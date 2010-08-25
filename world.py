@@ -3,6 +3,7 @@ import string
 import os
 import os.path
 import time
+import multiprocessing
 
 from PIL import Image
 
@@ -42,7 +43,7 @@ def find_chunkfiles(worlddir):
                     os.path.join(dirpath, f)))
     return all_chunks
 
-def render_world(worlddir):
+def render_world(worlddir, cavemode=False):
     print "Scanning chunks..."
     all_chunks = find_chunkfiles(worlddir)
 
@@ -109,6 +110,14 @@ def render_world(worlddir):
     print "Sorting chunks..."
     all_chunks.sort(key=lambda x: x[1]-x[0])
 
+    print "Starting chunk processors..."
+    pool = multiprocessing.Pool(processes=3)
+    resultsmap = {}
+    for chunkx, chunky, chunkfile in all_chunks:
+        result = pool.apply_async(chunk.render_and_save, args=(chunkfile,),
+                kwds=dict(cave=cavemode))
+        resultsmap[(chunkx, chunky)] = result
+
     print "Processing chunks!"
     processed = 0
     starttime = time.time()
@@ -128,8 +137,13 @@ def render_world(worlddir):
         print "It's in column {0} row {1}".format(column, row)
         
         # Read it and render
-        chunk.chunk_render(chunkfile, worldimg, imgx, imgy, cave=True)
-        # chunk chunk chunk chunk
+        result = resultsmap[(chunkx, chunky)]
+        chunkimagefile = result.get()
+        chunkimg = Image.open(chunkimagefile)
+        # Draw the image sans alpha layer, using the alpha layer as a mask. (We
+        # don't want the alpha layer actually drawn on the image, this pastes
+        # it as if it was a layer)
+        worldimg.paste(chunkimg.convert("RGB"), (imgx, imgy), chunkimg.split()[3])
 
         processed += 1
         
@@ -137,4 +151,6 @@ def render_world(worlddir):
                 (time.time()-starttime)/processed)
 
     print "All done!"
+    print "Took {0} minutes".format((time.time()-starttime)/60)
     return worldimg
+
