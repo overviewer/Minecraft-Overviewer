@@ -1,3 +1,4 @@
+import sys
 import os
 import os.path
 import zipfile
@@ -8,7 +9,11 @@ import numpy
 from PIL import Image, ImageEnhance
 
 def _get_terrain_image():
-    minecraftjar = zipfile.ZipFile(os.path.join(os.environ['HOME'], ".minecraft", "bin", "minecraft.jar"))
+    if "win" in sys.platform:
+        minecraftdir = os.environ['APPDATA']
+    else:
+        minecraftdir = os.environ['HOME']
+    minecraftjar = zipfile.ZipFile(os.path.join(minecraftdir, ".minecraft", "bin", "minecraft.jar"))
     textures = minecraftjar.open("terrain.png")
     buffer = StringIO(textures.read())
     return Image.open(buffer)
