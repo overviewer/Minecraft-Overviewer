@@ -71,6 +71,11 @@ class ChunkRenderer(object):
         """Finds a hash of the block array"""
         h = hashlib.md5()
         h.update(self.level['Blocks'])
+
+        # If the render algorithm changes, change this line to re-generate all
+        # the chunks automatically:
+        #h.update("1")
+
         digest = h.hexdigest()
         # 6 digits ought to be plenty
         return digest[:6]

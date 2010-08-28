@@ -38,12 +38,13 @@ def find_chunkfiles(worlddir):
     for dirpath, dirnames, filenames in os.walk(worlddir):
         if not dirnames and filenames:
             for f in filenames:
-                p = f.split(".")
-                all_chunks.append((base36decode(p[1]), base36decode(p[2]), 
-                    os.path.join(dirpath, f)))
+                if f.startswith("c.") and f.endswith(".dat"):
+                    p = f.split(".")
+                    all_chunks.append((base36decode(p[1]), base36decode(p[2]), 
+                        os.path.join(dirpath, f)))
     return all_chunks
 
-def render_world(worlddir, cavemode=False):
+def render_world(worlddir, cavemode=False, procs=2):
     print "Scanning chunks..."
     all_chunks = find_chunkfiles(worlddir)
 
@@ -101,6 +102,8 @@ def render_world(worlddir, cavemode=False):
 
     print "Final image will be {0}x{1}. (That's {2} bytes!)".format(
             width, height, width*height*4)
+    print "Don't worry though, that's just the memory requirements"
+    print "The final png will be much smaller"
 
     # Oh god create a giant ass image
     worldimg = Image.new("RGBA", (width, height))
@@ -110,8 +113,8 @@ def render_world(worlddir, cavemode=False):
     print "Sorting chunks..."
     all_chunks.sort(key=lambda x: x[1]-x[0])
 
-    print "Starting chunk processors..."
-    pool = multiprocessing.Pool(processes=3)
+    print "Starting up {0} chunk processors...".format(procs)
+    pool = multiprocessing.Pool(processes=procs)
     resultsmap = {}
     for chunkx, chunky, chunkfile in all_chunks:
         result = pool.apply_async(chunk.render_and_save, args=(chunkfile,),
@@ -143,7 +146,7 @@ def render_world(worlddir, cavemode=False):
         # Draw the image sans alpha layer, using the alpha layer as a mask. (We
         # don't want the alpha layer actually drawn on the image, this pastes
         # it as if it was a layer)
-        worldimg.paste(chunkimg.convert("RGB"), (imgx, imgy), chunkimg.split()[3])
+        worldimg.paste(chunkimg.convert("RGB"), (imgx, imgy), chunkimg)
 
         processed += 1
         
