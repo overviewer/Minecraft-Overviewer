@@ -105,9 +105,6 @@ def render_world(worlddir, cavemode=False, procs=2):
     print "Don't worry though, that's just the memory requirements"
     print "The final png will be much smaller"
 
-    # Oh god create a giant ass image
-    worldimg = Image.new("RGBA", (width, height))
-
     # Sort the chunks by their row, so when we loop through them it goes top to
     # bottom
     print "Sorting chunks..."
@@ -120,6 +117,10 @@ def render_world(worlddir, cavemode=False, procs=2):
         result = pool.apply_async(chunk.render_and_save, args=(chunkfile,),
                 kwds=dict(cave=cavemode))
         resultsmap[(chunkx, chunky)] = result
+
+    # Oh god create a giant ass image
+    print "Allocating memory for the giant image"
+    worldimg = Image.new("RGBA", (width, height))
 
     print "Processing chunks!"
     processed = 0
