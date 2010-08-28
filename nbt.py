@@ -4,12 +4,12 @@ import struct
 def load(fileobj):
     if isinstance(fileobj, basestring):
         # Is actually a filename
-        fileobj = open(fileobj, 'r')
+        fileobj = open(fileobj, 'rb')
     return NBTFileReader(fileobj).read_all()
 
 class NBTFileReader(object):
     def __init__(self, fileobj):
-        self._file = gzip.GzipFile(fileobj=fileobj, mode='r')
+        self._file = gzip.GzipFile(fileobj=fileobj, mode='rb')
 
     # These private methods read the payload only of the following types
     def _read_tag_end(self):
