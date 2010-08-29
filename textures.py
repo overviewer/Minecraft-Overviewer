@@ -176,4 +176,6 @@ def _build_blockimages():
 # Maps block images to the appropriate texture on each side. This map is not
 # appropriate for all block types
 blockmap = _build_blockimages()
-
+# Future block types:
+while len(blockmap) < 256:
+    blockmap.append(None)
