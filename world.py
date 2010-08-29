@@ -54,8 +54,8 @@ def render_world(worlddir, cavemode=False, procs=2):
         return
 
     # Create an image big enough for all chunks
-    # Each chunk is 352 pixels across. Each chunk is vertically 1584 pixels,
-    # but are spaced only 16*11=176 pixels apart.
+    # Each chunk is 384 pixels across. Each chunk is vertically 1728 pixels,
+    # but are spaced only 16*12=192 pixels apart. (Staggered, it's half that)
 
     # Imagine a diagonal coordinate system to address the chunks where
     # increasing x goes up-right and increasing z goes down-right. This needs
@@ -68,20 +68,23 @@ def render_world(worlddir, cavemode=False, procs=2):
 
     # This means the total width of the image is max sum - the min sum, times
     # the horizontal spacing between each neighboring chunk. Since the rows are
-    # staggered, each row takes up half its actual width: 352/2
+    # staggered, each row takes up half its actual width: 384/2
 
     # Similarly, each row of chunks has a constant difference between their x
     # and z coordinate, since going from from a chunk to the one to its right
     # involves an addition of 1 to both x and z.
 
     # So the total height of the image must be the max diff - the min diff,
-    # times the vertical chunk spacing which is half of 16*11. Additionally,
-    # 1584-8*11 must be added to the height for the rest of the bottom layer of
+    # times the vertical chunk spacing which is half of 16*12. Additionally,
+    # 1536-8*12 must be added to the height for the rest of the bottom layer of
     # chunks.
 
     # Furthermore, the chunks with the minimum z-x are placed on the image at
     # y=0 (in image coordinates, not chunk coordinates). The chunks with the
     # minimum x+z are placed on the image at x=0.
+
+    # I think I may have forgotten to account for the block heights, the image
+    # may be short by 12 pixels or so. Not a huge deal.
     
     # Find the max and min sum and difference. Start out by finding the sum and
     # diff of the first chunk
