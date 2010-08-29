@@ -9,6 +9,10 @@ import numpy
 from PIL import Image, ImageEnhance
 
 def _get_terrain_image():
+    # Check the current directory for terrain.png first:
+    if os.path.isfile("terrain.png"):
+        return Image.open("terrain.png")
+
     if "darwin" in sys.platform:
         # On Macs, terrain.png could lie at
         # "/Applications/minecraft/terrain.png" for custom terrain. Try this
