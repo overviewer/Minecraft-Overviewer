@@ -45,7 +45,12 @@ transparent_blocks = set([0, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53, 59, 6
 
 def render_and_save(chunkfile, cave=False):
     a = ChunkRenderer(chunkfile)
-    return a.render_and_save(cave)
+    try:
+        return a.render_and_save(cave)
+    except Exception, e:
+        import traceback
+        traceback.print_exc()
+        raise
 
 class ChunkRenderer(object):
     def __init__(self, chunkfile):
