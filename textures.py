@@ -9,12 +9,28 @@ import numpy
 from PIL import Image, ImageEnhance
 
 def _get_terrain_image():
-    if "win" in sys.platform:
-        minecraftdir = os.environ['APPDATA']
+    if "darwin" in sys.platform:
+        # On Macs, terrain.png could lie at
+        # "/Applications/minecraft/terrain.png" for custom terrain. Try this
+        # first.
+        png = "/Applications/Minecraft/terrain.png"
+        if os.access(png, os.F_OK):
+            return Image.open(png)
+
+        # Paths on a Mac are a bit different
+        minecraftdir = os.path.join(os.environ['HOME'], "Library",
+                "Application Support", "minecraft")
+        minecraftjar = zipfile.ZipFile(os.path.join(minecraftdir, "bin", "minecraft.jar"))
+        textures = minecraftjar.open("terrain.png")
+
     else:
-        minecraftdir = os.environ['HOME']
-    minecraftjar = zipfile.ZipFile(os.path.join(minecraftdir, ".minecraft", "bin", "minecraft.jar"))
-    textures = minecraftjar.open("terrain.png")
+        if "win" in sys.platform:
+            minecraftdir = os.environ['APPDATA']
+        else:
+            minecraftdir = os.environ['HOME']
+        minecraftjar = zipfile.ZipFile(os.path.join(minecraftdir, ".minecraft",
+            "bin", "minecraft.jar"))
+        textures = minecraftjar.open("terrain.png")
     buffer = StringIO(textures.read())
     return Image.open(buffer)
 
