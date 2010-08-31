@@ -33,7 +33,11 @@ def base36encode(number):
 
 def find_chunkfiles(worlddir):
     """Returns a list of all the chunk file locations, and the file they
-    correspond to"""
+    correspond to.
+    
+    Returns a list of (chunkx, chunky, filename) where chunkx and chunky are
+    given in chunk coordinates. Use convert_coords() to turn the resulting list
+    into an oblique coordinate system"""
     all_chunks = []
     for dirpath, dirnames, filenames in os.walk(worlddir):
         if not dirnames and filenames:
@@ -43,6 +47,29 @@ def find_chunkfiles(worlddir):
                     all_chunks.append((base36decode(p[1]), base36decode(p[2]), 
                         os.path.join(dirpath, f)))
     return all_chunks
+
+def render_chunks_async(chunks, caves, processes):
+    """Starts up a process pool and renders all the chunks asynchronously.
+
+    caves is boolean passed to chunk.render_and_save()
+
+    chunks is a list of (chunkx, chunky, chunkfile)
+
+    Returns a dictionary mapping (chunkx, chunky) to a
+    multiprocessing.pool.AsyncResult object
+    """
+    pool = multiprocessing.Pool(processes=processes)
+    resultsmap = {}
+    for chunkx, chunky, chunkfile in chunks:
+        result = pool.apply_async(chunk.render_and_save, args=(chunkfile,),
+                kwds=dict(cave=caves))
+        resultsmap[(chunkx, chunky)] = result
+
+    # Stick the pool object in the dict under the key "pool" so it isn't
+    # garbage collected (which kills the subprocesses)
+    resultsmap['pool'] = pool
+
+    return resultsmap
 
 def render_world(worlddir, cavemode=False, procs=2):
     print "Scanning chunks..."
@@ -86,19 +113,7 @@ def render_world(worlddir, cavemode=False, procs=2):
     # I think I may have forgotten to account for the block heights, the image
     # may be short by 12 pixels or so. Not a huge deal.
     
-    # Find the max and min sum and difference. Start out by finding the sum and
-    # diff of the first chunk
-    item = all_chunks[0]
-    minsum = maxsum = item[0] + item[1]
-    mindiff = maxdiff = item[1] - item[0]
-
-    for c in all_chunks:
-        s = c[0] + c[1]
-        minsum = min(minsum, s)
-        maxsum = max(maxsum, s)
-        d = c[1] - c[0]
-        mindiff = min(mindiff, d)
-        maxdiff = max(maxdiff, d)
+    minsum, maxsum, mindiff, maxdiff, _ = convert_coords(all_chunks)
 
     width = (maxsum - minsum) * 384//2
     height = (maxdiff-mindiff) * 8*12 + (12*128-8*12)
@@ -114,12 +129,7 @@ def render_world(worlddir, cavemode=False, procs=2):
     all_chunks.sort(key=lambda x: x[1]-x[0])
 
     print "Starting up {0} chunk processors...".format(procs)
-    pool = multiprocessing.Pool(processes=procs)
-    resultsmap = {}
-    for chunkx, chunky, chunkfile in all_chunks:
-        result = pool.apply_async(chunk.render_and_save, args=(chunkfile,),
-                kwds=dict(cave=cavemode))
-        resultsmap[(chunkx, chunky)] = result
+    resultsmap = render_chunks_async(all_chunks, cavemode, procs)
 
     # Oh god create a giant ass image
     print "Allocating memory for the giant image"
@@ -161,3 +171,71 @@ def render_world(worlddir, cavemode=False, procs=2):
     print "Took {0} minutes".format((time.time()-starttime)/60)
     return worldimg
 
+def convert_coords(chunks):
+    """Takes the list of (chunkx, chunky, chunkfile) where chunkx and chunky
+    are in the chunk coordinate system, and figures out the row and column in
+    the image each one should be.
+
+    returns mincol, maxcol, minrow, maxrow, chunks_translated
+    chunks_translated is a list of (col, row, filename)
+    """
+    chunks_translated = []
+    # columns are determined by the sum of the chunk coords, rows are the
+    # difference
+    item = chunks[0]
+    mincol = maxcol = item[0] + item[1]
+    minrow = maxrow = item[1] - item[0]
+    for c in chunks:
+        col = c[0] + c[1]
+        mincol = min(mincol, col)
+        maxcol = max(maxcol, col)
+        row = c[1] - c[0]
+        minrow = min(minrow, row)
+        maxrow = max(maxrow, row)
+        chunks_translated.append((col, row, c[2]))
+
+    return mincol, maxcol, minrow, maxrow, chunks_translated
+
+def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
+    """Renders just the specified chunks into a tile. Unlike usual python
+    conventions, rowend and colend are inclusive. Additionally, the chunks
+    around the edges are half-way cut off (so that neighboring tiles will
+    render the other half)
+
+    chunkmap is a dictionary mapping (col, row) to an object whose .get()
+    method returns a chunk filename path (a multiprocessing.pool.AsyncResult
+    object) as returned from render_chunks_async()
+
+    The image object is returned.
+    """
+    # width of one chunk is 384. Each column is half a chunk wide.
+    width = 192 * (colend - colstart)
+    # Same deal with height
+    height = 96 * (rowend - rowstart)
+    # I know those equations could be simplified. Left like that for clarity
+
+    tileimg = Image.new("RGBA", (width, height))
+
+    # col colstart will get drawn on the image starting at x coordinates -(384/2)
+    # row rowstart will get drawn on the image starting at y coordinates -(192/2)
+    # Due to how the tiles fit together, we may need to render chunks way above
+    # this (since very few chunks actually touch the top of the sky, some tiles
+    # way above this one are possibly visible in this tile). Render them
+    # anyways just in case)
+    for row in xrange(rowstart-16, rowend+1):
+        for col in xrange(colstart, colend+1):
+            chunkresult = chunkmap.get((col, row), None)
+            if not chunkresult:
+                continue
+            chunkfile = chunkresult.get()
+            chunkimg = Image.open(chunkfile)
+
+            xpos = -192 + (col-colstart)*192
+            ypos = -96 + (row-rowstart)*96
+
+            print "Pasting chunk {0},{1} at {2},{3}".format(
+                    col, row, xpos, ypos)
+
+            tileimg.paste(chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
+
+    return tileimg
