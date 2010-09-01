@@ -239,3 +239,36 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
             tileimg.paste(chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
 
     return tileimg
+
+def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
+    """Recursive method that generates a quadtree.
+    A single call generates, saves, and returns an image with the range
+    specified by colstart,colend,rowstart, and rowend.
+
+    The image is saved as prefix+".png"
+
+    If the requested range is larger than a certain threshold, this method will
+    instead make 4 calls to itself to render the 4 quadrents of the image. The
+    four pieces are then resized and pasted into one image that is saved and
+    returned.
+
+    If the requested range is not too large, it is generated with
+    render_worldtile()
+
+    If the path "prefix" exists and is a directory, this call is assumed to be
+    the "initial" recursive call, and will save the image as "base.png" in that
+    directory. Recursed calls will have prefix set to os.path.join(prefix, "#")
+    where # is 0, 1, 2, or 3.
+
+    The last piece to the puzzle is how directories are created. If a call
+    wants to save an image as tiles/0/0.png and directory tiles/0 doesn't
+    exist, it will be created.
+
+    So the first call will have prefix "tiles" (e.g.) and will save its image as
+    "tiles/base.png"
+    The second call will have prefix "tiles/0" and will save its image as
+    "tiles/0.png"
+    The third call will have prefix "tiles/0/0" and will create directory
+    "tiles/0" to save its image as "tile/0/0.png"
+    """
+    pass
