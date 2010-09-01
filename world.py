@@ -212,7 +212,6 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
     width = 192 * (colend - colstart)
     # Same deal with height
     height = 96 * (rowend - rowstart)
-    # I know those equations could be simplified. Left like that for clarity
 
     tileimg = Image.new("RGBA", (width, height))
 
