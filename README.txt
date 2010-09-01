@@ -23,8 +23,8 @@ This program requires:
 * PIL (Python Imaging Library)
 * Numpy
 
-I developed and tested this on Linux. It ought to work on Windows and Mac, but
-I haven't tried it.
+I developed and tested this on Linux. It has been reported to work on Windows
+and Mac, but if something doesn't, let me know. 
 
 Running
 -------
@@ -52,8 +52,7 @@ The Overviewer keeps a cache of each world chunk it renders stored within your
 world directory. When you generate a new image of the same world, it will only
 re-render chunks that have changed, speeding things up a lot.
 
-If you want to delete these images, to save space or perhaps you've changed
-texture packs, run the renderer.py script with the -d flag:
+If you want to delete these images, run the renderer.py script with the -d flag:
 
     python renderer.py -d <Path to World>
 
@@ -61,11 +60,16 @@ To delete the cave mode images, run it with -d and -c
 
     python renderer.py -d -c <Path to World>
 
+You may want to do this for example to save space. Or perhaps you've changed
+texture packs and want to force it to re-render all chunks.
+
 Using More Cores
 ----------------
 The Overviewer will render each chunk separately in parallel. You can tell it
 how many processes to start with the -p option. This is set to a default of 2,
 which will use 2 processes to render chunks, and 1 to render the final image.
+
+To bump that up to 3 processes, use a command in this form:
 
     python renderer.py -p 3 <Path to World> <image out.png>
 
@@ -73,13 +77,14 @@ Bugs
 ====
 * This program is memory intensive. Obviously if you have a 20000x10000 pixel
   image, it's going to take up quite a bit of room. This program may not work
-  if you have a gigantic world. I am working on a solution to this, possibly
-  splitting up the final image so it's not as big. Even if the image is
-  successfully generated, my image viewer has quite some trouble showing it.
+  if you have a gigantic world. The program may crash, or even if the image is
+  successfully generated, your image viewer may crash or refuse to display it.
+  I am working on a solution to this involving a google maps like interface
+  where the world is split up into tiles.
 
 * Some types of block are not rendered correctly yet. This includes torches,
-  mushrooms, flowers, and anything that is not a traditional "block". They are
-  still rendered, but look funny.
+  mushrooms, flowers, and anything that is not a traditional "block". Some are
+  still rendered, but look funny. Others are not rendered at all currently.
 
 * Water transparency is not working yet. I'm trying to come up with a good
   solution, but I think it has to do with the image blending algorithm in the
