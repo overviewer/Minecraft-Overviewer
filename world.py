@@ -309,7 +309,7 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
         # base case: just render the image
         img = render_worldtile(chunkmap, colstart, colend, rowstart, rowend)
     elif cols < 3 or rows < 5:
-        Exception("Something went wrong, this tile is too small. (Please send "
+        raise Exception("Something went wrong, this tile is too small. (Please send "
                 "me the traceback so I can fix this)")
     else:
         # Recursively generate each quadrent for this tile
