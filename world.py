@@ -31,6 +31,14 @@ def base36encode(number):
     else:
         return base36
 
+def load_sort_and_process(worlddir):
+    """Takes a directory to a world dir, and returns a mapping from (col, row)
+    to result object"""
+    all_chunks = find_chunkfiles(worlddir)
+    mincol, maxcol, minrow, maxrow, translated_chunks = convert_coords(all_chunks)
+    results = render_chunks_async(translated_chunks, caves=False, processes=5)
+    return results
+
 def find_chunkfiles(worlddir):
     """Returns a list of all the chunk file locations, and the file they
     correspond to.
@@ -208,11 +216,27 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
 
     The image object is returned.
     """
-    # width of one chunk is 384. Each column is half a chunk wide.
+    # width of one chunk is 384. Each column is half a chunk wide. The total
+    # width is (384 + 192*(numcols-1)) since the first column contributes full
+    # width, and each additional one contributes half since they're staggered.
+    # However, since we want to cut off half a chunk at each end (384 less
+    # pixels) and since (colend - colstart + 1) is the number of columns
+    # inclusive, the equation simplifies to:
     width = 192 * (colend - colstart)
     # Same deal with height
     height = 96 * (rowend - rowstart)
-    # I know those equations could be simplified. Left like that for clarity
+
+    # The standard tile size is 3 columns by 5 rows, which works out to 384x384
+    # pixels for 8 total chunks. (Since the chunks are staggered but the grid
+    # is not, some grid coordinates do not address chunks) The two chunks on
+    # the middle column are shown in full, the two chunks in the middle row are
+    # half cut off, and the four remaining chunks are one quarter shown.
+    # The above example with cols 0-3 and rows 0-4 has the chunks arranged like this:
+    #   0,0         2,0
+    #         1,1
+    #   0,2         2,2
+    #         1,3
+    #   0,4         2,4
 
     tileimg = Image.new("RGBA", (width, height))
 
@@ -240,12 +264,12 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
 
     return tileimg
 
-def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
+def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrent="base"):
     """Recursive method that generates a quadtree.
     A single call generates, saves, and returns an image with the range
     specified by colstart,colend,rowstart, and rowend.
 
-    The image is saved as prefix+".png"
+    The image is saved as os.path.join(prefix, quadrent+".png")
 
     If the requested range is larger than a certain threshold, this method will
     instead make 4 calls to itself to render the 4 quadrents of the image. The
@@ -255,20 +279,114 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
     If the requested range is not too large, it is generated with
     render_worldtile()
 
-    If the path "prefix" exists and is a directory, this call is assumed to be
-    the "initial" recursive call, and will save the image as "base.png" in that
-    directory. Recursed calls will have prefix set to os.path.join(prefix, "#")
-    where # is 0, 1, 2, or 3.
+    The path "prefix" should be a directory where this call should save its
+    image.
 
-    The last piece to the puzzle is how directories are created. If a call
-    wants to save an image as tiles/0/0.png and directory tiles/0 doesn't
-    exist, it will be created.
+    quadrent is used in recursion. If it is "base", the image is saved in the
+    directory named by prefix, and recursive calls will have quadrent set to
+    "0" "1" "2" or "3" and prefix will remain unchanged.
 
-    So the first call will have prefix "tiles" (e.g.) and will save its image as
-    "tiles/base.png"
-    The second call will have prefix "tiles/0" and will save its image as
-    "tiles/0.png"
-    The third call will have prefix "tiles/0/0" and will create directory
-    "tiles/0" to save its image as "tile/0/0.png"
+    If quadrent is anything else, the tile will be saved just the same, but for
+    recursive calls a directory named quadrent will be created (if it doesn't
+    exist) and prefix will be set to os.path.join(prefix, quadrent)
+
+    So the first call will have prefix "tiles" (e.g.) and quadrent "base" and
+    will save its image as "tiles/base.png"
+    The second call will have prefix "tiles" and quadrent "0" and will save its
+    image as "tiles/0.png". It will create the directory "tiles/0/"
+    The third call will have prefix "tiles/0", quadrent "0" and will save its image as
+    "tile/0/0.png"
+
+    Each tile outputted is always 384 by 384 pixels.
     """
-    pass
+    print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
+    print "  prefix:", prefix
+    print "  quadrent:", quadrent
+    cols = colend - colstart
+    rows = rowend - rowstart
+
+    if cols == 3 and rows == 5:
+        # base case: just render the image
+        img = render_worldtile(chunkmap, colstart, colend, rowstart, rowend)
+    elif cols < 3 or rows < 5:
+        Exception("Something went wrong, this tile is too small. (Please send "
+                "me the traceback so I can fix this)")
+    else:
+        # Recursively generate each quadrent for this tile
+        img = Image.new("RGBA", (384, 384))
+
+        # Find the midpoint
+        colmid = (colstart + colend) // 2
+        rowmid = (rowstart + rowend) // 2
+        if quadrent == "base":
+            # The first call has a special job. No matter the input, we need to
+            # make sure that each recursive call splits both dimensions evenly
+            # into a power of 2 * 384. (Since all tiles are 384x384 which is 3
+            # cols by 5 rows)
+            # Since the row of the final recursion needs to be 3, this split
+            # needs to be sized into the void so that it is some number of rows
+            # in the form 3*2^p. And columns must be in the form 5*2^p
+            # They need to be the same power
+            # In other words, I need to find the smallest power p such that
+            # colmid + 3*2^p >= colend and rowmid + 5*2^p >= rowend
+            for p in xrange(15): # That should be a high enough upper limit
+                if colmid + 3*2**p >= colend and rowmid + 5*2**p >= rowend:
+                    break
+            else:
+                raise Exception("Your map is waaaay to big")
+
+            # Modify the lower and upper bounds to be sized correctly
+            colstart = colmid - 3*2**p
+            colend = colmid + 3*2**p
+            rowstart = rowmid - 5*2**p
+            rowend = rowmid + 5*2**p
+
+            print "     power is", p
+            print "     new bounds: {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
+
+            newprefix = prefix
+        else:
+            # Assert that the split in the center still leaves everything sized
+            # exactly right by checking divisibility by the final row and
+            # column sizes. This isn't sufficient, but is necessary for
+            # success. (A better check would make sure the dimensions fit the
+            # above equations for the same power of 2)
+            assert (colmid - colstart) % 3 == 0
+            assert (colend - colmid) % 3 == 0
+            assert (rowmid - rowstart) % 5 == 0
+            assert (rowend - rowmid) % 5 == 0
+
+            newprefix = os.path.join(prefix, quadrent)
+            if not os.path.exists(newprefix):
+                os.mkdir(newprefix)
+
+        # Recurse to generate each quadrent of images
+        quad0file = generate_quadtree(chunkmap, 
+                colstart, colmid, rowstart, rowmid,
+                newprefix, "0")
+        quad1file = generate_quadtree(chunkmap, 
+                colmid, colend, rowstart, rowmid,
+                newprefix, "1")
+        quad2file = generate_quadtree(chunkmap, 
+                colstart, colmid, rowmid, rowend,
+                newprefix, "2")
+        quad3file = generate_quadtree(chunkmap, 
+                colmid, colend, rowmid, rowend,
+                newprefix, "3")
+
+        quad0 = Image.open(quad0file).resize((192,192))
+        quad1 = Image.open(quad1file).resize((192,192))
+        quad2 = Image.open(quad2file).resize((192,192))
+        quad3 = Image.open(quad3file).resize((192,192))
+
+        img.paste(quad0, (0,0))
+        img.paste(quad1, (192,0))
+        img.paste(quad2, (0, 192))
+        img.paste(quad3, (192, 192))
+
+    # Save the image
+    path = os.path.join(prefix, quadrent+".png")
+    img.save(path)
+
+    # Return its location
+    return path
