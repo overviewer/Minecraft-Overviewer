@@ -257,8 +257,8 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
             xpos = -192 + (col-colstart)*192
             ypos = -96 + (row-rowstart)*96
 
-            print "Pasting chunk {0},{1} at {2},{3}".format(
-                    col, row, xpos, ypos)
+            #print "Pasting chunk {0},{1} at {2},{3}".format(
+            #        col, row, xpos, ypos)
 
             tileimg.paste(chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
 
@@ -299,16 +299,16 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
 
     Each tile outputted is always 384 by 384 pixels.
     """
-    print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
-    print "  prefix:", prefix
-    print "  quadrent:", quadrent
+    #print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
+    #print "  prefix:", prefix
+    #print "  quadrent:", quadrent
     cols = colend - colstart
     rows = rowend - rowstart
 
-    if cols == 3 and rows == 5:
+    if cols == 2 and rows == 4:
         # base case: just render the image
         img = render_worldtile(chunkmap, colstart, colend, rowstart, rowend)
-    elif cols < 3 or rows < 5:
+    elif cols < 2 or rows < 4:
         raise Exception("Something went wrong, this tile is too small. (Please send "
                 "me the traceback so I can fix this)")
     else:
@@ -330,16 +330,16 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
             # In other words, I need to find the smallest power p such that
             # colmid + 3*2^p >= colend and rowmid + 5*2^p >= rowend
             for p in xrange(15): # That should be a high enough upper limit
-                if colmid + 3*2**p >= colend and rowmid + 5*2**p >= rowend:
+                if colmid + 2*2**p >= colend and rowmid + 4*2**p >= rowend:
                     break
             else:
                 raise Exception("Your map is waaaay to big")
 
             # Modify the lower and upper bounds to be sized correctly
-            colstart = colmid - 3*2**p
-            colend = colmid + 3*2**p
-            rowstart = rowmid - 5*2**p
-            rowend = rowmid + 5*2**p
+            colstart = colmid - 2*2**p
+            colend = colmid + 2*2**p
+            rowstart = rowmid - 4*2**p
+            rowend = rowmid + 4*2**p
 
             print "     power is", p
             print "     new bounds: {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
@@ -351,10 +351,10 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
             # column sizes. This isn't sufficient, but is necessary for
             # success. (A better check would make sure the dimensions fit the
             # above equations for the same power of 2)
-            assert (colmid - colstart) % 3 == 0
-            assert (colend - colmid) % 3 == 0
-            assert (rowmid - rowstart) % 5 == 0
-            assert (rowend - rowmid) % 5 == 0
+            assert (colmid - colstart) % 2 == 0
+            assert (colend - colmid) % 2 == 0
+            assert (rowmid - rowstart) % 4 == 0
+            assert (rowend - rowmid) % 4 == 0
 
             newprefix = os.path.join(prefix, quadrent)
             if not os.path.exists(newprefix):
