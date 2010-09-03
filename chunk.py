@@ -103,7 +103,16 @@ class ChunkRenderer(object):
         dest_path = os.path.join(destdir, dest_filename)
 
         if os.path.exists(dest_path):
-            return dest_path
+            # Try to open it to see if it's corrupt or something (can happen if
+            # the program crashed last time)
+            try:
+                testimg = Image.open(dest_path)
+                testimg.load()
+            except Exception:
+                # guess not, continue below
+                pass
+            else:
+                return dest_path
         else:
             # Remove old images for this chunk
             for oldimg in os.listdir(destdir):
