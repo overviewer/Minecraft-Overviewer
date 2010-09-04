@@ -79,7 +79,7 @@ class ChunkRenderer(object):
 
         # If the render algorithm changes, change this line to re-generate all
         # the chunks automatically:
-        #h.update("1")
+        h.update("1")
 
         digest = h.hexdigest()
         # 6 digits ought to be plenty

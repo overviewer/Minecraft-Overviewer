@@ -298,6 +298,10 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
     "tile/0/0.png"
 
     Each tile outputted is always 384 by 384 pixels.
+
+    The return from this function is the path to the file saved, unless it's
+    the base call. In that case, it outputs the power of 2 that was used to
+    size the full image, which is the zoom level.
     """
     #print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
     #print "  prefix:", prefix
@@ -322,13 +326,14 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
             # The first call has a special job. No matter the input, we need to
             # make sure that each recursive call splits both dimensions evenly
             # into a power of 2 * 384. (Since all tiles are 384x384 which is 3
-            # cols by 5 rows)
+            # cols by 5 rows). I'm not really sure how to explain this best,
+            # sorry.
             # Since the row of the final recursion needs to be 3, this split
             # needs to be sized into the void so that it is some number of rows
-            # in the form 3*2^p. And columns must be in the form 5*2^p
+            # in the form 2*2^p. And columns must be in the form 4*2^p
             # They need to be the same power
             # In other words, I need to find the smallest power p such that
-            # colmid + 3*2^p >= colend and rowmid + 5*2^p >= rowend
+            # colmid + 2*2^p >= colend and rowmid + 4*2^p >= rowend
             for p in xrange(15): # That should be a high enough upper limit
                 if colmid + 2*2**p >= colend and rowmid + 4*2**p >= rowend:
                     break
@@ -374,10 +379,10 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
                 colmid, colend, rowmid, rowend,
                 newprefix, "3")
 
-        quad0 = Image.open(quad0file).resize((192,192))
-        quad1 = Image.open(quad1file).resize((192,192))
-        quad2 = Image.open(quad2file).resize((192,192))
-        quad3 = Image.open(quad3file).resize((192,192))
+        quad0 = Image.open(quad0file).resize((192,192), Image.ANTIALIAS)
+        quad1 = Image.open(quad1file).resize((192,192), Image.ANTIALIAS)
+        quad2 = Image.open(quad2file).resize((192,192), Image.ANTIALIAS)
+        quad3 = Image.open(quad3file).resize((192,192), Image.ANTIALIAS)
 
         img.paste(quad0, (0,0))
         img.paste(quad1, (192,0))
@@ -388,5 +393,9 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
     path = os.path.join(prefix, quadrent+".png")
     img.save(path)
 
-    # Return its location
-    return path
+    if quadrent == "base":
+        # Return the power (number of zoom levels)
+        return p
+    else:
+        # Return its location
+        return path
