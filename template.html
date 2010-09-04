@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <!--
+      This document written by SomethingAwful forums user Bad Munki, August 2010.
+      Feel free to use it, in whole or in part, for whatever you like.
+      
+      If you want to publish this to a web site, you will need to provide a valid
+      Google Maps API key. To obtain a free API key, go to:
+      http://code.google.com/apis/maps/signup.html
+      and enter the requested information. Copy the key in its entirety, and
+      replace the text YOUR_API_KEY_HERE (on or about line 135 of this file) with
+      the copied key. Do not add quotes, spaces, etc.
+      
+      Enjoy!
+    -->
+    <script type="text/javascript">
+      var map;
+      var host_div;
+      var meta = {
+        longName:     'Minecraft World',        // The long name for your map.                                Example: Minecraft World 1
+        shortName:    'minecraft',       // The short name for your map,                               Example: world1
+        path:         '.',    // The relative path to the quad tree. No trailing slash.     Example: world1
+        copyright:    '',        // The copyright string for your map.                         Example: Copyright 2010 Uncle Sam
+        file_ext:     'png',   // The filetype extension of your tiles.                      Example: png
+        minZoom:      0,           // The minimum zoom level of the map.                         Example: 1
+        maxZoom:      {maxzoom},           // The maximum zoom level of the map.                         Example: 5
+        defaultZoom:  1,       // The initial zoom level of the map.                         Example: 3
+        centerX:      0,           // The initial X coordinate to center on screen.              Example: 1000
+        centerY:      0,           // The initial Y coordinate to center on screen.              Example: 800
+      };
+      
+      function IVCreateViewer(div) {
+        host_div = div;
+        if (!GBrowserIsCompatible()) {
+          return;
+        }
+        if(!document.getElementById(host_div)) {
+          return;
+        }
+        IVResize();
+        
+        map = new GMap2(document.getElementById(host_div), { mapTypes: [IVGetMapType()] });
+        map.setCenter(new GLatLng(meta.centerY, meta.centerX), meta.defaultZoom);
+        map.addControl(new GLargeMapControl());
+        document.getElementById(host_div).style.backgroundColor = '#000000';
+      }
+      
+      function IVGetMapType() {
+        var copyrights = new GCopyrightCollection('Map data');
+        copyrights.addCopyright(new GCopyright(
+          'map_copyright',
+          new GLatLngBounds(new GLatLng(-90,-180), new GLatLng(90,180)),
+          0,
+          meta.copyright));
+        
+        var tileset = new GTileLayer(copyrights, 0, 4);
+        tileset.getTileUrl = function(tile, zoom) {
+          var url = meta.path;
+          if(zoom == 0) {
+            url += '/base';
+          } else {
+            for(var z = zoom - 1; z >= 0; --z) {
+              var x = Math.floor(tile.x / Math.pow(2, z)) % 2;
+              var y = Math.floor(tile.y / Math.pow(2, z)) % 2;
+              url += '/' + (x + 2 * y)
+            }
+          }
+          url += '.' + meta.file_ext;
+          return(url);
+        };
+        tileset.isPng = function() { return !(meta.file_ext.match(/^png$/i) == null); };
+        tileset.getOpacity = function() { return 1.0; };
+        
+        var proj = new GMercatorProjection(meta.maxZoom + 1);
+        proj.getWrapWidth = function(zoom) {
+          return Infinity;
+        };
+        proj.tileCheckRange = function(tile, zoom, tilesize) {
+          if(tile.x < 0 || tile.x >= Math.pow(2, zoom) || tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
+            return false;
+          }
+          return true;
+        };
+        
+        var maptype = new GMapType(
+          [tileset],
+          proj,
+          meta.title,
+          {
+            shortName:meta.shortName,
+            tileSize:384,
+            maxResolution:meta.maxZoom,
+            minResolution:meta.minZoom
+          });
+        
+        return maptype;
+      }
+      
+      function IVResize() {
+        document.getElementById(host_div).style.width = (IVPageWidth() - 30) + 'px';
+        document.getElementById(host_div).style.height = (IVPageHeight() - 30) + 'px';
+        if(map) {
+          map.checkResize();
+        }
+      }
+      
+      function IVUnload() {
+        GUnload();
+      }
+      
+      function IVPageWidth() {
+        if(window.innerWidth) {
+          return window.innerWidth;
+        } else if(document.body) {
+          return document.body.clientWidth;
+        }
+        return null;
+      }
+      
+      function IVPageHeight() {
+        if(window.innerHeight) {
+          return window.innerHeight;
+        } else if(document.body) {
+          return document.body.clientHeight;
+        }
+        return null;
+      }
+    </script>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>Minecraft Map Viewer</title>
+    <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=YOUR_API_KEY_HERE" type="text/javascript"></script>
+  </head>
+  <body onload="IVCreateViewer('map'); IVResize();" onunload="IVUnload();" onresize="IVResize();" style="background-color: #000000;">
+    <center>
+      <div id="map" style="border: 1px solid #555"></div>
+    </center>
+  </body>
+</html>
