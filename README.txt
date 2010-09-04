@@ -3,6 +3,8 @@ Minecraft Overviewer
 ====================
 By Andrew Brown
 
+http://github.com/brownan/Minecraft-Overviewer
+
 Generates large resolution images of a Minecraft map.
 
 In short, this program reads in Minecraft world files and renders very large
@@ -12,8 +14,8 @@ Cartographer program.
 I wrote this with an additional goal in mind: to generate large images that I
 could zoom in and see details.
 
-Using the Overviewer
-====================
+**New**: gmap.py generates tiles for a Google Map interface, so that people
+with large worlds can still benefit!
 
 Requirements
 ------------
@@ -24,10 +26,43 @@ This program requires:
 * Numpy
 
 I developed and tested this on Linux. It has been reported to work on Windows
-and Mac, but if something doesn't, let me know. 
+and Mac, but if something doesn't, let me know.
+
+Using the Google Map Tile Generator
+===================================
+This is the new and preferred way to generate images of your map.
+
+Disclaimers
+-----------
+Before you dive into using this, let it be known that there are a few minor
+problems. First, it's slow. If your map is really large, this could take at
+least half an hour. Second, there's no progress bar. You can watch the tiles
+get generated, but the program gives no feedback at this time on how far it is.
+
+There are probably some other minor glitches along the way, hopefully they will
+be fixed soon. See the `Bugs`_ section below.
 
 Running
 -------
+To generate a set of Google Map tiles, use the gmap.py script like this:
+
+    python gmap.py <Path to World> <Output Directory>
+
+The output directory must already exist. This will generate a set of image
+tiles for your world. When it's done, it will put an index.html file in the
+same directory that you can use to view it.
+
+Note that this program renders each chunk of your world as an intermediate step
+and stores the images in your world directory as a cache. You usually don't
+need to worry about this, but if you want to delete them, see the section below
+about `Deleting the Cache`_.
+
+Using the Large Image Renderer
+==============================
+The Large Image Renderer creates one large image of your world. This was
+originally the only option, but would crash and use too much memory for very
+large worlds. You may still find a use for it though.
+
 Right now there's only a console interface. Here's how to use it:
 
 To render a world, run the renderer.py script like this:
@@ -75,17 +110,28 @@ To bump that up to 3 processes, use a command in this form:
 
 Bugs
 ====
-* This program is memory intensive. Obviously if you have a 20000x10000 pixel
-  image, it's going to take up quite a bit of room. This program may not work
-  if you have a gigantic world. The program may crash, or even if the image is
-  successfully generated, your image viewer may crash or refuse to display it.
-  I am working on a solution to this involving a google maps like interface
-  where the world is split up into tiles.
+This program has bugs. They are mostly minor things, I wouldn't have released a
+completely useless program. However, there are a number of things that I want
+to fix or improve.
 
-* Some types of block are not rendered correctly yet. This includes torches,
-  mushrooms, flowers, and anything that is not a traditional "block". Some are
-  still rendered, but look funny. Others are not rendered at all currently.
+For a current list of issues, visit
+http://github.com/brownan/Minecraft-Overviewer/issues
 
-* Water transparency is not working yet. I'm trying to come up with a good
-  solution, but I think it has to do with the image blending algorithm in the
-  Python Imaging Library. There may not be an easy solution to this.
+Feel free to comment on issues, report new issues, and vote on issues that are
+important to you, so I can prioritize accordingly.
+
+An incomplete list of things I want to fix soon is:
+
+* Rendering non-cube blocks, such as torches, flowers, mine tracks, fences,
+  doors, and the like. Right now they are either not rendered at all, or
+  rendered as if they were a cube, so it looks funny.
+
+* Water transparency. There are a couple issues involved with that, and I want
+  to fix them.
+
+* Add lighting
+
+* Speed up the tile rendering. I can parallelize that process, and add more
+  caches to the tiles so subsequent renderings go faster.
+
+* I want to add some indication of progress to the tile generation.
