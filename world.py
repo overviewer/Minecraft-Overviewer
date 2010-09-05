@@ -214,7 +214,8 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
     method returns a chunk filename path (a multiprocessing.pool.AsyncResult
     object) as returned from render_chunks_async()
 
-    The image object is returned.
+    The image object is returned. Unless no tiles were found, then None is
+    returned.
     """
     # width of one chunk is 384. Each column is half a chunk wide. The total
     # width is (384 + 192*(numcols-1)) since the first column contributes full
@@ -246,11 +247,13 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
     # this (since very few chunks actually touch the top of the sky, some tiles
     # way above this one are possibly visible in this tile). Render them
     # anyways just in case)
+    count = 0
     for row in xrange(rowstart-16, rowend+1):
         for col in xrange(colstart, colend+1):
             chunkresult = chunkmap.get((col, row), None)
             if not chunkresult:
                 continue
+            count += 1
             chunkfile = chunkresult.get()
             chunkimg = Image.open(chunkfile)
 
@@ -262,6 +265,8 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
 
             tileimg.paste(chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
 
+    if count == 0:
+        return None
     return tileimg
 
 def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrent="base"):
@@ -302,6 +307,9 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
     The return from this function is the path to the file saved, unless it's
     the base call. In that case, it outputs the power of 2 that was used to
     size the full image, which is the zoom level.
+    
+    Additionally, if the function would otherwise have rendered a blank image,
+    the image is not saved and None is returned.
     """
     #print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
     #print "  prefix:", prefix
@@ -379,23 +387,35 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
                 colmid, colend, rowmid, rowend,
                 newprefix, "3")
 
-        quad0 = Image.open(quad0file).resize((192,192), Image.ANTIALIAS)
-        quad1 = Image.open(quad1file).resize((192,192), Image.ANTIALIAS)
-        quad2 = Image.open(quad2file).resize((192,192), Image.ANTIALIAS)
-        quad3 = Image.open(quad3file).resize((192,192), Image.ANTIALIAS)
+        count = 0
+        if quad0file:
+            quad0 = Image.open(quad0file).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad0, (0,0))
+            count += 1
+        if quad1file:
+            quad1 = Image.open(quad1file).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad1, (192,0))
+            count += 1
+        if quad2file:
+            quad2 = Image.open(quad2file).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad2, (0, 192))
+            count += 1
+        if quad3file:
+            quad3 = Image.open(quad3file).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad3, (192, 192))
+            count += 1
 
-        img.paste(quad0, (0,0))
-        img.paste(quad1, (192,0))
-        img.paste(quad2, (0, 192))
-        img.paste(quad3, (192, 192))
+        if count == 0:
+            img = None
 
     # Save the image
-    path = os.path.join(prefix, quadrent+".png")
-    img.save(path)
+    if img:
+        path = os.path.join(prefix, quadrent+".png")
+        img.save(path)
 
     if quadrent == "base":
         # Return the power (number of zoom levels)
         return p
     else:
         # Return its location
-        return path
+        return path if img else None

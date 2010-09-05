@@ -44,6 +44,7 @@ def get_skylight_array(level):
 transparent_blocks = set([0, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53, 59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 83, 85])
 
 def render_and_save(chunkfile, cave=False):
+    """Used as the entry point for the multiprocessing workers"""
     a = ChunkRenderer(chunkfile)
     try:
         return a.render_and_save(cave)

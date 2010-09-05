@@ -39,6 +39,9 @@ def main():
 
     print "Generating quad tree. This may take a while and has no progress bar right now, so sit tight."
 
+    if not os.path.exists(destdir):
+        os.mkdir(destdir)
+
     zoom = world.generate_quadtree(results, mincol, maxcol, minrow, maxrow, destdir)
 
     print "DONE"
