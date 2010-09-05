@@ -18,7 +18,7 @@ could zoom in and see details.
 with large worlds can still benefit!
 
 Requirements
-------------
+============
 This program requires:
 
 * Python 2.6
