@@ -4,6 +4,7 @@ import os
 import os.path
 import time
 import multiprocessing
+import hashlib
 
 from PIL import Image
 
@@ -204,7 +205,7 @@ def convert_coords(chunks):
 
     return mincol, maxcol, minrow, maxrow, chunks_translated
 
-def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
+def render_worldtile(chunkmap, colstart, colend, rowstart, rowend, oldhash):
     """Renders just the specified chunks into a tile. Unlike usual python
     conventions, rowend and colend are inclusive. Additionally, the chunks
     around the edges are half-way cut off (so that neighboring tiles will
@@ -214,8 +215,12 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
     method returns a chunk filename path (a multiprocessing.pool.AsyncResult
     object) as returned from render_chunks_async()
 
-    The image object is returned. Unless no tiles were found, then None is
-    returned.
+    Return value is (image object, hash) where hash is some string that depends
+    on the image contents. If no tiles were found, the image object is None.
+
+    oldhash is a hash value of an existing tile. The hash of this tile is
+    computed before it is rendered, and if they match, rendering is skipped and
+    (None, oldhash) is returned.
     """
     # width of one chunk is 384. Each column is half a chunk wide. The total
     # width is (384 + 192*(numcols-1)) since the first column contributes full
@@ -239,37 +244,92 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend):
     #         1,3
     #   0,4         2,4
 
-    tileimg = Image.new("RGBA", (width, height))
-
-    # col colstart will get drawn on the image starting at x coordinates -(384/2)
-    # row rowstart will get drawn on the image starting at y coordinates -(192/2)
     # Due to how the tiles fit together, we may need to render chunks way above
     # this (since very few chunks actually touch the top of the sky, some tiles
     # way above this one are possibly visible in this tile). Render them
-    # anyways just in case)
-    count = 0
+    # anyways just in case). That's the reason for the "rowstart-16" below.
+
+    # Before we render any tiles, check the hash of each image in this tile to
+    # see if it's changed.
+    tilelist = []
+    imghash = hashlib.md5()
     for row in xrange(rowstart-16, rowend+1):
         for col in xrange(colstart, colend+1):
             chunkresult = chunkmap.get((col, row), None)
             if not chunkresult:
                 continue
-            count += 1
             chunkfile = chunkresult.get()
-            chunkimg = Image.open(chunkfile)
+            tilelist.append((col, row, chunkfile))
+            # Get the hash of this image and add it to our hash for this tile
+            imghash.update(
+                    os.path.basename(chunkfile).split(".")[4]
+                    )
 
-            xpos = -192 + (col-colstart)*192
-            ypos = -96 + (row-rowstart)*96
+    if not tilelist:
+        return None, imghash.digest()
+    digest = imghash.digest()
+    if digest == oldhash:
+        return None, oldhash
 
-            #print "Pasting chunk {0},{1} at {2},{3}".format(
-            #        col, row, xpos, ypos)
+    tileimg = Image.new("RGBA", (width, height))
 
-            tileimg.paste(chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
+    # col colstart will get drawn on the image starting at x coordinates -(384/2)
+    # row rowstart will get drawn on the image starting at y coordinates -(192/2)
+    for col, row, chunkfile in tilelist:
+        chunkimg = Image.open(chunkfile)
 
-    if count == 0:
-        return None
-    return tileimg
+        xpos = -192 + (col-colstart)*192
+        ypos = -96 + (row-rowstart)*96
 
-def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrent="base"):
+        #print "Pasting chunk {0},{1} at {2},{3}".format(
+        #        col, row, xpos, ypos)
+
+        tileimg.paste(chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
+
+    return tileimg, digest
+
+def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
+    """Base call for quadtree_recurse. This sets up the recursion and generates
+    a quadtree given a chunkmap and the ranges.
+
+    This returns the power of 2 tiles wide and high the image is. This is one
+    less than the maximum zoom (level 0 is a single tile, level 1 is 2 tiles
+    wide by 2 tiles high, etc.)
+
+    """
+    # This first call has a special job. No matter the input, we need to
+    # make sure that each recursive call splits both dimensions evenly
+    # into a power of 2 tiles wide and high.
+    # Since a single tile has 3 columns of chunks and 5 rows of chunks,  this
+    # split needs to be sized into the void so that it is some number of rows
+    # in the form 2*2^p. And columns must be in the form 4*2^p
+    # They need to be the same power
+    # In other words, I need to find the smallest power p such that
+    # colmid + 2*2^p >= colend and rowmid + 4*2^p >= rowend
+    # I hope that makes some sense. I don't know how to explain this very well,
+    # it was some trial and error.
+    colmid = (colstart + colend) // 2
+    rowmid = (rowstart + rowend) // 2
+    for p in xrange(15): # That should be a high enough upper limit
+        if colmid + 2*2**p >= colend and rowmid + 4*2**p >= rowend:
+            break
+    else:
+        raise Exception("Your map is waaaay to big")
+
+    # Modify the lower and upper bounds to be sized correctly
+    colstart = colmid - 2*2**p
+    colend = colmid + 2*2**p
+    rowstart = rowmid - 4*2**p
+    rowend = rowmid + 4*2**p
+
+    print "     power is", p
+    print "     new bounds: {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
+
+    quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, "base")
+
+    return p
+
+def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrent):
     """Recursive method that generates a quadtree.
     A single call generates, saves, and returns an image with the range
     specified by colstart,colend,rowstart, and rowend.
@@ -304,118 +364,126 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, quad
 
     Each tile outputted is always 384 by 384 pixels.
 
-    The return from this function is the path to the file saved, unless it's
-    the base call. In that case, it outputs the power of 2 that was used to
-    size the full image, which is the zoom level.
+    The return from this function (path, hash) where path is the path to the
+    file saved, and hash is a byte string that depends on the tile's contents.
+    If the tile is blank, path will be None.
     
-    Additionally, if the function would otherwise have rendered a blank image,
-    the image is not saved and None is returned.
     """
-    #print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
-    #print "  prefix:", prefix
-    #print "  quadrent:", quadrent
+    if 0 and prefix == "/tmp/testrender/2/1/0/1/3" and quadrent == "1":
+        print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
+        print "  prefix:", prefix
+        print "  quadrent:", quadrent
     cols = colend - colstart
     rows = rowend - rowstart
 
+    # Get the tile's existing hash. Maybe it hasn't changed. Whether this
+    # function invocation is destined to recurse, or whether we end up calling
+    # render_worldtile(), the hash will help us short circuit a lot of pixel
+    # copying.
+    hashpath = os.path.join(prefix, quadrent+".hash")
+    if os.path.exists(hashpath):
+        oldhash = open(hashpath, "rb").read()
+    else:
+        oldhash = None
+
     if cols == 2 and rows == 4:
         # base case: just render the image
-        img = render_worldtile(chunkmap, colstart, colend, rowstart, rowend)
+        img, newhash = render_worldtile(chunkmap, colstart, colend, rowstart, rowend, oldhash)
+        if not img:
+            # Image doesn't exist, exit now
+            return None, newhash
     elif cols < 2 or rows < 4:
         raise Exception("Something went wrong, this tile is too small. (Please send "
                 "me the traceback so I can fix this)")
     else:
         # Recursively generate each quadrent for this tile
-        img = Image.new("RGBA", (384, 384))
 
         # Find the midpoint
         colmid = (colstart + colend) // 2
         rowmid = (rowstart + rowend) // 2
+
+        # Assert that the split in the center still leaves everything sized
+        # exactly right by checking divisibility by the final row and
+        # column sizes. This isn't sufficient, but is necessary for
+        # success. (A better check would make sure the dimensions fit the
+        # above equations for the same power of 2)
+        assert (colmid - colstart) % 2 == 0
+        assert (colend - colmid) % 2 == 0
+        assert (rowmid - rowstart) % 4 == 0
+        assert (rowend - rowmid) % 4 == 0
+
         if quadrent == "base":
-            # The first call has a special job. No matter the input, we need to
-            # make sure that each recursive call splits both dimensions evenly
-            # into a power of 2 * 384. (Since all tiles are 384x384 which is 3
-            # cols by 5 rows). I'm not really sure how to explain this best,
-            # sorry.
-            # Since the row of the final recursion needs to be 3, this split
-            # needs to be sized into the void so that it is some number of rows
-            # in the form 2*2^p. And columns must be in the form 4*2^p
-            # They need to be the same power
-            # In other words, I need to find the smallest power p such that
-            # colmid + 2*2^p >= colend and rowmid + 4*2^p >= rowend
-            for p in xrange(15): # That should be a high enough upper limit
-                if colmid + 2*2**p >= colend and rowmid + 4*2**p >= rowend:
-                    break
-            else:
-                raise Exception("Your map is waaaay to big")
-
-            # Modify the lower and upper bounds to be sized correctly
-            colstart = colmid - 2*2**p
-            colend = colmid + 2*2**p
-            rowstart = rowmid - 4*2**p
-            rowend = rowmid + 4*2**p
-
-            print "     power is", p
-            print "     new bounds: {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
-
             newprefix = prefix
         else:
-            # Assert that the split in the center still leaves everything sized
-            # exactly right by checking divisibility by the final row and
-            # column sizes. This isn't sufficient, but is necessary for
-            # success. (A better check would make sure the dimensions fit the
-            # above equations for the same power of 2)
-            assert (colmid - colstart) % 2 == 0
-            assert (colend - colmid) % 2 == 0
-            assert (rowmid - rowstart) % 4 == 0
-            assert (rowend - rowmid) % 4 == 0
-
+            # Make the directory for the recursive subcalls
             newprefix = os.path.join(prefix, quadrent)
             if not os.path.exists(newprefix):
                 os.mkdir(newprefix)
+        
+        # Keep a hash of the concatenation of each returned hash. If it matches
+        # oldhash from above, skip rendering this tile
+        hasher = hashlib.md5()
 
         # Recurse to generate each quadrent of images
-        quad0file = generate_quadtree(chunkmap, 
+        quad0file, hash0 = quadtree_recurse(chunkmap, 
                 colstart, colmid, rowstart, rowmid,
                 newprefix, "0")
-        quad1file = generate_quadtree(chunkmap, 
+        quad1file, hash1 = quadtree_recurse(chunkmap, 
                 colmid, colend, rowstart, rowmid,
                 newprefix, "1")
-        quad2file = generate_quadtree(chunkmap, 
+        quad2file, hash2 = quadtree_recurse(chunkmap, 
                 colstart, colmid, rowmid, rowend,
                 newprefix, "2")
-        quad3file = generate_quadtree(chunkmap, 
+        quad3file, hash3 = quadtree_recurse(chunkmap, 
                 colmid, colend, rowmid, rowend,
                 newprefix, "3")
 
-        count = 0
+        # Is this tile blank? If so, it doesn't matter what the old hash was,
+        # we can exit right now.
+        # Note for the confused: python's True value is a subclass of int and
+        # has value 1, so I can do this:
+        if (bool(quad0file) + bool(quad1file) + bool(quad2file) +
+                bool(quad3file)) == 0:
+            return None, hasher.digest()
+
+        # Check the hashes.
+        hasher.update(hash0)
+        hasher.update(hash1)
+        hasher.update(hash2)
+        hasher.update(hash3)
+        newhash = hasher.digest()
+        if newhash == oldhash:
+            # Nothing left to do, this tile already exists and hasn't changed.
+            return os.path.join(prefix, quadrent+".png"), oldhash
+
+        img = Image.new("RGBA", (384, 384))
+
         if quad0file:
             quad0 = Image.open(quad0file).resize((192,192), Image.ANTIALIAS)
             img.paste(quad0, (0,0))
-            count += 1
         if quad1file:
             quad1 = Image.open(quad1file).resize((192,192), Image.ANTIALIAS)
             img.paste(quad1, (192,0))
-            count += 1
         if quad2file:
             quad2 = Image.open(quad2file).resize((192,192), Image.ANTIALIAS)
             img.paste(quad2, (0, 192))
-            count += 1
         if quad3file:
             quad3 = Image.open(quad3file).resize((192,192), Image.ANTIALIAS)
             img.paste(quad3, (192, 192))
-            count += 1
 
-        if count == 0:
-            img = None
+    # At this point, if the tile hasn't change or is blank, the function should
+    # have returned by now.
+    assert bool(img)
 
     # Save the image
-    if img:
-        path = os.path.join(prefix, quadrent+".png")
-        img.save(path)
+    path = os.path.join(prefix, quadrent+".png")
+    img.save(path)
 
-    if quadrent == "base":
-        # Return the power (number of zoom levels)
-        return p
-    else:
-        # Return its location
-        return path if img else None
+    print "Saving image", path
+
+    # Save the hash
+    with open(os.path.join(prefix, quadrent+".hash"), 'wb') as hashout:
+        hashout.write(newhash)
+
+    # Return the location and hash of this tile
+    return path, newhash
