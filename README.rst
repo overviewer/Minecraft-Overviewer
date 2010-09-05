@@ -21,9 +21,9 @@ Requirements
 ============
 This program requires:
 
-* Python 2.6
-* PIL (Python Imaging Library)
-* Numpy
+* Python 2.6 or 2.7 <http://python.org/download/>
+* PIL (Python Imaging Library) <http://www.pythonware.com/products/pil/>
+* Numpy <http://scipy.org/Download>
 
 I developed and tested this on Linux. It has been reported to work on Windows
 and Mac, but if something doesn't, let me know.
@@ -36,8 +36,9 @@ Disclaimers
 -----------
 Before you dive into using this, let it be known that there are a few minor
 problems. First, it's slow. If your map is really large, this could take at
-least half an hour. Second, there's no progress bar. You can watch the tiles
-get generated, but the program gives no feedback at this time on how far it is.
+least half an hour, and for really large maps, several hours. Second, there's
+no progress bar. You can watch the tiles get generated, but the program gives
+no feedback at this time on how far it is.
 
 There are probably some other minor glitches along the way, hopefully they will
 be fixed soon. See the `Bugs`_ section below.
