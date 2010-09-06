@@ -329,15 +329,15 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
 
     return p
 
-def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrent):
+def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrant):
     """Recursive method that generates a quadtree.
     A single call generates, saves, and returns an image with the range
     specified by colstart,colend,rowstart, and rowend.
 
-    The image is saved as os.path.join(prefix, quadrent+".png")
+    The image is saved as os.path.join(prefix, quadrant+".png")
 
     If the requested range is larger than a certain threshold, this method will
-    instead make 4 calls to itself to render the 4 quadrents of the image. The
+    instead make 4 calls to itself to render the 4 quadrants of the image. The
     four pieces are then resized and pasted into one image that is saved and
     returned.
 
@@ -347,19 +347,19 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
     The path "prefix" should be a directory where this call should save its
     image.
 
-    quadrent is used in recursion. If it is "base", the image is saved in the
-    directory named by prefix, and recursive calls will have quadrent set to
+    quadrant is used in recursion. If it is "base", the image is saved in the
+    directory named by prefix, and recursive calls will have quadrant set to
     "0" "1" "2" or "3" and prefix will remain unchanged.
 
-    If quadrent is anything else, the tile will be saved just the same, but for
-    recursive calls a directory named quadrent will be created (if it doesn't
-    exist) and prefix will be set to os.path.join(prefix, quadrent)
+    If quadrant is anything else, the tile will be saved just the same, but for
+    recursive calls a directory named quadrant will be created (if it doesn't
+    exist) and prefix will be set to os.path.join(prefix, quadrant)
 
-    So the first call will have prefix "tiles" (e.g.) and quadrent "base" and
+    So the first call will have prefix "tiles" (e.g.) and quadrant "base" and
     will save its image as "tiles/base.png"
-    The second call will have prefix "tiles" and quadrent "0" and will save its
+    The second call will have prefix "tiles" and quadrant "0" and will save its
     image as "tiles/0.png". It will create the directory "tiles/0/"
-    The third call will have prefix "tiles/0", quadrent "0" and will save its image as
+    The third call will have prefix "tiles/0", quadrant "0" and will save its image as
     "tile/0/0.png"
 
     Each tile outputted is always 384 by 384 pixels.
@@ -369,10 +369,10 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
     If the tile is blank, path will be None.
     
     """
-    if 0 and prefix == "/tmp/testrender/2/1/0/1/3" and quadrent == "1":
+    if 0 and prefix == "/tmp/testrender/2/1/0/1/3" and quadrant == "1":
         print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
         print "  prefix:", prefix
-        print "  quadrent:", quadrent
+        print "  quadrant:", quadrant
     cols = colend - colstart
     rows = rowend - rowstart
 
@@ -380,7 +380,7 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
     # function invocation is destined to recurse, or whether we end up calling
     # render_worldtile(), the hash will help us short circuit a lot of pixel
     # copying.
-    hashpath = os.path.join(prefix, quadrent+".hash")
+    hashpath = os.path.join(prefix, quadrant+".hash")
     if os.path.exists(hashpath):
         oldhash = open(hashpath, "rb").read()
     else:
@@ -396,7 +396,7 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         raise Exception("Something went wrong, this tile is too small. (Please send "
                 "me the traceback so I can fix this)")
     else:
-        # Recursively generate each quadrent for this tile
+        # Recursively generate each quadrant for this tile
 
         # Find the midpoint
         colmid = (colstart + colend) // 2
@@ -412,11 +412,11 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         assert (rowmid - rowstart) % 4 == 0
         assert (rowend - rowmid) % 4 == 0
 
-        if quadrent == "base":
+        if quadrant == "base":
             newprefix = prefix
         else:
             # Make the directory for the recursive subcalls
-            newprefix = os.path.join(prefix, quadrent)
+            newprefix = os.path.join(prefix, quadrant)
             if not os.path.exists(newprefix):
                 os.mkdir(newprefix)
         
@@ -424,7 +424,7 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         # oldhash from above, skip rendering this tile
         hasher = hashlib.md5()
 
-        # Recurse to generate each quadrent of images
+        # Recurse to generate each quadrant of images
         quad0file, hash0 = quadtree_recurse(chunkmap, 
                 colstart, colmid, rowstart, rowmid,
                 newprefix, "0")
@@ -454,7 +454,7 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         newhash = hasher.digest()
         if newhash == oldhash:
             # Nothing left to do, this tile already exists and hasn't changed.
-            return os.path.join(prefix, quadrent+".png"), oldhash
+            return os.path.join(prefix, quadrant+".png"), oldhash
 
         img = Image.new("RGBA", (384, 384))
 
@@ -476,13 +476,13 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
     assert bool(img)
 
     # Save the image
-    path = os.path.join(prefix, quadrent+".png")
+    path = os.path.join(prefix, quadrant+".png")
     img.save(path)
 
     print "Saving image", path
 
     # Save the hash
-    with open(os.path.join(prefix, quadrent+".hash"), 'wb') as hashout:
+    with open(os.path.join(prefix, quadrant+".hash"), 'wb') as hashout:
         hashout.write(newhash)
 
     # Return the location and hash of this tile
