@@ -216,11 +216,13 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend, oldhash):
     object) as returned from render_chunks_async()
 
     Return value is (image object, hash) where hash is some string that depends
-    on the image contents. If no tiles were found, the image object is None.
+    on the image contents.
+    
+    If no tiles were found, (None, hash) is returned.
 
     oldhash is a hash value of an existing tile. The hash of this tile is
     computed before it is rendered, and if they match, rendering is skipped and
-    (None, oldhash) is returned.
+    (True, oldhash) is returned.
     """
     # width of one chunk is 384. Each column is half a chunk wide. The total
     # width is (384 + 192*(numcols-1)) since the first column contributes full
@@ -265,11 +267,13 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend, oldhash):
                     os.path.basename(chunkfile).split(".")[4]
                     )
 
-    if not tilelist:
-        return None, imghash.digest()
     digest = imghash.digest()
+    if not tilelist:
+        # No chunks were found in this tile
+        return None, digest
     if digest == oldhash:
-        return None, oldhash
+        # All the chunks for this tile have not changed according to the hash
+        return True, digest
 
     tileimg = Image.new("RGBA", (width, height))
 
@@ -375,15 +379,18 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
 
     Each tile outputted is always 384 by 384 pixels.
 
-    The return from this function (path, hash) where path is the path to the
+    The return from this function is (path, hash) where path is the path to the
     file saved, and hash is a byte string that depends on the tile's contents.
-    If the tile is blank, path will be None.
+    If the tile is blank, path will be None, but hash will still be valid.
     
     """
-    if 0 and prefix == "/tmp/testrender/2/1/0/1/3" and quadrant == "1":
-        print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
-        print "  prefix:", prefix
-        print "  quadrant:", quadrant
+    #if 1 and prefix == "/tmp/testrender/2/1/0/1" and quadrant == "1":
+    #    print "Called with {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
+    #    print "  prefix:", prefix
+    #    print "  quadrant:", quadrant
+    #    dbg = True
+    #else:
+    #    dbg = False
     cols = colend - colstart
     rows = rowend - rowstart
 
@@ -395,14 +402,43 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
     if os.path.exists(hashpath):
         oldhash = open(hashpath, "rb").read()
     else:
+        # This method (should) never actually return None for a hash, this is
+        # used so it will always compare unequal.
         oldhash = None
 
     if cols == 2 and rows == 4:
         # base case: just render the image
         img, newhash = render_worldtile(chunkmap, colstart, colend, rowstart, rowend, oldhash)
+        # There are a few cases to handle here:
+        # 1) img is None: the image doesn't exist (would have been blank, no
+        #    chunks exist for that range.
+        # 2) img is True: the image hasn't changed according to the hashes. The
+        #    image object is not returned by render_worldtile, but we do need to
+        #    return the path to it.
+        # 3) img is a PIL.Image.Image object, a new tile was computed, we need
+        #    to save it and its hash (newhash) to disk.
+
         if not img:
-            # Image doesn't exist, exit now
+            # The image returned is blank, there should not be an image here.
+            # If one does exist, from a previous world or something, it is not
+            # deleted, but None is returned to indicate to our caller this tile
+            # is blank.
             return None, newhash
+        if img is True:
+            # No image was returned because the hashes matched. Return the path
+            # to the image that already exists and is up to date according to
+            # the hash
+            path = os.path.join(prefix, quadrant+".png")
+            if not os.path.exists(path):
+                # Oops, the image doesn't actually exist. User must have
+                # deleted it, or must be some bug?
+                raise Exception("Error, this image should have existed according to the hashes, but didn't")
+            return path, newhash
+
+        # If img was not None or True, it is an image object. The image exists
+        # and the hashes did not match, so it must have changed. Fall through
+        # to the last part of this function which saves the image and its hash.
+        assert isinstance(img, Image.Image)
     elif cols < 2 or rows < 4:
         raise Exception("Something went wrong, this tile is too small. (Please send "
                 "me the traceback so I can fix this)")
@@ -449,15 +485,20 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
                 colmid, colend, rowmid, rowend,
                 newprefix, "3")
 
-        # Is this tile blank? If so, it doesn't matter what the old hash was,
-        # we can exit right now.
-        # Note for the confused: python's True value is a subclass of int and
-        # has value 1, so I can do this:
-        if (bool(quad0file) + bool(quad1file) + bool(quad2file) +
-                bool(quad3file)) == 0:
-            return None, hasher.digest()
+        #if dbg:
+        #    print quad0file
+        #    print repr(hash0)
+        #    print quad1file
+        #    print repr(hash1)
+        #    print quad2file
+        #    print repr(hash2)
+        #    print quad3file
+        #    print repr(hash3)
 
-        # Check the hashes.
+        # Check the hashes. This is checked even if the tile files returned
+        # None, since that could happen if either the tile was blank or it
+        # hasn't changed. So the hashes returned should tell us whether we need
+        # to update this tile or not.
         hasher.update(hash0)
         hasher.update(hash1)
         hasher.update(hash2)
@@ -465,7 +506,18 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         newhash = hasher.digest()
         if newhash == oldhash:
             # Nothing left to do, this tile already exists and hasn't changed.
+            #if dbg: print "hashes match, nothing to do"
             return os.path.join(prefix, quadrant+".png"), oldhash
+
+        # Check here if this tile is actually blank. If all 4 returned quadrant
+        # filenames are None, this tile should not be rendered. However, we
+        # still need to return a valid hash for it, so that's why this check is
+        # below the hash check.
+        # For the confused: Python boolean values are a subclass of integers,
+        # and True has value 1, so I can do this:
+        if (bool(quad0file) + bool(quad1file) + bool(quad2file) +
+                bool(quad3file)) == 0:
+            return None, newhash
 
         img = Image.new("RGBA", (384, 384))
 
