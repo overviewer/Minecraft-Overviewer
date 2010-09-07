@@ -12,7 +12,7 @@
 </script>
 <script type="text/javascript">
   var config = {
-    path:        '.',
+    path:        'tiles',
     fileExt:     'png',
     tileSize:     384,
     defaultZoom:  1,
@@ -30,10 +30,10 @@
         for(var z = zoom - 1; z >= 0; --z) {
           var x = Math.floor(tile.x / Math.pow(2, z)) % 2;
           var y = Math.floor(tile.y / Math.pow(2, z)) % 2;
-          url += '/' + (x + 2 * y)
+          url += '/' + (x + 2 * y);
         }
       }
-      url += '.' + config.fileExt;
+      url = config.path + url + '.' + config.fileExt;
       return(url);
     },
     tileSize: new google.maps.Size(config.tileSize, config.tileSize),
