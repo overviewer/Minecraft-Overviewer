@@ -288,15 +288,13 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend, oldhash):
 
     return tileimg, digest
 
-def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
-    """Base call for quadtree_recurse. This sets up the recursion and generates
-    a quadtree given a chunkmap and the ranges.
-
-    This returns the power of 2 tiles wide and high the image is. This is one
-    less than the maximum zoom (level 0 is a single tile, level 1 is 2 tiles
-    wide by 2 tiles high, etc.)
-
+def get_quadtree_depth(colstart, colend, rowstart, rowend):
+    """Determines the zoom depth of a requested quadtree.
+    
+    Return value is an integer >= 0. Higher integers mean higher resolution maps.
     """
+    # Pulled out of generate_quadtree. Original comment follows:
+    #
     # This first call has a special job. No matter the input, we need to
     # make sure that each recursive call splits both dimensions evenly
     # into a power of 2 tiles wide and high.
@@ -315,6 +313,21 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
             break
     else:
         raise Exception("Your map is waaaay to big")
+    
+    return p
+
+def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
+    """Base call for quadtree_recurse. This sets up the recursion and generates
+    a quadtree given a chunkmap and the ranges.
+
+    This returns the power of 2 tiles wide and high the image is. This is one
+    less than the maximum zoom (level 0 is a single tile, level 1 is 2 tiles
+    wide by 2 tiles high, etc.)
+
+    """
+    p = get_quadtree_depth(colstart, colend, rowstart, rowend);
+    colmid = (colstart + colend) // 2
+    rowmid = (rowstart + rowend) // 2
 
     # Modify the lower and upper bounds to be sized correctly
     colstart = colmid - 2*2**p
@@ -326,8 +339,6 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
     print "     new bounds: {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
 
     quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, "base")
-
-    return p
 
 def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrant):
     """Recursive method that generates a quadtree.

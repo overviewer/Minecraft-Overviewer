@@ -36,21 +36,20 @@ def main():
 
     print "processing chunks in background"
     results = world.render_chunks_async(chunks, False, options.procs)
-
-    print "Generating quad tree. This may take a while and has no progress bar right now, so sit tight."
-
+    
+    print "Writing out html file"
     if not os.path.exists(destdir):
         os.mkdir(destdir)
-        tiledir = os.path.join(destdir, "tiles");
-        if not os.path.exists(tiledir):
-          os.mkdir(tiledir)
+    zoom = world.get_quadtree_depth(mincol, maxcol, minrow, maxrow)
+    write_html(destdir, zoom+1)
 
-    zoom = world.generate_quadtree(results, mincol, maxcol, minrow, maxrow, tiledir)
+    print "Generating quad tree. This may take a while and has no progress bar right now, so sit tight."
+    tiledir = os.path.join(destdir, "tiles");
+    if not os.path.exists(tiledir):
+        os.mkdir(tiledir)
+    world.generate_quadtree(results, mincol, maxcol, minrow, maxrow, tiledir)
 
     print "DONE"
-
-    print "Writing out html file"
-    write_html(destdir, zoom+1)
 
 def write_html(path, zoomlevel):
     templatepath = os.path.join(os.path.split(__file__)[0], "template.html")
