@@ -12,8 +12,19 @@ resolution images. It performs a similar function to the existing Minecraft
 Cartographer program but with a slightly different goal in mind: to generate
 large resolution images such that one can zoom in and see details.
 
-**New**: gmap.py generates tiles for a Google Map interface, so that people
-with large worlds and/or limited computer memory can still view their worlds!
+Features
+========
+
+* Renders large resolution images of your world, such that you can zoom in and
+  see details
+
+* Outputs a Google Map powered interface that is memory efficient, both in
+  generating and viewing.
+
+* Utilizes 2 levels of caching to speed up subsequent renderings of your world.
+
+* Throw the output directory up on a web server to share your Minecraft world
+  with everyone!
 
 Requirements
 ============
@@ -37,7 +48,7 @@ problems. First, it's slow. If your map is really large, this could take at
 least half an hour, and for really large maps, several hours (Subsequent runs
 will be quicker since it only re-renders tiles that have changed). Second,
 there's no progress bar. You can watch the tiles get generated, but the program
-gives no feedback at this time on how far it is.
+gives no direct feedback at this time on how far along it is.
 
 There are probably some other minor glitches along the way, hopefully they will
 be fixed soon. See the `Bugs`_ section below.
@@ -78,8 +89,8 @@ Crushing the Output Tiles
 -------------------------
 Image files taking too much disk space? Try using pngcrush. On Linux and
 probably Mac, if you have pngcrush installed, this command will go and crush
-all your images in the given destination. This took the total disk usage of my
-world from 85M to 67M.
+all your images in the given destination. This took the total disk usage of the
+render for my world from 85M to 67M.
 
 ::
 
