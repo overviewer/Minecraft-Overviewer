@@ -41,9 +41,9 @@ def main():
 
     if not os.path.exists(destdir):
         os.mkdir(destdir)
-        tiledir = os.path.join(destdir, "tiles");
-        if not os.path.exists(tiledir):
-          os.mkdir(tiledir)
+    tiledir = os.path.join(destdir, "tiles");
+    if not os.path.exists(tiledir):
+      os.mkdir(tiledir)
 
     zoom = world.generate_quadtree(results, mincol, maxcol, minrow, maxrow, tiledir)
 
