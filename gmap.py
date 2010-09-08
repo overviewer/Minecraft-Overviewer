@@ -42,9 +42,10 @@ def main():
         os.mkdir(destdir)
     zoom = world.get_quadtree_depth(mincol, maxcol, minrow, maxrow)
     write_html(destdir, zoom+1)
+    print "Your map will have {0} zoom levels".format(zoom+1)
 
     print "Generating quad tree. This may take a while and has no progress bar right now, so sit tight."
-    tiledir = os.path.join(destdir, "tiles");
+    tiledir = os.path.join(destdir, "tiles")
     if not os.path.exists(tiledir):
         os.mkdir(tiledir)
     world.generate_quadtree(results, mincol, maxcol, minrow, maxrow, tiledir)
