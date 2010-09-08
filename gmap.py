@@ -15,6 +15,7 @@ helptext = """
 def main():
     parser = OptionParser(usage=helptext)
     parser.add_option("-p", "--processes", dest="procs", help="How many chunks to render in parallel. A good number for this is 1 more than the number of cores in your computer. Default 2", default=2, action="store", type="int")
+    parser.add_option("-c", "--cachelife", dest="cachelife", help="How many minutes a tile will be considered valid by the web browser before it fetches a new copy. Used if you have a crontab or similar running this every once in a while. Default is 24 hours.", default=1440, action="store", type="int")
 
     options, args = parser.parse_args()
 
@@ -41,7 +42,7 @@ def main():
     if not os.path.exists(destdir):
         os.mkdir(destdir)
     zoom = world.get_quadtree_depth(mincol, maxcol, minrow, maxrow)
-    write_html(destdir, zoom+1)
+    write_html(destdir, zoom+1, options.cachelife)
     print "Your map will have {0} zoom levels".format(zoom+1)
 
     print "Generating quad tree. This may take a while and has no progress bar right now, so sit tight."
@@ -52,11 +53,13 @@ def main():
 
     print "DONE"
 
-def write_html(path, zoomlevel):
+def write_html(path, zoomlevel, cachelife):
     templatepath = os.path.join(os.path.split(__file__)[0], "template.html")
     html = open(templatepath, 'r').read()
     html = html.replace(
             "{maxzoom}", str(zoomlevel))
+    html = html.replace(
+            "{cachelife}", str(cachelife))
             
     with open(os.path.join(path, "index.html"), 'w') as output:
         output.write(html)
