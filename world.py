@@ -426,6 +426,7 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
             # If one does exist, from a previous world or something, it is not
             # deleted, but None is returned to indicate to our caller this tile
             # is blank.
+            remove_tile(prefix, quadrant)
             return None, newhash
         if img is True:
             # No image was returned because the hashes matched. Return the path
@@ -516,10 +517,9 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         # filenames are None, this tile should not be rendered. However, we
         # still need to return a valid hash for it, so that's why this check is
         # below the hash check.
-        # For the confused: Python boolean values are a subclass of integers,
-        # and True has value 1, so I can do this:
-        if (bool(quad0file) + bool(quad1file) + bool(quad2file) +
-                bool(quad3file)) == 0:
+        if not (bool(quad0file) or bool(quad1file) or bool(quad2file) or
+                bool(quad3file)):
+            remove_tile(prefix, quadrant)
             return None, newhash
 
         img = Image.new("RGBA", (384, 384))
@@ -553,3 +553,17 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
 
     # Return the location and hash of this tile
     return path, newhash
+
+def remove_tile(prefix, quadrent):
+    """Called when a tile doesn't exist, this deletes an existing tile if it
+    does
+    """
+    path = os.path.join(prefix, quadrent)
+    img = path + ".png"
+    hash = path + ".hash"
+
+    if os.path.exists(img):
+        print "removing", img
+        os.unlink(img)
+    if os.path.exists(hash):
+        os.unlink(hash)
