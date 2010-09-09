@@ -15,7 +15,7 @@ helptext = """
 def main():
     parser = OptionParser(usage=helptext)
     parser.add_option("-p", "--processes", dest="procs", help="How many chunks to render in parallel. A good number for this is 1 more than the number of cores in your computer. Default 2", default=2, action="store", type="int")
-    parser.add_option("-c", "--cachelife", dest="cachelife", help="How many minutes a tile will be considered valid by the web browser before it fetches a new copy. Used if you have a crontab or similar running this every once in a while. Default is 24 hours.", default=1440, action="store", type="int")
+    parser.add_option("-c", "--cachelife", dest="cachelife", help="How many minutes a tile will be considered valid by the web browser before it fetches a new copy. Used if you have a crontab or similar running this every once in a while. Default is 24 hours.", default=0, action="store", type="int")
 
     options, args = parser.parse_args()
 
