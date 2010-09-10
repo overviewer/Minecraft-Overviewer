@@ -6,7 +6,6 @@ import hashlib
 
 import nbt
 import textures
-from textures import texturemap as txtarray
 
 # General note about pasting transparent image objects onto an image with an
 # alpha channel:
@@ -244,7 +243,7 @@ class ChunkRenderer(object):
                         if blockid not in transparent_blocks:
                             draw = ImageDraw.Draw(img)
                             if x != 15 and blocks[x+1,y,z] == 0:
-                                draw.line(((imgx+12,imgy), (imgx+24,imgy+6)), fill=(0,0,0), width=1)
+                                draw.line(((imgx+12,imgy), (imgx+22,imgy+5)), fill=(0,0,0), width=1)
                             if y != 0 and blocks[x,y-1,z] == 0:
                                 draw.line(((imgx,imgy+6), (imgx+12,imgy)), fill=(0,0,0), width=1)
 

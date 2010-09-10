@@ -96,8 +96,33 @@ render for my world from 85M to 67M.
 
     find /path/to/destination -name "*.png" -exec pngcrush {} {}.crush \; -exec mv {}.crush {} \;
 
-Windows users, you're on your own, but there's probably a way to do this. (If
-someone figures it out, let me know I'll update this README)
+If you're on Windows, I've gotten word that this command line snippet works
+provided pngout is installed and on your path. Note that the % symbols will
+need to be doubled up if this is in a batch file.
+
+::
+
+    FOR /R c:\path\to\tiles\folder %v IN (*.png) DO pngout %v /y
+
+Viewing the Results
+-------------------
+The output is two things: an index.html file, and a directory hierarchy full of
+images. To view your world, simply open index.html in a web browser. Internet
+access is required to load the Google Maps API files, but you otherwise don't
+need anything else.
+
+You can throw these files up to a web server to let others view your map. You
+do not need a Google Maps API key (as was the case with older versions of the
+API), so just copying the directory to your web server should suffice.
+
+Tip: Since Minecraft worlds rarely produce perfectly square worlds, there will
+be blank and non-existent tiles around the borders of your world. The Google
+Maps API has no way of knowing this until it requests them and the web server
+returns a 404 Not Found. If this doesn't bother you, then fine, stop reading.
+Otherwise: you can avoid a lot of 404s to your logs by configuring your web
+server to redirect all 404 requests in that directory to a single 1px
+"blank.png". This may or may not save on bandwidth, but it will probably save
+on log noise.
 
 Using the Large Image Renderer
 ==============================

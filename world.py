@@ -74,6 +74,8 @@ def render_chunks_async(chunks, caves, processes):
                 kwds=dict(cave=caves))
         resultsmap[(chunkx, chunky)] = result
 
+    pool.close()
+
     # Stick the pool object in the dict under the key "pool" so it isn't
     # garbage collected (which kills the subprocesses)
     resultsmap['pool'] = pool
