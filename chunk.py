@@ -52,6 +52,14 @@ def render_and_save(chunkfile, cave=False):
         import traceback
         traceback.print_exc()
         raise
+    except KeyboardInterrupt:
+        print
+        print "You pressed Ctrl-C. Unfortunately it got caught by a subprocess"
+        print "The program will terminate... eventually, but the main process"
+        print "may take a while to realize something went wrong."
+        print "To exit immediately, you'll need to kill this process some other"
+        print "way"
+        raise Exception()
 
 class ChunkRenderer(object):
     def __init__(self, chunkfile):
