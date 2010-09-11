@@ -21,6 +21,9 @@ Features
 * Outputs a Google Map powered interface that is memory efficient, both in
   generating and viewing.
 
+* Renders efficiently in parallel, using as many simultaneous processes as you
+  want!
+
 * Utilizes 2 levels of caching to speed up subsequent renderings of your world.
 
 * Throw the output directory up on a web server to share your Minecraft world
@@ -34,8 +37,8 @@ This program requires:
 * PIL (Python Imaging Library) <http://www.pythonware.com/products/pil/>
 * Numpy <http://scipy.org/Download>
 
-I developed and tested this on Linux. It has been reported to work on Windows
-and Mac, but if something doesn't, let me know.
+I develop and test this on Linux, but need help testing it on Windows and Mac.
+If something doesn't work, let me know.
 
 Using the Google Map Tile Generator
 ===================================
@@ -77,9 +80,7 @@ greatly speeds up the rendering.
 Using more Cores
 ----------------
 Adding the "-p" option will utilize more cores to generate the chunk files.
-This can speed up rendering quite a bit. However, the tile generation routine
-is currently serial and not written to take advantage of multiple cores. This
-option will only affect the chunk generation (which is around half the process)
+This can speed up rendering quite a bit.
 
 Example::
 
