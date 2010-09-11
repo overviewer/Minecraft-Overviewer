@@ -74,6 +74,8 @@ def render_chunks_async(chunks, caves, processes):
                 kwds=dict(cave=caves))
         resultsmap[(chunkx, chunky)] = result
 
+    pool.close()
+
     # Stick the pool object in the dict under the key "pool" so it isn't
     # garbage collected (which kills the subprocesses)
     resultsmap['pool'] = pool
@@ -326,7 +328,7 @@ def get_quadtree_depth(colstart, colend, rowstart, rowend):
     
     return p
 
-def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
+def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, procs):
     """Base call for quadtree_recurse. This sets up the recursion and generates
     a quadtree given a chunkmap and the ranges.
 
@@ -345,9 +347,12 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
     #print "     power is", p
     #print "     new bounds: {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
 
-    quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, "base")
+    # procs is -1 here since the main process always runs as well, only spawn
+    # procs-1 /new/ processes
+    sem = multiprocessing.BoundedSemaphore(procs-1)
+    quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, "base", sem)
 
-def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrant):
+def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrant, sem):
     """Recursive method that generates a quadtree.
     A single call generates, saves, and returns an image with the range
     specified by colstart,colend,rowstart, and rowend.
@@ -381,6 +386,13 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
     "tile/0/0.png"
 
     Each tile outputted is always 384 by 384 pixels.
+
+    The last parameter, sem, should be a multiprocessing.Semaphore or
+    BoundedSemaphore object. Before each recursive call, the semaphore is
+    acquired without blocking. If the acquire is successful, the recursive call
+    will spawn a new process. If it is not successful, the recursive call is
+    run in the same thread. The semaphore is passed to each recursive call, so
+    any call could spawn new processes if another one exits at some point.
 
     The return from this function is (path, hash) where path is the path to the
     file saved, and hash is a byte string that depends on the tile's contents.
@@ -476,18 +488,44 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         hasher = hashlib.md5()
 
         # Recurse to generate each quadrant of images
-        quad0file, hash0 = quadtree_recurse(chunkmap, 
-                colstart, colmid, rowstart, rowmid,
-                newprefix, "0")
-        quad1file, hash1 = quadtree_recurse(chunkmap, 
-                colmid, colend, rowstart, rowmid,
-                newprefix, "1")
-        quad2file, hash2 = quadtree_recurse(chunkmap, 
-                colstart, colmid, rowmid, rowend,
-                newprefix, "2")
+        # Quadrent 1:
+        if sem.acquire(False):
+            Procobj = ReturnableProcess
+        else:
+            Procobj = FakeProcess
+
+        quad0result = Procobj(sem, target=quadtree_recurse,
+                args=(chunkmap, colstart, colmid, rowstart, rowmid, newprefix, "0", sem)
+                )
+        quad0result.start()
+
+        if sem.acquire(False):
+            Procobj = ReturnableProcess
+        else:
+            Procobj = FakeProcess
+        quad1result = Procobj(sem, target=quadtree_recurse,
+                args=(chunkmap, colmid, colend, rowstart, rowmid, newprefix, "1", sem)
+                )
+        quad1result.start()
+
+        if sem.acquire(False):
+            Procobj = ReturnableProcess
+        else:
+            Procobj = FakeProcess
+        quad2result = Procobj(sem, target=quadtree_recurse,
+                args=(chunkmap, colstart, colmid, rowmid, rowend, newprefix, "2", sem)
+                )
+        quad2result.start()
+
+        # 3rd quadrent always runs in this process, no need to spawn a new one
+        # since we're just going to turn around and wait for it.
         quad3file, hash3 = quadtree_recurse(chunkmap, 
                 colmid, colend, rowmid, rowend,
-                newprefix, "3")
+                newprefix, "3", sem)
+
+        quad0file, hash0 = quad0result.get()
+        quad1file, hash1 = quad1result.get()
+        quad2file, hash2 = quad2result.get()
 
         #if dbg:
         #    print quad0file
@@ -567,3 +605,39 @@ def remove_tile(prefix, quadrent):
         os.unlink(img)
     if os.path.exists(hash):
         os.unlink(hash)
+
+class ReturnableProcess(multiprocessing.Process):
+    """Like the standard multiprocessing.Process class, but the return value of
+    the target method is available by calling get().
+    
+    The given semaphore is released when the target finishes running"""
+    def __init__(self, semaphore, *args, **kwargs):
+        self.__sem = semaphore
+        multiprocessing.Process.__init__(self, *args, **kwargs)
+
+    def run(self):
+        results = self._target(*self._args, **self._kwargs)
+        self._respipe_in.send(results)
+        self.__sem.release()
+
+    def get(self):
+        self.join()
+        return self._respipe_out.recv()
+
+    def start(self):
+        self._respipe_out, self._respipe_in = multiprocessing.Pipe()
+        multiprocessing.Process.start(self)
+
+class FakeProcess(object):
+    """Identical interface to the above class, but runs in the same thread.
+    Used to make the code simpler in quadtree_recurse
+
+    """
+    def __init__(self, semaphore, target, args=None, kwargs=None):
+        self._target = target
+        self._args = args if args else ()
+        self._kwargs = kwargs if kwargs else {}
+    def start(self):
+        self.ret = self._target(*self._args, **self._kwargs)
+    def get(self):
+        return self.ret

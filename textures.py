@@ -8,35 +8,69 @@ import math
 import numpy
 from PIL import Image, ImageEnhance
 
-def _get_terrain_image():
-    # Check the current directory for terrain.png first:
-    if os.path.isfile("terrain.png"):
-        return Image.open("terrain.png")
+def _find_file(filename, mode="rb"):
+    """Searches for the given file and returns an open handle to it.
+    This searches the following locations in this order:
+    
+    * The program dir (same dir as this file)
+    * On Darwin, in /Applications/Minecraft
+    * Inside minecraft.jar, which is looked for at these locations
 
-    if "darwin" in sys.platform:
-        # On Macs, terrain.png could lie at
-        # "/Applications/minecraft/terrain.png" for custom terrain. Try this
-        # first.
-        png = "/Applications/Minecraft/terrain.png"
-        if os.access(png, os.F_OK):
-            return Image.open(png)
+      * On Windows, at %APPDATA%/.minecraft/bin/minecraft.jar
+      * On Darwin, at $HOME/Library/Application Support/minecraft/bin/minecraft.jar
+      * at $HOME/.minecraft/bin/minecraft.jar
 
-        # Paths on a Mac are a bit different
-        minecraftdir = os.path.join(os.environ['HOME'], "Library",
-                "Application Support", "minecraft")
-        minecraftjar = zipfile.ZipFile(os.path.join(minecraftdir, "bin", "minecraft.jar"))
-        textures = minecraftjar.open("terrain.png")
+    * The current working directory
+    * The program dir / textures
 
-    else:
-        if "win" in sys.platform:
-            minecraftdir = os.environ['APPDATA']
-        else:
-            minecraftdir = os.environ['HOME']
-        minecraftjar = zipfile.ZipFile(os.path.join(minecraftdir, ".minecraft",
+    """
+    programdir = os.path.dirname(__file__)
+    path = os.path.join(programdir, filename)
+    if os.path.exists(path):
+        return open(path, mode)
+
+    if sys.platform == "darwin":
+        path = os.path.join("/Applications/Minecraft", filename)
+        if os.path.exists(path):
+            return open(path, mode)
+
+    # Find minecraft.jar.
+    jarpaths = []
+    if "APPDATA" in os.environ:
+        jarpaths.append( os.path.join(os.environ['APPDATA'], ".minecraft",
             "bin", "minecraft.jar"))
-        textures = minecraftjar.open("terrain.png")
-    buffer = StringIO(textures.read())
+    if "HOME" in os.environ:
+        jarpaths.append(os.path.join(os.environ['HOME'], "Library",
+                "Application Support", "minecraft"))
+        jarpaths.append(os.path.join(os.environ['HOME'], ".minecraft", "bin",
+                "minecraft.jar"))
+
+    for jarpath in jarpaths:
+        if os.path.exists(jarpath):
+            jar = zipfile.ZipFile(jarpath)
+            try:
+                return jar.open(filename)
+            except KeyError:
+                pass
+
+    path = filename
+    if os.path.exists(path):
+        return open(path, mode)
+
+    path = os.path.join(programdir, "textures", filename)
+    if os.path.exists(path):
+        return open(path, mode)
+
+    raise IOError("Could not find the file {0}".format(filename))
+
+def _load_image(filename):
+    """Returns an image object"""
+    fileobj = _find_file(filename)
+    buffer = StringIO(fileobj.read())
     return Image.open(buffer)
+
+def _get_terrain_image():
+    return _load_image("terrain.png")
 
 def _split_terrain(terrain):
     """Builds and returns a length 256 array of each 16x16 chunk of texture"""
@@ -100,102 +134,113 @@ def _transform_image_side(img):
     return newimg
 
 
-def _build_texturemap():
-    """"""
-    t = terrain_images
+def _build_block(top, side):
+    """From a top texture and a side texture, build a block image.
+    top and side should be 16x16 image objects. Returns a 24x24 image
 
-    # Notes are for things I've left out or will probably have to make special
-    # exception for
-    top = [-1,1,0,2,16,4,15,17,205,205,237,237,18,19,32,33,
+    """
+    img = Image.new("RGBA", (24,24))
+
+    top = _transform_image(top)
+
+    if not side:
+        img.paste(top, (0,0), top)
+        return img
+
+    side = _transform_image_side(side)
+
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    # Darken the sides slightly. These methods also affect the alpha layer,
+    # so save them first (we don't want to "darken" the alpha layer making
+    # the block transparent)
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    img.paste(side, (0,6), side)
+    img.paste(otherside, (12,6), otherside)
+    img.paste(top, (0,0), top)
+
+    # Manually touch up 6 pixels that leave a gap because of how the
+    # shearing works out. This makes the blocks perfectly tessellate-able
+    for x,y in [(13,23), (17,21), (21,19)]:
+        # Copy a pixel to x,y from x-1,y
+        img.putpixel((x,y), img.getpixel((x-1,y)))
+    for x,y in [(3,4), (7,2), (11,0)]:
+        # Copy a pixel to x,y from x+1,y
+        img.putpixel((x,y), img.getpixel((x+1,y)))
+
+    return img
+
+
+def _build_blockimages():
+    """Returns a mapping from blockid to an image of that block in perspective
+    The values of the mapping are actually (image in RGB mode, alpha channel).
+    This is not appropriate for all block types, only block types that are
+    proper cubes"""
+
+    # Top textures of all block types. The number here is the index in the
+    # texture array (terrain_images), which comes from terrain.png's cells, left to right top to
+    # bottom.
+    topids = [-1,1,0,2,16,4,15,17,205,205,237,237,18,19,32,33,
         34,21,52,48,49,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, # Cloths are left out
         -1,-1,-1,64,64,13,12,29,28,23,22,6,6,7,8,35, # Gold/iron blocks? Doublestep? TNT from above?
         36,37,-1,-1,65,4,25,101,98,24,43,-1,86,1,1,-1, # Torch from above? leaving out fire. Redstone wire? Crops left out. sign post
         -1,-1,-1,16,-1,-1,-1,-1,-1,51,51,-1,-1,1,66,67, # door,ladder left out. Minecart rail orientation
         66,69,72,-1,74 # clay?
         ]
-    side = [-1,1,3,2,16,4,15,17,205,205,237,237,18,19,32,33,
-        34,21,52,48,49,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+
+    # And side textures of all block types
+    sideids = [-1,1,3,2,16,4,15,17,205,205,237,237,18,19,32,33,
+        34,20,52,48,49,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
         -1,-1,-1,64,64,13,12,29,28,23,22,6,6,7,8,35,
         36,37,-1,-1,65,4,25,101,98,24,43,-1,86,1,1,-1,
         -1,-1,-1,16,-1,-1,-1,-1,-1,51,51,-1,-1,1,66,67,
         66,69,72,-1,74
         ]
-    side[2] = 2
 
-    return (
-           [(t[x] if x != -1 else None) for x in top],
-           [(_transform_image(t[x]) if x != -1 else None) for x in top],
-           [(_transform_image_side(t[x]) if x != -1 else None) for x in side],
-           )
-# texturemap maps block ids to a 16x16 image that goes on the top face
-# perspective_texturemap does the same, except the texture is rotated and shrunk
-# shear_texturemap maps block ids to the image that goes on the side of the
-# block, sheared appropriately
-texturemap, perspective_texturemap, shear_texturemap = _build_texturemap()
-
-def _render_sprite(img):
-    """Takes a 16x16 sprite image, and returns a 22x22 image to go in the
-    blockmap
-    This is for rendering things that are sticking out of the ground, like
-    flowers and such
-    torches are drawn the same way, but torches that attach to walls are
-    handled differently
-    """
-    pass
-
-def _render_ground_image(img):
-    """Takes a 16x16 sprite image and skews it to look like it's on the ground.
-    This is for things like mine track and such
-
-    """
-    pass
-
-def _build_blockimages():
-    """Returns a mapping from blockid to an image of that block in perspective
-    The values of the mapping are actually (image in RGB mode, alpha channel)"""
     # This maps block id to the texture that goes on the side of the block
     allimages = []
-    for top, side in zip(perspective_texturemap, shear_texturemap):
-        if not top or not side:
+    for toptextureid, sidetextureid in zip(topids, sideids):
+        if toptextureid == -1 or sidetextureid == -1:
             allimages.append(None)
             continue
-        img = Image.new("RGBA", (24,24))
-        
-        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
 
-        # Darken the sides slightly. These methods also affect the alpha layer,
-        # so save them first (we don't want to "darken" the alpha layer making
-        # the block transparent)
-        if 1:
-            sidealpha = side.split()[3]
-            side = ImageEnhance.Brightness(side).enhance(0.9)
-            side.putalpha(sidealpha)
-            othersidealpha = otherside.split()[3]
-            otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
-            otherside.putalpha(othersidealpha)
+        toptexture = terrain_images[toptextureid]
+        sidetexture = terrain_images[sidetextureid]
 
-        # Copy on the left side
-        img.paste(side, (0,6), side)
-        # Copy on the other side
-        img.paste(otherside, (12,6), otherside)
-        # Copy on the top piece (last so it's on top)
-        img.paste(top, (0,0), top)
-
-        # Manually touch up 6 pixels that leave a gap because of how the
-        # shearing works out. This makes the blocks perfectly tessellate-able
-        for x,y in [(13,23), (17,21), (21,19)]:
-            # Copy a pixel to x,y from x-1,y
-            img.putpixel((x,y), img.getpixel((x-1,y)))
-        for x,y in [(3,4), (7,2), (11,0)]:
-            # Copy a pixel to x,y from x+1,y
-            img.putpixel((x,y), img.getpixel((x+1,y)))
+        img = _build_block(toptexture, sidetexture)
 
         allimages.append((img.convert("RGB"), img.split()[3]))
-    return allimages
 
-# Maps block images to the appropriate texture on each side. This map is not
-# appropriate for all block types
+    # Future block types:
+    while len(allimages) < 256:
+        allimages.append(None)
+    return allimages
 blockmap = _build_blockimages()
-# Future block types:
-while len(blockmap) < 256:
-    blockmap.append(None)
+
+def load_water():
+    """Evidentially, the water and lava textures are not loaded from any files
+    in the jar (that I can tell). They must be generated on the fly. While
+    terrain.png does have some water and lava cells, not all texture packs
+    include them. So I load them here from a couple pngs included.
+
+    This mutates the blockmap global list with the new water and lava blocks.
+    Block 9, standing water, is given a block with only the top face showing.
+    Block 8, flowing water, is given a full 3 sided cube."""
+
+    watertexture = _load_image("water.png")
+    w1 = _build_block(watertexture, None)
+    blockmap[9] = w1.convert("RGB"), w1
+    w2 = _build_block(watertexture, watertexture)
+    blockmap[8] = w2.convert("RGB"), w2
+
+    lavatexture = _load_image("lava.png")
+    lavablock = _build_block(lavatexture, lavatexture)
+    blockmap[10] = lavablock.convert("RGB"), lavablock
+    blockmap[11] = blockmap[10]
+load_water()
