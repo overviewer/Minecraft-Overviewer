@@ -488,7 +488,6 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         hasher = hashlib.md5()
 
         # Recurse to generate each quadrant of images
-        # Quadrent 1:
         if sem.acquire(False):
             Procobj = ReturnableProcess
         else:

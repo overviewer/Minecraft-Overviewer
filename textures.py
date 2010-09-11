@@ -41,7 +41,7 @@ def _find_file(filename, mode="rb"):
             "bin", "minecraft.jar"))
     if "HOME" in os.environ:
         jarpaths.append(os.path.join(os.environ['HOME'], "Library",
-                "Application Support", "minecraft"))
+                "Application Support", "minecraft","bin","minecraft.jar"))
         jarpaths.append(os.path.join(os.environ['HOME'], ".minecraft", "bin",
                 "minecraft.jar"))
 
