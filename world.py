@@ -67,6 +67,23 @@ def render_chunks_async(chunks, caves, processes):
     Returns a dictionary mapping (chunkx, chunky) to a
     multiprocessing.pool.AsyncResult object
     """
+    if processes == 1:
+        # Skip the multiprocessing stuff
+        print "Rendering chunks synchronously since you requested 1 process"
+        class MyResult(object):
+            pass
+        resultsmap = {}
+        for i, (chunkx, chunky, chunkfile) in enumerate(chunks):
+            result = chunk.render_and_save(chunkfile, cave=caves)
+            print "{0}/{1} chunks rendered".format(i, len(chunks))
+            resultobj = MyResult()
+            resultobj.get = lambda: result
+            resultsmap[(chunkx, chunky)] = resultobj
+            if i == 6:
+                import sys
+                sys.exit(0)
+        return resultsmap
+
     pool = multiprocessing.Pool(processes=processes)
     resultsmap = {}
     for chunkx, chunky, chunkfile in chunks:

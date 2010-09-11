@@ -40,7 +40,8 @@ def get_skylight_array(level):
     return numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
-transparent_blocks = set([0, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53, 59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 83, 85])
+transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53,
+    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 83, 85])
 
 def render_and_save(chunkfile, cave=False):
     """Used as the entry point for the multiprocessing workers"""
@@ -53,18 +54,31 @@ def render_and_save(chunkfile, cave=False):
         raise
     except KeyboardInterrupt:
         print
-        print "You pressed Ctrl-C. Unfortunately it got caught by a subprocess"
-        print "The program will terminate... eventually, but the main process"
-        print "may take a while to realize something went wrong."
-        print "To exit immediately, you'll need to kill this process some other"
-        print "way"
+        print "You pressed Ctrl-C. Exiting..."
+        # Raise an exception that is an instance of Exception. Unlike
+        # KeyboardInterrupt, that will kill the process instead of having it
+        # propagate the exception back to the parent process.
         raise Exception()
+
+def valid_image(filename):
+    """Returns true if the file is valid, false if it can't be loaded (is
+    corrupt or something)
+    """
+    try:
+        img = Image.open(filename)
+        img.load()
+    except Exception, e:
+        return False
+    return True
 
 class ChunkRenderer(object):
     def __init__(self, chunkfile):
         if not os.path.exists(chunkfile):
             raise ValueError("Could not find chunkfile")
         self.chunkfile = chunkfile
+        destdir, filename = os.path.split(self.chunkfile)
+        self.destdir = os.path.abspath(destdir)
+        self.blockid = ".".join(filename.split(".")[1:3])
 
     def _load_level(self):
         """Loads and returns the level structure"""
@@ -82,6 +96,8 @@ class ChunkRenderer(object):
 
     def _hash_blockarray(self):
         """Finds a hash of the block array"""
+        if hasattr(self, "_digest"):
+            return self._digest
         h = hashlib.md5()
         h.update(self.level['Blocks'])
 
@@ -91,17 +107,53 @@ class ChunkRenderer(object):
 
         digest = h.hexdigest()
         # 6 digits ought to be plenty
-        return digest[:6]
+        self._digest = digest[:6]
+        return self._digest
 
+    def _find_oldimage(self, cave):
+        # Get the name of the existing image. No way to do this but to look at
+        # all the files
+        oldimg = oldimg_path = None
+        for filename in os.listdir(self.destdir):
+            if filename.startswith("img.{0}.{1}.".format(self.blockid,
+                    "cave" if cave else "nocave")) and \
+                    filename.endswith(".png"):
+                oldimg = filename
+                oldimg_path = os.path.join(self.destdir, oldimg)
+                break
+        return oldimg, oldimg_path
 
     def render_and_save(self, cave=False):
         """Render the chunk using chunk_render, and then save it to a file in
         the same directory as the source image. If the file already exists and
         is up to date, this method doesn't render anything.
         """
-        destdir, filename = os.path.split(self.chunkfile)
-        destdir = os.path.abspath(destdir)
-        blockid = ".".join(filename.split(".")[1:3])
+        destdir = self.destdir
+        blockid = self.blockid
+
+        oldimg, oldimg_path = self._find_oldimage(cave)
+
+        if oldimg:
+            # An image exists? Instead of checking the hash which is kinda
+            # expensive (for tens of thousands of chunks, yes it is) check if
+            # the mtime of the chunk file is newer than the mtime of oldimg
+            if os.path.getmtime(self.chunkfile) < os.path.getmtime(oldimg_path):
+                # chunkfile is older than the image, don't even bother checking
+                # the hash
+                if valid_image(oldimg_path):
+                    return oldimg_path
+                else:
+                    os.unlink(oldimg_path)
+                    oldimg = None
+
+        # Reasons for the code to get to this point:
+        # 1) An old image doesn't exist
+        # 2) An old image exists, but the chunk was more recently modified (the
+        #    image was NOT checked if it was valid)
+        # 3) An old image exists, the chunk was not modified more recently, but
+        #    the image was invalid and deleted (sort of the same as (1))
+
+        # What /should/ the image be named, go ahead and hash the block array
         dest_filename = "img.{0}.{1}.{2}.png".format(
                 blockid,
                 "cave" if cave else "nocave",
@@ -110,25 +162,15 @@ class ChunkRenderer(object):
 
         dest_path = os.path.join(destdir, dest_filename)
 
-        if os.path.exists(dest_path):
-            # Try to open it to see if it's corrupt or something (can happen if
-            # the program crashed last time)
-            try:
-                testimg = Image.open(dest_path)
-                testimg.load()
-            except Exception:
-                # guess not, continue below
-                pass
-            else:
+        if oldimg:
+            if dest_filename == oldimg and valid_image(dest_path):
+                # There is an existing file, the chunk has a newer mtime, but the
+                # hashes match.
                 return dest_path
-        else:
-            # Remove old images for this chunk
-            for oldimg in os.listdir(destdir):
-                if oldimg.startswith("img.{0}.{1}.".format(blockid,
-                        "cave" if cave else "nocave")) and \
-                        oldimg.endswith(".png"):
-                    os.unlink(os.path.join(destdir,oldimg))
-                    break
+            else:
+                # Remove old image for this chunk. Anything already existing is
+                # either corrupt or out of date
+                os.unlink(oldimg_path)
 
         # Render the chunk
         img = self.chunk_render(cave=cave)

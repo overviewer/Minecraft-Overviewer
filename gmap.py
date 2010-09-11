@@ -37,9 +37,10 @@ def main():
 
     print "Rendering chunks"
     results = world.render_chunks_async(chunks, False, options.procs)
-    for i, (col, row, filename) in enumerate(chunks):
-        results[col, row].wait()
-        print "{0}/{1} chunks rendered".format(i, len(chunks))
+    if options.procs > 1:
+        for i, (col, row, filename) in enumerate(chunks):
+            results[col, row].wait()
+            print "{0}/{1} chunks rendered".format(i, len(chunks))
     
     print "Writing out html file"
     if not os.path.exists(destdir):
