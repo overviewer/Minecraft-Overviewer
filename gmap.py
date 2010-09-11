@@ -35,8 +35,11 @@ def main():
     # Translate chunks from diagonal coordinate system
     mincol, maxcol, minrow, maxrow, chunks = world.convert_coords(all_chunks)
 
-    print "processing chunks in background"
+    print "Rendering chunks"
     results = world.render_chunks_async(chunks, False, options.procs)
+    for i, (col, row, filename) in enumerate(chunks):
+        results[col, row].wait()
+        print "{0}/{1} chunks rendered".format(i, len(chunks))
     
     print "Writing out html file"
     if not os.path.exists(destdir):
@@ -49,7 +52,7 @@ def main():
     tiledir = os.path.join(destdir, "tiles")
     if not os.path.exists(tiledir):
         os.mkdir(tiledir)
-    world.generate_quadtree(results, mincol, maxcol, minrow, maxrow, tiledir)
+    world.generate_quadtree(results, mincol, maxcol, minrow, maxrow, tiledir, options.procs)
 
     print "DONE"
 

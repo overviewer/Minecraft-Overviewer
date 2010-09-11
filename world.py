@@ -328,7 +328,7 @@ def get_quadtree_depth(colstart, colend, rowstart, rowend):
     
     return p
 
-def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
+def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix, procs):
     """Base call for quadtree_recurse. This sets up the recursion and generates
     a quadtree given a chunkmap and the ranges.
 
@@ -347,9 +347,11 @@ def generate_quadtree(chunkmap, colstart, colend, rowstart, rowend, prefix):
     #print "     power is", p
     #print "     new bounds: {0},{1} {2},{3}".format(colstart, colend, rowstart, rowend)
 
-    quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, "base")
+    # procs is -1 here since the main process always runs as well, only spawn
+    # procs-1 /new/ processes
+    quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, "base", procs-1)
 
-def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrant):
+def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadrant, procs):
     """Recursive method that generates a quadtree.
     A single call generates, saves, and returns an image with the range
     specified by colstart,colend,rowstart, and rowend.
@@ -478,18 +480,47 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         hasher = hashlib.md5()
 
         # Recurse to generate each quadrant of images
-        quad0file, hash0 = quadtree_recurse(chunkmap, 
-                colstart, colmid, rowstart, rowmid,
-                newprefix, "0")
-        quad1file, hash1 = quadtree_recurse(chunkmap, 
-                colmid, colend, rowstart, rowmid,
-                newprefix, "1")
-        quad2file, hash2 = quadtree_recurse(chunkmap, 
-                colstart, colmid, rowmid, rowend,
-                newprefix, "2")
+        # Quadrent 1:
+        if procs > 0:
+            Procobj = ReturnableProcess
+            procs -= 1
+        else:
+            Procobj = FakeProcess
+
+        quad0result = Procobj(target=quadtree_recurse,
+                args=(chunkmap, colstart, colmid, rowstart, rowmid, newprefix, "0", 0)
+                )
+        quad0result.start()
+
+        if procs > 0:
+            Procobj = ReturnableProcess
+            procs -= 1
+        else:
+            Procobj = FakeProcess
+        quad1result = Procobj(target=quadtree_recurse,
+                args=(chunkmap, colmid, colend, rowstart, rowmid, newprefix, "1", 0)
+                )
+        quad1result.start()
+
+        if procs > 0:
+            Procobj = ReturnableProcess
+            procs -= 1
+        else:
+            Procobj = FakeProcess
+        quad2result = Procobj(target=quadtree_recurse,
+                args=(chunkmap, colstart, colmid, rowmid, rowend, newprefix, "2", 0)
+                )
+        quad2result.start()
+
+        # 3rd quadrent always runs in this process, no need to spawn a new one
+        # since we're just going to turn around and wait for it.
         quad3file, hash3 = quadtree_recurse(chunkmap, 
                 colmid, colend, rowmid, rowend,
-                newprefix, "3")
+                newprefix, "3", 0)
+
+        quad0file, hash0 = quad0result.get()
+        quad1file, hash1 = quad1result.get()
+        quad2file, hash2 = quad2result.get()
 
         #if dbg:
         #    print quad0file
@@ -569,3 +600,32 @@ def remove_tile(prefix, quadrent):
         os.unlink(img)
     if os.path.exists(hash):
         os.unlink(hash)
+
+class ReturnableProcess(multiprocessing.Process):
+    """Like the standard multiprocessing.Process class, but the return value of
+    the target method is available by calling get()"""
+    def run(self):
+        results = self._target(*self._args, **self._kwargs)
+        self._respipe_in.send(results)
+
+    def get(self):
+        self.join()
+        return self._respipe_out.recv()
+
+    def start(self):
+        self._respipe_out, self._respipe_in = multiprocessing.Pipe()
+        multiprocessing.Process.start(self)
+
+class FakeProcess(object):
+    """Identical interface to the above class, but runs in the same thread.
+    Used to make the code simpler in quadtree_recurse
+
+    """
+    def __init__(self, target, args=None, kwargs=None):
+        self._target = target
+        self._args = args if args else ()
+        self._kwargs = kwargs if kwargs else {}
+    def start(self):
+        return
+    def get(self):
+        return self._target(*self._args, **self._kwargs)
