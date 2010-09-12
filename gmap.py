@@ -43,7 +43,9 @@ def main():
             if i > 0:
                 if 1000 % i == 0 or i % 1000 == 0:
                     print "{0}/{1} chunks rendered".format(i, len(chunks))
-    
+
+    results['pool'].join()
+
     print "Writing out html file"
     if not os.path.exists(destdir):
         os.mkdir(destdir)

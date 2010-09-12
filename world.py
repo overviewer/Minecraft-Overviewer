@@ -299,7 +299,22 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend, oldhash):
     # col colstart will get drawn on the image starting at x coordinates -(384/2)
     # row rowstart will get drawn on the image starting at y coordinates -(192/2)
     for col, row, chunkfile in tilelist:
-        chunkimg = Image.open(chunkfile)
+        try:
+            chunkimg = Image.open(chunkfile)
+        except IOError, e:
+            print "Error opening file", chunkfile
+            print "Attempting to re-generate it"
+            os.unlink(chunkfile)
+            # Do some string manipulation to determine what the chunk file is
+            # that goes with this image. Then call chunk.render_and_save
+            dirname, imagename = os.path.split(chunkfile)
+            parts = imagename.split(".")
+            datafile = "c.{0}.{1}.dat".format(parts[1],parts[2])
+            print "Chunk came from data file", datafile
+            # XXX Don't forget to set cave mode here when it gets implemented!
+            chunk.render_and_save(os.path.join(dirname, datafile), False)
+            chunkimg = Image.open(chunkfile)
+            print "Success"
 
         xpos = -192 + (col-colstart)*192
         ypos = -96 + (row-rowstart)*96
@@ -635,13 +650,21 @@ class ReturnableProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self, *args, **kwargs)
 
     def run(self):
-        results = self._target(*self._args, **self._kwargs)
-        self._respipe_in.send(results)
-        self.__sem.release()
+        try:
+            results = self._target(*self._args, **self._kwargs)
+        except BaseException, e:
+            self._respipe_in.send(e)
+        else:
+            self._respipe_in.send(results)
+        finally:
+            self.__sem.release()
 
     def get(self):
         self.join()
-        return self._respipe_out.recv()
+        ret = self._respipe_out.recv()
+        if isinstance(ret, BaseException):
+            raise ret
+        return ret
 
     def start(self):
         self._respipe_out, self._respipe_in = multiprocessing.Pipe()

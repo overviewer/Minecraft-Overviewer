@@ -60,17 +60,6 @@ def render_and_save(chunkfile, cave=False):
         # propagate the exception back to the parent process.
         raise Exception()
 
-def valid_image(filename):
-    """Returns true if the file is valid, false if it can't be loaded (is
-    corrupt or something)
-    """
-    try:
-        img = Image.open(filename)
-        img.load()
-    except Exception, e:
-        return False
-    return True
-
 class ChunkRenderer(object):
     def __init__(self, chunkfile):
         if not os.path.exists(chunkfile):
@@ -140,11 +129,7 @@ class ChunkRenderer(object):
             if os.path.getmtime(self.chunkfile) < os.path.getmtime(oldimg_path):
                 # chunkfile is older than the image, don't even bother checking
                 # the hash
-                if valid_image(oldimg_path):
-                    return oldimg_path
-                else:
-                    os.unlink(oldimg_path)
-                    oldimg = None
+                return oldimg_path
 
         # Reasons for the code to get to this point:
         # 1) An old image doesn't exist
@@ -163,7 +148,7 @@ class ChunkRenderer(object):
         dest_path = os.path.join(destdir, dest_filename)
 
         if oldimg:
-            if dest_filename == oldimg and valid_image(dest_path):
+            if dest_filename == oldimg:
                 # There is an existing file, the chunk has a newer mtime, but the
                 # hashes match.
                 return dest_path
@@ -175,7 +160,11 @@ class ChunkRenderer(object):
         # Render the chunk
         img = self.chunk_render(cave=cave)
         # Save it
-        img.save(dest_path)
+        try:
+            img.save(dest_path)
+        except:
+            os.unlink(dest_path)
+            raise
         # Return its location
         return dest_path
 
