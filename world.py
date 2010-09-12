@@ -79,9 +79,6 @@ def render_chunks_async(chunks, caves, processes):
             resultobj = MyResult()
             resultobj.get = lambda: result
             resultsmap[(chunkx, chunky)] = resultobj
-            if i == 6:
-                import sys
-                sys.exit(0)
         return resultsmap
 
     pool = multiprocessing.Pool(processes=processes)
