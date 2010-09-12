@@ -513,7 +513,6 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         quad0result = Procobj(sem, target=quadtree_recurse,
                 args=(chunkmap, colstart, colmid, rowstart, rowmid, newprefix, "0", sem)
                 )
-        quad0result.start()
 
         if sem.acquire(False):
             Procobj = ReturnableProcess
@@ -522,7 +521,6 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         quad1result = Procobj(sem, target=quadtree_recurse,
                 args=(chunkmap, colmid, colend, rowstart, rowmid, newprefix, "1", sem)
                 )
-        quad1result.start()
 
         if sem.acquire(False):
             Procobj = ReturnableProcess
@@ -531,6 +529,11 @@ def quadtree_recurse(chunkmap, colstart, colend, rowstart, rowend, prefix, quadr
         quad2result = Procobj(sem, target=quadtree_recurse,
                 args=(chunkmap, colstart, colmid, rowmid, rowend, newprefix, "2", sem)
                 )
+        
+        # Start the processes. If one is a fakeprocess, it will do the
+        # processing right here instead.
+        quad0result.start()
+        quad1result.start()
         quad2result.start()
 
         # 3rd quadrent always runs in this process, no need to spawn a new one
