@@ -79,12 +79,15 @@
     var mapOptions = {
       zoom: config.defaultZoom,
       center: new google.maps.LatLng(-45, 90),
+      navigationControl: true,
+      scaleControl: true,
+      mapTypeControl: false,
       mapTypeId: 'mcmap'
     };
     map = new google.maps.Map(document.getElementById("mcmap"), mapOptions);
     
     if(config.debug) {
-      map.overlayMapTypes.insertAt(0, new CoordMapType(new google.maps.Size(384, 384)));
+      map.overlayMapTypes.insertAt(0, new CoordMapType(new google.maps.Size(config.tileSize, config.tileSize)));
     }
         
     // Now attach the coordinate map type to the map's registry
