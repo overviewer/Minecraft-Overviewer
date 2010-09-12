@@ -17,7 +17,8 @@
     tileSize:     384,
     defaultZoom:  1,
     maxZoom:      {maxzoom},
-    cacheMinutes: {cachelife}
+    cacheMinutes: {cachelife},
+    debug:        false
   };
   
   var MCMapOptions = {
@@ -51,18 +52,40 @@
   MCMapType.name = "MC Map";
   MCMapType.alt = "Minecraft Map";
   
+  function CoordMapType() {
+  }
+  
+  function CoordMapType(tileSize) {
+    this.tileSize = tileSize;
+  }
+  
+  CoordMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
+    var div = ownerDocument.createElement('DIV');
+    div.innerHTML = "(" + coord.x + ", " + coord.y + ", " + zoom + ")";
+    div.innerHTML += "<br />";
+    div.innerHTML += MCMapOptions.getTileUrl(coord, zoom);
+    div.style.width = this.tileSize.width + 'px';
+    div.style.height = this.tileSize.height + 'px';
+    div.style.fontSize = '10';
+    div.style.borderStyle = 'solid';
+    div.style.borderWidth = '1px';
+    div.style.borderColor = '#AAAAAA';
+    return div;
+  };
+  
   var map;
   
   function initialize() {
     var mapOptions = {
       zoom: config.defaultZoom,
       center: new google.maps.LatLng(-45, 90),
-      mapTypeControlOptions: {
-        mapTypeIds: ['mcmap'],
-        style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
-      }
+      mapTypeId: 'mcmap'
     };
     map = new google.maps.Map(document.getElementById("mcmap"), mapOptions);
+    
+    if(config.debug) {
+      map.overlayMapTypes.insertAt(0, new CoordMapType(new google.maps.Size(384, 384)));
+    }
         
     // Now attach the coordinate map type to the map's registry
     map.mapTypes.set('mcmap', MCMapType);
