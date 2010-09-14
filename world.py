@@ -75,10 +75,12 @@ def render_chunks_async(chunks, caves, processes):
         resultsmap = {}
         for i, (chunkx, chunky, chunkfile) in enumerate(chunks):
             result = chunk.render_and_save(chunkfile, cave=caves)
-            print "{0}/{1} chunks rendered".format(i, len(chunks))
             resultobj = MyResult()
             resultobj.get = lambda: result
             resultsmap[(chunkx, chunky)] = resultobj
+            if i > 0:
+                if 1000 % i == 0 or i % 1000 == 0:
+                    print "{0}/{1} chunks rendered".format(i, len(chunks))
         return resultsmap
 
     pool = multiprocessing.Pool(processes=processes)
