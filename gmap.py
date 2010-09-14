@@ -39,12 +39,18 @@ def main():
     results = world.render_chunks_async(chunks, False, options.procs)
     if options.procs > 1:
         for i, (col, row, filename) in enumerate(chunks):
-            results[col, row].wait()
             if i > 0:
                 if 1000 % i == 0 or i % 1000 == 0:
                     print "{0}/{1} chunks rendered".format(i, len(chunks))
 
         results['pool'].join()
+    print "Done"
+    # Compat-change for windows (which can't pass result objects to
+    # subprocesses)
+    chunkmap = {}
+    for col, row, filename in chunks:
+        chunkmap[col, row] = results[col, row].get()
+    del results
 
     print "Writing out html file"
     if not os.path.exists(destdir):
@@ -57,7 +63,7 @@ def main():
     tiledir = os.path.join(destdir, "tiles")
     if not os.path.exists(tiledir):
         os.mkdir(tiledir)
-    world.generate_quadtree(results, mincol, maxcol, minrow, maxrow, tiledir, options.procs)
+    world.generate_quadtree(chunkmap, mincol, maxcol, minrow, maxrow, tiledir, options.procs)
 
     print "DONE"
 

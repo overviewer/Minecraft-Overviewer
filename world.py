@@ -273,10 +273,9 @@ def render_worldtile(chunkmap, colstart, colend, rowstart, rowend, oldhash):
     imghash = hashlib.md5()
     for row in xrange(rowstart-16, rowend+1):
         for col in xrange(colstart, colend+1):
-            chunkresult = chunkmap.get((col, row), None)
-            if not chunkresult:
+            chunkfile = chunkmap.get((col, row), None)
+            if not chunkfile:
                 continue
-            chunkfile = chunkresult.get()
             tilelist.append((col, row, chunkfile))
             # Get the hash of this image and add it to our hash for this tile
             imghash.update(
