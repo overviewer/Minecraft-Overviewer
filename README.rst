@@ -45,12 +45,17 @@ Using the Google Map Tile Generator
 
 Disclaimers
 -----------
-Before you dive into using this, let it be known that there are a few minor
-problems. First, it's slow. If your map is really large, this could take at
-least half an hour, and for really large maps, several hours (Subsequent runs
-will be quicker since it only re-renders tiles that have changed). Second,
-there's no progress bar. You can watch the tiles get generated, but the program
-gives no direct feedback at this time on how far along it is.
+Before you dive into using this, just be aware that, for large maps, there is a
+*lot* of data to parse through and process. If your world is very large, expect
+the initial render to take at least an hour, possibly more. (Since minecraft
+maps are practically infinite, the maximum time this could take is also
+infinite!)
+
+If you press ctrl-C, it will stop. The next run will pick up where it left off.
+
+Once your initial render is done, subsequent renderings will be MUCH faster due
+to all the caching that happens behind the scenes. Just use the same output
+directory and it will only update the tiles it needs to.
 
 There are probably some other minor glitches along the way, hopefully they will
 be fixed soon. See the `Bugs`_ section below.
@@ -103,17 +108,8 @@ access is required to load the Google Maps API files, but you otherwise don't
 need anything else.
 
 You can throw these files up to a web server to let others view your map. You
-do not need a Google Maps API key (as was the case with older versions of the
+do *not* need a Google Maps API key (as was the case with older versions of the
 API), so just copying the directory to your web server should suffice.
-
-Tip: Since Minecraft worlds rarely produce perfectly square worlds, there will
-be blank and non-existent tiles around the borders of your world. The Google
-Maps API has no way of knowing this until it requests them and the web server
-returns a 404 Not Found. If this doesn't bother you, then fine, stop reading.
-Otherwise: you can avoid a lot of 404s to your logs by configuring your web
-server to redirect all 404 requests in that directory to a single 1px
-"blank.png". This may or may not save on bandwidth, but it will probably save
-on log noise.
 
 Bugs
 ====
@@ -139,3 +135,5 @@ An incomplete list of things I want to fix soon is:
 * Add lighting
 
 * Some kind of graphical interface.
+
+* A Windows exe for easier access for Windows users.
