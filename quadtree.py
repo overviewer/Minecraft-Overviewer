@@ -88,7 +88,7 @@ class QuadtreeGen(object):
             rowend = rowstart + 4
 
             # This image is rendered at:
-            dest = os.path.join(self.destdir, *(str(x) for x in path))
+            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
 
             # The directory, create it if not exists
             dirdest = os.path.dirname(dest)
@@ -118,6 +118,7 @@ class QuadtreeGen(object):
             if i > 0 and (i % 100 == 0 or 100 % i == 0):
                 print "{0}/{1} tiles complete on level {2}/{3}".format(
                         i, len(results), 1, self.p+1)
+        print "Done"
 
         # Now do the other layers
         for zoom in xrange(self.p, 0, -1):
@@ -127,7 +128,7 @@ class QuadtreeGen(object):
             results = []
             for path in iterate_base4(zoom):
                 # This image is rendered at:
-                dest = os.path.join(self.destdir, *(str(x) for x in path[:-1]))
+                dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
                 name = str(path[-1])
 
                 results.append(
@@ -143,10 +144,10 @@ class QuadtreeGen(object):
                 if i > 0 and (i % 100 == 0 or 100 % i == 0):
                     print "{0}/{1} tiles complete on level {2}/{3}".format(
                             i, len(results), level, self.p+1)
+            print "Done"
 
         # Do the final one right here:
-        render_innertile(self.destdir, "base")
-        print "Done!"
+        render_innertile(os.path.join(self.destdir, "tiles"), "base")
 
         pool.close()
         pool.join()
