@@ -7,6 +7,12 @@ import hashlib
 import nbt
 import textures
 
+"""
+This module has routines related to rendering one particular chunk into an
+image
+
+"""
+
 # General note about pasting transparent image objects onto an image with an
 # alpha channel:
 # If you use the image as its own mask, it will work fine only if the alpha
@@ -44,7 +50,10 @@ transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 83, 85])
 
 def render_and_save(chunkfile, cave=False):
-    """Used as the entry point for the multiprocessing workers"""
+    """Used as the entry point for the multiprocessing workers (since processes
+    can't target bound methods) or to easily render and save one chunk
+    
+    Returns the image file location"""
     a = ChunkRenderer(chunkfile)
     try:
         return a.render_and_save(cave)
