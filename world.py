@@ -1,10 +1,7 @@
 import functools
-import string
 import os
 import os.path
-import time
 import multiprocessing
-import hashlib
 
 from PIL import Image
 
