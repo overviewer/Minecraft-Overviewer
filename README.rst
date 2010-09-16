@@ -148,9 +148,6 @@ An incomplete list of things I want to fix soon is:
   doors, and the like. Right now they are either not rendered at all, or
   rendered as if they were a cube, so it looks funny.
 
-* Water transparency. There are a couple issues involved with that, and I want
-  to fix them.
-
 * Add lighting
 
 * Some kind of graphical interface.
