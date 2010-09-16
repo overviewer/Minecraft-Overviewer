@@ -111,6 +111,25 @@ You can throw these files up to a web server to let others view your map. You
 do *not* need a Google Maps API key (as was the case with older versions of the
 API), so just copying the directory to your web server should suffice.
 
+Clearing the Cache
+------------------
+The Overviewer keeps two levels of cache: it saves each chunk rendered
+individually along side your chunk files in your saved world directory, and it
+keeps a hash file along side each tile in your output directory. Using these
+cache files it will not re-render any image that has not changed.
+
+If you want to clear the cache and re-render everything, run gmap.py with the
+-d option::
+
+    python gmap.py -d <Path to World> <Output Directory>
+
+The next time your map is rendered, it will re-render every chunk. This is
+useful if you've changed texture packs or want to save disk space, but
+otherwise not too useful.
+
+This is probably *not* a good idea for very large worlds, since it will take
+much longer to render the next time you do so.
+
 Bugs
 ====
 This program has bugs. They are mostly minor things, I wouldn't have released a
