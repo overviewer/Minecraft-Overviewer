@@ -251,7 +251,7 @@ def render_innertile(dest, name):
         return
 
     # Create the actual image now
-    img = Image.new("RGBA", (384, 384))
+    img = Image.new("RGBA", (384, 384), (38,92,255,0))
 
     if q0path:
         quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
@@ -351,7 +351,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
         return
 
     # Compile this image
-    tileimg = Image.new("RGBA", (width, height))
+    tileimg = Image.new("RGBA", (width, height), (38,92,255,0))
 
     # col colstart will get drawn on the image starting at x coordinates -(384/2)
     # row rowstart will get drawn on the image starting at y coordinates -(192/2)

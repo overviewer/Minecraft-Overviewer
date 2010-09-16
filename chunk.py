@@ -214,7 +214,7 @@ class ChunkRenderer(object):
         # Since there are 16x16x128 blocks in a chunk, the image will be 384x1728
         # (height is 128*12 high, plus the size of the horizontal plane: 16*12)
         if not img:
-            img = Image.new("RGBA", (384, 1728))
+            img = Image.new("RGBA", (384, 1728), (38,92,255,0))
 
         for x in xrange(15,-1,-1):
             for y in xrange(16):

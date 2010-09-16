@@ -139,7 +139,7 @@ def _build_block(top, side):
     top and side should be 16x16 image objects. Returns a 24x24 image
 
     """
-    img = Image.new("RGBA", (24,24))
+    img = Image.new("RGBA", (24,24), (38,92,255,0))
 
     top = _transform_image(top)
 
