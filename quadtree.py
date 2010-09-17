@@ -71,8 +71,53 @@ class QuadtreeGen(object):
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
 
+    def _get_cur_depth(self):
+        """How deep is the quadtree currently in the destdir? This assumes all
+        the directories are created, even if they don't have any images
+        """
+        p = 0
+        curdir = os.path.join(self.destdir, "tiles")
+        while "0" in os.listdir(curdir):
+            curdir = os.path.join(curdir, "0")
+            p += 1
+        return p
+
+    def _increase_depth(self):
+        """Moves existing tiles into place for a larger tree"""
+        getpath = functools.partial(os.path.join, self.destdir, "tiles")
+
+        # At top level of the tree:
+        # quadrant 0 is now 0/3
+        # 1 is now 1/2
+        # 2 is now 2/1
+        # 3 is now 3/0
+        # then all that needs to be done is to regenerate the new top level
+        for dirnum in range(4):
+            newnum = (3,2,1,0)[dirnum]
+
+            newdir = "new" + str(dirnum)
+            newdirpath = getpath(newdir)
+
+            files = [str(dirnum)+".png", str(dirnum)+".hash", str(dirnum)]
+            newfiles = [str(newnum)+".png", str(newnum)+".hash", str(newnum)]
+
+            os.mkdir(newdirpath)
+            for f, newf in zip(files, newfiles):
+                p = getpath(f)
+                if os.path.exists(p):
+                    os.rename(p, getpath(newdir, newf))
+            os.rename(newdirpath, getpath(str(dirnum)))
+
     def go(self, procs):
         """Renders all tiles"""
+
+        curdepth = self._get_cur_depth()
+        if self.p > curdepth:
+            print "Your map seemes to have expanded beyond its previous bounds."
+            print "Doing some tile re-arrangements... just a sec..."
+            for _ in xrange(self.p-curdepth):
+                print "Increasing depth..."
+                self._increase_depth()
 
         # Create a pool
         pool = multiprocessing.Pool(processes=procs)
@@ -360,14 +405,14 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
             chunkimg = Image.open(chunkfile)
         except IOError, e:
             print "Error opening file", chunkfile
-            print "Attempting to re-generate it"
+            print "Attempting to re-generate it..."
             os.unlink(chunkfile)
             # Do some string manipulation to determine what the chunk file is
             # that goes with this image. Then call chunk.render_and_save
             dirname, imagename = os.path.split(chunkfile)
             parts = imagename.split(".")
             datafile = "c.{0}.{1}.dat".format(parts[1],parts[2])
-            print "Chunk came from data file", datafile
+            #print "Chunk came from data file", datafile
             # XXX Don't forget to set cave mode here when it gets implemented!
             chunk.render_and_save(os.path.join(dirname, datafile), False)
             chunkimg = Image.open(chunkfile)
