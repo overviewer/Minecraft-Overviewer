@@ -103,7 +103,6 @@ class QuadtreeGen(object):
             if res:
                 p = int(res.group(1))
                 break
-        print "detected previous zoom level:", p
         return p
 
     def _increase_depth(self):
@@ -143,20 +142,25 @@ class QuadtreeGen(object):
         # 3/0 goes to 3
         # Just worry about the directories here, the files at the top two
         # levels are cheap enough to replace
-        os.rename(getpath("0", "3"), getpath("new0"))
-        os.rename(getpath("1", "2"), getpath("new1"))
-        os.rename(getpath("2", "1"), getpath("new2"))
-        os.rename(getpath("3", "0"), getpath("new3"))
+        if os.path.exists(getpath("0", "3")):
+            os.rename(getpath("0", "3"), getpath("new0"))
+            shutil.rmtree(getpath("0"))
+            os.rename(getpath("new0"), getpath("0"))
 
-        shutil.rmtree(getpath("0"))
-        shutil.rmtree(getpath("1"))
-        shutil.rmtree(getpath("2"))
-        shutil.rmtree(getpath("3"))
+        if os.path.exists(getpath("1", "2")):
+            os.rename(getpath("1", "2"), getpath("new1"))
+            shutil.rmtree(getpath("1"))
+            os.rename(getpath("new1"), getpath("1"))
 
-        os.rename(getpath("new0"), getpath("0"))
-        os.rename(getpath("new1"), getpath("1"))
-        os.rename(getpath("new2"), getpath("2"))
-        os.rename(getpath("new3"), getpath("3"))
+        if os.path.exists(getpath("2", "1")):
+            os.rename(getpath("2", "1"), getpath("new2"))
+            shutil.rmtree(getpath("2"))
+            os.rename(getpath("new2"), getpath("2"))
+
+        if os.path.exists(getpath("3", "0")):
+            os.rename(getpath("3", "0"), getpath("new3"))
+            shutil.rmtree(getpath("3"))
+            os.rename(getpath("new3"), getpath("3"))
 
     def go(self, procs):
         """Renders all tiles"""
