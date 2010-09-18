@@ -80,6 +80,7 @@ class QuadtreeGen(object):
     def write_html(self, zoomlevel):
         """Writes out index.html"""
         templatepath = os.path.join(os.path.split(__file__)[0], "template.html")
+
         html = open(templatepath, 'r').read()
         html = html.replace(
                 "{maxzoom}", str(zoomlevel))
@@ -164,6 +165,10 @@ class QuadtreeGen(object):
 
     def go(self, procs):
         """Renders all tiles"""
+
+        # Make the destination dir
+        if not os.path.exists(self.destdir):
+            os.mkdir(self.destdir)
 
         curdepth = self._get_cur_depth()
         if curdepth != -1:
