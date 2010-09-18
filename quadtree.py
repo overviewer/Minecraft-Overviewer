@@ -432,7 +432,15 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
     # Create the directory if not exists
     dirdest = os.path.dirname(path)
     if not os.path.exists(dirdest):
-        os.makedirs(dirdest)
+        try:
+            os.makedirs(dirdest)
+        except OSError, e:
+            # Ignore errno EEXIST: file exists. Since this is multithreaded,
+            # two processes could conceivably try and create the same directory
+            # at the same time.
+            import errno
+            if e.errno != errno.EEXIST:
+                raise
 
     imghash = hashlib.md5()
     for col, row, chunkfile in chunks:
