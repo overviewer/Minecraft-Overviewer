@@ -40,8 +40,8 @@ This program requires:
 I develop and test this on Linux, but need help testing it on Windows and Mac.
 If something doesn't work, let me know.
 
-Using the Google Map Tile Generator
-===================================
+Using the Overviewer
+====================
 
 Disclaimers
 -----------
@@ -81,24 +81,25 @@ Example to run 5 worker processes in parallel::
 
     python gmap.py -p 5 <Path to World> <Output Directory>
 
-Crushing the Output Tiles
+Specifying the Zoom Level
 -------------------------
-Image files taking too much disk space? Try using pngcrush. On Linux and
-probably Mac, if you have pngcrush installed, this command will go and crush
-all your images in the given destination. This took the total disk usage of the
-render for my world from 85M to 67M.
+The -z option will set the zoom level manually. Without this option, the
+Overviewer will detect the smallest number of zoom levels needed to render your
+entire map.
 
-::
+Maybe that's too much though, or maybe you have some outlier chunks that are
+very far off making your map too large to render. That's where this option
+comes in handy.
 
-    find /path/to/destination -name "*.png" -exec pngcrush {} {}.crush \; -exec mv {}.crush {} \;
+This will render your map with 7 zoom levels::
 
-If you're on Windows, I've gotten word that this command line snippet works
-provided pngout is installed and on your path. Note that the % symbols will
-need to be doubled up if this is in a batch file.
+    python gmap.py -z 7 <Path to World> <Output Directory>
 
-::
-
-    FOR /R c:\path\to\tiles\folder %v IN (*.png) DO pngout %v /y
+The zoom level specifies the number of tiles at the highest zoom level. A zoom
+level of z will generate up to 4^z tiles (2^z by 2^z in a square). This means
+each additional zoom level covers 4 times as much area as the last one. Tiles
+with no content will not be rendered, but they still take a small amount of
+time to process.
 
 Viewing the Results
 -------------------
@@ -129,6 +130,25 @@ otherwise not too useful.
 
 This is probably *not* a good idea for very large worlds, since it will take
 much longer to render the next time you do so.
+
+Crushing the Output Tiles
+-------------------------
+Image files taking too much disk space? Try using pngcrush. On Linux and
+probably Mac, if you have pngcrush installed, this command will go and crush
+all your images in the given destination. This took the total disk usage of the
+render for my world from 85M to 67M.
+
+::
+
+    find /path/to/destination -name "*.png" -exec pngcrush {} {}.crush \; -exec mv {}.crush {} \;
+
+If you're on Windows, I've gotten word that this command line snippet works
+provided pngout is installed and on your path. Note that the % symbols will
+need to be doubled up if this is in a batch file.
+
+::
+
+    FOR /R c:\path\to\tiles\folder %v IN (*.png) DO pngout %v /y
 
 Bugs
 ====
