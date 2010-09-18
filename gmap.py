@@ -21,6 +21,7 @@ def main():
         cpus = 1
     parser = OptionParser(usage=helptext)
     parser.add_option("-p", "--processes", dest="procs", help="How many chunks to render in parallel. A good number for this is the number of cores in your computer. Default %s" % cpus, default=cpus, action="store", type="int")
+    parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int")
     parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true")
 
     options, args = parser.parse_args()
@@ -43,7 +44,7 @@ def main():
     w.go(options.procs)
 
     # Now generate the tiles
-    q = quadtree.QuadtreeGen(w, destdir)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom)
     q.go(options.procs)
 
 def delete_all(worlddir, tiledir):

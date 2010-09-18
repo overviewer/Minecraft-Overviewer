@@ -4,6 +4,8 @@ import os
 import os.path
 import hashlib
 import functools
+import re
+import shutil
 
 from PIL import Image
 
@@ -33,30 +35,44 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir):
+    def __init__(self, worldobj, destdir, depth=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
         worldobj is a world.WorldRenderer object that has already been processed
 
-        """
-        # Determine quadtree depth (midpoint is always 0,0)
-        for p in xrange(15):
-            xdiameter = 2*2**p
-            ydiameter = 4*2**p
-            if xdiameter >= worldobj.maxcol and -xdiameter <= worldobj.mincol and \
-                    ydiameter >= worldobj.maxrow and -ydiameter <= worldobj.minrow:
-                break
-        else:
-            raise ValueError("Your map is waaaay to big!")
+        If depth is given, it overrides the calculated value. Otherwise, the
+        minimum depth that contains all chunks is calculated and used.
 
-        self.p = p
+        """
+        if depth is None:
+            # Determine quadtree depth (midpoint is always 0,0)
+            for p in xrange(15):
+                # Will 2^p tiles wide and high suffice?
+
+                # X has twice as many chunks as tiles, then halved since this is a
+                # radius
+                xradius = 2**p
+                # Y has 4 times as many chunks as tiles, then halved since this is
+                # a radius
+                yradius = 2*2**p
+                if xradius >= worldobj.maxcol and -xradius <= worldobj.mincol and \
+                        yradius >= worldobj.maxrow and -yradius <= worldobj.minrow:
+                    break
+            else:
+                raise ValueError("Your map is waaaay too big!")
+
+            self.p = p
+        else:
+            self.p = depth
+            xradius = 2**depth
+            yradius = 2*2**depth
 
         # Make new row and column ranges
-        self.mincol = -xdiameter
-        self.maxcol = xdiameter
-        self.minrow = -ydiameter
-        self.maxrow = ydiameter
+        self.mincol = -xradius
+        self.maxcol = xradius
+        self.minrow = -yradius
+        self.maxrow = yradius
 
         self.world = worldobj
         self.destdir = destdir
@@ -72,14 +88,22 @@ class QuadtreeGen(object):
             output.write(html)
 
     def _get_cur_depth(self):
-        """How deep is the quadtree currently in the destdir? This assumes all
-        the directories are created, even if they don't have any images
+        """How deep is the quadtree currently in the destdir? This glances in
+        index.html to see what maxZoom is set to.
+        returns -1 if it couldn't be detected, file not found, or nothing in
+        index.html matched
         """
-        p = 0
-        curdir = os.path.join(self.destdir, "tiles")
-        while "0" in os.listdir(curdir):
-            curdir = os.path.join(curdir, "0")
-            p += 1
+        indexfile = os.path.join(self.destdir, "index.html")
+        if not os.path.exists(indexfile):
+            return -1
+        matcher = re.compile(r"maxZoom:\s*(\d+)")
+        p = -1
+        for line in open(indexfile, "r"):
+            res = matcher.search(line)
+            if res:
+                p = int(res.group(1))
+                break
+        print "detected previous zoom level:", p
         return p
 
     def _increase_depth(self):
@@ -108,16 +132,46 @@ class QuadtreeGen(object):
                     os.rename(p, getpath(newdir, newf))
             os.rename(newdirpath, getpath(str(dirnum)))
 
+    def _decrease_depth(self):
+        """If the map size decreases, or perhaps the user has a depth override
+        in effect, re-arrange existing tiles for a smaller tree"""
+        getpath = functools.partial(os.path.join, self.destdir, "tiles")
+
+        # quadrant 0/3 goes to 0
+        # 1/2 goes to 1
+        # 2/1 goes to 2
+        # 3/0 goes to 3
+        # Just worry about the directories here, the files at the top two
+        # levels are cheap enough to replace
+        os.rename(getpath("0", "3"), getpath("new0"))
+        os.rename(getpath("1", "2"), getpath("new1"))
+        os.rename(getpath("2", "1"), getpath("new2"))
+        os.rename(getpath("3", "0"), getpath("new3"))
+
+        shutil.rmtree(getpath("0"))
+        shutil.rmtree(getpath("1"))
+        shutil.rmtree(getpath("2"))
+        shutil.rmtree(getpath("3"))
+
+        os.rename(getpath("new0"), getpath("0"))
+        os.rename(getpath("new1"), getpath("1"))
+        os.rename(getpath("new2"), getpath("2"))
+        os.rename(getpath("new3"), getpath("3"))
+
     def go(self, procs):
         """Renders all tiles"""
 
         curdepth = self._get_cur_depth()
-        if self.p > curdepth:
-            print "Your map seemes to have expanded beyond its previous bounds."
-            print "Doing some tile re-arrangements... just a sec..."
-            for _ in xrange(self.p-curdepth):
-                print "Increasing depth..."
-                self._increase_depth()
+        if curdepth != -1:
+            if self.p > curdepth:
+                print "Your map seemes to have expanded beyond its previous bounds."
+                print "Doing some tile re-arrangements... just a sec..."
+                for _ in xrange(self.p-curdepth):
+                    self._increase_depth()
+            elif self.p < curdepth:
+                print "Your map seems to have shrunk. Re-arranging tiles, just a sec..."
+                for _ in xrange(curdepth - self.p):
+                    self._decrease_depth()
 
         # Create a pool
         pool = multiprocessing.Pool(processes=procs)
@@ -126,7 +180,7 @@ class QuadtreeGen(object):
         print "Computing the tile ranges and starting tile processers for inner-most tiles..."
         print "This takes the longest. The other levels will go quicker"
         results = []
-        for path in iterate_base4(self.p+1):
+        for path in iterate_base4(self.p):
             # Get the range for this tile
             colstart, rowstart = self._get_range_by_path(path)
             colend = colstart + 2
@@ -134,11 +188,6 @@ class QuadtreeGen(object):
 
             # This image is rendered at:
             dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
-
-            # The directory, create it if not exists
-            dirdest = os.path.dirname(dest)
-            if not os.path.exists(dirdest):
-                os.makedirs(dirdest)
 
             # And uses these chunks
             tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
@@ -153,7 +202,7 @@ class QuadtreeGen(object):
                         )
                     )
 
-        self.write_html(self.p+1)
+        self.write_html(self.p)
 
         # Wait for all results to finish
         print "Rendering inner most zoom level tiles now!"
@@ -161,15 +210,14 @@ class QuadtreeGen(object):
             # get() instead of wait() so we can see errors
             result.get()
             if i > 0 and (i % 100 == 0 or 100 % i == 0):
-                print "{0}/{1} tiles complete on level {2}/{3}".format(
-                        i, len(results), 1, self.p+1)
+                print "{0}/{1} tiles complete on level 1/{2}".format(
+                        i, len(results), self.p)
         print "Done"
 
         # Now do the other layers
-        for zoom in xrange(self.p, 0, -1):
-            level = self.p+2-zoom
-            print "Preparing level", level
-
+        for zoom in xrange(self.p-1, 0, -1):
+            level = self.p - zoom + 1
+            print "Starting level", level
             results = []
             for path in iterate_base4(zoom):
                 # This image is rendered at:
@@ -182,13 +230,12 @@ class QuadtreeGen(object):
                             )
                         )
 
-            print "Rendering level {0}/{1} now!".format(level, self.p+1)
             for i, result in enumerate(results):
                 # get() instead of wait() so we can see errors
                 result.get()
                 if i > 0 and (i % 100 == 0 or 100 % i == 0):
-                    print "{0}/{1} tiles complete on level {2}/{3}".format(
-                            i, len(results), level, self.p+1)
+                    print "{0}/{1} tiles complete for level {2}/{3}".format(
+                            i, len(results), level, self.p)
             print "Done"
 
         # Do the final one right here:
@@ -274,7 +321,7 @@ def render_innertile(dest, name):
         if os.path.exists(hashpath):
             os.unlink(hashpath)
         return
-
+    
     # Now check the hashes
     hasher = hashlib.md5()
     if q0hash:
@@ -377,6 +424,11 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
         if os.path.exists(hashpath):
             os.unlink(hashpath)
         return None
+
+    # Create the directory if not exists
+    dirdest = os.path.dirname(path)
+    if not os.path.exists(dirdest):
+        os.makedirs(dirdest)
 
     imghash = hashlib.md5()
     for col, row, chunkfile in chunks:
