@@ -6,9 +6,11 @@ import multiprocessing
 from PIL import Image
 
 import chunk
+import nbt
 
 """
 This module has routines related to generating all the chunks for a world
+and for extracting information about available worlds
 
 """
 
@@ -119,3 +121,35 @@ class WorldRenderer(object):
 
         return results
 
+def get_save_dir():
+    """Returns the path to the local saves directory
+      * On Windows, at %APPDATA%/.minecraft/saves/
+      * On Darwin, at $HOME/Library/Application Support/minecraft/saves/
+      * at $HOME/.minecraft/saves/
+
+    """
+    
+    savepaths = []
+    if "APPDATA" in os.environ:
+        savepaths += [os.path.join(os.environ['APPDATA'], ".minecraft", "saves")]
+    if "HOME" in os.environ:
+        savepaths += [os.path.join(os.environ['HOME'], "Library",
+                "Application Support", "minecraft", "saves")]
+        savepaths += [os.path.join(os.environ['HOME'], ".minecraft", "saves")]
+
+    for path in savepaths:
+        if os.path.exists(path):
+            return path
+
+def get_worlds():
+    "Returns {world # : level.dat information}"
+    ret = {}
+    save_dir = get_save_dir()
+    for dir in os.listdir(save_dir):
+        if dir.startswith("World"):
+            world_n = int(dir[-1])
+            info = nbt.load(os.path.join(save_dir, dir, "level.dat"))[1]
+            info['Data']['path'] = os.path.join(save_dir, dir)
+            ret[world_n] = info['Data']
+
+    return ret

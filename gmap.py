@@ -6,12 +6,13 @@ import os.path
 from optparse import OptionParser
 import re
 import multiprocessing
+import time
 
 import world
 import quadtree
 
 helptext = """
-%prog [-p PROCS] [-d] <Path to World> <tiles dest dir>
+%prog [-p PROCS] [-d] <World # / Path to World> <tiles dest dir>
 """
 
 def main():
@@ -27,10 +28,21 @@ def main():
     options, args = parser.parse_args()
 
     if len(args) < 1:
-        print "You need to give me your world directory"
+        print "You need to give me your world number or directory"
         parser.print_help()
+        list_worlds()
         sys.exit(1)
     worlddir = args[0]
+
+    if not os.path.exists(worlddir):
+        try:
+            worldnum = int(worlddir)
+            worlddir = world.get_worlds()[worldnum]['path']
+        except (ValueError, KeyError):
+            print "Invalid world number or directory"
+            parser.print_help()
+            sys.exit(1)
+
 
     if len(args) != 2:
         parser.error("Where do you want to save the tiles?")
@@ -38,7 +50,6 @@ def main():
 
     if options.delete:
         return delete_all(worlddir, destdir)
-
     # First generate the world's chunk images
     w = world.WorldRenderer(worlddir)
     w.go(options.procs)
@@ -66,6 +77,23 @@ def delete_all(worlddir, tiledir):
                 filepath = os.path.join(dirpath, f)
                 print "Deleting {0}".format(filepath)
                 os.unlink(filepath)
+
+def list_worlds():
+    "Prints out a brief summary of saves found in the default directory"
+    print 
+    worlds = world.get_worlds()
+    if not worlds:
+        print 'No world saves found in the usual place'
+        return
+    print "Detected saves:"
+    for num, info in sorted(worlds.iteritems()):
+        timestamp = time.strftime("%Y-%m-%d %H:%M",
+                                  time.localtime(info['LastPlayed'] / 1000))
+        playtime = info['Time'] / 20
+        playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
+        size = "%.2fMB" % (info['SizeOnDisk'] / 1024. / 1024.)
+        print "World %s: %s Playtime: %s Modified: %s" % (num, size, playstamp, timestamp)
+
 
 if __name__ == "__main__":
     main()
