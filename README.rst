@@ -1,7 +1,7 @@
 ====================
 Minecraft Overviewer
 ====================
-By Andrew Brown
+By Andrew Brown and contributors
 
 http://github.com/brownan/Minecraft-Overviewer
 
@@ -14,6 +14,8 @@ large resolution images such that one can zoom in and see details.
 
 See some examples here!
 http://github.com/brownan/Minecraft-Overviewer/wiki/Map-examples
+
+(To contact me, send me a message on Github)
 
 Features
 ========
