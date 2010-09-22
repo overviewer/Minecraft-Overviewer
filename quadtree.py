@@ -178,6 +178,29 @@ class QuadtreeGen(object):
             shutil.rmtree(getpath("3"))
             os.rename(getpath("new3"), getpath("3"))
 
+    def _apply_render_worldtiles(self, pool):
+        """Returns an iterator over result objects. Each time a new result is
+        requested, a new task is added to the pool and a result returned.
+        """
+        for path in iterate_base4(self.p):
+            # Get the range for this tile
+            colstart, rowstart = self._get_range_by_path(path)
+            colend = colstart + 2
+            rowend = rowstart + 4
+
+            # This image is rendered at:
+            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
+
+            # And uses these chunks
+            tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
+                    rowend)
+
+            # Put this in the pool
+            # (even if tilechunks is empty, render_worldtile will delete
+            # existing images if appropriate)
+            yield pool.apply_async(func=render_worldtile, args= (tilechunks,
+                colstart, colend, rowstart, rowend, dest))
+
     def go(self, procs):
         """Renders all tiles"""
 
@@ -204,27 +227,8 @@ class QuadtreeGen(object):
         print "Computing the tile ranges and starting tile processers for inner-most tiles..."
         print "This takes the longest. The other levels will go quicker"
         results = []
-        for path in iterate_base4(self.p):
-            # Get the range for this tile
-            colstart, rowstart = self._get_range_by_path(path)
-            colend = colstart + 2
-            rowend = rowstart + 4
-
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
-
-            # And uses these chunks
-            tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
-                    rowend)
-
-            # Put this in the pool
-            # (even if tilechunks is empty, render_worldtile will delete
-            # existing images if appropriate)
-            results.append(
-                    pool.apply_async(func=render_worldtile, args=
-                        (tilechunks, colstart, colend, rowstart, rowend, dest)
-                        )
-                    )
+        for result in self._apply_render_worldtiles(pool):
+            results.append(result)
 
         self.write_html(self.p)
 
