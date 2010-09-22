@@ -61,7 +61,7 @@ def _find_file(filename, mode="rb"):
     if os.path.exists(path):
         return open(path, mode)
 
-    raise IOError("Could not find the file {0}".format(filename))
+    raise IOError("Could not find the file {0}. Is Minecraft installed? If so, I couldn't find the minecraft.jar file.".format(filename))
 
 def _load_image(filename):
     """Returns an image object"""

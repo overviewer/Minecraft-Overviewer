@@ -12,6 +12,9 @@ resolution images. It performs a similar function to the existing Minecraft
 Cartographer program but with a slightly different goal in mind: to generate
 large resolution images such that one can zoom in and see details.
 
+See some examples here!
+http://github.com/brownan/Minecraft-Overviewer/wiki/Map-examples
+
 Features
 ========
 
