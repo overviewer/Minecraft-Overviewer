@@ -58,10 +58,14 @@ def _convert_coords(chunks):
     return mincol, maxcol, minrow, maxrow, chunks_translated
 
 class WorldRenderer(object):
-    """Renders a world's worth of chunks"""
-    def __init__(self, worlddir):
+    """Renders a world's worth of chunks.
+    worlddir is the path to the minecraft world
+    cachedir is the path to a directory that should hold the resulting images.
+    It may be the same as worlddir (which used to be the default)"""
+    def __init__(self, worlddir, cachedir):
         self.worlddir = worlddir
         self.caves = False
+        self.cachedir = cachedir
 
     def go(self, procs):
         """Starts the render. This returns when it is finished"""
@@ -109,7 +113,7 @@ class WorldRenderer(object):
             # Skip the multiprocessing stuff
             print "Rendering chunks synchronously since you requested 1 process"
             for i, (col, row, chunkfile) in enumerate(chunks):
-                result = chunk.render_and_save(chunkfile, cave=self.caves)
+                result = chunk.render_and_save(chunkfile, self.cachedir, cave=self.caves)
                 results[(col, row)] = result
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
@@ -119,7 +123,8 @@ class WorldRenderer(object):
             pool = multiprocessing.Pool(processes=processes)
             asyncresults = []
             for col, row, chunkfile in chunks:
-                result = pool.apply_async(chunk.render_and_save, args=(chunkfile,),
+                result = pool.apply_async(chunk.render_and_save,
+                        args=(chunkfile,self.cachedir),
                         kwds=dict(cave=self.caves))
                 asyncresults.append((col, row, result))
 

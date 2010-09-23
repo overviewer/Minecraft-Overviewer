@@ -64,12 +64,12 @@ def get_skylight_array(level):
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 83, 85])
 
-def render_and_save(chunkfile, cave=False):
+def render_and_save(chunkfile, cachedir, cave=False):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
     
     Returns the image file location"""
-    a = ChunkRenderer(chunkfile)
+    a = ChunkRenderer(chunkfile, cachedir)
     try:
         return a.render_and_save(cave)
     except Exception, e:
@@ -80,18 +80,37 @@ def render_and_save(chunkfile, cave=False):
         print
         print "You pressed Ctrl-C. Exiting..."
         # Raise an exception that is an instance of Exception. Unlike
-        # KeyboardInterrupt, that will kill the process instead of having it
-        # propagate the exception back to the parent process.
+        # KeyboardInterrupt, this will re-raise in the parent, killing the
+        # entire program, instead of this process dying and the parent waiting
+        # forever for it to finish.
         raise Exception()
 
 class ChunkRenderer(object):
-    def __init__(self, chunkfile):
+    def __init__(self, chunkfile, cachedir):
+        """Make a new chunk renderer for the given chunkfile.
+        chunkfile should be a full path to the .dat file to process
+        cachedir is a directory to save the resulting chunk images to
+        """
         if not os.path.exists(chunkfile):
             raise ValueError("Could not find chunkfile")
         self.chunkfile = chunkfile
         destdir, filename = os.path.split(self.chunkfile)
-        self.destdir = os.path.abspath(destdir)
         self.blockid = ".".join(filename.split(".")[1:3])
+
+        # Cachedir here is the base directory of the caches. We need to go 2
+        # levels deeper according to the chunk file. Get the last 2 components
+        # of destdir and use that
+        moredirs, dir2 = os.path.split(destdir)
+        _, dir1 = os.path.split(moredirs)
+        self.cachedir = os.path.join(cachedir, dir1, dir2)
+
+        if not os.path.exists(self.cachedir):
+            try:
+                os.makedirs(self.cachedir)
+            except OSError, e:
+                import errno
+                if e.errno != errno.EEXIST:
+                    raise
 
     def _load_level(self):
         """Loads and returns the level structure"""
@@ -127,12 +146,12 @@ class ChunkRenderer(object):
         # Get the name of the existing image. No way to do this but to look at
         # all the files
         oldimg = oldimg_path = None
-        for filename in os.listdir(self.destdir):
+        for filename in os.listdir(self.cachedir):
             if filename.startswith("img.{0}.{1}.".format(self.blockid,
                     "cave" if cave else "nocave")) and \
                     filename.endswith(".png"):
                 oldimg = filename
-                oldimg_path = os.path.join(self.destdir, oldimg)
+                oldimg_path = os.path.join(self.cachedir, oldimg)
                 break
         return oldimg, oldimg_path
 
@@ -141,7 +160,6 @@ class ChunkRenderer(object):
         the same directory as the source image. If the file already exists and
         is up to date, this method doesn't render anything.
         """
-        destdir = self.destdir
         blockid = self.blockid
 
         oldimg, oldimg_path = self._find_oldimage(cave)
@@ -169,7 +187,7 @@ class ChunkRenderer(object):
                 self._hash_blockarray(),
                 )
 
-        dest_path = os.path.join(destdir, dest_filename)
+        dest_path = os.path.join(self.cachedir, dest_filename)
 
         if oldimg:
             if dest_filename == oldimg:

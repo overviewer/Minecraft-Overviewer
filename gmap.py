@@ -28,7 +28,7 @@ import world
 import quadtree
 
 helptext = """
-%prog [-p PROCS] [-d] <World # / Path to World> <tiles dest dir>
+%prog [OPTIONS] <World # / Path to World> <tiles dest dir>
 """
 
 def main():
@@ -40,6 +40,7 @@ def main():
     parser.add_option("-p", "--processes", dest="procs", help="How many chunks to render in parallel. A good number for this is the number of cores in your computer. Default %s" % cpus, default=cpus, action="store", type="int")
     parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int")
     parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true")
+    parser.add_option("--cachedir", dest="cachedir", help="Sets the directory where the Overviewer will save chunk images, which is an intermediate step before the tiles are generated. You must use the same directory each time to gain any benefit from the cache. If not set, this defaults to your world directory.")
 
     options, args = parser.parse_args()
 
@@ -59,15 +60,21 @@ def main():
             parser.print_help()
             sys.exit(1)
 
+    if not options.cachedir:
+        cachedir = worlddir
+    else:
+        cachedir = options.cachedir
 
     if len(args) != 2:
+        if options.delete:
+            return delete_all(cachedir, None)
         parser.error("Where do you want to save the tiles?")
     destdir = args[1]
 
     if options.delete:
-        return delete_all(worlddir, destdir)
+        return delete_all(cachedir, destdir)
     # First generate the world's chunk images
-    w = world.WorldRenderer(worlddir)
+    w = world.WorldRenderer(worlddir, cachedir)
     w.go(options.procs)
 
     # Now generate the tiles
@@ -87,12 +94,13 @@ def delete_all(worlddir, tiledir):
                 os.unlink(filepath)
 
     # Now delete all /hash/ files in the tile dir.
-    for dirpath, dirnames, filenames in os.walk(tiledir):
-        for f in filenames:
-            if f.endswith(".hash"):
-                filepath = os.path.join(dirpath, f)
-                print "Deleting {0}".format(filepath)
-                os.unlink(filepath)
+    if tiledir:
+        for dirpath, dirnames, filenames in os.walk(tiledir):
+            for f in filenames:
+                if f.endswith(".hash"):
+                    filepath = os.path.join(dirpath, f)
+                    print "Deleting {0}".format(filepath)
+                    os.unlink(filepath)
 
 def list_worlds():
     "Prints out a brief summary of saves found in the default directory"
