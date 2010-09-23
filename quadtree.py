@@ -221,7 +221,10 @@ class QuadtreeGen(object):
                     self._decrease_depth()
 
         # Create a pool
-        pool = multiprocessing.Pool(processes=procs)
+        if procs == 1:
+            pool = FakePool()
+        else:
+            pool = multiprocessing.Pool(processes=procs)
 
         # Render the highest level of tiles from the chunks
         print "Computing the tile ranges and starting tile processers for inner-most tiles..."
@@ -516,3 +519,20 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
     with open(hashpath, "wb") as hashout:
         hashout.write(digest)
 
+class FakeResult(object):
+    def __init__(self, res):
+        self.res = res
+    def get(self):
+        return self.res
+class FakePool(object):
+    """A fake pool used to render things in sync. Implements a subset of
+    multiprocessing.Pool"""
+    def apply_async(self, func, args=(), kwargs=None):
+        if not kwargs:
+            kwargs = {}
+        result = func(*args, **kwargs)
+        return FakeResult(result)
+    def close(self):
+        pass
+    def join(self):
+        pass
