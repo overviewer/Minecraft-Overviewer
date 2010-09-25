@@ -17,6 +17,7 @@ import functools
 import os
 import os.path
 import multiprocessing
+import numpy
 
 from PIL import Image
 
@@ -57,6 +58,29 @@ def _convert_coords(chunks):
 
     return mincol, maxcol, minrow, maxrow, chunks_translated
 
+
+def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
+    '''
+    Convert an integer to a base36 string.
+    '''
+    if not isinstance(number, (int, long)):
+        raise TypeError('number must be an integer')
+    
+    newn = abs(number)
+ 
+    # Special case for zero
+    if number == 0:
+        return '0'
+ 
+    base36 = ''
+    while newn != 0:
+        newn, i = divmod(newn, len(alphabet))
+        base36 = alphabet[i] + base36
+
+    if number < 0:
+        return "-" + base36
+    return base36
+
 class WorldRenderer(object):
     """Renders a world's worth of chunks.
     worlddir is the path to the minecraft world
@@ -66,6 +90,47 @@ class WorldRenderer(object):
         self.worlddir = worlddir
         self.caves = False
         self.cachedir = cachedir
+
+        #  stores Points Of Interest to be mapped with markers
+        #  a list of dictionaries, see below for an example
+        self.POI = []
+
+    def findTrueSpawn(self):
+        """Adds the true spawn location to self.POI.  The spawn Y coordinate
+        is almost always the default of 64.  Find the first air block above
+        that point for the true spawn location"""
+
+        ## read spawn info from level.dat
+        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]
+        spawnX = data['Data']['SpawnX']
+        spawnY = data['Data']['SpawnY']
+        spawnZ = data['Data']['SpawnZ']
+   
+        ## The chunk that holds the spawn location 
+        chunkX = spawnX/16
+        chunkY = spawnZ/16
+
+        ## The filename of this chunk
+        chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64), 
+                                           base36encode(chunkY % 64),
+                                           base36encode(chunkX),
+                                           base36encode(chunkY))
+
+
+        data=nbt.load(os.path.join(self.worlddir, chunkFile))[1]
+        level = data['Level']
+        blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
+
+        ## The block for spawn *within* the chunk
+        inChunkX = spawnX - (chunkX*16)
+        inChunkZ = spawnZ - (chunkY*16)
+
+        ## find the first air block
+        while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
+            spawnY += 1
+
+
+        self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, msg="Spawn"))
 
     def go(self, procs):
         """Starts the render. This returns when it is finished"""
@@ -82,6 +147,8 @@ class WorldRenderer(object):
         self.maxcol = maxcol
         self.minrow = minrow
         self.maxrow = maxrow
+
+        self.findTrueSpawn()
 
     def _find_chunkfiles(self):
         """Returns a list of all the chunk file locations, and the file they

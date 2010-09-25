@@ -7,6 +7,7 @@
   body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
   #mcmap { height: 100% }
 </style>
+<script type="text/javascript" src="markers.js"></script>
 <script type="text/javascript"
     src="http://maps.google.com/maps/api/js?sensor=false">
 </script>
@@ -74,7 +75,57 @@
   };
   
   var map;
-  
+  var prot;
+
+  var markersInit = false;
+
+    function convertCoords (x,y,z) {
+    
+    var imgx = 0;
+    var imgy = 0;
+    
+    imgx = imgx + (12*x);
+    imgy = imgy - (6*x);
+    
+    imgx = imgx + (12 * y);
+    imgy = imgy + (6* y);
+
+    imgy = imgy - (12*z);
+
+    // this math is mysterious.  i don't fully understand it
+    // but the idea is to assume that block 0,0,0 in chunk 0,0
+    // is drawn in the very middle of the gmap at (192,192)
+    return [192*Math.pow(2,config.maxZoom)+imgx, 192*Math.pow(2,config.maxZoom)+imgy+768+768];
+    }
+
+  function initMarkers() {
+      if (markersInit) { return; }
+
+      markersInit = true;
+
+      prot = map.getProjection();
+
+      for (i in markerData) {
+          var item = markerData[i];
+
+          var converted = convertCoords(item.x-16, item.z, item.y);
+
+
+          var x = converted[0] / Math.pow(2, config.maxZoom);
+          var y = converted[1] / Math.pow(2, config.maxZoom);
+          var p = new google.maps.Point(x,y);
+          var marker = new google.maps.Marker({
+position: prot.fromPointToLatLng(p),
+map: map, 
+title:item.msg
+}); 
+
+}
+
+
+
+}
+
   function initialize() {
     var mapOptions = {
       zoom: config.defaultZoom,
@@ -89,12 +140,33 @@
     if(config.debug) {
       map.overlayMapTypes.insertAt(0, new CoordMapType(new google.maps.Size(config.tileSize, config.tileSize)));
     }
+
+
         
     // Now attach the coordinate map type to the map's registry
     map.mapTypes.set('mcmap', MCMapType);
   
     // We can now set the map to use the 'coordinate' map type
     map.setMapTypeId('mcmap');
+
+    prot = map.getProjection();
+
+    if (config.debug) 
+        google.maps.event.addListener(map, 'click', function(event) {
+                console.log("latLng: " + event.latLng.lat() + ", " + event.latLng.lng());
+                var pnt = prot.fromLatLngToPoint(event.latLng);
+
+                console.log("point: " + pnt);//
+                var pxx = pnt.x * Math.pow(2,config.maxZoom);
+                var pxy = pnt.y * Math.pow(2,config.maxZoom);
+                console.log("pixel: " + pxx + ", " + pxy);
+                });
+
+    google.maps.event.addListener(map, 'projection_changed', function(event) {
+            initMarkers();
+            });
+
+
   }
 </script>
 </head>
