@@ -52,7 +52,7 @@ Disclaimers
 -----------
 Before you dive into using this, just be aware that, for large maps, there is a
 *lot* of data to parse through and process. If your world is very large, expect
-the initial render to take at least an hour, possibly more. (Since minecraft
+the initial render to take at least an hour, possibly more. (Since Minecraft
 maps are practically infinite, the maximum time this could take is also
 infinite!)
 
@@ -69,72 +69,102 @@ Running
 -------
 To generate a set of Google Map tiles, use the gmap.py script like this::
 
-    python gmap.py <Path to World> <Output Directory>
+    python gmap.py [OPTIONS] <World Number / Path to World> <Output Directory>
 
 The output directory will be created if it doesn't exist. This will generate a
 set of image tiles for your world in the directory you choose. When it's done,
 you will find an index.html file in the same directory that you can use to view
 it.
 
-Using more Cores
-----------------
-Adding the "-p" option will utilize more cores during processing.  This can
-speed up rendering quite a bit. The default is set to the same number of cores
-in your computer, but you can adjust it.
+**Important note about Caches**
 
-Example to run 5 worker processes in parallel::
+The Overviewer will put a cached image for every chunk *directly in your world
+directory by default*. If you do not like this behavior, you can specify
+another location with the --chunkdir option. See below for details.
 
-    python gmap.py -p 5 <Path to World> <Output Directory>
+Options
+-------
 
-Specifying the Zoom Level
--------------------------
-The -z option will set the zoom level manually. Without this option, the
-Overviewer will detect the smallest number of zoom levels needed to render your
-entire map.
+-h, --help
+    Shows the list of options and exits
 
-Maybe that's too much though, or maybe you have some outlier chunks that are
-very far off making your map too large to render. That's where this option
-comes in handy.
+--cachedir=CACHEDIR
+    By default, the Overviewer will save in your world directory one image
+    file for every chunk in your world. If you do backups of your world,
+    you may not want these images in your world directory.
 
-This will render your map with 7 zoom levels::
+    Use this option to specify an alternate location to put the rendered
+    chunk images. You must specify this same directory each rendering so
+    that it doesn't have to render every chunk from scratch every time.
 
-    python gmap.py -z 7 <Path to World> <Output Directory>
+    Example::
 
-The zoom level specifies the number of tiles at the highest zoom level. A zoom
-level of z will generate up to 4^z tiles (2^z by 2^z in a square). This means
-each additional zoom level covers 4 times as much area as the last one. Tiles
-with no content will not be rendered, but they still take a small amount of
-time to process.
+        python gmap.py --cachedir=<chunk cache dir> <world> <output dir>
+
+-p PROCS, --processes=PROCS
+    Adding the "-p" option will utilize more cores during processing.  This
+    can speed up rendering quite a bit. The default is set to the same
+    number of cores in your computer, but you can adjust it.
+
+    Example to run 5 worker processes in parallel::
+
+        python gmap.py -p 5 <Path to World> <Output Directory>
+
+-z ZOOM, --zoom=ZOOM
+    The Overviewer by default will detect how many zoom levels are required
+    to show your entire map. This is equivilant to the dimensions of the
+    highest zoom level, in tiles. A zoom level of z means the highest zoom
+    level of your map will be 2^z by 2^z tiles.
+
+    The -z option will set the zoom level manually. This could be useful if
+    you have some outlier chunks causing your map to be too large.
+
+    This will render your map with 7 zoom levels::
+
+        python gmap.py -z 7 <Path to World> <Output Directory>
+
+    Remember that each additional zoom level adds 4 times as many tiles as
+    the last. This can add up fast, zoom level 10 has over a million tiles.
+    Tiles with no content will not be rendered, but they still take a small
+    amount of time to process.
+
+-d, --delete
+    This option changes the mode of execution. No tiles are rendered, and
+    instead, cache files are deleted.
+
+    Explanation: The Overviewer keeps two levels of cache: it saves each
+    chunk rendered as a png, and it keeps a hash file along side each tile
+    in your output directory. Using these cache files allows the Overviewer
+    to skip rendering of any tile image that has not changed.
+
+    By default, the chunk images are saved in your world directory. This
+    example will remove them::
+    
+        python gmap.py -d <World # / Path to World / Path to cache dir>
+
+    You can also delete the tile cache as well. This will force a full
+    re-render, useful if you've changed texture packs and want your world
+    to look uniform. Here's an example::
+
+        python gmap.py -d <# / path> <Tile Directory>
+
+    Be warned, this will cause the next rendering of your map to take
+    significantly longer, since it is having to re-generate the files you just
+    deleted.
 
 Viewing the Results
 -------------------
-The output is two things: an index.html file, and a directory hierarchy full of
-images. To view your world, simply open index.html in a web browser. Internet
-access is required to load the Google Maps API files, but you otherwise don't
-need anything else.
+Within the output directory you will find two things: an index.html file, and a
+directory hierarchy full of images. To view your world, simply open index.html
+in a web browser. Internet access is required to load the Google Maps API
+files, but you otherwise don't need anything else.
 
 You can throw these files up to a web server to let others view your map. You
 do *not* need a Google Maps API key (as was the case with older versions of the
-API), so just copying the directory to your web server should suffice.
+API), so just copying the directory to your web server should suffice. You are,
+however, bound by the Google Maps API terms of service.
 
-Clearing the Cache
-------------------
-The Overviewer keeps two levels of cache: it saves each chunk rendered
-individually along side your chunk files in your saved world directory, and it
-keeps a hash file along side each tile in your output directory. Using these
-cache files it will not re-render any image that has not changed.
-
-If you want to clear the cache and re-render everything, run gmap.py with the
--d option::
-
-    python gmap.py -d <Path to World> <Output Directory>
-
-The next time your map is rendered, it will re-render every chunk. This is
-useful if you've changed texture packs or want to save disk space, but
-otherwise not too useful.
-
-This is probably *not* a good idea for very large worlds, since it will take
-much longer to render the next time you do so.
+http://code.google.com/apis/maps/terms.html
 
 Crushing the Output Tiles
 -------------------------
@@ -167,7 +197,9 @@ http://github.com/brownan/Minecraft-Overviewer/issues
 Feel free to comment on issues, report new issues, and vote on issues that are
 important to you, so I can prioritize accordingly.
 
-An incomplete list of things I want to fix soon is:
+An incomplete list of things I want to do soon is:
+
+* Improve efficiency
 
 * Rendering non-cube blocks, such as torches, flowers, mine tracks, fences,
   doors, and the like. Right now they are either not rendered at all, or

@@ -75,6 +75,7 @@ class WorldRenderer(object):
 
         # Translate chunks to our diagonal coordinate system
         mincol, maxcol, minrow, maxrow, chunks = _convert_coords(raw_chunks)
+        del raw_chunks # Free some memory
 
         self.chunkmap = self._render_chunks_async(chunks, procs)
 
