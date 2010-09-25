@@ -532,6 +532,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
     for col, row, chunkfile in chunks:
         try:
             chunkimg = Image.open(chunkfile)
+            chunkimg.load()
         except IOError, e:
             print "Error opening file", chunkfile
             print "Attempting to re-generate it..."
