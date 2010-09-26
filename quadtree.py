@@ -22,6 +22,7 @@ import functools
 import re
 import shutil
 import collections
+import json
 
 from PIL import Image
 
@@ -118,6 +119,11 @@ class QuadtreeGen(object):
                 
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
+
+        
+
+        with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
+            output.write("var markerData=%s" % json.dumps(self.world.POI))
 
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
