@@ -534,19 +534,27 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
             chunkimg = Image.open(chunkfile)
             chunkimg.load()
         except IOError, e:
+            # If for some reason the chunk failed to load (perhaps a previous
+            # run was canceled and the file was only written half way,
+            # corrupting it), then this could error.
+            # Since we have no easy way of determining how this chunk was
+            # generated, we need to just ignore it.
             print "Error opening file", chunkfile
-            print "Attempting to re-generate it..."
-            os.unlink(chunkfile)
-            # Do some string manipulation to determine what the chunk file is
-            # that goes with this image. Then call chunk.render_and_save
-            dirname, imagename = os.path.split(chunkfile)
-            parts = imagename.split(".")
-            datafile = "c.{0}.{1}.dat".format(parts[1],parts[2])
-            #print "Chunk came from data file", datafile
-            # XXX Don't forget to set cave mode here when it gets implemented!
-            chunk.render_and_save(os.path.join(dirname, datafile), False)
-            chunkimg = Image.open(chunkfile)
-            print "Success"
+            try:
+                # Remove the file so that the next run will re-generate it.
+                os.unlink(chunkfile)
+            except OSError, e:
+                import errno
+                # Ignore if file doesn't exist, another task could have already
+                # removed it.
+                if e.errno != errno.ENOENT:
+                    print "Could not remove the corrupt chunk!"
+                    raise
+            else:
+                print "Removed the corrupt file"
+
+            print "You will need to re-run the Overviewer to fix this chunk"
+            continue
 
         xpos = -192 + (col-colstart)*192
         ypos = -96 + (row-rowstart)*96
