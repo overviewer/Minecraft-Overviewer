@@ -54,11 +54,26 @@ def get_blockarray_fromfile(filename):
     return get_blockarray(level)
 
 def get_skylight_array(level):
-    """Returns the skylight array. Remember this is 4 bits per block, so divide
-    the z component by 2 when accessing the array. and mask off the top or
-    bottom 4 bits if it's odd or even respectively
-    """
-    return numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
+    """Returns the skylight array. This is 4 bits per block, but it is
+    expanded for you so you may index it normally."""
+    skylight = numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
+    # this array is 2 blocks per byte, so expand it
+    skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+    # Even elements get the lower 4 bits
+    skylight_expanded[:,:,::2] = skylight & 0x0F
+    # Odd elements get the upper 4 bits
+    skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
+    return skylight_expanded
+
+def get_blocklight_array(level):
+    """Returns the blocklight array. This is 4 bits per block, but it
+    is expanded for you so you may index it normally."""
+    # expand just like get_skylight_array()
+    blocklight = numpy.frombuffer(level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64))
+    blocklight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+    blocklight_expanded[:,:,::2] = blocklight & 0x0F
+    blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
+    return blocklight_expanded
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53,
@@ -219,24 +234,18 @@ class ChunkRenderer(object):
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
         blocks = self.blocks
+        skylight = get_skylight_array(self.level)
+        blocklight = get_blocklight_array(self.level)
+        
         if cave:
-            skylight = get_skylight_array(self.level)
             # Cave mode. Actually go through and 0 out all blocks that are not in a
             # cave, so that it only renders caves.
-
-            # 1st task: this array is 2 blocks per byte, expand it so we can just
-            # do a bitwise and on the arrays
-            skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
-            # Even elements get the lower 4 bits
-            skylight_expanded[:,:,::2] = skylight & 0x0F
-            # Odd elements get the upper 4 bits
-            skylight_expanded[:,:,1::2] = skylight >> 4
 
             # Places where the skylight is not 0 (there's some amount of skylight
             # touching it) change it to something that won't get rendered, AND
             # won't get counted as "transparent".
             blocks = blocks.copy()
-            blocks[skylight_expanded != 0] = 21
+            blocks[skylight != 0] = 21
 
 
         # Each block is 24x24
@@ -310,7 +319,9 @@ class ChunkRenderer(object):
                         if cave:
                             img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
                         else:
-                            img.paste(t[0], (imgx, imgy), t[1])
+                            light_coeff = pow(0.95, 15 - max(blocklight[x,y,z], skylight[x,y,z]))
+                            img.paste(Image.blend(t[0], black_color, 1.0 - light_coeff), (imgx, imgy), t[1])
+                            #img.paste(t[0], (imgx, imgy), t[1])
 
                         # Draw edge lines
                         if blockid not in transparent_blocks:
@@ -347,4 +358,5 @@ def generate_depthcolors():
             g -= 7
 
     return depth_colors
+black_color = Image.new("RGB", (24,24), (0,0,0))
 depth_colors = generate_depthcolors()
