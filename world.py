@@ -341,6 +341,11 @@ def get_worlds():
     "Returns {world # : level.dat information}"
     ret = {}
     save_dir = get_save_dir()
+
+    # No dirs found - most likely not running from inside minecraft-dir
+    if save_dir is None:
+        return None
+
     for dir in os.listdir(save_dir):
         if dir.startswith("World") and len(dir) == 6:
             world_n = int(dir[-1])
