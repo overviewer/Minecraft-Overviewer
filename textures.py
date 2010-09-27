@@ -92,13 +92,19 @@ def _get_terrain_image():
 def _split_terrain(terrain):
     """Builds and returns a length 256 array of each 16x16 chunk of texture"""
     textures = []
+    (terrain_width, terrain_height) = terrain.size
+    texture_resolution = terrain_width / 16
     for y in xrange(16):
         for x in xrange(16):
-            left = x*16
-            upper = y*16
-            right = left+16
-            lower = upper+16
-            region = terrain.crop((left,upper,right,lower))
+            left = x*texture_resolution
+            upper = y*texture_resolution
+            right = left+texture_resolution
+            lower = upper+texture_resolution
+            region = terrain.transform(
+                      (16, 16),
+                      Image.EXTENT,
+                      (left,upper,right,lower),
+                      Image.BICUBIC)
             textures.append(region)
 
     return textures
