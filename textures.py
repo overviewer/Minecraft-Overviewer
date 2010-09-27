@@ -64,10 +64,10 @@ def _find_file(filename, mode="rb"):
 
     for jarpath in jarpaths:
         if os.path.exists(jarpath):
-            jar = zipfile.ZipFile(jarpath)
             try:
+                jar = zipfile.ZipFile(jarpath)
                 return jar.open(filename)
-            except KeyError:
+            except (KeyError, IOError):
                 pass
 
     path = filename
