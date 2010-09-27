@@ -23,6 +23,9 @@ Features
 * Renders large resolution images of your world, such that you can zoom in and
   see details
 
+* Customizable textures! Pulls textures straight from your installed texture
+  pack!
+
 * Outputs a Google Map powered interface that is memory efficient, both in
   generating and viewing.
 
@@ -41,6 +44,8 @@ This program requires:
 * Python 2.6 or 2.7 <http://python.org/download/>
 * PIL (Python Imaging Library) <http://www.pythonware.com/products/pil/>
 * Numpy <http://scipy.org/Download>
+* Either the Minecraft client installed, or a terrain.png file. See the
+  `Textures`_ section below.
 
 I develop and test this on Linux, but need help testing it on Windows and Mac.
 If something doesn't work, let me know.
@@ -64,6 +69,21 @@ directory and it will only update the tiles it needs to.
 
 There are probably some other minor glitches along the way, hopefully they will
 be fixed soon. See the `Bugs`_ section below.
+
+Textures
+--------
+The Overviewer uses actual textures to render your world. However, I don't
+include textures in the package. You will need to do one of two things before
+you can use the Overviewer:
+
+* Make sure the Minecraft client is installed. The Overviewer will find the
+  installed minecraft.jar and extract the textures from it.
+
+* Install a texture file yourself. This file is called "terrain.png" and is
+  normally found in your minecraft.jar file (not "Minecraft.jar", the launcher,
+  but rather the file that's downloaded by the launcher and installed into a
+  hidden directory). You can also get this file from any of the third party
+  texture packs out there.
 
 Running
 -------

@@ -59,6 +59,8 @@ def _find_file(filename, mode="rb"):
                 "Application Support", "minecraft","bin","minecraft.jar"))
         jarpaths.append(os.path.join(os.environ['HOME'], ".minecraft", "bin",
                 "minecraft.jar"))
+    jarpaths.append(programdir)
+    jarpaths.append(os.getcwd())
 
     for jarpath in jarpaths:
         if os.path.exists(jarpath):
