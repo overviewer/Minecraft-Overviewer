@@ -8,6 +8,7 @@
   #mcmap { height: 100% }
 </style>
 <script type="text/javascript" src="markers.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 <script type="text/javascript"
     src="http://maps.google.com/maps/api/js?sensor=false">
 </script>
@@ -21,6 +22,8 @@
     cacheMinutes: 0, // Change this to have browsers automatically requiest new images every x minutes
     debug:        false
   };
+  
+  var markers = new Array();
   
   // our custom projection maps Latitude to Y, and Longitude to X as normal,
   // but it maps the range [0.0, 1.0] to [0, tileSize] in both directions
@@ -144,16 +147,65 @@
     markersInit = true;
 
     for (i in markerData) {
-      var item = markerData[i];
+      addMarker(markerData[i]);
+		
+   }
+  }
+  
+  
+  function delMarker(markername) {
+	marker = markers[markername];
+	
+    if (marker) {
+		marker.setMap(null);
+		markers[markername].title = "";
+	}
+   }
+   
+   
+  function addMarker(item) {
+	// Add marker if it doesnt exist
+	// if it does, update position
+	var converted = fromWorldToLatLng(item.x, item.y, item.z);
+	marker = markers[item.msg];
+	if (marker) {
+		marker.setPosition(converted);
+	}
+	else { 
       
-      var converted = fromWorldToLatLng(item.x, item.y, item.z);
        var marker = new google.maps.Marker({
         position: converted,
         map: map,
         title: item.msg
       });
+	  markers[item.msg] = marker;
+	  }
    }
-  }
+  
+  
+  function refreshMarkers(){
+		$.getJSON('markers.json', function(data) {
+			
+			for (marker in markers) {
+				var found = false;
+				for (item in data) {
+					if (markers[marker].title == data[item].msg)  found = true;
+					
+				}
+				if (!found) delMarker(markers[marker].title);
+			}
+			
+			for (item in data) {
+				addMarker(data[item]);
+			}
+			
+			
+			
+		
+		});
+	}
+
+	
   
   function initialize() {
     var mapOptions = {
@@ -189,6 +241,10 @@
 	
 	// initialize the markers
 	initMarkers();
+	
+	
+	var refreshInterval = setInterval(refreshMarkers, 3 * 1000);
+	refreshMarkers();
   }
 </script>
 </head>

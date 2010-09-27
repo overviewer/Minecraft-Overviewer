@@ -79,23 +79,6 @@ def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
     return base36
     
     
-def catch_keyboardinterrupt(func):
-    """Decorator that catches a keyboardinterrupt and raises a real exception
-    so that multiprocessing will propagate it properly"""
-    @functools.wraps(func)
-    def newfunc(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except KeyboardInterrupt:
-            print "Ctrl-C caught!"
-            raise Exception("Exiting")
-        except:
-            import traceback
-            traceback.print_exc()
-            raise
-    return newfunc
-
-@catch_keyboardinterrupt
 class MarkerGenerator(object):
     """Generates all markers to overlay on map.
     worlddir is the path to the minecraft world
@@ -133,7 +116,7 @@ class MarkerGenerator(object):
             fileobj = open(path, "rb")
             print "Adding markers to map"
             for line in fileobj:
-                print "marker found: "+line
+                #print "marker found: "+line
                 split = line.split(":");
                 if (len(split) == 5):
                     text = split[0]
@@ -195,10 +178,14 @@ class MarkerGenerator(object):
             output.write("var markerData=%s" % json.dumps(self.POI))
 
 
+        with open(os.path.join(self.destdir, "markers.json"), 'w') as output:
+            output.write(json.dumps(self.POI))
+
+            
     def go(self, procs):
         """Starts the generation of markers"""
         
-        print "Adding markers"
+        #print "Adding markers"
 
         self.addSpawn()
         self.addLabels()
