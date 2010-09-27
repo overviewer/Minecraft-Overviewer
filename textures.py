@@ -106,7 +106,7 @@ def _split_terrain(terrain):
 # This maps terainids to 16x16 images
 terrain_images = _split_terrain(_get_terrain_image())
 
-def _transform_image(img):
+def transform_image(img):
     """Takes a PIL image and rotates it left 45 degrees and shrinks the y axis
     by a factor of 2. Returns the resulting image, which will be 24x12 pixels
 
@@ -134,7 +134,7 @@ def _transform_image(img):
     newimg = img.transform((24,12), Image.AFFINE, transform)
     return newimg
 
-def _transform_image_side(img):
+def transform_image_side(img):
     """Takes an image and shears it for the left side of the cube (reflect for
     the right side)"""
 
@@ -158,13 +158,13 @@ def _build_block(top, side, texID=None):
     """
     img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-    top = _transform_image(top)
+    top = transform_image(top)
 
     if not side:
         img.paste(top, (0,0), top)
         return img
 
-    side = _transform_image_side(side)
+    side = transform_image_side(side)
 
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
     

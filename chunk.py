@@ -14,7 +14,7 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance
 from itertools import izip, count
 import os.path
 import hashlib
@@ -36,6 +36,13 @@ image
 # first use im.split() and take the third item which is the alpha channel and
 # use that as the mask. Then take the image and use im.convert("RGB") to strip
 # the image from its alpha channel, and use that as the source to paste()
+
+def get_lighting_coefficient(skylight, blocklight):
+    """Takes a raw blocklight and skylight, and returns a value
+    between 0.0 (fully lit) and 1.0 (fully black) that can be used as
+    an alpha value for a blend with a black source image. It mimics
+    Minecraft lighting calculations."""
+    return 1.0 - pow(0.8, 15 - max(blocklight, skylight))
 
 def get_lvldata(filename):
     """Takes a filename and returns the Level struct, which contains all the
@@ -317,11 +324,38 @@ class ChunkRenderer(object):
                         # Draw the actual block on the image. For cave images,
                         # tint the block with a color proportional to its depth
                         if cave:
+                            # no lighting for cave -- depth is probably more useful
                             img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
                         else:
-                            light_coeff = pow(0.95, 15 - max(blocklight[x,y,z], skylight[x,y,z]))
-                            img.paste(Image.blend(t[0], black_color, 1.0 - light_coeff), (imgx, imgy), t[1])
-                            #img.paste(t[0], (imgx, imgy), t[1])
+                            if blockid in transparent_blocks:
+                                # transparent means draw the whole
+                                # block shaded with the current
+                                # block's light
+                                black_coeff = get_lighting_coefficient(skylight[x,y,z], blocklight[x,y,z])
+                                img.paste(Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
+                            else:
+                                # draw each face lit appropriately,
+                                # but first just draw the block
+                                img.paste(t[0], (imgx, imgy), t[1])
+                                
+                                # top face
+                                if z != 127 and (blocks[x,y,z+1] in transparent_blocks):
+                                    black_coeff = get_lighting_coefficient(skylight[x,y,z+1], blocklight[x,y,z+1])
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
+
+                                # left face
+                                black_coeff = 0.0
+                                if x != 0:
+                                    black_coeff = get_lighting_coefficient(skylight[x-1,y,z], blocklight[x-1,y,z])
+                                if x == 0 or (blocks[x-1,y,z] in transparent_blocks):
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
+
+                                # right face
+                                black_coeff = 0.0
+                                if y != 15:
+                                    black_coeff = get_lighting_coefficient(skylight[x,y+1,z], blocklight[x,y+1,z])
+                                if y == 15 or (blocks[x,y+1,z] in transparent_blocks):
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
                         # Draw edge lines
                         if blockid not in transparent_blocks:
@@ -338,6 +372,32 @@ class ChunkRenderer(object):
 
         return img
 
+# Render 3 blending masks for lighting
+# first is top (+Z), second is left (-X), third is right (+Y)
+def generate_facemasks():
+    white = Image.new("L", (24,24), 255)
+    
+    top = Image.new("L", (24,24), 0)
+    left = Image.new("L", (24,24), 0)
+    whole = Image.new("L", (24,24), 0)
+    
+    toppart = textures.transform_image(white)
+    leftpart = textures.transform_image_side(white)
+    
+    top.paste(toppart, (0,0))
+    left.paste(leftpart, (0,6))
+    right = left.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    # Manually touch up 6 pixels that leave a gap, like in
+    # textures._build_block()
+    for x,y in [(13,23), (17,21), (21,19)]:
+        right.putpixel((x,y), 255)
+    for x,y in [(3,4), (7,2), (11,0)]:
+        top.putpixel((x,y), 255)
+    
+    return (top, left, right)
+facemasks = generate_facemasks()
+black_color = Image.new("RGB", (24,24), (0,0,0))
 
 # Render 128 different color images for color coded depth blending in cave mode
 def generate_depthcolors():
@@ -358,5 +418,4 @@ def generate_depthcolors():
             g -= 7
 
     return depth_colors
-black_color = Image.new("RGB", (24,24), (0,0,0))
 depth_colors = generate_depthcolors()
