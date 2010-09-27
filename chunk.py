@@ -21,6 +21,7 @@ import hashlib
 
 import nbt
 import textures
+import world
 
 """
 This module has routines related to rendering one particular chunk into an
@@ -86,12 +87,12 @@ def get_blocklight_array(level):
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 83, 85])
 
-def render_and_save(chunkfile, cachedir, cave=False):
+def render_and_save(chunkfile, cachedir, worldobj, cave=False):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
     
     Returns the image file location"""
-    a = ChunkRenderer(chunkfile, cachedir)
+    a = ChunkRenderer(chunkfile, cachedir, worldobj)
     try:
         return a.render_and_save(cave)
     except Exception, e:
@@ -108,7 +109,7 @@ def render_and_save(chunkfile, cachedir, cave=False):
         raise Exception()
 
 class ChunkRenderer(object):
-    def __init__(self, chunkfile, cachedir):
+    def __init__(self, chunkfile, cachedir, worldobj):
         """Make a new chunk renderer for the given chunkfile.
         chunkfile should be a full path to the .dat file to process
         cachedir is a directory to save the resulting chunk images to
@@ -117,7 +118,11 @@ class ChunkRenderer(object):
             raise ValueError("Could not find chunkfile")
         self.chunkfile = chunkfile
         destdir, filename = os.path.split(self.chunkfile)
-        self.blockid = ".".join(filename.split(".")[1:3])
+        
+        chunkcoords = filename.split(".")[1:3]
+        self.coords = map(world.base36decode, chunkcoords)
+        self.blockid = ".".join(chunkcoords)
+        self.world = worldobj
 
         # Cachedir here is the base directory of the caches. We need to go 2
         # levels deeper according to the chunk file. Get the last 2 components
@@ -241,8 +246,35 @@ class ChunkRenderer(object):
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
         blocks = self.blocks
+        
+        # light data for the current chunk
         skylight = get_skylight_array(self.level)
         blocklight = get_blocklight_array(self.level)
+        
+        # light data for the chunk to the lower left
+        chunk_path = self.world.get_chunk_path(self.coords[0] - 1, self.coords[1])
+        try:
+            chunk_data = get_lvldata(chunk_path)
+            left_skylight = get_skylight_array(chunk_data)
+            left_blocklight = get_blocklight_array(chunk_data)
+            del chunk_data
+        except IOError:
+            left_skylight = None
+            left_blocklight = None
+
+        # light data for the chunk to the lower right
+        chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] + 1)
+        try:
+            chunk_data = get_lvldata(chunk_path)
+            right_skylight = get_skylight_array(chunk_data)
+            right_blocklight = get_blocklight_array(chunk_data)
+            del chunk_data
+        except IOError:
+            right_skylight = None
+            right_blocklight = None
+        
+        # clean up namespace a bit
+        del chunk_path
         
         if cave:
             # Cave mode. Actually go through and 0 out all blocks that are not in a
@@ -347,6 +379,8 @@ class ChunkRenderer(object):
                                 black_coeff = 0.0
                                 if x != 0:
                                     black_coeff = get_lighting_coefficient(skylight[x-1,y,z], blocklight[x-1,y,z])
+                                elif left_skylight != None and left_blocklight != None:
+                                    black_coeff = get_lighting_coefficient(left_skylight[15,y,z], left_blocklight[15,y,z])
                                 if x == 0 or (blocks[x-1,y,z] in transparent_blocks):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
 
@@ -354,6 +388,8 @@ class ChunkRenderer(object):
                                 black_coeff = 0.0
                                 if y != 15:
                                     black_coeff = get_lighting_coefficient(skylight[x,y+1,z], blocklight[x,y+1,z])
+                                elif right_skylight != None and right_blocklight != None:
+                                    black_coeff = get_lighting_coefficient(right_skylight[x,0,z], right_blocklight[x,0,z])
                                 if y == 15 or (blocks[x,y+1,z] in transparent_blocks):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
