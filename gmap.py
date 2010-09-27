@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 #    This file is part of the Minecraft Overviewer.
 #
@@ -15,9 +15,12 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+if sys.version_info[0] != 2 and sys.version_info[1] < 6:
+    print "Sorry, the Overviewer requires at least Python 2.6 to run"
+    sys.exit(1)
 
 import os
-import sys
 import os.path
 from optparse import OptionParser
 import re

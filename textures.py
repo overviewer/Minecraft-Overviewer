@@ -59,13 +59,15 @@ def _find_file(filename, mode="rb"):
                 "Application Support", "minecraft","bin","minecraft.jar"))
         jarpaths.append(os.path.join(os.environ['HOME'], ".minecraft", "bin",
                 "minecraft.jar"))
+    jarpaths.append(programdir)
+    jarpaths.append(os.getcwd())
 
     for jarpath in jarpaths:
         if os.path.exists(jarpath):
-            jar = zipfile.ZipFile(jarpath)
             try:
+                jar = zipfile.ZipFile(jarpath)
                 return jar.open(filename)
-            except KeyError:
+            except (KeyError, IOError):
                 pass
 
     path = filename
@@ -149,7 +151,7 @@ def _transform_image_side(img):
     return newimg
 
 
-def _build_block(top, side):
+def _build_block(top, side, texID=None):
     """From a top texture and a side texture, build a block image.
     top and side should be 16x16 image objects. Returns a 24x24 image
 
@@ -176,6 +178,14 @@ def _build_block(top, side):
     otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
     otherside.putalpha(othersidealpha)
 
+    ## special case for non-block things
+    if texID in (12,13,15,28,29,80,73): ## flowers, sapling, mushrooms,  regular torch, reeds
+        # instead of pasting these blocks at the cube edges, place them in the middle:
+        # and omit the top
+        img.paste(side, (6,3), side)
+        img.paste(otherside, (6,3), otherside)
+        return img
+
     img.paste(side, (0,6), side)
     img.paste(otherside, (12,6), otherside)
     img.paste(top, (0,0), top)
@@ -201,21 +211,35 @@ def _build_blockimages():
     # Top textures of all block types. The number here is the index in the
     # texture array (terrain_images), which comes from terrain.png's cells, left to right top to
     # bottom.
-    topids = [-1,1,0,2,16,4,15,17,205,205,237,237,18,19,32,33,
-        34,21,52,48,49,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, # Cloths are left out
-        -1,-1,-1,64,64,13,12,29,28,23,22,6,6,7,8,35, # Gold/iron blocks? Doublestep? TNT from above?
-        36,37,-1,-1,65,4,25,101,98,24,43,-1,86,1,1,-1, # Torch from above? leaving out fire. Redstone wire? Crops left out. sign post
-        -1,-1,-1,16,-1,-1,-1,-1,-1,51,51,-1,-1,1,66,67, # door,ladder left out. Minecart rail orientation
-        66,69,72,-1,74 # clay?
+       #        0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+    topids = [ -1,  1,  0,  2, 16,  4, 15, 17,205,205,237,237, 18, 19, 32, 33,
+       #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
+               34, 21, 52, 48, 49, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, # Cloths are left out
+       #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
+               -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
+       #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+               36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1, # Torch from above? leaving out fire. Redstone wire? Crops left out. sign post
+       #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
+               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67, # door,ladder left out. Minecart rail orientation
+       #       80  81  82  83  84
+               66, 69, 72, 73, 74 # clay?
         ]
 
+    # NOTE: For non-block textures, the sideid is ignored, but can't be -1
+
     # And side textures of all block types
-    sideids = [-1,1,3,2,16,4,15,17,205,205,237,237,18,19,32,33,
-        34,20,52,48,49,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-        -1,-1,-1,64,64,13,12,29,28,23,22,6,6,7,8,35,
-        36,37,-1,-1,65,4,25,101,98,24,43,-1,86,1,1,-1,
-        -1,-1,-1,16,-1,-1,-1,-1,-1,51,51,-1,-1,1,66,67,
-        66,69,72,-1,74
+       #         0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+    sideids = [ -1,  1,  3,  2, 16,  4, 15, 17,205,205,237,237, 18, 19, 32, 33,
+       #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
+                34, 20, 52, 48, 49, -1, -1, -1, -1, -1, -1, -1,- 1, -1, -1, -1,
+       #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
+                -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35,
+       #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+                36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1,
+       #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
+                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67,
+       #        80  81  82  83  84
+                66, 69, 72, 73, 74
         ]
 
     # This maps block id to the texture that goes on the side of the block
@@ -228,7 +252,7 @@ def _build_blockimages():
         toptexture = terrain_images[toptextureid]
         sidetexture = terrain_images[sidetextureid]
 
-        img = _build_block(toptexture, sidetexture)
+        img = _build_block(toptexture, sidetexture, toptextureid)
 
         allimages.append((img.convert("RGB"), img.split()[3]))
 
