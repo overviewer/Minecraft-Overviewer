@@ -539,13 +539,14 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
         try:
             chunkimg = Image.open(chunkfile)
             chunkimg.load()
-        except IOError, e:
+        except Exception, e:
             # If for some reason the chunk failed to load (perhaps a previous
             # run was canceled and the file was only written half way,
             # corrupting it), then this could error.
             # Since we have no easy way of determining how this chunk was
             # generated, we need to just ignore it.
             print "Error opening file", chunkfile
+            print "(Error was {0})".format(e)
             try:
                 # Remove the file so that the next run will re-generate it.
                 os.unlink(chunkfile)

@@ -19,9 +19,8 @@ import os.path
 import multiprocessing
 import numpy
 import math
-
+import sys
 from PIL import Image
-
 import chunk
 import nbt
 
@@ -32,7 +31,6 @@ and for extracting information about available worlds
 """
 
 base36decode = functools.partial(int, base=36)
-
 
 def _convert_coords(chunks):
     """Takes the list of (chunkx, chunky, chunkfile) where chunkx and chunky
@@ -86,17 +84,23 @@ class WorldRenderer(object):
     """Renders a world's worth of chunks.
     worlddir is the path to the minecraft world
     cachedir is the path to a directory that should hold the resulting images.
-    It may be the same as worlddir (which used to be the default)"""
-    def __init__(self, worlddir, cachedir):
+    It may be the same as worlddir (which used to be the default).
+    
+    If chunklist is given, it is assumed to be an iterator over paths to chunk
+    files to update. If it includes a trailing newline, it is stripped, so you
+    can pass in file handles just fine.
+    """
+    def __init__(self, worlddir, cachedir, chunklist=None):
         self.worlddir = worlddir
         self.caves = False
         self.cachedir = cachedir
+
+        self.chunklist = chunklist
 
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example
         self.POI = []
 
-        
     def addSpawn(self):
         """Adds the true spawn location to self.POI."""  
 
@@ -105,7 +109,7 @@ class WorldRenderer(object):
         spawnX = data['Data']['SpawnX']
         spawnY = data['Data']['SpawnY'] ## REMEMBER! Z-level is swapped with Ys
         spawnZ = data['Data']['SpawnZ']
-        print str(spawnX)+","+str(spawnY)+","+str(spawnZ)
+        
         self.addMarker(spawnX, spawnY, spawnZ, "Spawn")
 
     def addLabels(self):
@@ -121,14 +125,14 @@ class WorldRenderer(object):
             fileobj = open(path, "rb")
             print "Adding markers to map"
             for line in fileobj:
-                print "line found"+line
+                
                 split = line.split(":");
                 if (len(split) == 5):
                     text = split[0]
                     locX = math.trunc(float(split[1]))
                     locY = math.trunc(float(split[2]))
                     locZ = math.trunc(float(split[3]))
-                    print str(locX)+","+str(locY)+","+str(locZ)
+                    
                     self.addMarker(locX, locY, locZ, text)
                     
                 else:
@@ -146,7 +150,7 @@ class WorldRenderer(object):
         is almost always the default of 64.  Find the first air block above
         that point for the true spawn location"""
 
-        print str(locX)+","+str(locZ)
+        
         ## The chunk that holds the spawn location 
         chunkX = locX/16
         chunkZ = locZ/16
@@ -172,7 +176,7 @@ class WorldRenderer(object):
        
 
         self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text))
-        print "Successfully appended to POI"
+        
 
 
     def go(self, procs):
@@ -201,8 +205,12 @@ class WorldRenderer(object):
         
         Returns a list of (chunkx, chunky, filename) where chunkx and chunky are
         given in chunk coordinates. Use convert_coords() to turn the resulting list
-        into an oblique coordinate system"""
+        into an oblique coordinate system.
+        
+        Usually this scans the given worlddir, but will use the chunk list
+        given to the constructor if one was provided."""
         all_chunks = []
+
         for dirpath, dirnames, filenames in os.walk(self.worlddir):
             if not dirnames and filenames:
                 for f in filenames:
@@ -210,7 +218,41 @@ class WorldRenderer(object):
                         p = f.split(".")
                         all_chunks.append((base36decode(p[1]), base36decode(p[2]), 
                             os.path.join(dirpath, f)))
+
+        if not all_chunks:
+            print "Error: No chunks found!"
+            sys.exit(1)
         return all_chunks
+        
+
+    def _get_chunk_renderset(self):
+        """Returns a set of (col, row) chunks that should be rendered. Returns
+        None if all chunks should be rendered"""
+        if not self.chunklist:
+            return None
+        
+        # Get a list of the (chunks, chunky, filename) from the passed in list
+        # of filenames
+        chunklist = []
+        for path in self.chunklist:
+            if path.endswith("\n"):
+                path = path[:-1]
+            f = os.path.basename(path)
+            if f and f.startswith("c.") and f.endswith(".dat"):
+                p = f.split(".")
+                chunklist.append((base36decode(p[1]), base36decode(p[2]),
+                    path))
+
+        # Translate to col, row coordinates
+        _, _, _, _, chunklist = _convert_coords(chunklist)
+
+        # Build a set from the col, row pairs
+        inclusion_set = set()
+        for col, row, filename in chunklist:
+            inclusion_set.add((col, row))
+
+        return inclusion_set
+
 
     def _render_chunks_async(self, chunks, processes):
         """Starts up a process pool and renders all the chunks asynchronously.
@@ -220,11 +262,25 @@ class WorldRenderer(object):
         Returns a dictionary mapping (col, row) to the file where that
         chunk is rendered as an image
         """
+        # The set of chunks to render, or None for all of them. The logic is
+        # slightly more compliated than it should seem, since we still need to
+        # build the results dict out of all chunks, even if they're not being
+        # rendered.
+        inclusion_set = self._get_chunk_renderset()
+
         results = {}
         if processes == 1:
             # Skip the multiprocessing stuff
             print "Rendering chunks synchronously since you requested 1 process"
             for i, (col, row, chunkfile) in enumerate(chunks):
+                if inclusion_set and (col, row) not in inclusion_set:
+                    # Skip rendering, just find where the existing image is
+                    _, imgpath = chunk.ChunkRenderer(chunkfile,
+                            self.cachedir).find_oldimage(False)
+                    if imgpath:
+                        results[(col, row)] = imgpath
+                        continue
+
                 result = chunk.render_and_save(chunkfile, self.cachedir, cave=self.caves)
                 results[(col, row)] = result
                 if i > 0:
@@ -235,6 +291,14 @@ class WorldRenderer(object):
             pool = multiprocessing.Pool(processes=processes)
             asyncresults = []
             for col, row, chunkfile in chunks:
+                if inclusion_set and (col, row) not in inclusion_set:
+                    # Skip rendering, just find where the existing image is
+                    _, imgpath = chunk.ChunkRenderer(chunkfile,
+                            self.cachedir).find_oldimage(False)
+                    if imgpath:
+                        results[(col, row)] = imgpath
+                        continue
+
                 result = pool.apply_async(chunk.render_and_save,
                         args=(chunkfile,self.cachedir),
                         kwds=dict(cave=self.caves))
@@ -246,7 +310,7 @@ class WorldRenderer(object):
                 results[(col, row)] = result.get()
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
-                        print "{0}/{1} chunks rendered".format(i, len(chunks))
+                        print "{0}/{1} chunks rendered".format(i, len(asyncresults))
 
             pool.join()
         print "Done!"

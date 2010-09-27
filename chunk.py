@@ -142,7 +142,7 @@ class ChunkRenderer(object):
         self._digest = digest[:6]
         return self._digest
 
-    def _find_oldimage(self, cave):
+    def find_oldimage(self, cave):
         # Get the name of the existing image. No way to do this but to look at
         # all the files
         oldimg = oldimg_path = None
@@ -162,7 +162,7 @@ class ChunkRenderer(object):
         """
         blockid = self.blockid
 
-        oldimg, oldimg_path = self._find_oldimage(cave)
+        oldimg, oldimg_path = self.find_oldimage(cave)
 
         if oldimg:
             # An image exists? Instead of checking the hash which is kinda

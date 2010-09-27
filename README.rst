@@ -172,6 +172,18 @@ Options
     significantly longer, since it is having to re-generate the files you just
     deleted.
 
+--chunklist=CHUNKLIST
+    Use this option to specify manually a list of chunks to consider for
+    updating. Without this option, every chunk is checked for update and if
+    necessary, re-rendered. If this option points to a file containing, 1 per
+    line, the path to a chunk data file, then only those in the list will be
+    considered for update.
+
+    It's up to you to build such a list. On Linux or Mac, try using the "find"
+    command. You could, for example, output all chunk files that are older than
+    a certain date. Or perhaps you can incrementally update your map by passing
+    in a subset of chunks each time. It's up to you!
+
 Viewing the Results
 -------------------
 Within the output directory you will find two things: an index.html file, and a
