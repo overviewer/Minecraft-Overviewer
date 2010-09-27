@@ -110,12 +110,12 @@ class WorldRenderer(object):
         """Adds the labels from the server to self.POI."""
 
         ## read label info from mapper-labels.txt
-	## TODO! for each line, extract text:x:Z:y
-        data = nbt.load(os.path.join(self.worlddir, "../mapper-labels.txt"))[1]
+		## TODO! for each line, extract text:x:Z:y
+        data = nbt.load(os.path.join(self.worlddir, "mapper-labels.dat"))[1]
         locX = data['Data']['locX']
         locY = data['Data']['locY']
         locZ = data['Data']['locZ']
-	text = data['Data']['text']
+        text = data['Data']['text']
         self.addMarker(locX, locY, locZ, text)
 
   
