@@ -18,6 +18,7 @@ import os
 import os.path
 import multiprocessing
 import numpy
+import math
 
 from PIL import Image
 
@@ -67,16 +68,16 @@ def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
         raise TypeError('number must be an integer')
     
     newn = abs(number)
- 
+    
     # Special case for zero
     if number == 0:
         return '0'
- 
+    
     base36 = ''
     while newn != 0:
         newn, i = divmod(newn, len(alphabet))
         base36 = alphabet[i] + base36
-
+    
     if number < 0:
         return "-" + base36
     return base36
@@ -102,22 +103,41 @@ class WorldRenderer(object):
         ## read spawn info from level.dat
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]
         spawnX = data['Data']['SpawnX']
-        spawnY = data['Data']['SpawnY']
+        spawnY = data['Data']['SpawnY'] ## REMEMBER! Z-level is swapped with Ys
         spawnZ = data['Data']['SpawnZ']
-
-	self.addMarker(spawnX, spawnY, spawnZ, "Spawn")
+        print str(spawnX)+","+str(spawnY)+","+str(spawnZ)
+        self.addMarker(spawnX, spawnY, spawnZ, "Spawn")
 
     def addLabels(self):
         """Adds the labels from the server to self.POI."""
 
         ## read label info from mapper-labels.txt
-	## TODO! for each line, extract text:x:Z:y
-        data = nbt.load(os.path.join(self.worlddir, "../mapper-labels.txt"))[1]
-        locX = data['Data']['locX']
-        locY = data['Data']['locY']
-        locZ = data['Data']['locZ']
-        text = data['Data']['text']
-        self.addMarker(locX, locY, locZ, text)
+        ## TODO! for each line, extract text:x:Z:y
+
+        path = os.path.join(self.worlddir, "mapper-labels.txt")
+        
+        #try:
+        if os.path.exists(path):
+            fileobj = open(path, "rb")
+            print "Adding markers to map"
+            for line in fileobj:
+                print "line found"+line
+                split = line.split(":");
+                if (len(split) == 5):
+                    text = split[0]
+                    locX = math.trunc(float(split[1]))
+                    locY = math.trunc(float(split[2]))
+                    locZ = math.trunc(float(split[3]))
+                    print str(locX)+","+str(locY)+","+str(locZ)
+                    self.addMarker(locX, locY, locZ, text)
+                    
+                else:
+                    continue;
+        #except (IOError):
+         #   print "Exception while reading label";
+         #   pass;
+
+        
 
   
 
@@ -126,16 +146,16 @@ class WorldRenderer(object):
         is almost always the default of 64.  Find the first air block above
         that point for the true spawn location"""
 
-   
+        print str(locX)+","+str(locZ)
         ## The chunk that holds the spawn location 
         chunkX = locX/16
-        chunkY = locZ/16
+        chunkZ = locZ/16
 
         ## The filename of this chunk
         chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64), 
-                                           base36encode(chunkY % 64),
+                                           base36encode(chunkZ % 64),
                                            base36encode(chunkX),
-                                           base36encode(chunkY))
+                                           base36encode(chunkZ))
 
 
         data=nbt.load(os.path.join(self.worlddir, chunkFile))[1]
@@ -144,7 +164,7 @@ class WorldRenderer(object):
 
         ## The block for spawn *within* the chunk
         inChunkX = locX - (chunkX*16)
-        inChunkZ = locZ - (chunkY*16)
+        inChunkZ = locZ - (chunkZ*16)
 
         ## find the first air block
         while (blockArray[inChunkX, inChunkZ, locY] != 0):
@@ -152,6 +172,7 @@ class WorldRenderer(object):
        
 
         self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text))
+        print "Successfully appended to POI"
 
 
     def go(self, procs):
@@ -172,6 +193,7 @@ class WorldRenderer(object):
         self.maxrow = maxrow
 
         self.addSpawn()
+        self.addLabels()
 
     def _find_chunkfiles(self):
         """Returns a list of all the chunk file locations, and the file they
