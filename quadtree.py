@@ -539,7 +539,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
         try:
             chunkimg = Image.open(chunkfile)
             chunkimg.load()
-        except IOError, e:
+        except (IOError, IndexError), e:
             # If for some reason the chunk failed to load (perhaps a previous
             # run was canceled and the file was only written half way,
             # corrupting it), then this could error.
