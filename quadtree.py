@@ -112,13 +112,15 @@ class QuadtreeGen(object):
         print "{0}/{1} tiles complete on level {2}/{3}".format(
                 complete, total, level, self.p)
 
-    def write_html(self, zoomlevel):
+    def write_html(self, zoomlevel, imgformat):
         """Writes out index.html"""
         templatepath = os.path.join(os.path.split(__file__)[0], "template.html")
 
         html = open(templatepath, 'r').read()
         html = html.replace(
                 "{maxzoom}", str(zoomlevel))
+        html = html.replace(
+                "{imgformat}", str(imgformat))
                 
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
@@ -263,7 +265,7 @@ class QuadtreeGen(object):
         else:
             pool = multiprocessing.Pool(processes=procs)
 
-        self.write_html(self.p)
+        self.write_html(self.p, self.imgformat)
 
         # Render the highest level of tiles from the chunks
         results = collections.deque()
