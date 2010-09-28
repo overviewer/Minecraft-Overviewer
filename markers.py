@@ -28,33 +28,6 @@ This module has routines related to exporting markers to overlay on a generated 
 
 """
 
-base36decode = functools.partial(int, base=36)
-
-def _convert_coords(chunks):
-    """Takes the list of (chunkx, chunky, chunkfile) where chunkx and chunky
-    are in the chunk coordinate system, and figures out the row and column in
-    the image each one should be.
-
-    returns mincol, maxcol, minrow, maxrow, chunks_translated
-    chunks_translated is a list of (col, row, filename)
-    """
-    chunks_translated = []
-    # columns are determined by the sum of the chunk coords, rows are the
-    # difference
-    item = chunks[0]
-    mincol = maxcol = item[0] + item[1]
-    minrow = maxrow = item[1] - item[0]
-    for c in chunks:
-        col = c[0] + c[1]
-        mincol = min(mincol, col)
-        maxcol = max(maxcol, col)
-        row = c[1] - c[0]
-        minrow = min(minrow, row)
-        maxrow = max(maxrow, row)
-        chunks_translated.append((col, row, c[2]))
-
-    return mincol, maxcol, minrow, maxrow, chunks_translated
-
 
 def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
     '''
@@ -98,23 +71,22 @@ class MarkerGenerator(object):
         ## read spawn info from level.dat
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]
         spawnX = data['Data']['SpawnX']
-        spawnY = data['Data']['SpawnY'] ## REMEMBER! Z-level is swapped with Ys
+        spawnY = data['Data']['SpawnY']
         spawnZ = data['Data']['SpawnZ']
         
-        self.addMarker(spawnX, spawnY, spawnZ, "Spawn")
+        self.addMarker(spawnX, spawnY, spawnZ, "Spawn",0)
 
     def addLabels(self):
         """Adds the labels from the server to self.POI."""
 
         ## read label info from mapper-labels.txt
-        ## TODO! for each line, extract text:x:Z:y
 
         path = os.path.join(self.worlddir, "mapper-labels.txt")
         
         #try:
         if os.path.exists(path):
             fileobj = open(path, "rb")
-            print "Adding markers to map"
+            print "Adding labels to map"
             for line in fileobj:
                 #print "marker found: "+line
                 split = line.split(":");
@@ -124,7 +96,7 @@ class MarkerGenerator(object):
                     locY = math.trunc(float(split[2]))
                     locZ = math.trunc(float(split[3]))
                     
-                    self.addMarker(locX, locY, locZ, text)
+                    self.addMarker(locX, locY, locZ, text, 3)
                     
                 else:
                     continue;
@@ -133,15 +105,71 @@ class MarkerGenerator(object):
          #   pass;
 
         
+        
+    def addPlayers(self):
+        """Adds the players positions from the server to self.POI."""
+
+        ## read label info from mapper-labels.txt
+
+        path = os.path.join(self.worlddir, "mapper-playerpos.txt")
+        
+        #try:
+        if os.path.exists(path):
+            fileobj = open(path, "rb")
+            print "Adding players to map"
+            for line in fileobj:
+                #print "marker found: "+line
+                split = line.split(":");
+                if (len(split) == 5):
+                    text = split[0]
+                    locX = math.trunc(float(split[1]))
+                    locY = math.trunc(float(split[2]))
+                    locZ = math.trunc(float(split[3]))
+                    
+                    self.addMarker(locX, locY, locZ, text, 4)
+                    
+                else:
+                    continue;
+        #except (IOError):
+         #   print "Exception while reading label";
+         #   pass;
+
+    def addHomes(self):
+        """Adds the players homes from the server to self.POI."""
+
+        ## read label info from mapper-labels.txt
+
+        path = os.path.join(self.worlddir, "mapper-homes.txt")
+        
+        #try:
+        if os.path.exists(path):
+            fileobj = open(path, "rb")
+            print "Adding homes to map"
+            for line in fileobj:
+                #print "marker found: "+line
+                split = line.split(":");
+                if (len(split) == 5):
+                    text = split[0]
+                    locX = math.trunc(float(split[1]))
+                    locY = math.trunc(float(split[2]))
+                    locZ = math.trunc(float(split[3]))
+                    
+                    self.addMarker(locX, locY, locZ, text, 1)
+                    
+                else:
+                    continue;
+        #except (IOError):
+         #   print "Exception while reading label";
+         #   pass;
 
   
 
-    def addMarker(self, locX, locY, locZ, text):
+    def addMarker(self, locX, locY, locZ, text, id):
         """The spawn Y coordinate is almost always the
         default of 64.  Find the first air block above
         that point for the true spawn location"""
 
-        
+        #print "marker: "+str(locX)+","+str(locY)+","+str(locZ)
         ## The chunk that holds the spawn location 
         chunkX = locX/16
         chunkZ = locZ/16
@@ -162,11 +190,12 @@ class MarkerGenerator(object):
         inChunkZ = locZ - (chunkZ*16)
 
         ## find the first air block
-        while (blockArray[inChunkX, inChunkZ, locY] != 0):
-            locY += 1
+        #while (blockArray[inChunkX, inChunkZ, locY] != 0):
+            #locY += 1
+            #locY = locY
        
 
-        self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text))
+        self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text, id=id))
        
        
     
@@ -189,4 +218,6 @@ class MarkerGenerator(object):
 
         self.addSpawn()
         self.addLabels()
+        self.addPlayers()
+        self.addHomes()
         self.write_markers()
