@@ -258,23 +258,29 @@ class ChunkRenderer(object):
         chunk_path = self.world.get_chunk_path(self.coords[0] - 1, self.coords[1])
         try:
             chunk_data = get_lvldata(chunk_path)
-            left_skylight = get_skylight_array(chunk_data)
-            left_blocklight = get_blocklight_array(chunk_data)
+            # we only need +X-most side
+            left_skylight = get_skylight_array(chunk_data)[15,:,:]
+            left_blocklight = get_blocklight_array(chunk_data)[15,:,:]
+            left_blocks = get_blockarray(chunk_data)[15,:,:]
             del chunk_data
         except IOError:
             left_skylight = None
             left_blocklight = None
+            left_blocks = None
 
         # light data for the chunk to the lower right
         chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] + 1)
         try:
             chunk_data = get_lvldata(chunk_path)
-            right_skylight = get_skylight_array(chunk_data)
-            right_blocklight = get_blocklight_array(chunk_data)
+            # we only need -Y-most side
+            right_skylight = get_skylight_array(chunk_data)[:,0,:]
+            right_blocklight = get_blocklight_array(chunk_data)[:,0,:]
+            right_blocks = get_blockarray(chunk_data)[:,0,:]
             del chunk_data
         except IOError:
             right_skylight = None
             right_blocklight = None
+            right_blocks = None
         
         # clean up namespace a bit
         del chunk_path
@@ -379,21 +385,21 @@ class ChunkRenderer(object):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
 
                                 # left face
-                                black_coeff = 0.0
+                                black_coeff = get_lighting_coefficient(15, 0)
                                 if x != 0:
                                     black_coeff = get_lighting_coefficient(skylight[x-1,y,z], blocklight[x-1,y,z])
                                 elif left_skylight != None and left_blocklight != None:
-                                    black_coeff = get_lighting_coefficient(left_skylight[15,y,z], left_blocklight[15,y,z])
-                                if x == 0 or (blocks[x-1,y,z] in transparent_blocks):
+                                    black_coeff = get_lighting_coefficient(left_skylight[y,z], left_blocklight[y,z])
+                                if (x == 0 and (left_blocks == None or left_blocks[y,z] in transparent_blocks)) or (x != 0 and blocks[x-1,y,z] in transparent_blocks):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
 
                                 # right face
-                                black_coeff = 0.0
+                                black_coeff = get_lighting_coefficient(15, 0)
                                 if y != 15:
                                     black_coeff = get_lighting_coefficient(skylight[x,y+1,z], blocklight[x,y+1,z])
                                 elif right_skylight != None and right_blocklight != None:
-                                    black_coeff = get_lighting_coefficient(right_skylight[x,0,z], right_blocklight[x,0,z])
-                                if y == 15 or (blocks[x,y+1,z] in transparent_blocks):
+                                    black_coeff = get_lighting_coefficient(right_skylight[x,z], right_blocklight[x,z])
+                                if (y == 15 and (right_blocks == None or right_blocks[x,z] in transparent_blocks)) or (y != 15 and blocks[x,y+1,z] in transparent_blocks):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
                         # Draw edge lines
