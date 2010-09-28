@@ -156,6 +156,9 @@
   function addMarker(item) {
         // Add marker if it doesnt exist
         // if it does, update position
+		
+		if ("no_markers" in urlParams)
+			return;
 
         if ("no_players" in urlParams && item.id == 4)
                 return;
@@ -271,6 +274,8 @@ $(document).ready(function() {
         })();
 
         if ("no_overlay" in urlParams)
+                $('#mcmarkerlist').hide();
+		if ("no_markers" in urlParams)
                 $('#mcmarkerlist').hide();
         if ("no_players" in urlParams)
                 $('div[name=mcmarkers4]').hide();
