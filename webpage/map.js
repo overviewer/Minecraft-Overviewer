@@ -177,12 +177,15 @@
         map: map,
         title: item.msg
 
-      });
-          markers[item.msg+item.id] = marker;
-          $('#mcmarkerlist div[name=mcmarkers'+item.id+']').append('<div class="mcmarker" name="'+item.msg+item.id+'">'+item.msg+'</div>').click(function() {
-                        map.panTo(markers[$(this).attr("name")].getPosition());
-                        map.setZoom(config.markerZoom);
-                });
+		});
+        markers[item.msg+item.id] = marker;
+		  
+		$('#mcmarkerlist div[name='+item.msg+item.id+']').append('<div class="mcmarker" name="'+item.msg+item.id+'">'+item.msg+'</div>');
+
+        $('#mcmarkerlist div[name=mcmarkers'+item.id+'] div[name="'+item.msg+item.id+']').click(function() {
+				map.panTo(markers[$(this).attr("name")].getPosition());
+                map.setZoom(config.markerZoom);
+			});
           }
    }
 
