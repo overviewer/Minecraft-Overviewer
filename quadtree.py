@@ -52,7 +52,7 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None):
+    def __init__(self, worldobj, destdir, chunkset=None, depth=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -61,7 +61,12 @@ class QuadtreeGen(object):
         If depth is given, it overrides the calculated value. Otherwise, the
         minimum depth that contains all chunks is calculated and used.
 
+        If chunkset is given, only tiles that have a chunk in that set will be
+        rendered
+
         """
+        self.chunkset = chunkset
+
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
             for p in xrange(15):
@@ -216,6 +221,16 @@ class QuadtreeGen(object):
             # And uses these chunks
             tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
                     rowend)
+
+            # Check if this tile should be included at all
+            if self.chunkset:
+                for chunk in tilechunks:
+                    if chunk in self.chunkset:
+                        # Break out of this loop and render this tile
+                        break
+                else:
+                    # Don't render this chunk
+                    continue
 
             # Put this in the pool
             # (even if tilechunks is empty, render_worldtile will delete

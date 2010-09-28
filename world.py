@@ -33,6 +33,32 @@ and for extracting information about available worlds
 
 base36decode = functools.partial(int, base=36)
 
+def get_chunk_renderset(chunkfiles):
+    """Returns a set of (col, row) chunks that should be rendered. Returns
+    None if all chunks should be rendered"""
+    
+    # Get a list of the (chunks, chunky, filename) from the passed in list
+    # of filenames
+    chunklist = []
+    for path in chunkfiles:
+        if path.endswith("\n"):
+            path = path[:-1]
+        f = os.path.basename(path)
+        if f and f.startswith("c.") and f.endswith(".dat"):
+            p = f.split(".")
+            chunklist.append((base36decode(p[1]), base36decode(p[2]),
+                path))
+
+    # Translate to col, row coordinates
+    _, _, _, _, chunklist = _convert_coords(chunklist)
+
+    # Build a set from the col, row pairs
+    inclusion_set = set()
+    for col, row, filename in chunklist:
+        inclusion_set.add((col, row))
+
+    return inclusion_set
+
 
 def _convert_coords(chunks):
     """Takes the list of (chunkx, chunky, chunkfile) where chunkx and chunky
@@ -88,48 +114,19 @@ class WorldRenderer(object):
     cachedir is the path to a directory that should hold the resulting images.
     It may be the same as worlddir (which used to be the default).
     
-    If chunklist is given, it is assumed to be an iterator over paths to chunk
-    files to update. If it includes a trailing newline, it is stripped, so you
-    can pass in file handles just fine.
+    If chunkset is given, it is a set of (col, row) as returned by
+    get_chunk_renderset of chunks to update.
     """
-    def __init__(self, worlddir, cachedir, chunklist=None):
+    def __init__(self, worlddir, cachedir, chunkset=None):
         self.worlddir = worlddir
         self.caves = False
         self.cachedir = cachedir
 
-        self.chunklist = chunklist
+        self.chunkset = chunkset
 
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example
         self.POI = []
-
-    def _get_chunk_renderset(self):
-        """Returns a set of (col, row) chunks that should be rendered. Returns
-        None if all chunks should be rendered"""
-        if not self.chunklist:
-            return None
-        
-        # Get a list of the (chunks, chunky, filename) from the passed in list
-        # of filenames
-        chunklist = []
-        for path in self.chunklist:
-            if path.endswith("\n"):
-                path = path[:-1]
-            f = os.path.basename(path)
-            if f and f.startswith("c.") and f.endswith(".dat"):
-                p = f.split(".")
-                chunklist.append((base36decode(p[1]), base36decode(p[2]),
-                    path))
-
-        # Translate to col, row coordinates
-        _, _, _, _, chunklist = _convert_coords(chunklist)
-
-        # Build a set from the col, row pairs
-        inclusion_set = set()
-        for col, row, filename in chunklist:
-            inclusion_set.add((col, row))
-
-        return inclusion_set
 
     def findTrueSpawn(self):
         """Adds the true spawn location to self.POI.  The spawn Y coordinate
@@ -224,7 +221,7 @@ class WorldRenderer(object):
         # slightly more compliated than it should seem, since we still need to
         # build the results dict out of all chunks, even if they're not being
         # rendered.
-        inclusion_set = self._get_chunk_renderset()
+        inclusion_set = self.chunkset
 
         results = {}
         if processes == 1:
