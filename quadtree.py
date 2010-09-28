@@ -110,17 +110,22 @@ class QuadtreeGen(object):
                 complete, total, level, self.p)
 
     def write_html(self, zoomlevel):
-        """Writes out index.html"""
-        templatepath = os.path.join(os.path.split(__file__)[0], "template.html")
-
-        html = open(templatepath, 'r').read()
-        html = html.replace(
-                "{maxzoom}", str(zoomlevel))
+        """Writes out index.html and map.js"""
+        indexpath = os.path.join(os.path.split(__file__)[0], "webpage/index.html")
+		mapjspath = os.path.join(os.path.split(__file__)[0], "webpage/map.js")
+        
+		html = open(indexpath, 'r').read()
+		js = open(mapjspath, 'r').read()
+        
+		js = js.replace("{defaultzoom}", str(zoomlevel / 2 + 1))
+		js = js.replace("{markerzoom}", str(zoomlevel / 2 + 3))
+		js = js.replace("{maxzoom}", str(zoomlevel))
                 
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
-
-        
+			
+		with open(os.path.join(self.destdir, "map.js"), 'w') as output:
+            output.write(js)
 
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
             output.write("var markerData=%s" % json.dumps(self.world.POI))
