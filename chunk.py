@@ -38,15 +38,17 @@ image
 # use that as the mask. Then take the image and use im.convert("RGB") to strip
 # the image from its alpha channel, and use that as the source to paste()
 
-def get_lighting_coefficient(skylight, blocklight):
+def get_lighting_coefficient(skylight, blocklight, night):
     """Takes a raw blocklight and skylight, and returns a value
     between 0.0 (fully lit) and 1.0 (fully black) that can be used as
     an alpha value for a blend with a black source image. It mimics
     Minecraft lighting calculations."""
-    # Daytime
-    return 1.0 - pow(0.8, 15 - max(blocklight, skylight))
-    # Nighttime
-    #return 1.0 - pow(0.8, 15 - max(blocklight, skylight - 11))
+    if not night:
+        # Daytime
+        return 1.0 - pow(0.8, 15 - max(blocklight, skylight))
+    else:
+        # Nighttime
+        return 1.0 - pow(0.8, 15 - max(blocklight, skylight - 11))
 
 def get_lvldata(filename):
     """Takes a filename and returns the Level struct, which contains all the
@@ -250,40 +252,52 @@ class ChunkRenderer(object):
         depth."""
         blocks = self.blocks
         
-        # light data for the current chunk
-        skylight = get_skylight_array(self.level)
-        blocklight = get_blocklight_array(self.level)
+        # dummy variables that may be filled in later based on render options
+        skylight = None
+        blocklight = None
+        left_skylight = None
+        left_blocklight = None
+        left_blocks = None
+        right_skylight = None
+        right_blocklight = None
+        right_blocks = None
         
-        # light data for the chunk to the lower left
-        chunk_path = self.world.get_chunk_path(self.coords[0] - 1, self.coords[1])
-        try:
-            chunk_data = get_lvldata(chunk_path)
-            # we only need +X-most side
-            left_skylight = get_skylight_array(chunk_data)[15,:,:]
-            left_blocklight = get_blocklight_array(chunk_data)[15,:,:]
-            left_blocks = get_blockarray(chunk_data)[15,:,:]
-            del chunk_data
-        except IOError:
-            left_skylight = None
-            left_blocklight = None
-            left_blocks = None
+        if self.world.lighting or cave:
+            # light data for the current chunk
+            skylight = get_skylight_array(self.level)
+            blocklight = get_blocklight_array(self.level)
+        
+        if self.world.lighting:
+            # light data for the chunk to the lower left
+            chunk_path = self.world.get_chunk_path(self.coords[0] - 1, self.coords[1])
+            try:
+                chunk_data = get_lvldata(chunk_path)
+                # we only need +X-most side
+                left_skylight = get_skylight_array(chunk_data)[15,:,:]
+                left_blocklight = get_blocklight_array(chunk_data)[15,:,:]
+                left_blocks = get_blockarray(chunk_data)[15,:,:]
+                del chunk_data
+            except IOError:
+                left_skylight = None
+                left_blocklight = None
+                left_blocks = None
 
-        # light data for the chunk to the lower right
-        chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] + 1)
-        try:
-            chunk_data = get_lvldata(chunk_path)
-            # we only need -Y-most side
-            right_skylight = get_skylight_array(chunk_data)[:,0,:]
-            right_blocklight = get_blocklight_array(chunk_data)[:,0,:]
-            right_blocks = get_blockarray(chunk_data)[:,0,:]
-            del chunk_data
-        except IOError:
-            right_skylight = None
-            right_blocklight = None
-            right_blocks = None
-        
-        # clean up namespace a bit
-        del chunk_path
+            # light data for the chunk to the lower right
+            chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] + 1)
+            try:
+                chunk_data = get_lvldata(chunk_path)
+                # we only need -Y-most side
+                right_skylight = get_skylight_array(chunk_data)[:,0,:]
+                right_blocklight = get_blocklight_array(chunk_data)[:,0,:]
+                right_blocks = get_blockarray(chunk_data)[:,0,:]
+                del chunk_data
+            except IOError:
+                right_skylight = None
+                right_blocklight = None
+                right_blocks = None
+                
+            # clean up namespace a bit
+            del chunk_path
         
         if cave:
             # Cave mode. Actually go through and 0 out all blocks that are not in a
@@ -368,11 +382,14 @@ class ChunkRenderer(object):
                             # no lighting for cave -- depth is probably more useful
                             img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
                         else:
-                            if blockid in transparent_blocks:
+                            if not (blocklight != None and skylight != None):
+                                # no lighting at all
+                                img.paste(t[0], (imgx, imgy), t[1])
+                            elif blockid in transparent_blocks:
                                 # transparent means draw the whole
                                 # block shaded with the current
                                 # block's light
-                                black_coeff = get_lighting_coefficient(skylight[x,y,z], blocklight[x,y,z])
+                                black_coeff = get_lighting_coefficient(skylight[x,y,z], blocklight[x,y,z], self.world.night)
                                 img.paste(Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
                             else:
                                 # draw each face lit appropriately,
@@ -381,24 +398,24 @@ class ChunkRenderer(object):
                                 
                                 # top face
                                 if z != 127 and (blocks[x,y,z+1] in transparent_blocks):
-                                    black_coeff = get_lighting_coefficient(skylight[x,y,z+1], blocklight[x,y,z+1])
+                                    black_coeff = get_lighting_coefficient(skylight[x,y,z+1], blocklight[x,y,z+1], self.world.night)
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
 
                                 # left face
-                                black_coeff = get_lighting_coefficient(15, 0)
+                                black_coeff = get_lighting_coefficient(15, 0, self.world.night)
                                 if x != 0:
-                                    black_coeff = get_lighting_coefficient(skylight[x-1,y,z], blocklight[x-1,y,z])
+                                    black_coeff = get_lighting_coefficient(skylight[x-1,y,z], blocklight[x-1,y,z], self.world.night)
                                 elif left_skylight != None and left_blocklight != None:
-                                    black_coeff = get_lighting_coefficient(left_skylight[y,z], left_blocklight[y,z])
+                                    black_coeff = get_lighting_coefficient(left_skylight[y,z], left_blocklight[y,z], self.world.night)
                                 if (x == 0 and (left_blocks == None or left_blocks[y,z] in transparent_blocks)) or (x != 0 and blocks[x-1,y,z] in transparent_blocks):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
 
                                 # right face
-                                black_coeff = get_lighting_coefficient(15, 0)
+                                black_coeff = get_lighting_coefficient(15, 0, self.world.night)
                                 if y != 15:
-                                    black_coeff = get_lighting_coefficient(skylight[x,y+1,z], blocklight[x,y+1,z])
+                                    black_coeff = get_lighting_coefficient(skylight[x,y+1,z], blocklight[x,y+1,z], self.world.night)
                                 elif right_skylight != None and right_blocklight != None:
-                                    black_coeff = get_lighting_coefficient(right_skylight[x,z], right_blocklight[x,z])
+                                    black_coeff = get_lighting_coefficient(right_skylight[x,z], right_blocklight[x,z], self.world.night)
                                 if (y == 15 and (right_blocks == None or right_blocks[x,z] in transparent_blocks)) or (y != 15 and blocks[x,y+1,z] in transparent_blocks):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
