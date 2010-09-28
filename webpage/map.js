@@ -246,4 +246,7 @@
 	
 	var refreshInterval = setInterval(refreshMarkers, 3 * 1000);
 	refreshMarkers();
+
+	// Set initial position to spawn
+        map.panTo(markers["Spawn"].getPosition());
   }
