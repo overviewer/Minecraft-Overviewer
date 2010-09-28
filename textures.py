@@ -112,15 +112,20 @@ def _split_terrain(terrain):
 # This maps terainids to 16x16 images
 terrain_images = _split_terrain(_get_terrain_image())
 
-def _transform_image(img):
+def _transform_image(img, texID):
     """Takes a PIL image and rotates it left 45 degrees and shrinks the y axis
     by a factor of 2. Returns the resulting image, which will be 24x12 pixels
 
     """
 
-    # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
-    # even number that can be split in half twice
-    img = img.resize((17, 17), Image.BILINEAR)
+    if texID in (69,): # cacti
+        # Resize to 15x15, since the cactus texture is a little smaller than the other textures
+        img = img.resize((15, 15), Image.BILINEAR)
+
+    else:
+        # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
+        # even number that can be split in half twice
+        img = img.resize((17, 17), Image.BILINEAR)
 
     # Build the Affine transformation matrix for this perspective
     transform = numpy.matrix(numpy.identity(3))
@@ -164,7 +169,7 @@ def _build_block(top, side, texID=None):
     """
     img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-    top = _transform_image(top)
+    top = _transform_image(top, texID)
 
     if not side:
         img.paste(top, (0,0), top)
@@ -192,9 +197,14 @@ def _build_block(top, side, texID=None):
         img.paste(otherside, (6,3), otherside)
         return img
 
-    img.paste(side, (0,6), side)
-    img.paste(otherside, (12,6), otherside)
-    img.paste(top, (0,0), top)
+    if texID in (69,): # cacti!
+        img.paste(side, (2,6), side)
+        img.paste(otherside, (10,6), otherside)
+        img.paste(top, (0,2), top)
+    else:
+        img.paste(side, (0,6), side)
+        img.paste(otherside, (12,6), otherside)
+        img.paste(top, (0,0), top)
 
     # Manually touch up 6 pixels that leave a gap because of how the
     # shearing works out. This makes the blocks perfectly tessellate-able

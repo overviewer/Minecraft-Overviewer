@@ -62,7 +62,7 @@ def get_skylight_array(level):
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53,
-    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 83, 85])
+    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 81, 83, 85])
 
 def render_and_save(chunkfile, cachedir, cave=False):
     """Used as the entry point for the multiprocessing workers (since processes
