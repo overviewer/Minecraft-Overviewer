@@ -43,7 +43,10 @@ def get_lighting_coefficient(skylight, blocklight):
     between 0.0 (fully lit) and 1.0 (fully black) that can be used as
     an alpha value for a blend with a black source image. It mimics
     Minecraft lighting calculations."""
+    # Daytime
     return 1.0 - pow(0.8, 15 - max(blocklight, skylight))
+    # Nighttime
+    #return 1.0 - pow(0.8, 15 - max(blocklight, skylight - 11))
 
 def get_lvldata(filename):
     """Takes a filename and returns the Level struct, which contains all the
