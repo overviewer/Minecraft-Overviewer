@@ -61,7 +61,7 @@ def get_skylight_array(level):
     return numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
-transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53,
+transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 81, 83, 85])
 
 def render_and_save(chunkfile, cachedir, cave=False):
