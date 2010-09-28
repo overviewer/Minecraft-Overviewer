@@ -440,7 +440,7 @@ def render_innertile(dest, name, imgformat):
 
     # Save it
     if imgformat == 'jpg':
-        img.save(imgpath, quality=95, optimize=True, subsampling=0)
+        img.save(imgpath, quality=95, subsampling=0)
     else: # png
         img.save(imgpath)
     with open(hashpath, "wb") as hashout:
