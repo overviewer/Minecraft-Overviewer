@@ -209,6 +209,10 @@ render for my world from 85M to 67M.
 
     find /path/to/destination -name "*.png" -exec pngcrush {} {}.crush \; -exec mv {}.crush {} \;
 
+Or if you prefer a more parallel solution, try something like this::
+
+    find /path/to/destination -print0 | xargs -0 -n 1 -P <nr_procs> sh -c 'pngcrush $0 temp.$$ && mv temp.$$ $0'
+
 If you're on Windows, I've gotten word that this command line snippet works
 provided pngout is installed and on your path. Note that the % symbols will
 need to be doubled up if this is in a batch file.
