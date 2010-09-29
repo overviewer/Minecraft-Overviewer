@@ -134,7 +134,9 @@ class QuadtreeGen(object):
 
         # Write a blank image
         blank = Image.new("RGBA", (1,1))
-        blank.save(os.path.join(self.destdir, "tiles", "blank."+self.imgformat))
+        tileDir = os.path.join(self.destdir, "tiles")
+        if not os.path.exists(tileDir): os.mkdir(tileDir)
+        blank.save(os.path.join(tileDir, "blank."+self.imgformat))
 
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
