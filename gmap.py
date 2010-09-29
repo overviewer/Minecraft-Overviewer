@@ -140,4 +140,5 @@ def list_worlds():
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()

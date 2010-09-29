@@ -23,6 +23,8 @@ import math
 import numpy
 from PIL import Image, ImageEnhance
 
+import util
+
 def _find_file(filename, mode="rb"):
     """Searches for the given file and returns an open handle to it.
     This searches the following locations in this order:
@@ -39,7 +41,7 @@ def _find_file(filename, mode="rb"):
     * The program dir / textures
 
     """
-    programdir = os.path.dirname(__file__)
+    programdir = util.get_program_path()
     path = os.path.join(programdir, filename)
     if os.path.exists(path):
         return open(path, mode)

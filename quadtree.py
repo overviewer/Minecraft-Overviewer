@@ -26,6 +26,8 @@ import json
 
 from PIL import Image
 
+import util
+
 """
 This module has routines related to generating a quadtree of tiles
 
@@ -114,7 +116,7 @@ class QuadtreeGen(object):
 
     def write_html(self, zoomlevel, imgformat):
         """Writes out index.html"""
-        templatepath = os.path.join(os.path.split(__file__)[0], "template.html")
+        templatepath = os.path.join(util.get_program_path(), "template.html")
 
         html = open(templatepath, 'r').read()
         html = html.replace(
