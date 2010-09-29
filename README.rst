@@ -100,7 +100,7 @@ it.
 
 The Overviewer will put a cached image for every chunk *directly in your world
 directory by default*. If you do not like this behavior, you can specify
-another location with the --chunkdir option. See below for details.
+another location with the --cachedir option. See below for details.
 
 Options
 -------
