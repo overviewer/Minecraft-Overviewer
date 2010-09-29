@@ -130,6 +130,10 @@ class QuadtreeGen(object):
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
             output.write("var markerData=%s" % json.dumps(self.world.POI))
 
+        # Write a blank image
+        blank = Image.new("RGBA", (1,1))
+        blank.save(os.path.join(self.destdir, "tiles", "blank."+self.imgformat))
+
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
         index.html to see what maxZoom is set to.
