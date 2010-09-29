@@ -112,15 +112,20 @@ def _split_terrain(terrain):
 # This maps terainids to 16x16 images
 terrain_images = _split_terrain(_get_terrain_image())
 
-def _transform_image(img):
+def _transform_image(img, blockID):
     """Takes a PIL image and rotates it left 45 degrees and shrinks the y axis
     by a factor of 2. Returns the resulting image, which will be 24x12 pixels
 
     """
 
-    # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
-    # even number that can be split in half twice
-    img = img.resize((17, 17), Image.BILINEAR)
+    if blockID in (81,): # cacti
+        # Resize to 15x15, since the cactus texture is a little smaller than the other textures
+        img = img.resize((15, 15), Image.BILINEAR)
+
+    else:
+        # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
+        # even number that can be split in half twice
+        img = img.resize((17, 17), Image.BILINEAR)
 
     # Build the Affine transformation matrix for this perspective
     transform = numpy.matrix(numpy.identity(3))
@@ -140,9 +145,18 @@ def _transform_image(img):
     newimg = img.transform((24,12), Image.AFFINE, transform)
     return newimg
 
-def _transform_image_side(img):
+def _transform_image_side(img, blockID):
     """Takes an image and shears it for the left side of the cube (reflect for
     the right side)"""
+
+    if blockID in (44,): # step block
+        # make the top half transpartent
+        # (don't just crop img, since we want the size of
+        # img to be unchanged
+        mask = img.crop((0,8,16,16))
+        n = Image.new(img.mode, img.size, (38,92,255,0))
+        n.paste(mask,(0,0,16,8), mask)
+        img = n
 
     # Size of the cube side before shear
     img = img.resize((12,12))
@@ -157,20 +171,20 @@ def _transform_image_side(img):
     return newimg
 
 
-def _build_block(top, side, texID=None):
+def _build_block(top, side, blockID=None):
     """From a top texture and a side texture, build a block image.
     top and side should be 16x16 image objects. Returns a 24x24 image
 
     """
     img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-    top = _transform_image(top)
+    top = _transform_image(top, blockID)
 
     if not side:
         img.paste(top, (0,0), top)
         return img
 
-    side = _transform_image_side(side)
+    side = _transform_image_side(side, blockID)
 
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
     
@@ -185,16 +199,27 @@ def _build_block(top, side, texID=None):
     otherside.putalpha(othersidealpha)
 
     ## special case for non-block things
-    if texID in (12,13,15,28,29,80,73): ## flowers, sapling, mushrooms,  regular torch, reeds
+    if blockID in (37,38,6,39,40,50,83): ## flowers, sapling, mushrooms,  regular torch, reeds
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
         img.paste(side, (6,3), side)
         img.paste(otherside, (6,3), otherside)
         return img
 
-    img.paste(side, (0,6), side)
-    img.paste(otherside, (12,6), otherside)
-    img.paste(top, (0,0), top)
+
+    if blockID in (81,): # cacti!
+        img.paste(side, (2,6), side)
+        img.paste(otherside, (10,6), otherside)
+        img.paste(top, (0,2), top)
+    elif blockID in (44,): # half step
+        # shift each texture down 6 pixels
+        img.paste(side, (0,12), side)
+        img.paste(otherside, (12,12), otherside)
+        img.paste(top, (0,6), top)
+    else:
+        img.paste(side, (0,6), side)
+        img.paste(otherside, (12,6), otherside)
+        img.paste(top, (0,0), top)
 
     # Manually touch up 6 pixels that leave a gap because of how the
     # shearing works out. This makes the blocks perfectly tessellate-able
@@ -239,7 +264,7 @@ def _build_blockimages():
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                 34, 20, 52, 48, 49, -1, -1, -1, -1, -1, -1, -1,- 1, -1, -1, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-                -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35,
+                -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  5,  5,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                 36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
@@ -249,8 +274,11 @@ def _build_blockimages():
         ]
 
     # This maps block id to the texture that goes on the side of the block
+    if len(topids) != len(sideids):
+        raise Exception("mismatched lengths")
+
     allimages = []
-    for toptextureid, sidetextureid in zip(topids, sideids):
+    for toptextureid, sidetextureid,blockID in zip(topids, sideids,range(len(topids))):
         if toptextureid == -1 or sidetextureid == -1:
             allimages.append(None)
             continue
@@ -258,7 +286,9 @@ def _build_blockimages():
         toptexture = terrain_images[toptextureid]
         sidetexture = terrain_images[sidetextureid]
 
-        img = _build_block(toptexture, sidetexture, toptextureid)
+        ## _build_block needs to know about the block ID, not just the textures
+        ## of the block or the texture ID
+        img = _build_block(toptexture, sidetexture, blockID)
 
         allimages.append((img.convert("RGB"), img.split()[3]))
 
