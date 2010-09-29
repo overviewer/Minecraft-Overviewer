@@ -121,6 +121,12 @@ Options
 
         python gmap.py --cachedir=<chunk cache dir> <world> <output dir>
 
+--imgformat=FORMAT
+    Set the output image format used for the tiles. The default is 'png',
+    but 'jpg' is also supported. Note that regardless of what you choose,
+    Overviewer will still use PNG for cached images to avoid recompression
+    artifacts.
+
 -p PROCS, --processes=PROCS
     Adding the "-p" option will utilize more cores during processing.  This
     can speed up rendering quite a bit. The default is set to the same

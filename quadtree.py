@@ -52,7 +52,7 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None):
+    def __init__(self, worldobj, destdir, depth=None, imgformat=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -62,6 +62,9 @@ class QuadtreeGen(object):
         minimum depth that contains all chunks is calculated and used.
 
         """
+        assert(imgformat)
+        self.imgformat = imgformat
+
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
             for p in xrange(15):
@@ -109,13 +112,15 @@ class QuadtreeGen(object):
         print "{0}/{1} tiles complete on level {2}/{3}".format(
                 complete, total, level, self.p)
 
-    def write_html(self, zoomlevel):
+    def write_html(self, zoomlevel, imgformat):
         """Writes out index.html"""
         templatepath = os.path.join(os.path.split(__file__)[0], "template.html")
 
         html = open(templatepath, 'r').read()
         html = html.replace(
                 "{maxzoom}", str(zoomlevel))
+        html = html.replace(
+                "{imgformat}", str(imgformat))
                 
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
@@ -159,8 +164,8 @@ class QuadtreeGen(object):
             newdir = "new" + str(dirnum)
             newdirpath = getpath(newdir)
 
-            files = [str(dirnum)+".png", str(dirnum)+".hash", str(dirnum)]
-            newfiles = [str(newnum)+".png", str(newnum)+".hash", str(newnum)]
+            files = [str(dirnum)+"."+imgformat, str(dirnum)+".hash", str(dirnum)]
+            newfiles = [str(newnum)+"."+imgformat, str(newnum)+".hash", str(newnum)]
 
             os.mkdir(newdirpath)
             for f, newf in zip(files, newfiles):
@@ -221,7 +226,7 @@ class QuadtreeGen(object):
             # (even if tilechunks is empty, render_worldtile will delete
             # existing images if appropriate)
             yield pool.apply_async(func=render_worldtile, args= (tilechunks,
-                colstart, colend, rowstart, rowend, dest))
+                colstart, colend, rowstart, rowend, dest, self.imgformat))
 
     def _apply_render_inntertile(self, pool, zoom):
         """Same as _apply_render_worltiles but for the inntertile routine.
@@ -233,7 +238,7 @@ class QuadtreeGen(object):
             dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
             name = str(path[-1])
 
-            yield pool.apply_async(func=render_innertile, args= (dest, name))
+            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat))
 
     def go(self, procs):
         """Renders all tiles"""
@@ -260,7 +265,7 @@ class QuadtreeGen(object):
         else:
             pool = multiprocessing.Pool(processes=procs)
 
-        self.write_html(self.p)
+        self.write_html(self.p, self.imgformat)
 
         # Render the highest level of tiles from the chunks
         results = collections.deque()
@@ -317,7 +322,7 @@ class QuadtreeGen(object):
         pool.join()
 
         # Do the final one right here:
-        render_innertile(os.path.join(self.destdir, "tiles"), "base")
+        render_innertile(os.path.join(self.destdir, "tiles"), "base", self.imgformat)
 
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
@@ -348,28 +353,28 @@ class QuadtreeGen(object):
         return chunklist
 
 @catch_keyboardinterrupt
-def render_innertile(dest, name):
+def render_innertile(dest, name, imgformat):
     """
-    Renders a tile at os.path.join(dest, name)+".png" by taking tiles from
+    Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
     os.path.join(dest, name, "{0,1,2,3}.png")
     """
-    imgpath = os.path.join(dest, name) + ".png"
+    imgpath = os.path.join(dest, name) + "." + imgformat
     hashpath = os.path.join(dest, name) + ".hash"
 
     if name == "base":
-        q0path = os.path.join(dest, "0.png")
-        q1path = os.path.join(dest, "1.png")
-        q2path = os.path.join(dest, "2.png")
-        q3path = os.path.join(dest, "3.png")
+        q0path = os.path.join(dest, "0." + imgformat)
+        q1path = os.path.join(dest, "1." + imgformat)
+        q2path = os.path.join(dest, "2." + imgformat)
+        q3path = os.path.join(dest, "3." + imgformat)
         q0hash = os.path.join(dest, "0.hash")
         q1hash = os.path.join(dest, "1.hash")
         q2hash = os.path.join(dest, "2.hash")
         q3hash = os.path.join(dest, "3.hash")
     else:
-        q0path = os.path.join(dest, name, "0.png")
-        q1path = os.path.join(dest, name, "1.png")
-        q2path = os.path.join(dest, name, "2.png")
-        q3path = os.path.join(dest, name, "3.png")
+        q0path = os.path.join(dest, name, "0." + imgformat)
+        q1path = os.path.join(dest, name, "1." + imgformat)
+        q2path = os.path.join(dest, name, "2." + imgformat)
+        q3path = os.path.join(dest, name, "3." + imgformat)
         q0hash = os.path.join(dest, name, "0.hash")
         q1hash = os.path.join(dest, name, "1.hash")
         q2hash = os.path.join(dest, name, "2.hash")
@@ -434,13 +439,16 @@ def render_innertile(dest, name):
         img.paste(quad3, (192, 192))
 
     # Save it
-    img.save(imgpath)
+    if imgformat == 'jpg':
+        img.save(imgpath, quality=95, subsampling=0)
+    else: # png
+        img.save(imgpath)
     with open(hashpath, "wb") as hashout:
         hashout.write(newhash)
 
 
 @catch_keyboardinterrupt
-def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
+def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat):
     """Renders just the specified chunks into a tile and save it. Unlike usual
     python conventions, rowend and colend are inclusive. Additionally, the
     chunks around the edges are half-way cut off (so that neighboring tiles
@@ -449,7 +457,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
     chunks is a list of (col, row, filename) of chunk images that are relevant
     to this call
 
-    The image is saved to path+".png" and a hash is saved to path+".hash"
+    The image is saved to path+".ext" and a hash is saved to path+".hash"
 
     If there are no chunks, this tile is not saved (if it already exists, it is
     deleted)
@@ -490,7 +498,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path):
     # Before we render any tiles, check the hash of each image in this tile to
     # see if it's changed.
     hashpath = path + ".hash"
-    imgpath = path + ".png"
+    imgpath = path + "." + imgformat
 
     if not chunks:
         # No chunks were found in this tile
