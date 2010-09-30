@@ -81,7 +81,7 @@ class MarkerGenerator(object):
         ## read label info from mapper-labels.txt
         path = os.path.join(self.worlddir, "mapper-labels.txt")
         print "Adding labels to map"
-        addMarkers(path);
+        self.addMarkers(path);
         
         
     def addPlayers(self):
@@ -90,14 +90,14 @@ class MarkerGenerator(object):
         ## read label info from mapper-labels.txt
         path = os.path.join(self.worlddir, "mapper-playerpos.txt")
         print "Adding players to map"
-        addMarkers(path);
+        self.addMarkers(path);
 
     def addHomes(self):
         """Adds the players homes from the server to self.POI."""
         ## read label info from mapper-labels.txt
         path = os.path.join(self.worlddir, "mapper-homes.txt")
         print "Adding homes to map"
-        addMarkers(path);
+        self.addMarkers(path);
     
     def addMarkers(self, path):
         """Add marker to array"""
