@@ -114,7 +114,7 @@ class MarkerGenerator(object):
                         locX = math.trunc(float(split[1]))
                         locY = math.trunc(float(split[2]))
                         locZ = math.trunc(float(split[3]))
-                        id = split[4]
+                        id = math.trunc(float(split[4]))
                         
                         self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text, id=id))
                         
