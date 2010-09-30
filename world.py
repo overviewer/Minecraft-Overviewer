@@ -20,7 +20,6 @@ import multiprocessing
 import sys
 
 import numpy
-from PIL import Image
 
 import chunk
 import nbt
