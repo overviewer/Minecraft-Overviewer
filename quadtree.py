@@ -172,8 +172,8 @@ class QuadtreeGen(object):
             newdir = "new" + str(dirnum)
             newdirpath = getpath(newdir)
 
-            files = [str(dirnum)+"."+imgformat, str(dirnum)+".hash", str(dirnum)]
-            newfiles = [str(newnum)+"."+imgformat, str(newnum)+".hash", str(newnum)]
+            files = [str(dirnum)+"."+self.imgformat, str(dirnum)+".hash", str(dirnum)]
+            newfiles = [str(newnum)+"."+self.imgformat, str(newnum)+".hash", str(newnum)]
 
             os.mkdir(newdirpath)
             for f, newf in zip(files, newfiles):
