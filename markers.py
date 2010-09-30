@@ -103,23 +103,23 @@ class MarkerGenerator(object):
         """Add marker to array"""
         
         try:
-        if os.path.exists(path):
-            fileobj = open(path, "rb")
-            #print "Adding markers to map"
-            for line in fileobj:
-                #print "marker found: "+line
-                split = line.split(":");
-                if (len(split) >= 5):
-                    text = split[0]
-                    locX = math.trunc(float(split[1]))
-                    locY = math.trunc(float(split[2]))
-                    locZ = math.trunc(float(split[3]))
-                    id = split[4]
-                    
-                    self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text, id=id))
-                    
-                else:
-                    continue;
+            if os.path.exists(path):
+                fileobj = open(path, "rb")
+                #print "Adding markers to map"
+                for line in fileobj:
+                    #print "marker found: "+line
+                    split = line.split(":");
+                    if (len(split) >= 5):
+                        text = split[0]
+                        locX = math.trunc(float(split[1]))
+                        locY = math.trunc(float(split[2]))
+                        locZ = math.trunc(float(split[3]))
+                        id = split[4]
+                        
+                        self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text, id=id))
+                        
+                    else:
+                        continue;
         except (Exception):
             print "Exception while reading markers";
             pass;
