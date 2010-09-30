@@ -21,7 +21,6 @@ import sys
 import logging
 
 import numpy
-from PIL import Image
 
 import chunk
 import nbt

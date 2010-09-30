@@ -15,7 +15,6 @@
 
 import numpy
 from PIL import Image, ImageDraw
-from itertools import izip, count
 import os.path
 import hashlib
 
