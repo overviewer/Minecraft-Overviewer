@@ -73,129 +73,57 @@ class MarkerGenerator(object):
         spawnX = data['Data']['SpawnX']
         spawnY = data['Data']['SpawnY']
         spawnZ = data['Data']['SpawnZ']
-        
-        self.addMarker(spawnX, spawnY, spawnZ, "Spawn",0)
+
+        self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, msg="Spawn", id=0))
 
     def addLabels(self):
         """Adds the labels from the server to self.POI."""
-
         ## read label info from mapper-labels.txt
-
         path = os.path.join(self.worlddir, "mapper-labels.txt")
-        
-        #try:
-        if os.path.exists(path):
-            fileobj = open(path, "rb")
-            print "Adding labels to map"
-            for line in fileobj:
-                #print "marker found: "+line
-                split = line.split(":");
-                if (len(split) == 5):
-                    text = split[0]
-                    locX = math.trunc(float(split[1]))
-                    locY = math.trunc(float(split[2]))
-                    locZ = math.trunc(float(split[3]))
-                    
-                    self.addMarker(locX, locY, locZ, text, 3)
-                    
-                else:
-                    continue;
-        #except (IOError):
-         #   print "Exception while reading label";
-         #   pass;
-
+        print "Adding labels to map"
+        addMarkers(path);
         
         
     def addPlayers(self):
         """Adds the players positions from the server to self.POI."""
 
         ## read label info from mapper-labels.txt
-
         path = os.path.join(self.worlddir, "mapper-playerpos.txt")
-        
-        #try:
-        if os.path.exists(path):
-            fileobj = open(path, "rb")
-            print "Adding players to map"
-            for line in fileobj:
-                #print "marker found: "+line
-                split = line.split(":");
-                if (len(split) == 5):
-                    text = split[0]
-                    locX = math.trunc(float(split[1]))
-                    locY = math.trunc(float(split[2]))
-                    locZ = math.trunc(float(split[3]))
-                    
-                    self.addMarker(locX, locY, locZ, text, 4)
-                    
-                else:
-                    continue;
-        #except (IOError):
-         #   print "Exception while reading label";
-         #   pass;
+        print "Adding players to map"
+        addMarkers(path);
 
     def addHomes(self):
         """Adds the players homes from the server to self.POI."""
-
         ## read label info from mapper-labels.txt
-
         path = os.path.join(self.worlddir, "mapper-homes.txt")
+        print "Adding homes to map"
+        addMarkers(path);
+    
+    def addMarkers(self, path):
+        """Add marker to array"""
         
-        #try:
+        try:
         if os.path.exists(path):
             fileobj = open(path, "rb")
-            print "Adding homes to map"
+            #print "Adding markers to map"
             for line in fileobj:
                 #print "marker found: "+line
                 split = line.split(":");
-                if (len(split) == 5):
+                if (len(split) >= 5):
                     text = split[0]
                     locX = math.trunc(float(split[1]))
                     locY = math.trunc(float(split[2]))
                     locZ = math.trunc(float(split[3]))
+                    id = split[4]
                     
-                    self.addMarker(locX, locY, locZ, text, 1)
+                    self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text, id=id))
                     
                 else:
                     continue;
-        #except (IOError):
-         #   print "Exception while reading label";
-         #   pass;
-
-  
-
-    def addMarker(self, locX, locY, locZ, text, id):
-        """The spawn Y coordinate is almost always the
-        default of 64.  Find the first air block above
-        that point for the true spawn location"""
-
-        #print "marker: "+str(locX)+","+str(locY)+","+str(locZ)
-        ## The chunk that holds the spawn location 
-        chunkX = locX/16
-        chunkZ = locZ/16
-
-        ## The filename of this chunk
-        chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64), 
-                                           base36encode(chunkZ % 64),
-                                           base36encode(chunkX),
-                                           base36encode(chunkZ))
-
-
-        data=nbt.load(os.path.join(self.worlddir, chunkFile))[1]
-        level = data['Level']
-        blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
-
-        ## The block for spawn *within* the chunk
-        inChunkX = locX - (chunkX*16)
-        inChunkZ = locZ - (chunkZ*16)
-
-        ## find the first air block
-        #while (blockArray[inChunkX, inChunkZ, locY] != 0):
-            #locY += 1
-            #locY = locY
-       
-
-        self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text, id=id))
+        except (Exception):
+            print "Exception while reading markers";
+            pass;
+        
        
        
     
