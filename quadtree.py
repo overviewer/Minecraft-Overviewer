@@ -23,6 +23,7 @@ import re
 import shutil
 import collections
 import json
+import logging
 
 from PIL import Image
 
@@ -45,7 +46,7 @@ def catch_keyboardinterrupt(func):
         try:
             return func(*args, **kwargs)
         except KeyboardInterrupt:
-            print "Ctrl-C caught!"
+            logging.error("Ctrl-C caught!")
             raise Exception("Exiting")
         except:
             import traceback
@@ -111,8 +112,8 @@ class QuadtreeGen(object):
         else:
             if not complete % 1000 == 0:
                 return
-        print "{0}/{1} tiles complete on level {2}/{3}".format(
-                complete, total, level, self.p)
+        logging.info("{0}/{1} tiles complete on level {2}/{3}".format(
+                complete, total, level, self.p))
 
     def write_html(self, zoomlevel, imgformat):
         """Writes out index.html"""
@@ -258,12 +259,12 @@ class QuadtreeGen(object):
         curdepth = self._get_cur_depth()
         if curdepth != -1:
             if self.p > curdepth:
-                print "Your map seemes to have expanded beyond its previous bounds."
-                print "Doing some tile re-arrangements... just a sec..."
+                logging.warning("Your map seemes to have expanded beyond its previous bounds.")
+                logging.warning( "Doing some tile re-arrangements... just a sec...")
                 for _ in xrange(self.p-curdepth):
                     self._increase_depth()
             elif self.p < curdepth:
-                print "Your map seems to have shrunk. Re-arranging tiles, just a sec..."
+                logging.warning("Your map seems to have shrunk. Re-arranging tiles, just a sec...")
                 for _ in xrange(curdepth - self.p):
                     self._decrease_depth()
 
@@ -279,11 +280,11 @@ class QuadtreeGen(object):
         results = collections.deque()
         complete = 0
         total = 4**self.p
-        print "Rendering highest zoom level of tiles now."
-        print "There are {0} tiles to render".format(total)
-        print "There are {0} total levels to render".format(self.p)
-        print "Don't worry, each level has only 25% as many tiles as the last."
-        print "The others will go faster"
+        logging.info("Rendering highest zoom level of tiles now.")
+        logging.info("There are {0} tiles to render".format(total))
+        logging.info("There are {0} total levels to render".format(self.p))
+        logging.info("Don't worry, each level has only 25% as many tiles as the last.")
+        logging.info("The others will go faster")
         for result in self._apply_render_worldtiles(pool):
             results.append(result)
             if len(results) > 10000:
@@ -308,7 +309,7 @@ class QuadtreeGen(object):
             assert len(results) == 0
             complete = 0
             total = 4**zoom
-            print "Starting level", level
+            logging.info("Starting level {0}".format(level))
             for result in self._apply_render_inntertile(pool, zoom):
                 results.append(result)
                 if len(results) > 10000:
@@ -324,7 +325,7 @@ class QuadtreeGen(object):
 
             self.print_statusline(complete, total, level, True)
 
-            print "Done"
+            logging.info("Done")
 
         pool.close()
         pool.join()
@@ -561,8 +562,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
             # corrupting it), then this could error.
             # Since we have no easy way of determining how this chunk was
             # generated, we need to just ignore it.
-            print "Error opening file", chunkfile
-            print "(Error was {0})".format(e)
+            logging.warning("Could not open chunk '{0}' ({1})".format(chunkfile,e))
             try:
                 # Remove the file so that the next run will re-generate it.
                 os.unlink(chunkfile)
@@ -571,12 +571,12 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
                 # Ignore if file doesn't exist, another task could have already
                 # removed it.
                 if e.errno != errno.ENOENT:
-                    print "Could not remove the corrupt chunk!"
+                    logging.warning("Could not remove chunk '{0}'!".format(chunkfile))
                     raise
             else:
-                print "Removed the corrupt file"
+                logging.warning("Removed the corrupt file")
 
-            print "You will need to re-run the Overviewer to fix this chunk"
+            logging.warning("You will need to re-run the Overviewer to fix this chunk")
             continue
 
         xpos = -192 + (col-colstart)*192
