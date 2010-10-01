@@ -66,7 +66,7 @@ def get_blockdata_array(level):
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
-    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 81, 83, 85])
+    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
 
 def render_and_save(chunkfile, cachedir, cave=False):
     """Used as the entry point for the multiprocessing workers (since processes
@@ -341,7 +341,7 @@ class ChunkRenderer(object):
                         else:
                            increment = 0
 
-                        if blockid not in transparent_blocks:
+                        if blockid not in transparent_blocks or blockid in (78,): #special case snow so the outline is still drawn
                             draw = ImageDraw.Draw(img)
                             if x != 15 and blocks[x+1,y,z] == 0:
                                 draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
