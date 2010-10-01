@@ -163,7 +163,8 @@
         if ("no_players" in urlParams && item.id == 4)
                 return;
 
-
+        if ("no_places" in urlParams && item.id == 3)
+                return;
 
         var converted = fromWorldToLatLng(item.x, item.y, item.z);
         marker = markers[item.msg+item.id];
@@ -278,8 +279,10 @@ $(document).ready(function() {
 
         if ("no_overlay" in urlParams)
                 $('#mcmarkerlist').hide();
-		if ("no_markers" in urlParams)
+        if ("no_markers" in urlParams)
                 $('#mcmarkerlist').hide();
+        if ("no_places" in urlParams)
+                $('div[name=mcmarkers3]').hide();
         if ("no_players" in urlParams)
                 $('div[name=mcmarkers4]').hide();
         initialize();

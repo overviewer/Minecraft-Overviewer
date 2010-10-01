@@ -243,6 +243,10 @@ class WorldRenderer(object):
                 chunklist.append((base36decode(p[1]), base36decode(p[2]),
                     path))
 
+        # No chunks found
+        if len(chunklist) == 0:
+            return None;
+        
         # Translate to col, row coordinates
         _, _, _, _, chunklist = _convert_coords(chunklist)
 
