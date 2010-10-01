@@ -254,6 +254,7 @@ class WorldRenderer(object):
         inclusion_set = set()
         for col, row, filename in chunklist:
             inclusion_set.add((col, row))
+            
 
         return inclusion_set
 
@@ -271,7 +272,10 @@ class WorldRenderer(object):
         # build the results dict out of all chunks, even if they're not being
         # rendered.
         self.inclusion_set = self._get_chunk_renderset()
-
+        if self.inclusion_set:
+            print "Inclusion set found, rendering only a subset of map"
+        
+        
         results = {}
         if processes == 1:
             # Skip the multiprocessing stuff

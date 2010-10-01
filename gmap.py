@@ -90,7 +90,7 @@ def main():
     if options.delete:
         return delete_all(cachedir, destdir)
 
-    if options.chunklist:
+    if options.chunklist and os.path.exists(options.chunklist):
         chunklist = open(options.chunklist, 'r')
     else:
         chunklist = None
@@ -100,7 +100,7 @@ def main():
     w.go(options.procs)
 
     # Now generate the tiles
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, chunklist=chunklist)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom)
     q.go(options.procs)
 
 def delete_all(worlddir, tiledir):

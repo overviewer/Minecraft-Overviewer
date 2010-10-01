@@ -23,6 +23,7 @@ import re
 import shutil
 import collections
 import json
+import sys
 
 from PIL import Image
 
@@ -243,9 +244,46 @@ class QuadtreeGen(object):
 
             yield pool.apply_async(func=render_innertile, args= (dest, name))
 
-
-    
+    def _apply_render_inclusiontiles(self, pool):
+        """Returns an iterator over result objects. Each time a new result is
+        requested, a new task is added to the pool and a result returned.
+        """
+        
+        """Get chunks that are relevant to the tile rendering function that's
+        rendering that range"""
+        # !TODO! Add a buffer around inclusion chunks, primarily above (say 6 chunks?)
+        tilechunks = []
             
+        for (col,row) in self.world.inclusion_set:
+            # This image is rendered at:
+            # !TODO! need to convert row,col to tiles/0/3/1/2/3/ path
+            #dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
+            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in self._get_path_by_coordinates(self.p,col,row)[:-1]))
+
+            # And uses these chunks
+            tilechunks = self._get_chunks_in_range(col, col, row, row)
+
+            # Put this in the pool
+            # (even if tilechunks is empty, render_worldtile will delete
+            # existing images if appropriate)
+            yield pool.apply_async(func=render_worldtile, args= (tilechunks,
+                col, col+2, row, row+4, dest))
+
+    def _apply_render_innerinclusiontile(self, pool, zoom):
+        """Same as _apply_render_worltiles but for the inntertile routine.
+        Returns an iterator that yields result objects from tasks that have
+        been applied to the pool.
+        """
+        
+        for (col,row) in self.world.inclusion_set:
+        
+            path = self._get_path_by_coordinates(zoom,col,row)
+            # This image is rendered at:
+            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
+            name = str(path[-1])
+
+            yield pool.apply_async(func=render_innertile, args= (dest, name))
+    
     def go(self, procs):
         """Renders all tiles"""
 
@@ -274,63 +312,108 @@ class QuadtreeGen(object):
         self.write_html(self.p)
 
         # Check for chunklist
-        if self.chunklist:
+        if self.world.inclusion_set:
+            results = collections.deque()
             print "Have a chunklist, so only rendering subset of tiles"
-            
-        
-        # Render the highest level of tiles from the chunks
-        results = collections.deque()
-        complete = 0
-        total = 4**self.p
-        print "Rendering highest zoom level of tiles now."
-        print "There are {0} tiles to render".format(total)
-        print "There are {0} total levels to render".format(self.p)
-        print "Don't worry, each level has only 25% as many tiles as the last."
-        print "The others will go faster"
-        for result in self._apply_render_worldtiles(pool):
-            results.append(result)
-            if len(results) > 10000:
-                # Empty the queue before adding any more, so that memory
-                # required has an upper bound
-                while len(results) > 500:
-                    results.popleft().get()
-                    complete += 1
-                    self.print_statusline(complete, total, 1)
 
-        # Wait for the rest of the results
-        while len(results) > 0:
-            results.popleft().get()
-            complete += 1
-            self.print_statusline(complete, total, 1)
-
-        self.print_statusline(complete, total, 1, True)
-
-        # Now do the other layers
-        for zoom in xrange(self.p-1, 0, -1):
-            level = self.p - zoom + 1
-            assert len(results) == 0
-            complete = 0
-            total = 4**zoom
-            print "Starting level", level
-            for result in self._apply_render_inntertile(pool, zoom):
+            for result in self._apply_render_inclusiontiles(pool):
                 results.append(result)
                 if len(results) > 10000:
+                    # Empty the queue before adding any more, so that memory
+                    # required has an upper bound
+                    while len(results) > 500:
+                        results.popleft().get()
+                        #complete += 1
+                        #self.print_statusline(complete, total, 1)
+
+            # Wait for the rest of the results
+            while len(results) > 0:
+                results.popleft().get()
+                #complete += 1
+                #self.print_statusline(complete, total, 1)
+
+            #self.print_statusline(complete, total, 1, True)
+            
+            # Now do the other layers
+            for zoom in xrange(self.p-1, 0, -1):
+                level = self.p - zoom + 1
+                assert len(results) == 0
+                print "Starting level", level
+                for result in self._apply_render_innerinclusiontile(pool, zoom):
+                    results.append(result)
+                    if len(results) > 10000:
+                        while len(results) > 500:
+                            results.popleft().get()
+                            #complete += 1
+                            #self.print_statusline(complete, total, level)
+                # Empty the queue
+                while len(results) > 0:
+                    results.popleft().get()
+                    #complete += 1
+                    #self.print_statusline(complete, total, level)
+
+                #self.print_statusline(complete, total, level, True)
+
+                print "Done"
+
+            pool.close()
+            pool.join()
+            
+            
+        else:
+            # Render the highest level of tiles from the chunks
+            results = collections.deque()
+            complete = 0
+            total = 4**self.p
+            print "Rendering highest zoom level of tiles now."
+            print "There are {0} tiles to render".format(total)
+            print "There are {0} total levels to render".format(self.p)
+            print "Don't worry, each level has only 25% as many tiles as the last."
+            print "The others will go faster"
+            for result in self._apply_render_worldtiles(pool):
+                results.append(result)
+                if len(results) > 10000:
+                    # Empty the queue before adding any more, so that memory
+                    # required has an upper bound
                     while len(results) > 500:
                         results.popleft().get()
                         complete += 1
-                        self.print_statusline(complete, total, level)
-            # Empty the queue
+                        self.print_statusline(complete, total, 1)
+
+            # Wait for the rest of the results
             while len(results) > 0:
                 results.popleft().get()
                 complete += 1
-                self.print_statusline(complete, total, level)
+                self.print_statusline(complete, total, 1)
 
-            self.print_statusline(complete, total, level, True)
+            self.print_statusline(complete, total, 1, True)
 
-            print "Done"
+            # Now do the other layers
+            for zoom in xrange(self.p-1, 0, -1):
+                level = self.p - zoom + 1
+                assert len(results) == 0
+                complete = 0
+                total = 4**zoom
+                print "Starting level", level
+                for result in self._apply_render_inntertile(pool, zoom):
+                    results.append(result)
+                    if len(results) > 10000:
+                        while len(results) > 500:
+                            results.popleft().get()
+                            complete += 1
+                            self.print_statusline(complete, total, level)
+                # Empty the queue
+                while len(results) > 0:
+                    results.popleft().get()
+                    complete += 1
+                    self.print_statusline(complete, total, level)
 
-        pool.close()
-        pool.join()
+                self.print_statusline(complete, total, level, True)
+
+                print "Done"
+
+            pool.close()
+            pool.join()
 
         # Do the final one right here:
         render_innertile(os.path.join(self.destdir, "tiles"), "base")
@@ -339,6 +422,8 @@ class QuadtreeGen(object):
         
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
+        # tile/3/2/1/0/2/3/1
+        
         x, y = self.mincol, self.minrow
         
         xsize = self.maxcol
@@ -351,8 +436,58 @@ class QuadtreeGen(object):
                 y += ysize
             xsize //= 2
             ysize //= 2
-
+       # print path
+        #print x,y
+        # sys.exit()
         return x, y
+        
+    def _get_path_by_coordinates(self, zoom, x,y):
+        """Returns the x, y chunk coordinates of this tile"""
+        # tile/3/2/1/0/2/3/1
+        
+        depth = zoom
+        xradius = 2**(depth)
+        yradius = 2*2**(depth)    
+        
+        # Make new row and column ranges
+        xpivot = 0
+        ypivot = 0
+        
+        path = []
+        
+        for p in range(0,depth):
+            
+            yradius /= 2
+            xradius /= 2
+            #print xradius, yradius, xpivot, ypivot, path
+        
+            if x >= xpivot:
+                if y >= ypivot:
+                    path.append(3)
+                    xpivot = (xpivot + xradius)
+                    ypivot = (ypivot + yradius)
+                    continue
+                else:
+                    path.append(1)
+                    xpivot = (xpivot + xradius)
+                    ypivot = (ypivot - yradius)
+                    continue
+            if x <= xpivot:
+                if y >= ypivot:
+                    path.append(2)
+                    xpivot = (xpivot - xradius)
+                    ypivot = (ypivot + yradius)
+                    continue
+                else:
+                   path.append(0)
+                   xpivot = (xpivot - xradius)
+                   ypivot = (ypivot - yradius)
+                   continue
+        
+        
+        return path
+
+        
 
     def _get_chunks_in_range(self, colstart, colend, rowstart, rowend):
         """Get chunks that are relevant to the tile rendering function that's
@@ -362,13 +497,7 @@ class QuadtreeGen(object):
             for col in xrange(colstart, colend+1):
                 c = self.world.chunkmap.get((col, row), None)
                 if c:
-                    if self.world.inclusion_set:
-                        if not (col,row) in self.world.inclusion_set:
-                            # Do not include chunk
-                            #print "Ignoring chunk {0}, not in inclusion set".format((col,row))
-                            continue;
-                    else:
-                        chunklist.append((col, row, c))
+                    chunklist.append((col, row, c))
         return chunklist
 
 @catch_keyboardinterrupt
