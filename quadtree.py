@@ -52,7 +52,7 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None):
+    def __init__(self, worldobj, destdir, depth=None, chunklist=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -93,6 +93,8 @@ class QuadtreeGen(object):
 
         self.world = worldobj
         self.destdir = destdir
+        
+        self.chunklist = chunklist
 
     def print_statusline(self, complete, total, level, unconditional=False):
         if unconditional:
@@ -209,6 +211,7 @@ class QuadtreeGen(object):
         """Returns an iterator over result objects. Each time a new result is
         requested, a new task is added to the pool and a result returned.
         """
+        
         for path in iterate_base4(self.p):
             # Get the range for this tile
             colstart, rowstart = self._get_range_by_path(path)
@@ -240,6 +243,9 @@ class QuadtreeGen(object):
 
             yield pool.apply_async(func=render_innertile, args= (dest, name))
 
+
+    
+            
     def go(self, procs):
         """Renders all tiles"""
 
@@ -267,6 +273,11 @@ class QuadtreeGen(object):
 
         self.write_html(self.p)
 
+        # Check for chunklist
+        if self.chunklist:
+            print "Have a chunklist, so only rendering subset of tiles"
+            
+        
         # Render the highest level of tiles from the chunks
         results = collections.deque()
         complete = 0
@@ -324,6 +335,8 @@ class QuadtreeGen(object):
         # Do the final one right here:
         render_innertile(os.path.join(self.destdir, "tiles"), "base")
 
+        
+        
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
         x, y = self.mincol, self.minrow
@@ -349,7 +362,13 @@ class QuadtreeGen(object):
             for col in xrange(colstart, colend+1):
                 c = self.world.chunkmap.get((col, row), None)
                 if c:
-                    chunklist.append((col, row, c))
+                    if self.world.inclusion_set:
+                        if not (col,row) in self.world.inclusion_set:
+                            # Do not include chunk
+                            #print "Ignoring chunk {0}, not in inclusion set".format((col,row))
+                            continue;
+                    else:
+                        chunklist.append((col, row, c))
         return chunklist
 
 @catch_keyboardinterrupt

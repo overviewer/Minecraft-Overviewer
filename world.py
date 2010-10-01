@@ -231,7 +231,7 @@ class WorldRenderer(object):
         if not self.chunklist:
             return None
         
-        # Get a list of the (chunks, chunky, filename) from the passed in list
+        # Get a list of the (chunkx, chunky, filename) from the passed in list
         # of filenames
         chunklist = []
         for path in self.chunklist:
@@ -270,14 +270,14 @@ class WorldRenderer(object):
         # slightly more compliated than it should seem, since we still need to
         # build the results dict out of all chunks, even if they're not being
         # rendered.
-        inclusion_set = self._get_chunk_renderset()
+        self.inclusion_set = self._get_chunk_renderset()
 
         results = {}
         if processes == 1:
             # Skip the multiprocessing stuff
             print "Rendering chunks synchronously since you requested 1 process"
             for i, (col, row, chunkfile) in enumerate(chunks):
-                if inclusion_set and (col, row) not in inclusion_set:
+                if self.inclusion_set and (col, row) not in self.inclusion_set:
                     # Skip rendering, just find where the existing image is
                     _, imgpath = chunk.ChunkRenderer(chunkfile,
                             self.cachedir).find_oldimage(False)
@@ -295,7 +295,7 @@ class WorldRenderer(object):
             pool = multiprocessing.Pool(processes=processes)
             asyncresults = []
             for col, row, chunkfile in chunks:
-                if inclusion_set and (col, row) not in inclusion_set:
+                if self.inclusion_set and (col, row) not in self.inclusion_set:
                     # Skip rendering, just find where the existing image is
                     _, imgpath = chunk.ChunkRenderer(chunkfile,
                             self.cachedir).find_oldimage(False)
