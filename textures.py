@@ -151,7 +151,7 @@ def _transform_image_side(img, blockID):
     """Takes an image and shears it for the left side of the cube (reflect for
     the right side)"""
 
-    if blockID in (44,): # step block
+    if blockID in (44,78,): # step block, snow
         # make the top half transpartent
         # (don't just crop img, since we want the size of
         # img to be unchanged
@@ -213,7 +213,7 @@ def _build_block(top, side, blockID=None):
         img.paste(side, (2,6), side)
         img.paste(otherside, (10,6), otherside)
         img.paste(top, (0,2), top)
-    elif blockID in (44,): # half step
+    elif blockID in (44,78,): # half step, snow
         # shift each texture down 6 pixels
         img.paste(side, (0,12), side)
         img.paste(otherside, (12,12), otherside)
