@@ -114,7 +114,7 @@ def _split_terrain(terrain):
 # This maps terainids to 16x16 images
 terrain_images = _split_terrain(_get_terrain_image())
 
-def _transform_image(img, blockID):
+def _transform_image(img, blockID=None):
     """Takes a PIL image and rotates it left 45 degrees and shrinks the y axis
     by a factor of 2. Returns the resulting image, which will be 24x12 pixels
 
@@ -201,6 +201,8 @@ def _build_block(top, side, blockID=None):
     otherside.putalpha(othersidealpha)
 
     ## special case for non-block things
+    # TODO once torches are handled by generate_special_texture, remove
+    # them from this list
     if blockID in (37,38,6,39,40,50,83): ## flowers, sapling, mushrooms,  regular torch, reeds
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
@@ -321,3 +323,41 @@ def load_water():
     blockmap[10] = lavablock.convert("RGB"), lavablock
     blockmap[11] = blockmap[10]
 load_water()
+
+
+def generate_special_texture(blockID, data):
+    """Generates a special texture, such as a correctly facing minecraft track"""
+    #print "%s has ancillary data: %X" %(blockID, data)
+    # TODO torches, redstone torches, crops, ladders, stairs, 
+    #      levers, doors, buttons, and signs all need to be handled here (and in chunkpy)
+    if blockID == 66: # minetrack:
+        raw_straight = terrain_images[128]
+        raw_corner = terrain_images[112]
+    
+        ## use _transform_image to scale and shear
+        if data == 0:
+            track = _transform_image(raw_straight, blockID)
+        elif data == 6:
+            track = _transform_image(raw_corner, blockID)
+        elif data == 7:
+            track = _transform_image(raw_corner.rotate(270), blockID)
+        elif data == 8:
+            # flip
+            track = _transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90), 
+                    blockID)
+        elif data == 9:
+            track = _transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM), 
+                    blockID)
+        elif data == 1:
+            track = _transform_image(raw_straight.rotate(90), blockID)
+        else:
+            # TODO render carts that slop up or down
+            track = _transform_image(raw_straight, blockID)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        img.paste(track, (0,12), track)
+
+        return (img.convert("RGB"), img.split()[3])
+
+
+    return None
