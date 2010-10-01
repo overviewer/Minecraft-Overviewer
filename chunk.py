@@ -334,17 +334,19 @@ class ChunkRenderer(object):
                             img.paste(t[0], (imgx, imgy), t[1])
 
                         # Draw edge lines
-			if blockid in (44,78,): # step block, snow
-			   half = 6
-			else:
-			   half = 0
+                        if blockid in (44,): # step block
+                           increment = 6
+                        elif blockid in (78,): # snow
+                           increment = 9
+                        else:
+                           increment = 0
 
                         if blockid not in transparent_blocks:
                             draw = ImageDraw.Draw(img)
                             if x != 15 and blocks[x+1,y,z] == 0:
-                                draw.line(((imgx+12,imgy+half), (imgx+22,imgy+5+half)), fill=(0,0,0), width=1)
+                                draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
                             if y != 0 and blocks[x,y-1,z] == 0:
-                                draw.line(((imgx,imgy+6+half), (imgx+12,imgy+half)), fill=(0,0,0), width=1)
+                                draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
 
 
                     finally:
