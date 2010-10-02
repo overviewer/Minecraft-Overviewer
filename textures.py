@@ -253,7 +253,7 @@ def _build_blockimages():
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1, # Torch from above? leaving out fire. Redstone wire? Crops left out. sign post
+               36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1, # Torch from above? leaving out fire. Redstone wire? Crops handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67, # door,ladder left out. Minecart rail orientation
        #       80  81  82  83  84
@@ -358,6 +358,20 @@ def generate_special_texture(blockID, data):
         img.paste(track, (0,12), track)
 
         return (img.convert("RGB"), img.split()[3])
+    if blockID == 59: # crops
+        raw_crop = terrain_images[88+data]
+        crop1 = _transform_image(raw_crop, blockID)
+        crop2 = _transform_image_side(raw_crop, blockID)
+        crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        img.paste(crop1, (0,12), crop1)
+        img.paste(crop2, (6,3), crop2)
+        img.paste(crop3, (6,3), crop3)
+        return (img.convert("RGB"), img.split()[3])
+
+
+
 
 
     return None
