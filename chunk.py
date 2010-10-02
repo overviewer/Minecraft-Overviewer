@@ -272,8 +272,10 @@ class ChunkRenderer(object):
                         # alone.  additional data is required.
                         # TODO torches, redstone torches, crops, ladders, stairs, 
                         #      levers, doors, buttons, and signs all need to be handled here (and in textures.py)
-                        if blockid in (66,59,61,62, 65): ## minecart track, crops, ladder
-                            # also handle furnaces here, since one side has a different texture than the other
+
+                        ## minecart track, crops, ladder, doors
+                        if blockid in (66,59,61,62, 65,64,71):
+                         # also handle furnaces here, since one side has a different texture than the other
                             ancilData = blockData_expanded[x,y,z]
                             t =  textures.generate_special_texture(blockid, ancilData)
 

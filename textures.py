@@ -421,6 +421,56 @@ def generate_special_texture(blockID, data):
             img.paste(tex, (12,0), tex)
             return (img.convert("RGB"), img.split()[3])
             
+    if blockID in (64,71): #wooden door, or iron door
+        if data & 0x8 == 0x8: # top of the door
+            raw_door = terrain_images[81 if blockID == 64 else 82]
+        else: # bottom of the door
+            raw_door = terrain_images[97 if blockID == 64 else 98]
+        
+        # if you want to render all doors as closed, then force
+        # force swung to be False
+        if data & 0x4 == 0x4:
+            swung=True
+        else:
+            swung=False
 
+        # mask out the high bits to figure out the orientation 
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        if (data & 0x03) == 0:
+            if not swung:
+                tex = _transform_image_side(raw_door)
+                img.paste(tex, (0,6), tex)
+            else:
+                # flip first to set the doornob on the correct side
+                tex = _transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
+                img.paste(tex, (0,0), tex)
+        
+        if (data & 0x03) == 1:
+            if not swung:
+                tex = _transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                img.paste(tex, (0,0), tex)
+            else:
+                tex = _transform_image_side(raw_door)
+                img.paste(tex, (12,0), tex)
+
+        if (data & 0x03) == 2:
+            if not swung:
+                tex = _transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                img.paste(tex, (12,0), tex)
+            else:
+                tex = _transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                img.paste(tex, (12,6), tex)
+
+        if (data & 0x03) == 3:
+            if not swung:
+                tex = _transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
+                img.paste(tex, (12,6), tex)
+            else:
+                tex = _transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                img.paste(tex, (0,6), tex)
+        
+        return (img.convert("RGB"), img.split()[3])
+    
 
     return None
