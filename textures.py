@@ -394,5 +394,33 @@ def generate_special_texture(blockID, data):
         img.paste(top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
 
+    if blockID == 65: # ladder
+        raw_texture = terrain_images[83]
+        #print "ladder is facing: %d" % data
+        if data == 5:
+            # normally this ladder would be obsured by the block it's attached to
+            # but since ladders can apparently be placed on transparent blocks, we 
+            # have to render this thing anyway.  same for data == 2
+            tex = _transform_image_side(raw_texture)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            img.paste(tex, (0,6), tex)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 2:
+            tex = _transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            img.paste(tex, (12,6), tex)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 3:
+            tex = _transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            img.paste(tex, (0,0), tex)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 4:
+            tex = _transform_image_side(raw_texture)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            img.paste(tex, (12,0), tex)
+            return (img.convert("RGB"), img.split()[3])
+            
+
 
     return None
