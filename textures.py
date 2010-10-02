@@ -147,7 +147,7 @@ def _transform_image(img, blockID=None):
     newimg = img.transform((24,12), Image.AFFINE, transform)
     return newimg
 
-def _transform_image_side(img, blockID):
+def _transform_image_side(img, blockID=None):
     """Takes an image and shears it for the left side of the cube (reflect for
     the right side)"""
 
@@ -253,7 +253,7 @@ def _build_blockimages():
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1, # Torch from above? leaving out fire. Redstone wire? Crops handled elsewhere. sign post
+               36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67, # door,ladder left out. Minecart rail orientation
        #       80  81  82  83  84
@@ -270,7 +270,7 @@ def _build_blockimages():
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  5,  5,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1,
+                36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, 44, 61, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                 -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67,
        #        80  81  82  83  84
@@ -370,8 +370,29 @@ def generate_special_texture(blockID, data):
         img.paste(crop3, (6,3), crop3)
         return (img.convert("RGB"), img.split()[3])
 
+    if blockID == 61: #furnace
+        top = _transform_image(terrain_images[1])
+        side1 = _transform_image_side(terrain_images[45])
+        side2 = _transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
 
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
 
+        img.paste(side1, (0,6), side1)
+        img.paste(side2, (12,6), side2)
+        img.paste(top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+    
+    if blockID == 62: # lit furnace
+        top = _transform_image(terrain_images[1])
+        side1 = _transform_image_side(terrain_images[45])
+        side2 = _transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        img.paste(side1, (0,6), side1)
+        img.paste(side2, (12,6), side2)
+        img.paste(top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
 
 
     return None
