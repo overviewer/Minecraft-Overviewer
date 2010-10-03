@@ -485,3 +485,25 @@ def generate_special_texture(blockID, data):
     
 
     return None
+
+
+# This set holds block ids that require special pre-computing.  These are typically
+# things that require ancillary data to render properly (i.e. ladder plus orientation)
+special_blocks = set([66,59,61,62, 65,64,71])
+
+# this is a map of special blockIDs to a list of all 
+# possible values for ancillary data that it might have.
+special_map = {}
+special_map[66] = range(10) # minecrart tracks
+special_map[59] = range(8)  # crops
+special_map[61] = (0,)      # furnace
+special_map[62] = (0,)      # burning furnace
+special_map[65] = (2,3,4,5) # ladder
+special_map[64] = range(16) # wooden door
+special_map[71] = range(16) # iron door
+
+specialblockmap = {}
+
+for blockID in special_blocks:
+    for data in special_map[blockID]:
+        specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)
