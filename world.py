@@ -121,6 +121,11 @@ class WorldRenderer(object):
                 chunklist.append((base36decode(p[1]), base36decode(p[2]),
                     path))
 
+        if not chunklist:
+            logging.error("No valid chunks specified in your chunklist!")
+            logging.error("HINT: chunks are in your world directory and have names of the form 'c.*.*.dat'")
+            sys.exit(1)
+
         # Translate to col, row coordinates
         _, _, _, _, chunklist = _convert_coords(chunklist)
 
@@ -204,8 +209,6 @@ class WorldRenderer(object):
                     if f.startswith("c.") and f.endswith(".dat"):
                         p = f.split(".")
                         all_chunks.append((base36decode(p[1]), base36decode(p[2]), 
-                            os.path.join(dirpath, f)))
-                        logging.debug((base36decode(p[1]), base36decode(p[2]),
                             os.path.join(dirpath, f)))
 
         if not all_chunks:
