@@ -100,7 +100,7 @@ it.
 
 The Overviewer will put a cached image for every chunk *directly in your world
 directory by default*. If you do not like this behavior, you can specify
-another location with the --chunkdir option. See below for details.
+another location with the --cachedir option. See below for details.
 
 Options
 -------
@@ -120,6 +120,12 @@ Options
     Example::
 
         python gmap.py --cachedir=<chunk cache dir> <world> <output dir>
+
+--imgformat=FORMAT
+    Set the output image format used for the tiles. The default is 'png',
+    but 'jpg' is also supported. Note that regardless of what you choose,
+    Overviewer will still use PNG for cached images to avoid recompression
+    artifacts.
 
 -p PROCS, --processes=PROCS
     Adding the "-p" option will utilize more cores during processing.  This
@@ -208,6 +214,10 @@ render for my world from 85M to 67M.
 ::
 
     find /path/to/destination -name "*.png" -exec pngcrush {} {}.crush \; -exec mv {}.crush {} \;
+
+Or if you prefer a more parallel solution, try something like this::
+
+    find /path/to/destination -print0 | xargs -0 -n 1 -P <nr_procs> sh -c 'pngcrush $0 temp.$$ && mv temp.$$ $0'
 
 If you're on Windows, I've gotten word that this command line snippet works
 provided pngout is installed and on your path. Note that the % symbols will
