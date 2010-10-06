@@ -602,7 +602,27 @@ def render_innertile(dest, name):
         # generated, we need to just ignore it.
         print "Error with file ", dest," -- ",name
         print "(Error was {0})".format(e)
-        
+        try:
+            if q0path:
+				os.unlink(q0path)
+			if q1path:
+				os.unlink(q1path)
+			if q2path:
+				os.unlink(q2path)
+			if q3path:
+				os.unlink(q3path)
+		except OSError, e:
+			import errno
+			# Ignore if file doesn't exist, another task could have already
+			# removed it.
+			if e.errno != errno.ENOENT:
+				print "Could not remove the corrupt chunks!"
+				raise
+            else:
+                print "Removed the corrupt files"
+
+            print "You will need to re-run the Overviewer to fix this tile"
+            
         
     
     
