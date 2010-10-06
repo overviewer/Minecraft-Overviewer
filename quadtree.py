@@ -314,6 +314,9 @@ class QuadtreeGen(object):
         # Check for chunklist
         if self.world.inclusion_set:
             results = collections.deque()
+            complete = 0
+            #total = 4**self.p
+            total = len(self.world.inclusion_set) * self.p
             print "Have a chunklist, so only rendering subset of tiles"
 
             for result in self._apply_render_inclusiontiles(pool):
@@ -323,16 +326,16 @@ class QuadtreeGen(object):
                     # required has an upper bound
                     while len(results) > 500:
                         results.popleft().get()
-                        #complete += 1
-                        #self.print_statusline(complete, total, 1)
+                        complete += 1
+                        self.print_statusline(complete, total, 1)
 
             # Wait for the rest of the results
             while len(results) > 0:
                 results.popleft().get()
-                #complete += 1
-                #self.print_statusline(complete, total, 1)
+                complete += 1
+                self.print_statusline(complete, total, 1)
 
-            #self.print_statusline(complete, total, 1, True)
+            self.print_statusline(complete, total, 1, True)
             
             # Now do the other layers
             for zoom in xrange(self.p-1, 0, -1):
@@ -344,15 +347,15 @@ class QuadtreeGen(object):
                     if len(results) > 10000:
                         while len(results) > 500:
                             results.popleft().get()
-                            #complete += 1
-                            #self.print_statusline(complete, total, level)
+                            complete += 1
+                            self.print_statusline(complete, total, level)
                 # Empty the queue
                 while len(results) > 0:
                     results.popleft().get()
-                    #complete += 1
-                    #self.print_statusline(complete, total, level)
+                    complete += 1
+                    self.print_statusline(complete, total, level)
 
-                #self.print_statusline(complete, total, level, True)
+                self.print_statusline(complete, total, level, True)
 
                 print "Done"
 
@@ -506,90 +509,103 @@ def render_innertile(dest, name):
     Renders a tile at os.path.join(dest, name)+".png" by taking tiles from
     os.path.join(dest, name, "{0,1,2,3}.png")
     """
-    imgpath = os.path.join(dest, name) + ".png"
-    hashpath = os.path.join(dest, name) + ".hash"
+    try:
+        imgpath = os.path.join(dest, name) + ".png"
+        hashpath = os.path.join(dest, name) + ".hash"
+        print "dest: {0}, name: {1}".format(dest,name)
+        if name == "base":
+            q0path = os.path.join(dest, "0.png")
+            q1path = os.path.join(dest, "1.png")
+            q2path = os.path.join(dest, "2.png")
+            q3path = os.path.join(dest, "3.png")
+            q0hash = os.path.join(dest, "0.hash")
+            q1hash = os.path.join(dest, "1.hash")
+            q2hash = os.path.join(dest, "2.hash")
+            q3hash = os.path.join(dest, "3.hash")
+        else:
+            q0path = os.path.join(dest, name, "0.png")
+            q1path = os.path.join(dest, name, "1.png")
+            q2path = os.path.join(dest, name, "2.png")
+            q3path = os.path.join(dest, name, "3.png")
+            q0hash = os.path.join(dest, name, "0.hash")
+            q1hash = os.path.join(dest, name, "1.hash")
+            q2hash = os.path.join(dest, name, "2.hash")
+            q3hash = os.path.join(dest, name, "3.hash")
 
-    if name == "base":
-        q0path = os.path.join(dest, "0.png")
-        q1path = os.path.join(dest, "1.png")
-        q2path = os.path.join(dest, "2.png")
-        q3path = os.path.join(dest, "3.png")
-        q0hash = os.path.join(dest, "0.hash")
-        q1hash = os.path.join(dest, "1.hash")
-        q2hash = os.path.join(dest, "2.hash")
-        q3hash = os.path.join(dest, "3.hash")
-    else:
-        q0path = os.path.join(dest, name, "0.png")
-        q1path = os.path.join(dest, name, "1.png")
-        q2path = os.path.join(dest, name, "2.png")
-        q3path = os.path.join(dest, name, "3.png")
-        q0hash = os.path.join(dest, name, "0.hash")
-        q1hash = os.path.join(dest, name, "1.hash")
-        q2hash = os.path.join(dest, name, "2.hash")
-        q3hash = os.path.join(dest, name, "3.hash")
+        # Check which ones exist
+        if not os.path.exists(q0hash):
+            q0path = None
+            q0hash = None
+        if not os.path.exists(q1hash):
+            q1path = None
+            q1hash = None
+        if not os.path.exists(q2hash):
+            q2path = None
+            q2hash = None
+        if not os.path.exists(q3hash):
+            q3path = None
+            q3hash = None
 
-    # Check which ones exist
-    if not os.path.exists(q0hash):
-        q0path = None
-        q0hash = None
-    if not os.path.exists(q1hash):
-        q1path = None
-        q1hash = None
-    if not os.path.exists(q2hash):
-        q2path = None
-        q2hash = None
-    if not os.path.exists(q3hash):
-        q3path = None
-        q3hash = None
-
-    # do they all not exist?
-    if not (q0path or q1path or q2path or q3path):
-        if os.path.exists(imgpath):
-            os.unlink(imgpath)
+        # do they all not exist?
+        if not (q0path or q1path or q2path or q3path):
+            if os.path.exists(imgpath):
+                os.unlink(imgpath)
+            if os.path.exists(hashpath):
+                os.unlink(hashpath)
+            return
+        
+        # Now check the hashes
+        hasher = hashlib.md5()
+        if q0hash:
+            hasher.update(open(q0hash, "rb").read())
+        if q1hash:
+            hasher.update(open(q1hash, "rb").read())
+        if q2hash:
+            hasher.update(open(q2hash, "rb").read())
+        if q3hash:
+            hasher.update(open(q3hash, "rb").read())
         if os.path.exists(hashpath):
-            os.unlink(hashpath)
-        return
+            oldhash = open(hashpath, "rb").read()
+        else:
+            oldhash = None
+        newhash = hasher.digest()
+
+        if newhash == oldhash:
+            # Nothing to do
+            return
+
+        # Create the actual image now
+        img = Image.new("RGBA", (384, 384), (38,92,255,0))
+
+        if q0path:
+            quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad0, (0,0))
+        if q1path:
+            quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad1, (192,0))
+        if q2path:
+            quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad2, (0, 192))
+        if q3path:
+            quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad3, (192, 192))
+
+        # Save it
+        img.save(imgpath)
+        with open(hashpath, "wb") as hashout:
+            hashout.write(newhash)
+    except Exception, e:
+        # If for some reason the chunk failed to load (perhaps a previous
+        # run was canceled and the file was only written half way,
+        # corrupting it), then this could error.
+        # Since we have no easy way of determining how this chunk was
+        # generated, we need to just ignore it.
+        print "Error with file ", dest," -- ",name
+        print "(Error was {0})".format(e)
+        
+        
     
-    # Now check the hashes
-    hasher = hashlib.md5()
-    if q0hash:
-        hasher.update(open(q0hash, "rb").read())
-    if q1hash:
-        hasher.update(open(q1hash, "rb").read())
-    if q2hash:
-        hasher.update(open(q2hash, "rb").read())
-    if q3hash:
-        hasher.update(open(q3hash, "rb").read())
-    if os.path.exists(hashpath):
-        oldhash = open(hashpath, "rb").read()
-    else:
-        oldhash = None
-    newhash = hasher.digest()
-
-    if newhash == oldhash:
-        # Nothing to do
-        return
-
-    # Create the actual image now
-    img = Image.new("RGBA", (384, 384), (38,92,255,0))
-
-    if q0path:
-        quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad0, (0,0))
-    if q1path:
-        quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad1, (192,0))
-    if q2path:
-        quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad2, (0, 192))
-    if q3path:
-        quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad3, (192, 192))
-
-    # Save it
-    img.save(imgpath)
-    with open(hashpath, "wb") as hashout:
-        hashout.write(newhash)
+    
 
 
 @catch_keyboardinterrupt
