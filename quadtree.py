@@ -286,7 +286,7 @@ class QuadtreeGen(object):
             # (even if tilechunks is empty, render_worldtile will delete
             # existing images if appropriate)
             yield pool.apply_async(func=render_worldtile, args= (tilechunks,
-                colstart, colend, rowstart, rowend, dest))
+                colstart, colend, rowstart, rowend, dest, self.imgformat))
 
     def _apply_render_innerinclusiontile(self, pool, zoom):
         """Same as _apply_render_worltiles but for the inntertile routine.
@@ -303,7 +303,7 @@ class QuadtreeGen(object):
             dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
             name = str(path[-1])
 
-            yield pool.apply_async(func=render_innertile, args= (dest, name))
+            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat))
 
     
             
@@ -368,7 +368,7 @@ class QuadtreeGen(object):
                 level = self.p - zoom + 1
                 assert len(results) == 0
                 complete = 0
-                total = len(self.chunkset)
+                #total = len(self.chunkset)
                 logging.info( "Starting level {0}".format(level))
                 for result in self._apply_render_innerinclusiontile(pool, zoom):
                     results.append(result)
@@ -635,12 +635,12 @@ def render_innertile(dest, name, imgformat):
             # Ignore if file doesn't exist, another task could have already
             # removed it.
             if e.errno != errno.ENOENT:
-                logging.warning("Could not remove the corrupt chunks!"
+                logging.warning("Could not remove the corrupt chunks!")
                 raise
             else:
-                logging.warning("Removed the corrupt files"
+                logging.warning("Removed the corrupt files")
 
-            logging.warning("You will need to re-run the Overviewer to fix this tile"
+            logging.warning("You will need to re-run the Overviewer to fix this tile")
             
         
     
