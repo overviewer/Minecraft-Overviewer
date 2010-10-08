@@ -92,15 +92,16 @@ def main():
 
     if options.chunklist and os.path.exists(options.chunklist):
         chunklist = open(options.chunklist, 'r')
+        chunkset = world.get_chunk_renderset(chunklist)
     else:
-        chunklist = None
+        chunkset = None
 
     # First generate the world's chunk images
-    w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist)
+    w = world.WorldRenderer(worlddir, cachedir, chunkset)
     w.go(options.procs)
 
     # Now generate the tiles
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, chunkset=chunkset)
     q.go(options.procs)
 
 def delete_all(worlddir, tiledir):
