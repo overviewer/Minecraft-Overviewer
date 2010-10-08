@@ -243,46 +243,57 @@ class QuadtreeGen(object):
             name = str(path[-1])
 
             yield pool.apply_async(func=render_innertile, args= (dest, name))
-
     def _apply_render_inclusiontiles(self, pool):
         """Returns an iterator over result objects. Each time a new result is
         requested, a new task is added to the pool and a result returned.
         """
-        
+
         """Get chunks that are relevant to the tile rendering function that's
         rendering that range"""
         # !TODO! Add a buffer around inclusion chunks, primarily above (say 6 chunks?)
         tilechunks = []
-            
+
         for (col,row) in self.world.inclusion_set:
             # This image is rendered at:
-            # !TODO! need to convert row,col to tiles/0/3/1/2/3/ path
-            #dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
-            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in self._get_path_by_coordinates(self.p,col,row)[:-1]))
+            path = self._get_path_by_coordinates(self.p,col,row+6)
+             # Get the range for this tile
+            colstart, rowstart = self._get_range_by_path(path)
+            #print path
+            #print colstart, rowstart, col, row
+            colend = colstart + 2
+            rowend = rowstart + 4
+
+            # This image is rendered at:
+            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
 
             # And uses these chunks
-            tilechunks = self._get_chunks_in_range(col, col, row, row)
+            tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
+                    rowend)
 
             # Put this in the pool
             # (even if tilechunks is empty, render_worldtile will delete
             # existing images if appropriate)
             yield pool.apply_async(func=render_worldtile, args= (tilechunks,
-                col, col+2, row, row+4, dest))
+                colstart, colend, rowstart, rowend, dest))
 
     def _apply_render_innerinclusiontile(self, pool, zoom):
         """Same as _apply_render_worltiles but for the inntertile routine.
         Returns an iterator that yields result objects from tasks that have
         been applied to the pool.
         """
-        
+
         for (col,row) in self.world.inclusion_set:
-        
-            path = self._get_path_by_coordinates(zoom,col,row)
+            # Hack in correct row
+            #row = row+6
+            #print ("col : {0} row : {1}").format(col,row)
+            path = self._get_path_by_coordinates(zoom,col,row+6)
+            #print ("path : {0}").format(path)
             # This image is rendered at:
             dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
             name = str(path[-1])
 
             yield pool.apply_async(func=render_innertile, args= (dest, name))
+
     
     def go(self, procs):
         """Renders all tiles"""
@@ -448,9 +459,9 @@ class QuadtreeGen(object):
         """Returns the x, y chunk coordinates of this tile"""
         # tile/3/2/1/0/2/3/1
         
-        depth = zoom
+        depth = self.p
         xradius = 2**(depth)
-        yradius = 2*2**(depth)    
+        yradius = 2*2**(depth)
         
         # Make new row and column ranges
         xpivot = 0
@@ -458,7 +469,7 @@ class QuadtreeGen(object):
         
         path = []
         
-        for p in range(0,depth):
+        for p in range(0,zoom):
             
             yradius /= 2
             xradius /= 2
