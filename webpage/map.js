@@ -1,6 +1,6 @@
   var config = {
     path:        'tiles',
-    fileExt:     'png',
+    fileExt:     '{imgformat}',
     tileSize:     384,
     defaultZoom:  {defaultzoom},
     markerZoom:   {markerzoom},

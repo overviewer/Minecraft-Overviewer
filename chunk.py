@@ -15,7 +15,6 @@
 
 import numpy
 from PIL import Image, ImageDraw
-from itertools import izip, count
 import os.path
 import hashlib
 
@@ -60,9 +59,14 @@ def get_skylight_array(level):
     """
     return numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
 
+def get_blockdata_array(level):
+    """Returns the ancillary data from the 'Data' byte array.  Data is packed
+    in a similar manner to skylight data"""
+    return numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
+
 # This set holds blocks ids that can be seen through, for occlusion calculations
-transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 50, 51, 52, 53,
-    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 83, 85])
+transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
+    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
 
 def render_and_save(chunkfile, cachedir, cave=False):
     """Used as the entry point for the multiprocessing workers (since processes
@@ -238,6 +242,13 @@ class ChunkRenderer(object):
             blocks = blocks.copy()
             blocks[skylight_expanded != 0] = 21
 
+        blockData = get_blockdata_array(self.level)
+        blockData_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+        # Even elements get the lower 4 bits
+        blockData_expanded[:,:,::2] = blockData & 0x0F
+        # Odd elements get the upper 4 bits
+        blockData_expanded[:,:,1::2] = blockData >> 4
+
 
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image
@@ -256,7 +267,23 @@ class ChunkRenderer(object):
                 for z in xrange(128):
                     try:
                         blockid = blocks[x,y,z]
-                        t = textures.blockmap[blockid]
+
+                        # the following blocks don't have textures that can be pre-computed from the blockid
+                        # alone.  additional data is required.
+                        # TODO torches, redstone torches, crops, ladders, stairs, 
+                        #      levers, doors, buttons, and signs all need to be handled here (and in textures.py)
+
+                        ## minecart track, crops, ladder, doors, etc.
+                        if blockid in textures.special_blocks:
+                         # also handle furnaces here, since one side has a different texture than the other
+                            ancilData = blockData_expanded[x,y,z]
+                            try:
+                                t = textures.specialblockmap[(blockid, ancilData)]
+                            except KeyError:
+                                t = None
+
+                        else:
+                            t = textures.blockmap[blockid]
                         if not t:
                             continue
 
@@ -313,12 +340,19 @@ class ChunkRenderer(object):
                             img.paste(t[0], (imgx, imgy), t[1])
 
                         # Draw edge lines
-                        if blockid not in transparent_blocks:
+                        if blockid in (44,): # step block
+                           increment = 6
+                        elif blockid in (78,): # snow
+                           increment = 9
+                        else:
+                           increment = 0
+
+                        if blockid not in transparent_blocks or blockid in (78,): #special case snow so the outline is still drawn
                             draw = ImageDraw.Draw(img)
                             if x != 15 and blocks[x+1,y,z] == 0:
-                                draw.line(((imgx+12,imgy), (imgx+22,imgy+5)), fill=(0,0,0), width=1)
+                                draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
                             if y != 0 and blocks[x,y-1,z] == 0:
-                                draw.line(((imgx,imgy+6), (imgx+12,imgy)), fill=(0,0,0), width=1)
+                                draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
 
 
                     finally:

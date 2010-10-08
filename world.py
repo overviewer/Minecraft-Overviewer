@@ -17,10 +17,11 @@ import functools
 import os
 import os.path
 import multiprocessing
-import numpy
-import math
 import sys
-from PIL import Image
+import logging
+
+import numpy
+
 import chunk
 import nbt
 
@@ -97,93 +98,13 @@ class WorldRenderer(object):
 
         self.chunklist = chunklist
 
-        #  stores Points Of Interest to be mapped with markers
-        #  a list of dictionaries, see below for an example
-        self.POI = []
-
-    def addSpawn(self):
-        """Adds the true spawn location to self.POI."""  
-
-        ## read spawn info from level.dat
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]
-        spawnX = data['Data']['SpawnX']
-        spawnY = data['Data']['SpawnY'] ## REMEMBER! Z-level is swapped with Ys
-        spawnZ = data['Data']['SpawnZ']
-        
-        self.addMarker(spawnX, spawnY, spawnZ, "Spawn")
-
-    def addLabels(self):
-        """Adds the labels from the server to self.POI."""
-
-        ## read label info from mapper-labels.txt
-        ## TODO! for each line, extract text:x:Z:y
-
-        path = os.path.join(self.worlddir, "mapper-labels.txt")
-        
-        #try:
-        if os.path.exists(path):
-            fileobj = open(path, "rb")
-            print "Adding markers to map"
-            for line in fileobj:
-                
-                split = line.split(":");
-                if (len(split) == 5):
-                    text = split[0]
-                    locX = math.trunc(float(split[1]))
-                    locY = math.trunc(float(split[2]))
-                    locZ = math.trunc(float(split[3]))
-                    
-                    self.addMarker(locX, locY, locZ, text)
-                    
-                else:
-                    continue;
-        #except (IOError):
-         #   print "Exception while reading label";
-         #   pass;
-
-        
-
-  
-
-    def addMarker(self, locX, locY, locZ, text):
-        """The spawn Y coordinate
-        is almost always the default of 64.  Find the first air block above
-        that point for the true spawn location"""
-
-        
-        ## The chunk that holds the spawn location 
-        chunkX = locX/16
-        chunkZ = locZ/16
-
-        ## The filename of this chunk
-        chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64), 
-                                           base36encode(chunkZ % 64),
-                                           base36encode(chunkX),
-                                           base36encode(chunkZ))
-
-
-        data=nbt.load(os.path.join(self.worlddir, chunkFile))[1]
-        level = data['Level']
-        blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
-
-        ## The block for spawn *within* the chunk
-        inChunkX = locX - (chunkX*16)
-        inChunkZ = locZ - (chunkZ*16)
-
-        ## find the first air block
-        while (blockArray[inChunkX, inChunkZ, locY] != 0):
-            locY += 1
-       
-
-        self.POI.append( dict(x=locX, y=locY, z=locZ, msg=text))
-        
-
 
     def go(self, procs):
         """Starts the render. This returns when it is finished"""
         
-        print "Scanning chunks"
+        logging.info("Scanning chunks")
         raw_chunks = self._find_chunkfiles()
+        logging.debug("Done scanning chunks")
 
         # Translate chunks to our diagonal coordinate system
         mincol, maxcol, minrow, maxrow, chunks = _convert_coords(raw_chunks)
@@ -196,8 +117,6 @@ class WorldRenderer(object):
         self.minrow = minrow
         self.maxrow = maxrow
 
-        self.addSpawn()
-        self.addLabels()
 
     def _find_chunkfiles(self):
         """Returns a list of all the chunk file locations, and the file they
@@ -220,7 +139,7 @@ class WorldRenderer(object):
                             os.path.join(dirpath, f)))
 
         if not all_chunks:
-            print "Error: No chunks found!"
+            logging.error("Error: No chunks found!")
             sys.exit(1)
         return all_chunks
         
@@ -279,7 +198,7 @@ class WorldRenderer(object):
         results = {}
         if processes == 1:
             # Skip the multiprocessing stuff
-            print "Rendering chunks synchronously since you requested 1 process"
+            logging.debug("Rendering chunks synchronously since you requested 1 process")
             for i, (col, row, chunkfile) in enumerate(chunks):
                 if self.inclusion_set and (col, row) not in self.inclusion_set:
                     # Skip rendering, just find where the existing image is
@@ -293,9 +212,9 @@ class WorldRenderer(object):
                 results[(col, row)] = result
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
-                        print "{0}/{1} chunks rendered".format(i, len(chunks))
+                        logging.info("{0}/{1} chunks rendered".format(i, len(chunks)))
         else:
-            print "Rendering chunks in {0} processes".format(processes)
+            logging.debug("Rendering chunks in {0} processes".format(processes))
             pool = multiprocessing.Pool(processes=processes)
             asyncresults = []
             for col, row, chunkfile in chunks:
@@ -318,10 +237,10 @@ class WorldRenderer(object):
                 results[(col, row)] = result.get()
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
-                        print "{0}/{1} chunks rendered".format(i, len(asyncresults))
+                        logging.info("{0}/{1} chunks rendered".format(i, len(asyncresults)))
 
             pool.join()
-        print "Done!"
+        logging.info("Done!")
 
         return results
 
