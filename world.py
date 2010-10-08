@@ -33,7 +33,7 @@ and for extracting information about available worlds
 
 base36decode = functools.partial(int, base=36)
 
-def _get_chunk_renderset(chunkfiles):
+def get_chunk_renderset(chunkfiles):
     """Returns a set of (col, row) chunks that should be rendered. Returns
     None if all chunks should be rendered"""
     
@@ -196,7 +196,7 @@ class WorldRenderer(object):
         # rendered.
         
         if self.chunkset:
-            print "Inclusion set found, rendering only a subset of map"
+            logging.info("Inclusion set found, rendering only a subset of map")
         
         
         results = {}

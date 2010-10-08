@@ -122,7 +122,7 @@ def main():
     w.go(options.procs)
 
     # Now generate the tiles
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, chunkset)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, chunkset=chunkset)
     q.go(options.procs)
 
 def delete_all(worlddir, tiledir):
