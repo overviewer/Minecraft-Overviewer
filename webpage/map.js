@@ -9,6 +9,13 @@
     debug:        false
   };
 
+
+  function imgError(source){
+	source.src = "http://maps.gstatic.com/intl/en_us/mapfiles/transparent.png";
+	source.onerror = "";
+	return true;
+}
+  
   var markers = new Array();
 
         var urlParams = {};
@@ -72,8 +79,32 @@
     return new google.maps.LatLng(lat, lng);
   }
 
-  var MCMapOptions = {
-    getTileUrl: function(tile, zoom) {
+  function MCMapType() {
+}
+
+MCMapType.prototype.tileSize = new google.maps.Size(config.tileSize, config.tileSize);
+MCMapType.prototype.maxZoom = config.maxZoom;
+MCMapType.prototype.minZoom = 0;
+MCMapType.prototype.isPng =  !(config.fileExt.match(/^png$/i) == null);
+
+MCMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
+    var div = ownerDocument.createElement('DIV');
+    //div.innerHTML = "(" + coord.x + ", " + coord.y + ", " + zoom + ")";
+    //div.innerHTML += "<br />";
+    //div.innerHTML += mcMapType.getTileUrl(coord, zoom);
+	
+	div.innerHTML += "<img src='"+mcMapType.getTileUrl(coord, zoom)+"' onerror='imgError(this)' />";
+	//src="http://maps.gstatic.com/intl/en_us/mapfiles/transparent.png"
+	//div.innerHTML += "<img src='test' />";
+    div.style.width = this.tileSize.width + 'px';
+    div.style.height = this.tileSize.height + 'px';
+    //div.style.fontSize = '10';
+    //div.style.borderStyle = 'solid';
+    //div.style.borderWidth = '1px';
+    //div.style.borderColor = '#AAAAAA';
+    return div;
+	}
+MCMapType.prototype.getTileUrl = function(tile, zoom) {
       var url = config.path;
       if(tile.x < 0 || tile.x >= Math.pow(2, zoom) || tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
         url += '/blank';
@@ -92,40 +123,16 @@
         url += '?c=' + Math.floor(d.getTime() / (1000 * 60 * config.cacheMinutes));
       }
       return(url);
-    },
-    tileSize: new google.maps.Size(config.tileSize, config.tileSize),
-    maxZoom:  config.maxZoom,
-    minZoom:  0,
-    isPng:    !(config.fileExt.match(/^png$/i) == null)
-  };
+};
 
-  var MCMapType = new google.maps.ImageMapType(MCMapOptions);
-  MCMapType.name = "MC Map";
-  MCMapType.alt = "Minecraft Map";
-  MCMapType.projection = new MCMapProjection();
 
-  function CoordMapType() {
-  }
+MCMapType.prototype.name = "MC Map";
+MCMapType.prototype.alt = "Minecraft Map";
+MCMapType.prototype.projection = new MCMapProjection();
 
-  function CoordMapType(tileSize) {
-    this.tileSize = tileSize;
-  }
-
-  CoordMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
-    var div = ownerDocument.createElement('DIV');
-    div.innerHTML = "(" + coord.x + ", " + coord.y + ", " + zoom + ")";
-    div.innerHTML += "<br />";
-    div.innerHTML += MCMapOptions.getTileUrl(coord, zoom);
-    div.style.width = this.tileSize.width + 'px';
-    div.style.height = this.tileSize.height + 'px';
-    div.style.fontSize = '10';
-    div.style.borderStyle = 'solid';
-    div.style.borderWidth = '1px';
-    div.style.borderColor = '#AAAAAA';
-    return div;
-  };
-
-  var map;
+var map;
+var mcMapType = new MCMapType();
+  
 
   var markersInit = false;
 
@@ -222,15 +229,17 @@
 
 
   function initialize() {
+  
     var mapOptions = {
       zoom: config.defaultZoom,
       center: new google.maps.LatLng(0.5, 0.5),
       navigationControl: true,
-      scaleControl: false,
+      scaleControl: true,
       mapTypeControl: false,
       mapTypeId: 'mcmap'
     };
     map = new google.maps.Map(document.getElementById("mcmap"), mapOptions);
+	//map = new google.maps.Map(document.getElementById("mcmap"), mapOptions);
 
     if(config.debug) {
       map.overlayMapTypes.insertAt(0, new CoordMapType(new google.maps.Size(config.tileSize, config.tileSize)));
@@ -248,20 +257,20 @@
     }
 
     // Now attach the coordinate map type to the map's registry
-    map.mapTypes.set('mcmap', MCMapType);
+    map.mapTypes.set('mcmap', mcMapType);
 
     // We can now set the map to use the 'coordinate' map type
     map.setMapTypeId('mcmap');
 
-        // initialize the markers
-        initMarkers();
+	// initialize the markers
+	initMarkers();
 
 
-        var refreshInterval = setInterval(refreshMarkers, 3 * 1000);
-        refreshMarkers();
+	var refreshInterval = setInterval(refreshMarkers, 3 * 1000);
+	refreshMarkers();
 
-        // Set initial position to spawn
-        map.panTo(markers["Spawn0"].getPosition());
+	// Set initial position to spawn
+	setTimeout(map.panTo(markers["Spawn0"].getPosition()),2000);
   }
 
 
@@ -287,4 +296,5 @@ $(document).ready(function() {
                 $('div[name=mcmarkers4]').hide();
         initialize();
 });
+
 
