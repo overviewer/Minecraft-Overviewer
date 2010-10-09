@@ -8,6 +8,7 @@
   #mcmap { height: 100% }
 </style>
 <script type="text/javascript" src="markers.js"></script>
+<script type="text/javascript" src="regions.js"></script>
 <script type="text/javascript"
     src="http://maps.google.com/maps/api/js?sensor=false">
 </script>
@@ -155,6 +156,48 @@
    }
   }
   
+  var regionsInit = false;
+  function initRegions() {
+    if (regionsInit) { return; }
+    
+    regionsInit = true;
+    
+    for (i in regionData) {
+      var region = regionData[i];
+      var converted = new google.maps.MVCArray();
+      for (j in region.path) {
+        var point = region.path[j];
+        converted.push(fromWorldToLatLng(point.x, point.y, point.z));
+      }
+      
+      if (region.closed) {
+        new google.maps.Polygon({
+          clickable: false,
+          geodesic: false,
+          map: map,
+          strokeColor: region.color,
+          strokeOpacity: region.opacity,
+          strokeWeight: 2,
+          fillColor: region.color,
+          fillOpacity: region.opacity * 0.25,
+          zIndex: i,
+          paths: converted
+        });
+      } else {
+        new google.maps.Polyline({
+          clickable: false,
+          geodesic: false,
+          map: map,
+          strokeColor: region.color,
+          strokeOpacity: region.opacity,
+          strokeWeight: 2,
+          zIndex: i,
+          path: converted
+        });
+      }
+    }
+  }
+  
   function initialize() {
     var mapOptions = {
       zoom: config.defaultZoom,
@@ -187,8 +230,9 @@
     // We can now set the map to use the 'coordinate' map type
     map.setMapTypeId('mcmap');
 	
-	// initialize the markers
+	// initialize the markers and regions
 	initMarkers();
+    initRegions();
   }
 </script>
 </head>
