@@ -10,6 +10,7 @@
   };
 
 
+
   function imgError(source){
 	source.src = "http://maps.gstatic.com/intl/en_us/mapfiles/transparent.png";
 	source.onerror = "";
@@ -17,6 +18,7 @@
 }
   
   var markers = new Array();
+  var tiles = new Object();
 
         var urlParams = {};
 
@@ -79,6 +81,19 @@
     return new google.maps.LatLng(lat, lng);
   }
 
+  function updateTiles() {
+
+	for(tile in tiles) {
+		tiles[tile].div.firstChild.src = mcMapType.getTileUrl(tiles[tile].coord, tiles[tile].zoom)+"?" + (new Date).getTime();
+		tiles[tile].div.firstChild.onerror = 'imgError(this)';
+		tiles[tile].div.firstChild.style.border = '1px solid red';
+		setTimeout( function() {
+			for(tile in tiles) {
+				tiles[tile].div.firstChild.style.border = '0px';
+			} }, 500);
+		}
+  }
+  
   function MCMapType() {
 }
 
@@ -92,8 +107,9 @@ MCMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
     //div.innerHTML = "(" + coord.x + ", " + coord.y + ", " + zoom + ")";
     //div.innerHTML += "<br />";
     //div.innerHTML += mcMapType.getTileUrl(coord, zoom);
-	
+
 	div.innerHTML += "<img src='"+mcMapType.getTileUrl(coord, zoom)+"' onerror='imgError(this)' />";
+	
 	//src="http://maps.gstatic.com/intl/en_us/mapfiles/transparent.png"
 	//div.innerHTML += "<img src='test' />";
     div.style.width = this.tileSize.width + 'px';
@@ -102,8 +118,20 @@ MCMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
     //div.style.borderStyle = 'solid';
     //div.style.borderWidth = '1px';
     //div.style.borderColor = '#AAAAAA';
+	// Add coodrs to live list, so when reload is hit, it gets reloaded
+	div.tileId = "" + coord.x+","+coord.y+","+zoom
+	tiles[div.tileId] = {coord : coord, zoom : zoom, div : div};
+	
     return div;
 	}
+
+MCMapType.prototype.releaseTile = function(tile) {
+	// Remove coodrs from live list
+	
+	delete tiles[tile.tileId];
+	
+    }
+	
 MCMapType.prototype.getTileUrl = function(tile, zoom) {
       var url = config.path;
       if(tile.x < 0 || tile.x >= Math.pow(2, zoom) || tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
@@ -133,7 +161,44 @@ MCMapType.prototype.projection = new MCMapProjection();
 var map;
 var mcMapType = new MCMapType();
   
+/**
+ * The HomeControl adds a control to the map that simply
+ * returns the user to Chicago. This constructor takes
+ * the control DIV as an argument.
+ */
 
+function ReloadControl(controlDiv, map) {
+
+  // Set CSS styles for the DIV containing the control
+  // Setting padding to 5 px will offset the control
+  // from the edge of the map
+  controlDiv.style.padding = '5px';
+
+  // Set CSS for the control border
+  var controlUI = document.createElement('DIV');
+  controlUI.style.backgroundColor = 'white';
+  controlUI.style.borderStyle = 'solid';
+  controlUI.style.borderWidth = '2px';
+  controlUI.style.cursor = 'pointer';
+  controlUI.style.textAlign = 'center';
+  controlUI.title = 'Click to reload the images in the current viewport';
+  controlDiv.appendChild(controlUI);
+
+  // Set CSS for the control interior
+  var controlText = document.createElement('DIV');
+  controlText.style.fontFamily = 'Arial,sans-serif';
+  controlText.style.fontSize = '12px';
+  controlText.style.paddingLeft = '4px';
+  controlText.style.paddingRight = '4px';
+  controlText.innerHTML = 'Reload';
+  controlUI.appendChild(controlText);
+
+  // Setup the click event listeners: simply set the map to Chicago
+  google.maps.event.addDomListener(controlUI, 'click', function() {
+    updateTiles();
+  });
+}
+  
   var markersInit = false;
 
   function initMarkers() {
@@ -266,11 +331,19 @@ var mcMapType = new MCMapType();
 	initMarkers();
 
 
-	var refreshInterval = setInterval(refreshMarkers, 3 * 1000);
+	//var refreshInterval = setInterval(refreshMarkers, 3 * 1000);
 	refreshMarkers();
 
 	// Set initial position to spawn
 	setTimeout(map.panTo(markers["Spawn0"].getPosition()),2000);
+	
+	// Create the DIV to hold the control and call the HomeControl() constructor
+	// passing in this DIV.
+	var reloadControlDiv = document.createElement('DIV');
+	var reloadControl = new ReloadControl(reloadControlDiv, map);
+
+	reloadControl.index = 1;
+	map.controls[google.maps.ControlPosition.TOP_RIGHT].push(reloadControlDiv);
   }
 
 
