@@ -23,6 +23,7 @@ import re
 import shutil
 import collections
 import json
+import sys
 import logging
 import util
 
@@ -56,7 +57,8 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, imgformat=None, optimizeimg=None):
+    def __init__(self, worldobj, destdir, depth=None, imgformat=None, chunkset=None,
+        optimizeimg=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -66,6 +68,9 @@ class QuadtreeGen(object):
         minimum depth that contains all chunks is calculated and used.
 
         """
+        
+        self.chunkset = chunkset
+        
         assert(imgformat)
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
@@ -101,6 +106,7 @@ class QuadtreeGen(object):
 
         self.world = worldobj
         self.destdir = destdir
+        
 
     def print_statusline(self, complete, total, level, unconditional=False):
         if unconditional:
@@ -118,22 +124,23 @@ class QuadtreeGen(object):
                 complete, total, level, self.p))
 
     def write_html(self, zoomlevel, imgformat):
-        """Writes out index.html"""
-        templatepath = os.path.join(util.get_program_path(), "template.html")
-
-        html = open(templatepath, 'r').read()
-        html = html.replace(
-                "{maxzoom}", str(zoomlevel))
-        html = html.replace(
-                "{imgformat}", str(imgformat))
-                
+        """Writes out index.html and map.js"""
+        indexpath = os.path.join(util.get_program_path(), "webpage/index.html")
+        mapjspath = os.path.join(util.get_program_path(), "webpage/map.js")
+        
+        html = open(indexpath, 'r').read()
+        js = open(mapjspath, 'r').read()
+        
+        js = js.replace("{defaultzoom}", str(zoomlevel / 2 + 1))
+        js = js.replace("{markerzoom}", str(zoomlevel / 2 + 3))
+        js = js.replace("{maxzoom}", str(zoomlevel))
+        js = js.replace("{imgformat}", str(imgformat))
+        
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
-
         
-
-        with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
-            output.write("var markerData=%s" % json.dumps(self.world.POI))
+        with open(os.path.join(self.destdir, "map.js"), 'w') as output:
+            output.write(js)
 
         # Write a blank image
         blank = Image.new("RGBA", (1,1))
@@ -220,6 +227,7 @@ class QuadtreeGen(object):
         """Returns an iterator over result objects. Each time a new result is
         requested, a new task is added to the pool and a result returned.
         """
+        
         for path in iterate_base4(self.p):
             # Get the range for this tile
             colstart, rowstart = self._get_range_by_path(path)
@@ -249,9 +257,63 @@ class QuadtreeGen(object):
             # This image is rendered at:
             dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
             name = str(path[-1])
+        
+            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat,
+                self.optimizeimg))
 
-            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
+    def _apply_render_inclusiontiles(self, pool):
+        """Returns an iterator over result objects. Each time a new result is
+        requested, a new task is added to the pool and a result returned.
+        """
 
+        """Get chunks that are relevant to the tile rendering function that's
+        rendering that range"""
+        # !TODO! Add a buffer around inclusion chunks, primarily above (say 6 chunks?)
+        tilechunks = []
+
+        for (col,row) in self.chunkset:
+            # Get a correct path for this chunk
+            # Not sure why we need +6, but it works
+            path = self._get_path_by_coordinates(self.p,col,row+6)
+             # Get the range for this tile
+            colstart, rowstart = self._get_range_by_path(path)
+            colend = colstart + 2
+            rowend = rowstart + 4
+
+            # This image is rendered at:
+            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
+
+            # And uses these chunks
+            tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
+                    rowend)
+
+            # Put this in the pool
+            # (even if tilechunks is empty, render_worldtile will delete
+            # existing images if appropriate)
+            yield pool.apply_async(func=render_worldtile, args= (tilechunks,
+                colstart, colend, rowstart, rowend, dest, self.imgformat))
+
+    def _apply_render_innerinclusiontile(self, pool, zoom):
+        """Same as _apply_render_worltiles but for the inntertile routine.
+        Returns an iterator that yields result objects from tasks that have
+        been applied to the pool.
+        """
+
+        for (col,row) in self.chunkset:
+            # Get path for this chunk
+            # Not sure why we need +6, but it works
+            path = self._get_path_by_coordinates(zoom,col,row+6)
+            #print ("path : {0}").format(path)
+            # This image is rendered at:
+            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
+            name = str(path[-1])
+
+            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat,
+                self.optimizeimg))
+
+    
+            
+            
     def go(self, procs):
         """Renders all tiles"""
 
@@ -276,73 +338,128 @@ class QuadtreeGen(object):
             pool = FakePool()
         else:
             pool = multiprocessing.Pool(processes=procs)
-
+            
+        logging.info("Writing index.html and map.js")
         self.write_html(self.p, self.imgformat)
-
+        
         # Render the highest level of tiles from the chunks
         results = collections.deque()
         complete = 0
-        total = 4**self.p
-        logging.info("Rendering highest zoom level of tiles now.")
-        logging.info("There are {0} tiles to render".format(total))
-        logging.info("There are {0} total levels to render".format(self.p))
-        logging.info("Don't worry, each level has only 25% as many tiles as the last.")
-        logging.info("The others will go faster")
-        for result in self._apply_render_worldtiles(pool):
-            results.append(result)
-            if len(results) > 10000:
-                # Empty the queue before adding any more, so that memory
-                # required has an upper bound
-                while len(results) > 500:
-                    results.popleft().get()
-                    complete += 1
-                    self.print_statusline(complete, total, 1)
+        
+        # Check for chunklist
+        if self.chunkset:
+            total = len(self.chunkset)
+            logging.info("Have a chunklist, so only rendering subset of tiles")
 
-        # Wait for the rest of the results
-        while len(results) > 0:
-            results.popleft().get()
-            complete += 1
-            self.print_statusline(complete, total, 1)
-
-        self.print_statusline(complete, total, 1, True)
-
-        # Now do the other layers
-        for zoom in xrange(self.p-1, 0, -1):
-            level = self.p - zoom + 1
-            assert len(results) == 0
-            complete = 0
-            total = 4**zoom
-            logging.info("Starting level {0}".format(level))
-            for result in self._apply_render_inntertile(pool, zoom):
+            for result in self._apply_render_inclusiontiles(pool):
                 results.append(result)
                 if len(results) > 10000:
+                    # Empty the queue before adding any more, so that memory
+                    # required has an upper bound
                     while len(results) > 500:
                         results.popleft().get()
                         complete += 1
-                        self.print_statusline(complete, total, level)
-            # Empty the queue
+                        self.print_statusline(complete, total, 1)
+
+            # Wait for the rest of the results
             while len(results) > 0:
                 results.popleft().get()
                 complete += 1
-                self.print_statusline(complete, total, level)
+                self.print_statusline(complete, total, 1)
 
-            self.print_statusline(complete, total, level, True)
+            self.print_statusline(complete, total, 1, True)
+            
+            # Now do the other layers
+            for zoom in xrange(self.p-1, 0, -1):
+                level = self.p - zoom + 1
+                assert len(results) == 0
+                complete = 0
+                #total = len(self.chunkset)
+                logging.info( "Starting level {0}".format(level))
+                for result in self._apply_render_innerinclusiontile(pool, zoom):
+                    results.append(result)
+                    if len(results) > 10000:
+                        while len(results) > 500:
+                            results.popleft().get()
+                            complete += 1
+                            self.print_statusline(complete, total, level)
+                # Empty the queue
+                while len(results) > 0:
+                    results.popleft().get()
+                    complete += 1
+                    self.print_statusline(complete, total, level)
+
+                self.print_statusline(complete, total, level, True)
 
             logging.info("Done")
 
-        pool.close()
-        pool.join()
+            pool.close()
+            pool.join()
+        else:
+            total = 4**self.p
+            logging.info("Rendering highest zoom level of tiles now.")
+            logging.info("There are {0} tiles to render".format(total))
+            logging.info("There are {0} total levels to render".format(self.p))
+            logging.info("Don't worry, each level has only 25% as many tiles as the last.")
+            logging.info("The others will go faster")
+            
+            for result in self._apply_render_worldtiles(pool):
+                results.append(result)
+                if len(results) > 10000:
+                    # Empty the queue before adding any more, so that memory
+                    # required has an upper bound
+                    while len(results) > 500:
+                        results.popleft().get()
+                        complete += 1
+                        self.print_statusline(complete, total, 1)
+
+            # Wait for the rest of the results
+            while len(results) > 0:
+                results.popleft().get()
+                complete += 1
+                self.print_statusline(complete, total, 1)
+
+            self.print_statusline(complete, total, 1, True)
+
+            # Now do the other layers
+            for zoom in xrange(self.p-1, 0, -1):
+                level = self.p - zoom + 1
+                assert len(results) == 0
+                complete = 0
+                total = 4**zoom
+                logging.info("Starting level {0}".format(level))
+                for result in self._apply_render_inntertile(pool, zoom):
+                    results.append(result)
+                    if len(results) > 10000:
+                        while len(results) > 500:
+                            results.popleft().get()
+                            complete += 1
+                            self.print_statusline(complete, total, level)
+                # Empty the queue
+                while len(results) > 0:
+                    results.popleft().get()
+                    complete += 1
+                    self.print_statusline(complete, total, level)
+                    
+                self.print_statusline(complete, total, level, True)
+            
+            logging.info("Done")
+            
+            pool.close()
+            pool.join()
 
         # Do the final one right here:
         render_innertile(os.path.join(self.destdir, "tiles"), "base", self.imgformat, self.optimizeimg)
-
+        
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
+        # tile/3/2/1/0/2/3/1
+        
         x, y = self.mincol, self.minrow
         
         xsize = self.maxcol
         ysize = self.maxrow
-
+        
         for p in path:
             if p in (1, 3):
                 x += xsize
@@ -350,8 +467,51 @@ class QuadtreeGen(object):
                 y += ysize
             xsize //= 2
             ysize //= 2
-
+       # print path
+        #print x,y
+        # sys.exit()
         return x, y
+        
+    def _get_path_by_coordinates(self, zoom, x,y):
+        """Returns the path of this chunk"""
+        
+        depth = self.p
+        xradius = 2**(depth)
+        yradius = 2*2**(depth)
+        
+        # Make new row and column ranges
+        xpivot = 0
+        ypivot = 0
+        
+        path = []
+        
+        for p in range(0,zoom):
+            yradius /= 2
+            xradius /= 2
+            #!TODO!Improve this tree structure, should be able to use XOR
+            if x >= xpivot:
+                if y >= ypivot:
+                    path.append(3)
+                    xpivot = (xpivot + xradius)
+                    ypivot = (ypivot + yradius)
+                    continue
+                else:
+                    path.append(1)
+                    xpivot = (xpivot + xradius)
+                    ypivot = (ypivot - yradius)
+                    continue
+            if x <= xpivot:
+                if y >= ypivot:
+                    path.append(2)
+                    xpivot = (xpivot - xradius)
+                    ypivot = (ypivot + yradius)
+                    continue
+                else:
+                   path.append(0)
+                   xpivot = (xpivot - xradius)
+                   ypivot = (ypivot - yradius)
+                   continue
+        return path
 
     def _get_chunks_in_range(self, colstart, colend, rowstart, rowend):
         """Get chunks that are relevant to the tile rendering function that's
@@ -370,96 +530,124 @@ def render_innertile(dest, name, imgformat, optimizeimg):
     Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
     os.path.join(dest, name, "{0,1,2,3}.png")
     """
-    imgpath = os.path.join(dest, name) + "." + imgformat
-    hashpath = os.path.join(dest, name) + ".hash"
 
-    if name == "base":
-        q0path = os.path.join(dest, "0." + imgformat)
-        q1path = os.path.join(dest, "1." + imgformat)
-        q2path = os.path.join(dest, "2." + imgformat)
-        q3path = os.path.join(dest, "3." + imgformat)
-        q0hash = os.path.join(dest, "0.hash")
-        q1hash = os.path.join(dest, "1.hash")
-        q2hash = os.path.join(dest, "2.hash")
-        q3hash = os.path.join(dest, "3.hash")
-    else:
-        q0path = os.path.join(dest, name, "0." + imgformat)
-        q1path = os.path.join(dest, name, "1." + imgformat)
-        q2path = os.path.join(dest, name, "2." + imgformat)
-        q3path = os.path.join(dest, name, "3." + imgformat)
-        q0hash = os.path.join(dest, name, "0.hash")
-        q1hash = os.path.join(dest, name, "1.hash")
-        q2hash = os.path.join(dest, name, "2.hash")
-        q3hash = os.path.join(dest, name, "3.hash")
+    try:
+        imgpath = os.path.join(dest, name) + ".png"
+        hashpath = os.path.join(dest, name) + ".hash"
+        
+        if name == "base":
+            q0path = os.path.join(dest, "0.png")
+            q1path = os.path.join(dest, "1.png")
+            q2path = os.path.join(dest, "2.png")
+            q3path = os.path.join(dest, "3.png")
+            q0hash = os.path.join(dest, "0.hash")
+            q1hash = os.path.join(dest, "1.hash")
+            q2hash = os.path.join(dest, "2.hash")
+            q3hash = os.path.join(dest, "3.hash")
+        else:
+            q0path = os.path.join(dest, name, "0.png")
+            q1path = os.path.join(dest, name, "1.png")
+            q2path = os.path.join(dest, name, "2.png")
+            q3path = os.path.join(dest, name, "3.png")
+            q0hash = os.path.join(dest, name, "0.hash")
+            q1hash = os.path.join(dest, name, "1.hash")
+            q2hash = os.path.join(dest, name, "2.hash")
+            q3hash = os.path.join(dest, name, "3.hash")
 
-    # Check which ones exist
-    if not os.path.exists(q0hash):
-        q0path = None
-        q0hash = None
-    if not os.path.exists(q1hash):
-        q1path = None
-        q1hash = None
-    if not os.path.exists(q2hash):
-        q2path = None
-        q2hash = None
-    if not os.path.exists(q3hash):
-        q3path = None
-        q3hash = None
+        # Check which ones exist
+        if not os.path.exists(q0hash):
+            q0path = None
+            q0hash = None
+        if not os.path.exists(q1hash):
+            q1path = None
+            q1hash = None
+        if not os.path.exists(q2hash):
+            q2path = None
+            q2hash = None
+        if not os.path.exists(q3hash):
+            q3path = None
+            q3hash = None
 
-    # do they all not exist?
-    if not (q0path or q1path or q2path or q3path):
-        if os.path.exists(imgpath):
-            os.unlink(imgpath)
+        # do they all not exist?
+        if not (q0path or q1path or q2path or q3path):
+            if os.path.exists(imgpath):
+                os.unlink(imgpath)
+            if os.path.exists(hashpath):
+                os.unlink(hashpath)
+            return
+        
+        # Now check the hashes
+        hasher = hashlib.md5()
+        if q0hash:
+            hasher.update(open(q0hash, "rb").read())
+        if q1hash:
+            hasher.update(open(q1hash, "rb").read())
+        if q2hash:
+            hasher.update(open(q2hash, "rb").read())
+        if q3hash:
+            hasher.update(open(q3hash, "rb").read())
+        
         if os.path.exists(hashpath):
-            os.unlink(hashpath)
-        return
-    
-    # Now check the hashes
-    hasher = hashlib.md5()
-    if q0hash:
-        hasher.update(open(q0hash, "rb").read())
-    if q1hash:
-        hasher.update(open(q1hash, "rb").read())
-    if q2hash:
-        hasher.update(open(q2hash, "rb").read())
-    if q3hash:
-        hasher.update(open(q3hash, "rb").read())
-    if os.path.exists(hashpath):
-        oldhash = open(hashpath, "rb").read()
-    else:
-        oldhash = None
-    newhash = hasher.digest()
+            oldhash = open(hashpath, "rb").read()
+        else:
+            oldhash = None
+        newhash = hasher.digest()
 
-    if newhash == oldhash:
-        # Nothing to do
-        return
+        if newhash == oldhash:
+            # Nothing to do
+            return
 
-    # Create the actual image now
-    img = Image.new("RGBA", (384, 384), (38,92,255,0))
+        # Create the actual image now
+        img = Image.new("RGBA", (384, 384), (38,92,255,0))
 
-    if q0path:
-        quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad0, (0,0))
-    if q1path:
-        quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad1, (192,0))
-    if q2path:
-        quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad2, (0, 192))
-    if q3path:
-        quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad3, (192, 192))
+        if q0path:
+            quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad0, (0,0))
+        if q1path:
+            quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad1, (192,0))
+        if q2path:
+            quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad2, (0, 192))
+        if q3path:
+            quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad3, (192, 192))
 
-    # Save it
-    if imgformat == 'jpg':
-        img.save(imgpath, quality=95, subsampling=0)
-    else: # png
+        # Save it
         img.save(imgpath)
+        with open(hashpath, "wb") as hashout:
+            hashout.write(newhash)
+    except Exception, e:
+        # If for some reason the chunk failed to load (perhaps a previous
+        # run was canceled and the file was only written half way,
+        # corrupting it), then this could error.
+        # Since we have no easy way of determining how this chunk was
+        # generated, we need to just ignore it.
+        logging.warning("Error with file %s -- %s".format(dest,name))
+        logging.warning("(Error was {0})".format(e))
+        try:
+            if q0path:
+                os.unlink(q0path)
+            if q1path:
+                os.unlink(q1path)
+            if q2path:
+                os.unlink(q2path)
+            if q3path:
+                os.unlink(q3path)
+        except OSError, e:
+            import errno
+            # Ignore if file doesn't exist, another task could have already
+            # removed it.
+            if e.errno != errno.ENOENT:
+                logging.warning("Could not remove the corrupt chunks!")
+                raise
+            else:
+                logging.warning("Removed the corrupt files")
+
+            logging.warning("You will need to re-run the Overviewer to fix this tile")
+            
         if optimizeimg:
             optimize_image(imgpath, imgformat, optimizeimg)
-
-    with open(hashpath, "wb") as hashout:
-        hashout.write(newhash)
 
 
 @catch_keyboardinterrupt

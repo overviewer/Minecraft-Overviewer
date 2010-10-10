@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<style type="text/css">
+  html { height: 100% }
+  body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
+  #mcmap { height: 100% }
+</style>
+<script type="text/javascript" src="markers.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script type="text/javascript" src="map.js"></script>
+
+    <style>
+
+        #mcmarkerlist{
+        z-index:1;
+        border: 1px solid black;
+        opacity: 0.8;
+        background-color:grey;
+        height: auto;
+        left: 85%;
+        top: 5px;
+        width: 160px;
+        position: absolute;
+        text-align: center;
+    }
+        .mcmarker{
+                font-size: 10px;
+
+        }
+    </style>
+</head>
+<body>
+        <div id="mcmarkerlist">
+                <div name="mcmarkers0" >
+                        Markers
+                </div>
+                <div name="mcmarkers3" > <br />
+Labels
+                </div>
+                <div name="mcmarkers4" > <br />
+Players
+                </div>
+        </div>
+        <div id="mcmap" style="width:100%; height:100%"></div>
+
+</body>
+</html>
+
