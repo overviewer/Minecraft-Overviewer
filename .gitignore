@@ -1,1 +1,3 @@
 *.pyc
+cache/
+terrain.png
