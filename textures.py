@@ -114,7 +114,7 @@ def _split_terrain(terrain):
 # This maps terainids to 16x16 images
 terrain_images = _split_terrain(_get_terrain_image())
 
-def _transform_image(img, blockID=None):
+def transform_image(img, blockID=None):
     """Takes a PIL image and rotates it left 45 degrees and shrinks the y axis
     by a factor of 2. Returns the resulting image, which will be 24x12 pixels
 
@@ -147,7 +147,7 @@ def _transform_image(img, blockID=None):
     newimg = img.transform((24,12), Image.AFFINE, transform)
     return newimg
 
-def _transform_image_side(img, blockID=None):
+def transform_image_side(img, blockID=None):
     """Takes an image and shears it for the left side of the cube (reflect for
     the right side)"""
 
@@ -186,13 +186,13 @@ def _build_block(top, side, blockID=None):
     """
     img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-    top = _transform_image(top, blockID)
+    top = transform_image(top, blockID)
 
     if not side:
         img.paste(top, (0,0), top)
         return img
 
-    side = _transform_image_side(side, blockID)
+    side = transform_image_side(side, blockID)
 
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
     
@@ -345,25 +345,25 @@ def generate_special_texture(blockID, data):
         raw_straight = terrain_images[128]
         raw_corner = terrain_images[112]
     
-        ## use _transform_image to scale and shear
+        ## use transform_image to scale and shear
         if data == 0:
-            track = _transform_image(raw_straight, blockID)
+            track = transform_image(raw_straight, blockID)
         elif data == 6:
-            track = _transform_image(raw_corner, blockID)
+            track = transform_image(raw_corner, blockID)
         elif data == 7:
-            track = _transform_image(raw_corner.rotate(270), blockID)
+            track = transform_image(raw_corner.rotate(270), blockID)
         elif data == 8:
             # flip
-            track = _transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90), 
+            track = transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90), 
                     blockID)
         elif data == 9:
-            track = _transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM), 
+            track = transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM), 
                     blockID)
         elif data == 1:
-            track = _transform_image(raw_straight.rotate(90), blockID)
+            track = transform_image(raw_straight.rotate(90), blockID)
         else:
             # TODO render carts that slop up or down
-            track = _transform_image(raw_straight, blockID)
+            track = transform_image(raw_straight, blockID)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
         img.paste(track, (0,12), track)
@@ -371,8 +371,8 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
     if blockID == 59: # crops
         raw_crop = terrain_images[88+data]
-        crop1 = _transform_image(raw_crop, blockID)
-        crop2 = _transform_image_side(raw_crop, blockID)
+        crop1 = transform_image(raw_crop, blockID)
+        crop2 = transform_image_side(raw_crop, blockID)
         crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
@@ -382,9 +382,9 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
     if blockID == 61: #furnace
-        top = _transform_image(terrain_images[1])
-        side1 = _transform_image_side(terrain_images[45])
-        side2 = _transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
+        top = transform_image(terrain_images[1])
+        side1 = transform_image_side(terrain_images[45])
+        side2 = transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
@@ -394,9 +394,9 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 62: # lit furnace
-        top = _transform_image(terrain_images[1])
-        side1 = _transform_image_side(terrain_images[45])
-        side2 = _transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
+        top = transform_image(terrain_images[1])
+        side1 = transform_image_side(terrain_images[45])
+        side2 = transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
@@ -412,22 +412,22 @@ def generate_special_texture(blockID, data):
             # normally this ladder would be obsured by the block it's attached to
             # but since ladders can apparently be placed on transparent blocks, we 
             # have to render this thing anyway.  same for data == 2
-            tex = _transform_image_side(raw_texture)
+            tex = transform_image_side(raw_texture)
             img = Image.new("RGBA", (24,24), (38,92,255,0))
             img.paste(tex, (0,6), tex)
             return (img.convert("RGB"), img.split()[3])
         if data == 2:
-            tex = _transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+            tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
             img = Image.new("RGBA", (24,24), (38,92,255,0))
             img.paste(tex, (12,6), tex)
             return (img.convert("RGB"), img.split()[3])
         if data == 3:
-            tex = _transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+            tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
             img = Image.new("RGBA", (24,24), (38,92,255,0))
             img.paste(tex, (0,0), tex)
             return (img.convert("RGB"), img.split()[3])
         if data == 4:
-            tex = _transform_image_side(raw_texture)
+            tex = transform_image_side(raw_texture)
             img = Image.new("RGBA", (24,24), (38,92,255,0))
             img.paste(tex, (12,0), tex)
             return (img.convert("RGB"), img.split()[3])
@@ -449,36 +449,36 @@ def generate_special_texture(blockID, data):
         img = Image.new("RGBA", (24,24), (38,92,255,0))
         if (data & 0x03) == 0:
             if not swung:
-                tex = _transform_image_side(raw_door)
+                tex = transform_image_side(raw_door)
                 img.paste(tex, (0,6), tex)
             else:
                 # flip first to set the doornob on the correct side
-                tex = _transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
                 tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
                 img.paste(tex, (0,0), tex)
         
         if (data & 0x03) == 1:
             if not swung:
-                tex = _transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
                 img.paste(tex, (0,0), tex)
             else:
-                tex = _transform_image_side(raw_door)
+                tex = transform_image_side(raw_door)
                 img.paste(tex, (12,0), tex)
 
         if (data & 0x03) == 2:
             if not swung:
-                tex = _transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
                 img.paste(tex, (12,0), tex)
             else:
-                tex = _transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
                 img.paste(tex, (12,6), tex)
 
         if (data & 0x03) == 3:
             if not swung:
-                tex = _transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
+                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
                 img.paste(tex, (12,6), tex)
             else:
-                tex = _transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
                 img.paste(tex, (0,6), tex)
         
         return (img.convert("RGB"), img.split()[3])

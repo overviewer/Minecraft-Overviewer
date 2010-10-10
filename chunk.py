@@ -14,12 +14,13 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance
 import os.path
 import hashlib
 
 import nbt
 import textures
+import world
 
 """
 This module has routines related to rendering one particular chunk into an
@@ -35,6 +36,18 @@ image
 # first use im.split() and take the third item which is the alpha channel and
 # use that as the mask. Then take the image and use im.convert("RGB") to strip
 # the image from its alpha channel, and use that as the source to paste()
+
+def get_lighting_coefficient(skylight, blocklight, night):
+    """Takes a raw blocklight and skylight, and returns a value
+    between 0.0 (fully lit) and 1.0 (fully black) that can be used as
+    an alpha value for a blend with a black source image. It mimics
+    Minecraft lighting calculations."""
+    if not night:
+        # Daytime
+        return 1.0 - pow(0.8, 15 - max(blocklight, skylight))
+    else:
+        # Nighttime
+        return 1.0 - pow(0.8, 15 - max(blocklight, skylight - 11))
 
 def get_lvldata(filename):
     """Takes a filename and returns the Level struct, which contains all the
@@ -53,11 +66,26 @@ def get_blockarray_fromfile(filename):
     return get_blockarray(level)
 
 def get_skylight_array(level):
-    """Returns the skylight array. Remember this is 4 bits per block, so divide
-    the z component by 2 when accessing the array. and mask off the top or
-    bottom 4 bits if it's odd or even respectively
-    """
-    return numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
+    """Returns the skylight array. This is 4 bits per block, but it is
+    expanded for you so you may index it normally."""
+    skylight = numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
+    # this array is 2 blocks per byte, so expand it
+    skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+    # Even elements get the lower 4 bits
+    skylight_expanded[:,:,::2] = skylight & 0x0F
+    # Odd elements get the upper 4 bits
+    skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
+    return skylight_expanded
+
+def get_blocklight_array(level):
+    """Returns the blocklight array. This is 4 bits per block, but it
+    is expanded for you so you may index it normally."""
+    # expand just like get_skylight_array()
+    blocklight = numpy.frombuffer(level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64))
+    blocklight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+    blocklight_expanded[:,:,::2] = blocklight & 0x0F
+    blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
+    return blocklight_expanded
 
 def get_blockdata_array(level):
     """Returns the ancillary data from the 'Data' byte array.  Data is packed
@@ -68,12 +96,12 @@ def get_blockdata_array(level):
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
 
-def render_and_save(chunkfile, cachedir, cave=False):
+def render_and_save(chunkfile, cachedir, worldobj, cave=False):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
     
     Returns the image file location"""
-    a = ChunkRenderer(chunkfile, cachedir)
+    a = ChunkRenderer(chunkfile, cachedir, worldobj)
     try:
         return a.render_and_save(cave)
     except Exception, e:
@@ -90,7 +118,7 @@ def render_and_save(chunkfile, cachedir, cave=False):
         raise Exception()
 
 class ChunkRenderer(object):
-    def __init__(self, chunkfile, cachedir):
+    def __init__(self, chunkfile, cachedir, worldobj):
         """Make a new chunk renderer for the given chunkfile.
         chunkfile should be a full path to the .dat file to process
         cachedir is a directory to save the resulting chunk images to
@@ -99,7 +127,11 @@ class ChunkRenderer(object):
             raise ValueError("Could not find chunkfile")
         self.chunkfile = chunkfile
         destdir, filename = os.path.split(self.chunkfile)
-        self.blockid = ".".join(filename.split(".")[1:3])
+        
+        chunkcoords = filename.split(".")[1:3]
+        self.coords = map(world.base36decode, chunkcoords)
+        self.blockid = ".".join(chunkcoords)
+        self.world = worldobj
 
         # Cachedir here is the base directory of the caches. We need to go 2
         # levels deeper according to the chunk file. Get the last 2 components
@@ -223,24 +255,63 @@ class ChunkRenderer(object):
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
         blocks = self.blocks
-        if cave:
+        
+        # dummy variables that may be filled in later based on render options
+        skylight = None
+        blocklight = None
+        left_skylight = None
+        left_blocklight = None
+        left_blocks = None
+        right_skylight = None
+        right_blocklight = None
+        right_blocks = None
+        
+        if self.world.lighting or cave:
+            # light data for the current chunk
             skylight = get_skylight_array(self.level)
+            blocklight = get_blocklight_array(self.level)
+        
+        if self.world.lighting:
+            # light data for the chunk to the lower left
+            chunk_path = self.world.get_chunk_path(self.coords[0] - 1, self.coords[1])
+            try:
+                chunk_data = get_lvldata(chunk_path)
+                # we only need +X-most side
+                left_skylight = get_skylight_array(chunk_data)[15,:,:]
+                left_blocklight = get_blocklight_array(chunk_data)[15,:,:]
+                left_blocks = get_blockarray(chunk_data)[15,:,:]
+                del chunk_data
+            except IOError:
+                left_skylight = None
+                left_blocklight = None
+                left_blocks = None
+
+            # light data for the chunk to the lower right
+            chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] + 1)
+            try:
+                chunk_data = get_lvldata(chunk_path)
+                # we only need -Y-most side
+                right_skylight = get_skylight_array(chunk_data)[:,0,:]
+                right_blocklight = get_blocklight_array(chunk_data)[:,0,:]
+                right_blocks = get_blockarray(chunk_data)[:,0,:]
+                del chunk_data
+            except IOError:
+                right_skylight = None
+                right_blocklight = None
+                right_blocks = None
+                
+            # clean up namespace a bit
+            del chunk_path
+        
+        if cave:
             # Cave mode. Actually go through and 0 out all blocks that are not in a
             # cave, so that it only renders caves.
-
-            # 1st task: this array is 2 blocks per byte, expand it so we can just
-            # do a bitwise and on the arrays
-            skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
-            # Even elements get the lower 4 bits
-            skylight_expanded[:,:,::2] = skylight & 0x0F
-            # Odd elements get the upper 4 bits
-            skylight_expanded[:,:,1::2] = skylight >> 4
 
             # Places where the skylight is not 0 (there's some amount of skylight
             # touching it) change it to something that won't get rendered, AND
             # won't get counted as "transparent".
             blocks = blocks.copy()
-            blocks[skylight_expanded != 0] = 21
+            blocks[skylight != 0] = 21
 
         blockData = get_blockdata_array(self.level)
         blockData_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
@@ -335,9 +406,45 @@ class ChunkRenderer(object):
                         # Draw the actual block on the image. For cave images,
                         # tint the block with a color proportional to its depth
                         if cave:
+                            # no lighting for cave -- depth is probably more useful
                             img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
                         else:
-                            img.paste(t[0], (imgx, imgy), t[1])
+                            if not (blocklight != None and skylight != None):
+                                # no lighting at all
+                                img.paste(t[0], (imgx, imgy), t[1])
+                            elif blockid in transparent_blocks:
+                                # transparent means draw the whole
+                                # block shaded with the current
+                                # block's light
+                                black_coeff = get_lighting_coefficient(skylight[x,y,z], blocklight[x,y,z], self.world.night)
+                                img.paste(Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
+                            else:
+                                # draw each face lit appropriately,
+                                # but first just draw the block
+                                img.paste(t[0], (imgx, imgy), t[1])
+                                
+                                # top face
+                                if z != 127 and (blocks[x,y,z+1] in transparent_blocks):
+                                    black_coeff = get_lighting_coefficient(skylight[x,y,z+1], blocklight[x,y,z+1], self.world.night)
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
+
+                                # left face
+                                black_coeff = get_lighting_coefficient(15, 0, self.world.night)
+                                if x != 0:
+                                    black_coeff = get_lighting_coefficient(skylight[x-1,y,z], blocklight[x-1,y,z], self.world.night)
+                                elif left_skylight != None and left_blocklight != None:
+                                    black_coeff = get_lighting_coefficient(left_skylight[y,z], left_blocklight[y,z], self.world.night)
+                                if (x == 0 and (left_blocks == None or left_blocks[y,z] in transparent_blocks)) or (x != 0 and blocks[x-1,y,z] in transparent_blocks):
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
+
+                                # right face
+                                black_coeff = get_lighting_coefficient(15, 0, self.world.night)
+                                if y != 15:
+                                    black_coeff = get_lighting_coefficient(skylight[x,y+1,z], blocklight[x,y+1,z], self.world.night)
+                                elif right_skylight != None and right_blocklight != None:
+                                    black_coeff = get_lighting_coefficient(right_skylight[x,z], right_blocklight[x,z], self.world.night)
+                                if (y == 15 and (right_blocks == None or right_blocks[x,z] in transparent_blocks)) or (y != 15 and blocks[x,y+1,z] in transparent_blocks):
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
                         # Draw edge lines
                         if blockid in (44,): # step block
@@ -361,6 +468,32 @@ class ChunkRenderer(object):
 
         return img
 
+# Render 3 blending masks for lighting
+# first is top (+Z), second is left (-X), third is right (+Y)
+def generate_facemasks():
+    white = Image.new("L", (24,24), 255)
+    
+    top = Image.new("L", (24,24), 0)
+    left = Image.new("L", (24,24), 0)
+    whole = Image.new("L", (24,24), 0)
+    
+    toppart = textures.transform_image(white)
+    leftpart = textures.transform_image_side(white)
+    
+    top.paste(toppart, (0,0))
+    left.paste(leftpart, (0,6))
+    right = left.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    # Manually touch up 6 pixels that leave a gap, like in
+    # textures._build_block()
+    for x,y in [(13,23), (17,21), (21,19)]:
+        right.putpixel((x,y), 255)
+    for x,y in [(3,4), (7,2), (11,0)]:
+        top.putpixel((x,y), 255)
+    
+    return (top, left, right)
+facemasks = generate_facemasks()
+black_color = Image.new("RGB", (24,24), (0,0,0))
 
 # Render 128 different color images for color coded depth blending in cave mode
 def generate_depthcolors():
