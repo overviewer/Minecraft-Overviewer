@@ -134,13 +134,13 @@ class QuadtreeGen(object):
 
         # write out the default (empty, but documented) region table
         with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
-            output.write('var regionData=[\n');
+            output.write('var regionData=[\n')
             output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
             output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
             output.write('  //   {"x": 0, "y": 10, "z": 0},\n')
             output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
             output.write('  // ]},\n')
-            output.write('];');
+            output.write('];')
         
         # Write a blank image
         blank = Image.new("RGBA", (1,1))
