@@ -27,6 +27,7 @@ import logging
 import util
 
 from PIL import Image
+
 from optimizeimages import optimize_image
 
 
@@ -603,7 +604,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
     tileimg.save(imgpath)
 
     if optimizeimg:
-	optimize_image(imgpath, imgformat, optimizeimg)
+        optimize_image(imgpath, imgformat, optimizeimg)
 
     with open(hashpath, "wb") as hashout:
         hashout.write(digest)
