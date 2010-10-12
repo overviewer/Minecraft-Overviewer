@@ -37,18 +37,6 @@ image
 # use that as the mask. Then take the image and use im.convert("RGB") to strip
 # the image from its alpha channel, and use that as the source to paste()
 
-def get_lighting_coefficient(skylight, blocklight, night):
-    """Takes a raw blocklight and skylight, and returns a value
-    between 0.0 (fully lit) and 1.0 (fully black) that can be used as
-    an alpha value for a blend with a black source image. It mimics
-    Minecraft lighting calculations."""
-    if not night:
-        # Daytime
-        return 1.0 - pow(0.8, 15 - max(blocklight, skylight))
-    else:
-        # Nighttime
-        return 1.0 - pow(0.8, 15 - max(blocklight, skylight - 11))
-
 def get_lvldata(filename):
     """Takes a filename and returns the Level struct, which contains all the
     level info"""
@@ -246,6 +234,18 @@ class ChunkRenderer(object):
         # Return its location
         return dest_path
 
+    def get_lighting_coefficient(self, skylight, blocklight):
+        """Takes a raw blocklight and skylight, and returns a value
+        between 0.0 (fully lit) and 1.0 (fully black) that can be used as
+        an alpha value for a blend with a black source image. It mimics
+        Minecraft lighting calculations."""
+        if not self.world.night:
+            # Daytime
+            return 1.0 - pow(0.8, 15 - max(blocklight, skylight))
+        else:
+            # Nighttime
+            return 1.0 - pow(0.8, 15 - max(blocklight, skylight - 11))
+    
     def chunk_render(self, img=None, xoff=0, yoff=0, cave=False):
         """Renders a chunk with the given parameters, and returns the image.
         If img is given, the chunk is rendered to that image object. Otherwise,
@@ -416,7 +416,7 @@ class ChunkRenderer(object):
                                 # transparent means draw the whole
                                 # block shaded with the current
                                 # block's light
-                                black_coeff = get_lighting_coefficient(skylight[x,y,z], blocklight[x,y,z], self.world.night)
+                                black_coeff = self.get_lighting_coefficient(skylight[x,y,z], blocklight[x,y,z])
                                 img.paste(Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
                             else:
                                 # draw each face lit appropriately,
@@ -425,24 +425,24 @@ class ChunkRenderer(object):
                                 
                                 # top face
                                 if z != 127 and (blocks[x,y,z+1] in transparent_blocks):
-                                    black_coeff = get_lighting_coefficient(skylight[x,y,z+1], blocklight[x,y,z+1], self.world.night)
+                                    black_coeff = self.get_lighting_coefficient(skylight[x,y,z+1], blocklight[x,y,z+1])
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
 
                                 # left face
-                                black_coeff = get_lighting_coefficient(15, 0, self.world.night)
+                                black_coeff = self.get_lighting_coefficient(15, 0)
                                 if x != 0:
-                                    black_coeff = get_lighting_coefficient(skylight[x-1,y,z], blocklight[x-1,y,z], self.world.night)
+                                    black_coeff = self.get_lighting_coefficient(skylight[x-1,y,z], blocklight[x-1,y,z])
                                 elif left_skylight != None and left_blocklight != None:
-                                    black_coeff = get_lighting_coefficient(left_skylight[y,z], left_blocklight[y,z], self.world.night)
+                                    black_coeff = self.get_lighting_coefficient(left_skylight[y,z], left_blocklight[y,z])
                                 if (x == 0 and (left_blocks == None or left_blocks[y,z] in transparent_blocks)) or (x != 0 and blocks[x-1,y,z] in transparent_blocks):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
 
                                 # right face
-                                black_coeff = get_lighting_coefficient(15, 0, self.world.night)
+                                black_coeff = self.get_lighting_coefficient(15, 0)
                                 if y != 15:
-                                    black_coeff = get_lighting_coefficient(skylight[x,y+1,z], blocklight[x,y+1,z], self.world.night)
+                                    black_coeff = self.get_lighting_coefficient(skylight[x,y+1,z], blocklight[x,y+1,z])
                                 elif right_skylight != None and right_blocklight != None:
-                                    black_coeff = get_lighting_coefficient(right_skylight[x,z], right_blocklight[x,z], self.world.night)
+                                    black_coeff = self.get_lighting_coefficient(right_skylight[x,z], right_blocklight[x,z])
                                 if (y == 15 and (right_blocks == None or right_blocks[x,z] in transparent_blocks)) or (y != 15 and blocks[x,y+1,z] in transparent_blocks):
                                     img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
