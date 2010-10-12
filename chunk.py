@@ -64,6 +64,21 @@ def get_blockdata_array(level):
     in a similar manner to skylight data"""
     return numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
 
+def iterate_chunkblocks(xoff,yoff):
+    """Iterates over the 16x16x128 blocks of a chunk in rendering order.
+    Yields (x,y,z,imgx,imgy)
+    x,y,z is the block coordinate in the chunk
+    imgx,imgy is the image offset in the chunk image where that block should go
+    """
+    for x in xrange(15,-1,-1):
+        for y in xrange(16):
+            imgx = xoff + x*12 + y*12
+            imgy = yoff - x*6 + y*6 + 128*12 + 16*12//2
+            for z in xrange(128):
+                yield x,y,z,imgx,imgy
+                imgy -= 12
+
+
 # This set holds blocks ids that can be seen through, for occlusion calculations
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
@@ -260,104 +275,94 @@ class ChunkRenderer(object):
         if not img:
             img = Image.new("RGBA", (384, 1728), (38,92,255,0))
 
-        for x in xrange(15,-1,-1):
-            for y in xrange(16):
-                imgx = xoff + x*12 + y*12
-                imgy = yoff - x*6 + y*6 + 128*12 + 16*12//2
-                for z in xrange(128):
-                    try:
-                        blockid = blocks[x,y,z]
+        for x,y,z,imgx,imgy in iterate_chunkblocks(xoff,yoff):
+            blockid = blocks[x,y,z]
 
-                        # the following blocks don't have textures that can be pre-computed from the blockid
-                        # alone.  additional data is required.
-                        # TODO torches, redstone torches, crops, ladders, stairs, 
-                        #      levers, doors, buttons, and signs all need to be handled here (and in textures.py)
+            # the following blocks don't have textures that can be pre-computed from the blockid
+            # alone.  additional data is required.
+            # TODO torches, redstone torches, crops, ladders, stairs, 
+            #      levers, doors, buttons, and signs all need to be handled here (and in textures.py)
 
-                        ## minecart track, crops, ladder, doors, etc.
-                        if blockid in textures.special_blocks:
-                         # also handle furnaces here, since one side has a different texture than the other
-                            ancilData = blockData_expanded[x,y,z]
-                            try:
-                                t = textures.specialblockmap[(blockid, ancilData)]
-                            except KeyError:
-                                t = None
+            ## minecart track, crops, ladder, doors, etc.
+            if blockid in textures.special_blocks:
+             # also handle furnaces here, since one side has a different texture than the other
+                ancilData = blockData_expanded[x,y,z]
+                try:
+                    t = textures.specialblockmap[(blockid, ancilData)]
+                except KeyError:
+                    t = None
 
-                        else:
-                            t = textures.blockmap[blockid]
-                        if not t:
-                            continue
+            else:
+                t = textures.blockmap[blockid]
+            if not t:
+                continue
 
-                        # Check if this block is occluded
-                        if cave and (
-                                x == 0 and y != 15 and z != 127
-                        ):
-                            # If it's on the x face, only render if there's a
-                            # transparent block in the y+1 direction OR the z-1
-                            # direction
-                            if (
-                                blocks[x,y+1,z] not in transparent_blocks and
-                                blocks[x,y,z+1] not in transparent_blocks
-                            ):
-                                continue
-                        elif cave and (
-                                y == 15 and x != 0 and z != 127
-                        ):
-                            # If it's on the facing y face, only render if there's
-                            # a transparent block in the x-1 direction OR the z-1
-                            # direction
-                            if (
-                                blocks[x-1,y,z] not in transparent_blocks and
-                                blocks[x,y,z+1] not in transparent_blocks
-                            ):
-                                continue
-                        elif cave and (
-                                y == 15 and x == 0
-                        ):
-                            # If it's on the facing edge, only render if what's
-                            # above it is transparent
-                            if (
-                                blocks[x,y,z+1] not in transparent_blocks
-                            ):
-                                continue
-                        elif (
-                                # Normal block or not cave mode, check sides for
-                                # transparentcy or render unconditionally if it's
-                                # on a shown face
-                                x != 0 and y != 15 and z != 127 and
-                                blocks[x-1,y,z] not in transparent_blocks and
-                                blocks[x,y+1,z] not in transparent_blocks and
-                                blocks[x,y,z+1] not in transparent_blocks
-                        ):
-                            # Don't render if all sides aren't transparent and
-                            # we're not on the edge
-                            continue
+            # Check if this block is occluded
+            if cave and (
+                    x == 0 and y != 15 and z != 127
+            ):
+                # If it's on the x face, only render if there's a
+                # transparent block in the y+1 direction OR the z-1
+                # direction
+                if (
+                    blocks[x,y+1,z] not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+                ):
+                    continue
+            elif cave and (
+                    y == 15 and x != 0 and z != 127
+            ):
+                # If it's on the facing y face, only render if there's
+                # a transparent block in the x-1 direction OR the z-1
+                # direction
+                if (
+                    blocks[x-1,y,z] not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+                ):
+                    continue
+            elif cave and (
+                    y == 15 and x == 0
+            ):
+                # If it's on the facing edge, only render if what's
+                # above it is transparent
+                if (
+                    blocks[x,y,z+1] not in transparent_blocks
+                ):
+                    continue
+            elif (
+                    # Normal block or not cave mode, check sides for
+                    # transparentcy or render unconditionally if it's
+                    # on a shown face
+                    x != 0 and y != 15 and z != 127 and
+                    blocks[x-1,y,z] not in transparent_blocks and
+                    blocks[x,y+1,z] not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+            ):
+                # Don't render if all sides aren't transparent and
+                # we're not on the edge
+                continue
 
-                        # Draw the actual block on the image. For cave images,
-                        # tint the block with a color proportional to its depth
-                        if cave:
-                            img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
-                        else:
-                            img.paste(t[0], (imgx, imgy), t[1])
+            # Draw the actual block on the image. For cave images,
+            # tint the block with a color proportional to its depth
+            if cave:
+                img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
+            else:
+                img.paste(t[0], (imgx, imgy), t[1])
 
-                        # Draw edge lines
-                        if blockid in (44,): # step block
-                           increment = 6
-                        elif blockid in (78,): # snow
-                           increment = 9
-                        else:
-                           increment = 0
+            # Draw edge lines
+            if blockid in (44,): # step block
+               increment = 6
+            elif blockid in (78,): # snow
+               increment = 9
+            else:
+               increment = 0
 
-                        if blockid not in transparent_blocks or blockid in (78,): #special case snow so the outline is still drawn
-                            draw = ImageDraw.Draw(img)
-                            if x != 15 and blocks[x+1,y,z] == 0:
-                                draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
-                            if y != 0 and blocks[x,y-1,z] == 0:
-                                draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
-
-
-                    finally:
-                        # Do this no mater how the above block exits
-                        imgy -= 12
+            if blockid not in transparent_blocks or blockid in (78,): #special case snow so the outline is still drawn
+                draw = ImageDraw.Draw(img)
+                if x != 15 and blocks[x+1,y,z] == 0:
+                    draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
+                if y != 0 and blocks[x,y-1,z] == 0:
+                    draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
 
         return img
 
