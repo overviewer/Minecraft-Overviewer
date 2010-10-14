@@ -24,10 +24,12 @@ import shutil
 import collections
 import json
 import logging
+import util
 
 from PIL import Image
 
-import util
+from optimizeimages import optimize_image
+
 
 """
 This module has routines related to generating a quadtree of tiles
@@ -55,7 +57,7 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, imgformat=None):
+    def __init__(self, worldobj, destdir, depth=None, imgformat=None, optimizeimg=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -67,6 +69,7 @@ class QuadtreeGen(object):
         """
         assert(imgformat)
         self.imgformat = imgformat
+        self.optimizeimg = optimizeimg
 
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
@@ -128,11 +131,20 @@ class QuadtreeGen(object):
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
 
-        
-
+        # write out the default marker table
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
             output.write("var markerData=%s" % json.dumps(self.world.POI))
 
+        # write out the default (empty, but documented) region table
+        with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
+            output.write('var regionData=[\n')
+            output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
+            output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
+            output.write('  //   {"x": 0, "y": 10, "z": 0},\n')
+            output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
+            output.write('  // ]},\n')
+            output.write('];')
+        
         # Write a blank image
         blank = Image.new("RGBA", (1,1))
         tileDir = os.path.join(self.destdir, "tiles")
@@ -235,7 +247,8 @@ class QuadtreeGen(object):
             # (even if tilechunks is empty, render_worldtile will delete
             # existing images if appropriate)
             yield pool.apply_async(func=render_worldtile, args= (tilechunks,
-                colstart, colend, rowstart, rowend, dest, self.imgformat))
+                colstart, colend, rowstart, rowend, dest, self.imgformat,
+                self.optimizeimg))
 
     def _apply_render_inntertile(self, pool, zoom):
         """Same as _apply_render_worltiles but for the inntertile routine.
@@ -247,7 +260,7 @@ class QuadtreeGen(object):
             dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
             name = str(path[-1])
 
-            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat))
+            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
 
     def go(self, procs):
         """Renders all tiles"""
@@ -331,7 +344,7 @@ class QuadtreeGen(object):
         pool.join()
 
         # Do the final one right here:
-        render_innertile(os.path.join(self.destdir, "tiles"), "base", self.imgformat)
+        render_innertile(os.path.join(self.destdir, "tiles"), "base", self.imgformat, self.optimizeimg)
 
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
@@ -362,7 +375,7 @@ class QuadtreeGen(object):
         return chunklist
 
 @catch_keyboardinterrupt
-def render_innertile(dest, name, imgformat):
+def render_innertile(dest, name, imgformat, optimizeimg):
     """
     Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
     os.path.join(dest, name, "{0,1,2,3}.png")
@@ -452,12 +465,15 @@ def render_innertile(dest, name, imgformat):
         img.save(imgpath, quality=95, subsampling=0)
     else: # png
         img.save(imgpath)
+        if optimizeimg:
+            optimize_image(imgpath, imgformat, optimizeimg)
+
     with open(hashpath, "wb") as hashout:
         hashout.write(newhash)
 
 
 @catch_keyboardinterrupt
-def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat):
+def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat, optimizeimg):
     """Renders just the specified chunks into a tile and save it. Unlike usual
     python conventions, rowend and colend are inclusive. Additionally, the
     chunks around the edges are half-way cut off (so that neighboring tiles
@@ -586,6 +602,10 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
 
     # Save them
     tileimg.save(imgpath)
+
+    if optimizeimg:
+        optimize_image(imgpath, imgformat, optimizeimg)
+
     with open(hashpath, "wb") as hashout:
         hashout.write(digest)
 

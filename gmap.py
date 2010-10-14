@@ -51,6 +51,7 @@ def main():
     parser.add_option("--lighting", dest="lighting", help="Renders shadows using light data from each chunk.", action="store_true")
     parser.add_option("--night", dest="night", help="Renders shadows using light data from each chunk, as if it were night. Implies --lighting.", action="store_true")
     parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg. NOTE: png will always be used as the intermediate image format.")
+    parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%")
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, help="Print more output. You can specify this option multiple times.")
 
@@ -100,6 +101,11 @@ def main():
     else:
         imgformat = 'png'
 
+    if options.optimizeimg:
+        optimizeimg = options.optimizeimg
+    else:
+        optimizeimg = None
+
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)
     logging.getLogger().setLevel(
@@ -113,7 +119,7 @@ def main():
     w.go(options.procs)
 
     # Now generate the tiles
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg)
     q.go(options.procs)
 
 def delete_all(worlddir, tiledir):
