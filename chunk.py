@@ -372,9 +372,11 @@ class ChunkRenderer(object):
             # we have no useful info, return default
             return (self.calculate_darkness(15, 0), False)
         
+        blocktype = blocks[local_x, local_y, local_z]
+        
         # special handling for half-blocks
         # (don't recurse more than once!)
-        if blocks[local_x, local_y, local_z] == 44 and not norecurse:
+        if blocktype == 44 and not norecurse:
             # average gathering variables
             averagegather = 0.0
             averagecount = 0
@@ -395,9 +397,13 @@ class ChunkRenderer(object):
                 return (averagegather / averagecount, False)
         
         # calculate the return...
-        occluded = not (blocks[local_x, local_y, local_z] in transparent_blocks)
+        occluded = not (blocktype in transparent_blocks)
+        
         # only calculate the non-default coefficient if we're not occluded
-        if occluded:
+        if (blocktype == 10) or (blocktype == 11):
+            # lava blocks should always be lit!
+            coefficient = 0.0
+        elif occluded:
             coefficient = self.calculate_darkness(15, 0)
         else:
             coefficient = self.calculate_darkness(skylight[local_x, local_y, local_z], blocklight[local_x, local_y, local_z])
