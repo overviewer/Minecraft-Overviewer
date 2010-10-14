@@ -332,10 +332,11 @@ class ChunkRenderer(object):
         """Calculates the lighting coefficient for the given
         coordinate, using default lighting and peeking into
         neighboring chunks, if needed. A lighting coefficient of 1.0
-        means fully black. Returns a tuple (coefficient, occluded),
-        where occluded is true if the given coordinate is filled with
-        a solid block, and therefore the returned coefficient is
-        just the default."""
+        means fully black.
+        
+        Returns a tuple (coefficient, occluded), where occluded is
+        True if the given coordinate is filled with a solid block, and
+        therefore the returned coefficient is just the default."""
         
         # fill it in with the default first (full skylight)
         coefficient = self.calculate_darkness(15, 0)
@@ -347,11 +348,14 @@ class ChunkRenderer(object):
         local_x = x
         local_y = y
         local_z = z
+        is_local_chunk = False
         
+        # find out what chunk we're in, and translate accordingly
         if x >= 0 and y < 16:
             blocks = self.blocks
             skylight = self.skylight
             blocklight = self.blocklight
+            is_local_chunk = True
         elif x < 0:
             local_x += 16
             blocks = self.left_blocks
@@ -371,10 +375,20 @@ class ChunkRenderer(object):
             # we have no useful info, return default
             return (coefficient, False)
         
-        # calculate the return
+        # calculate the return...
         occluded = not (blocks[local_x, local_y, local_z] in transparent_blocks)
+        
+        # only calculate the coefficient if we're not occluded
         if not occluded:
             coefficient = self.calculate_darkness(skylight[local_x, local_y, local_z], blocklight[local_x, local_y, local_z])
+        
+        # only say we're occluded if the point is in the CURRENT
+        # chunk, so that we don't get obvious inter-chunk dependencies
+        # (we want this here so we still have the default coefficient
+        # for occluded blocks, even when we don't report them as
+        # occluded)
+        if not is_local_chunk:
+            occluded = False
         
         return (coefficient, occluded)
         
@@ -509,16 +523,19 @@ class ChunkRenderer(object):
                                 img.paste(t[0], (imgx, imgy), t[1])
                                 
                                 # top face
-                                black_coeff, _ = self.get_lighting_coefficient(x, y, z + 1)
-                                img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
+                                black_coeff, face_occlude = self.get_lighting_coefficient(x, y, z + 1)
+                                if not face_occlude:
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
 
                                 # left face
-                                black_coeff, _ = self.get_lighting_coefficient(x - 1, y, z)
-                                img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
+                                black_coeff, face_occlude = self.get_lighting_coefficient(x - 1, y, z)
+                                if not face_occlude:
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
 
                                 # right face
-                                black_coeff, _ = self.get_lighting_coefficient(x, y + 1, z)
-                                img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
+                                black_coeff, face_occlude = self.get_lighting_coefficient(x, y + 1, z)
+                                if not face_occlude:
+                                    img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
                         # Draw edge lines
                         if blockid in (44,): # step block
