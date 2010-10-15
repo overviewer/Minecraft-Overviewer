@@ -190,6 +190,18 @@ Options
     a certain date. Or perhaps you can incrementally update your map by passing
     in a subset of chunks each time. It's up to you!
 
+--lighting
+    This option enables map lighting, using lighting information stored by
+    Minecraft inside the chunks. This will make your map prettier, at the cost
+    of update speed.
+    
+    Note that for existing, unlit maps, you may want to clear your cache
+    (with -d) before updating the map to use lighting. Otherwise, only updated
+    chunks will have lighting enabled.
+
+--night
+    This option enables --lighting, and renders the world at night.
+
 Viewing the Results
 -------------------
 Within the output directory you will find two things: an index.html file, and a
@@ -246,8 +258,6 @@ An incomplete list of things I want to do soon is:
 * Rendering non-cube blocks, such as torches, flowers, mine tracks, fences,
   doors, and the like. Right now they are either not rendered at all, or
   rendered as if they were a cube, so it looks funny.
-
-* Add lighting
 
 * Some kind of graphical interface.
 
