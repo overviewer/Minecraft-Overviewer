@@ -448,17 +448,29 @@ def render_innertile(dest, name, imgformat, optimizeimg):
     img = Image.new("RGBA", (384, 384), (38,92,255,0))
 
     if q0path:
-        quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad0, (0,0))
+        try:
+            quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad0, (0,0))
+        except Exception, e:
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q0path, e)
     if q1path:
-        quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad1, (192,0))
+        try:
+            quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad1, (192,0))
+        except Exception, e:
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q1path, e)
     if q2path:
-        quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad2, (0, 192))
+        try:
+            quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad2, (0, 192))
+        except Exception, e:
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q2path, e)
     if q3path:
-        quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad3, (192, 192))
+        try:
+            quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad3, (192, 192))
+        except Exception, e:
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q3path, e)
 
     # Save it
     if imgformat == 'jpg':
