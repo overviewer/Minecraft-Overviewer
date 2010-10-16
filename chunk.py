@@ -17,6 +17,7 @@ import numpy
 from PIL import Image, ImageDraw
 import os.path
 import hashlib
+import logging
 
 import nbt
 import textures
@@ -91,6 +92,9 @@ def render_and_save(chunkfile, cachedir, cave=False):
     a = ChunkRenderer(chunkfile, cachedir)
     try:
         return a.render_and_save(cave)
+    except ChunkCorrupt:
+        # This should be non-fatal, but should print a warning
+        pass
     except Exception, e:
         import traceback
         traceback.print_exc()
@@ -103,6 +107,9 @@ def render_and_save(chunkfile, cachedir, cave=False):
         # entire program, instead of this process dying and the parent waiting
         # forever for it to finish.
         raise Exception()
+
+class ChunkCorrupt(Exception):
+    pass
 
 class ChunkRenderer(object):
     def __init__(self, chunkfile, cachedir):
@@ -134,7 +141,11 @@ class ChunkRenderer(object):
     def _load_level(self):
         """Loads and returns the level structure"""
         if not hasattr(self, "_level"):
-            self._level = get_lvldata(self.chunkfile)
+            try:
+                self._level = get_lvldata(self.chunkfile)
+            except Exception, e:
+                logging.warning("Error opening chunk file %s. It may be corrupt. %s", self.chunkfile, e)
+                raise ChunkCorrupt(str(e))
         return self._level
     level = property(_load_level)
         
