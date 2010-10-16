@@ -187,7 +187,7 @@ class ChunkRenderer(object):
             # An image exists? Instead of checking the hash which is kinda
             # expensive (for tens of thousands of chunks, yes it is) check if
             # the mtime of the chunk file is newer than the mtime of oldimg
-            if os.path.getmtime(self.chunkfile) < os.path.getmtime(oldimg_path):
+            if os.path.getmtime(self.chunkfile) <= os.path.getmtime(oldimg_path):
                 # chunkfile is older than the image, don't even bother checking
                 # the hash
                 return oldimg_path
@@ -212,6 +212,9 @@ class ChunkRenderer(object):
             if dest_filename == oldimg:
                 # There is an existing file, the chunk has a newer mtime, but the
                 # hashes match.
+                # Before we return it, update its mtime so the next round
+                # doesn't have to check the hash
+                os.utime(dest_path, None)
                 return dest_path
             else:
                 # Remove old image for this chunk. Anything already existing is
