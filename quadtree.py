@@ -118,8 +118,10 @@ class QuadtreeGen(object):
         logging.info("{0}/{1} tiles complete on level {2}/{3}".format(
                 complete, total, level, self.p))
 
-    def write_html(self, zoomlevel, imgformat):
-        """Writes out index.html"""
+    def write_html(self, skipjs=False):
+        """Writes out index.html, marker.js, and region.js"""
+        zoomlevel = self.p
+        imgformat = self.imgformat
         templatepath = os.path.join(util.get_program_path(), "template.html")
 
         html = open(templatepath, 'r').read()
@@ -130,6 +132,15 @@ class QuadtreeGen(object):
                 
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
+
+        # Write a blank image
+        blank = Image.new("RGBA", (1,1))
+        tileDir = os.path.join(self.destdir, "tiles")
+        if not os.path.exists(tileDir): os.mkdir(tileDir)
+        blank.save(os.path.join(tileDir, "blank."+self.imgformat))
+
+        if skipjs:
+            return
 
         # write out the default marker table
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
@@ -145,12 +156,6 @@ class QuadtreeGen(object):
             output.write('  // ]},\n')
             output.write('];')
         
-        # Write a blank image
-        blank = Image.new("RGBA", (1,1))
-        tileDir = os.path.join(self.destdir, "tiles")
-        if not os.path.exists(tileDir): os.mkdir(tileDir)
-        blank.save(os.path.join(tileDir, "blank."+self.imgformat))
-
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
         index.html to see what maxZoom is set to.
@@ -286,8 +291,6 @@ class QuadtreeGen(object):
             pool = FakePool()
         else:
             pool = multiprocessing.Pool(processes=procs)
-
-        self.write_html(self.p, self.imgformat)
 
         # Render the highest level of tiles from the chunks
         results = collections.deque()
