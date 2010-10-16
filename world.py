@@ -92,9 +92,11 @@ class WorldRenderer(object):
     files to update. If it includes a trailing newline, it is stripped, so you
     can pass in file handles just fine.
     """
-    def __init__(self, worlddir, cachedir, chunklist=None):
+    def __init__(self, worlddir, cachedir, chunklist=None, lighting=False, night=False):
         self.worlddir = worlddir
         self.caves = False
+        self.lighting = lighting or night
+        self.night = night
         self.cachedir = cachedir
 
         self.chunklist = chunklist
@@ -135,7 +137,18 @@ class WorldRenderer(object):
             inclusion_set.add((col, row))
 
         return inclusion_set
-
+    
+    def get_chunk_path(self, chunkX, chunkY):
+        """Returns the path to the chunk file at (chunkX, chunkY), if
+        it exists."""
+        
+        chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64),
+                                           base36encode(chunkY % 64),
+                                           base36encode(chunkX),
+                                           base36encode(chunkY))
+        
+        return os.path.join(self.worlddir, chunkFile)
+    
     def findTrueSpawn(self):
         """Adds the true spawn location to self.POI.  The spawn Y coordinate
         is almost always the default of 64.  Find the first air block above
@@ -152,11 +165,9 @@ class WorldRenderer(object):
         chunkY = spawnZ/16
 
         ## The filename of this chunk
-        chunkFile = os.path.join(base36encode(chunkX % 64), base36encode(chunkY % 64),
-              "c.%s.%s.dat" % (base36encode(chunkX), base36encode(chunkY)))
+        chunkFile = self.get_chunk_path(chunkX, chunkY)
 
-
-        data=nbt.load(os.path.join(self.worlddir, chunkFile))[1]
+        data=nbt.load(chunkFile)[1]
         level = data['Level']
         blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
 
@@ -238,12 +249,12 @@ class WorldRenderer(object):
                 if inclusion_set and (col, row) not in inclusion_set:
                     # Skip rendering, just find where the existing image is
                     _, imgpath = chunk.ChunkRenderer(chunkfile,
-                            self.cachedir).find_oldimage(False)
+                            self.cachedir, self).find_oldimage(False)
                     if imgpath:
                         results[(col, row)] = imgpath
                         continue
 
-                result = chunk.render_and_save(chunkfile, self.cachedir, cave=self.caves)
+                result = chunk.render_and_save(chunkfile, self.cachedir, self, cave=self.caves)
                 results[(col, row)] = result
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
@@ -256,13 +267,13 @@ class WorldRenderer(object):
                 if inclusion_set and (col, row) not in inclusion_set:
                     # Skip rendering, just find where the existing image is
                     _, imgpath = chunk.ChunkRenderer(chunkfile,
-                            self.cachedir).find_oldimage(False)
+                            self.cachedir, self).find_oldimage(False)
                     if imgpath:
                         results[(col, row)] = imgpath
                         continue
 
                 result = pool.apply_async(chunk.render_and_save,
-                        args=(chunkfile,self.cachedir),
+                        args=(chunkfile,self.cachedir,self),
                         kwds=dict(cave=self.caves))
                 asyncresults.append((col, row, result))
 
