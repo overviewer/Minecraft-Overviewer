@@ -49,7 +49,17 @@ elif [ "`uname`" = "Darwin" ]; then
     echo "Detected an OS X based operating system."
     if which port > /dev/null 2>&1; then
 	SYSTEM=port
-	PKGS="py-pil py-numpy"
+	PYVER=`python -V 2>&1 | awk '{print $2}'`
+	if echo ${PYVER} | grep -q "^2.6.*"; then
+	    PKGS="py26-pil py26-numpy"
+	elif echo ${PYVER} | grep -q "^2.7.*"; then
+	    PKGS="py27-pil py27-numpy"
+	else
+	    echo "Unsupported Python version (${PYVER}) installed."
+	    echo "Minecraft Overviewer requires version 2.6 or 2.7."
+	    echo "Python 2.6 will be installed automatically."
+	    PKGS="py26-pil py26-numpy"
+	fi
     else
 	echo "You're running OS X but no package manager was discovered."
 	echo "MacPorts is available at http://www.macports.org/."
