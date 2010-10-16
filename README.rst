@@ -50,6 +50,10 @@ This program requires:
 I develop and test this on Linux, but need help testing it on Windows and Mac.
 If something doesn't work, let me know.
 
+RedHat/Fedora, Debian/Ubuntu, and OS X users with MacPorts installed
+can use the provided get-deps.sh script to install the Python
+dependencies automatically.
+
 Using the Overviewer
 ====================
 
