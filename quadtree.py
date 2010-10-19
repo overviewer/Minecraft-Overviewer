@@ -129,7 +129,16 @@ class QuadtreeGen(object):
                 "{maxzoom}", str(zoomlevel))
         html = html.replace(
                 "{imgformat}", str(imgformat))
-                
+
+        # sleepynate: check to make sure destdir exists before writing
+        if not os.path.exists(self.destdir):
+            try:
+                os.makedirs(self.destdir)
+            except OSError, e:
+                import errno
+                if e.errno != errno.EEXIST:
+                    raise
+
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
 
@@ -155,7 +164,7 @@ class QuadtreeGen(object):
             output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
             output.write('  // ]},\n')
             output.write('];')
-        
+
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
         index.html to see what maxZoom is set to.
@@ -352,7 +361,7 @@ class QuadtreeGen(object):
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
         x, y = self.mincol, self.minrow
-        
+
         xsize = self.maxcol
         ysize = self.maxrow
 
@@ -426,7 +435,7 @@ def render_innertile(dest, name, imgformat, optimizeimg):
         if os.path.exists(hashpath):
             os.unlink(hashpath)
         return
-    
+
     # Now check the hashes
     hasher = hashlib.md5()
     if q0hash:
