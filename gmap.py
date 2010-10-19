@@ -26,6 +26,9 @@ from optparse import OptionParser
 import re
 import multiprocessing
 import time
+import logging
+
+logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
 import world
 import quadtree
@@ -46,6 +49,10 @@ def main():
     parser.add_option("--cachedir", dest="cachedir", help="Sets the directory where the Overviewer will save chunk images, which is an intermediate step before the tiles are generated. You must use the same directory each time to gain any benefit from the cache. If not set, this defaults to your world directory.")
     parser.add_option("--chunklist", dest="chunklist", help="A file containing, on each line, a path to a chunkfile to update. Instead of scanning the world directory for chunks, it will just use this list. Normal caching rules still apply.")
     parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg. NOTE: png will always be used as the intermediate image format.")
+    parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%")
+    parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
+    parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, help="Print more output. You can specify this option multiple times.")
+    parser.add_option("--skip-js", dest="skipjs", action="store_true", help="Don't output marker.js or regions.js")
 
     options, args = parser.parse_args()
 
@@ -93,12 +100,26 @@ def main():
     else:
         imgformat = 'png'
 
+    if options.optimizeimg:
+        optimizeimg = options.optimizeimg
+    else:
+        optimizeimg = None
+
+    logging.getLogger().setLevel(
+        logging.getLogger().level + 10*options.quiet)
+    logging.getLogger().setLevel(
+        logging.getLogger().level - 10*options.verbose)
+
+    logging.info("Welcome to Minecraft Overviewer!")
+    logging.debug("Current log level: {0}".format(logging.getLogger().level))
+
     # First generate the world's chunk images
     w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist)
     w.go(options.procs)
 
     # Now generate the tiles
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg)
+    q.write_html(options.skipjs)
     q.go(options.procs)
 
 def delete_all(worlddir, tiledir):
@@ -110,7 +131,7 @@ def delete_all(worlddir, tiledir):
         for f in filenames:
             if matcher.match(f):
                 filepath = os.path.join(dirpath, f)
-                print "Deleting {0}".format(filepath)
+                logging.info("Deleting {0}".format(filepath))
                 os.unlink(filepath)
 
     # Now delete all /hash/ files in the tile dir.
@@ -119,7 +140,7 @@ def delete_all(worlddir, tiledir):
             for f in filenames:
                 if f.endswith(".hash"):
                     filepath = os.path.join(dirpath, f)
-                    print "Deleting {0}".format(filepath)
+                    logging.info("Deleting {0}".format(filepath))
                     os.unlink(filepath)
 
 def list_worlds():

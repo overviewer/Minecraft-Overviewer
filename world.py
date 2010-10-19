@@ -18,9 +18,9 @@ import os
 import os.path
 import multiprocessing
 import sys
+import logging
 
 import numpy
-from PIL import Image
 
 import chunk
 import nbt
@@ -121,6 +121,11 @@ class WorldRenderer(object):
                 chunklist.append((base36decode(p[1]), base36decode(p[2]),
                     path))
 
+        if not chunklist:
+            logging.error("No valid chunks specified in your chunklist!")
+            logging.error("HINT: chunks are in your world directory and have names of the form 'c.*.*.dat'")
+            sys.exit(1)
+
         # Translate to col, row coordinates
         _, _, _, _, chunklist = _convert_coords(chunklist)
 
@@ -147,10 +152,8 @@ class WorldRenderer(object):
         chunkY = spawnZ/16
 
         ## The filename of this chunk
-        chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64), 
-                                           base36encode(chunkY % 64),
-                                           base36encode(chunkX),
-                                           base36encode(chunkY))
+        chunkFile = os.path.join(base36encode(chunkX % 64), base36encode(chunkY % 64),
+              "c.%s.%s.dat" % (base36encode(chunkX), base36encode(chunkY)))
 
 
         data=nbt.load(os.path.join(self.worlddir, chunkFile))[1]
@@ -171,8 +174,9 @@ class WorldRenderer(object):
     def go(self, procs):
         """Starts the render. This returns when it is finished"""
         
-        print "Scanning chunks"
+        logging.info("Scanning chunks")
         raw_chunks = self._find_chunkfiles()
+        logging.debug("Done scanning chunks")
 
         # Translate chunks to our diagonal coordinate system
         mincol, maxcol, minrow, maxrow, chunks = _convert_coords(raw_chunks)
@@ -208,7 +212,7 @@ class WorldRenderer(object):
                             os.path.join(dirpath, f)))
 
         if not all_chunks:
-            print "Error: No chunks found!"
+            logging.error("Error: No chunks found!")
             sys.exit(1)
         return all_chunks
 
@@ -229,7 +233,7 @@ class WorldRenderer(object):
         results = {}
         if processes == 1:
             # Skip the multiprocessing stuff
-            print "Rendering chunks synchronously since you requested 1 process"
+            logging.debug("Rendering chunks synchronously since you requested 1 process")
             for i, (col, row, chunkfile) in enumerate(chunks):
                 if inclusion_set and (col, row) not in inclusion_set:
                     # Skip rendering, just find where the existing image is
@@ -243,9 +247,9 @@ class WorldRenderer(object):
                 results[(col, row)] = result
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
-                        print "{0}/{1} chunks rendered".format(i, len(chunks))
+                        logging.info("{0}/{1} chunks rendered".format(i, len(chunks)))
         else:
-            print "Rendering chunks in {0} processes".format(processes)
+            logging.debug("Rendering chunks in {0} processes".format(processes))
             pool = multiprocessing.Pool(processes=processes)
             asyncresults = []
             for col, row, chunkfile in chunks:
@@ -268,10 +272,10 @@ class WorldRenderer(object):
                 results[(col, row)] = result.get()
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
-                        print "{0}/{1} chunks rendered".format(i, len(asyncresults))
+                        logging.info("{0}/{1} chunks rendered".format(i, len(asyncresults)))
 
             pool.join()
-        print "Done!"
+        logging.info("Done!")
 
         return results
 

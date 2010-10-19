@@ -8,6 +8,7 @@
   #mcmap { height: 100% }
 </style>
 <script type="text/javascript" src="markers.js"></script>
+<script type="text/javascript" src="regions.js"></script>
 <script type="text/javascript"
     src="http://maps.google.com/maps/api/js?sensor=false">
 </script>
@@ -21,6 +22,65 @@
     cacheMinutes: 0, // Change this to have browsers automatically request new images every x minutes
     debug:        false
   };
+  
+  // our custom projection maps Latitude to Y, and Longitude to X as normal,
+  // but it maps the range [0.0, 1.0] to [0, tileSize] in both directions
+  // so it is easier to position markers, etc. based on their position
+  // (find their position in the lowest-zoom image, and divide by tileSize)
+  function MCMapProjection() {
+    this.inverseTileSize = 1.0 / config.tileSize;
+  }
+  
+  MCMapProjection.prototype.fromLatLngToPoint = function(latLng) {
+    var x = latLng.lng() * config.tileSize;
+    var y = latLng.lat() * config.tileSize;
+    return new google.maps.Point(x, y);
+  };
+
+  MCMapProjection.prototype.fromPointToLatLng = function(point) {
+    var lng = point.x * this.inverseTileSize;
+    var lat = point.y * this.inverseTileSize;
+    return new google.maps.LatLng(lat, lng);
+  };
+  
+  // helper to get map LatLng from world coordinates
+  // takes arguments in X, Y, Z order
+  // (arguments are *out of order*, because within the function we use
+  // the axes like the rest of Minecraft Overviewer -- with the Z and Y
+  // flipped from normal minecraft usage.)
+  function fromWorldToLatLng(x, z, y)
+  {
+    // the width and height of all the highest-zoom tiles combined, inverted
+    var perPixel = 1.0 / (config.tileSize * Math.pow(2, config.maxZoom));
+    
+    // This information about where the center column is may change with a different
+    // drawing implementation -- check it again after any drawing overhauls!
+    
+    // point (0, 0, 127) is at (0.5, 0.0) of tile (tiles/2 - 1, tiles/2)
+    // so the Y coordinate is at 0.5, and the X is at 0.5 - ((tileSize / 2) / (tileSize * 2^maxZoom))
+    // or equivalently, 0.5 - (1 / 2^(maxZoom + 1))
+    var lng = 0.5 - (1.0 / Math.pow(2, config.maxZoom + 1));
+    var lat = 0.5;
+    
+    // the following metrics mimic those in ChunkRenderer.chunk_render in "chunk.py"
+    
+    // each block on X axis adds 12px to x and subtracts 6px from y
+    lng += 12 * x * perPixel;
+    lat -= 6 * x * perPixel;
+    
+    // each block on Y axis adds 12px to x and adds 6px to y
+    lng += 12 * y * perPixel;
+    lat += 6 * y * perPixel;
+    
+    // each block down along Z adds 12px to y
+    lat += 12 * (128 - z) * perPixel;
+
+    // add on 12 px to the X coordinate and 18px to the Y to center our point
+    lng += 12 * perPixel;
+    lat += 18 * perPixel;
+    
+    return new google.maps.LatLng(lat, lng);
+  }
   
   var MCMapOptions = {
     getTileUrl: function(tile, zoom) {
@@ -52,6 +112,7 @@
   var MCMapType = new google.maps.ImageMapType(MCMapOptions);
   MCMapType.name = "MC Map";
   MCMapType.alt = "Minecraft Map";
+  MCMapType.projection = new MCMapProjection();
   
   function CoordMapType() {
   }
@@ -75,98 +136,104 @@
   };
   
   var map;
-  var prot;
-
+  
   var markersInit = false;
-
-    function convertCoords (x,y,z) {
-    
-    var imgx = 0;
-    var imgy = 0;
-    
-    imgx = imgx + (12*x);
-    imgy = imgy - (6*x);
-    
-    imgx = imgx + (12 * y);
-    imgy = imgy + (6* y);
-
-    imgy = imgy - (12*z);
-
-    // this math is mysterious.  i don't fully understand it
-    // but the idea is to assume that block 0,0,0 in chunk 0,0
-    // is drawn in the very middle of the gmap at (192,192)
-    return [192*Math.pow(2,config.maxZoom)+imgx, 192*Math.pow(2,config.maxZoom)+imgy+768+768];
-    }
-
+  
   function initMarkers() {
-      if (markersInit) { return; }
+    if (markersInit) { return; }
+    
+    markersInit = true;
 
-      markersInit = true;
-
-      prot = map.getProjection();
-
-      for (i in markerData) {
-          var item = markerData[i];
-
-          var converted = convertCoords(item.x-16, item.z, item.y);
-
-
-          var x = converted[0] / Math.pow(2, config.maxZoom);
-          var y = converted[1] / Math.pow(2, config.maxZoom);
-          var p = new google.maps.Point(x,y);
-          var marker = new google.maps.Marker({
-position: prot.fromPointToLatLng(p),
-map: map, 
-title:item.msg
-}); 
-
-}
-
-
-
-}
-
+    for (i in markerData) {
+      var item = markerData[i];
+      
+      var converted = fromWorldToLatLng(item.x, item.y, item.z);
+       var marker = new google.maps.Marker({
+        position: converted,
+        map: map,
+        title: item.msg
+      });
+   }
+  }
+  
+  var regionsInit = false;
+  function initRegions() {
+    if (regionsInit) { return; }
+    
+    regionsInit = true;
+    
+    for (i in regionData) {
+      var region = regionData[i];
+      var converted = new google.maps.MVCArray();
+      for (j in region.path) {
+        var point = region.path[j];
+        converted.push(fromWorldToLatLng(point.x, point.y, point.z));
+      }
+      
+      if (region.closed) {
+        new google.maps.Polygon({
+          clickable: false,
+          geodesic: false,
+          map: map,
+          strokeColor: region.color,
+          strokeOpacity: region.opacity,
+          strokeWeight: 2,
+          fillColor: region.color,
+          fillOpacity: region.opacity * 0.25,
+          zIndex: i,
+          paths: converted
+        });
+      } else {
+        new google.maps.Polyline({
+          clickable: false,
+          geodesic: false,
+          map: map,
+          strokeColor: region.color,
+          strokeOpacity: region.opacity,
+          strokeWeight: 2,
+          zIndex: i,
+          path: converted
+        });
+      }
+    }
+  }
+  
   function initialize() {
     var mapOptions = {
       zoom: config.defaultZoom,
-      center: new google.maps.LatLng(-45, 90),
+      center: new google.maps.LatLng(0.5, 0.5),
       navigationControl: true,
       scaleControl: false,
       mapTypeControl: false,
+      streetViewControl: false,
       mapTypeId: 'mcmap'
     };
     map = new google.maps.Map(document.getElementById("mcmap"), mapOptions);
     
     if(config.debug) {
       map.overlayMapTypes.insertAt(0, new CoordMapType(new google.maps.Size(config.tileSize, config.tileSize)));
+	  
+	  google.maps.event.addListener(map, 'click', function(event) {
+	    console.log("latLng; " + event.latLng.lat() + ", " + event.latLng.lng());
+
+	    var pnt = map.getProjection().fromLatLngToPoint(event.latLng);
+	    console.log("point: " + pnt);
+	    
+	    var pxx = pnt.x * config.tileSize * Math.pow(2, config.maxZoom);
+	    var pxy = pnt.y * config.tileSize * Math.pow(2, config.maxZoom);
+	    console.log("pixel: " + pxx + ", " + pxy);
+	  });
     }
-
-
         
     // Now attach the coordinate map type to the map's registry
     map.mapTypes.set('mcmap', MCMapType);
   
     // We can now set the map to use the 'coordinate' map type
     map.setMapTypeId('mcmap');
-
-    prot = map.getProjection();
-
-    if (config.debug) 
-        google.maps.event.addListener(map, 'click', function(event) {
-                console.log("latLng: " + event.latLng.lat() + ", " + event.latLng.lng());
-                var pnt = prot.fromLatLngToPoint(event.latLng);
-
-                console.log("point: " + pnt);//
-                var pxx = pnt.x * Math.pow(2,config.maxZoom);
-                var pxy = pnt.y * Math.pow(2,config.maxZoom);
-                console.log("pixel: " + pxx + ", " + pxy);
-                });
-
-    google.maps.event.addListener(map, 'projection_changed', function(event) {
-            initMarkers();
-            });
-
-
+	
+	// initialize the markers and regions
+	initMarkers();
+    initRegions();
   }
 </script>
 </head>

@@ -23,10 +23,13 @@ import re
 import shutil
 import collections
 import json
+import logging
+import util
 
 from PIL import Image
 
-import util
+from optimizeimages import optimize_image
+
 
 """
 This module has routines related to generating a quadtree of tiles
@@ -45,7 +48,7 @@ def catch_keyboardinterrupt(func):
         try:
             return func(*args, **kwargs)
         except KeyboardInterrupt:
-            print "Ctrl-C caught!"
+            logging.error("Ctrl-C caught!")
             raise Exception("Exiting")
         except:
             import traceback
@@ -54,7 +57,7 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, imgformat=None):
+    def __init__(self, worldobj, destdir, depth=None, imgformat=None, optimizeimg=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -66,6 +69,7 @@ class QuadtreeGen(object):
         """
         assert(imgformat)
         self.imgformat = imgformat
+        self.optimizeimg = optimizeimg
 
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
@@ -111,11 +115,13 @@ class QuadtreeGen(object):
         else:
             if not complete % 1000 == 0:
                 return
-        print "{0}/{1} tiles complete on level {2}/{3}".format(
-                complete, total, level, self.p)
+        logging.info("{0}/{1} tiles complete on level {2}/{3}".format(
+                complete, total, level, self.p))
 
-    def write_html(self, zoomlevel, imgformat):
-        """Writes out index.html"""
+    def write_html(self, skipjs=False):
+        """Writes out index.html, marker.js, and region.js"""
+        zoomlevel = self.p
+        imgformat = self.imgformat
         templatepath = os.path.join(util.get_program_path(), "template.html")
 
         html = open(templatepath, 'r').read()
@@ -127,17 +133,29 @@ class QuadtreeGen(object):
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
 
-        
-
-        with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
-            output.write("var markerData=%s" % json.dumps(self.world.POI))
-
         # Write a blank image
         blank = Image.new("RGBA", (1,1))
         tileDir = os.path.join(self.destdir, "tiles")
         if not os.path.exists(tileDir): os.mkdir(tileDir)
         blank.save(os.path.join(tileDir, "blank."+self.imgformat))
 
+        if skipjs:
+            return
+
+        # write out the default marker table
+        with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
+            output.write("var markerData=%s" % json.dumps(self.world.POI))
+
+        # write out the default (empty, but documented) region table
+        with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
+            output.write('var regionData=[\n')
+            output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
+            output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
+            output.write('  //   {"x": 0, "y": 10, "z": 0},\n')
+            output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
+            output.write('  // ]},\n')
+            output.write('];')
+        
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
         index.html to see what maxZoom is set to.
@@ -172,8 +190,8 @@ class QuadtreeGen(object):
             newdir = "new" + str(dirnum)
             newdirpath = getpath(newdir)
 
-            files = [str(dirnum)+"."+imgformat, str(dirnum)+".hash", str(dirnum)]
-            newfiles = [str(newnum)+"."+imgformat, str(newnum)+".hash", str(newnum)]
+            files = [str(dirnum)+"."+self.imgformat, str(dirnum)+".hash", str(dirnum)]
+            newfiles = [str(newnum)+"."+self.imgformat, str(newnum)+".hash", str(newnum)]
 
             os.mkdir(newdirpath)
             for f, newf in zip(files, newfiles):
@@ -234,7 +252,8 @@ class QuadtreeGen(object):
             # (even if tilechunks is empty, render_worldtile will delete
             # existing images if appropriate)
             yield pool.apply_async(func=render_worldtile, args= (tilechunks,
-                colstart, colend, rowstart, rowend, dest, self.imgformat))
+                colstart, colend, rowstart, rowend, dest, self.imgformat,
+                self.optimizeimg))
 
     def _apply_render_inntertile(self, pool, zoom):
         """Same as _apply_render_worltiles but for the inntertile routine.
@@ -246,7 +265,7 @@ class QuadtreeGen(object):
             dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
             name = str(path[-1])
 
-            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat))
+            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
 
     def go(self, procs):
         """Renders all tiles"""
@@ -258,12 +277,12 @@ class QuadtreeGen(object):
         curdepth = self._get_cur_depth()
         if curdepth != -1:
             if self.p > curdepth:
-                print "Your map seemes to have expanded beyond its previous bounds."
-                print "Doing some tile re-arrangements... just a sec..."
+                logging.warning("Your map seemes to have expanded beyond its previous bounds.")
+                logging.warning( "Doing some tile re-arrangements... just a sec...")
                 for _ in xrange(self.p-curdepth):
                     self._increase_depth()
             elif self.p < curdepth:
-                print "Your map seems to have shrunk. Re-arranging tiles, just a sec..."
+                logging.warning("Your map seems to have shrunk. Re-arranging tiles, just a sec...")
                 for _ in xrange(curdepth - self.p):
                     self._decrease_depth()
 
@@ -273,17 +292,15 @@ class QuadtreeGen(object):
         else:
             pool = multiprocessing.Pool(processes=procs)
 
-        self.write_html(self.p, self.imgformat)
-
         # Render the highest level of tiles from the chunks
         results = collections.deque()
         complete = 0
         total = 4**self.p
-        print "Rendering highest zoom level of tiles now."
-        print "There are {0} tiles to render".format(total)
-        print "There are {0} total levels to render".format(self.p)
-        print "Don't worry, each level has only 25% as many tiles as the last."
-        print "The others will go faster"
+        logging.info("Rendering highest zoom level of tiles now.")
+        logging.info("There are {0} tiles to render".format(total))
+        logging.info("There are {0} total levels to render".format(self.p))
+        logging.info("Don't worry, each level has only 25% as many tiles as the last.")
+        logging.info("The others will go faster")
         for result in self._apply_render_worldtiles(pool):
             results.append(result)
             if len(results) > 10000:
@@ -308,7 +325,7 @@ class QuadtreeGen(object):
             assert len(results) == 0
             complete = 0
             total = 4**zoom
-            print "Starting level", level
+            logging.info("Starting level {0}".format(level))
             for result in self._apply_render_inntertile(pool, zoom):
                 results.append(result)
                 if len(results) > 10000:
@@ -324,13 +341,13 @@ class QuadtreeGen(object):
 
             self.print_statusline(complete, total, level, True)
 
-            print "Done"
+            logging.info("Done")
 
         pool.close()
         pool.join()
 
         # Do the final one right here:
-        render_innertile(os.path.join(self.destdir, "tiles"), "base", self.imgformat)
+        render_innertile(os.path.join(self.destdir, "tiles"), "base", self.imgformat, self.optimizeimg)
 
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
@@ -361,7 +378,7 @@ class QuadtreeGen(object):
         return chunklist
 
 @catch_keyboardinterrupt
-def render_innertile(dest, name, imgformat):
+def render_innertile(dest, name, imgformat, optimizeimg):
     """
     Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
     os.path.join(dest, name, "{0,1,2,3}.png")
@@ -434,29 +451,44 @@ def render_innertile(dest, name, imgformat):
     img = Image.new("RGBA", (384, 384), (38,92,255,0))
 
     if q0path:
-        quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad0, (0,0))
+        try:
+            quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad0, (0,0))
+        except Exception, e:
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q0path, e)
     if q1path:
-        quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad1, (192,0))
+        try:
+            quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad1, (192,0))
+        except Exception, e:
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q1path, e)
     if q2path:
-        quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad2, (0, 192))
+        try:
+            quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad2, (0, 192))
+        except Exception, e:
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q2path, e)
     if q3path:
-        quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
-        img.paste(quad3, (192, 192))
+        try:
+            quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad3, (192, 192))
+        except Exception, e:
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q3path, e)
 
     # Save it
     if imgformat == 'jpg':
         img.save(imgpath, quality=95, subsampling=0)
     else: # png
         img.save(imgpath)
+        if optimizeimg:
+            optimize_image(imgpath, imgformat, optimizeimg)
+
     with open(hashpath, "wb") as hashout:
         hashout.write(newhash)
 
 
 @catch_keyboardinterrupt
-def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat):
+def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat, optimizeimg):
     """Renders just the specified chunks into a tile and save it. Unlike usual
     python conventions, rowend and colend are inclusive. Additionally, the
     chunks around the edges are half-way cut off (so that neighboring tiles
@@ -561,8 +593,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
             # corrupting it), then this could error.
             # Since we have no easy way of determining how this chunk was
             # generated, we need to just ignore it.
-            print "Error opening file", chunkfile
-            print "(Error was {0})".format(e)
+            logging.warning("Could not open chunk '{0}' ({1})".format(chunkfile,e))
             try:
                 # Remove the file so that the next run will re-generate it.
                 os.unlink(chunkfile)
@@ -571,12 +602,12 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
                 # Ignore if file doesn't exist, another task could have already
                 # removed it.
                 if e.errno != errno.ENOENT:
-                    print "Could not remove the corrupt chunk!"
+                    logging.warning("Could not remove chunk '{0}'!".format(chunkfile))
                     raise
             else:
-                print "Removed the corrupt file"
+                logging.warning("Removed the corrupt file")
 
-            print "You will need to re-run the Overviewer to fix this chunk"
+            logging.warning("You will need to re-run the Overviewer to fix this chunk")
             continue
 
         xpos = -192 + (col-colstart)*192
@@ -586,6 +617,10 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
 
     # Save them
     tileimg.save(imgpath)
+
+    if optimizeimg:
+        optimize_image(imgpath, imgformat, optimizeimg)
+
     with open(hashpath, "wb") as hashout:
         hashout.write(digest)
 

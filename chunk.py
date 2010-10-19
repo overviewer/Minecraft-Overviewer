@@ -15,9 +15,9 @@
 
 import numpy
 from PIL import Image, ImageDraw
-from itertools import izip, count
 import os.path
 import hashlib
+import logging
 
 import nbt
 import textures
@@ -60,9 +60,29 @@ def get_skylight_array(level):
     """
     return numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
 
+def get_blockdata_array(level):
+    """Returns the ancillary data from the 'Data' byte array.  Data is packed
+    in a similar manner to skylight data"""
+    return numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
+
+def iterate_chunkblocks(xoff,yoff):
+    """Iterates over the 16x16x128 blocks of a chunk in rendering order.
+    Yields (x,y,z,imgx,imgy)
+    x,y,z is the block coordinate in the chunk
+    imgx,imgy is the image offset in the chunk image where that block should go
+    """
+    for x in xrange(15,-1,-1):
+        for y in xrange(16):
+            imgx = xoff + x*12 + y*12
+            imgy = yoff - x*6 + y*6 + 128*12 + 16*12//2
+            for z in xrange(128):
+                yield x,y,z,imgx,imgy
+                imgy -= 12
+
+
 # This set holds blocks ids that can be seen through, for occlusion calculations
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
-    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 79, 81, 83, 85])
+    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
 
 def render_and_save(chunkfile, cachedir, cave=False):
     """Used as the entry point for the multiprocessing workers (since processes
@@ -72,6 +92,9 @@ def render_and_save(chunkfile, cachedir, cave=False):
     a = ChunkRenderer(chunkfile, cachedir)
     try:
         return a.render_and_save(cave)
+    except ChunkCorrupt:
+        # This should be non-fatal, but should print a warning
+        pass
     except Exception, e:
         import traceback
         traceback.print_exc()
@@ -84,6 +107,9 @@ def render_and_save(chunkfile, cachedir, cave=False):
         # entire program, instead of this process dying and the parent waiting
         # forever for it to finish.
         raise Exception()
+
+class ChunkCorrupt(Exception):
+    pass
 
 class ChunkRenderer(object):
     def __init__(self, chunkfile, cachedir):
@@ -115,7 +141,11 @@ class ChunkRenderer(object):
     def _load_level(self):
         """Loads and returns the level structure"""
         if not hasattr(self, "_level"):
-            self._level = get_lvldata(self.chunkfile)
+            try:
+                self._level = get_lvldata(self.chunkfile)
+            except Exception, e:
+                logging.warning("Error opening chunk file %s. It may be corrupt. %s", self.chunkfile, e)
+                raise ChunkCorrupt(str(e))
         return self._level
     level = property(_load_level)
         
@@ -168,7 +198,7 @@ class ChunkRenderer(object):
             # An image exists? Instead of checking the hash which is kinda
             # expensive (for tens of thousands of chunks, yes it is) check if
             # the mtime of the chunk file is newer than the mtime of oldimg
-            if os.path.getmtime(self.chunkfile) < os.path.getmtime(oldimg_path):
+            if os.path.getmtime(self.chunkfile) <= os.path.getmtime(oldimg_path):
                 # chunkfile is older than the image, don't even bother checking
                 # the hash
                 return oldimg_path
@@ -193,6 +223,9 @@ class ChunkRenderer(object):
             if dest_filename == oldimg:
                 # There is an existing file, the chunk has a newer mtime, but the
                 # hashes match.
+                # Before we return it, update its mtime so the next round
+                # doesn't have to check the hash
+                os.utime(dest_path, None)
                 return dest_path
             else:
                 # Remove old image for this chunk. Anything already existing is
@@ -238,6 +271,13 @@ class ChunkRenderer(object):
             blocks = blocks.copy()
             blocks[skylight_expanded != 0] = 21
 
+        blockData = get_blockdata_array(self.level)
+        blockData_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+        # Even elements get the lower 4 bits
+        blockData_expanded[:,:,::2] = blockData & 0x0F
+        # Odd elements get the upper 4 bits
+        blockData_expanded[:,:,1::2] = blockData >> 4
+
 
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image
@@ -249,81 +289,94 @@ class ChunkRenderer(object):
         if not img:
             img = Image.new("RGBA", (384, 1728), (38,92,255,0))
 
-        for x in xrange(15,-1,-1):
-            for y in xrange(16):
-                imgx = xoff + x*12 + y*12
-                imgy = yoff - x*6 + y*6 + 128*12 + 16*12//2
-                for z in xrange(128):
-                    try:
-                        blockid = blocks[x,y,z]
-                        t = textures.blockmap[blockid]
-                        if not t:
-                            continue
+        for x,y,z,imgx,imgy in iterate_chunkblocks(xoff,yoff):
+            blockid = blocks[x,y,z]
 
-                        # Check if this block is occluded
-                        if cave and (
-                                x == 0 and y != 15 and z != 127
-                        ):
-                            # If it's on the x face, only render if there's a
-                            # transparent block in the y+1 direction OR the z-1
-                            # direction
-                            if (
-                                blocks[x,y+1,z] not in transparent_blocks and
-                                blocks[x,y,z+1] not in transparent_blocks
-                            ):
-                                continue
-                        elif cave and (
-                                y == 15 and x != 0 and z != 127
-                        ):
-                            # If it's on the facing y face, only render if there's
-                            # a transparent block in the x-1 direction OR the z-1
-                            # direction
-                            if (
-                                blocks[x-1,y,z] not in transparent_blocks and
-                                blocks[x,y,z+1] not in transparent_blocks
-                            ):
-                                continue
-                        elif cave and (
-                                y == 15 and x == 0
-                        ):
-                            # If it's on the facing edge, only render if what's
-                            # above it is transparent
-                            if (
-                                blocks[x,y,z+1] not in transparent_blocks
-                            ):
-                                continue
-                        elif (
-                                # Normal block or not cave mode, check sides for
-                                # transparentcy or render unconditionally if it's
-                                # on a shown face
-                                x != 0 and y != 15 and z != 127 and
-                                blocks[x-1,y,z] not in transparent_blocks and
-                                blocks[x,y+1,z] not in transparent_blocks and
-                                blocks[x,y,z+1] not in transparent_blocks
-                        ):
-                            # Don't render if all sides aren't transparent and
-                            # we're not on the edge
-                            continue
+            # the following blocks don't have textures that can be pre-computed from the blockid
+            # alone.  additional data is required.
+            # TODO torches, redstone torches, crops, ladders, stairs, 
+            #      levers, doors, buttons, and signs all need to be handled here (and in textures.py)
 
-                        # Draw the actual block on the image. For cave images,
-                        # tint the block with a color proportional to its depth
-                        if cave:
-                            img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
-                        else:
-                            img.paste(t[0], (imgx, imgy), t[1])
+            ## minecart track, crops, ladder, doors, etc.
+            if blockid in textures.special_blocks:
+             # also handle furnaces here, since one side has a different texture than the other
+                ancilData = blockData_expanded[x,y,z]
+                try:
+                    t = textures.specialblockmap[(blockid, ancilData)]
+                except KeyError:
+                    t = None
 
-                        # Draw edge lines
-                        if blockid not in transparent_blocks:
-                            draw = ImageDraw.Draw(img)
-                            if x != 15 and blocks[x+1,y,z] == 0:
-                                draw.line(((imgx+12,imgy), (imgx+22,imgy+5)), fill=(0,0,0), width=1)
-                            if y != 0 and blocks[x,y-1,z] == 0:
-                                draw.line(((imgx,imgy+6), (imgx+12,imgy)), fill=(0,0,0), width=1)
+            else:
+                t = textures.blockmap[blockid]
+            if not t:
+                continue
 
+            # Check if this block is occluded
+            if cave and (
+                    x == 0 and y != 15 and z != 127
+            ):
+                # If it's on the x face, only render if there's a
+                # transparent block in the y+1 direction OR the z-1
+                # direction
+                if (
+                    blocks[x,y+1,z] not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+                ):
+                    continue
+            elif cave and (
+                    y == 15 and x != 0 and z != 127
+            ):
+                # If it's on the facing y face, only render if there's
+                # a transparent block in the x-1 direction OR the z-1
+                # direction
+                if (
+                    blocks[x-1,y,z] not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+                ):
+                    continue
+            elif cave and (
+                    y == 15 and x == 0
+            ):
+                # If it's on the facing edge, only render if what's
+                # above it is transparent
+                if (
+                    blocks[x,y,z+1] not in transparent_blocks
+                ):
+                    continue
+            elif (
+                    # Normal block or not cave mode, check sides for
+                    # transparentcy or render unconditionally if it's
+                    # on a shown face
+                    x != 0 and y != 15 and z != 127 and
+                    blocks[x-1,y,z] not in transparent_blocks and
+                    blocks[x,y+1,z] not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+            ):
+                # Don't render if all sides aren't transparent and
+                # we're not on the edge
+                continue
 
-                    finally:
-                        # Do this no mater how the above block exits
-                        imgy -= 12
+            # Draw the actual block on the image. For cave images,
+            # tint the block with a color proportional to its depth
+            if cave:
+                img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
+            else:
+                img.paste(t[0], (imgx, imgy), t[1])
+
+            # Draw edge lines
+            if blockid in (44,): # step block
+               increment = 6
+            elif blockid in (78,): # snow
+               increment = 9
+            else:
+               increment = 0
+
+            if blockid not in transparent_blocks or blockid in (78,): #special case snow so the outline is still drawn
+                draw = ImageDraw.Draw(img)
+                if x != 15 and blocks[x+1,y,z] == 0:
+                    draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
+                if y != 0 and blocks[x,y-1,z] == 0:
+                    draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
 
         return img
 
