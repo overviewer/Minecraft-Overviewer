@@ -138,12 +138,22 @@ Options
 
 -z ZOOM, --zoom=ZOOM
     The Overviewer by default will detect how many zoom levels are required
-    to show your entire map. This is equivilant to the dimensions of the
-    highest zoom level, in tiles. A zoom level of z means the highest zoom
-    level of your map will be 2^z by 2^z tiles.
+    to show your entire map. This option sets it manually.
 
-    The -z option will set the zoom level manually. This could be useful if
-    you have some outlier chunks causing your map to be too large.
+    *You do not normally need to set this option!*
+
+    This is equivalent to setting the dimensions of the highest zoom level. It
+    does not actually change how the map is rendered, but rather *how much of
+    the map is rendered.* (Calling this option "zoom" may be a bit misleading,
+    I know)
+   
+    To be precise, it sets the width and height of the highest zoom level, in
+    tiles. A zoom level of z means the highest zoom level of your map will be
+    2^z by 2^z tiles.
+
+    This option map be useful if you have some outlier chunks causing your map
+    to be too large, or you want to render a smaller portion of your map,
+    instead of rendering everything.
 
     This will render your map with 7 zoom levels::
 
