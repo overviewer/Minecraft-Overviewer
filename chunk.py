@@ -531,7 +531,7 @@ class ChunkRenderer(object):
                 ):
                     continue
             elif cave and (
-                    y == 15 and x == 0
+                    y == 15 and x == 0 and z != 127
             ):
                 # If it's on the facing edge, only render if what's
                 # above it is transparent
