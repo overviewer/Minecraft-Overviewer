@@ -138,12 +138,22 @@ Options
 
 -z ZOOM, --zoom=ZOOM
     The Overviewer by default will detect how many zoom levels are required
-    to show your entire map. This is equivilant to the dimensions of the
-    highest zoom level, in tiles. A zoom level of z means the highest zoom
-    level of your map will be 2^z by 2^z tiles.
+    to show your entire map. This option sets it manually.
 
-    The -z option will set the zoom level manually. This could be useful if
-    you have some outlier chunks causing your map to be too large.
+    *You do not normally need to set this option!*
+
+    This is equivalent to setting the dimensions of the highest zoom level. It
+    does not actually change how the map is rendered, but rather *how much of
+    the map is rendered.* (Calling this option "zoom" may be a bit misleading,
+    I know)
+   
+    To be precise, it sets the width and height of the highest zoom level, in
+    tiles. A zoom level of z means the highest zoom level of your map will be
+    2^z by 2^z tiles.
+
+    This option map be useful if you have some outlier chunks causing your map
+    to be too large, or you want to render a smaller portion of your map,
+    instead of rendering everything.
 
     This will render your map with 7 zoom levels::
 
@@ -189,6 +199,18 @@ Options
     command. You could, for example, output all chunk files that are older than
     a certain date. Or perhaps you can incrementally update your map by passing
     in a subset of chunks each time. It's up to you!
+
+--lighting
+    This option enables map lighting, using lighting information stored by
+    Minecraft inside the chunks. This will make your map prettier, at the cost
+    of update speed.
+    
+    Note that for existing, unlit maps, you may want to clear your cache
+    (with -d) before updating the map to use lighting. Otherwise, only updated
+    chunks will have lighting enabled.
+
+--night
+    This option enables --lighting, and renders the world at night.
 
 Viewing the Results
 -------------------
@@ -246,8 +268,6 @@ An incomplete list of things I want to do soon is:
 * Rendering non-cube blocks, such as torches, flowers, mine tracks, fences,
   doors, and the like. Right now they are either not rendered at all, or
   rendered as if they were a cube, so it looks funny.
-
-* Add lighting
 
 * Some kind of graphical interface.
 

@@ -71,6 +71,10 @@ class QuadtreeGen(object):
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
 
+        # Make the destination dir
+        if not os.path.exists(destdir):
+            os.mkdir(destdir)
+
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
             for p in xrange(15):
@@ -269,10 +273,6 @@ class QuadtreeGen(object):
 
     def go(self, procs):
         """Renders all tiles"""
-
-        # Make the destination dir
-        if not os.path.exists(self.destdir):
-            os.mkdir(self.destdir)
 
         curdepth = self._get_cur_depth()
         if curdepth != -1:

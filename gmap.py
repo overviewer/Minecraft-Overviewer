@@ -48,6 +48,8 @@ def main():
     parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true")
     parser.add_option("--cachedir", dest="cachedir", help="Sets the directory where the Overviewer will save chunk images, which is an intermediate step before the tiles are generated. You must use the same directory each time to gain any benefit from the cache. If not set, this defaults to your world directory.")
     parser.add_option("--chunklist", dest="chunklist", help="A file containing, on each line, a path to a chunkfile to update. Instead of scanning the world directory for chunks, it will just use this list. Normal caching rules still apply.")
+    parser.add_option("--lighting", dest="lighting", help="Renders shadows using light data from each chunk.", action="store_true")
+    parser.add_option("--night", dest="night", help="Renders shadows using light data from each chunk, as if it were night. Implies --lighting.", action="store_true")
     parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg. NOTE: png will always be used as the intermediate image format.")
     parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%")
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
@@ -114,7 +116,7 @@ def main():
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
 
     # First generate the world's chunk images
-    w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist)
+    w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist, lighting=options.lighting, night=options.night)
     w.go(options.procs)
 
     # Now generate the tiles
