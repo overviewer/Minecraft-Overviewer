@@ -19,6 +19,7 @@ import os.path
 import multiprocessing
 import sys
 import logging
+import cPickle
 
 import numpy
 
@@ -105,6 +106,20 @@ class WorldRenderer(object):
         #  a list of dictionaries, see below for an example
         self.POI = []
 
+        # if it exists, open overviewer.dat, and read in the data structure
+        # info self.persistentData.  This dictionary can hold any information
+        # that may be needed between runs.
+        # Currently only holds into about POIs (more more details, see quadtree)
+        self.pickleFile = os.path.join(self.cachedir,"overviewer.dat")
+        if os.path.exists(self.pickleFile):
+            with open(self.pickleFile,"rb") as p:
+                self.persistentData = cPickle.load(p)
+        else:
+            # some defaults
+            self.persistentData = dict(POI=[])
+
+
+
     def _get_chunk_renderset(self):
         """Returns a set of (col, row) chunks that should be rendered. Returns
         None if all chunks should be rendered"""
@@ -180,7 +195,8 @@ class WorldRenderer(object):
             spawnY += 1
 
 
-        self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, msg="Spawn"))
+        self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, 
+                msg="Spawn", type="spawn", chunk=(inChunkX,inChunkZ)))
 
     def go(self, procs):
         """Starts the render. This returns when it is finished"""
@@ -242,6 +258,9 @@ class WorldRenderer(object):
         inclusion_set = self._get_chunk_renderset()
 
         results = {}
+        manager = multiprocessing.Manager()
+        q = manager.Queue()
+
         if processes == 1:
             # Skip the multiprocessing stuff
             logging.debug("Rendering chunks synchronously since you requested 1 process")
@@ -254,9 +273,15 @@ class WorldRenderer(object):
                         results[(col, row)] = imgpath
                         continue
 
-                result = chunk.render_and_save(chunkfile, self.cachedir, self, cave=self.caves)
+                result = chunk.render_and_save(chunkfile, self.cachedir, self, cave=self.caves, queue=q)
                 results[(col, row)] = result
                 if i > 0:
+                    try:
+                        item = q.get(block=False)
+                        if item[0] == "newpoi":
+                            self.POI.append(item[1])
+                    except:
+                        pass
                     if 1000 % i == 0 or i % 1000 == 0:
                         logging.info("{0}/{1} chunks rendered".format(i, len(chunks)))
         else:
@@ -274,13 +299,20 @@ class WorldRenderer(object):
 
                 result = pool.apply_async(chunk.render_and_save,
                         args=(chunkfile,self.cachedir,self),
-                        kwds=dict(cave=self.caves))
+                        kwds=dict(cave=self.caves, queue=q))
                 asyncresults.append((col, row, result))
 
             pool.close()
 
             for i, (col, row, result) in enumerate(asyncresults):
                 results[(col, row)] = result.get()
+                try:
+                    item = q.get(block=False)
+                    if item[0] == "newpoi":
+                        self.POI.append(item[1])
+
+                except:
+                    pass
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
                         logging.info("{0}/{1} chunks rendered".format(i, len(asyncresults)))
