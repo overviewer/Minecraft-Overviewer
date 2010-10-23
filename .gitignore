@@ -1,1 +1,8 @@
 *.pyc
+build
+
+# various forms of compiled _composite extensions
+_composite.so
+_composite.pyd
+_composite_d.pyd
+_composite.dylib
