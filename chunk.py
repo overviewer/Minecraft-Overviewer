@@ -112,9 +112,15 @@ def render_and_save(chunkfile, cachedir, worldobj, cave=False):
         # This should be non-fatal, but should print a warning
         pass
     except Exception, e:
-        import traceback
-        traceback.print_exc()
-        raise
+        print "Continuing after borked chunkfile"
+        print e
+        print chunkfile
+        try:
+            os.unlink(chunkfile)
+            print "Chunkfile has been removed"
+        except:
+            print "Error removing corrupt chunkfile"
+
     except KeyboardInterrupt:
         print
         print "You pressed Ctrl-C. Exiting..."
@@ -264,6 +270,7 @@ class ChunkRenderer(object):
             return self._digest
         h = hashlib.md5()
         h.update(self.level['Blocks'])
+
 
         # If the render algorithm changes, change this line to re-generate all
         # the chunks automatically:

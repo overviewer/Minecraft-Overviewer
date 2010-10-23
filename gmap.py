@@ -32,6 +32,7 @@ logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(mes
 
 import world
 import quadtree
+import markers
 
 helptext = """
 %prog [OPTIONS] <World # / Path to World> <tiles dest dir>
@@ -74,6 +75,14 @@ def main():
             parser.print_help()
             sys.exit(1)
 
+    if options.markers:
+        destdir = args[1]
+
+        # Generate the markers
+        m = markers.MarkerGenerator(worlddir, destdir)
+        m.go(options.procs)
+        sys.exit(0)        
+            
     if not options.cachedir:
         cachedir = worlddir
     else:
@@ -89,10 +98,11 @@ def main():
     if options.delete:
         return delete_all(cachedir, destdir)
 
-    if options.chunklist:
+    if options.chunklist and os.path.exists(options.chunklist):
         chunklist = open(options.chunklist, 'r')
+        chunkset = world.get_chunk_renderset(chunklist)
     else:
-        chunklist = None
+        chunkset = None
 
     if options.imgformat:
         if options.imgformat not in ('jpg','png'):
@@ -116,11 +126,11 @@ def main():
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
 
     # First generate the world's chunk images
-    w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist, lighting=options.lighting, night=options.night)
+    w = world.WorldRenderer(worlddir, cachedir, chunkset, lighting=options.lighting, night=options.night)
     w.go(options.procs)
 
     # Now generate the tiles
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, chunkset=chunkset, optimizeimg=optimizeimg)
     q.write_html(options.skipjs)
     q.go(options.procs)
 

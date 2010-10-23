@@ -33,6 +33,41 @@ and for extracting information about available worlds
 
 base36decode = functools.partial(int, base=36)
 
+def get_chunk_renderset(chunkfiles):
+    """Returns a set of (col, row) chunks that should be rendered. Returns
+    None if all chunks should be rendered"""
+    
+    if not chunkfiles:
+        return None
+    
+    
+    # Get a list of the (chunks, chunky, filename) from the passed in list
+    # of filenames
+    chunklist = []
+    for path in chunkfiles:
+        if path.endswith("\n"):
+            path = path[:-1]
+        f = os.path.basename(path)
+        if f and f.startswith("c.") and f.endswith(".dat"):
+            p = f.split(".")
+            chunklist.append((base36decode(p[1]), base36decode(p[2]),
+                path))
+
+    # No chunks found
+    if len(chunklist) == 0:
+        return None;
+    
+    # Translate to col, row coordinates
+    _, _, _, _, chunklist = _convert_coords(chunklist)
+
+    # Build a set from the col, row pairs
+    inclusion_set = set()
+    for col, row, filename in chunklist:
+        inclusion_set.add((col, row))
+        
+
+    return inclusion_set
+
 
 def _convert_coords(chunks):
     """Takes the list of (chunkx, chunky, chunkfile) where chunkx and chunky
@@ -68,16 +103,16 @@ def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
         raise TypeError('number must be an integer')
     
     newn = abs(number)
- 
+    
     # Special case for zero
     if number == 0:
         return '0'
- 
+    
     base36 = ''
     while newn != 0:
         newn, i = divmod(newn, len(alphabet))
         base36 = alphabet[i] + base36
-
+    
     if number < 0:
         return "-" + base36
     return base36
@@ -92,95 +127,15 @@ class WorldRenderer(object):
     files to update. If it includes a trailing newline, it is stripped, so you
     can pass in file handles just fine.
     """
-    def __init__(self, worlddir, cachedir, chunklist=None, lighting=False, night=False):
+
+    def __init__(self, worlddir, cachedir, chunkset=None, lighting=False, night=False):
         self.worlddir = worlddir
         self.caves = False
         self.lighting = lighting or night
         self.night = night
         self.cachedir = cachedir
 
-        self.chunklist = chunklist
-
-        #  stores Points Of Interest to be mapped with markers
-        #  a list of dictionaries, see below for an example
-        self.POI = []
-
-    def _get_chunk_renderset(self):
-        """Returns a set of (col, row) chunks that should be rendered. Returns
-        None if all chunks should be rendered"""
-        if not self.chunklist:
-            return None
-        
-        # Get a list of the (chunks, chunky, filename) from the passed in list
-        # of filenames
-        chunklist = []
-        for path in self.chunklist:
-            if path.endswith("\n"):
-                path = path[:-1]
-            f = os.path.basename(path)
-            if f and f.startswith("c.") and f.endswith(".dat"):
-                p = f.split(".")
-                chunklist.append((base36decode(p[1]), base36decode(p[2]),
-                    path))
-
-        if not chunklist:
-            logging.error("No valid chunks specified in your chunklist!")
-            logging.error("HINT: chunks are in your world directory and have names of the form 'c.*.*.dat'")
-            sys.exit(1)
-
-        # Translate to col, row coordinates
-        _, _, _, _, chunklist = _convert_coords(chunklist)
-
-        # Build a set from the col, row pairs
-        inclusion_set = set()
-        for col, row, filename in chunklist:
-            inclusion_set.add((col, row))
-
-        return inclusion_set
-    
-    def get_chunk_path(self, chunkX, chunkY):
-        """Returns the path to the chunk file at (chunkX, chunkY), if
-        it exists."""
-        
-        chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64),
-                                           base36encode(chunkY % 64),
-                                           base36encode(chunkX),
-                                           base36encode(chunkY))
-        
-        return os.path.join(self.worlddir, chunkFile)
-    
-    def findTrueSpawn(self):
-        """Adds the true spawn location to self.POI.  The spawn Y coordinate
-        is almost always the default of 64.  Find the first air block above
-        that point for the true spawn location"""
-
-        ## read spawn info from level.dat
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]
-        spawnX = data['Data']['SpawnX']
-        spawnY = data['Data']['SpawnY']
-        spawnZ = data['Data']['SpawnZ']
-   
-        ## The chunk that holds the spawn location 
-        chunkX = spawnX/16
-        chunkY = spawnZ/16
-
-        ## The filename of this chunk
-        chunkFile = self.get_chunk_path(chunkX, chunkY)
-
-        data=nbt.load(chunkFile)[1]
-        level = data['Level']
-        blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
-
-        ## The block for spawn *within* the chunk
-        inChunkX = spawnX - (chunkX*16)
-        inChunkZ = spawnZ - (chunkY*16)
-
-        ## find the first air block
-        while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
-            spawnY += 1
-
-
-        self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, msg="Spawn"))
+        self.chunkset = chunkset
 
     def go(self, procs):
         """Starts the render. This returns when it is finished"""
@@ -200,7 +155,6 @@ class WorldRenderer(object):
         self.minrow = minrow
         self.maxrow = maxrow
 
-        self.findTrueSpawn()
 
     def _find_chunkfiles(self):
         """Returns a list of all the chunk file locations, and the file they
@@ -226,6 +180,9 @@ class WorldRenderer(object):
             logging.error("Error: No chunks found!")
             sys.exit(1)
         return all_chunks
+        
+
+   
 
     def _render_chunks_async(self, chunks, processes):
         """Starts up a process pool and renders all the chunks asynchronously.
@@ -239,14 +196,17 @@ class WorldRenderer(object):
         # slightly more compliated than it should seem, since we still need to
         # build the results dict out of all chunks, even if they're not being
         # rendered.
-        inclusion_set = self._get_chunk_renderset()
-
+        
+        if self.chunkset:
+            logging.info("Inclusion set found, rendering only a subset of map")
+        
+        
         results = {}
         if processes == 1:
             # Skip the multiprocessing stuff
             logging.debug("Rendering chunks synchronously since you requested 1 process")
             for i, (col, row, chunkfile) in enumerate(chunks):
-                if inclusion_set and (col, row) not in inclusion_set:
+                if self.chunkset and (col, row) not in self.chunkset:
                     # Skip rendering, just find where the existing image is
                     _, imgpath = chunk.ChunkRenderer(chunkfile,
                             self.cachedir, self).find_oldimage(False)
@@ -264,7 +224,7 @@ class WorldRenderer(object):
             pool = multiprocessing.Pool(processes=processes)
             asyncresults = []
             for col, row, chunkfile in chunks:
-                if inclusion_set and (col, row) not in inclusion_set:
+                if self.chunkset and (col, row) not in self.chunkset:
                     # Skip rendering, just find where the existing image is
                     _, imgpath = chunk.ChunkRenderer(chunkfile,
                             self.cachedir, self).find_oldimage(False)

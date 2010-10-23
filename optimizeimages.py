@@ -23,10 +23,16 @@ def optimize_image(imgpath, imgformat, optimizeimg):
             # we can't do an atomic replace here because windows is terrible
             # so instead, we make temp files, delete the old ones, and rename
             # the temp files. go windows!
+
             subprocess.Popen(shlex.split("pngcrush " + imgpath + " " + imgpath + ".tmp"),
-                stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
-            os.remove(imgpath)
-            os.rename(imgpath+".tmp", imgpath)
+                 stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
+            if os.path.exists(imgpath+".tmp"):
+                os.remove(imgpath)
+                os.rename(imgpath+".tmp", imgpath)
+            else:
+                print "No tmp file created for pngcrush"
+                print "pngcrush " + imgpath + " " + imgpath + ".tmp"
+
 
         if optimizeimg == "2":
             subprocess.Popen(shlex.split("optipng " + imgpath), stderr=subprocess.STDOUT,
