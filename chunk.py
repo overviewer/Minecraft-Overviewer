@@ -22,6 +22,7 @@ import logging
 import nbt
 import textures
 import world
+import composite
 
 """
 This module has routines related to rendering one particular chunk into an
@@ -36,7 +37,11 @@ image
 # of the dest image will have its alpha channel modified. To prevent this:
 # first use im.split() and take the third item which is the alpha channel and
 # use that as the mask. Then take the image and use im.convert("RGB") to strip
-# the image from its alpha channel, and use that as the source to paste()
+# the image from its alpha channel, and use that as the source to alpha_over()
+
+# (note that this workaround is NOT technically needed when using the
+# alpha_over extension, BUT this extension may fall back to PIL's
+# paste(), which DOES need the workaround.)
 
 def get_lvldata(filename):
     """Takes a filename and returns the Level struct, which contains all the
@@ -556,36 +561,36 @@ class ChunkRenderer(object):
             # tint the block with a color proportional to its depth
             if cave:
                 # no lighting for cave -- depth is probably more useful
-                img.paste(Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
+                composite.alpha_over(img, Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
             else:
                 if not self.world.lighting:
                     # no lighting at all
-                    img.paste(t[0], (imgx, imgy), t[1])
+                    composite.alpha_over(img, t[0], (imgx, imgy), t[1])
                 elif blockid in transparent_blocks:
                     # transparent means draw the whole
                     # block shaded with the current
                     # block's light
                     black_coeff, _ = self.get_lighting_coefficient(x, y, z)
-                    img.paste(Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
+                    composite.alpha_over(img, Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
                 else:
                     # draw each face lit appropriately,
                     # but first just draw the block
-                    img.paste(t[0], (imgx, imgy), t[1])
+                    composite.alpha_over(img, t[0], (imgx, imgy), t[1])
                     
                     # top face
                     black_coeff, face_occlude = self.get_lighting_coefficient(x, y, z + 1)
                     if not face_occlude:
-                        img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
+                        composite.alpha_over(img, black_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
                     
                     # left face
                     black_coeff, face_occlude = self.get_lighting_coefficient(x - 1, y, z)
                     if not face_occlude:
-                        img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
+                        composite.alpha_over(img, black_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
 
                     # right face
                     black_coeff, face_occlude = self.get_lighting_coefficient(x, y + 1, z)
                     if not face_occlude:
-                        img.paste((0,0,0), (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
+                        composite.alpha_over(img, black_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
             # Draw edge lines
             if blockid in (44,): # step block
@@ -616,6 +621,8 @@ def generate_facemasks():
     toppart = textures.transform_image(white)
     leftpart = textures.transform_image_side(white)
     
+    # using the real PIL paste here (not alpha_over) because there is
+    # no alpha channel (and it's mode "L")
     top.paste(toppart, (0,0))
     left.paste(leftpart, (0,6))
     right = left.transpose(Image.FLIP_LEFT_RIGHT)
