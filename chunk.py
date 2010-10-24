@@ -520,32 +520,6 @@ class ChunkRenderer(object):
             else:
                 t = textures.blockmap[blockid]
 
-
-            # see if we want to do anything else with this chunk
-            if blockid in (63, 68): # signs
-                # find the sign text from the TileEntities list
-                print "Found a sign!"
-                for entity in tileEntities:
-                    if entity['id'] == 'Sign':
-                        print "adding to POI list"
-                        # TODO assert that the x,y,z of this entity matches
-                        # the x,y,z of this block
-
-                        # convert the blockID coordinates from local chunk
-                        # coordinates to global world coordinates
-                        newPOI = dict(type="sign",
-                                        x= x+(self.chunkX*16),
-                                        y= z,
-                                        z= y+(self.chunkY*16),
-                                        msg="%s\n%s\n%s\n%s" %
-                                           (entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']),
-                                        chunk= (self.chunkX, self.chunkY),
-                                       )
-                        print "new POI: %s" % newPOI
-                        self.queue.put(["newpoi", newPOI])
-                        break
-
-
             if not t:
                 continue
 
@@ -643,6 +617,30 @@ class ChunkRenderer(object):
                     draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
                 if y != 0 and blocks[x,y-1,z] == 0:
                     draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
+
+
+        for entity in tileEntities:
+            if entity['id'] == 'Sign':
+
+                # convert the blockID coordinates from local chunk
+                # coordinates to global world coordinates
+                newPOI = dict(type="sign",
+                                x= entity['x'],
+                                y= entity['z'],
+                                z= entity['y'],
+                                msg="%s\n%s\n%s\n%s" %
+                                   (entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']),
+                                chunk= (self.chunkX, self.chunkY),
+                               )
+                self.queue.put(["newpoi", newPOI])
+
+
+        # check to see if there are any signs in the persistentData list that are from this chunk.
+        # if so, remove them from the persistentData list (since they're have been added to the world.POI
+        # list above.
+        self.queue.put(['removePOI', (self.chunkX, self.chunkY)])
+
+            
 
         return img
 

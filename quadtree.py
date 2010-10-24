@@ -153,15 +153,7 @@ class QuadtreeGen(object):
         # in self.world.POI.  To make sure we don't remove these from markers.js
         # we need to merge self.world.POI with the persistant data in world.PersistentData
 
-        # 
-        modifiedChunks = map(lambda x: x['chunk'], filter(lambda x: x['type'] != 'spawn', self.world.POI))
-       
-        for item in self.world.persistentData['POI']:
-            # if this previously discovered POI isn't in a modified chunk, keep it
-            if item['chunk'] not in modifiedChunks and item['type'] != 'spawn':
-                self.world.POI.append(item)
-            # else discard it, because self.world.POI will contain it (or not if it
-            # was deleted)
+        self.world.POI += filter(lambda x: x['type'] != 'spawn', self.world.persistentData['POI'])
 
         # write out the default marker table
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:

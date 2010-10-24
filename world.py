@@ -17,6 +17,7 @@ import functools
 import os
 import os.path
 import multiprocessing
+import Queue
 import sys
 import logging
 import cPickle
@@ -280,7 +281,9 @@ class WorldRenderer(object):
                         item = q.get(block=False)
                         if item[0] == "newpoi":
                             self.POI.append(item[1])
-                    except:
+                        elif item[0] == "removePOI":
+                            self.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], self.persistentData['POI'])
+                    except Queue.Empty:
                         pass
                     if 1000 % i == 0 or i % 1000 == 0:
                         logging.info("{0}/{1} chunks rendered".format(i, len(chunks)))
@@ -310,8 +313,10 @@ class WorldRenderer(object):
                     item = q.get(block=False)
                     if item[0] == "newpoi":
                         self.POI.append(item[1])
+                    elif item[0] == "removePOI":
+                        self.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], self.persistentData['POI'])
 
-                except:
+                except Queue.Empty:
                     pass
                 if i > 0:
                     if 1000 % i == 0 or i % 1000 == 0:
