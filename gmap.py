@@ -74,14 +74,6 @@ def main():
             print "Invalid world number or directory"
             parser.print_help()
             sys.exit(1)
-
-    if options.markers:
-        destdir = args[1]
-
-        # Generate the markers
-        m = markers.MarkerGenerator(worlddir, destdir)
-        m.go(options.procs)
-        sys.exit(0)        
             
     if not options.cachedir:
         cachedir = worlddir
@@ -131,7 +123,7 @@ def main():
 
     # Now generate the tiles
     q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, chunkset=chunkset, optimizeimg=optimizeimg)
-    q.write_html(options.skipjs)
+    q.write_html(options.skipjs, worlddir)
     q.go(options.procs)
 
 def delete_all(worlddir, tiledir):

@@ -6,26 +6,37 @@
   html { height: 100% }
   body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
   #mcmap { height: 100% }
-   #mcmarkerlist{
-        z-index:1;
-        border: 1px solid black;
-        opacity: 0.8;
-        background-color:grey;
-        height: auto;
-        left: 85%;
-        top: 5px;
-        width: 160px;
+  #players, #info {
         position: absolute;
-        text-align: center;
-    }
-	.mcmarker{
-			font-size: 10px;
-
-	}
+        top: 5px; right: 5px;
+        z-index: 100;
+        padding: 3px;
+        font-family: arial, verdana, helvetica;
+        font-size: 9pt;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        text-align: right;
+  }
+  #info {
+        top: auto;
+        bottom: 20px;
+        color: #bbb;
+  }
+  #players p {
+        margin: 1px;
+  }
+  #players span {
+        cursor: pointer;
+        color: #fff;
+        text-decoration: none;
+  }
+  #players span.idle {
+        color: #bbb;
+  }
 </style>
 
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-<script type="text/javascript" src="mapMarkersInit.js"></script>
+<script type="text/javascript" src="maprefresh.js"></script>
 <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
 <script type="text/javascript">
   var config = {
@@ -157,7 +168,7 @@
   function initialize() {
     var mapOptions = {
       zoom: config.defaultZoom,
-      center: new google.maps.LatLng(0.5, 0.5),
+      center: fromWorldToLatLng({originx}, {originy}, {originz}),
       navigationControl: true,
       scaleControl: false,
       mapTypeControl: false,
@@ -191,11 +202,11 @@
 </script>
 </head>
 <body onload="initialize()">
-	<div id="mcmarkerlist">
-		<div name="mcmarkers0" >Markers</div>
-		<div name="mcmarkers3" ><br />Labels</div>
-		<div name="mcmarkers4" ><br />Players</div>
-	</div>
   <div id="mcmap" style="width:100%; height:100%"></div>
+  <div id="info">Last Updated: {lastUpdated} || Starts an update every 2 hours at 45 minutes after.</div>
+  <div id="players">
+	<b><u>Online</u></b>
+	<p id="plist"></p>
+  </div>
 </body>
 </html>

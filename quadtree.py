@@ -128,26 +128,33 @@ class QuadtreeGen(object):
                 complete, total, level, self.p))
 
 
-def write_html(self, skipjs=False):
-        """Writes out index.html, map.js, marker.js, and region.js"""
+    def write_html(self, skipjs=False, worlddir):
+        """Writes out index.html, and optionally maprefresh.js and regions.js"""
         zoomlevel = self.p
         imgformat = self.imgformat
-        indexpath = os.path.join(util.get_program_path(), "webpage/index.html")
-        mapjspath = os.path.join(util.get_program_path(), "webpage/map.js")
+        indexpath = os.path.join(util.get_program_path(), "template.html")
+        mapjspath = os.path.join(util.get_program_path(), "webpage/maprefresh.js")
+        
+        ## read spawn info from level.dat
+        data = nbt.load(os.path.join(worlddir, "level.dat"))[1]
+        spawnX = data['Data']['SpawnX']
+        spawnY = data['Data']['SpawnY']
+        spawnZ = data['Data']['SpawnZ']
         
         html = open(indexpath, 'r').read()
-        js = open(mapjspath, 'r').read()
         
-        js = js.replace("{defaultzoom}", str(zoomlevel / 2 + 1))
-        js = js.replace("{markerzoom}", str(zoomlevel / 2 + 3))
-        js = js.replace("{maxzoom}", str(zoomlevel))
-        js = js.replace("{imgformat}", str(imgformat))
+        html = html.replace("{defaultzoom}", str(zoomlevel / 2 + 1))
+        html = html.replace("{markerzoom}", str(zoomlevel / 2 + 3))
+        html = html.replace("{maxzoom}", str(zoomlevel))
+        html = html.replace("{imgformat}", str(imgformat))
+        
+        html = html.replace("{originx}", str(spawnX))
+        html = html.replace("{originy}", str(spawnY))
+        html = html.replace("{originz}", str(spawnZ))
         
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
 
-        with open(os.path.join(self.destdir, "map.js"), 'w') as output:
-            output.write(js)
 
         # Write a blank image
         blank = Image.new("RGBA", (1,1))
@@ -157,11 +164,12 @@ def write_html(self, skipjs=False):
 
         if skipjs:
             return
+        
+        js = open(mapjspath, 'r').read()
 
-        # write out the default marker table
-        with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
-            output.write("var markerData=%s" % json.dumps(self.world.POI))
-
+        with open(os.path.join(self.destdir, "maprefresh.js"), 'w') as output:
+            output.write(js)
+        
         # write out the default (empty, but documented) region table
         with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
             output.write('var regionData=[\n')
@@ -284,7 +292,7 @@ def write_html(self, skipjs=False):
         
             yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
 
-    def _apply_render_inclusiontiles(self, pool):
+    def _apply_render_worldinclusiontiles(self, pool):
         """Returns an iterator over result objects. Each time a new result is
         requested, a new task is added to the pool and a result returned.
         """
@@ -295,27 +303,31 @@ def write_html(self, skipjs=False):
         tilechunks = []
 
         for (col,row) in self.chunkset:
-            # Get a correct path for this chunk
-            # Not sure why we need +6, but it works
-            path = self._get_path_by_coordinates(self.p,col,row+6)
-             # Get the range for this tile
-            colstart, rowstart = self._get_range_by_path(path)
-            colend = colstart + 2
-            rowend = rowstart + 4
+            for i in range(-4,4): # Add buffer around updated chunks
+                for j in range(-4,4): # increases render time, but makes sure map looks correct
+                    #!TODO! check 4 rows/cols all directions is enough (may need more)
+                    #!TODO! totally changes total chunk numbers, update with new math
+                    #!TODO! check whether multiple instances of same chunk only get rendered once (because after first time, hashes will match)
+                    # Get a correct path for this chunk
+                    # Not sure why we need +6, but it works
+                    path = self._get_path_by_coordinates(self.p,col+j,row+6+i)
+                    # Get the range for this tile
+                    colstart, rowstart = self._get_range_by_path(path)
+                    colend = colstart + 2
+                    rowend = rowstart + 4
 
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
+                    # This image is rendered at:
+                    dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
 
-            # And uses these chunks
-            tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
-                    rowend)
+                    # And uses these chunks
+                    tilechunks = self._get_chunks_in_range(colstart, colend, rowstart, rowend)
 
-            # Put this in the pool
-            # (even if tilechunks is empty, render_worldtile will delete
-            # existing images if appropriate)
-            yield pool.apply_async(func=render_worldtile, args= (tilechunks,
-                colstart, colend, rowstart, rowend, dest, self.imgformat,
-                self.optimizeimg))
+                    # Put this in the pool
+                    # (even if tilechunks is empty, render_worldtile will delete
+                    # existing images if appropriate)
+                    yield pool.apply_async(func=render_worldtile, args= (tilechunks,
+                        colstart, colend, rowstart, rowend, dest, self.imgformat,
+                        self.optimizeimg))
 
     def _apply_render_innerinclusiontile(self, pool, zoom):
         """Same as _apply_render_worltiles but for the inntertile routine.
@@ -324,15 +336,21 @@ def write_html(self, skipjs=False):
         """
 
         for (col,row) in self.chunkset:
-            # Get path for this chunk
-            # Not sure why we need +6, but it works
-            path = self._get_path_by_coordinates(zoom,col,row+6)
-            #print ("path : {0}").format(path)
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
-            name = str(path[-1])
+            for i in range(-4,4): # Add buffer around updated chunks
+                for j in range(-4,4): # increases render time, but makes sure map looks correct
+                    #!TODO! check 4 rows/cols all directions is enough (may need more)
+                    #!TODO! totally changes total chunk numbers, update with new math
+                    #!TODO! check whether multiple instances of same chunk only get rendered once (because after first time, hashes will match)
+                    # Get a correct path for this chunk
+                    # Not sure why we need +6, but it works
+                    path = self._get_path_by_coordinates(self.p,col+j,row+6+i)
+                    
+                    #print ("path : {0}").format(path)
+                    # This image is rendered at:
+                    dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
+                    name = str(path[-1])
 
-            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
+                    yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
 
     
             
@@ -367,7 +385,7 @@ def write_html(self, skipjs=False):
             total = len(self.chunkset)
             logging.info("Have a chunklist, so only rendering subset of tiles")
 
-            for result in self._apply_render_inclusiontiles(pool):
+            for result in self._apply_render_worldinclusiontiles(pool):
                 results.append(result)
                 if len(results) > 10000:
                     # Empty the queue before adding any more, so that memory
@@ -663,17 +681,27 @@ def render_innertile(dest, name, imgformat, optimizeimg):
         # corrupting it), then this could error.
         # Since we have no easy way of determining how this chunk was
         # generated, we need to just ignore it.
-        logging.warning("Error with file {1} -- {2}".format(dest,name))
+        logging.warning("Error with file {0} -- {1}".format(dest,name))
         logging.warning("(Error was {0})".format(e))
         try:
-            if q0path:
-                os.unlink(q0path)
-            if q1path:
-                os.unlink(q1path)
-            if q2path:
-                os.unlink(q2path)
-            if q3path:
-                os.unlink(q3path)
+            if q0hash and os.path.exists(q0hash):
+                os.unlink(q0hash)
+            if q1hash and os.path.exists(q1hash):
+                os.unlink(q1hash)
+            if q2hash and os.path.exists(q2hash):
+                os.unlink(q2hash)
+            if q3hash and os.path.exists(q3hash):
+                os.unlink(q3hash)
+
+            if q0path and os.path.exists(q0path):
+                 os.unlink(q0path)
+            if q1path and os.path.exists(q1path):
+                 os.unlink(q1path)
+            if q2path and os.path.exists(q2path):
+                 os.unlink(q2path)
+            if q3path and os.path.exists(q3path):
+                 os.unlink(q3path)
+
         except OSError, e:
             import errno
             # Ignore if file doesn't exist, another task could have already

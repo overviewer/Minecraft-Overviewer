@@ -269,7 +269,11 @@ class ChunkRenderer(object):
         if hasattr(self, "_digest"):
             return self._digest
         h = hashlib.md5()
-        h.update(self.level['Blocks'])
+        try:
+            h.update(self.level['Blocks'])
+        except IOError, e:
+             # Do nothing, chunk will be forced to update
+            h.update("blargh")
 
 
         # If the render algorithm changes, change this line to re-generate all

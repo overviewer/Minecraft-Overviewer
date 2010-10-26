@@ -16,9 +16,6 @@ function initMarkers() {
 	}
 }
   
-  
-  
-  
 function initRegions() {
 	if (regionsInit) { return; }
 
@@ -150,11 +147,6 @@ function initRegions() {
 
 	var refreshInterval = setInterval(refreshMarkers, 3 * 1000);
 	refreshMarkers();
-	
-	
-
-	// Set initial position to spawn
-	setTimeout(map.panTo(markers["Spawn0"].getPosition()),2000);
   }
 
 
