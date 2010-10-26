@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import time
 from datetime import datetime, timedelta
@@ -55,7 +56,11 @@ cache = Cache()
 
 def application(environ, start_response):
     status = '200 OK'
-    response_headers = [('Content-type','text/plain')]
+    response_headers = [('Content-type','application/json')]
     start_response(status, response_headers)
     #return ['Hello world!\n']
-    return cache.getMarkers()
+    return [cache.getMarkers()]
+
+if __name__ == '__main__':
+    from flup.server.fcgi import WSGIServer
+    WSGIServer(application, bindAddress=('127.0.0.1',9950)).run()

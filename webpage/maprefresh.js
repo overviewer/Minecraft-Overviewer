@@ -82,11 +82,14 @@ function gotoPlayer(index)
 		d = new Date(),
 		diff = d.getTime() - ts.getTime(),
 		var converted = fromWorldToLatLng(item.x, item.y, item.z);
-		if( diff < 10 * 1000*60 ) {
-			if (marker) {
-                marker.setPosition(converted);
-			}
-			else {
+		marker = playerMarkers[item.msg+item.id];
+		
+		if (marker) {
+			marker.setPosition(converted);
+		}
+		else {
+			if( diff < 10 * 1000*60 ) {
+			
 				var marker = new google.maps.Marker({
 					position: converted,
 					map: map,
@@ -96,40 +99,19 @@ function gotoPlayer(index)
 				$('#plist').append("<span onClick='gotoPlayer(" + i + ")'>" + item.msg + "</span><br />");
 				playerMarkers[item.msg+item.id] = marker;
 			}
-		} 
-		else {
-			if (marker) {
-                marker.setPosition(converted);
-			}
 			else {
 				var marker = new google.maps.Marker({
-					position: converted,
-					map: map,
-					title: item.msg + " - Idle since " + ts.toString(),,
-					icon: 'User.png'
-				});
-				$('#plist').append("<span onClick='gotoPlayer(" + i + ")' class='idle'>" + item.msg + "</span><br />");
-				playerMarkers[item.msg+item.id] = marker;
+				position: converted,
+				map: map,
+				title: item.msg + " - Idle since " + ts.toString(),,
+				icon: 'User.png'
+			});
+			$('#plist').append("<span onClick='gotoPlayer(" + i + ")' class='idle'>" + item.msg + "</span><br />");
+			playerMarkers[item.msg+item.id] = marker;
 			}
 		}
 		
-
-        var converted = fromWorldToLatLng(item.x, item.y, item.z);
-        marker = playerMarkers[item.msg+item.id];
-        if (marker) {
-                marker.setPosition(converted);
-        }
-        else {
-
-       var marker = new google.maps.Marker({
-        position: converted,
-        map: map,
-        title: item.msg
-
-		});
-        playerMarkers[item.msg+item.id] = marker;
-		  
-		$('#plist').append("<span onClick='gotoPlayer(" + i + ")' class='idle'>" + item.msg + "</span>");
+		
    }
 
 
