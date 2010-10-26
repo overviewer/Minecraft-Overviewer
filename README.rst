@@ -100,6 +100,9 @@ compile this extension like this::
 
     python setup.py build
 
+Note that you need the development headers for your version of Python installed,
+look for a package named 'python-dev', 'python-devel' or similar.
+
 Running
 -------
 To generate a set of Google Map tiles, use the gmap.py script like this::
