@@ -27,7 +27,10 @@ import sys
 import logging
 import util
 
+import nbt
 from PIL import Image
+
+from time import gmtime, strftime
 
 from optimizeimages import optimize_image
 
@@ -128,7 +131,7 @@ class QuadtreeGen(object):
                 complete, total, level, self.p))
 
 
-    def write_html(self, skipjs=False, worlddir):
+    def write_html(self, skipjs=False, worlddir=None):
         """Writes out index.html, and optionally maprefresh.js and regions.js"""
         zoomlevel = self.p
         imgformat = self.imgformat
@@ -151,6 +154,8 @@ class QuadtreeGen(object):
         html = html.replace("{originx}", str(spawnX))
         html = html.replace("{originy}", str(spawnY))
         html = html.replace("{originz}", str(spawnZ))
+        
+        html = html.replace("{lastUpdated}", strftime("%a, %d %b %Y %H:%M:%S %Z"))
         
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)

@@ -1,20 +1,10 @@
 // Global variables
-var markers = new Array();
+var playerMarkers = new Array();
 var urlParams = {};
-var markersInit = false;
 var regionsInit = false;
- 
+  
+var reg = /(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/; // !TODO!need to keep synced with mapmarkers format
 
-function initMarkers() {
-	if (markersInit) { return; }
-	markersInit = true;
-
-	if (markerData == null) return;
-	
-	for (i in markerData) {
-		addMarker(markerData[i]);
-	}
-}
   
 function initRegions() {
 	if (regionsInit) { return; }
@@ -25,7 +15,7 @@ function initRegions() {
 		var region = regionData[i];
 		var converted = new google.maps.MVCArray();
 		for (j in region.path) {
-			ar point = region.path[j];
+			var point = region.path[j];
 			converted.push(fromWorldToLatLng(point.x, point.y, point.z));
 		}
 
@@ -57,14 +47,18 @@ function initRegions() {
 	}
 }
 		
-
+function gotoPlayer(index)
+{
+	map.setCenter(playerMarkers[index].position);
+	map.setZoom(6);
+}
 
   function delMarker(markername) {
-        marker = markers[markername];
+        marker = playerMarkers[markername];
 
     if (marker) {
                 marker.setMap(null);
-                delete markers[markername];
+                delete playerMarkers[markername];
                 $('#mcmarkerlist div[name='+markername+']').remove();
         }
    }
@@ -82,9 +76,46 @@ function initRegions() {
 
         if ("no_places" in urlParams && item.id == 3)
                 return;
+				
+		m = reg.exec(item.timestamp),
+		ts = new Date(m[1],m[2]-1,m[3],m[4],m[5],m[6]),
+		d = new Date(),
+		diff = d.getTime() - ts.getTime(),
+		var converted = fromWorldToLatLng(item.x, item.y, item.z);
+		if( diff < 10 * 1000*60 ) {
+			if (marker) {
+                marker.setPosition(converted);
+			}
+			else {
+				var marker = new google.maps.Marker({
+					position: converted,
+					map: map,
+					title: item.msg,
+					icon: 'User.png'
+				});
+				$('#plist').append("<span onClick='gotoPlayer(" + i + ")'>" + item.msg + "</span><br />");
+				playerMarkers[item.msg+item.id] = marker;
+			}
+		} 
+		else {
+			if (marker) {
+                marker.setPosition(converted);
+			}
+			else {
+				var marker = new google.maps.Marker({
+					position: converted,
+					map: map,
+					title: item.msg + " - Idle since " + ts.toString(),,
+					icon: 'User.png'
+				});
+				$('#plist').append("<span onClick='gotoPlayer(" + i + ")' class='idle'>" + item.msg + "</span><br />");
+				playerMarkers[item.msg+item.id] = marker;
+			}
+		}
+		
 
         var converted = fromWorldToLatLng(item.x, item.y, item.z);
-        marker = markers[item.msg+item.id];
+        marker = playerMarkers[item.msg+item.id];
         if (marker) {
                 marker.setPosition(converted);
         }
@@ -96,25 +127,26 @@ function initRegions() {
         title: item.msg
 
 		});
-        markers[item.msg+item.id] = marker;
+        playerMarkers[item.msg+item.id] = marker;
 		  
-		$('#mcmarkerlist div[name=mcmarkers'+item.id+']').append('<div class="mcmarker" name="'+item.msg+item.id+'">'+item.msg+'</div>');
-
-        $('#mcmarkerlist div[name=mcmarkers'+item.id+'] div[name="'+item.msg+item.id+'"]').click(function() {
-				map.panTo(markers[$(this).attr("name")].getPosition());
-                map.setZoom(config.markerZoom);
-			});
-          }
+		$('#plist').append("<span onClick='gotoPlayer(" + i + ")' class='idle'>" + item.msg + "</span>");
    }
 
 
   function refreshMarkers(){
                 $.getJSON('markers.json', function(data) {
 
-                        if (data == null)
-                                return;
+                        if (data == null || data.length == 0) {
+							$('#plist').html('[No players online]');
+                            return;
+						}
 
-                        for (marker in markers) {
+						for (i in data) {
+							var item = data[i],
+							
+						}
+		
+                        for (marker in playerMarkers) {
                                 var found = false;
                                 for (item in data) {
                                         if (marker == data[item].msg + data[item].id)
@@ -139,10 +171,7 @@ function initRegions() {
 
 
   function mapMarkersInit() {
-    
-	// initialize the markers
-	initMarkers();
-	// initRegions(); //!TODO!Get MapRegions to write regions.json from cuboids
+    // initRegions(); //!TODO!Get MapRegions to write regions.json from cuboids
 	
 
 	var refreshInterval = setInterval(refreshMarkers, 3 * 1000);
