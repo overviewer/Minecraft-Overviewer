@@ -2,6 +2,7 @@
 Minecraft Overviewer
 ====================
 By Andrew Brown and contributors
+-- mrsheen's modifications highlighted with a bang (!)
 
 http://github.com/brownan/Minecraft-Overviewer
 
@@ -163,6 +164,12 @@ Options
     the last. This can add up fast, zoom level 10 has over a million tiles.
     Tiles with no content will not be rendered, but they still take a small
     amount of time to process.
+    
+    !There is a basic python script (scripts/maphardlimit.py) which will force
+    a hard limit on the size of the map, replacing outlier chunks with air.
+    DO NOT RUN without first opening up and understanding it, it has no user
+    interface, it is quick and dirty. 
+    It requires nbt.py from twoolie (http://github.com/twoolie/NBT)
 
 -d, --delete
     This option changes the mode of execution. No tiles are rendered, and
@@ -199,6 +206,10 @@ Options
     command. You could, for example, output all chunk files that are older than
     a certain date. Or perhaps you can incrementally update your map by passing
     in a subset of chunks each time. It's up to you!
+    
+    !Check scripts directory for bash scripts which use rsync to generate a
+    chunklist. With my modifications to the chunklist render algorithm, you
+    can expect a massive speedup on large maps
 
 --lighting
     This option enables map lighting, using lighting information stored by
@@ -272,3 +283,9 @@ An incomplete list of things I want to do soon is:
 * Some kind of graphical interface.
 
 * A Windows exe for easier access for Windows users.
+
+!Addons
+=======
+If you are running hey0's Server Mod, you can use the MapMarkers plugin to
+generate live player positions. The plugin will output markers.json, which
+needs to be in the output directory along with index.html
