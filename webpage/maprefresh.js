@@ -3,7 +3,7 @@ var playerMarkers = new Array();
 var urlParams = {};
 var regionsInit = false;
   
-var reg = /(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/; // !TODO!need to keep synced with mapmarkers format
+var reg = /(\d{4})(\d{2})(\d{2}) (\d{2}):(\d{2}):(\d{2})/; // !TODO!need to keep synced with mapmarkers format
 
   
 function initRegions() {
@@ -50,7 +50,7 @@ function initRegions() {
 function gotoPlayer(index)
 {
 	map.setCenter(playerMarkers[index].position);
-	map.setZoom(6);
+	map.setZoom(config.markerZoom);
 }
 
   function delMarker(markername) {
@@ -59,7 +59,7 @@ function gotoPlayer(index)
     if (marker) {
                 marker.setMap(null);
                 delete playerMarkers[markername];
-                $('#mcmarkerlist div[name='+markername+']').remove();
+                $('#plist span[name='+markername+']').remove();
         }
    }
 
@@ -77,11 +77,11 @@ function gotoPlayer(index)
         if ("no_places" in urlParams && item.id == 3)
                 return;
 				
-		m = reg.exec(item.timestamp),
+		var m = reg.exec(item.timestamp),
 		ts = new Date(m[1],m[2]-1,m[3],m[4],m[5],m[6]),
 		d = new Date(),
 		diff = d.getTime() - ts.getTime(),
-		var converted = fromWorldToLatLng(item.x, item.y, item.z);
+		converted = fromWorldToLatLng(item.x, item.y, item.z);
 		marker = playerMarkers[item.msg+item.id];
 		
 		if (marker) {
@@ -94,19 +94,19 @@ function gotoPlayer(index)
 					position: converted,
 					map: map,
 					title: item.msg,
-					icon: 'User.png'
+					icon: 'smiley.gif'
 				});
-				$('#plist').append("<span onClick='gotoPlayer(" + i + ")'>" + item.msg + "</span><br />");
+				$('#plist').append("<span name='" + item.msg+item.id + "' onClick='gotoPlayer(\"" + item.msg+item.id + "\")'>" + item.msg + "</span><br name='" + item.msg+item.id + "' />");
 				playerMarkers[item.msg+item.id] = marker;
 			}
 			else {
 				var marker = new google.maps.Marker({
 				position: converted,
 				map: map,
-				title: item.msg + " - Idle since " + ts.toString(),,
-				icon: 'User.png'
+				title: item.msg + " - Idle since " + ts.toString(),
+				icon: 'smiley.gif'
 			});
-			$('#plist').append("<span onClick='gotoPlayer(" + i + ")' class='idle'>" + item.msg + "</span><br />");
+			$('#plist').append("<span name='" + item.msg+item.id + "' onClick='gotoPlayer(\"" + item.msg+item.id + "\")' class='idle'>" + item.msg + "</span><br name='" + item.msg+item.id + "' />");
 			playerMarkers[item.msg+item.id] = marker;
 			}
 		}
@@ -117,15 +117,10 @@ function gotoPlayer(index)
 
   function refreshMarkers(){
                 $.getJSON('markers.json', function(data) {
-
+					try {
                         if (data == null || data.length == 0) {
 							$('#plist').html('[No players online]');
                             return;
-						}
-
-						for (i in data) {
-							var item = data[i],
-							
 						}
 		
                         for (marker in playerMarkers) {
@@ -142,8 +137,12 @@ function gotoPlayer(index)
                         for (item in data) {
                                 addMarker(data[item]);
                         }
+					}
 
-
+					catch(err)
+					{
+						// Do nothing
+					}
 
 
                 });

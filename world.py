@@ -137,6 +137,17 @@ class WorldRenderer(object):
 
         self.chunkset = chunkset
 
+    def get_chunk_path(self, chunkX, chunkY):
+        """Returns the path to the chunk file at (chunkX, chunkY), if
+        it exists."""
+        
+        chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64),
+                                           base36encode(chunkY % 64),
+                                           base36encode(chunkX),
+                                           base36encode(chunkY))
+        
+        return os.path.join(self.worlddir, chunkFile)
+        
     def go(self, procs):
         """Starts the render. This returns when it is finished"""
         

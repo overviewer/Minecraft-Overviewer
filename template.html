@@ -168,7 +168,6 @@
   function initialize() {
     var mapOptions = {
       zoom: config.defaultZoom,
-      center: fromWorldToLatLng({originx}, {originy}, {originz}),
       navigationControl: true,
       scaleControl: false,
       mapTypeControl: false,
@@ -197,6 +196,8 @@
   
     // We can now set the map to use the 'coordinate' map type
     map.setMapTypeId('mcmap');
+	
+	map.setCenter(fromWorldToLatLng({originx}, {originy}, {originz}));
 	
   }
 </script>
