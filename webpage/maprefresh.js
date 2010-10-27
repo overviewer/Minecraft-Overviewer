@@ -58,8 +58,10 @@ function gotoPlayer(index)
 
     if (marker) {
                 marker.setMap(null);
-                delete playerMarkers[markername];
+				marker.hidden = true;
+                //delete playerMarkers[markername];
                 $('#plist span[name='+markername+']').remove();
+				$('#plist br[name='+markername+']').remove();
         }
    }
 
@@ -85,6 +87,10 @@ function gotoPlayer(index)
 		marker = playerMarkers[item.msg+item.id];
 		
 		if (marker) {
+			if (marker.hidden) {
+				marker.setMap(map);
+				marker.hidden = false;
+			}
 			marker.setPosition(converted);
 		}
 		else {
@@ -97,6 +103,7 @@ function gotoPlayer(index)
 					icon: 'smiley.gif'
 				});
 				$('#plist').append("<span name='" + item.msg+item.id + "' onClick='gotoPlayer(\"" + item.msg+item.id + "\")'>" + item.msg + "</span><br name='" + item.msg+item.id + "' />");
+				marker.hidden = false;
 				playerMarkers[item.msg+item.id] = marker;
 			}
 			else {
@@ -107,6 +114,7 @@ function gotoPlayer(index)
 				icon: 'smiley.gif'
 			});
 			$('#plist').append("<span name='" + item.msg+item.id + "' onClick='gotoPlayer(\"" + item.msg+item.id + "\")' class='idle'>" + item.msg + "</span><br name='" + item.msg+item.id + "' />");
+			marker.hidden = false;
 			playerMarkers[item.msg+item.id] = marker;
 			}
 		}
@@ -130,7 +138,7 @@ function gotoPlayer(index)
                                                 found = true;
 
                                 }
-                                if (!found)
+                                if (!found && !playerMarkers[marker].hidden)
                                         delMarker(marker);
                         }
 

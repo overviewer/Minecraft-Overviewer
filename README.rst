@@ -289,3 +289,5 @@ An incomplete list of things I want to do soon is:
 If you are running hey0's Server Mod, you can use the MapMarkers plugin to
 generate live player positions. The plugin will output markers.json, which
 needs to be in the output directory along with index.html
+You should also copy smiley.gif from the webpage directory to the map
+output, as it is used for player positions (see maprefresh.js)
