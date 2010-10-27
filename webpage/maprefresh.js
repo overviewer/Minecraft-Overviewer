@@ -57,8 +57,7 @@ function gotoPlayer(index)
         marker = playerMarkers[markername];
 
     if (marker) {
-                marker.setMap(null);
-				marker.hidden = true;
+                marker.setVisible(false);
                 //delete playerMarkers[markername];
                 $('#plist span[name='+markername+']').remove();
 				$('#plist br[name='+markername+']').remove();
@@ -87,10 +86,7 @@ function gotoPlayer(index)
 		marker = playerMarkers[item.msg+item.id];
 		
 		if (marker) {
-			if (marker.hidden) {
-				marker.setMap(map);
-				marker.hidden = false;
-			}
+			marker.setVisible(true);
 			marker.setPosition(converted);
 		}
 		else {
@@ -103,7 +99,6 @@ function gotoPlayer(index)
 					icon: 'smiley.gif'
 				});
 				$('#plist').append("<span name='" + item.msg+item.id + "' onClick='gotoPlayer(\"" + item.msg+item.id + "\")'>" + item.msg + "</span><br name='" + item.msg+item.id + "' />");
-				marker.hidden = false;
 				playerMarkers[item.msg+item.id] = marker;
 			}
 			else {
@@ -114,7 +109,6 @@ function gotoPlayer(index)
 				icon: 'smiley.gif'
 			});
 			$('#plist').append("<span name='" + item.msg+item.id + "' onClick='gotoPlayer(\"" + item.msg+item.id + "\")' class='idle'>" + item.msg + "</span><br name='" + item.msg+item.id + "' />");
-			marker.hidden = false;
 			playerMarkers[item.msg+item.id] = marker;
 			}
 		}
@@ -138,12 +132,13 @@ function gotoPlayer(index)
                                                 found = true;
 
                                 }
-                                if (!found && !playerMarkers[marker].hidden)
+                                if (!found && !playerMarkers[marker].getVisible())
                                         delMarker(marker);
                         }
 
                         for (item in data) {
-                                addMarker(data[item]);
+							if (data[item].id == 4)
+                                addMarker(data[item]); // Only player markers, ignore other for now
                         }
 					}
 

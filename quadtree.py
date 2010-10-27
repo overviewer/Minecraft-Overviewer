@@ -313,6 +313,7 @@ class QuadtreeGen(object):
                     #!TODO! check 4 rows/cols all directions is enough (may need more)
                     #!TODO! totally changes total chunk numbers, update with new math
                     #!TODO! check whether multiple instances of same chunk only get rendered once (because after first time, hashes will match)
+                    #!TODO! add configurable level of update (sometimes small, ie 0-just chunk itself, sometimes large ie 5, huge area)
                     # Get a correct path for this chunk
                     # Not sure why we need +6, but it works
                     path = self._get_path_by_coordinates(self.p,col+j,row+6+i)
