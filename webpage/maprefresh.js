@@ -86,7 +86,15 @@ function gotoPlayer(index)
 		marker = playerMarkers[item.msg+item.id];
 		
 		if (marker) {
-			marker.setVisible(true);
+			if (!marker.getVisible()) {
+				marker.setVisible(true);
+				if( diff < 10 * 1000*60 ) {
+					$('#plist').append("<span name='" + item.msg+item.id + "' onClick='gotoPlayer(\"" + item.msg+item.id + "\")'>" + item.msg + "</span><br name='" + item.msg+item.id + "' />");
+				}
+				else {
+					$('#plist').append("<span name='" + item.msg+item.id + "' onClick='gotoPlayer(\"" + item.msg+item.id + "\")' class='idle'>" + item.msg + "</span><br name='" + item.msg+item.id + "' />");
+				}
+			}
 			marker.setPosition(converted);
 		}
 		else {
