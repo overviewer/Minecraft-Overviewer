@@ -38,8 +38,11 @@ typedef struct
 
 static Imaging imaging_python_to_c(PyObject* obj)
 {
+	PyObject* im;
+	Imaging image;
+
 	/* first, get the 'im' attribute */
-	PyObject* im = PyObject_GetAttrString(obj, "im");
+	im = PyObject_GetAttrString(obj, "im");
 	if (!im)
 		return NULL;
 	
@@ -51,21 +54,34 @@ static Imaging imaging_python_to_c(PyObject* obj)
 		return NULL;
 	}
 	
-	Imaging image = ((ImagingObject*)im)->image;
+	image = ((ImagingObject*)im)->image;
 	Py_DECREF(im);
 	return image;
 }
 
 static PyObject* _composite_alpha_over(PyObject* self, PyObject* args)
 {
+	/* raw input python variables */
 	PyObject* dest, * src, * pos, * mask;
+	/* libImaging handles */
+	Imaging imDest, imSrc, imMask;
+	/* cached blend properties */
+	int src_has_alpha, mask_offset, mask_stride;
+	/* destination position and size */
+	int dx, dy, xsize, ysize;
+	/* source position */
+	int sx, sy;
+	/* iteration variables */
+	unsigned int x, y, i;
+	/* temporary calculation variables */
+	int tmp1, tmp2, tmp3;
 	
 	if (!PyArg_ParseTuple(args, "OOOO", &dest, &src, &pos, &mask))
 		return NULL;
 	
-	Imaging imDest = imaging_python_to_c(dest);
-	Imaging imSrc = imaging_python_to_c(src);
-	Imaging imMask = imaging_python_to_c(mask);
+	imDest = imaging_python_to_c(dest);
+	imSrc = imaging_python_to_c(src);
+	imMask = imaging_python_to_c(mask);
 	
 	if (!imDest || !imSrc || !imMask)
 		return NULL;
@@ -97,14 +113,13 @@ static PyObject* _composite_alpha_over(PyObject* self, PyObject* args)
 	}
 	
 	/* set up flags for the src/mask type */
-	int src_has_alpha = (imSrc->pixelsize == 4 ? 1 : 0);
+    src_has_alpha = (imSrc->pixelsize == 4 ? 1 : 0);
 	/* how far into image the first alpha byte resides */
-	int mask_offset = (imMask->pixelsize == 4 ? 3 : 0);
+	mask_offset = (imMask->pixelsize == 4 ? 3 : 0);
 	/* how many bytes to skip to get to the next alpha byte */
-	int mask_stride = imMask->pixelsize;
+	mask_stride = imMask->pixelsize;
 	
 	/* destination position read */
-	int dx, dy, xsize, ysize;
 	if (!PyArg_ParseTuple(pos, "iiii", &dx, &dy, &xsize, &ysize))
 	{
 		PyErr_SetString(PyExc_TypeError, "given blend destination rect is not valid");
@@ -112,8 +127,6 @@ static PyObject* _composite_alpha_over(PyObject* self, PyObject* args)
 	}
 	
 	/* set up the source position, size and destination position */
-	int sx, sy;
-	
 	/* handle negative dest pos */
 	if (dx < 0)
 	{
@@ -148,12 +161,6 @@ static PyObject* _composite_alpha_over(PyObject* self, PyObject* args)
 		Py_INCREF(dest);
 		return dest;
 	}
-	
-	/* iteration variables */
-	unsigned int x, y, i;
-	
-	/* temporary calculation variables */
-	int tmp1, tmp2, tmp3;
 	
 	for (y = 0; y < ysize; y++)
 	{
