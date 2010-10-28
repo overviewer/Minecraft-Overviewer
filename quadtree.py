@@ -357,7 +357,7 @@ class QuadtreeGen(object):
                     #!TODO! check whether multiple instances of same chunk only get rendered once (because after first time, hashes will match)
                     # Get a correct path for this chunk
                     # Not sure why we need +6, but it works
-                    path = self._get_path_by_coordinates(zoom,col+j,row+6+i) // Wow, totally missed the zoom param
+                    path = self._get_path_by_coordinates(zoom,col+j,row+6+i) # Wow, totally missed the zoom param
                     if path in checkedpaths:
                         continue;
                     else:
