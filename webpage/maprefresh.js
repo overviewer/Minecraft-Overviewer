@@ -140,7 +140,7 @@ function gotoPlayer(index)
                                                 found = true;
 
                                 }
-                                if (!found && !playerMarkers[marker].getVisible())
+                                if (!found && playerMarkers[marker].getVisible())
                                         delMarker(marker);
                         }
 
