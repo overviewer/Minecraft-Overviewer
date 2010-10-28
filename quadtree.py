@@ -306,6 +306,8 @@ class QuadtreeGen(object):
         rendering that range"""
         # !TODO! Add a buffer around inclusion chunks, primarily above (say 6 chunks?)
         tilechunks = []
+        
+        checkedpaths = []
 
         for (col,row) in self.chunkset:
             for i in range(-4,4): # Add buffer around updated chunks
@@ -317,6 +319,10 @@ class QuadtreeGen(object):
                     # Get a correct path for this chunk
                     # Not sure why we need +6, but it works
                     path = self._get_path_by_coordinates(self.p,col+j,row+6+i)
+                    if path in checkedpaths:
+                        continue;
+                    else:
+                        checkedpaths.append(path)
                     # Get the range for this tile
                     colstart, rowstart = self._get_range_by_path(path)
                     colend = colstart + 2
@@ -340,6 +346,8 @@ class QuadtreeGen(object):
         Returns an iterator that yields result objects from tasks that have
         been applied to the pool.
         """
+        
+        checkedpaths = []
 
         for (col,row) in self.chunkset:
             for i in range(-4,4): # Add buffer around updated chunks
@@ -349,7 +357,11 @@ class QuadtreeGen(object):
                     #!TODO! check whether multiple instances of same chunk only get rendered once (because after first time, hashes will match)
                     # Get a correct path for this chunk
                     # Not sure why we need +6, but it works
-                    path = self._get_path_by_coordinates(self.p,col+j,row+6+i)
+                    path = self._get_path_by_coordinates(zoom,col+j,row+6+i) // Wow, totally missed the zoom param
+                    if path in checkedpaths:
+                        continue;
+                    else:
+                        checkedpaths.append(path)
                     
                     #print ("path : {0}").format(path)
                     # This image is rendered at:
