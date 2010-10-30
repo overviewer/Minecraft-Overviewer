@@ -10,7 +10,8 @@
 <script type="text/javascript" src="markers.js"></script>
 <script type="text/javascript" src="regions.js"></script>
 <script type="text/javascript"
-    src="http://maps.google.com/maps/api/js?sensor=false">
+    src="http://maps.google.com/maps/api/js?file=api&amp;v=1&amp;key=ABQIAAAAZ6gqd-U6oLkZVIeUWgpYUBRHuDUPIgLkyWDlguh4lUg6wHED6RRvXykJINa1i7bwqpYBlhvGxXgCYA&sensor=false">
+
 </script>
 <script type="text/javascript">
   var config = {
@@ -197,11 +198,37 @@
       }
     }
   }
-  
-  function initialize() {
+function makeLink() {
+    var a=location.href.substring(0,location.href.lastIndexOf("/")+1)
+        + "?lat=" + map.getCenter().lat().toFixed(6)
+        + "&lng=" + map.getCenter().lng().toFixed(6)
+        + "&zoom=" + map.getZoom();
+    document.getElementById("link").innerHTML = a;
+}
+
+function initialize() {
+
+    var query = location.search.substring(1);
+
+    var lat = 0.5;
+    var lng = 0.5;
+    var zoom = config.defaultZoom;
+    var pairs = query.split("&");
+    for (var i=0; i<pairs.length; i++) {
+        // break each pair at the first "=" to obtain the argname and value
+        var pos = pairs[i].indexOf("=");
+        var argname = pairs[i].substring(0,pos).toLowerCase();
+        var value = pairs[i].substring(pos+1).toLowerCase();
+
+        // process each possible argname
+        if (argname == "lat") {lat = parseFloat(value);}
+        if (argname == "lng") {lng = parseFloat(value);}
+        if (argname == "zoom") {zoom = parseInt(value);}
+    }
+
     var mapOptions = {
-      zoom: config.defaultZoom,
-      center: new google.maps.LatLng(0.5, 0.5),
+      zoom: zoom,
+      center: new google.maps.LatLng(lat, lng),
       navigationControl: true,
       scaleControl: false,
       mapTypeControl: false,
@@ -234,10 +261,22 @@
 	// initialize the markers and regions
 	initMarkers();
     initRegions();
+
+    makeLink();
+
+    // Make the link again whenever the map changes
+    google.maps.event.addListener(map, 'zoom_changed', function() {
+        makeLink();
+    });
+    google.maps.event.addListener(map, 'center_changed', function() {
+        makeLink();
+    });
+
   }
 </script>
 </head>
 <body onload="initialize()">
+<div id="link" style="border:5px solid black;color:white"></div>
   <div id="mcmap" style="width:100%; height:100%"></div>
 </body>
 </html>
