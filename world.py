@@ -19,6 +19,7 @@ import os.path
 import multiprocessing
 import sys
 import logging
+import time
 
 import numpy
 
@@ -182,6 +183,19 @@ class WorldRenderer(object):
 
         self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, msg="Spawn"))
 
+    def findPlayerPosition(self):
+        """Load player positions from players folder for all players who haven't been inactive for over a week"""
+        playerfolder=os.path.join(self.worlddir, "players")
+        playerList=os.listdir(playerfolder)
+        now = time.time()
+        for playerFile in playerList:
+            absPlayerFile =os.path.join(playerfolder, playerFile)
+            if os.path.getmtime(absPlayerFile)+60*60*24*7 < now:
+                continue
+            data = nbt.load(absPlayerFile)[1]
+            pos = data['Pos']
+            self.POI.append( dict(x=pos[0], y=pos[1], z=pos[2], msg=playerFile[0:-4]))
+
     def go(self, procs):
         """Starts the render. This returns when it is finished"""
         
@@ -201,6 +215,7 @@ class WorldRenderer(object):
         self.maxrow = maxrow
 
         self.findTrueSpawn()
+        self.findPlayerPosition()
 
     def _find_chunkfiles(self):
         """Returns a list of all the chunk file locations, and the file they
