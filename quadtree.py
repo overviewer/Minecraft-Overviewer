@@ -136,7 +136,8 @@ class QuadtreeGen(object):
         zoomlevel = self.p
         imgformat = self.imgformat
         indexpath = os.path.join(util.get_program_path(), "template.html")
-        mapjspath = os.path.join(util.get_program_path(), "webpage/maprefresh.js")
+        mapjspath = os.path.join(util.get_program_path(), "webpage/map.js")
+        maprefreshjspath = os.path.join(util.get_program_path(), "webpage/maprefresh.js")
         
         ## read spawn info from level.dat
         data = nbt.load(os.path.join(worlddir, "level.dat"))[1]
@@ -151,11 +152,9 @@ class QuadtreeGen(object):
         html = html.replace("{maxzoom}", str(zoomlevel))
         html = html.replace("{imgformat}", str(imgformat))
         
-        html = html.replace("{originx}", str(spawnX))
-        html = html.replace("{originy}", str(spawnY))
-        html = html.replace("{originz}", str(spawnZ))
+        html = html.replace("{mapcenter}", str(spawnX + "," + spawnY + "," + spawnZ))
         
-        html = html.replace("{lastUpdated}", strftime("%a, %d %b %Y %H:%M:%S %Z"))
+        html = html.replace("{statustext}", str("Last Updated: "+strftime("%a, %d %b %Y %H:%M:%S %Z")))
         
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(html)
@@ -170,10 +169,13 @@ class QuadtreeGen(object):
         if skipjs:
             return
         
-        js = open(mapjspath, 'r').read()
-
+        mapjs = open(mapjspath, 'r').read()
+        with open(os.path.join(self.destdir, "map.js"), 'w') as output:
+            output.write(mapjs)
+            
+        maprefreshjs = open(mapjspath, 'r').read()
         with open(os.path.join(self.destdir, "maprefresh.js"), 'w') as output:
-            output.write(js)
+            output.write(maprefreshjs)
         
         # write out the default (empty, but documented) region table
         with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
