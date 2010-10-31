@@ -215,7 +215,7 @@ class WorldRenderer(object):
         all_chunks = []
 
         for dirpath, dirnames, filenames in os.walk(self.worlddir):
-            if not dirnames and filenames:
+            if not dirnames and filenames and "DIM-1" not in dirpath:
                 for f in filenames:
                     if f.startswith("c.") and f.endswith(".dat"):
                         p = f.split(".")
