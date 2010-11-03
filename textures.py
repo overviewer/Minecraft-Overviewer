@@ -394,10 +394,10 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
     if blockID in (86,91): # jack-o-lantern
-        print "generating special for pumpkins"
         top = transform_image(terrain_images[102])
-        side1 = transform_image_side(terrain_images[118])
-        side2 = transform_image_side(terrain_images[119]).transpose(Image.FLIP_LEFT_RIGHT)
+        frontID = 119 if blockID == 86 else 120
+        side1 = transform_image_side(terrain_images[frontID])
+        side2 = transform_image_side(terrain_images[118]).transpose(Image.FLIP_LEFT_RIGHT)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
@@ -496,13 +496,43 @@ def generate_special_texture(blockID, data):
         
         return (img.convert("RGB"), img.split()[3])
     
+    if blockID == 2: # grass
+        top = transform_image(tintTexture(terrain_images[0],(0,255,0,255)))
+        side1 = transform_image_side(terrain_images[3])
+        side2 = transform_image_side(terrain_images[3]).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        img.paste(side1, (0,6), side1)
+        img.paste(side2, (12,6), side2)
+        img.paste(top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+    
+    if blockID == 18: # leaves
+        t = tintTexture(terrain_images[52], (0, 255, 0, 255))
+        top = transform_image(t)
+        side1 = transform_image_side(t)
+        side2 = transform_image_side(t).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        img.paste(side1, (0,6), side1)
+        img.paste(side2, (12,6), side2)
+        img.paste(top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+    
 
     return None
 
+def tintTexture(im, c):
+    color_map = []
+    for component in c:
+        color_map.extend(int(component/255.0*i) for i in range(256))
+    return im.point(color_map)
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
-special_blocks = set([66,59,61,62, 65,64,71,91,86])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -519,6 +549,13 @@ special_map[86] = range(5)  # pumpkin
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
 # like torches
+special_map[2] = (0,)       # grass
+special_map[18] = range(16) # leaves
+# grass and leaves are now graysacle in terrain.png
+# we treat them as special so we can manually tint them
+# it is unknown how the specific tint (biomes) is calculated
+
+# leaves have ancilary data, but its meaning is unknown (age perhaps?)
 
 specialblockmap = {}
 
