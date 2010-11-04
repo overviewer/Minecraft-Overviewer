@@ -21,7 +21,7 @@ from cStringIO import StringIO
 import math
 
 import numpy
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageOps
 
 import util
 
@@ -497,7 +497,7 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 2: # grass
-        top = transform_image(tintTexture(terrain_images[0],(0,255,0,255)))
+        top = transform_image(tintTexture(terrain_images[0],(170,255,50)))
         side1 = transform_image_side(terrain_images[3])
         side2 = transform_image_side(terrain_images[3]).transpose(Image.FLIP_LEFT_RIGHT)
 
@@ -509,7 +509,7 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 18: # leaves
-        t = tintTexture(terrain_images[52], (0, 255, 0, 255))
+        t = tintTexture(terrain_images[52], (170, 255, 50))
         top = transform_image(t)
         side1 = transform_image_side(t)
         side2 = transform_image_side(t).transpose(Image.FLIP_LEFT_RIGHT)
@@ -525,10 +525,10 @@ def generate_special_texture(blockID, data):
     return None
 
 def tintTexture(im, c):
-    color_map = []
-    for component in c:
-        color_map.extend(int(component/255.0*i) for i in range(256))
-    return im.point(color_map)
+    # apparently converting to grayscale drops the alpha channel?
+    i = ImageOps.colorize(ImageOps.grayscale(im), (0,0,0), c)
+    i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
+    return i
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
