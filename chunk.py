@@ -626,8 +626,8 @@ class ChunkRenderer(object):
                 # coordinates to global world coordinates
                 newPOI = dict(type="sign",
                                 x= entity['x'],
-                                y= entity['z'],
-                                z= entity['y'],
+                                y= entity['y'],
+                                z= entity['z'],
                                 msg="%s\n%s\n%s\n%s" %
                                    (entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']),
                                 chunk= (self.chunkX, self.chunkY),
