@@ -255,6 +255,18 @@ google.maps.event.addListener(marker, 'click', function() {
 	// initialize the markers and regions
 	initMarkers();
     initRegions();
+
+    var compassDiv = document.createElement('DIV');
+
+    compassDiv.style.padding = '5px';
+
+    var compassImg = document.createElement('IMG');
+    compassImg.src="compass.png";
+    compassDiv.appendChild(compassImg);
+
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
+
+
   }
 </script>
 </head>
