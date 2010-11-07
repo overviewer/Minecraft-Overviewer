@@ -144,6 +144,10 @@ class QuadtreeGen(object):
         if not os.path.exists(tileDir): os.mkdir(tileDir)
         blank.save(os.path.join(tileDir, "blank."+self.imgformat))
 
+        # copy web assets into destdir:
+        for root, dirs, files in os.walk(os.path.join(util.get_program_path(), "web_assets")):
+            for f in files:
+                shutil.copy(os.path.join(root, f), self.destdir)
 
         if skipjs:
             return
