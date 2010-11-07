@@ -26,4 +26,7 @@ def get_program_path():
     if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
         return os.path.dirname(sys.executable)
     else:
-        return os.path.dirname(sys.argv[0])
+        try:
+            return os.path.dirname(__file__)
+        except NameError:
+            return os.path.dirname(sys.argv[0])
