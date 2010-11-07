@@ -85,6 +85,28 @@ you can use the Overviewer:
   hidden directory). You can also get this file from any of the third party
   texture packs out there.
 
+Compiling the C Extension (optional)
+------------------------------------ 
+The C Extension for Overviewer is completely optional. It provides a higher
+quality image compositing function that looks better on maps with lighting
+enabled, and a slight performance boost.
+
+If you downloaded Overviewer as a binary package, this extension may be already
+compiled for you. Overviewer emits a warning if the extension is not found, but
+will still work fine.
+
+If you have a C compiler and the Python development libraries set up, you can
+compile this extension like this::
+
+    python setup.py build
+
+Note that you need the development headers for your version of Python installed,
+look for a package named 'python-dev', 'python-devel' or similar. Also, some
+Python distributions do not install "Imaging.h" and "ImPlatform.h" properly. If
+you get errors complaining about them, you can get them from the PIL source, or
+at <http://svn.effbot.org/public/tags/pil-1.1.7/libImaging/>. Just put them in
+the same directory as "_composite.c".
+
 Running
 -------
 To generate a set of Google Map tiles, use the gmap.py script like this::

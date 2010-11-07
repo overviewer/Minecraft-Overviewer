@@ -24,6 +24,7 @@ import numpy
 from PIL import Image, ImageEnhance
 
 import util
+import composite
 
 def _find_file(filename, mode="rb"):
     """Searches for the given file and returns an open handle to it.
@@ -157,13 +158,13 @@ def transform_image_side(img, blockID=None):
         # img to be unchanged
         mask = img.crop((0,8,16,16))
         n = Image.new(img.mode, img.size, (38,92,255,0))
-        n.paste(mask,(0,0,16,8), mask)
+        composite.alpha_over(n, mask,(0,0,16,8), mask)
         img = n
     if blockID in (78,): # snow
         # make the top three quarters transparent
         mask = img.crop((0,12,16,16))
         n = Image.new(img.mode, img.size, (38,92,255,0))
-        n.paste(mask,(0,12,16,16), mask)
+        composite.alpha_over(n, mask,(0,12,16,16), mask)
         img = n
 
     # Size of the cube side before shear
@@ -189,7 +190,7 @@ def _build_block(top, side, blockID=None):
     top = transform_image(top, blockID)
 
     if not side:
-        img.paste(top, (0,0), top)
+        composite.alpha_over(img, top, (0,0), top)
         return img
 
     side = transform_image_side(side, blockID)
@@ -212,29 +213,29 @@ def _build_block(top, side, blockID=None):
     if blockID in (37,38,6,39,40,50,83): ## flowers, sapling, mushrooms,  regular torch, reeds
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
-        img.paste(side, (6,3), side)
-        img.paste(otherside, (6,3), otherside)
+        composite.alpha_over(img, side, (6,3), side)
+        composite.alpha_over(img, otherside, (6,3), otherside)
         return img
 
 
     if blockID in (81,): # cacti!
-        img.paste(side, (2,6), side)
-        img.paste(otherside, (10,6), otherside)
-        img.paste(top, (0,2), top)
+        composite.alpha_over(img, side, (2,6), side)
+        composite.alpha_over(img, otherside, (10,6), otherside)
+        composite.alpha_over(img, top, (0,2), top)
     elif blockID in (44,): # half step
         # shift each texture down 6 pixels
-        img.paste(side, (0,12), side)
-        img.paste(otherside, (12,12), otherside)
-        img.paste(top, (0,6), top)
+        composite.alpha_over(img, side, (0,12), side)
+        composite.alpha_over(img, otherside, (12,12), otherside)
+        composite.alpha_over(img, top, (0,6), top)
     elif blockID in (78,): # snow
         # shift each texture down 9 pixels
-        img.paste(side, (0,6), side)
-        img.paste(otherside, (12,6), otherside)
-        img.paste(top, (0,9), top)
+        composite.alpha_over(img, side, (0,6), side)
+        composite.alpha_over(img, otherside, (12,6), otherside)
+        composite.alpha_over(img, top, (0,9), top)
     else:
-        img.paste(side, (0,6), side)
-        img.paste(otherside, (12,6), otherside)
-        img.paste(top, (0,0), top)
+        composite.alpha_over(img, side, (0,6), side)
+        composite.alpha_over(img, otherside, (12,6), otherside)
+        composite.alpha_over(img, top, (0,0), top)
 
     # Manually touch up 6 pixels that leave a gap because of how the
     # shearing works out. This makes the blocks perfectly tessellate-able
@@ -366,7 +367,7 @@ def generate_special_texture(blockID, data):
             track = transform_image(raw_straight, blockID)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
-        img.paste(track, (0,12), track)
+        composite.alpha_over(img, track, (0,12), track)
 
         return (img.convert("RGB"), img.split()[3])
     if blockID == 59: # crops
@@ -376,9 +377,9 @@ def generate_special_texture(blockID, data):
         crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
-        img.paste(crop1, (0,12), crop1)
-        img.paste(crop2, (6,3), crop2)
-        img.paste(crop3, (6,3), crop3)
+        composite.alpha_over(img, crop1, (0,12), crop1)
+        composite.alpha_over(img, crop2, (6,3), crop2)
+        composite.alpha_over(img, crop3, (6,3), crop3)
         return (img.convert("RGB"), img.split()[3])
 
     if blockID == 61: #furnace
@@ -388,9 +389,9 @@ def generate_special_texture(blockID, data):
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-        img.paste(side1, (0,6), side1)
-        img.paste(side2, (12,6), side2)
-        img.paste(top, (0,0), top)
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 62: # lit furnace
@@ -400,9 +401,9 @@ def generate_special_texture(blockID, data):
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-        img.paste(side1, (0,6), side1)
-        img.paste(side2, (12,6), side2)
-        img.paste(top, (0,0), top)
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
 
     if blockID == 65: # ladder
@@ -414,22 +415,22 @@ def generate_special_texture(blockID, data):
             # have to render this thing anyway.  same for data == 2
             tex = transform_image_side(raw_texture)
             img = Image.new("RGBA", (24,24), (38,92,255,0))
-            img.paste(tex, (0,6), tex)
+            composite.alpha_over(img, tex, (0,6), tex)
             return (img.convert("RGB"), img.split()[3])
         if data == 2:
             tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
             img = Image.new("RGBA", (24,24), (38,92,255,0))
-            img.paste(tex, (12,6), tex)
+            composite.alpha_over(img, tex, (12,6), tex)
             return (img.convert("RGB"), img.split()[3])
         if data == 3:
             tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
             img = Image.new("RGBA", (24,24), (38,92,255,0))
-            img.paste(tex, (0,0), tex)
+            composite.alpha_over(img, tex, (0,0), tex)
             return (img.convert("RGB"), img.split()[3])
         if data == 4:
             tex = transform_image_side(raw_texture)
             img = Image.new("RGBA", (24,24), (38,92,255,0))
-            img.paste(tex, (12,0), tex)
+            composite.alpha_over(img, tex, (12,0), tex)
             return (img.convert("RGB"), img.split()[3])
             
     if blockID in (64,71): #wooden door, or iron door
@@ -450,36 +451,36 @@ def generate_special_texture(blockID, data):
         if (data & 0x03) == 0:
             if not swung:
                 tex = transform_image_side(raw_door)
-                img.paste(tex, (0,6), tex)
+                composite.alpha_over(img, tex, (0,6), tex)
             else:
                 # flip first to set the doornob on the correct side
                 tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
                 tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
-                img.paste(tex, (0,0), tex)
+                composite.alpha_over(img, tex, (0,0), tex)
         
         if (data & 0x03) == 1:
             if not swung:
                 tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
-                img.paste(tex, (0,0), tex)
+                composite.alpha_over(img, tex, (0,0), tex)
             else:
                 tex = transform_image_side(raw_door)
-                img.paste(tex, (12,0), tex)
+                composite.alpha_over(img, tex, (12,0), tex)
 
         if (data & 0x03) == 2:
             if not swung:
                 tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-                img.paste(tex, (12,0), tex)
+                composite.alpha_over(img, tex, (12,0), tex)
             else:
                 tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
-                img.paste(tex, (12,6), tex)
+                composite.alpha_over(img, tex, (12,6), tex)
 
         if (data & 0x03) == 3:
             if not swung:
                 tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
-                img.paste(tex, (12,6), tex)
+                composite.alpha_over(img, tex, (12,6), tex)
             else:
                 tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-                img.paste(tex, (0,6), tex)
+                composite.alpha_over(img, tex, (0,6), tex)
         
         return (img.convert("RGB"), img.split()[3])
     
