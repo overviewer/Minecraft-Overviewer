@@ -402,9 +402,9 @@ def generate_special_texture(blockID, data):
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-        img.paste(side1, (0,6), side1)
-        img.paste(side2, (12,6), side2)
-        img.paste(top, (0,0), top)
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 62: # lit furnace
@@ -504,9 +504,9 @@ def generate_special_texture(blockID, data):
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-        img.paste(side1, (0,6), side1)
-        img.paste(side2, (12,6), side2)
-        img.paste(top, (0,0), top)
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 18: # leaves
@@ -517,9 +517,9 @@ def generate_special_texture(blockID, data):
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-        img.paste(side1, (0,6), side1)
-        img.paste(side2, (12,6), side2)
-        img.paste(top, (0,0), top)
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
     
 
