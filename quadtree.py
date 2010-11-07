@@ -25,6 +25,7 @@ import collections
 import json
 import logging
 import util
+import cPickle
 
 from PIL import Image
 
@@ -144,12 +145,29 @@ class QuadtreeGen(object):
         if not os.path.exists(tileDir): os.mkdir(tileDir)
         blank.save(os.path.join(tileDir, "blank."+self.imgformat))
 
+        # copy web assets into destdir:
+        for root, dirs, files in os.walk(os.path.join(util.get_program_path(), "web_assets")):
+            for f in files:
+                shutil.copy(os.path.join(root, f), self.destdir)
+
         if skipjs:
             return
+
+        # since we will only discover PointsOfInterest in chunks that need to be 
+        # [re]rendered, POIs like signs in unchanged chunks will not be listed
+        # in self.world.POI.  To make sure we don't remove these from markers.js
+        # we need to merge self.world.POI with the persistant data in world.PersistentData
+
+        self.world.POI += filter(lambda x: x['type'] != 'spawn', self.world.persistentData['POI'])
 
         # write out the default marker table
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
             output.write("var markerData=%s" % json.dumps(self.world.POI))
+        
+        # save persistent data
+        self.world.persistentData['POI'] = self.world.POI
+        with open(self.world.pickleFile,"wb") as f:
+            cPickle.dump(self.world.persistentData,f)
 
         # write out the default (empty, but documented) region table
         with open(os.path.join(self.destdir, "regions.js"), 'w') as output:

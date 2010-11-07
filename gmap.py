@@ -145,6 +145,12 @@ def delete_all(worlddir, tiledir):
                     logging.info("Deleting {0}".format(filepath))
                     os.unlink(filepath)
 
+    # delete the overviewer.dat persistant data file
+    datfile = os.path.join(worlddir,"overviewer.dat")
+    if os.path.exists(datfile):
+        os.unlink(datfile)
+        logging.info("Deleting {0}".format(datfile))
+
 def list_worlds():
     "Prints out a brief summary of saves found in the default directory"
     print 

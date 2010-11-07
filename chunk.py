@@ -86,6 +86,11 @@ def get_blockdata_array(level):
     in a similar manner to skylight data"""
     return numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
 
+def get_tileentity_data(level):
+    """Returns the TileEntities TAG_List from chunk dat file"""
+    data = level['TileEntities']
+    return data
+
 def iterate_chunkblocks(xoff,yoff):
     """Iterates over the 16x16x128 blocks of a chunk in rendering order.
     Yields (x,y,z,imgx,imgy)
@@ -105,12 +110,12 @@ def iterate_chunkblocks(xoff,yoff):
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
 
-def render_and_save(chunkfile, cachedir, worldobj, cave=False):
+def render_and_save(chunkfile, cachedir, worldobj, cave=False, queue=None):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
     
     Returns the image file location"""
-    a = ChunkRenderer(chunkfile, cachedir, worldobj)
+    a = ChunkRenderer(chunkfile, cachedir, worldobj, queue)
     try:
         return a.render_and_save(cave)
     except ChunkCorrupt:
@@ -133,21 +138,29 @@ class ChunkCorrupt(Exception):
     pass
 
 class ChunkRenderer(object):
-    def __init__(self, chunkfile, cachedir, worldobj):
+    def __init__(self, chunkfile, cachedir, worldobj, queue):
         """Make a new chunk renderer for the given chunkfile.
         chunkfile should be a full path to the .dat file to process
         cachedir is a directory to save the resulting chunk images to
         """
+        self.queue = queue
+    
         if not os.path.exists(chunkfile):
             raise ValueError("Could not find chunkfile")
         self.chunkfile = chunkfile
         destdir, filename = os.path.split(self.chunkfile)
+        filename_split = filename.split(".")
+        chunkcoords = filename_split[1:3]
         
-        chunkcoords = filename.split(".")[1:3]
         self.coords = map(world.base36decode, chunkcoords)
         self.blockid = ".".join(chunkcoords)
-        self.world = worldobj
 
+        # chunk coordinates (useful to converting local block coords to 
+        # global block coords)
+        self.chunkX = int(filename_split[1], base=36)
+        self.chunkY = int(filename_split[2], base=36)
+
+        self.world = worldobj
         # Cachedir here is the base directory of the caches. We need to go 2
         # levels deeper according to the chunk file. Get the last 2 components
         # of destdir and use that
@@ -298,7 +311,7 @@ class ChunkRenderer(object):
         is up to date, this method doesn't render anything.
         """
         blockid = self.blockid
-
+        
         oldimg, oldimg_path = self.find_oldimage(cave)
 
         if oldimg:
@@ -479,6 +492,8 @@ class ChunkRenderer(object):
         # Odd elements get the upper 4 bits
         blockData_expanded[:,:,1::2] = blockData >> 4
 
+        tileEntities = get_tileentity_data(self.level)
+
 
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image
@@ -509,6 +524,7 @@ class ChunkRenderer(object):
 
             else:
                 t = textures.blockmap[blockid]
+
             if not t:
                 continue
 
@@ -606,6 +622,30 @@ class ChunkRenderer(object):
                     draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
                 if y != 0 and blocks[x,y-1,z] == 0:
                     draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
+
+
+        for entity in tileEntities:
+            if entity['id'] == 'Sign':
+
+                # convert the blockID coordinates from local chunk
+                # coordinates to global world coordinates
+                newPOI = dict(type="sign",
+                                x= entity['x'],
+                                y= entity['y'],
+                                z= entity['z'],
+                                msg="%s\n%s\n%s\n%s" %
+                                   (entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']),
+                                chunk= (self.chunkX, self.chunkY),
+                               )
+                self.queue.put(["newpoi", newPOI])
+
+
+        # check to see if there are any signs in the persistentData list that are from this chunk.
+        # if so, remove them from the persistentData list (since they're have been added to the world.POI
+        # list above.
+        self.queue.put(['removePOI', (self.chunkX, self.chunkY)])
+
+            
 
         return img
 

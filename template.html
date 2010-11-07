@@ -2,11 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-<style type="text/css">
-  html { height: 100% }
-  body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
-  #mcmap { height: 100% }
-</style>
+<link rel="stylesheet" href="style.css" type="text/css" />
 <script type="text/javascript" src="markers.js"></script>
 <script type="text/javascript" src="regions.js"></script>
 <script type="text/javascript"
@@ -138,7 +134,19 @@
   var map;
   
   var markersInit = false;
-  
+
+  function prepareSignMarker(marker, item) {
+      
+      var c = "<div class=\"infoWindow\"><img src=\"signpost.png\" /><p>" + item.msg.replace(/\n/g,"<br/>") + "</p></div>";
+      var infowindow = new google.maps.InfoWindow({
+content: c
+});
+google.maps.event.addListener(marker, 'click', function() {
+        infowindow.open(map,marker);
+        });
+
+}
+
   function initMarkers() {
     if (markersInit) { return; }
     
@@ -146,13 +154,26 @@
 
     for (i in markerData) {
       var item = markerData[i];
+
+      // a default:
+      var iconURL = '';
+      
+      if (item.type == 'spawn') { iconURL = 'http://google-maps-icons.googlecode.com/files/home.png';}
+      if (item.type == 'sign') { iconURL = 'signpost_icon.png';}
       
       var converted = fromWorldToLatLng(item.x, item.y, item.z);
        var marker = new google.maps.Marker({
         position: converted,
         map: map,
-        title: item.msg
-      });
+        title: item.msg, 
+        icon: iconURL
+
+        });
+
+       if (item.type == 'sign') {
+           prepareSignMarker(marker, item);
+       }
+
    }
   }
   
@@ -234,6 +255,18 @@
 	// initialize the markers and regions
 	initMarkers();
     initRegions();
+
+    var compassDiv = document.createElement('DIV');
+
+    compassDiv.style.padding = '5px';
+
+    var compassImg = document.createElement('IMG');
+    compassImg.src="compass.png";
+    compassDiv.appendChild(compassImg);
+
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
+
+
   }
 </script>
 </head>

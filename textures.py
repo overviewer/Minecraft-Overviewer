@@ -21,7 +21,7 @@ from cStringIO import StringIO
 import math
 
 import numpy
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageOps
 
 import util
 import composite
@@ -268,8 +268,8 @@ def _build_blockimages():
                36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67, # door,ladder left out. Minecart rail orientation
-       #       80  81  82  83  84
-               66, 69, 72, 73, 74 # clay?
+       #       80  81  82  83  84  85  86  87  88  89  90  91
+               66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
         ]
 
     # NOTE: For non-block textures, the sideid is ignored, but can't be -1
@@ -285,8 +285,8 @@ def _build_blockimages():
                 36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, 44, 61, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                 -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67,
-       #        80  81  82  83  84
-                66, 69, 72, 73, 74
+       #        80  81  82  83  84  85  86  87  88  89  90  91
+                66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
 
     # This maps block id to the texture that goes on the side of the block
@@ -393,6 +393,19 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, side2, (12,6), side2)
         composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
+
+    if blockID in (86,91): # jack-o-lantern
+        top = transform_image(terrain_images[102])
+        frontID = 119 if blockID == 86 else 120
+        side1 = transform_image_side(terrain_images[frontID])
+        side2 = transform_image_side(terrain_images[118]).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        img.paste(side1, (0,6), side1)
+        img.paste(side2, (12,6), side2)
+        img.paste(top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
     
     if blockID == 62: # lit furnace
         top = transform_image(terrain_images[1])
@@ -484,13 +497,43 @@ def generate_special_texture(blockID, data):
         
         return (img.convert("RGB"), img.split()[3])
     
+    if blockID == 2: # grass
+        top = transform_image(tintTexture(terrain_images[0],(170,255,50)))
+        side1 = transform_image_side(terrain_images[3])
+        side2 = transform_image_side(terrain_images[3]).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        img.paste(side1, (0,6), side1)
+        img.paste(side2, (12,6), side2)
+        img.paste(top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+    
+    if blockID == 18: # leaves
+        t = tintTexture(terrain_images[52], (170, 255, 50))
+        top = transform_image(t)
+        side1 = transform_image_side(t)
+        side2 = transform_image_side(t).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        img.paste(side1, (0,6), side1)
+        img.paste(side2, (12,6), side2)
+        img.paste(top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+    
 
     return None
 
+def tintTexture(im, c):
+    # apparently converting to grayscale drops the alpha channel?
+    i = ImageOps.colorize(ImageOps.grayscale(im), (0,0,0), c)
+    i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
+    return i
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
-special_blocks = set([66,59,61,62, 65,64,71])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -502,6 +545,18 @@ special_map[62] = (0,)      # burning furnace
 special_map[65] = (2,3,4,5) # ladder
 special_map[64] = range(16) # wooden door
 special_map[71] = range(16) # iron door
+special_map[91] = range(5)  # jack-o-lantern
+special_map[86] = range(5)  # pumpkin
+# apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
+# what that data represents.  For now, assume that the range for data is 0 to 5
+# like torches
+special_map[2] = (0,)       # grass
+special_map[18] = range(16) # leaves
+# grass and leaves are now graysacle in terrain.png
+# we treat them as special so we can manually tint them
+# it is unknown how the specific tint (biomes) is calculated
+
+# leaves have ancilary data, but its meaning is unknown (age perhaps?)
 
 specialblockmap = {}
 
