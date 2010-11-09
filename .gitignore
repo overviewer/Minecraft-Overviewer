@@ -6,3 +6,7 @@ _composite.so
 _composite.pyd
 _composite_d.pyd
 _composite.dylib
+
+#Script files, as users may want their own scripts.
+*.sh
+*.bat
