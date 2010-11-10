@@ -1,8 +1,15 @@
 *.pyc
 build
 
+# header files that may be copied over, if missing
+ImPlatform.h
+Imaging.h
+
 # various forms of compiled _composite extensions
 _composite.so
 _composite.pyd
 _composite_d.pyd
 _composite.dylib
+
+# Mac OS X noise
+.DS_Store
