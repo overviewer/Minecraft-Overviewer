@@ -26,6 +26,13 @@ from PIL import Image, ImageEnhance, ImageOps
 import util
 import composite
 
+sys.path.append("../python-gearman")
+
+from gearman.client import GearmanClient
+
+gmc = GearmanClient(["localhost"])
+
+
 def _find_file(filename, mode="rb"):
     """Searches for the given file and returns an open handle to it.
     This searches the following locations in this order:
@@ -531,9 +538,34 @@ def tintTexture(im, c):
     i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
     return i
 
+## prepare grasscolor.png
+grasscolor = list(Image.open("grasscolor.png").getdata())
+
+
+
+def tintForBiome(im, x, y):
+    result = gmc.submit_job("GetBiome", "%d,%d" % (x,y))
+    temp, moisture = map(lambda x: float(x),result.result.split("/"))
+
+    #print result.result
+    moisture *= temp
+    i  = int((1.0 - temp) * 255)
+    j = int((1.0 - moisture) * 255)
+    #print "tintInfo for %d,%d is %f,%f coord %d, %d" % (x,y, temp, moisture, i, j)
+    #print "resulting color: %r" % (grasscolor.getpixel((i,j))[:-1],)
+    #t = tintTexture(im[0], grasscolor.getpixel((i, j))[:-1])
+    #im[0] = t
+    #c = grasscolor.getpixel((j,i))[:-1]
+    c = grasscolor[(j << 8 | i)]
+    #print "grass color: %r" % (c,)
+    i = ImageOps.colorize(ImageOps.grayscale(im[0]), (0,0,0), c)
+    i.putalpha(im[1])
+    return (i, im[1])
+
+
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18])
+special_blocks = set([66,59,61,62, 65,64,71,91,86])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -550,8 +582,8 @@ special_map[86] = range(5)  # pumpkin
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
 # like torches
-special_map[2] = (0,)       # grass
-special_map[18] = range(16) # leaves
+#special_map[2] = (0,)       # grass
+#special_map[18] = range(16) # leaves
 # grass and leaves are now graysacle in terrain.png
 # we treat them as special so we can manually tint them
 # it is unknown how the specific tint (biomes) is calculated

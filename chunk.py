@@ -528,6 +528,9 @@ class ChunkRenderer(object):
             if not t:
                 continue
 
+            if blockid in (2,18): # grass or leaves, tint according to biome
+                t = textures.tintForBiome(t, (16*self.chunkX) + x,y+(16*self.chunkY))
+
             # Check if this block is occluded
             if cave and (
                     x == 0 and y != 15 and z != 127
