@@ -14,10 +14,12 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy
-from PIL import Image, ImageDraw, ImageEnhance
+from PIL import Image, ImageDraw, ImageEnhance, ImageOps
 import os.path
 import hashlib
 import logging
+import time
+import math
 
 import nbt
 import textures
@@ -473,6 +475,7 @@ class ChunkRenderer(object):
         For cave mode, all blocks that have any direct sunlight are not
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
+
         blocks = self.blocks
         
         if cave:
@@ -494,6 +497,11 @@ class ChunkRenderer(object):
 
         tileEntities = get_tileentity_data(self.level)
 
+        biomeColorData = textures.prepareBiomeData(self.world.worlddir,
+                self.chunkX, self.chunkY)
+        # in the 8x8 block of biome data, what chunk is this?l
+        startX = (self.chunkX - int(math.floor(self.chunkX/8)*8))
+        startY = (self.chunkY - int(math.floor(self.chunkY/8)*8))
 
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image
@@ -528,8 +536,22 @@ class ChunkRenderer(object):
             if not t:
                 continue
 
-            if blockid in (2,18): # grass or leaves, tint according to biome
-                t = textures.tintForBiome(t, (16*self.chunkX) + x,y+(16*self.chunkY))
+            if blockid == 2: #grass
+                index = biomeColorData[ ((startY*16)+y) * 128 + (startX*16) + x]
+                c = textures.grasscolor[index]
+
+                # only tint the top texture
+                t = textures.prepareGrassTexture(c)
+            elif blockid == 18: # leaves
+                index = biomeColorData[ ((startY*16)+y) * 128 + (startX*16) + x]
+                c = textures.foliagecolor[index]
+                #i = textures.tintTexture(t,c)
+                i = ImageOps.colorize(ImageOps.grayscale(t[0]), (0,0,0), c)
+                i.putalpha(t[1])              
+                t = (i, t[1])
+
+
+
 
             # Check if this block is occluded
             if cave and (
@@ -647,8 +669,6 @@ class ChunkRenderer(object):
         # if so, remove them from the persistentData list (since they're have been added to the world.POI
         # list above.
         self.queue.put(['removePOI', (self.chunkX, self.chunkY)])
-
-            
 
         return img
 

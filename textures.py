@@ -538,30 +538,50 @@ def tintTexture(im, c):
     i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
     return i
 
-## prepare grasscolor.png
+grassSide1 = transform_image_side(terrain_images[3])
+grassSide2 = transform_image_side(terrain_images[3]).transpose(Image.FLIP_LEFT_RIGHT)
+def prepareGrassTexture(color):
+    top = transform_image(tintTexture(terrain_images[0],color))
+    img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+    img.paste(grassSide1, (0,6), grassSide1)
+    img.paste(grassSide2, (12,6), grassSide2)
+    img.paste(top, (0,0), top)
+    return (img.convert("RGB"), img.split()[3])
+
+# TODO be more intelligent about where to find these files
 grasscolor = list(Image.open("grasscolor.png").getdata())
+foliagecolor = list(Image.open("foliagecolor.png").getdata())
 
+currentBiomeFile = None
+currentBiomeData = None
+def prepareBiomeData(worlddir, chunkX, chunkY):
+    '''Opens the worlddir and reads in the biome color information
+    from the .biome files.  See also:
+    http://www.minecraftforum.net/viewtopic.php?f=25&t=80902
+    '''
+    t = sys.modules[__name__]
+    if not os.path.exists(os.path.join(worlddir, "EXTRACTEDBIOMES")):
+        raise Exception("EXTRACTEDBIOMES not found")
 
+    biomeFile = "%d.%d.biome" % (
+        int(math.floor(chunkX/8)*8),
+        int(math.floor(chunkY/8)*8)
+            )
+    if biomeFile == t.currentBiomeFile:
+        return currentBiomeData
 
-def tintForBiome(im, x, y):
-    result = gmc.submit_job("GetBiome", "%d,%d" % (x,y))
-    temp, moisture = map(lambda x: float(x),result.result.split("/"))
+    t.currentBiomeFile = biomeFile
 
-    #print result.result
-    moisture *= temp
-    i  = int((1.0 - temp) * 255)
-    j = int((1.0 - moisture) * 255)
-    #print "tintInfo for %d,%d is %f,%f coord %d, %d" % (x,y, temp, moisture, i, j)
-    #print "resulting color: %r" % (grasscolor.getpixel((i,j))[:-1],)
-    #t = tintTexture(im[0], grasscolor.getpixel((i, j))[:-1])
-    #im[0] = t
-    #c = grasscolor.getpixel((j,i))[:-1]
-    c = grasscolor[(j << 8 | i)]
-    #print "grass color: %r" % (c,)
-    i = ImageOps.colorize(ImageOps.grayscale(im[0]), (0,0,0), c)
-    i.putalpha(im[1])
-    return (i, im[1])
+    f = open(os.path.join(worlddir, "EXTRACTEDBIOMES", biomeFile))
+    rawdata = f.read()
+    f.close()
 
+    data = numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2"))
+
+    t.currentBiomeData = data
+    return data
+     
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
