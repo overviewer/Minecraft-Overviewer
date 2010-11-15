@@ -1,5 +1,7 @@
 *.pyc
 build
+terrain.png
+cachedir*
 
 # various forms of compiled _composite extensions
 _composite.so
