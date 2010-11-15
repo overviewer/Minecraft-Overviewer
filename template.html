@@ -136,7 +136,7 @@
   var markersInit = false;
 
   function prepareSignMarker(marker, item) {
-      
+
       var c = "<div class=\"infoWindow\"><img src=\"signpost.png\" /><p>" + item.msg.replace(/\n/g,"<br/>") + "</p></div>";
       var infowindow = new google.maps.InfoWindow({
 content: c
@@ -149,7 +149,7 @@ google.maps.event.addListener(marker, 'click', function() {
 
   function initMarkers() {
     if (markersInit) { return; }
-    
+
     markersInit = true;
 
     for (i in markerData) {
@@ -157,7 +157,7 @@ google.maps.event.addListener(marker, 'click', function() {
 
       // a default:
       var iconURL = '';
-      
+
       if (item.type == 'spawn') { iconURL = 'http://google-maps-icons.googlecode.com/files/home.png';}
       if (item.type == 'sign') { iconURL = 'signpost_icon.png';}
       
@@ -165,7 +165,7 @@ google.maps.event.addListener(marker, 'click', function() {
        var marker = new google.maps.Marker({
         position: converted,
         map: map,
-        title: item.msg, 
+        title: item.msg,
         icon: iconURL
 
         });

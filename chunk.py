@@ -475,7 +475,6 @@ class ChunkRenderer(object):
         For cave mode, all blocks that have any direct sunlight are not
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
-
         blocks = self.blocks
         
         if cave:
@@ -547,7 +546,7 @@ class ChunkRenderer(object):
                 c = textures.foliagecolor[index]
                 #i = textures.tintTexture(t,c)
                 i = ImageOps.colorize(ImageOps.grayscale(t[0]), (0,0,0), c)
-                i.putalpha(t[1])              
+                i.putalpha(t[1])
                 t = (i, t[1])
 
 

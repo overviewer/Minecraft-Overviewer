@@ -26,13 +26,6 @@ from PIL import Image, ImageEnhance, ImageOps
 import util
 import composite
 
-sys.path.append("../python-gearman")
-
-from gearman.client import GearmanClient
-
-gmc = GearmanClient(["localhost"])
-
-
 def _find_file(filename, mode="rb"):
     """Searches for the given file and returns an open handle to it.
     This searches the following locations in this order:
@@ -581,7 +574,6 @@ def prepareBiomeData(worlddir, chunkX, chunkY):
 
     t.currentBiomeData = data
     return data
-     
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
