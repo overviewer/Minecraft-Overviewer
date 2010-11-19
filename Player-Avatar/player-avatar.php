@@ -1,4 +1,14 @@
 <?
+/**
+ * Player Avatars for brownan's Overviewer
+ * 
+ * @author eth0 <eth0@eth0.uk.net>
+ * @version 0.1
+ * @copyright Copyright (c) 2010, eth0
+ *
+ * @todo Needs serious tidy up
+ */
+
 $custom_player = 'http://minecraft.net/skin/'. $_GET['player'] .'.png';
 $default_player = 'http://eth0.uk.net/minecraft/map/char.png';
 $percent = ($_GET['s']) ? $_GET['s'] : 3;
