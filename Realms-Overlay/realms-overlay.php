@@ -1,4 +1,12 @@
 <?
+/**
+ * Realms Overlay for brownan's Overviewer
+ * 
+ * @author eth0 <eth0@eth0.uk.net>
+ * @version 0.1
+ * @copyright Copyright (c) 2010, eth0
+ */
+
 $MC_PATH = "/home/eth0/minecraft";
 
 $REALM_FILE_PATH = $MC_PATH . "/plugins/Realms Files"; 
