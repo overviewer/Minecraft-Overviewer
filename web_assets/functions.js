@@ -1,3 +1,4 @@
+var prevInfoWindow = null;
 
 function prepareSignMarker(marker, item) {
 
@@ -5,7 +6,10 @@ function prepareSignMarker(marker, item) {
     var infowindow = new google.maps.InfoWindow({content: c
             });
     google.maps.event.addListener(marker, 'click', function() {
+            if (prevInfoWindow)
+                prevInfoWindow.close()
             infowindow.open(map,marker);
+            prevInfoWindow = infowindow
             });
 
 }
@@ -25,6 +29,7 @@ function drawMapControls() {
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
 
 
+    if (markerData.length > 0) {
     // signpost display control
     //
 
@@ -57,8 +62,10 @@ function drawMapControls() {
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(signControl);
 
 
-
+    var hasSignGroup = false;
     for (label in signGroups) {
+        hasSignGroup = true;
+        var d = document.createElement("div");
         var n = document.createElement("input");
         n.type="checkbox";
 
@@ -68,10 +75,11 @@ function drawMapControls() {
                 jQuery.each(markerCollection[t.data("label")], function(i,elem) {elem.setVisible(e.target.checked);});
                 });
 
-        dropdownDiv.appendChild(n);
+        dropdownDiv.appendChild(d);
+        d.appendChild(n)
         var textNode = document.createElement("text");
         textNode.innerHTML = label + "<br/>";
-        dropdownDiv.appendChild(textNode);
+        d.appendChild(textNode);
 
     }
 
@@ -87,8 +95,15 @@ function drawMapControls() {
 
     dropdownDiv.appendChild(n);
     var textNode = document.createElement("text");
-    textNode.innerHTML = "Others<br/>";
+    if (hasSignGroup) {
+        textNode.innerHTML = "Others<br/>";
+    } else{ 
+        textNode.innerHTML = "All<br/>";
+    }
     dropdownDiv.appendChild(textNode);
+
+
+    }
 }
 
 function initRegions() {
