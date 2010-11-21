@@ -1,0 +1,17 @@
+Cache_Lite is perfs oriented. So before commiting, please bench your patch !
+
+To bench Cache_Lite, I use the tool 'ab' (distributed with apache).
+
+(for example)
+/usr/sbin/ab -c 10 -n 1000 http://127.0.0.1/ [...] /Cache_Lite/tests/bench.php
+
+In the output of 'ab', most important things are :
+- Failed requests: (must be 0 ! If not, don't commit !)
+- Requests per second:    XXX [#/sec] (mean)
+
+
+For testing if the cache is ok or not, you can use the script 'test.php', it 
+will write if the cache has been hit or missed...
+
+
+Fabien (fab@php.net)
