@@ -3,7 +3,7 @@
  * Player Avatars for brownan's Overviewer
  * 
  * @author eth0 <eth0@eth0.uk.net>
- * @version 0.2
+ * @version 0.3
  * @copyright Copyright (c) 2010, eth0
  *
  */
