@@ -60,7 +60,7 @@ imagealphablending($imgPlayerFace,true);
 // Copy and scale the head/face piece to canvas
 imagecopyresampled($imgPlayer, $imgPlayerHead, -8*$percent, -8*$percent, 0, 0, $new_width, $new_height, $width, $height);
 
-// Does the player have a face?
+// Does the player have a helmet?
 // We have to detect if the 'face' is entire painted the same as the background.
 $rgb = imagecolorat( $imgPlayerFace, 0, 0 );
 $bg_colors = imagecolorsforindex( $imgPlayerFace, $rgb );
