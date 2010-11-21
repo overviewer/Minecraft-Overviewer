@@ -11,33 +11,36 @@
 require_once('Cache/Lite.php');
 
 define("DEBUG", false);
+define("TMPDIR", '/tmp/');
+define("LIFETIME", 86400);	// People don't generally change their skin more than daily
+
 
 $CACHE_OPTIONS = array(
-	'cacheDir' => '/tmp/',
-	'lifeTime' => 3600,
+	'cacheDir' => TMPDIR,
+	'lifeTime' => LIFETIME,	
 	'automaticSerialization' => true
 );
 
-$player = $_GET['player'];
+$player = (string) htmlentities($_GET['player'], ENT_QUOTES, 'UTF-8');
 $custom_player = 'http://minecraft.net/skin/'. $player .'.png';
 $default_player = 'http://minecraft.net/img/char.png';
-$percent = ($_GET['s']) ? $_GET['s'] : 3;
+$s = (float) htmlentities($_GET['s'], ENT_QUOTES, 'UTF-8');
+$percent = (!empty($s)) ? $s : 3;
 
-
-// Create a Cache_Lite object
+// Let's dip in to the cache and see if we have a return visitor
 $Cache_Lite = new Cache_Lite($CACHE_OPTIONS);
-
 if ($player_skin_data = ($Cache_Lite->get($player))) {
 	if (DEBUG) $DEBUG_TEXT = "Cache Hit: " . (time() - $Cache_Lite->lastModified($player));
 } else {
 	$player_skin_data = file_get_contents($custom_player);
+	// Oh no custom skin? Guess we'll use the default
 	if ( !$player_skin_data ) $player_skin_data = file_get_contents($default_player);
 	if (DEBUG) $DEBUG_TEXT = "Cache Miss: " . (time() - $Cache_Lite->lastModified($player));
 	$Cache_Lite->save(($player_skin_data));
 }
 $player_skin = imagecreatefromstring($player_skin_data);
 
-// Get new dimensions
+// We get the skin dimensions and scaling factor
 $width = imagesx($player_skin);
 $height= imagesy($player_skin);
 $new_width = $width * $percent;
