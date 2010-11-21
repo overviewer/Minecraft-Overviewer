@@ -3,46 +3,86 @@
  * Player Avatars for brownan's Overviewer
  * 
  * @author eth0 <eth0@eth0.uk.net>
- * @version 0.1
+ * @version 0.2
  * @copyright Copyright (c) 2010, eth0
  *
- * @todo Needs serious tidy up
  */
 
-$custom_player = 'http://minecraft.net/skin/'. $_GET['player'] .'.png';
-$default_player = 'http://eth0.uk.net/minecraft/map/char.png';
+require_once('Cache/Lite.php');
+
+define("DEBUG", false);
+
+$CACHE_OPTIONS = array(
+	'cacheDir' => '/tmp/',
+	'lifeTime' => 3600,
+	'automaticSerialization' => true
+);
+
+$player = $_GET['player'];
+$custom_player = 'http://minecraft.net/skin/'. $player .'.png';
+$default_player = 'http://minecraft.net/img/char.png';
 $percent = ($_GET['s']) ? $_GET['s'] : 3;
 
-$player = getimagesize($custom_player) ? $custom_player : $default_player;
+
+// Create a Cache_Lite object
+$Cache_Lite = new Cache_Lite($CACHE_OPTIONS);
+
+if ($player_skin_data = ($Cache_Lite->get($player))) {
+	if (DEBUG) $DEBUG_TEXT = "Cache Hit: " . (time() - $Cache_Lite->lastModified($player));
+} else {
+	$player_skin_data = file_get_contents($custom_player);
+	if ( !$player_skin_data ) $player_skin_data = file_get_contents($default_player);
+	if (DEBUG) $DEBUG_TEXT = "Cache Miss: " . (time() - $Cache_Lite->lastModified($player));
+	$Cache_Lite->save(($player_skin_data));
+}
+$player_skin = imagecreatefromstring($player_skin_data);
 
 // Get new dimensions
-list($width, $height) = getimagesize($player);
+$width = imagesx($player_skin);
+$height= imagesy($player_skin);
 $new_width = $width * $percent;
 $new_height = $height * $percent;
 
-// Resample
-$image_p = imagecreatetruecolor(8*$percent, 8*$percent);
-//$image_p = imagecreatetruecolor(640, 320);
-$image_helmet_p = imagecreatefrompng($player);
-$image = imagecreatefrompng($player);
+// Setup a transparent canvas to compose the head/face & helmet/face pieces
+$imgPlayer = imagecreatetruecolor(8*$percent, 8*$percent);
+$color = imagecolortransparent($imgPlayer, imagecolorallocatealpha($imgPlayer, 0, 0, 0, 127));
+imagefill($imgPlayer, 0, 0, $color);
+imagesavealpha($imgPlayer, true);
+$imgPlayerHead = imagecreatefromstring($player_skin_data);
+$imgPlayerFace = imagecreatefromstring($player_skin_data);
+imagealphablending($imgPlayer, true);
+imagealphablending($imgPlayerHead,true); 
+imagealphablending($imgPlayerFace,true); 
 
-// Helmet
-/*
-imagealphablending($image_p, false);
-$color = imagecolortransparent($image_p, imagecolorallocatealpha($image_p, 0, 0, 0, 127));
-imagefill($image_p, 0, 0, $color);
-imagesavealpha($image_p, true);
-imagecopymerge($image_p, $image,0, 0,0, 0, 640, 320,	100); 
-*/
+// Copy and scale the head/face piece to canvas
+imagecopyresampled($imgPlayer, $imgPlayerHead, -8*$percent, -8*$percent, 0, 0, $new_width, $new_height, $width, $height);
 
-#imagecopymerge($image_p, $image, -40*10, -8*10, 0, 0, 640, 320,	imagesx($image),imagesy($image)); 
-        
-        imagecopyresampled($image_p, $image, -8*$percent, -8*$percent, 0, 0, $new_width, $new_height, $width, $height);
-#imagecopyresampled($image_p, $image, -40*$percent, -8*$percent, 0, 0, $new_width, $new_height, $width, $height);
+// Does the player have a face?
+// We have to detect if the 'face' is entire painted the same as the background.
+$rgb = imagecolorat( $imgPlayerFace, 0, 0 );
+$bg_colors = imagecolorsforindex( $imgPlayerFace, $rgb );
+$hasFace = false;
+for ($xPix=40; $xPix <= 47; $xPix++)
+{
+	for ($yPix=8; $yPix <= 15; $yPix++)
+	{
+		$rgb = imagecolorat( $imgPlayerFace, $xPix, $yPix );
+		$colors = imagecolorsforindex( $imgPlayerFace, $rgb );
+		if ( count(array_diff_assoc( $colors, $bg_colors )) )
+		{
+			$hasFace = true;
+			break 2;
+		}
+	}
+}
 
-// Output
+// Copy and scale the helmet/face piece to canvas
+if ($hasFace) imagecopyresampled($imgPlayer, $imgPlayerFace, -40*$percent, -8*$percent, 0, 0, $new_width, $new_height, $width, $height);
+
+if (DEBUG) imagestring($imgPlayer, 2, 0, 0, $DEBUG_TEXT, imagecolorallocate($imgPlayer, 0, 0, 255));
+
+// And finally output the image
 header('Content-type: image/png');
-imagepng($image_p, null, 1);
-imagedestroy($image_p);
-
+imagepng($imgPlayer, null, 9);
+imagedestroy($imgPlayer);
 ?>
