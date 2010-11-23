@@ -496,7 +496,8 @@ class ChunkRenderer(object):
 
         tileEntities = get_tileentity_data(self.level)
 
-        biomeColorData = textures.prepareBiomeData(self.world.worlddir,
+        if self.world.useBiomeData:
+            biomeColorData = textures.prepareBiomeData(self.world.worlddir,
                 self.chunkX, self.chunkY)
         # in the 8x8 block of biome data, what chunk is this?l
         startX = (self.chunkX - int(math.floor(self.chunkX/8)*8))
@@ -534,20 +535,19 @@ class ChunkRenderer(object):
 
             if not t:
                 continue
+            
+            if self.world.useBiomeData:
+                if blockid == 2: #grass
+                    index = biomeColorData[ ((startY*16)+y) * 128 + (startX*16) + x]
+                    c = textures.grasscolor[index]
 
-            if blockid == 2: #grass
-                index = biomeColorData[ ((startY*16)+y) * 128 + (startX*16) + x]
-                c = textures.grasscolor[index]
-
-                # only tint the top texture
-                t = textures.prepareGrassTexture(c)
-            elif blockid == 18: # leaves
-                index = biomeColorData[ ((startY*16)+y) * 128 + (startX*16) + x]
-                c = textures.foliagecolor[index]
-                #i = textures.tintTexture(t,c)
-                i = ImageOps.colorize(ImageOps.grayscale(t[0]), (0,0,0), c)
-                i.putalpha(t[1])
-                t = (i, t[1])
+                    # only tint the top texture
+                    t = textures.prepareGrassTexture(c)
+                elif blockid == 18: # leaves
+                    index = biomeColorData[ ((startY*16)+y) * 128 + (startX*16) + x]
+                    c = textures.foliagecolor[index]
+                    
+                    t = textures.prepareLeafTexture(c)
 
 
 
