@@ -165,7 +165,7 @@ google.maps.event.addListener(marker, 'click', function() {
        var marker = new google.maps.Marker({
         position: converted,
         map: map,
-        title: item.msg, 
+        title: item.msg.replace(/\s+/g, " \n"),
         icon: iconURL
 
         });
