@@ -32,7 +32,7 @@ if py2exe != None:
 # _composite.c extension
 #
 
-setup_kwargs['ext_modules'].append(Extension('_composite', ['_composite.c']))
+setup_kwargs['ext_modules'].append(Extension('_composite', ['_composite.c'], include_dirs=['.']))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
@@ -48,8 +48,8 @@ class CustomClean(clean):
         # try to remove '_composite.{so,pyd,...}' extension,
         # regardless of the current system's extension name convention
         build_ext = self.get_finalized_command('build_ext')
-        fname = build_ext.get_ext_fullpath('_composite')
-        pretty_fname = os.path.split(fname)[1]
+        pretty_fname = build_ext.get_ext_filename('_composite')
+        fname = pretty_fname
         if os.path.exists(fname):
             try:
                 if not self.dry_run:
