@@ -170,6 +170,12 @@ class ChunkRenderer(object):
         _, dir1 = os.path.split(moredirs)
         self.cachedir = os.path.join(cachedir, dir1, dir2)
 
+
+        if self.world.useBiomeData:
+            if not textures.grasscolor or not textures.foliagecolor:
+                raise Exception("Can't find grasscolor.png or foliagecolor.png")
+
+
         if not os.path.exists(self.cachedir):
             try:
                 os.makedirs(self.cachedir)

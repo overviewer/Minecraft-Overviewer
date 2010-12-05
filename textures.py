@@ -564,7 +564,8 @@ try:
     grasscolor = list(Image.open(_find_file("grasscolor.png")).getdata())
     foliagecolor = list(Image.open(_find_file("foliagecolor.png")).getdata())
 except:
-    pass
+    grasscolor = None
+    foliagecolor = None
 
 currentBiomeFile = None
 currentBiomeData = None
