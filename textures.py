@@ -556,27 +556,37 @@ def prepareLeafTexture(color):
     img.paste(top, (0,0), top)
     return (img.convert("RGB"), img.split()[3])
 
-#useBiomeData = os.path.exists(os.path.join(self.world, EXTRACTEDBIOMES))
-#if not useBiomeData:
-#    logging.info("Notice: Not using biome data for tinting")
 
-try:
-    grasscolor = list(Image.open(_find_file("grasscolor.png")).getdata())
-    foliagecolor = list(Image.open(_find_file("foliagecolor.png")).getdata())
-except:
-    grasscolor = None
-    foliagecolor = None
 
 currentBiomeFile = None
 currentBiomeData = None
-def prepareBiomeData(worlddir, chunkX, chunkY):
+
+def prepareBiomeData(worlddir):
+    biomeDir = os.path.join(worlddir, "EXTRACTEDBIOMES")
+    if not os.path.exists(biomeDir):
+        raise Exception("EXTRACTEDBIOMES not found")
+
+    t = sys.modules[__name__]
+
+    # try to find the biome color images.  If _find_file can't locate them
+    # then try looking in the EXTRACTEDBIOMES folder
+    try:
+        t.grasscolor = list(Image.open(_find_file("grasscolor.png")).getdata())
+        t.foliagecolor = list(Image.open(_find_file("foliagecolor.png")).getdata())
+    except IOError:
+        try:
+            t.grasscolor = list(Image.open(os.path.join(biomeDir,"grasscolor.png")).getdata())
+            t.foliagecolor = list(Image.open(os.path.join(biomeDir,"foliagecolor.png")).getdata())
+        except:
+            t.grasscolor = None
+            t.foliagecolor = None
+
+def getBiomeData(worlddir, chunkX, chunkY):
     '''Opens the worlddir and reads in the biome color information
     from the .biome files.  See also:
     http://www.minecraftforum.net/viewtopic.php?f=25&t=80902
     '''
     t = sys.modules[__name__]
-    if not os.path.exists(os.path.join(worlddir, "EXTRACTEDBIOMES")):
-        raise Exception("EXTRACTEDBIOMES not found")
 
     biomeFile = "%d.%d.biome" % (
         int(math.floor(chunkX/8)*8),

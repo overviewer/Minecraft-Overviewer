@@ -503,7 +503,7 @@ class ChunkRenderer(object):
         tileEntities = get_tileentity_data(self.level)
 
         if self.world.useBiomeData:
-            biomeColorData = textures.prepareBiomeData(self.world.worlddir,
+            biomeColorData = textures.getBiomeData(self.world.worlddir,
                 self.chunkX, self.chunkY)
         # in the 8x8 block of biome data, what chunk is this?l
         startX = (self.chunkX - int(math.floor(self.chunkX/8)*8))

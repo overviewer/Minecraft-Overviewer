@@ -26,6 +26,7 @@ import numpy
 
 import chunk
 import nbt
+import textures
 
 """
 This module has routines related to generating all the chunks for a world
@@ -101,6 +102,9 @@ class WorldRenderer(object):
         self.night = night
         self.cachedir = cachedir
         self.useBiomeData = useBiomeData
+
+        if self.useBiomeData:
+            textures.prepareBiomeData(worlddir)
 
         self.chunklist = chunklist
 
