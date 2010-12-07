@@ -125,19 +125,20 @@ class QuadtreeGen(object):
                 complete, total, level, self.p))
 
     def write_html(self, skipjs=False):
-        """Writes out index.html, marker.js, and region.js"""
+        """Writes out config.js, marker.js, and region.js
+        Copies web assets into the destdir"""
         zoomlevel = self.p
         imgformat = self.imgformat
-        templatepath = os.path.join(util.get_program_path(), "template.html")
+        configpath = os.path.join(util.get_program_path(), "config.js")
 
-        html = open(templatepath, 'r').read()
-        html = html.replace(
+        config = open(configpath, 'r').read()
+        config = config.replace(
                 "{maxzoom}", str(zoomlevel))
-        html = html.replace(
+        config = config.replace(
                 "{imgformat}", str(imgformat))
                 
-        with open(os.path.join(self.destdir, "index.html"), 'w') as output:
-            output.write(html)
+        with open(os.path.join(self.destdir, "config.js"), 'w') as output:
+            output.write(config)
 
         # Write a blank image
         blank = Image.new("RGBA", (1,1))
@@ -181,11 +182,11 @@ class QuadtreeGen(object):
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
-        index.html to see what maxZoom is set to.
+        config.js to see what maxZoom is set to.
         returns -1 if it couldn't be detected, file not found, or nothing in
-        index.html matched
+        config.js matched
         """
-        indexfile = os.path.join(self.destdir, "index.html")
+        indexfile = os.path.join(self.destdir, "config.js")
         if not os.path.exists(indexfile):
             return -1
         matcher = re.compile(r"maxZoom:\s*(\d+)")

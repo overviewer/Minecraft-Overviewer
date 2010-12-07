@@ -16,3 +16,27 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
     text-align: center;
     font-family: monospace;
 }
+
+#signControl {
+    padding: 5px;
+    height: 15px;
+    font-family: Arial, sans-serif;
+}
+
+#signControl > div#top {
+    background-color: #fff;
+    border: 1px solid #000;
+    text-align: center;
+    width: 70px;
+    font-size: 12px;
+    width: 70px;
+    cursor: pointer;
+}
+
+#signControl > div#dropDown {
+    border: 1px solid #000;
+    font-size: 12px;
+    background-color: #fff;
+    display: none;
+}
+
