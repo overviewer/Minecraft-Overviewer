@@ -29,7 +29,7 @@ function drawMapControls() {
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
 
 
-    if (markerData.length > 0) {
+    if (signGroups.length > 0) {
     // signpost display control
     //
 
@@ -62,8 +62,12 @@ function drawMapControls() {
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(signControl);
 
 
+
     var hasSignGroup = false;
-    for (label in signGroups) {
+    for (idx in signGroups) {
+        var item = signGroups[idx];
+        //console.log(item);
+        label = item.label;
         hasSignGroup = true;
         var d = document.createElement("div");
         var n = document.createElement("input");
@@ -75,6 +79,11 @@ function drawMapControls() {
                 jQuery.each(markerCollection[t.data("label")], function(i,elem) {elem.setVisible(e.target.checked);});
                 });
 
+
+        if (item.checked) {
+            n.checked = true;
+            jQuery.each(markerCollection[label], function(i,elem) {elem.setVisible(n.checked);});
+        }
         dropdownDiv.appendChild(d);
         d.appendChild(n)
         var textNode = document.createElement("text");
@@ -82,25 +91,6 @@ function drawMapControls() {
         d.appendChild(textNode);
 
     }
-
-    // add "others" 
-    var n = document.createElement("input");
-    n.type="checkbox";
-
-    $(n).data("label","__others__");
-    jQuery(n).click(function(e) {
-            var t = $(e.target);
-            jQuery.each(markerCollection[t.data("label")], function(i,elem) {elem.setVisible(e.target.checked);});
-            });
-
-    dropdownDiv.appendChild(n);
-    var textNode = document.createElement("text");
-    if (hasSignGroup) {
-        textNode.innerHTML = "Others<br/>";
-    } else{ 
-        textNode.innerHTML = "All<br/>";
-    }
-    dropdownDiv.appendChild(textNode);
 
 
     }
@@ -172,11 +162,12 @@ function initMarkers() {
         }
 
         var matched = false;
-        for (label in signGroups) {
-            var pattern = signGroups[label];
+        for (idx in signGroups) {
+            var signGroup = signGroups[idx];
+            var testfunc = signGroup.match;
+            var label = signGroup.label;
 
-            var r = item.msg.match(pattern);
-            if (r) {
+            if (testfunc(item)) {
                 matched = true;
 
                 if (item.type == 'sign') { iconURL = 'signpost_icon.png';}
@@ -246,14 +237,14 @@ function initialize() {
         map.overlayMapTypes.insertAt(0, new CoordMapType(new google.maps.Size(config.tileSize, config.tileSize)));
 
         google.maps.event.addListener(map, 'click', function(event) {
-                console.log("latLng; " + event.latLng.lat() + ", " + event.latLng.lng());
+                //console.log("latLng; " + event.latLng.lat() + ", " + event.latLng.lng());
 
                 var pnt = map.getProjection().fromLatLngToPoint(event.latLng);
-                console.log("point: " + pnt);
+                //console.log("point: " + pnt);
 
                 var pxx = pnt.x * config.tileSize * Math.pow(2, config.maxZoom);
                 var pxy = pnt.y * config.tileSize * Math.pow(2, config.maxZoom);
-                console.log("pixel: " + pxx + ", " + pxy);
+                //console.log("pixel: " + pxx + ", " + pxy);
                 });
     }
 
