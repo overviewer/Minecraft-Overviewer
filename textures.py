@@ -498,7 +498,7 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 2: # grass
-        top = transform_image(tintTexture(terrain_images[0],(170,255,50)))
+        top = transform_image(tintTexture(terrain_images[0],(115,175,71)))
         side1 = transform_image_side(terrain_images[3])
         side2 = transform_image_side(terrain_images[3]).transpose(Image.FLIP_LEFT_RIGHT)
 
@@ -510,7 +510,7 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 18: # leaves
-        t = tintTexture(terrain_images[52], (170, 255, 50))
+        t = tintTexture(terrain_images[52], (37, 118, 25))
         top = transform_image(t)
         side1 = transform_image_side(t)
         side2 = transform_image_side(t).transpose(Image.FLIP_LEFT_RIGHT)
@@ -530,6 +530,81 @@ def tintTexture(im, c):
     i = ImageOps.colorize(ImageOps.grayscale(im), (0,0,0), c)
     i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
     return i
+
+grassSide1 = transform_image_side(terrain_images[3])
+grassSide2 = transform_image_side(terrain_images[3]).transpose(Image.FLIP_LEFT_RIGHT)
+def prepareGrassTexture(color):
+    top = transform_image(tintTexture(terrain_images[0],color))
+    img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+    img.paste(grassSide1, (0,6), grassSide1)
+    img.paste(grassSide2, (12,6), grassSide2)
+    img.paste(top, (0,0), top)
+    return (img.convert("RGB"), img.split()[3])
+
+
+def prepareLeafTexture(color):
+    t = tintTexture(terrain_images[52], color)
+    top = transform_image(t)
+    side1 = transform_image_side(t)
+    side2 = transform_image_side(t).transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+    img.paste(side1, (0,6), side1)
+    img.paste(side2, (12,6), side2)
+    img.paste(top, (0,0), top)
+    return (img.convert("RGB"), img.split()[3])
+
+
+
+currentBiomeFile = None
+currentBiomeData = None
+
+def prepareBiomeData(worlddir):
+    biomeDir = os.path.join(worlddir, "EXTRACTEDBIOMES")
+    if not os.path.exists(biomeDir):
+        raise Exception("EXTRACTEDBIOMES not found")
+
+    t = sys.modules[__name__]
+
+    # try to find the biome color images.  If _find_file can't locate them
+    # then try looking in the EXTRACTEDBIOMES folder
+    try:
+        t.grasscolor = list(Image.open(_find_file("grasscolor.png")).getdata())
+        t.foliagecolor = list(Image.open(_find_file("foliagecolor.png")).getdata())
+    except IOError:
+        try:
+            t.grasscolor = list(Image.open(os.path.join(biomeDir,"grasscolor.png")).getdata())
+            t.foliagecolor = list(Image.open(os.path.join(biomeDir,"foliagecolor.png")).getdata())
+        except:
+            t.grasscolor = None
+            t.foliagecolor = None
+
+def getBiomeData(worlddir, chunkX, chunkY):
+    '''Opens the worlddir and reads in the biome color information
+    from the .biome files.  See also:
+    http://www.minecraftforum.net/viewtopic.php?f=25&t=80902
+    '''
+    t = sys.modules[__name__]
+
+    biomeFile = "%d.%d.biome" % (
+        int(math.floor(chunkX/8)*8),
+        int(math.floor(chunkY/8)*8)
+            )
+    if biomeFile == t.currentBiomeFile:
+        return currentBiomeData
+
+    t.currentBiomeFile = biomeFile
+
+    f = open(os.path.join(worlddir, "EXTRACTEDBIOMES", biomeFile), "rb")
+    rawdata = f.read()
+    f.close()
+
+    data = numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2"))
+
+    t.currentBiomeData = data
+    return data
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)

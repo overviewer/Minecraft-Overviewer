@@ -14,10 +14,12 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy
-from PIL import Image, ImageDraw, ImageEnhance
+from PIL import Image, ImageDraw, ImageEnhance, ImageOps
 import os.path
 import hashlib
 import logging
+import time
+import math
 
 import nbt
 import textures
@@ -167,6 +169,12 @@ class ChunkRenderer(object):
         moredirs, dir2 = os.path.split(destdir)
         _, dir1 = os.path.split(moredirs)
         self.cachedir = os.path.join(cachedir, dir1, dir2)
+
+
+        if self.world.useBiomeData:
+            if not textures.grasscolor or not textures.foliagecolor:
+                raise Exception("Can't find grasscolor.png or foliagecolor.png")
+
 
         if not os.path.exists(self.cachedir):
             try:
@@ -494,6 +502,12 @@ class ChunkRenderer(object):
 
         tileEntities = get_tileentity_data(self.level)
 
+        if self.world.useBiomeData:
+            biomeColorData = textures.getBiomeData(self.world.worlddir,
+                self.chunkX, self.chunkY)
+        # in the 8x8 block of biome data, what chunk is this?l
+        startX = (self.chunkX - int(math.floor(self.chunkX/8)*8))
+        startY = (self.chunkY - int(math.floor(self.chunkY/8)*8))
 
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image
@@ -527,6 +541,22 @@ class ChunkRenderer(object):
 
             if not t:
                 continue
+            
+            if self.world.useBiomeData:
+                if blockid == 2: #grass
+                    index = biomeColorData[ ((startY*16)+y) * 128 + (startX*16) + x]
+                    c = textures.grasscolor[index]
+
+                    # only tint the top texture
+                    t = textures.prepareGrassTexture(c)
+                elif blockid == 18: # leaves
+                    index = biomeColorData[ ((startY*16)+y) * 128 + (startX*16) + x]
+                    c = textures.foliagecolor[index]
+                    
+                    t = textures.prepareLeafTexture(c)
+
+
+
 
             # Check if this block is occluded
             if cave and (
@@ -644,8 +674,6 @@ class ChunkRenderer(object):
         # if so, remove them from the persistentData list (since they're have been added to the world.POI
         # list above.
         self.queue.put(['removePOI', (self.chunkX, self.chunkY)])
-
-            
 
         return img
 

@@ -115,8 +115,13 @@ def main():
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
 
+    
+    useBiomeData = os.path.exists(os.path.join(worlddir, 'EXTRACTEDBIOMES'))
+    if not useBiomeData:
+        logging.info("Notice: Not using biome data for tinting")
+
     # First generate the world's chunk images
-    w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist, lighting=options.lighting, night=options.night)
+    w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist, lighting=options.lighting, night=options.night, useBiomeData=useBiomeData)
     w.go(options.procs)
 
     # Now generate the tiles

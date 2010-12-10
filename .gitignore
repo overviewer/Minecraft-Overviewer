@@ -1,5 +1,11 @@
 *.pyc
 build
+terrain.png
+cachedir*
+
+# header files that may be copied over, if missing
+ImPlatform.h
+Imaging.h
 
 # header files that may be copied over, if missing
 ImPlatform.h
