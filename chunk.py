@@ -304,7 +304,7 @@ class ChunkRenderer(object):
     def find_oldimage(self, cave):
         # Get the name of the existing image.
         oldimg = oldimg_path = None
-        key = ".".join((dirbits[0], dirbits[1], self.blockid, "cave" if cave else "nocave"))
+        key = ".".join((self.dirbits[0], self.dirbits[1], self.blockid, "cave" if cave else "nocave"))
         if key in self.world.cached:
              oldimg_path = self.world.cached[key]
              _, oldimg = os.path.split(oldimg_path)
