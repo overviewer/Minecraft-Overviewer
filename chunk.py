@@ -327,6 +327,7 @@ class ChunkRenderer(object):
             if os.path.getmtime(self.chunkfile) <= os.path.getmtime(oldimg_path):
                 # chunkfile is older than the image, don't even bother checking
                 # the hash
+                logging.debug("Using cached image")
                 return oldimg_path
 
         # Reasons for the code to get to this point:
@@ -352,6 +353,7 @@ class ChunkRenderer(object):
                 # Before we return it, update its mtime so the next round
                 # doesn't have to check the hash
                 os.utime(dest_path, None)
+                logging.debug("Using cached image")
                 return dest_path
             else:
                 # Remove old image for this chunk. Anything already existing is
