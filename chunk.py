@@ -306,6 +306,7 @@ class ChunkRenderer(object):
         oldimg = oldimg_path = None
         key = ".".join((self.dirbits[0], self.dirbits[1], self.blockid, "cave" if cave else "nocave"))
         if key in self.world.cached:
+             print "Found cached image {0}".format(key)
              oldimg_path = self.world.cached[key]
              _, oldimg = os.path.split(oldimg_path)
         return oldimg, oldimg_path
