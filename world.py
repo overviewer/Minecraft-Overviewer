@@ -21,6 +21,7 @@ import Queue
 import sys
 import logging
 import cPickle
+import collections
 
 import numpy
 
@@ -107,6 +108,20 @@ class WorldRenderer(object):
             textures.prepareBiomeData(worlddir)
 
         self.chunklist = chunklist
+        self.cached = collections.defaultdict(dict)
+
+        # In order to avoid having to look up the cache file names in
+        # ChunkRenderer, get them all and store them here
+        for root, dirnames, filenames in os.walk('.'):
+            for filename in filenames:
+                if not filename.endswith('.png'):
+                    continue
+                dirname, dir_b = os.path.split(root)
+                _, dir_a = os.path.split(dirname)
+                _, x, z, cave, _ = filename.split('.', 4)
+                bits = '.'.join((dir_a, dir_b, x, z, cave))
+                self.cached[bits] = os.path.join(root, filename)
+
 
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example

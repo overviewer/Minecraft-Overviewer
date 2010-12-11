@@ -169,6 +169,7 @@ class ChunkRenderer(object):
         moredirs, dir2 = os.path.split(destdir)
         _, dir1 = os.path.split(moredirs)
         self.cachedir = os.path.join(cachedir, dir1, dir2)
+        self.dirbits = (dir1, dir2)
 
 
         if self.world.useBiomeData:
@@ -301,16 +302,12 @@ class ChunkRenderer(object):
         return self._digest
 
     def find_oldimage(self, cave):
-        # Get the name of the existing image. No way to do this but to look at
-        # all the files
+        # Get the name of the existing image.
         oldimg = oldimg_path = None
-        for filename in os.listdir(self.cachedir):
-            if filename.startswith("img.{0}.{1}.".format(self.blockid,
-                    "cave" if cave else "nocave")) and \
-                    filename.endswith(".png"):
-                oldimg = filename
-                oldimg_path = os.path.join(self.cachedir, oldimg)
-                break
+        key = ".".join((dirbits[0], dirbits[1], self.blockid, "cave" if cave else "nocave"))
+        if key in self.world.cached:
+             oldimg_path = self.world.cached[key]
+             _, oldimg = os.path.split(oldimg_path)
         return oldimg, oldimg_path
 
     def render_and_save(self, cave=False):
