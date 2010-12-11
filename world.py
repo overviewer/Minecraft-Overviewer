@@ -112,7 +112,7 @@ class WorldRenderer(object):
 
         # In order to avoid having to look up the cache file names in
         # ChunkRenderer, get them all and store them here
-        for root, dirnames, filenames in os.walk('.'):
+        for root, dirnames, filenames in os.walk(cachedir):
             for filename in filenames:
                 if not filename.endswith('.png'):
                     continue
