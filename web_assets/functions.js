@@ -154,7 +154,7 @@ function initMarkers() {
             var converted = fromWorldToLatLng(item.x, item.y, item.z);
             var marker = new google.maps.Marker({position: converted,
                     map: map,
-                    title: item.msg, 
+                    title: jQuery.trim(item.msg), 
                     icon: iconURL
                     });
 
@@ -175,7 +175,7 @@ function initMarkers() {
                 var converted = fromWorldToLatLng(item.x, item.y, item.z);
                 var marker = new google.maps.Marker({position: converted,
                         map: map,
-                        title: item.msg, 
+                        title: jQuery.trim(item.msg), 
                         icon: iconURL,
                         visible: false
                         });
@@ -201,7 +201,7 @@ function initMarkers() {
             var converted = fromWorldToLatLng(item.x, item.y, item.z);
             var marker = new google.maps.Marker({position: converted,
                     map: map,
-                    title: item.msg, 
+                    title: jQuery.trim(item.msg), 
                     icon: iconURL,
                     visible: false
                     });
