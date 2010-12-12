@@ -221,10 +221,37 @@ function initMarkers() {
 }
 
 
+function makeLink() {
+    var a=location.href.substring(0,location.href.lastIndexOf("/")+1)
+        + "?lat=" + map.getCenter().lat().toFixed(6)
+        + "&lng=" + map.getCenter().lng().toFixed(6)
+        + "&zoom=" + map.getZoom();
+    document.getElementById("link").innerHTML = a;
+}
 
 function initialize() {
-    var mapOptions = {zoom: config.defaultZoom,
-        center: new google.maps.LatLng(0.5, 0.5),
+
+    var query = location.search.substring(1);
+
+    var lat = 0.5;
+    var lng = 0.5;
+    var zoom = config.defaultZoom;
+    var pairs = query.split("&");
+    for (var i=0; i<pairs.length; i++) {
+        // break each pair at the first "=" to obtain the argname and value
+        var pos = pairs[i].indexOf("=");
+        var argname = pairs[i].substring(0,pos).toLowerCase();
+        var value = pairs[i].substring(pos+1).toLowerCase();
+
+        // process each possible argname
+        if (argname == "lat") {lat = parseFloat(value);}
+        if (argname == "lng") {lng = parseFloat(value);}
+        if (argname == "zoom") {zoom = parseInt(value);}
+    }
+
+    var mapOptions = {
+        zoom: zoom,
+        center: new google.maps.LatLng(lat, lng),
         navigationControl: true,
         scaleControl: false,
         mapTypeControl: false,
@@ -260,7 +287,15 @@ function initialize() {
     initRegions();
     drawMapControls();
 
+    makeLink();
 
+    // Make the link again whenever the map changes
+    google.maps.event.addListener(map, 'zoom_changed', function() {
+        makeLink();
+    });
+    google.maps.event.addListener(map, 'center_changed', function() {
+        makeLink();
+    });
 
 }
 
