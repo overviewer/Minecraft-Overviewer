@@ -17,6 +17,17 @@ function prepareSignMarker(marker, item) {
 
 function drawMapControls() {
 
+    // viewstate link
+    var viewStateDiv = document.createElement('DIV');
+
+        //<div id="link" style="border:1px solid black;background-color:white;color:black;position:absolute;top:5px;right:5px"></div>
+
+    viewStateDiv.id="link";
+
+
+    map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(viewStateDiv);
+
+
     // compass rose, in the top right corner
     var compassDiv = document.createElement('DIV');
 
@@ -222,7 +233,7 @@ function initMarkers() {
 
 
 function makeLink() {
-    var a=location.href.substring(0,location.href.lastIndexOf("/")+1)
+    var a=location.href.substring(0,location.href.lastIndexOf(location.search))
         + "?lat=" + map.getCenter().lat().toFixed(6)
         + "&lng=" + map.getCenter().lng().toFixed(6)
         + "&zoom=" + map.getZoom();
@@ -287,7 +298,7 @@ function initialize() {
     initRegions();
     drawMapControls();
 
-    makeLink();
+    //makeLink();
 
     // Make the link again whenever the map changes
     google.maps.event.addListener(map, 'zoom_changed', function() {

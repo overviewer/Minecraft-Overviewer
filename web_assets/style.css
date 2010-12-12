@@ -40,3 +40,18 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
     display: none;
 }
 
+
+#link {
+    background-color: #fff; /* fallback */
+    background-color: rgba(255,255,255,0.55);
+    border: 1px solid rgb(0, 0, 0);
+    font-size: 9pt;
+    padding-left: 2px;
+    padding-right: 2px;
+    margin-bottom: 1px;
+}
+
+#link:hover {
+    background-color: #fff; /* fallback */
+    background-color: rgba(255,255,255,0.8);
+}
