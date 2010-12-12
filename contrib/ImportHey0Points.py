@@ -50,7 +50,7 @@ def main():
                       help = 'The bin directory for Hey0 server mod (Location of homes.txt and warps.txt)')
 
     options, args = parser.parse_args()
-    if (options.bindir != '' and options.cachedir != '') and (not options.parsehome or not options.parsewarps):
+    if (options.bindir != '' and options.cachedir != '') and not (options.parsehome or options.parsewarps):
         print "You must specify --cachedir --bindir and and at least one file to process"
         parser.print_help()
         sys.exit(1)
