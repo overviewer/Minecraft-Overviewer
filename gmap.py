@@ -27,6 +27,7 @@ import re
 import multiprocessing
 import time
 import logging
+import optimizeimages
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -103,7 +104,8 @@ def main():
         imgformat = 'png'
 
     if options.optimizeimg:
-        optimizeimg = options.optimizeimg
+        optimizeimg = int(options.optimizeimg)
+        optimizeimages.check_programs(optimizeimg)
     else:
         optimizeimg = None
 
