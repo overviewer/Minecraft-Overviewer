@@ -284,46 +284,6 @@ class ChunkRenderer(object):
         return self._right_blocklight
     right_blocklight = property(_load_right_blocklight)
 
-    def _load_up_right(self):
-        """Loads and sets data from upper-right chunk"""
-        chunk_path = self.world.get_chunk_path(self.coords[0] + 1, self.coords[1])
-        try:
-            chunk_data = get_lvldata(chunk_path)
-            self._up_right_skylight = get_skylight_array(chunk_data)
-            self._up_right_blocklight = get_blocklight_array(chunk_data)
-            self._up_right_blocks = get_blockarray(chunk_data)
-        except IOError:
-            self._up_right_skylight = None
-            self._up_right_blocklight = None
-            self._up_right_blocks = None
-    
-    def _load_up_right_blocks(self):
-        """Loads and returns upper-right block array"""
-        if not hasattr(self, "_up_right_blocks"):
-            self._load_up_right()
-        return self._up_right_blocks
-    up_right_blocks = property(_load_up_right_blocks)
-    
-    def _load_up_left(self):
-        """Loads and sets data from upper-left chunk"""
-        chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] - 1)
-        try:
-            chunk_data = get_lvldata(chunk_path)
-            self._up_left_skylight = get_skylight_array(chunk_data)
-            self._up_left_blocklight = get_blocklight_array(chunk_data)
-            self._up_left_blocks = get_blockarray(chunk_data)
-        except IOError:
-            self._up_left_skylight = None
-            self._up_left_blocklight = None
-            self._up_left_blocks = None
-    
-    def _load_up_left_blocks(self):
-        """Loads and returns lower-left block array"""
-        if not hasattr(self, "_up_left_blocks"):
-            self._load_up_left()
-        return self._up_left_blocks
-    up_left_blocks = property(_load_up_left_blocks)
-
     def _hash_blockarray(self):
         """Finds a hash of the block array"""
         if hasattr(self, "_digest"):
@@ -523,8 +483,6 @@ class ChunkRenderer(object):
         depth."""
         blocks = self.blocks
         
-        up_left_blocks = self.up_left_blocks
-        up_right_blocks = self.up_right_blocks
         left_blocks = self.left_blocks
         right_blocks = self.right_blocks
         
@@ -644,15 +602,19 @@ class ChunkRenderer(object):
                     blocks[x-1,y,z] not in transparent_blocks and
                     blocks[x,y+1,z] not in transparent_blocks and
                     blocks[x,y,z+1] not in transparent_blocks
-                    ): continue
+                    ):
+                        continue
             elif (
                 # If it's a interior chunk check for transparent blocks
                 # in the adjacent chunks.
-                (z != 127 and left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
+                z != 127 and 
+                (left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
                 (right_blocks[x,0,z] if y == 15 else blocks[x,y + 1,z]) not in transparent_blocks and
-                blocks[x,y,z+1] not in transparent_blocks):
+                blocks[x,y,z+1] not in transparent_blocks
                 # Don't render if all sides aren't transparent
-                continue
+                ):
+                    continue
+
 
             # Draw the actual block on the image. For cave images,
             # tint the block with a color proportional to its depth
