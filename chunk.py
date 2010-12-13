@@ -112,6 +112,28 @@ def iterate_chunkblocks(xoff,yoff):
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
 
+def find_oldimage(chunkfile, cached, cave):
+    destdir, filename = os.path.split(chunkfile)
+    filename_split = filename.split(".")
+    blockid = ".".join(filename_split[1:3])
+
+    # Get the name of the existing image.
+    moredirs, dir2 = os.path.split(destdir)
+    dir1 = os.path.basename(moredirs)
+    cachename = '/'.join((dir1, dir2))
+
+    oldimg = oldimg_path = None
+    key = ".".join((blockid, "cave" if cave else "nocave"))
+    if key in cached[cachename]:
+         oldimg_path = cached[cachename][key]
+         _, oldimg = os.path.split(oldimg_path)
+         logging.debug("Found cached image {0}".format(oldimg))
+    return oldimg, oldimg_path
+
+def check_cache(chunkfile, oldimg):
+    if os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
+        return self.oldimg_path
+
 def render_and_save(chunkfile, cachedir, worldobj, cached, cave=False, queue=None):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
@@ -140,7 +162,7 @@ class ChunkCorrupt(Exception):
     pass
 
 class ChunkRenderer(object):
-    def __init__(self, chunkfile, cachedir, cached, worldobj, queue):
+    def __init__(self, chunkfile, cachedir, oldimg, worldobj, queue):
         """Make a new chunk renderer for the given chunkfile.
         chunkfile should be a full path to the .dat file to process
         cachedir is a directory to save the resulting chunk images to
@@ -169,7 +191,7 @@ class ChunkRenderer(object):
         moredirs, dir2 = os.path.split(destdir)
         _, dir1 = os.path.split(moredirs)
         self.cachedir = os.path.join(cachedir, dir1, dir2)
-        self.cached = cached
+        self.oldimg, self.oldimg_path = oldimg
 
 
         if self.world.useBiomeData:
@@ -301,34 +323,22 @@ class ChunkRenderer(object):
         self._digest = digest[:6]
         return self._digest
 
-    def find_oldimage(self, cave):
-        # Get the name of the existing image.
-        oldimg = oldimg_path = None
-        key = ".".join((self.blockid, "cave" if cave else "nocave"))
-        if key in self.cached:
-             oldimg_path = self.cached[key]
-             _, oldimg = os.path.split(oldimg_path)
-             logging.debug("Found cached image {0}".format(oldimg))
-        return oldimg, oldimg_path
-
     def render_and_save(self, cave=False):
         """Render the chunk using chunk_render, and then save it to a file in
         the same directory as the source image. If the file already exists and
         is up to date, this method doesn't render anything.
         """
         blockid = self.blockid
-        
-        oldimg, oldimg_path = self.find_oldimage(cave)
 
-        if oldimg:
+        if self.oldimg:
             # An image exists? Instead of checking the hash which is kinda
             # expensive (for tens of thousands of chunks, yes it is) check if
             # the mtime of the chunk file is newer than the mtime of oldimg
-            if os.path.getmtime(self.chunkfile) <= os.path.getmtime(oldimg_path):
+            if os.path.getmtime(self.chunkfile) <= os.path.getmtime(self.oldimg_path):
                 # chunkfile is older than the image, don't even bother checking
                 # the hash
                 logging.debug("Using cached image")
-                return oldimg_path
+                return self.oldimg_path
 
         # Reasons for the code to get to this point:
         # 1) An old image doesn't exist
@@ -346,8 +356,8 @@ class ChunkRenderer(object):
 
         dest_path = os.path.join(self.cachedir, dest_filename)
 
-        if oldimg:
-            if dest_filename == oldimg:
+        if self.oldimg:
+            if dest_filename == self.oldimg:
                 # There is an existing file, the chunk has a newer mtime, but the
                 # hashes match.
                 # Before we return it, update its mtime so the next round
@@ -358,7 +368,7 @@ class ChunkRenderer(object):
             else:
                 # Remove old image for this chunk. Anything already existing is
                 # either corrupt or out of date
-                os.unlink(oldimg_path)
+                os.unlink(self.oldimg_path)
 
         # Render the chunk
         img = self.chunk_render(cave=cave)

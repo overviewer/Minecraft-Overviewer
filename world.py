@@ -295,11 +295,12 @@ class WorldRenderer(object):
                         results[(col, row)] = imgpath
                         continue
 
-                moredirs, dir2 = os.path.split(os.path.dirname(chunkfile))
-                dir1 = os.path.basename(moredirs)
-                cachename = '/'.join((dir1, dir2))
+                oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
+                if os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
+                    result = oldimg[1]
+                else:
+                    result = chunk.render_and_save(chunkfile, self.cachedir, self, oldimg, queue=q)
 
-                result = chunk.render_and_save(chunkfile, self.cachedir, self, cached[cachename], queue=q)
                 results[(col, row)] = result
                 if i > 0:
                     try:
@@ -325,13 +326,13 @@ class WorldRenderer(object):
                         results[(col, row)] = imgpath
                         continue
 
-                moredirs, dir2 = os.path.split(os.path.dirname(chunkfile))
-                dir1 = os.path.basename(moredirs)
-                cachename = '/'.join((dir1, dir2))
-
-                result = pool.apply_async(chunk.render_and_save,
-                        args=(chunkfile,self.cachedir,self, cached[cachename]),
-                        kwds=dict(cave=self.caves, queue=q))
+                oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
+                if os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
+                    result = oldimg[1]
+                else:
+                    result = pool.apply_async(chunk.render_and_save,
+                            args=(chunkfile,self.cachedir,self, oldimg),
+                            kwds=dict(cave=self.caves, queue=q))
                 asyncresults.append((col, row, result))
 
             pool.close()
