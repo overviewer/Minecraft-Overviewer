@@ -131,8 +131,12 @@ def find_oldimage(chunkfile, cached, cave):
     return oldimg, oldimg_path
 
 def check_cache(chunkfile, oldimg):
-    if os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
-        return self.oldimg_path
+    try:
+        if oldimg[1] and os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
+            return True
+        return False
+    except OSError:
+        return False
 
 def render_and_save(chunkfile, cachedir, worldobj, oldimg, cave=False, queue=None):
     """Used as the entry point for the multiprocessing workers (since processes
