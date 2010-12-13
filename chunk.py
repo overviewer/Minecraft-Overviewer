@@ -134,12 +134,12 @@ def check_cache(chunkfile, oldimg):
     if os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
         return self.oldimg_path
 
-def render_and_save(chunkfile, cachedir, worldobj, cached, cave=False, queue=None):
+def render_and_save(chunkfile, cachedir, worldobj, oldimg, cave=False, queue=None):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
     
     Returns the image file location"""
-    a = ChunkRenderer(chunkfile, cachedir, worldobj, cached, queue)
+    a = ChunkRenderer(chunkfile, cachedir, worldobj, oldimg, queue)
     try:
         return a.render_and_save(cave)
     except ChunkCorrupt:
@@ -162,7 +162,7 @@ class ChunkCorrupt(Exception):
     pass
 
 class ChunkRenderer(object):
-    def __init__(self, chunkfile, cachedir, oldimg, worldobj, queue):
+    def __init__(self, chunkfile, cachedir, worldobj, oldimg, queue):
         """Make a new chunk renderer for the given chunkfile.
         chunkfile should be a full path to the .dat file to process
         cachedir is a directory to save the resulting chunk images to
