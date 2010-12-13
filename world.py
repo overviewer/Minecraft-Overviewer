@@ -297,7 +297,7 @@ class WorldRenderer(object):
 
                 moredirs, dir2 = os.path.split(os.path.dirname(chunkfile))
                 dir1 = os.path.basename(moredirs)
-                cachename = '/'.join(dir1, dir2)
+                cachename = '/'.join((dir1, dir2))
 
                 result = chunk.render_and_save(chunkfile, self.cachedir, self, cached[chunkname], queue=q)
                 results[(col, row)] = result
@@ -327,7 +327,7 @@ class WorldRenderer(object):
 
                 moredirs, dir2 = os.path.split(os.path.dirname(chunkfile))
                 dir1 = os.path.basename(moredirs)
-                cachename = '/'.join(dir1, dir2)
+                cachename = '/'.join((dir1, dir2))
 
                 result = pool.apply_async(chunk.render_and_save,
                         args=(chunkfile,self.cachedir,self, cached[chunkname]),
