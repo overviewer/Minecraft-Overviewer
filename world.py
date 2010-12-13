@@ -289,8 +289,7 @@ class WorldRenderer(object):
             for i, (col, row, chunkfile) in enumerate(chunks):
                 if inclusion_set and (col, row) not in inclusion_set:
                     # Skip rendering, just find where the existing image is
-                    _, imgpath = chunk.ChunkRenderer(chunkfile,
-                            self.cachedir, self, q).find_oldimage(False)
+                    _, imgpath = chunk.find_oldimage(chunkfile, cached, self.caves)
                     if imgpath:
                         results[(col, row)] = imgpath
                         continue
@@ -320,8 +319,7 @@ class WorldRenderer(object):
             for col, row, chunkfile in chunks:
                 if inclusion_set and (col, row) not in inclusion_set:
                     # Skip rendering, just find where the existing image is
-                    _, imgpath = chunk.ChunkRenderer(chunkfile,
-                            self.cachedir, self, q).find_oldimage(False)
+                    _, imgpath = chunk.find_oldimage(chunkfile, cached, self.caves)
                     if imgpath:
                         results[(col, row)] = imgpath
                         continue
