@@ -36,6 +36,7 @@ and for extracting information about available worlds
 """
 
 base36decode = functools.partial(int, base=36)
+cached = collections.defaultdict(dict)
 
 
 def _convert_coords(chunks):
@@ -108,7 +109,6 @@ class WorldRenderer(object):
             textures.prepareBiomeData(worlddir)
 
         self.chunklist = chunklist
-        self.cached = collections.defaultdict(dict)
 
         # In order to avoid having to look up the cache file names in
         # ChunkRenderer, get them all and store them here
@@ -119,8 +119,9 @@ class WorldRenderer(object):
                 dirname, dir_b = os.path.split(root)
                 _, dir_a = os.path.split(dirname)
                 _, x, z, cave, _ = filename.split('.', 4)
-                bits = '.'.join((dir_a, dir_b, x, z, cave))
-                self.cached[bits] = os.path.join(root, filename)
+                dir = '/'.join((dir_a, dir_b))
+                bits = '.'.join((x, z, cave))
+                cached[dir][bits] = os.path.join(root, filename)
 
 
         #  stores Points Of Interest to be mapped with markers
@@ -294,7 +295,11 @@ class WorldRenderer(object):
                         results[(col, row)] = imgpath
                         continue
 
-                result = chunk.render_and_save(chunkfile, self.cachedir, self, cave=self.caves, queue=q)
+                moredirs, dir2 = os.path.split(os.path.dirname(self.chunkfile))
+                dir1 = os.path.basename(moredirs)
+                cachename = '/'.join(dir1, dir2)
+
+                result = chunk.render_and_save(chunkfile, self.cachedir, self, cached[chunkname], queue=q)
                 results[(col, row)] = result
                 if i > 0:
                     try:
@@ -320,8 +325,12 @@ class WorldRenderer(object):
                         results[(col, row)] = imgpath
                         continue
 
+                moredirs, dir2 = os.path.split(os.path.dirname(self.chunkfile))
+                dir1 = os.path.basename(moredirs)
+                cachename = '/'.join(dir1, dir2)
+
                 result = pool.apply_async(chunk.render_and_save,
-                        args=(chunkfile,self.cachedir,self),
+                        args=(chunkfile,self.cachedir,self, cached[chunkname]),
                         kwds=dict(cave=self.caves, queue=q))
                 asyncresults.append((col, row, result))
 

@@ -112,12 +112,12 @@ def iterate_chunkblocks(xoff,yoff):
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
 
-def render_and_save(chunkfile, cachedir, worldobj, cave=False, queue=None):
+def render_and_save(chunkfile, cachedir, worldobj, cached, cave=False, queue=None):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
     
     Returns the image file location"""
-    a = ChunkRenderer(chunkfile, cachedir, worldobj, queue)
+    a = ChunkRenderer(chunkfile, cachedir, worldobj, cached, queue)
     try:
         return a.render_and_save(cave)
     except ChunkCorrupt:
@@ -140,7 +140,7 @@ class ChunkCorrupt(Exception):
     pass
 
 class ChunkRenderer(object):
-    def __init__(self, chunkfile, cachedir, worldobj, queue):
+    def __init__(self, chunkfile, cachedir, cached, worldobj, queue):
         """Make a new chunk renderer for the given chunkfile.
         chunkfile should be a full path to the .dat file to process
         cachedir is a directory to save the resulting chunk images to
@@ -169,7 +169,7 @@ class ChunkRenderer(object):
         moredirs, dir2 = os.path.split(destdir)
         _, dir1 = os.path.split(moredirs)
         self.cachedir = os.path.join(cachedir, dir1, dir2)
-        self.dirbits = (dir1, dir2)
+        self.cached = cached
 
 
         if self.world.useBiomeData:
@@ -304,9 +304,9 @@ class ChunkRenderer(object):
     def find_oldimage(self, cave):
         # Get the name of the existing image.
         oldimg = oldimg_path = None
-        key = ".".join((self.dirbits[0], self.dirbits[1], self.blockid, "cave" if cave else "nocave"))
-        if key in self.world.cached:
-             oldimg_path = self.world.cached[key]
+        key = ".".join((self.blockid, "cave" if cave else "nocave"))
+        if key in self.cached:
+             oldimg_path = self.cached[key]
              _, oldimg = os.path.split(oldimg_path)
              logging.debug("Found cached image {0}".format(oldimg))
         return oldimg, oldimg_path
