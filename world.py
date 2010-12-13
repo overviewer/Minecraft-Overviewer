@@ -87,6 +87,12 @@ def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
         return "-" + base36
     return base36
 
+class FakeAsyncResult:
+    def __init__(self, string):
+        self.string = string
+    def get(self):
+        return self.string
+
 class WorldRenderer(object):
     """Renders a world's worth of chunks.
     worlddir is the path to the minecraft world
@@ -326,7 +332,7 @@ class WorldRenderer(object):
 
                 oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
                 if oldimg[1] and (os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1])):
-                    result = oldimg[1]
+                    result = FakeAsyncResult(oldimg[1])
                 else:
                     result = pool.apply_async(chunk.render_and_save,
                             args=(chunkfile,self.cachedir,self, oldimg),
