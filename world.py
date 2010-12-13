@@ -296,7 +296,7 @@ class WorldRenderer(object):
                         continue
 
                 oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
-                if os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
+                if oldimg[1] and (os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1])):
                     result = oldimg[1]
                 else:
                     result = chunk.render_and_save(chunkfile, self.cachedir, self, oldimg, queue=q)
@@ -327,7 +327,7 @@ class WorldRenderer(object):
                         continue
 
                 oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
-                if os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
+                if oldimg[1] and (os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1])):
                     result = oldimg[1]
                 else:
                     result = pool.apply_async(chunk.render_and_save,
