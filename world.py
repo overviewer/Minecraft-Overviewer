@@ -295,7 +295,7 @@ class WorldRenderer(object):
                         results[(col, row)] = imgpath
                         continue
 
-                moredirs, dir2 = os.path.split(os.path.dirname(self.chunkfile))
+                moredirs, dir2 = os.path.split(os.path.dirname(chunkfile))
                 dir1 = os.path.basename(moredirs)
                 cachename = '/'.join(dir1, dir2)
 
@@ -325,7 +325,7 @@ class WorldRenderer(object):
                         results[(col, row)] = imgpath
                         continue
 
-                moredirs, dir2 = os.path.split(os.path.dirname(self.chunkfile))
+                moredirs, dir2 = os.path.split(os.path.dirname(chunkfile))
                 dir1 = os.path.basename(moredirs)
                 cachename = '/'.join(dir1, dir2)
 
