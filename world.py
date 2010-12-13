@@ -299,7 +299,7 @@ class WorldRenderer(object):
                 dir1 = os.path.basename(moredirs)
                 cachename = '/'.join((dir1, dir2))
 
-                result = chunk.render_and_save(chunkfile, self.cachedir, self, cached[chunkname], queue=q)
+                result = chunk.render_and_save(chunkfile, self.cachedir, self, cached[cachename], queue=q)
                 results[(col, row)] = result
                 if i > 0:
                     try:
@@ -330,7 +330,7 @@ class WorldRenderer(object):
                 cachename = '/'.join((dir1, dir2))
 
                 result = pool.apply_async(chunk.render_and_save,
-                        args=(chunkfile,self.cachedir,self, cached[chunkname]),
+                        args=(chunkfile,self.cachedir,self, cached[cachename]),
                         kwds=dict(cave=self.caves, queue=q))
                 asyncresults.append((col, row, result))
 
