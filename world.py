@@ -301,7 +301,7 @@ class WorldRenderer(object):
                         continue
 
                 oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
-                if chunk.check_cache(chunkfile, oldimg[1]):
+                if chunk.check_cache(chunkfile, oldimg):
                     result = oldimg[1]
                 else:
                     result = chunk.render_and_save(chunkfile, self.cachedir, self, oldimg, queue=q)
@@ -331,7 +331,7 @@ class WorldRenderer(object):
                         continue
 
                 oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
-                if chunk.check_cache(chunkfile, oldimg[1]):
+                if chunk.check_cache(chunkfile, oldimg):
                     result = FakeAsyncResult(oldimg[1])
                 else:
                     result = pool.apply_async(chunk.render_and_save,
