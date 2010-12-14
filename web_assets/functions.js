@@ -37,6 +37,7 @@ function drawMapControls() {
     compassImg.src="compass.png";
     compassDiv.appendChild(compassImg);
 
+    compassDiv.index = 0;
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
 
 
@@ -260,16 +261,23 @@ function initialize() {
         if (argname == "zoom") {zoom = parseInt(value);}
     }
 
+    var mapTyepControlToggle = false
+    if (mapTypeIds.length > 1) {
+      mapTyepControlToggle = true
+    }
     var mapOptions = {
         zoom: zoom,
         center: new google.maps.LatLng(lat, lng),
         navigationControl: true,
         scaleControl: false,
-        mapTypeControl: false,
+        mapTypeControl: mapTyepControlToggle,
+        mapTypeControlOptions: {
+            mapTypeIds: mapTypeIds
+        },
+        mapTypeId: mapTypeIdDefault
         streetViewControl: false,
-        mapTypeId: 'mcmap'
     };
-    map = new google.maps.Map(document.getElementById("mcmap"), mapOptions);
+    map = new google.maps.Map(document.getElementById('mcmap'), mapOptions);
 
     if(config.debug) {
         map.overlayMapTypes.insertAt(0, new CoordMapType(new google.maps.Size(config.tileSize, config.tileSize)));
@@ -287,11 +295,12 @@ function initialize() {
     }
 
     // Now attach the coordinate map type to the map's registry
-    map.mapTypes.set('mcmap', MCMapType);
+    for (idx in MCMapType) {
+      map.mapTypes.set('mcmap' + MCMapType[idx].name, MCMapType[idx]);
+    }
 
     // We can now set the map to use the 'coordinate' map type
-    map.setMapTypeId('mcmap');
-
+    map.setMapTypeId(mapTypeIdDefault);
 
     // initialize the markers and regions
     initMarkers();
@@ -370,9 +379,9 @@ function initialize() {
     return new google.maps.LatLng(lat, lng);
   }
   
-  var MCMapOptions = {
-    getTileUrl: function(tile, zoom) {
-      var url = config.path;
+function getTileUrlGenerator(path) {
+  return function(tile, zoom) {
+    var url = path;
       if(tile.x < 0 || tile.x >= Math.pow(2, zoom) || tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
         url += '/blank';
       } else if(zoom == 0) {
@@ -390,17 +399,33 @@ function initialize() {
         url += '?c=' + Math.floor(d.getTime() / (1000 * 60 * config.cacheMinutes));
       }
       return(url);
-    },
+  }
+}
+
+var MCMapOptions = new Array;
+var MCMapType = new Array;
+var mapTypeIdDefault = null;
+var mapTypeIds = [];
+for (idx in mapTypeData) {
+  var view = mapTypeData[idx];
+
+  MCMapOptions[view.label] = {
+    getTileUrl: getTileUrlGenerator(view.path),
     tileSize: new google.maps.Size(config.tileSize, config.tileSize),
     maxZoom:  config.maxZoom,
     minZoom:  0,
     isPng:    !(config.fileExt.match(/^png$/i) == null)
   };
   
-  var MCMapType = new google.maps.ImageMapType(MCMapOptions);
-  MCMapType.name = "MC Map";
-  MCMapType.alt = "Minecraft Map";
-  MCMapType.projection = new MCMapProjection();
+  MCMapType[view.label] = new google.maps.ImageMapType(MCMapOptions[view.label]);
+  MCMapType[view.label].name = view.label;
+  MCMapType[view.label].alt = "Minecraft " + view.label + " Map";
+  MCMapType[view.label].projection = new MCMapProjection();
+  if (mapTypeIdDefault == null) {
+    mapTypeIdDefault = 'mcmap' + view.label;
+  }
+  mapTypeIds.push('mcmap' + view.label);
+}
   
   function CoordMapType() {
   }

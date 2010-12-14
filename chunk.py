@@ -112,6 +112,18 @@ def iterate_chunkblocks(xoff,yoff):
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53,
     59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85])
 
+# This set holds block ids that are solid blocks
+solid_blocks = set([1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 35,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 53, 54, 56, 57, 58, 60, 61, 62, 64, 65,
+    66, 67, 71, 73, 74, 78, 79, 80, 81, 82, 84, 86, 87, 88, 89, 91])
+
+# This set holds block ids that are fluid blocks
+fluid_blocks = set([8,9,10,11])
+
+# This set holds block ids that are not candidates for spawning mobs on
+# (glass, half blocks)
+nospawn_blocks = set([20,44])
+
 def render_and_save(chunkfile, cachedir, worldobj, cave=False, queue=None):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
@@ -617,7 +629,14 @@ class ChunkRenderer(object):
                     # block shaded with the current
                     # block's light
                     black_coeff, _ = self.get_lighting_coefficient(x, y, z)
-                    composite.alpha_over(img, Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
+                    if self.world.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
+                        blockid in nospawn_blocks or (
+                            z != 127 and (blocks[x,y,z+1] in solid_blocks or blocks[x,y,z+1] in fluid_blocks)
+                        )
+                    ):
+                        composite.alpha_over(img, Image.blend(t[0], red_color, black_coeff), (imgx, imgy), t[1])
+                    else:
+                        composite.alpha_over(img, Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
                 else:
                     # draw each face lit appropriately,
                     # but first just draw the block
@@ -625,18 +644,28 @@ class ChunkRenderer(object):
                     
                     # top face
                     black_coeff, face_occlude = self.get_lighting_coefficient(x, y, z + 1)
+                    # Use red instead of black for spawnable blocks
+                    if self.world.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
+                        blockid in nospawn_blocks or (
+                            z != 127 and (blocks[x,y,z+1] in solid_blocks or blocks[x,y,z+1] in fluid_blocks)
+                        )
+                    ):
+                        over_color = red_color
+                    else:
+                        over_color = black_color
+
                     if not face_occlude:
-                        composite.alpha_over(img, black_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
+                        composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
                     
                     # left face
                     black_coeff, face_occlude = self.get_lighting_coefficient(x - 1, y, z)
                     if not face_occlude:
-                        composite.alpha_over(img, black_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
+                        composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
 
                     # right face
                     black_coeff, face_occlude = self.get_lighting_coefficient(x, y + 1, z)
                     if not face_occlude:
-                        composite.alpha_over(img, black_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
+                        composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
 
             # Draw edge lines
             if blockid in (44,): # step block
@@ -705,6 +734,7 @@ def generate_facemasks():
     return (top, left, right)
 facemasks = generate_facemasks()
 black_color = Image.new("RGB", (24,24), (0,0,0))
+red_color = Image.new("RGB", (24,24), (229,36,38))
 
 # Render 128 different color images for color coded depth blending in cave mode
 def generate_depthcolors():
