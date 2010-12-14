@@ -593,7 +593,7 @@ class ChunkRenderer(object):
                     blocks[x,y,z+1] not in transparent_blocks
                 ):
                     continue
-            elif (left_blocks == None or (right_blocks == None)):
+            elif (left_blocks == None and right_blocks == None):
                     # Normal block or not cave mode, check sides for
                     # transparentcy or render if it's a border chunk.
 
@@ -604,6 +604,31 @@ class ChunkRenderer(object):
                     blocks[x,y,z+1] not in transparent_blocks
                     ):
                         continue
+
+            elif (left_blocks != None and right_blocks == None):
+
+                if (
+                    # If it has the left face covered check for 
+                    # transparent blocks in left face
+                    y != 15 and z != 127 and
+                    (left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
+                    blocks[x,y+1,z] not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+                    ):
+                        continue
+
+            elif (left_blocks == None and right_blocks != None):
+
+                if (
+                    # If it has the right face covered check for
+                    # transparent blocks in right face
+                    x != 0 and z != 127 and
+                    blocks[x-1,y,z] not in transparent_blocks and
+                    (right_blocks[x,0,z] if y == 15 else blocks[x,y + 1,z]) not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+                    ):
+                        continue
+                
             elif (
                 # If it's a interior chunk check for transparent blocks
                 # in the adjacent chunks.
