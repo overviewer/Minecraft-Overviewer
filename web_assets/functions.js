@@ -274,7 +274,7 @@ function initialize() {
         mapTypeControlOptions: {
             mapTypeIds: mapTypeIds
         },
-        mapTypeId: mapTypeIdDefault
+        mapTypeId: mapTypeIdDefault,
         streetViewControl: false,
     };
     map = new google.maps.Map(document.getElementById('mcmap'), mapOptions);
