@@ -455,6 +455,8 @@ class ChunkRenderer(object):
         (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
         (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
         ): return 16
+        
+        else: return None
 
     def _hash_blockarray(self):
         """Finds a hash of the block array"""
@@ -654,6 +656,7 @@ class ChunkRenderer(object):
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
         blocks = self.blocks
+        pseudo_ancildata_blocks = set([85])
         
         if cave:
             # Cave mode. Actually go through and 0 out all blocks that are not in a
@@ -704,6 +707,10 @@ class ChunkRenderer(object):
              # also handle furnaces here, since one side has a different texture than the other
                 ancilData = blockData_expanded[x,y,z]
                 try:
+                    if blockid in pseudo_ancildata_blocks:
+                        
+                        pseudo_ancilData = self.generate_pseudo_ancildata(x,y,z,blockid)
+                        ancilData = pseudo_ancilData
                     t = textures.specialblockmap[(blockid, ancilData)]
                 except KeyError:
                     t = None
