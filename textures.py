@@ -581,6 +581,10 @@ def generate_special_texture(blockID, data):
         sidealpha = fence_small_other_side.split()[3]
         fence_small_other_side = ImageEnhance.Brightness(fence_small_other_side).enhance(0.9)
         fence_small_other_side.putalpha(sidealpha)
+        sidealpha = fence_small_side.split()[3]
+        fence_small_side = ImageEnhance.Brightness(fence_small_side).enhance(0.9)
+        fence_small_side.putalpha(sidealpha)
+
 
        # Create img to compose the fence
 
