@@ -483,6 +483,9 @@ class ChunkRenderer(object):
         depth."""
         blocks = self.blocks
         
+        left_blocks = self.left_blocks
+        right_blocks = self.right_blocks
+        
         if cave:
             # Cave mode. Actually go through and 0 out all blocks that are not in a
             # cave, so that it only renders caves.
@@ -590,18 +593,52 @@ class ChunkRenderer(object):
                     blocks[x,y,z+1] not in transparent_blocks
                 ):
                     continue
-            elif (
+            elif (left_blocks == None and right_blocks == None):
                     # Normal block or not cave mode, check sides for
-                    # transparentcy or render unconditionally if it's
-                    # on a shown face
+                    # transparentcy or render if it's a border chunk.
+
+                if (
                     x != 0 and y != 15 and z != 127 and
                     blocks[x-1,y,z] not in transparent_blocks and
                     blocks[x,y+1,z] not in transparent_blocks and
                     blocks[x,y,z+1] not in transparent_blocks
-            ):
-                # Don't render if all sides aren't transparent and
-                # we're not on the edge
-                continue
+                    ):
+                        continue
+
+            elif (left_blocks != None and right_blocks == None):
+
+                if (
+                    # If it has the left face covered check for 
+                    # transparent blocks in left face
+                    y != 15 and z != 127 and
+                    (left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
+                    blocks[x,y+1,z] not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+                    ):
+                        continue
+
+            elif (left_blocks == None and right_blocks != None):
+
+                if (
+                    # If it has the right face covered check for
+                    # transparent blocks in right face
+                    x != 0 and z != 127 and
+                    blocks[x-1,y,z] not in transparent_blocks and
+                    (right_blocks[x,0,z] if y == 15 else blocks[x,y + 1,z]) not in transparent_blocks and
+                    blocks[x,y,z+1] not in transparent_blocks
+                    ):
+                        continue
+                
+            elif (
+                # If it's a interior chunk check for transparent blocks
+                # in the adjacent chunks.
+                z != 127 and 
+                (left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
+                (right_blocks[x,0,z] if y == 15 else blocks[x,y + 1,z]) not in transparent_blocks and
+                blocks[x,y,z+1] not in transparent_blocks
+                # Don't render if all sides aren't transparent
+                ):
+                    continue
 
             # Draw the actual block on the image. For cave images,
             # tint the block with a color proportional to its depth
