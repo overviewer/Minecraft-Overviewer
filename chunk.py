@@ -284,6 +284,180 @@ class ChunkRenderer(object):
         return self._right_blocklight
     right_blocklight = property(_load_right_blocklight)
 
+    def _load_up_right(self):
+        """Loads and sets data from upper-right chunk"""
+        chunk_path = self.world.get_chunk_path(self.coords[0] + 1, self.coords[1])
+        try:
+            chunk_data = get_lvldata(chunk_path)
+            self._up_right_skylight = get_skylight_array(chunk_data)
+            self._up_right_blocklight = get_blocklight_array(chunk_data)
+            self._up_right_blocks = get_blockarray(chunk_data)
+        except IOError:
+            self._up_right_skylight = None
+            self._up_right_blocklight = None
+            self._up_right_blocks = None
+    
+    def _load_up_right_blocks(self):
+        """Loads and returns upper-right block array"""
+        if not hasattr(self, "_up_right_blocks"):
+            self._load_up_right()
+        return self._up_right_blocks
+    up_right_blocks = property(_load_up_right_blocks)
+    
+    def _load_up_left(self):
+        """Loads and sets data from upper-left chunk"""
+        chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] - 1)
+        try:
+            chunk_data = get_lvldata(chunk_path)
+            self._up_left_skylight = get_skylight_array(chunk_data)
+            self._up_left_blocklight = get_blocklight_array(chunk_data)
+            self._up_left_blocks = get_blockarray(chunk_data)
+        except IOError:
+            self._up_left_skylight = None
+            self._up_left_blocklight = None
+            self._up_left_blocks = None
+    
+    def _load_up_left_blocks(self):
+        """Loads and returns lower-left block array"""
+        if not hasattr(self, "_up_left_blocks"):
+            self._load_up_left()
+        return self._up_left_blocks
+    up_left_blocks = property(_load_up_left_blocks)
+
+    def generate_pseudo_ancildata(self,x,y,z,blockid):
+        """ Generates a pseudo ancillary data for blocks that depend of 
+        what are surrounded and don't have ancillary data"""
+        
+        blocks = self.blocks
+        up_left_blocks = self.up_left_blocks 
+        up_right_blocks = self.up_right_blocks
+        left_blocks = self.left_blocks
+        right_blocks = self.right_blocks
+        
+        if ( # The block is surrounded by 0 blocks with same blockid
+        (up_right_blocks[0,y,z] != blockid if x == 15 else blocks[x+1,y,z] != blockid) and 
+        (left_blocks[15,y,z] != blockid if x == 0 else blocks[x - 1,y,z] != blockid) and
+        (right_blocks[x,0,z] != blockid if y == 15 else blocks[x,y + 1,z] != blockid) and
+        (up_left_blocks[x,15,z] != blockid if y == 0 else blocks[x,y - 1,z] != blockid) 
+        ): return 1
+
+        # Now 3 in line, they should be more common:
+        
+        elif ( # The block is surrounded by 2 blocks with same blockid, along x axis
+        (up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid) and 
+        (left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid) and
+        (right_blocks[x,0,z] != blockid if y == 15 else blocks[x,y + 1,z] != blockid) and
+        (up_left_blocks[x,15,z] != blockid if y == 0 else blocks[x,y - 1,z] != blockid)
+        ): return 2
+
+        elif ( # The block is surrounded by 2 blocks with same blockid, along y axis
+        (up_right_blocks[0,y,z] != blockid if x == 15 else blocks[x+1,y,z] != blockid) and 
+        (left_blocks[15,y,z] != blockid if x == 0 else blocks[x - 1,y,z] != blockid) and
+        (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
+        (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
+        ): return 3
+        
+        # Now 3 in corner:
+        
+        elif ( # The block is surrounded by 2 blocks with same blockid, in a -y to x corner
+        (up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid) and 
+        (left_blocks[15,y,z] != blockid if x == 0 else blocks[x - 1,y,z] != blockid) and
+        (right_blocks[x,0,z] != blockid if y == 15 else blocks[x,y + 1,z] != blockid) and
+        (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
+        ): return 4
+
+        elif ( # The block is surrounded by 2 blocks with same blockid, in a -y to -x corner
+        (up_right_blocks[0,y,z] != blockid if x == 15 else blocks[x+1,y,z] != blockid) and 
+        (left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid) and
+        (right_blocks[x,0,z] != blockid if y == 15 else blocks[x,y + 1,z] != blockid) and
+        (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
+        ): return 5
+        
+        elif ( # The block is surrounded by 2 blocks with same blockid, in a y to -x corner
+        (up_right_blocks[0,y,z] != blockid if x == 15 else blocks[x+1,y,z] != blockid) and 
+        (left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid) and
+        (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
+        (up_left_blocks[x,15,z] != blockid if y == 0 else blocks[x,y - 1,z] != blockid)
+        ): return 6
+        
+        elif ( # The block is surrounded by 2 blocks with same blockid, in a y to x corner
+        (up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid) and 
+        (left_blocks[15,y,z] != blockid if x == 0 else blocks[x - 1,y,z] != blockid) and
+        (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
+        (up_left_blocks[x,15,z] != blockid if y == 0 else blocks[x,y - 1,z] != blockid)
+        ): return 7
+    
+        # Now 1 in dead end:
+
+        elif ( # The block is surrounded by 1 blocks with same blockid, in +x
+        (up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid) and 
+        (left_blocks[15,y,z] != blockid if x == 0 else blocks[x - 1,y,z] != blockid) and
+        (right_blocks[x,0,z] != blockid if y == 15 else blocks[x,y + 1,z] != blockid) and
+        (up_left_blocks[x,15,z] != blockid if y == 0 else blocks[x,y - 1,z] != blockid)
+        ): return 8
+
+        elif ( # The block is surrounded by 1 blocks with same blockid, in -y
+        (up_right_blocks[0,y,z] != blockid if x == 15 else blocks[x+1,y,z] != blockid) and 
+        (left_blocks[15,y,z] != blockid if x == 0 else blocks[x - 1,y,z] != blockid) and
+        (right_blocks[x,0,z] != blockid if y == 15 else blocks[x,y + 1,z] != blockid) and
+        (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
+        ): return 9
+        
+        elif ( # The block is surrounded by 1 blocks with same blockid, in -x
+        (up_right_blocks[0,y,z] != blockid if x == 15 else blocks[x+1,y,z] != blockid) and 
+        (left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid) and
+        (right_blocks[x,0,z] != blockid if y == 15 else blocks[x,y + 1,z] != blockid) and
+        (up_left_blocks[x,15,z] != blockid if y == 0 else blocks[x,y - 1,z] != blockid)
+        ): return 10
+        
+        elif ( # The block is surrounded by 1 blocks with same blockid, in +y
+        (up_right_blocks[0,y,z] != blockid if x == 15 else blocks[x+1,y,z] != blockid) and 
+        (left_blocks[15,y,z] != blockid if x == 0 else blocks[x - 1,y,z] != blockid) and
+        (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
+        (up_left_blocks[x,15,z] != blockid if y == 0 else blocks[x,y - 1,z] != blockid)
+        ): return 11
+
+        # Now surrounded by 3 identical blocks:
+
+        elif ( # The block is surrounded by 3 blocks with same blockid, in postiions -x, -y, +x
+        (up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid) and 
+        (left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid) and
+        (right_blocks[x,0,z] != blockid if y == 15 else blocks[x,y + 1,z] != blockid) and
+        (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
+        ): return 12
+        
+        elif ( # The block is surrounded by 3 blocks with same blockid, in postiions +y, -y, -x
+        (up_right_blocks[0,y,z] != blockid if x == 15 else blocks[x+1,y,z] != blockid) and 
+        (left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid) and
+        (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
+        (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
+        ): return 13
+        
+        elif ( # The block is surrounded by 3 blocks with same blockid, in postiions -x, +y, +x
+        (up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid) and 
+        (left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid) and
+        (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
+        (up_left_blocks[x,15,z] != blockid if y == 0 else blocks[x,y - 1,z] != blockid)
+        ): return 14
+        
+        elif ( # The block is surrounded by 3 blocks with same blockid, in postiions +y, -y, +x
+        (up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid) and 
+        (left_blocks[15,y,z] != blockid if x == 0 else blocks[x - 1,y,z] != blockid) and
+        (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
+        (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
+        ): return 15
+
+        # Block completely sourrounded by 4 blocks:
+
+        elif ( # The block is surrounded completely
+        (up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid) and 
+        (left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid) and
+        (right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid) and
+        (up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid)
+        ): return 16
+        
+        else: return None
+
     def _hash_blockarray(self):
         """Finds a hash of the block array"""
         if hasattr(self, "_digest"):
@@ -482,6 +656,7 @@ class ChunkRenderer(object):
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
         blocks = self.blocks
+        pseudo_ancildata_blocks = set([85])
         
         left_blocks = self.left_blocks
         right_blocks = self.right_blocks
@@ -535,6 +710,10 @@ class ChunkRenderer(object):
              # also handle furnaces here, since one side has a different texture than the other
                 ancilData = blockData_expanded[x,y,z]
                 try:
+                    if blockid in pseudo_ancildata_blocks:
+                        
+                        pseudo_ancilData = self.generate_pseudo_ancildata(x,y,z,blockid)
+                        ancilData = pseudo_ancilData
                     t = textures.specialblockmap[(blockid, ancilData)]
                 except KeyError:
                     t = None
