@@ -187,11 +187,20 @@ def _build_block(top, side, blockID=None):
     """
     img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-    top = transform_image(top, blockID)
+    if not top: # Build a block without top (used in waterfall)
+        side = transform_image_side(side, blockID)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        
+        composite.alpha_over(img, side, (0,6), side)
+        composite.alpha_over(img, otherside, (12,6), otherside)
+        return img
 
-    if not side:
+    elif not side: # Render a block without sides (standing water)
+        top = transform_image(top, blockID)
         composite.alpha_over(img, top, (0,0), top)
         return img
+
+    top = transform_image(top, blockID)
 
     side = transform_image_side(side, blockID)
 
@@ -522,7 +531,31 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
     
-
+    if blockID == 9: # water: standing, flowing and falling
+        flowing_water = set([1,2,3,4,5,6,7])
+        watertexture = _load_image("water.png")
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        
+        if data == 0: # standing water, render top only
+            img = _build_block(watertexture, None)
+            return (img.convert("RGB"), img.split()[3])
+            
+        elif data == 8: # falling vertically water, reder sides only
+            img = _build_block(None, watertexture)
+            return (img.convert("RGB"), img.split()[3])
+            
+        elif data in flowing_water and data != 7: # Flowing water, but not in the end. Only top for this one
+            img = _build_block(watertexture, None)
+            return (img.convert("RGB"), img.split()[3])
+            
+        elif data == 7: # the end of the flowing water, a full cube for this one. ???Level 6 also is end of water if it's flowing diagonally!
+            img = _build_block(watertexture, watertexture)
+            return (img.convert("RGB"), img.split()[3])
+            
+        else: # let's suppose that is normal standing water... reder only top
+            img = _build_block(watertexture, None)
+            return (img.convert("RGB"), img.split()[3])
+            
     return None
 
 def tintTexture(im, c):
@@ -608,7 +641,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,9])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -625,6 +658,8 @@ special_map[86] = range(5)  # pumpkin
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
 # like torches
+special_map[9] = range(18)  # water, spring ,flowing and waterfall. 
+
 special_map[2] = (0,)       # grass
 special_map[18] = range(16) # leaves
 # grass and leaves are now graysacle in terrain.png
