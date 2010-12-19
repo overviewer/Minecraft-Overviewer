@@ -25,7 +25,7 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
 
 #signControl > div#top {
     background-color: #fff;
-    border: 1px solid #000;
+    border: 2px solid #000;
     text-align: center;
     width: 70px;
     font-size: 12px;

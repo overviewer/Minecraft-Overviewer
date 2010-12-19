@@ -1,6 +1,5 @@
 
   var config = {
-    path:        'tiles',
     fileExt:     '{imgformat}',
     tileSize:     384,
     defaultZoom:  1,
@@ -26,6 +25,21 @@ var signGroups = [
 //    {label: "Storage", match: function(s) {return s.msg.match(/storage/i) || s.msg.match(/dirt/i) || s.msg.match(/sand/)}},
 //    {label: "Below Sealevel", match: function(s) { return s.y<64;}},   
     {label: "All", match: function(s) {return true}}
+];
+
+/* mapTypeData -- a list of alternate map renderings available. At least one rendering must be
+ * listed.  When more than one are provided, controls to switch between them are provided, with
+ * the first one being the default.
+ *
+ * Required:
+ *     label : string. Displayed on the control.
+ *     path  : string. Location of the rendered tiles.
+ */
+var mapTypeData=[
+  {'label': 'Unlit', 'path': 'tiles'},
+//  {'label': 'Day',   'path': 'lighting/tiles'},
+//  {'label': 'Night', 'path': 'night/tiles'},
+//  {'label': 'Spawn', 'path': 'spawn/tiles'}
 ];
 
 // Please leave the following variables here:
