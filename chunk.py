@@ -551,6 +551,7 @@ class ChunkRenderer(object):
         # Save it
         try:
             img.save(dest_path)
+            logging.debug("Chunk rendered and saved in: %s", dest_path)
         except:
             os.unlink(dest_path)
             raise
