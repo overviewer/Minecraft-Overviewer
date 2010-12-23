@@ -21,6 +21,7 @@ import Queue
 import sys
 import logging
 import cPickle
+import collections
 
 import numpy
 
@@ -35,6 +36,7 @@ and for extracting information about available worlds
 """
 
 base36decode = functools.partial(int, base=36)
+cached = collections.defaultdict(dict)
 
 
 def _convert_coords(chunks):
@@ -85,6 +87,12 @@ def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
         return "-" + base36
     return base36
 
+class FakeAsyncResult:
+    def __init__(self, string):
+        self.string = string
+    def get(self):
+        return self.string
+
 class WorldRenderer(object):
     """Renders a world's worth of chunks.
     worlddir is the path to the minecraft world
@@ -108,6 +116,20 @@ class WorldRenderer(object):
             textures.prepareBiomeData(worlddir)
 
         self.chunklist = chunklist
+
+        # In order to avoid having to look up the cache file names in
+        # ChunkRenderer, get them all and store them here
+        for root, dirnames, filenames in os.walk(cachedir):
+            for filename in filenames:
+                if not filename.endswith('.png'):
+                    continue
+                dirname, dir_b = os.path.split(root)
+                _, dir_a = os.path.split(dirname)
+                _, x, z, cave, _ = filename.split('.', 4)
+                dir = '/'.join((dir_a, dir_b))
+                bits = '.'.join((x, z, cave))
+                cached[dir][bits] = os.path.join(root, filename)
+
 
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example
@@ -274,13 +296,17 @@ class WorldRenderer(object):
             for i, (col, row, chunkfile) in enumerate(chunks):
                 if inclusion_set and (col, row) not in inclusion_set:
                     # Skip rendering, just find where the existing image is
-                    _, imgpath = chunk.ChunkRenderer(chunkfile,
-                            self.cachedir, self, q).find_oldimage(False)
+                    _, imgpath = chunk.find_oldimage(chunkfile, cached, self.caves)
                     if imgpath:
                         results[(col, row)] = imgpath
                         continue
 
-                result = chunk.render_and_save(chunkfile, self.cachedir, self, cave=self.caves, queue=q)
+                oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
+                if chunk.check_cache(chunkfile, oldimg):
+                    result = oldimg[1]
+                else:
+                    result = chunk.render_and_save(chunkfile, self.cachedir, self, oldimg, queue=q)
+
                 results[(col, row)] = result
                 if i > 0:
                     try:
@@ -300,15 +326,18 @@ class WorldRenderer(object):
             for col, row, chunkfile in chunks:
                 if inclusion_set and (col, row) not in inclusion_set:
                     # Skip rendering, just find where the existing image is
-                    _, imgpath = chunk.ChunkRenderer(chunkfile,
-                            self.cachedir, self, q).find_oldimage(False)
+                    _, imgpath = chunk.find_oldimage(chunkfile, cached, self.caves)
                     if imgpath:
                         results[(col, row)] = imgpath
                         continue
 
-                result = pool.apply_async(chunk.render_and_save,
-                        args=(chunkfile,self.cachedir,self),
-                        kwds=dict(cave=self.caves, queue=q))
+                oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
+                if chunk.check_cache(chunkfile, oldimg):
+                    result = FakeAsyncResult(oldimg[1])
+                else:
+                    result = pool.apply_async(chunk.render_and_save,
+                            args=(chunkfile,self.cachedir,self, oldimg),
+                            kwds=dict(cave=self.caves, queue=q))
                 asyncresults.append((col, row, result))
 
             pool.close()
