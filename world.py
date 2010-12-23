@@ -121,7 +121,7 @@ class WorldRenderer(object):
         # ChunkRenderer, get them all and store them here
         for root, dirnames, filenames in os.walk(cachedir):
             for filename in filenames:
-                if not filename.endswith('.png'):
+                if not filename.endswith('.png') or not filename.startswith("img."):
                     continue
                 dirname, dir_b = os.path.split(root)
                 _, dir_a = os.path.split(dirname)
