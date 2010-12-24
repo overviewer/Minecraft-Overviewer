@@ -16,8 +16,8 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-if sys.version_info[0] != 2 and sys.version_info[1] < 6:
-    print "Sorry, the Overviewer requires at least Python 2.6 to run"
+if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
+    print "Sorry, the Overviewer requires at least Python 2.6 to run"  # Python3.0 is not supported either
     sys.exit(1)
 
 import os
