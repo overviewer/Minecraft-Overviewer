@@ -102,10 +102,11 @@ def iterate_chunkblocks(xoff,yoff):
     for x in xrange(15,-1,-1):
         for y in xrange(16):
             imgx = xoff + x*12 + y*12
-            imgy = yoff - x*6 + y*6 + 128*12 + 16*12//2
+            imgy = yoff - x*6 + y*6 + 128*12 + 15*12//2
             for z in xrange(128):
-                yield x,y,z,imgx,imgy
                 imgy -= 12
+                yield x,y,z,imgx,imgy
+
 
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
