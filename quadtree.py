@@ -390,7 +390,7 @@ class QuadtreeGen(object):
         """Get chunks that are relevant to the tile rendering function that's
         rendering that range"""
         chunklist = []
-        for row in xrange(rowstart-16, rowend+1):
+        for row in xrange(rowstart-17, rowend+1):
             for col in xrange(colstart, colend+1):
                 c = self.world.chunkmap.get((col, row), None)
                 if c:
