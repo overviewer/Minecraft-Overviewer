@@ -390,7 +390,9 @@ class QuadtreeGen(object):
         """Get chunks that are relevant to the tile rendering function that's
         rendering that range"""
         chunklist = []
-        for row in xrange(rowstart-17, rowend+1):
+        for row in xrange(rowstart-17, rowend+1): # It should be -16, this is a workaround
+                                                  # for the cropped chunks problem.
+                                                  # the problem is in chunk.py iterate_chunkblocks
             for col in xrange(colstart, colend+1):
                 c = self.world.chunkmap.get((col, row), None)
                 if c:
