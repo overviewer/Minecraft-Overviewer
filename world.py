@@ -394,7 +394,9 @@ def get_worlds():
     for dir in os.listdir(save_dir):
         if dir.startswith("World") and len(dir) == 6:
             world_n = int(dir[-1])
-            info = nbt.load(os.path.join(save_dir, dir, "level.dat"))[1]
+            world_dat = os.path.join(save_dir, dir, "level.dat")
+            if not os.path.exists(world_dat): continue
+            info = nbt.load(world_dat)[1]
             info['Data']['path'] = os.path.join(save_dir, dir)
             ret[world_n] = info['Data']
 
