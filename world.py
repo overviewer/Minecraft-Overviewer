@@ -103,12 +103,12 @@ class WorldRenderer(object):
     files to update. If it includes a trailing newline, it is stripped, so you
     can pass in file handles just fine.
     """
-    def __init__(self, worlddir, cachedir, chunklist=None, lighting=False, night=False, spawn=False, useBiomeData=False):
+    def __init__(self, worlddir, cachedir, chunklist=None, rendermode="normal", useBiomeData=False):
         self.worlddir = worlddir
         self.caves = False
-        self.lighting = lighting or night or spawn
-        self.night = night or spawn
-        self.spawn = spawn
+        self.lighting = rendermode in ("lighting","night","spawn")
+        self.night = rendermode in ("night","spawn")
+        self.spawn = rendermode in ("spawn",)
         self.cachedir = cachedir
         self.useBiomeData = useBiomeData
 
