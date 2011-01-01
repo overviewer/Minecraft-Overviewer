@@ -905,18 +905,19 @@ class ChunkRenderer(object):
 
         for entity in tileEntities:
             if entity['id'] == 'Sign':
-
-                # convert the blockID coordinates from local chunk
-                # coordinates to global world coordinates
-                newPOI = dict(type="sign",
-                                x= entity['x'],
-                                y= entity['y'],
-                                z= entity['z'],
-                                msg="%s \n%s \n%s \n%s" %
-                                   (entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']),
-                                chunk= (self.chunkX, self.chunkY),
-                               )
-                self.queue.put(["newpoi", newPOI])
+                msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])
+                if not msg.strip():
+                    # convert the blockID coordinates from local chunk
+                    # coordinates to global world coordinates
+                    newPOI = dict(type="sign",
+                                    x= entity['x'],
+                                    y= entity['y'],
+                                    z= entity['z'],
+                                    msg="%s \n%s \n%s \n%s" %
+                                      (entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']),
+                                    chunk= (self.chunkX, self.chunkY),
+                                  )
+                    self.queue.put(["newpoi", newPOI])
 
 
         # check to see if there are any signs in the persistentData list that are from this chunk.
