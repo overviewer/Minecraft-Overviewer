@@ -905,7 +905,8 @@ class ChunkRenderer(object):
 
         for entity in tileEntities:
             if entity['id'] == 'Sign':
-                if entity['Text1'] != '' and entity['Text2'] != '' and entity['Text3'] != '' and entity['Text3'] != '':
+                msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])
+                if not msg.strip():
                     # convert the blockID coordinates from local chunk
                     # coordinates to global world coordinates
                     newPOI = dict(type="sign",
