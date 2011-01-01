@@ -753,11 +753,15 @@ grasscolor = None
 foliagecolor = None
 
 def prepareBiomeData(worlddir):
+    global grasscolor, foliagecolor
+    
+    # skip if the color files are already loaded
+    if grasscolor and foliagecolor:
+        return
+    
     biomeDir = os.path.join(worlddir, "EXTRACTEDBIOMES")
     if not os.path.exists(biomeDir):
         raise Exception("EXTRACTEDBIOMES not found")
-
-    global grasscolor, foliagecolor
 
     # try to find the biome color images.  If _find_file can't locate them
     # then try looking in the EXTRACTEDBIOMES folder
