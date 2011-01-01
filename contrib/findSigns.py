@@ -45,16 +45,18 @@ for dirpath, dirnames, filenames in os.walk(worlddir):
             data = nbt.load(full)[1]['Level']['TileEntities']
             for entity in data:
                 if entity['id'] == 'Sign':
-                    newPOI = dict(type="sign",
-                                    x= entity['x'],
-                                    y= entity['y'],
-                                    z= entity['z'],
-                                    msg="%s \n%s \n%s \n%s" %
-                                       (entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']),
-                                    chunk= (entity['x']/16, entity['z']/16),
-                                   )
-                    POI.append(newPOI)
-                    print "Found sign at (%d, %d, %d): %r" % (newPOI['x'], newPOI['y'], newPOI['z'], newPOI['msg'])
+                    msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])
+                    #print "checking -->%s<--" % msg.strip()
+                    if msg.strip():
+                        newPOI = dict(type="sign",
+                                        x= entity['x'],
+                                        y= entity['y'],
+                                        z= entity['z'],
+                                        msg=msg,
+                                        chunk= (entity['x']/16, entity['z']/16),
+                                       )
+                        POI.append(newPOI)
+                        print "Found sign at (%d, %d, %d): %r" % (newPOI['x'], newPOI['y'], newPOI['z'], newPOI['msg'])
 
 
 
