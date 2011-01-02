@@ -211,6 +211,8 @@ class ChunkRenderer(object):
 
 
         if self.world.useBiomeData:
+            # make sure we've at least *tried* to load the color arrays in this process...
+            textures.prepareBiomeData(self.world.worlddir)
             if not textures.grasscolor or not textures.foliagecolor:
                 raise Exception("Can't find grasscolor.png or foliagecolor.png")
 

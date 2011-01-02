@@ -749,42 +749,50 @@ def prepareLeafTexture(color):
 
 currentBiomeFile = None
 currentBiomeData = None
+grasscolor = None
+foliagecolor = None
 
 def prepareBiomeData(worlddir):
+    global grasscolor, foliagecolor
+    
+    # skip if the color files are already loaded
+    if grasscolor and foliagecolor:
+        return
+    
     biomeDir = os.path.join(worlddir, "EXTRACTEDBIOMES")
     if not os.path.exists(biomeDir):
         raise Exception("EXTRACTEDBIOMES not found")
 
-    t = sys.modules[__name__]
-
     # try to find the biome color images.  If _find_file can't locate them
     # then try looking in the EXTRACTEDBIOMES folder
     try:
-        t.grasscolor = list(Image.open(_find_file("grasscolor.png")).getdata())
-        t.foliagecolor = list(Image.open(_find_file("foliagecolor.png")).getdata())
+        grasscolor = list(Image.open(_find_file("grasscolor.png")).getdata())
+        foliagecolor = list(Image.open(_find_file("foliagecolor.png")).getdata())
     except IOError:
         try:
-            t.grasscolor = list(Image.open(os.path.join(biomeDir,"grasscolor.png")).getdata())
-            t.foliagecolor = list(Image.open(os.path.join(biomeDir,"foliagecolor.png")).getdata())
+            grasscolor = list(Image.open(os.path.join(biomeDir,"grasscolor.png")).getdata())
+            foliagecolor = list(Image.open(os.path.join(biomeDir,"foliagecolor.png")).getdata())
         except:
-            t.grasscolor = None
-            t.foliagecolor = None
+            # clear anything that managed to get set
+            grasscolor = None
+            foliagecolor = None
 
 def getBiomeData(worlddir, chunkX, chunkY):
     '''Opens the worlddir and reads in the biome color information
     from the .biome files.  See also:
     http://www.minecraftforum.net/viewtopic.php?f=25&t=80902
     '''
-    t = sys.modules[__name__]
+
+    global currentBiomeFile, currentBiomeData
 
     biomeFile = "%d.%d.biome" % (
         int(math.floor(chunkX/8)*8),
         int(math.floor(chunkY/8)*8)
             )
-    if biomeFile == t.currentBiomeFile:
+    if biomeFile == currentBiomeFile:
         return currentBiomeData
 
-    t.currentBiomeFile = biomeFile
+    currentBiomeFile = biomeFile
 
     f = open(os.path.join(worlddir, "EXTRACTEDBIOMES", biomeFile), "rb")
     rawdata = f.read()
@@ -792,7 +800,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
     data = numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2"))
 
-    t.currentBiomeData = data
+    currentBiomeData = data
     return data
 
 # This set holds block ids that require special pre-computing.  These are typically

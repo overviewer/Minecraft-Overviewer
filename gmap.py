@@ -28,6 +28,7 @@ import multiprocessing
 import time
 import logging
 import optimizeimages
+import composite
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -118,6 +119,8 @@ def main():
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
 
+    if not composite.extension_alpha_over:
+        logging.info("Notice: alpha_over extension not found; using default PIL paste()")
     
     useBiomeData = os.path.exists(os.path.join(worlddir, 'EXTRACTEDBIOMES'))
     if not useBiomeData:
