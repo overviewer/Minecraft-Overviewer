@@ -179,6 +179,22 @@ def transform_image_side(img, blockID=None):
     newimg = img.transform((12,18), Image.AFFINE, transform)
     return newimg
 
+def transform_image_slope(img, blockID=None):
+    """Takes an image and shears it in the shape of a slope going up
+    in the -y direction (reflect for +x direction). Used for minetracks"""
+
+    # Take the same size as trasform_image_side
+    img = img.resize((12,12))
+
+    # Apply shear
+    transform = numpy.matrix(numpy.identity(3))
+    transform *= numpy.matrix("[0.75,-0.5,3;0.25,0.5,-3;0,0,1]")
+    transform = numpy.array(transform)[:2,:].ravel().tolist()
+    
+    newimg = img.transform((24,24), Image.AFFINE, transform)
+    
+    return newimg
+    
 
 def _build_block(top, side, blockID=None):
     """From a top texture and a side texture, build a block image.
@@ -362,14 +378,46 @@ def generate_special_texture(blockID, data):
                     blockID)
         elif data == 1:
             track = transform_image(raw_straight.rotate(90), blockID)
-        else:
-            # TODO render carts that slop up or down
+            
+        #slopes
+        elif data == 2: # slope going up in +x direction
+            track = transform_image_slope(raw_straight,blockID)
+            track = track.transpose(Image.FLIP_LEFT_RIGHT)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            composite.alpha_over(img, track, (2,0), track)
+            # the 2 pixels move is needed to fit with the adjacent tracks
+            return (img.convert("RGB"), img.split()[3])
+
+        elif data == 3: # slope going up in -x direction
+            # tracks are sprites, in this case we are seeing the "side" of 
+            # the sprite, so draw a line to make it beautiful.
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            ImageDraw.Draw(img).line([(11,11),(23,17)],fill=(164,164,164))
+            # grey from track texture (exterior grey).
+            # the track doesn't start from image corners, be carefull drawing the line!
+            return (img.convert("RGB"), img.split()[3])
+            
+        elif data == 4: # slope going up in -y direction
+            track = transform_image_slope(raw_straight,blockID)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            composite.alpha_over(img, track, (0,0), track)
+            return (img.convert("RGB"), img.split()[3])
+            
+        elif data == 5: # slope going up in +y direction
+            # same as "data == 3"
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            ImageDraw.Draw(img).line([(1,17),(12,11)],fill=(164,164,164))
+            return (img.convert("RGB"), img.split()[3])
+            
+
+        else: # just in case
             track = transform_image(raw_straight, blockID)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
         composite.alpha_over(img, track, (0,12), track)
 
         return (img.convert("RGB"), img.split()[3])
+        
     if blockID == 59: # crops
         raw_crop = terrain_images[88+data]
         crop1 = transform_image(raw_crop, blockID)
