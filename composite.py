@@ -28,7 +28,7 @@ try:
     from _composite import alpha_over as _extension_alpha_over
     extension_alpha_over = _extension_alpha_over
 except ImportError:
-    logging.warning("alpha_over extension not found; using default PIL paste()")
+    pass
 
 def alpha_over(dest, src, pos_or_rect=(0, 0), mask=None):
     """Composite src over dest, using mask as the alpha channel (if

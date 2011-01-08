@@ -222,7 +222,8 @@ class WorldRenderer(object):
         ## find the first air block
         while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
             spawnY += 1
-
+            if spawnY == 128:
+                break
 
         self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, 
                 msg="Spawn", type="spawn", chunk=(inChunkX,inChunkZ)))
