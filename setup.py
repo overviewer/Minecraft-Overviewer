@@ -5,6 +5,7 @@ from distutils.dir_util import remove_tree
 from distutils import log
 import os, os.path
 import glob
+import platform
 
 try:
     import py2exe
@@ -34,7 +35,7 @@ if py2exe != None:
 # _composite.c extension
 #
 
-setup_kwargs['ext_modules'].append(Extension('_composite', ['_composite.c'], include_dirs=['.'], extra_link_args=["/MANIFEST"]))
+setup_kwargs['ext_modules'].append(Extension('_composite', ['_composite.c'], include_dirs=['.'], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
