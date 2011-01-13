@@ -365,7 +365,7 @@ class ChunkRenderer(object):
         return self._up_left_blocks
     up_left_blocks = property(_load_up_left_blocks)
 
-    def generate_pseudo_ancildata(self,x,y,z,blockid, north_position = ll ):
+    def generate_pseudo_ancildata(self,x,y,z,blockid, north_position = 0 ):
         """ Generates a pseudo ancillary data for blocks that depend of 
         what are surrounded and don't have ancillary data
         
@@ -374,12 +374,22 @@ class ChunkRenderer(object):
         
         Bit:   1   2   3   4
         Side:  x   y  -x  -y
-        Values: bit = 0 -> The corresponding side block is not blockid
-                bit = 1 -> The corresponding side block is not blockid
+        Values: bit = 0 -> The corresponding side block has different blockid
+                bit = 1 -> The corresponding side block has same blockid
         Example: if the bit1 is 1 that means that there is a block with 
         blockid in the side of the +x direction.
         
-        Once generate the pseudo_ancildata 
+        You can rotate the pseudo data multiplying by 2 and
+        if it is > 15 subtracting 15 and adding 1. (moving bits
+        in the left direction is like rotate 90 degree in anticlockwise
+        direction). In this way can be used for maps with other
+        north orientation.
+        
+        North position can have the values 0, 1, 2, 3, corresponding to 
+        north in bottom-left, bottom-right, top-right and top-left of
+        the screen.
+        
+        The rotation feature is not used anywhere yet.
         """
         
         blocks = self.blocks
@@ -389,50 +399,40 @@ class ChunkRenderer(object):
         right_blocks = self.right_blocks
 
         pseudo_data = 0
+        # ll, ul, ur, lr stands for lower-left, upper-left, upper-right 
+        # and lower-right 
         
         # check if we are in the border of a chunk and the chunk
         # is in the border of the map
         
-        if up_right_blocks[0,0,0] == None and x == 15 or
-        right_blocks[0,0,0] == None and y == 15 or
-        left_blocks[0,0,0] == None and x == 0 or
-        up_left_blocks[0,0,0] == None and y == 0:
+        if ((up_right_blocks[0,0,0] == None and x == 15) or
+        (right_blocks[0,0,0] == None and y == 15) or
+        (left_blocks[0,0,0] == None and x == 0) or
+        (up_left_blocks[0,0,0] == None and y == 0)):
             return None
         
         if up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid:
-            pseudo_data |= 0b1000
+            pseudo_data = pseudo_data | 0b1000
         
         if right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid:
-            pseudo_data |= 0b0100
+            pseudo_data = pseudo_data | 0b0100
         
         if left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid:
-            pseudo_data |= 0b0010
+            pseudo_data = pseudo_data | 0b0010
             
         if up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid:
-            pseudo_data |= 0b0001
-        
-        if north_position == ll:
-            return pseudo_data
+            pseudo_data = pseudo_data | 0b0001
+
+
+        while north_position > 0:
+            pseudo_data *= 2
+            if pseudo_data > 15:
+                pseudo_data -= 16
+                pseudo_data +=1
+            north_position -= 1
             
-        elif north_position == ul:
-            pseudo_data *= 2
-            if pseudo_data > 15:
-                pseudo_data -= 15
-                pseudo_data +=1
-            return pseudo_data
-                
-        elif north_position == ul:
-            pseudo_data *= 2
-            if pseudo_data > 15:
-                pseudo_data -= 15
-                pseudo_data +=1
-
-        elif north_position == ul:
-            pseudo_data *= 2
-            if pseudo_data > 15:
-                pseudo_data -= 15
-                pseudo_data +=1
-
+        return pseudo_data
+        
     def _hash_blockarray(self):
         """Finds a hash of the block array"""
         if hasattr(self, "_digest"):
