@@ -277,11 +277,11 @@ def _build_blockimages():
        #        0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
     topids = [ -1,  1,  0,  2, 16,  4, 15, 17,205,205,237,237, 18, 19, 32, 33,
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-               34, 21, 52, 48, 49, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, # Cloths are left out
+               34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, -1, -1, # Cloths are left out, sandstone (it has top, side, and bottom wich is ignored here), note block
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86,  1,  1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
+               36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67, # door,ladder left out. Minecart rail orientation
        #       80  81  82  83  84  85  86  87  88  89  90  91
@@ -294,11 +294,11 @@ def _build_blockimages():
        #         0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
     sideids = [ -1,  1,  3,  2, 16,  4, 15, 17,205,205,237,237, 18, 19, 32, 33,
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-                34, 20, 52, 48, 49, -1, -1, -1, -1, -1, -1, -1,- 1, -1, -1, -1,
+                34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, -1, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  5,  5,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, 44, 61, -1,
+                36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                 -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
@@ -431,7 +431,7 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
     if blockID == 61: #furnace
-        top = transform_image(terrain_images[1])
+        top = transform_image(terrain_images[62])
         side1 = transform_image_side(terrain_images[45])
         side2 = transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
 
@@ -456,16 +456,30 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 62: # lit furnace
-        top = transform_image(terrain_images[1])
+        top = transform_image(terrain_images[62])
         side1 = transform_image_side(terrain_images[45])
         side2 = transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
-
+        
         composite.alpha_over(img, side1, (0,6), side1)
         composite.alpha_over(img, side2, (12,6), side2)
         composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
+
+    if blockID == 23: # dispenser
+        top = transform_image(terrain_images[62])
+        side1 = transform_image_side(terrain_images[46])
+        side2 = transform_image_side(terrain_images[45]).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+
+
 
     if blockID == 65: # ladder
         raw_texture = terrain_images[83]
@@ -569,7 +583,22 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, side2, (12,6), side2)
         composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
-
+        
+    if blockID == 17: # wood: normal, birch and pines
+        top = terrain_images[21]
+        if data == 0:
+            side = terrain_images[20]
+            img = _build_block(top, side, 17)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 1:
+            side = terrain_images[116]
+            img = _build_block(top, side, 17)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 2:
+            side = terrain_images[117]
+            img = _build_block(top, side, 17)
+            return (img.convert("RGB"), img.split()[3])
+        
     if blockID == 85: # fences
         # create needed images for Big stick fence
         raw_texture = terrain_images[4]
@@ -853,21 +882,23 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
 special_map = {}
 special_map[66] = range(10) # minecrart tracks
 special_map[59] = range(8)  # crops
-special_map[61] = (0,)      # furnace
-special_map[62] = (0,)      # burning furnace
+special_map[61] = range(6)      # furnace
+special_map[62] = range(6)      # burning furnace
 special_map[65] = (2,3,4,5) # ladder
 special_map[64] = range(16) # wooden door
 special_map[71] = range(16) # iron door
 special_map[91] = range(5)  # jack-o-lantern
 special_map[86] = range(5)  # pumpkin
 special_map[85] = range(17) # fences
+special_map[17] = range(4)  # wood: normal, birch and pine
+special_map[23] = range(6)      # dispensers
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
 # like torches
