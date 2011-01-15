@@ -279,7 +279,7 @@ def _build_blockimages():
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, -1, -1, # Cloths are left out, sandstone (it has top, side, and bottom wich is ignored here), note block
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-               -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
+               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
@@ -296,7 +296,7 @@ def _build_blockimages():
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                 34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, -1, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-                -1, -1, -1, 64, 64, 13, 12, 29, 28, 23, 22,  5,  5,  7,  8, 35,
+                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22,  5,  5,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                 36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
@@ -599,6 +599,73 @@ def generate_special_texture(blockID, data):
             img = _build_block(top, side, 17)
             return (img.convert("RGB"), img.split()[3])
         
+    if blockID == 35: # wool
+        if data == 0: # white
+            top = side = terrain_images[64]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 1: # orange
+            top = side = terrain_images[210]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 2: # magenta
+            top = side = terrain_images[194]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 3: # light blue
+            top = side = terrain_images[178]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 4: # yellow
+            top = side = terrain_images[162]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 5: # light green
+            top = side = terrain_images[146]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 6: # pink
+            top = side = terrain_images[130]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 7: # grey
+            top = side = terrain_images[114]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 8: # light grey
+            top = side = terrain_images[225]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 9: # cyan
+            top = side = terrain_images[209]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 10: # purple
+            top = side = terrain_images[193]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 11: # blue
+            top = side = terrain_images[177]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 12: # brown
+            top = side = terrain_images[161]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 13: # dark green
+            top = side = terrain_images[145]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 14: # red
+            top = side = terrain_images[129]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 15: # black
+            top = side = terrain_images[113]
+            img = _build_block(top, side, 35)
+            return (img.convert("RGB"), img.split()[3])
+
+        
     if blockID == 85: # fences
         # create needed images for Big stick fence
         raw_texture = terrain_images[4]
@@ -882,15 +949,15 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
 special_map = {}
 special_map[66] = range(10) # minecrart tracks
 special_map[59] = range(8)  # crops
-special_map[61] = range(6)      # furnace
-special_map[62] = range(6)      # burning furnace
+special_map[61] = range(6)  # furnace
+special_map[62] = range(6)  # burning furnace
 special_map[65] = (2,3,4,5) # ladder
 special_map[64] = range(16) # wooden door
 special_map[71] = range(16) # iron door
@@ -898,7 +965,8 @@ special_map[91] = range(5)  # jack-o-lantern
 special_map[86] = range(5)  # pumpkin
 special_map[85] = range(17) # fences
 special_map[17] = range(4)  # wood: normal, birch and pine
-special_map[23] = range(6)      # dispensers
+special_map[23] = range(6)  # dispensers
+special_map[35] = range(16) # wool, colored and white
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
 # like torches
