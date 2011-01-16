@@ -571,6 +571,21 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
     
+    if blockID == 51: # fire
+        firetexture = _load_image("fire.png")
+        side1 = transform_image_side(firetexture)
+        side2 = transform_image_side(firetexture).transpose(Image.FLIP_LEFT_RIGHT)
+        
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        composite.alpha_over(img, side1, (12,0), side1)
+        composite.alpha_over(img, side2, (0,0), side2)
+
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        
+        return (img.convert("RGB"), img.split()[3])
+    
     if blockID == 18: # leaves
         t = tintTexture(terrain_images[52], (37, 118, 25))
         top = transform_image(t)
@@ -949,7 +964,8 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35])
+
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -967,6 +983,8 @@ special_map[85] = range(17) # fences
 special_map[17] = range(4)  # wood: normal, birch and pine
 special_map[23] = range(6)  # dispensers
 special_map[35] = range(16) # wool, colored and white
+special_map[51] = range(16) # fire
+
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
 # like torches
