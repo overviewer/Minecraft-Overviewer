@@ -1,91 +1,104 @@
 <?
 /**
  * Player Avatars for brownan's Overviewer
- * 
+ *
  * @author eth0 <eth0@eth0.uk.net>
+ * @author billiam
  * @version 0.3
  * @copyright Copyright (c) 2010, eth0
  *
  */
 
 require_once('Cache/Lite.php');
+require_once('classes/Char_Image.php');
 
 define("DEBUG", false);
 define("TMPDIR", '/tmp/');
-define("LIFETIME", 86400);	// People don't generally change their skin more than daily
-
+define("LIFETIME", 86400);      // People don't generally change their skin more than daily
 
 $CACHE_OPTIONS = array(
-	'cacheDir' => TMPDIR,
-	'lifeTime' => LIFETIME,	
-	'automaticSerialization' => true
+        'cacheDir' => TMPDIR,
+        'lifeTime' => LIFETIME,
+        'automaticSerialization' => true
 );
 
-$player = (string) htmlentities($_GET['player'], ENT_QUOTES, 'UTF-8');
-$custom_player = 'http://minecraft.net/skin/'. $player .'.png';
-$default_player = 'http://minecraft.net/img/char.png';
-$s = (float) htmlentities($_GET['s'], ENT_QUOTES, 'UTF-8');
-$percent = (!empty($s)) ? $s : 3;
+$s = 3;
+$borderWidth = 0;
+$borderColor = '#fff';
+
+if ( ! empty($_GET['player'])) {
+    $player = preg_replace('/[^a-zA-Z0-9_]/', '', $_GET['player']);
+    $custom_player = 'http://minecraft.net/skin/'. $player .'.png';
+}
+
+//use local default file instead of pulling from remote server.
+$default_player = 'char.png'; //http://minecraft.net/img/char.png
+
+if ( ! empty($_GET['s'])) {
+    $s = (float)$_GET['s'];
+    $percent = $s > 0 ? $s : 3;
+}
+
+if ( ! empty($_GET['format'])) {
+    $format = $_GET['format'];
+}
+
+if ( ! empty($_GET['bw'])) {
+    $borderWidth = (int)$_GET['bw'];
+}
+
+if ( ! empty($_GET['bc'])) {
+    if ( preg_match('/#?[0-9a-f]{3,6}$/i', $_GET['bc'])) {
+        $borderColor = (string)$_GET['bc'];
+    }
+}
+
+$paramHash = md5($player . $borderWidth . $borderColor . $s . $format);
 
 // Let's dip in to the cache and see if we have a return visitor
 $Cache_Lite = new Cache_Lite($CACHE_OPTIONS);
-if ($player_skin_data = ($Cache_Lite->get($player))) {
-	if (DEBUG) $DEBUG_TEXT = "Cache Hit: " . (time() - $Cache_Lite->lastModified($player));
+
+//check for cached image with input parameters
+if ( ! $generatedImage = $Cache_Lite->get($paramHash, 'avatar')) {
+    //check for cached skin
+    if ( ! $playerSkin = $Cache_Lite->get($player)) {
+
+        //reduce default timeout
+        $ctx = stream_context_create(array(
+            'http' => array(
+                'timeout' => 3,
+            )
+        ));
+
+        if ( ! empty($player))
+            $playerSkin = file_get_contents($custom_player, 0, $ctx);
+        
+        if ( $playerSkin ) {
+            $Cache_Lite->save($player, $playerSkin);
+
+        } else {
+            // Oh no custom skin? Guess we'll use the default
+            $playerSkin = file_get_contents($default_player);
+            if (DEBUG) $DEBUG_TEXT = "Skin Cache Miss: " . (time() - $Cache_Lite->lastModified());
+        }
+    } else {
+        if (DEBUG) $DEBUG_TEXT = "Skin Cache Hit: " . (time() - $Cache_Lite->lastModified());
+    }
+
+    $char = new Char_Image($playerSkin);
+
+    $generatedImage = $char->setScale($s)
+                  ->setBorder($borderColor, $borderWidth)
+                  ->setFormat($format)
+                  ->getImage();
+
+    $Cache_Lite->save($generatedImage, $paramHash, 'avatar');
+
+    if (DEBUG) $DEBUG_TEXT = "Image Cache Miss: " . (time() - $Cache_Lite->lastModified());
 } else {
-	$player_skin_data = file_get_contents($custom_player);
-	// Oh no custom skin? Guess we'll use the default
-	if ( !$player_skin_data ) $player_skin_data = file_get_contents($default_player);
-	if (DEBUG) $DEBUG_TEXT = "Cache Miss: " . (time() - $Cache_Lite->lastModified($player));
-	$Cache_Lite->save(($player_skin_data));
+    if (DEBUG) $DEBUG_TEXT = "Image Cache Hit: " . (time() - $Cache_Lite->lastModified());
 }
-$player_skin = imagecreatefromstring($player_skin_data);
+echo $DEBUG_TEXT;
+Char_Image::outputImage($generatedImage);
 
-// We get the skin dimensions and scaling factor
-$width = imagesx($player_skin);
-$height= imagesy($player_skin);
-$new_width = $width * $percent;
-$new_height = $height * $percent;
-
-// Setup a transparent canvas to compose the head/face & helmet/face pieces
-$imgPlayer = imagecreatetruecolor(8*$percent, 8*$percent);
-$color = imagecolortransparent($imgPlayer, imagecolorallocatealpha($imgPlayer, 0, 0, 0, 127));
-imagefill($imgPlayer, 0, 0, $color);
-imagesavealpha($imgPlayer, true);
-$imgPlayerHead = imagecreatefromstring($player_skin_data);
-$imgPlayerFace = imagecreatefromstring($player_skin_data);
-imagealphablending($imgPlayer, true);
-imagealphablending($imgPlayerHead,true); 
-imagealphablending($imgPlayerFace,true); 
-
-// Copy and scale the head/face piece to canvas
-imagecopyresampled($imgPlayer, $imgPlayerHead, -8*$percent, -8*$percent, 0, 0, $new_width, $new_height, $width, $height);
-
-// Does the player have a helmet?
-// We have to detect if the 'face' is entire painted the same as the background.
-$rgb = imagecolorat( $imgPlayerFace, 0, 0 );
-$bg_colors = imagecolorsforindex( $imgPlayerFace, $rgb );
-$hasFace = false;
-for ($xPix=40; $xPix <= 47; $xPix++)
-{
-	for ($yPix=8; $yPix <= 15; $yPix++)
-	{
-		$rgb = imagecolorat( $imgPlayerFace, $xPix, $yPix );
-		$colors = imagecolorsforindex( $imgPlayerFace, $rgb );
-		if ( count(array_diff_assoc( $colors, $bg_colors )) )
-		{
-			$hasFace = true;
-			break 2;
-		}
-	}
-}
-
-// Copy and scale the helmet/face piece to canvas
-if ($hasFace) imagecopyresampled($imgPlayer, $imgPlayerFace, -40*$percent, -8*$percent, 0, 0, $new_width, $new_height, $width, $height);
-
-if (DEBUG) imagestring($imgPlayer, 2, 0, 0, $DEBUG_TEXT, imagecolorallocate($imgPlayer, 0, 0, 255));
-
-// And finally output the image
-header('Content-type: image/png');
-imagepng($imgPlayer, null, 9);
-imagedestroy($imgPlayer);
 ?>
