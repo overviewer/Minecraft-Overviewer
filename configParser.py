@@ -24,6 +24,10 @@ class ConfigOptionParser(object):
             print  "%s: %r" % (n, self.configResults.__dict__[n])
 
     def add_option(self, *args, **kwargs):
+
+        if kwargs.get("configFileOnly", False) and kwargs.get("commandLineOnly", False):
+            raise Exception(args, "configFileOnly and commandLineOnly are mututally exclusive")
+
         self.configVars.append(kwargs.copy())
 
         if not kwargs.get("configFileOnly", False):
@@ -40,7 +44,6 @@ class ConfigOptionParser(object):
         # first, load the results from the command line:
         options, args = self.cmdParser.parse_args()
 
-
         # second, use these values to seed the locals dict
         l = dict()
         g = dict()
@@ -48,25 +51,34 @@ class ConfigOptionParser(object):
             n = a['dest']
             if a.get('configFileOnly', False): continue
             if a.get('commandLineOnly', False): continue
-            if getattr(options, n) != None:
-                l[n] = getattr(options, n)
+            v = getattr(options, n)
+            if v != None:
+                #print "seeding %s with %s" % (n, v)
+                l[n] = v
+            else:
+                # if this has a default, use that to seed the globals dict
+                if a.get("default", None): g[n] = a['default']
         g['args'] = args
+
         try:
             execfile(self.configFile, g, l)
         except NameError, ex:
-            pass
+            import traceback
+            traceback.print_exc()
+            print "\nError parsing %s.  Please check the trackback above" % self.configFile
+            sys.exit(1)
         except SyntaxError, ex:
-            print "Error parsing %s.  Please check the trackback below:" % self.configFile
             import traceback
             traceback.print_exc()
             tb = sys.exc_info()[2]
             #print tb.tb_frame.f_code.co_filename
+            print "\nError parsing %s.  Please check the trackback above" % self.configFile
             sys.exit(1)
 
         #print l.keys()
 
         configResults = OptionsResults()
-        # first, load the results from the config file:
+        # third, load the results from the config file:
         for a in self.configVars:
             n = a['dest']
             if a.get('commandLineOnly', False):
