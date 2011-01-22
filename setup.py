@@ -4,6 +4,8 @@ from distutils.command.clean import clean
 from distutils.dir_util import remove_tree
 from distutils import log
 import os, os.path
+import glob
+import platform
 
 try:
     import py2exe
@@ -24,15 +26,16 @@ setup_kwargs['cmdclass'] = {}
 if py2exe != None:
     setup_kwargs['console'] = ['gmap.py']
     setup_kwargs['data_files'] = [('textures', ['textures/lava.png', 'textures/water.png']),
-                                  ('', ['template.html'])]
+                                  ('', ['config.js', 'COPYING.txt', 'README.rst']),
+                                  ('web_assets', glob.glob('web_assets/*'))]
     setup_kwargs['zipfile'] = None
-    setup_kwargs['options']['py2exe'] = {'bundle_files' : 1}
+    setup_kwargs['options']['py2exe'] = {'bundle_files' : 1, 'excludes': 'Tkinter'}
 
 #
 # _composite.c extension
 #
 
-setup_kwargs['ext_modules'].append(Extension('_composite', ['_composite.c'], include_dirs=['.']))
+setup_kwargs['ext_modules'].append(Extension('_composite', ['_composite.c'], include_dirs=['.'], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}

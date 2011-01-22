@@ -184,6 +184,10 @@ function initMarkers() {
 
                 if (item.type == 'sign') { iconURL = 'signpost_icon.png';}
 
+                console.log(signGroup.icon);
+                if (signGroup.icon) { iconURL = signGroup.icon; 
+                }
+
                 var converted = fromWorldToLatLng(item.x, item.y, item.z);
                 var marker = new google.maps.Marker({position: converted,
                         map: map,

@@ -19,12 +19,14 @@
  *
  * Optional:
  *     checked : boolean.  Set to true to have the group visible by default
+ *     icon : string. Used to specify an icon url.
  */
 var signGroups = [
 //    {label: "'To'", checked: false, match: function(s) {return s.msg.match(/to/)}},
 //    {label: "Storage", match: function(s) {return s.msg.match(/storage/i) || s.msg.match(/dirt/i) || s.msg.match(/sand/)}},
 //    {label: "Below Sealevel", match: function(s) { return s.y<64;}},   
-    {label: "All", match: function(s) {return true}}
+//    {label: "Info", match: function(s) { return s.msg.match("\\[info\\]");}, icon:"http://google-maps-icons.googlecode.com/files/info.png"},   
+    {label: "All", match: function(s) {return true}},
 ];
 
 /* mapTypeData -- a list of alternate map renderings available. At least one rendering must be
