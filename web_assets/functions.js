@@ -184,7 +184,7 @@ function initMarkers() {
 
                 if (item.type == 'sign') { iconURL = 'signpost_icon.png';}
 
-                console.log(signGroup.icon);
+                //console.log(signGroup.icon);
                 if (signGroup.icon) { iconURL = signGroup.icon; 
                 }
 
