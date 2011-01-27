@@ -5,6 +5,7 @@
     defaultZoom:  1,
     maxZoom:      {maxzoom},
     cacheMinutes: 0, // Change this to have browsers automatically request new images every x minutes
+    bg_color:     '#1A1A1A',
     debug:        false
   };
 

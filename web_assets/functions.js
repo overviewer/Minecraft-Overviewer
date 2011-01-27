@@ -280,6 +280,7 @@ function initialize() {
         },
         mapTypeId: mapTypeIdDefault,
         streetViewControl: false,
+        backgroundColor: config.bg_color,
     };
     map = new google.maps.Map(document.getElementById('mcmap'), mapOptions);
 
