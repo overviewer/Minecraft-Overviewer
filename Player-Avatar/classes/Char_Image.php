@@ -245,8 +245,9 @@ class Char_Image {
         $this->_copyTo($image, $this->_skin, $face, 1, 1);
 
         if ( $this->hasHelmet()) {
-            $this->_copyTo($image, $this->_skin, $helmet, 0, 0, 10/8);
+            $this->_copyTo($image, $this->_skin, $helmet, 0, 0, false, 10/8);
         }
+        
         return self::getPngString($image);
     }
 

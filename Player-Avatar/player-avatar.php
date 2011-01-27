@@ -71,14 +71,14 @@ if ( ! $generatedImage = $Cache_Lite->get($paramHash, 'avatar')) {
         ));
 
         if ( ! empty($player))
-            $playerSkin = file_get_contents($custom_player, 0, $ctx);
-        
+            $playerSkin = @file_get_contents($custom_player, 0, $ctx);
+            
         if ( $playerSkin ) {
             $Cache_Lite->save($player, $playerSkin);
 
         } else {
             // Oh no custom skin? Guess we'll use the default
-            $playerSkin = file_get_contents($default_player);
+            $playerSkin = @file_get_contents($default_player);
             if (DEBUG) $DEBUG_TEXT = "Skin Cache Miss: " . (time() - $Cache_Lite->lastModified());
         }
     } else {
