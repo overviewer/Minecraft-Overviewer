@@ -399,31 +399,24 @@ class ChunkRenderer(object):
         right_blocks = self.right_blocks
 
         pseudo_data = 0
-        # ll, ul, ur, lr stands for lower-left, upper-left, upper-right 
-        # and lower-right 
+
+        # first check if we are in the border of a chunk, next check for chunks adjacent to this 
+        # and finally check for a block with same blockid. I we aren't in the border of a chunk, 
+        # check for the block having the sme blockid.
         
-        # check if we are in the border of a chunk and the chunk
-        # is in the border of the map
-        
-        if ((up_right_blocks[0,0,0] == None and x == 15) or
-        (right_blocks[0,0,0] == None and y == 15) or
-        (left_blocks[0,0,0] == None and x == 0) or
-        (up_left_blocks[0,0,0] == None and y == 0)):
-            return None
-        
-        if up_right_blocks[0,y,z] == blockid if x == 15 else blocks[x+1,y,z] == blockid:
+        if (up_right_blocks.any() and up_right_blocks[0,y,z] == blockid) if x == 15 else blocks[x+1,y,z] == blockid:
             pseudo_data = pseudo_data | 0b1000
         
-        if right_blocks[x,0,z] == blockid if y == 15 else blocks[x,y + 1,z] == blockid:
+        if (right_blocks.any() and right_blocks[x,0,z] == blockid) if y == 15 else blocks[x,y + 1,z] == blockid:
             pseudo_data = pseudo_data | 0b0100
         
-        if left_blocks[15,y,z] == blockid if x == 0 else blocks[x - 1,y,z] == blockid:
+        if (left_blocks.any() and left_blocks[15,y,z] == blockid) if x == 0 else blocks[x - 1,y,z] == blockid:
             pseudo_data = pseudo_data | 0b0010
             
-        if up_left_blocks[x,15,z] == blockid if y == 0 else blocks[x,y - 1,z] == blockid:
+        if (up_left_blocks.any() and up_left_blocks[x,15,z] == blockid) if y == 0 else blocks[x,y - 1,z] == blockid:
             pseudo_data = pseudo_data | 0b0001
 
-
+        # rotate the bits for other north orientations
         while north_position > 0:
             pseudo_data *= 2
             if pseudo_data > 15:
