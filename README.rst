@@ -46,6 +46,7 @@ This program requires:
 * Numpy <http://scipy.org/Download>
 * Either the Minecraft client installed, or a terrain.png file. See the
   `Textures`_ section below.
+* bukkit's MapMarkers <http://forums.bukkit.org/threads/mapmarkers-v0-2.843/>
 
 I develop and test this on Linux, but need help testing it on Windows and Mac.
 If something doesn't work, let me know.
