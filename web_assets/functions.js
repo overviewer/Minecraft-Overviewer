@@ -404,7 +404,7 @@ function getTileUrlGenerator(path, path_base) {
         var d = new Date();
         url += '?c=' + Math.floor(d.getTime() / (1000 * 60 * config.cacheMinutes));
       }
-      return(path_base + url);
+      return(url_base + url);
   }
 }
 
