@@ -129,8 +129,9 @@ class QuadtreeGen(object):
         Copies web assets into the destdir"""
         zoomlevel = self.p
         imgformat = self.imgformat
-        configpath = os.path.join(util.get_program_path(), "config.js")
 
+	# Configure and output config.js
+        configpath = os.path.join(util.get_program_path(), "config.js")
         config = open(configpath, 'r').read()
         config = config.replace(
                 "{maxzoom}", str(zoomlevel))
@@ -149,7 +150,10 @@ class QuadtreeGen(object):
         # copy web assets into destdir:
         for root, dirs, files in os.walk(os.path.join(util.get_program_path(), "web_assets")):
             for f in files:
-                shutil.copy(os.path.join(root, f), self.destdir)
+		if f == 'index.html':
+			print f
+		else :
+	                shutil.copy(os.path.join(root, f), self.destdir)
 
         if skipjs:
             return
@@ -179,6 +183,25 @@ class QuadtreeGen(object):
             output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
             output.write('  // ]},\n')
             output.write('];')
+
+        # Find all javascript files in the web_assets folder and make a fancy string to include them in index
+        javascriptAssets = []
+        for root, dirs, files in os.walk(self.destdir):
+                for f in files:
+                        if f.endswith('.js') and f != 'config.js':
+                                javascriptAssets.append(f)
+        javascriptAssetStr = ''
+        for x in javascriptAssets:
+                javascriptAssetStr += "<script type=\"text/javascript\" src=\"{0}\"></script>\n".format(x)
+
+        # Open index.html and find all js files and automaitically include them from the web_assets folder
+        indexpath = os.path.join(util.get_program_path(), "web_assets/index.html")
+        index = open(indexpath, 'r').read()
+        index = index.replace(
+                "<!--{javascript-includes}-->", javascriptAssetStr)
+
+        with open(os.path.join(self.destdir, "index.html"), 'w') as output:
+            output.write(index)
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
