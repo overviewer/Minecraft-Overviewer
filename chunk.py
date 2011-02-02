@@ -404,16 +404,16 @@ class ChunkRenderer(object):
         # and finally check for a block with same blockid. I we aren't in the border of a chunk, 
         # check for the block having the sme blockid.
         
-        if (up_right_blocks.any() and up_right_blocks[0,y,z] == blockid) if x == 15 else blocks[x+1,y,z] == blockid:
+        if (up_right_blocks != None and up_right_blocks[0,y,z] == blockid) if x == 15 else blocks[x+1,y,z] == blockid:
             pseudo_data = pseudo_data | 0b1000
         
-        if (right_blocks.any() and right_blocks[x,0,z] == blockid) if y == 15 else blocks[x,y + 1,z] == blockid:
+        if (right_blocks != None and right_blocks[x,0,z] == blockid) if y == 15 else blocks[x,y + 1,z] == blockid:
             pseudo_data = pseudo_data | 0b0100
         
-        if (left_blocks.any() and left_blocks[15,y,z] == blockid) if x == 0 else blocks[x - 1,y,z] == blockid:
+        if (left_blocks != None and left_blocks[15,y,z] == blockid) if x == 0 else blocks[x - 1,y,z] == blockid:
             pseudo_data = pseudo_data | 0b0010
             
-        if (up_left_blocks.any() and up_left_blocks[x,15,z] == blockid) if y == 0 else blocks[x,y - 1,z] == blockid:
+        if (up_left_blocks != None and up_left_blocks[x,15,z] == blockid) if y == 0 else blocks[x,y - 1,z] == blockid:
             pseudo_data = pseudo_data | 0b0001
 
         # rotate the bits for other north orientations
