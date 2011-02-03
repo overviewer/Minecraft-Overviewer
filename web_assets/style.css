@@ -55,3 +55,23 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
     background-color: #fff; /* fallback */
     background-color: rgba(255,255,255,0.8);
 }
+
+.playerlink A:link {
+    text-decoration: none;
+    color: #fff;
+}
+
+.playerlink A:hover {
+    text-decoration: none;
+    color: #fff;
+}
+
+.playerlink A:active {
+    text-decoration: none;
+    color: #fff;
+}
+
+.playerlink A:visited {
+    text-decoration: none;
+    color: #fff;
+}
