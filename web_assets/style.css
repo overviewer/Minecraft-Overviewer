@@ -68,58 +68,31 @@ body {
     background-color: rgba(255,255,255,0.8);
 }
 
+<<<<<<< HEAD:web_assets/style.css
 /* CSS for Playerlist */
 #playerList A:link {
+=======
+.playerlink A:link {
+>>>>>>> 89adabd... Added online player list by datLicht (http://forums.bukkit.org/threads/mapmarkers-v0-2.843/page-2#post-37817), crushed all unchrushed png.:web_assets/style.css
     text-decoration: none;
     color: #fff;
 }
 
+<<<<<<< HEAD:web_assets/style.css
 #playerList A:hover {
+=======
+.playerlink A:hover {
+>>>>>>> 89adabd... Added online player list by datLicht (http://forums.bukkit.org/threads/mapmarkers-v0-2.843/page-2#post-37817), crushed all unchrushed png.:web_assets/style.css
     text-decoration: none;
     color: #fff;
 }
 
-#playerList A:active {
+.playerlink A:active {
     text-decoration: none;
     color: #fff;
 }
 
-#playerList A:visited {
+.playerlink A:visited {
     text-decoration: none;
     color: #fff;
-}
-
-#playerList {
-	position:absolute;
-	background-image:url(./listbg.png);
-	top:55px;
-	right:20px;
-	width:150px; 
-/*	height:*;*/
-	border:solid;
-	border-color:#FFFFFF;
-	border-width:1px;
-	color:#FFFFFF;
-	font-family:Arial;
-}
-
-#Players {
-	font-size:80%;
-	left:10px;
-	bottom:10px;
-	top:5px;
-	font-weight: bold;
-}
-
-#onlinelist {
-	font-size: 80%;
-	position: relative;
-	text-align: center;
-	top: 5px;
-}
-
-#onlinelist > hr {
-	color:#FFFFFF;
-	background:#FFFFFF;
-	height:1px;
 }

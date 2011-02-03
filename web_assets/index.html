@@ -14,12 +14,16 @@
 </head>
 <!-- Generated at: {time} -->
 <body onload="initialize()">
-<div id="mcmap"></div>
-<div id="playerList">
-<div id="onlinelist"><strong> Online List </strong></div>
-<hr />
-<div id="Players"></div>
-</div>
 <div style="position: absolute; bottom: 20px; right: 5px; padding-left: 2px; padding-right: 3px; background-image: url(./listbg.png); border: solid; border-color: #FFF; border-width: 1px; color: #FFF; font-family:Courier New; font-size: 11px;" class="mapdate">Map Generated at {time}</div>
+<div id="mcmap" style="width:100%; height:100%"></div>
+
+   <div id="playerList" style="position:absolute; background-image:url(./listbg.png); top:55px; right:20px; width:150px; height:*;border:solid;border-color:#FFFFFF;border-width:1px;color:#FFFFFF;font-family:Arial;" class="playerlink">
+	<strong>
+		<div align="center" style="font-size:80%; position:relative; top:5px;">&nbsp;Online List&nbsp;</div>
+		<hr style="color:#FFFFFF; background:#FFFFFF; heigth:1px;" />
+				<div style="font-size:80%; left:10px; bottom:10px; top:5px" id="Players"></div>
+			</strong>
+		  </div>
+
 </body>
 </html>
