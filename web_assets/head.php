@@ -27,7 +27,7 @@ function LoadPNG($imgname)
     return $im;
 }
 
-$img = LoadPNG('http://www.minecraft.net/skin/'.$player.'.png');
+$img = LoadPNG('http://s3.amazonaws.com/MinecraftSkins/'.$player.'.png');
 
 if($usage == 'list')
 {
