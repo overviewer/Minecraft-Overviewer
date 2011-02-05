@@ -687,7 +687,7 @@ class ChunkRenderer(object):
             # touching it) change it to something that won't get rendered, AND
             # won't get counted as "transparent".
             blocks = blocks.copy()
-            blocks[self.skylight != 0] = 21
+            blocks[self.skylight != 0] = 255
 
         blockData = get_blockdata_array(self.level)
         blockData_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
