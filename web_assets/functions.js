@@ -280,6 +280,7 @@ function initialize() {
         },
         mapTypeId: mapTypeIdDefault,
         streetViewControl: false,
+        backgroundColor: config.bg_color,
     };
     map = new google.maps.Map(document.getElementById('mcmap'), mapOptions);
 
@@ -383,9 +384,10 @@ function initialize() {
     return new google.maps.LatLng(lat, lng);
   }
   
-function getTileUrlGenerator(path) {
+function getTileUrlGenerator(path, path_base) {
   return function(tile, zoom) {
     var url = path;
+    var url_base = ( path_base ? path_base : '' );
       if(tile.x < 0 || tile.x >= Math.pow(2, zoom) || tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
         url += '/blank';
       } else if(zoom == 0) {
@@ -402,7 +404,7 @@ function getTileUrlGenerator(path) {
         var d = new Date();
         url += '?c=' + Math.floor(d.getTime() / (1000 * 60 * config.cacheMinutes));
       }
-      return(url);
+      return(url_base + url);
   }
 }
 
@@ -414,7 +416,7 @@ for (idx in mapTypeData) {
   var view = mapTypeData[idx];
 
   MCMapOptions[view.label] = {
-    getTileUrl: getTileUrlGenerator(view.path),
+    getTileUrl: getTileUrlGenerator(view.path, view.base),
     tileSize: new google.maps.Size(config.tileSize, config.tileSize),
     maxZoom:  config.maxZoom,
     minZoom:  0,
