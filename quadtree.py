@@ -26,6 +26,7 @@ import json
 import logging
 import util
 import cPickle
+from time import gmtime, strftime
 
 from PIL import Image
 
@@ -150,6 +151,16 @@ class QuadtreeGen(object):
         for root, dirs, files in os.walk(os.path.join(util.get_program_path(), "web_assets")):
             for f in files:
                 shutil.copy(os.path.join(root, f), self.destdir)
+
+        # Add time in index.html
+        indexpath = os.path.join(self.destdir, "index.html")
+
+        index = open(indexpath, 'r').read()
+        index = index.replace(
+                "{time}", str(strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())))
+
+        with open(os.path.join(self.destdir, "index.html"), 'w') as output:
+            output.write(index)
 
         if skipjs:
             return
