@@ -26,7 +26,7 @@ import json
 import logging
 import util
 import cPickle
-from time import gmtime, strftime
+from time import localtime, strftime
 
 from PIL import Image
 
@@ -157,7 +157,11 @@ class QuadtreeGen(object):
 
         index = open(indexpath, 'r').read()
         index = index.replace(
-                "{time}", str(strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())))
+                "{time}", str(strftime("%a, %d %b %Y %H:%M:%S %Z", localtime())))
+
+		### Some time options:
+		# %I = hour in 12hr format
+		# %p = AM/PM
 
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(index)
