@@ -390,9 +390,9 @@ class ChunkRenderer(object):
         return self._up_left_blocks
     up_left_blocks = property(_load_up_left_blocks)
 
-    def generate_pseudo_ancildata(self,x,y,z,blockid, north_position = 0 ):
+    def check_adjacent_blocks(self ,x ,y ,z ,blockid, north_position = 0):
         """ Generates a pseudo ancillary data for blocks that depend of 
-        what are surrounded and don't have ancillary data
+        what are surrounded.
         
         This uses a binary number of 4 digits to encode the info. 
         The encode is:
@@ -402,7 +402,7 @@ class ChunkRenderer(object):
         Values: bit = 0 -> The corresponding side block has different blockid
                 bit = 1 -> The corresponding side block has same blockid
         Example: if the bit1 is 1 that means that there is a block with 
-        blockid in the side of the +x direction.
+        blockid touching the side of the +x direction.
         
         You can rotate the pseudo data multiplying by 2 and
         if it is > 15 subtracting 15 and adding 1. (moving bits
@@ -450,6 +450,36 @@ class ChunkRenderer(object):
             north_position -= 1
             
         return pseudo_data
+
+    def generate_pseudo_ancildata(self,x,y,z,blockid,data,north_position = 0 ):
+        """ Generate pseudo data for special blocks.
+        
+        This encodes the sides values as is explained in check_adjacent_blocks()
+        and add other bits for other things."""
+        
+        if blockid == 9: # water
+            # add another bit for the top.
+            flowing_water = set([1,2,3,4,5,6,7])    # draw top + faces
+            waterfall_water = set([8,9])            # draw faces
+            other_water = set([10,11,12,13,14,15]) # unknown but used values of ancillary data
+            
+            if data == 0: # standing water, only top
+                return 16 # = 0b10000
+                
+            elif data in flowing_water:
+                return ((self.check_adjacent_blocks(x,y,z,blockid) ^ 0b1111) | 0b10000)
+                # check for adjacent non-water blocks
+                
+            elif data in waterfall_water:
+                return (self.check_adjacent_blocks(x,y,z,blockid) ^ 0b1111)
+            
+            else: # only other_water values remaining
+                return ((self.check_adjacent_blocks(x,y,z,blockid) ^ 0b1111) | 0b10000)
+        
+        elif blockid == 85: # fences
+            return self.check_adjacent_blocks(x,y,z,blockid)
+            
+        return 0
         
     def _hash_blockarray(self):
         """Finds a hash of the block array"""
@@ -635,7 +665,7 @@ class ChunkRenderer(object):
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
         blocks = self.blocks
-        pseudo_ancildata_blocks = set([85])
+        pseudo_ancildata_blocks = set([9,85])
         
         left_blocks = self.left_blocks
         right_blocks = self.right_blocks
@@ -697,10 +727,10 @@ class ChunkRenderer(object):
                         ancilData = blockData_expanded[x,y,z]
                         try:
                             if blockid in pseudo_ancildata_blocks:
-
-                                pseudo_ancilData = self.generate_pseudo_ancildata(x,y,z,blockid)
+                                pseudo_ancilData = self.generate_pseudo_ancildata(x,y,z,blockid,ancilData)
                                 ancilData = pseudo_ancilData
                             t = textures.specialblockmap[(blockid, ancilData)]
+                            
                         except KeyError:
                             t = None
 
