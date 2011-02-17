@@ -124,6 +124,10 @@ fluid_blocks = set([8,9,10,11])
 # (glass, half blocks)
 nospawn_blocks = set([20,44])
 
+# This set holds block ids that need pseudo ancildata to render properly,
+# fences, redstone wire and water.
+pseudo_ancildata_blocks = set([9,85,55])
+
 def find_oldimage(chunkfile, cached, cave):
     destdir, filename = os.path.split(chunkfile)
     filename_split = filename.split(".")
@@ -430,7 +434,7 @@ class ChunkRenderer(object):
         """ Generate pseudo data for special blocks.
         
         This encodes the sides values as is explained in check_adjacent_blocks()
-        and add other bits for other things."""
+        and add other bits for other things. """
         
         if blockid == 9: # water
             # add another bit for the top.
@@ -451,10 +455,50 @@ class ChunkRenderer(object):
             else: # only other_water values remaining
                 return ((self.check_adjacent_blocks(x,y,z,blockid) ^ 0b1111) | 0b10000)
         
+        
+        elif blockid == 55: # redstone wire
+            # add three bits, one for on/off state, and another two for
+            # going up in the same block redstone wire (connection with
+            # the level z+1).
+            
+            # check connection with z+1 level
+            if z != 127 and self.blocks[x,y,z+1] == 0:
+                above_level_data = self.check_adjacent_blocks(x,y,z+1,blockid)
+            
+            else:
+                above_level_data = 0
+            
+            # check connection with same level
+            same_level_data = self.check_adjacent_blocks(x,y,z,blockid)
+            
+            # check connection with z-1 level
+            possibly_connected = self.check_adjacent_blocks(x,y,z,0) # check for air
+            
+            if z != 0:
+                below_level_data = self.check_adjacent_blocks(x,y,z-1,blockid)
+            
+            else:
+                below_level_data = 0            
+                
+            final_data = above_level_data | same_level_data | (below_level_data & possibly_connected)
+            
+            # add bits for on/off state and restone wire going up
+            if data > 0: #powered redstone wire
+                final_data = final_data | 0b1000000
+                
+            if above_level_data & 0b0001 == 1: #draw top left going up redstonewire
+                final_data = final_data | 0b0100000
+                
+            if above_level_data & 0b1000 == 8: #draw top right going up redstonewire
+                final_data = final_data | 0b0010000
+            
+            return final_data
+            
         elif blockid == 85: # fences
             return self.check_adjacent_blocks(x,y,z,blockid)
+
             
-        return 0
+        return self.check_adjacent_blocks(x,y,z,blockid)
         
     def _hash_blockarray(self):
         """Finds a hash of the block array"""
@@ -631,7 +675,6 @@ class ChunkRenderer(object):
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
         blocks = self.blocks
-        pseudo_ancildata_blocks = set([9,85])
         
         left_blocks = self.left_blocks
         right_blocks = self.right_blocks
@@ -688,7 +731,7 @@ class ChunkRenderer(object):
                     if blockid in pseudo_ancildata_blocks:
                         pseudo_ancilData = self.generate_pseudo_ancildata(x,y,z,blockid,ancilData)
                         ancilData = pseudo_ancilData
-                        
+
                     t = textures.specialblockmap[(blockid, ancilData)]
                     
                 except KeyError:
