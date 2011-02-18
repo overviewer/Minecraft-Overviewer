@@ -851,7 +851,8 @@ class ChunkRenderer(object):
         # check to see if there are any signs in the persistentData list that are from this chunk.
         # if so, remove them from the persistentData list (since they're have been added to the world.POI
         # list above.
-        self.queue.put(['removePOI', (self.chunkX, self.chunkY)])
+        if self.queue:
+            self.queue.put(['removePOI', (self.chunkX, self.chunkY)])
 
         return img
 
