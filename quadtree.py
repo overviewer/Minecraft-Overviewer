@@ -27,6 +27,7 @@ import logging
 import util
 import cPickle
 import stat
+from time import gmtime, strftime
 
 from PIL import Image
 
@@ -169,6 +170,16 @@ class QuadtreeGen(object):
 
         # copy web assets into destdir:
         mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)
+
+        # Add time in index.html
+        indexpath = os.path.join(self.destdir, "index.html")
+
+        index = open(indexpath, 'r').read()
+        index = index.replace(
+                "{time}", str(strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())))
+
+        with open(os.path.join(self.destdir, "index.html"), 'w') as output:
+            output.write(index)
 
         if skipjs:
             return
