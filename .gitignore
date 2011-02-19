@@ -19,3 +19,4 @@ _composite.dylib
 #Script files, as users may want their own scripts.
 *.sh
 *.bat
+*.jar
