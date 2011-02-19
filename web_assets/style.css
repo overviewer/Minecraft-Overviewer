@@ -1,6 +1,18 @@
-html { height: 100% }
-body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
-#mcmap { height: 100% }
+html {
+	height: 100%;
+}
+
+body {
+	height: 100%;
+	margin: 0px;
+	padding: 0px ;
+	background-color: #000;
+}
+
+#mcmap {
+	height: 100%;
+	width:100%;
+}
 
 .infoWindow {
     height: 100px;
@@ -54,4 +66,60 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
 #link:hover {
     background-color: #fff; /* fallback */
     background-color: rgba(255,255,255,0.8);
+}
+
+/* CSS for Playerlist */
+#playerList A:link {
+    text-decoration: none;
+    color: #fff;
+}
+
+#playerList A:hover {
+    text-decoration: none;
+    color: #fff;
+}
+
+#playerList A:active {
+    text-decoration: none;
+    color: #fff;
+}
+
+#playerList A:visited {
+    text-decoration: none;
+    color: #fff;
+}
+
+#playerList {
+	position:absolute;
+	background-image:url(./listbg.png);
+	top:55px;
+	right:20px;
+	width:150px; 
+/*	height:*;*/
+	border:solid;
+	border-color:#FFFFFF;
+	border-width:1px;
+	color:#FFFFFF;
+	font-family:Arial;
+}
+
+#Players {
+	font-size:80%;
+	left:10px;
+	bottom:10px;
+	top:5px;
+	font-weight: bold;
+}
+
+#onlinelist {
+	font-size: 80%;
+	position: relative;
+	text-align: center;
+	top: 5px;
+}
+
+#onlinelist > hr {
+	color:#FFFFFF;
+	background:#FFFFFF;
+	height:1px;
 }

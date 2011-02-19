@@ -1,9 +1,10 @@
-====================
-Minecraft Overviewer
-====================
+﻿========================================
+FabianN's Re-packed Minecraft Overviewer
+========================================
 By Andrew Brown and contributors
+Re-packaged by FabianN
 
-http://github.com/brownan/Minecraft-Overviewer
+http://github.com/fabiann/Minecraft-Overviewer
 
 Generates large resolution images of a Minecraft map.
 
@@ -37,6 +38,8 @@ Features
 * Throw the output directory up on a web server to share your Minecraft world
   with everyone!
 
+* Built in MapMarkers support.
+
 Requirements
 ============
 This program requires:
@@ -46,6 +49,7 @@ This program requires:
 * Numpy <http://scipy.org/Download>
 * Either the Minecraft client installed, or a terrain.png file. See the
   `Textures`_ section below.
+* Bukkit's MapMarkers plugin <http://forums.bukkit.org/threads/mapmarkers-v0-2.843/>
 
 I develop and test this on Linux, but need help testing it on Windows and Mac.
 If something doesn't work, let me know.
@@ -96,6 +100,13 @@ If the EXTRACTEDBIOMES folder is present in the world directory, then the
 Overviewer will use the biome data to tint grass and leaves automatically -- 
 there is no command line option to turn this feature on.  If this folder does
 not exist, then the Overviewer will use a static tinting for grass and leaves.
+
+MapMarker
+--------------
+MapMarkers support has been integrated into Overviewer. For MapMarkers to work you need to have the MapMarkers Bukkit plugin installed which can be downloaded here: http://forums.bukkit.org/threads/mapmarkers-v0-2.843/
+
+Ensure that the plugin outputs the player markers into the same directory as your map's index.html file is as markers.json.
+
 
 Compiling the C Extension (optional)
 ------------------------------------ 
@@ -306,3 +317,13 @@ An incomplete list of things I want to do soon is:
 * Some kind of graphical interface.
 
 * A Windows exe for easier access for Windows users.
+
+
+Changes by FabianN
+------------------
+This is just my personal configuration of Overviewer and I decided to share it, maybe make it easier for someone to host their own map with MapMarkers integration (and possibly more, in the future). My additions would not be possible without the work of others. Here the pieces of code from others that I have intergrated with my package of Overviewer
+
+* The user's skin showing up as their icon on the map. Thanks to ethzero/Billiam for the Player-Avatar add-on. https://github.com/Billiam/Minecraft-Overviewer-Addons
+
+* The Online Players list. Thanks to datLicht for the player list. http://forums.bukkit.org/threads/mapmarkers-v0-2.843/page-2#post-37817
+

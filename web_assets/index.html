@@ -1,19 +1,25 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 <link rel="stylesheet" href="style.css" type="text/css" />
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 <script type="text/javascript" src="config.js"></script>
-<script type="text/javascript"
-    src="http://maps.google.com/maps/api/js?sensor=false">
-</script>
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
 <script type="text/javascript" src="functions.js"></script>
 <script type="text/javascript" src="markers.js"></script>
 <script type="text/javascript" src="regions.js"></script>
+<script type="text/javascript" src="player_markers.js"></script>
+<title>Minecraft World Map</title>
 </head>
 <!-- Generated at: {time} -->
 <body onload="initialize()">
-  <div id="mcmap" style="width:100%; height:100%"></div>
+<div id="mcmap"></div>
+<div id="playerList">
+<div id="onlinelist"><strong> Online List </strong></div>
+<hr />
+<div id="Players"></div>
+</div>
+<div style="position: absolute; bottom: 20px; right: 5px; padding-left: 2px; padding-right: 3px; background-image: url(./listbg.png); border: solid; border-color: #FFF; border-width: 1px; color: #FFF; font-family:Courier New; font-size: 11px;" class="mapdate">Map Generated at {time}</div>
 </body>
 </html>
