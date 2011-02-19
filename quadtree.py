@@ -26,6 +26,7 @@ import json
 import logging
 import util
 import cPickle
+import stat
 
 from PIL import Image
 
@@ -37,6 +38,26 @@ import composite
 This module has routines related to generating a quadtree of tiles
 
 """
+
+def mirror_dir(src, dst, entities=None):
+    '''copies all of the entities from src to dst'''
+    if not os.path.exists(dst):
+        os.mkdir(dst)
+    if entities and type(entities) != list: raise Exception("Expected a list, got a %r instead" % type(entities))
+
+    for entry in os.listdir(src):
+        if entities and entry not in entities: continue
+        if os.path.isdir(os.path.join(src,entry)):
+            mirror_dir(os.path.join(src, entry), os.path.join(dst, entry))
+        elif os.path.isfile(os.path.join(src,entry)):
+            try:
+                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
+            except IOError:
+                # maybe permission problems?
+                os.chmod(os.path.join(src, entry), stat.S_IRUSR)
+                os.chmod(os.path.join(dst, entry), stat.S_IWUSR)
+                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
+                # if this stills throws an error, let it propagate up
 
 def iterate_base4(d):
     """Iterates over a base 4 number with d digits"""
@@ -147,9 +168,7 @@ class QuadtreeGen(object):
         blank.save(os.path.join(tileDir, "blank."+self.imgformat))
 
         # copy web assets into destdir:
-        for root, dirs, files in os.walk(os.path.join(util.get_program_path(), "web_assets")):
-            for f in files:
-                shutil.copy(os.path.join(root, f), self.destdir)
+        mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)
 
         if skipjs:
             return
