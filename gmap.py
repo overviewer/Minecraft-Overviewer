@@ -36,8 +36,8 @@ import world
 import quadtree
 
 helptext = """
-%prog [OPTIONS] <World # / Path to World> <tiles dest dir>
-%prog -d <World # / Path to World / Path to cache dir> [tiles dest dir]"""
+%prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>
+%prog -d <World # / Name / Path to World / Path to cache dir> [tiles dest dir]"""
 
 def main():
     try:
@@ -69,11 +69,21 @@ def main():
     worlddir = args[0]
 
     if not os.path.exists(worlddir):
+        # world given is either world number, or name
         try:
             worldnum = int(worlddir)
             worlddir = world.get_worlds()[worldnum]['path']
-        except (ValueError, KeyError):
-            print "Invalid world number or directory"
+        except ValueError:
+            # it wasn't a number, try using it as a name
+            worlddir = os.path.join(world.get_save_dir(), worlddir)
+            if not os.path.exists(worlddir):
+                # still doesn't exist! print help and die.
+                print "Invalid world name or path"
+                parser.print_help()
+                sys.exit(1)
+        except KeyError:
+            # it was an invalid number
+            print "Invalid world number"
             parser.print_help()
             sys.exit(1)
 
