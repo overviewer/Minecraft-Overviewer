@@ -112,6 +112,14 @@ class WorldRenderer(object):
         self.cachedir = cachedir
         self.useBiomeData = useBiomeData
 
+        # figure out chunk format is in use
+        # if mcregion, error out early until we can add support
+        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
+        #print data
+        if 'version' in data and data['version'] == 19132:
+            logging.error("Sorry, Minecraft-Overviewer doesn't yet know how to read McRegion chunks")
+            sys.exit(1)
+
         if self.useBiomeData:
             textures.prepareBiomeData(worlddir)
 
