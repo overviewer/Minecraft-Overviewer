@@ -256,6 +256,22 @@ class WorldRenderer(object):
 
         self.findTrueSpawn()
 
+    def _find_regionfiles(self):
+        """Returns a list of all of the region files, along with their 
+        coordinates
+
+        Returns (regionx, regiony, filename)"""
+        all_chunks = []
+
+        for dirpath, dirnames, filenames in os.walk(os.path.join(self.worlddir, 'region')):
+            if not dirnames and filenames and "DIM-1" not in dirpath:
+                for f in filenames:
+                    if f.startswith("r.") and f.endswith(".mcr"):
+                        p = f.split(".")
+                        all_chunks.append((int(p[1]), int(p[2]), 
+                            os.path.join(dirpath, f)))
+        return all_chunks
+
     def _find_chunkfiles(self):
         """Returns a list of all the chunk file locations, and the file they
         correspond to.
