@@ -183,13 +183,21 @@ def list_worlds():
         print 'No world saves found in the usual place'
         return
     print "Detected saves:"
-    for num, info in sorted(worlds.iteritems()):
+    for name, info in sorted(worlds.iteritems()):
+        if isinstance(name, basestring) and name.startswith("World") and len(name) == 6:
+            try:
+                world_n = int(name[-1])
+                # we'll catch this one later, when it shows up as an
+                # integer key
+                continue
+            except ValueError:
+                pass
         timestamp = time.strftime("%Y-%m-%d %H:%M",
                                   time.localtime(info['LastPlayed'] / 1000))
         playtime = info['Time'] / 20
         playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
         size = "%.2fMB" % (info['SizeOnDisk'] / 1024. / 1024.)
-        print "World %s: %s Playtime: %s Modified: %s" % (num, size, playstamp, timestamp)
+        print "World %s: %s Playtime: %s Modified: %s" % (name, size, playstamp, timestamp)
 
 
 if __name__ == "__main__":
