@@ -392,7 +392,7 @@ def get_save_dir():
             return path
 
 def get_worlds():
-    "Returns {world # : level.dat information}"
+    "Returns {world # or name : level.dat information}"
     ret = {}
     save_dir = get_save_dir()
 
@@ -401,12 +401,14 @@ def get_worlds():
         return None
 
     for dir in os.listdir(save_dir):
+        world_dat = os.path.join(save_dir, dir, "level.dat")
+        if not os.path.exists(world_dat): continue
+        info = nbt.load(world_dat)[1]
+        info['Data']['path'] = os.path.join(save_dir, dir)
         if dir.startswith("World") and len(dir) == 6:
             world_n = int(dir[-1])
-            world_dat = os.path.join(save_dir, dir, "level.dat")
-            if not os.path.exists(world_dat): continue
-            info = nbt.load(world_dat)[1]
-            info['Data']['path'] = os.path.join(save_dir, dir)
             ret[world_n] = info['Data']
+        if 'LevelName' in info['Data'].keys():
+            ret[info['Data']['LevelName']] = info['Data']
 
     return ret

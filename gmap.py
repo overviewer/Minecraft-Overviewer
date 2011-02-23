@@ -70,14 +70,16 @@ def main():
 
     if not os.path.exists(worlddir):
         # world given is either world number, or name
+        worlds = world.get_worlds()
         try:
             worldnum = int(worlddir)
-            worlddir = world.get_worlds()[worldnum]['path']
+            worlddir = worlds[worldnum]['path']
         except ValueError:
-            # it wasn't a number, try using it as a name
-            worlddir = os.path.join(world.get_save_dir(), worlddir)
-            if not os.path.exists(worlddir):
-                # still doesn't exist! print help and die.
+            # it wasn't a number or path, try using it as a name
+            try:
+                worlddir = worlds[worlddir]['path']
+            except KeyError:
+                # it's not a number, name, or path
                 print "Invalid world name or path"
                 parser.print_help()
                 sys.exit(1)
