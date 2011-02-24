@@ -22,6 +22,7 @@ import sys
 import logging
 import cPickle
 import collections
+import itertools
 
 import numpy
 
@@ -45,7 +46,10 @@ def _convert_coords(chunks):
     the image each one should be.
 
     returns mincol, maxcol, minrow, maxrow, chunks_translated
-    chunks_translated is a list of (col, row, filename)
+    chunks_translated is a list of (col, row, (chunkX, chunkY))
+
+    The (chunkX, chunkY) tuple is the chunkCoords, used to identify the 
+    chunk file
     """
     chunks_translated = []
     # columns are determined by the sum of the chunk coords, rows are the
@@ -60,7 +64,7 @@ def _convert_coords(chunks):
         row = c[1] - c[0]
         minrow = min(minrow, row)
         maxrow = max(maxrow, row)
-        chunks_translated.append((col, row, c[2]))
+        chunks_translated.append((col, row, (c[0],c[1])))
 
     return mincol, maxcol, minrow, maxrow, chunks_translated
 
@@ -118,7 +122,7 @@ class WorldRenderer(object):
         #print data
         if 'version' in data and data['version'] == 19132:
             logging.error("Sorry, Minecraft-Overviewer doesn't yet know how to read McRegion chunks")
-            sys.exit(1)
+            #sys.exit(1)
 
         if self.useBiomeData:
             textures.prepareBiomeData(worlddir)
@@ -127,6 +131,7 @@ class WorldRenderer(object):
 
         # In order to avoid having to look up the cache file names in
         # ChunkRenderer, get them all and store them here
+        # TODO change how caching works
         for root, dirnames, filenames in os.walk(cachedir):
             for filename in filenames:
                 if not filename.endswith('.png') or not filename.startswith("img."):
@@ -137,7 +142,6 @@ class WorldRenderer(object):
                 dir = '/'.join((dir_a, dir_b))
                 bits = '.'.join((x, z, cave))
                 cached[dir][bits] = os.path.join(root, filename)
-
 
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example
@@ -163,6 +167,7 @@ class WorldRenderer(object):
         if not self.chunklist:
             return None
         
+        raise Exception("not yet working") ## TODO correctly reimplement this for mcregion
         # Get a list of the (chunks, chunky, filename) from the passed in list
         # of filenames
         chunklist = []
@@ -190,15 +195,12 @@ class WorldRenderer(object):
 
         return inclusion_set
     
-    def get_chunk_path(self, chunkX, chunkY):
-        """Returns the path to the chunk file at (chunkX, chunkY), if
-        it exists."""
+    def get_region_path(self, chunkX, chunkY):
+        """Returns the path to the region that contains chunk (chunkX, chunkY)
+        """
         
-        chunkFile = "%s/%s/c.%s.%s.dat" % (base36encode(chunkX % 64),
-                                           base36encode(chunkY % 64),
-                                           base36encode(chunkX),
-                                           base36encode(chunkY))
-        
+        chunkFile = "region/r.%s.%s.mcr" % (chunkX//32, chunkY//32)
+
         return os.path.join(self.worlddir, chunkFile)
     
     def findTrueSpawn(self):
@@ -217,9 +219,9 @@ class WorldRenderer(object):
         chunkY = spawnZ/16
 
         ## The filename of this chunk
-        chunkFile = self.get_chunk_path(chunkX, chunkY)
+        chunkFile = self.get_region_path(chunkX, chunkY)
 
-        data=nbt.load(chunkFile)[1]
+        data=nbt.load_from_region(chunkFile, chunkX, chunkY)[1]
         level = data['Level']
         blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
 
@@ -240,14 +242,17 @@ class WorldRenderer(object):
         """Starts the render. This returns when it is finished"""
         
         logging.info("Scanning chunks")
-        raw_chunks = self._find_chunkfiles()
+        raw_chunks = self._get_chunklist()
         logging.debug("Done scanning chunks")
 
         # Translate chunks to our diagonal coordinate system
+        # TODO
         mincol, maxcol, minrow, maxrow, chunks = _convert_coords(raw_chunks)
         del raw_chunks # Free some memory
 
         self.chunkmap = self._render_chunks_async(chunks, procs)
+        logging.debug("world chunkmap has len %d", len(self.chunkmap))
+
 
         self.mincol = mincol
         self.maxcol = maxcol
@@ -272,35 +277,47 @@ class WorldRenderer(object):
                             os.path.join(dirpath, f)))
         return all_chunks
 
-    def _find_chunkfiles(self):
-        """Returns a list of all the chunk file locations, and the file they
-        correspond to.
-        
-        Returns a list of (chunkx, chunky, filename) where chunkx and chunky are
-        given in chunk coordinates. Use convert_coords() to turn the resulting list
-        into an oblique coordinate system.
-        
-        Usually this scans the given worlddir, but will use the chunk list
-        given to the constructor if one was provided."""
+    def _get_chunklist(self):
+        """Returns a list of all possible chunk coordinates, based on the 
+        available regions files.  Note that not all chunk coordinates will
+        exists.  The chunkrender will know how to ignore non-existant chunks
+
+        returns a list of (chunkx, chunky, regionfile) where regionfile is
+        the region file that contains this chunk
+
+        TODO, a --cachedir implemetation should involved thie method
+
+        """
+
         all_chunks = []
 
-        for dirpath, dirnames, filenames in os.walk(self.worlddir):
-            if not dirnames and filenames and "DIM-1" not in dirpath:
-                for f in filenames:
-                    if f.startswith("c.") and f.endswith(".dat"):
-                        p = f.split(".")
-                        all_chunks.append((base36decode(p[1]), base36decode(p[2]), 
-                            os.path.join(dirpath, f)))
+        regions = self._find_regionfiles()
+        print "found %d regions" % len(regions)
+        for region in regions:
+            print "region %d, %d  --> %s" % region
+            these_chunks = list(itertools.product(
+                range(region[0]*32,region[0]*32 + 32),
+                range(region[1]*32,region[1]*32 + 32)
+                ))
+            print "region %d,%d will go from:"
+            print "  %r" % range(region[0]*32,region[0]*32 + 32)
+            print "  %r" % range(region[1]*32,region[1]*32 + 32)
+            these_chunks = map(lambda x: (x[0], x[1], region[2]), these_chunks)
+            assert(len(these_chunks) == 1024)
+            all_chunks += these_chunks
 
         if not all_chunks:
             logging.error("Error: No chunks found!")
             sys.exit(1)
+
+        logging.debug("Total possible chunks: %d", len(all_chunks))
         return all_chunks
 
     def _render_chunks_async(self, chunks, processes):
         """Starts up a process pool and renders all the chunks asynchronously.
 
-        chunks is a list of (col, row, chunkfile)
+        chunks is a list of (col, row, (chunkX, chunkY)).  Use chunkX,chunkY
+        to find the chunk data in a region file
 
         Returns a dictionary mapping (col, row) to the file where that
         chunk is rendered as an image
@@ -318,21 +335,23 @@ class WorldRenderer(object):
         if processes == 1:
             # Skip the multiprocessing stuff
             logging.debug("Rendering chunks synchronously since you requested 1 process")
-            for i, (col, row, chunkfile) in enumerate(chunks):
-                if inclusion_set and (col, row) not in inclusion_set:
-                    # Skip rendering, just find where the existing image is
-                    _, imgpath = chunk.find_oldimage(chunkfile, cached, self.caves)
-                    if imgpath:
-                        results[(col, row)] = imgpath
-                        continue
+            for i, (col, row, chunkXY) in enumerate(chunks):
+                ##TODO##/if inclusion_set and (col, row) not in inclusion_set:
+                ##TODO##/    # Skip rendering, just find where the existing image is
+                ##TODO##/    _, imgpath = chunk.find_oldimage(chunkfile, cached, self.caves)
+                ##TODO##/    if imgpath:
+                ##TODO##/        results[(col, row)] = imgpath
+                ##TODO##/        continue
 
-                oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
-                if chunk.check_cache(chunkfile, oldimg):
+                oldimg = chunk.find_oldimage(chunkXY, cached, self.caves)
+                # TODO remove this shortcircuit
+                if oldimg[1]:## or chunk.check_cache(chunkfile, oldimg):
                     result = oldimg[1]
                 else:
-                    result = chunk.render_and_save(chunkfile, self.cachedir, self, oldimg, queue=q)
-
-                results[(col, row)] = result
+                    result = chunk.render_and_save(chunkXY, self.cachedir, self, oldimg, queue=q)
+                
+                if result:
+                    results[(col, row)] = result
                 if i > 0:
                     try:
                         item = q.get(block=False)

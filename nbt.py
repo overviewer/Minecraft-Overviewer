@@ -34,7 +34,8 @@ def load(fileobj):
 def load_from_region(fileobj, x, y):
     nbt = MCRFileReader(fileobj).load_chunk(x, y)
     if not nbt:
-        raise IOError("No such chunk in region: (%i, %i)" % (x, y))
+        return None ## return none.  I think this is who we should indicate missing chunks
+        #raise IOError("No such chunk in region: (%i, %i)" % (x, y))
     return nbt.read_all()
 
 class NBTFileReader(object):
