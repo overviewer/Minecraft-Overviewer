@@ -288,7 +288,7 @@ class ChunkRenderer(object):
         """Loads and sets data from lower-left chunk"""
         chunk_path = self.world.get_region_path(self.chunkX - 1, self.chunkY)
         try:
-            chunk_data = get_lvldata(chunk_path, self.chunkX-1, self.chunkY)
+            chunk_data = get_lvldata(chunk_path, self.chunkX - 1, self.chunkY)
             self._left_skylight = get_skylight_array(chunk_data)
             self._left_blocklight = get_blocklight_array(chunk_data)
             self._left_blocks = get_blockarray(chunk_data)
@@ -322,7 +322,7 @@ class ChunkRenderer(object):
         """Loads and sets data from lower-right chunk"""
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY + 1)
         try:
-            chunk_data = get_lvldata(chunk_path, self.chunkX, self.chunkY+1)
+            chunk_data = get_lvldata(chunk_path, self.chunkX, self.chunkY + 1)
             self._right_skylight = get_skylight_array(chunk_data)
             self._right_blocklight = get_blocklight_array(chunk_data)
             self._right_blocks = get_blockarray(chunk_data)
@@ -354,9 +354,9 @@ class ChunkRenderer(object):
 
     def _load_up_right(self):
         """Loads and sets data from upper-right chunk"""
-        chunk_path = self.world.get_chunk_path(self.coords[0] + 1, self.coords[1])
+        chunk_path = self.world.get_region_path(self.chunkX + 1, self.chunkY)
         try:
-            chunk_data = get_lvldata(chunk_path)
+            chunk_data = get_lvldata(chunk_path, self.chunkX + 1, self.chunkY)
             self._up_right_skylight = get_skylight_array(chunk_data)
             self._up_right_blocklight = get_blocklight_array(chunk_data)
             self._up_right_blocks = get_blockarray(chunk_data)
@@ -374,9 +374,9 @@ class ChunkRenderer(object):
     
     def _load_up_left(self):
         """Loads and sets data from upper-left chunk"""
-        chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] - 1)
+        chunk_path = self.world.get_region_path(self.chunkX, self.chunkY - 1)
         try:
-            chunk_data = get_lvldata(chunk_path)
+            chunk_data = get_lvldata(chunk_path, self.chunkX, self.chunkY - 1)
             self._up_left_skylight = get_skylight_array(chunk_data)
             self._up_left_blocklight = get_blocklight_array(chunk_data)
             self._up_left_blocks = get_blockarray(chunk_data)
