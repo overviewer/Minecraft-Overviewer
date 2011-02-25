@@ -345,9 +345,10 @@ class WorldRenderer(object):
 
                 oldimg = chunk.find_oldimage(chunkXY, cached, self.caves)
                 # TODO remove this shortcircuit
-                if oldimg[1]:## or chunk.check_cache(chunkfile, oldimg):
+                if chunk.check_cache(self, chunkXY, oldimg):
                     result = oldimg[1]
                 else:
+                    #logging.debug("check cache failed, need to render")
                     result = chunk.render_and_save(chunkXY, self.cachedir, self, oldimg, queue=q)
                 
                 if result:
@@ -376,7 +377,7 @@ class WorldRenderer(object):
                 ##TODO/        continue
 
                 oldimg = chunk.find_oldimage(chunkXY, cached, self.caves)
-                if oldimg[1]: ## TODO chunk.check_cache(chunkfile, oldimg):
+                if chunk.check_cache(self, chunkXY, oldimg):
                     result = FakeAsyncResult(oldimg[1])
                 else:
                     result = pool.apply_async(chunk.render_and_save,

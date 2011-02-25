@@ -129,7 +129,6 @@ fluid_blocks = set([8,9,10,11])
 nospawn_blocks = set([20,44])
 
 def find_oldimage(chunkXY, cached, cave):
-# TODO update this
     blockid = "%d.%d" % chunkXY
 
     # Get the name of the existing image.
@@ -145,7 +144,14 @@ def find_oldimage(chunkXY, cached, cave):
          logging.debug("Found cached image {0}".format(oldimg))
     return oldimg, oldimg_path
 
-def check_cache(chunkfile, oldimg):
+def check_cache(world, chunkXY, oldimg):
+    """Returns True is oldimg is OK to use (i.e. not stale)"""
+# TODO read to the region file and get the timestamp??
+# TODO currently, just use the mtime on the region file
+# TODO (which will cause a single chunk update to invalidate everything in the region
+
+    chunkfile = os.path.join(world.worlddir, "region", "r.%d.%d.mcr" % (chunkXY[0]%64, chunkXY[1]%64))
+    #logging.debug("checking cache  %s against %s", chunkfile, oldimg[1])
     try:
         if oldimg[1] and os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
             return True
@@ -504,6 +510,7 @@ class ChunkRenderer(object):
                 # hashes match.
                 # Before we return it, update its mtime so the next round
                 # doesn't have to check the hash
+                # TODO fix up hash checking
                 os.utime(dest_path, None)
                 logging.debug("Using cached image")
                 return dest_path
