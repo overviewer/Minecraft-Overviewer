@@ -367,22 +367,23 @@ class WorldRenderer(object):
             logging.debug("Rendering chunks in {0} processes".format(processes))
             pool = multiprocessing.Pool(processes=processes)
             asyncresults = []
-            for col, row, chunkfile in chunks:
-                if inclusion_set and (col, row) not in inclusion_set:
-                    # Skip rendering, just find where the existing image is
-                    _, imgpath = chunk.find_oldimage(chunkfile, cached, self.caves)
-                    if imgpath:
-                        results[(col, row)] = imgpath
-                        continue
+            for col, row, chunkXY in chunks:
+                ##TODO/if inclusion_set and (col, row) not in inclusion_set:
+                ##TODO/    # Skip rendering, just find where the existing image is
+                ##TODO/    _, imgpath = chunk.find_oldimage(chunkfile, cached, self.caves)
+                ##TODO/    if imgpath:
+                ##TODO/        results[(col, row)] = imgpath
+                ##TODO/        continue
 
-                oldimg = chunk.find_oldimage(chunkfile, cached, self.caves)
-                if chunk.check_cache(chunkfile, oldimg):
+                oldimg = chunk.find_oldimage(chunkXY, cached, self.caves)
+                if oldimg[1]: ## TODO chunk.check_cache(chunkfile, oldimg):
                     result = FakeAsyncResult(oldimg[1])
                 else:
                     result = pool.apply_async(chunk.render_and_save,
-                            args=(chunkfile,self.cachedir,self, oldimg),
+                            args=(chunkXY,self.cachedir,self, oldimg),
                             kwds=dict(cave=self.caves, queue=q))
-                asyncresults.append((col, row, result))
+                if result:
+                    asyncresults.append((col, row, result))
 
             pool.close()
 
