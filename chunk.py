@@ -141,7 +141,7 @@ def find_oldimage(chunkXY, cached, cave):
     if key in cached[cachename]:
          oldimg_path = cached[cachename][key]
          _, oldimg = os.path.split(oldimg_path)
-         logging.debug("Found cached image {0}".format(oldimg))
+         #logging.debug("Found cached image {0}".format(oldimg))
     return oldimg, oldimg_path
 
 def check_cache(world, chunkXY, oldimg):

@@ -120,9 +120,9 @@ class WorldRenderer(object):
         # if mcregion, error out early until we can add support
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
         #print data
-        if 'version' in data and data['version'] == 19132:
-            logging.error("Sorry, Minecraft-Overviewer doesn't yet know how to read McRegion chunks")
-            #sys.exit(1)
+        if not ('version' in data and data['version'] == 19132):
+            logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
+            sys.exit(1)
 
         if self.useBiomeData:
             textures.prepareBiomeData(worlddir)
@@ -292,16 +292,12 @@ class WorldRenderer(object):
         all_chunks = []
 
         regions = self._find_regionfiles()
-        print "found %d regions" % len(regions)
+        logging.debug("Found %d regions",len(regions))
         for region in regions:
-            print "region %d, %d  --> %s" % region
             these_chunks = list(itertools.product(
                 range(region[0]*32,region[0]*32 + 32),
                 range(region[1]*32,region[1]*32 + 32)
                 ))
-            print "region %d,%d will go from:"
-            print "  %r" % range(region[0]*32,region[0]*32 + 32)
-            print "  %r" % range(region[1]*32,region[1]*32 + 32)
             these_chunks = map(lambda x: (x[0], x[1], region[2]), these_chunks)
             assert(len(these_chunks) == 1024)
             all_chunks += these_chunks
