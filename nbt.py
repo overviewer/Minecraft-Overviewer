@@ -16,11 +16,15 @@
 import gzip, zlib
 import struct
 import StringIO
+import os
 
 # decorator to handle filename or object as first parameter
 def _file_loader(func):
     def wrapper(fileobj, *args):
         if isinstance(fileobj, basestring):
+            if not os.path.isfile(fileobj):
+               return None
+
             # Is actually a filename
             fileobj = open(fileobj, 'rb')
         return func(fileobj, *args)
