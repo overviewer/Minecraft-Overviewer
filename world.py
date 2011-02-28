@@ -379,8 +379,7 @@ class WorldRenderer(object):
                     result = pool.apply_async(chunk.render_and_save,
                             args=(chunkXY,self.cachedir,self, oldimg),
                             kwds=dict(cave=self.caves, queue=q))
-                if result:
-                    asyncresults.append((col, row, result))
+                asyncresults.append((col, row, result))
 
             pool.close()
 

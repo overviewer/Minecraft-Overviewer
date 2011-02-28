@@ -366,7 +366,7 @@ class ChunkRenderer(object):
             self._up_right_skylight = get_skylight_array(chunk_data)
             self._up_right_blocklight = get_blocklight_array(chunk_data)
             self._up_right_blocks = get_blockarray(chunk_data)
-        except IOError:
+        except NoSuchChunk:
             self._up_right_skylight = None
             self._up_right_blocklight = None
             self._up_right_blocks = None
@@ -386,7 +386,7 @@ class ChunkRenderer(object):
             self._up_left_skylight = get_skylight_array(chunk_data)
             self._up_left_blocklight = get_blocklight_array(chunk_data)
             self._up_left_blocks = get_blockarray(chunk_data)
-        except IOError:
+        except NoSuchChunk:
             self._up_left_skylight = None
             self._up_left_blocklight = None
             self._up_left_blocks = None
