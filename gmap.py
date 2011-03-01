@@ -132,10 +132,9 @@ def main():
     if not useBiomeData:
         logging.info("Notice: Not using biome data for tinting")
 
-    # First generate the world's chunk images
-    #w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist, lighting=options.lighting, night=options.night, spawn=options.spawn, useBiomeData=useBiomeData)
-
-    #w.go(options.procs)
+    # First do world-level preprocessing
+    w = world.World(worlddir, useBiomeData=useBiomeData)
+    w.go(options.procs)
 
     # Now generate the tiles
     #q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg)
