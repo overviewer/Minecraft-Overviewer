@@ -36,8 +36,8 @@ import world
 import quadtree
 
 helptext = """
-%prog [OPTIONS] <World # / Path to World> <tiles dest dir>
-%prog -d <World # / Path to World / Path to cache dir> [tiles dest dir]"""
+%prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>
+%prog -d <World # / Name / Path to World / Path to cache dir> [tiles dest dir]"""
 
 def main():
     try:
@@ -69,11 +69,23 @@ def main():
     worlddir = args[0]
 
     if not os.path.exists(worlddir):
+        # world given is either world number, or name
+        worlds = world.get_worlds()
         try:
             worldnum = int(worlddir)
-            worlddir = world.get_worlds()[worldnum]['path']
-        except (ValueError, KeyError):
-            print "Invalid world number or directory"
+            worlddir = worlds[worldnum]['path']
+        except ValueError:
+            # it wasn't a number or path, try using it as a name
+            try:
+                worlddir = worlds[worlddir]['path']
+            except KeyError:
+                # it's not a number, name, or path
+                print "Invalid world name or path"
+                parser.print_help()
+                sys.exit(1)
+        except KeyError:
+            # it was an invalid number
+            print "Invalid world number"
             parser.print_help()
             sys.exit(1)
 
@@ -176,13 +188,21 @@ def list_worlds():
         print 'No world saves found in the usual place'
         return
     print "Detected saves:"
-    for num, info in sorted(worlds.iteritems()):
+    for name, info in sorted(worlds.iteritems()):
+        if isinstance(name, basestring) and name.startswith("World") and len(name) == 6:
+            try:
+                world_n = int(name[-1])
+                # we'll catch this one later, when it shows up as an
+                # integer key
+                continue
+            except ValueError:
+                pass
         timestamp = time.strftime("%Y-%m-%d %H:%M",
                                   time.localtime(info['LastPlayed'] / 1000))
         playtime = info['Time'] / 20
         playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
         size = "%.2fMB" % (info['SizeOnDisk'] / 1024. / 1024.)
-        print "World %s: %s Playtime: %s Modified: %s" % (num, size, playstamp, timestamp)
+        print "World %s: %s Playtime: %s Modified: %s" % (name, size, playstamp, timestamp)
 
 
 if __name__ == "__main__":

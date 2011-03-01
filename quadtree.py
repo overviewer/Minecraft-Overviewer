@@ -27,7 +27,7 @@ import logging
 import util
 import cPickle
 import stat
-from time import gmtime, strftime
+from time import gmtime, strftime, sleep
 
 from PIL import Image
 
@@ -297,10 +297,12 @@ class QuadtreeGen(object):
 
             # This image is rendered at:
             dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
+            #logging.debug("this is rendered at %s", dest)
 
             # And uses these chunks
             tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
                     rowend)
+            #logging.debug(" tilechunks: %r", tilechunks)
 
             # Put this in the pool
             # (even if tilechunks is empty, render_worldtile will delete

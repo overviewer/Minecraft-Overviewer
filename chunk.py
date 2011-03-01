@@ -20,6 +20,7 @@ import hashlib
 import logging
 import time
 import math
+import sys
 
 import nbt
 import textures
@@ -45,10 +46,13 @@ image
 # alpha_over extension, BUT this extension may fall back to PIL's
 # paste(), which DOES need the workaround.)
 
-def get_lvldata(filename):
-    """Takes a filename and returns the Level struct, which contains all the
+def get_lvldata(filename, x, y):
+    """Takes a filename and chunkcoords and returns the Level struct, which contains all the
     level info"""
-    return nbt.load(filename)[1]['Level']
+
+    d =  nbt.load_from_region(filename, x, y)
+    if not d: raise NoSuchChunk(x,y)
+    return d[1]['Level']
 
 def get_blockarray(level):
     """Takes the level struct as returned from get_lvldata, and returns the
@@ -124,14 +128,12 @@ fluid_blocks = set([8,9,10,11])
 # (glass, half blocks)
 nospawn_blocks = set([20,44])
 
-def find_oldimage(chunkfile, cached, cave):
-    destdir, filename = os.path.split(chunkfile)
-    filename_split = filename.split(".")
-    blockid = ".".join(filename_split[1:3])
+def find_oldimage(chunkXY, cached, cave):
+    blockid = "%d.%d" % chunkXY
 
     # Get the name of the existing image.
-    moredirs, dir2 = os.path.split(destdir)
-    dir1 = os.path.basename(moredirs)
+    dir1 = world.base36encode(chunkXY[0]%64)
+    dir2 = world.base36encode(chunkXY[1]%64)
     cachename = '/'.join((dir1, dir2))
 
     oldimg = oldimg_path = None
@@ -139,23 +141,39 @@ def find_oldimage(chunkfile, cached, cave):
     if key in cached[cachename]:
          oldimg_path = cached[cachename][key]
          _, oldimg = os.path.split(oldimg_path)
-         logging.debug("Found cached image {0}".format(oldimg))
+         #logging.debug("Found cached image {0}".format(oldimg))
     return oldimg, oldimg_path
 
-def check_cache(chunkfile, oldimg):
+def check_cache(world, chunkXY, oldimg):
+    """Returns True is oldimg is OK to use (i.e. not stale)"""
+# TODO read to the region file and get the timestamp??
+# TODO currently, just use the mtime on the region file
+# TODO (which will cause a single chunk update to invalidate everything in the region
+
+    if not oldimg[1]: return False
+    chunkfile = os.path.join(world.worlddir, "region", "r.%d.%d.mcr" % (chunkXY[0]//32, chunkXY[1]//32))
+
+    with open(chunkfile, "rb") as f:
+        region = nbt.MCRFileReader(f)
+        mtime = region.get_chunk_timestamp(chunkXY[0], chunkXY[1])
+    #logging.debug("checking cache  %s against %s %d", chunkfile, oldimg[1], mtime)
     try:
-        if oldimg[1] and os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
+        if mtime <= os.path.getmtime(oldimg[1]):
             return True
         return False
     except OSError:
         return False
 
-def render_and_save(chunkfile, cachedir, worldobj, oldimg, cave=False, queue=None):
+# chunkcoords should be the coordinates of a possible chunk.  it may not exist
+def render_and_save(chunkcoords, cachedir, worldobj, oldimg, cave=False, queue=None):
     """Used as the entry point for the multiprocessing workers (since processes
     can't target bound methods) or to easily render and save one chunk
-    
-    Returns the image file location"""
-    a = ChunkRenderer(chunkfile, cachedir, worldobj, oldimg, queue)
+
+    chunkcoords is a tuple:  (chunkX, chunkY)
+
+    If the chunk doesn't exist, return None. 
+    Else, returns the image file location"""
+    a = ChunkRenderer(chunkcoords, cachedir, worldobj, oldimg, queue)
     try:
         return a.render_and_save(cave)
     except ChunkCorrupt:
@@ -177,36 +195,53 @@ def render_and_save(chunkfile, cachedir, worldobj, oldimg, cave=False, queue=Non
 class ChunkCorrupt(Exception):
     pass
 
+class NoSuchChunk(Exception):
+    pass
+
 class ChunkRenderer(object):
-    def __init__(self, chunkfile, cachedir, worldobj, oldimg, queue):
-        """Make a new chunk renderer for the given chunkfile.
-        chunkfile should be a full path to the .dat file to process
+    def __init__(self, chunkcoords, cachedir, worldobj, oldimg, queue):
+        """Make a new chunk renderer for the given chunk coordinates.
+        chunkcoors should be a tuple: (chunkX, chunkY)
+        
         cachedir is a directory to save the resulting chunk images to
         """
         self.queue = queue
+        # derive based on worlddir and chunkcoords
+        self.regionfile = os.path.join(worldobj.worlddir, "region",
+                "r.%d.%d.mcr" % (chunkcoords[0] // 32, chunkcoords[1]//32))
     
-        if not os.path.exists(chunkfile):
-            raise ValueError("Could not find chunkfile")
-        self.chunkfile = chunkfile
-        destdir, filename = os.path.split(self.chunkfile)
-        filename_split = filename.split(".")
-        chunkcoords = filename_split[1:3]
+        if not os.path.exists(self.regionfile):
+            raise ValueError("Could not find regionfile: %s" % self.regionfile)
+
+        ## TODO TODO all of this class
+
+        #destdir, filename = os.path.split(self.chunkfile)
+        #filename_split = filename.split(".")
+        #chunkcoords = filename_split[1:3]
         
-        self.coords = map(world.base36decode, chunkcoords)
-        self.blockid = ".".join(chunkcoords)
+        #self.coords = map(world.base36decode, chunkcoords)
+        self.blockid = "%d.%d" % chunkcoords
 
         # chunk coordinates (useful to converting local block coords to 
         # global block coords)
-        self.chunkX = int(filename_split[1], base=36)
-        self.chunkY = int(filename_split[2], base=36)
+        self.chunkX = chunkcoords[0]
+        self.chunkY = chunkcoords[1]
+
+
 
         self.world = worldobj
+
+
         # Cachedir here is the base directory of the caches. We need to go 2
         # levels deeper according to the chunk file. Get the last 2 components
         # of destdir and use that
-        moredirs, dir2 = os.path.split(destdir)
-        _, dir1 = os.path.split(moredirs)
-        self.cachedir = os.path.join(cachedir, dir1, dir2)
+        ##moredirs, dir2 = os.path.split(destdir)
+        ##_, dir1 = os.path.split(moredirs)
+        self.cachedir = os.path.join(cachedir, 
+                world.base36encode(self.chunkX%64), 
+                world.base36encode(self.chunkY%64))
+
+        #logging.debug("cache location for this chunk: %s", self.cachedir)
         self.oldimg, self.oldimg_path = oldimg
 
 
@@ -229,9 +264,12 @@ class ChunkRenderer(object):
         """Loads and returns the level structure"""
         if not hasattr(self, "_level"):
             try:
-                self._level = get_lvldata(self.chunkfile)
+                self._level = get_lvldata(self.regionfile, self.chunkX, self.chunkY)
+            except NoSuchChunk, e:
+                #logging.debug("Skipping non-existant chunk")
+                raise
             except Exception, e:
-                logging.warning("Error opening chunk file %s. It may be corrupt. %s", self.chunkfile, e)
+                logging.warning("Error opening chunk file %s. It may be corrupt. %s", self.regionfile, e)
                 raise ChunkCorrupt(str(e))
         return self._level
     level = property(_load_level)
@@ -259,13 +297,13 @@ class ChunkRenderer(object):
     
     def _load_left(self):
         """Loads and sets data from lower-left chunk"""
-        chunk_path = self.world.get_chunk_path(self.coords[0] - 1, self.coords[1])
+        chunk_path = self.world.get_region_path(self.chunkX - 1, self.chunkY)
         try:
-            chunk_data = get_lvldata(chunk_path)
+            chunk_data = get_lvldata(chunk_path, self.chunkX - 1, self.chunkY)
             self._left_skylight = get_skylight_array(chunk_data)
             self._left_blocklight = get_blocklight_array(chunk_data)
             self._left_blocks = get_blockarray(chunk_data)
-        except IOError:
+        except NoSuchChunk:
             self._left_skylight = None
             self._left_blocklight = None
             self._left_blocks = None
@@ -293,13 +331,13 @@ class ChunkRenderer(object):
 
     def _load_right(self):
         """Loads and sets data from lower-right chunk"""
-        chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] + 1)
+        chunk_path = self.world.get_region_path(self.chunkX, self.chunkY + 1)
         try:
-            chunk_data = get_lvldata(chunk_path)
+            chunk_data = get_lvldata(chunk_path, self.chunkX, self.chunkY + 1)
             self._right_skylight = get_skylight_array(chunk_data)
             self._right_blocklight = get_blocklight_array(chunk_data)
             self._right_blocks = get_blockarray(chunk_data)
-        except IOError:
+        except NoSuchChunk:
             self._right_skylight = None
             self._right_blocklight = None
             self._right_blocks = None
@@ -327,13 +365,13 @@ class ChunkRenderer(object):
 
     def _load_up_right(self):
         """Loads and sets data from upper-right chunk"""
-        chunk_path = self.world.get_chunk_path(self.coords[0] + 1, self.coords[1])
+        chunk_path = self.world.get_region_path(self.chunkX + 1, self.chunkY)
         try:
-            chunk_data = get_lvldata(chunk_path)
+            chunk_data = get_lvldata(chunk_path, self.chunkX + 1, self.chunkY)
             self._up_right_skylight = get_skylight_array(chunk_data)
             self._up_right_blocklight = get_blocklight_array(chunk_data)
             self._up_right_blocks = get_blockarray(chunk_data)
-        except IOError:
+        except NoSuchChunk:
             self._up_right_skylight = None
             self._up_right_blocklight = None
             self._up_right_blocks = None
@@ -347,13 +385,13 @@ class ChunkRenderer(object):
     
     def _load_up_left(self):
         """Loads and sets data from upper-left chunk"""
-        chunk_path = self.world.get_chunk_path(self.coords[0], self.coords[1] - 1)
+        chunk_path = self.world.get_region_path(self.chunkX, self.chunkY - 1)
         try:
-            chunk_data = get_lvldata(chunk_path)
+            chunk_data = get_lvldata(chunk_path, self.chunkX, self.chunkY - 1)
             self._up_left_skylight = get_skylight_array(chunk_data)
             self._up_left_blocklight = get_blocklight_array(chunk_data)
             self._up_left_blocks = get_blockarray(chunk_data)
-        except IOError:
+        except NoSuchChunk:
             self._up_left_skylight = None
             self._up_left_blocklight = None
             self._up_left_blocks = None
@@ -448,6 +486,7 @@ class ChunkRenderer(object):
         is up to date, this method doesn't render anything.
         """
         blockid = self.blockid
+        
 
         # Reasons for the code to get to this point:
         # 1) An old image doesn't exist
@@ -457,13 +496,17 @@ class ChunkRenderer(object):
         #    the image was invalid and deleted (sort of the same as (1))
 
         # What /should/ the image be named, go ahead and hash the block array
-        dest_filename = "img.{0}.{1}.{2}.png".format(
+        try:
+            dest_filename = "img.{0}.{1}.{2}.png".format(
                 blockid,
                 "cave" if cave else "nocave",
                 self._hash_blockarray(),
                 )
+        except NoSuchChunk, e:
+            return None
 
         dest_path = os.path.join(self.cachedir, dest_filename)
+        #logging.debug("cache filename: %s", dest_path)
 
         if self.oldimg:
             if dest_filename == self.oldimg:
@@ -471,14 +514,17 @@ class ChunkRenderer(object):
                 # hashes match.
                 # Before we return it, update its mtime so the next round
                 # doesn't have to check the hash
+                # TODO confirm hash checking is correct (it should be)
                 os.utime(dest_path, None)
-                logging.debug("Using cached image")
+                logging.debug("Using cached image, and updating utime")
                 return dest_path
             else:
                 # Remove old image for this chunk. Anything already existing is
                 # either corrupt or out of date
                 os.unlink(self.oldimg_path)
 
+
+        logging.debug("doing a real real render")    
         # Render the chunk
         img = self.chunk_render(cave=cave)
         # Save it
@@ -488,6 +534,7 @@ class ChunkRenderer(object):
             os.unlink(dest_path)
             raise
         # Return its location
+        #raise Exception("early exit")
         return dest_path
 
     def calculate_darkness(self, skylight, blocklight):

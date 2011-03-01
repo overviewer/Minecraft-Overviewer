@@ -123,7 +123,7 @@ Running
 -------
 To generate a set of Google Map tiles, use the gmap.py script like this::
 
-    python gmap.py [OPTIONS] <World Number / Path to World> <Output Directory>
+    python gmap.py [OPTIONS] <World # / Name / Path to World> <Output Directory>
 
 The output directory will be created if it doesn't exist. This will generate a
 set of image tiles for your world in the directory you choose. When it's done,
