@@ -137,9 +137,10 @@ def main():
     w.go(options.procs)
 
     # Now generate the tiles
-    #q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg)
-    #q.write_html(options.skipjs)
-    #q.go(options.procs)
+    # TODO chunklist, render type (night, lighting, spawn)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg)
+    q.write_html(options.skipjs)
+    q.go(options.procs)
 
 def delete_all(tiledir):
     # Delete all /hash/ files in the tile dir.

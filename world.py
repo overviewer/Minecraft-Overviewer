@@ -38,16 +38,6 @@ This module has routines for extracting information about available worlds
 base36decode = functools.partial(int, base=36)
 cached = collections.defaultdict(dict)
 
-
-def _convert_coords(chunkx, chunky):
-    """Takes a coordinate (chunkx, chunky) where chunkx and chunky are
-    in the chunk coordinate system, and figures out the row and column
-    in the image each one should be. Returns (col, row)."""
-
-    # columns are determined by the sum of the chunk coords, rows are the
-    # difference (TODO: be able to change direction of north)
-    return (chunkx + chunky, chunky - chunkx)
-
 def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
     '''
     Convert an integer to a base36 string.
@@ -117,6 +107,23 @@ class World(object):
 
         return os.path.join(self.worlddir, chunkFile)
     
+    def convert_coords(self, chunkx, chunky):
+        """Takes a coordinate (chunkx, chunky) where chunkx and chunky are
+        in the chunk coordinate system, and figures out the row and column
+        in the image each one should be. Returns (col, row)."""
+        
+        # columns are determined by the sum of the chunk coords, rows are the
+        # difference (TODO: be able to change direction of north)
+        # change this function, and you MUST change unconvert_coords
+        return (chunkx + chunky, chunky - chunkx)
+    
+    def unconvert_coords(self, col, row):
+        """Undoes what convert_coords does. Returns (chunkx, chunky)."""
+        
+        # col + row = chunky + chunky => (col + row)/2 = chunky
+        # col - row = chunkx + chunkx => (col - row)/2 = chunkx
+        return ((col - row) / 2, (col + row) / 2)
+    
     def findTrueSpawn(self):
         """Adds the true spawn location to self.POI.  The spawn Y coordinate
         is almost always the default of 64.  Find the first air block above
@@ -181,7 +188,7 @@ class World(object):
         # Translate chunks to our diagonal coordinate system
         mincol = maxcol = minrow = maxrow = 0
         for chunkx, chunky in [(minx, miny), (minx, maxy), (maxx, miny), (maxx, maxy)]:
-            col, row = _convert_coords(chunkx, chunky)
+            col, row = self.convert_coords(chunkx, chunky)
             mincol = min(mincol, col)
             maxcol = max(maxcol, col)
             minrow = min(minrow, row)

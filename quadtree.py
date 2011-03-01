@@ -31,6 +31,7 @@ from time import gmtime, strftime, sleep
 
 from PIL import Image
 
+import nbt
 from optimizeimages import optimize_image
 import composite
 
@@ -424,9 +425,11 @@ class QuadtreeGen(object):
         chunklist = []
         for row in xrange(rowstart-16, rowend+1):
             for col in xrange(colstart, colend+1):
-                c = self.world.chunkmap.get((col, row), None)
-                if c:
-                    chunklist.append((col, row, c))
+                # return (col, row, chunkx, chunky, regionpath)
+                chunkx, chunky = self.world.unconvert_coords(col, row)
+                c = self.world.get_region_path(chunkx, chunky)
+                if os.path.exists(c):
+                    chunklist.append((col, row, chunkx, chunky, c))
         return chunklist
 
 @catch_keyboardinterrupt
@@ -436,68 +439,56 @@ def render_innertile(dest, name, imgformat, optimizeimg):
     os.path.join(dest, name, "{0,1,2,3}.png")
     """
     imgpath = os.path.join(dest, name) + "." + imgformat
-    hashpath = os.path.join(dest, name) + ".hash"
 
     if name == "base":
         q0path = os.path.join(dest, "0." + imgformat)
         q1path = os.path.join(dest, "1." + imgformat)
         q2path = os.path.join(dest, "2." + imgformat)
         q3path = os.path.join(dest, "3." + imgformat)
-        q0hash = os.path.join(dest, "0.hash")
-        q1hash = os.path.join(dest, "1.hash")
-        q2hash = os.path.join(dest, "2.hash")
-        q3hash = os.path.join(dest, "3.hash")
     else:
         q0path = os.path.join(dest, name, "0." + imgformat)
         q1path = os.path.join(dest, name, "1." + imgformat)
         q2path = os.path.join(dest, name, "2." + imgformat)
         q3path = os.path.join(dest, name, "3." + imgformat)
-        q0hash = os.path.join(dest, name, "0.hash")
-        q1hash = os.path.join(dest, name, "1.hash")
-        q2hash = os.path.join(dest, name, "2.hash")
-        q3hash = os.path.join(dest, name, "3.hash")
 
     # Check which ones exist
-    if not os.path.exists(q0hash):
+    if not os.path.exists(q0path):
         q0path = None
-        q0hash = None
-    if not os.path.exists(q1hash):
+    if not os.path.exists(q1path):
         q1path = None
-        q1hash = None
-    if not os.path.exists(q2hash):
+    if not os.path.exists(q2path):
         q2path = None
-        q2hash = None
-    if not os.path.exists(q3hash):
+    if not os.path.exists(q3path):
         q3path = None
-        q3hash = None
 
     # do they all not exist?
     if not (q0path or q1path or q2path or q3path):
         if os.path.exists(imgpath):
             os.unlink(imgpath)
-        if os.path.exists(hashpath):
-            os.unlink(hashpath)
         return
     
-    # Now check the hashes
-    hasher = hashlib.md5()
-    if q0hash:
-        hasher.update(open(q0hash, "rb").read())
-    if q1hash:
-        hasher.update(open(q1hash, "rb").read())
-    if q2hash:
-        hasher.update(open(q2hash, "rb").read())
-    if q3hash:
-        hasher.update(open(q3hash, "rb").read())
-    if os.path.exists(hashpath):
-        oldhash = open(hashpath, "rb").read()
-    else:
-        oldhash = None
-    newhash = hasher.digest()
-
-    if newhash == oldhash:
-        # Nothing to do
-        return
+    # check the mtimes
+    try:
+        tile_mtime = os.path.getmtime(imgpath)
+        needs_rerender = False
+        
+        # remove non-existant paths
+        components = [q0path, q1path, q2path, q3path]
+        components = filter(lambda p: p != None, components)
+        
+        for mtime in [os.path.getmtime(path) for path in components]:
+            if mtime > tile_mtime:
+                needs_rerender = True
+                break
+        
+        # quit now if we don't need rerender
+        if not needs_rerender:
+            return
+    except OSError:
+        # one of our mtime calls failed, so we'll continue
+        pass
+    
+    #logging.debug("writing out innertile {0}".format(imgpath))
 
     # Create the actual image now
     img = Image.new("RGBA", (384, 384), (38,92,255,0))
@@ -538,10 +529,6 @@ def render_innertile(dest, name, imgformat, optimizeimg):
         if optimizeimg:
             optimize_image(imgpath, imgformat, optimizeimg)
 
-    with open(hashpath, "wb") as hashout:
-        hashout.write(newhash)
-
-
 @catch_keyboardinterrupt
 def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat, optimizeimg):
     """Renders just the specified chunks into a tile and save it. Unlike usual
@@ -549,8 +536,8 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
     chunks around the edges are half-way cut off (so that neighboring tiles
     will render the other half)
 
-    chunks is a list of (col, row, filename) of chunk images that are relevant
-    to this call
+    chunks is a list of (col, row, chunkx, chunky, filename) of chunk
+    images that are relevant to this call (with their associated regions)
 
     The image is saved to path+".ext" and a hash is saved to path+".hash"
 
@@ -592,15 +579,20 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
 
     # Before we render any tiles, check the hash of each image in this tile to
     # see if it's changed.
-    hashpath = path + ".hash"
+    # TODO remove hash files?
     imgpath = path + "." + imgformat
+    
+    # first, remove chunks from `chunks` that don't actually exist in
+    # their region files
+    def chunk_exists(chunk):
+        _, _, chunkx, chunky, region = chunk
+        return nbt.load_from_region(region, chunkx, chunky) != None
+    chunks = filter(chunk_exists, chunks)
 
     if not chunks:
         # No chunks were found in this tile
         if os.path.exists(imgpath):
             os.unlink(imgpath)
-        if os.path.exists(hashpath):
-            os.unlink(hashpath)
         return None
 
     # Create the directory if not exists
@@ -615,69 +607,50 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
             import errno
             if e.errno != errno.EEXIST:
                 raise
-
-    imghash = hashlib.md5()
-    for col, row, chunkfile in chunks:
-        # Get the hash of this image and add it to our hash for this tile
-        imghash.update(
-                os.path.basename(chunkfile).split(".")[4]
-                )
-    digest = imghash.digest()
-
-    if os.path.exists(hashpath):
-        oldhash = open(hashpath, 'rb').read()
-    else:
-        oldhash = None
-
-    if digest == oldhash:
-        # All the chunks for this tile have not changed according to the hash
-        return
+    
+    # check chunk mtimes to see if they are newer
+    try:
+        tile_mtime = os.path.getmtime(imgpath)
+        needs_rerender = False
+        for col, row, chunkx, chunky, regionfile in chunks:
+            # check region file mtime first
+            if os.path.getmtime(regionfile) <= tile_mtime:
+                continue
+            
+            # checking chunk mtime
+            with open(regionfile, 'rb') as regionfile:
+                region = nbt.MCRFileReader(regionfile)
+                if region.get_chunk_timestamp(chunkx, chunky) > time_mtime:
+                    needs_rerender = True
+            if needs_rerender:
+                break
+        
+        # if after all that, we don't need a rerender, return
+        if not needs_rerender:
+            return None
+    except OSError:
+        # couldn't get tile mtime, skip check
+        pass
+    
+    #logging.debug("writing out worldtile {0}".format(imgpath))
 
     # Compile this image
     tileimg = Image.new("RGBA", (width, height), (38,92,255,0))
 
     # col colstart will get drawn on the image starting at x coordinates -(384/2)
     # row rowstart will get drawn on the image starting at y coordinates -(192/2)
-    for col, row, chunkfile in chunks:
-        try:
-            chunkimg = Image.open(chunkfile)
-            chunkimg.load()
-        except Exception, e:
-            # If for some reason the chunk failed to load (perhaps a previous
-            # run was canceled and the file was only written half way,
-            # corrupting it), then this could error.
-            # Since we have no easy way of determining how this chunk was
-            # generated, we need to just ignore it.
-            logging.warning("Could not open chunk '{0}' ({1})".format(chunkfile,e))
-            try:
-                # Remove the file so that the next run will re-generate it.
-                os.unlink(chunkfile)
-            except OSError, e:
-                import errno
-                # Ignore if file doesn't exist, another task could have already
-                # removed it.
-                if e.errno != errno.ENOENT:
-                    logging.warning("Could not remove chunk '{0}'!".format(chunkfile))
-                    raise
-            else:
-                logging.warning("Removed the corrupt file")
-
-            logging.warning("You will need to re-run the Overviewer to fix this chunk")
-            continue
-
+    for col, row, chunkx, chunky, regionfile in chunks:
         xpos = -192 + (col-colstart)*192
         ypos = -96 + (row-rowstart)*96
 
-        composite.alpha_over(tileimg, chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
+        # TODO draw chunks!
+        #composite.alpha_over(tileimg, chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
 
     # Save them
     tileimg.save(imgpath)
 
     if optimizeimg:
         optimize_image(imgpath, imgformat, optimizeimg)
-
-    with open(hashpath, "wb") as hashout:
-        hashout.write(digest)
 
 class FakeResult(object):
     def __init__(self, res):
