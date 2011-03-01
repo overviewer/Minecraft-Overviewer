@@ -361,10 +361,10 @@ class QuadtreeGen(object):
         logging.info("The others will go faster")
         for result in self._apply_render_worldtiles(pool):
             results.append(result)
-            if len(results) > 10000:
+            if len(results) > 10 + 2*procs:
                 # Empty the queue before adding any more, so that memory
                 # required has an upper bound
-                while len(results) > 500:
+                while len(results) > 10:
                     results.popleft().get()
                     complete += 1
                     self.print_statusline(complete, total, 1)
@@ -386,8 +386,8 @@ class QuadtreeGen(object):
             logging.info("Starting level {0}".format(level))
             for result in self._apply_render_inntertile(pool, zoom):
                 results.append(result)
-                if len(results) > 10000:
-                    while len(results) > 500:
+                if len(results) > 10 + 2*procs:
+                    while len(results) > 10:
                         results.popleft().get()
                         complete += 1
                         self.print_statusline(complete, total, level)
