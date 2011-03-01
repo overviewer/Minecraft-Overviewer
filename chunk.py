@@ -151,7 +151,7 @@ def check_cache(world, chunkXY, oldimg):
 # TODO (which will cause a single chunk update to invalidate everything in the region
 
     if not oldimg[1]: return False
-    chunkfile = os.path.join(world.worlddir, "region", "r.%d.%d.mcr" % (chunkXY[0]//64, chunkXY[1]//64))
+    chunkfile = os.path.join(world.worlddir, "region", "r.%d.%d.mcr" % (chunkXY[0]//32, chunkXY[1]//32))
 
     with open(chunkfile, "rb") as f:
         region = nbt.MCRFileReader(f)
