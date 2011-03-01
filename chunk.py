@@ -150,10 +150,15 @@ def check_cache(world, chunkXY, oldimg):
 # TODO currently, just use the mtime on the region file
 # TODO (which will cause a single chunk update to invalidate everything in the region
 
-    chunkfile = os.path.join(world.worlddir, "region", "r.%d.%d.mcr" % (chunkXY[0]%64, chunkXY[1]%64))
-    #logging.debug("checking cache  %s against %s", chunkfile, oldimg[1])
+    if not oldimg[1]: return False
+    chunkfile = os.path.join(world.worlddir, "region", "r.%d.%d.mcr" % (chunkXY[0]//64, chunkXY[1]//64))
+
+    with open(chunkfile, "rb") as f:
+        region = nbt.MCRFileReader(f)
+        mtime = region.get_chunk_timestamp(chunkXY[0], chunkXY[1])
+    #logging.debug("checking cache  %s against %s %d", chunkfile, oldimg[1], mtime)
     try:
-        if oldimg[1] and os.path.getmtime(chunkfile) <= os.path.getmtime(oldimg[1]):
+        if mtime <= os.path.getmtime(oldimg[1]):
             return True
         return False
     except OSError:
@@ -500,7 +505,6 @@ class ChunkRenderer(object):
         except NoSuchChunk, e:
             return None
 
-        
         dest_path = os.path.join(self.cachedir, dest_filename)
         #logging.debug("cache filename: %s", dest_path)
 
@@ -510,9 +514,9 @@ class ChunkRenderer(object):
                 # hashes match.
                 # Before we return it, update its mtime so the next round
                 # doesn't have to check the hash
-                # TODO fix up hash checking
+                # TODO confirm hash checking is correct (it should be)
                 os.utime(dest_path, None)
-                logging.debug("Using cached image")
+                logging.debug("Using cached image, and updating utime")
                 return dest_path
             else:
                 # Remove old image for this chunk. Anything already existing is
@@ -520,6 +524,7 @@ class ChunkRenderer(object):
                 os.unlink(self.oldimg_path)
 
 
+        logging.debug("doing a real real render")    
         # Render the chunk
         img = self.chunk_render(cave=cave)
         # Save it

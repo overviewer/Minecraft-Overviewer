@@ -344,7 +344,7 @@ class WorldRenderer(object):
                 if chunk.check_cache(self, chunkXY, oldimg):
                     result = oldimg[1]
                 else:
-                    #logging.debug("check cache failed, need to render")
+                    #logging.debug("check cache failed, need to render (could be ghost chunk)")
                     result = chunk.render_and_save(chunkXY, self.cachedir, self, oldimg, queue=q)
                 
                 if result:
