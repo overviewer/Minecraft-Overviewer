@@ -128,54 +128,21 @@ fluid_blocks = set([8,9,10,11])
 # (glass, half blocks)
 nospawn_blocks = set([20,44])
 
-def find_oldimage(chunkXY, cached, cave):
-    blockid = "%d.%d" % chunkXY
-
-    # Get the name of the existing image.
-    dir1 = world.base36encode(chunkXY[0]%64)
-    dir2 = world.base36encode(chunkXY[1]%64)
-    cachename = '/'.join((dir1, dir2))
-
-    oldimg = oldimg_path = None
-    key = ".".join((blockid, "cave" if cave else "nocave"))
-    if key in cached[cachename]:
-         oldimg_path = cached[cachename][key]
-         _, oldimg = os.path.split(oldimg_path)
-         #logging.debug("Found cached image {0}".format(oldimg))
-    return oldimg, oldimg_path
-
-def check_cache(world, chunkXY, oldimg):
-    """Returns True is oldimg is OK to use (i.e. not stale)"""
-# TODO read to the region file and get the timestamp??
-# TODO currently, just use the mtime on the region file
-# TODO (which will cause a single chunk update to invalidate everything in the region
-
-    if not oldimg[1]: return False
-    chunkfile = os.path.join(world.worlddir, "region", "r.%d.%d.mcr" % (chunkXY[0]//32, chunkXY[1]//32))
-
-    with open(chunkfile, "rb") as f:
-        region = nbt.MCRFileReader(f)
-        mtime = region.get_chunk_timestamp(chunkXY[0], chunkXY[1])
-    #logging.debug("checking cache  %s against %s %d", chunkfile, oldimg[1], mtime)
-    try:
-        if mtime <= os.path.getmtime(oldimg[1]):
-            return True
-        return False
-    except OSError:
-        return False
-
 # chunkcoords should be the coordinates of a possible chunk.  it may not exist
-def render_and_save(chunkcoords, cachedir, worldobj, oldimg, cave=False, queue=None):
-    """Used as the entry point for the multiprocessing workers (since processes
-    can't target bound methods) or to easily render and save one chunk
+def render_to_image(chunkcoords, img, imgcoords, quadtreeobj, cave=False, queue=None):
+    """Used to render a chunk to a tile in quadtree.py.
 
     chunkcoords is a tuple:  (chunkX, chunkY)
+    
+    imgcoords is as well: (imgX, imgY), which represents the "origin"
+    to use for drawing.
 
-    If the chunk doesn't exist, return None. 
-    Else, returns the image file location"""
-    a = ChunkRenderer(chunkcoords, cachedir, worldobj, oldimg, queue)
+    If the chunk doesn't exist, return False.
+    Else, returns True."""
+    a = ChunkRenderer(chunkcoords, quadtreeobj.world, quadtreeobj, queue)
     try:
-        return a.render_and_save(cave)
+        a.chunk_render(img, imgcoords[0], imgcoords[1], cave)
+        return True
     except ChunkCorrupt:
         # This should be non-fatal, but should print a warning
         pass
@@ -191,6 +158,7 @@ def render_and_save(chunkcoords, cachedir, worldobj, oldimg, cave=False, queue=N
         # entire program, instead of this process dying and the parent waiting
         # forever for it to finish.
         raise Exception()
+    return False
 
 class ChunkCorrupt(Exception):
     pass
@@ -199,17 +167,15 @@ class NoSuchChunk(Exception):
     pass
 
 class ChunkRenderer(object):
-    def __init__(self, chunkcoords, cachedir, worldobj, oldimg, queue):
+    def __init__(self, chunkcoords, worldobj, quadtreeobj, queue):
         """Make a new chunk renderer for the given chunk coordinates.
         chunkcoors should be a tuple: (chunkX, chunkY)
         
         cachedir is a directory to save the resulting chunk images to
         """
         self.queue = queue
-        # derive based on worlddir and chunkcoords
-        self.regionfile = os.path.join(worldobj.worlddir, "region",
-                "r.%d.%d.mcr" % (chunkcoords[0] // 32, chunkcoords[1]//32))
-    
+        
+        self.regionfile = worldobj.get_region_path(*chunkcoords)    
         if not os.path.exists(self.regionfile):
             raise ValueError("Could not find regionfile: %s" % self.regionfile)
 
@@ -227,38 +193,14 @@ class ChunkRenderer(object):
         self.chunkX = chunkcoords[0]
         self.chunkY = chunkcoords[1]
 
-
-
         self.world = worldobj
-
-
-        # Cachedir here is the base directory of the caches. We need to go 2
-        # levels deeper according to the chunk file. Get the last 2 components
-        # of destdir and use that
-        ##moredirs, dir2 = os.path.split(destdir)
-        ##_, dir1 = os.path.split(moredirs)
-        self.cachedir = os.path.join(cachedir, 
-                world.base36encode(self.chunkX%64), 
-                world.base36encode(self.chunkY%64))
-
-        #logging.debug("cache location for this chunk: %s", self.cachedir)
-        self.oldimg, self.oldimg_path = oldimg
-
+        self.quadtree = quadtreeobj
 
         if self.world.useBiomeData:
             # make sure we've at least *tried* to load the color arrays in this process...
             textures.prepareBiomeData(self.world.worlddir)
             if not textures.grasscolor or not textures.foliagecolor:
                 raise Exception("Can't find grasscolor.png or foliagecolor.png")
-
-
-        if not os.path.exists(self.cachedir):
-            try:
-                os.makedirs(self.cachedir)
-            except OSError, e:
-                import errno
-                if e.errno != errno.EEXIST:
-                    raise
 
     def _load_level(self):
         """Loads and returns the level structure"""
@@ -480,69 +422,12 @@ class ChunkRenderer(object):
         self._digest = digest[:6]
         return self._digest
 
-    def render_and_save(self, cave=False):
-        """Render the chunk using chunk_render, and then save it to a file in
-        the same directory as the source image. If the file already exists and
-        is up to date, this method doesn't render anything.
-        """
-        blockid = self.blockid
-        
-
-        # Reasons for the code to get to this point:
-        # 1) An old image doesn't exist
-        # 2) An old image exists, but the chunk was more recently modified (the
-        #    image was NOT checked if it was valid)
-        # 3) An old image exists, the chunk was not modified more recently, but
-        #    the image was invalid and deleted (sort of the same as (1))
-
-        # What /should/ the image be named, go ahead and hash the block array
-        try:
-            dest_filename = "img.{0}.{1}.{2}.png".format(
-                blockid,
-                "cave" if cave else "nocave",
-                self._hash_blockarray(),
-                )
-        except NoSuchChunk, e:
-            return None
-
-        dest_path = os.path.join(self.cachedir, dest_filename)
-        #logging.debug("cache filename: %s", dest_path)
-
-        if self.oldimg:
-            if dest_filename == self.oldimg:
-                # There is an existing file, the chunk has a newer mtime, but the
-                # hashes match.
-                # Before we return it, update its mtime so the next round
-                # doesn't have to check the hash
-                # TODO confirm hash checking is correct (it should be)
-                os.utime(dest_path, None)
-                logging.debug("Using cached image, and updating utime")
-                return dest_path
-            else:
-                # Remove old image for this chunk. Anything already existing is
-                # either corrupt or out of date
-                os.unlink(self.oldimg_path)
-
-
-        logging.debug("doing a real real render")    
-        # Render the chunk
-        img = self.chunk_render(cave=cave)
-        # Save it
-        try:
-            img.save(dest_path)
-        except:
-            os.unlink(dest_path)
-            raise
-        # Return its location
-        #raise Exception("early exit")
-        return dest_path
-
     def calculate_darkness(self, skylight, blocklight):
         """Takes a raw blocklight and skylight, and returns a value
         between 0.0 (fully lit) and 1.0 (fully black) that can be used as
         an alpha value for a blend with a black source image. It mimics
         Minecraft lighting calculations."""
-        if not self.world.night:
+        if not self.quadtree.night:
             # Daytime
             return 1.0 - pow(0.8, 15 - max(blocklight, skylight))
         else:
@@ -662,7 +547,7 @@ class ChunkRenderer(object):
             # won't get counted as "transparent".
             blocks = blocks.copy()
             blocks[self.skylight != 0] = 21
-
+  
         blockData = get_blockdata_array(self.level)
         blockData_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
         # Even elements get the lower 4 bits
@@ -691,6 +576,11 @@ class ChunkRenderer(object):
 
         for x,y,z,imgx,imgy in iterate_chunkblocks(xoff,yoff):
             blockid = blocks[x,y,z]
+            
+            if imgx > img.size[0] + 12 or imgx < -12:
+                continue
+            if imgy > img.size[1] + 12 or imgy < -12:
+                continue
 
             # the following blocks don't have textures that can be pre-computed from the blockid
             # alone.  additional data is required.
@@ -817,7 +707,7 @@ class ChunkRenderer(object):
                 # no lighting for cave -- depth is probably more useful
                 composite.alpha_over(img, Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
             else:
-                if not self.world.lighting:
+                if not self.quadtree.lighting:
                     # no lighting at all
                     composite.alpha_over(img, t[0], (imgx, imgy), t[1])
                 elif blockid in transparent_blocks:
@@ -825,7 +715,7 @@ class ChunkRenderer(object):
                     # block shaded with the current
                     # block's light
                     black_coeff, _ = self.get_lighting_coefficient(x, y, z)
-                    if self.world.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
+                    if self.quadtree.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
                         blockid in nospawn_blocks or (
                             z != 127 and (blocks[x,y,z+1] in solid_blocks or blocks[x,y,z+1] in fluid_blocks)
                         )
@@ -841,7 +731,7 @@ class ChunkRenderer(object):
                     # top face
                     black_coeff, face_occlude = self.get_lighting_coefficient(x, y, z + 1)
                     # Use red instead of black for spawnable blocks
-                    if self.world.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
+                    if self.quadtree.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
                         blockid in nospawn_blocks or (
                             z != 127 and (blocks[x,y,z+1] in solid_blocks or blocks[x,y,z+1] in fluid_blocks)
                         )
@@ -892,13 +782,15 @@ class ChunkRenderer(object):
                                     msg=msg,
                                     chunk= (self.chunkX, self.chunkY),
                                   )
-                    self.queue.put(["newpoi", newPOI])
+                    if self.queue:
+                        self.queue.put(["newpoi", newPOI])
 
 
         # check to see if there are any signs in the persistentData list that are from this chunk.
         # if so, remove them from the persistentData list (since they're have been added to the world.POI
-        # list above.
-        self.queue.put(['removePOI', (self.chunkX, self.chunkY)])
+        # list above
+        if self.queue:
+            self.queue.put(['removePOI', (self.chunkX, self.chunkY)])
 
         return img
 

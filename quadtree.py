@@ -32,6 +32,7 @@ from time import gmtime, strftime, sleep
 from PIL import Image
 
 import nbt
+import chunk
 from optimizeimages import optimize_image
 import composite
 
@@ -95,6 +96,11 @@ class QuadtreeGen(object):
         assert(imgformat)
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
+        
+        # TODO placeholders (use config!)
+        self.lighting = False
+        self.night = False
+        self.spawn = False
 
         # Make the destination dir
         if not os.path.exists(destdir):
@@ -308,9 +314,8 @@ class QuadtreeGen(object):
             # Put this in the pool
             # (even if tilechunks is empty, render_worldtile will delete
             # existing images if appropriate)
-            yield pool.apply_async(func=render_worldtile, args= (tilechunks,
-                colstart, colend, rowstart, rowend, dest, self.imgformat,
-                self.optimizeimg))
+            yield pool.apply_async(func=render_worldtile, args= (self,
+                tilechunks, colstart, colend, rowstart, rowend, dest))
 
     def _apply_render_inntertile(self, pool, zoom):
         """Same as _apply_render_worltiles but for the inntertile routine.
@@ -530,7 +535,7 @@ def render_innertile(dest, name, imgformat, optimizeimg):
             optimize_image(imgpath, imgformat, optimizeimg)
 
 @catch_keyboardinterrupt
-def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat, optimizeimg):
+def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path):
     """Renders just the specified chunks into a tile and save it. Unlike usual
     python conventions, rowend and colend are inclusive. Additionally, the
     chunks around the edges are half-way cut off (so that neighboring tiles
@@ -539,7 +544,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
     chunks is a list of (col, row, chunkx, chunky, filename) of chunk
     images that are relevant to this call (with their associated regions)
 
-    The image is saved to path+".ext" and a hash is saved to path+".hash"
+    The image is saved to path+"."+quadtree.imgformat
 
     If there are no chunks, this tile is not saved (if it already exists, it is
     deleted)
@@ -550,6 +555,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
 
     There is no return value
     """
+    
     # width of one chunk is 384. Each column is half a chunk wide. The total
     # width is (384 + 192*(numcols-1)) since the first column contributes full
     # width, and each additional one contributes half since they're staggered.
@@ -577,10 +583,7 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
     # way above this one are possibly visible in this tile). Render them
     # anyways just in case). "chunks" should include up to rowstart-16
 
-    # Before we render any tiles, check the hash of each image in this tile to
-    # see if it's changed.
-    # TODO remove hash files?
-    imgpath = path + "." + imgformat
+    imgpath = path + "." + quadtree.imgformat
     
     # first, remove chunks from `chunks` that don't actually exist in
     # their region files
@@ -643,14 +646,15 @@ def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat
         xpos = -192 + (col-colstart)*192
         ypos = -96 + (row-rowstart)*96
 
-        # TODO draw chunks!
-        #composite.alpha_over(tileimg, chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
+        # draw the chunk!
+        # TODO cave, queue arguments
+        chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), quadtree, False, None)
 
     # Save them
     tileimg.save(imgpath)
 
-    if optimizeimg:
-        optimize_image(imgpath, imgformat, optimizeimg)
+    if quadtree.optimizeimg:
+        optimize_image(imgpath, quadtree.imgformat, quadtree.optimizeimg)
 
 class FakeResult(object):
     def __init__(self, res):
