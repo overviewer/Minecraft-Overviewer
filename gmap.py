@@ -48,7 +48,6 @@ def main():
     parser.add_option("-p", "--processes", dest="procs", help="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
     parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int")
     parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true")
-    parser.add_option("--cachedir", dest="cachedir", help="Sets the directory where the Overviewer will save chunk images, which is an intermediate step before the tiles are generated. You must use the same directory each time to gain any benefit from the cache. If not set, this defaults to your world directory.")
     parser.add_option("--chunklist", dest="chunklist", help="A file containing, on each line, a path to a chunkfile to update. Instead of scanning the world directory for chunks, it will just use this list. Normal caching rules still apply.")
     parser.add_option("--lighting", dest="lighting", help="Renders shadows using light data from each chunk.", action="store_true")
     parser.add_option("--night", dest="night", help="Renders shadows using light data from each chunk, as if it were night. Implies --lighting.", action="store_true")
@@ -89,11 +88,6 @@ def main():
             parser.print_help()
             sys.exit(1)
 
-    if not options.cachedir:
-        cachedir = worlddir
-    else:
-        cachedir = options.cachedir
-
     if len(args) != 2:
         if options.delete:
             return delete_all(cachedir, None)
@@ -102,7 +96,7 @@ def main():
     destdir = args[1]
 
     if options.delete:
-        return delete_all(cachedir, destdir)
+        return delete_all(destdir)
 
     if options.chunklist:
         chunklist = open(options.chunklist, 'r')
@@ -139,28 +133,17 @@ def main():
         logging.info("Notice: Not using biome data for tinting")
 
     # First generate the world's chunk images
-    w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist, lighting=options.lighting, night=options.night, spawn=options.spawn, useBiomeData=useBiomeData)
+    #w = world.WorldRenderer(worlddir, cachedir, chunklist=chunklist, lighting=options.lighting, night=options.night, spawn=options.spawn, useBiomeData=useBiomeData)
 
-    w.go(options.procs)
+    #w.go(options.procs)
 
     # Now generate the tiles
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg)
-    q.write_html(options.skipjs)
-    q.go(options.procs)
+    #q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg)
+    #q.write_html(options.skipjs)
+    #q.go(options.procs)
 
-def delete_all(worlddir, tiledir):
-    # First delete all images in the world dir
-    imgre = r"img\.[^.]+\.[^.]+\.nocave\.\w+\.png$"
-    matcher = re.compile(imgre)
-
-    for dirpath, dirnames, filenames in os.walk(worlddir):
-        for f in filenames:
-            if matcher.match(f):
-                filepath = os.path.join(dirpath, f)
-                logging.info("Deleting {0}".format(filepath))
-                os.unlink(filepath)
-
-    # Now delete all /hash/ files in the tile dir.
+def delete_all(tiledir):
+    # Delete all /hash/ files in the tile dir.
     if tiledir:
         for dirpath, dirnames, filenames in os.walk(tiledir):
             for f in filenames:
