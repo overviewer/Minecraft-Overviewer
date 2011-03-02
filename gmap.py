@@ -90,13 +90,13 @@ def main():
 
     if len(args) != 2:
         if options.delete:
-            return delete_all(cachedir, None)
+            return delete_all(worlddir, None)
         parser.error("Where do you want to save the tiles?")
 
     destdir = args[1]
 
     if options.delete:
-        return delete_all(destdir)
+        return delete_all(worlddir, destdir)
 
     if options.chunklist:
         chunklist = open(options.chunklist, 'r')
@@ -142,16 +142,9 @@ def main():
     q.write_html(options.skipjs)
     q.go(options.procs)
 
-def delete_all(tiledir):
-    # Delete all /hash/ files in the tile dir.
-    if tiledir:
-        for dirpath, dirnames, filenames in os.walk(tiledir):
-            for f in filenames:
-                if f.endswith(".hash"):
-                    filepath = os.path.join(dirpath, f)
-                    logging.info("Deleting {0}".format(filepath))
-                    os.unlink(filepath)
-
+def delete_all(worlddir, tiledir):
+    # TODO should we delete tiledir here too?
+    
     # delete the overviewer.dat persistant data file
     datfile = os.path.join(worlddir,"overviewer.dat")
     if os.path.exists(datfile):
