@@ -82,7 +82,7 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, imgformat=None, optimizeimg=None, lighting=False, night=False, spawn=False):
+    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, lighting=False, night=False, spawn=False):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -103,6 +103,7 @@ class QuadtreeGen(object):
         # Make the destination dir
         if not os.path.exists(destdir):
             os.mkdir(destdir)
+        self.tiledir = tiledir
 
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
@@ -169,7 +170,7 @@ class QuadtreeGen(object):
 
         # Write a blank image
         blank = Image.new("RGBA", (1,1))
-        tileDir = os.path.join(self.destdir, "tiles")
+        tileDir = os.path.join(self.destdir, self.tiledir)
         if not os.path.exists(tileDir): os.mkdir(tileDir)
         blank.save(os.path.join(tileDir, "blank."+self.imgformat))
 
@@ -235,7 +236,7 @@ class QuadtreeGen(object):
 
     def _increase_depth(self):
         """Moves existing tiles into place for a larger tree"""
-        getpath = functools.partial(os.path.join, self.destdir, "tiles")
+        getpath = functools.partial(os.path.join, self.destdir, self.tiledir)
 
         # At top level of the tree:
         # quadrant 0 is now 0/3
@@ -262,7 +263,7 @@ class QuadtreeGen(object):
     def _decrease_depth(self):
         """If the map size decreases, or perhaps the user has a depth override
         in effect, re-arrange existing tiles for a smaller tree"""
-        getpath = functools.partial(os.path.join, self.destdir, "tiles")
+        getpath = functools.partial(os.path.join, self.destdir, self.tiledir)
 
         # quadrant 0/3 goes to 0
         # 1/2 goes to 1
@@ -301,7 +302,7 @@ class QuadtreeGen(object):
             rowend = rowstart + 4
 
             # This image is rendered at:
-            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
+            dest = os.path.join(self.destdir, self.tiledir, *(str(x) for x in path))
             #logging.debug("this is rendered at %s", dest)
 
             # And uses these chunks
@@ -322,7 +323,7 @@ class QuadtreeGen(object):
         """
         for path in iterate_base4(zoom):
             # This image is rendered at:
-            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
+            dest = os.path.join(self.destdir, self.tiledir, *(str(x) for x in path[:-1]))
             name = str(path[-1])
 
             yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
@@ -403,7 +404,7 @@ class QuadtreeGen(object):
         pool.join()
 
         # Do the final one right here:
-        render_innertile(os.path.join(self.destdir, "tiles"), "base", self.imgformat, self.optimizeimg)
+        render_innertile(os.path.join(self.destdir, self.tiledir), "base", self.imgformat, self.optimizeimg)
 
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
