@@ -628,7 +628,7 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
             # checking chunk mtime
             with open(regionfile, 'rb') as regionfile:
                 region = nbt.MCRFileReader(regionfile)
-                if region.get_chunk_timestamp(chunkx, chunky) > time_mtime:
+                if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
                     needs_rerender = True
             if needs_rerender:
                 break
