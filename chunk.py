@@ -16,7 +16,6 @@
 import numpy
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps
 import os.path
-import hashlib
 import logging
 import time
 import math
@@ -406,22 +405,6 @@ class ChunkRenderer(object):
             
         return pseudo_data
         
-    def _hash_blockarray(self):
-        """Finds a hash of the block array"""
-        if hasattr(self, "_digest"):
-            return self._digest
-        h = hashlib.md5()
-        h.update(self.level['Blocks'])
-
-        # If the render algorithm changes, change this line to re-generate all
-        # the chunks automatically:
-        h.update("1")
-
-        digest = h.hexdigest()
-        # 6 digits ought to be plenty
-        self._digest = digest[:6]
-        return self._digest
-
     def calculate_darkness(self, skylight, blocklight):
         """Takes a raw blocklight and skylight, and returns a value
         between 0.0 (fully lit) and 1.0 (fully black) that can be used as

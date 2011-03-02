@@ -17,7 +17,6 @@ import multiprocessing
 import itertools
 import os
 import os.path
-import hashlib
 import functools
 import re
 import shutil
@@ -251,8 +250,8 @@ class QuadtreeGen(object):
             newdir = "new" + str(dirnum)
             newdirpath = getpath(newdir)
 
-            files = [str(dirnum)+"."+self.imgformat, str(dirnum)+".hash", str(dirnum)]
-            newfiles = [str(newnum)+"."+self.imgformat, str(newnum)+".hash", str(newnum)]
+            files = [str(dirnum)+"."+self.imgformat, str(dirnum)]
+            newfiles = [str(newnum)+"."+self.imgformat, str(newnum)]
 
             os.mkdir(newdirpath)
             for f, newf in zip(files, newfiles):
@@ -554,8 +553,6 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
 
     If there are no chunks, this tile is not saved (if it already exists, it is
     deleted)
-
-    If the hash file already exists, it is checked against the hash of each chunk.
 
     Standard tile size has colend-colstart=2 and rowend-rowstart=4
 
