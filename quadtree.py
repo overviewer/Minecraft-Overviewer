@@ -430,6 +430,12 @@ class QuadtreeGen(object):
         chunklist = []
         for row in xrange(rowstart-16, rowend+1):
             for col in xrange(colstart, colend+1):
+                # due to how chunks are arranged, we can only allow
+                # even row, even column or odd row, odd column
+                # otherwise, you end up with duplicates!
+                if row % 2 != col % 2:
+                    continue
+                
                 # return (col, row, chunkx, chunky, regionpath)
                 chunkx, chunky = self.world.unconvert_coords(col, row)
                 c = self.world.get_region_path(chunkx, chunky)
@@ -589,7 +595,9 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
     # their region files
     def chunk_exists(chunk):
         _, _, chunkx, chunky, region = chunk
-        return nbt.load_from_region(region, chunkx, chunky) != None
+        with open(region, 'rb') as region:
+            r = nbt.MCRFileReader(region)
+            return r.load_chunk(chunkx, chunky) != None
     chunks = filter(chunk_exists, chunks)
 
     if not chunks:

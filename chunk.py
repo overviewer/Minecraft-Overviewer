@@ -575,13 +575,15 @@ class ChunkRenderer(object):
             img = Image.new("RGBA", (384, 1728), (38,92,255,0))
 
         for x,y,z,imgx,imgy in iterate_chunkblocks(xoff,yoff):
-            blockid = blocks[x,y,z]
-            
-            if imgx > img.size[0] + 12 or imgx < -12:
+            # make sure we're drawing within the image boundaries
+            # 24 == approximate width, height of one block
+            if imgx >= img.size[0] + 24 or imgx <= -24:
                 continue
-            if imgy > img.size[1] + 12 or imgy < -12:
+            if imgy >= img.size[1] + 24 or imgy <= -24:
                 continue
 
+            blockid = blocks[x,y,z]
+            
             # the following blocks don't have textures that can be pre-computed from the blockid
             # alone.  additional data is required.
             # TODO torches, redstone torches, crops, ladders, stairs, 
