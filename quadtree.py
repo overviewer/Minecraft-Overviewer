@@ -82,7 +82,7 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, imgformat=None, optimizeimg=None):
+    def __init__(self, worldobj, destdir, depth=None, imgformat=None, optimizeimg=None, lighting=False, night=False, spawn=False):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -96,10 +96,9 @@ class QuadtreeGen(object):
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
         
-        # TODO placeholders (use config!)
-        self.lighting = False
-        self.night = False
-        self.spawn = False
+        self.lighting = lighting
+        self.night = night
+        self.spawn = spawn
 
         # Make the destination dir
         if not os.path.exists(destdir):
@@ -652,7 +651,7 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
         ypos = -96 + (row-rowstart)*96
 
         # draw the chunk!
-        # TODO cave, queue arguments
+        # TODO POI queue
         chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), quadtree, False, None)
 
     # Save them
