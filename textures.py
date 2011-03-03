@@ -824,9 +824,9 @@ def prepareBiomeData(worlddir):
     if grasscolor and foliagecolor:
         return
     
-    biomeDir = os.path.join(worlddir, "EXTRACTEDBIOMES")
+    biomeDir = os.path.join(worlddir, "biomes")
     if not os.path.exists(biomeDir):
-        raise Exception("EXTRACTEDBIOMES not found")
+        raise Exception("biomes not found")
 
     # try to find the biome color images.  If _find_file can't locate them
     # then try looking in the EXTRACTEDBIOMES folder
@@ -850,16 +850,16 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
     global currentBiomeFile, currentBiomeData
 
-    biomeFile = "%d.%d.biome" % (
-        int(math.floor(chunkX/8)*8),
-        int(math.floor(chunkY/8)*8)
+    biomeFile = "b.%d.%d.biome" % (
+        int(math.floor(chunkX/32)),
+        int(math.floor(chunkY/32))
             )
     if biomeFile == currentBiomeFile:
         return currentBiomeData
 
     currentBiomeFile = biomeFile
 
-    f = open(os.path.join(worlddir, "EXTRACTEDBIOMES", biomeFile), "rb")
+    f = open(os.path.join(worlddir, "biomes", biomeFile), "rb")
     rawdata = f.read()
     f.close()
 

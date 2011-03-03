@@ -134,7 +134,7 @@ def main():
     if not composite.extension_alpha_over:
         logging.info("Notice: alpha_over extension not found; using default PIL paste()")
     
-    useBiomeData = os.path.exists(os.path.join(worlddir, 'EXTRACTEDBIOMES'))
+    useBiomeData = os.path.exists(os.path.join(worlddir, 'biomes'))
     if not useBiomeData:
         logging.info("Notice: Not using biome data for tinting")
 
