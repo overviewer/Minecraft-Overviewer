@@ -676,8 +676,8 @@ class ChunkRenderer(object):
             biomeColorData = textures.getBiomeData(self.world.worlddir,
                 self.chunkX, self.chunkY)
         # in the 32x32 block of biome data, what chunk is this?l
-        startX = (self.chunkX - int(math.floor(self.chunkX/32)*32))
-        startY = (self.chunkY - int(math.floor(self.chunkY/32)*32))
+        startX = self.chunkX % 32
+        startY = self.chunkY % 32
 
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image

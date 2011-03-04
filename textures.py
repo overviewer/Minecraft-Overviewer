@@ -850,10 +850,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
     global currentBiomeFile, currentBiomeData
 
-    biomeFile = "b.%d.%d.biome" % (
-        int(math.floor(chunkX/32)),
-        int(math.floor(chunkY/32))
-            )
+    biomeFile = "b.%d.%d.biome" % (chunkX // 32, chunkY // 32)
     if biomeFile == currentBiomeFile:
         return currentBiomeData
 
