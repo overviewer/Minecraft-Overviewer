@@ -71,6 +71,13 @@ def main():
     if not os.path.exists(worlddir):
         # world given is either world number, or name
         worlds = world.get_worlds()
+        
+        # if there are no worlds found at all, exit now
+        if not worlds:
+            print "Invalid world path"
+            parser.print_help()
+            sys.exit(1)
+        
         try:
             worldnum = int(worlddir)
             worlddir = worlds[worldnum]['path']
