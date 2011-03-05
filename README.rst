@@ -92,10 +92,10 @@ biome-accurate tinting, the Overviewer can use biome data produced by the
 Minecraft Biome Extractor tool.  This tool can be downloaded from:
 http://www.minecraftforum.net/viewtopic.php?f=25&t=80902
 
-If the EXTRACTEDBIOMES folder is present in the world directory, then the
-Overviewer will use the biome data to tint grass and leaves automatically -- 
-there is no command line option to turn this feature on.  If this folder does
-not exist, then the Overviewer will use a static tinting for grass and leaves.
+If the "biomes" folder is present in the world directory, then the Overviewer
+will use the biome data to tint grass and leaves automatically -- there is no
+command line option to turn this feature on.  If this folder does not exist,
+then the Overviewer will use a static tinting for grass and leaves.
 
 Compiling the C Extension (optional)
 ------------------------------------ 
