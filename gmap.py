@@ -74,8 +74,8 @@ def main():
         
         # if there are no worlds found at all, exit now
         if not worlds:
-            print "Invalid world path"
             parser.print_help()
+            print "\nInvalid world path"
             sys.exit(1)
         
         try:
@@ -87,13 +87,13 @@ def main():
                 worlddir = worlds[worlddir]['path']
             except KeyError:
                 # it's not a number, name, or path
-                print "Invalid world name or path"
                 parser.print_help()
+                print "Invalid world name or path"
                 sys.exit(1)
         except KeyError:
             # it was an invalid number
-            print "Invalid world number"
             parser.print_help()
+            print "Invalid world number"
             sys.exit(1)
 
     if not options.cachedir:

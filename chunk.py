@@ -256,7 +256,7 @@ class ChunkRenderer(object):
             try:
                 self._level = get_lvldata(self.regionfile, self.chunkX, self.chunkY)
             except NoSuchChunk, e:
-                #logging.debug("Skipping non-existant chunk")
+                logging.debug("Skipping non-existant chunk")
                 raise
         return self._level
     level = property(_load_level)
