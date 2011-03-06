@@ -114,7 +114,7 @@ class QuadtreeGen(object):
                         yradius >= worldobj.maxrow and -yradius <= worldobj.minrow:
                     break
             else:
-                raise ValueError("Your map is waaaay too big!")
+                raise ValueError("Your map is waaaay too big! Use the '-z' or '--zoom' options.")
 
             self.p = p
         else:
