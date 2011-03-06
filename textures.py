@@ -283,7 +283,7 @@ def _build_blockimages():
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                36, 37, 80, -1, 65,  4, 25, -1, 98, 24, 43, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67, # door,ladder left out. Minecart rail orientation
+               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation
        #       80  81  82  83  84  85  86  87  88  89  90  91
                66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
         ]
@@ -300,7 +300,7 @@ def _build_blockimages():
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                 36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1,  1, 66, 67,
+                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
                 66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
@@ -824,9 +824,9 @@ def prepareBiomeData(worlddir):
     if grasscolor and foliagecolor:
         return
     
-    biomeDir = os.path.join(worlddir, "EXTRACTEDBIOMES")
+    biomeDir = os.path.join(worlddir, "biomes")
     if not os.path.exists(biomeDir):
-        raise Exception("EXTRACTEDBIOMES not found")
+        raise Exception("biomes not found")
 
     # try to find the biome color images.  If _find_file can't locate them
     # then try looking in the EXTRACTEDBIOMES folder
@@ -850,16 +850,13 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
     global currentBiomeFile, currentBiomeData
 
-    biomeFile = "%d.%d.biome" % (
-        int(math.floor(chunkX/8)*8),
-        int(math.floor(chunkY/8)*8)
-            )
+    biomeFile = "b.%d.%d.biome" % (chunkX // 32, chunkY // 32)
     if biomeFile == currentBiomeFile:
         return currentBiomeData
 
     currentBiomeFile = biomeFile
 
-    f = open(os.path.join(worlddir, "EXTRACTEDBIOMES", biomeFile), "rb")
+    f = open(os.path.join(worlddir, "biomes", biomeFile), "rb")
     rawdata = f.read()
     f.close()
 
