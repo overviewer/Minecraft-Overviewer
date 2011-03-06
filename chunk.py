@@ -49,8 +49,13 @@ image
 def get_lvldata(filename, x, y):
     """Takes a filename and chunkcoords and returns the Level struct, which contains all the
     level info"""
-
-    d =  nbt.load_from_region(filename, x, y)
+    
+    try:
+        d =  nbt.load_from_region(filename, x, y)
+    except Exception, e:
+        logging.warning("Error opening chunk (%i, %i) in %s. It may be corrupt. %s", x, y, filename, e)
+        raise ChunkCorrupt(str(e))
+    
     if not d: raise NoSuchChunk(x,y)
     return d[1]['Level']
 
@@ -253,9 +258,6 @@ class ChunkRenderer(object):
             except NoSuchChunk, e:
                 #logging.debug("Skipping non-existant chunk")
                 raise
-            except Exception, e:
-                logging.warning("Error opening chunk file %s. It may be corrupt. %s", self.regionfile, e)
-                raise ChunkCorrupt(str(e))
         return self._level
     level = property(_load_level)
         
