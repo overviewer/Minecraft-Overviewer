@@ -49,8 +49,13 @@ image
 def get_lvldata(filename, x, y):
     """Takes a filename and chunkcoords and returns the Level struct, which contains all the
     level info"""
-
-    d =  nbt.load_from_region(filename, x, y)
+    
+    try:
+        d =  nbt.load_from_region(filename, x, y)
+    except Exception, e:
+        logging.warning("Error opening chunk (%i, %i) in %s. It may be corrupt. %s", x, y, filename, e)
+        raise ChunkCorrupt(str(e))
+    
     if not d: raise NoSuchChunk(x,y)
     return d[1]['Level']
 
@@ -96,21 +101,6 @@ def get_tileentity_data(level):
     """Returns the TileEntities TAG_List from chunk dat file"""
     data = level['TileEntities']
     return data
-
-def iterate_chunkblocks(xoff,yoff):
-    """Iterates over the 16x16x128 blocks of a chunk in rendering order.
-    Yields (x,y,z,imgx,imgy)
-    x,y,z is the block coordinate in the chunk
-    imgx,imgy is the image offset in the chunk image where that block should go
-    """
-    for x in xrange(15,-1,-1):
-        for y in xrange(16):
-            imgx = xoff + x*12 + y*12
-            imgy = yoff - x*6 + y*6 + 128*12 + 16*12//2
-            for z in xrange(128):
-                yield x,y,z,imgx,imgy
-                imgy -= 12
-
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
 transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53, 55,
@@ -266,11 +256,8 @@ class ChunkRenderer(object):
             try:
                 self._level = get_lvldata(self.regionfile, self.chunkX, self.chunkY)
             except NoSuchChunk, e:
-                #logging.debug("Skipping non-existant chunk")
+                logging.debug("Skipping non-existant chunk")
                 raise
-            except Exception, e:
-                logging.warning("Error opening chunk file %s. It may be corrupt. %s", self.regionfile, e)
-                raise ChunkCorrupt(str(e))
         return self._level
     level = property(_load_level)
         
@@ -689,197 +676,204 @@ class ChunkRenderer(object):
         if not img:
             img = Image.new("RGBA", (384, 1728), (38,92,255,0))
 
-        for x,y,z,imgx,imgy in iterate_chunkblocks(xoff,yoff):
-            blockid = blocks[x,y,z]
+        for x in xrange(15,-1,-1):
+            for y in xrange(16):
+                imgx = xoff + x*12 + y*12
+                imgy = yoff - x*6 + y*6 + 128*12 + 16*12//2
+                imgy += 12
+                for z in xrange(128):
+                    imgy -= 12
 
-            # the following blocks don't have textures that can be pre-computed from the blockid
-            # alone.  additional data is required.
-            # TODO torches, redstone torches, crops, ladders, stairs, 
-            #      levers, doors, buttons, and signs all need to be handled here (and in textures.py)
+                    blockid = blocks[x,y,z]
 
-            ## minecart track, crops, ladder, doors, etc.
-            if blockid in textures.special_blocks:
-             # also handle furnaces here, since one side has a different texture than the other
-                ancilData = blockData_expanded[x,y,z]
-                try:
-                    if blockid in pseudo_ancildata_blocks:
-                        
-                        pseudo_ancilData = self.generate_pseudo_ancildata(x,y,z,blockid)
-                        ancilData = pseudo_ancilData
-                    t = textures.specialblockmap[(blockid, ancilData)]
-                except KeyError:
-                    t = None
+                    # the following blocks don't have textures that can be pre-computed from the blockid
+                    # alone.  additional data is required.
+                    # TODO torches, redstone torches, crops, ladders, stairs, 
+                    #      levers, doors, buttons, and signs all need to be handled here (and in textures.py)
 
-            else:
-                t = textures.blockmap[blockid]
+                    ## minecart track, crops, ladder, doors, etc.
+                    if blockid in textures.special_blocks:
+                     # also handle furnaces here, since one side has a different texture than the other
+                        ancilData = blockData_expanded[x,y,z]
+                        try:
+                            if blockid in pseudo_ancildata_blocks:
 
-            if not t:
-                continue
-            
-            if self.world.useBiomeData:
-                # 16 : number of blocks in a chunk (in one direction)
-                # 32 : number of chunks in a region (and biome file) in one direction
-                # so 16 * 32 == 512 : number of blocks in biome file, in one direction
-                if blockid == 2: #grass
-                    index = biomeColorData[ ((startY*16)+y) * 512 + (startX*16) + x]
-                    c = textures.grasscolor[index]
+                                pseudo_ancilData = self.generate_pseudo_ancildata(x,y,z,blockid)
+                                ancilData = pseudo_ancilData
+                            t = textures.specialblockmap[(blockid, ancilData)]
+                        except KeyError:
+                            t = None
 
-                    # only tint the top texture
-                    t = textures.prepareGrassTexture(c)
-                elif blockid == 18: # leaves
-                    index = biomeColorData[ ((startY*16)+y) * 512 + (startX*16) + x]
-                    c = textures.foliagecolor[index]
-                    
-                    t = textures.prepareLeafTexture(c)
-
-
-
-
-            # Check if this block is occluded
-            if cave and (
-                    x == 0 and y != 15 and z != 127
-            ):
-                # If it's on the x face, only render if there's a
-                # transparent block in the y+1 direction OR the z-1
-                # direction
-                if (
-                    blocks[x,y+1,z] not in transparent_blocks and
-                    blocks[x,y,z+1] not in transparent_blocks
-                ):
-                    continue
-            elif cave and (
-                    y == 15 and x != 0 and z != 127
-            ):
-                # If it's on the facing y face, only render if there's
-                # a transparent block in the x-1 direction OR the z-1
-                # direction
-                if (
-                    blocks[x-1,y,z] not in transparent_blocks and
-                    blocks[x,y,z+1] not in transparent_blocks
-                ):
-                    continue
-            elif cave and (
-                    y == 15 and x == 0 and z != 127
-            ):
-                # If it's on the facing edge, only render if what's
-                # above it is transparent
-                if (
-                    blocks[x,y,z+1] not in transparent_blocks
-                ):
-                    continue
-            elif (left_blocks == None and right_blocks == None):
-                    # Normal block or not cave mode, check sides for
-                    # transparentcy or render if it's a border chunk.
-
-                if (
-                    x != 0 and y != 15 and z != 127 and
-                    blocks[x-1,y,z] not in transparent_blocks and
-                    blocks[x,y+1,z] not in transparent_blocks and
-                    blocks[x,y,z+1] not in transparent_blocks
-                    ):
-                        continue
-
-            elif (left_blocks != None and right_blocks == None):
-
-                if (
-                    # If it has the left face covered check for 
-                    # transparent blocks in left face
-                    y != 15 and z != 127 and
-                    (left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
-                    blocks[x,y+1,z] not in transparent_blocks and
-                    blocks[x,y,z+1] not in transparent_blocks
-                    ):
-                        continue
-
-            elif (left_blocks == None and right_blocks != None):
-
-                if (
-                    # If it has the right face covered check for
-                    # transparent blocks in right face
-                    x != 0 and z != 127 and
-                    blocks[x-1,y,z] not in transparent_blocks and
-                    (right_blocks[x,0,z] if y == 15 else blocks[x,y + 1,z]) not in transparent_blocks and
-                    blocks[x,y,z+1] not in transparent_blocks
-                    ):
-                        continue
-                
-            elif (
-                # If it's a interior chunk check for transparent blocks
-                # in the adjacent chunks.
-                z != 127 and 
-                (left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
-                (right_blocks[x,0,z] if y == 15 else blocks[x,y + 1,z]) not in transparent_blocks and
-                blocks[x,y,z+1] not in transparent_blocks
-                # Don't render if all sides aren't transparent
-                ):
-                    continue
-
-            # Draw the actual block on the image. For cave images,
-            # tint the block with a color proportional to its depth
-            if cave:
-                # no lighting for cave -- depth is probably more useful
-                composite.alpha_over(img, Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
-            else:
-                if not self.world.lighting:
-                    # no lighting at all
-                    composite.alpha_over(img, t[0], (imgx, imgy), t[1])
-                elif blockid in transparent_blocks:
-                    # transparent means draw the whole
-                    # block shaded with the current
-                    # block's light
-                    black_coeff, _ = self.get_lighting_coefficient(x, y, z)
-                    if self.world.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
-                        blockid in nospawn_blocks or (
-                            z != 127 and (blocks[x,y,z+1] in solid_blocks or blocks[x,y,z+1] in fluid_blocks)
-                        )
-                    ):
-                        composite.alpha_over(img, Image.blend(t[0], red_color, black_coeff), (imgx, imgy), t[1])
                     else:
-                        composite.alpha_over(img, Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
-                else:
-                    # draw each face lit appropriately,
-                    # but first just draw the block
-                    composite.alpha_over(img, t[0], (imgx, imgy), t[1])
-                    
-                    # top face
-                    black_coeff, face_occlude = self.get_lighting_coefficient(x, y, z + 1)
-                    # Use red instead of black for spawnable blocks
-                    if self.world.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
-                        blockid in nospawn_blocks or (
-                            z != 127 and (blocks[x,y,z+1] in solid_blocks or blocks[x,y,z+1] in fluid_blocks)
-                        )
+                        t = textures.blockmap[blockid]
+
+                    if not t:
+                        continue
+
+                    if self.world.useBiomeData:
+                        # 16 : number of blocks in a chunk (in one direction)
+                        # 32 : number of chunks in a region (and biome file) in one direction
+                        # so 16 * 32 == 512 : number of blocks in biome file, in one direction
+                        if blockid == 2: #grass
+                            index = biomeColorData[ ((startY*16)+y) * 512 + (startX*16) + x]
+                            c = textures.grasscolor[index]
+
+                            # only tint the top texture
+                            t = textures.prepareGrassTexture(c)
+                        elif blockid == 18: # leaves
+                            index = biomeColorData[ ((startY*16)+y) * 512 + (startX*16) + x]
+                            c = textures.foliagecolor[index]
+
+                            t = textures.prepareLeafTexture(c)
+
+
+
+
+                    # Check if this block is occluded
+                    if cave and (
+                            x == 0 and y != 15 and z != 127
                     ):
-                        over_color = red_color
+                        # If it's on the x face, only render if there's a
+                        # transparent block in the y+1 direction OR the z-1
+                        # direction
+                        if (
+                            blocks[x,y+1,z] not in transparent_blocks and
+                            blocks[x,y,z+1] not in transparent_blocks
+                        ):
+                            continue
+                    elif cave and (
+                            y == 15 and x != 0 and z != 127
+                    ):
+                        # If it's on the facing y face, only render if there's
+                        # a transparent block in the x-1 direction OR the z-1
+                        # direction
+                        if (
+                            blocks[x-1,y,z] not in transparent_blocks and
+                            blocks[x,y,z+1] not in transparent_blocks
+                        ):
+                            continue
+                    elif cave and (
+                            y == 15 and x == 0 and z != 127
+                    ):
+                        # If it's on the facing edge, only render if what's
+                        # above it is transparent
+                        if (
+                            blocks[x,y,z+1] not in transparent_blocks
+                        ):
+                            continue
+                    elif (left_blocks == None and right_blocks == None):
+                            # Normal block or not cave mode, check sides for
+                            # transparentcy or render if it's a border chunk.
+
+                        if (
+                            x != 0 and y != 15 and z != 127 and
+                            blocks[x-1,y,z] not in transparent_blocks and
+                            blocks[x,y+1,z] not in transparent_blocks and
+                            blocks[x,y,z+1] not in transparent_blocks
+                            ):
+                                continue
+
+                    elif (left_blocks != None and right_blocks == None):
+
+                        if (
+                            # If it has the left face covered check for 
+                            # transparent blocks in left face
+                            y != 15 and z != 127 and
+                            (left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
+                            blocks[x,y+1,z] not in transparent_blocks and
+                            blocks[x,y,z+1] not in transparent_blocks
+                            ):
+                                continue
+
+                    elif (left_blocks == None and right_blocks != None):
+
+                        if (
+                            # If it has the right face covered check for
+                            # transparent blocks in right face
+                            x != 0 and z != 127 and
+                            blocks[x-1,y,z] not in transparent_blocks and
+                            (right_blocks[x,0,z] if y == 15 else blocks[x,y + 1,z]) not in transparent_blocks and
+                            blocks[x,y,z+1] not in transparent_blocks
+                            ):
+                                continue
+
+                    elif (
+                        # If it's a interior chunk check for transparent blocks
+                        # in the adjacent chunks.
+                        z != 127 and 
+                        (left_blocks[15,y,z] if x == 0 else blocks[x - 1,y,z]) not in transparent_blocks and
+                        (right_blocks[x,0,z] if y == 15 else blocks[x,y + 1,z]) not in transparent_blocks and
+                        blocks[x,y,z+1] not in transparent_blocks
+                        # Don't render if all sides aren't transparent
+                        ):
+                            continue
+
+                    # Draw the actual block on the image. For cave images,
+                    # tint the block with a color proportional to its depth
+                    if cave:
+                        # no lighting for cave -- depth is probably more useful
+                        composite.alpha_over(img, Image.blend(t[0],depth_colors[z],0.3), (imgx, imgy), t[1])
                     else:
-                        over_color = black_color
+                        if not self.world.lighting:
+                            # no lighting at all
+                            composite.alpha_over(img, t[0], (imgx, imgy), t[1])
+                        elif blockid in transparent_blocks:
+                            # transparent means draw the whole
+                            # block shaded with the current
+                            # block's light
+                            black_coeff, _ = self.get_lighting_coefficient(x, y, z)
+                            if self.world.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
+                                blockid in nospawn_blocks or (
+                                    z != 127 and (blocks[x,y,z+1] in solid_blocks or blocks[x,y,z+1] in fluid_blocks)
+                                )
+                            ):
+                                composite.alpha_over(img, Image.blend(t[0], red_color, black_coeff), (imgx, imgy), t[1])
+                            else:
+                                composite.alpha_over(img, Image.blend(t[0], black_color, black_coeff), (imgx, imgy), t[1])
+                        else:
+                            # draw each face lit appropriately,
+                            # but first just draw the block
+                            composite.alpha_over(img, t[0], (imgx, imgy), t[1])
 
-                    if not face_occlude:
-                        composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
-                    
-                    # left face
-                    black_coeff, face_occlude = self.get_lighting_coefficient(x - 1, y, z)
-                    if not face_occlude:
-                        composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
+                            # top face
+                            black_coeff, face_occlude = self.get_lighting_coefficient(x, y, z + 1)
+                            # Use red instead of black for spawnable blocks
+                            if self.world.spawn and black_coeff > 0.8 and blockid in solid_blocks and not (
+                                blockid in nospawn_blocks or (
+                                    z != 127 and (blocks[x,y,z+1] in solid_blocks or blocks[x,y,z+1] in fluid_blocks)
+                                )
+                            ):
+                                over_color = red_color
+                            else:
+                                over_color = black_color
 
-                    # right face
-                    black_coeff, face_occlude = self.get_lighting_coefficient(x, y + 1, z)
-                    if not face_occlude:
-                        composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
+                            if not face_occlude:
+                                composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[0]).enhance(black_coeff))
 
-            # Draw edge lines
-            if blockid in (44,): # step block
-               increment = 6
-            elif blockid in (78,): # snow
-               increment = 9
-            else:
-               increment = 0
+                            # left face
+                            black_coeff, face_occlude = self.get_lighting_coefficient(x - 1, y, z)
+                            if not face_occlude:
+                                composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[1]).enhance(black_coeff))
 
-            if blockid not in transparent_blocks or blockid in (78,): #special case snow so the outline is still drawn
-                draw = ImageDraw.Draw(img)
-                if x != 15 and blocks[x+1,y,z] == 0:
-                    draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
-                if y != 0 and blocks[x,y-1,z] == 0:
-                    draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
+                            # right face
+                            black_coeff, face_occlude = self.get_lighting_coefficient(x, y + 1, z)
+                            if not face_occlude:
+                                composite.alpha_over(img, over_color, (imgx, imgy), ImageEnhance.Brightness(facemasks[2]).enhance(black_coeff))
+
+                    # Draw edge lines
+                    if blockid in (44,): # step block
+                       increment = 6
+                    elif blockid in (78,): # snow
+                       increment = 9
+                    else:
+                       increment = 0
+
+                    if blockid not in transparent_blocks or blockid in (78,): #special case snow so the outline is still drawn
+                        draw = ImageDraw.Draw(img)
+                        if x != 15 and blocks[x+1,y,z] == 0:
+                            draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
+                        if y != 0 and blocks[x,y-1,z] == 0:
+                            draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
 
 
         for entity in tileEntities:
