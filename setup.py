@@ -32,11 +32,11 @@ if py2exe != None:
     setup_kwargs['options']['py2exe'] = {'bundle_files' : 1, 'excludes': 'Tkinter'}
 
 #
-# _composite.c extension
+# c_overviewer extension
 #
 
-setup_kwargs['ext_modules'].append(Extension('_composite', ['src/composite.c'], include_dirs=['.'], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
-setup_kwargs['ext_modules'].append(Extension('_iterate', ['src/iterate.c'], include_dirs=['.'], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
+c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c']
+setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.'], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
@@ -52,7 +52,7 @@ class CustomClean(clean):
         # try to remove '_composite.{so,pyd,...}' extension,
         # regardless of the current system's extension name convention
         build_ext = self.get_finalized_command('build_ext')
-        pretty_fname = build_ext.get_ext_filename('_composite')
+        pretty_fname = build_ext.get_ext_filename('c_overviewer')
         fname = pretty_fname
         if os.path.exists(fname):
             try:

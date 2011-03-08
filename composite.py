@@ -25,7 +25,7 @@ alpha-over extension cannot be found.
 
 extension_alpha_over = None
 try:
-    from _composite import alpha_over as _extension_alpha_over
+    from c_overviewer import alpha_over as _extension_alpha_over
     extension_alpha_over = _extension_alpha_over
 except ImportError:
     pass

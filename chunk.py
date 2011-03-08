@@ -25,7 +25,7 @@ import nbt
 import textures
 import world
 import composite
-import _iterate
+import c_overviewer
 
 """
 This module has routines related to rendering one particular chunk into an
@@ -545,7 +545,7 @@ class ChunkRenderer(object):
         if not img:
             img = Image.new("RGBA", (384, 1728), (38,92,255,0))
 
-        _iterate.render_loop(self, img, xoff, yoff, blockData_expanded)
+        c_overviewer.render_loop(self, img, xoff, yoff, blockData_expanded)
 
         for entity in tileEntities:
             if entity['id'] == 'Sign':

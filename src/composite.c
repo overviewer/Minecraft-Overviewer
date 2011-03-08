@@ -22,8 +22,7 @@
  * PIL paste if this extension is not found.
  */
 
-#include <Python.h>
-#include <Imaging.h>
+#include "overviewer.h"
 
 /* like (a * b + 127) / 255), but much faster on most platforms
    from PIL's _imaging.c */
@@ -36,7 +35,7 @@ typedef struct
 	Imaging image;
 } ImagingObject;
 
-static Imaging imaging_python_to_c(PyObject* obj)
+Imaging imaging_python_to_c(PyObject* obj)
 {
 	PyObject* im;
 	Imaging image;
@@ -59,26 +58,22 @@ static Imaging imaging_python_to_c(PyObject* obj)
 	return image;
 }
 
-static PyObject* _composite_alpha_over(PyObject* self, PyObject* args)
+/* the alpha_over function, in a form that can be called from C */
+/* if xsize, ysize are negative, they are instead set to the size of the image in src */
+/* returns NULL on error, dest on success. You do NOT need to decref the return! */
+PyObject* alpha_over(PyObject* dest, PyObject* src, PyObject* mask, int dx, int dy, int xsize, int ysize)
 {
-	/* raw input python variables */
-	PyObject* dest, * src, * pos, * mask;
 	/* libImaging handles */
 	Imaging imDest, imSrc, imMask;
 	/* cached blend properties */
 	int src_has_alpha, mask_offset, mask_stride;
-	/* destination position and size */
-	int dx, dy, xsize, ysize;
 	/* source position */
 	int sx, sy;
 	/* iteration variables */
 	unsigned int x, y, i;
 	/* temporary calculation variables */
 	int tmp1, tmp2, tmp3;
-	
-	if (!PyArg_ParseTuple(args, "OOOO", &dest, &src, &pos, &mask))
-		return NULL;
-	
+		
 	imDest = imaging_python_to_c(dest);
 	imSrc = imaging_python_to_c(src);
 	imMask = imaging_python_to_c(mask);
@@ -119,11 +114,11 @@ static PyObject* _composite_alpha_over(PyObject* self, PyObject* args)
 	/* how many bytes to skip to get to the next alpha byte */
 	mask_stride = imMask->pixelsize;
 	
-	/* destination position read */
-	if (!PyArg_ParseTuple(pos, "iiii", &dx, &dy, &xsize, &ysize))
+	/* handle negative/zero sizes appropriately */
+	if (xsize <= 0 || ysize <= 0)
 	{
-		PyErr_SetString(PyExc_TypeError, "given blend destination rect is not valid");
-		return NULL;
+		xsize = imSrc->xsize;
+		ysize = imSrc->ysize;
 	}
 	
 	/* set up the source position, size and destination position */
@@ -158,7 +153,6 @@ static PyObject* _composite_alpha_over(PyObject* self, PyObject* args)
 	if (xsize <= 0 || ysize <= 0)
 	{
 		/* nothing to do, return */
-		Py_INCREF(dest);
 		return dest;
 	}
 	
@@ -208,17 +202,39 @@ static PyObject* _composite_alpha_over(PyObject* self, PyObject* args)
 		}
 	}
 	
-	Py_INCREF(dest);
 	return dest;
 }
 
-static PyMethodDef _CompositeMethods[] =
+/* wraps alpha_over so it can be called directly from python */
+/* properly refs the return value when needed: you DO need to decref the return */
+PyObject* alpha_over_wrap(PyObject* self, PyObject* args)
 {
-	{"alpha_over", _composite_alpha_over, METH_VARARGS, "alpha over composite function"},
-	{NULL, NULL, 0, NULL}
-};
-
-PyMODINIT_FUNC init_composite(void)
-{
-	(void) Py_InitModule("_composite", _CompositeMethods);
+	/* raw input python variables */
+	PyObject* dest, * src, * pos, * mask;
+	/* destination position and size */
+	int dx, dy, xsize, ysize;
+	
+	if (!PyArg_ParseTuple(args, "OOOO", &dest, &src, &pos, &mask))
+		return NULL;
+	
+	/* destination position read */
+	if (!PyArg_ParseTuple(pos, "iiii", &dx, &dy, &xsize, &ysize))
+	{
+		/* try again, but this time try to read a point */
+		xsize = 0;
+		ysize = 0;
+		if (!PyArg_ParseTuple(pos, "ii", &dx, &dy))
+		{
+			PyErr_SetString(PyExc_TypeError, "given blend destination rect is not valid");
+			return NULL;
+		}
+	}
+	
+	PyObject* ret = alpha_over(dest, src, mask, dx, dy, xsize, ysize);
+	if (ret == dest)
+	{
+		/* Python needs us to own our return value */
+		Py_INCREF(dest);
+	}
+	return ret;
 }
