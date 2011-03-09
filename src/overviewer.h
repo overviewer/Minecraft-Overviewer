@@ -29,11 +29,12 @@
 #include <Imaging.h>
 
 /* in composite.c */
-Imaging imaging_python_to_c(PyObject* obj);
-PyObject* alpha_over(PyObject* dest, PyObject* src, PyObject* mask, int dx, int dy, int xsize, int ysize);
-PyObject* alpha_over_wrap(PyObject* self, PyObject* args);
+Imaging imaging_python_to_c(PyObject *obj);
+PyObject *alpha_over(PyObject *dest, PyObject *src, PyObject *mask, int dx,
+                     int dy, int xsize, int ysize);
+PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
 
 /* in iterate.c */
-PyObject* chunk_render(PyObject *self, PyObject *args);
+PyObject *chunk_render(PyObject *self, PyObject *args);
 
 #endif /* __OVERVIEWER_H_INCLUDED__ */
