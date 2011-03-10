@@ -35,8 +35,17 @@ if py2exe != None:
 # c_overviewer extension
 #
 
+# Third-party modules - we depend on numpy for everything
+import numpy
+# Obtain the numpy include directory.  This logic works across numpy versions.
+try:
+    numpy_include = numpy.get_include()
+except AttributeError:
+    numpy_include = numpy.get_numpy_include()
+
+
 c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c']
-setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.'], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
+setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
