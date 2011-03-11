@@ -93,23 +93,21 @@ chunk_render(PyObject *self, PyObject *args) {
     for (x = 15; x > -1; x--) {
         for (y = 0; y < 16; y++) {
             imgx = xoff + x*12 + y*12;
-            imgy = yoff - x*6 + y*6 + 1632; // 1632 == 128*12 + 16*12//2
+            /* 128*12 -- offset for z direction, 15*6 -- offset for x */
+            imgy = yoff - x*6 + y*6 + 128*12 + 15*6;
             for (z = 0; z < 128; z++) {
-                //printf("c/imgx/%d\n", imgx);
-                //printf("c/imgy/%d\n", imgy);
+                imgy -= 12;
+                
                 if ((imgx >= imgsize0 + 24) || (imgx <= -24)) {
-                    imgy -= 12; // NOTE: we need to do this at every continue
                     continue;
                 }
                 if ((imgy >= imgsize1 + 24) || (imgy <= -24)) {
-                    imgy -= 12;
                     continue;
                 }
 
                 // get blockid
                 unsigned char block = getBlock(blocks, x, z, y);  // Note the order: x,z,y
                 if (block == 0) {
-                    imgy -= 12;
                     continue;
                 }
                 //printf("checking blockid %hhu\n", block);
@@ -120,7 +118,6 @@ chunk_render(PyObject *self, PyObject *args) {
                         !isTransparent(getBlock(blocks, x-1, z, y)) &&
                         !isTransparent(getBlock(blocks, x, z+1, y)) &&
                         !isTransparent(getBlock(blocks, x, z, y+1))    ) {
-                    imgy -= 12;
                     continue;
                 }
 
@@ -131,7 +128,6 @@ chunk_render(PyObject *self, PyObject *args) {
                     // PyList_GetItem returns borrowed ref
                     if (t == Py_None) {
                         printf("t == Py_None.  blockid=%d\n", block);
-                        imgy -= 12;
                         continue;
 
                     }
@@ -145,7 +141,6 @@ chunk_render(PyObject *self, PyObject *args) {
                     void* ancilData_p = PyArray_GETPTR3(blockdata_expanded, x, y, z); 
                     unsigned char ancilData = *((unsigned char*)ancilData_p);
                     if (block == 85) { // fence.  skip the generate_pseudo_ancildata for now
-                        imgy -= 12;
                         continue;
                     }
                     PyObject *tmp = PyTuple_New(2);
@@ -157,10 +152,8 @@ chunk_render(PyObject *self, PyObject *args) {
                     Py_DECREF(tmp);
                     if (t != NULL) 
                         texture_alpha_over(img, t, imgx, imgy );
-                    imgy -= 12;
                     continue;
                 }
-                imgy -= 12;
             }
         }
     } 
