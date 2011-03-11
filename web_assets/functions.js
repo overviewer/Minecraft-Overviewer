@@ -365,6 +365,7 @@ function initialize() {
     var lat = 0.5;
     
     // the following metrics mimic those in ChunkRenderer.chunk_render in "chunk.py"
+    // or, equivalently, chunk_render in src/iterate.c
     
     // each block on X axis adds 12px to x and subtracts 6px from y
     lng += 12 * x * perPixel;
@@ -377,9 +378,8 @@ function initialize() {
     // each block down along Z adds 12px to y
     lat += 12 * (128 - z) * perPixel;
 
-    // add on 12 px to the X coordinate and 18px to the Y to center our point
+    // add on 12 px to the X coordinate to center our point
     lng += 12 * perPixel;
-    lat += 18 * perPixel;
     
     return new google.maps.LatLng(lat, lng);
   }
