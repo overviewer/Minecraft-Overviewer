@@ -142,9 +142,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *t = PyList_GetItem(blockmap, block);
                     /* PyList_GetItem returns borrowed ref */
                     if (t == Py_None) {
-                        printf("t == Py_None.  blockid=%d\n", block);
                         continue;
-
                     }
 
                     /* note that this version of alpha_over has a different signature than the 
