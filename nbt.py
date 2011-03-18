@@ -204,7 +204,7 @@ class MCRFileReader(object):
         and y must be between 0 and 31, or None. If they are None,
         then there will be no file seek before doing the read."""
         
-        if x != None and y != None:
+        if x is not None and y is not None:
             if (not x >= 0) or (not x < 32) or (not y >= 0) or (not y < 32):
                 raise ValueError("Chunk location out of range.")
             
@@ -234,7 +234,7 @@ class MCRFileReader(object):
         None. If they are, None, then there will be no file seek
         before doing the read."""
         
-        if x != None and y != None:
+        if x is not None and y is not None:
             if (not x >= 0) or (not x < 32) or (not y >= 0) or (not y < 32):
                 raise ValueError("Chunk location out of range.")
             
@@ -286,9 +286,25 @@ class MCRFileReader(object):
         chunk doesn't exist, this number may be nonsense. Like
         load_chunk(), this will wrap x and y into the range [0, 31].
         """
-        
-        return self._read_chunk_timestamp(x % 32, y % 32)
+        x = x % 32
+        y = y % 32        
+        if self._timestamps is None:
+            #self.get_chunks()
+            return self._read_chunk_timestamp(x, y)
+        else:     
+            return self._timestamps[x + y * 32]   
     
+    def chunkExists(self, x, y):
+        """Determines if a chunk exists without triggering loading of the backend data"""
+        x = x % 32
+        y = y % 32
+        if self._locations is None:
+            #self.get_chunks()
+            location = self._read_chunk_location(x, y)
+        else:
+            location = self._locations[x + y * 32]
+        return location is not None        
+
     def load_chunk(self, x, y):
         """Return a NBTFileReader instance for the given chunk, or
         None if the given chunk doesn't exist in this region file. If
@@ -296,9 +312,14 @@ class MCRFileReader(object):
         modulo'd into this range (x % 32, etc.) This is so you can
         provide chunk coordinates in global coordinates, and still
         have the chunks load out of regions properly."""
-        
-        location = self._read_chunk_location(x % 32, y % 32)
-        if not location:
+        x = x % 32
+        y = y % 32
+        if self._locations is None:
+            #self.get_chunks()
+            location = self._read_chunk_location(x % 32, y % 32)
+        else:            
+            location = self._locations[x + y * 32]
+        if location is None:
             return None
         
         # seek to the data
@@ -320,8 +341,7 @@ class MCRFileReader(object):
             is_gzip = False
         else:
             # unsupported!
-            raise Exception("Unsupported chunk compression type: %i" % (compression,))
-        
+            raise Exception("Unsupported chunk compression type: %i" % (compression))
         # turn the rest of the data into a StringIO object
         # (using data_length - 1, as we already read 1 byte for compression)
         data = self._file.read(data_length - 1)
