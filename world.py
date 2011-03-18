@@ -67,10 +67,16 @@ class World(object):
     
     mincol = maxcol = minrow = maxrow = 0
     
-    def __init__(self, worlddir, useBiomeData=False):
+    def __init__(self, worlddir, useBiomeData=False,regionlist=None):
         self.worlddir = worlddir
         self.useBiomeData = useBiomeData
 
+        #find region files, or load the region list
+        regionfiles = {}
+        for x, y, regionfile in self._iterate_regionfiles():            
+            regionfiles[(x,y)]	= (x,y,regionfile)
+        self.regionfiles = regionfiles	
+        
         # figure out chunk format is in use
         # if not mcregion, error out early
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
@@ -102,11 +108,9 @@ class World(object):
     def get_region_path(self, chunkX, chunkY):
         """Returns the path to the region that contains chunk (chunkX, chunkY)
         """
+        _, _, regionfile = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None));
+        return regionfile
         
-        chunkFile = "region/r.%s.%s.mcr" % (chunkX//32, chunkY//32)
-
-        return os.path.join(self.worlddir, chunkFile)
-    
     def convert_coords(self, chunkx, chunky):
         """Takes a coordinate (chunkx, chunky) where chunkx and chunky are
         in the chunk coordinate system, and figures out the row and column
@@ -168,7 +172,7 @@ class World(object):
         # find the dimensions of the map, in region files
         minx = maxx = miny = maxy = 0
         found_regions = False
-        for x, y, regionfile in self._iterate_regionfiles():
+        for x, y in self.regionfiles:
             found_regions = True
             minx = min(minx, x)
             maxx = max(maxx, x)
@@ -203,18 +207,27 @@ class World(object):
 
         self.findTrueSpawn()
 
-    def _iterate_regionfiles(self):
+    def _iterate_regionfiles(self,regionlist=None):
         """Returns an iterator of all of the region files, along with their 
         coordinates
 
         Returns (regionx, regiony, filename)"""
-
-        for dirpath, dirnames, filenames in os.walk(os.path.join(self.worlddir, 'region')):
-            if not dirnames and filenames and "DIM-1" not in dirpath:
-                for f in filenames:
-                    if f.startswith("r.") and f.endswith(".mcr"):
-                        p = f.split(".")
-                        yield (int(p[1]), int(p[2]), os.path.join(dirpath, f))
+        join = os.path.join
+        if regionlist is not None:
+            for path in regionlist:
+                if path.endswith("\n"):
+                    path = path[:-1]            
+                f = os.path.basename(path)
+                if f.startswith("r.") and f.endswith(".mcr"):
+                    p = f.split(".")
+                    yield (int(p[1]), int(p[2]), join(self.worlddir, 'region', f))        
+        else:                    
+            for dirpath, dirnames, filenames in os.walk(os.path.join(self.worlddir, 'region')):
+                if not dirnames and filenames and "DIM-1" not in dirpath:
+                    for f in filenames:
+                        if f.startswith("r.") and f.endswith(".mcr"):
+                            p = f.split(".")
+                            yield (int(p[1]), int(p[2]), join(dirpath, f))
 
 def get_save_dir():
     """Returns the path to the local saves directory

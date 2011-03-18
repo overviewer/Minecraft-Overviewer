@@ -878,15 +878,16 @@ def getBiomeData(worlddir, chunkX, chunkY):
     if biomeFile == currentBiomeFile:
         return currentBiomeData
 
-    f = open(os.path.join(worlddir, "biomes", biomeFile), "rb")
-    rawdata = f.read()
-    f.close()
-    
-    # make sure the file size is correct
-    if not len(rawdata) == 512 * 512 * 2:
-        raise Exception("Biome file %s is not valid." % (biomeFile,))
-    
-    data = numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2"))
+    try:
+        with open(os.path.join(worlddir, "biomes", biomeFile), "rb") as f:
+            rawdata = f.read()
+            # make sure the file size is correct
+            if not len(rawdata) == 512 * 512 * 2:
+                raise Exception("Biome file %s is not valid." % (biomeFile,))
+            data = numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2"))
+    except IOError:
+        data = None
+        pass # no biome data   
 
     currentBiomeFile = biomeFile
     currentBiomeData = data

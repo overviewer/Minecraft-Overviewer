@@ -26,6 +26,7 @@ import logging
 import util
 import cPickle
 import stat
+import errno 
 from time import gmtime, strftime, sleep
 
 from PIL import Image
@@ -438,7 +439,7 @@ class QuadtreeGen(object):
                 # return (col, row, chunkx, chunky, regionpath)
                 chunkx, chunky = self.world.unconvert_coords(col, row)
                 c = self.world.get_region_path(chunkx, chunky)
-                if os.path.exists(c):
+                if c is not None:
                     chunklist.append((col, row, chunkx, chunky, c))
         return chunklist
 
@@ -451,53 +452,38 @@ def render_innertile(dest, name, imgformat, optimizeimg):
     imgpath = os.path.join(dest, name) + "." + imgformat
 
     if name == "base":
-        q0path = os.path.join(dest, "0." + imgformat)
-        q1path = os.path.join(dest, "1." + imgformat)
-        q2path = os.path.join(dest, "2." + imgformat)
-        q3path = os.path.join(dest, "3." + imgformat)
+        quadPath = [[(0,0),os.path.join(dest, "0." + imgformat)],[(192,0),os.path.join(dest, "1." + imgformat)], [(0, 192),os.path.join(dest, "2." + imgformat)],[(192,192),os.path.join(dest, "3." + imgformat)]]
     else:
-        q0path = os.path.join(dest, name, "0." + imgformat)
-        q1path = os.path.join(dest, name, "1." + imgformat)
-        q2path = os.path.join(dest, name, "2." + imgformat)
-        q3path = os.path.join(dest, name, "3." + imgformat)
-
-    # Check which ones exist
-    if not os.path.exists(q0path):
-        q0path = None
-    if not os.path.exists(q1path):
-        q1path = None
-    if not os.path.exists(q2path):
-        q2path = None
-    if not os.path.exists(q3path):
-        q3path = None
-
+        quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
+   
+    #stat the tile, we need to know if it exists or it's mtime
+    try:    
+        tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
+    except OSError, e:
+        if e.errno != errno.ENOENT:
+            raise
+        tile_mtime = None
+        
+    #check mtimes on each part of the quad, this also checks if they exist
+    needs_rerender = tile_mtime is None
+    quadPath_filtered = []
+    for path in quadPath:
+        try:
+            quad_mtime = os.stat(path[1])[stat.ST_MTIME]; 
+            quadPath_filtered.append(path)
+            if quad_mtime > tile_mtime:     
+                needs_rerender = True            
+        except OSError:
+            # We need to stat all the quad files, so keep looping
+            pass      
     # do they all not exist?
-    if not (q0path or q1path or q2path or q3path):
-        if os.path.exists(imgpath):
+    if quadPath_filtered == []:
+        if tile_mtime is not None:
             os.unlink(imgpath)
         return
-    
-    # check the mtimes
-    try:
-        tile_mtime = os.path.getmtime(imgpath)
-        needs_rerender = False
-        
-        # remove non-existant paths
-        components = [q0path, q1path, q2path, q3path]
-        components = filter(lambda p: p != None, components)
-        
-        for mtime in [os.path.getmtime(path) for path in components]:
-            if mtime > tile_mtime:
-                needs_rerender = True
-                break
-        
-        # quit now if we don't need rerender
-        if not needs_rerender:
-            return
-    except OSError:
-        # one of our mtime calls failed, so we'll continue
-        pass
-    
+    # quit now if we don't need rerender            
+    if not needs_rerender:
+        return    
     #logging.debug("writing out innertile {0}".format(imgpath))
 
     # Create the actual image now
@@ -506,30 +492,12 @@ def render_innertile(dest, name, imgformat, optimizeimg):
     # we'll use paste (NOT alpha_over) for quadtree generation because
     # this is just straight image stitching, not alpha blending
     
-    if q0path:
+    for path in quadPath_filtered:
         try:
-            quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad0, (0,0))
+            quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
+            img.paste(quad, path[0])
         except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q0path, e)
-    if q1path:
-        try:
-            quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad1, (192,0))
-        except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q1path, e)
-    if q2path:
-        try:
-            quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad2, (0, 192))
-        except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q2path, e)
-    if q3path:
-        try:
-            quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad3, (192, 192))
-        except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q3path, e)
+            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", path[1], e)
 
     # Save it
     if imgformat == 'jpg':
@@ -594,12 +562,20 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
         _, _, chunkx, chunky, region = chunk
         with open(region, 'rb') as region:
             r = nbt.MCRFileReader(region)
-            return r.load_chunk(chunkx, chunky) != None
+            return r.chunkExists(chunkx, chunky)
     chunks = filter(chunk_exists, chunks)
 
+    #stat the file, we need to know if it exists or it's mtime
+    try:    
+        tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
+    except OSError, e:
+        if e.errno != errno.ENOENT:
+            raise
+        tile_mtime = None
+        
     if not chunks:
         # No chunks were found in this tile
-        if os.path.exists(imgpath):
+        if tile_mtime is not None:
             os.unlink(imgpath)
         return None
 
@@ -611,18 +587,23 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
         except OSError, e:
             # Ignore errno EEXIST: file exists. Since this is multithreaded,
             # two processes could conceivably try and create the same directory
-            # at the same time.
-            import errno
+            # at the same time.            
             if e.errno != errno.EEXIST:
                 raise
     
     # check chunk mtimes to see if they are newer
     try:
-        tile_mtime = os.path.getmtime(imgpath)
+        #tile_mtime = os.path.getmtime(imgpath)
+        regionMtimes = {}
         needs_rerender = False
         for col, row, chunkx, chunky, regionfile in chunks:
-            # check region file mtime first
-            if os.path.getmtime(regionfile) <= tile_mtime:
+            # check region file mtime first. 
+            # Note: we cache the value since it's actually very likely we will have multipule chunks in the same region, and syscalls are expensive
+            regionMtime = regionMtimes.get(regionfile,None)
+            if  regionMtime is None:
+                regionMtime = os.path.getmtime(regionfile)  
+                regionMtimes[regionfile] = regionMtime 
+            if regionMtime <= tile_mtime:
                 continue
             
             # checking chunk mtime

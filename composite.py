@@ -36,11 +36,11 @@ def alpha_over(dest, src, pos_or_rect=(0, 0), mask=None):
     either be a position or a rectangle, specifying where on dest to
     put src. Falls back to dest.paste() if the alpha_over extension
     can't be found."""
-    if mask == None:
+    if mask is None:
         mask = src
     
     global extension_alpha_over
-    if extension_alpha_over != None:
+    if extension_alpha_over is not None:
         # extension ALWAYS expects rects, so convert if needed
         if len(pos_or_rect) == 2:
             pos_or_rect = (pos_or_rect[0], pos_or_rect[1], src.size[0], src.size[1])

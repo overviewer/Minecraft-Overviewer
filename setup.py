@@ -23,7 +23,7 @@ setup_kwargs['cmdclass'] = {}
 # py2exe options
 #
 
-if py2exe != None:
+if py2exe is not None:
     setup_kwargs['console'] = ['gmap.py']
     setup_kwargs['data_files'] = [('textures', ['textures/lava.png', 'textures/water.png', 'textures/fire.png']),
                                   ('', ['config.js', 'COPYING.txt', 'README.rst']),
