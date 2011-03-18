@@ -31,5 +31,6 @@ PyMODINIT_FUNC
 initc_overviewer(void)
 {
     (void)Py_InitModule("c_overviewer", COverviewerMethods);
-    import_array();     // for numpy
+    /* for numpy */
+    import_array();
 }

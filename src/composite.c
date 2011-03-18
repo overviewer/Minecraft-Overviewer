@@ -30,7 +30,7 @@
 	(tmp = (a) * (b) + 128, ((((tmp) >> 8) + (tmp)) >> 8))
 
 typedef struct {
-    PyObject_HEAD;
+    PyObject_HEAD
     Imaging image;
 } ImagingObject;
 
@@ -214,6 +214,8 @@ alpha_over_wrap(PyObject *self, PyObject *args)
     PyObject *dest, *src, *pos, *mask;
     /* destination position and size */
     int dx, dy, xsize, ysize;
+    /* return value: dest image on success */
+    PyObject *ret;
 
     if (!PyArg_ParseTuple(args, "OOOO", &dest, &src, &pos, &mask))
         return NULL;
@@ -230,7 +232,7 @@ alpha_over_wrap(PyObject *self, PyObject *args)
         }
     }
 
-    PyObject *ret = alpha_over(dest, src, mask, dx, dy, xsize, ysize);
+    ret = alpha_over(dest, src, mask, dx, dy, xsize, ysize);
     if (ret == dest) {
         /* Python needs us to own our return value */
         Py_INCREF(dest);
