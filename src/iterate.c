@@ -20,12 +20,11 @@
 #include <numpy/arrayobject.h>
 
 /* macro for getting blockID from a chunk of memory */
-#define getBlock(blockThing, x,y,z) blockThing[ y + ( z * 128 + ( x * 128 * 16) ) ]
+#define getBlock(blockThing, x,y,z) (*(unsigned char *)(PyArray_GETPTR3(blockThing, (x), (y), (z))))
 
 static inline int isTransparent(unsigned char b) {
     /* TODO expand this to include all transparent blocks */
-    return b == 0;
-
+    return b == 0 || b == 8 || b == 9 || b == 18;
 }
 
 /* helper to handle alpha_over calls involving a texture tuple */
@@ -56,7 +55,6 @@ chunk_render(PyObject *self, PyObject *args) {
     int imgsize0, imgsize1;
     
     PyObject *blocks_py;
-    char *blocks;
     
     PyObject *textures, *blockmap, *special_blocks, *specialblockmap;
     
@@ -81,8 +79,6 @@ chunk_render(PyObject *self, PyObject *args) {
 
     /* get the block data directly from numpy: */
     blocks_py = PyObject_GetAttrString(chunk, "blocks");
-    blocks = PyArray_BYTES(blocks_py);
-    Py_DECREF(blocks_py);
 
     /*
     PyObject *left_blocks = PyObject_GetAttrString(chunk, "left_blocks");
@@ -119,7 +115,7 @@ chunk_render(PyObject *self, PyObject *args) {
 
                 /* get blockid
                    note the order: x, z, y */
-                block = getBlock(blocks, x, z, y);
+                block = getBlock(blocks_py, x, y, z);
                 if (block == 0) {
                     continue;
                 }
@@ -130,9 +126,9 @@ chunk_render(PyObject *self, PyObject *args) {
 
 
                 if ( (x != 0) && (y != 15) && (z != 127) &&
-                        !isTransparent(getBlock(blocks, x-1, z, y)) &&
-                        !isTransparent(getBlock(blocks, x, z+1, y)) &&
-                        !isTransparent(getBlock(blocks, x, z, y+1))    ) {
+                     !isTransparent(getBlock(blocks_py, x-1, y, z)) &&
+                     !isTransparent(getBlock(blocks_py, x, y, z+1)) &&
+                     !isTransparent(getBlock(blocks_py, x, y+1, z))) {
                     continue;
                 }
 
@@ -176,6 +172,7 @@ chunk_render(PyObject *self, PyObject *args) {
         }
     } 
 
+    Py_DECREF(blocks_py);
     Py_DECREF(blockmap);
     Py_DECREF(special_blocks);
     Py_DECREF(specialblockmap);
