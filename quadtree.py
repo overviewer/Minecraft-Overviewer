@@ -428,6 +428,9 @@ class QuadtreeGen(object):
         """Get chunks that are relevant to the tile rendering function that's
         rendering that range"""
         chunklist = []
+        unconvert_coords = self.world.unconvert_coords
+        #get_region_path = self.world.get_region_path
+        get_region = self.world.regionfiles.get
         for row in xrange(rowstart-16, rowend+1):
             for col in xrange(colstart, colend+1):
                 # due to how chunks are arranged, we can only allow
@@ -437,8 +440,9 @@ class QuadtreeGen(object):
                     continue
                 
                 # return (col, row, chunkx, chunky, regionpath)
-                chunkx, chunky = self.world.unconvert_coords(col, row)
-                c = self.world.get_region_path(chunkx, chunky)
+                chunkx, chunky = unconvert_coords(col, row)
+                #c = get_region_path(chunkx, chunky)
+                _, _, c = get_region((chunkx//32, chunky//32),(None,None,None));
                 if c is not None:
                     chunklist.append((col, row, chunkx, chunky, c))
         return chunklist
