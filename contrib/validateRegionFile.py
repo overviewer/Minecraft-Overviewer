@@ -51,7 +51,7 @@ def main():
         try:
             chunks = mcr.get_chunk_info(False)
         except IOError, e:
-            print("Error opening regionfile. It may be corrupt. %s"%( e))
+            print("Error opening regionfile(bad header info). It may be corrupt. %s"%( e))
             chunks = []
             pass            
         for x, y in chunks:
