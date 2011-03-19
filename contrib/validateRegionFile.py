@@ -12,15 +12,15 @@ import re
 import os.path
 import logging
 
-# sys.path wrangling, so we can access Overviewer code
-overviewer_dir = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
-sys.path.insert(0, overviewer_dir)
 
-import nbt
-import chunk
-import quadtree
 
 def main():
+    # sys.path wrangling, so we can access Overviewer code
+    overviewer_dir = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
+    sys.path.insert(0, overviewer_dir)
+    import nbt
+    #import chunk
+    #import quadtree
     parser = OptionParser(usage=usage, description=description)
     parser.add_option("-r", "--regions", dest="regiondir", help="Use path to the regions instead of a list of files")
     parser.add_option("-v", dest="verbose", action="store_true", help="Lists why a chunk in a region failed")
@@ -46,41 +46,56 @@ def main():
         chunk_pass = 0    
         chunk_total = 0          
         if not os.path.exists(regionfile):
-            print("Region:%s Passed %s/%s"%(shortname,chunk_pass,chunk_total))
+            print("File not found: %s"%( regionfile))
+            #print("Region:%s Passed %s/%s"%(shortname,chunk_pass,chunk_total))
             continue          
         try:
             mcr = nbt.load_region(regionfile)
         except IOError, e:
-            if options.verbose:
+            if opt.verbose:
                 print("Error opening regionfile. It may be corrupt. %s"%( e))
+            continue
         if mcr is not None:
             try:
                 chunks = mcr.get_chunk_info(False)
             except IOError, e:
-                if options.verbose:
+                if opt.verbose:
                     print("Error opening regionfile(bad header info). It may be corrupt. %s"%( e))
                 chunks = []
+                continue
+            except Exception, e:
+                if opt.verbose:
+                    print("Error opening regionfile (%s): %s"%( regionfile,e))
+                continue
             for x, y in chunks:
                 chunk_total += 1
-                #try:
-                chunk_data = mcr.load_chunk(x, y)
+                try:
+                    chunk_data = mcr.load_chunk(x, y)
+                except Exception, e:
+                    if opt.verbose:
+                        print("Error reading chunk (%i,%i): %s"%(x,y,e))
+                    continue
                 if chunk_data is None:
-                    if options.verbose:
+                    if opt.verbose:
                         print("Chunk %s:%s is unexpectedly empty"%(x, y))
+                    continue
                 else:
                     try:
                         processed = chunk_data.read_all()
                         if processed == []:
-                            if options.verbose:
+                            if opt.verbose:
                                 print("Chunk %s:%s is an unexpectedly empty set"%(x, y))
+                            continue
                         else:
                             chunk_pass += 1
                     except Exception, e:
-                        if options.verbose:
+                        if opt.verbose:
                             print("Error opening chunk (%i, %i) It may be corrupt. %s"%( x, y, e))
+                        continue
         else:           
-            if options.verbose:    
+            if opt.verbose:    
                 print("Error opening regionfile.")
+            continue
          
         print("Region:%s Passed %s/%s"%(shortname,chunk_pass,chunk_total))
 if __name__ == "__main__":
