@@ -59,7 +59,7 @@ chunk_render(PyObject *self, PyObject *args) {
     
     PyObject *blocks_py;
     
-    PyObject *textures, *blockmap, *special_blocks, *specialblockmap, *chunk_mod;
+    PyObject *textures, *blockmap, *special_blocks, *specialblockmap, *chunk_mod, *transparent_blocks;
     
     int imgx, imgy;
     int x, y, z;
@@ -95,7 +95,7 @@ chunk_render(PyObject *self, PyObject *args) {
     blockmap = PyObject_GetAttrString(textures, "blockmap");
     special_blocks = PyObject_GetAttrString(textures, "special_blocks");
     specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
-    PyObject *transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
+    transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
     if (transparent_blocks == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "transparent_blocks is NULL");
