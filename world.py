@@ -11,7 +11,7 @@
 #    Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License along
-#    with the Overviewer.  If not, see <http://wfww.gnu.org/licenses/>.
+#    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 import functools
 import os
