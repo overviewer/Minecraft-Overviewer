@@ -46,15 +46,20 @@ image
 # alpha_over extension, BUT this extension may fall back to PIL's
 # paste(), which DOES need the workaround.)
 
-def get_lvldata(filename, x, y):
+def get_lvldata(filename, x, y, retries=2):
     """Takes a filename and chunkcoords and returns the Level struct, which contains all the
     level info"""
     
     try:
         d =  nbt.load_from_region(filename, x, y)
     except Exception, e:
-        logging.warning("Error opening chunk (%i, %i) in %s. It may be corrupt. %s", x, y, filename, e)
-        raise ChunkCorrupt(str(e))
+        if retries > 0:
+            # wait a little bit, and try again (up to `retries` times)
+            time.sleep(1)
+            return get_lvldata(filename, x, y, retries=retries-1)
+        else:
+            logging.warning("Error opening chunk (%i, %i) in %s. It may be corrupt. %s", x, y, filename, e)
+            raise ChunkCorrupt(str(e))
     
     if not d: raise NoSuchChunk(x,y)
     return d[1]['Level']
