@@ -27,11 +27,19 @@ import re
 import multiprocessing
 import time
 import logging
-import optimizeimages
-import composite
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
+# make sure the c_overviewer extension is available
+try:
+    import c_overviewer
+except ImportError:
+    print "You need to compile the c_overviewer module to run Minecraft Overviewer."
+    print "Run `python setup.py build`, or see the README for details."
+    sys.exit(1)
+
+import optimizeimages
+import composite
 import world
 import quadtree
 
