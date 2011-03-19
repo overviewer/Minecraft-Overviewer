@@ -22,9 +22,12 @@
 /* macro for getting blockID from a chunk of memory */
 #define getBlock(blockThing, x,y,z) (*(unsigned char *)(PyArray_GETPTR3(blockThing, (x), (y), (z))))
 
-static inline int isTransparent(unsigned char b) {
-    /* TODO expand this to include all transparent blocks */
-    return b == 0 || b == 8 || b == 9 || b == 18;
+static inline int isTransparent(PyObject* tup, unsigned char b) {
+    PyObject *block = PyInt_FromLong(b);
+    int ret = PySequence_Contains(tup, block);
+    Py_DECREF(block);
+    return ret;
+
 }
 
 /* helper to handle alpha_over calls involving a texture tuple */
@@ -56,7 +59,7 @@ chunk_render(PyObject *self, PyObject *args) {
     
     PyObject *blocks_py;
     
-    PyObject *textures, *blockmap, *special_blocks, *specialblockmap;
+    PyObject *textures, *blockmap, *special_blocks, *specialblockmap, *chunk_mod;
     
     int imgx, imgy;
     int x, y, z;
@@ -83,17 +86,25 @@ chunk_render(PyObject *self, PyObject *args) {
     /*
     PyObject *left_blocks = PyObject_GetAttrString(chunk, "left_blocks");
     PyObject *right_blocks = PyObject_GetAttrString(chunk, "right_blocks");
-    PyObject *transparent_blocks = PyObject_GetAttrString(chunk, "transparent_blocks");
     */
     
     textures = PyImport_ImportModule("textures");
+    chunk_mod = PyImport_ImportModule("chunk");
 
     /* TODO can these be global static?  these don't change during program execution */
     blockmap = PyObject_GetAttrString(textures, "blockmap");
     special_blocks = PyObject_GetAttrString(textures, "special_blocks");
     specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
+    PyObject *transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
+    if (transparent_blocks == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                        "transparent_blocks is NULL");
+        return NULL;
+    }
+        
 
     Py_DECREF(textures);
+    Py_DECREF(chunk_mod);
     
     for (x = 15; x > -1; x--) {
         for (y = 0; y < 16; y++) {
@@ -126,9 +137,9 @@ chunk_render(PyObject *self, PyObject *args) {
 
 
                 if ( (x != 0) && (y != 15) && (z != 127) &&
-                     !isTransparent(getBlock(blocks_py, x-1, y, z)) &&
-                     !isTransparent(getBlock(blocks_py, x, y, z+1)) &&
-                     !isTransparent(getBlock(blocks_py, x, y+1, z))) {
+                     !isTransparent(transparent_blocks, getBlock(blocks_py, x-1, y, z)) &&
+                     !isTransparent(transparent_blocks, getBlock(blocks_py, x, y, z+1)) &&
+                     !isTransparent(transparent_blocks, getBlock(blocks_py, x, y+1, z))) {
                     continue;
                 }
 
