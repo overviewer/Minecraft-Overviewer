@@ -344,11 +344,11 @@ class QuadtreeGen(object):
             tiles += 1
             if tiles >= batch_size:
                 tiles = 0
-                yield pool.apply_async(func=render_innertile_batch, args= (batch))
+                yield pool.apply_async(func=render_innertile_batch, args= (self,batch))
                 batch = []
             
         if tiles > 0:            
-            yield pool.apply_async(func=render_innertile_batch, args= (batch))
+            yield pool.apply_async(func=render_innertile_batch, args= (self,batch))
 
     def go(self, procs):
         """Renders all tiles"""
@@ -468,12 +468,12 @@ class QuadtreeGen(object):
         return chunklist
 
 @catch_keyboardinterrupt
-def render_innertile_batch( batch):    
+def render_innertile_batch(quadtree, batch):    
     count = 0
     #logging.debug("{0} working on batch of size {1}".format(os.getpid(),len(batch)))
     for job in batch:
         count += 1
-        render_worldtile(job[0],job[1],job[2],job[3])
+        render_innertile(job[0],job[1],job[2],job[3])
     return count
     
 def render_innertile(dest, name, imgformat, optimizeimg):
