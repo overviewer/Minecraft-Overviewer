@@ -83,7 +83,12 @@ def catch_keyboardinterrupt(func):
     return newfunc
 
 child_quadtree = None
-
+def pool_initializer(quadtree):
+    logging.debug("Child process {0}".format(os.getpid()))
+    #stash the quadtree object in a global variable after fork() for windows compat.
+    global child_quadtree
+    child_quadtree = quadtree    
+    
 class QuadtreeGen(object):
     def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, lighting=False, night=False, spawn=False):
         """Generates a quadtree from the world given into the
@@ -344,9 +349,6 @@ class QuadtreeGen(object):
             
         if tiles > 0:       
             yield pool.apply_async(func=render_innertile_batch, args= [batch])
-
-    def pool_initializer(args):
-        logging.debug("Child process {0}".format(os.getpid()))
         
     def go(self, procs):
         """Renders all tiles"""
@@ -364,14 +366,11 @@ class QuadtreeGen(object):
                     self._decrease_depth()
 
         logging.debug("Parent process {0}".format(os.getpid()))
-        #stash the quadtree object so child process's can 
-        global child_quadtree
-        child_quadtree = self
         # Create a pool
         if procs == 1:
             pool = FakePool()
         else:
-            pool = multiprocessing.Pool(processes=procs,initializer=self.pool_initializer,initargs=())
+            pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
             #warm up the pool so it reports all the worker id's
             pool.map(bool,xrange(multiprocessing.cpu_count()),1)
         
