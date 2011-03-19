@@ -34,14 +34,16 @@ def _file_loader(func):
 def load(fileobj):
     return NBTFileReader(fileobj).read_all()
 
-@_file_loader
-def load_from_region(fileobj, x, y):
-    nbt = MCRFileReader(fileobj).load_chunk(x, y)
-    if not nbt:
+def load_from_region(filename, x, y):
+    nbt = load_region(filename).load_chunk(x, y)
+    if nbt is None:
         return None ## return none.  I think this is who we should indicate missing chunks
-        #raise IOError("No such chunk in region: (%i, %i)" % (x, y))
+        #raise IOError("No such chunk in region: (%i, %i)" % (x, y))     
     return nbt.read_all()
-
+  
+def load_region(filename):            
+    return MCRFileReader(filename)
+  
 class NBTFileReader(object):
     def __init__(self, fileobj, is_gzip=True):
         if is_gzip:
@@ -178,9 +180,9 @@ class MCRFileReader(object):
     chunks (as instances of NBTFileReader), getting chunk timestamps,
     and for listing chunks contained in the file."""
     
-    def __init__(self, fileobj):
-        self._file = fileobj
-        
+    def __init__(self, filename):
+        self._file = None
+        self._filename = filename
         # cache used when the entire header tables are read in get_chunks()
         self._locations = None
         self._timestamps = None
@@ -250,7 +252,7 @@ class MCRFileReader(object):
         
         return timestamp
     
-    def get_chunks(self):
+    def get_chunk_info(self,closeFile = True):
         """Return a list of all chunks contained in this region file,
         as a list of (x, y) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
@@ -258,6 +260,9 @@ class MCRFileReader(object):
         if self._chunks:
             return self._chunks
         
+        if self._file is None:
+            self._file = open(self._filename,'rb');
+
         self._chunks = []
         self._locations = []
         self._timestamps = []
@@ -278,7 +283,11 @@ class MCRFileReader(object):
             for x in xrange(32):
                 timestamp = self._read_chunk_timestamp()
                 self._timestamps.append(timestamp)
-        
+
+        if closeFile:        
+            #free the file object since it isn't safe to be reused in child processes (seek point goes wonky!)
+            self._file.close()
+            self._file =  None
         return self._chunks
     
     def get_chunk_timestamp(self, x, y):
@@ -289,20 +298,16 @@ class MCRFileReader(object):
         x = x % 32
         y = y % 32        
         if self._timestamps is None:
-            #self.get_chunks()
-            return self._read_chunk_timestamp(x, y)
-        else:     
-            return self._timestamps[x + y * 32]   
+            self.get_chunk_info() 
+        return self._timestamps[x + y * 32]   
     
     def chunkExists(self, x, y):
         """Determines if a chunk exists without triggering loading of the backend data"""
         x = x % 32
         y = y % 32
         if self._locations is None:
-            #self.get_chunks()
-            location = self._read_chunk_location(x, y)
-        else:
-            location = self._locations[x + y * 32]
+            self.get_chunk_info()
+        location = self._locations[x + y * 32]
         return location is not None        
 
     def load_chunk(self, x, y):
@@ -315,13 +320,14 @@ class MCRFileReader(object):
         x = x % 32
         y = y % 32
         if self._locations is None:
-            #self.get_chunks()
-            location = self._read_chunk_location(x % 32, y % 32)
-        else:            
-            location = self._locations[x + y * 32]
+            self.get_chunk_info()   
+                    
+        location = self._locations[x + y * 32]
         if location is None:
             return None
-        
+
+        if self._file is None:
+            self._file = open(self._filename,'rb'); 
         # seek to the data
         self._file.seek(location[0])
         

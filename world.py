@@ -11,7 +11,7 @@
 #    Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License along
-#    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
+#    with the Overviewer.  If not, see <http://wfww.gnu.org/licenses/>.
 
 import functools
 import os
@@ -72,10 +72,16 @@ class World(object):
         self.useBiomeData = useBiomeData
 
         #find region files, or load the region list
+        #this also caches all the region file header info
         regionfiles = {}
+        regions = {}
         for x, y, regionfile in self._iterate_regionfiles():            
+            mcr = nbt.MCRFileReader(regionfile)
+            mcr.get_chunk_info()
+            regions[regionfile] = mcr
             regionfiles[(x,y)]	= (x,y,regionfile)
         self.regionfiles = regionfiles	
+        self.regions = regions
         
         # figure out chunk format is in use
         # if not mcregion, error out early
@@ -110,6 +116,22 @@ class World(object):
         """
         _, _, regionfile = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None));
         return regionfile
+    
+    
+    
+    def load_from_region(self,filename, x, y):
+        nbt = self.load_region(filename).load_chunk(x, y)
+        if nbt is None:
+            return None ## return none.  I think this is who we should indicate missing chunks
+            #raise IOError("No such chunk in region: (%i, %i)" % (x, y))     
+        return nbt.read_all()
+      
+      
+    #filo region cache
+    def load_region(self,filename):                
+        #return nbt.MCRFileReader(filename)    
+        return self.regions[filename]
+        
         
     def convert_coords(self, chunkx, chunky):
         """Takes a coordinate (chunkx, chunky) where chunkx and chunky are

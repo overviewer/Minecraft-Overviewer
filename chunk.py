@@ -46,12 +46,12 @@ image
 # alpha_over extension, BUT this extension may fall back to PIL's
 # paste(), which DOES need the workaround.)
 
-def get_lvldata(filename, x, y):
+def get_lvldata(world,filename, x, y):
     """Takes a filename and chunkcoords and returns the Level struct, which contains all the
     level info"""
     
     try:
-        d =  nbt.load_from_region(filename, x, y)
+        d =  world.load_from_region(filename, x, y)
     except Exception, e:
         logging.warning("Error opening chunk (%i, %i) in %s. It may be corrupt. %s", x, y, filename, e)
         raise ChunkCorrupt(str(e))
@@ -64,10 +64,10 @@ def get_blockarray(level):
     Block array, which just contains all the block ids"""
     return numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
 
-def get_blockarray_fromfile(filename):
+def get_blockarray_fromfile(world,filename):
     """Same as get_blockarray except takes a filename and uses get_lvldata to
     open it. This is a shortcut"""
-    level = get_lvldata(filename)
+    level = get_lvldata(world,filename)
     return get_blockarray(level)
 
 def get_skylight_array(level):
@@ -196,7 +196,7 @@ class ChunkRenderer(object):
         """Loads and returns the level structure"""
         if not hasattr(self, "_level"):
             try:
-                self._level = get_lvldata(self.regionfile, self.chunkX, self.chunkY)
+                self._level = get_lvldata(self.world,self.regionfile, self.chunkX, self.chunkY)
             except NoSuchChunk, e:
                 logging.debug("Skipping non-existant chunk")
                 raise
@@ -228,7 +228,7 @@ class ChunkRenderer(object):
         """Loads and sets data from lower-left chunk"""
         chunk_path = self.world.get_region_path(self.chunkX - 1, self.chunkY)
         try:
-            chunk_data = get_lvldata(chunk_path, self.chunkX - 1, self.chunkY)
+            chunk_data = get_lvldata(self.world,chunk_path, self.chunkX - 1, self.chunkY)
             self._left_skylight = get_skylight_array(chunk_data)
             self._left_blocklight = get_blocklight_array(chunk_data)
             self._left_blocks = get_blockarray(chunk_data)
@@ -262,7 +262,7 @@ class ChunkRenderer(object):
         """Loads and sets data from lower-right chunk"""
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY + 1)
         try:
-            chunk_data = get_lvldata(chunk_path, self.chunkX, self.chunkY + 1)
+            chunk_data = get_lvldata(self.world,chunk_path, self.chunkX, self.chunkY + 1)
             self._right_skylight = get_skylight_array(chunk_data)
             self._right_blocklight = get_blocklight_array(chunk_data)
             self._right_blocks = get_blockarray(chunk_data)
@@ -296,7 +296,7 @@ class ChunkRenderer(object):
         """Loads and sets data from upper-right chunk"""
         chunk_path = self.world.get_region_path(self.chunkX + 1, self.chunkY)
         try:
-            chunk_data = get_lvldata(chunk_path, self.chunkX + 1, self.chunkY)
+            chunk_data = get_lvldata(self.world,chunk_path, self.chunkX + 1, self.chunkY)
             self._up_right_skylight = get_skylight_array(chunk_data)
             self._up_right_blocklight = get_blocklight_array(chunk_data)
             self._up_right_blocks = get_blockarray(chunk_data)
@@ -316,7 +316,7 @@ class ChunkRenderer(object):
         """Loads and sets data from upper-left chunk"""
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY - 1)
         try:
-            chunk_data = get_lvldata(chunk_path, self.chunkX, self.chunkY - 1)
+            chunk_data = get_lvldata(self.world,chunk_path, self.chunkX, self.chunkY - 1)
             self._up_left_skylight = get_skylight_array(chunk_data)
             self._up_left_blocklight = get_blocklight_array(chunk_data)
             self._up_left_blocks = get_blockarray(chunk_data)

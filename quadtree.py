@@ -556,13 +556,13 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
 
     imgpath = path + "." + quadtree.imgformat
     
+    world = quadtree.world
     # first, remove chunks from `chunks` that don't actually exist in
     # their region files
     def chunk_exists(chunk):
         _, _, chunkx, chunky, region = chunk
-        with open(region, 'rb') as region:
-            r = nbt.MCRFileReader(region)
-            return r.chunkExists(chunkx, chunky)
+        r = world.load_region(region)
+        return r.chunkExists(chunkx, chunky)            
     chunks = filter(chunk_exists, chunks)
 
     #stat the file, we need to know if it exists or it's mtime
@@ -607,11 +607,9 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
                 continue
             
             # checking chunk mtime
-            with open(regionfile, 'rb') as regionfile:
-                region = nbt.MCRFileReader(regionfile)
-                if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
-                    needs_rerender = True
-            if needs_rerender:
+            region = world.load_region(regionfile)
+            if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
+                needs_rerender = True
                 break
         
         # if after all that, we don't need a rerender, return
