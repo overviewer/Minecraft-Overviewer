@@ -375,6 +375,8 @@ class QuadtreeGen(object):
         # Create a pool
         if procs == 1:
             pool = FakePool()
+            global child_quadtree
+            child_quadtree = self
         else:
             pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
             #warm up the pool so it reports all the worker id's
