@@ -107,7 +107,7 @@ class QuadtreeGen(object):
         
         self.lighting = rendermode in ("lighting", "night", "spawn")
         self.night = rendermode in ("night", "spawn")
-        self.spawn = spawn in ("spawn",)
+        self.spawn = rendermode in ("spawn",)
 
         # Make the destination dir
         if not os.path.exists(destdir):

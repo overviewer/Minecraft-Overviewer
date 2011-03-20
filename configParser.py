@@ -1,5 +1,6 @@
 from optparse import OptionParser
 import sys
+import os.path
 
 class OptionsResults(object):
     pass
@@ -61,7 +62,8 @@ class ConfigOptionParser(object):
         g['args'] = args
 
         try:
-            execfile(self.configFile, g, l)
+            if os.path.exists(self.configFile):
+                execfile(self.configFile, g, l)
         except NameError, ex:
             import traceback
             traceback.print_exc()
