@@ -90,7 +90,7 @@ def pool_initializer(quadtree):
     child_quadtree = quadtree    
     
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, lighting=False, night=False, spawn=False):
+    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -104,9 +104,9 @@ class QuadtreeGen(object):
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
         
-        self.lighting = lighting
-        self.night = night
-        self.spawn = spawn
+        self.lighting = rendermode in ("lighting", "night", "spawn")
+        self.night = rendermode in ("night", "spawn")
+        self.spawn = spawn in ("spawn",)
 
         # Make the destination dir
         if not os.path.exists(destdir):

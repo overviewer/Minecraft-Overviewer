@@ -64,7 +64,7 @@ class World(object):
     """Does world-level preprocessing to prepare for QuadtreeGen
     worlddir is the path to the minecraft world
     """
-    
+
     mincol = maxcol = minrow = maxrow = 0
     
     def __init__(self, worlddir, useBiomeData=False,regionlist=None):
