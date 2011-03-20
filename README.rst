@@ -246,6 +246,15 @@ Options
 --night
     This option enables --lighting, and renders the world at night.
 
+--web-assets-hook=HOOK
+    This option lets you specify a script to run after the web assets have been
+    copied into the output directory, but before any tile rendering takes
+    place. This is an ideal time to do any custom postprocessing for markers.js
+    or other web assets.
+    
+    The script should be executable, and it should accept one argument:
+    the path to the output directory.
+
 Viewing the Results
 -------------------
 Within the output directory you will find two things: an index.html file, and a
