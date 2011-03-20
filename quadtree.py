@@ -90,7 +90,7 @@ def pool_initializer(quadtree):
     child_quadtree = quadtree    
     
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, rendermode="normal", web_assets_hook=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -103,6 +103,7 @@ class QuadtreeGen(object):
         assert(imgformat)
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
+        self.web_assets_hook = web_assets_hook
         
         self.lighting = rendermode in ("lighting", "night", "spawn")
         self.night = rendermode in ("night", "spawn")
@@ -196,6 +197,8 @@ class QuadtreeGen(object):
             output.write(index)
 
         if skipjs:
+            if self.web_assets_hook:
+                self.web_assets_hook(self)
             return
 
         # since we will only discover PointsOfInterest in chunks that need to be 
@@ -223,6 +226,9 @@ class QuadtreeGen(object):
             output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
             output.write('  // ]},\n')
             output.write('];')
+        
+        if self.web_assets_hook:
+            self.web_assets_hook(self)
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in

@@ -24,6 +24,7 @@ import os
 import os.path
 from configParser import ConfigOptionParser
 import re
+import subprocess
 import multiprocessing
 import time
 import logging
@@ -62,6 +63,7 @@ def main():
     parser.add_option("--rendermode", dest="rendermode", help="Specifies the render type: normal (default), lighting, night, or spawn.", type="choice", choices=["normal", "lighting", "night", "spawn"], required=True, default="normal")
     parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg. NOTE: png will always be used as the intermediate image format.", configFileOnly=True )
     parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", configFileOnly=True)
+    parser.add_option("--web-assets-hook", dest="web_assets_hook", help="If provided, run this script after the web assets have been copied, but before actual tile rendering begins. See the README for details.", action="store", metavar="SCRIPT", type="string", configFileOnly=True)
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, help="Print more output. You can specify this option multiple times.")
     parser.add_option("--skip-js", dest="skipjs", action="store_true", help="Don't output marker.js or regions.js")
@@ -138,7 +140,22 @@ def main():
         optimizeimages.check_programs(optimizeimg)
     else:
         optimizeimg = None
-
+    
+    if options.web_assets_hook:
+        if not os.path.exists(options.web_assets_hook):
+            parser.error("Provided hook script does not exist!")
+    def web_assets_hook(quadtree):
+        if options.web_assets_hook == None:
+            return
+        try:
+            subprocess.check_call((options.web_assets_hook, os.path.abspath(quadtree.destdir)))
+        except OSError, e:
+            logging.error("could not call web assets hook: %s" % (e,))
+            sys.exit(1)
+        except subprocess.CalledProcessError:
+            logging.error("web assets hook returned error")
+            sys.exit(1)
+    
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)
     logging.getLogger().setLevel(
@@ -160,7 +177,7 @@ def main():
 
     # Now generate the tiles
     # TODO chunklist
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode=options.rendermode)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode=options.rendermode, web_assets_hook=web_assets_hook)
     q.write_html(options.skipjs)
     q.go(options.procs)
 
