@@ -58,6 +58,36 @@ imaging_python_to_c(PyObject *obj)
     return image;
 }
 
+/**
+ * img should be an Image object, type 'L'
+ * factor should be between 0 and 1, inclusive
+ */
+PyObject *brightness(PyObject *img, double factor) {
+    Imaging imDest;
+
+    imDest = imaging_python_to_c(img);
+    assert(imDest);
+
+    int x, y;
+
+    int xsize = imDest->xsize;
+    int ysize = imDest->ysize;
+
+    for (y = 0; y < ysize; y++) {
+        UINT8 *out = (UINT8 *)imDest->image[y];
+        //UINT8 *outmask = (UINT8 *)imDest->image[y] + 3;
+
+        for (x = 0; x < xsize; x++) {
+            //printf("old out: %d\n", *out);
+            *out *= factor;
+            //printf("new out: %d\n", *out);
+            out++;
+        }
+    }
+    return NULL;
+
+}
+
 /* the alpha_over function, in a form that can be called from C */
 /* if xsize, ysize are negative, they are instead set to the size of the image in src */
 /* returns NULL on error, dest on success. You do NOT need to decref the return! */

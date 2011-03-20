@@ -545,7 +545,10 @@ class ChunkRenderer(object):
         if not img:
             img = Image.new("RGBA", (384, 1728), (38,92,255,0))
 
-        c_overviewer.render_loop(self, img, xoff, yoff, blockData_expanded)
+        if self.world.lighting:
+            c_overviewer.render_loop_lighting(self, img, xoff, yoff, blockData_expanded)
+        else:
+            c_overviewer.render_loop(self, img, xoff, yoff, blockData_expanded)
 
         for entity in tileEntities:
             if entity['id'] == 'Sign':
