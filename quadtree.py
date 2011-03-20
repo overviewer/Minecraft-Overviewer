@@ -597,16 +597,10 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
     
     # check chunk mtimes to see if they are newer
     try:
-        #tile_mtime = os.path.getmtime(imgpath)
-        regionMtimes = {}
         needs_rerender = False
         for col, row, chunkx, chunky, regionfile in chunks:
             # check region file mtime first. 
-            # Note: we cache the value since it's actually very likely we will have multipule chunks in the same region, and syscalls are expensive
-            regionMtime = regionMtimes.get(regionfile,None)
-            if  regionMtime is None:
-                regionMtime = os.path.getmtime(regionfile)  
-                regionMtimes[regionfile] = regionMtime 
+            regionMtime = world.get_region_mtime(regionfile)  
             if regionMtime <= tile_mtime:
                 continue
             
