@@ -78,7 +78,7 @@ class World(object):
         for x, y, regionfile in self._iterate_regionfiles():            
             mcr = nbt.MCRFileReader(regionfile)
             mcr.get_chunk_info()
-            regions[regionfile] = mcr
+            regions[regionfile] = (mcr,os.path.getmtime(regionfile))
             regionfiles[(x,y)]	= (x,y,regionfile)
         self.regionfiles = regionfiles	
         self.regions = regions
@@ -117,8 +117,6 @@ class World(object):
         _, _, regionfile = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None));
         return regionfile
     
-    
-    
     def load_from_region(self,filename, x, y):
         nbt = self.load_region(filename).load_chunk(x, y)
         if nbt is None:
@@ -127,11 +125,15 @@ class World(object):
         return nbt.read_all()
       
       
-    #filo region cache
-    def load_region(self,filename):                
-        #return nbt.MCRFileReader(filename)    
-        return self.regions[filename]
+    #used to reload a changed region
+    def reload_region(self,filename):
+        self.regions[filename] = (nbt.MCRFileReader(filename),os.path.getmtime(regionfile))
         
+    def load_region(self,filename):                  
+        return self.regions[filename][0]
+        
+    def get_region_mtime(self,filename):                  
+        return self.regions[filename][1]        
         
     def convert_coords(self, chunkx, chunky):
         """Takes a coordinate (chunkx, chunky) where chunkx and chunky are
