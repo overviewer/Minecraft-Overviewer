@@ -131,6 +131,9 @@ class ConfigOptionParser(object):
                         configResults.__dict__[n] = long(configResults.__dict__[n])
                     elif a['type'] == "complex":
                         configResults.__dict__[n] = complex(configResults.__dict__[n])
+                    elif a['type'] == "function":
+                        if not callable(configResults.__dict__[n]):
+                            raise ValueError("Not callable")
                     else:
                         print "Unknown type!"
                         sys.exit(1)
