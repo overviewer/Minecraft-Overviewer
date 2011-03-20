@@ -27,6 +27,7 @@ import util
 import cPickle
 import stat
 import errno 
+import time
 from time import gmtime, strftime, sleep
 
 from PIL import Image
@@ -300,13 +301,24 @@ class QuadtreeGen(object):
         logging.info("Don't worry, each level has only 25% as many tiles as the last.")
         logging.info("The others will go faster")
         count = 0
-        batch_size = 10
+        batch_size = 8
+        timestamp = time.time()
         for result in self._apply_render_worldtiles(pool,batch_size):
-            results.append(result)
-            if len(results) > (10000/batch_size):
+            results.append(result)               
+            # every second drain some of the queue
+            timestamp2 = time.time()
+            if timestamp2 >= timestamp + 1:
+                timestamp = timestamp2                
+                count_to_remove = (1000//batch_size)
+                if count_to_remove < len(results):
+                    while count_to_remove > 0:
+                        count_to_remove -= 1
+                        complete += results.popleft().get()
+                        self.print_statusline(complete, total, 1)                
+            if len(results) > (10000//batch_size):
                 # Empty the queue before adding any more, so that memory
                 # required has an upper bound
-                while len(results) > (500/batch_size):
+                while len(results) > (500//batch_size):
                     complete += results.popleft().get()
                     self.print_statusline(complete, total, 1)
 
@@ -324,8 +336,19 @@ class QuadtreeGen(object):
             complete = 0
             total = 4**zoom
             logging.info("Starting level {0}".format(level))
+            timestamp = time.time()
             for result in self._apply_render_inntertile(pool, zoom,batch_size):
                 results.append(result)
+                # every second drain some of the queue
+                timestamp2 = time.time()
+                if timestamp2 >= timestamp + 1:
+                    timestamp = timestamp2                
+                    count_to_remove = (1000//batch_size)
+                    if count_to_remove < len(results):
+                        while count_to_remove > 0:
+                            count_to_remove -= 1
+                            complete += results.popleft().get()
+                            self.print_statusline(complete, total, 1)                  
                 if len(results) > (10000/batch_size):
                     while len(results) > (500/batch_size):
                         complete += results.popleft().get()
