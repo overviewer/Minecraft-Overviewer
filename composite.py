@@ -23,12 +23,7 @@ Overviewer. It defaults to the PIL paste function when the custom
 alpha-over extension cannot be found.
 """
 
-extension_alpha_over = None
-try:
-    from c_overviewer import alpha_over as _extension_alpha_over
-    extension_alpha_over = _extension_alpha_over
-except ImportError:
-    pass
+from c_overviewer import alpha_over as extension_alpha_over
 
 def alpha_over(dest, src, pos_or_rect=(0, 0), mask=None):
     """Composite src over dest, using mask as the alpha channel (if
@@ -40,12 +35,4 @@ def alpha_over(dest, src, pos_or_rect=(0, 0), mask=None):
         mask = src
     
     global extension_alpha_over
-    if extension_alpha_over is not None:
-        # extension ALWAYS expects rects, so convert if needed
-        if len(pos_or_rect) == 2:
-            pos_or_rect = (pos_or_rect[0], pos_or_rect[1], src.size[0], src.size[1])
-        extension_alpha_over(dest, src, pos_or_rect, mask)
-    else:
-        # fallback
-        dest.paste(src, pos_or_rect, mask)
-
+    return extension_alpha_over(dest, src, pos_or_rect, mask)

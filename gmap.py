@@ -22,16 +22,25 @@ if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
 
 import os
 import os.path
-from optparse import OptionParser
+from configParser import ConfigOptionParser
 import re
+import subprocess
 import multiprocessing
 import time
 import logging
-import optimizeimages
-import composite
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
+# make sure the c_overviewer extension is available
+try:
+    import c_overviewer
+except ImportError:
+    print "You need to compile the c_overviewer module to run Minecraft Overviewer."
+    print "Run `python setup.py build`, or see the README for details."
+    sys.exit(1)
+
+import optimizeimages
+import composite
 import world
 import quadtree
 
@@ -44,19 +53,21 @@ def main():
         cpus = multiprocessing.cpu_count()
     except NotImplementedError:
         cpus = 1
-    parser = OptionParser(usage=helptext)
+
+    parser = ConfigOptionParser(usage=helptext, config="settings.py")
     parser.add_option("-p", "--processes", dest="procs", help="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
-    parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int")
-    parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true")
+    parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", configFileOnly=True)
+    parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true", commandLineOnly=True)
     parser.add_option("--chunklist", dest="chunklist", help="A file containing, on each line, a path to a chunkfile to update. Instead of scanning the world directory for chunks, it will just use this list. Normal caching rules still apply.")
-    parser.add_option("--lighting", dest="lighting", help="Renders shadows using light data from each chunk.", action="store_true")
-    parser.add_option("--night", dest="night", help="Renders shadows using light data from each chunk, as if it were night. Implies --lighting.", action="store_true")
-    parser.add_option("--spawn", dest="spawn", help="Renders shadows using light data from each chunk, as if it were night, while also highlighting areas that are dark enough to spawn mobs. Implies --lighting and --night.", action="store_true")
-    parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg.")
-    parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%")
+    parser.add_option("--rendermode", dest="rendermode", help="Specifies the render type: normal (default), lighting, night, or spawn.", type="choice", choices=["normal", "lighting", "night", "spawn"], required=True, default="normal")
+    parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg. NOTE: png will always be used as the intermediate image format.", configFileOnly=True )
+    parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", configFileOnly=True)
+    parser.add_option("--web-assets-hook", dest="web_assets_hook", help="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a QuadtreeGen object as its only argument.", action="store", metavar="SCRIPT", type="function", configFileOnly=True)
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, help="Print more output. You can specify this option multiple times.")
     parser.add_option("--skip-js", dest="skipjs", action="store_true", help="Don't output marker.js or regions.js")
+    parser.add_option("--display-config", dest="display_config", action="store_true", help="Display the configuration parameters, but don't render the map.  Requires all required options to be specified", commandLineOnly=True)
+    #parser.add_option("--write-config", dest="write_config", action="store_true", help="Writes out a sample config file", commandLineOnly=True)
 
     options, args = parser.parse_args()
 
@@ -101,6 +112,11 @@ def main():
         parser.error("Where do you want to save the tiles?")
 
     destdir = args[1]
+    if options.display_config:
+        # just display the config file and exit
+        parser.display_config()
+        sys.exit(0)
+
 
     if options.delete:
         return delete_all(worlddir, destdir)
@@ -123,7 +139,7 @@ def main():
         optimizeimages.check_programs(optimizeimg)
     else:
         optimizeimg = None
-
+    
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)
     logging.getLogger().setLevel(
@@ -145,7 +161,7 @@ def main():
 
     # Now generate the tiles
     # TODO chunklist
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, lighting=options.lighting, night=options.night, spawn=options.spawn)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode=options.rendermode, web_assets_hook=options.web_assets_hook)
     q.write_html(options.skipjs)
     q.go(options.procs)
 

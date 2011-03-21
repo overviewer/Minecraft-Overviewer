@@ -35,4 +35,10 @@ initc_overviewer(void)
     (void)Py_InitModule("c_overviewer", COverviewerMethods);
     /* for numpy */
     import_array();
+
+    /* initialize some required variables in iterage.c */
+    if (init_chunk_render()) {
+        fprintf(stderr, "failed to init_chunk_render\n");
+        exit(1); // TODO better way to indicate error?
+    }
 }

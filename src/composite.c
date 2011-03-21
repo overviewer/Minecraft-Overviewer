@@ -253,6 +253,7 @@ alpha_over_wrap(PyObject *self, PyObject *args)
     /* destination position read */
     if (!PyArg_ParseTuple(pos, "iiii", &dx, &dy, &xsize, &ysize)) {
         /* try again, but this time try to read a point */
+        PyErr_Clear();
         xsize = 0;
         ysize = 0;
         if (!PyArg_ParseTuple(pos, "ii", &dx, &dy)) {

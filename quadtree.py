@@ -82,8 +82,15 @@ def catch_keyboardinterrupt(func):
             raise
     return newfunc
 
+child_quadtree = None
+def pool_initializer(quadtree):
+    logging.debug("Child process {0}".format(os.getpid()))
+    #stash the quadtree object in a global variable after fork() for windows compat.
+    global child_quadtree
+    child_quadtree = quadtree    
+    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, lighting=False, night=False, spawn=False):
+    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, rendermode="normal", web_assets_hook=None):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -96,10 +103,11 @@ class QuadtreeGen(object):
         assert(imgformat)
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
+        self.web_assets_hook = web_assets_hook
         
-        self.lighting = lighting
-        self.night = night
-        self.spawn = spawn
+        self.lighting = rendermode in ("lighting", "night", "spawn")
+        self.night = rendermode in ("night", "spawn")
+        self.spawn = rendermode in ("spawn",)
 
         # Make the destination dir
         if not os.path.exists(destdir):
@@ -189,6 +197,8 @@ class QuadtreeGen(object):
             output.write(index)
 
         if skipjs:
+            if self.web_assets_hook:
+                self.web_assets_hook(self)
             return
 
         # since we will only discover PointsOfInterest in chunks that need to be 
@@ -216,6 +226,9 @@ class QuadtreeGen(object):
             output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
             output.write('  // ]},\n')
             output.write('];')
+        
+        if self.web_assets_hook:
+            self.web_assets_hook(self)
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
@@ -292,10 +305,13 @@ class QuadtreeGen(object):
             shutil.rmtree(getpath("3"))
             os.rename(getpath("new3"), getpath("3"))
 
-    def _apply_render_worldtiles(self, pool):
+    def _apply_render_worldtiles(self, pool,batch_size):
         """Returns an iterator over result objects. Each time a new result is
         requested, a new task is added to the pool and a result returned.
         """
+             
+        batch = []
+        tiles = 0
         for path in iterate_base4(self.p):
             # Get the range for this tile
             colstart, rowstart = self._get_range_by_path(path)
@@ -305,30 +321,41 @@ class QuadtreeGen(object):
             # This image is rendered at:
             dest = os.path.join(self.destdir, self.tiledir, *(str(x) for x in path))
             #logging.debug("this is rendered at %s", dest)
+            
+            # Put this in the batch to be submited to the pool                        
+            batch.append((colstart, colend, rowstart, rowend, dest))
+            tiles += 1
+            if tiles >= batch_size:
+                tiles = 0
+                yield pool.apply_async(func=render_worldtile_batch, args= [batch])
+                batch = []
 
-            # And uses these chunks
-            tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
-                    rowend)
-            #logging.debug(" tilechunks: %r", tilechunks)
+        if tiles > 0:
+            yield pool.apply_async(func=render_worldtile_batch, args= (batch,))
 
-            # Put this in the pool
-            # (even if tilechunks is empty, render_worldtile will delete
-            # existing images if appropriate)
-            yield pool.apply_async(func=render_worldtile, args= (self,
-                tilechunks, colstart, colend, rowstart, rowend, dest))
 
-    def _apply_render_inntertile(self, pool, zoom):
+    def _apply_render_inntertile(self, pool, zoom,batch_size):
         """Same as _apply_render_worltiles but for the inntertile routine.
         Returns an iterator that yields result objects from tasks that have
         been applied to the pool.
         """
+        batch = []
+        tiles = 0        
         for path in iterate_base4(zoom):
             # This image is rendered at:
             dest = os.path.join(self.destdir, self.tiledir, *(str(x) for x in path[:-1]))
             name = str(path[-1])
-
-            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
-
+            
+            batch.append((dest, name, self.imgformat, self.optimizeimg))
+            tiles += 1
+            if tiles >= batch_size:
+                tiles = 0
+                yield pool.apply_async(func=render_innertile_batch, args= [batch])
+                batch = []
+            
+        if tiles > 0:       
+            yield pool.apply_async(func=render_innertile_batch, args= [batch])
+        
     def go(self, procs):
         """Renders all tiles"""
 
@@ -344,12 +371,17 @@ class QuadtreeGen(object):
                 for _ in xrange(curdepth - self.p):
                     self._decrease_depth()
 
+        logging.debug("Parent process {0}".format(os.getpid()))
         # Create a pool
         if procs == 1:
             pool = FakePool()
+            global child_quadtree
+            child_quadtree = self
         else:
-            pool = multiprocessing.Pool(processes=procs)
-
+            pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
+            #warm up the pool so it reports all the worker id's
+            pool.map(bool,xrange(multiprocessing.cpu_count()),1)
+        
         # Render the highest level of tiles from the chunks
         results = collections.deque()
         complete = 0
@@ -359,20 +391,20 @@ class QuadtreeGen(object):
         logging.info("There are {0} total levels to render".format(self.p))
         logging.info("Don't worry, each level has only 25% as many tiles as the last.")
         logging.info("The others will go faster")
-        for result in self._apply_render_worldtiles(pool):
+        count = 0
+        batch_size = 10
+        for result in self._apply_render_worldtiles(pool,batch_size):
             results.append(result)
-            if len(results) > 10000:
+            if len(results) > (10000/batch_size):
                 # Empty the queue before adding any more, so that memory
                 # required has an upper bound
-                while len(results) > 500:
-                    results.popleft().get()
-                    complete += 1
+                while len(results) > (500/batch_size):
+                    complete += results.popleft().get()
                     self.print_statusline(complete, total, 1)
 
         # Wait for the rest of the results
         while len(results) > 0:
-            results.popleft().get()
-            complete += 1
+            complete += results.popleft().get()
             self.print_statusline(complete, total, 1)
 
         self.print_statusline(complete, total, 1, True)
@@ -384,17 +416,15 @@ class QuadtreeGen(object):
             complete = 0
             total = 4**zoom
             logging.info("Starting level {0}".format(level))
-            for result in self._apply_render_inntertile(pool, zoom):
+            for result in self._apply_render_inntertile(pool, zoom,batch_size):
                 results.append(result)
-                if len(results) > 10000:
-                    while len(results) > 500:
-                        results.popleft().get()
-                        complete += 1
+                if len(results) > (10000/batch_size):
+                    while len(results) > (500/batch_size):
+                        complete += results.popleft().get()
                         self.print_statusline(complete, total, level)
             # Empty the queue
             while len(results) > 0:
-                results.popleft().get()
-                complete += 1
+                complete += results.popleft().get()
                 self.print_statusline(complete, total, level)
 
             self.print_statusline(complete, total, level, True)
@@ -448,6 +478,14 @@ class QuadtreeGen(object):
         return chunklist
 
 @catch_keyboardinterrupt
+def render_innertile_batch(batch):    
+    count = 0
+    #logging.debug("{0} working on batch of size {1}".format(os.getpid(),len(batch)))
+    for job in batch:
+        count += 1
+        render_innertile(job[0],job[1],job[2],job[3])
+    return count
+    
 def render_innertile(dest, name, imgformat, optimizeimg):
     """
     Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
@@ -512,6 +550,30 @@ def render_innertile(dest, name, imgformat, optimizeimg):
             optimize_image(imgpath, imgformat, optimizeimg)
 
 @catch_keyboardinterrupt
+def render_worldtile_batch(batch):  
+    global child_quadtree
+    return render_worldtile_batch_(child_quadtree, batch)
+
+def render_worldtile_batch_(quadtree, batch):   
+    count = 0
+    _get_chunks_in_range = quadtree._get_chunks_in_range
+    #logging.debug("{0} working on batch of size {1}".format(os.getpid(),len(batch)))
+    for job in batch:
+        count += 1
+        colstart = job[0]
+        colend = job[1]
+        rowstart = job[2]
+        rowend = job[3]
+        path = job[4]
+        # (even if tilechunks is empty, render_worldtile will delete
+        # existing images if appropriate)    
+        # And uses these chunks
+        tilechunks = _get_chunks_in_range(colstart, colend, rowstart,rowend)
+        #logging.debug(" tilechunks: %r", tilechunks)
+            
+        render_worldtile(quadtree,tilechunks,colstart, colend, rowstart, rowend, path)
+    return count
+
 def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path):
     """Renders just the specified chunks into a tile and save it. Unlike usual
     python conventions, rowend and colend are inclusive. Additionally, the
@@ -529,7 +591,7 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
     Standard tile size has colend-colstart=2 and rowend-rowstart=4
 
     There is no return value
-    """
+    """    
     
     # width of one chunk is 384. Each column is half a chunk wide. The total
     # width is (384 + 192*(numcols-1)) since the first column contributes full
@@ -597,16 +659,10 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
     
     # check chunk mtimes to see if they are newer
     try:
-        #tile_mtime = os.path.getmtime(imgpath)
-        regionMtimes = {}
         needs_rerender = False
         for col, row, chunkx, chunky, regionfile in chunks:
             # check region file mtime first. 
-            # Note: we cache the value since it's actually very likely we will have multipule chunks in the same region, and syscalls are expensive
-            regionMtime = regionMtimes.get(regionfile,None)
-            if  regionMtime is None:
-                regionMtime = os.path.getmtime(regionfile)  
-                regionMtimes[regionfile] = regionMtime 
+            regionMtime = world.get_region_mtime(regionfile)  
             if regionMtime <= tile_mtime:
                 continue
             
