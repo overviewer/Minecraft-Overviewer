@@ -63,20 +63,7 @@ int init_chunk_render(void);
 int is_transparent(unsigned char b);
 PyObject *chunk_render(PyObject *self, PyObject *args);
 
-/* in rendermode.c */
-typedef struct {
-    /* the size of the local storage for this rendermode */
-    unsigned int data_size;
-    
-    /* may return non-zero on error */
-    int (*start)(void *, RenderState *);
-    void (*finish)(void *, RenderState *);
-    /* returns non-zero to skip rendering this block */
-    int (*occluded)(void *, RenderState *);
-    /* last two arguments are img and mask, from texture lookup */
-    void (*draw)(void *, RenderState *, PyObject *, PyObject *);
-} RenderModeInterface;
-/* figures out the render mode to use from the given ChunkRenderer */
-RenderModeInterface *get_render_mode(RenderState *state);
+/* pull in the rendermode info */
+#include "rendermodes.h"
 
 #endif /* __OVERVIEWER_H_INCLUDED__ */

@@ -44,7 +44,7 @@ except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
 
-c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c', 'src/rendermodes.c']
+c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c', 'src/rendermodes.c', 'src/rendermode-lighting.c']
 setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
