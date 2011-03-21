@@ -90,8 +90,8 @@ class QuadtreeGen(object):
         # Make the destination dir
         if not os.path.exists(destdir):
             os.mkdir(destdir)
-        self.tiledir = tiledir
-
+        self.tiledir = tiledir        
+        
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
             for p in xrange(15):
@@ -123,6 +123,9 @@ class QuadtreeGen(object):
 
         self.world = worldobj
         self.destdir = destdir
+        self.full_tiledir = os.path.join(destdir, tiledir)
+        
+        
 
     def print_statusline(self, complete, total, level, unconditional=False):
         if unconditional:
@@ -227,12 +230,13 @@ class QuadtreeGen(object):
             colend = colstart + 2
             rowend = rowstart + 4
 
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, self.tiledir, *(str(x) for x in path))
+            # This image is rendered at(relative to the worker's destdir):
+            tilepath = [str(x) for x in path]
+            tilepath = os.sep.join(tilepath)
             #logging.debug("this is rendered at %s", dest)
             
             # Put this in the batch to be submited to the pool                        
-            batch.append((colstart, colend, rowstart, rowend, dest))
+            batch.append((colstart, colend, rowstart, rowend, tilepath))
             tiles += 1
             if tiles >= batch_size:
                 tiles = 0
@@ -251,11 +255,14 @@ class QuadtreeGen(object):
         batch = []
         tiles = 0        
         for path in iterate_base4(zoom):
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, self.tiledir, *(str(x) for x in path[:-1]))
+            # This image is rendered at(relative to the worker's destdir):
+            tilepath = [str(x) for x in path[:-1]]
+            tilepath = os.sep.join(tilepath)
             name = str(path[-1])
+  
             
-            batch.append((dest, name, self.imgformat, self.optimizeimg))
+            self.full_tiledir
+            batch.append((tilepath, name, self.imgformat, self.optimizeimg))
             tiles += 1
             if tiles >= batch_size:
                 tiles = 0
@@ -410,11 +417,14 @@ class QuadtreeGen(object):
 
 @catch_keyboardinterrupt
 def render_innertile_batch(batch):    
+    global child_quadtree
+    quadtree = child_quadtree
     count = 0
     #logging.debug("{0} working on batch of size {1}".format(os.getpid(),len(batch)))
     for job in batch:
         count += 1
-        render_innertile(job[0],job[1],job[2],job[3])
+        dest = quadtree.full_tiledir+os.sep+job[0]
+        render_innertile(dest,job[1],job[2],job[3])
     return count
     
 def render_innertile(dest, name, imgformat, optimizeimg):
@@ -481,11 +491,9 @@ def render_innertile(dest, name, imgformat, optimizeimg):
             optimize_image(imgpath, imgformat, optimizeimg)
 
 @catch_keyboardinterrupt
-def render_worldtile_batch(batch):  
+def render_worldtile_batch(batch):   
     global child_quadtree
-    return render_worldtile_batch_(child_quadtree, batch)
-
-def render_worldtile_batch_(quadtree, batch):   
+    quadtree = child_quadtree
     count = 0
     _get_chunks_in_range = quadtree._get_chunks_in_range
     #logging.debug("{0} working on batch of size {1}".format(os.getpid(),len(batch)))
@@ -496,6 +504,7 @@ def render_worldtile_batch_(quadtree, batch):
         rowstart = job[2]
         rowend = job[3]
         path = job[4]
+        path = quadtree.full_tiledir+os.sep+path
         # (even if tilechunks is empty, render_worldtile will delete
         # existing images if appropriate)    
         # And uses these chunks

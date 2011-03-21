@@ -70,9 +70,10 @@ class World(object):
     def __init__(self, worlddir, useBiomeData=False,regionlist=None):
         self.worlddir = worlddir
         self.useBiomeData = useBiomeData
-
+                
         #find region files, or load the region list
         #this also caches all the region file header info
+        logging.info("Scanning regions")
         regionfiles = {}
         regions = {}
         for x, y, regionfile in self._iterate_regionfiles():            
@@ -82,6 +83,7 @@ class World(object):
             regionfiles[(x,y)]	= (x,y,regionfile)
         self.regionfiles = regionfiles	
         self.regions = regions
+        logging.debug("Done scanning regions")
         
         # figure out chunk format is in use
         # if not mcregion, error out early
