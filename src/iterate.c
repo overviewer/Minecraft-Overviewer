@@ -45,7 +45,7 @@ int init_chunk_render(void) {
     transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
     
     /* ensure none of these pointers are NULL */    
-    if ((!transparent_blocks) || (!blockmap) || (!special_blocks) || (!specialblockmap)){
+    if ((!transparent_blocks) || (!blockmap) || (!special_blocks) || (!specialblockmap)) {
         fprintf(stderr, "\ninit_chunk_render failed\n");
         return 1;
     }
@@ -192,8 +192,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 }
                 
                 /* decref'd on replacement *and* at the end of the z for block */
-                if (blockid)
-                {
+                if (blockid) {
                     Py_DECREF(blockid);
                 }
                 blockid = PyInt_FromLong(block);
@@ -242,8 +241,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         texture_alpha_over(img, t, imgx, imgy );
                 }
                 
-                if (lighting)
-                {
+                if (lighting) {
                     // FIXME whole-block shading for transparent blocks
                     do_shading_for_face(chunk, x, y, z+1, facemasks[0], black_color,
                                         img, imgx, imgy);
@@ -254,8 +252,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 }
             }
             
-            if (blockid)
-            {
+            if (blockid) {
                 Py_DECREF(blockid);
                 blockid = NULL;
             }
