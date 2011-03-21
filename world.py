@@ -67,10 +67,9 @@ class World(object):
 
     mincol = maxcol = minrow = maxrow = 0
     
-    def __init__(self, worlddir, useBiomeData=False,regionlist=None, lighting=False):
+    def __init__(self, worlddir, useBiomeData=False,regionlist=None):
         self.worlddir = worlddir
         self.useBiomeData = useBiomeData
-        self.lighting = lighting
 
         #find region files, or load the region list
         #this also caches all the region file header info

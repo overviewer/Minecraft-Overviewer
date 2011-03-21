@@ -157,7 +157,7 @@ def main():
         logging.info("Notice: Not using biome data for tinting")
 
     # First do world-level preprocessing
-    w = world.World(worlddir, useBiomeData=useBiomeData, lighting=options.lighting)
+    w = world.World(worlddir, useBiomeData=useBiomeData)
     w.go(options.procs)
 
     # create the quadtrees
