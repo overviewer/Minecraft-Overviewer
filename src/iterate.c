@@ -17,9 +17,6 @@
 
 #include "overviewer.h"
 
-/* available render modes */
-extern RenderModeInterface rendermode_normal;
-
 static PyObject *textures = NULL;
 static PyObject *chunk_mod = NULL;
 static PyObject *blockmap = NULL;
@@ -82,8 +79,7 @@ chunk_render(PyObject *self, PyObject *args) {
     state.chunk = chunk_mod;
     
     /* set up the render mode */
-    /* FIXME deciding on correct rendermode */
-    RenderModeInterface *rendermode = &rendermode_normal;
+    RenderModeInterface *rendermode = get_render_mode(&state);
     void* rm_data = malloc(rendermode->data_size);
     if (rendermode->start) {
         if (rendermode->start(rm_data, &state)) {

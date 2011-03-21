@@ -17,12 +17,75 @@
 
 #include "overviewer.h"
 
+/*
+ * ========================
+ * == NORMAL rendermode ===
+ * ========================
+ */
+
+typedef struct {
+    /* normal mode does not have any special data, so just use a dummy int
+       this way, normal mode is just like any other type of render mode */
+    int dummy;
+} RenderModeNormal;
+
+static int
+rendermode_normal_start(void *data, RenderState *state) {
+    /* do nothing */
+    return 0;
+}
+
+static void
+rendermode_normal_finish(void *data, RenderState *state) {
+    /* do nothing */
+}
+
+static int
+rendermode_normal_occluded(void *data, RenderState *state) {
+    int x = state->x, y = state->y, z = state->z;
+    
+    if ( (x != 0) && (y != 15) && (z != 127) &&
+         !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
+         !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
+         !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
+        return 1;
+    }
+
+    return 0;
+}
+
+static void
+rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+    alpha_over(state->img, src, mask, state->imgx, state->imgy, 0, 0);
+}
+
+RenderModeInterface rendermode_normal = {
+    sizeof(RenderModeNormal),
+    rendermode_normal_start,
+    rendermode_normal_finish,
+    rendermode_normal_occluded,
+    rendermode_normal_draw,
+};
+
+/*
+ * ===========================
+ * === LIGHTING rendermode ===
+ * ===========================
+ */
+
+typedef struct {
+    /* inherits from normal render mode */
+    RenderModeNormal parent;
+    
+    PyObject *black_color, *facemasks_py;
+    PyObject *facemasks[3];
+} RenderModeLighting;
+
 /* shades the drawn block with the given facemask/black_color, based on the
    lighting results from (x, y, z) */
 static inline void
 do_shading_for_face(PyObject *chunk, int x, int y, int z, PyObject *facemask, PyObject *black_color,
-                    PyObject *img, int imgx, int imgy)
-{
+                    PyObject *img, int imgx, int imgy) {
     // returns new references
     PyObject* light_tup = PyObject_CallMethod(chunk, "get_lighting_coefficient", "iii", x, y, z);
     PyObject *black_coeff_py = PySequence_GetItem(light_tup, 0);
@@ -48,21 +111,14 @@ do_shading_for_face(PyObject *chunk, int x, int y, int z, PyObject *facemask, Py
     }
 }
 
-typedef struct {
-    int lighting;
-    PyObject *black_color, *facemasks_py;
-    PyObject *facemasks[3];
-} RenderModeNormal;
-
 static int
-rendermode_normal_start(void *data, RenderState *state) {
-    RenderModeNormal* self = (RenderModeNormal *)data;
+rendermode_lighting_start(void *data, RenderState *state) {
+    /* first, chain up */
+    int ret = rendermode_normal_start(data, state);
+    if (ret != 0)
+        return ret;
     
-    PyObject *quadtree = PyObject_GetAttrString(state->self, "quadtree");
-    PyObject *lighting_py = PyObject_GetAttrString(quadtree, "lighting");
-    self->lighting = PyObject_IsTrue(lighting_py);
-    Py_DECREF(lighting_py);
-    Py_DECREF(quadtree);
+    RenderModeLighting* self = (RenderModeLighting *)data;
     
     self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
     self->facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
@@ -75,31 +131,22 @@ rendermode_normal_start(void *data, RenderState *state) {
 }
 
 static void
-rendermode_normal_finish(void *data, RenderState *state) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
+rendermode_lighting_finish(void *data, RenderState *state) {
+    RenderModeLighting *self = (RenderModeLighting *)data;
     
     Py_DECREF(self->black_color);
     Py_DECREF(self->facemasks_py);
-}
-
-static int
-rendermode_normal_occluded(void *data, RenderState *state) {
-    int x = state->x, y = state->y, z = state->z;
     
-    if ( (x != 0) && (y != 15) && (z != 127) &&
-         !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
-         !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
-         !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
-        return 1;
-    }
-
-    return 0;
+    /* now chain up */
+    rendermode_normal_finish(data, state);
 }
 
 static void
-rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask)
-{
-    RenderModeNormal* self = (RenderModeNormal *)data;
+rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+    /* first, chain up */
+    rendermode_normal_draw(data, state, src, mask);
+    
+    RenderModeLighting* self = (RenderModeLighting *)data;
     
     PyObject *chunk = state->self;
     int x = state->x, y = state->y, z = state->z;
@@ -107,24 +154,34 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     PyObject *black_color = self->black_color, *img = state->img;
     int imgx = state->imgx, imgy = state->imgy;
     
-    alpha_over(img, src, mask, imgx, imgy, 0, 0);
-    
-    if (self->lighting) {
-        // FIXME whole-block shading for transparent blocks
-        do_shading_for_face(chunk, x, y, z+1, facemasks[0], black_color,
-                            img, imgx, imgy);
-        do_shading_for_face(chunk, x-1, y, z, facemasks[1], black_color,
-                            img, imgx, imgy);
-        do_shading_for_face(chunk, x, y+1, z, facemasks[2], black_color,
-                            img, imgx, imgy);
-    }
-
+    // FIXME whole-block shading for transparent blocks
+    do_shading_for_face(chunk, x, y, z+1, facemasks[0], black_color,
+                        img, imgx, imgy);
+    do_shading_for_face(chunk, x-1, y, z, facemasks[1], black_color,
+                        img, imgx, imgy);
+    do_shading_for_face(chunk, x, y+1, z, facemasks[2], black_color,
+                        img, imgx, imgy);
 }
 
-RenderModeInterface rendermode_normal = {
-    sizeof(RenderModeNormal),
-    rendermode_normal_start,
-    rendermode_normal_finish,
+RenderModeInterface rendermode_lighting = {
+    sizeof(RenderModeLighting),
+    rendermode_lighting_start,
+    rendermode_lighting_finish,
+    /* no special occlusion for lighting */
     rendermode_normal_occluded,
-    rendermode_normal_draw,
+    rendermode_lighting_draw,
 };
+
+/* putting it all together */
+RenderModeInterface *get_render_mode(RenderState *state)
+{
+    /* default: normal */
+    RenderModeInterface *iface = &rendermode_normal;
+    PyObject *quadtree = PyObject_GetAttrString(state->self, "quadtree");
+    PyObject *lighting = PyObject_GetAttrString(quadtree, "lighting");
+    
+    if (PyObject_IsTrue(lighting))
+        iface = &rendermode_lighting;
+    
+    return iface;
+}

@@ -59,6 +59,11 @@ typedef struct {
     unsigned char block;
     PyObject *blocks;
 } RenderState;
+int init_chunk_render(void);
+int is_transparent(unsigned char b);
+PyObject *chunk_render(PyObject *self, PyObject *args);
+
+/* in rendermode.c */
 typedef struct {
     /* the size of the local storage for this rendermode */
     unsigned int data_size;
@@ -71,8 +76,7 @@ typedef struct {
     /* last two arguments are img and mask, from texture lookup */
     void (*draw)(void *, RenderState *, PyObject *, PyObject *);
 } RenderModeInterface;
-int init_chunk_render(void);
-int is_transparent(unsigned char b);
-PyObject *chunk_render(PyObject *self, PyObject *args);
+/* figures out the render mode to use from the given ChunkRenderer */
+RenderModeInterface *get_render_mode(RenderState *state);
 
 #endif /* __OVERVIEWER_H_INCLUDED__ */
