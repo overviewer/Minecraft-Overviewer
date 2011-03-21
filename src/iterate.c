@@ -166,12 +166,13 @@ chunk_render(PyObject *self, PyObject *args) {
     
     for (x = 15; x > -1; x--) {
         for (y = 0; y < 16; y++) {
+            PyObject *blockid = NULL;
+            
             imgx = xoff + x*12 + y*12;
             /* 128*12 -- offset for z direction, 15*6 -- offset for x */
             imgy = yoff - x*6 + y*6 + 128*12 + 15*6;
             for (z = 0; z < 128; z++) {
                 unsigned char block;
-                PyObject *blockid;
                 
                 imgy -= 12;
                 
@@ -189,8 +190,11 @@ chunk_render(PyObject *self, PyObject *args) {
                     continue;
                 }
                 
-                /* TODO figure out how to DECREF this easily, instead of at
-                   every continue */
+                /* decref'd on replacement *and* at the end of the z for block */
+                if (blockid)
+                {
+                    Py_DECREF(blockid);
+                }
                 blockid = PyInt_FromLong(block);
 
 
@@ -247,6 +251,12 @@ chunk_render(PyObject *self, PyObject *args) {
                     do_shading_for_face(chunk, x, y+1, z, facemasks[2], black_color,
                                         img, imgx, imgy);
                 }
+            }
+            
+            if (blockid)
+            {
+                Py_DECREF(blockid);
+                blockid = NULL;
             }
         }
     } 
