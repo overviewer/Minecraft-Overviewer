@@ -54,7 +54,8 @@ int init_chunk_render(void) {
 
 }
 
-static inline int isTransparent(PyObject* tup, unsigned char b) {
+inline int
+is_transparent(PyObject* tup, unsigned char b) {
     PyObject *block = PyInt_FromLong(b);
     int ret = PySequence_Contains(tup, block);
     Py_DECREF(block);
@@ -199,9 +200,9 @@ chunk_render(PyObject *self, PyObject *args) {
 
 
                 if ( (x != 0) && (y != 15) && (z != 127) &&
-                     !isTransparent(transparent_blocks, getArrayByte3D(blocks_py, x-1, y, z)) &&
-                     !isTransparent(transparent_blocks, getArrayByte3D(blocks_py, x, y, z+1)) &&
-                     !isTransparent(transparent_blocks, getArrayByte3D(blocks_py, x, y+1, z))) {
+                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, x-1, y, z)) &&
+                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, x, y, z+1)) &&
+                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, x, y+1, z))) {
                     continue;
                 }
 
