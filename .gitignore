@@ -3,6 +3,9 @@ build
 terrain.png
 cachedir*
 
+# vim swap files
+.*.swp
+
 # user-provided settings file
 settings.py
 
