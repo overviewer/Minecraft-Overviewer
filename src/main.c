@@ -24,8 +24,6 @@ static PyMethodDef COverviewerMethods[] = {
      "alpha over composite function"},
     {"render_loop", chunk_render, METH_VARARGS,
      "Renders stuffs"},
-    {"render_loop_lighting", chunk_render_lighting, METH_VARARGS,
-     "Renders stuffs, lighting"},
     {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 

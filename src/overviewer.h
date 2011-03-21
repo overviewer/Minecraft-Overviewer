@@ -37,7 +37,6 @@ PyObject *brightness(PyObject *img, double factor);
 
 /* in iterate.c */
 PyObject *chunk_render(PyObject *self, PyObject *args);
-PyObject *chunk_render_lighting(PyObject *self, PyObject *args);
 int init_chunk_render(void);
 
 #endif /* __OVERVIEWER_H_INCLUDED__ */
