@@ -43,6 +43,7 @@ import optimizeimages
 import composite
 import world
 import quadtree
+import googlemap
 
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>
@@ -159,10 +160,15 @@ def main():
     w = world.World(worlddir, useBiomeData=useBiomeData)
     w.go(options.procs)
 
-    # Now generate the tiles
+    # create the quadtrees
     # TODO chunklist
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode=options.rendermode, web_assets_hook=options.web_assets_hook)
-    q.write_html(options.skipjs)
+    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode=options.rendermode)
+    
+    # write out the map and web assets
+    m = googlemap.MapGen([q,], skipjs=options.skipjs, web_assets_hook=options.web_assets_hook)
+    m.go(options.procs)
+    
+    # render the tiles!
     q.go(options.procs)
 
 def delete_all(worlddir, tiledir):

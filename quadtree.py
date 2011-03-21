@@ -42,26 +42,6 @@ This module has routines related to generating a quadtree of tiles
 
 """
 
-def mirror_dir(src, dst, entities=None):
-    '''copies all of the entities from src to dst'''
-    if not os.path.exists(dst):
-        os.mkdir(dst)
-    if entities and type(entities) != list: raise Exception("Expected a list, got a %r instead" % type(entities))
-
-    for entry in os.listdir(src):
-        if entities and entry not in entities: continue
-        if os.path.isdir(os.path.join(src,entry)):
-            mirror_dir(os.path.join(src, entry), os.path.join(dst, entry))
-        elif os.path.isfile(os.path.join(src,entry)):
-            try:
-                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
-            except IOError:
-                # maybe permission problems?
-                os.chmod(os.path.join(src, entry), stat.S_IRUSR)
-                os.chmod(os.path.join(dst, entry), stat.S_IWUSR)
-                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
-                # if this stills throws an error, let it propagate up
-
 def iterate_base4(d):
     """Iterates over a base 4 number with d digits"""
     return itertools.product(xrange(4), repeat=d)
@@ -90,7 +70,7 @@ def pool_initializer(quadtree):
     child_quadtree = quadtree    
     
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, rendermode="normal", web_assets_hook=None):
+    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -103,11 +83,11 @@ class QuadtreeGen(object):
         assert(imgformat)
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
-        self.web_assets_hook = web_assets_hook
         
         self.lighting = rendermode in ("lighting", "night", "spawn")
         self.night = rendermode in ("night", "spawn")
         self.spawn = rendermode in ("spawn",)
+        self.rendermode = rendermode
 
         # Make the destination dir
         if not os.path.exists(destdir):
@@ -160,75 +140,6 @@ class QuadtreeGen(object):
                 return
         logging.info("{0}/{1} tiles complete on level {2}/{3}".format(
                 complete, total, level, self.p))
-
-    def write_html(self, skipjs=False):
-        """Writes out config.js, marker.js, and region.js
-        Copies web assets into the destdir"""
-        zoomlevel = self.p
-        imgformat = self.imgformat
-        configpath = os.path.join(util.get_program_path(), "config.js")
-
-        config = open(configpath, 'r').read()
-        config = config.replace(
-                "{maxzoom}", str(zoomlevel))
-        config = config.replace(
-                "{imgformat}", str(imgformat))
-                
-        with open(os.path.join(self.destdir, "config.js"), 'w') as output:
-            output.write(config)
-
-        # Write a blank image
-        blank = Image.new("RGBA", (1,1))
-        tileDir = os.path.join(self.destdir, self.tiledir)
-        if not os.path.exists(tileDir): os.mkdir(tileDir)
-        blank.save(os.path.join(tileDir, "blank."+self.imgformat))
-
-        # copy web assets into destdir:
-        mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)
-
-        # Add time in index.html
-        indexpath = os.path.join(self.destdir, "index.html")
-
-        index = open(indexpath, 'r').read()
-        index = index.replace(
-                "{time}", str(strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())))
-
-        with open(os.path.join(self.destdir, "index.html"), 'w') as output:
-            output.write(index)
-
-        if skipjs:
-            if self.web_assets_hook:
-                self.web_assets_hook(self)
-            return
-
-        # since we will only discover PointsOfInterest in chunks that need to be 
-        # [re]rendered, POIs like signs in unchanged chunks will not be listed
-        # in self.world.POI.  To make sure we don't remove these from markers.js
-        # we need to merge self.world.POI with the persistant data in world.PersistentData
-
-        self.world.POI += filter(lambda x: x['type'] != 'spawn', self.world.persistentData['POI'])
-
-        # write out the default marker table
-        with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
-            output.write("var markerData=%s" % json.dumps(self.world.POI))
-        
-        # save persistent data
-        self.world.persistentData['POI'] = self.world.POI
-        with open(self.world.pickleFile,"wb") as f:
-            cPickle.dump(self.world.persistentData,f)
-
-        # write out the default (empty, but documented) region table
-        with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
-            output.write('var regionData=[\n')
-            output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
-            output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
-            output.write('  //   {"x": 0, "y": 10, "z": 0},\n')
-            output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
-            output.write('  // ]},\n')
-            output.write('];')
-        
-        if self.web_assets_hook:
-            self.web_assets_hook(self)
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in

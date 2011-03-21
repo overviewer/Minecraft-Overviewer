@@ -39,13 +39,16 @@ var signGroups = [
  *     path  : string. Location of the rendered tiles.
  * Optional:
  *     base  : string. Base of the url path for tile locations, useful for serving tiles from a different server than the js/html server.
- */
+
 var mapTypeData=[
   {'label': 'Unlit', 'path': 'tiles'},
 //  {'label': 'Day',   'path': 'lighting/tiles'},
 //  {'label': 'Night', 'path': 'night/tiles'},
 //  {'label': 'Spawn', 'path': 'spawn/tiles', 'base': 'http://example.cdn.amazon.com/'}
 ];
+ */
+
+var mapTypeData = {maptypedata};
 
 // Please leave the following variables here:
 var markerCollection = {}; // holds groups of markers
