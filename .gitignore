@@ -3,6 +3,9 @@ build
 terrain.png
 cachedir*
 
+# user-provided settings file
+settings.py
+
 # header files that may be copied over, if missing
 ImPlatform.h
 Imaging.h
