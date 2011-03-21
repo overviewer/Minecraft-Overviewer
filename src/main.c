@@ -17,8 +17,6 @@
 
 #include "overviewer.h"
 
-#include <numpy/arrayobject.h>
-
 static PyMethodDef COverviewerMethods[] = {
     {"alpha_over", alpha_over_wrap, METH_VARARGS,
      "alpha over composite function"},

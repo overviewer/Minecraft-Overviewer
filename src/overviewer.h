@@ -24,9 +24,13 @@
 #ifndef __OVERVIEWER_H_INCLUDED__
 #define __OVERVIEWER_H_INCLUDED__
 
-/* Python and PIL headers */
+/* Python PIL, and numpy headers */
 #include <Python.h>
 #include <Imaging.h>
+#include <numpy/arrayobject.h>
+
+/* macro for getting a value out of a 3D numpy byte array */
+#define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (x), (y), (z))))
 
 /* in composite.c */
 Imaging imaging_python_to_c(PyObject *obj);
@@ -44,16 +48,31 @@ typedef struct {
     PyObject *textures;
     PyObject *chunk;
     
+    /* the rest only make sense for occluded() and draw() !! */
+    
     /* the tile image and destination */
     PyObject *img;
     int imgx, imgy;
     
-    /* the block position and type */
+    /* the block position and type, and the block array */
     int x, y, z;
     unsigned char block;
+    PyObject *blocks;
 } RenderState;
-int is_transparent(PyObject* tup, unsigned char b);
-PyObject *chunk_render(PyObject *self, PyObject *args);
+typedef struct {
+    /* the size of the local storage for this rendermode */
+    unsigned int data_size;
+    
+    /* may return non-zero on error */
+    int (*start)(void *, RenderState *);
+    void (*finish)(void *, RenderState *);
+    /* returns non-zero to skip rendering this block */
+    int (*occluded)(void *, RenderState *);
+    /* last two arguments are img and mask, from texture lookup */
+    void (*draw)(void *, RenderState *, PyObject *, PyObject *);
+} RenderModeInterface;
 int init_chunk_render(void);
+int is_transparent(unsigned char b);
+PyObject *chunk_render(PyObject *self, PyObject *args);
 
 #endif /* __OVERVIEWER_H_INCLUDED__ */
