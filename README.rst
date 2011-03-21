@@ -121,9 +121,9 @@ the same directory as "_composite.c".
 
 Running
 -------
-To generate a set of Google Map tiles, use the gmap.py script like this::
+To generate a set of Google Map tiles, use the overviewer.py script like this::
 
-    python gmap.py [OPTIONS] <World # / Name / Path to World> <Output Directory>
+    python overviewer.py [OPTIONS] <World # / Name / Path to World> <Output Directory>
 
 The output directory will be created if it doesn't exist. This will generate a
 set of image tiles for your world in the directory you choose. When it's done,
@@ -153,7 +153,7 @@ Options
 
     Example::
 
-        python gmap.py --cachedir=<chunk cache dir> <world> <output dir>
+        python overviewer.py --cachedir=<chunk cache dir> <world> <output dir>
 
 --imgformat=FORMAT
     Set the output image format used for the tiles. The default is 'png',
@@ -168,7 +168,7 @@ Options
 
     Example to run 5 worker processes in parallel::
 
-        python gmap.py -p 5 <Path to World> <Output Directory>
+        python overviewer.py -p 5 <Path to World> <Output Directory>
 
 -z ZOOM, --zoom=ZOOM
     The Overviewer by default will detect how many zoom levels are required
@@ -191,7 +191,7 @@ Options
 
     This will render your map with 7 zoom levels::
 
-        python gmap.py -z 7 <Path to World> <Output Directory>
+        python overviewer.py -z 7 <Path to World> <Output Directory>
 
     Remember that each additional zoom level adds 4 times as many tiles as
     the last. This can add up fast, zoom level 10 has over a million tiles.
@@ -210,13 +210,13 @@ Options
     By default, the chunk images are saved in your world directory. This
     example will remove them::
     
-        python gmap.py -d <World # / Path to World / Path to cache dir>
+        python overviewer.py -d <World # / Path to World / Path to cache dir>
 
     You can also delete the tile cache as well. This will force a full
     re-render, useful if you've changed texture packs and want your world
     to look uniform. Here's an example::
 
-        python gmap.py -d <# / path> <Tile Directory>
+        python overviewer.py -d <# / path> <Tile Directory>
 
     Be warned, this will cause the next rendering of your map to take
     significantly longer, since it is having to re-generate the files you just

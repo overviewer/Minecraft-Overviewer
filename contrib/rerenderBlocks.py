@@ -3,12 +3,12 @@
 '''
 This is used to force the regeneration of any chunks that contain a certain
 blockID.  The output is a chunklist file that is suitable to use with the
---chunklist option to gmap.py.
+--chunklist option to overviewer.py.
 
 Example:
 
 python contrib/rerenderBlocks.py --ids=46,79,91 --world=world/> chunklist.txt
-    python gmap.py --chunklist=chunklist.txt world/ output_dir/
+    python overviewer.py --chunklist=chunklist.txt world/ output_dir/
 
 This will rerender any chunks that contain either TNT (46), Ice (79), or 
 a Jack-O-Lantern (91)

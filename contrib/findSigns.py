@@ -11,7 +11,7 @@ To run, simply give a path to your world directory, for example:
 
 Once that is done, simply re-run the overviewer to generate markers.js:
 
-    python gmap.py ../world.test/ output_dir/
+    python overviewer.py ../world.test/ output_dir/
 
 Note: if your cachedir is not the same as your world-dir, you'll need to manually
 move overviewer.dat into the correct location.

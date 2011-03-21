@@ -4,7 +4,7 @@ usage = "python contrib/%prog [OPTIONS] <World # / Name / Path to World>"
 
 description = """
 This script will delete files from the old chunk-based cache, a lot
-like the old `gmap.py -d World/` command. You should only use this if
+like the old `overviewer.py -d World/` command. You should only use this if
 you're updating from an older version of Overviewer, and you want to
 clean up your world folder.
 """
@@ -19,7 +19,7 @@ overviewer_dir = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
 sys.path.insert(0, overviewer_dir)
 
 import world
-from gmap import list_worlds
+from overviewer import list_worlds
 
 def main():
     parser = OptionParser(usage=usage, description=description)
