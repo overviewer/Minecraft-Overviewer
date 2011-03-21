@@ -36,5 +36,6 @@ PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
 
 /* in iterate.c */
 PyObject *chunk_render(PyObject *self, PyObject *args);
+int init_chunk_render(void);
 
 #endif /* __OVERVIEWER_H_INCLUDED__ */

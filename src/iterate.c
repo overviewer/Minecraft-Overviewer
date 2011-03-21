@@ -22,6 +22,40 @@
 /* macro for getting blockID from a chunk of memory */
 #define getBlock(blockThing, x,y,z) (*(unsigned char *)(PyArray_GETPTR3(blockThing, (x), (y), (z))))
 
+static PyObject *textures = NULL;
+static PyObject *chunk_mod = NULL;
+static PyObject *blockmap = NULL;
+static PyObject *special_blocks = NULL;
+static PyObject *specialblockmap = NULL;
+static PyObject *transparent_blocks = NULL;
+
+int init_chunk_render(void) {
+   
+    /* if blockmap (or any of these) is not NULL, then that means that we've 
+     * somehow called this function twice.  error out so we can notice this
+     * */
+    if (blockmap) return 1;
+
+    textures = PyImport_ImportModule("textures");
+    chunk_mod = PyImport_ImportModule("chunk");
+
+    blockmap = PyObject_GetAttrString(textures, "blockmap");
+    special_blocks = PyObject_GetAttrString(textures, "special_blocks");
+    specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
+    transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
+    
+    /* ensure none of these pointers are NULL */    
+    if ((!transparent_blocks) || (!blockmap) || (!special_blocks) || (!specialblockmap)){
+        fprintf(stderr, "\ninit_chunk_render failed\n");
+        return 1;
+    }
+
+    Py_DECREF(textures);
+    Py_DECREF(chunk_mod);
+    return 0;
+
+}
+
 static inline int isTransparent(PyObject* tup, unsigned char b) {
     PyObject *block = PyInt_FromLong(b);
     int ret = PySequence_Contains(tup, block);
@@ -59,8 +93,6 @@ chunk_render(PyObject *self, PyObject *args) {
     
     PyObject *blocks_py;
     
-    PyObject *textures, *blockmap, *special_blocks, *specialblockmap, *chunk_mod, *transparent_blocks;
-    
     int imgx, imgy;
     int x, y, z;
 
@@ -88,23 +120,6 @@ chunk_render(PyObject *self, PyObject *args) {
     PyObject *right_blocks = PyObject_GetAttrString(chunk, "right_blocks");
     */
     
-    textures = PyImport_ImportModule("textures");
-    chunk_mod = PyImport_ImportModule("chunk");
-
-    /* TODO can these be global static?  these don't change during program execution */
-    blockmap = PyObject_GetAttrString(textures, "blockmap");
-    special_blocks = PyObject_GetAttrString(textures, "special_blocks");
-    specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
-    transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
-    if (transparent_blocks == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                        "transparent_blocks is NULL");
-        return NULL;
-    }
-        
-
-    Py_DECREF(textures);
-    Py_DECREF(chunk_mod);
     
     for (x = 15; x > -1; x--) {
         for (y = 0; y < 16; y++) {
@@ -184,9 +199,6 @@ chunk_render(PyObject *self, PyObject *args) {
     } 
 
     Py_DECREF(blocks_py);
-    Py_DECREF(blockmap);
-    Py_DECREF(special_blocks);
-    Py_DECREF(specialblockmap);
 
     return Py_BuildValue("i",2);
 }
