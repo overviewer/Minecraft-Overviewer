@@ -36,6 +36,22 @@ PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
 PyObject *brightness(PyObject *img, double factor);
 
 /* in iterate.c */
+typedef struct {
+    /* the ChunkRenderer object */
+    PyObject *self;
+    
+    /* important modules, for convenience */
+    PyObject *textures;
+    PyObject *chunk;
+    
+    /* the tile image and destination */
+    PyObject *img;
+    int imgx, imgy;
+    
+    /* the block position and type */
+    int x, y, z;
+    unsigned char block;
+} RenderState;
 int is_transparent(PyObject* tup, unsigned char b);
 PyObject *chunk_render(PyObject *self, PyObject *args);
 int init_chunk_render(void);

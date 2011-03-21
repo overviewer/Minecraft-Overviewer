@@ -113,25 +113,25 @@ do_shading_for_face(PyObject *chunk, int x, int y, int z, PyObject *facemask, Py
 /* TODO triple check this to make sure reference counting is correct */
 PyObject*
 chunk_render(PyObject *self, PyObject *args) {
+    RenderState state;
 
-    PyObject *chunk;
     PyObject *blockdata_expanded; 
     int xoff, yoff;
-    PyObject *img;
     
     PyObject *imgsize, *imgsize0_py, *imgsize1_py;
     int imgsize0, imgsize1;
     
     PyObject *blocks_py;
     
-    int imgx, imgy;
-    int x, y, z;
-
-    if (!PyArg_ParseTuple(args, "OOiiO",  &chunk, &img, &xoff, &yoff, &blockdata_expanded))
+    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &blockdata_expanded))
         return Py_BuildValue("i", "-1");
+    
+    /* fill in important modules */
+    state.textures = textures;
+    state.chunk = chunk_mod;
 
     /* tuple */
-    imgsize = PyObject_GetAttrString(img, "size");
+    imgsize = PyObject_GetAttrString(state.img, "size");
 
     imgsize0_py = PySequence_GetItem(imgsize, 0);
     imgsize1_py = PySequence_GetItem(imgsize, 1);
@@ -144,50 +144,47 @@ chunk_render(PyObject *self, PyObject *args) {
 
 
     /* get the block data directly from numpy: */
-    blocks_py = PyObject_GetAttrString(chunk, "blocks");
+    blocks_py = PyObject_GetAttrString(state.self, "blocks");
 
     /*
     PyObject *left_blocks = PyObject_GetAttrString(chunk, "left_blocks");
     PyObject *right_blocks = PyObject_GetAttrString(chunk, "right_blocks");
     */
     
-    PyObject *quadtree = PyObject_GetAttrString(chunk, "quadtree");
+    PyObject *quadtree = PyObject_GetAttrString(state.self, "quadtree");
     PyObject *lighting_py = PyObject_GetAttrString(quadtree, "lighting");
     int lighting = PyObject_IsTrue(lighting_py);
     Py_DECREF(lighting_py);
     Py_DECREF(quadtree);
     
-    PyObject *black_color = PyObject_GetAttrString(chunk_mod, "black_color");
-    PyObject *facemasks_py = PyObject_GetAttrString(chunk_mod, "facemasks");
+    PyObject *black_color = PyObject_GetAttrString(state.chunk, "black_color");
+    PyObject *facemasks_py = PyObject_GetAttrString(state.chunk, "facemasks");
     PyObject *facemasks[3];
     // borrowed references, don't need to be decref'd
     facemasks[0] = PyTuple_GetItem(facemasks_py, 0);
     facemasks[1] = PyTuple_GetItem(facemasks_py, 1);
     facemasks[2] = PyTuple_GetItem(facemasks_py, 2);
     
-    for (x = 15; x > -1; x--) {
-        for (y = 0; y < 16; y++) {
+    for (state.x = 15; state.x > -1; state.x--) {
+        for (state.y = 0; state.y < 16; state.y++) {
             PyObject *blockid = NULL;
             
-            imgx = xoff + x*12 + y*12;
+            state.imgx = xoff + state.x*12 + state.y*12;
             /* 128*12 -- offset for z direction, 15*6 -- offset for x */
-            imgy = yoff - x*6 + y*6 + 128*12 + 15*6;
-            for (z = 0; z < 128; z++) {
-                unsigned char block;
+            state.imgy = yoff - state.x*6 + state.y*6 + 128*12 + 15*6;
+            for (state.z = 0; state.z < 128; state.z++) {
+                state.imgy -= 12;
                 
-                imgy -= 12;
-                
-                if ((imgx >= imgsize0 + 24) || (imgx <= -24)) {
+                if ((state.imgx >= imgsize0 + 24) || (state.imgx <= -24)) {
                     continue;
                 }
-                if ((imgy >= imgsize1 + 24) || (imgy <= -24)) {
+                if ((state.imgy >= imgsize1 + 24) || (state.imgy <= -24)) {
                     continue;
                 }
 
-                /* get blockid
-                   note the order: x, z, y */
-                block = getArrayByte3D(blocks_py, x, y, z);
-                if (block == 0) {
+                /* get blockid */
+                state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
+                if (state.block == 0) {
                     continue;
                 }
                 
@@ -195,20 +192,20 @@ chunk_render(PyObject *self, PyObject *args) {
                 if (blockid) {
                     Py_DECREF(blockid);
                 }
-                blockid = PyInt_FromLong(block);
+                blockid = PyInt_FromLong(state.block);
 
 
-                if ( (x != 0) && (y != 15) && (z != 127) &&
-                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, x-1, y, z)) &&
-                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, x, y, z+1)) &&
-                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, x, y+1, z))) {
+                if ( (state.x != 0) && (state.y != 15) && (state.z != 127) &&
+                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, state.x-1, state.y, state.z)) &&
+                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, state.x, state.y, state.z+1)) &&
+                     !is_transparent(transparent_blocks, getArrayByte3D(blocks_py, state.x, state.y+1, state.z))) {
                     continue;
                 }
 
 
                 if (!PySequence_Contains(special_blocks, blockid)) {
                     /* t = textures.blockmap[blockid] */
-                    PyObject *t = PyList_GetItem(blockmap, block);
+                    PyObject *t = PyList_GetItem(blockmap, state.block);
                     /* PyList_GetItem returns borrowed ref */
                     if (t == Py_None) {
                         continue;
@@ -216,14 +213,14 @@ chunk_render(PyObject *self, PyObject *args) {
 
                     /* note that this version of alpha_over has a different signature than the 
                        version in _composite.c */
-                    texture_alpha_over(img, t, imgx, imgy );
+                    texture_alpha_over(state.img, t, state.imgx, state.imgy );
                 } else {
                     PyObject *tmp, *t;
                     
                     /* this should be a pointer to a unsigned char */
-                    void* ancilData_p = PyArray_GETPTR3(blockdata_expanded, x, y, z); 
+                    void* ancilData_p = PyArray_GETPTR3(blockdata_expanded, state.x, state.y, state.z); 
                     unsigned char ancilData = *((unsigned char*)ancilData_p);
-                    if (block == 85) {
+                    if (state.block == 85) {
                         /* fence.  skip the generate_pseudo_ancildata for now */
                         continue;
                     }
@@ -238,17 +235,17 @@ chunk_render(PyObject *self, PyObject *args) {
                     t = PyDict_GetItem(specialblockmap, tmp);
                     Py_DECREF(tmp);
                     if (t != NULL) 
-                        texture_alpha_over(img, t, imgx, imgy );
+                        texture_alpha_over(state.img, t, state.imgx, state.imgy );
                 }
                 
                 if (lighting) {
                     // FIXME whole-block shading for transparent blocks
-                    do_shading_for_face(chunk, x, y, z+1, facemasks[0], black_color,
-                                        img, imgx, imgy);
-                    do_shading_for_face(chunk, x-1, y, z, facemasks[1], black_color,
-                                        img, imgx, imgy);
-                    do_shading_for_face(chunk, x, y+1, z, facemasks[2], black_color,
-                                        img, imgx, imgy);
+                    do_shading_for_face(state.self, state.x, state.y, state.z+1, facemasks[0], black_color,
+                                        state.img, state.imgx, state.imgy);
+                    do_shading_for_face(state.self, state.x-1, state.y, state.z, facemasks[1], black_color,
+                                        state.img, state.imgx, state.imgy);
+                    do_shading_for_face(state.self, state.x, state.y+1, state.z, facemasks[2], black_color,
+                                        state.img, state.imgx, state.imgy);
                 }
             }
             
