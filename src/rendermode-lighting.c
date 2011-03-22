@@ -31,6 +31,8 @@ do_shading_for_face(PyObject *chunk, int x, int y, int z, PyObject *facemask, Py
     PyObject *face_occlude_py = PySequence_GetItem(light_tup, 1);
     int face_occlude = PyInt_AsLong(face_occlude_py);
     Py_DECREF(face_occlude_py);
+
+    Py_DECREF(light_tup);
     
     
     if (!face_occlude) {
