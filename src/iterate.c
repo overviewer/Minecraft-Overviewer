@@ -158,9 +158,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 } else {
                     PyObject *tmp;
                     
-                    /* this should be a pointer to a unsigned char */
-                    void* ancilData_p = PyArray_GETPTR3(blockdata_expanded, state.x, state.y, state.z); 
-                    unsigned char ancilData = *((unsigned char*)ancilData_p);
+                    unsigned char ancilData = getByteArray3D(blockdata_expanded, state.x, state.y, state.z);
                     if (state.block == 85) {
                         /* fence.  skip the generate_pseudo_ancildata for now */
                         continue;
