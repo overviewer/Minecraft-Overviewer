@@ -81,11 +81,9 @@ chunk_render(PyObject *self, PyObject *args) {
     /* set up the render mode */
     RenderModeInterface *rendermode = get_render_mode(&state);
     void* rm_data = malloc(rendermode->data_size);
-    if (rendermode->start) {
-        if (rendermode->start(rm_data, &state)) {
-            free(rm_data);
-            return Py_BuildValue("i", "-1");
-        }
+    if (rendermode->start(rm_data, &state)) {
+        free(rm_data);
+        return Py_BuildValue("i", "-1");
     }
 
     /* get the image size */
@@ -143,10 +141,8 @@ chunk_render(PyObject *self, PyObject *args) {
                 blockid = PyInt_FromLong(state.block);
 
                 // check for occlusion
-                if (rendermode->occluded) {
-                    if (rendermode->occluded(rm_data, &state)) {
-                        continue;
-                    }
+                if (rendermode->occluded(rm_data, &state)) {
+                    continue;
                 }
                 
                 // everything stored here will be a borrowed ref
@@ -185,8 +181,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     if (mask == Py_None)
                         mask = src;
                     
-                    if (rendermode->draw)
-                        rendermode->draw(rm_data, &state, src, mask);
+                    rendermode->draw(rm_data, &state, src, mask);
                 }               
             }
             
@@ -198,8 +193,7 @@ chunk_render(PyObject *self, PyObject *args) {
     } 
 
     /* free up the rendermode info */
-    if (rendermode->finish)
-        rendermode->finish(rm_data, &state);
+    rendermode->finish(rm_data, &state);
     free(rm_data);
     
     Py_DECREF(blocks_py);
