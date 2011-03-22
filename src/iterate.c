@@ -154,7 +154,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 } else {
                     PyObject *tmp;
                     
-                    unsigned char ancilData = getByteArray3D(blockdata_expanded, state.x, state.y, state.z);
+                    unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
                     if (state.block == 85) {
                         /* fence.  skip the generate_pseudo_ancildata for now */
                         continue;
