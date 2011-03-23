@@ -45,6 +45,7 @@ import composite
 import world
 import quadtree
 import googlemap
+import rendernode
 
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>
@@ -171,21 +172,29 @@ def main():
     useBiomeData = os.path.exists(os.path.join(worlddir, 'biomes'))
     if not useBiomeData:
         logging.info("Notice: Not using biome data for tinting")
-
+    
     # First do world-level preprocessing
     w = world.World(worlddir, useBiomeData=useBiomeData)
     w.go(options.procs)
 
     # create the quadtrees
     # TODO chunklist
-    q = quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode=options.rendermode)
+    q = []
+    q.append(quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode='normal', tiledir='tiles'))    
+    q.append(quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode='lighting'))  
+    q.append(quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode='night'))  
+    q.append(quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode='spawn'))  
+
+    #create the distributed render
+    r = rendernode.RenderNode(w,q)
     
     # write out the map and web assets
-    m = googlemap.MapGen([q,], skipjs=options.skipjs, web_assets_hook=options.web_assets_hook)
+    m = googlemap.MapGen(q, skipjs=options.skipjs, web_assets_hook=options.web_assets_hook)
     m.go(options.procs)
     
     # render the tiles!
-    q.go(options.procs)
+    r.go(options.procs)
+
 
 def delete_all(worlddir, tiledir):
     # TODO should we delete tiledir here too?
