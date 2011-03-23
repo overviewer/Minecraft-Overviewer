@@ -85,6 +85,9 @@ class QuadtreeGen(object):
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
         
+        self.lighting = rendermode in ("lighting", "night", "spawn")
+        self.night = rendermode in ("night", "spawn")
+        self.spawn = rendermode in ("spawn",)
         self.rendermode = rendermode
 
         # Make the destination dir
@@ -410,8 +413,8 @@ class QuadtreeGen(object):
                 # return (col, row, chunkx, chunky, regionpath)
                 chunkx, chunky = unconvert_coords(col, row)
                 #c = get_region_path(chunkx, chunky)
-                _, _, c = get_region((chunkx//32, chunky//32),(None,None,None));
-                if c is not None:
+                _, _, c, mcr = get_region((chunkx//32, chunky//32),(None,None,None,None));
+                if c is not None and mcr.chunkExists(chunkx,chunky):                  
                     chunklist.append((col, row, chunkx, chunky, c))
         return chunklist
 
@@ -561,16 +564,7 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
     # anyways just in case). "chunks" should include up to rowstart-16
 
     imgpath = path + "." + quadtree.imgformat
-    
     world = quadtree.world
-    # first, remove chunks from `chunks` that don't actually exist in
-    # their region files
-    def chunk_exists(chunk):
-        _, _, chunkx, chunky, region = chunk
-        r = world.load_region(region)
-        return r.chunkExists(chunkx, chunky)            
-    chunks = filter(chunk_exists, chunks)
-
     #stat the file, we need to know if it exists or it's mtime
     try:    
         tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
@@ -602,12 +596,11 @@ def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path)
         needs_rerender = False
         for col, row, chunkx, chunky, regionfile in chunks:
             # check region file mtime first. 
-            regionMtime = world.get_region_mtime(regionfile)  
+            region,regionMtime = world.get_region_mtime(regionfile)  
             if regionMtime <= tile_mtime:
                 continue
             
             # checking chunk mtime
-            region = world.load_region(regionfile)
             if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
                 needs_rerender = True
                 break

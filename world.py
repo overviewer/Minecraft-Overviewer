@@ -80,7 +80,7 @@ class World(object):
             mcr = nbt.MCRFileReader(regionfile)
             mcr.get_chunk_info()
             regions[regionfile] = (mcr,os.path.getmtime(regionfile))
-            regionfiles[(x,y)]	= (x,y,regionfile)
+            regionfiles[(x,y)]	= (x,y,regionfile,mcr)
         self.regionfiles = regionfiles	
         self.regions = regions
         logging.debug("Done scanning regions")
@@ -116,7 +116,7 @@ class World(object):
     def get_region_path(self, chunkX, chunkY):
         """Returns the path to the region that contains chunk (chunkX, chunkY)
         """
-        _, _, regionfile = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None));
+        _, _, regionfile,_ = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None,None));
         return regionfile
     
     def load_from_region(self,filename, x, y):
@@ -135,7 +135,7 @@ class World(object):
         return self.regions[filename][0]
         
     def get_region_mtime(self,filename):                  
-        return self.regions[filename][1]        
+        return self.regions[filename]        
         
     def convert_coords(self, chunkx, chunky):
         """Takes a coordinate (chunkx, chunky) where chunkx and chunky are
