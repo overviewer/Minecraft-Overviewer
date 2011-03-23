@@ -17,45 +17,7 @@
 
 #include "overviewer.h"
 
-static int
-rendermode_normal_start(void *data, RenderState *state) {
-    /* do nothing */
-    return 0;
-}
-
-static void
-rendermode_normal_finish(void *data, RenderState *state) {
-    /* do nothing */
-}
-
-static int
-rendermode_normal_occluded(void *data, RenderState *state) {
-    int x = state->x, y = state->y, z = state->z;
-    
-    if ( (x != 0) && (y != 15) && (z != 127) &&
-         !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
-         !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
-         !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
-        return 1;
-    }
-
-    return 0;
-}
-
-static void
-rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
-    alpha_over(state->img, src, mask, state->imgx, state->imgy, 0, 0);
-}
-
-RenderModeInterface rendermode_normal = {
-    sizeof(RenderModeNormal),
-    rendermode_normal_start,
-    rendermode_normal_finish,
-    rendermode_normal_occluded,
-    rendermode_normal_draw,
-};
-
-/* putting it all together */
+/* decides which render mode to use */
 RenderModeInterface *get_render_mode(RenderState *state) {
     /* default: normal */
     RenderModeInterface *iface = &rendermode_normal;
