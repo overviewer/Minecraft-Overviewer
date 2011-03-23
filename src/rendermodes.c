@@ -16,16 +16,19 @@
  */
 
 #include "overviewer.h"
+#include <string.h>
 
 /* decides which render mode to use */
 RenderModeInterface *get_render_mode(RenderState *state) {
     /* default: normal */
     RenderModeInterface *iface = &rendermode_normal;
-    PyObject *quadtree = PyObject_GetAttrString(state->self, "quadtree");
-    PyObject *lighting = PyObject_GetAttrString(quadtree, "lighting");
+    PyObject *rendermode_py = PyObject_GetAttrString(state->self, "rendermode");
+    const char *rendermode = PyString_AsString(rendermode_py);
     
-    if (PyObject_IsTrue(lighting))
+    if (strcmp(rendermode, "lighting") == 0) {
         iface = &rendermode_lighting;
+    }
     
+    Py_DECREF(rendermode_py);
     return iface;
 }

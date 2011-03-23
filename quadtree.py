@@ -84,9 +84,6 @@ class QuadtreeGen(object):
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
         
-        self.lighting = rendermode in ("lighting", "night", "spawn")
-        self.night = rendermode in ("night", "spawn")
-        self.spawn = rendermode in ("spawn",)
         self.rendermode = rendermode
 
         # Make the destination dir

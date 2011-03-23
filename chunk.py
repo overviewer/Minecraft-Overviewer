@@ -134,7 +134,7 @@ def render_to_image(chunkcoords, img, imgcoords, quadtreeobj, cave=False, queue=
 
     If the chunk doesn't exist, return False.
     Else, returns True."""
-    a = ChunkRenderer(chunkcoords, quadtreeobj.world, quadtreeobj, queue)
+    a = ChunkRenderer(chunkcoords, quadtreeobj.world, quadtreeobj.rendermode, queue)
     try:
         a.chunk_render(img, imgcoords[0], imgcoords[1], cave)
         return True
@@ -162,7 +162,7 @@ class NoSuchChunk(Exception):
     pass
 
 class ChunkRenderer(object):
-    def __init__(self, chunkcoords, worldobj, quadtreeobj, queue):
+    def __init__(self, chunkcoords, worldobj, rendermode, queue):
         """Make a new chunk renderer for the given chunk coordinates.
         chunkcoors should be a tuple: (chunkX, chunkY)
         
@@ -189,7 +189,7 @@ class ChunkRenderer(object):
         self.chunkY = chunkcoords[1]
 
         self.world = worldobj
-        self.quadtree = quadtreeobj
+        self.rendermode = rendermode
 
         if self.world.useBiomeData:
             # make sure we've at least *tried* to load the color arrays in this process...
