@@ -73,10 +73,10 @@ def get_blockarray(level):
     Block array, which just contains all the block ids"""
     return numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
 
-def get_blockarray_fromfile(world,filename):
-    """Same as get_blockarray except takes a filename and uses get_lvldata to
-    open it. This is a shortcut"""
-    level = get_lvldata(world,filename)
+def get_blockarray_fromfile(filename):
+    """Same as get_blockarray except takes a filename. This is a shortcut"""
+    d =  nbt.load_from_region(filename, x, y)
+    level = return d[1]['Level']
     return get_blockarray(level)
 
 def get_skylight_array(level):

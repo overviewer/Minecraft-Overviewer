@@ -33,30 +33,34 @@ if os.path.exists(worlddir):
 else:
     sys.exit("Bad WorldDir")
 
-matcher = re.compile(r"^c\..*\.dat$")
+matcher = re.compile(r"^r\..*\.mcr$")
 
 POI = []
 
 for dirpath, dirnames, filenames in os.walk(worlddir):
     for f in filenames:
         if matcher.match(f):
+            print f
             full = os.path.join(dirpath, f)
-            #print "inspecting %s" % full
-            data = nbt.load(full)[1]['Level']['TileEntities']
-            for entity in data:
-                if entity['id'] == 'Sign':
-                    msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])
-                    #print "checking -->%s<--" % msg.strip()
-                    if msg.strip():
-                        newPOI = dict(type="sign",
-                                        x= entity['x'],
-                                        y= entity['y'],
-                                        z= entity['z'],
-                                        msg=msg,
-                                        chunk= (entity['x']/16, entity['z']/16),
-                                       )
-                        POI.append(newPOI)
-                        print "Found sign at (%d, %d, %d): %r" % (newPOI['x'], newPOI['y'], newPOI['z'], newPOI['msg'])
+            r = nbt.load_region(full)
+            chunks = r.get_chunks()
+            for x,y in chunks:
+                chunk = r.load_chunk(x,y).read_all()                
+                data = chunk[1]['Level']['TileEntities']
+                for entity in data:
+                    if entity['id'] == 'Sign':
+                        msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])
+                        #print "checking -->%s<--" % msg.strip()
+                        if msg.strip():
+                            newPOI = dict(type="sign",
+                                            x= entity['x'],
+                                            y= entity['y'],
+                                            z= entity['z'],
+                                            msg=msg,
+                                            chunk= (entity['x']/16, entity['z']/16),
+                                           )
+                            POI.append(newPOI)
+                            print "Found sign at (%d, %d, %d): %r" % (newPOI['x'], newPOI['y'], newPOI['z'], newPOI['msg'])
 
 
 
