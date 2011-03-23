@@ -70,6 +70,15 @@ typedef struct {
     
     PyObject *black_color, *facemasks_py;
     PyObject *facemasks[3];
+    
+    /* extra block data, loaded off the chunk class */
+    PyObject *skylight, *blocklight;
+    PyObject *left_blocks, *left_skylight, *left_blocklight;
+    PyObject *right_blocks, *right_skylight, *right_blocklight;
+    
+    /* can be overridden in derived rendermodes to control lighting
+       arguments are skylight, blocklight */
+    float (*calculate_darkness)(unsigned char, unsigned char);
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
 

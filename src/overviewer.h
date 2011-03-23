@@ -32,6 +32,10 @@
 /* macro for getting a value out of a 3D numpy byte array */
 #define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (x), (y), (z))))
 
+/* generally useful MAX / MIN macros */
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 /* in composite.c */
 Imaging imaging_python_to_c(PyObject *obj);
 PyObject *alpha_over(PyObject *dest, PyObject *src, PyObject *mask, int dx,
