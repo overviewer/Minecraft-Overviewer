@@ -281,12 +281,15 @@ class MCRFileReader(object):
         as a list of (x, y) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
         
-        if self._chunks:
+        if self._chunks is not None:
             return self._chunks
         if self._locations is None:
             self.get_chunk_info()       
-        self._chunks = filter(None,self._locations) 
-        
+        self._chunks = [] 
+        for x in xrange(32): 
+            for y in xrange(32): 
+                if self._locations[x + y * 32] is not None:
+                    self._chunks.append((x,y))
         return self._chunks
         
     def get_chunk_info(self,closeFile = True):
@@ -296,7 +299,7 @@ class MCRFileReader(object):
             return
         
         if self._file is None:
-            self._file = open(self._filename,'rb');
+            self._file = open(self._filename,'rb')
 
         self._chunks = None
         self._locations = []
@@ -307,13 +310,13 @@ class MCRFileReader(object):
         
         # read chunk location table
         locations_append = self._locations.append
-        for x, y in [(x,y) for x in xrange(32) for y in xrange(32)]:    
+        for _ in xrange(32*32): 
             locations_append(self._read_chunk_location())
         
         # read chunk timestamp table
         timestamp_append = self._timestamps.append
-        for x, y in [(x,y) for x in xrange(32) for y in xrange(32)]:
-                timestamp_append(self._read_chunk_timestamp())
+        for _ in xrange(32*32): 
+            timestamp_append(self._read_chunk_timestamp())
  
         if closeFile:        
             #free the file object since it isn't safe to be reused in child processes (seek point goes wonky!)
