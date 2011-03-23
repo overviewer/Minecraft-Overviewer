@@ -25,15 +25,27 @@ static float calculate_darkness(unsigned char skylight, unsigned char blocklight
 }
 
 /* loads the appropriate light data for the given (possibly non-local)
-   coordinates, and returns a black_coeff
-   this is exposed, so other (derived) rendermodes can use it */
+ * coordinates, and returns a black_coeff this is exposed, so other (derived)
+ * rendermodes can use it
+ *  
+ * authoratative is a return slot for whether or not this lighting calculation
+ * is true, or a guess. If we guessed, *authoratative will be false, but if it
+ * was calculated correctly from available light data, it will be true. You
+ * may (and probably should) pass NULL.
+ */
 inline float
-get_lighting_coefficient(RenderModeLighting *self, RenderState *state, int x, int y, int z) {
+get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
+                         int x, int y, int z, int *authoratative) {
+    
     /* placeholders for later data arrays, coordinates */
     PyObject *blocks = NULL;
     PyObject *skylight = NULL;
     PyObject *blocklight = NULL;
     int local_x = x, local_y = y, local_z = z;
+    
+    /* defaults to "guess" until told otherwise */
+    if (authoratative)
+        *authoratative = 0;
     
     /* find out what chunk we're in, and translate accordingly */
     if (x >= 0 && y < 16) {
@@ -76,8 +88,31 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state, int x, in
         return self->calculate_darkness(15, 0);
     }
     
-    if (block == 44) {
-        /* TODO special handling for half-blocks! */
+    /* only do special half-step handling if no authoratative pointer was
+       passed in, which is a sign that we're recursing */
+    if (block == 44 && authoratative == NULL) {
+        float average_gather = 0.0f;
+        unsigned int average_count = 0;
+        int auth;
+        float coeff;
+        
+        /* iterate through all surrounding blocks to take an average */
+        int dx, dy, dz;
+        for (dx = -1; dx <= 1; dx += 2) {
+            for (dy = -1; dy <= 1; dy += 2) {
+                for (dz = -1; dz <= 1; dz += 2) {
+                    coeff = get_lighting_coefficient(self, state, x+dx, y+dy, z+dz, &auth);
+                    if (auth) {
+                        average_gather += coeff;
+                        average_count++;
+                    }
+                }
+            }
+        }
+        
+        /* only return the average if at least one was authoratative */
+        if (average_count > 0)
+            return average_gather / average_count;
     }
     
     if (block == 10 || block == 11) {
@@ -87,6 +122,10 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state, int x, in
     
     unsigned char skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
     unsigned char blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
+    
+    /* no longer a guess */
+    if (authoratative)
+        *authoratative = 1;
     
     return self->calculate_darkness(skylevel, blocklevel);
 }
@@ -105,7 +144,7 @@ do_shading_for_face(RenderModeLighting *self, RenderState *state,
         }
     }
     
-    float black_coeff = get_lighting_coefficient(self, state, x, y, z);    
+    float black_coeff = get_lighting_coefficient(self, state, x, y, z, NULL);
     
     PyObject *mask = PyObject_CallMethod(facemask, "copy", NULL); // new ref
     brightness(mask, black_coeff);

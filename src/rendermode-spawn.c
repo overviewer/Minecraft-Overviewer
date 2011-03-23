@@ -67,9 +67,9 @@ rendermode_spawn_draw(void *data, RenderState *state, PyObject *src, PyObject *m
        this block for transparents, the block above for non-transparent */
     float darkness = 0.0;
     if (is_transparent(state->block)) {
-        darkness = get_lighting_coefficient((RenderModeLighting *)self, state, x, y, z);
+        darkness = get_lighting_coefficient((RenderModeLighting *)self, state, x, y, z, NULL);
     } else {
-        darkness = get_lighting_coefficient((RenderModeLighting *)self, state, x, y, z+1);
+        darkness = get_lighting_coefficient((RenderModeLighting *)self, state, x, y, z+1, NULL);
     }
     
     /* if it's dark enough... */
