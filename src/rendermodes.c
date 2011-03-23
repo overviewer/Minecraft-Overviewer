@@ -27,6 +27,8 @@ RenderModeInterface *get_render_mode(RenderState *state) {
     
     if (strcmp(rendermode, "lighting") == 0) {
         iface = &rendermode_lighting;
+    } else if (strcmp(rendermode, "night") == 0) {
+        iface = &rendermode_night;
     }
     
     Py_DECREF(rendermode_py);

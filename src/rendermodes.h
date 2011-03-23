@@ -21,12 +21,13 @@
  *     * add a data struct and extern'd interface declaration below
  *
  *     * fill in this interface struct in rendermode-(yourmode).c
- *         (see rendermodes.c for an example: the "normal" mode)
+ *         (see rendermodes-normal.c for an example: the "normal" mode)
  *
  *     * if you want to derive from (say) the "normal" mode, put
  *       a RenderModeNormal entry at the top of your data struct, and
  *       be sure to call your parent's functions in your own!
- *         (see rendermode-lighting.c for an example)
+ *         (see rendermode-night.c for a simple example derived from
+ *          the "lighting" mode)
  *
  *     * add a condition to get_render_mode() in rendermodes.c
  */
@@ -81,5 +82,12 @@ typedef struct {
     float (*calculate_darkness)(unsigned char, unsigned char);
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
+
+/* NIGHT */
+typedef struct {
+    /* inherits from lighting */
+    RenderModeLighting parent;
+} RenderModeNight;
+extern RenderModeInterface rendermode_night;
 
 #endif /* __RENDERMODES_H_INCLUDED__ */
