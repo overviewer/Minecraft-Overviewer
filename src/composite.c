@@ -59,33 +59,42 @@ imaging_python_to_c(PyObject *obj)
 }
 
 /**
- * img should be an Image object, type 'L'
+ * img should be an Image object, type 'L' or 'RGBA'
+ * for RGBA images, operates on the alpha only
  * factor should be between 0 and 1, inclusive
  */
-PyObject *brightness(PyObject *img, double factor) {
+PyObject *brightness(PyObject *img, float factor) {
     Imaging imDest;
 
     imDest = imaging_python_to_c(img);
-    assert(imDest);
+    if (!imDest)
+        return NULL;
 
+    if (strcmp(imDest->mode, "RGBA") != 0 && strcmp(imDest->mode, "L") != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "given image does not have mode \"RGBA\" or \"L\"");
+        return NULL;
+    }
+    
+    /* how far into image the first alpha byte resides */
+    int offset = (imDest->pixelsize == 4 ? 3 : 0);
+    /* how many bytes to skip to get to the next alpha byte */
+    int stride = imDest->pixelsize;
+    
     int x, y;
 
     int xsize = imDest->xsize;
     int ysize = imDest->ysize;
 
     for (y = 0; y < ysize; y++) {
-        UINT8 *out = (UINT8 *)imDest->image[y];
-        //UINT8 *outmask = (UINT8 *)imDest->image[y] + 3;
+        UINT8 *out = (UINT8 *)imDest->image[y] + offset;
 
         for (x = 0; x < xsize; x++) {
-            //printf("old out: %d\n", *out);
             *out *= factor;
-            //printf("new out: %d\n", *out);
-            out++;
+            out += stride;
         }
     }
     return NULL;
-
 }
 
 /* the alpha_over function, in a form that can be called from C */

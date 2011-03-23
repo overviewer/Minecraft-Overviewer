@@ -133,8 +133,8 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
 /* shades the drawn block with the given facemask/black_color, based on the
    lighting results from (x, y, z) */
 static inline void
-do_shading_for_face(RenderModeLighting *self, RenderState *state,
-                    int x, int y, int z, PyObject *facemask) {
+do_shading_with_mask(RenderModeLighting *self, RenderState *state,
+                     int x, int y, int z, PyObject *facemask) {
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
         unsigned char block = getArrayByte3D(state->blocks, x, y, z);
@@ -220,10 +220,15 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
     RenderModeLighting* self = (RenderModeLighting *)data;
     int x = state->x, y = state->y, z = state->z;
     
-    // TODO whole-block shading for transparent blocks
-    do_shading_for_face(self, state, x, y, z+1, self->facemasks[0]);
-    do_shading_for_face(self, state, x-1, y, z, self->facemasks[1]);
-    do_shading_for_face(self, state, x, y+1, z, self->facemasks[2]);
+    if (is_transparent(state->block)) {
+        /* transparent: do shading on whole block */
+        do_shading_with_mask(self, state, x, y, z, mask);
+    } else {
+        /* opaque: do per-face shading */
+        do_shading_with_mask(self, state, x, y, z+1, self->facemasks[0]);
+        do_shading_with_mask(self, state, x-1, y, z, self->facemasks[1]);
+        do_shading_with_mask(self, state, x, y+1, z, self->facemasks[2]);
+    }
 }
 
 RenderModeInterface rendermode_lighting = {
