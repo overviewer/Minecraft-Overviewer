@@ -215,6 +215,29 @@ class QuadtreeGen(object):
 
         return x, y
         
+    def get_chunks_in_range(self, colstart, colend, rowstart, rowend):
+        """Get chunks that are relevant to the tile rendering function that's
+        rendering that range"""
+        chunklist = []
+        unconvert_coords = self.world.unconvert_coords
+        #get_region_path = self.world.get_region_path
+        get_region = self.world.regionfiles.get
+        for row in xrange(rowstart-16, rowend+1):
+            for col in xrange(colstart, colend+1):
+                # due to how chunks are arranged, we can only allow
+                # even row, even column or odd row, odd column
+                # otherwise, you end up with duplicates!
+                if row % 2 != col % 2:
+                    continue
+                
+                # return (col, row, chunkx, chunky, regionpath)
+                chunkx, chunky = unconvert_coords(col, row)
+                #c = get_region_path(chunkx, chunky)
+                _, _, c, mcr = get_region((chunkx//32, chunky//32),(None,None,None,None));
+                if c is not None and mcr.chunkExists(chunkx,chunky):                  
+                    chunklist.append((col, row, chunkx, chunky, c))
+        return chunklist   
+        
     def get_worldtiles(self):
         """Returns an iterator over the tiles of the most detailed layer
         """

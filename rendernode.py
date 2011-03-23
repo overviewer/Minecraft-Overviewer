@@ -76,13 +76,12 @@ def roundrobin(iterables):
 
             
 class RenderNode(object):
-    def __init__(self, world, quadtrees):
-        """Distributes the rendering of a list of quadtrees. All of the quadtrees must have the same world."""
+    def __init__(self, quadtrees):
+        """Distributes the rendering of a list of quadtrees."""
 
         if not len(quadtrees) > 0:
             raise ValueError("there must be at least one quadtree to work on")    
 
-        self.world = world
         self.quadtrees = quadtrees
         #bind an index value to the quadtree so we can find it again
         i = 0
@@ -213,32 +212,6 @@ class RenderNode(object):
         for q in quadtrees:
             q.render_innertile(os.path.join(q.destdir, q.tiledir), "base")
         
-        
-    def _get_chunks_in_range(self, colstart, colend, rowstart, rowend):
-        """Get chunks that are relevant to the tile rendering function that's
-        rendering that range"""
-        chunklist = []
-        unconvert_coords = self.world.unconvert_coords
-        #get_region_path = self.world.get_region_path
-        get_region = self.world.regionfiles.get
-        for row in xrange(rowstart-16, rowend+1):
-            for col in xrange(colstart, colend+1):
-                # due to how chunks are arranged, we can only allow
-                # even row, even column or odd row, odd column
-                # otherwise, you end up with duplicates!
-                if row % 2 != col % 2:
-                    continue
-                
-                # return (col, row, chunkx, chunky, regionpath)
-                chunkx, chunky = unconvert_coords(col, row)
-                #c = get_region_path(chunkx, chunky)
-                _, _, c, mcr = get_region((chunkx//32, chunky//32),(None,None,None,None));
-                if c is not None and mcr.chunkExists(chunkx,chunky):                  
-                    chunklist.append((col, row, chunkx, chunky, c))
-        return chunklist        
-        
-
-        
     def _apply_render_worldtiles(self, pool,batch_size):
         """Returns an iterator over result objects. Each time a new result is
         requested, a new task is added to the pool and a result returned.
@@ -293,7 +266,6 @@ def render_worldtile_batch(batch):
     global child_rendernode
     rendernode = child_rendernode
     count = 0
-    _get_chunks_in_range = rendernode._get_chunks_in_range
     #logging.debug("{0} working on batch of size {1}".format(os.getpid(),len(batch)))        
     for job in batch:
         count += 1    
@@ -307,7 +279,7 @@ def render_worldtile_batch(batch):
         # (even if tilechunks is empty, render_worldtile will delete
         # existing images if appropriate)    
         # And uses these chunks
-        tilechunks = _get_chunks_in_range(colstart, colend, rowstart,rowend)
+        tilechunks = quadtree.get_chunks_in_range(colstart, colend, rowstart,rowend)
         #logging.debug(" tilechunks: %r", tilechunks)
         
         quadtree.render_worldtile(tilechunks,colstart, colend, rowstart, rowend, path)      
