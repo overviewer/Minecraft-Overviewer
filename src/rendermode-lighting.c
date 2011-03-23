@@ -69,6 +69,12 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state, int x, in
     
     unsigned char block = getArrayByte3D(blocks, local_x, local_y, local_z);
     
+    /* if this block is opaque, use a fully-lit coeff instead
+       to prevent stippled lines along chunk boundaries! */
+    if (!is_transparent(block)) {
+        return self->calculate_darkness(15, 0);
+    }
+    
     if (block == 44) {
         /* TODO special handling for half-blocks! */
     }
