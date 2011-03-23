@@ -25,8 +25,9 @@ static float calculate_darkness(unsigned char skylight, unsigned char blocklight
 }
 
 /* loads the appropriate light data for the given (possibly non-local)
-   coordinates, and returns a black_coeff */
-static inline float
+   coordinates, and returns a black_coeff
+   this is exposed, so other (derived) rendermodes can use it */
+inline float
 get_lighting_coefficient(RenderModeLighting *self, RenderState *state, int x, int y, int z) {
     /* placeholders for later data arrays, coordinates */
     PyObject *blocks = NULL;

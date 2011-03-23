@@ -82,6 +82,7 @@ typedef struct {
     float (*calculate_darkness)(unsigned char, unsigned char);
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
+inline float get_lighting_coefficient(RenderModeLighting *self, RenderState *state, int x, int y, int z);
 
 /* NIGHT */
 typedef struct {
@@ -89,5 +90,17 @@ typedef struct {
     RenderModeLighting parent;
 } RenderModeNight;
 extern RenderModeInterface rendermode_night;
+
+/* SPAWN */
+typedef struct {
+    /* inherits from night */
+    RenderModeNight parent;
+    
+    /* used to figure out which blocks are spawnable */
+    PyObject *solid_blocks, *nospawn_blocks, *fluid_blocks;
+    /* replacement for black_color */
+    PyObject *red_color;
+} RenderModeSpawn;
+extern RenderModeInterface rendermode_spawn;
 
 #endif /* __RENDERMODES_H_INCLUDED__ */
