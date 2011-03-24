@@ -69,6 +69,7 @@ unsigned char
          * This uses a binary number of 4 digits to encode the info. 
          * The encode is:
          *
+         * 0b1234:
          * Bit:   1   2   3   4
          * Side: +x  +y  -x  -y
          * Values: bit = 0 -> The corresponding side block has different blockid
@@ -82,48 +83,48 @@ unsigned char
         if (state->x == 15) { /* +x direction */
             if (state->up_right_blocks != Py_None) { /* just in case we are in the end of the world */
                 if (getArrayByte3D(state->up_right_blocks, 0, state->y, state->z) == blockid) {
-                    pdata = pdata|0b1000;
+                    pdata = pdata|(1 << 3);
                 }
             }
         } else {
             if (getArrayByte3D(state->blocks, state->x + 1, state->y, state->z) == blockid) {
-                pdata = pdata|0b1000;
+                pdata = pdata|(1 << 3);
             }
         }
         
         if (state->y == 15) { /* +y direction*/
             if (state->right_blocks != Py_None) {
                 if (getArrayByte3D(state->right_blocks, state->x, 0, state->z) == blockid) {
-                    pdata = pdata|0b0100;
+                    pdata = pdata|(1 << 2);
                 }
             }
         } else {
             if (getArrayByte3D(state->blocks, state->x, state->y + 1, state->z) == blockid) {
-                pdata = pdata|0b0100;
+                pdata = pdata|(1 << 2);
             }
         }
         
         if (state->x == 0) { /* -x direction*/
             if (state->left_blocks != Py_None) {
                 if (getArrayByte3D(state->left_blocks, 15, state->y, state->z) == blockid) {
-                    pdata = pdata|0b0010;
+                    pdata = pdata|(1 << 1);
                 }
             }
         } else {
             if (getArrayByte3D(state->blocks, state->x - 1, state->y, state->z) == blockid) {
-                pdata = pdata|0b0010;
+                pdata = pdata|(1 << 1);
             }
         }
         
         if (state->y == 0) { /* -y direction */
             if (state->up_left_blocks != Py_None) {
                 if (getArrayByte3D(state->up_left_blocks, state->x, 15, state->z) == blockid) {
-                    pdata = pdata|0b0001;
+                    pdata = pdata|(1 << 0);
                 }
             }
         } else {
             if (getArrayByte3D(state->blocks, state->x, state->y - 1, state->z) == blockid) {
-                pdata = pdata|0b0001;
+                pdata = pdata|(1 << 0);
             }
         }
 
