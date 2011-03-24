@@ -58,6 +58,94 @@ is_transparent(unsigned char b) {
 
 }
 
+
+unsigned char
+    check_adjacent_blocks(RenderState *state, unsigned char blockid) {
+        /*
+         * Generates a pseudo ancillary data for blocks that depend of 
+         * what are surrounded and don't have ancillary data. This 
+         * function is through generate_pseudo_data.
+         *
+         * This uses a binary number of 4 digits to encode the info. 
+         * The encode is:
+         *
+         * Bit:   1   2   3   4
+         * Side: +x  +y  -x  -y
+         * Values: bit = 0 -> The corresponding side block has different blockid
+         *         bit = 1 -> The corresponding side block has same blockid
+         * Example: if the bit1 is 1 that means that there is a block with 
+         * blockid in the side of the +x direction.
+         */
+        
+        unsigned char pdata=0;
+        
+        if (state->x == 15) { /* +x direction */
+            if (state->up_right_blocks != NULL) { /* just in case we are in the end of the world */
+                if (getArrayByte3D(state->up_right_blocks, 0, state->y, state->z) == blockid) {
+                    pdata = pdata|0b1000;
+                }
+            }
+        } else {
+            if (getArrayByte3D(state->blocks, state->x + 1, state->y, state->z) == blockid) {
+                pdata = pdata|0b1000;
+            }
+        }
+        
+        if (state->y == 15) { /* +y direction*/
+            if (state->right_blocks != NULL) {
+                if (getArrayByte3D(state->right_blocks, state->x, 0, state->z) == blockid) {
+                    pdata = pdata|0b0100;
+                }
+            }
+        } else {
+            if (getArrayByte3D(state->blocks, state->x, state->y + 1, state->z) == blockid) {
+                pdata = pdata|0b0100;
+            }
+        }
+        
+        if (state->x == 0) { /* -x direction*/
+            if (state->left_blocks != NULL) {
+                if (getArrayByte3D(state->left_blocks, 15, state->y, state->z) == blockid) {
+                    pdata = pdata|0b0010;
+                }
+            }
+        } else {
+            if (getArrayByte3D(state->blocks, state->x - 1, state->y, state->z) == blockid) {
+                pdata = pdata|0b0010;
+            }
+        }
+        
+        if (state->y == 0) { /* -y direction */
+            if (state->up_left_blocks != NULL) {
+                if (getArrayByte3D(state->up_left_blocks, state->x, 15, state->z) == blockid) {
+                    pdata = pdata|0b0001;
+                }
+            }
+        } else {
+            if (getArrayByte3D(state->blocks, state->x, state->y - 1, state->z) == blockid) {
+                pdata = pdata|0b0001;
+            }
+        }
+
+        return pdata;
+}
+
+
+unsigned char
+generate_pseudo_data(RenderState *state) {
+    /*
+     * Generates a fake ancillary data for blocks that are drawn 
+     * depending on what are surrounded.
+     */
+
+    if (state->block == 85) { /* fences */
+        return check_adjacent_blocks(state, state->block);
+    }
+    return 0;
+
+}
+
+
 /* TODO triple check this to make sure reference counting is correct */
 PyObject*
 chunk_render(PyObject *self, PyObject *args) {
@@ -173,8 +261,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     
                     unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
                     if (state.block == 85) {
-                        /* fence.  skip the generate_pseudo_ancildata for now */
-                        continue;
+                        ancilData = generate_pseudo_data(&state);
                     }
                     
                     tmp = PyTuple_New(2);
