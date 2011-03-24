@@ -83,8 +83,6 @@ PyObject *brightness(PyObject *img, float factor) {
     /* how many bytes to skip to get to the next alpha byte */
     stride = imDest->pixelsize;
     
-    x, y;
-
     xsize = imDest->xsize;
     ysize = imDest->ysize;
 
