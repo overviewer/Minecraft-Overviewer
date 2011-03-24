@@ -62,6 +62,10 @@ typedef struct {
     int x, y, z;
     unsigned char block;
     PyObject *blocks;
+    PyObject *up_left_blocks;
+    PyObject *up_right_blocks;
+    PyObject *left_blocks;
+    PyObject *right_blocks;
 } RenderState;
 int init_chunk_render(void);
 int is_transparent(unsigned char b);

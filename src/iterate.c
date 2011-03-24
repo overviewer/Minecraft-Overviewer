@@ -70,6 +70,10 @@ chunk_render(PyObject *self, PyObject *args) {
     int imgsize0, imgsize1;
     
     PyObject *blocks_py;
+    PyObject *left_blocks_py;
+    PyObject *right_blocks_py;
+    PyObject *up_left_blocks_py;
+    PyObject *up_right_blocks_py;
 
     RenderModeInterface *rendermode;
 
@@ -109,10 +113,17 @@ chunk_render(PyObject *self, PyObject *args) {
     blocks_py = PyObject_GetAttrString(state.self, "blocks");
     state.blocks = blocks_py;
 
-    /*
-    PyObject *left_blocks = PyObject_GetAttrString(chunk, "left_blocks");
-    PyObject *right_blocks = PyObject_GetAttrString(chunk, "right_blocks");
-    */
+    left_blocks_py = PyObject_GetAttrString(state.self, "left_blocks");
+    state.left_blocks = left_blocks_py;
+
+    right_blocks_py = PyObject_GetAttrString(state.self, "right_blocks");
+    state.right_blocks = right_blocks_py;
+
+    up_left_blocks_py = PyObject_GetAttrString(state.self, "up_left_blocks");
+    state.up_left_blocks = up_left_blocks_py;
+
+    up_right_blocks_py = PyObject_GetAttrString(state.self, "up_right_blocks");
+    state.up_right_blocks = up_right_blocks_py;
     
     for (state.x = 15; state.x > -1; state.x--) {
         for (state.y = 0; state.y < 16; state.y++) {
@@ -203,6 +214,10 @@ chunk_render(PyObject *self, PyObject *args) {
     free(rm_data);
     
     Py_DECREF(blocks_py);
+    Py_XDECREF(left_blocks_py);
+    Py_XDECREF(right_blocks_py);
+    Py_XDECREF(up_left_blocks_py);
+    Py_XDECREF(up_right_blocks_py);
 
     return Py_BuildValue("i",2);
 }
