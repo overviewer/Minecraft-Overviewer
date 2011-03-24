@@ -1,6 +1,7 @@
 from distutils.core import setup, Extension
 from distutils.command.build import build
 from distutils.command.clean import clean
+from distutils.command.build_ext import build_ext
 from distutils.dir_util import remove_tree
 from distutils import log
 import os, os.path
@@ -46,7 +47,7 @@ except AttributeError:
 
 c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c']
 c_overviewer_files += ['src/rendermodes.c', 'src/rendermode-normal.c', 'src/rendermode-lighting.c', 'src/rendermode-night.c', 'src/rendermode-spawn.c']
-setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
+setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], extra_link_args=[]))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
@@ -75,8 +76,25 @@ class CustomClean(clean):
         else:
             log.debug("'%s' does not exist -- can't clean it",
                       pretty_fname)
+
+class CustomBuild(build_ext):
+    def build_extensions(self):
+        c = self.compiler.compiler_type
+        if c == "msvc":
+            # customize the build options for this compilier
+            for e in self.extensions:
+                e.extra_link_args.append("/MANIFEST")
+
+        build_ext.build_extensions(self)
+        
+
+
 setup_kwargs['cmdclass']['clean'] = CustomClean
+setup_kwargs['cmdclass']['build_ext'] = CustomBuild
 
 ###
 
 setup(**setup_kwargs)
+
+
+print "\nBuild Complete"
