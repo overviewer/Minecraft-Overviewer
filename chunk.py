@@ -50,6 +50,10 @@ def get_lvldata(world, filename, x, y, retries=2):
     """Takes a filename and chunkcoords and returns the Level struct, which contains all the
     level info"""
     
+    # non existent region file doesn't mean corrupt chunk.
+    if filename == None:
+        return None
+    
     try:
         d =  world.load_from_region(filename, x, y)
     except Exception, e:
