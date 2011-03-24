@@ -80,7 +80,7 @@ unsigned char
         unsigned char pdata=0;
         
         if (state->x == 15) { /* +x direction */
-            if (state->up_right_blocks != NULL) { /* just in case we are in the end of the world */
+            if (state->up_right_blocks != Py_None) { /* just in case we are in the end of the world */
                 if (getArrayByte3D(state->up_right_blocks, 0, state->y, state->z) == blockid) {
                     pdata = pdata|0b1000;
                 }
@@ -92,7 +92,7 @@ unsigned char
         }
         
         if (state->y == 15) { /* +y direction*/
-            if (state->right_blocks != NULL) {
+            if (state->right_blocks != Py_None) {
                 if (getArrayByte3D(state->right_blocks, state->x, 0, state->z) == blockid) {
                     pdata = pdata|0b0100;
                 }
@@ -104,7 +104,7 @@ unsigned char
         }
         
         if (state->x == 0) { /* -x direction*/
-            if (state->left_blocks != NULL) {
+            if (state->left_blocks != Py_None) {
                 if (getArrayByte3D(state->left_blocks, 15, state->y, state->z) == blockid) {
                     pdata = pdata|0b0010;
                 }
@@ -116,7 +116,7 @@ unsigned char
         }
         
         if (state->y == 0) { /* -y direction */
-            if (state->up_left_blocks != NULL) {
+            if (state->up_left_blocks != Py_None) {
                 if (getArrayByte3D(state->up_left_blocks, state->x, 15, state->z) == blockid) {
                     pdata = pdata|0b0001;
                 }
