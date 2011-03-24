@@ -55,12 +55,12 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         blocklight = self->blocklight;
     } else if (x < 0) {
         local_x += 16;        
-        blocks = self->left_blocks;
+        blocks = state->left_blocks;
         skylight = self->left_skylight;
         blocklight = self->left_blocklight;
     } else if (y >= 16) {
         local_y -= 16;
-        blocks = self->right_blocks;
+        blocks = state->right_blocks;
         skylight = self->right_skylight;
         blocklight = self->right_blocklight;
     }
@@ -176,12 +176,8 @@ rendermode_lighting_start(void *data, RenderState *state) {
     
     self->skylight = PyObject_GetAttrString(state->self, "skylight");
     self->blocklight = PyObject_GetAttrString(state->self, "blocklight");
-
-    self->left_blocks = PyObject_GetAttrString(state->self, "left_blocks");
     self->left_skylight = PyObject_GetAttrString(state->self, "left_skylight");
     self->left_blocklight = PyObject_GetAttrString(state->self, "left_blocklight");
-
-    self->right_blocks = PyObject_GetAttrString(state->self, "right_blocks");
     self->right_skylight = PyObject_GetAttrString(state->self, "right_skylight");
     self->right_blocklight = PyObject_GetAttrString(state->self, "right_blocklight");
     
@@ -199,12 +195,8 @@ rendermode_lighting_finish(void *data, RenderState *state) {
     
     Py_DECREF(self->skylight);
     Py_DECREF(self->blocklight);
-
-    Py_DECREF(self->left_blocks);
     Py_DECREF(self->left_skylight);
     Py_DECREF(self->left_blocklight);
-
-    Py_DECREF(self->right_blocks);
     Py_DECREF(self->right_skylight);
     Py_DECREF(self->right_blocklight);
     
