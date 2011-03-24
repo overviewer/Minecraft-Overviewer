@@ -66,6 +66,8 @@ imaging_python_to_c(PyObject *obj)
 PyObject *brightness(PyObject *img, float factor) {
     Imaging imDest;
 
+    int offset, stride, x, y, xsize, ysize;
+
     imDest = imaging_python_to_c(img);
     if (!imDest)
         return NULL;
@@ -77,14 +79,14 @@ PyObject *brightness(PyObject *img, float factor) {
     }
     
     /* how far into image the first alpha byte resides */
-    int offset = (imDest->pixelsize == 4 ? 3 : 0);
+    offset = (imDest->pixelsize == 4 ? 3 : 0);
     /* how many bytes to skip to get to the next alpha byte */
-    int stride = imDest->pixelsize;
+    stride = imDest->pixelsize;
     
-    int x, y;
+    x, y;
 
-    int xsize = imDest->xsize;
-    int ysize = imDest->ysize;
+    xsize = imDest->xsize;
+    ysize = imDest->ysize;
 
     for (y = 0; y < ysize; y++) {
         UINT8 *out = (UINT8 *)imDest->image[y] + offset;

@@ -27,13 +27,15 @@ static float calculate_darkness(unsigned char skylight, unsigned char blocklight
 
 static int
 rendermode_night_start(void *data, RenderState *state) {
+    RenderModeNight* self;    
+
     /* first, chain up */
     int ret = rendermode_lighting.start(data, state);
     if (ret != 0)
         return ret;
     
     /* override the darkness function with our night version! */
-    RenderModeNight* self = (RenderModeNight *)data;    
+    self = (RenderModeNight *)data;    
     self->parent.calculate_darkness = calculate_darkness;
     
     return 0;

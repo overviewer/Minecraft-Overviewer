@@ -20,13 +20,15 @@
 
 static int
 rendermode_spawn_start(void *data, RenderState *state) {
+    RenderModeSpawn* self;
+
     /* first, chain up */
     int ret = rendermode_night.start(data, state);
     if (ret != 0)
         return ret;
     
     /* now do custom initializations */
-    RenderModeSpawn* self = (RenderModeSpawn *)data;
+    self = (RenderModeSpawn *)data;
     self->solid_blocks = PyObject_GetAttrString(state->chunk, "solid_blocks");
     self->nospawn_blocks = PyObject_GetAttrString(state->chunk, "nospawn_blocks");
     self->fluid_blocks = PyObject_GetAttrString(state->chunk, "fluid_blocks");

@@ -49,7 +49,7 @@ int init_chunk_render(void) {
 
 }
 
-inline int
+int
 is_transparent(unsigned char b) {
     PyObject *block = PyInt_FromLong(b);
     int ret = PySequence_Contains(transparent_blocks, block);
@@ -70,6 +70,12 @@ chunk_render(PyObject *self, PyObject *args) {
     int imgsize0, imgsize1;
     
     PyObject *blocks_py;
+
+    RenderModeInterface *rendermode;
+
+    void *rm_data;
+                
+    PyObject *t = NULL;
     
     if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &blockdata_expanded))
         return Py_BuildValue("i", "-1");
@@ -79,8 +85,8 @@ chunk_render(PyObject *self, PyObject *args) {
     state.chunk = chunk_mod;
     
     /* set up the render mode */
-    RenderModeInterface *rendermode = get_render_mode(&state);
-    void* rm_data = malloc(rendermode->data_size);
+    rendermode = get_render_mode(&state);
+    rm_data = malloc(rendermode->data_size);
     if (rendermode->start(rm_data, &state)) {
         free(rm_data);
         return Py_BuildValue("i", "-1");
@@ -146,7 +152,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 }
                 
                 // everything stored here will be a borrowed ref
-                PyObject *t = NULL;
+
                 /* get the texture and mask from block type / ancil. data */
                 if (!PySequence_Contains(special_blocks, blockid)) {
                     /* t = textures.blockmap[blockid] */

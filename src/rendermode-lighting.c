@@ -42,6 +42,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
     PyObject *skylight = NULL;
     PyObject *blocklight = NULL;
     int local_x = x, local_y = y, local_z = z;
+    unsigned char block, skylevel, blocklevel;
     
     /* defaults to "guess" until told otherwise */
     if (authoratative)
@@ -80,7 +81,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         return self->calculate_darkness(15, 0);
     }
     
-    unsigned char block = getArrayByte3D(blocks, local_x, local_y, local_z);
+    block = getArrayByte3D(blocks, local_x, local_y, local_z);
     
     /* if this block is opaque, use a fully-lit coeff instead
        to prevent stippled lines along chunk boundaries! */
@@ -120,8 +121,8 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         return 0.0f;
     }
     
-    unsigned char skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
-    unsigned char blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
+    skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
+    blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
     
     /* no longer a guess */
     if (authoratative)
@@ -135,6 +136,9 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
 static inline void
 do_shading_with_mask(RenderModeLighting *self, RenderState *state,
                      int x, int y, int z, PyObject *facemask) {
+    float black_coeff;
+    PyObject *mask;
+
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
         unsigned char block = getArrayByte3D(state->blocks, x, y, z);
@@ -144,9 +148,9 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
         }
     }
     
-    float black_coeff = get_lighting_coefficient(self, state, x, y, z, NULL);
+    black_coeff = get_lighting_coefficient(self, state, x, y, z, NULL);
     
-    PyObject *mask = PyObject_CallMethod(facemask, "copy", NULL); // new ref
+    mask = PyObject_CallMethod(facemask, "copy", NULL); // new ref
     brightness(mask, black_coeff);
     alpha_over(state->img, self->black_color, mask, state->imgx, state->imgy, 0, 0);
     Py_DECREF(mask);
@@ -154,12 +158,14 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
 
 static int
 rendermode_lighting_start(void *data, RenderState *state) {
+    RenderModeLighting* self;
+
     /* first, chain up */
     int ret = rendermode_normal.start(data, state);
     if (ret != 0)
         return ret;
     
-    RenderModeLighting* self = (RenderModeLighting *)data;
+    self = (RenderModeLighting *)data;
     
     self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
     self->facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
@@ -214,11 +220,14 @@ rendermode_lighting_occluded(void *data, RenderState *state) {
 
 static void
 rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+    RenderModeLighting* self;
+    int x, y, z;
+
     /* first, chain up */
     rendermode_normal.draw(data, state, src, mask);
     
-    RenderModeLighting* self = (RenderModeLighting *)data;
-    int x = state->x, y = state->y, z = state->z;
+    self = (RenderModeLighting *)data;
+    x = state->x, y = state->y, z = state->z;
     
     if (is_transparent(state->block)) {
         /* transparent: do shading on whole block */
