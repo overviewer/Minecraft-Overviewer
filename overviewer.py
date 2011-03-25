@@ -32,6 +32,8 @@ import util
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
+#import this before to ensure it doesn't have an errors or c_overviewer will eat them
+import chunk
 # make sure the c_overviewer extension is available
 try:
     import c_overviewer

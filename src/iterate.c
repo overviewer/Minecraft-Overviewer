@@ -34,6 +34,12 @@ int init_chunk_render(void) {
     textures = PyImport_ImportModule("textures");
     chunk_mod = PyImport_ImportModule("chunk");
 
+    /* ensure none of these pointers are NULL */    
+    if ((!textures) || (!chunk_mod)) {
+        fprintf(stderr, "\ninit_chunk_render failed\n");
+        return 1;
+    }
+    
     blockmap = PyObject_GetAttrString(textures, "blockmap");
     special_blocks = PyObject_GetAttrString(textures, "special_blocks");
     specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
