@@ -49,6 +49,23 @@ helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>
 %prog -d <World # / Name / Path to World / Path to cache dir> [tiles dest dir]"""
 
+
+def findGitVersion():
+    if os.path.exists(".git"):
+        with open(os.path.join(".git","HEAD")) as f:
+            data = f.read().strip()
+        if data.startswith("ref: "):
+            with open(os.path.join(".git", data[5:])) as g:
+                return g.read().strip()
+        else:
+            return data
+    else:
+        try:
+            import overviewer_version
+            return overviewer_version.VERSION
+        except:
+            return "unknown"
+
 def main():
     try:
         cpus = multiprocessing.cpu_count()
@@ -56,6 +73,7 @@ def main():
         cpus = 1
 
     parser = ConfigOptionParser(usage=helptext, config="settings.py")
+    parser.add_option("-V", "--version", dest="version", help="Displays version information and then exits", action="store_true")
     parser.add_option("-p", "--processes", dest="procs", help="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
     parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", configFileOnly=True)
     parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true", commandLineOnly=True)
@@ -71,6 +89,18 @@ def main():
     #parser.add_option("--write-config", dest="write_config", action="store_true", help="Writes out a sample config file", commandLineOnly=True)
 
     options, args = parser.parse_args()
+
+    if options.version:
+        print "Minecraft-Overviewer"
+        print "Git version: %s" % findGitVersion()
+        try:
+            import overviewer_version
+            if hasattr(sys, "frozen"):
+                print "py2exe version build on %s" % overviewer_version.BUILD_DATE
+                print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
+        except:
+            pass
+        sys.exit(0)
 
     if len(args) < 1:
         print "You need to give me your world number or directory"
