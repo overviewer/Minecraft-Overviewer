@@ -7,6 +7,7 @@ from distutils import log
 import os, os.path
 import glob
 import platform
+import time
 
 try:
     import py2exe
@@ -88,10 +89,26 @@ class CustomBuild(build_ext):
         build_ext.build_extensions(self)
         
 
+if py2exe  is not None:
+# define a subclass of py2exe to build our version file on the fly
+    class CustomPy2exe(py2exe.build_exe.py2exe):
+        def run(self):
+            try:
+                import overviewer
+                f = open("overviewer_version.py", "w")
+                f.write("VERSION=%r\n" % overviewer.findGitVersion())
+                f.write("BUILD_DATE=%r\n" % time.asctime())
+                f.write("BUILD_PLATFORM=%r\n" % platform.processor())
+                f.write("BUILD_OS=%r\n" % platform.platform())
+                f.close()
+                setup_kwargs['data_files'].append(('.', ['overviewer_version.py']))
+            except:
+                print "WARNING: failed to build overview_version file"
+            py2exe.build_exe.py2exe.run(self)
+    setup_kwargs['cmdclass']['py2exe'] = CustomPy2exe
 
 setup_kwargs['cmdclass']['clean'] = CustomClean
 setup_kwargs['cmdclass']['build_ext'] = CustomBuild
-
 ###
 
 setup(**setup_kwargs)
