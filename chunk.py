@@ -76,7 +76,7 @@ def get_blockarray(level):
 def get_blockarray_fromfile(filename):
     """Same as get_blockarray except takes a filename. This is a shortcut"""
     d =  nbt.load_from_region(filename, x, y)
-    level = return d[1]['Level']
+    level = d[1]['Level']
     return get_blockarray(level)
 
 def get_skylight_array(level):

@@ -186,7 +186,7 @@ def main():
     q.append(quadtree.QuadtreeGen(w, destdir, depth=options.zoom, imgformat=imgformat, optimizeimg=optimizeimg, rendermode='spawn'))  
 
     #create the distributed render
-    r = rendernode.RenderNode(w,q)
+    r = rendernode.RenderNode(q)
     
     # write out the map and web assets
     m = googlemap.MapGen(q, skipjs=options.skipjs, web_assets_hook=options.web_assets_hook)
