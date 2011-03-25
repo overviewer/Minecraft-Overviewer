@@ -94,9 +94,9 @@ if py2exe  is not None:
     class CustomPy2exe(py2exe.build_exe.py2exe):
         def run(self):
             try:
-                import overviewer
+                import util
                 f = open("overviewer_version.py", "w")
-                f.write("VERSION=%r\n" % overviewer.findGitVersion())
+                f.write("VERSION=%r\n" % util.findGitVersion())
                 f.write("BUILD_DATE=%r\n" % time.asctime())
                 f.write("BUILD_PLATFORM=%r\n" % platform.processor())
                 f.write("BUILD_OS=%r\n" % platform.platform())

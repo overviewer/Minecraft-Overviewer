@@ -30,3 +30,21 @@ def get_program_path():
             return os.path.dirname(__file__)
         except NameError:
             return os.path.dirname(sys.argv[0])
+
+
+
+def findGitVersion():
+    if os.path.exists(".git"):
+        with open(os.path.join(".git","HEAD")) as f:
+            data = f.read().strip()
+        if data.startswith("ref: "):
+            with open(os.path.join(".git", data[5:])) as g:
+                return g.read().strip()
+        else:
+            return data
+    else:
+        try:
+            import overviewer_version
+            return overviewer_version.VERSION
+        except:
+            return "unknown"

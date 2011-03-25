@@ -28,6 +28,7 @@ import subprocess
 import multiprocessing
 import time
 import logging
+import util
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -50,21 +51,6 @@ helptext = """
 %prog -d <World # / Name / Path to World / Path to cache dir> [tiles dest dir]"""
 
 
-def findGitVersion():
-    if os.path.exists(".git"):
-        with open(os.path.join(".git","HEAD")) as f:
-            data = f.read().strip()
-        if data.startswith("ref: "):
-            with open(os.path.join(".git", data[5:])) as g:
-                return g.read().strip()
-        else:
-            return data
-    else:
-        try:
-            import overviewer_version
-            return overviewer_version.VERSION
-        except:
-            return "unknown"
 
 def main():
     try:
@@ -92,7 +78,7 @@ def main():
 
     if options.version:
         print "Minecraft-Overviewer"
-        print "Git version: %s" % findGitVersion()
+        print "Git version: %s" % util.findGitVersion()
         try:
             import overviewer_version
             if hasattr(sys, "frozen"):
