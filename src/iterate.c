@@ -32,11 +32,16 @@ int init_chunk_render(void) {
     if (blockmap) return 1;
 
     textures = PyImport_ImportModule("textures");
-    chunk_mod = PyImport_ImportModule("chunk");
-
     /* ensure none of these pointers are NULL */    
-    if ((!textures) || (!chunk_mod)) {
-        fprintf(stderr, "\ninit_chunk_render failed\n");
+    if ((!textures)) {
+        fprintf(stderr, "\ninit_chunk_render failed to load; textures\n");
+        return 1;
+    }
+
+    chunk_mod = PyImport_ImportModule("chunk");
+    /* ensure none of these pointers are NULL */    
+    if ((!chunk_mod)) {
+        fprintf(stderr, "\ninit_chunk_render failed to load; chunk\n");
         return 1;
     }
     
