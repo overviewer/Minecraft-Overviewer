@@ -217,12 +217,16 @@ class MCRFileReader(object):
             # go to the correct entry in the chunk location table
             self._file.seek(4 * (x + y * 32))
         
-        # 3-byte offset in 4KiB sectors
-        offset_sectors = self._read_24bit_int()
-        
-        # 1-byte length in 4KiB sectors, rounded up
-        byte = self._file.read(1)
-        length_sectors = struct.unpack("B", byte)[0]
+        try:
+            # 3-byte offset in 4KiB sectors
+            offset_sectors = self._read_24bit_int()
+            
+            # 1-byte length in 4KiB sectors, rounded up
+            byte = self._file.read(1)
+            length_sectors = struct.unpack("B", byte)[0]
+        except (IndexError, struct.error):
+            # got a problem somewhere
+            return None
         
         # check for empty chunks
         if offset_sectors == 0 or length_sectors == 0:
@@ -247,8 +251,11 @@ class MCRFileReader(object):
             # go to the correct entry in the chunk timestamp table
             self._file.seek(4 * (x + y * 32) + 4096)
         
-        bytes = self._file.read(4)
-        timestamp = struct.unpack(">I", bytes)[0]
+        try:
+            bytes = self._file.read(4)
+            timestamp = struct.unpack(">I", bytes)[0]
+        except (IndexError, struct.error):
+            return 0
         
         return timestamp
     
