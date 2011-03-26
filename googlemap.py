@@ -54,7 +54,8 @@ class MapGen(object):
     def __init__(self, quadtrees, skipjs=False, web_assets_hook=None):
         """Generates a Google Maps interface for the given list of
         quadtrees. All of the quadtrees must have the same destdir,
-        image format, and world."""
+        image format, and world. 
+        Note:tiledir for each quadtree should be unique. By default the tiledir is determined by the rendermode"""
         
         self.skipjs = skipjs
         self.web_assets_hook = web_assets_hook

@@ -27,6 +27,7 @@ import util
 import cPickle
 import stat
 import errno 
+import time
 from time import gmtime, strftime, sleep
 
 from PIL import Image
@@ -45,32 +46,9 @@ This module has routines related to generating a quadtree of tiles
 def iterate_base4(d):
     """Iterates over a base 4 number with d digits"""
     return itertools.product(xrange(4), repeat=d)
-
-def catch_keyboardinterrupt(func):
-    """Decorator that catches a keyboardinterrupt and raises a real exception
-    so that multiprocessing will propagate it properly"""
-    @functools.wraps(func)
-    def newfunc(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except KeyboardInterrupt:
-            logging.error("Ctrl-C caught!")
-            raise Exception("Exiting")
-        except:
-            import traceback
-            traceback.print_exc()
-            raise
-    return newfunc
-
-child_quadtree = None
-def pool_initializer(quadtree):
-    logging.debug("Child process {0}".format(os.getpid()))
-    #stash the quadtree object in a global variable after fork() for windows compat.
-    global child_quadtree
-    child_quadtree = quadtree    
-    
+   
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, tiledir="tiles", imgformat=None, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, depth=None, tiledir=None, imgformat=None, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -84,13 +62,18 @@ class QuadtreeGen(object):
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
         
+        self.lighting = rendermode in ("lighting", "night", "spawn")
+        self.night = rendermode in ("night", "spawn")
+        self.spawn = rendermode in ("spawn",)
         self.rendermode = rendermode
 
         # Make the destination dir
         if not os.path.exists(destdir):
             os.mkdir(destdir)
-        self.tiledir = tiledir
-
+        if tiledir is None:
+            tiledir = rendermode
+        self.tiledir = tiledir        
+        
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
             for p in xrange(15):
@@ -122,21 +105,7 @@ class QuadtreeGen(object):
 
         self.world = worldobj
         self.destdir = destdir
-
-    def print_statusline(self, complete, total, level, unconditional=False):
-        if unconditional:
-            pass
-        elif complete < 100:
-            if not complete % 25 == 0:
-                return
-        elif complete < 1000:
-            if not complete % 100 == 0:
-                return
-        else:
-            if not complete % 1000 == 0:
-                return
-        logging.info("{0}/{1} tiles complete on level {2}/{3}".format(
-                complete, total, level, self.p))
+        self.full_tiledir = os.path.join(destdir, tiledir)
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
@@ -212,60 +181,9 @@ class QuadtreeGen(object):
             os.rename(getpath("3", "0"), getpath("new3"))
             shutil.rmtree(getpath("3"))
             os.rename(getpath("new3"), getpath("3"))
-
-    def _apply_render_worldtiles(self, pool,batch_size):
-        """Returns an iterator over result objects. Each time a new result is
-        requested, a new task is added to the pool and a result returned.
-        """
-             
-        batch = []
-        tiles = 0
-        for path in iterate_base4(self.p):
-            # Get the range for this tile
-            colstart, rowstart = self._get_range_by_path(path)
-            colend = colstart + 2
-            rowend = rowstart + 4
-
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, self.tiledir, *(str(x) for x in path))
-            #logging.debug("this is rendered at %s", dest)
-            
-            # Put this in the batch to be submited to the pool                        
-            batch.append((colstart, colend, rowstart, rowend, dest))
-            tiles += 1
-            if tiles >= batch_size:
-                tiles = 0
-                yield pool.apply_async(func=render_worldtile_batch, args= [batch])
-                batch = []
-
-        if tiles > 0:
-            yield pool.apply_async(func=render_worldtile_batch, args= (batch,))
-
-
-    def _apply_render_inntertile(self, pool, zoom,batch_size):
-        """Same as _apply_render_worltiles but for the inntertile routine.
-        Returns an iterator that yields result objects from tasks that have
-        been applied to the pool.
-        """
-        batch = []
-        tiles = 0        
-        for path in iterate_base4(zoom):
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, self.tiledir, *(str(x) for x in path[:-1]))
-            name = str(path[-1])
-            
-            batch.append((dest, name, self.imgformat, self.optimizeimg))
-            tiles += 1
-            if tiles >= batch_size:
-                tiles = 0
-                yield pool.apply_async(func=render_innertile_batch, args= [batch])
-                batch = []
-            
-        if tiles > 0:       
-            yield pool.apply_async(func=render_innertile_batch, args= [batch])
         
     def go(self, procs):
-        """Renders all tiles"""
+        """Processing before tile rendering"""
 
         curdepth = self._get_cur_depth()
         if curdepth != -1:
@@ -278,73 +196,8 @@ class QuadtreeGen(object):
                 logging.warning("Your map seems to have shrunk. Re-arranging tiles, just a sec...")
                 for _ in xrange(curdepth - self.p):
                     self._decrease_depth()
-
-        logging.debug("Parent process {0}".format(os.getpid()))
-        # Create a pool
-        if procs == 1:
-            pool = FakePool()
-            global child_quadtree
-            child_quadtree = self
-        else:
-            pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
-            #warm up the pool so it reports all the worker id's
-            pool.map(bool,xrange(multiprocessing.cpu_count()),1)
-        
-        # Render the highest level of tiles from the chunks
-        results = collections.deque()
-        complete = 0
-        total = 4**self.p
-        logging.info("Rendering highest zoom level of tiles now.")
-        logging.info("There are {0} tiles to render".format(total))
-        logging.info("There are {0} total levels to render".format(self.p))
-        logging.info("Don't worry, each level has only 25% as many tiles as the last.")
-        logging.info("The others will go faster")
-        count = 0
-        batch_size = 10
-        for result in self._apply_render_worldtiles(pool,batch_size):
-            results.append(result)
-            if len(results) > (10000/batch_size):
-                # Empty the queue before adding any more, so that memory
-                # required has an upper bound
-                while len(results) > (500/batch_size):
-                    complete += results.popleft().get()
-                    self.print_statusline(complete, total, 1)
-
-        # Wait for the rest of the results
-        while len(results) > 0:
-            complete += results.popleft().get()
-            self.print_statusline(complete, total, 1)
-
-        self.print_statusline(complete, total, 1, True)
-
-        # Now do the other layers
-        for zoom in xrange(self.p-1, 0, -1):
-            level = self.p - zoom + 1
-            assert len(results) == 0
-            complete = 0
-            total = 4**zoom
-            logging.info("Starting level {0}".format(level))
-            for result in self._apply_render_inntertile(pool, zoom,batch_size):
-                results.append(result)
-                if len(results) > (10000/batch_size):
-                    while len(results) > (500/batch_size):
-                        complete += results.popleft().get()
-                        self.print_statusline(complete, total, level)
-            # Empty the queue
-            while len(results) > 0:
-                complete += results.popleft().get()
-                self.print_statusline(complete, total, level)
-
-            self.print_statusline(complete, total, level, True)
-
-            logging.info("Done")
-
-        pool.close()
-        pool.join()
-
-        # Do the final one right here:
-        render_innertile(os.path.join(self.destdir, self.tiledir), "base", self.imgformat, self.optimizeimg)
-
+    
+    
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
         x, y = self.mincol, self.minrow
@@ -361,8 +214,8 @@ class QuadtreeGen(object):
             ysize //= 2
 
         return x, y
-
-    def _get_chunks_in_range(self, colstart, colend, rowstart, rowend):
+        
+    def get_chunks_in_range(self, colstart, colend, rowstart, rowend):
         """Get chunks that are relevant to the tile rendering function that's
         rendering that range"""
         chunklist = []
@@ -380,248 +233,218 @@ class QuadtreeGen(object):
                 # return (col, row, chunkx, chunky, regionpath)
                 chunkx, chunky = unconvert_coords(col, row)
                 #c = get_region_path(chunkx, chunky)
-                _, _, c = get_region((chunkx//32, chunky//32),(None,None,None));
-                if c is not None:
+                _, _, c, mcr = get_region((chunkx//32, chunky//32),(None,None,None,None));
+                if c is not None and mcr.chunkExists(chunkx,chunky):                  
                     chunklist.append((col, row, chunkx, chunky, c))
-        return chunklist
-
-@catch_keyboardinterrupt
-def render_innertile_batch(batch):    
-    count = 0
-    #logging.debug("{0} working on batch of size {1}".format(os.getpid(),len(batch)))
-    for job in batch:
-        count += 1
-        render_innertile(job[0],job[1],job[2],job[3])
-    return count
-    
-def render_innertile(dest, name, imgformat, optimizeimg):
-    """
-    Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
-    os.path.join(dest, name, "{0,1,2,3}.png")
-    """
-    imgpath = os.path.join(dest, name) + "." + imgformat
-
-    if name == "base":
-        quadPath = [[(0,0),os.path.join(dest, "0." + imgformat)],[(192,0),os.path.join(dest, "1." + imgformat)], [(0, 192),os.path.join(dest, "2." + imgformat)],[(192,192),os.path.join(dest, "3." + imgformat)]]
-    else:
-        quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
-   
-    #stat the tile, we need to know if it exists or it's mtime
-    try:    
-        tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
-    except OSError, e:
-        if e.errno != errno.ENOENT:
-            raise
-        tile_mtime = None
+        return chunklist   
         
-    #check mtimes on each part of the quad, this also checks if they exist
-    needs_rerender = tile_mtime is None
-    quadPath_filtered = []
-    for path in quadPath:
-        try:
-            quad_mtime = os.stat(path[1])[stat.ST_MTIME]; 
-            quadPath_filtered.append(path)
-            if quad_mtime > tile_mtime:     
-                needs_rerender = True            
-        except OSError:
-            # We need to stat all the quad files, so keep looping
-            pass      
-    # do they all not exist?
-    if quadPath_filtered == []:
-        if tile_mtime is not None:
-            os.unlink(imgpath)
-        return
-    # quit now if we don't need rerender            
-    if not needs_rerender:
-        return    
-    #logging.debug("writing out innertile {0}".format(imgpath))
-
-    # Create the actual image now
-    img = Image.new("RGBA", (384, 384), (38,92,255,0))
-    
-    # we'll use paste (NOT alpha_over) for quadtree generation because
-    # this is just straight image stitching, not alpha blending
-    
-    for path in quadPath_filtered:
-        try:
-            quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad, path[0])
-        except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", path[1], e)
-
-    # Save it
-    if imgformat == 'jpg':
-        img.save(imgpath, quality=95, subsampling=0)
-    else: # png
-        img.save(imgpath)
-        if optimizeimg:
-            optimize_image(imgpath, imgformat, optimizeimg)
-
-@catch_keyboardinterrupt
-def render_worldtile_batch(batch):  
-    global child_quadtree
-    return render_worldtile_batch_(child_quadtree, batch)
-
-def render_worldtile_batch_(quadtree, batch):   
-    count = 0
-    _get_chunks_in_range = quadtree._get_chunks_in_range
-    #logging.debug("{0} working on batch of size {1}".format(os.getpid(),len(batch)))
-    for job in batch:
-        count += 1
-        colstart = job[0]
-        colend = job[1]
-        rowstart = job[2]
-        rowend = job[3]
-        path = job[4]
-        # (even if tilechunks is empty, render_worldtile will delete
-        # existing images if appropriate)    
-        # And uses these chunks
-        tilechunks = _get_chunks_in_range(colstart, colend, rowstart,rowend)
-        #logging.debug(" tilechunks: %r", tilechunks)
+    def get_worldtiles(self):
+        """Returns an iterator over the tiles of the most detailed layer
+        """
+        for path in iterate_base4(self.p):
+            # Get the range for this tile
+            colstart, rowstart = self._get_range_by_path(path)
+            colend = colstart + 2
+            rowend = rowstart + 4   
             
-        render_worldtile(quadtree,tilechunks,colstart, colend, rowstart, rowend, path)
-    return count
-
-def render_worldtile(quadtree, chunks, colstart, colend, rowstart, rowend, path):
-    """Renders just the specified chunks into a tile and save it. Unlike usual
-    python conventions, rowend and colend are inclusive. Additionally, the
-    chunks around the edges are half-way cut off (so that neighboring tiles
-    will render the other half)
-
-    chunks is a list of (col, row, chunkx, chunky, filename) of chunk
-    images that are relevant to this call (with their associated regions)
-
-    The image is saved to path+"."+quadtree.imgformat
-
-    If there are no chunks, this tile is not saved (if it already exists, it is
-    deleted)
-
-    Standard tile size has colend-colstart=2 and rowend-rowstart=4
-
-    There is no return value
-    """    
-    
-    # width of one chunk is 384. Each column is half a chunk wide. The total
-    # width is (384 + 192*(numcols-1)) since the first column contributes full
-    # width, and each additional one contributes half since they're staggered.
-    # However, since we want to cut off half a chunk at each end (384 less
-    # pixels) and since (colend - colstart + 1) is the number of columns
-    # inclusive, the equation simplifies to:
-    width = 192 * (colend - colstart)
-    # Same deal with height
-    height = 96 * (rowend - rowstart)
-
-    # The standard tile size is 3 columns by 5 rows, which works out to 384x384
-    # pixels for 8 total chunks. (Since the chunks are staggered but the grid
-    # is not, some grid coordinates do not address chunks) The two chunks on
-    # the middle column are shown in full, the two chunks in the middle row are
-    # half cut off, and the four remaining chunks are one quarter shown.
-    # The above example with cols 0-3 and rows 0-4 has the chunks arranged like this:
-    #   0,0         2,0
-    #         1,1
-    #   0,2         2,2
-    #         1,3
-    #   0,4         2,4
-
-    # Due to how the tiles fit together, we may need to render chunks way above
-    # this (since very few chunks actually touch the top of the sky, some tiles
-    # way above this one are possibly visible in this tile). Render them
-    # anyways just in case). "chunks" should include up to rowstart-16
-
-    imgpath = path + "." + quadtree.imgformat
-    
-    world = quadtree.world
-    # first, remove chunks from `chunks` that don't actually exist in
-    # their region files
-    def chunk_exists(chunk):
-        _, _, chunkx, chunky, region = chunk
-        r = world.load_region(region)
-        return r.chunkExists(chunkx, chunky)            
-    chunks = filter(chunk_exists, chunks)
-
-    #stat the file, we need to know if it exists or it's mtime
-    try:    
-        tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
-    except OSError, e:
-        if e.errno != errno.ENOENT:
-            raise
-        tile_mtime = None
+            # This image is rendered at(relative to the worker's destdir):
+            tilepath = [str(x) for x in path]
+            tilepath = os.sep.join(tilepath)
+            #logging.debug("this is rendered at %s", dest)
         
-    if not chunks:
-        # No chunks were found in this tile
-        if tile_mtime is not None:
-            os.unlink(imgpath)
-        return None
+            # Put this in the batch to be submited to the pool     
+            yield [self,colstart, colend, rowstart, rowend, tilepath]
+        
+    def get_innertiles(self,zoom):
+        """Same as get_worldtiles but for the inntertile routine.
+        """    
+        for path in iterate_base4(zoom):
+            # This image is rendered at(relative to the worker's destdir):
+            tilepath = [str(x) for x in path[:-1]]
+            tilepath = os.sep.join(tilepath)
+            name = str(path[-1])
+  
+            yield [self,tilepath, name]
+    
+    def render_innertile(self, dest, name):
+        """
+        Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
+        os.path.join(dest, name, "{0,1,2,3}.png")
+        """
+        imgformat = self.imgformat 
+        imgpath = os.path.join(dest, name) + "." + imgformat
 
-    # Create the directory if not exists
-    dirdest = os.path.dirname(path)
-    if not os.path.exists(dirdest):
-        try:
-            os.makedirs(dirdest)
+        if name == "base":
+            quadPath = [[(0,0),os.path.join(dest, "0." + imgformat)],[(192,0),os.path.join(dest, "1." + imgformat)], [(0, 192),os.path.join(dest, "2." + imgformat)],[(192,192),os.path.join(dest, "3." + imgformat)]]
+        else:
+            quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
+       
+        #stat the tile, we need to know if it exists or it's mtime
+        try:    
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
         except OSError, e:
-            # Ignore errno EEXIST: file exists. Since this is multithreaded,
-            # two processes could conceivably try and create the same directory
-            # at the same time.            
-            if e.errno != errno.EEXIST:
+            if e.errno != errno.ENOENT:
                 raise
-    
-    # check chunk mtimes to see if they are newer
-    try:
-        needs_rerender = False
-        for col, row, chunkx, chunky, regionfile in chunks:
-            # check region file mtime first. 
-            regionMtime = world.get_region_mtime(regionfile)  
-            if regionMtime <= tile_mtime:
-                continue
+            tile_mtime = None
             
-            # checking chunk mtime
-            region = world.load_region(regionfile)
-            if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
-                needs_rerender = True
-                break
-        
-        # if after all that, we don't need a rerender, return
+        #check mtimes on each part of the quad, this also checks if they exist
+        needs_rerender = tile_mtime is None
+        quadPath_filtered = []
+        for path in quadPath:
+            try:
+                quad_mtime = os.stat(path[1])[stat.ST_MTIME]; 
+                quadPath_filtered.append(path)
+                if quad_mtime > tile_mtime:     
+                    needs_rerender = True            
+            except OSError:
+                # We need to stat all the quad files, so keep looping
+                pass      
+        # do they all not exist?
+        if quadPath_filtered == []:
+            if tile_mtime is not None:
+                os.unlink(imgpath)
+            return
+        # quit now if we don't need rerender            
         if not needs_rerender:
+            return    
+        #logging.debug("writing out innertile {0}".format(imgpath))
+
+        # Create the actual image now
+        img = Image.new("RGBA", (384, 384), (38,92,255,0))
+        
+        # we'll use paste (NOT alpha_over) for quadtree generation because
+        # this is just straight image stitching, not alpha blending
+        
+        for path in quadPath_filtered:
+            try:
+                quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
+                img.paste(quad, path[0])
+            except Exception, e:
+                logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", path[1], e)
+
+        # Save it
+        if self.imgformat == 'jpg':
+            img.save(imgpath, quality=95, subsampling=0)
+        else: # png
+            img.save(imgpath)
+            
+        if self.optimizeimg:
+            optimize_image(imgpath, self.imgformat, self.optimizeimg)
+
+
+
+    def render_worldtile(self, chunks, colstart, colend, rowstart, rowend, path):
+        """Renders just the specified chunks into a tile and save it. Unlike usual
+        python conventions, rowend and colend are inclusive. Additionally, the
+        chunks around the edges are half-way cut off (so that neighboring tiles
+        will render the other half)
+
+        chunks is a list of (col, row, chunkx, chunky, filename) of chunk
+        images that are relevant to this call (with their associated regions)
+
+        The image is saved to path+"."+self.imgformat
+
+        If there are no chunks, this tile is not saved (if it already exists, it is
+        deleted)
+
+        Standard tile size has colend-colstart=2 and rowend-rowstart=4
+
+        There is no return value
+        """    
+        
+        # width of one chunk is 384. Each column is half a chunk wide. The total
+        # width is (384 + 192*(numcols-1)) since the first column contributes full
+        # width, and each additional one contributes half since they're staggered.
+        # However, since we want to cut off half a chunk at each end (384 less
+        # pixels) and since (colend - colstart + 1) is the number of columns
+        # inclusive, the equation simplifies to:
+        width = 192 * (colend - colstart)
+        # Same deal with height
+        height = 96 * (rowend - rowstart)
+
+        # The standard tile size is 3 columns by 5 rows, which works out to 384x384
+        # pixels for 8 total chunks. (Since the chunks are staggered but the grid
+        # is not, some grid coordinates do not address chunks) The two chunks on
+        # the middle column are shown in full, the two chunks in the middle row are
+        # half cut off, and the four remaining chunks are one quarter shown.
+        # The above example with cols 0-3 and rows 0-4 has the chunks arranged like this:
+        #   0,0         2,0
+        #         1,1
+        #   0,2         2,2
+        #         1,3
+        #   0,4         2,4
+
+        # Due to how the tiles fit together, we may need to render chunks way above
+        # this (since very few chunks actually touch the top of the sky, some tiles
+        # way above this one are possibly visible in this tile). Render them
+        # anyways just in case). "chunks" should include up to rowstart-16
+
+        imgpath = path + "." + self.imgformat
+        world = self.world
+        #stat the file, we need to know if it exists or it's mtime
+        try:    
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
+        except OSError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            tile_mtime = None
+            
+        if not chunks:
+            # No chunks were found in this tile
+            if tile_mtime is not None:
+                os.unlink(imgpath)
             return None
-    except OSError:
-        # couldn't get tile mtime, skip check
-        pass
-    
-    #logging.debug("writing out worldtile {0}".format(imgpath))
 
-    # Compile this image
-    tileimg = Image.new("RGBA", (width, height), (38,92,255,0))
+        # Create the directory if not exists
+        dirdest = os.path.dirname(path)
+        if not os.path.exists(dirdest):
+            try:
+                os.makedirs(dirdest)
+            except OSError, e:
+                # Ignore errno EEXIST: file exists. Since this is multithreaded,
+                # two processes could conceivably try and create the same directory
+                # at the same time.            
+                if e.errno != errno.EEXIST:
+                    raise
+        
+        # check chunk mtimes to see if they are newer
+        try:
+            needs_rerender = False
+            for col, row, chunkx, chunky, regionfile in chunks:
+                # check region file mtime first. 
+                region,regionMtime = world.get_region_mtime(regionfile)  
+                if regionMtime <= tile_mtime:
+                    continue
+                
+                # checking chunk mtime
+                if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
+                    needs_rerender = True
+                    break
+            
+            # if after all that, we don't need a rerender, return
+            if not needs_rerender:
+                return None
+        except OSError:
+            # couldn't get tile mtime, skip check
+            pass
+        
+        #logging.debug("writing out worldtile {0}".format(imgpath))
 
-    # col colstart will get drawn on the image starting at x coordinates -(384/2)
-    # row rowstart will get drawn on the image starting at y coordinates -(192/2)
-    for col, row, chunkx, chunky, regionfile in chunks:
-        xpos = -192 + (col-colstart)*192
-        ypos = -96 + (row-rowstart)*96
+        # Compile this image
+        tileimg = Image.new("RGBA", (width, height), (38,92,255,0))
 
-        # draw the chunk!
-        # TODO POI queue
-        chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), quadtree, False, None)
+        # col colstart will get drawn on the image starting at x coordinates -(384/2)
+        # row rowstart will get drawn on the image starting at y coordinates -(192/2)
+        for col, row, chunkx, chunky, regionfile in chunks:
+            xpos = -192 + (col-colstart)*192
+            ypos = -96 + (row-rowstart)*96
 
-    # Save them
-    tileimg.save(imgpath)
+            # draw the chunk!
+            # TODO POI queue
+            chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), self, False, None)
 
-    if quadtree.optimizeimg:
-        optimize_image(imgpath, quadtree.imgformat, quadtree.optimizeimg)
+        # Save them
+        tileimg.save(imgpath)
 
-class FakeResult(object):
-    def __init__(self, res):
-        self.res = res
-    def get(self):
-        return self.res
-class FakePool(object):
-    """A fake pool used to render things in sync. Implements a subset of
-    multiprocessing.Pool"""
-    def apply_async(self, func, args=(), kwargs=None):
-        if not kwargs:
-            kwargs = {}
-        result = func(*args, **kwargs)
-        return FakeResult(result)
-    def close(self):
-        pass
-    def join(self):
-        pass
+        if self.optimizeimg:
+            optimize_image(imgpath, self.imgformat, self.optimizeimg)

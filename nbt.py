@@ -26,7 +26,7 @@ def _file_loader(func):
                return None
 
             # Is actually a filename
-            fileobj = open(fileobj, 'rb')
+            fileobj = open(fileobj, 'rb',4096)
         return func(fileobj, *args)
     return wrapper
 
@@ -44,6 +44,20 @@ def load_from_region(filename, x, y):
 def load_region(filename):            
     return MCRFileReader(filename)
   
+  
+# compile the unpacker's into a classes
+_byte   = struct.Struct("b")
+_short  = struct.Struct(">h")
+_int    = struct.Struct(">i")
+_long   = struct.Struct(">q")
+_float  = struct.Struct(">f")
+_double = struct.Struct(">d") 
+
+_24bit_int = struct.Struct("B B B")
+_unsigned_byte = struct.Struct("B")
+_unsigned_int = struct.Struct(">I")
+_chunk_header = struct.Struct(">I B")
+ 
 class NBTFileReader(object):
     def __init__(self, fileobj, is_gzip=True):
         if is_gzip:
@@ -61,27 +75,32 @@ class NBTFileReader(object):
 
     def _read_tag_byte(self):
         byte = self._file.read(1)
-        return struct.unpack("b", byte)[0]
+        return _byte.unpack(byte)[0]
     
     def _read_tag_short(self):
         bytes = self._file.read(2)
-        return struct.unpack(">h", bytes)[0]
+        global _short
+        return _short.unpack(bytes)[0]
 
     def _read_tag_int(self):
         bytes = self._file.read(4)
-        return struct.unpack(">i", bytes)[0]
+        global _int
+        return _int.unpack(bytes)[0]
 
     def _read_tag_long(self):
         bytes = self._file.read(8)
-        return struct.unpack(">q", bytes)[0]
+        global _long
+        return _long.unpack(bytes)[0]
 
     def _read_tag_float(self):
         bytes = self._file.read(4)
-        return struct.unpack(">f", bytes)[0]
+        global _float
+        return _float.unpack(bytes)[0]
 
     def _read_tag_double(self):
         bytes = self._file.read(8)
-        return struct.unpack(">d", bytes)[0]
+        global _double
+        return _double.unpack(bytes)[0]
 
     def _read_tag_byte_array(self):
         length = self._read_tag_int()
@@ -194,9 +213,11 @@ class MCRFileReader(object):
         
         ret = 0
         bytes = self._file.read(3)
+        global _24bit_int
+        bytes = _24bit_int.unpack(bytes)
         for i in xrange(3):
             ret = ret << 8
-            ret += struct.unpack("B", bytes[i])[0]
+            ret += bytes[i]
         
         return ret
     
@@ -222,8 +243,9 @@ class MCRFileReader(object):
             offset_sectors = self._read_24bit_int()
             
             # 1-byte length in 4KiB sectors, rounded up
+            global _unsigned_byte
             byte = self._file.read(1)
-            length_sectors = struct.unpack("B", byte)[0]
+            length_sectors = _unsigned_byte.unpack(byte)[0]
         except (IndexError, struct.error):
             # got a problem somewhere
             return None
@@ -253,49 +275,60 @@ class MCRFileReader(object):
         
         try:
             bytes = self._file.read(4)
-            timestamp = struct.unpack(">I", bytes)[0]
+            global _unsigned_int
+            timestamp = _unsigned_int.unpack(bytes)[0]
         except (IndexError, struct.error):
             return 0
         
         return timestamp
     
-    def get_chunk_info(self,closeFile = True):
+    def get_chunks(self):    
         """Return a list of all chunks contained in this region file,
         as a list of (x, y) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
         
-        if self._chunks:
+        if self._chunks is not None:
             return self._chunks
+        if self._locations is None:
+            self.get_chunk_info()       
+        self._chunks = [] 
+        for x in xrange(32): 
+            for y in xrange(32): 
+                if self._locations[x + y * 32] is not None:
+                    self._chunks.append((x,y))
+        return self._chunks
+        
+    def get_chunk_info(self,closeFile = True):
+        """Preloads region header information."""
+        
+        if self._locations:
+            return
         
         if self._file is None:
-            self._file = open(self._filename,'rb');
+            self._file = open(self._filename,'rb')
 
-        self._chunks = []
+        self._chunks = None
         self._locations = []
         self._timestamps = []
         
         # go to the beginning of the file
-        self._file.seek(0)
+        self._file.seek(0)        
         
         # read chunk location table
-        for y in xrange(32):
-            for x in xrange(32):
-                location = self._read_chunk_location()
-                self._locations.append(location)
-                if location:
-                    self._chunks.append((x, y))
+        locations_append = self._locations.append
+        for _ in xrange(32*32): 
+            locations_append(self._read_chunk_location())
         
         # read chunk timestamp table
-        for y in xrange(32):
-            for x in xrange(32):
-                timestamp = self._read_chunk_timestamp()
-                self._timestamps.append(timestamp)
-
+        timestamp_append = self._timestamps.append
+        for _ in xrange(32*32): 
+            timestamp_append(self._read_chunk_timestamp())
+ 
         if closeFile:        
             #free the file object since it isn't safe to be reused in child processes (seek point goes wonky!)
             self._file.close()
             self._file =  None
-        return self._chunks
+        return
     
     def get_chunk_timestamp(self, x, y):
         """Return the given chunk's modification time. If the given
@@ -339,10 +372,8 @@ class MCRFileReader(object):
         self._file.seek(location[0])
         
         # read in the chunk data header
-        bytes = self._file.read(4)
-        data_length = struct.unpack(">I", bytes)[0]
-        bytes = self._file.read(1)
-        compression = struct.unpack("B", bytes)[0]
+        bytes = self._file.read(5)        
+        data_length,compression =  _chunk_header.unpack(bytes)
         
         # figure out the compression
         is_gzip = True

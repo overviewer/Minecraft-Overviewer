@@ -70,18 +70,20 @@ class World(object):
     def __init__(self, worlddir, useBiomeData=False,regionlist=None):
         self.worlddir = worlddir
         self.useBiomeData = useBiomeData
-
+                
         #find region files, or load the region list
         #this also caches all the region file header info
+        logging.info("Scanning regions")
         regionfiles = {}
         regions = {}
         for x, y, regionfile in self._iterate_regionfiles():            
             mcr = nbt.MCRFileReader(regionfile)
             mcr.get_chunk_info()
             regions[regionfile] = (mcr,os.path.getmtime(regionfile))
-            regionfiles[(x,y)]	= (x,y,regionfile)
+            regionfiles[(x,y)]	= (x,y,regionfile,mcr)
         self.regionfiles = regionfiles	
         self.regions = regions
+        logging.debug("Done scanning regions")
         
         # figure out chunk format is in use
         # if not mcregion, error out early
@@ -114,7 +116,7 @@ class World(object):
     def get_region_path(self, chunkX, chunkY):
         """Returns the path to the region that contains chunk (chunkX, chunkY)
         """
-        _, _, regionfile = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None));
+        _, _, regionfile,_ = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None,None));
         return regionfile
     
     def load_from_region(self,filename, x, y):
@@ -133,7 +135,7 @@ class World(object):
         return self.regions[filename][0]
         
     def get_region_mtime(self,filename):                  
-        return self.regions[filename][1]        
+        return self.regions[filename]        
         
     def convert_coords(self, chunkx, chunky):
         """Takes a coordinate (chunkx, chunky) where chunkx and chunky are
