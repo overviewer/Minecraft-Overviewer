@@ -410,9 +410,10 @@ class QuadtreeGen(object):
         # check chunk mtimes to see if they are newer
         try:
             needs_rerender = False
+            get_region_mtime = world.get_region_mtime
             for col, row, chunkx, chunky, regionfile in chunks:
                 # check region file mtime first. 
-                region,regionMtime = world.get_region_mtime(regionfile)  
+                region,regionMtime = get_region_mtime(regionfile)  
                 if regionMtime <= tile_mtime:
                     continue
                 

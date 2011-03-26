@@ -282,6 +282,17 @@ class MCRFileReader(object):
         
         return timestamp
     
+    def openfile(self):
+        #make sure we clean up
+        if self._file is None:
+            self._file = open(self._filename,'rb')   
+
+    def closefile(self):
+        #make sure we clean up
+        if self._file is not None:
+            self._file.close()
+            self._file =  None
+
     def get_chunks(self):    
         """Return a list of all chunks contained in this region file,
         as a list of (x, y) coordinate tuples. To load these chunks,
@@ -304,8 +315,7 @@ class MCRFileReader(object):
         if self._locations:
             return
         
-        if self._file is None:
-            self._file = open(self._filename,'rb')
+        self.openfile()
 
         self._chunks = None
         self._locations = []
@@ -325,9 +335,7 @@ class MCRFileReader(object):
             timestamp_append(self._read_chunk_timestamp())
  
         if closeFile:        
-            #free the file object since it isn't safe to be reused in child processes (seek point goes wonky!)
-            self._file.close()
-            self._file =  None
+            self.closefile()
         return
     
     def get_chunk_timestamp(self, x, y):
@@ -350,7 +358,7 @@ class MCRFileReader(object):
         location = self._locations[x + y * 32]
         return location is not None        
 
-    def load_chunk(self, x, y):
+    def load_chunk(self, x, y,closeFile=True):
         """Return a NBTFileReader instance for the given chunk, or
         None if the given chunk doesn't exist in this region file. If
         you provide an x or y not between 0 and 31, it will be
@@ -366,8 +374,8 @@ class MCRFileReader(object):
         if location is None:
             return None
 
-        if self._file is None:
-            self._file = open(self._filename,'rb'); 
+        self.openfile()
+        
         # seek to the data
         self._file.seek(location[0])
         
@@ -391,4 +399,6 @@ class MCRFileReader(object):
         data = self._file.read(data_length - 1)
         data = StringIO.StringIO(data)
         
+        if closeFile:        
+            self.closefile()        
         return NBTFileReader(data, is_gzip=is_gzip)

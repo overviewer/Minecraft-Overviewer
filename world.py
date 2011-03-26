@@ -29,6 +29,7 @@ import numpy
 import chunk
 import nbt
 import textures
+import time
 
 """
 This module has routines for extracting information about available worlds
@@ -75,14 +76,17 @@ class World(object):
         #this also caches all the region file header info
         logging.info("Scanning regions")
         regionfiles = {}
-        regions = {}
-        for x, y, regionfile in self._iterate_regionfiles():            
-            mcr = nbt.MCRFileReader(regionfile)
+        self.regions = {}
+        for x, y, regionfile in self._iterate_regionfiles():  
+            mcr = self.reload_region(regionfile) 
             mcr.get_chunk_info()
-            regions[regionfile] = (mcr,os.path.getmtime(regionfile))
             regionfiles[(x,y)]	= (x,y,regionfile,mcr)
         self.regionfiles = regionfiles	
-        self.regions = regions
+        # set the number of region file handles we will permit open at any time before we start closing them
+#        self.regionlimit = 1000
+        # the max number of chunks we will keep before removing them
+        self.chunklimit = 1024*6 # this should be a multipule of the max chunks per region or things could get wonky ???
+        self.chunkcount = 0
         logging.debug("Done scanning regions")
         
         # figure out chunk format is in use
@@ -118,24 +122,54 @@ class World(object):
         """
         _, _, regionfile,_ = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None,None));
         return regionfile
-    
+            
     def load_from_region(self,filename, x, y):
-        nbt = self.load_region(filename).load_chunk(x, y)
-        if nbt is None:
-            return None ## return none.  I think this is who we should indicate missing chunks
-            #raise IOError("No such chunk in region: (%i, %i)" % (x, y))     
-        return nbt.read_all()
-      
+        #we need to manage the chunk cache
+        regioninfo = self.regions[filename]
+        if regioninfo is None:
+            return None
+        chunks = regioninfo[2]
+        chunk_data = chunks.get((x,y))
+        if chunk_data is None:        
+            nbt = self.load_region(filename).load_chunk(x, y)
+            if nbt is None:
+                chunks[(x,y)] = [None,None]
+                return None ## return none.  I think this is who we should indicate missing chunks
+                #raise IOError("No such chunk in region: (%i, %i)" % (x, y))                 
+            #prune the cache if required
+            if self.chunkcount > self.chunklimit: #todo: make the emptying the chunk cache slightly less crazy
+                [self.reload_region(regionfile) for regionfile in self.regions if regionfile <> filename]
+            self.chunkcount += 1  
+
+            #we cache the transformed data, not it's raw form
+            data = nbt.read_all()    
+            level = data[1]['Level']
+            chunk_data = level
+            #chunk_data = {}
+            #chunk_data['skylight'] = chunk.get_skylight_array(level)
+            #chunk_data['blocklight'] = chunk.get_blocklight_array(level)
+            #chunk_data['blockarray'] = chunk.get_blockdata_array(level)
+            #chunk_data['TileEntities'] = chunk.get_tileentity_data(level)
+            
+            chunks[(x,y)] = [level,time.time()]
+        else:
+            chunk_data = chunk_data[0]
+        return chunk_data      
       
     #used to reload a changed region
     def reload_region(self,filename):
-        self.regions[filename] = (nbt.MCRFileReader(filename),os.path.getmtime(regionfile))
+        if self.regions.get(filename) is not None:
+            self.regions[filename][0].closefile()
+        chunkcache = {}    
+        mcr = nbt.MCRFileReader(filename)
+        self.regions[filename] = (mcr,os.path.getmtime(filename),chunkcache)
+        return mcr
         
-    def load_region(self,filename):                  
+    def load_region(self,filename):    
         return self.regions[filename][0]
         
     def get_region_mtime(self,filename):                  
-        return self.regions[filename]        
+        return (self.regions[filename][0],self.regions[filename][1])        
         
     def convert_coords(self, chunkx, chunky):
         """Takes a coordinate (chunkx, chunky) where chunkx and chunky are

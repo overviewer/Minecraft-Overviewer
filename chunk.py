@@ -52,7 +52,7 @@ def get_lvldata(world, filename, x, y, retries=2):
     
     # non existent region file doesn't mean corrupt chunk.
     if filename == None:
-        raise NoSuchChunk
+        return None
     
     try:
         d =  world.load_from_region(filename, x, y)
@@ -60,13 +60,15 @@ def get_lvldata(world, filename, x, y, retries=2):
         if retries > 0:
             # wait a little bit, and try again (up to `retries` times)
             time.sleep(1)
+            #make sure we reload region info
+            world.reload_region(filename)
             return get_lvldata(world, filename, x, y, retries=retries-1)
         else:
             logging.warning("Error opening chunk (%i, %i) in %s. It may be corrupt. %s", x, y, filename, e)
             raise ChunkCorrupt(str(e))
     
     if not d: raise NoSuchChunk(x,y)
-    return d[1]['Level']
+    return d
 
 def get_blockarray(level):
     """Takes the level struct as returned from get_lvldata, and returns the

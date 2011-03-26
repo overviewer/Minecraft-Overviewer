@@ -41,7 +41,6 @@ except ImportError:
     sys.exit(1)
 
 import optimizeimages
-import composite
 import world
 import quadtree
 import googlemap
@@ -166,10 +165,7 @@ def main():
 
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
-
-    if not composite.extension_alpha_over:
-        logging.info("Notice: alpha_over extension not found; using default PIL paste()")
-    
+   
     useBiomeData = os.path.exists(os.path.join(worlddir, 'biomes'))
     if not useBiomeData:
         logging.info("Notice: Not using biome data for tinting")
