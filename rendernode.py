@@ -191,7 +191,7 @@ class RenderNode(object):
                         while count_to_remove > 0:
                             count_to_remove -= 1
                             complete += results.popleft().get()
-                            self.print_statusline(complete, total, 1)    
+                            self.print_statusline(complete, total, level)
                 if len(results) > (10000/batch_size):
                     while len(results) > (500/batch_size):
                         complete += results.popleft().get()
