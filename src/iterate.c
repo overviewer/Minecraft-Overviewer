@@ -35,6 +35,7 @@ int init_chunk_render(void) {
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
         fprintf(stderr, "\ninit_chunk_render failed to load; textures\n");
+        PyErr_Print();
         return 1;
     }
 
@@ -42,6 +43,7 @@ int init_chunk_render(void) {
     /* ensure none of these pointers are NULL */    
     if ((!chunk_mod)) {
         fprintf(stderr, "\ninit_chunk_render failed to load; chunk\n");
+        PyErr_Print();
         return 1;
     }
     
@@ -53,6 +55,7 @@ int init_chunk_render(void) {
     /* ensure none of these pointers are NULL */    
     if ((!transparent_blocks) || (!blockmap) || (!special_blocks) || (!specialblockmap)) {
         fprintf(stderr, "\ninit_chunk_render failed\n");
+        PyErr_Print();
         return 1;
     }
 
