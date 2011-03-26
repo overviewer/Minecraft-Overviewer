@@ -13,9 +13,11 @@ class ConfigOptionParser(object):
 
         # these are arguments not understood by OptionParser, so they must be removed
         # in add_option before being passed to the OptionParser
+
         # note that default is a valid OptionParser argument, but we remove it
         # because we want to do our default value handling
-        self.customArgs = ["required", "commandLineOnly", "default"]
+
+        self.customArgs = ["required", "commandLineOnly", "default", "listify", "listdelim", "choices"]
 
         self.requiredArgs = []
 
@@ -35,6 +37,8 @@ class ConfigOptionParser(object):
             for arg in self.customArgs:
                 if arg in kwargs.keys(): del kwargs[arg]
 
+            if kwargs.get("type", None):
+                kwargs['type'] = 'string' # we'll do our own converting later
             self.cmdParser.add_option(*args, **kwargs)
 
     def print_help(self):
@@ -114,29 +118,15 @@ class ConfigOptionParser(object):
         # sixth, check types
         for a in self.configVars:
             n = a['dest']
+            if 'listify' in a.keys():
+                # this thing may be a list!
+                if configResults.__dict__[n] != None and type(configResults.__dict__[n]) == str:
+                    configResults.__dict__[n] = configResults.__dict__[n].split(a.get("listdelim",","))
+                elif type(configResults.__dict__[n]) != list:
+                    configResults.__dict__[n] = [configResults.__dict__[n]]
             if 'type' in a.keys() and configResults.__dict__[n] != None:
                 try:
-                    # switch on type.  there are only 6 types that can be used with optparse
-                    if a['type'] == "int":
-                        configResults.__dict__[n] = int(configResults.__dict__[n])
-                    elif a['type'] == "string":
-                        configResults.__dict__[n] = str(configResults.__dict__[n])
-                    elif a['type'] == "long":
-                        configResults.__dict__[n] = long(configResults.__dict__[n])
-                    elif a['type'] == "choice":
-                        if configResults.__dict__[n] not in a['choices']:
-                            print "The value '%s' is not valid for config parameter '%s'" % (configResults.__dict__[n], n)
-                            sys.exit(1)
-                    elif a['type'] == "float":
-                        configResults.__dict__[n] = long(configResults.__dict__[n])
-                    elif a['type'] == "complex":
-                        configResults.__dict__[n] = complex(configResults.__dict__[n])
-                    elif a['type'] == "function":
-                        if not callable(configResults.__dict__[n]):
-                            raise ValueError("Not callable")
-                    else:
-                        print "Unknown type!"
-                        sys.exit(1)
+                    configResults.__dict__[n] = self.checkType(configResults.__dict__[n], a)
                 except ValueError, ex:
                     print "There was a problem converting the value '%s' to type %s for config parameter '%s'" % (configResults.__dict__[n], a['type'], n)
                     import traceback
@@ -149,3 +139,30 @@ class ConfigOptionParser(object):
 
         return configResults, args
 
+    def checkType(self, value, a):
+
+        if type(value) == list:
+            return map(lambda x: self.checkType(x, a), value)
+
+        # switch on type.  there are only 7 types that can be used with optparse
+        if a['type'] == "int":
+            return int(value)
+        elif a['type'] == "string":
+            return str(value)
+        elif a['type'] == "long":
+            return long(value)
+        elif a['type'] == "choice":
+            if value not in a['choices']:
+                print "The value '%s' is not valid for config parameter '%s'" % (value, a['dest'])
+                sys.exit(1)
+            return value
+        elif a['type'] == "float":
+            return long(value)
+        elif a['type'] == "complex":
+            return complex(value)
+        elif a['type'] == "function":
+            if not callable(value):
+                raise ValueError("Not callable")
+        else:
+            print "Unknown type!"
+            sys.exit(1)
