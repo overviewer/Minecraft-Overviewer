@@ -52,7 +52,7 @@ def get_lvldata(world, filename, x, y, retries=2):
     
     # non existent region file doesn't mean corrupt chunk.
     if filename == None:
-        return None
+        raise NoSuchChunk
     
     try:
         d =  world.load_from_region(filename, x, y)
