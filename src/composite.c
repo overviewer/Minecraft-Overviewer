@@ -272,7 +272,7 @@ alpha_over_wrap(PyObject *self, PyObject *args)
 /* like alpha_over, but instead of src image it takes a source color
  * also, it multiplies instead of doing an over operation
  */
-inline PyObject *
+PyObject *
 tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg, unsigned char sb,
                PyObject *mask, int dx, int dy, int xsize, int ysize) {
     /* libImaging handles */

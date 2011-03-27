@@ -31,7 +31,11 @@ if py2exe is not None:
                                   ('', ['config.js', 'COPYING.txt', 'README.rst']),
                                   ('web_assets', glob.glob('web_assets/*'))]
     setup_kwargs['zipfile'] = None
-    setup_kwargs['options']['py2exe'] = {'bundle_files' : 1, 'excludes': 'Tkinter'}
+    if platform.system() == 'Windows' and '64bit' in platform.architecture():
+        b = 3
+    else:
+        b = 1
+    setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter'}
 
 #
 # c_overviewer extension
