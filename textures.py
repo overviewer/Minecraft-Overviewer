@@ -311,10 +311,6 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         bottom = transform_image(bottom, blockID)
         composite.alpha_over(img, bottom, (0,12), top)
         
-    if top != None :
-        top = transform_image(top, blockID)
-        composite.alpha_over(img, top, (0,0), top)
-        
     # front sides
     if side3 != None :
         side3 = transform_image_side(side3, blockID)
@@ -336,6 +332,10 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side4.putalpha(sidealpha)
         
         composite.alpha_over(img, side4, (12,6), side4)
+
+    if top != None :
+        top = transform_image(top, blockID)
+        composite.alpha_over(img, top, (0,0), top)
 
     return img
 
