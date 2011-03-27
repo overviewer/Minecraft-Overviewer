@@ -121,8 +121,8 @@ def transform_image(img, blockID=None):
 
     """
 
-    if blockID in (81,): # cacti
-        # Resize to 15x15, since the cactus texture is a little smaller than the other textures
+    if blockID in (81,92): # cacti and cake
+        # Resize to 15x15, since the cactus and the cake textures are a little smaller than the other textures
         img = img.resize((15, 15), Image.BILINEAR)
 
     else:
@@ -977,6 +977,34 @@ def generate_special_texture(blockID, data):
 
         return (img.convert("RGB"),img.split()[3])
 
+
+    if blockID == 92: # cake! (without bites, at the moment)
+    
+        top = terrain_images[121]
+        side = terrain_images[122]
+        top = transform_image(top, blockID)
+        side = transform_image_side(side, blockID)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        
+        sidealpha = side.split()[3]
+        side = ImageEnhance.Brightness(side).enhance(0.9)
+        side.putalpha(sidealpha)
+        othersidealpha = otherside.split()[3]
+        otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+        otherside.putalpha(othersidealpha)
+        
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        
+        composite.alpha_over(img, side, (2,12), side)
+        composite.alpha_over(img, otherside, (10,12), otherside)
+        composite.alpha_over(img, top, (0,8), top)
+        
+        #~ composite.alpha_over(img, side, (2,6), side)
+        #~ composite.alpha_over(img, otherside, (10,6), otherside)
+        #~ composite.alpha_over(img, top, (0,2), top)
+        return (img.convert("RGB"), img.split()[3])
+
+
     return None
 
 def tintTexture(im, c):
@@ -1050,7 +1078,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
 
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51,43,44,9,55,58])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51,43,44,9,55,58,92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1074,6 +1102,7 @@ special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values. 
 special_map[55] = range(128) # redstone wire
 special_map[58] = (0,) # crafting table
+special_map[92] = range(6) # cake!
 
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
