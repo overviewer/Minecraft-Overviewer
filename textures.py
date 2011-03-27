@@ -633,15 +633,8 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 2: # grass
-        top = transform_image(tintTexture(terrain_images[0],(115,175,71)))
-        side1 = transform_image_side(terrain_images[3])
-        side2 = transform_image_side(terrain_images[3]).transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+        top = tintTexture(terrain_images[0],(115,175,71))
+        img = _build_block(top, terrain_images[3], 2)
         return (img.convert("RGB"), img.split()[3])
     
     if blockID == 51: # fire
@@ -661,15 +654,7 @@ def generate_special_texture(blockID, data):
     
     if blockID == 18: # leaves
         t = tintTexture(terrain_images[52], (37, 118, 25))
-        top = transform_image(t)
-        side1 = transform_image_side(t)
-        side2 = transform_image_side(t).transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+        img = _build_block(t, t, 18)
         return (img.convert("RGB"), img.split()[3])
         
     if blockID == 17: # wood: normal, birch and pines
@@ -990,31 +975,9 @@ def tintTexture(im, c):
     i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
     return i
 
-grassSide1 = transform_image_side(terrain_images[3])
-grassSide2 = transform_image_side(terrain_images[3]).transpose(Image.FLIP_LEFT_RIGHT)
-def prepareGrassTexture(color):
-    top = transform_image(tintTexture(terrain_images[0],color))
-    img = Image.new("RGBA", (24,24), (38,92,255,0))
-
-    img.paste(grassSide1, (0,6), grassSide1)
-    img.paste(grassSide2, (12,6), grassSide2)
-    img.paste(top, (0,0), top)
-    return (img.convert("RGB"), img.split()[3])
-
-
-def prepareLeafTexture(color):
-    t = tintTexture(terrain_images[52], color)
-    top = transform_image(t)
-    side1 = transform_image_side(t)
-    side2 = transform_image_side(t).transpose(Image.FLIP_LEFT_RIGHT)
-
-    img = Image.new("RGBA", (24,24), (38,92,255,0))
-
-    img.paste(side1, (0,6), side1)
-    img.paste(side2, (12,6), side2)
-    img.paste(top, (0,0), top)
-    return (img.convert("RGB"), img.split()[3])
-
+# generate biome (still grayscale) leaf, grass textures
+biome_grass_texture = _build_block(terrain_images[0], terrain_images[3], 2)
+biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
 
 
 currentBiomeFile = None

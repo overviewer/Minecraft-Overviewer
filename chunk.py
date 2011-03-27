@@ -437,13 +437,6 @@ class ChunkRenderer(object):
 
         tileEntities = get_tileentity_data(self.level)
 
-        if self.world.useBiomeData:
-            biomeColorData = textures.getBiomeData(self.world.worlddir,
-                self.chunkX, self.chunkY)
-        # in the 32x32 block of biome data, what chunk is this?l
-        startX = self.chunkX % 32
-        startY = self.chunkY % 32
-
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image
         # The next block on the Y axis adds 12px to x and adds 6px to y in the image

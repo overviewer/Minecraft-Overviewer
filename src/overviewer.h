@@ -29,8 +29,9 @@
 #include <Imaging.h>
 #include <numpy/arrayobject.h>
 
-/* macro for getting a value out of a 3D numpy byte array */
+/* macro for getting a value out of various numpy arrays */
 #define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (x), (y), (z))))
+#define getArrayShort1D(array, x) (*(unsigned short *)(PyArray_GETPTR1((array), (x))))
 
 /* generally useful MAX / MIN macros */
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -43,6 +44,8 @@ PyObject *alpha_over(PyObject *dest, PyObject *src, PyObject *mask,
 PyObject *alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alpha,
                           int dx, int dy, int xsize, int ysize);
 PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
+PyObject *tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg, unsigned char sb,
+                         PyObject *mask, int dx, int dy, int xsize, int ysize);
 
 /* in iterate.c */
 typedef struct {

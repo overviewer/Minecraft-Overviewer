@@ -34,7 +34,7 @@ typedef struct {
     Imaging image;
 } ImagingObject;
 
-Imaging
+inline Imaging
 imaging_python_to_c(PyObject *obj)
 {
     PyObject *im;
@@ -56,6 +56,45 @@ imaging_python_to_c(PyObject *obj)
     image = ((ImagingObject *)im)->image;
     Py_DECREF(im);
     return image;
+}
+
+/* helper function to setup s{x,y}, d{x,y}, and {x,y}size variables
+   in these composite functions -- even handles auto-sizing to src! */
+static inline void
+setup_source_destination(Imaging src, Imaging dest,
+                         int *sx, int *sy, int *dx, int *dy, int *xsize, int *ysize)
+{
+   /* handle negative/zero sizes appropriately */
+    if (*xsize <= 0 || *ysize <= 0) {
+        *xsize = src->xsize;
+        *ysize = src->ysize;
+    }
+    
+    /* set up the source position, size and destination position */
+    /* handle negative dest pos */
+    if (*dx < 0) {
+        *sx = -(*dx);
+        *dx = 0;
+    } else {
+        *sx = 0;
+    }
+
+    if (*dy < 0) {
+        *sy = -(*dy);
+        *dy = 0;
+    } else {
+        *sy = 0;
+    }
+
+    /* set up source dimensions */
+    *xsize -= *sx;
+    *ysize -= *sy;
+
+    /* clip dimensions, if needed */
+    if (*dx + *xsize > dest->xsize)
+        *xsize = dest->xsize - *dx;
+    if (*dy + *ysize > dest->ysize)
+        *ysize = dest->ysize - *dy;
 }
 
 /* convenience alpha_over with 1.0 as overall_alpha */
@@ -129,39 +168,8 @@ alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alp
     /* how many bytes to skip to get to the next alpha byte */
     mask_stride = imMask->pixelsize;
 
-    /* handle negative/zero sizes appropriately */
-    if (xsize <= 0 || ysize <= 0) {
-        xsize = imSrc->xsize;
-        ysize = imSrc->ysize;
-    }
-
-    /* set up the source position, size and destination position */
-    /* handle negative dest pos */
-    if (dx < 0) {
-        sx = -dx;
-        dx = 0;
-    }
-    else {
-        sx = 0;
-    }
-
-    if (dy < 0) {
-        sy = -dy;
-        dy = 0;
-    }
-    else {
-        sy = 0;
-    }
-
-    /* set up source dimensions */
-    xsize -= sx;
-    ysize -= sy;
-
-    /* clip dimensions, if needed */
-    if (dx + xsize > imDest->xsize)
-        xsize = imDest->xsize - dx;
-    if (dy + ysize > imDest->ysize)
-        ysize = imDest->ysize - dy;
+    /* setup source & destination vars */
+    setup_source_destination(imSrc, imDest, &sx, &sy, &dx, &dy, &xsize, &ysize);
 
     /* check that there remains any blending to be done */
     if (xsize <= 0 || ysize <= 0) {
@@ -195,13 +203,11 @@ alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alp
                 out++, in++;
                 *out = *in;
                 out++, in++;
-            }
-            else if (in_alpha == 0) {
+            } else if (in_alpha == 0) {
                 /* do nothing -- source is fully transparent */
                 out += 3;
                 in += 3;
-            }
-            else {
+            } else {
                 /* general case */
                 int alpha = in_alpha + MULDIV255(*outmask, 255 - in_alpha, tmp1);
                 for (i = 0; i < 3; i++) {
@@ -261,4 +267,90 @@ alpha_over_wrap(PyObject *self, PyObject *args)
         Py_INCREF(dest);
     }
     return ret;
+}
+
+/* like alpha_over, but instead of src image it takes a source color
+ * also, it multiplies instead of doing an over operation
+ */
+inline PyObject *
+tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg, unsigned char sb,
+               PyObject *mask, int dx, int dy, int xsize, int ysize) {
+    /* libImaging handles */
+    Imaging imDest, imMask;
+    /* cached blend properties */
+    int mask_offset, mask_stride;
+    /* source position */
+    int sx, sy;
+    /* iteration variables */
+    unsigned int x, y;
+    /* temporary calculation variables */
+    int tmp1, tmp2;
+
+    imDest = imaging_python_to_c(dest);
+    imMask = imaging_python_to_c(mask);
+
+    if (!imDest || !imMask)
+        return NULL;
+
+    /* check the various image modes, make sure they make sense */
+    if (strcmp(imDest->mode, "RGBA") != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "given destination image does not have mode \"RGBA\"");
+        return NULL;
+    }
+
+    if (strcmp(imMask->mode, "RGBA") != 0 && strcmp(imMask->mode, "L") != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "given mask image does not have mode \"RGBA\" or \"L\"");
+        return NULL;
+    }
+
+    /* how far into image the first alpha byte resides */
+    mask_offset = (imMask->pixelsize == 4 ? 3 : 0);
+    /* how many bytes to skip to get to the next alpha byte */
+    mask_stride = imMask->pixelsize;
+
+    /* setup source & destination vars */
+    setup_source_destination(imMask, imDest, &sx, &sy, &dx, &dy, &xsize, &ysize);
+
+    /* check that there remains any blending to be done */
+    if (xsize <= 0 || ysize <= 0) {
+        /* nothing to do, return */
+        return dest;
+    }
+
+    for (y = 0; y < ysize; y++) {
+        UINT8 *out = (UINT8 *)imDest->image[dy + y] + dx * 4;
+        UINT8 *inmask = (UINT8 *)imMask->image[sy + y] + sx * mask_stride + mask_offset;
+
+        for (x = 0; x < xsize; x++) {
+            /* special cases */
+            if (*inmask == 255) {
+                *out = MULDIV255(*out, sr, tmp1);
+                out++;
+                *out = MULDIV255(*out, sg, tmp1);
+                out++;
+                *out = MULDIV255(*out, sb, tmp1);
+                out++;
+            } else if (*inmask == 0) {
+                /* do nothing -- source is fully transparent */
+                out += 3;
+            } else {
+                /* general case */
+                
+                /* TODO work out general case */
+                *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sr, *inmask, tmp1), tmp2);
+                out++;
+                *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sg, *inmask, tmp1), tmp2);
+                out++;
+                *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sb, *inmask, tmp1), tmp2);
+                out++;
+            }
+
+            out++;
+            inmask += mask_stride;
+        }
+    }
+
+    return dest;
 }

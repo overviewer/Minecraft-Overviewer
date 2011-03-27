@@ -58,9 +58,16 @@ RenderModeInterface *get_render_mode(RenderState *state);
 
 /* NORMAL */
 typedef struct {
-    /* normal mode does not have any special data, so just use a dummy int
-       this way, normal mode is just like any other type of render mode */
-    int dummy;
+    /* coordinates of the chunk, inside its region file */
+    int chunk_x, chunk_y;
+    /* biome data for the region */
+    PyObject *biome_data;
+    /* grasscolor and foliagecolor lookup tables */
+    PyObject *grasscolor, *foliagecolor;
+    /* biome-compatible grass/leaf textures */
+    PyObject *grass_texture, *leaf_texture;
+    /* top facemask for grass biome tinting */
+    PyObject *facemask_top;
 } RenderModeNormal;
 extern RenderModeInterface rendermode_normal;
 

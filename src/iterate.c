@@ -247,7 +247,7 @@ chunk_render(PyObject *self, PyObject *args) {
     
     /* set up the render mode */
     rendermode = get_render_mode(&state);
-    rm_data = malloc(rendermode->data_size);
+    rm_data = calloc(1, rendermode->data_size);
     if (rendermode->start(rm_data, &state)) {
         free(rm_data);
         return Py_BuildValue("i", "-1");
