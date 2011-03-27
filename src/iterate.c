@@ -74,7 +74,7 @@ is_transparent(unsigned char b) {
 
 
 unsigned char
-    check_adjacent_blocks(RenderState *state, unsigned char blockid) {
+    check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
         /*
          * Generates a pseudo ancillary data for blocks that depend of 
          * what are surrounded and don't have ancillary data. This 
@@ -96,48 +96,48 @@ unsigned char
         
         if (state->x == 15) { /* +x direction */
             if (state->up_right_blocks != Py_None) { /* just in case we are in the end of the world */
-                if (getArrayByte3D(state->up_right_blocks, 0, state->y, state->z) == blockid) {
+                if (getArrayByte3D(state->up_right_blocks, 0, y, z) == blockid) {
                     pdata = pdata|(1 << 3);
                 }
             }
         } else {
-            if (getArrayByte3D(state->blocks, state->x + 1, state->y, state->z) == blockid) {
+            if (getArrayByte3D(state->blocks, x + 1, y, z) == blockid) {
                 pdata = pdata|(1 << 3);
             }
         }
         
         if (state->y == 15) { /* +y direction*/
             if (state->right_blocks != Py_None) {
-                if (getArrayByte3D(state->right_blocks, state->x, 0, state->z) == blockid) {
+                if (getArrayByte3D(state->right_blocks, x, 0, z) == blockid) {
                     pdata = pdata|(1 << 2);
                 }
             }
         } else {
-            if (getArrayByte3D(state->blocks, state->x, state->y + 1, state->z) == blockid) {
+            if (getArrayByte3D(state->blocks, x, y + 1, z) == blockid) {
                 pdata = pdata|(1 << 2);
             }
         }
         
         if (state->x == 0) { /* -x direction*/
             if (state->left_blocks != Py_None) {
-                if (getArrayByte3D(state->left_blocks, 15, state->y, state->z) == blockid) {
+                if (getArrayByte3D(state->left_blocks, 15, y, z) == blockid) {
                     pdata = pdata|(1 << 1);
                 }
             }
         } else {
-            if (getArrayByte3D(state->blocks, state->x - 1, state->y, state->z) == blockid) {
+            if (getArrayByte3D(state->blocks, x - 1, y, z) == blockid) {
                 pdata = pdata|(1 << 1);
             }
         }
         
         if (state->y == 0) { /* -y direction */
             if (state->up_left_blocks != Py_None) {
-                if (getArrayByte3D(state->up_left_blocks, state->x, 15, state->z) == blockid) {
+                if (getArrayByte3D(state->up_left_blocks, x, 15, z) == blockid) {
                     pdata = pdata|(1 << 0);
                 }
             }
         } else {
-            if (getArrayByte3D(state->blocks, state->x, state->y - 1, state->z) == blockid) {
+            if (getArrayByte3D(state->blocks, x, y - 1, z) == blockid) {
                 pdata = pdata|(1 << 0);
             }
         }
@@ -147,15 +147,69 @@ unsigned char
 
 
 unsigned char
-generate_pseudo_data(RenderState *state) {
+generate_pseudo_data(RenderState *state, unsigned char ancilData) {
     /*
      * Generates a fake ancillary data for blocks that are drawn 
      * depending on what are surrounded.
      */
+    int x = state->x, y = state->y, z = state->z;
+    unsigned char data = 0;
+    
+    if (state->block == 9) { /* water */
+        /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
+        if ((ancilData == 0) || (ancilData >= 10)) { /* static water, only top, and unkown ancildata values */
+            data = 16;
+            return data; /* = 0b10000 */
+        } else if ((ancilData > 0) && (ancilData < 8)) { /* flowing water */
+            data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | 0x10;
+            return data;
+        } else if ((ancilData == 8) || (ancilData == 9)) { /* falling water */
+            data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f);
+            return data;
+        }
 
-    if (state->block == 85) { /* fences */
-        return check_adjacent_blocks(state, state->block);
+
+    } else if (state->block == 85) { /* fences */
+        return check_adjacent_blocks(state, x, y, z, state->block);
+
+
+    } else if (state->block == 55) { /* redstone */
+        /* three addiotional bit are added, one for on/off state, and
+         * another two for going-up redstone wire in the same block
+         * (connection with the level z+1) */
+        unsigned char above_level_data = 0, same_level_data = 0, below_level_data = 0, possibly_connected = 0, final_data = 0;
+
+        /* check for air in z+1, no air = no connection with upper level */        
+        if ((z != 127) && (getArrayByte3D(state->left_blocks, x, y, z) == 0)) { 
+            above_level_data = check_adjacent_blocks(state, x, y, z + 1, state->block);
+        }   /* else above_level_data = 0 */
+        
+        /* check connection with same level */
+        same_level_data = check_adjacent_blocks(state, x, y, z, 55);
+        
+        /* check the posibility of connection with z-1 level, check for air */
+        possibly_connected = check_adjacent_blocks(state, x, y, z, 0);
+        
+        /* check connection with z-1 level */
+        if (z != 0) {
+            below_level_data = check_adjacent_blocks(state, x, y, z - 1, state->block);
+        } /* else below_level_data = 0 */
+        
+        final_data = above_level_data | same_level_data | (below_level_data & possibly_connected);
+        
+        /* add the three bits */
+        if (ancilData > 0) { /* powered redstone wire */
+            final_data = final_data | 0x40;
+        }
+        if ((above_level_data & 0x01)) { /* draw top left going up redstonewire */
+            final_data = final_data | 0x20;
+        }
+        if ((above_level_data & 0x08)) { /* draw top right going up redstonewire */
+            final_data = final_data | 0x10;
+        }
+        return final_data;        
     }
+
     return 0;
 
 }
@@ -275,8 +329,8 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *tmp;
                     
                     unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
-                    if (state.block == 85) {
-                        ancilData = generate_pseudo_data(&state);
+                    if ((state.block == 85) || (state.block == 9) || (state.block == 55)) {
+                        ancilData = generate_pseudo_data(&state, ancilData);
                     }
                     
                     tmp = PyTuple_New(2);
