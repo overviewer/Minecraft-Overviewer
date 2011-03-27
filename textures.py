@@ -121,8 +121,8 @@ def transform_image(img, blockID=None):
 
     """
 
-    if blockID in (81,): # cacti
-        # Resize to 15x15, since the cactus texture is a little smaller than the other textures
+    if blockID in (81,92): # cacti and cake
+        # Resize to 15x15, since the cactus and the cake textures are a little smaller than the other textures
         img = img.resize((15, 15), Image.BILINEAR)
 
     else:
@@ -226,7 +226,9 @@ def _build_block(top, side, blockID=None):
     ## special case for non-block things
     # TODO once torches are handled by generate_special_texture, remove
     # them from this list
-    if blockID in (37,38,6,39,40,50,83): ## flowers, sapling, mushrooms,  regular torch, reeds
+    if blockID in (37,38,6,39,40,50,83,75,76): ## flowers, sapling, mushrooms,  regular torch, reeds,
+        # redstone torch on, redstone torch off
+        #
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
         composite.alpha_over(img, side, (6,3), side)
@@ -309,10 +311,6 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         bottom = transform_image(bottom, blockID)
         composite.alpha_over(img, bottom, (0,12), top)
         
-    if top != None :
-        top = transform_image(top, blockID)
-        composite.alpha_over(img, top, (0,0), top)
-        
     # front sides
     if side3 != None :
         side3 = transform_image_side(side3, blockID)
@@ -335,6 +333,10 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         
         composite.alpha_over(img, side4, (12,6), side4)
 
+    if top != None :
+        top = transform_image(top, blockID)
+        composite.alpha_over(img, top, (0,0), top)
+
     return img
 
 
@@ -354,9 +356,9 @@ def _build_blockimages():
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, 80, -1, 65,  4, 25, -1, 98, 24, 43, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
+               36, 37, 80, -1, 65,  4, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation
+               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51,115, 99, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
        #       80  81  82  83  84  85  86  87  88  89  90  91
                66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
         ]
@@ -371,9 +373,9 @@ def _build_blockimages():
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, -1, -1, -1,
+                36, 37, 80, -1, 65,  4, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
+                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51,115, 99, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
                 66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
@@ -490,7 +492,15 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, track, (0,12), track)
 
         return (img.convert("RGB"), img.split()[3])
+
+    if blockID == 58: # crafting table
+        top = terrain_images[43]
+        side3 = terrain_images[43+16]
+        side4 = terrain_images[43+16+1]
         
+        img = _build_full_block(top, None, None, side3, side4, None, 58)
+        return (img.convert("RGB"), img.split()[3])
+
     if blockID == 59: # crops
         raw_crop = terrain_images[88+data]
         crop1 = transform_image(raw_crop, blockID)
@@ -967,6 +977,34 @@ def generate_special_texture(blockID, data):
 
         return (img.convert("RGB"),img.split()[3])
 
+
+    if blockID == 92: # cake! (without bites, at the moment)
+    
+        top = terrain_images[121]
+        side = terrain_images[122]
+        top = transform_image(top, blockID)
+        side = transform_image_side(side, blockID)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        
+        sidealpha = side.split()[3]
+        side = ImageEnhance.Brightness(side).enhance(0.9)
+        side.putalpha(sidealpha)
+        othersidealpha = otherside.split()[3]
+        otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+        otherside.putalpha(othersidealpha)
+        
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        
+        composite.alpha_over(img, side, (2,12), side)
+        composite.alpha_over(img, otherside, (10,12), otherside)
+        composite.alpha_over(img, top, (0,8), top)
+        
+        #~ composite.alpha_over(img, side, (2,6), side)
+        #~ composite.alpha_over(img, otherside, (10,6), otherside)
+        #~ composite.alpha_over(img, top, (0,2), top)
+        return (img.convert("RGB"), img.split()[3])
+
+
     return None
 
 def tintTexture(im, c):
@@ -1040,7 +1078,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
 
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51,43,44,9,55])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51,43,44,9,55,58,92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1063,6 +1101,8 @@ special_map[43] = range(4)  # stone, sandstone, wooden and cobblestone double-sl
 special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values. 
 special_map[55] = range(128) # redstone wire
+special_map[58] = (0,) # crafting table
+special_map[92] = range(6) # cake!
 
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
