@@ -15,28 +15,25 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+/* simple routines for dealing with endian conversion */
 
-static PyMethodDef COverviewerMethods[] = {
-    {"alpha_over", alpha_over_wrap, METH_VARARGS,
-     "alpha over composite function"},
-    {"render_loop", chunk_render, METH_VARARGS,
-     "Renders stuffs"},
-    {NULL, NULL, 0, NULL}       /* Sentinel */
-};
+#define UNKNOWN_ENDIAN 0
+#define BIG_ENDIAN 1
+#define LITTLE_ENDIAN 2
 
-PyMODINIT_FUNC
-initc_overviewer(void)
-{
-    (void)Py_InitModule("c_overviewer", COverviewerMethods);
-    /* for numpy */
-    import_array();
+static int endianness = UNKNOWN_ENDIAN;
 
-    /* initialize some required variables in iterage.c */
-    if (init_chunk_render()) {
-        fprintf(stderr, "failed to init_chunk_render\n");
-        exit(1); // TODO better way to indicate error?
-    }
-    
-    init_endian();
+void init_endian() {
+    /* figure out what our endianness is! */
+    short word = 0x0001;
+    char* byte = (char*)(&word);
+    endianness = byte[0] ? LITTLE_ENDIAN : BIG_ENDIAN;
+}
+
+unsigned short big_endian_ushort(unsigned short in) {
+    return (endianness == LITTLE_ENDIAN) ? ((in >> 8) | (in << 8)) : in;
+}
+
+unsigned int big_endian_uint(unsigned int in) {
+    return (endianness == LITTLE_ENDIAN) ? (((in & 0x000000FF) << 24) + ((in & 0x0000FF00) << 8) + ((in & 0x00FF0000) >> 8) + ((in & 0xFF000000) >> 24)) : in;
 }

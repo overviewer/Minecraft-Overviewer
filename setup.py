@@ -46,7 +46,7 @@ except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
 
-c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c']
+c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c', 'src/endian.c']
 c_overviewer_files += ['src/rendermodes.c', 'src/rendermode-normal.c', 'src/rendermode-lighting.c', 'src/rendermode-night.c', 'src/rendermode-spawn.c']
 setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], extra_link_args=[]))
 # tell build_ext to build the extension in-place

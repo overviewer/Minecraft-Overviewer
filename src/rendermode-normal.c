@@ -128,16 +128,11 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     if (self->biome_data) {
         /* do the biome stuff! */
         unsigned int index;
-        PyObject *index_py, *color = NULL, *facemask = NULL;
+        PyObject *color = NULL, *facemask = NULL;
         unsigned char r, g, b;
         
         index = ((self->chunk_y * 16) + state->y) * 16 * 32 + (self->chunk_x * 16) + state->x;
-        /* TODO for some reason, this one doesn't work:
-         * index = getArrayShort1D(self->biome_data, index);
-         */
-        index_py = PySequence_GetItem(self->biome_data, index);
-        index = PyInt_AsLong(index_py);
-        Py_DECREF(index_py);
+        index = big_endian_ushort(getArrayShort1D(self->biome_data, index));
         
         switch (state->block) {
         case 2:
