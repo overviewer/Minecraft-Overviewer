@@ -186,7 +186,7 @@ def main():
         q.append(qtree)
 
     #create the distributed render
-    r = rendernode.RenderNode(q)
+    r = rendernode.RenderNode(q, world=w)
     
     # write out the map and web assets
     m = googlemap.MapGen(q, skipjs=options.skipjs, web_assets_hook=options.web_assets_hook)
@@ -194,6 +194,8 @@ def main():
     
     # render the tiles!
     r.go(options.procs)
+
+    m.finalize()
 
 
 def delete_all(worlddir, tiledir):

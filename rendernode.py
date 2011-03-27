@@ -14,6 +14,7 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 import multiprocessing
+import Queue
 import itertools
 from itertools import cycle, islice
 import os
@@ -76,7 +77,7 @@ def roundrobin(iterables):
 
             
 class RenderNode(object):
-    def __init__(self, quadtrees):
+    def __init__(self, quadtrees, world):
         """Distributes the rendering of a list of quadtrees."""
 
         if not len(quadtrees) > 0:
@@ -88,6 +89,13 @@ class RenderNode(object):
         for q in quadtrees:
             q._render_index = i
             i += 1       
+
+        # queue for receiving interesting events from the renderer
+        # (like the discovery of signs!
+        self.poi_q = multiprocessing.Queue()
+        
+        self.world = world
+
 
     def print_statusline(self, complete, total, level, unconditional=False):
         if unconditional:
@@ -151,6 +159,18 @@ class RenderNode(object):
                 timestamp = timestamp2                
                 count_to_remove = (1000//batch_size)
                 if count_to_remove < len(results):
+                    try:
+                        while (1):
+                            # an exception will break us out of this loop
+                            item = self.poi_q.get(block=False)
+                            if item[0] == "newpoi":
+                                if item[1] not in self.world.POI:
+                                    #print "got an item from the queue!"
+                                    self.world.POI.append(item[1])
+                            elif item[0] == "removePOI":
+                                self.world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], self.world.persistentData['POI'])
+                    except Queue.Empty:
+                        pass
                     while count_to_remove > 0:
                         count_to_remove -= 1
                         complete += results.popleft().get()
@@ -166,6 +186,18 @@ class RenderNode(object):
         while len(results) > 0:
             complete += results.popleft().get()
             self.print_statusline(complete, total, 1)
+        try:
+            while (1):
+                # an exception will break us out of this loop
+                item = self.poi_q.get(block=False)
+                if item[0] == "newpoi":
+                    if item[1] not in self.world.POI:
+                        #print "got an item from the queue!"
+                        self.world.POI.append(item[1])
+                elif item[0] == "removePOI":
+                    self.world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], self.world.persistentData['POI'])
+        except Queue.Empty:
+            pass
 
         self.print_statusline(complete, total, 1, True)
 
@@ -230,10 +262,10 @@ class RenderNode(object):
             jobcount += 1
             if jobcount >= batch_size:
                 jobcount = 0        
-                yield pool.apply_async(func=render_worldtile_batch, args= [batch])
+                yield pool.apply_async(func=render_worldtile_batch, args= [batch, self.poi_q])
                 batch = []              
         if jobcount > 0:
-            yield pool.apply_async(func=render_worldtile_batch, args= [batch])         
+            yield pool.apply_async(func=render_worldtile_batch, args= [batch, self.poi_q])
 
     def _apply_render_inntertile(self, pool, zoom,batch_size):
         """Same as _apply_render_worltiles but for the inntertile routine.
@@ -262,7 +294,7 @@ class RenderNode(object):
             yield pool.apply_async(func=render_innertile_batch, args= [batch])    
             
 @catch_keyboardinterrupt
-def render_worldtile_batch(batch):   
+def render_worldtile_batch(batch, poi_queue):
     global child_rendernode
     rendernode = child_rendernode
     count = 0
@@ -282,7 +314,7 @@ def render_worldtile_batch(batch):
         tilechunks = quadtree.get_chunks_in_range(colstart, colend, rowstart,rowend)
         #logging.debug(" tilechunks: %r", tilechunks)
         
-        quadtree.render_worldtile(tilechunks,colstart, colend, rowstart, rowend, path)      
+        quadtree.render_worldtile(tilechunks,colstart, colend, rowstart, rowend, path, poi_queue)
     return count
 
 @catch_keyboardinterrupt

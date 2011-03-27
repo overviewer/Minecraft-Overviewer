@@ -333,7 +333,7 @@ class QuadtreeGen(object):
 
 
 
-    def render_worldtile(self, chunks, colstart, colend, rowstart, rowend, path):
+    def render_worldtile(self, chunks, colstart, colend, rowstart, rowend, path, poi_queue=None):
         """Renders just the specified chunks into a tile and save it. Unlike usual
         python conventions, rowend and colend are inclusive. Additionally, the
         chunks around the edges are half-way cut off (so that neighboring tiles
@@ -442,7 +442,7 @@ class QuadtreeGen(object):
 
             # draw the chunk!
             # TODO POI queue
-            chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), self, False, None)
+            chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), self, False, poi_queue)
 
         # Save them
         tileimg.save(imgpath)
