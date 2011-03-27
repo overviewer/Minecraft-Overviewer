@@ -226,7 +226,9 @@ def _build_block(top, side, blockID=None):
     ## special case for non-block things
     # TODO once torches are handled by generate_special_texture, remove
     # them from this list
-    if blockID in (37,38,6,39,40,50,83): ## flowers, sapling, mushrooms,  regular torch, reeds
+    if blockID in (37,38,6,39,40,50,83,75,76): ## flowers, sapling, mushrooms,  regular torch, reeds,
+        # redstone torch on, redstone torch off
+        #
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
         composite.alpha_over(img, side, (6,3), side)
@@ -356,7 +358,7 @@ def _build_blockimages():
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                36, 37, 80, -1, 65,  4, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation
+               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51,115, 99, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
        #       80  81  82  83  84  85  86  87  88  89  90  91
                66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
         ]
@@ -373,7 +375,7 @@ def _build_blockimages():
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                 36, 37, 80, -1, 65,  4, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
+                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51,115, 99, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
                 66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
