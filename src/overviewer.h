@@ -38,10 +38,11 @@
 
 /* in composite.c */
 Imaging imaging_python_to_c(PyObject *obj);
-PyObject *alpha_over(PyObject *dest, PyObject *src, PyObject *mask, int dx,
-                     int dy, int xsize, int ysize);
+PyObject *alpha_over(PyObject *dest, PyObject *src, PyObject *mask,
+                     int dx, int dy, int xsize, int ysize);
+PyObject *alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alpha,
+                          int dx, int dy, int xsize, int ysize);
 PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
-PyObject *brightness(PyObject *img, float factor);
 
 /* in iterate.c */
 typedef struct {

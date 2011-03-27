@@ -135,9 +135,8 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
    lighting results from (x, y, z) */
 static inline void
 do_shading_with_mask(RenderModeLighting *self, RenderState *state,
-                     int x, int y, int z, PyObject *facemask) {
+                     int x, int y, int z, PyObject *mask) {
     float black_coeff;
-    PyObject *mask;
 
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
@@ -149,11 +148,7 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
     }
     
     black_coeff = get_lighting_coefficient(self, state, x, y, z, NULL);
-    
-    mask = PyObject_CallMethod(facemask, "copy", NULL); // new ref
-    brightness(mask, black_coeff);
-    alpha_over(state->img, self->black_color, mask, state->imgx, state->imgy, 0, 0);
-    Py_DECREF(mask);
+    alpha_over_full(state->img, self->black_color, mask, black_coeff, state->imgx, state->imgy, 0, 0);
 }
 
 static int

@@ -58,52 +58,20 @@ imaging_python_to_c(PyObject *obj)
     return image;
 }
 
-/**
- * img should be an Image object, type 'L' or 'RGBA'
- * for RGBA images, operates on the alpha only
- * factor should be between 0 and 1, inclusive
- */
-PyObject *brightness(PyObject *img, float factor) {
-    Imaging imDest;
-
-    int offset, stride, x, y, xsize, ysize;
-
-    imDest = imaging_python_to_c(img);
-    if (!imDest)
-        return NULL;
-
-    if (strcmp(imDest->mode, "RGBA") != 0 && strcmp(imDest->mode, "L") != 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "given image does not have mode \"RGBA\" or \"L\"");
-        return NULL;
-    }
-    
-    /* how far into image the first alpha byte resides */
-    offset = (imDest->pixelsize == 4 ? 3 : 0);
-    /* how many bytes to skip to get to the next alpha byte */
-    stride = imDest->pixelsize;
-    
-    xsize = imDest->xsize;
-    ysize = imDest->ysize;
-
-    for (y = 0; y < ysize; y++) {
-        UINT8 *out = (UINT8 *)imDest->image[y] + offset;
-
-        for (x = 0; x < xsize; x++) {
-            *out *= factor;
-            out += stride;
-        }
-    }
-    return NULL;
+/* convenience alpha_over with 1.0 as overall_alpha */
+inline PyObject* alpha_over(PyObject *dest, PyObject *src, PyObject *mask,
+                            int dx, int dy, int xsize, int ysize) {
+    return alpha_over_full(dest, src, mask, 1.0f, dx, dy, xsize, ysize);
 }
 
-/* the alpha_over function, in a form that can be called from C */
-/* if xsize, ysize are negative, they are instead set to the size of the image in src */
-/* returns NULL on error, dest on success. You do NOT need to decref the return! */
-PyObject *
-alpha_over(PyObject *dest, PyObject *src, PyObject *mask, int dx, int dy,
-           int xsize, int ysize)
-{
+/* the full alpha_over function, in a form that can be called from C
+ * overall_alpha is multiplied with the whole mask, useful for lighting...
+ * if xsize, ysize are negative, they are instead set to the size of the image in src
+ * returns NULL on error, dest on success. You do NOT need to decref the return!
+ */
+inline PyObject *
+alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alpha,
+                int dx, int dy, int xsize, int ysize) {
     /* libImaging handles */
     Imaging imDest, imSrc, imMask;
     /* cached blend properties */
@@ -114,6 +82,12 @@ alpha_over(PyObject *dest, PyObject *src, PyObject *mask, int dx, int dy,
     unsigned int x, y, i;
     /* temporary calculation variables */
     int tmp1, tmp2, tmp3;
+    /* integer [0, 255] version of overall_alpha */
+    UINT8 overall_alpha_int = 255 * overall_alpha;
+    
+    /* short-circuit this whole thing if overall_alpha is zero */
+    if (overall_alpha_int == 0)
+        return dest;
 
     imDest = imaging_python_to_c(dest);
     imSrc = imaging_python_to_c(src);
@@ -202,9 +176,18 @@ alpha_over(PyObject *dest, PyObject *src, PyObject *mask, int dx, int dy,
         UINT8 *inmask = (UINT8 *)imMask->image[sy + y] + sx * mask_stride + mask_offset;
 
         for (x = 0; x < xsize; x++) {
+            UINT8 in_alpha;
+            
+            /* apply overall_alpha */
+            if (overall_alpha_int != 255 && *inmask != 0) {
+                in_alpha = MULDIV255(*inmask, overall_alpha_int, tmp1);
+            } else {
+                in_alpha = *inmask;
+            }
+            
             /* special cases */
-            if (*inmask == 255 || *outmask == 0) {
-                *outmask = *inmask;
+            if (in_alpha == 255 || *outmask == 0) {
+                *outmask = in_alpha;
 
                 *out = *in;
                 out++, in++;
@@ -213,18 +196,18 @@ alpha_over(PyObject *dest, PyObject *src, PyObject *mask, int dx, int dy,
                 *out = *in;
                 out++, in++;
             }
-            else if (*inmask == 0) {
+            else if (in_alpha == 0) {
                 /* do nothing -- source is fully transparent */
                 out += 3;
                 in += 3;
             }
             else {
                 /* general case */
-                int alpha = *inmask + MULDIV255(*outmask, 255 - *inmask, tmp1);
+                int alpha = in_alpha + MULDIV255(*outmask, 255 - in_alpha, tmp1);
                 for (i = 0; i < 3; i++) {
                     /* general case */
-                    *out = MULDIV255(*in, *inmask, tmp1) +
-                        MULDIV255(MULDIV255(*out, *outmask, tmp2), 255 - *inmask, tmp3);
+                    *out = MULDIV255(*in, in_alpha, tmp1) +
+                        MULDIV255(MULDIV255(*out, *outmask, tmp2), 255 - in_alpha, tmp3);
                     
                     *out = (*out * 255) / alpha;
                     out++, in++;
