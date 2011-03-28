@@ -92,7 +92,8 @@ class RenderNode(object):
 
         # queue for receiving interesting events from the renderer
         # (like the discovery of signs!
-        self.poi_q = multiprocessing.Queue()
+        self.manager = multiprocessing.Manager()
+        self.poi_q = self.manager.Queue()
         
         self.world = world
 
