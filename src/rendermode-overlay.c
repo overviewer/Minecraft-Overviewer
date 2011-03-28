@@ -17,6 +17,14 @@
 
 #include "overviewer.h"
 
+static void get_color(void *data, RenderState *state,
+                      unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
+    *r = 200;
+    *g = 200;
+    *b = 255;
+    *a = 155;
+}
+
 static int
 rendermode_overlay_start(void *data, RenderState *state) {
     PyObject *facemasks_py;
@@ -32,6 +40,8 @@ rendermode_overlay_start(void *data, RenderState *state) {
     
     self->solid_blocks = PyObject_GetAttrString(state->chunk, "solid_blocks");
     self->fluid_blocks = PyObject_GetAttrString(state->chunk, "fluid_blocks");
+    
+    self->get_color = get_color;
     
     return 0;
 }
@@ -63,6 +73,7 @@ rendermode_overlay_occluded(void *data, RenderState *state) {
 static void
 rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
     RenderModeOverlay *self = (RenderModeOverlay *)data;
+    unsigned char r, g, b, a;
     
     /* clear the draw space -- set alpha to 0 within mask */
     tint_with_mask(state->img, 255, 255, 255, 0, mask, state->imgx, state->imgy, 0, 0);
@@ -97,8 +108,14 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
     }
     Py_DECREF(block_py);
 
+    /* get our color info */
+    self->get_color(data, state, &r, &g, &b, &a);
+    
     /* do the overlay */
-    alpha_over_full(state->img, self->white_color, self->facemask_top, 0.5, state->imgx, state->imgy, 0, 0);
+    if (a > 0) {
+        alpha_over(state->img, self->white_color, self->facemask_top, state->imgx, state->imgy, 0, 0);
+        tint_with_mask(state->img, r, g, b, a, self->facemask_top, state->imgx, state->imgy, 0, 0);
+    }
 }
 
 RenderModeInterface rendermode_overlay = {

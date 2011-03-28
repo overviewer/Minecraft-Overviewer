@@ -77,6 +77,11 @@ typedef struct {
     PyObject *facemask_top, *white_color;
     /* only show overlay on top of solid or fluid blocks */
     PyObject *solid_blocks, *fluid_blocks;
+    /* can be overridden in derived classes to control
+       overlay alpha and color
+       last four vars are r, g, b, a out */
+    void (*get_color)(void *, RenderState *,
+                      unsigned char *, unsigned char *, unsigned char *, unsigned char *);
 } RenderModeOverlay;
 extern RenderModeInterface rendermode_overlay;
 
