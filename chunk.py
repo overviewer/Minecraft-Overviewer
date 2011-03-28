@@ -177,8 +177,8 @@ class ChunkRenderer(object):
         self.queue = queue
         
         self.regionfile = worldobj.get_region_path(*chunkcoords)    
-        if not os.path.exists(self.regionfile):
-            raise ValueError("Could not find regionfile: %s" % self.regionfile)
+        #if not os.path.exists(self.regionfile):
+        #    raise ValueError("Could not find regionfile: %s" % self.regionfile)
 
         ## TODO TODO all of this class
 
@@ -187,7 +187,7 @@ class ChunkRenderer(object):
         #chunkcoords = filename_split[1:3]
         
         #self.coords = map(world.base36decode, chunkcoords)
-        self.blockid = "%d.%d" % chunkcoords
+        #self.blockid = "%d.%d" % chunkcoords
 
         # chunk coordinates (useful to converting local block coords to 
         # global block coords)
@@ -196,12 +196,6 @@ class ChunkRenderer(object):
 
         self.world = worldobj
         self.rendermode = rendermode
-
-        if self.world.useBiomeData:
-            # make sure we've at least *tried* to load the color arrays in this process...
-            textures.prepareBiomeData(self.world.worlddir)
-            if not textures.grasscolor or not textures.foliagecolor:
-                raise Exception("Can't find grasscolor.png or foliagecolor.png")
 
     def _load_level(self):
         """Loads and returns the level structure"""

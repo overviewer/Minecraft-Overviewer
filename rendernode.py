@@ -60,7 +60,13 @@ def pool_initializer(rendernode):
     #stash the quadtree objects in a global variable after fork() for windows compat.
     global child_rendernode
     child_rendernode = rendernode  
-    
+    for quadtree in rendernode.quadtrees:
+        if quadtree.world.useBiomeData:
+            # make sure we've at least *tried* to load the color arrays in this process...
+            textures.prepareBiomeData(quadtree.world.worlddir)
+            if not textures.grasscolor or not textures.foliagecolor:
+                raise Exception("Can't find grasscolor.png or foliagecolor.png")
+                    
 #http://docs.python.org/library/itertools.html    
 def roundrobin(iterables):
     "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
@@ -119,8 +125,7 @@ class RenderNode(object):
         # Create a pool
         if procs == 1:
             pool = FakePool()
-            global child_rendernode
-            child_rendernode = self
+            pool_initializer(self)
         else:
             pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
             #warm up the pool so it reports all the worker id's

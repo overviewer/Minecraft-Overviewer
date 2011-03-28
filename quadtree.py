@@ -434,6 +434,8 @@ class QuadtreeGen(object):
         # Compile this image
         tileimg = Image.new("RGBA", (width, height), (38,92,255,0))
 
+        world = self.world
+        rendermode = self.rendermode
         # col colstart will get drawn on the image starting at x coordinates -(384/2)
         # row rowstart will get drawn on the image starting at y coordinates -(192/2)
         for col, row, chunkx, chunky, regionfile in chunks:
@@ -441,8 +443,10 @@ class QuadtreeGen(object):
             ypos = -96 + (row-rowstart)*96
 
             # draw the chunk!
-            # TODO POI queue
-            chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), self, False, poi_queue)
+            a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue)
+            a.chunk_render(tileimg, xpos, ypos, None)            
+#            chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), self, False, None)
+
 
         # Save them
         tileimg.save(imgpath)
