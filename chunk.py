@@ -406,22 +406,7 @@ class ChunkRenderer(object):
         For cave mode, all blocks that have any direct sunlight are not
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
-        blocks = self.blocks
-        pseudo_ancildata_blocks = set([85])
         
-        left_blocks = self.left_blocks
-        right_blocks = self.right_blocks
-        
-        if cave:
-            # Cave mode. Actually go through and 0 out all blocks that are not in a
-            # cave, so that it only renders caves.
-
-            # Places where the skylight is not 0 (there's some amount of skylight
-            # touching it) change it to something that won't get rendered, AND
-            # won't get counted as "transparent".
-            blocks = blocks.copy()
-            blocks[self.skylight != 0] = 21
-  
         blockData = get_blockdata_array(self.level)
         blockData_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
         # Even elements get the lower 4 bits
@@ -429,7 +414,6 @@ class ChunkRenderer(object):
         # Odd elements get the upper 4 bits
         blockData_expanded[:,:,1::2] = blockData >> 4
 
-        tileEntities = get_tileentity_data(self.level)
 
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image
@@ -443,6 +427,8 @@ class ChunkRenderer(object):
 
         c_overviewer.render_loop(self, img, xoff, yoff, blockData_expanded)
 
+        #tileEntities = get_tileentity_data(self.level)
+	tileEntities = []
         for entity in tileEntities:
             if entity['id'] == 'Sign':
                 msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])
