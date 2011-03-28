@@ -129,7 +129,10 @@ class RenderNode(object):
         else:
             pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
             #warm up the pool so it reports all the worker id's
-            pool.map(bool,xrange(multiprocessing.cpu_count()),1)        
+            if logging.getLogger().level >= 10:
+                pool.map_(bool,xrange(multiprocessing.cpu_count()),1)
+            else:
+                pool.map_async(bool,xrange(multiprocessing.cpu_count()),1)
                 
         quadtrees = self.quadtrees
         
