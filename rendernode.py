@@ -62,6 +62,7 @@ def pool_initializer(rendernode):
     child_rendernode = rendernode  
     for quadtree in rendernode.quadtrees:
         if quadtree.world.useBiomeData:
+            import textures
             # make sure we've at least *tried* to load the color arrays in this process...
             textures.prepareBiomeData(quadtree.world.worlddir)
             if not textures.grasscolor or not textures.foliagecolor:
