@@ -30,6 +30,9 @@ rendermode_overlay_start(void *data, RenderState *state) {
     
     self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
     
+    self->solid_blocks = PyObject_GetAttrString(state->chunk, "solid_blocks");
+    self->fluid_blocks = PyObject_GetAttrString(state->chunk, "fluid_blocks");
+    
     return 0;
 }
 
@@ -37,8 +40,10 @@ static void
 rendermode_overlay_finish(void *data, RenderState *state) {
     RenderModeOverlay *self = (RenderModeOverlay *)data;
     
-    Py_XDECREF(self->facemask_top);
-    Py_XDECREF(self->white_color);
+    Py_DECREF(self->facemask_top);
+    Py_DECREF(self->white_color);
+    Py_DECREF(self->solid_blocks);
+    Py_DECREF(self->fluid_blocks);
 }
 
 static int
@@ -51,7 +56,7 @@ rendermode_overlay_occluded(void *data, RenderState *state) {
          !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
         return 1;
     }
-
+    
     return 0;
 }
 
@@ -61,7 +66,37 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
     
     /* clear the draw space -- set alpha to 0 within mask */
     tint_with_mask(state->img, 255, 255, 255, 0, mask, state->imgx, state->imgy, 0, 0);
+
+    /* skip rendering the overlay if we can't see it */
+    if (state->z != 127) {
+        unsigned char top_block = getArrayByte3D(state->blocks, state->x, state->y, state->z+1);
+        if (!is_transparent(top_block)) {
+            return;
+        }
+        
+        /* check to be sure this block is solid/fluid */
+        PyObject *top_block_py = PyInt_FromLong(top_block);
+        if (PySequence_Contains(self->solid_blocks, top_block_py) ||
+            PySequence_Contains(self->fluid_blocks, top_block_py)) {
+            
+            /* top block is fluid or solid, skip drawing */
+            Py_DECREF(top_block_py);
+            return;
+        }
+        Py_DECREF(top_block_py);
+    }
     
+    /* check to be sure this block is solid/fluid */
+    PyObject *block_py = PyInt_FromLong(state->block);
+    if (!PySequence_Contains(self->solid_blocks, block_py) &&
+        !PySequence_Contains(self->fluid_blocks, block_py)) {
+        
+        /* not fluid or solid, skip drawing the overlay */
+        Py_DECREF(block_py);
+        return;
+    }
+    Py_DECREF(block_py);
+
     /* do the overlay */
     alpha_over_full(state->img, self->white_color, self->facemask_top, 0.5, state->imgx, state->imgy, 0, 0);
 }

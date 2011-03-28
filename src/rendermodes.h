@@ -75,6 +75,8 @@ extern RenderModeInterface rendermode_normal;
 typedef struct {
     /* top facemask and white color image, for drawing overlays */
     PyObject *facemask_top, *white_color;
+    /* only show overlay on top of solid or fluid blocks */
+    PyObject *solid_blocks, *fluid_blocks;
 } RenderModeOverlay;
 extern RenderModeInterface rendermode_overlay;
 
