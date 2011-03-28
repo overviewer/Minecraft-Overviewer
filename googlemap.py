@@ -96,7 +96,7 @@ class MapGen(object):
         
         # create generated map type data, from given quadtrees
         # FIXME hook this into render_modes in setup.py, somehow
-        overlay_types = ['overlay']
+        overlay_types = ['spawn']
         maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
                                      'path' : q.tiledir,
                                      'overlay' : q.rendermode in overlay_types},

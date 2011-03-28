@@ -502,7 +502,6 @@ def generate_facemasks():
     return (top, left, right)
 facemasks = generate_facemasks()
 black_color = Image.new("RGB", (24,24), (0,0,0))
-red_color = Image.new("RGB", (24,24), (229,36,38))
 white_color = Image.new("RGB", (24,24), (255,255,255))
 
 # Render 128 different color images for color coded depth blending in cave mode

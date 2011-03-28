@@ -115,13 +115,12 @@ extern RenderModeInterface rendermode_night;
 
 /* SPAWN */
 typedef struct {
-    /* inherits from night */
-    RenderModeNight parent;
+    /* inherits from overlay */
+    RenderModeOverlay parent;
     
     /* used to figure out which blocks are spawnable */
-    PyObject *solid_blocks, *nospawn_blocks, *fluid_blocks;
-    /* replacement for black_color */
-    PyObject *red_color;
+    PyObject *nospawn_blocks;
+    PyObject *skylight, *blocklight;
 } RenderModeSpawn;
 extern RenderModeInterface rendermode_spawn;
 
