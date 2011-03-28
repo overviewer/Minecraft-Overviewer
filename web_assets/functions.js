@@ -46,26 +46,23 @@ function createDropDown(title, items) {
     for (idx in items) {
         var item = items[idx];
         //console.log(item);
-        label = item.label;
-        action = item.action;
         var d = document.createElement("div");
         var n = document.createElement("input");
         n.type="checkbox";
 
-        $(n).data("label",label);
+        $(n).data("label",item.label);
         jQuery(n).click(function(e) {
-                            var t = $(e.target);
-                            action(idx, label, e.target.checked);
+                            item.action(idx, item.label, e.target.checked);
                         });
 
         if (item.checked) {
             n.checked = true;
-            action(idx, label, item.checked);
+            item.action(idx, item.label, item.checked);
         }
         dropdownDiv.appendChild(d);
         d.appendChild(n)
         var textNode = document.createElement("text");
-        textNode.innerHTML = label + "<br/>";
+        textNode.innerHTML = item.label + "<br/>";
         d.appendChild(textNode);
     }
 }
