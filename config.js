@@ -44,7 +44,8 @@ var mapTypeData=[
   {'label': 'Unlit', 'path': 'tiles'},
 //  {'label': 'Day',   'path': 'lighting/tiles'},
 //  {'label': 'Night', 'path': 'night/tiles'},
-//  {'label': 'Spawn', 'path': 'spawn/tiles', 'base': 'http://example.cdn.amazon.com/'}
+//  {'label': 'Spawn', 'path': 'spawn/tiles', 'base': 'http://example.cdn.amazon.com/'},
+//  {'label': 'Overlay', 'path': 'overlay/tiles', 'overlay': true}
 ];
  */
 

@@ -158,7 +158,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
             Py_DECREF(color);
 
-            tint_with_mask(state->img, r, g, b, facemask, state->imgx, state->imgy, 0, 0);
+            tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
         }
     }
 }

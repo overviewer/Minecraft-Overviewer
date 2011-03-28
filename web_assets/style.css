@@ -17,13 +17,13 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
     font-family: monospace;
 }
 
-#signControl {
+#customControl {
     padding: 5px;
     height: 15px;
     font-family: Arial, sans-serif;
 }
 
-#signControl > div#top {
+#customControl > div#top {
     background-color: #fff;
     border: 2px solid #000;
     text-align: center;
@@ -33,7 +33,7 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
     cursor: pointer;
 }
 
-#signControl > div#dropDown {
+#customControl > div#dropDown {
     border: 1px solid #000;
     font-size: 12px;
     background-color: #fff;

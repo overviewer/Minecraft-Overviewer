@@ -14,6 +14,61 @@ function prepareSignMarker(marker, item) {
 
 }
 
+function createDropDown(title, items) {
+    var control = document.createElement("DIV");
+    control.id = "customControl"; // let's let a style sheet do most of the styling here
+
+    var controlBorder = document.createElement("DIV");
+    controlBorder.id="top";
+    control.appendChild(controlBorder);
+
+    var controlText = document.createElement("DIV");
+
+    controlBorder.appendChild(controlText);
+
+    controlText.innerHTML = title;
+    
+    var dropdownDiv = document.createElement("DIV");
+
+
+    $(controlText).click(function() {
+            $(dropdownDiv).toggle();
+
+            });
+
+
+    dropdownDiv.id="dropDown";
+    control.appendChild(dropdownDiv);
+    dropdownDiv.innerHTML="";
+
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(control);
+
+    for (idx in items) {
+        var item = items[idx];
+        //console.log(item);
+        label = item.label;
+        action = item.action;
+        var d = document.createElement("div");
+        var n = document.createElement("input");
+        n.type="checkbox";
+
+        $(n).data("label",label);
+        jQuery(n).click(function(e) {
+                            var t = $(e.target);
+                            action(idx, label, e.target.checked);
+                        });
+
+        if (item.checked) {
+            n.checked = true;
+            action(idx, label, item.checked);
+        }
+        dropdownDiv.appendChild(d);
+        d.appendChild(n)
+        var textNode = document.createElement("text");
+        textNode.innerHTML = label + "<br/>";
+        d.appendChild(textNode);
+    }
+}
 
 function drawMapControls() {
 
@@ -42,69 +97,43 @@ function drawMapControls() {
 
 
     if (signGroups.length > 0) {
-    // signpost display control
-    //
-
-    var signControl = document.createElement("DIV");
-    signControl.id = "signControl"; // let's let a style sheet do most of the styling here
-
-    var controlBorder = document.createElement("DIV");
-    controlBorder.id="top";
-    signControl.appendChild(controlBorder);
-
-    var controlText = document.createElement("DIV");
-
-    controlBorder.appendChild(controlText);
-
-    controlText.innerHTML = "Signposts";
-    
-    var dropdownDiv = document.createElement("DIV");
-
-
-    $(controlText).click(function() {
-            $(dropdownDiv).toggle();
-
-            });
-
-
-    dropdownDiv.id="dropDown";
-    signControl.appendChild(dropdownDiv);
-    dropdownDiv.innerHTML="";
-
-    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(signControl);
-
-
-
-    var hasSignGroup = false;
-    for (idx in signGroups) {
-        var item = signGroups[idx];
-        //console.log(item);
-        label = item.label;
-        hasSignGroup = true;
-        var d = document.createElement("div");
-        var n = document.createElement("input");
-        n.type="checkbox";
-
-        $(n).data("label",label);
-        jQuery(n).click(function(e) {
-                var t = $(e.target);
-                jQuery.each(markerCollection[t.data("label")], function(i,elem) {elem.setVisible(e.target.checked);});
-                });
-
-
-        if (item.checked) {
-            n.checked = true;
-            jQuery.each(markerCollection[label], function(i,elem) {elem.setVisible(n.checked);});
+        // signpost display control
+        
+        var items = [];
+        for (idx in signGroups) {
+            var item = signGroups[idx];
+            items.push({"label": item.label, "checked": item.checked,
+                        "action": function(n, l, checked) {
+                            jQuery.each(markerCollection[l], function(i,elem) {elem.setVisible(checked);});
+                        }});
         }
-        dropdownDiv.appendChild(d);
-        d.appendChild(n)
-        var textNode = document.createElement("text");
-        textNode.innerHTML = label + "<br/>";
-        d.appendChild(textNode);
-
+        createDropDown("Signposts", items);
     }
-
-
+    
+    if (overlayMapTypes.length > 0) {
+        // overlay maps control
+        
+        var items = [];
+        for (idx in overlayMapTypes) {
+            var overlay = overlayMapTypes[idx];
+            items.push({"label": overlay.name, "checked": false,
+                        "action": function(i, l, checked) {
+                            if (checked) {
+                                map.overlayMapTypes.push(overlay);
+                            } else {
+                                var idx_to_delete = -1;
+                                map.overlayMapTypes.forEach(function(e, j) {
+                                                                if (e == overlay) {
+                                                                    idx_to_delete = j;
+                                                                }
+                                                            });
+                                if (idx_to_delete >= 0) {
+                                    map.overlayMapTypes.removeAt(idx_to_delete);
+                                }
+                            }
+                        }});
+        }
+        createDropDown("Overlays", items);
     }
 }
 
@@ -303,7 +332,7 @@ function initialize() {
     for (idx in MCMapType) {
       map.mapTypes.set('mcmap' + MCMapType[idx].name, MCMapType[idx]);
     }
-
+    
     // We can now set the map to use the 'coordinate' map type
     map.setMapTypeId(mapTypeIdDefault);
 
@@ -412,6 +441,7 @@ var MCMapOptions = new Array;
 var MCMapType = new Array;
 var mapTypeIdDefault = null;
 var mapTypeIds = [];
+var overlayMapTypes = [];
 for (idx in mapTypeData) {
   var view = mapTypeData[idx];
 
@@ -427,10 +457,15 @@ for (idx in mapTypeData) {
   MCMapType[view.label].name = view.label;
   MCMapType[view.label].alt = "Minecraft " + view.label + " Map";
   MCMapType[view.label].projection = new MCMapProjection();
-  if (mapTypeIdDefault == null) {
-    mapTypeIdDefault = 'mcmap' + view.label;
+  
+  if (view.overlay) {
+    overlayMapTypes.push(MCMapType[view.label]);
+  } else {
+    if (mapTypeIdDefault == null) {
+      mapTypeIdDefault = 'mcmap' + view.label;
+    }
+    mapTypeIds.push('mcmap' + view.label);
   }
-  mapTypeIds.push('mcmap' + view.label);
 }
   
   function CoordMapType() {

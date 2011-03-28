@@ -31,6 +31,10 @@ RenderModeInterface *get_render_mode(RenderState *state) {
         iface = &rendermode_night;
     } else if (strcmp(rendermode, "spawn") == 0) {
         iface = &rendermode_spawn;
+    } else if (strcmp(rendermode, "overlay") == 0) {
+        /* TODO temporarily use overlay directly, but later on
+           you want to use overlay-derived modes */
+        iface = &rendermode_overlay;
     }
     
     Py_DECREF(rendermode_py);

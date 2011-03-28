@@ -71,6 +71,13 @@ typedef struct {
 } RenderModeNormal;
 extern RenderModeInterface rendermode_normal;
 
+/* OVERLAY */
+typedef struct {
+    /* top facemask and white color image, for drawing overlays */
+    PyObject *facemask_top, *white_color;
+} RenderModeOverlay;
+extern RenderModeInterface rendermode_overlay;
+
 /* LIGHTING */
 typedef struct {
     /* inherits from normal render mode */

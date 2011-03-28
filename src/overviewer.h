@@ -44,7 +44,8 @@ PyObject *alpha_over(PyObject *dest, PyObject *src, PyObject *mask,
 PyObject *alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alpha,
                           int dx, int dy, int xsize, int ysize);
 PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
-PyObject *tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg, unsigned char sb,
+PyObject *tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
+                         unsigned char sb, unsigned char sa,
                          PyObject *mask, int dx, int dy, int xsize, int ysize);
 
 /* in iterate.c */
@@ -79,7 +80,7 @@ PyObject *chunk_render(PyObject *self, PyObject *args);
 #include "rendermodes.h"
 
 /* in endian.c */
-void init_endian();
+void init_endian(void);
 unsigned short big_endian_ushort(unsigned short in);
 unsigned int big_endian_uint(unsigned int in);
 

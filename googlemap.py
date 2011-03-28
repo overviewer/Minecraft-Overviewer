@@ -95,8 +95,12 @@ class MapGen(object):
                 "{imgformat}", str(imgformat))
         
         # create generated map type data, from given quadtrees
+        # FIXME hook this into render_modes in setup.py, somehow
+        overlay_types = ['overlay']
         maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
-                                     'path' : q.tiledir}, self.quadtrees)
+                                     'path' : q.tiledir,
+                                     'overlay' : q.rendermode in overlay_types},
+                          self.quadtrees)
         config = config.replace("{maptypedata}", json.dumps(maptypedata))
         
         with open(os.path.join(self.destdir, "config.js"), 'w') as output:
