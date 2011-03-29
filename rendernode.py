@@ -60,7 +60,14 @@ def pool_initializer(rendernode):
     #stash the quadtree objects in a global variable after fork() for windows compat.
     global child_rendernode
     child_rendernode = rendernode  
-    
+    for quadtree in rendernode.quadtrees:
+        if quadtree.world.useBiomeData:
+            import textures
+            # make sure we've at least *tried* to load the color arrays in this process...
+            textures.prepareBiomeData(quadtree.world.worlddir)
+            if not textures.grasscolor or not textures.foliagecolor:
+                raise Exception("Can't find grasscolor.png or foliagecolor.png")
+                    
 #http://docs.python.org/library/itertools.html    
 def roundrobin(iterables):
     "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
@@ -77,7 +84,7 @@ def roundrobin(iterables):
 
             
 class RenderNode(object):
-    def __init__(self, quadtrees, world):
+    def __init__(self, quadtrees):
         """Distributes the rendering of a list of quadtrees."""
 
         if not len(quadtrees) > 0:
@@ -85,17 +92,21 @@ class RenderNode(object):
 
         self.quadtrees = quadtrees
         #bind an index value to the quadtree so we can find it again
+        #and figure out which worlds are where
         i = 0
+        self.worlds = []
         for q in quadtrees:
             q._render_index = i
-            i += 1       
+            i += 1   
+            if q.world not in self.worlds:
+                self.worlds.append(q.world)            
 
+        manager = multiprocessing.Manager() 
         # queue for receiving interesting events from the renderer
         # (like the discovery of signs!
-        self.manager = multiprocessing.Manager()
-        self.poi_q = self.manager.Queue()
-        
-        self.world = world
+        #stash into the world object like we stash an index into the quadtree
+        for world in self.worlds:
+            world.poi_q = manager.Queue() 
 
 
     def print_statusline(self, complete, total, level, unconditional=False):
@@ -120,12 +131,14 @@ class RenderNode(object):
         # Create a pool
         if procs == 1:
             pool = FakePool()
-            global child_rendernode
-            child_rendernode = self
+            pool_initializer(self)
         else:
             pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
             #warm up the pool so it reports all the worker id's
-            pool.map(bool,xrange(multiprocessing.cpu_count()),1)        
+            if logging.getLogger().level >= 10:
+                pool.map(bool,xrange(multiprocessing.cpu_count()),1)
+            else:
+                pool.map_async(bool,xrange(multiprocessing.cpu_count()),1)
                 
         quadtrees = self.quadtrees
         
@@ -160,18 +173,19 @@ class RenderNode(object):
                 timestamp = timestamp2                
                 count_to_remove = (1000//batch_size)
                 if count_to_remove < len(results):
-                    try:
-                        while (1):
-                            # an exception will break us out of this loop
-                            item = self.poi_q.get(block=False)
-                            if item[0] == "newpoi":
-                                if item[1] not in self.world.POI:
-                                    #print "got an item from the queue!"
-                                    self.world.POI.append(item[1])
-                            elif item[0] == "removePOI":
-                                self.world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], self.world.persistentData['POI'])
-                    except Queue.Empty:
-                        pass
+                    for world in self.worlds:
+                        try:
+                            while (1):
+                                # an exception will break us out of this loop
+                                item = world.poi_q.get(block=False)
+                                if item[0] == "newpoi":
+                                    if item[1] not in world.POI:
+                                        #print "got an item from the queue!"
+                                        world.POI.append(item[1])
+                                elif item[0] == "removePOI":
+                                    world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], world.persistentData['POI'])
+                        except Queue.Empty:
+                            pass
                     while count_to_remove > 0:
                         count_to_remove -= 1
                         complete += results.popleft().get()
@@ -187,18 +201,19 @@ class RenderNode(object):
         while len(results) > 0:
             complete += results.popleft().get()
             self.print_statusline(complete, total, 1)
-        try:
-            while (1):
-                # an exception will break us out of this loop
-                item = self.poi_q.get(block=False)
-                if item[0] == "newpoi":
-                    if item[1] not in self.world.POI:
-                        #print "got an item from the queue!"
-                        self.world.POI.append(item[1])
-                elif item[0] == "removePOI":
-                    self.world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], self.world.persistentData['POI'])
-        except Queue.Empty:
-            pass
+        for world in self.worlds:    
+            try:
+                while (1):
+                    # an exception will break us out of this loop
+                    item = world.poi_q.get(block=False)
+                    if item[0] == "newpoi":
+                        if item[1] not in world.POI:
+                            #print "got an item from the queue!"
+                            world.POI.append(item[1])
+                    elif item[0] == "removePOI":
+                        world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], world.persistentData['POI'])
+            except Queue.Empty:
+                pass
 
         self.print_statusline(complete, total, 1, True)
 
@@ -263,10 +278,10 @@ class RenderNode(object):
             jobcount += 1
             if jobcount >= batch_size:
                 jobcount = 0        
-                yield pool.apply_async(func=render_worldtile_batch, args= [batch, self.poi_q])
+                yield pool.apply_async(func=render_worldtile_batch, args= [batch])
                 batch = []              
         if jobcount > 0:
-            yield pool.apply_async(func=render_worldtile_batch, args= [batch, self.poi_q])
+            yield pool.apply_async(func=render_worldtile_batch, args= [batch])
 
     def _apply_render_inntertile(self, pool, zoom,batch_size):
         """Same as _apply_render_worltiles but for the inntertile routine.
@@ -295,7 +310,7 @@ class RenderNode(object):
             yield pool.apply_async(func=render_innertile_batch, args= [batch])    
             
 @catch_keyboardinterrupt
-def render_worldtile_batch(batch, poi_queue):
+def render_worldtile_batch(batch):
     global child_rendernode
     rendernode = child_rendernode
     count = 0
@@ -308,6 +323,7 @@ def render_worldtile_batch(batch, poi_queue):
         rowstart = job[3]
         rowend = job[4]
         path = job[5]
+        poi_queue = quadtree.world.poi_q
         path = quadtree.full_tiledir+os.sep+path        
         # (even if tilechunks is empty, render_worldtile will delete
         # existing images if appropriate)    

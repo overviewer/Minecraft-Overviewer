@@ -177,8 +177,8 @@ class ChunkRenderer(object):
         self.queue = queue
         
         self.regionfile = worldobj.get_region_path(*chunkcoords)    
-        if not os.path.exists(self.regionfile):
-            raise ValueError("Could not find regionfile: %s" % self.regionfile)
+        #if not os.path.exists(self.regionfile):
+        #    raise ValueError("Could not find regionfile: %s" % self.regionfile)
 
         ## TODO TODO all of this class
 
@@ -187,7 +187,7 @@ class ChunkRenderer(object):
         #chunkcoords = filename_split[1:3]
         
         #self.coords = map(world.base36decode, chunkcoords)
-        self.blockid = "%d.%d" % chunkcoords
+        #self.blockid = "%d.%d" % chunkcoords
 
         # chunk coordinates (useful to converting local block coords to 
         # global block coords)
@@ -196,12 +196,6 @@ class ChunkRenderer(object):
 
         self.world = worldobj
         self.rendermode = rendermode
-
-        if self.world.useBiomeData:
-            # make sure we've at least *tried* to load the color arrays in this process...
-            textures.prepareBiomeData(self.world.worlddir)
-            if not textures.grasscolor or not textures.foliagecolor:
-                raise Exception("Can't find grasscolor.png or foliagecolor.png")
 
     def _load_level(self):
         """Loads and returns the level structure"""
@@ -412,22 +406,7 @@ class ChunkRenderer(object):
         For cave mode, all blocks that have any direct sunlight are not
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
-        blocks = self.blocks
-        pseudo_ancildata_blocks = set([85])
         
-        left_blocks = self.left_blocks
-        right_blocks = self.right_blocks
-        
-        if cave:
-            # Cave mode. Actually go through and 0 out all blocks that are not in a
-            # cave, so that it only renders caves.
-
-            # Places where the skylight is not 0 (there's some amount of skylight
-            # touching it) change it to something that won't get rendered, AND
-            # won't get counted as "transparent".
-            blocks = blocks.copy()
-            blocks[self.skylight != 0] = 21
-  
         blockData = get_blockdata_array(self.level)
         blockData_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
         # Even elements get the lower 4 bits
@@ -435,7 +414,6 @@ class ChunkRenderer(object):
         # Odd elements get the upper 4 bits
         blockData_expanded[:,:,1::2] = blockData >> 4
 
-        tileEntities = get_tileentity_data(self.level)
 
         # Each block is 24x24
         # The next block on the X axis adds 12px to x and subtracts 6px from y in the image
@@ -449,6 +427,7 @@ class ChunkRenderer(object):
 
         c_overviewer.render_loop(self, img, xoff, yoff, blockData_expanded)
 
+        tileEntities = get_tileentity_data(self.level)
         for entity in tileEntities:
             if entity['id'] == 'Sign':
                 msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])

@@ -186,7 +186,7 @@ def main():
         q.append(qtree)
 
     #create the distributed render
-    r = rendernode.RenderNode(q, world=w)
+    r = rendernode.RenderNode(q)
     
     # write out the map and web assets
     m = googlemap.MapGen(q, skipjs=options.skipjs, web_assets_hook=options.web_assets_hook)
