@@ -27,15 +27,23 @@ setup_kwargs['cmdclass'] = {}
 
 if py2exe is not None:
     setup_kwargs['console'] = ['overviewer.py']
-    setup_kwargs['data_files'] = [('textures', ['textures/lava.png', 'textures/water.png', 'textures/fire.png']),
-                                  ('', ['config.js', 'COPYING.txt', 'README.rst']),
-                                  ('web_assets', glob.glob('web_assets/*'))]
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
     else:
         b = 1
     setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter'}
+
+#
+# script, package, and data
+#
+
+setup_kwargs['packages'] = ['overviewer']
+setup_kwargs['scripts'] = ['overviewer.py']
+setup_kwargs['data_files'] = [('textures', glob.glob('textures/*')),
+                              ('', ['config.js', 'COPYING.txt', 'README.rst']),
+                              ('web_assets', glob.glob('web_assets/*'))]
+
 
 #
 # c_overviewer extension
@@ -50,10 +58,10 @@ except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
 
-c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c', 'src/endian.c']
-c_overviewer_files += ['src/rendermodes.c', 'src/rendermode-normal.c', 'src/rendermode-lighting.c', 'src/rendermode-night.c', 'src/rendermode-spawn.c']
-c_overviewer_includes = ['src/overviewer.h', 'src/rendermodes.h']
-setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], depends=c_overviewer_includes, extra_link_args=[]))
+c_overviewer_files = ['overviewer/src/main.c', 'overviewer/src/composite.c', 'overviewer/src/iterate.c', 'overviewer/src/endian.c']
+c_overviewer_files += ['overviewer/src/rendermodes.c', 'overviewer/src/rendermode-normal.c', 'overviewer/src/rendermode-lighting.c', 'overviewer/src/rendermode-night.c', 'overviewer/src/rendermode-spawn.c']
+c_overviewer_includes = ['overviewer/src/overviewer.h', 'overviewer/src/rendermodes.h']
+setup_kwargs['ext_modules'].append(Extension('overviewer.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], depends=c_overviewer_includes, extra_link_args=[]))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
@@ -69,7 +77,7 @@ class CustomClean(clean):
         # try to remove '_composite.{so,pyd,...}' extension,
         # regardless of the current system's extension name convention
         build_ext = self.get_finalized_command('build_ext')
-        pretty_fname = build_ext.get_ext_filename('c_overviewer')
+        pretty_fname = build_ext.get_ext_filename('overviewer.c_overviewer')
         fname = pretty_fname
         if os.path.exists(fname):
             try:

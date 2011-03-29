@@ -22,29 +22,26 @@ if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
 
 import os
 import os.path
-from configParser import ConfigOptionParser
 import re
 import subprocess
 import multiprocessing
 import time
 import logging
-import util
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
 # make sure the c_overviewer extension is available
 try:
-    import c_overviewer
+    import overviewer.c_overviewer as c_overviewer
 except ImportError:
     print "You need to compile the c_overviewer module to run Minecraft Overviewer."
     print "Run `python setup.py build`, or see the README for details."
     sys.exit(1)
 
-import optimizeimages
-import world
-import quadtree
-import googlemap
-import rendernode
+from overviewer.configParser import ConfigOptionParser
+from overviewer import optimizeimages, world, quadtree
+from overviewer import googlemap, rendernode, util
+
 
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>

@@ -14,10 +14,10 @@ ImPlatform.h
 Imaging.h
 
 # various forms of compiled c_overviewer extensions
-c_overviewer.so
-c_overviewer.pyd
-c_overviewer_d.pyd
-c_overviewer.dylib
+overviewer/c_overviewer.so
+overviewer/c_overviewer.pyd
+overviewer/c_overviewer_d.pyd
+overviewer/c_overviewer.dylib
 
 # Mac OS X noise
 .DS_Store
