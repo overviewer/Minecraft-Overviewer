@@ -2,8 +2,11 @@
   var config = {
     fileExt:     '{imgformat}',
     tileSize:     384,
-    defaultZoom:  1,
+    defaultZoom:  2,
     maxZoom:      {maxzoom},
+    // center on this point, in world coordinates, ex:
+    //center:       [0,0,0],
+    center:       {spawn_coords},
     cacheMinutes: 0, // Change this to have browsers automatically request new images every x minutes
     bg_color:     '#1A1A1A',
     debug:        false

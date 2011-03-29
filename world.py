@@ -226,6 +226,7 @@ class World(object):
 
         self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, 
                 msg="Spawn", type="spawn", chunk=(inChunkX,inChunkZ)))
+        self.spawn = (spawnX, spawnY, spawnZ)
 
     def go(self, procs):
         """Scan the world directory, to fill in

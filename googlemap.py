@@ -94,6 +94,9 @@ class MapGen(object):
         config = config.replace(
                 "{imgformat}", str(imgformat))
         
+        config = config.replace("{spawn_coords}",
+                                json.dumps(list(self.world.spawn)))
+        
         # create generated map type data, from given quadtrees
         maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
                                      'path' : q.tiledir}, self.quadtrees)
