@@ -29,7 +29,7 @@
  *         (see rendermode-night.c for a simple example derived from
  *          the "lighting" mode)
  *
- *     * add a condition to get_render_mode() in rendermodes.c
+ *     * add your mode to the list in rendermodes.c
  */
 
 #ifndef __RENDERMODES_H_INCLUDED__
@@ -39,6 +39,11 @@
 
 /* rendermode interface */
 typedef struct {
+    /* the name of this mode */
+    const char* name;
+    /* the short description of this render mode */
+    const char* description;
+    
     /* the size of the local storage for this rendermode */
     unsigned int data_size;
     
@@ -53,6 +58,9 @@ typedef struct {
 
 /* figures out the render mode to use from the given ChunkRenderer */
 RenderModeInterface *get_render_mode(RenderState *state);
+/* python bindings */
+PyObject *get_render_modes(PyObject *self, PyObject *args);
+PyObject *get_render_mode_info(PyObject *self, PyObject *args);
 
 /* individual rendermode interface declarations follow */
 

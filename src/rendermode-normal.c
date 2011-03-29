@@ -164,6 +164,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
 }
 
 RenderModeInterface rendermode_normal = {
+    "normal", "nothing special, just render the blocks",
     sizeof(RenderModeNormal),
     rendermode_normal_start,
     rendermode_normal_finish,
