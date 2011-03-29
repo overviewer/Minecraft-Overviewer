@@ -79,7 +79,7 @@ PyObject *chunk_render(PyObject *self, PyObject *args);
 #include "rendermodes.h"
 
 /* in endian.c */
-void init_endian();
+void init_endian(void);
 unsigned short big_endian_ushort(unsigned short in);
 unsigned int big_endian_uint(unsigned int in);
 
