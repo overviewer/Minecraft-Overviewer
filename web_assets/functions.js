@@ -249,8 +249,8 @@ function initialize() {
 
     var query = location.search.substring(1);
 
-    var lat = 0.5;
-    var lng = 0.5;
+    var lat = config.defaultLat;
+    var lng = config.defaultLong;
     var zoom = config.defaultZoom;
     var pairs = query.split("&");
     for (var i=0; i<pairs.length; i++) {
