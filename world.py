@@ -84,9 +84,10 @@ class World(object):
         self.regionfiles = regionfiles	
         # set the number of region file handles we will permit open at any time before we start closing them
 #        self.regionlimit = 1000
-        # the max number of chunks we will keep before removing them
-        self.chunklimit = 1024*6 # this should be a multipule of the max chunks per region or things could get wonky ???
+        # the max number of chunks we will keep before removing them (includes emptry chunks)
+        self.chunklimit = 1024 
         self.chunkcount = 0
+        self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
         
         # figure out chunk format is in use
@@ -116,7 +117,8 @@ class World(object):
         else:
             # some defaults
             self.persistentData = dict(POI=[])
-
+        
+ 
     def get_region_path(self, chunkX, chunkY):
         """Returns the path to the region that contains chunk (chunkX, chunkY)
         """
@@ -131,15 +133,17 @@ class World(object):
         chunks = regioninfo[2]
         chunk_data = chunks.get((x,y))
         if chunk_data is None:        
-            nbt = self.load_region(filename).load_chunk(x, y)
-            if nbt is None:
-                chunks[(x,y)] = [None,None]
-                return None ## return none.  I think this is who we should indicate missing chunks
-                #raise IOError("No such chunk in region: (%i, %i)" % (x, y))                 
             #prune the cache if required
             if self.chunkcount > self.chunklimit: #todo: make the emptying the chunk cache slightly less crazy
                 [self.reload_region(regionfile) for regionfile in self.regions if regionfile <> filename]
+                self.chunkcount = 0
             self.chunkcount += 1  
+
+            nbt = self.load_region(filename).load_chunk(x, y)
+            if nbt is None:
+                chunks[(x,y)] = self.empty_chunk
+                return None ## return none.  I think this is who we should indicate missing chunks
+                #raise IOError("No such chunk in region: (%i, %i)" % (x, y))                 
 
             #we cache the transformed data, not it's raw form
             data = nbt.read_all()    
