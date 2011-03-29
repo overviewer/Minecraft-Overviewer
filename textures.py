@@ -285,7 +285,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
     # first back sides
     if side1 != None :
         side1 = transform_image_side(side1, blockID)
-        side1 = side1.transpose(Image.FLIP_TOP_BOTTOM)
+        side1 = side1.transpose(Image.FLIP_LEFT_RIGHT)
         
         # Darken this side.
         sidealpha = side1.split()[3]
@@ -354,9 +354,9 @@ def _build_blockimages():
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, 80, -1, 65,  4, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
+               36, 37, -1, -1, 65,  4, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51,115, 99, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
+               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
        #       80  81  82  83  84  85  86  87  88  89  90  91
                66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
         ]
@@ -371,9 +371,9 @@ def _build_blockimages():
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, 80, -1, 65,  4, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
+                36, 37, -1, -1, 65,  4, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51,115, 99, -1, 66, 67,
+                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
                 66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
@@ -1002,6 +1002,58 @@ def generate_special_texture(blockID, data):
         #~ composite.alpha_over(img, top, (0,2), top)
         return (img.convert("RGB"), img.split()[3])
 
+    if blockID in (50,75,76): # torch, off redstone torch, on redstone torch
+    
+        # choose the proper texture
+        if blockID == 50: # torch
+            small = terrain_images[80]
+        elif blockID == 75: # off redstone torch
+            small = terrain_images[115]
+        else: # on redstone torch
+            small = terrain_images[99]
+        
+        # compose a torch bigger than the normal
+        # (better for doing transformations)
+        torch = Image.new("RGBA", (16,16), (38,92,255,0))
+        composite.alpha_over(torch,small,(-4,-3))
+        composite.alpha_over(torch,small,(-5,-2))
+        composite.alpha_over(torch,small,(-3,-2))
+        
+        # angle of inclination of the texture
+        rotation = 15
+        
+        if data == 1: # pointing south
+            torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
+            img = _build_full_block(None, None, None, torch, None, None, blockID)
+            
+        elif data == 2: # pointing north
+            torch = torch.rotate(rotation, Image.NEAREST)
+            img = _build_full_block(None, None, torch, None, None, None, blockID)
+            
+        elif data == 3: # pointing west
+            torch = torch.rotate(rotation, Image.NEAREST)
+            img = _build_full_block(None, torch, None, None, None, None, blockID)
+            
+        elif data == 4: # pointing east
+            torch = torch.rotate(-rotation, Image.NEAREST)
+            img = _build_full_block(None, None, None, None, torch, None, blockID)
+            
+        elif data == 5: # standing on the floor
+            # compose a "3d torch".
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            
+            small_crop = small.crop((2,2,14,14))
+            slice = small_crop.copy()
+            ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+            
+            composite.alpha_over(img, slice, (6,4))
+            composite.alpha_over(img, small_crop, (5,5))
+            composite.alpha_over(img, small_crop, (6,5))
+            composite.alpha_over(img, slice, (6,6))
+
+        return (img.convert("RGB"), img.split()[3])
+
 
     return None
 
@@ -1076,7 +1128,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
 
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51,43,44,9,55,58,92])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51,43,44,9,55,50,58,75,76,92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1101,6 +1153,9 @@ special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unkn
 special_map[55] = range(128) # redstone wire
 special_map[58] = (0,) # crafting table
 special_map[92] = range(6) # cake!
+special_map[50] = (1,2,3,4,5) # torch
+special_map[75] = (1,2,3,4,5) # off redstone torch
+special_map[76] = (1,2,3,4,5) # on redstone torch
 
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
