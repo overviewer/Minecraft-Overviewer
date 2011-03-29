@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from distutils.core import setup, Extension
 from distutils.command.build import build
 from distutils.command.clean import clean
@@ -17,9 +19,15 @@ except ImportError:
 # now, setup the keyword arguments for setup
 # (because we don't know until runtime if py2exe is available)
 setup_kwargs = {}
-setup_kwargs['options'] = {}
 setup_kwargs['ext_modules'] = []
 setup_kwargs['cmdclass'] = {}
+
+#
+# metadata
+#
+
+setup_kwargs['name'] = 'minecraft-overviewer'
+setup_kwargs['version'] = '0.0.0' # TODO useful version
 
 #
 # py2exe options
@@ -27,22 +35,25 @@ setup_kwargs['cmdclass'] = {}
 
 if py2exe is not None:
     setup_kwargs['console'] = ['overviewer.py']
+    setup_kwargs['data_files'] = [('', ['COPYING.txt', 'README.rst'])]
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
     else:
         b = 1
+    setup_kwargs['options'] = {}
     setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter'}
 
 #
 # script, package, and data
 #
 
-setup_kwargs['packages'] = ['overviewer']
+setup_kwargs['packages'] = ['overviewer_core']
 setup_kwargs['scripts'] = ['overviewer.py']
-setup_kwargs['data_files'] = [('textures', glob.glob('textures/*')),
-                              ('', ['config.js', 'COPYING.txt', 'README.rst']),
-                              ('web_assets', glob.glob('web_assets/*'))]
+setup_kwargs['package_data'] = {'overviewer_core':
+                                    ['data/config.js',
+                                     'data/textures/*',
+                                     'data/web_assets/*']}
 
 
 #
@@ -58,15 +69,14 @@ except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
 
-c_overviewer_files = ['overviewer/src/main.c', 'overviewer/src/composite.c', 'overviewer/src/iterate.c', 'overviewer/src/endian.c']
-c_overviewer_files += ['overviewer/src/rendermodes.c', 'overviewer/src/rendermode-normal.c', 'overviewer/src/rendermode-lighting.c', 'overviewer/src/rendermode-night.c', 'overviewer/src/rendermode-spawn.c']
-c_overviewer_includes = ['overviewer/src/overviewer.h', 'overviewer/src/rendermodes.h']
-setup_kwargs['ext_modules'].append(Extension('overviewer.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], depends=c_overviewer_includes, extra_link_args=[]))
-# tell build_ext to build the extension in-place
-# (NOT in build/)
-setup_kwargs['options']['build_ext'] = {'inplace' : 1}
-# tell the build command to only run build_ext
-build.sub_commands = [('build_ext', None)]
+c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c']
+c_overviewer_files += ['rendermodes.c', 'rendermode-normal.c', 'rendermode-lighting.c', 'rendermode-night.c', 'rendermode-spawn.c']
+c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
+
+c_overviewer_files = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_files)
+c_overviewer_includes = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_includes)
+
+setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], depends=c_overviewer_includes, extra_link_args=[]))
 
 # custom clean command to remove in-place extension
 class CustomClean(clean):
@@ -77,7 +87,7 @@ class CustomClean(clean):
         # try to remove '_composite.{so,pyd,...}' extension,
         # regardless of the current system's extension name convention
         build_ext = self.get_finalized_command('build_ext')
-        pretty_fname = build_ext.get_ext_filename('overviewer.c_overviewer')
+        pretty_fname = build_ext.get_ext_filename('overviewer_core.c_overviewer')
         fname = pretty_fname
         if os.path.exists(fname):
             try:
@@ -99,6 +109,10 @@ class CustomBuild(build_ext):
             for e in self.extensions:
                 e.extra_link_args.append("/MANIFEST")
 
+        # build in place, and in the build/ tree
+        self.inplace = False
+        build_ext.build_extensions(self)
+        self.inplace = True
         build_ext.build_extensions(self)
         
 

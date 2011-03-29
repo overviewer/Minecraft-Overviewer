@@ -31,7 +31,7 @@ int init_chunk_render(void) {
      * */
     if (blockmap) return 1;
 
-    textures = PyImport_ImportModule("overviewer.textures");
+    textures = PyImport_ImportModule("overviewer_core.textures");
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
         fprintf(stderr, "\ninit_chunk_render failed to load; textures\n");
@@ -39,7 +39,7 @@ int init_chunk_render(void) {
         return 1;
     }
 
-    chunk_mod = PyImport_ImportModule("overviewer.chunk");
+    chunk_mod = PyImport_ImportModule("overviewer_core.chunk");
     /* ensure none of these pointers are NULL */    
     if ((!chunk_mod)) {
         fprintf(stderr, "\ninit_chunk_render failed to load; chunk\n");

@@ -1,5 +1,7 @@
 *.pyc
-build
+MANIFEST
+build/
+dist/
 terrain.png
 cachedir*
 
@@ -14,10 +16,10 @@ ImPlatform.h
 Imaging.h
 
 # various forms of compiled c_overviewer extensions
-overviewer/c_overviewer.so
-overviewer/c_overviewer.pyd
-overviewer/c_overviewer_d.pyd
-overviewer/c_overviewer.dylib
+overviewer_core/c_overviewer.so
+overviewer_core/c_overviewer.pyd
+overviewer_core/c_overviewer_d.pyd
+overviewer_core/c_overviewer.dylib
 
 # Mac OS X noise
 .DS_Store

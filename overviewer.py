@@ -32,15 +32,17 @@ logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(mes
 
 # make sure the c_overviewer extension is available
 try:
-    import overviewer.c_overviewer as c_overviewer
+    from overviewer_core import c_overviewer
 except ImportError:
     print "You need to compile the c_overviewer module to run Minecraft Overviewer."
     print "Run `python setup.py build`, or see the README for details."
+    import traceback
+    traceback.print_exc()
     sys.exit(1)
 
-from overviewer.configParser import ConfigOptionParser
-from overviewer import optimizeimages, world, quadtree
-from overviewer import googlemap, rendernode, util
+from overviewer_core.configParser import ConfigOptionParser
+from overviewer_core import optimizeimages, world, quadtree
+from overviewer_core import googlemap, rendernode, util
 
 
 helptext = """
