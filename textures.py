@@ -297,8 +297,6 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         
     if side2 != None :
         side2 = transform_image_side(side2, blockID)
-        side2 = side2.transpose(Image.FLIP_LEFT_RIGHT)
-        side2 = side2.transpose(Image.FLIP_TOP_BOTTOM)
 
         # Darken this side.
         sidealpha2 = side2.split()[3]
