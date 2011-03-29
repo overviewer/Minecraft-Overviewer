@@ -94,6 +94,9 @@ class MapGen(object):
         config = config.replace(
                 "{imgformat}", str(imgformat))
         
+        config = config.replace("{spawn_coords}",
+                                json.dumps(list(self.world.spawn)))
+        
         # create generated map type data, from given quadtrees
         # FIXME hook this into render_modes in setup.py, somehow
         overlay_types = ['spawn']
@@ -131,6 +134,11 @@ class MapGen(object):
                 self.web_assets_hook(self)
             return
 
+
+    def finalize(self):
+        if self.skipjs:
+            return
+
         # since we will only discover PointsOfInterest in chunks that need to be 
         # [re]rendered, POIs like signs in unchanged chunks will not be listed
         # in self.world.POI.  To make sure we don't remove these from markers.js
@@ -157,5 +165,3 @@ class MapGen(object):
             output.write('  // ]},\n')
             output.write('];')
         
-        if self.web_assets_hook:
-            self.web_assets_hook(self)

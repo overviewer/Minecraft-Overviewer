@@ -18,21 +18,84 @@
 #include "overviewer.h"
 #include <string.h>
 
+/* list of all render modes, ending in NULL
+   all of these will be available to the user, so DON'T include modes
+   that are only useful as a base for other modes. */
+static RenderModeInterface *render_modes[] = {
+    &rendermode_normal,
+    &rendermode_lighting,
+    &rendermode_night,
+    &rendermode_spawn,
+    NULL
+};
+
 /* decides which render mode to use */
 RenderModeInterface *get_render_mode(RenderState *state) {
-    /* default: normal */
-    RenderModeInterface *iface = &rendermode_normal;
+    unsigned int i;
+    /* default: NULL --> an error */
+    RenderModeInterface *iface = NULL;
     PyObject *rendermode_py = PyObject_GetAttrString(state->self, "rendermode");
     const char *rendermode = PyString_AsString(rendermode_py);
     
-    if (strcmp(rendermode, "lighting") == 0) {
-        iface = &rendermode_lighting;
-    } else if (strcmp(rendermode, "night") == 0) {
-        iface = &rendermode_night;
-    } else if (strcmp(rendermode, "spawn") == 0) {
-        iface = &rendermode_spawn;
+    for (i = 0; render_modes[i] != NULL; i++) {
+        if (strcmp(render_modes[i]->name, rendermode) == 0) {
+            iface = render_modes[i];
+            break;
+        }
     }
     
     Py_DECREF(rendermode_py);
     return iface;
+}
+
+/* bindings for python -- get all the rendermode names */
+PyObject *get_render_modes(PyObject *self, PyObject *args) {
+    PyObject *modes;
+    unsigned int i;
+    if (!PyArg_ParseTuple(args, ""))
+        return NULL;
+    
+    modes = PyList_New(0);
+    if (modes == NULL)
+        return NULL;
+    
+    for (i = 0; render_modes[i] != NULL; i++) {
+        PyObject *name = PyString_FromString(render_modes[i]->name);
+        PyList_Append(modes, name);
+        Py_DECREF(name);
+    }
+    
+    return modes;
+}
+
+/* more bindings -- return info for a given rendermode name */
+PyObject *get_render_mode_info(PyObject *self, PyObject *args) {
+    const char* rendermode;
+    PyObject *info;
+    unsigned int i;
+    if (!PyArg_ParseTuple(args, "s", &rendermode))
+        return NULL;
+    
+    info = PyDict_New();
+    if (info == NULL)
+        return NULL;
+    
+    for (i = 0; render_modes[i] != NULL; i++) {
+        if (strcmp(render_modes[i]->name, rendermode) == 0) {
+            PyObject *tmp;
+            
+            tmp = PyString_FromString(render_modes[i]->name);
+            PyDict_SetItemString(info, "name", tmp);
+            Py_DECREF(tmp);
+            
+            tmp = PyString_FromString(render_modes[i]->description);
+            PyDict_SetItemString(info, "description", tmp);
+            Py_DECREF(tmp);
+            
+            return info;
+        }
+    }
+    
+    Py_DECREF(info);
+    Py_RETURN_NONE;
 }

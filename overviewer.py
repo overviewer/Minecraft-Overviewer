@@ -57,15 +57,17 @@ def main():
         cpus = multiprocessing.cpu_count()
     except NotImplementedError:
         cpus = 1
-
+    
+    avail_rendermodes = c_overviewer.get_render_modes()
+    
     parser = ConfigOptionParser(usage=helptext, config="settings.py")
     parser.add_option("-V", "--version", dest="version", help="Displays version information and then exits", action="store_true")
     parser.add_option("-p", "--processes", dest="procs", help="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
     parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", configFileOnly=True)
     parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true", commandLineOnly=True)
     parser.add_option("--chunklist", dest="chunklist", help="A file containing, on each line, a path to a chunkfile to update. Instead of scanning the world directory for chunks, it will just use this list. Normal caching rules still apply.")
-    # TODO hook this up to render_modes in setup.py
-    parser.add_option("--rendermodes", dest="rendermode", help="Specifies the render type: normal (default), lighting, night, or spawn.", type="choice", choices=["normal", "lighting", "night", "spawn"], required=True, default="normal", listify=True)
+    parser.add_option("--rendermodes", dest="rendermode", help="Specifies the render types, separated by commas. Use --list-rendermodes to list them all.", type="choice", choices=avail_rendermodes, required=True, default=avail_rendermodes[0], listify=True)
+    parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", help="List available render modes and exit.", commandLineOnly=True)
     parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg. NOTE: png will always be used as the intermediate image format.", configFileOnly=True )
     parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", configFileOnly=True)
     parser.add_option("--web-assets-hook", dest="web_assets_hook", help="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a QuadtreeGen object as its only argument.", action="store", metavar="SCRIPT", type="function", configFileOnly=True)
@@ -88,6 +90,13 @@ def main():
                 print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
         except:
             pass
+        sys.exit(0)
+    
+    if options.list_rendermodes:
+        rendermode_info = map(c_overviewer.get_render_mode_info, avail_rendermodes)
+        name_width = max(map(lambda i: len(i['name']), rendermode_info))
+        for info in rendermode_info:
+            print "{name:{0}} {description}".format(name_width, **info)
         sys.exit(0)
 
     if len(args) < 1:
@@ -195,6 +204,8 @@ def main():
     
     # render the tiles!
     r.go(options.procs)
+
+    m.finalize()
 
 
 def delete_all(worlddir, tiledir):

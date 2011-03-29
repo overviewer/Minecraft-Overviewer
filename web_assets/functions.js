@@ -1,3 +1,10 @@
+var markerCollection = {}; // holds groups of markers
+
+var map;
+
+var markersInit = false;
+var regionsInit = false;
+
 var prevInfoWindow = null;
 
 function prepareSignMarker(marker, item) {
@@ -275,8 +282,12 @@ function initialize() {
 
     var query = location.search.substring(1);
 
-    var lat = 0.5;
-    var lng = 0.5;
+    var defaultCenter = fromWorldToLatLng(config.center[0],
+                                          config.center[1],
+                                          config.center[2]);
+    var lat = defaultCenter.lat();
+    var lng = defaultCenter.lng();
+    
     var zoom = config.defaultZoom;
     var pairs = query.split("&");
     for (var i=0; i<pairs.length; i++) {

@@ -228,6 +228,7 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
 }
 
 RenderModeInterface rendermode_lighting = {
+    "lighting", "draw shadows from the lighting data",
     sizeof(RenderModeLighting),
     rendermode_lighting_start,
     rendermode_lighting_finish,

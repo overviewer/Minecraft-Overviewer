@@ -23,7 +23,7 @@
 
 static int endianness = UNKNOWN_ENDIAN;
 
-void init_endian() {
+void init_endian(void) {
     /* figure out what our endianness is! */
     short word = 0x0001;
     char* byte = (char*)(&word);
