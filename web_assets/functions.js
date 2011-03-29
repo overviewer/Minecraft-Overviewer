@@ -1,3 +1,10 @@
+var markerCollection = {}; // holds groups of markers
+
+var map;
+
+var markersInit = false;
+var regionsInit = false;
+
 var prevInfoWindow = null;
 
 function prepareSignMarker(marker, item) {

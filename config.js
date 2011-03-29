@@ -50,10 +50,3 @@ var mapTypeData=[
 
 var mapTypeData = {maptypedata};
 
-// Please leave the following variables here:
-var markerCollection = {}; // holds groups of markers
-
-var map;
-
-var markersInit = false;
-var regionsInit = false;
