@@ -427,8 +427,7 @@ class ChunkRenderer(object):
 
         c_overviewer.render_loop(self, img, xoff, yoff, blockData_expanded)
 
-        #tileEntities = get_tileentity_data(self.level)
-	tileEntities = []
+        tileEntities = get_tileentity_data(self.level)
         for entity in tileEntities:
             if entity['id'] == 'Sign':
                 msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])
