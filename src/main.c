@@ -17,13 +17,21 @@
 
 #include "overviewer.h"
 
+PyObject *get_extension_version(PyObject *self, PyObject *args) {
+
+    return Py_BuildValue("i", OVERVIEWER_EXTENSION_VERSION);
+}
+
 static PyMethodDef COverviewerMethods[] = {
     {"alpha_over", alpha_over_wrap, METH_VARARGS,
      "alpha over composite function"},
     {"render_loop", chunk_render, METH_VARARGS,
      "Renders stuffs"},
+    {"extension_version", get_extension_version, METH_VARARGS, 
+        "Returns the extension version"},
     {NULL, NULL, 0, NULL}       /* Sentinel */
 };
+
 
 PyMODINIT_FUNC
 initc_overviewer(void)
