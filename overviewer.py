@@ -29,16 +29,44 @@ import multiprocessing
 import time
 import logging
 import util
+import platform
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
+
+this_dir = util.get_program_path()
 
 # make sure the c_overviewer extension is available
 try:
     import c_overviewer
 except ImportError:
+    ## try to find the build extension
+    ext = os.path.join(this_dir, "c_overviewer.%s" % ("pyd" if platform.system() == "Windows" else "so"))
+    if os.path.exists(ext):
+        print "Something has gone wrong importing the c_overviewer extension.  Please"
+        print "make sure it is up-to-date (clean and rebuild)"
+        sys.exit(1)
+
     print "You need to compile the c_overviewer module to run Minecraft Overviewer."
     print "Run `python setup.py build`, or see the README for details."
     sys.exit(1)
+
+if hasattr(sys, "frozen"):
+    pass # we don't bother with a compat test since it should always be in sync
+elif "extension_version" in dir(c_overviewer):
+    # check to make sure the binary matches the headers
+    if os.path.exists(os.path.join(this_dir, "src", "overviewer.h")):
+        with open(os.path.join(this_dir, "src", "overviewer.h")) as f:
+            lines = f.readlines()
+            lines = filter(lambda x: x.startswith("#define OVERVIEWER_EXTENSION_VERSION"), lines)
+            if lines:
+                l = lines[0]
+                if int(l.split()[2].strip()) != c_overviewer.extension_version():
+                    print "Please rebuild your c_overviewer module.  It is out of date!"
+                    sys.exit(1)
+else:
+    print "Please rebuild your c_overviewer module.  It is out of date!"
+    sys.exit(1)
+
 
 import optimizeimages
 import world

@@ -34,11 +34,14 @@ def get_program_path():
 
 
 def findGitVersion():
-    if os.path.exists(".git"):
-        with open(os.path.join(".git","HEAD")) as f:
+    this_dir = get_program_path()
+    if os.path.exists(os.path.join(this_dir,".git")):
+        with open(os.path.join(this_dir,".git","HEAD")) as f:
             data = f.read().strip()
         if data.startswith("ref: "):
-            with open(os.path.join(".git", data[5:])) as g:
+            if not os.path.exists(os.path.join(this_dir,data[5:])):
+                return data
+            with open(os.path.join(this_dir, ".git", data[5:])) as g:
                 return g.read().strip()
         else:
             return data
