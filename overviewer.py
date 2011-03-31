@@ -184,6 +184,8 @@ def main():
     w = world.World(worlddir, useBiomeData=useBiomeData)
     w.go(options.procs)
 
+    logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
+
     # create the quadtrees
     # TODO chunklist
     q = []
