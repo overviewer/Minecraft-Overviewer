@@ -100,7 +100,7 @@ def main():
         sys.exit(0)
 
     if len(args) < 1:
-        print "You need to give me your world number or directory"
+        logging.error("You need to give me your world number or directory")
         parser.print_help()
         list_worlds()
         sys.exit(1)
@@ -113,7 +113,7 @@ def main():
         # if there are no worlds found at all, exit now
         if not worlds:
             parser.print_help()
-            print "\nInvalid world path"
+            logging.error("Invalid world path")
             sys.exit(1)
         
         try:
@@ -126,12 +126,12 @@ def main():
             except KeyError:
                 # it's not a number, name, or path
                 parser.print_help()
-                print "Invalid world name or path"
+                logging.error("Invalid world name or path")
                 sys.exit(1)
         except KeyError:
             # it was an invalid number
             parser.print_help()
-            print "Invalid world number"
+            logging.error("Invalid world number")
             sys.exit(1)
 
     if len(args) != 2:
