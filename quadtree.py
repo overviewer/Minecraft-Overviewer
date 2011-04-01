@@ -222,6 +222,10 @@ class QuadtreeGen(object):
         unconvert_coords = self.world.unconvert_coords
         #get_region_path = self.world.get_region_path
         get_region = self.world.regionfiles.get
+        regionx = None
+        regiony = None
+        c = None
+        mcr = None
         for row in xrange(rowstart-16, rowend+1):
             for col in xrange(colstart, colend+1):
                 # due to how chunks are arranged, we can only allow
@@ -230,12 +234,18 @@ class QuadtreeGen(object):
                 if row % 2 != col % 2:
                     continue
                 
-                # return (col, row, chunkx, chunky, regionpath)
                 chunkx, chunky = unconvert_coords(col, row)
-                #c = get_region_path(chunkx, chunky)
-                _, _, c, mcr = get_region((chunkx//32, chunky//32),(None,None,None,None));
+
+                regionx_ = chunkx//32
+                regiony_ = chunky//32
+                if regionx_ != regionx or regiony_ != regiony:
+                    regionx = regionx_
+                    regiony = regiony_
+                    _, _, c, mcr = get_region((regionx, regiony),(None,None,None,None))
+                    
                 if c is not None and mcr.chunkExists(chunkx,chunky):                  
                     chunklist.append((col, row, chunkx, chunky, c))
+                    
         return chunklist   
         
     def get_worldtiles(self):
