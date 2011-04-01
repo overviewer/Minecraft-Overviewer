@@ -1181,7 +1181,10 @@ special_map[92] = range(6) # cake!
 # grass and leaves are graysacle in terrain.png
 # we treat them as special so we can manually tint them
 # it is unknown how the specific tint (biomes) is calculated
-special_map[2] = (0,)       # grass
+special_map[2] = range(11)       # grass, grass has not ancildata but is used
+                                # in the mod WildGrass, and this small fix
+                                # shows the map as expected, and is harmless
+                                # for normal maps
 special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
 
 
