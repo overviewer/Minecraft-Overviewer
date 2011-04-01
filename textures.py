@@ -1144,7 +1144,8 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # A good source of information is:
 #  http://www.minecraftwiki.net/wiki/Data_values
 # (when adding new blocks here and in generate_special_textures,
-# please, keep the ascending order of blockid value)
+# please, if possible, keep the ascending order of blockid value
+# in special_map and in the generate_special_texture function)
 
 special_blocks = set([2, 9, 17, 18, 23, 35, 43, 44, 50, 51, 55, 58, 59, \
                       61, 62, 64, 65, 66, 71, 75, 76, 85, 86, 91, 92])
