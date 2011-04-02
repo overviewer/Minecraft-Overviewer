@@ -161,6 +161,38 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             tint_with_mask(state->img, r, g, b, facemask, state->imgx, state->imgy, 0, 0);
         }
     }
+
+
+    /* Draw some edge lines! */
+    // draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
+    if (!is_transparent(state->block)) {
+        int increment=0;
+        if (state->block == 44) 
+            increment=6;
+        else if (state->block == 78) 
+            increment=9;
+
+        Imaging img_i = imaging_python_to_c(state->img);
+        uint8_t ink[] = {0,0,0,40};
+        if ((state->x == 15) && (state->up_right_blocks != Py_None) && is_transparent(getArrayByte3D(state->up_right_blocks, 0, state->y, state->z))) {
+            ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
+            ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
+        } else if ((state->x != 15) && is_transparent(getArrayByte3D(state->blocks, state->x+1, state->y, state->z))) {
+            ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
+            ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
+        }
+        // if y != 0 and blocks[x,y-1,z] == 0
+
+        // chunk boundries are annoying
+        if ((state->y == 0) && (state->up_left_blocks != Py_None) && is_transparent(getArrayByte3D(state->up_left_blocks, state->x, 15, state->z))) {
+            ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
+            ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
+        } else if ((state->y != 0) && is_transparent(getArrayByte3D(state->blocks, state->x, state->y-1, state->z))) {
+            // draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
+            ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
+            ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
+        }
+    }
 }
 
 RenderModeInterface rendermode_normal = {
