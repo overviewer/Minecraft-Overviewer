@@ -49,17 +49,28 @@ rendermode_normal_start(void *data, RenderState *state) {
         
         self->biome_data = PyObject_CallMethod(state->textures, "getBiomeData", "OOO",
                                                worlddir, chunk_x_py, chunk_y_py);
-        self->foliagecolor = PyObject_GetAttrString(state->textures, "foliagecolor");
-        self->grasscolor = PyObject_GetAttrString(state->textures, "grasscolor");
-        
-        self->leaf_texture = PyObject_GetAttrString(state->textures, "biome_leaf_texture");
-        self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
-        
-        facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
-        /* borrowed reference, needs to be incref'd if we keep it */
-        self->facemask_top = PyTuple_GetItem(facemasks_py, 0);
-        Py_INCREF(self->facemask_top);
-        Py_DECREF(facemasks_py);
+        if (self->biome_data == Py_None) {
+            self->biome_data = NULL;
+            self->foliagecolor = NULL;
+            self->grasscolor = NULL;
+
+            self->leaf_texture = NULL;
+            self->grass_texture = NULL;
+            self->facemask_top = NULL;
+        } else {
+
+            self->foliagecolor = PyObject_GetAttrString(state->textures, "foliagecolor");
+            self->grasscolor = PyObject_GetAttrString(state->textures, "grasscolor");
+
+            self->leaf_texture = PyObject_GetAttrString(state->textures, "biome_leaf_texture");
+            self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
+
+            facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
+            /* borrowed reference, needs to be incref'd if we keep it */
+            self->facemask_top = PyTuple_GetItem(facemasks_py, 0);
+            Py_INCREF(self->facemask_top);
+            Py_DECREF(facemasks_py);
+        }
     } else {
         self->biome_data = NULL;
         self->foliagecolor = NULL;
