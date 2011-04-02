@@ -17,6 +17,11 @@
 
 #include "overviewer.h"
 
+PyObject *get_extension_version(PyObject *self, PyObject *args) {
+
+    return Py_BuildValue("i", OVERVIEWER_EXTENSION_VERSION);
+}
+
 static PyMethodDef COverviewerMethods[] = {
     {"alpha_over", alpha_over_wrap, METH_VARARGS,
      "alpha over composite function"},
@@ -26,8 +31,11 @@ static PyMethodDef COverviewerMethods[] = {
      "returns available render modes"},
     {"get_render_mode_info", get_render_mode_info, METH_VARARGS,
      "returns info for a particular render mode"},
+    {"extension_version", get_extension_version, METH_VARARGS, 
+        "Returns the extension version"},
     {NULL, NULL, 0, NULL}       /* Sentinel */
 };
+
 
 PyMODINIT_FUNC
 initc_overviewer(void)

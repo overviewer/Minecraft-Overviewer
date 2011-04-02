@@ -1,6 +1,7 @@
 from optparse import OptionParser
 import sys
 import os.path
+import logging
 
 class OptionsResults(object):
     pass
@@ -22,9 +23,11 @@ class ConfigOptionParser(object):
         self.requiredArgs = []
 
     def display_config(self):
+        logging.info("Using the following settings:")
         for x in self.configVars:
             n = x['dest']
             print  "%s: %r" % (n, self.configResults.__dict__[n])
+
 
     def add_option(self, *args, **kwargs):
 
@@ -71,14 +74,14 @@ class ConfigOptionParser(object):
         except NameError, ex:
             import traceback
             traceback.print_exc()
-            print "\nError parsing %s.  Please check the trackback above" % self.configFile
+            logging.error("Error parsing %s.  Please check the trackback above" % self.configFile)
             sys.exit(1)
         except SyntaxError, ex:
             import traceback
             traceback.print_exc()
             tb = sys.exc_info()[2]
             #print tb.tb_frame.f_code.co_filename
-            print "\nError parsing %s.  Please check the trackback above" % self.configFile
+            logging.error("Error parsing %s.  Please check the trackback above" % self.configFile)
             sys.exit(1)
 
         #print l.keys()
@@ -89,7 +92,7 @@ class ConfigOptionParser(object):
             n = a['dest']
             if a.get('commandLineOnly', False):
                 if n in l.keys():
-                    print "Error: %s can only be specified on the command line.  It is not valid in the config file" % n
+                    logging.error("Error: %s can only be specified on the command line.  It is not valid in the config file" % n)
                     sys.exit(1)
 
             configResults.__dict__[n] = l.get(n)
@@ -113,7 +116,8 @@ class ConfigOptionParser(object):
         for a in self.configVars:
             n = a['dest']
             if configResults.__dict__[n] == None and a.get('required',False):
-                raise Exception("%s is required" % n)
+                logging.error("%s is required" % n)
+                sys.exit(1)
 
         # sixth, check types
         for a in self.configVars:
@@ -128,7 +132,7 @@ class ConfigOptionParser(object):
                 try:
                     configResults.__dict__[n] = self.checkType(configResults.__dict__[n], a)
                 except ValueError, ex:
-                    print "There was a problem converting the value '%s' to type %s for config parameter '%s'" % (configResults.__dict__[n], a['type'], n)
+                    logging.error("There was a problem converting the value '%s' to type %s for config parameter '%s'" % (configResults.__dict__[n], a['type'], n))
                     import traceback
                     #traceback.print_exc()
                     sys.exit(1)
@@ -153,7 +157,7 @@ class ConfigOptionParser(object):
             return long(value)
         elif a['type'] == "choice":
             if value not in a['choices']:
-                print "The value '%s' is not valid for config parameter '%s'" % (value, a['dest'])
+                logging.error("The value '%s' is not valid for config parameter '%s'" % (value, a['dest']))
                 sys.exit(1)
             return value
         elif a['type'] == "float":
@@ -164,5 +168,5 @@ class ConfigOptionParser(object):
             if not callable(value):
                 raise ValueError("Not callable")
         else:
-            print "Unknown type!"
+            logging.error("Unknown type!")
             sys.exit(1)

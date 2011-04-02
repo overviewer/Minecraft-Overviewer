@@ -131,7 +131,8 @@ try:
             print "... done"
             stats = get_stats(timelist)
             print stats
-            log.write("%s %s\n" % (commit, repr(stats)))
+            if log:
+                log.write("%s %s\n" % (commit, repr(stats)))
         except CalledProcessError, e:
             if options.fatal_errors:
                 print

@@ -285,7 +285,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
     # first back sides
     if side1 != None :
         side1 = transform_image_side(side1, blockID)
-        side1 = side1.transpose(Image.FLIP_TOP_BOTTOM)
+        side1 = side1.transpose(Image.FLIP_LEFT_RIGHT)
         
         # Darken this side.
         sidealpha = side1.split()[3]
@@ -297,8 +297,6 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         
     if side2 != None :
         side2 = transform_image_side(side2, blockID)
-        side2 = side2.transpose(Image.FLIP_LEFT_RIGHT)
-        side2 = side2.transpose(Image.FLIP_TOP_BOTTOM)
 
         # Darken this side.
         sidealpha2 = side2.split()[3]
@@ -356,9 +354,9 @@ def _build_blockimages():
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, 80, -1, 65,  4, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
+               36, 37, -1, -1, 65,  4, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51,115, 99, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
+               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
        #       80  81  82  83  84  85  86  87  88  89  90  91
                66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
         ]
@@ -373,9 +371,9 @@ def _build_blockimages():
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, 80, -1, 65,  4, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
+                36, 37, -1, -1, 65,  4, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51,115, 99, -1, 66, 67,
+                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
                 66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
@@ -431,242 +429,45 @@ load_water()
 def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
     #print "%s has ancillary data: %X" %(blockID, data)
-    # TODO torches, redstone torches, crops, ladders, stairs, 
-    #      levers, doors, buttons, and signs all need to be handled here (and in chunkpy)
-    if blockID == 66: # minetrack:
-        raw_straight = terrain_images[128]
-        raw_corner = terrain_images[112]
-    
-        ## use transform_image to scale and shear
-        if data == 0:
-            track = transform_image(raw_straight, blockID)
-        elif data == 6:
-            track = transform_image(raw_corner, blockID)
-        elif data == 7:
-            track = transform_image(raw_corner.rotate(270), blockID)
-        elif data == 8:
-            # flip
-            track = transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90), 
-                    blockID)
-        elif data == 9:
-            track = transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM), 
-                    blockID)
-        elif data == 1:
-            track = transform_image(raw_straight.rotate(90), blockID)
-            
-        #slopes
-        elif data == 2: # slope going up in +x direction
-            track = transform_image_slope(raw_straight,blockID)
-            track = track.transpose(Image.FLIP_LEFT_RIGHT)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
-            composite.alpha_over(img, track, (2,0), track)
-            # the 2 pixels move is needed to fit with the adjacent tracks
-            return (img.convert("RGB"), img.split()[3])
-
-        elif data == 3: # slope going up in -x direction
-            # tracks are sprites, in this case we are seeing the "side" of 
-            # the sprite, so draw a line to make it beautiful.
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
-            ImageDraw.Draw(img).line([(11,11),(23,17)],fill=(164,164,164))
-            # grey from track texture (exterior grey).
-            # the track doesn't start from image corners, be carefull drawing the line!
-            return (img.convert("RGB"), img.split()[3])
-            
-        elif data == 4: # slope going up in -y direction
-            track = transform_image_slope(raw_straight,blockID)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
-            composite.alpha_over(img, track, (0,0), track)
-            return (img.convert("RGB"), img.split()[3])
-            
-        elif data == 5: # slope going up in +y direction
-            # same as "data == 3"
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
-            ImageDraw.Draw(img).line([(1,17),(12,11)],fill=(164,164,164))
-            return (img.convert("RGB"), img.split()[3])
-            
-
-        else: # just in case
-            track = transform_image(raw_straight, blockID)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        composite.alpha_over(img, track, (0,12), track)
-
-        return (img.convert("RGB"), img.split()[3])
-
-    if blockID == 58: # crafting table
-        top = terrain_images[43]
-        side3 = terrain_images[43+16]
-        side4 = terrain_images[43+16+1]
-        
-        img = _build_full_block(top, None, None, side3, side4, None, 58)
-        return (img.convert("RGB"), img.split()[3])
-
-    if blockID == 59: # crops
-        raw_crop = terrain_images[88+data]
-        crop1 = transform_image(raw_crop, blockID)
-        crop2 = transform_image_side(raw_crop, blockID)
-        crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        composite.alpha_over(img, crop1, (0,12), crop1)
-        composite.alpha_over(img, crop2, (6,3), crop2)
-        composite.alpha_over(img, crop3, (6,3), crop3)
-        return (img.convert("RGB"), img.split()[3])
-
-    if blockID == 61: #furnace
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[45])
-        side2 = transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
-        return (img.convert("RGB"), img.split()[3])
-
-    if blockID in (86,91): # jack-o-lantern
-        top = transform_image(terrain_images[102])
-        frontID = 119 if blockID == 86 else 120
-        side1 = transform_image_side(terrain_images[frontID])
-        side2 = transform_image_side(terrain_images[118]).transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
-        return (img.convert("RGB"), img.split()[3])
-    
-    if blockID == 62: # lit furnace
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[45])
-        side2 = transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
-        return (img.convert("RGB"), img.split()[3])
-
-    if blockID == 23: # dispenser
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[46])
-        side2 = transform_image_side(terrain_images[45]).transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
-        return (img.convert("RGB"), img.split()[3])
-
-
-
-    if blockID == 65: # ladder
-        raw_texture = terrain_images[83]
-        #print "ladder is facing: %d" % data
-        if data == 5:
-            # normally this ladder would be obsured by the block it's attached to
-            # but since ladders can apparently be placed on transparent blocks, we 
-            # have to render this thing anyway.  same for data == 2
-            tex = transform_image_side(raw_texture)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
-            composite.alpha_over(img, tex, (0,6), tex)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 2:
-            tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
-            composite.alpha_over(img, tex, (12,6), tex)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 3:
-            tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
-            composite.alpha_over(img, tex, (0,0), tex)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 4:
-            tex = transform_image_side(raw_texture)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
-            composite.alpha_over(img, tex, (12,0), tex)
-            return (img.convert("RGB"), img.split()[3])
-            
-    if blockID in (64,71): #wooden door, or iron door
-        if data & 0x8 == 0x8: # top of the door
-            raw_door = terrain_images[81 if blockID == 64 else 82]
-        else: # bottom of the door
-            raw_door = terrain_images[97 if blockID == 64 else 98]
-        
-        # if you want to render all doors as closed, then force
-        # force swung to be False
-        if data & 0x4 == 0x4:
-            swung=True
-        else:
-            swung=False
-
-        # mask out the high bits to figure out the orientation 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        if (data & 0x03) == 0:
-            if not swung:
-                tex = transform_image_side(raw_door)
-                composite.alpha_over(img, tex, (0,6), tex)
-            else:
-                # flip first to set the doornob on the correct side
-                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-                tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
-                composite.alpha_over(img, tex, (0,0), tex)
-        
-        if (data & 0x03) == 1:
-            if not swung:
-                tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
-                composite.alpha_over(img, tex, (0,0), tex)
-            else:
-                tex = transform_image_side(raw_door)
-                composite.alpha_over(img, tex, (12,0), tex)
-
-        if (data & 0x03) == 2:
-            if not swung:
-                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-                composite.alpha_over(img, tex, (12,0), tex)
-            else:
-                tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
-                composite.alpha_over(img, tex, (12,6), tex)
-
-        if (data & 0x03) == 3:
-            if not swung:
-                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
-                composite.alpha_over(img, tex, (12,6), tex)
-            else:
-                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-                composite.alpha_over(img, tex, (0,6), tex)
-        
-        return (img.convert("RGB"), img.split()[3])
+    # TODO ladders, stairs, levers, buttons, and signs
+    # all need to behandled here (and in chunkpy)
     
     if blockID == 2: # grass
         top = tintTexture(terrain_images[0],(115,175,71))
         img = _build_block(top, terrain_images[3], 2)
         return (img.convert("RGB"), img.split()[3])
-    
-    if blockID == 51: # fire
-        firetexture = _load_image("fire.png")
-        side1 = transform_image_side(firetexture)
-        side2 = transform_image_side(firetexture).transpose(Image.FLIP_LEFT_RIGHT)
-        
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-        composite.alpha_over(img, side1, (12,0), side1)
-        composite.alpha_over(img, side2, (0,0), side2)
 
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
+    if blockID == 9: # spring water, flowing water and waterfall water
+
+        watertexture = _load_image("water.png")
         
-        return (img.convert("RGB"), img.split()[3])
-    
-    if blockID == 18: # leaves
-        t = tintTexture(terrain_images[52], (37, 118, 25))
-        img = _build_block(t, t, 18)
-        return (img.convert("RGB"), img.split()[3])
+        if (data & 0b10000) == 16:
+            top = watertexture
+            
+        else: top = None
+
+        if (data & 0b0001) == 1:
+            side1 = watertexture    # top left
+        else: side1 = None
         
+        if (data & 0b1000) == 8:
+            side2 = watertexture    # top right           
+        else: side2 = None
+        
+        if (data & 0b0010) == 2:
+            side3 = watertexture    # bottom left    
+        else: side3 = None
+        
+        if (data & 0b0100) == 4:
+            side4 = watertexture    # bottom right
+        else: side4 = None
+        
+        img = _build_full_block(top,side1,side2,side3,side4)
+        
+        return (img.convert("RGB"),img.split()[3])
+
+
     if blockID == 17: # wood: normal, birch and pines
         top = terrain_images[21]
         if data == 0:
@@ -681,7 +482,26 @@ def generate_special_texture(blockID, data):
             side = terrain_images[117]
             img = _build_block(top, side, 17)
             return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 18: # leaves
+        t = tintTexture(terrain_images[52], (37, 118, 25))
+        img = _build_block(t, t, 18)
+        return (img.convert("RGB"), img.split()[3])
         
+    if blockID == 23: # dispenser
+        top = transform_image(terrain_images[62])
+        side1 = transform_image_side(terrain_images[46])
+        side2 = transform_image_side(terrain_images[45]).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+
+
     if blockID == 35: # wool
         if data == 0: # white
             top = side = terrain_images[64]
@@ -748,7 +568,370 @@ def generate_special_texture(blockID, data):
             img = _build_block(top, side, 35)
             return (img.convert("RGB"), img.split()[3])
 
+
+    if blockID in (43,44): # slab and double-slab
         
+        if data == 0: # stone slab
+            top = terrain_images[6]
+            side = terrain_images[5]
+            img = _build_block(top, side, blockID)
+            return (img.convert("RGB"), img.split()[3])
+            
+        if data == 1: # stone slab
+            top = terrain_images[176]
+            side = terrain_images[192]
+            img = _build_block(top, side, blockID)
+            return (img.convert("RGB"), img.split()[3])
+            
+        if data == 2: # wooden slab
+            top = side = terrain_images[4]
+            img = _build_block(top, side, blockID)
+            return (img.convert("RGB"), img.split()[3])
+            
+        if data == 3: # cobblestone slab
+            top = side = terrain_images[16]
+            img = _build_block(top, side, blockID)
+            return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID in (50,75,76): # torch, off redstone torch, on redstone torch
+    
+        # choose the proper texture
+        if blockID == 50: # torch
+            small = terrain_images[80]
+        elif blockID == 75: # off redstone torch
+            small = terrain_images[115]
+        else: # on redstone torch
+            small = terrain_images[99]
+        
+        # compose a torch bigger than the normal
+        # (better for doing transformations)
+        torch = Image.new("RGBA", (16,16), (38,92,255,0))
+        composite.alpha_over(torch,small,(-4,-3))
+        composite.alpha_over(torch,small,(-5,-2))
+        composite.alpha_over(torch,small,(-3,-2))
+        
+        # angle of inclination of the texture
+        rotation = 15
+        
+        if data == 1: # pointing south
+            torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
+            img = _build_full_block(None, None, None, torch, None, None, blockID)
+            
+        elif data == 2: # pointing north
+            torch = torch.rotate(rotation, Image.NEAREST)
+            img = _build_full_block(None, None, torch, None, None, None, blockID)
+            
+        elif data == 3: # pointing west
+            torch = torch.rotate(rotation, Image.NEAREST)
+            img = _build_full_block(None, torch, None, None, None, None, blockID)
+            
+        elif data == 4: # pointing east
+            torch = torch.rotate(-rotation, Image.NEAREST)
+            img = _build_full_block(None, None, None, None, torch, None, blockID)
+            
+        elif data == 5: # standing on the floor
+            # compose a "3d torch".
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            
+            small_crop = small.crop((2,2,14,14))
+            slice = small_crop.copy()
+            ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+            
+            composite.alpha_over(img, slice, (6,4))
+            composite.alpha_over(img, small_crop, (5,5))
+            composite.alpha_over(img, small_crop, (6,5))
+            composite.alpha_over(img, slice, (6,6))
+
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 51: # fire
+        firetexture = _load_image("fire.png")
+        side1 = transform_image_side(firetexture)
+        side2 = transform_image_side(firetexture).transpose(Image.FLIP_LEFT_RIGHT)
+        
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        composite.alpha_over(img, side1, (12,0), side1)
+        composite.alpha_over(img, side2, (0,0), side2)
+
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 55: # redstone wire
+        
+        if data & 0b1000000 == 64: # powered redstone wire
+            redstone_wire_t = terrain_images[165]
+            redstone_wire_t = tintTexture(redstone_wire_t,(255,0,0))
+
+            redstone_cross_t = terrain_images[164]
+            redstone_cross_t = tintTexture(redstone_cross_t,(255,0,0))
+
+            
+        else: # unpowered redstone wire
+            redstone_wire_t = terrain_images[165]
+            redstone_wire_t = tintTexture(redstone_wire_t,(48,0,0))
+            
+            redstone_cross_t = terrain_images[164]
+            redstone_cross_t = tintTexture(redstone_cross_t,(48,0,0))
+
+        # generate an image per redstone direction
+        branch_top_left = redstone_cross_t.copy()
+        ImageDraw.Draw(branch_top_left).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(branch_top_left).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(branch_top_left).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        branch_top_right = redstone_cross_t.copy()
+        ImageDraw.Draw(branch_top_right).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(branch_top_right).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(branch_top_right).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        branch_bottom_right = redstone_cross_t.copy()
+        ImageDraw.Draw(branch_bottom_right).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(branch_bottom_right).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(branch_bottom_right).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        branch_bottom_left = redstone_cross_t.copy()
+        ImageDraw.Draw(branch_bottom_left).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(branch_bottom_left).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(branch_bottom_left).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+                
+        # generate the bottom texture
+        if data & 0b111111 == 0:
+            bottom = redstone_cross_t.copy()
+        
+        elif data & 0b1111 == 10: #= 0b1010 redstone wire in the x direction
+            bottom = redstone_wire_t.copy()
+            
+        elif data & 0b1111 == 5: #= 0b0101 redstone wire in the y direction
+            bottom = redstone_wire_t.copy().rotate(90)
+        
+        else:
+            bottom = Image.new("RGBA", (16,16), (38,92,255,0))
+            if (data & 0b0001) == 1:
+                composite.alpha_over(bottom,branch_top_left)
+                
+            if (data & 0b1000) == 8:
+                composite.alpha_over(bottom,branch_top_right)
+                
+            if (data & 0b0010) == 2:
+                composite.alpha_over(bottom,branch_bottom_left)
+                
+            if (data & 0b0100) == 4:
+                composite.alpha_over(bottom,branch_bottom_right)
+
+        # check for going up redstone wire
+        if data & 0b100000 == 32:
+            side1 = redstone_wire_t.rotate(90)
+        else:
+            side1 = None
+            
+        if data & 0b010000 == 16:
+            side2 = redstone_wire_t.rotate(90)
+        else:
+            side2 = None
+            
+        img = _build_full_block(None,side1,side2,None,None,bottom)
+
+        return (img.convert("RGB"),img.split()[3])
+
+
+    if blockID == 58: # crafting table
+        top = terrain_images[43]
+        side3 = terrain_images[43+16]
+        side4 = terrain_images[43+16+1]
+        
+        img = _build_full_block(top, None, None, side3, side4, None, 58)
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 59: # crops
+        raw_crop = terrain_images[88+data]
+        crop1 = transform_image(raw_crop, blockID)
+        crop2 = transform_image_side(raw_crop, blockID)
+        crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        composite.alpha_over(img, crop1, (0,12), crop1)
+        composite.alpha_over(img, crop2, (6,3), crop2)
+        composite.alpha_over(img, crop3, (6,3), crop3)
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 61: #furnace
+        top = transform_image(terrain_images[62])
+        side1 = transform_image_side(terrain_images[45])
+        side2 = transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 62: # lit furnace
+        top = transform_image(terrain_images[62])
+        side1 = transform_image_side(terrain_images[45])
+        side2 = transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID in (64,71): #wooden door, or iron door
+        if data & 0x8 == 0x8: # top of the door
+            raw_door = terrain_images[81 if blockID == 64 else 82]
+        else: # bottom of the door
+            raw_door = terrain_images[97 if blockID == 64 else 98]
+        
+        # if you want to render all doors as closed, then force
+        # force swung to be False
+        if data & 0x4 == 0x4:
+            swung=True
+        else:
+            swung=False
+
+        # mask out the high bits to figure out the orientation 
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        if (data & 0x03) == 0:
+            if not swung:
+                tex = transform_image_side(raw_door)
+                composite.alpha_over(img, tex, (0,6), tex)
+            else:
+                # flip first to set the doornob on the correct side
+                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
+                composite.alpha_over(img, tex, (0,0), tex)
+        
+        if (data & 0x03) == 1:
+            if not swung:
+                tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                composite.alpha_over(img, tex, (0,0), tex)
+            else:
+                tex = transform_image_side(raw_door)
+                composite.alpha_over(img, tex, (12,0), tex)
+
+        if (data & 0x03) == 2:
+            if not swung:
+                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                composite.alpha_over(img, tex, (12,0), tex)
+            else:
+                tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                composite.alpha_over(img, tex, (12,6), tex)
+
+        if (data & 0x03) == 3:
+            if not swung:
+                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
+                composite.alpha_over(img, tex, (12,6), tex)
+            else:
+                tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                composite.alpha_over(img, tex, (0,6), tex)
+        
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 65: # ladder
+        raw_texture = terrain_images[83]
+        #print "ladder is facing: %d" % data
+        if data == 5:
+            # normally this ladder would be obsured by the block it's attached to
+            # but since ladders can apparently be placed on transparent blocks, we 
+            # have to render this thing anyway.  same for data == 2
+            tex = transform_image_side(raw_texture)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            composite.alpha_over(img, tex, (0,6), tex)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 2:
+            tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            composite.alpha_over(img, tex, (12,6), tex)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 3:
+            tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            composite.alpha_over(img, tex, (0,0), tex)
+            return (img.convert("RGB"), img.split()[3])
+        if data == 4:
+            tex = transform_image_side(raw_texture)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            composite.alpha_over(img, tex, (12,0), tex)
+            return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 66: # minetrack:
+    
+        raw_straight = terrain_images[128]
+        raw_corner = terrain_images[112]
+    
+        ## use transform_image to scale and shear
+        if data == 0:
+            track = transform_image(raw_straight, blockID)
+        elif data == 6:
+            track = transform_image(raw_corner, blockID)
+        elif data == 7:
+            track = transform_image(raw_corner.rotate(270), blockID)
+        elif data == 8:
+            # flip
+            track = transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90), 
+                    blockID)
+        elif data == 9:
+            track = transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM), 
+                    blockID)
+        elif data == 1:
+            track = transform_image(raw_straight.rotate(90), blockID)
+            
+        #slopes
+        elif data == 2: # slope going up in +x direction
+            track = transform_image_slope(raw_straight,blockID)
+            track = track.transpose(Image.FLIP_LEFT_RIGHT)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            composite.alpha_over(img, track, (2,0), track)
+            # the 2 pixels move is needed to fit with the adjacent tracks
+            return (img.convert("RGB"), img.split()[3])
+
+        elif data == 3: # slope going up in -x direction
+            # tracks are sprites, in this case we are seeing the "side" of 
+            # the sprite, so draw a line to make it beautiful.
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            ImageDraw.Draw(img).line([(11,11),(23,17)],fill=(164,164,164))
+            # grey from track texture (exterior grey).
+            # the track doesn't start from image corners, be carefull drawing the line!
+            return (img.convert("RGB"), img.split()[3])
+            
+        elif data == 4: # slope going up in -y direction
+            track = transform_image_slope(raw_straight,blockID)
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            composite.alpha_over(img, track, (0,0), track)
+            return (img.convert("RGB"), img.split()[3])
+            
+        elif data == 5: # slope going up in +y direction
+            # same as "data == 3"
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            ImageDraw.Draw(img).line([(1,17),(12,11)],fill=(164,164,164))
+            return (img.convert("RGB"), img.split()[3])
+            
+
+        else: # just in case
+            track = transform_image(raw_straight, blockID)
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        composite.alpha_over(img, track, (0,12), track)
+
+        return (img.convert("RGB"), img.split()[3])
+
+
+
     if blockID == 85: # fences
         # create needed images for Big stick fence
         raw_texture = terrain_images[4]
@@ -845,137 +1028,18 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"),img.split()[3])
 
 
-    if blockID in (43,44): # slab and double-slab
-        
-        if data == 0: # stone slab
-            top = terrain_images[6]
-            side = terrain_images[5]
-            img = _build_block(top, side, blockID)
-            return (img.convert("RGB"), img.split()[3])
-            
-        if data == 1: # stone slab
-            top = terrain_images[176]
-            side = terrain_images[192]
-            img = _build_block(top, side, blockID)
-            return (img.convert("RGB"), img.split()[3])
-            
-        if data == 2: # wooden slab
-            top = side = terrain_images[4]
-            img = _build_block(top, side, blockID)
-            return (img.convert("RGB"), img.split()[3])
-            
-        if data == 3: # cobblestone slab
-            top = side = terrain_images[16]
-            img = _build_block(top, side, blockID)
-            return (img.convert("RGB"), img.split()[3])
+    if blockID in (86,91): # pumpkins, jack-o-lantern
+        top = transform_image(terrain_images[102])
+        frontID = 119 if blockID == 86 else 120
+        side1 = transform_image_side(terrain_images[frontID])
+        side2 = transform_image_side(terrain_images[118]).transpose(Image.FLIP_LEFT_RIGHT)
 
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-    if blockID == 9: # spring water, flowing water and waterfall water
-
-        watertexture = _load_image("water.png")
-        
-        if (data & 0b10000) == 16:
-            top = watertexture
-            
-        else: top = None
-
-        if (data & 0b0001) == 1:
-            side1 = watertexture    # top left
-        else: side1 = None
-        
-        if (data & 0b1000) == 8:
-            side2 = watertexture    # top right           
-        else: side2 = None
-        
-        if (data & 0b0010) == 2:
-            side3 = watertexture    # bottom left    
-        else: side3 = None
-        
-        if (data & 0b0100) == 4:
-            side4 = watertexture    # bottom right
-        else: side4 = None
-        
-        img = _build_full_block(top,side1,side2,side3,side4)
-        
-        return (img.convert("RGB"),img.split()[3])
-
-
-    if blockID == 55: # redstone wire
-        
-        if data & 0b1000000 == 64: # powered redstone wire
-            redstone_wire_t = terrain_images[165]
-            redstone_wire_t = tintTexture(redstone_wire_t,(255,0,0))
-
-            redstone_cross_t = terrain_images[164]
-            redstone_cross_t = tintTexture(redstone_cross_t,(255,0,0))
-
-            
-        else: # unpowered redstone wire
-            redstone_wire_t = terrain_images[165]
-            redstone_wire_t = tintTexture(redstone_wire_t,(48,0,0))
-            
-            redstone_cross_t = terrain_images[164]
-            redstone_cross_t = tintTexture(redstone_cross_t,(48,0,0))
-
-        # generate an image per redstone direction
-        branch_top_left = redstone_cross_t.copy()
-        ImageDraw.Draw(branch_top_left).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(branch_top_left).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(branch_top_left).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        
-        branch_top_right = redstone_cross_t.copy()
-        ImageDraw.Draw(branch_top_right).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(branch_top_right).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(branch_top_right).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        
-        branch_bottom_right = redstone_cross_t.copy()
-        ImageDraw.Draw(branch_bottom_right).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(branch_bottom_right).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(branch_bottom_right).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-
-        branch_bottom_left = redstone_cross_t.copy()
-        ImageDraw.Draw(branch_bottom_left).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(branch_bottom_left).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(branch_bottom_left).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-                
-        # generate the bottom texture
-        if data & 0b111111 == 0:
-            bottom = redstone_cross_t.copy()
-        
-        elif data & 0b1111 == 10: #= 0b1010 redstone wire in the x direction
-            bottom = redstone_wire_t.copy()
-            
-        elif data & 0b1111 == 5: #= 0b0101 redstone wire in the y direction
-            bottom = redstone_wire_t.copy().rotate(90)
-        
-        else:
-            bottom = Image.new("RGBA", (16,16), (38,92,255,0))
-            if (data & 0b0001) == 1:
-                composite.alpha_over(bottom,branch_top_left)
-                
-            if (data & 0b1000) == 8:
-                composite.alpha_over(bottom,branch_top_right)
-                
-            if (data & 0b0010) == 2:
-                composite.alpha_over(bottom,branch_bottom_left)
-                
-            if (data & 0b0100) == 4:
-                composite.alpha_over(bottom,branch_bottom_right)
-
-        # check for going up redstone wire
-        if data & 0b100000 == 32:
-            side1 = redstone_wire_t.rotate(90)
-        else:
-            side1 = None
-            
-        if data & 0b010000 == 16:
-            side2 = redstone_wire_t.rotate(90)
-        else:
-            side2 = None
-            
-        img = _build_full_block(None,side1,side2,None,None,bottom)
-
-        return (img.convert("RGB"),img.split()[3])
+        composite.alpha_over(img, side1, (0,6), side1)
+        composite.alpha_over(img, side2, (12,6), side2)
+        composite.alpha_over(img, top, (0,0), top)
+        return (img.convert("RGB"), img.split()[3])
 
 
     if blockID == 92: # cake! (without bites, at the moment)
@@ -1077,43 +1141,52 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
+# A good source of information is:
+#  http://www.minecraftwiki.net/wiki/Data_values
+# (when adding new blocks here and in generate_special_textures,
+# please, if possible, keep the ascending order of blockid value)
 
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51,43,44,9,55,58,92])
+special_blocks = set([2, 9, 17, 18, 23, 35, 43, 44, 50, 51, 55, 58, 59, \
+                      61, 62, 64, 65, 66, 71, 75, 76, 85, 86, 91, 92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
+
 special_map = {}
-special_map[66] = range(10) # minecrart tracks
-special_map[59] = range(8)  # crops
-special_map[61] = range(6)  # furnace
-special_map[62] = range(6)  # burning furnace
-special_map[65] = (2,3,4,5) # ladder
-special_map[64] = range(16) # wooden door
-special_map[71] = range(16) # iron door
-special_map[91] = range(5)  # jack-o-lantern
-special_map[86] = range(5)  # pumpkin
-special_map[85] = range(17) # fences
+
+special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values.
 special_map[17] = range(4)  # wood: normal, birch and pine
-special_map[23] = range(6)  # dispensers
+special_map[23] = range(6)  # dispensers, orientation
 special_map[35] = range(16) # wool, colored and white
-special_map[51] = range(16) # fire
 special_map[43] = range(4)  # stone, sandstone, wooden and cobblestone double-slab
 special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
-special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values. 
-special_map[55] = range(128) # redstone wire
-special_map[58] = (0,) # crafting table
+special_map[50] = (1,2,3,4,5) # torch, position in the block
+special_map[51] = range(16) # fire, position in the block (not implemented)
+special_map[55] = range(128) # redstone wire, all the possible combinations
+special_map[58] = (0,)      # crafting table
+special_map[59] = range(8)  # crops, grow from 0 to 7
+special_map[61] = range(6)  # furnace, orientation (not implemented)
+special_map[62] = range(6)  # burning furnace, orientation (not implemented)
+special_map[64] = range(16) # wooden door, open/close and orientation
+special_map[65] = (2,3,4,5) # ladder, orientation (not implemented)
+special_map[66] = range(10) # minecrart tracks, orientation, slope
+special_map[71] = range(16) # iron door, open/close and orientation
+special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
+special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
+special_map[85] = range(17) # fences, all the possible combination
+special_map[86] = range(5)  # pumpkin, orientation (not implemented)
+special_map[91] = range(5)  # jack-o-lantern, orientation (not implemented)
 special_map[92] = range(6) # cake!
 
-# apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
-# what that data represents.  For now, assume that the range for data is 0 to 5
-# like torches
-special_map[2] = (0,)       # grass
-special_map[18] = range(16) # leaves
-# grass and leaves are now graysacle in terrain.png
+# grass and leaves are graysacle in terrain.png
 # we treat them as special so we can manually tint them
 # it is unknown how the specific tint (biomes) is calculated
+special_map[2] = range(11)       # grass, grass has not ancildata but is used
+                                # in the mod WildGrass, and this small fix
+                                # shows the map as expected, and is harmless
+                                # for normal maps
+special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
 
-# leaves have ancilary data, but its meaning is unknown (age perhaps?)
 
 specialblockmap = {}
 

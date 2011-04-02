@@ -29,16 +29,44 @@ import multiprocessing
 import time
 import logging
 import util
+import platform
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
+
+this_dir = util.get_program_path()
 
 # make sure the c_overviewer extension is available
 try:
     import c_overviewer
 except ImportError:
+    ## try to find the build extension
+    ext = os.path.join(this_dir, "c_overviewer.%s" % ("pyd" if platform.system() == "Windows" else "so"))
+    if os.path.exists(ext):
+        print "Something has gone wrong importing the c_overviewer extension.  Please"
+        print "make sure it is up-to-date (clean and rebuild)"
+        sys.exit(1)
+
     print "You need to compile the c_overviewer module to run Minecraft Overviewer."
     print "Run `python setup.py build`, or see the README for details."
     sys.exit(1)
+
+if hasattr(sys, "frozen"):
+    pass # we don't bother with a compat test since it should always be in sync
+elif "extension_version" in dir(c_overviewer):
+    # check to make sure the binary matches the headers
+    if os.path.exists(os.path.join(this_dir, "src", "overviewer.h")):
+        with open(os.path.join(this_dir, "src", "overviewer.h")) as f:
+            lines = f.readlines()
+            lines = filter(lambda x: x.startswith("#define OVERVIEWER_EXTENSION_VERSION"), lines)
+            if lines:
+                l = lines[0]
+                if int(l.split()[2].strip()) != c_overviewer.extension_version():
+                    print "Please rebuild your c_overviewer module.  It is out of date!"
+                    sys.exit(1)
+else:
+    print "Please rebuild your c_overviewer module.  It is out of date!"
+    sys.exit(1)
+
 
 import optimizeimages
 import world
@@ -100,7 +128,7 @@ def main():
         sys.exit(0)
 
     if len(args) < 1:
-        print "You need to give me your world number or directory"
+        logging.error("You need to give me your world number or directory")
         parser.print_help()
         list_worlds()
         sys.exit(1)
@@ -113,7 +141,7 @@ def main():
         # if there are no worlds found at all, exit now
         if not worlds:
             parser.print_help()
-            print "\nInvalid world path"
+            logging.error("Invalid world path")
             sys.exit(1)
         
         try:
@@ -126,12 +154,12 @@ def main():
             except KeyError:
                 # it's not a number, name, or path
                 parser.print_help()
-                print "Invalid world name or path"
+                logging.error("Invalid world name or path")
                 sys.exit(1)
         except KeyError:
             # it was an invalid number
             parser.print_help()
-            print "Invalid world number"
+            logging.error("Invalid world number")
             sys.exit(1)
 
     if len(args) != 2:
@@ -183,6 +211,8 @@ def main():
     # First do world-level preprocessing
     w = world.World(worlddir, useBiomeData=useBiomeData)
     w.go(options.procs)
+
+    logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
 
     # create the quadtrees
     # TODO chunklist
