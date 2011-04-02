@@ -166,14 +166,15 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     /* Draw some edge lines! */
     // draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
     if (!is_transparent(state->block)) {
+        Imaging img_i = imaging_python_to_c(state->img);
+        unsigned char ink[] = {0,0,0,40};
+
         int increment=0;
         if (state->block == 44) 
             increment=6;
         else if (state->block == 78) 
             increment=9;
 
-        Imaging img_i = imaging_python_to_c(state->img);
-        uint8_t ink[] = {0,0,0,40};
         if ((state->x == 15) && (state->up_right_blocks != Py_None) && is_transparent(getArrayByte3D(state->up_right_blocks, 0, state->y, state->z))) {
             ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
             ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
