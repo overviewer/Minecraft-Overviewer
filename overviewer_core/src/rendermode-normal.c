@@ -49,17 +49,28 @@ rendermode_normal_start(void *data, RenderState *state) {
         
         self->biome_data = PyObject_CallMethod(state->textures, "getBiomeData", "OOO",
                                                worlddir, chunk_x_py, chunk_y_py);
-        self->foliagecolor = PyObject_GetAttrString(state->textures, "foliagecolor");
-        self->grasscolor = PyObject_GetAttrString(state->textures, "grasscolor");
-        
-        self->leaf_texture = PyObject_GetAttrString(state->textures, "biome_leaf_texture");
-        self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
-        
-        facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
-        /* borrowed reference, needs to be incref'd if we keep it */
-        self->facemask_top = PyTuple_GetItem(facemasks_py, 0);
-        Py_INCREF(self->facemask_top);
-        Py_DECREF(facemasks_py);
+        if (self->biome_data == Py_None) {
+            self->biome_data = NULL;
+            self->foliagecolor = NULL;
+            self->grasscolor = NULL;
+
+            self->leaf_texture = NULL;
+            self->grass_texture = NULL;
+            self->facemask_top = NULL;
+        } else {
+
+            self->foliagecolor = PyObject_GetAttrString(state->textures, "foliagecolor");
+            self->grasscolor = PyObject_GetAttrString(state->textures, "grasscolor");
+
+            self->leaf_texture = PyObject_GetAttrString(state->textures, "biome_leaf_texture");
+            self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
+
+            facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
+            /* borrowed reference, needs to be incref'd if we keep it */
+            self->facemask_top = PyTuple_GetItem(facemasks_py, 0);
+            Py_INCREF(self->facemask_top);
+            Py_DECREF(facemasks_py);
+        }
     } else {
         self->biome_data = NULL;
         self->foliagecolor = NULL;
@@ -159,6 +170,51 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             Py_DECREF(color);
 
             tint_with_mask(state->img, r, g, b, facemask, state->imgx, state->imgy, 0, 0);
+        }
+    }
+
+
+    /* Draw some edge lines! */
+    // draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
+    if (state->block == 44 || state->block == 78 || !is_transparent(state->block)) {
+        Imaging img_i = imaging_python_to_c(state->img);
+        unsigned char ink[] = {0,0,0,40};
+
+        int increment=0;
+        if (state->block == 44)  // half-step
+            increment=6;
+        else if (state->block == 78) // snow
+            increment=9;
+
+        if ((state->x == 15) && (state->up_right_blocks != Py_None)) {
+            unsigned char side_block = getArrayByte3D(state->up_right_blocks, 0, state->y, state->z);
+            if (side_block != state->block && is_transparent(side_block)) {
+                ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
+                ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
+            }
+        } else if (state->x != 15) {
+            unsigned char side_block = getArrayByte3D(state->blocks, state->x+1, state->y, state->z);
+            if (side_block != state->block && is_transparent(side_block)) {
+                ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
+                ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
+            }
+        }
+        // if y != 0 and blocks[x,y-1,z] == 0
+
+        // chunk boundries are annoying
+        if ((state->y == 0) && (state->up_left_blocks != Py_None)) {
+            unsigned char side_block = getArrayByte3D(state->up_left_blocks, state->x, 15, state->z);
+            if (side_block != state->block && is_transparent(side_block)) {
+                ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
+                ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
+            }
+        } else if (state->y != 0) {
+            unsigned char side_block = getArrayByte3D(state->blocks, state->x, state->y-1, state->z);
+            if (side_block != state->block && is_transparent(side_block)) {
+                // draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
+                ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
+                ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
+            }
         }
     }
 }

@@ -32,7 +32,7 @@ Features
 * Renders efficiently in parallel, using as many simultaneous processes as you
   want!
 
-* Utilizes 2 levels of caching to speed up subsequent renderings of your world.
+* Utilizes caching to speed up subsequent renderings of your world.
 
 * Throw the output directory up on a web server to share your Minecraft world
   with everyone!
@@ -46,6 +46,9 @@ This program requires:
 * Numpy <http://scipy.org/Download>
 * Either the Minecraft client installed, or a terrain.png file. See the
   `Textures`_ section below.
+* A C compiler.
+
+If you download a binary package, then some or all of these may not be required.
 
 I develop and test this on Linux, but need help testing it on Windows and Mac.
 If something doesn't work, let me know.
@@ -97,15 +100,14 @@ will use the biome data to tint grass and leaves automatically -- there is no
 command line option to turn this feature on.  If this folder does not exist,
 then the Overviewer will use a static tinting for grass and leaves.
 
-Compiling the C Extension (optional)
------------------------------------- 
-The C Extension for Overviewer is completely optional. It provides a higher
-quality image compositing function that looks better on maps with lighting
-enabled, and a slight performance boost.
+Compiling the C Extension
+------------------------- 
+The C Extension for Overviewer is no longer optional.  In addition to providing
+a higher quality image compositing function that looks better on maps with lighting
+enabled, it now does the bulk of the rendering.
 
-If you downloaded Overviewer as a binary package, this extension may be already
-compiled for you. Overviewer emits a warning if the extension is not found, but
-will still work fine.
+If you downloaded Overviewer as a binary package, this extension will already be
+compiled for you. 
 
 If you have a C compiler and the Python development libraries set up, you can
 compile this extension like this::
@@ -119,6 +121,9 @@ you get errors complaining about them, you can get them from the PIL source, or
 at <http://svn.effbot.org/public/tags/pil-1.1.7/libImaging/>. Just put them in
 the same directory as "_composite.c".
 
+For more detailed instructions, check the wiki: 
+https://github.com/brownan/Minecraft-Overviewer/wiki/Build-Instructions
+
 Running
 -------
 To generate a set of Google Map tiles, use the overviewer.py script like this::
@@ -130,30 +135,12 @@ set of image tiles for your world in the directory you choose. When it's done,
 you will find an index.html file in the same directory that you can use to view
 it.
 
-**Important note about Caches**
-
-The Overviewer will put a cached image for every chunk *directly in your world
-directory by default*. If you do not like this behavior, you can specify
-another location with the --cachedir option. See below for details.
 
 Options
 -------
 
 -h, --help
     Shows the list of options and exits
-
---cachedir=CACHEDIR
-    By default, the Overviewer will save in your world directory one image
-    file for every chunk in your world. If you do backups of your world,
-    you may not want these images in your world directory.
-
-    Use this option to specify an alternate location to put the rendered
-    chunk images. You must specify this same directory each rendering so
-    that it doesn't have to render every chunk from scratch every time.
-
-    Example::
-
-        python overviewer.py --cachedir=<chunk cache dir> <world> <output dir>
 
 --imgformat=FORMAT
     Set the output image format used for the tiles. The default is 'png',
@@ -200,39 +187,22 @@ Options
 
 -d, --delete
     This option changes the mode of execution. No tiles are rendered, and
-    instead, cache files are deleted.
+    instead, files are deleted.
 
-    Explanation: The Overviewer keeps two levels of cache: it saves each
-    chunk rendered as a png, and it keeps a hash file along side each tile
-    in your output directory. Using these cache files allows the Overviewer
-    to skip rendering of any tile image that has not changed.
+    *Note*: Currently only the overviewer.dat file is deleted when you run with
+    this option
 
-    By default, the chunk images are saved in your world directory. This
-    example will remove them::
-    
-        python overviewer.py -d <World # / Path to World / Path to cache dir>
-
-    You can also delete the tile cache as well. This will force a full
-    re-render, useful if you've changed texture packs and want your world
-    to look uniform. Here's an example::
-
-        python overviewer.py -d <# / path> <Tile Directory>
-
-    Be warned, this will cause the next rendering of your map to take
-    significantly longer, since it is having to re-generate the files you just
-    deleted.
-
---chunklist=CHUNKLIST
-    Use this option to specify manually a list of chunks to consider for
-    updating. Without this option, every chunk is checked for update and if
-    necessary, re-rendered. If this option points to a file containing, 1 per
-    line, the path to a chunk data file, then only those in the list will be
-    considered for update.
+--regionlist=regionlist
+    Use this option to specify manually a list of regions to consider for
+    updating. Without this option, every chunk in every region is checked for
+    update and if necessary, re-rendered. If this option points to a file
+    containing, 1 per line, the path to a region data file, then only those
+    in the list will be considered for update.
 
     It's up to you to build such a list. On Linux or Mac, try using the "find"
-    command. You could, for example, output all chunk files that are older than
+    command. You could, for example, output all region files that are older than
     a certain date. Or perhaps you can incrementally update your map by passing
-    in a subset of chunks each time. It's up to you!
+    in a subset of regions each time. It's up to you!
 
 --lighting
     This option enables map lighting, using lighting information stored by
@@ -254,6 +224,18 @@ Options
     
     The script should be executable, and it should accept one argument:
     the path to the output directory.
+
+
+Settings
+--------
+
+You can optionally store settings in a file named settings.py.  It is a regular
+python script, so you can use any python functions or modules you want.  
+
+This section needs to be expanded
+
+For a sample settings file, look at sample.settings.py
+
 
 Viewing the Results
 -------------------
@@ -308,10 +290,5 @@ An incomplete list of things I want to do soon is:
 
 * Improve efficiency
 
-* Rendering non-cube blocks, such as torches, flowers, mine tracks, fences,
-  doors, and the like. Right now they are either not rendered at all, or
-  rendered as if they were a cube, so it looks funny.
-
 * Some kind of graphical interface.
 
-* A Windows exe for easier access for Windows users.
