@@ -4,6 +4,8 @@ import os, shutil, tempfile, time, sys, math, re
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from optparse import OptionParser
 
+overviewer_scripts = ['./overviewer.py', './gmap.py']
+
 def check_call(*args, **kwargs):
     quiet = False
     if "quiet" in kwargs.keys():
@@ -35,12 +37,21 @@ def check_output(*args, **kwargs):
 
 def clean_render(overviewerargs, quiet):
     tempdir = tempfile.mkdtemp('mc-overviewer-test')
+    overviewer_script = None
+    for script in overviewer_scripts:
+        if os.path.exists(script):
+            overviewer_script = script
+            break
+    if overviewer_script is None:
+        sys.stderr.write("could not find main overviewer script\n")
+        sys.exit(1)
+        
     try:
         # check_call raises CalledProcessError when overviewer.py exits badly
         check_call(['python', 'setup.py', 'clean', 'build'], quiet=quiet)
-        check_call(['./overviewer.py', '-d'] + overviewerargs, quiet=quiet)
+        check_call([overviewer_script, '-d'] + overviewerargs, quiet=quiet)
         starttime = time.time()
-        check_call(['./overviewer.py',] + overviewerargs + [tempdir,], quiet=quiet)
+        check_call([overviewer_script,] + overviewerargs + [tempdir,], quiet=quiet)
         endtime = time.time()
         
         return endtime - starttime
