@@ -49,15 +49,21 @@ try:
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
+try:
+    pil_include = os.environ['PIL_INCLUDE_DIR'].split(os.pathsep)
+except:
+    pil_include = []
+
 # used to figure out what files to compile
 render_modes = ['normal', 'overlay', 'lighting', 'night', 'spawn']
 
 c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c', 'src/endian.c', 'src/rendermodes.c']
 c_overviewer_files += map(lambda mode: 'src/rendermode-%s.c' % (mode,), render_modes)
 
+c_overviewer_files += ['src/Draw.c']
 c_overviewer_includes = ['src/overviewer.h', 'src/rendermodes.h']
 
-setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include], depends=c_overviewer_includes, extra_link_args=[]))
+setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
 
 # tell build_ext to build the extension in-place
 # (NOT in build/)
