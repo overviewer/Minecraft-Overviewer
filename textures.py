@@ -279,7 +279,7 @@ def _build_blockimages():
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, -1, -1, # Cloths are left out, sandstone (it has top, side, and bottom wich is ignored here), note block
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22,  6,  6,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
+               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                36, 37, 80, -1, 65,  4, 25, -1, 98, 24, 43, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
@@ -296,7 +296,7 @@ def _build_blockimages():
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                 34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, -1, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22,  5,  5,  7,  8, 35,
+                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                 36, 37, 80, -1, 65,  4, 25,101, 98, 24, 43, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
@@ -777,6 +777,30 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"),img.split()[3])
 
 
+    if blockID in (43,44): # slab and double-slab
+        
+        if data == 0: # stone slab
+            top = terrain_images[6]
+            side = terrain_images[5]
+            img = _build_block(top, side, blockID)
+            return (img.convert("RGB"), img.split()[3])
+            
+        if data == 1: # stone slab
+            top = terrain_images[176]
+            side = terrain_images[192]
+            img = _build_block(top, side, blockID)
+            return (img.convert("RGB"), img.split()[3])
+            
+        if data == 2: # wooden slab
+            top = side = terrain_images[4]
+            img = _build_block(top, side, blockID)
+            return (img.convert("RGB"), img.split()[3])
+            
+        if data == 3: # cobblestone slab
+            top = side = terrain_images[16]
+            img = _build_block(top, side, blockID)
+            return (img.convert("RGB"), img.split()[3])
+
     return None
 
 def tintTexture(im, c):
@@ -868,7 +892,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
 
-special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51])
+special_blocks = set([66,59,61,62, 65,64,71,91,86,2,18,85,17,23,35,51,43,44])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -887,6 +911,8 @@ special_map[17] = range(4)  # wood: normal, birch and pine
 special_map[23] = range(6)  # dispensers
 special_map[35] = range(16) # wool, colored and white
 special_map[51] = range(16) # fire
+special_map[43] = range(4)  # stone, sandstone, wooden and cobblestone double-slab
+special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
 
 # apparently pumpkins and jack-o-lanterns have ancillary data, but it's unknown
 # what that data represents.  For now, assume that the range for data is 0 to 5
