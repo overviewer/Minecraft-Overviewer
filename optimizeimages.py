@@ -30,7 +30,7 @@ def check_programs(level):
     
     for prog,l in [(pngcrush,1), (optipng,2), (advdef,2)]:
         if l <= level:
-            if (not exists_in_path(prog)) or (not exists_in_path(prog + ".exe")):
+            if (not exists_in_path(prog)) and (not exists_in_path(prog + ".exe")):
                 raise Exception("Optimization prog %s for level %d not found!" % (prog, l))
 
 def optimize_image(imgpath, imgformat, optimizeimg):
