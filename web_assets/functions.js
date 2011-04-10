@@ -153,7 +153,12 @@ function initMarkers() {
     if (markersInit) { return; }
 
     markersInit = true;
-
+    
+    // first, give all collections an empty array to work with
+    for (i in signGroups) {
+        markerCollection[signGroups[i].label] = [];
+    }
+    
     for (i in markerData) {
         var item = markerData[i];
 
@@ -195,11 +200,8 @@ function initMarkers() {
                         icon: iconURL,
                         visible: false
                         });
-                if (markerCollection[label]) {
-                    markerCollection[label].push(marker);
-                } else {
-                    markerCollection[label] = [marker];
-                }
+                
+                markerCollection[label].push(marker);
 
                 if (item.type == 'sign') {
                     prepareSignMarker(marker, item);
