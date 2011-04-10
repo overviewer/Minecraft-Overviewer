@@ -129,38 +129,6 @@ fluid_blocks = set([8,9,10,11])
 # (glass, half blocks)
 nospawn_blocks = set([20,44])
 
-# chunkcoords should be the coordinates of a possible chunk.  it may not exist
-def render_to_image(chunkcoords, img, imgcoords, quadtreeobj, cave=False, queue=None):
-    """Used to render a chunk to a tile in quadtree.py.
-
-    chunkcoords is a tuple:  (chunkX, chunkY)
-    
-    imgcoords is as well: (imgX, imgY), which represents the "origin"
-    to use for drawing.
-
-    If the chunk doesn't exist, return False.
-    Else, returns True."""
-    a = ChunkRenderer(chunkcoords, quadtreeobj.world, quadtreeobj.rendermode, queue)
-    try:
-        a.chunk_render(img, imgcoords[0], imgcoords[1], cave)
-        return True
-    except ChunkCorrupt:
-        # This should be non-fatal, but should print a warning
-        pass
-    except Exception, e:
-        import traceback
-        traceback.print_exc()
-        raise
-    except KeyboardInterrupt:
-        print
-        print "You pressed Ctrl-C. Exiting..."
-        # Raise an exception that is an instance of Exception. Unlike
-        # KeyboardInterrupt, this will re-raise in the parent, killing the
-        # entire program, instead of this process dying and the parent waiting
-        # forever for it to finish.
-        raise Exception()
-    return False
-
 class ChunkCorrupt(Exception):
     pass
 
