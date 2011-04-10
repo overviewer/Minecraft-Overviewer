@@ -272,10 +272,10 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
     build a full block with four differnts faces. All images should be 16x16 
     image objects. Returns a 24x24 image. Can be used to render any block.
     
-    side1 is in the -y face of the cube     (top left)
-    side2 is in the +x                      (top right)
-    side3 is in the -x                      (bottom left)
-    side4 is in the +y                      (bottom right)
+    side1 is in the -y face of the cube     (top left, east)
+    side2 is in the +x                      (top right, south)
+    side3 is in the -x                      (bottom left, north)
+    side4 is in the +y                      (bottom right, west)
     
     A non transparent block uses top, side 3 and side 4
     
@@ -354,9 +354,9 @@ def _build_blockimages():
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, -1, -1, 65,  4, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
+               36, 37, -1, -1, 65, -1, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-               -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
+               -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
        #       80  81  82  83  84  85  86  87  88  89  90  91
                66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
         ]
@@ -371,9 +371,9 @@ def _build_blockimages():
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, -1, -1, 65,  4, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
+                36, 37, -1, -1, 65, -1, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-                -1, -1, -1, 16, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
                 66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
@@ -660,6 +660,75 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, side1, (0,6), side1)
         composite.alpha_over(img, side2, (12,6), side2)
         
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID in (53,67): # wooden and cobblestone stairs.
+        
+        if blockID == 53: # wooden
+            texture = terrain_images[4]
+            
+        elif blockID == 67: # cobblestone
+            texture = terrain_images[16]
+        
+        side = texture.copy()
+        half_block_u = texture.copy() # up, down, left, right
+        half_block_d = texture.copy()
+        half_block_l = texture.copy()
+        half_block_r = texture.copy()
+
+        # generate needed geometries
+        ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(half_block_u).rectangle((0,8,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(half_block_d).rectangle((0,0,15,6),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(half_block_l).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(half_block_r).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        if data == 0: # ascending south
+            img = _build_full_block(half_block_r, None, None, half_block_d, side.transpose(Image.FLIP_LEFT_RIGHT))
+            tmp1 = transform_image_side(half_block_u)
+            
+            # Darken the vertical part of the second step
+            sidealpha = tmp1.split()[3]
+            # darken it a bit more than usual, looks better
+            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.8)
+            tmp1.putalpha(sidealpha)
+            
+            composite.alpha_over(img, tmp1, (6,3))
+            tmp2 = transform_image(half_block_l)
+            composite.alpha_over(img, tmp2, (0,6))
+            
+        elif data == 1: # ascending north
+            img = Image.new("RGBA", (24,24), (38,92,255,0)) # first paste the texture in the back
+            tmp1 = transform_image(half_block_r)
+            composite.alpha_over(img, tmp1, (0,6))
+            tmp2 = _build_full_block(half_block_l, None, None, texture, side)
+            composite.alpha_over(img, tmp2)
+        
+        elif data == 2: # ascending west
+            img = Image.new("RGBA", (24,24), (38,92,255,0)) # first paste the texture in the back
+            tmp1 = transform_image(half_block_u)
+            composite.alpha_over(img, tmp1, (0,6))
+            tmp2 = _build_full_block(half_block_d, None, None, side, texture)
+            composite.alpha_over(img, tmp2)
+            
+        elif data == 3: # ascending east
+            img = _build_full_block(half_block_u, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_d)
+            tmp1 = transform_image_side(half_block_u).transpose(Image.FLIP_LEFT_RIGHT)
+            
+            # Darken the vertical part of the second step
+            sidealpha = tmp1.split()[3]
+            # darken it a bit more than usual, looks better
+            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.7)
+            tmp1.putalpha(sidealpha)
+            
+            composite.alpha_over(img, tmp1, (6,3))
+            tmp2 = transform_image(half_block_d)
+            composite.alpha_over(img, tmp2, (0,6))
+            
+            # touch up a (horrible) pixel
+            img.putpixel((18,3),(0,0,0,0))
+            
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1146,8 +1215,8 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # (when adding new blocks here and in generate_special_textures,
 # please, if possible, keep the ascending order of blockid value)
 
-special_blocks = set([2, 9, 17, 18, 23, 35, 43, 44, 50, 51, 55, 58, 59, \
-                      61, 62, 64, 65, 66, 71, 75, 76, 85, 86, 91, 92])
+special_blocks = set([2, 9, 17, 18, 23, 35, 43, 44, 50, 51, 53, 55, 58, 59, \
+                      61, 62, 64, 65, 66, 67, 71, 75, 76, 85, 86, 91, 92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1162,14 +1231,16 @@ special_map[43] = range(4)  # stone, sandstone, wooden and cobblestone double-sl
 special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
 special_map[50] = (1,2,3,4,5) # torch, position in the block
 special_map[51] = range(16) # fire, position in the block (not implemented)
+special_map[53] = range(4)  # wooden stairs, orientation
 special_map[55] = range(128) # redstone wire, all the possible combinations
 special_map[58] = (0,)      # crafting table
 special_map[59] = range(8)  # crops, grow from 0 to 7
 special_map[61] = range(6)  # furnace, orientation (not implemented)
 special_map[62] = range(6)  # burning furnace, orientation (not implemented)
 special_map[64] = range(16) # wooden door, open/close and orientation
-special_map[65] = (2,3,4,5) # ladder, orientation (not implemented)
+special_map[65] = (2,3,4,5) # ladder, orientation
 special_map[66] = range(10) # minecrart tracks, orientation, slope
+special_map[67] = range(4)  # cobblestone stairs, orientation
 special_map[71] = range(16) # iron door, open/close and orientation
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
