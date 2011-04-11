@@ -35,7 +35,12 @@ if py2exe != None:
 # _composite.c extension
 #
 
-setup_kwargs['ext_modules'].append(Extension('_composite', ['_composite.c'], include_dirs=['.'], extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
+try:
+    pil_include = os.environ['PIL_INCLUDE_DIR'].split(os.pathsep)
+except:
+    pil_include = []
+
+setup_kwargs['ext_modules'].append(Extension('_composite', ['_composite.c'], include_dirs=['.'] + pil_include, extra_link_args=["/MANIFEST"] if platform.system() == "Windows" else []))
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
