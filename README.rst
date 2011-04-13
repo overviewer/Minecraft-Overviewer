@@ -1,7 +1,7 @@
 ====================
 Minecraft Overviewer
 ====================
-By Andrew Brown and contributors
+By Andrew Brown and contributors (see CONTRIBUTORS.rst).
 
 http://github.com/brownan/Minecraft-Overviewer
 
