@@ -144,7 +144,13 @@ class MapGen(object):
 
         # write out the default marker table
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
-            output.write("var markerData=%s" % json.dumps(self.world.POI))
+            output.write("var markerData=[\n")
+            for marker in self.world.POI:
+                output.write(json.dumps(marker))
+                if marker != self.world.POI[-1]:
+                    output.write(",")
+                output.write("\n")
+            output.write("]\n")
         
         # save persistent data
         self.world.persistentData['POI'] = self.world.POI
