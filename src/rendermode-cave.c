@@ -27,7 +27,7 @@
 
 static int
 rendermode_cave_occluded(void *data, RenderState *state) {
-    int x = state->x, y = state->y, z = state->z;
+    int x = state->x, y = state->y, z = state->z, dz = 0;
     RenderModeCave* self;
     self = (RenderModeCave *)data;
 
@@ -132,9 +132,29 @@ rendermode_cave_occluded(void *data, RenderState *state) {
             return 1;
         }
 
-    } else { /* if z == 127 don't skip */
+    } else { /* if z == 127 skip */
         return 1;
     }
+
+    /* check for lakes and seas and don't render them */
+    /* at this point of the code the block has no skylight
+     * and is not occluded, but a deep sea can fool these
+     * 2 tests */
+    
+    if ((getArrayByte3D(state->blocks, x, y, z) == 9) ||
+        (getArrayByte3D(state->blocks, x, y, z+1) == 9)) {
+
+        for (dz = z+1; dz < 127; dz++) {
+            if (getArrayByte3D(self->skylight, x, y, dz) != 0) {
+                return 1;
+            }
+            if (getArrayByte3D(state->blocks, x, y, dz) != 9) {
+            /* we are out of the water! */
+                return 0;
+            }
+        }
+    }
+        
 
     return 0;
 }
