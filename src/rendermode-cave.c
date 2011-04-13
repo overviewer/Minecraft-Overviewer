@@ -144,12 +144,13 @@ rendermode_cave_occluded(void *data, RenderState *state) {
     if ((getArrayByte3D(state->blocks, x, y, z) == 9) ||
         (getArrayByte3D(state->blocks, x, y, z+1) == 9)) {
 
-        for (dz = z+1; dz < 127; dz++) {
+        for (dz = z+1; dz < 127; dz++) { /* go up and check for skylight */
             if (getArrayByte3D(self->skylight, x, y, dz) != 0) {
                 return 1;
             }
             if (getArrayByte3D(state->blocks, x, y, dz) != 9) {
-            /* we are out of the water! */
+            /* we are out of the water! and there's no skylight
+             * , i.e. is a cave lake or something similar */
                 return 0;
             }
         }
@@ -176,6 +177,10 @@ rendermode_cave_start(void *data, RenderState *state) {
     self->up_left_skylight = PyObject_GetAttrString(state->self, "up_left_skylight");
     self->up_right_skylight = PyObject_GetAttrString(state->self, "up_right_skylight");
 
+    /* colors for tinting */
+    self->depth_colors = PyObject_GetAttrString(state->chunk, "depth_colors");
+
+
     return 0;
 }
 
@@ -190,14 +195,30 @@ rendermode_cave_finish(void *data, RenderState *state) {
     Py_DECREF(self->up_left_skylight);
     Py_DECREF(self->up_right_skylight);
 
+    Py_DECREF(self->depth_colors);
+
     rendermode_normal.finish(data, state);
 }
 
 static void
 rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
-    /* nothing special to do */
+    RenderModeCave* self;
+    self = (RenderModeCave *)data;
+
+    int z = state->z;
+    int r = 0, g = 0, b = 0;
+
+    /* draw the normal block */
     rendermode_normal.draw(data, state, src, mask);
-    
+
+    /* get the colors and tint and tint */
+    /* TODO TODO   for a nether mode there isn't tinting! */
+    r = PyInt_AsLong(PyList_GetItem(self->depth_colors, 0 + z*3));
+    g = PyInt_AsLong(PyList_GetItem(self->depth_colors, 1 + z*3));
+    b = PyInt_AsLong(PyList_GetItem(self->depth_colors, 2 + z*3));
+
+    tint_with_mask(state->img, r, g, b, mask, state->imgx, state->imgy, 0, 0);
+
 }
 
 RenderModeInterface rendermode_cave = {

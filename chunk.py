@@ -472,8 +472,10 @@ def generate_depthcolors():
     g = 0
     b = 0
     for z in range(128):
-        img = Image.new("RGB", (24,24), (r,g,b))
-        depth_colors.append(img)
+        depth_colors.append(r)
+        depth_colors.append(g)
+        depth_colors.append(b)
+        
         if z < 32:
             g += 7
         elif z < 64:
