@@ -453,11 +453,13 @@ class QuadtreeGen(object):
             ypos = -96 + (row-rowstart)*96
 
             # draw the chunk!
-            a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue)
-            a.chunk_render(tileimg, xpos, ypos, None)            
-#            chunk.render_to_image((chunkx, chunky), tileimg, (xpos, ypos), self, False, None)
-
-
+            try:
+                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue)
+                a.chunk_render(tileimg, xpos, ypos, None)
+            except chunk.ChunkCorrupt:
+                # an error was already printed
+                pass
+        
         # Save them
         tileimg.save(imgpath)
 
