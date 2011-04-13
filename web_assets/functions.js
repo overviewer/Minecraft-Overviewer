@@ -1,14 +1,15 @@
+// var def
+var map; // god of the overviewer... bow before the google api.
 var markerCollection = {}; // holds groups of markers
-
-var map;
-
-var markersInit = false;
-var regionsInit = false;
+var markersInit = false; // only have to load the markers once, this just makes sure we only do it once
+var regionsInit = false; // same thing for the regions
 
 var prevInfoWindow = null;
 
+// add a popup info window to the marker and then the marker to the map.
+// marker is the clickable image on the map with all data.
+// item is just the same item in the markers.js
 function prepareSignMarker(marker, item) {
-
     var c = "<div class=\"infoWindow\"><img src=\"signpost.png\" /><p>" + item.msg.replace(/\n/g,"<br/>") + "</p></div>";
     var infowindow = new google.maps.InfoWindow({content: c
             });
@@ -17,51 +18,53 @@ function prepareSignMarker(marker, item) {
                 prevInfoWindow.close()
             infowindow.open(map,marker);
             prevInfoWindow = infowindow
-            });
+        });
 
 }
 
+// reusable function for making drop down menus.
+// title = string
+// items = array 
 function createDropDown(title, items) {
     var control = document.createElement("DIV");
     control.id = "customControl"; // let's let a style sheet do most of the styling here
 
+    var controlText = document.createElement("DIV");
+    controlText.innerHTML = title;
+
     var controlBorder = document.createElement("DIV");
     controlBorder.id="top";
     control.appendChild(controlBorder);
-
-    var controlText = document.createElement("DIV");
-
     controlBorder.appendChild(controlText);
 
-    controlText.innerHTML = title;
-    
     var dropdownDiv = document.createElement("DIV");
-
-
-    $(controlText).click(function() {
-            $(dropdownDiv).toggle();
-
-            });
-
-
     dropdownDiv.id="dropDown";
     control.appendChild(dropdownDiv);
     dropdownDiv.innerHTML="";
 
+    // add the functionality to toggle visibility of the items
+    $(controlText).click(function() {
+            $(dropdownDiv).toggle();
+        });
+    
+    // add that control box we've made back to the map.
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(control);
 
     for (idx in items) {
+        // create the visible elements of the item
         var item = items[idx];
-        //console.log(item);
+        //console.log(item); // debug
         var d = document.createElement("div");
         var n = document.createElement("input");
         n.type="checkbox";
 
+        // give it a name
         $(n).data("label",item.label);
         jQuery(n).click(function(e) {
-                            item.action(idx, item.label, e.target.checked);
-                        });
+                item.action(idx, item.label, e.target.checked);
+            });
 
+        // if its checked, its gotta do something, do that here.
         if (item.checked) {
             n.checked = true;
             item.action(idx, item.label, item.checked);
@@ -74,32 +77,28 @@ function createDropDown(title, items) {
     }
 }
 
+// need to define the controls including the compass and layer controls. top right!
+// input variables are for chumps... and reusable functions. this is neither.
 function drawMapControls() {
 
-    // viewstate link
+    // viewstate link (little link to where you're looking at the map, normally bottom left)
     var viewStateDiv = document.createElement('DIV');
-
-        //<div id="link" style="border:1px solid black;background-color:white;color:black;position:absolute;top:5px;right:5px"></div>
-
     viewStateDiv.id="link";
-
-
-    map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(viewStateDiv);
-
+    // add it to the map, bottom left.
+    map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(viewStateDiv);
 
     // compass rose, in the top right corner
     var compassDiv = document.createElement('DIV');
-
     compassDiv.style.padding = '5px';
-
     var compassImg = document.createElement('IMG');
     compassImg.src="compass.png";
     compassDiv.appendChild(compassImg);
-
     compassDiv.index = 0;
+    // add it to the map, top right.
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
 
 
+    // only need to create the control if there are items in the list. as definned in config.js
     if (signGroups.length > 0) {
         // signpost display control
         
@@ -107,9 +106,9 @@ function drawMapControls() {
         for (idx in signGroups) {
             var item = signGroups[idx];
             items.push({"label": item.label, "checked": item.checked,
-                        "action": function(n, l, checked) {
-                            jQuery.each(markerCollection[l], function(i,elem) {elem.setVisible(checked);});
-                        }});
+                "action": function(n, l, checked) {
+                    jQuery.each(markerCollection[l], function(i,elem) {elem.setVisible(checked);});
+                }});
         }
         createDropDown("Signposts", items);
     }
@@ -121,26 +120,26 @@ function drawMapControls() {
         for (idx in overlayMapTypes) {
             var overlay = overlayMapTypes[idx];
             items.push({"label": overlay.name, "checked": false,
-                        "action": function(i, l, checked) {
-                            if (checked) {
-                                map.overlayMapTypes.push(overlay);
-                            } else {
-                                var idx_to_delete = -1;
-                                map.overlayMapTypes.forEach(function(e, j) {
-                                                                if (e == overlay) {
-                                                                    idx_to_delete = j;
-                                                                }
-                                                            });
-                                if (idx_to_delete >= 0) {
-                                    map.overlayMapTypes.removeAt(idx_to_delete);
-                                }
+                    "action": function(i, l, checked) {
+                        if (checked) {
+                            map.overlayMapTypes.push(overlay);
+                        } else {
+                            var idx_to_delete = -1;
+                            map.overlayMapTypes.forEach(function(e, j) {
+                                    if (e == overlay) { idx_to_delete = j; }
+                                });
+                            if (idx_to_delete >= 0) {
+                                map.overlayMapTypes.removeAt(idx_to_delete);
                             }
-                        }});
+                        }
+                }});
         }
         createDropDown("Overlays", items);
     }
 }
 
+// will be recoded by pi, currently always displays all regions all the time.
+// parse the data as definned in the regions.js
 function initRegions() {
     if (regionsInit) { return; }
 
@@ -180,12 +179,11 @@ function initRegions() {
     }
 }
 
-
-
+// will initalize all the markers data as found in markers.js
+// may need to be reviewed by agrif or someone else... little finicky right now.
 function initMarkers() {
-    if (markersInit) { return; }
-
-    markersInit = true;
+    if (markersInit) { return; } // oh, we've already done this? nevermind, exit the function.
+    markersInit = true; // now that we've started, dont have to do it twice.
     
     // first, give all collections an empty array to work with
     for (i in signGroups) {
@@ -206,8 +204,7 @@ function initMarkers() {
                     map: map,
                     title: jQuery.trim(item.msg), 
                     icon: iconURL
-                    });
-
+                });
             continue;
         }
 
@@ -220,11 +217,11 @@ function initMarkers() {
             if (testfunc(item)) {
                 matched = true;
 
-                if (item.type == 'sign') { iconURL = 'signpost_icon.png';}
+                // can add custom types of images for externally definned item types, like 'command' here.
+                if (item.type == 'sign') { iconURL = 'signpost_icon.png'; }
 
-                //console.log(signGroup.icon);
-                if (signGroup.icon) { iconURL = signGroup.icon; 
-                }
+                //console.log(signGroup.icon); //debug
+                if (signGroup.icon) { iconURL = signGroup.icon; }
 
                 var converted = fromWorldToLatLng(item.x, item.y, item.z);
                 var marker = new google.maps.Marker({position: converted,
@@ -232,7 +229,7 @@ function initMarkers() {
                         title: jQuery.trim(item.msg), 
                         icon: iconURL,
                         visible: false
-                        });
+                    });
                 
                 markerCollection[label].push(marker);
 
@@ -271,7 +268,7 @@ function initMarkers() {
     }
 }
 
-
+// update the link in the viewstate. 
 function makeLink() {
     var a=location.href.substring(0,location.href.lastIndexOf(location.search))
         + "?lat=" + map.getCenter().lat().toFixed(6)
@@ -280,6 +277,7 @@ function makeLink() {
     document.getElementById("link").innerHTML = a;
 }
 
+// load the map up and add all the functions relevant stuff to the map.
 function initialize() {
 
     var query = location.search.substring(1);
@@ -364,87 +362,87 @@ function initialize() {
 }
 
 
-  // our custom projection maps Latitude to Y, and Longitude to X as normal,
-  // but it maps the range [0.0, 1.0] to [0, tileSize] in both directions
-  // so it is easier to position markers, etc. based on their position
-  // (find their position in the lowest-zoom image, and divide by tileSize)
-  function MCMapProjection() {
+// our custom projection maps Latitude to Y, and Longitude to X as normal,
+// but it maps the range [0.0, 1.0] to [0, tileSize] in both directions
+// so it is easier to position markers, etc. based on their position
+// (find their position in the lowest-zoom image, and divide by tileSize)
+function MCMapProjection() {
     this.inverseTileSize = 1.0 / config.tileSize;
-  }
+}
   
-  MCMapProjection.prototype.fromLatLngToPoint = function(latLng) {
+MCMapProjection.prototype.fromLatLngToPoint = function(latLng) {
     var x = latLng.lng() * config.tileSize;
     var y = latLng.lat() * config.tileSize;
     return new google.maps.Point(x, y);
-  };
+};
 
-  MCMapProjection.prototype.fromPointToLatLng = function(point) {
+MCMapProjection.prototype.fromPointToLatLng = function(point) {
     var lng = point.x * this.inverseTileSize;
     var lat = point.y * this.inverseTileSize;
     return new google.maps.LatLng(lat, lng);
-  };
+};
   
-  // helper to get map LatLng from world coordinates
-  // takes arguments in X, Y, Z order
-  // (arguments are *out of order*, because within the function we use
-  // the axes like the rest of Minecraft Overviewer -- with the Z and Y
-  // flipped from normal minecraft usage.)
-  function fromWorldToLatLng(x, z, y)
-  {
+// helper to get map LatLng from world coordinates
+// takes arguments in X, Y, Z order
+// (arguments are *out of order*, because within the function we use
+// the axes like the rest of Minecraft Overviewer -- with the Z and Y
+// flipped from normal minecraft usage.)
+function fromWorldToLatLng(x, z, y)
+{
     // the width and height of all the highest-zoom tiles combined, inverted
     var perPixel = 1.0 / (config.tileSize * Math.pow(2, config.maxZoom));
-    
+
     // This information about where the center column is may change with a different
     // drawing implementation -- check it again after any drawing overhauls!
-    
+
     // point (0, 0, 127) is at (0.5, 0.0) of tile (tiles/2 - 1, tiles/2)
     // so the Y coordinate is at 0.5, and the X is at 0.5 - ((tileSize / 2) / (tileSize * 2^maxZoom))
     // or equivalently, 0.5 - (1 / 2^(maxZoom + 1))
     var lng = 0.5 - (1.0 / Math.pow(2, config.maxZoom + 1));
     var lat = 0.5;
-    
+
     // the following metrics mimic those in ChunkRenderer.chunk_render in "chunk.py"
     // or, equivalently, chunk_render in src/iterate.c
-    
+
     // each block on X axis adds 12px to x and subtracts 6px from y
     lng += 12 * x * perPixel;
     lat -= 6 * x * perPixel;
-    
+
     // each block on Y axis adds 12px to x and adds 6px to y
     lng += 12 * y * perPixel;
     lat += 6 * y * perPixel;
-    
+
     // each block down along Z adds 12px to y
     lat += 12 * (128 - z) * perPixel;
 
     // add on 12 px to the X coordinate to center our point
     lng += 12 * perPixel;
-    
+
     return new google.maps.LatLng(lat, lng);
-  }
+}
   
 function getTileUrlGenerator(path, path_base) {
-  return function(tile, zoom) {
-    var url = path;
-    var url_base = ( path_base ? path_base : '' );
-      if(tile.x < 0 || tile.x >= Math.pow(2, zoom) || tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
-        url += '/blank';
-      } else if(zoom == 0) {
-        url += '/base';
-      } else {
-        for(var z = zoom - 1; z >= 0; --z) {
-          var x = Math.floor(tile.x / Math.pow(2, z)) % 2;
-          var y = Math.floor(tile.y / Math.pow(2, z)) % 2;
-          url += '/' + (x + 2 * y);
+    return function(tile, zoom) {
+        var url = path;
+        var url_base = ( path_base ? path_base : '' );
+        if(tile.x < 0 || tile.x >= Math.pow(2, zoom) || tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
+            url += '/blank';
+        } else if(zoom == 0) {
+            url += '/base';
+        } else {
+            for(var z = zoom - 1; z >= 0; --z) {
+                var x = Math.floor(tile.x / Math.pow(2, z)) % 2;
+                var y = Math.floor(tile.y / Math.pow(2, z)) % 2;
+                url += '/' + (x + 2 * y);
+            }
         }
-      }
-      url = url + '.' + config.fileExt;
-      if(config.cacheMinutes > 0) {
-        var d = new Date();
-        url += '?c=' + Math.floor(d.getTime() / (1000 * 60 * config.cacheMinutes));
-      }
-      return(url_base + url);
-  }
+        url = url + '.' + config.fileExt;
+        if(config.cacheMinutes > 0) {
+            var d = new Date();
+            url += '?c=' + Math.floor(d.getTime() / (1000 * 60 * config.cacheMinutes));
+        }
+        return(url_base + url);
+    }
 }
 
 var MCMapOptions = new Array;
@@ -453,39 +451,39 @@ var mapTypeIdDefault = null;
 var mapTypeIds = [];
 var overlayMapTypes = [];
 for (idx in mapTypeData) {
-  var view = mapTypeData[idx];
+    var view = mapTypeData[idx];
 
-  MCMapOptions[view.label] = {
-    getTileUrl: getTileUrlGenerator(view.path, view.base),
-    tileSize: new google.maps.Size(config.tileSize, config.tileSize),
-    maxZoom:  config.maxZoom,
-    minZoom:  0,
-    isPng:    !(config.fileExt.match(/^png$/i) == null)
-  };
+    MCMapOptions[view.label] = {
+        getTileUrl: getTileUrlGenerator(view.path, view.base),
+        tileSize: new google.maps.Size(config.tileSize, config.tileSize),
+        maxZoom:  config.maxZoom,
+        minZoom:  0,
+        isPng:    !(config.fileExt.match(/^png$/i) == null)
+    };
   
-  MCMapType[view.label] = new google.maps.ImageMapType(MCMapOptions[view.label]);
-  MCMapType[view.label].name = view.label;
-  MCMapType[view.label].alt = "Minecraft " + view.label + " Map";
-  MCMapType[view.label].projection = new MCMapProjection();
-  
-  if (view.overlay) {
-    overlayMapTypes.push(MCMapType[view.label]);
-  } else {
+    MCMapType[view.label] = new google.maps.ImageMapType(MCMapOptions[view.label]);
+    MCMapType[view.label].name = view.label;
+    MCMapType[view.label].alt = "Minecraft " + view.label + " Map";
+    MCMapType[view.label].projection = new MCMapProjection();
+
+    if (view.overlay) {
+        overlayMapTypes.push(MCMapType[view.label]);
+    } else {
     if (mapTypeIdDefault == null) {
-      mapTypeIdDefault = 'mcmap' + view.label;
+        mapTypeIdDefault = 'mcmap' + view.label;
     }
     mapTypeIds.push('mcmap' + view.label);
   }
 }
   
-  function CoordMapType() {
-  }
+function CoordMapType() {
+}
   
-  function CoordMapType(tileSize) {
+function CoordMapType(tileSize) {
     this.tileSize = tileSize;
-  }
+}
   
-  CoordMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
+CoordMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
     var div = ownerDocument.createElement('DIV');
     div.innerHTML = "(" + coord.x + ", " + coord.y + ", " + zoom + ")";
     div.innerHTML += "<br />";
@@ -497,4 +495,4 @@ for (idx in mapTypeData) {
     div.style.borderWidth = '1px';
     div.style.borderColor = '#AAAAAA';
     return div;
-  };
+};
