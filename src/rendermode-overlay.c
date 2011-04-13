@@ -74,6 +74,7 @@ static void
 rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
     RenderModeOverlay *self = (RenderModeOverlay *)data;
     unsigned char r, g, b, a;
+    PyObject *top_block_py, *block_py;
     
     /* clear the draw space -- set alpha to 0 within mask */
     tint_with_mask(state->img, 255, 255, 255, 0, mask, state->imgx, state->imgy, 0, 0);
@@ -86,7 +87,7 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
         }
         
         /* check to be sure this block is solid/fluid */
-        PyObject *top_block_py = PyInt_FromLong(top_block);
+        top_block_py = PyInt_FromLong(top_block);
         if (PySequence_Contains(self->solid_blocks, top_block_py) ||
             PySequence_Contains(self->fluid_blocks, top_block_py)) {
             
@@ -98,7 +99,7 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
     }
     
     /* check to be sure this block is solid/fluid */
-    PyObject *block_py = PyInt_FromLong(state->block);
+    block_py = PyInt_FromLong(state->block);
     if (!PySequence_Contains(self->solid_blocks, block_py) &&
         !PySequence_Contains(self->fluid_blocks, block_py)) {
         
