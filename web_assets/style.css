@@ -40,6 +40,13 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
     display: none;
 }
 
+#customControl > div#button {
+    border: 1px solid #000;
+    font-size: 12px;
+    background-color: #fff;
+    display: none;
+}
+
 
 #link {
     background-color: #fff; /* fallback */

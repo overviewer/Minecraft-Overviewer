@@ -77,6 +77,31 @@ function createDropDown(title, items) {
     }
 }
 
+function HomeControl(controlDiv, map) {
+ 
+    controlDiv.style.padding = '5px';
+
+    // Set CSS for the control border
+    var controlUI = document.createElement('DIV');
+    control.id='customControl';
+    //controlUI.className='controlUI';
+    controlUI.title = 'Click to set the map to Spawn';
+    controlDiv.appendChild(controlUI);
+
+    // Set CSS for the control interior
+    var controlText = document.createElement('DIV');
+    //controlText.className='controlText';
+    controlText.innerHTML = 'Spawn';
+    controlUI.appendChild(controlText);
+
+    // Setup the click event listeners: simply set the map to map center as definned below
+    google.maps.event.addDomListener(controlUI, 'click', function() {
+            map.panTo(defaultCenter);
+        });
+ 
+}
+
+
 // need to define the controls including the compass and layer controls. top right!
 // input variables are for chumps... and reusable functions. this is neither.
 function drawMapControls() {
@@ -96,6 +121,12 @@ function drawMapControls() {
     compassDiv.index = 0;
     // add it to the map, top right.
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
+    
+    // Spawn button
+    var homeControlDiv = document.createElement('DIV');
+    var homeControl = new HomeControl(homeControlDiv, map);  
+    homeControlDiv.index = 1;
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
 
 
     // only need to create the control if there are items in the list. as definned in config.js
