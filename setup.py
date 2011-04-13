@@ -55,7 +55,7 @@ except:
     pil_include = []
 
 c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c', 'src/endian.c']
-c_overviewer_files += ['src/rendermodes.c', 'src/rendermode-normal.c', 'src/rendermode-lighting.c', 'src/rendermode-night.c', 'src/rendermode-spawn.c']
+c_overviewer_files += ['src/rendermodes.c', 'src/rendermode-normal.c', 'src/rendermode-lighting.c', 'src/rendermode-night.c', 'src/rendermode-spawn.c', 'src/rendermode-cave.c']
 c_overviewer_files += ['src/Draw.c']
 c_overviewer_includes = ['src/overviewer.h', 'src/rendermodes.h']
 setup_kwargs['ext_modules'].append(Extension('c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
