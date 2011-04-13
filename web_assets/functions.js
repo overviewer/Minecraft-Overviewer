@@ -2,7 +2,8 @@
 var map; // god of the overviewer... bow before the google api.
 var markerCollection = {}; // holds groups of markers
 var markersInit = false; // only have to load the markers once, this just makes sure we only do it once
-var regionsInit = false; // same thing for the regions
+var regionCollection = {}; // holds groups of regions
+var regionsInit = false; // only have to load the regions once, this just makes sure we only do it once
 
 var prevInfoWindow = null;
 
@@ -82,21 +83,22 @@ function HomeControl(controlDiv, map) {
     controlDiv.style.padding = '5px';
 
     // Set CSS for the control border
-    var controlUI = document.createElement('DIV');
-    control.id='customControl';
-    //controlUI.className='controlUI';
-    controlUI.title = 'Click to set the map to Spawn';
-    controlDiv.appendChild(controlUI);
+    var control = document.createElement('DIV');
+    control.id='top';
+    control.title = 'Click to set the map to Spawn';
+    controlDiv.appendChild(control);
 
     // Set CSS for the control interior
     var controlText = document.createElement('DIV');
-    //controlText.className='controlText';
     controlText.innerHTML = 'Spawn';
-    controlUI.appendChild(controlText);
+    controlText.id='button';
+    control.appendChild(controlText);
 
     // Setup the click event listeners: simply set the map to map center as definned below
-    google.maps.event.addDomListener(controlUI, 'click', function() {
-            map.panTo(defaultCenter);
+    google.maps.event.addDomListener(control, 'click', function() {
+            map.panTo(fromWorldToLatLng(config.center[0],
+                                        config.center[1],
+                                        config.center[2]));
         });
  
 }
@@ -125,6 +127,7 @@ function drawMapControls() {
     // Spawn button
     var homeControlDiv = document.createElement('DIV');
     var homeControl = new HomeControl(homeControlDiv, map);  
+    homeControlDiv.id = "customControl";
     homeControlDiv.index = 1;
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
 
@@ -173,11 +176,23 @@ function drawMapControls() {
 // parse the data as definned in the regions.js
 function initRegions() {
     if (regionsInit) { return; }
-
     regionsInit = true;
+    
+    /* remove comment on this if we decide to add regionGroups in the config.js
+    this would let us selectivley show groups of regions based on the name of the region, or flags set.
+    could be good...
+    
+    for (i in regionGroups) {
+        regionCollection[regionGroups[i].label] = [];
+    }
+    remove next line if this is kept.
+    */
+    regionCollection['All Regions'] = [];
 
     for (i in regionData) {
         var region = regionData[i];
+        
+        // pull all the points out of the regions file.
         var converted = new google.maps.MVCArray();
         for (j in region.path) {
             var point = region.path[j];
@@ -185,7 +200,7 @@ function initRegions() {
         }
 
         if (region.closed) {
-            new google.maps.Polygon({clickable: false,
+            var region = new google.maps.Polygon({clickable: false,
                     geodesic: false,
                     map: map,
                     strokeColor: region.color,
@@ -197,7 +212,7 @@ function initRegions() {
                     paths: converted
                     });
         } else {
-            new google.maps.Polyline({clickable: false,
+            var region = new google.maps.Polyline({clickable: false,
                     geodesic: false,
                     map: map,
                     strokeColor: region.color,
@@ -207,6 +222,7 @@ function initRegions() {
                     path: converted
                     });
         }
+        regionCollection['All Regions'].push(region); //if we add groups to config.js this will need to be changed.
     }
 }
 
