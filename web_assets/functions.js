@@ -23,6 +23,21 @@ function prepareSignMarker(marker, item) {
 
 }
 
+// add a popup info window to the region and then the region to the map.
+// region is the clickable image on the map with all data.
+// item is just the same item in the regions.js
+function prepareRegionShape(shape, region) {
+    var c = "<div class=\"infoWindow\"><p>" + region.label + "</p></div>";
+    var infowindow = new google.maps.InfoWindow({content: c });
+    google.maps.event.addListener(shape, 'click', function() {
+            if (prevInfoWindow)
+                prevInfoWindow.close()
+            infowindow.open(map,shape);
+            prevInfoWindow = infowindow
+        });
+
+}
+
 // reusable function for making drop down menus.
 // title = string
 // items = array 
@@ -85,7 +100,7 @@ function HomeControl(controlDiv, map) {
     // Set CSS for the control border
     var control = document.createElement('DIV');
     control.id='top';
-    control.title = 'Click to set the map to Spawn';
+    control.title = 'Click to center the map on the Spawn';
     controlDiv.appendChild(control);
 
     // Set CSS for the control interior
@@ -147,6 +162,29 @@ function drawMapControls() {
         createDropDown("Signposts", items);
     }
     
+    // if there are any regions data, lets show the option to hide/show them.
+    if (regionGroups.length > 0) {
+        // region display control
+        
+        var items = [];
+        for (idx in regionGroups) {
+            var item = regionGroups[idx];
+            items.push({"label": item.label, "checked": item.checked,
+                "action": function(n, l, checked) {
+                    if (checked) {
+                        jQuery.each(regionCollection[l], function(i,elem) {
+                                elem.setVisible('visible');
+                            });
+                    } else {
+                        jQuery.each(regionCollection[l], function(i,elem) {
+                                elem.setVisible('hidden');
+                            });
+                    }
+                }});
+        }
+        createDropDown("Regions", items);
+    }
+    
     if (overlayMapTypes.length > 0) {
         // overlay maps control
         
@@ -178,16 +216,9 @@ function initRegions() {
     if (regionsInit) { return; }
     regionsInit = true;
     
-    /* remove comment on this if we decide to add regionGroups in the config.js
-    this would let us selectivley show groups of regions based on the name of the region, or flags set.
-    could be good...
-    
     for (i in regionGroups) {
         regionCollection[regionGroups[i].label] = [];
     }
-    remove next line if this is kept.
-    */
-    regionCollection['All Regions'] = [];
 
     for (i in regionData) {
         var region = regionData[i];
@@ -198,31 +229,43 @@ function initRegions() {
             var point = region.path[j];
             converted.push(fromWorldToLatLng(point.x, point.y, point.z));
         }
+        
+        for (idx in regionGroups) {
+            var regionGroup = regionGroups[idx];
+            var testfunc = regionGroup.match;
+            var label = regionGroup.label;
 
-        if (region.closed) {
-            var region = new google.maps.Polygon({clickable: false,
-                    geodesic: false,
-                    map: map,
-                    strokeColor: region.color,
-                    strokeOpacity: region.opacity,
-                    strokeWeight: 2,
-                    fillColor: region.color,
-                    fillOpacity: region.opacity * 0.25,
-                    zIndex: i,
-                    paths: converted
+            if (region.closed) {
+                var shape = new google.maps.Polygon({
+                        name: region.label,
+                        clickable: false,
+                        geodesic: false,
+                        map: map,
+                        strokeColor: region.color,
+                        strokeOpacity: region.opacity,
+                        strokeWeight: 2,
+                        fillColor: region.color,
+                        fillOpacity: region.opacity * 0.25,
+                        zIndex: i,
+                        paths: converted
                     });
-        } else {
-            var region = new google.maps.Polyline({clickable: false,
-                    geodesic: false,
-                    map: map,
-                    strokeColor: region.color,
-                    strokeOpacity: region.opacity,
-                    strokeWeight: 2,
-                    zIndex: i,
-                    path: converted
+            } else {
+                var shape = new google.maps.Polyline({
+                        name: region.label,
+                        clickable: false,
+                        geodesic: false,
+                        map: map,
+                        strokeColor: region.color,
+                        strokeOpacity: region.opacity,
+                        strokeWeight: 2,
+                        zIndex: i,
+                        path: converted
                     });
+            }
+            regionCollection[label].push(shape); 
+            prepareRegionShape(shape, region);
+
         }
-        regionCollection['All Regions'].push(region); //if we add groups to config.js this will need to be changed.
     }
 }
 

@@ -33,6 +33,11 @@ var signGroups = [
     {label: "All", match: function(s) {return true}},
 ];
 
+//piTODO: document this
+var regionGroups = [
+    {label: "WorldGuard", match: function(s) {return true}},
+];
+
 /* mapTypeData -- a list of alternate map renderings available. At least one rendering must be
  * listed.  When more than one are provided, controls to switch between them are provided, with
  * the first one being the default.
