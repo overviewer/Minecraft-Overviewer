@@ -37,13 +37,13 @@ var signGroups = [
  * group.  See below for some examples.
  * regions have been designed to work with the 
  * WorldGuard Overviewer Region importer at https://github.com/pironic/WG2OvR But your host must support php in order
- * to run WG2OvR. You can also continue to use any other region format, but your regions 
- * must now have a label definned in the regions.js.
+ * to run WG2OvR. You can also continue to use any other region format.
  *
  * Required: 
  *     label : string.  Displayed in the drop down menu control.
  *     clickable : boolean. Will determine if we should generate an experimental info window
- *                          that shows details about the clicked region.
+ *                          that shows details about the clicked region. 
+ * NOTE: if a region (as definned in region.js) does not have a label, this will default to false.
  *     match : function.  Applied to each region (from region.js).  It returns true if the region
  *                        Should be part of the group.
  *
@@ -51,7 +51,7 @@ var signGroups = [
  *     checked : boolean.  Set to true to have the group visible by default
  */
 var regionGroups = [
-    //{label: "WorldGuard", clickable: false, checked: false, match: function(s) {return true}},
+    //{label: "All", clickable: false, checked: false, match: function(s) {return true}},
 ];
 
 /* mapTypeData -- a list of alternate map renderings available. At least one rendering must be

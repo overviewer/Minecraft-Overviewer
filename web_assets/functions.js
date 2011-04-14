@@ -20,22 +20,6 @@ function prepareSignMarker(marker, item) {
             infowindow.open(map,marker);
             prevInfoWindow = infowindow
         });
-
-}
-
-// add a popup info window to the region and then the region to the map.
-// region is the clickable image on the map with all data.
-// item is just the same item in the regions.js
-function prepareRegionShape(shape, region) {
-    var c = "<div class=\"infoWindow\"><p>" + region.label + "</p></div>";
-    var infowindow = new google.maps.InfoWindow({content: c });
-    google.maps.event.addListener(shape, 'click', function() {
-            if (prevInfoWindow)
-                prevInfoWindow.close()
-            infowindow.open(map,shape);
-            prevInfoWindow = infowindow
-        });
-
 }
 
 // reusable function for making drop down menus.
@@ -232,6 +216,13 @@ function initRegions() {
             var clickable = regionGroup.clickable
             var label = regionGroup.label;
 
+            if(region.label) {
+                var name = region.label
+            } else {
+                var name = 'rawr';
+                clickable = false; // if it doesn't have a name, we dont have to show it.
+            }
+
             if (region.closed) {
                 var shape = new google.maps.Polygon({
                         name: region.label,
@@ -338,10 +329,7 @@ function initMarkers() {
                 if (item.type == 'sign') {
                     prepareSignMarker(marker, item);
                 }
-
             }
-
-
         }
 
         if (!matched) {
@@ -365,8 +353,6 @@ function initMarkers() {
                 prepareSignMarker(marker, item);
             }
         }
-
-
     }
 }
 
