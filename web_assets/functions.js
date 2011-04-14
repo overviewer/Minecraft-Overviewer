@@ -72,7 +72,12 @@ function createDropDown(title, items) {
         dropdownDiv.appendChild(d);
         d.appendChild(n)
         var textNode = document.createElement("text");
-        textNode.innerHTML = "<img width='15' height='15' src='"+item.icon+"'>" + item.label + "<br/>";
+        if(item.icon) {
+            textNode.innerHTML = "<img width='15' height='15' src='"+item.icon+"'>" + item.label + "<br/>";
+        } else {
+            textNode.innerHTML = item.label + "<br/>";
+        }
+
         d.appendChild(textNode);
     }
 }
@@ -162,12 +167,15 @@ function drawMapControls() {
         var items = [];
         for (idx in regionGroups) {
             var regionGroup = regionGroups[idx];
-            items.push({"label": regionGroup.label, "checked": regionGroup.checked,
+            items.push({
+                "label": regionGroup.label, 
+                "checked": regionGroup.checked,
                 "action": function(n, l, checked) {
-                    jQuery.each(regionCollection[l], function(i,elem) {
-                            elem.setMap(checked ? map : null); // Thanks to LeastWeasel for this line!
-                        });
-                }});
+                        jQuery.each(regionCollection[l], function(i,elem) {
+                                elem.setMap(checked ? map : null); // Thanks to LeastWeasel for this line!
+                            });
+                    }
+                });
         }
         createDropDown("Regions", items);
     }
