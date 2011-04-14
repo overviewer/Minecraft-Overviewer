@@ -172,7 +172,7 @@ function drawMapControls() {
             items.push({"label": item.label, "checked": item.checked,
                 "action": function(n, l, checked) {
                     jQuery.each(regionCollection[l], function(i,elem) {
-                            elem.setMap(checked ? map : null);
+                            elem.setMap(checked ? map : null); // Thanks to LeastWeasel for this line!
                         });
                 }});
         }
