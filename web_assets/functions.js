@@ -171,15 +171,9 @@ function drawMapControls() {
             var item = regionGroups[idx];
             items.push({"label": item.label, "checked": item.checked,
                 "action": function(n, l, checked) {
-                    if (checked) {
-                        jQuery.each(regionCollection[l], function(i,elem) {
-                                elem.setVisible('visible');
-                            });
-                    } else {
-                        jQuery.each(regionCollection[l], function(i,elem) {
-                                elem.setVisible('hidden');
-                            });
-                    }
+                    jQuery.each(regionCollection[l], function(i,elem) {
+                            elem.setMap(checked ? map : null);
+                        });
                 }});
         }
         createDropDown("Regions", items);
@@ -240,7 +234,7 @@ function initRegions() {
                         name: region.label,
                         clickable: false,
                         geodesic: false,
-                        map: map,
+                        map: null,
                         strokeColor: region.color,
                         strokeOpacity: region.opacity,
                         strokeWeight: 2,
@@ -254,7 +248,7 @@ function initRegions() {
                         name: region.label,
                         clickable: false,
                         geodesic: false,
-                        map: map,
+                        map: null,
                         strokeColor: region.color,
                         strokeOpacity: region.opacity,
                         strokeWeight: 2,
@@ -263,8 +257,6 @@ function initRegions() {
                     });
             }
             regionCollection[label].push(shape); 
-            prepareRegionShape(shape, region);
-
         }
     }
 }
