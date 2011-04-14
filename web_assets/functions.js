@@ -72,7 +72,7 @@ function createDropDown(title, items) {
         dropdownDiv.appendChild(d);
         d.appendChild(n)
         var textNode = document.createElement("text");
-        textNode.innerHTML = item.label + "<br/>";
+        textNode.innerHTML = "<img width='15' height='15' src='"+item.icon+"'>" + item.label + "<br/>";
         d.appendChild(textNode);
     }
 }
@@ -137,11 +137,20 @@ function drawMapControls() {
         
         var items = [];
         for (idx in signGroups) {
-            var item = signGroups[idx];
-            items.push({"label": item.label, "checked": item.checked,
+            var signGroup = signGroups[idx];
+            var iconURL = signGroup.icon;
+            if (!iconURL) { iconURL = 'signpost.png'; }
+            items.push({
+                "label": signGroup.label, 
+                "checked": signGroup.checked,
+                "icon": iconURL,
                 "action": function(n, l, checked) {
-                    jQuery.each(markerCollection[l], function(i,elem) {elem.setVisible(checked);});
-                }});
+                    jQuery.each(markerCollection[l], function(i,elem) {
+                            elem.setVisible(checked);
+                        });
+                    //alert(signGroup.label);
+                }
+            });
         }
         createDropDown("Signposts", items);
     }
@@ -152,8 +161,8 @@ function drawMapControls() {
         
         var items = [];
         for (idx in regionGroups) {
-            var item = regionGroups[idx];
-            items.push({"label": item.label, "checked": item.checked,
+            var regionGroup = regionGroups[idx];
+            items.push({"label": regionGroup.label, "checked": regionGroup.checked,
                 "action": function(n, l, checked) {
                     jQuery.each(regionCollection[l], function(i,elem) {
                             elem.setMap(checked ? map : null); // Thanks to LeastWeasel for this line!
@@ -215,7 +224,7 @@ function initRegions() {
             var testfunc = regionGroup.match;
             var clickable = regionGroup.clickable
             var label = regionGroup.label;
-
+            
             if(region.label) {
                 var name = region.label
             } else {
@@ -225,7 +234,7 @@ function initRegions() {
 
             if (region.closed) {
                 var shape = new google.maps.Polygon({
-                        name: region.label,
+                        name: name,
                         clickable: clickable,
                         geodesic: false,
                         map: null,
@@ -239,7 +248,7 @@ function initRegions() {
                     });
             } else {
                 var shape = new google.maps.Polyline({
-                        name: region.label,
+                        name: name,
                         clickable: clickable,
                         geodesic: false,
                         map: null,
@@ -282,6 +291,7 @@ function initMarkers() {
     for (i in signGroups) {
         markerCollection[signGroups[i].label] = [];
     }
+        
     
     for (i in markerData) {
         var item = markerData[i];
@@ -331,7 +341,7 @@ function initMarkers() {
                 }
             }
         }
-
+        
         if (!matched) {
             // is this signpost doesn't match any of the groups in config.js, add it automatically to the "__others__" group
             if (item.type == 'sign') { iconURL = 'signpost_icon.png';}
@@ -353,6 +363,9 @@ function initMarkers() {
                 prepareSignMarker(marker, item);
             }
         }
+        
+
+
     }
 }
 
