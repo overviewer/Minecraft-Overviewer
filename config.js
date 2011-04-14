@@ -33,9 +33,25 @@ var signGroups = [
     {label: "All", match: function(s) {return true}},
 ];
 
-//piTODO: document this
+/* regionGroups -- A list of region groups.  A region can fall into zero, one, or more than one
+ * group.  See below for some examples.
+ * regions have been designed to work with the 
+ * WorldGuard Overviewer Region importer at https://github.com/pironic/WG2OvR But your host must support php in order
+ * to run WG2OvR. You can also continue to use any other region format, but your regions 
+ * must now have a label definned in the regions.js.
+ *
+ * Required: 
+ *     label : string.  Displayed in the drop down menu control.
+ *     clickable : boolean. Will determine if we should generate an experimental info window
+ *                          that shows details about the clicked region.
+ *     match : function.  Applied to each region (from region.js).  It returns true if the region
+ *                        Should be part of the group.
+ *
+ * Optional:
+ *     checked : boolean.  Set to true to have the group visible by default
+ */
 var regionGroups = [
-    {label: "WorldGuard", match: function(s) {return true}},
+    //{label: "WorldGuard", clickable: false, checked: false, match: function(s) {return true}},
 ];
 
 /* mapTypeData -- a list of alternate map renderings available. At least one rendering must be

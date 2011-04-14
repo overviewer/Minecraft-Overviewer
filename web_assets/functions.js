@@ -219,20 +219,23 @@ function initRegions() {
         
         // pull all the points out of the regions file.
         var converted = new google.maps.MVCArray();
+        var infoPoint = "";
         for (j in region.path) {
             var point = region.path[j];
             converted.push(fromWorldToLatLng(point.x, point.y, point.z));
+            
         }
         
         for (idx in regionGroups) {
             var regionGroup = regionGroups[idx];
             var testfunc = regionGroup.match;
+            var clickable = regionGroup.clickable
             var label = regionGroup.label;
 
             if (region.closed) {
                 var shape = new google.maps.Polygon({
                         name: region.label,
-                        clickable: false,
+                        clickable: clickable,
                         geodesic: false,
                         map: null,
                         strokeColor: region.color,
@@ -246,7 +249,7 @@ function initRegions() {
             } else {
                 var shape = new google.maps.Polyline({
                         name: region.label,
-                        clickable: false,
+                        clickable: clickable,
                         geodesic: false,
                         map: null,
                         strokeColor: region.color,
@@ -257,6 +260,23 @@ function initRegions() {
                     });
             }
             regionCollection[label].push(shape); 
+            
+            if (clickable) {
+                // add the region infowindow popup
+                infowindow = new google.maps.InfoWindow();
+                google.maps.event.addListener(shape, 'click', function(e,i) {
+                        
+                        var contentString = "<b>Region: "+this.name+"</b><br />";
+                        contentString += "Clicked Location: <br />" + e.latLng.lat() + "," + e.latLng.lng() + "<br />";
+
+                        // Replace our Info Window's content and position
+                        infowindow.setContent(contentString);
+                        infowindow.setPosition(e.latLng);
+
+                        infowindow.open(map);
+
+                    });
+            }
         }
     }
 }
