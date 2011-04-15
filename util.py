@@ -39,7 +39,7 @@ def findGitVersion():
         with open(os.path.join(this_dir,".git","HEAD")) as f:
             data = f.read().strip()
         if data.startswith("ref: "):
-            if not os.path.exists(os.path.join(this_dir,data[5:])):
+            if not os.path.exists(os.path.join(this_dir, ".git", data[5:])):
                 return data
             with open(os.path.join(this_dir, ".git", data[5:])) as g:
                 return g.read().strip()
