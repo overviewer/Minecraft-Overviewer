@@ -1,6 +1,5 @@
 
   var config = {
-    fileExt:     '{imgformat}',
     tileSize:     384,
     defaultZoom:  2,
     maxZoom:      {maxzoom},
@@ -59,15 +58,17 @@ var regionGroups = [
  * the first one being the default.
  *
  * Required:
- *     label : string. Displayed on the control.
- *     path  : string. Location of the rendered tiles.
+ *     label    : string. Displayed on the control.
+ *     path     : string. Location of the rendered tiles.
  * Optional:
- *     base  : string. Base of the url path for tile locations, useful for serving tiles from a different server than the js/html server.
+ *     base     : string. Base of the url path for tile locations, useful for serving tiles from a different server than the js/html server.
+ *    imgformat : string. File extension used for these tiles. Defaults to png.
+ *    overlay   : bool. If true, this tile set will be treated like an overlay
 
 var mapTypeData=[
   {'label': 'Unlit', 'path': 'tiles'},
 //  {'label': 'Day',   'path': 'lighting/tiles'},
-//  {'label': 'Night', 'path': 'night/tiles'},
+//  {'label': 'Night', 'path': 'night/tiles', 'imgformat': 'jpg'},
 //  {'label': 'Spawn', 'path': 'spawn/tiles', 'base': 'http://example.cdn.amazon.com/'},
 //  {'label': 'Overlay', 'path': 'overlay/tiles', 'overlay': true}
 ];

@@ -60,12 +60,12 @@ class QuadtreeGen(object):
         """
         assert(imgformat)
         self.imgformat = imgformat
-        self.optimizeimg = optimizeimg
-        
-        self.lighting = rendermode in ("lighting", "night", "spawn")
-        self.night = rendermode in ("night", "spawn")
-        self.spawn = rendermode in ("spawn",)
+        self.optimizeimg = optimizeimg        
         self.rendermode = rendermode
+        
+        # force png renderformat if we're using an overlay mode
+        if rendermode in chunk.overlay_rendermodes:
+            self.imgformat = "png"
 
         # Make the destination dir
         if not os.path.exists(destdir):

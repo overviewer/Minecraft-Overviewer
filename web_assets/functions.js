@@ -532,7 +532,7 @@ function fromWorldToLatLng(x, z, y)
     return new google.maps.LatLng(lat, lng);
 }
   
-function getTileUrlGenerator(path, path_base) {
+function getTileUrlGenerator(path, path_base, path_ext) {
     return function(tile, zoom) {
         var url = path;
         var url_base = ( path_base ? path_base : '' );
@@ -547,7 +547,7 @@ function getTileUrlGenerator(path, path_base) {
                 url += '/' + (x + 2 * y);
             }
         }
-        url = url + '.' + config.fileExt;
+        url = url + '.' + path_ext;
         if(config.cacheMinutes > 0) {
             var d = new Date();
             url += '?c=' + Math.floor(d.getTime() / (1000 * 60 * config.cacheMinutes));
@@ -563,13 +563,14 @@ var mapTypeIds = [];
 var overlayMapTypes = [];
 for (idx in mapTypeData) {
     var view = mapTypeData[idx];
+    var imgformat = view.imgformat ? view.imgformat : 'png';
 
     MCMapOptions[view.label] = {
-        getTileUrl: getTileUrlGenerator(view.path, view.base),
+        getTileUrl: getTileUrlGenerator(view.path, view.base, imgformat),
         tileSize: new google.maps.Size(config.tileSize, config.tileSize),
         maxZoom:  config.maxZoom,
         minZoom:  0,
-        isPng:    !(config.fileExt.match(/^png$/i) == null)
+        isPng:    !(imgformat.match(/^png$/i) == null)
     };
   
     MCMapType[view.label] = new google.maps.ImageMapType(MCMapOptions[view.label]);
