@@ -43,12 +43,14 @@ static void get_color(void *data, RenderState *state,
     }
     Py_DECREF(block_py);
     
-    /* if we're at the top, use the top-most light instead */
-    if (z_light == 128)
-        z_light--;
+    blocklight = getArrayByte3D(self->blocklight, x, y, MAX(127, z_light));
     
-    blocklight = getArrayByte3D(self->blocklight, x, y, z_light);
-    skylight = getArrayByte3D(self->skylight, x, y, z_light);
+    /* if we're at the top, force 15 (brightest!) skylight */
+    if (z_light == 128) {
+        skylight = 15;
+    } else {
+        skylight = getArrayByte3D(self->skylight, x, y, z_light);
+    }
     
     if (MAX(blocklight, skylight) <= 7) {
         /* hostile mobs spawn in daylight */
