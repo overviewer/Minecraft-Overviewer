@@ -76,6 +76,13 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
     unsigned char r, g, b, a;
     PyObject *top_block_py, *block_py;
     
+    // exactly analogous to edge-line code for these special blocks
+    int increment=0;
+    if (state->block == 44)  // half-step
+        increment=6;
+    else if (state->block == 78) // snow
+        increment=9;
+    
     /* clear the draw space -- set alpha to 0 within mask */
     tint_with_mask(state->img, 255, 255, 255, 0, mask, state->imgx, state->imgy, 0, 0);
 
@@ -114,8 +121,8 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
     
     /* do the overlay */
     if (a > 0) {
-        alpha_over(state->img, self->white_color, self->facemask_top, state->imgx, state->imgy, 0, 0);
-        tint_with_mask(state->img, r, g, b, a, self->facemask_top, state->imgx, state->imgy, 0, 0);
+        alpha_over(state->img, self->white_color, self->facemask_top, state->imgx, state->imgy + increment, 0, 0);
+        tint_with_mask(state->img, r, g, b, a, self->facemask_top, state->imgx, state->imgy + increment, 0, 0);
     }
 }
 
