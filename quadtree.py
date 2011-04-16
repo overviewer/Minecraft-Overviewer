@@ -69,7 +69,7 @@ class QuadtreeGen(object):
 
         # Make the destination dir
         if not os.path.exists(destdir):
-            os.mkdir(destdir)
+            os.makedirs(os.path.abspath(destdir))
         if tiledir is None:
             tiledir = rendermode
         self.tiledir = tiledir        
