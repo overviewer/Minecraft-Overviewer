@@ -23,6 +23,7 @@ static void get_color(void *data, RenderState *state,
     
     RenderModeSpawn* self = (RenderModeSpawn *)data;
     int x = state->x, y = state->y, z = state->z;
+    int z_light = z + 1;
     unsigned char blocklight, skylight;
     PyObject *block_py;
     
@@ -34,10 +35,6 @@ static void get_color(void *data, RenderState *state,
     /* default to no overlay, until told otherwise */
     *a = 0;
     
-    /* if we're at the top, skip */
-    if (z == 127)
-        return;
-    
     block_py = PyInt_FromLong(state->block);
     if (PySequence_Contains(self->nospawn_blocks, block_py)) {
         /* nothing can spawn on this */
@@ -46,8 +43,12 @@ static void get_color(void *data, RenderState *state,
     }
     Py_DECREF(block_py);
     
-    blocklight = getArrayByte3D(self->blocklight, x, y, z+1);
-    skylight = getArrayByte3D(self->skylight, x, y, z+1);
+    /* if we're at the top, use the top-most light instead */
+    if (z_light == 128)
+        z_light--;
+    
+    blocklight = getArrayByte3D(self->blocklight, x, y, z_light);
+    skylight = getArrayByte3D(self->skylight, x, y, z_light);
     
     if (MAX(blocklight, skylight) <= 7) {
         /* hostile mobs spawn in daylight */
