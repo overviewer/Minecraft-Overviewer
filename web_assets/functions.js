@@ -60,9 +60,11 @@ function createDropDown(title, items) {
 
         // give it a name
         $(n).data("label",item.label);
-        jQuery(n).click(function(e) {
-                item.action(idx, item.label, e.target.checked);
-            });
+        jQuery(n).click((function(local_idx, local_item) {
+                             return function(e) {
+                                 item.action(local_idx, local_item, e.target.checked);
+                             };
+                         })(idx, item));
 
         // if its checked, its gotta do something, do that here.
         if (item.checked) {
@@ -149,11 +151,11 @@ function drawMapControls() {
                 "label": signGroup.label, 
                 "checked": signGroup.checked,
                 "icon": iconURL,
-                "action": function(n, l, checked) {
-                    jQuery.each(markerCollection[l], function(i,elem) {
+                "action": function(n, item, checked) {
+                    jQuery.each(markerCollection[item.label], function(i,elem) {
                             elem.setVisible(checked);
                         });
-                    //alert(signGroup.label);
+                    //alert(item.label);
                 }
             });
         }
@@ -170,8 +172,8 @@ function drawMapControls() {
             items.push({
                 "label": regionGroup.label, 
                 "checked": regionGroup.checked,
-                "action": function(n, l, checked) {
-                        jQuery.each(regionCollection[l], function(i,elem) {
+                "action": function(n, item, checked) {
+                        jQuery.each(regionCollection[item.label], function(i,elem) {
                                 elem.setMap(checked ? map : null); // Thanks to LeastWeasel for this line!
                             });
                     }
@@ -186,14 +188,14 @@ function drawMapControls() {
         var items = [];
         for (idx in overlayMapTypes) {
             var overlay = overlayMapTypes[idx];
-            items.push({"label": overlay.name, "checked": false,
-                    "action": function(i, l, checked) {
+            items.push({"label": overlay.name, "checked": false, "overlay": overlay,
+                    "action": function(i, item, checked) {
                         if (checked) {
-                            map.overlayMapTypes.push(overlay);
+                            map.overlayMapTypes.push(item.overlay);
                         } else {
                             var idx_to_delete = -1;
                             map.overlayMapTypes.forEach(function(e, j) {
-                                    if (e == overlay) { idx_to_delete = j; }
+                                    if (e == item.overlay) { idx_to_delete = j; }
                                 });
                             if (idx_to_delete >= 0) {
                                 map.overlayMapTypes.removeAt(idx_to_delete);
