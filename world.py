@@ -16,6 +16,7 @@
 import functools
 import os
 import os.path
+from glob import glob
 import multiprocessing
 import Queue
 import sys
@@ -287,12 +288,10 @@ class World(object):
                     p = f.split(".")
                     yield (int(p[1]), int(p[2]), join(self.worlddir, 'region', f))        
         else:                    
-            for dirpath, dirnames, filenames in os.walk(os.path.join(self.worlddir, 'region')):
-                if not dirnames and filenames and "DIM-1" not in dirpath:
-                    for f in filenames:
-                        if f.startswith("r.") and f.endswith(".mcr"):
-                            p = f.split(".")
-                            yield (int(p[1]), int(p[2]), join(dirpath, f))
+            for path in glob(os.path.join(self.worlddir, 'region') + "/r.*.*.mcr"):
+                dirpath, f = os.path.split(path)
+                p = f.split(".")
+                yield (int(p[1]), int(p[2]), join(dirpath, f))
 
 def get_save_dir():
     """Returns the path to the local saves directory

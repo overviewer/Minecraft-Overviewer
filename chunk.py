@@ -284,7 +284,14 @@ class ChunkRenderer(object):
             self._load_up_right()
         return self._up_right_blocks
     up_right_blocks = property(_load_up_right_blocks)
-    
+
+    def _load_up_right_skylight(self):
+        """Loads and returns lower-right skylight array"""
+        if not hasattr(self, "_up_right_skylight"):
+            self._load_up_right()
+        return self._up_right_skylight
+    up_right_skylight = property(_load_up_right_skylight)
+
     def _load_up_left(self):
         """Loads and sets data from upper-left chunk"""
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY - 1)
@@ -304,6 +311,13 @@ class ChunkRenderer(object):
             self._load_up_left()
         return self._up_left_blocks
     up_left_blocks = property(_load_up_left_blocks)
+
+    def _load_up_left_skylight(self):
+        """Loads and returns lower-right skylight array"""
+        if not hasattr(self, "_up_left_skylight"):
+            self._load_up_left()
+        return self._up_left_skylight
+    up_left_skylight = property(_load_up_left_skylight)
 
     def generate_pseudo_ancildata(self,x,y,z,blockid, north_position = 0 ):
         """ Generates a pseudo ancillary data for blocks that depend of 
@@ -458,8 +472,10 @@ def generate_depthcolors():
     g = 0
     b = 0
     for z in range(128):
-        img = Image.new("RGB", (24,24), (r,g,b))
-        depth_colors.append(img)
+        depth_colors.append(r)
+        depth_colors.append(g)
+        depth_colors.append(b)
+        
         if z < 32:
             g += 7
         elif z < 64:

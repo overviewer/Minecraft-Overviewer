@@ -132,4 +132,22 @@ typedef struct {
 } RenderModeSpawn;
 extern RenderModeInterface rendermode_spawn;
 
+/* CAVE */
+typedef struct {
+    /* render blocks with lighting mode */
+    RenderModeNormal parent;
+
+    /* data used to know where the surface is */
+    PyObject *skylight;
+    PyObject *left_skylight;
+    PyObject *right_skylight;
+    PyObject *up_left_skylight;
+    PyObject *up_right_skylight;
+
+    /* colors used for tinting */
+    PyObject *depth_colors;
+    
+} RenderModeCave;
+extern RenderModeInterface rendermode_cave;
+
 #endif /* __RENDERMODES_H_INCLUDED__ */

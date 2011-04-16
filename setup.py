@@ -55,11 +55,10 @@ except:
     pil_include = []
 
 # used to figure out what files to compile
-render_modes = ['normal', 'overlay', 'lighting', 'night', 'spawn']
+render_modes = ['normal', 'overlay', 'lighting', 'night', 'spawn', 'cave']
 
 c_overviewer_files = ['src/main.c', 'src/composite.c', 'src/iterate.c', 'src/endian.c', 'src/rendermodes.c']
 c_overviewer_files += map(lambda mode: 'src/rendermode-%s.c' % (mode,), render_modes)
-
 c_overviewer_files += ['src/Draw.c']
 c_overviewer_includes = ['src/overviewer.h', 'src/rendermodes.h']
 
