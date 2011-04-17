@@ -25,14 +25,24 @@ PyObject *get_extension_version(PyObject *self, PyObject *args) {
 static PyMethodDef COverviewerMethods[] = {
     {"alpha_over", alpha_over_wrap, METH_VARARGS,
      "alpha over composite function"},
+    
     {"render_loop", chunk_render, METH_VARARGS,
      "Renders stuffs"},
+    
     {"get_render_modes", get_render_modes, METH_VARARGS,
      "returns available render modes"},
     {"get_render_mode_info", get_render_mode_info, METH_VARARGS,
      "returns info for a particular render mode"},
+    {"get_render_mode_parent", get_render_mode_parent, METH_VARARGS,
+     "returns parent for a particular render mode"},
+    {"get_render_mode_inheritance", get_render_mode_inheritance, METH_VARARGS,
+     "returns inheritance chain for a particular render mode"},
+    {"get_render_mode_children", get_render_mode_children, METH_VARARGS,
+     "returns (direct) children for a particular render mode"},
+    
     {"extension_version", get_extension_version, METH_VARARGS, 
         "Returns the extension version"},
+    
     {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 

@@ -38,12 +38,15 @@
 #include <Python.h>
 
 /* rendermode interface */
-typedef struct {
+typedef struct _RenderModeInterface RenderModeInterface;
+struct _RenderModeInterface {
     /* the name of this mode */
     const char* name;
     /* the short description of this render mode */
     const char* description;
     
+    /* the rendermode this is derived from, or NULL */
+    RenderModeInterface *parent;
     /* the size of the local storage for this rendermode */
     unsigned int data_size;
     
@@ -54,13 +57,16 @@ typedef struct {
     int (*occluded)(void *, RenderState *);
     /* last two arguments are img and mask, from texture lookup */
     void (*draw)(void *, RenderState *, PyObject *, PyObject *);
-} RenderModeInterface;
+};
 
 /* figures out the render mode to use from the given ChunkRenderer */
 RenderModeInterface *get_render_mode(RenderState *state);
 /* python bindings */
 PyObject *get_render_modes(PyObject *self, PyObject *args);
 PyObject *get_render_mode_info(PyObject *self, PyObject *args);
+PyObject *get_render_mode_parent(PyObject *self, PyObject *args);
+PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args);
+PyObject *get_render_mode_children(PyObject *self, PyObject *args);
 
 /* individual rendermode interface declarations follow */
 

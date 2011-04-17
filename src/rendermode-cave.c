@@ -225,6 +225,7 @@ rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
 
 RenderModeInterface rendermode_cave = {
     "cave", "render only caves in normal mode",
+    &rendermode_normal,
     sizeof(RenderModeCave),
     rendermode_cave_start,
     rendermode_cave_finish,

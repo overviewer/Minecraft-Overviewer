@@ -129,10 +129,6 @@ fluid_blocks = set([8,9,10,11])
 # (glass, half blocks)
 nospawn_blocks = set([20,44])
 
-# overlay rendermodes
-# FIXME hook this into render_modes in setup.py, somehow
-overlay_rendermodes = ['spawn']
-
 class ChunkCorrupt(Exception):
     pass
 

@@ -23,7 +23,7 @@ from time import strftime, gmtime
 import json
 
 import util
-from chunk import overlay_rendermodes
+from c_overviewer import get_render_mode_inheritance
 
 """
 This module has routines related to generating a Google Maps-based
@@ -97,7 +97,7 @@ class MapGen(object):
         # create generated map type data, from given quadtrees
         maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
                                      'path' : q.tiledir,
-                                     'overlay' : q.rendermode in overlay_rendermodes,
+                                     'overlay' : 'overlay' in get_render_mode_inheritance(q.rendermode),
                                      'imgformat' : q.imgformat},
                           self.quadtrees)
         config = config.replace("{maptypedata}", json.dumps(maptypedata))

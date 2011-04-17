@@ -109,6 +109,7 @@ rendermode_spawn_draw(void *data, RenderState *state, PyObject *src, PyObject *m
 
 RenderModeInterface rendermode_spawn = {
     "spawn", "draws a red overlay where monsters can spawn at night",
+    &rendermode_overlay,
     sizeof(RenderModeSpawn),
     rendermode_spawn_start,
     rendermode_spawn_finish,
