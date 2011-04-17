@@ -59,14 +59,15 @@ def mirror_dir(src, dst, entities=None):
                 # if this stills throws an error, let it propagate up
 
 class MapGen(object):
-    def __init__(self, quadtrees, skipjs=False, web_assets_hook=None):
+    def __init__(self, quadtrees, configInfo):
         """Generates a Google Maps interface for the given list of
         quadtrees. All of the quadtrees must have the same destdir,
         image format, and world. 
         Note:tiledir for each quadtree should be unique. By default the tiledir is determined by the rendermode"""
         
-        self.skipjs = skipjs
-        self.web_assets_hook = web_assets_hook
+        self.skipjs = configInfo.get('skipjs', None)
+        self.web_assets_hook = configInfo.get('web_assets_hook', None)
+        self.bg_color = configInfo.get('bg_color')
         
         if not len(quadtrees) > 0:
             raise ValueError("there must be at least one quadtree to work on")
@@ -96,6 +97,8 @@ class MapGen(object):
         
         config = config.replace("{spawn_coords}",
                                 json.dumps(list(self.world.spawn)))
+
+        config = config.replace("{bg_color}", self.bg_color)
         
         # create generated map type data, from given quadtrees
         maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
@@ -105,9 +108,10 @@ class MapGen(object):
         with open(os.path.join(self.destdir, "config.js"), 'w') as output:
             output.write(config)
 
+        bgcolor = (int(self.bg_color[1:3],16), int(self.bg_color[3:5],16), int(self.bg_color[5:7],16), 0)
+        blank = Image.new("RGBA", (1,1), bgcolor)
         # Write a blank image
         for quadtree in self.quadtrees:
-            blank = Image.new("RGBA", (1,1))
             tileDir = os.path.join(self.destdir, quadtree.tiledir)
             if not os.path.exists(tileDir): os.mkdir(tileDir)
             blank.save(os.path.join(tileDir, "blank."+self.imgformat))

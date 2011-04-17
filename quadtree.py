@@ -48,7 +48,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, tiledir=None, imgformat=None, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, imgformat=None, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -61,6 +61,7 @@ class QuadtreeGen(object):
         assert(imgformat)
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
+        self.bgcolor = bgcolor
         
         self.lighting = rendermode in ("lighting", "night", "spawn")
         self.night = rendermode in ("night", "spawn")
@@ -320,7 +321,7 @@ class QuadtreeGen(object):
         #logging.debug("writing out innertile {0}".format(imgpath))
 
         # Create the actual image now
-        img = Image.new("RGBA", (384, 384), (38,92,255,0))
+        img = Image.new("RGBA", (384, 384), self.bgcolor)
         
         # we'll use paste (NOT alpha_over) for quadtree generation because
         # this is just straight image stitching, not alpha blending
@@ -442,7 +443,7 @@ class QuadtreeGen(object):
         #logging.debug("writing out worldtile {0}".format(imgpath))
 
         # Compile this image
-        tileimg = Image.new("RGBA", (width, height), (38,92,255,0))
+        tileimg = Image.new("RGBA", (width, height), self.bgcolor)
 
         world = self.world
         rendermode = self.rendermode

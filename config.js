@@ -8,7 +8,7 @@
     //center:       [0,0,0],
     center:       {spawn_coords},
     cacheMinutes: 0, // Change this to have browsers automatically request new images every x minutes
-    bg_color:     '#1A1A1A',
+    bg_color:     '{bg_color}',  // You can set this in settings.py
     debug:        false
   };
 

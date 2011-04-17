@@ -97,6 +97,7 @@ def main():
     parser.add_option("--rendermodes", dest="rendermode", help="Specifies the render types, separated by commas. Use --list-rendermodes to list them all.", type="choice", choices=avail_rendermodes, required=True, default=avail_rendermodes[0], listify=True)
     parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", help="List available render modes and exit.", commandLineOnly=True)
     parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg. NOTE: png will always be used as the intermediate image format.", configFileOnly=True )
+    parser.add_option("--bg_color", dest="bg_color", help="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", configFileOnly=True, type="string", default="#1A1A1A")
     parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", configFileOnly=True)
     parser.add_option("--web-assets-hook", dest="web_assets_hook", help="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a QuadtreeGen object as its only argument.", action="store", metavar="SCRIPT", type="function", configFileOnly=True)
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
@@ -214,10 +215,12 @@ def main():
 
     logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
 
+    bgcolor = (int(options.bg_color[1:3],16), int(options.bg_color[3:5],16), int(options.bg_color[5:7],16), 0)
+
     # create the quadtrees
     # TODO chunklist
     q = []
-    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'optimizeimg' : optimizeimg}
+    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'optimizeimg' : optimizeimg, 'bgcolor':bgcolor}
     for rendermode in options.rendermode:
         if rendermode == 'normal':
             qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, tiledir='tiles', **qtree_args)
@@ -229,7 +232,7 @@ def main():
     r = rendernode.RenderNode(q)
     
     # write out the map and web assets
-    m = googlemap.MapGen(q, skipjs=options.skipjs, web_assets_hook=options.web_assets_hook)
+    m = googlemap.MapGen(q, configInfo=options)
     m.go(options.procs)
     
     # render the tiles!
