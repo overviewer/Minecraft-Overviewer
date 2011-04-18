@@ -128,6 +128,7 @@ PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args) {
     const char *rendermode;
     PyObject *parents;
     unsigned int i;
+    RenderModeInterface *iface = NULL;
     if (!PyArg_ParseTuple(args, "s", &rendermode))
         return NULL;
     
@@ -135,7 +136,6 @@ PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args) {
     if (!parents)
         return NULL;
     
-    RenderModeInterface *iface = NULL;
     for (i = 0; render_modes[i] != NULL; i++) {
         if (strcmp(render_modes[i]->name, rendermode) == 0) {
             iface = render_modes[i];
