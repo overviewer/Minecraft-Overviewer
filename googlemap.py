@@ -23,6 +23,7 @@ from time import strftime, gmtime
 import json
 
 import util
+from c_overviewer import get_render_mode_inheritance
 
 """
 This module has routines related to generating a Google Maps-based
@@ -73,12 +74,11 @@ class MapGen(object):
             raise ValueError("there must be at least one quadtree to work on")
         
         self.destdir = quadtrees[0].destdir
-        self.imgformat = quadtrees[0].imgformat
         self.world = quadtrees[0].world
         self.p = quadtrees[0].p
         for i in quadtrees:
-            if i.destdir != self.destdir or i.imgformat != self.imgformat or i.world != self.world:
-                raise ValueError("all the given quadtrees must have the same destdir")
+            if i.destdir != self.destdir or i.world != self.world:
+                raise ValueError("all the given quadtrees must have the same destdir and world")
         
         self.quadtrees = quadtrees
         
@@ -86,14 +86,11 @@ class MapGen(object):
         """Writes out config.js, marker.js, and region.js
         Copies web assets into the destdir"""
         zoomlevel = self.p
-        imgformat = self.imgformat
         configpath = os.path.join(util.get_program_path(), "config.js")
 
         config = open(configpath, 'r').read()
         config = config.replace(
                 "{maxzoom}", str(zoomlevel))
-        config = config.replace(
-                "{imgformat}", str(imgformat))
         
         config = config.replace("{spawn_coords}",
                                 json.dumps(list(self.world.spawn)))
@@ -102,7 +99,10 @@ class MapGen(object):
         
         # create generated map type data, from given quadtrees
         maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
-                                     'path' : q.tiledir}, self.quadtrees)
+                                     'path' : q.tiledir,
+                                     'overlay' : 'overlay' in get_render_mode_inheritance(q.rendermode),
+                                     'imgformat' : q.imgformat},
+                          self.quadtrees)
         config = config.replace("{maptypedata}", json.dumps(maptypedata))
         
         with open(os.path.join(self.destdir, "config.js"), 'w') as output:
@@ -114,7 +114,7 @@ class MapGen(object):
         for quadtree in self.quadtrees:
             tileDir = os.path.join(self.destdir, quadtree.tiledir)
             if not os.path.exists(tileDir): os.mkdir(tileDir)
-            blank.save(os.path.join(tileDir, "blank."+self.imgformat))
+            blank.save(os.path.join(tileDir, "blank."+quadtree.imgformat))
 
         # copy web assets into destdir:
         mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)

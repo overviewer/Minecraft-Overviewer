@@ -219,12 +219,13 @@ rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
     g = PyInt_AsLong(PyList_GetItem(self->depth_colors, 1 + z*3));
     b = PyInt_AsLong(PyList_GetItem(self->depth_colors, 2 + z*3));
 
-    tint_with_mask(state->img, r, g, b, mask, state->imgx, state->imgy, 0, 0);
+    tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
 
 }
 
 RenderModeInterface rendermode_cave = {
     "cave", "render only caves in normal mode",
+    &rendermode_normal,
     sizeof(RenderModeCave),
     rendermode_cave_start,
     rendermode_cave_finish,

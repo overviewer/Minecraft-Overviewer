@@ -1,6 +1,5 @@
 
   var config = {
-    fileExt:     '{imgformat}',
     tileSize:     384,
     defaultZoom:  2,
     maxZoom:      {maxzoom},
@@ -33,21 +32,45 @@ var signGroups = [
     {label: "All", match: function(s) {return true}},
 ];
 
+/* regionGroups -- A list of region groups.  A region can fall into zero, one, or more than one
+ * group.  See below for some examples.
+ * regions have been designed to work with the 
+ * WorldGuard Overviewer Region importer at https://github.com/pironic/WG2OvR But your host must support php in order
+ * to run WG2OvR. You can also continue to use any other region format.
+ *
+ * Required: 
+ *     label : string.  Displayed in the drop down menu control.
+ *     clickable : boolean. Will determine if we should generate an experimental info window
+ *                          that shows details about the clicked region. 
+ * NOTE: if a region (as definned in region.js) does not have a label, this will default to false.
+ *     match : function.  Applied to each region (from region.js).  It returns true if the region
+ *                        Should be part of the group.
+ *
+ * Optional:
+ *     checked : boolean.  Set to true to have the group visible by default
+ */
+var regionGroups = [
+    //{label: "All", clickable: false, checked: false, match: function(s) {return true}},
+];
+
 /* mapTypeData -- a list of alternate map renderings available. At least one rendering must be
  * listed.  When more than one are provided, controls to switch between them are provided, with
  * the first one being the default.
  *
  * Required:
- *     label : string. Displayed on the control.
- *     path  : string. Location of the rendered tiles.
+ *     label    : string. Displayed on the control.
+ *     path     : string. Location of the rendered tiles.
  * Optional:
- *     base  : string. Base of the url path for tile locations, useful for serving tiles from a different server than the js/html server.
+ *     base     : string. Base of the url path for tile locations, useful for serving tiles from a different server than the js/html server.
+ *    imgformat : string. File extension used for these tiles. Defaults to png.
+ *    overlay   : bool. If true, this tile set will be treated like an overlay
 
 var mapTypeData=[
   {'label': 'Unlit', 'path': 'tiles'},
 //  {'label': 'Day',   'path': 'lighting/tiles'},
-//  {'label': 'Night', 'path': 'night/tiles'},
-//  {'label': 'Spawn', 'path': 'spawn/tiles', 'base': 'http://example.cdn.amazon.com/'}
+//  {'label': 'Night', 'path': 'night/tiles', 'imgformat': 'jpg'},
+//  {'label': 'Spawn', 'path': 'spawn/tiles', 'base': 'http://example.cdn.amazon.com/'},
+//  {'label': 'Overlay', 'path': 'overlay/tiles', 'overlay': true}
 ];
  */
 

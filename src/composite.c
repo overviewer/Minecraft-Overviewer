@@ -273,7 +273,8 @@ alpha_over_wrap(PyObject *self, PyObject *args)
  * also, it multiplies instead of doing an over operation
  */
 PyObject *
-tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg, unsigned char sb,
+tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
+               unsigned char sb, unsigned char sa,
                PyObject *mask, int dx, int dy, int xsize, int ysize) {
     /* libImaging handles */
     Imaging imDest, imMask;
@@ -332,9 +333,11 @@ tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg, unsigned char
                 out++;
                 *out = MULDIV255(*out, sb, tmp1);
                 out++;
+                *out = MULDIV255(*out, sa, tmp1);
+                out++;
             } else if (*inmask == 0) {
                 /* do nothing -- source is fully transparent */
-                out += 3;
+                out += 4;
             } else {
                 /* general case */
                 
@@ -345,9 +348,10 @@ tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg, unsigned char
                 out++;
                 *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sb, *inmask, tmp1), tmp2);
                 out++;
+                *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sa, *inmask, tmp1), tmp2);
+                out++;
             }
 
-            out++;
             inmask += mask_stride;
         }
     }

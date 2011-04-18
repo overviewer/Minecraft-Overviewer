@@ -98,5 +98,87 @@ PyObject *get_render_mode_info(PyObject *self, PyObject *args) {
     }
     
     Py_DECREF(info);
-    Py_RETURN_NONE;
+    return PyErr_Format(PyExc_ValueError, "invalid rendermode: \"%s\"", rendermode);
+}
+
+/* bindings -- get parent's name */
+PyObject *get_render_mode_parent(PyObject *self, PyObject *args) {
+    const char *rendermode;
+    unsigned int i;
+    if (!PyArg_ParseTuple(args, "s", &rendermode))
+        return NULL;
+    
+    for (i = 0; render_modes[i] != NULL; i++) {
+        if (strcmp(render_modes[i]->name, rendermode) == 0) {
+            if (render_modes[i]->parent) {
+                /* has parent */
+                return PyString_FromString(render_modes[i]->parent->name);
+            } else {
+                /* no parent */
+                Py_RETURN_NONE;
+            }
+        }
+    }
+    
+    return PyErr_Format(PyExc_ValueError, "invalid rendermode: \"%s\"", rendermode);
+}
+
+/* bindings -- get list of inherited parents */
+PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args) {
+    const char *rendermode;
+    PyObject *parents;
+    unsigned int i;
+    RenderModeInterface *iface = NULL;
+    if (!PyArg_ParseTuple(args, "s", &rendermode))
+        return NULL;
+    
+    parents = PyList_New(0);
+    if (!parents)
+        return NULL;
+    
+    for (i = 0; render_modes[i] != NULL; i++) {
+        if (strcmp(render_modes[i]->name, rendermode) == 0) {
+            iface = render_modes[i];
+            break;
+        }
+    }
+    
+    if (!iface) {
+        Py_DECREF(parents);
+        return PyErr_Format(PyExc_ValueError, "invalid rendermode: \"%s\"", rendermode);
+    }
+    
+    while (iface) {
+        PyObject *name = PyString_FromString(iface->name);
+        PyList_Append(parents, name);
+        Py_DECREF(name);
+        
+        iface = iface->parent;
+    }
+    
+    PyList_Reverse(parents);
+    return parents;
+}
+
+/* bindings -- get list of (direct) children */
+PyObject *get_render_mode_children(PyObject *self, PyObject *args) {
+    const char *rendermode;
+    PyObject *children;
+    unsigned int i;
+    if (!PyArg_ParseTuple(args, "s", &rendermode))
+        return NULL;
+    
+    children = PyList_New(0);
+    if (!children)
+        return NULL;
+    
+    for (i = 0; render_modes[i] != NULL; i++) {
+        if (render_modes[i]->parent && strcmp(render_modes[i]->parent->name, rendermode) == 0) {
+            PyObject *child_name = PyString_FromString(render_modes[i]->name);
+            PyList_Append(children, child_name);
+            Py_DECREF(child_name);
+        }
+    }
+    
+    return children;
 }

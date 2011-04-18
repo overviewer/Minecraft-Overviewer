@@ -18,21 +18,66 @@
 #include "overviewer.h"
 #include <math.h>
 
+static void get_color(void *data, RenderState *state,
+                      unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
+    
+    RenderModeSpawn* self = (RenderModeSpawn *)data;
+    int x = state->x, y = state->y, z = state->z;
+    int z_light = z + 1;
+    unsigned char blocklight, skylight;
+    PyObject *block_py;
+    
+    /* set a nice, pretty red color */
+    *r = 229;
+    *g = 36;
+    *b = 38;
+    
+    /* default to no overlay, until told otherwise */
+    *a = 0;
+    
+    block_py = PyInt_FromLong(state->block);
+    if (PySequence_Contains(self->nospawn_blocks, block_py)) {
+        /* nothing can spawn on this */
+        Py_DECREF(block_py);
+        return;
+    }
+    Py_DECREF(block_py);
+    
+    blocklight = getArrayByte3D(self->blocklight, x, y, MIN(127, z_light));
+    
+    /* if we're at the top, force 15 (brightest!) skylight */
+    if (z_light == 128) {
+        skylight = 15;
+    } else {
+        skylight = getArrayByte3D(self->skylight, x, y, z_light);
+    }
+    
+    if (MAX(blocklight, skylight) <= 7) {
+        /* hostile mobs spawn in daylight */
+        *a = 240;
+    } else if (MAX(blocklight, skylight - 11) <= 7) {
+        /* hostile mobs spawn at night */
+        *a = 150;
+    }
+}
+
 static int
 rendermode_spawn_start(void *data, RenderState *state) {
     RenderModeSpawn* self;
 
     /* first, chain up */
-    int ret = rendermode_night.start(data, state);
+    int ret = rendermode_overlay.start(data, state);
     if (ret != 0)
         return ret;
     
     /* now do custom initializations */
     self = (RenderModeSpawn *)data;
-    self->solid_blocks = PyObject_GetAttrString(state->chunk, "solid_blocks");
     self->nospawn_blocks = PyObject_GetAttrString(state->chunk, "nospawn_blocks");
-    self->fluid_blocks = PyObject_GetAttrString(state->chunk, "fluid_blocks");
-    self->red_color = PyObject_GetAttrString(state->chunk, "red_color");
+    self->blocklight = PyObject_GetAttrString(state->self, "blocklight");
+    self->skylight = PyObject_GetAttrString(state->self, "skylight");
+    
+    /* setup custom color */
+    self->parent.get_color = get_color;
     
     return 0;
 }
@@ -40,85 +85,31 @@ rendermode_spawn_start(void *data, RenderState *state) {
 static void
 rendermode_spawn_finish(void *data, RenderState *state) {
     /* first free all *our* stuff */
-    RenderModeSpawn* self = (RenderModeSpawn *)data;    
+    RenderModeSpawn* self = (RenderModeSpawn *)data;
     
-    Py_DECREF(self->solid_blocks);
     Py_DECREF(self->nospawn_blocks);
-    Py_DECREF(self->fluid_blocks);
+    Py_DECREF(self->blocklight);
+    Py_DECREF(self->skylight);
     
     /* now, chain up */
-    rendermode_night.finish(data, state);
+    rendermode_overlay.finish(data, state);
 }
 
 static int
 rendermode_spawn_occluded(void *data, RenderState *state) {
     /* no special occlusion here */
-    return rendermode_night.occluded(data, state);
+    return rendermode_overlay.occluded(data, state);
 }
 
 static void
 rendermode_spawn_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
-    /* different versions of self (spawn, lighting) */
-    RenderModeSpawn* self = (RenderModeSpawn *)data;
-    RenderModeLighting *lighting = (RenderModeLighting *)self;
-    
-    int x = state->x, y = state->y, z = state->z;
-    PyObject *old_black_color = NULL;
-    
-    /* figure out the appropriate darkness:
-       this block for transparents, the block above for non-transparent */
-    float darkness = 0.0;
-    if (is_transparent(state->block)) {
-        darkness = get_lighting_coefficient((RenderModeLighting *)self, state, x, y, z, NULL);
-    } else {
-        darkness = get_lighting_coefficient((RenderModeLighting *)self, state, x, y, z+1, NULL);
-    }
-    
-    /* if it's dark enough... */
-    if (darkness > 0.8) {
-        PyObject *block_py = PyInt_FromLong(state->block);
-        
-        /* make sure it's solid */
-        if (PySequence_Contains(self->solid_blocks, block_py)) {
-            int spawnable = 1;
-            
-            /* not spawnable if its in the nospawn list */
-            if (PySequence_Contains(self->nospawn_blocks, block_py))
-                spawnable = 0;
-            
-            /* check the block above for solid or fluid */
-            if (spawnable && z != 127) {
-                PyObject *top_block_py = PyInt_FromLong(getArrayByte3D(state->blocks, x, y, z+1));
-                if (PySequence_Contains(self->solid_blocks, top_block_py) ||
-                    PySequence_Contains(self->fluid_blocks, top_block_py)) {
-                    
-                    spawnable = 0;
-                }
-                
-                Py_DECREF(top_block_py);
-            }
-            
-            /* if we passed all the checks, replace black_color with red_color */
-            if (spawnable) {
-                old_black_color = lighting->black_color;
-                lighting->black_color = self->red_color;
-            }
-        }
-        
-        Py_DECREF(block_py);
-    }
-    
     /* draw normally */
-    rendermode_night.draw(data, state, src, mask);
-    
-    /* reset black_color, if needed */
-    if (old_black_color != NULL) {
-        lighting->black_color = old_black_color;
-    }
+    rendermode_overlay.draw(data, state, src, mask);
 }
 
 RenderModeInterface rendermode_spawn = {
-    "spawn", "draws red where monsters can spawn at night",
+    "spawn", "draws a red overlay where monsters can spawn at night",
+    &rendermode_overlay,
     sizeof(RenderModeSpawn),
     rendermode_spawn_start,
     rendermode_spawn_finish,

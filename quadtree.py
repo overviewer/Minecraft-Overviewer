@@ -34,6 +34,7 @@ from PIL import Image
 
 import nbt
 import chunk
+from c_overviewer import get_render_mode_inheritance
 from optimizeimages import optimize_image
 import composite
 
@@ -62,11 +63,11 @@ class QuadtreeGen(object):
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
         self.bgcolor = bgcolor
-        
-        self.lighting = rendermode in ("lighting", "night", "spawn")
-        self.night = rendermode in ("night", "spawn")
-        self.spawn = rendermode in ("spawn",)
         self.rendermode = rendermode
+        
+        # force png renderformat if we're using an overlay mode
+        if 'overlay' in get_render_mode_inheritance(rendermode):
+            self.imgformat = "png"
 
         # Make the destination dir
         if not os.path.exists(destdir):

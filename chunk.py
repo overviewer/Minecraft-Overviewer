@@ -120,7 +120,7 @@ transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53
 # This set holds block ids that are solid blocks
 solid_blocks = set([1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
     23, 24, 25, 35, 41, 42, 43, 44, 45, 46, 47, 48, 49, 53, 54, 56, 57, 58, 60, 
-    61, 62, 64, 65, 66, 67, 71, 73, 74, 78, 79, 80, 81, 82, 84, 86, 87, 88, 89, 91, 92])
+    61, 62, 67, 73, 74, 78, 79, 80, 81, 82, 84, 86, 87, 88, 89, 91])
 
 # This set holds block ids that are fluid blocks
 fluid_blocks = set([8,9,10,11])
@@ -463,7 +463,7 @@ def generate_facemasks():
     return (top, left, right)
 facemasks = generate_facemasks()
 black_color = Image.new("RGB", (24,24), (0,0,0))
-red_color = Image.new("RGB", (24,24), (229,36,38))
+white_color = Image.new("RGB", (24,24), (255,255,255))
 
 # Render 128 different color images for color coded depth blending in cave mode
 def generate_depthcolors():
