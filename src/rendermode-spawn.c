@@ -43,7 +43,7 @@ static void get_color(void *data, RenderState *state,
     }
     Py_DECREF(block_py);
     
-    blocklight = getArrayByte3D(self->blocklight, x, y, MAX(127, z_light));
+    blocklight = getArrayByte3D(self->blocklight, x, y, MIN(127, z_light));
     
     /* if we're at the top, force 15 (brightest!) skylight */
     if (z_light == 128) {
