@@ -178,6 +178,20 @@ function initMarkers() {
             continue;
         }
 
+        if (item.type == 'querypos') { 
+            // Set on page load if MC x/y/z coords are given in the query string
+
+            iconURL = 'http://google-maps-icons.googlecode.com/files/regroup.png';
+            var converted = fromWorldToLatLng(item.x, item.y, item.z);
+            var marker = new google.maps.Marker({position: converted,
+                    map: map,
+                    title: jQuery.trim(item.msg), 
+                    icon: iconURL
+                    });
+
+            continue;
+        }
+
         var matched = false;
         for (idx in signGroups) {
             var signGroup = signGroups[idx];
@@ -240,10 +254,19 @@ function initMarkers() {
 
 
 function makeLink() {
+    var displayZoom = map.getZoom();
+    if (displayZoom == config.maxZoom) {
+        displayZoom = "max";
+    } else {
+        displayZoom -= config.maxZoom;
+    }
+    var xyz;
+    var xyz = fromLatLngToWorld(map.getCenter().lat(), map.getCenter().lng());
     var a=location.href.substring(0,location.href.lastIndexOf(location.search))
-        + "?lat=" + map.getCenter().lat().toFixed(6)
-        + "&lng=" + map.getCenter().lng().toFixed(6)
-        + "&zoom=" + map.getZoom();
+        + "?x=" + Math.floor(xyz.x)
+        + "&y=" + Math.floor(xyz.y)
+        + "&z=" + Math.floor(xyz.z)
+        + "&zoom=" + displayZoom;
     document.getElementById("link").innerHTML = a;
 }
 
@@ -254,6 +277,11 @@ function initialize() {
     var lat = 0.5;
     var lng = 0.5;
     var zoom = config.defaultZoom;
+    var hasquerypos = false;
+    var queryx = 0;
+    var queryy = 64;
+    var queryz = 0;
+    var mapcenter;
     var pairs = query.split("&");
     for (var i=0; i<pairs.length; i++) {
         // break each pair at the first "=" to obtain the argname and value
@@ -264,7 +292,28 @@ function initialize() {
         // process each possible argname
         if (argname == "lat") {lat = parseFloat(value);}
         if (argname == "lng") {lng = parseFloat(value);}
-        if (argname == "zoom") {zoom = parseInt(value);}
+        if (argname == "zoom") {
+            if (value == "max") {
+                zoom = config.maxZoom;
+            } else {
+                zoom = parseInt(value);
+                // If negative, treat as a "zoom out from max zoom" value
+                if (zoom < 0) {zoom = config.maxZoom + zoom;}
+                // If still negative, fall back to default zoom
+                if (zoom < 0) {zoom = config.defaultZoom;}
+            }
+        }
+        if (argname == "x") {queryx = parseFloat(value); hasquerypos = true;}
+        if (argname == "y") {queryy = parseFloat(value); hasquerypos = true;}
+        if (argname == "z") {queryz = parseFloat(value); hasquerypos = true;}
+    }
+
+    if (hasquerypos) {
+        mapcenter = fromWorldToLatLng(queryx, queryy, queryz);
+        // Add a market indicating the user-supplied position
+        markerData.push({"msg": "Coordinates " + queryx + ", " + queryy + ", " + queryz, "y": queryy, "x": queryx, "z": queryz, "type": "querypos"})
+    } else {
+        mapcenter = new google.maps.LatLng(lat, lng);
     }
 
     var mapTyepControlToggle = false
@@ -273,7 +322,7 @@ function initialize() {
     }
     var mapOptions = {
         zoom: zoom,
-        center: new google.maps.LatLng(lat, lng),
+        center: mapcenter,
         navigationControl: true,
         scaleControl: false,
         mapTypeControl: mapTyepControlToggle,
@@ -384,6 +433,41 @@ function initialize() {
     lat += 18 * perPixel;
     
     return new google.maps.LatLng(lat, lng);
+  }
+
+  // NOTE: X, Y and Z in this function are Minecraft world definitions
+  // (that is, X is horizontal, Y is altitude and Z is vertical).
+  function fromLatLngToWorld(lat, lng)
+  {
+    // Initialize world x/y/z object to be returned
+    var xyz = Array();
+    xyz.x = 0;
+    xyz.y = 64;
+    xyz.z = 0;
+
+    // the width and height of all the highest-zoom tiles combined, inverted
+    var perPixel = 1.0 / (config.tileSize * Math.pow(2, config.maxZoom));
+
+    // Revert base positioning
+    // See equivalent code in fromWorldToLatLng()
+    lng -= 0.5 - (1.0 / Math.pow(2, config.maxZoom + 1));
+    lat -= 0.5;
+
+    // I'll admit, I plugged this into Wolfram Alpha:
+    //   a = (x * 12 * r) + (z * 12 * r), b = (z * 6 * r) - (x * 6 * r)
+    // And I don't know the math behind solving for for X and Z given
+    // A (lng) and B (lat).  But Wolfram Alpha did. :)  I'd welcome
+    // suggestions for splitting this up into long form and documenting
+    // it. -RF
+    xyz.x = (lng - 2 * lat) / (24 * perPixel)
+    xyz.z = (lng + 2 * lat) / (24 * perPixel)
+
+    // Adjust for the fact that we we can't figure out what Y is given
+    // only latitude and longitude, so assume Y=64.
+    xyz.x += 64 + 1;
+    xyz.z -= 64 + 2;
+
+    return xyz;
   }
   
 function getTileUrlGenerator(path, path_base) {
