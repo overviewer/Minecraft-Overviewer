@@ -1,6 +1,13 @@
-html { height: 100% }
+html {
+    height: 100%;
+    font-family: lucida grande, lucida sans console, sans-serif;
+}
 body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
 #mcmap { height: 100% }
+
+#mcmap div div a img, #mcmap div div div a {
+    display:none;
+}
 
 .infoWindow {
     height: 100px;
@@ -20,10 +27,10 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
 #signControl {
     padding: 5px;
     height: 15px;
-    font-family: Arial, sans-serif;
 }
 
 #signControl > div#top {
+    display:none;
     background-color: #fff;
     border: 2px solid #000;
     text-align: center;
@@ -44,7 +51,6 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
 #link {
     background-color: #fff; /* fallback */
     background-color: rgba(255,255,255,0.55);
-    border: 1px solid rgb(0, 0, 0);
     font-size: 9pt;
     padding-left: 2px;
     padding-right: 2px;

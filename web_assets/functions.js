@@ -240,11 +240,7 @@ function initMarkers() {
 
 
 function makeLink() {
-    var a=location.href.substring(0,location.href.lastIndexOf(location.search))
-        + "?lat=" + map.getCenter().lat().toFixed(6)
-        + "&lng=" + map.getCenter().lng().toFixed(6)
-        + "&zoom=" + map.getZoom();
-    document.getElementById("link").innerHTML = a;
+    location.hash = "#/"+map.getCenter().lat().toFixed(3)+"/"+map.getCenter().lng().toFixed(3)+"/"+map.getZoom();
 }
 
 function initialize() {
@@ -254,17 +250,14 @@ function initialize() {
     var lat = 0.5;
     var lng = 0.5;
     var zoom = config.defaultZoom;
-    var pairs = query.split("&");
-    for (var i=0; i<pairs.length; i++) {
-        // break each pair at the first "=" to obtain the argname and value
-        var pos = pairs[i].indexOf("=");
-        var argname = pairs[i].substring(0,pos).toLowerCase();
-        var value = pairs[i].substring(pos+1).toLowerCase();
 
-        // process each possible argname
-        if (argname == "lat") {lat = parseFloat(value);}
-        if (argname == "lng") {lng = parseFloat(value);}
-        if (argname == "zoom") {zoom = parseInt(value);}
+    // Jeff's hash rewriting:
+    var hash = window.location.hash
+    var params = hash.split("/")
+    if (params.length > 1) {
+    lat = parseFloat(params[1])
+    lng = parseFloat(params[2])
+    zoom = parseInt(params[3])
     }
 
     var mapTyepControlToggle = false
