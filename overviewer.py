@@ -227,8 +227,12 @@ def main():
         else:
             qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, **qtree_args)
         q.append(qtree)
+    
+    # do quadtree-level preprocessing
+    for qtree in q:
+        qtree.go(options.procs)
 
-    #create the distributed render
+    # create the distributed render
     r = rendernode.RenderNode(q)
     
     # write out the map and web assets
@@ -238,6 +242,7 @@ def main():
     # render the tiles!
     r.go(options.procs)
 
+    # finish up the map
     m.finalize()
 
 
