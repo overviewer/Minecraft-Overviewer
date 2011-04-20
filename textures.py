@@ -439,12 +439,12 @@ def generate_special_texture(blockID, data):
 
     if blockID == 6: # saplings
         if data == 1: # spruce sapling
-            toptexture = terrain_images[64]
-            sidetexture = terrain_images[64]
+            toptexture = terrain_images[63]
+            sidetexture = terrain_images[63]
         
         if data == 2: # birch sapling
-            toptexture = terrain_images[80]
-            sidetexture = terrain_images[80]
+            toptexture = terrain_images[79]
+            sidetexture = terrain_images[79]
             
         else: # usual and future saplings
             toptexture = terrain_images[15]
