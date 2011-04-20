@@ -938,11 +938,27 @@ def generate_special_texture(blockID, data):
             return (img.convert("RGB"), img.split()[3])
 
 
-    if blockID == 66: # minetrack:
+    if blockID in (27, 28, 66): # minetrack:
     
-        raw_straight = terrain_images[128]
-        raw_corner = terrain_images[112]
-    
+        if blockID == 27: # powered rail
+            if data & 0x8 == 0: # unpowered
+                raw_straight = terrain_images[163]
+                raw_corner = terrain_images[112]    # they don't exist but make the code
+                                                    # much simplier
+            elif data & 0x8 == 0x8: # powered
+                raw_straight = terrain_images[179]
+                raw_corner = terrain_images[112]    # leave corners for code simplicity
+            # filter the 'powered' bit
+            data = data & 0x7
+            
+        elif blockID == 28: # detector rail
+            raw_straight = terrain_images[195]
+            raw_corner = terrain_images[112]    # leave corners for code simplicity
+
+        elif blockID == 66: # normal rail
+            raw_straight = terrain_images[128]
+            raw_corner = terrain_images[112]
+
         ## use transform_image to scale and shear
         if data == 0:
             track = transform_image(raw_straight, blockID)
@@ -1215,8 +1231,9 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # (when adding new blocks here and in generate_special_textures,
 # please, if possible, keep the ascending order of blockid value)
 
-special_blocks = set([2, 9, 17, 18, 23, 35, 43, 44, 50, 51, 53, 55, 58, 59, \
-                      61, 62, 64, 65, 66, 67, 71, 75, 76, 85, 86, 91, 92])
+special_blocks = set([ 2,  9, 17, 18, 23, 27, 28, 35, 43, 44, 50, 51, 53,
+                      55, 58, 59, 61, 62, 64, 65, 66, 67, 71, 75, 76, 85,
+                      86, 91, 92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1226,6 +1243,8 @@ special_map = {}
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values.
 special_map[17] = range(4)  # wood: normal, birch and pine
 special_map[23] = range(6)  # dispensers, orientation
+special_map[27] = range(14) # powered rail, orientation/slope and powered/unpowered
+special_map[28] = range(6) # detector rail, orientation/slope
 special_map[35] = range(16) # wool, colored and white
 special_map[43] = range(4)  # stone, sandstone, wooden and cobblestone double-slab
 special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
