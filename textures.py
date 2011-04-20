@@ -226,8 +226,7 @@ def _build_block(top, side, blockID=None):
     ## special case for non-block things
     # TODO once torches are handled by generate_special_texture, remove
     # them from this list
-    if blockID in (37,38,6,39,40,50,83,75,76): ## flowers, sapling, mushrooms,  regular torch, reeds,
-        # redstone torch on, redstone torch off
+    if blockID in (37,38,6,39,40,83): ## flowers, sapling, mushrooms, reeds
         #
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
@@ -348,7 +347,7 @@ def _build_blockimages():
     # texture array (terrain_images), which comes from terrain.png's cells, left to right top to
     # bottom.
        #        0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
-    topids = [ -1,  1,  0,  2, 16,  4, 15, 17,205,205,237,237, 18, 19, 32, 33,
+    topids = [ -1,  1,  0,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, -1, -1, # Cloths are left out, sandstone (it has top, side, and bottom wich is ignored here), note block
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
@@ -365,7 +364,7 @@ def _build_blockimages():
 
     # And side textures of all block types
        #         0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
-    sideids = [ -1,  1,  3,  2, 16,  4, 15, 17,205,205,237,237, 18, 19, 32, 33,
+    sideids = [ -1,  1,  3,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                 34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, -1, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
@@ -436,6 +435,23 @@ def generate_special_texture(blockID, data):
         top = tintTexture(terrain_images[0],(115,175,71))
         img = _build_block(top, terrain_images[3], 2)
         return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 6: # saplings
+        if data == 1: # spruce sapling
+            toptexture = terrain_images[64]
+            sidetexture = terrain_images[64]
+        
+        if data == 2: # birch sapling
+            toptexture = terrain_images[80]
+            sidetexture = terrain_images[80]
+            
+        else: # usual and future saplings
+            toptexture = terrain_images[15]
+            sidetexture = terrain_images[15]
+        
+        img = _build_block(toptexture, sidetexture, blockID)
+        return (img.convert("RGB"),img.split()[3])
 
 
     if blockID == 9: # spring water, flowing water and waterfall water
@@ -1231,15 +1247,16 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # (when adding new blocks here and in generate_special_textures,
 # please, if possible, keep the ascending order of blockid value)
 
-special_blocks = set([ 2,  9, 17, 18, 23, 27, 28, 35, 43, 44, 50, 51, 53,
-                      55, 58, 59, 61, 62, 64, 65, 66, 67, 71, 75, 76, 85,
-                      86, 91, 92])
+special_blocks = set([ 2,  6,  9, 17, 18, 23, 27, 28, 35, 43, 44, 50, 51,
+                      53, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71, 75, 76,
+                      85, 86, 91, 92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
 
 special_map = {}
 
+special_map[6] = range(4)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values.
 special_map[17] = range(4)  # wood: normal, birch and pine
 special_map[23] = range(6)  # dispensers, orientation
