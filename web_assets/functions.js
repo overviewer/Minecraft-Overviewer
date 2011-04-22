@@ -659,7 +659,7 @@ for (idx in mapTypeData) {
         getTileUrl: getTileUrlGenerator(view.path, view.base, imgformat),
         tileSize: new google.maps.Size(config.tileSize, config.tileSize),
         maxZoom:  config.maxZoom,
-        minZoom:  0,
+        minZoom:  config.minZoom,
         isPng:    !(imgformat.match(/^png$/i) == null)
     };
   

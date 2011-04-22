@@ -2,6 +2,7 @@
   var config = {
     tileSize:     384,
     defaultZoom:  2,
+    minZoom:      {minzoom},
     maxZoom:      {maxzoom},
     // center on this point, in world coordinates, ex:
     //center:       [0,0,0],

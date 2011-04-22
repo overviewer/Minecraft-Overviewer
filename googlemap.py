@@ -90,6 +90,8 @@ class MapGen(object):
 
         config = open(configpath, 'r').read()
         config = config.replace(
+                "{minzoom}", str(0))
+        config = config.replace(
                 "{maxzoom}", str(zoomlevel))
         
         config = config.replace("{spawn_coords}",
