@@ -95,11 +95,12 @@ class MapGen(object):
         config = config.replace("{spawn_coords}",
                                 json.dumps(list(self.world.spawn)))
 
-        config = config.replace("{bg_color}", self.bg_color)
+        #config = config.replace("{bg_color}", self.bg_color)
         
         # create generated map type data, from given quadtrees
         maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
                                      'path' : q.tiledir,
+                                     'bg_color': self.bg_color,
                                      'overlay' : 'overlay' in get_render_mode_inheritance(q.rendermode),
                                      'imgformat' : q.imgformat},
                           self.quadtrees)

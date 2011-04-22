@@ -477,7 +477,6 @@ function initialize() {
         },
         mapTypeId: mapTypeIdDefault,
         streetViewControl: false,
-        backgroundColor: config.bg_color,
     };
     map = new google.maps.Map(document.getElementById('mcmap'), mapOptions);
 
@@ -501,9 +500,6 @@ function initialize() {
       map.mapTypes.set('mcmap' + MCMapType[idx].name, MCMapType[idx]);
     }
     
-    // We can now set the map to use the 'coordinate' map type
-    map.setMapTypeId(mapTypeIdDefault);
-
     // initialize the markers and regions
     initMarkers();
     initRegions();
@@ -518,7 +514,17 @@ function initialize() {
     google.maps.event.addListener(map, 'center_changed', function() {
         makeLink();
     });
-
+    google.maps.event.addListener(map, 'maptypeid_changed', function() {
+        var newType = map.getMapTypeId();
+        for(i in mapTypeData) {
+            if( 'mcmap' + mapTypeData[i].label == newType ) {
+                $('#mcmap').css('background-color', mapTypeData[i].bg_color);
+                break;
+            }
+        }
+    });
+    // We can now set the map to use the 'coordinate' map type
+    map.setMapTypeId(mapTypeIdDefault);
 }
 
 
