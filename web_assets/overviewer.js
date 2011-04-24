@@ -172,27 +172,30 @@ var overviewer = {
                 mapcenter = overviewer.util.fromWorldToLatLng(queryParams.x,
                     queryParams.y, queryParams.z);
                 // Add a market indicating the user-supplied position
-                overviewer.collections.markers.push({
+                overviewer.collections.markerDatas.push([{
                     'msg':  'Coordinates ' + queryParams.x + ', ' +
                         queryParams.y + ', ' + queryParams.z,
                     'y':    parseFloat(queryParams.y),
                     'x':    parseFloat(queryParams.x),
                     'z':    parseFloat(queryParams.z),
-                    'type': 'querypos'});
+                    'type': 'querypos'}]);
             } else {
                 mapcenter = new google.maps.LatLng(lat, lng);
             }
             var mapOptions = {
-                zoom: zoom,
-                center: mapcenter,
-                navigationControl: overviewerConfig.map.controls.navigation,
-                scaleControl: false,
-                mapTypeControl: overviewer.collections.mapTypeIds.length > 1,
+                zoom:                   zoom,
+                center:                 mapcenter,
+                panControl:             overviewerConfig.map.controls.pan,
+                scaleControl:           false,
+                mapTypeControl:         overviewer.collections.mapTypeIds.length > 1,
                 mapTypeControlOptions: {
                     mapTypeIds: overviewer.collections.mapTypeIds
                 },
-                mapTypeId: overviewer.util.getDefaultMapTypeId(),
-                streetViewControl: false
+                mapTypeId:              overviewer.util.getDefaultMapTypeId(),
+                streetViewControl:      false,
+                zoomControl:            overviewerConfig.map.controls.zoom,
+                backgroundColor:        overviewer.util.getMapTypeBackgroundColor(
+                    overviewer.util.getDefaultMapTypeId())
             };
             overviewer.map = new google.maps.Map(document.getElementById(
                 overviewerConfig.CONST.mapDivId), mapOptions);
@@ -230,15 +233,9 @@ var overviewer = {
                 overviewer.util.setViewUrl();
             });
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
-                var newType = overviewer.map.getMapTypeId();
-                for(i in overviewerConfig.mapTypes) {
-                    if( overviewerConfig.CONST.mapDivId +
-                            overviewerConfig.mapTypes[i].label == newType ) {
-                        $('#'+overviewerConfig.CONST.mapDivId).css(
-                            'background-color', overviewerConfig.mapTypes[i].bg_color);
-                        break;
-                    }
-                }
+                $('#'+overviewerConfig.CONST.mapDivId).css(
+                    'background-color', overviewer.util.getMapTypeBackgroundColor(
+                        overviewer.map.getMapTypeId()));
             });
             // We can now set the map to use the 'coordinate' map type
             overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
@@ -409,6 +406,22 @@ var overviewer = {
                             overviewer.util.createRegionInfoWindow(shape);
                         }
                     }
+                }
+            }
+        },
+        /**
+         * Change the map's div's background color according to the mapType's bg_color setting
+         *
+         * @param string mapTypeId
+         * @return string
+         */
+        'getMapTypeBackgroundColor': function(mapTypeId) {
+            for(i in overviewerConfig.mapTypes) {
+                if( overviewerConfig.CONST.mapDivId +
+                        overviewerConfig.mapTypes[i].label == mapTypeId ) {
+                    overviewer.util.debug('Found background color for: ' +
+                        overviewerConfig.mapTypes[i].bg_color);
+                    return overviewerConfig.mapTypes[i].bg_color;
                 }
             }
         },

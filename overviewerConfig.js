@@ -30,10 +30,13 @@ var overviewerConfig = {
          */
         'controls': {
             /**
-             * Navigation controls are the pan and zoom typically on the upper
-             * left.
+             * Pan control is the hand with the arrows around it in the upper left.
              */
-            'navigation':   true
+            'pan':      true,
+            /**
+             * Zoom control is the zoom slider bar in the upper left.
+             */
+            'zoom':     true
         },
         /**
          * The zoom level when the page is loaded without a specific zoom setting
