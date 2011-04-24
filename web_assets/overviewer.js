@@ -1,16 +1,56 @@
 var overviewer = {
+    /**
+     * This holds the map, probably the most important var in this file
+     */
     'map': null,
+    /**
+     * These are collections of data used in various places
+     */
     'collections': {
+        /**
+         * A list of lists of raw marker data objects, this will allow for an
+         * arbitrary number of marker data sources. This replaces the old
+         * markerData var from markers.js. Now you can add markers by including
+         * a file with:
+         * overviewer.collections.markerDatas.push([<your list of markers>]);
+         */
         'markerDatas':  [],
+        /**
+         * The actual Marker objects are stored here.
+         */
         'markers':      {},
+        /**
+         * Same as markerDatas, list of lists of raw region objects.
+         */
         'regionDatas':  [],
+        /**
+         * The actual Region objects.
+         */
         'regions':      {},
+        /**
+         * Overlay mapTypes (like Spawn) will go in here.
+         */
         'overlays':     [],
+        /**
+         * MapTypes that aren't overlays will end up in here.
+         */
         'mapTypes':     {},
+        /**
+         * The mapType names are in here.
+         */
         'mapTypeIds':   [],
+        /**
+         * This is the current infoWindow object, we keep track of it so that
+         * there is only one open at a time.
+         */
         'infoWindow':   null
     },
     'util': {
+        /**
+         * General initialization function, called when the page is loaded.
+         * Probably shouldn't need changing unless some very different kind of new
+         * feature gets added.
+         */
         'initialize': function() {
             overviewer.util.initializeClassPrototypes();
             overviewer.util.initializeMapTypes();
@@ -19,6 +59,11 @@ var overviewer = {
             overviewer.util.initializeRegions();
             overviewer.util.createMapControls();
         },
+        /**
+         * This adds some methods to these classes because Javascript is stupid
+         * and this seems like the best way to avoid re-creating the same methods
+         * on each object at object creation time.
+         */
         'initializeClassPrototypes': function() {
             overviewer.classes.MapProjection.prototype.fromLatLngToPoint = function(latLng) {
                 var x = latLng.lng() * overviewerConfig.CONST.tileSize;
@@ -34,9 +79,14 @@ var overviewer = {
 
             overviewer.classes.CoordMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
                 var div = ownerDocument.createElement('DIV');
-                div.innerHTML = '(' + coord.x + ', ' + coord.y + ', ' + zoom + ')';
-                div.innerHTML += '<br />';
+                div.innerHTML = '(' + coord.x + ', ' + coord.y + ', ' + zoom +
+                    ')' + '<br />';
+                //TODO: figure out how to get the current mapType, I think this
+                //will add the maptile url to the grid thing once it works
+
                 //div.innerHTML += overviewer.collections.mapTypes[0].getTileUrl(coord, zoom);
+                
+                //this should probably just have a css class
                 div.style.width = this.tileSize.width + 'px';
                 div.style.height = this.tileSize.height + 'px';
                 div.style.fontSize = '10px';
@@ -47,8 +97,8 @@ var overviewer = {
             };
         },
         /**
-         * I think this was old code that was replaced by stuff that is now
-         * in initializeMap()
+         * Setup the varous mapTypes before we actually create the map. This used
+         * to be a bunch of crap down at the bottom of functions.js
          */
         'initializeMapTypes': function() {
             var mapOptions = {};
@@ -81,6 +131,12 @@ var overviewer = {
                 }
             }
         },
+        /**
+         * This is where the magic happens. We setup the map with all it's
+         * options. The query string is also parsed here so we can know if
+         * we should be looking at a particular point on the map or just use
+         * the default view.
+         */
         'initializeMap': function() {
             var defaultCenter = overviewer.util.fromWorldToLatLng(
                 overviewerConfig.map.center[0], overviewerConfig.map.center[1],
@@ -103,7 +159,7 @@ var overviewer = {
                     zoom = overviewerConfig.map.minZoom;
                 } else {
                     zoom = parseInt(queryParams.zoom);
-                    if (zoom < 0 && zoom + overvierConfig.map.maxZoom >= 0) {
+                    if (zoom < 0 && zoom + overviewerConfig.map.maxZoom >= 0) {
                         //if zoom is negative, try to treat as "zoom out from max zoom"
                         zoom += overviewerConfig.map.maxZoom;
                     } else {
@@ -187,6 +243,12 @@ var overviewer = {
             // We can now set the map to use the 'coordinate' map type
             overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
         },
+        /**
+         * Read through overviewer.collections.markerDatas and create Marker
+         * objects and stick them in overviewer.collections.markers . This
+         * should probably be done differently at some point so that we can
+         * support markers that change position more easily.
+         */
         'initializeMarkers': function() {
             //first, give all collections an empty array to work with
             for (i in overviewerConfig.objectGroups.signs) {
@@ -283,6 +345,9 @@ var overviewer = {
                 }
             }
         },
+        /**
+         * Same as initializeMarkers() for the most part.
+         */
         'initializeRegions': function() {
             for (i in overviewerConfig.objectGroups.regions) {
                 overviewer.collections.regions[overviewerConfig.objectGroups.regions[i].label] = [];
@@ -347,11 +412,22 @@ var overviewer = {
                 }
             }
         },
+        /**
+         * Gee, I wonder what this does.
+         * 
+         * @param string msg
+         */
         'debug': function(msg) {
             if (overviewerConfig.map.debug) {
                 console.log(msg);
             }
         },
+        /**
+         * Simple helper function to split the query string into key/value
+         * pairs. Doesn't do any type conversion but both are lowercase'd.
+         * 
+         * @return Object
+         */
         'parseQueryString': function() {
             var results = {};
             var queryString = location.search.substring(1);
@@ -365,6 +441,10 @@ var overviewer = {
             }
             return results;
         },
+        /**
+         * Set the link (at the bottom of the screen) to the current view.
+         * TODO: make this preserve the mapTypeId as well
+         */
         'setViewUrl': function() {
             var displayZoom = overviewer.map.getZoom();
             if (displayZoom == overviewerConfig.map.maxZoom) {
@@ -387,6 +467,18 @@ var overviewer = {
         'getDefaultMapTypeId': function() {
             return overviewer.collections.mapTypeIds[0];
         },
+        /**
+         * helper to get map LatLng from world coordinates takes arguments in
+         * X, Y, Z order (arguments are *out of order*, because within the
+         * function we use the axes like the rest of Minecraft Overviewer --
+         * with the Z and Y flipped from normal minecraft usage.)
+         * 
+         * @param int x
+         * @param int z
+         * @param int y
+         * 
+         * @return google.maps.LatLng
+         */
         'fromWorldToLatLng': function(x, z, y) {
             // the width and height of all the highest-zoom tiles combined,
             // inverted
@@ -423,6 +515,16 @@ var overviewer = {
 
             return new google.maps.LatLng(lat, lng);
         },
+        /**
+         * The opposite of fromWorldToLatLng
+         * NOTE: X, Y and Z in this function are Minecraft world definitions
+         * (that is, X is horizontal, Y is altitude and Z is vertical).
+         * 
+         * @param float lat
+         * @param float lng
+         * 
+         * @return Array
+         */
         'fromLatLngToWorld': function(lat, lng) {
             // Initialize world x/y/z object to be returned
             var point = Array();
@@ -456,6 +558,10 @@ var overviewer = {
 
             return point;
         },
+        /**
+         * Create and draw the various map controls and other related things
+         * like the compass, current view link, etc.
+         */
         'createMapControls': function() {
             // viewstate link (little link to where you're looking at the map,
             // normally bottom left)
@@ -559,6 +665,12 @@ var overviewer = {
                 overviewer.util.createDropDown('Overlays', items);
             }
         },
+        /**
+         * Reusable method for creating drop-down menus
+         * 
+         * @param string title
+         * @param array items
+         */
         'createDropDown': function(title, items) {
             var control = document.createElement('DIV');
             // let's let a style sheet do most of the styling here
@@ -619,6 +731,13 @@ var overviewer = {
                 itemDiv.appendChild(textNode);
             }
         },
+        /**
+         * Create the pop-up infobox for when you click on a region, this can't
+         * be done in-line because of stupid Javascript scoping problems with
+         * closures or something.
+         * 
+         * @param google.maps.Polygon|google.maps.Polyline shape
+         */
         'createRegionInfoWindow': function(shape) {
             var infowindow = new google.maps.InfoWindow();
             google.maps.event.addListener(shape, 'click', function(event, i) {
@@ -635,6 +754,11 @@ var overviewer = {
                 overviewer.collections.infoWindow = infowindow;
             });
         },
+        /**
+         * Same as createRegionInfoWindow()
+         * 
+         * @param google.maps.Marker marker
+         */
         'createMarkerInfoWindow': function(marker) {
             var windowContent = '<div class="infoWindow"><img src="' + marker.icon +
                 '"/><p>' + marker.title.replace(/\n/g,'<br/>') + '</p></div>';
@@ -650,7 +774,16 @@ var overviewer = {
             });
         }
     },
+    /**
+     * The various classes needed in this file.
+     */
     'classes': {
+        /**
+         * This is the button that centers the map on spawn. Not sure why we
+         * need a separate class for this and not some of the other controls.
+         * 
+         * @param documentElement controlDiv
+         */
         'HomeControl': function(controlDiv) {
             controlDiv.style.padding = '5px';
             // Set CSS for the control border
@@ -674,15 +807,43 @@ var overviewer = {
                         overviewerConfig.map.center[2]));
                 });
         },
+        /**
+         * Our custom projection maps Latitude to Y, and Longitude to X as
+         * normal, but it maps the range [0.0, 1.0] to [0, tileSize] in both
+         * directions so it is easier to position markers, etc. based on their
+         * position (find their position in the lowest-zoom image, and divide
+         * by tileSize)
+         */
         'MapProjection' : function() {
             this.inverseTileSize = 1.0 / overviewerConfig.CONST.tileSize;
         },
-        //Looks like this is only used for debugging
+        /**
+         * This is a mapType used only for debugging, to draw a grid on the screen
+         * showing the tile co-ordinates and tile path. Currently the tile path
+         * part does not work.
+         * 
+         * @param google.maps.Size tileSize
+         */
         'CoordMapType': function(tileSize) {
             this.tileSize = tileSize;
         }
     },
+    /**
+     * Stuff that we give to the google maps code instead of using ourselves
+     * goes in here.
+     * 
+     * Also, why do I keep writing these comments as if I'm multiple people? I
+     * should probably stop that.
+     */
     'gmap': {
+        /**
+         * Generate a function to get the path to a tile at a particular location
+         * and zoom level.
+         * 
+         * @param string path
+         * @param string pathBase
+         * @param string pathExt
+         */
         'getTileUrlGenerator': function(path, pathBase, pathExt) {
             return function(tile, zoom) {
                 var url = path;

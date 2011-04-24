@@ -86,7 +86,7 @@ class MapGen(object):
         """Writes out config.js, marker.js, and region.js
         Copies web assets into the destdir"""
         zoomlevel = self.p
-        configpath = os.path.join(util.get_program_path(), "config.js")
+        configpath = os.path.join(util.get_program_path(), "overviewerConfig.js")
 
         config = open(configpath, 'r').read()
         config = config.replace(
@@ -108,7 +108,7 @@ class MapGen(object):
                           self.quadtrees)
         config = config.replace("{maptypedata}", json.dumps(maptypedata))
         
-        with open(os.path.join(self.destdir, "config.js"), 'w') as output:
+        with open(os.path.join(self.destdir, "overviewerConfig.js"), 'w') as output:
             output.write(config)
 
         bgcolor = (int(self.bg_color[1:3],16), int(self.bg_color[3:5],16), int(self.bg_color[5:7],16), 0)
@@ -151,13 +151,13 @@ class MapGen(object):
 
         # write out the default marker table
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
-            output.write("var markerData=[\n")
+            output.write("overviewer.collections.markerDatas.push([\n")
             for marker in self.world.POI:
                 output.write(json.dumps(marker))
                 if marker != self.world.POI[-1]:
                     output.write(",")
                 output.write("\n")
-            output.write("]\n")
+            output.write("]);\n")
         
         # save persistent data
         self.world.persistentData['POI'] = self.world.POI
@@ -166,11 +166,11 @@ class MapGen(object):
 
         # write out the default (empty, but documented) region table
         with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
-            output.write('var regionData=[\n')
+            output.write('overviewer.collections.regionDatas.push([\n')
             output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
             output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
             output.write('  //   {"x": 0, "y": 10, "z": 0},\n')
             output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
             output.write('  // ]},\n')
-            output.write('];')
+            output.write(']);')
         
