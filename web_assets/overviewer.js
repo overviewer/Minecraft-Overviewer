@@ -7,6 +7,7 @@ var overviewer = {
         'regions':      {},
         'overlays':     [],
         'mapTypes':     {},
+        'mapTypeIds':   [],
         'infoWindow':   null
     },
     'util': {
@@ -35,10 +36,10 @@ var overviewer = {
                 var div = ownerDocument.createElement('DIV');
                 div.innerHTML = '(' + coord.x + ', ' + coord.y + ', ' + zoom + ')';
                 div.innerHTML += '<br />';
-                div.innerHTML += overviewer.collections.mapTypes[0].getTileUrl(coord, zoom);
+                //div.innerHTML += overviewer.collections.mapTypes[0].getTileUrl(coord, zoom);
                 div.style.width = this.tileSize.width + 'px';
                 div.style.height = this.tileSize.height + 'px';
-                div.style.fontSize = '10';
+                div.style.fontSize = '10px';
                 div.style.borderStyle = 'solid';
                 div.style.borderWidth = '1px';
                 div.style.borderColor = '#AAAAAA';
@@ -80,7 +81,7 @@ var overviewer = {
                 }
             }
         },
-        'initilizeMap': function() {
+        'initializeMap': function() {
             var defaultCenter = overviewer.util.fromWorldToLatLng(
                 overviewerConfig.map.center[0], overviewerConfig.map.center[1],
                 overviewerConfig.map.center[2]);
@@ -142,7 +143,7 @@ var overviewer = {
 
             if (overviewerConfig.map.debug) {
                 overviewer.map.overlayMapTypes.insertAt(0,
-                    new CoordMapType(new google.maps.Size(
+                    new overviewer.classes.CoordMapType(new google.maps.Size(
                         overviewerConfig.CONST.tileSize,
                         overviewerConfig.CONST.tileSize)));
                 google.maps.event.addListener(overviewer.map, 'click', function(event) {
@@ -150,8 +151,10 @@ var overviewer = {
                         ', ' + event.latLng.lng() + ')');
                     var pnt = overviewer.map.getProjection().fromLatLngToPoint(event.latLng);
                     overviewer.util.debug('point: ' + pnt);
-                    var pxx = pnt.x * config.tileSize * Math.pow(2, config.maxZoom);
-                    var pxy = pnt.y * config.tileSize * Math.pow(2, config.maxZoom);
+                    var pxx = pnt.x * overviewerConfig.CONST.tileSize *
+                        Math.pow(2, overviewerConfig.map.maxZoom);
+                    var pxy = pnt.y * overviewerConfig.CONST.tileSize *
+                        Math.pow(2, overviewerConfig.map.maxZoom);
                     overviewer.util.debug('pixel: (' + pxx + ', ' + pxy + ')');
                 });
             }
@@ -186,9 +189,11 @@ var overviewer = {
         },
         'initializeMarkers': function() {
             //first, give all collections an empty array to work with
-            for (i in overviewerConfig.objectGroups.markers) {
+            for (i in overviewerConfig.objectGroups.signs) {
+                overviewer.util.debug('Found sign group: ' +
+                    overviewerConfig.objectGroups.signs[i].label);
                 overviewer.collections.markers[
-                    overviewerConfig.objectGroups.markers[i].label] = [];
+                    overviewerConfig.objectGroups.signs[i].label] = [];
             }
             for (i in overviewer.collections.markerDatas) {
                 var markerData = overviewer.collections.markerDatas[i];
@@ -236,7 +241,6 @@ var overviewer = {
                             if (signGroup.icon) {
                                 iconURL = signGroup.icon;
                             }
-                            var converted = fromWorldToLatLng(item.x, item.y, item.z);
                             var marker = new google.maps.Marker({
                                 'position': overviewer.util.fromWorldToLatLng(item.x,
                                     item.y, item.z),
@@ -245,6 +249,7 @@ var overviewer = {
                                 'icon':     iconURL,
                                 'visible':  false
                             });
+                            overviewer.util.debug(label);
                             overviewer.collections.markers[label].push(marker);
                             if (item.type == 'sign') {
                                 overviewer.util.createMarkerInfoWindow(marker);
@@ -258,7 +263,7 @@ var overviewer = {
                         if (item.type == 'sign') {
                             iconURL = overviewerConfig.CONST.image.signMarker;
                         }
-                        var marker = new google.maps.Marker({position: converted,
+                        var marker = new google.maps.Marker({
                             'position': overviewer.util.fromWorldToLatLng(item.x,
                                 item.y, item.z),
                             'map':      overviewer.map,
@@ -457,7 +462,7 @@ var overviewer = {
             var viewStateDiv = document.createElement('DIV');
             viewStateDiv.id='link';
             // add it to the map, bottom left.
-            map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(viewStateDiv);
+            overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(viewStateDiv);
 
             // compass rose, in the top right corner
             var compassDiv = document.createElement('DIV');
@@ -467,7 +472,7 @@ var overviewer = {
             compassDiv.appendChild(compassImg);
             compassDiv.index = 0;
             // add it to the map, top right.
-            map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
+            overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
 
             // Spawn button
             var homeControlDiv = document.createElement('DIV');
@@ -493,7 +498,7 @@ var overviewer = {
                         'icon': iconURL,
                         'action': function(n, item, checked) {
                             jQuery.each(overviewer.collections.markers[item.label],
-                                        function(i,elem) {
+                                        function(i, elem) {
                                             elem.setVisible(checked);
                                         }
                             );
@@ -514,14 +519,13 @@ var overviewer = {
                         'label': regionGroup.label, 
                         'checked': regionGroup.checked,
                         'action': function(n, item, checked) {
-                                jQuery.each(overviewer.collections.regions[item.label],
-                                    function(i,elem) {
-                                        // Thanks to LeastWeasel for this line!
-                                        elem.setMap(checked ? overviewer.map : null);
-                                    }
-                                );
-                            }
-                        });
+                            jQuery.each(overviewer.collections.regions[item.label],
+                                function(i,elem) {
+                                    // Thanks to LeastWeasel for this line!
+                                    elem.setMap(checked ? overviewer.map : null);
+                                });
+                        }
+                    });
                 }
                 overviewer.util.createDropDown('Regions', items);
             }
@@ -536,17 +540,19 @@ var overviewer = {
                         'checked':  false,
                         'overlay':  overlay,
                         'action':   function(i, item, checked) {
-                                if (checked) {
-                                    overviewer.map.overlayMapTypes.push(item.overlay);
-                                } else {
-                                    var idx_to_delete = -1;
-                                    overviewer.map.overlayMapTypes.forEach(function(e, j) {
-                                            if (e == item.overlay) { idx_to_delete = j; }
-                                        });
-                                    if (idx_to_delete >= 0) {
-                                        overviewer.map.overlayMapTypes.removeAt(idx_to_delete);
+                            if (checked) {
+                                overviewer.map.overlayMapTypes.push(item.overlay);
+                            } else {
+                                var idx_to_delete = -1;
+                                overviewer.map.overlayMapTypes.forEach(function(e, j) {
+                                    if (e == item.overlay) {
+                                        idx_to_delete = j;
                                     }
+                                });
+                                if (idx_to_delete >= 0) {
+                                    overviewer.map.overlayMapTypes.removeAt(idx_to_delete);
                                 }
+                            }
                         }
                     });
                 }
@@ -662,7 +668,7 @@ var overviewer = {
             // Setup the click event listeners: simply set the map to map center
             // as definned below
             google.maps.event.addDomListener(control, 'click', function() {
-                    overviewer.map.panTo(fromWorldToLatLng(
+                    overviewer.map.panTo(overviewer.util.fromWorldToLatLng(
                         overviewerConfig.map.center[0],
                         overviewerConfig.map.center[1],
                         overviewerConfig.map.center[2]));

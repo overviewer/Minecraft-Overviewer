@@ -32,7 +32,15 @@ var overviewerConfig = {
                 }
             }
         ],
-        'regions': []
+        'regions': [
+            {
+                'label':    'All',
+                'clickable':true,
+                'match':    function(region) {
+                    return true;
+                }
+            }
+        ]
     },
     'mapTypes':         {maptypedata}
 };
