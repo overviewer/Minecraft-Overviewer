@@ -36,7 +36,23 @@ var overviewerConfig = {
             /**
              * Zoom control is the zoom slider bar in the upper left.
              */
-            'zoom':     true
+            'zoom':     true,
+            /**
+             * Spawn control is the "Spawn" button that centers the map on spawn.
+             */
+            'spawn':    true,
+            /**
+             * The compass in the upper right.
+             */
+            'compass':  true,
+            /**
+             * The mapType control is the slider for selecting different map types.
+             */
+            'mapType':  true,
+            /**
+             * The small box at the bottom that displays the link to the current map view.
+             */
+            'link':     true
         },
         /**
          * The zoom level when the page is loaded without a specific zoom setting

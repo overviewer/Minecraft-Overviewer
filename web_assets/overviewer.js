@@ -187,7 +187,8 @@ var overviewer = {
                 center:                 mapcenter,
                 panControl:             overviewerConfig.map.controls.pan,
                 scaleControl:           false,
-                mapTypeControl:         overviewer.collections.mapTypeIds.length > 1,
+                mapTypeControl:         overviewerConfig.map.controls.mapType &&
+                    overviewer.collections.mapTypeIds.length > 1,
                 mapTypeControlOptions: {
                     mapTypeIds: overviewer.collections.mapTypeIds
                 },
@@ -226,12 +227,6 @@ var overviewer = {
             }
 
             // Make the link again whenever the map changes
-            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
-                overviewer.util.setViewUrl();
-            });
-            google.maps.event.addListener(overviewer.map, 'center_changed', function() {
-                overviewer.util.setViewUrl();
-            });
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
                 $('#'+overviewerConfig.CONST.mapDivId).css(
                     'background-color', overviewer.util.getMapTypeBackgroundColor(
@@ -581,7 +576,15 @@ var overviewer = {
             var viewStateDiv = document.createElement('DIV');
             viewStateDiv.id='link';
             // add it to the map, bottom left.
-            overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(viewStateDiv);
+            if (overviewerConfig.map.controls.link) {
+                google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
+                    overviewer.util.setViewUrl();
+                });
+                google.maps.event.addListener(overviewer.map, 'center_changed', function() {
+                    overviewer.util.setViewUrl();
+                });
+                overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(viewStateDiv);
+            }
 
             // compass rose, in the top right corner
             var compassDiv = document.createElement('DIV');
@@ -591,14 +594,18 @@ var overviewer = {
             compassDiv.appendChild(compassImg);
             compassDiv.index = 0;
             // add it to the map, top right.
-            overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
+            if (overviewerConfig.map.controls.compass) {
+                overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
+            }
 
             // Spawn button
             var homeControlDiv = document.createElement('DIV');
             var homeControl = new overviewer.classes.HomeControl(homeControlDiv);  
             homeControlDiv.id = 'customControl';
             homeControlDiv.index = 1;
-            overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
+            if (overviewerConfig.map.controls.spawn) {
+                overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
+            }
 
             // only need to create the control if there are items in the list.
             // as defined in config.js
