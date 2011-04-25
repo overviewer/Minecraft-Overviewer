@@ -115,10 +115,10 @@ class QuadtreeGen(object):
         returns -1 if it couldn't be detected, file not found, or nothing in
         config.js matched
         """
-        indexfile = os.path.join(self.destdir, "config.js")
+        indexfile = os.path.join(self.destdir, "overviewerConfig.js")
         if not os.path.exists(indexfile):
             return -1
-        matcher = re.compile(r"maxZoom:\s*(\d+)")
+        matcher = re.compile(r"maxZoom.*:\s*(\d+)")
         p = -1
         for line in open(indexfile, "r"):
             res = matcher.search(line)
