@@ -1,6 +1,18 @@
-html { height: 100% }
-body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
-#mcmap { height: 100% }
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    background-color: #000;
+}
+
+#mcmap {
+    width: 100%;
+    height: 100%;
+}
 
 .infoWindow {
     height: 100px;
