@@ -432,8 +432,9 @@ def generate_special_texture(blockID, data):
     # all need to behandled here (and in chunkpy)
     
     if blockID == 2: # grass
-        top = tintTexture(terrain_images[0],(115,175,71))
-        img = _build_block(top, terrain_images[3], 2)
+        img = _build_block(terrain_images[0], terrain_images[3], 2)
+        colored = tintTexture(biome_grass_texture, (115, 175, 71))
+        composite.alpha_over(img, colored, (0, 0), colored)
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1179,7 +1180,7 @@ def tintTexture(im, c):
     return i
 
 # generate biome (still grayscale) leaf, grass textures
-biome_grass_texture = _build_block(terrain_images[0], terrain_images[3], 2)
+biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
 biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
 
 

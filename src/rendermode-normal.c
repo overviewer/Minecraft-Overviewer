@@ -120,17 +120,8 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     RenderModeNormal *self = (RenderModeNormal *)data;
     
     /* first, check to see if we should use biome-compatible src, mask */
-    if (self->biome_data) {
-        switch (state->block) {
-        case 2:
-            src = mask = self->grass_texture;
-            break;
-        case 18:
-            src = mask = self->leaf_texture;
-            break;
-        default:
-            break;
-        };
+    if (self->biome_data && state->block == 18) {
+        src = mask = self->leaf_texture;
     }
     
     /* draw the block! */
@@ -149,7 +140,8 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         case 2:
             /* grass */
             color = PySequence_GetItem(self->grasscolor, index);
-            facemask = self->facemask_top;
+            facemask = self->grass_texture;
+            alpha_over(state->img, self->grass_texture, self->grass_texture, state->imgx, state->imgy, 0, 0);
             break;
         case 18:
             /* leaves */
