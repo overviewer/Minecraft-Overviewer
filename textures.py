@@ -123,12 +123,12 @@ def transform_image(img, blockID=None):
 
     if blockID in (81,92): # cacti and cake
         # Resize to 15x15, since the cactus and the cake textures are a little smaller than the other textures
-        img = img.resize((15, 15), Image.BILINEAR)
+        img = img.resize((15, 15), Image.ANTIALIAS)
 
     else:
         # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
         # even number that can be split in half twice
-        img = img.resize((17, 17), Image.BILINEAR)
+        img = img.resize((17, 17), Image.ANTIALIAS)
 
     # Build the Affine transformation matrix for this perspective
     transform = numpy.matrix(numpy.identity(3))
@@ -168,7 +168,7 @@ def transform_image_side(img, blockID=None):
         img = n
 
     # Size of the cube side before shear
-    img = img.resize((12,12))
+    img = img.resize((12,12), Image.ANTIALIAS)
 
     # Apply shear
     transform = numpy.matrix(numpy.identity(3))
@@ -184,7 +184,7 @@ def transform_image_slope(img, blockID=None):
     in the -y direction (reflect for +x direction). Used for minetracks"""
 
     # Take the same size as trasform_image_side
-    img = img.resize((12,12))
+    img = img.resize((12,12), Image.ANTIALIAS)
 
     # Apply shear
     transform = numpy.matrix(numpy.identity(3))
@@ -1066,9 +1066,9 @@ def generate_special_texture(blockID, data):
 
         # Compose the fence big stick
         fence_big = Image.new("RGBA", (24,24), (38,92,255,0))
-        composite.alpha_over(fence_big,fence_side, (4,4),fence_side)
-        composite.alpha_over(fence_big,fence_other_side, (8,4),fence_other_side)
-        composite.alpha_over(fence_big,fence_top, (-1,1),fence_top)
+        composite.alpha_over(fence_big,fence_side, (5,4),fence_side)
+        composite.alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
+        composite.alpha_over(fence_big,fence_top, (0,1),fence_top)
         
         # Now render the small sticks.
         # Create needed images
