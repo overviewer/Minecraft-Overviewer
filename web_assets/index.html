@@ -2,18 +2,16 @@
 <html>
 <head>
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-<link rel="stylesheet" href="style.css" type="text/css" />
-<script type="text/javascript" src="config.js"></script>
-<script type="text/javascript"
-    src="http://maps.google.com/maps/api/js?sensor=false">
-</script>
+<link rel="stylesheet" href="overviewer.css" type="text/css" />
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
-<script type="text/javascript" src="functions.js"></script>
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script type="text/javascript" src="overviewerConfig.js"></script>
+<script type="text/javascript" src="overviewer.js"></script>
 <script type="text/javascript" src="markers.js"></script>
 <script type="text/javascript" src="regions.js"></script>
 </head>
 <!-- Generated at: {time} -->
-<body onload="initialize()">
-  <div id="mcmap" style="width:100%; height:100%"></div>
+<body onload="overviewer.util.initialize()">
+  <div id="mcmap"></div>
 </body>
 </html>

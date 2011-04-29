@@ -17,7 +17,6 @@ import multiprocessing
 import itertools
 import os
 import os.path
-import hashlib
 import functools
 import re
 import shutil
@@ -27,10 +26,15 @@ import logging
 import util
 import cPickle
 import stat
+import errno 
+import time
 from time import gmtime, strftime, sleep
 
 from PIL import Image
 
+import nbt
+import chunk
+from c_overviewer import get_render_mode_inheritance
 from optimizeimages import optimize_image
 import composite
 
@@ -40,48 +44,12 @@ This module has routines related to generating a quadtree of tiles
 
 """
 
-def mirror_dir(src, dst, entities=None):
-    '''copies all of the entities from src to dst'''
-    if not os.path.exists(dst):
-        os.mkdir(dst)
-    if entities and type(entities) != list: raise Exception("Expected a list, got a %r instead" % type(entities))
-
-    for entry in os.listdir(src):
-        if entities and entry not in entities: continue
-        if os.path.isdir(os.path.join(src,entry)):
-            mirror_dir(os.path.join(src, entry), os.path.join(dst, entry))
-        elif os.path.isfile(os.path.join(src,entry)):
-            try:
-                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
-            except IOError:
-                # maybe permission problems?
-                os.chmod(os.path.join(src, entry), stat.S_IRUSR)
-                os.chmod(os.path.join(dst, entry), stat.S_IWUSR)
-                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
-                # if this stills throws an error, let it propagate up
-
 def iterate_base4(d):
     """Iterates over a base 4 number with d digits"""
     return itertools.product(xrange(4), repeat=d)
-
-def catch_keyboardinterrupt(func):
-    """Decorator that catches a keyboardinterrupt and raises a real exception
-    so that multiprocessing will propagate it properly"""
-    @functools.wraps(func)
-    def newfunc(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except KeyboardInterrupt:
-            logging.error("Ctrl-C caught!")
-            raise Exception("Exiting")
-        except:
-            import traceback
-            traceback.print_exc()
-            raise
-    return newfunc
-
+   
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, imgformat=None, optimizeimg=None, web_assets_hook=None):
+    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, imgformat=None, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -94,12 +62,20 @@ class QuadtreeGen(object):
         assert(imgformat)
         self.imgformat = imgformat
         self.optimizeimg = optimizeimg
-        self.web_assets_hook = web_assets_hook
+        self.bgcolor = bgcolor
+        self.rendermode = rendermode
+        
+        # force png renderformat if we're using an overlay mode
+        if 'overlay' in get_render_mode_inheritance(rendermode):
+            self.imgformat = "png"
 
         # Make the destination dir
         if not os.path.exists(destdir):
-            os.mkdir(destdir)
-
+            os.makedirs(os.path.abspath(destdir))
+        if tiledir is None:
+            tiledir = rendermode
+        self.tiledir = tiledir        
+        
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
             for p in xrange(15):
@@ -131,90 +107,7 @@ class QuadtreeGen(object):
 
         self.world = worldobj
         self.destdir = destdir
-
-    def print_statusline(self, complete, total, level, unconditional=False):
-        if unconditional:
-            pass
-        elif complete < 100:
-            if not complete % 25 == 0:
-                return
-        elif complete < 1000:
-            if not complete % 100 == 0:
-                return
-        else:
-            if not complete % 1000 == 0:
-                return
-        logging.info("{0}/{1} tiles complete on level {2}/{3}".format(
-                complete, total, level, self.p))
-
-    def write_html(self, skipjs=False):
-        """Writes out config.js, marker.js, and region.js
-        Copies web assets into the destdir"""
-        zoomlevel = self.p
-        imgformat = self.imgformat
-        configpath = os.path.join(util.get_program_path(), "config.js")
-
-        config = open(configpath, 'r').read()
-        config = config.replace(
-                "{maxzoom}", str(zoomlevel))
-        config = config.replace(
-                "{imgformat}", str(imgformat))
-                
-        with open(os.path.join(self.destdir, "config.js"), 'w') as output:
-            output.write(config)
-
-        # Write a blank image
-        blank = Image.new("RGBA", (1,1))
-        tileDir = os.path.join(self.destdir, "tiles")
-        if not os.path.exists(tileDir): os.mkdir(tileDir)
-        blank.save(os.path.join(tileDir, "blank."+self.imgformat))
-
-        # copy web assets into destdir:
-        mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)
-
-        # Add time in index.html
-        indexpath = os.path.join(self.destdir, "index.html")
-
-        index = open(indexpath, 'r').read()
-        index = index.replace(
-                "{time}", str(strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())))
-
-        with open(os.path.join(self.destdir, "index.html"), 'w') as output:
-            output.write(index)
-
-        if skipjs:
-            if self.web_assets_hook:
-                self.web_assets_hook(self)
-            return
-
-        # since we will only discover PointsOfInterest in chunks that need to be 
-        # [re]rendered, POIs like signs in unchanged chunks will not be listed
-        # in self.world.POI.  To make sure we don't remove these from markers.js
-        # we need to merge self.world.POI with the persistant data in world.PersistentData
-
-        self.world.POI += filter(lambda x: x['type'] != 'spawn', self.world.persistentData['POI'])
-
-        # write out the default marker table
-        with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
-            output.write("var markerData=%s" % json.dumps(self.world.POI))
-        
-        # save persistent data
-        self.world.persistentData['POI'] = self.world.POI
-        with open(self.world.pickleFile,"wb") as f:
-            cPickle.dump(self.world.persistentData,f)
-
-        # write out the default (empty, but documented) region table
-        with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
-            output.write('var regionData=[\n')
-            output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
-            output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
-            output.write('  //   {"x": 0, "y": 10, "z": 0},\n')
-            output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
-            output.write('  // ]},\n')
-            output.write('];')
-        
-        if self.web_assets_hook:
-            self.web_assets_hook(self)
+        self.full_tiledir = os.path.join(destdir, tiledir)
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
@@ -222,10 +115,10 @@ class QuadtreeGen(object):
         returns -1 if it couldn't be detected, file not found, or nothing in
         config.js matched
         """
-        indexfile = os.path.join(self.destdir, "config.js")
+        indexfile = os.path.join(self.destdir, "overviewerConfig.js")
         if not os.path.exists(indexfile):
             return -1
-        matcher = re.compile(r"maxZoom:\s*(\d+)")
+        matcher = re.compile(r"maxZoom.*:\s*(\d+)")
         p = -1
         for line in open(indexfile, "r"):
             res = matcher.search(line)
@@ -236,7 +129,7 @@ class QuadtreeGen(object):
 
     def _increase_depth(self):
         """Moves existing tiles into place for a larger tree"""
-        getpath = functools.partial(os.path.join, self.destdir, "tiles")
+        getpath = functools.partial(os.path.join, self.destdir, self.tiledir)
 
         # At top level of the tree:
         # quadrant 0 is now 0/3
@@ -250,8 +143,8 @@ class QuadtreeGen(object):
             newdir = "new" + str(dirnum)
             newdirpath = getpath(newdir)
 
-            files = [str(dirnum)+"."+self.imgformat, str(dirnum)+".hash", str(dirnum)]
-            newfiles = [str(newnum)+"."+self.imgformat, str(newnum)+".hash", str(newnum)]
+            files = [str(dirnum)+"."+self.imgformat, str(dirnum)]
+            newfiles = [str(newnum)+"."+self.imgformat, str(newnum)]
 
             os.mkdir(newdirpath)
             for f, newf in zip(files, newfiles):
@@ -263,7 +156,7 @@ class QuadtreeGen(object):
     def _decrease_depth(self):
         """If the map size decreases, or perhaps the user has a depth override
         in effect, re-arrange existing tiles for a smaller tree"""
-        getpath = functools.partial(os.path.join, self.destdir, "tiles")
+        getpath = functools.partial(os.path.join, self.destdir, self.tiledir)
 
         # quadrant 0/3 goes to 0
         # 1/2 goes to 1
@@ -290,47 +183,9 @@ class QuadtreeGen(object):
             os.rename(getpath("3", "0"), getpath("new3"))
             shutil.rmtree(getpath("3"))
             os.rename(getpath("new3"), getpath("3"))
-
-    def _apply_render_worldtiles(self, pool):
-        """Returns an iterator over result objects. Each time a new result is
-        requested, a new task is added to the pool and a result returned.
-        """
-        for path in iterate_base4(self.p):
-            # Get the range for this tile
-            colstart, rowstart = self._get_range_by_path(path)
-            colend = colstart + 2
-            rowend = rowstart + 4
-
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path))
-            #logging.debug("this is rendered at %s", dest)
-
-            # And uses these chunks
-            tilechunks = self._get_chunks_in_range(colstart, colend, rowstart,
-                    rowend)
-            #logging.debug(" tilechunks: %r", tilechunks)
-
-            # Put this in the pool
-            # (even if tilechunks is empty, render_worldtile will delete
-            # existing images if appropriate)
-            yield pool.apply_async(func=render_worldtile, args= (tilechunks,
-                colstart, colend, rowstart, rowend, dest, self.imgformat,
-                self.optimizeimg))
-
-    def _apply_render_inntertile(self, pool, zoom):
-        """Same as _apply_render_worltiles but for the inntertile routine.
-        Returns an iterator that yields result objects from tasks that have
-        been applied to the pool.
-        """
-        for path in iterate_base4(zoom):
-            # This image is rendered at:
-            dest = os.path.join(self.destdir, "tiles", *(str(x) for x in path[:-1]))
-            name = str(path[-1])
-
-            yield pool.apply_async(func=render_innertile, args= (dest, name, self.imgformat, self.optimizeimg))
-
+        
     def go(self, procs):
-        """Renders all tiles"""
+        """Processing before tile rendering"""
 
         curdepth = self._get_cur_depth()
         if curdepth != -1:
@@ -343,70 +198,8 @@ class QuadtreeGen(object):
                 logging.warning("Your map seems to have shrunk. Re-arranging tiles, just a sec...")
                 for _ in xrange(curdepth - self.p):
                     self._decrease_depth()
-
-        # Create a pool
-        if procs == 1:
-            pool = FakePool()
-        else:
-            pool = multiprocessing.Pool(processes=procs)
-
-        # Render the highest level of tiles from the chunks
-        results = collections.deque()
-        complete = 0
-        total = 4**self.p
-        logging.info("Rendering highest zoom level of tiles now.")
-        logging.info("There are {0} tiles to render".format(total))
-        logging.info("There are {0} total levels to render".format(self.p))
-        logging.info("Don't worry, each level has only 25% as many tiles as the last.")
-        logging.info("The others will go faster")
-        for result in self._apply_render_worldtiles(pool):
-            results.append(result)
-            if len(results) > 10000:
-                # Empty the queue before adding any more, so that memory
-                # required has an upper bound
-                while len(results) > 500:
-                    results.popleft().get()
-                    complete += 1
-                    self.print_statusline(complete, total, 1)
-
-        # Wait for the rest of the results
-        while len(results) > 0:
-            results.popleft().get()
-            complete += 1
-            self.print_statusline(complete, total, 1)
-
-        self.print_statusline(complete, total, 1, True)
-
-        # Now do the other layers
-        for zoom in xrange(self.p-1, 0, -1):
-            level = self.p - zoom + 1
-            assert len(results) == 0
-            complete = 0
-            total = 4**zoom
-            logging.info("Starting level {0}".format(level))
-            for result in self._apply_render_inntertile(pool, zoom):
-                results.append(result)
-                if len(results) > 10000:
-                    while len(results) > 500:
-                        results.popleft().get()
-                        complete += 1
-                        self.print_statusline(complete, total, level)
-            # Empty the queue
-            while len(results) > 0:
-                results.popleft().get()
-                complete += 1
-                self.print_statusline(complete, total, level)
-
-            self.print_statusline(complete, total, level, True)
-
-            logging.info("Done")
-
-        pool.close()
-        pool.join()
-
-        # Do the final one right here:
-        render_innertile(os.path.join(self.destdir, "tiles"), "base", self.imgformat, self.optimizeimg)
-
+    
+    
     def _get_range_by_path(self, path):
         """Returns the x, y chunk coordinates of this tile"""
         x, y = self.mincol, self.minrow
@@ -423,282 +216,254 @@ class QuadtreeGen(object):
             ysize //= 2
 
         return x, y
-
-    def _get_chunks_in_range(self, colstart, colend, rowstart, rowend):
+        
+    def get_chunks_in_range(self, colstart, colend, rowstart, rowend):
         """Get chunks that are relevant to the tile rendering function that's
         rendering that range"""
         chunklist = []
+        unconvert_coords = self.world.unconvert_coords
+        #get_region_path = self.world.get_region_path
+        get_region = self.world.regionfiles.get
+        regionx = None
+        regiony = None
+        c = None
+        mcr = None
         for row in xrange(rowstart-16, rowend+1):
             for col in xrange(colstart, colend+1):
-                c = self.world.chunkmap.get((col, row), None)
-                if c:
-                    chunklist.append((col, row, c))
-        return chunklist
+                # due to how chunks are arranged, we can only allow
+                # even row, even column or odd row, odd column
+                # otherwise, you end up with duplicates!
+                if row % 2 != col % 2:
+                    continue
+                
+                chunkx, chunky = unconvert_coords(col, row)
 
-@catch_keyboardinterrupt
-def render_innertile(dest, name, imgformat, optimizeimg):
-    """
-    Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
-    os.path.join(dest, name, "{0,1,2,3}.png")
-    """
-    imgpath = os.path.join(dest, name) + "." + imgformat
-    hashpath = os.path.join(dest, name) + ".hash"
-
-    if name == "base":
-        q0path = os.path.join(dest, "0." + imgformat)
-        q1path = os.path.join(dest, "1." + imgformat)
-        q2path = os.path.join(dest, "2." + imgformat)
-        q3path = os.path.join(dest, "3." + imgformat)
-        q0hash = os.path.join(dest, "0.hash")
-        q1hash = os.path.join(dest, "1.hash")
-        q2hash = os.path.join(dest, "2.hash")
-        q3hash = os.path.join(dest, "3.hash")
-    else:
-        q0path = os.path.join(dest, name, "0." + imgformat)
-        q1path = os.path.join(dest, name, "1." + imgformat)
-        q2path = os.path.join(dest, name, "2." + imgformat)
-        q3path = os.path.join(dest, name, "3." + imgformat)
-        q0hash = os.path.join(dest, name, "0.hash")
-        q1hash = os.path.join(dest, name, "1.hash")
-        q2hash = os.path.join(dest, name, "2.hash")
-        q3hash = os.path.join(dest, name, "3.hash")
-
-    # Check which ones exist
-    if not os.path.exists(q0hash):
-        q0path = None
-        q0hash = None
-    if not os.path.exists(q1hash):
-        q1path = None
-        q1hash = None
-    if not os.path.exists(q2hash):
-        q2path = None
-        q2hash = None
-    if not os.path.exists(q3hash):
-        q3path = None
-        q3hash = None
-
-    # do they all not exist?
-    if not (q0path or q1path or q2path or q3path):
-        if os.path.exists(imgpath):
-            os.unlink(imgpath)
-        if os.path.exists(hashpath):
-            os.unlink(hashpath)
-        return
+                regionx_ = chunkx//32
+                regiony_ = chunky//32
+                if regionx_ != regionx or regiony_ != regiony:
+                    regionx = regionx_
+                    regiony = regiony_
+                    _, _, c, mcr = get_region((regionx, regiony),(None,None,None,None))
+                    
+                if c is not None and mcr.chunkExists(chunkx,chunky):                  
+                    chunklist.append((col, row, chunkx, chunky, c))
+                    
+        return chunklist   
+        
+    def get_worldtiles(self):
+        """Returns an iterator over the tiles of the most detailed layer
+        """
+        for path in iterate_base4(self.p):
+            # Get the range for this tile
+            colstart, rowstart = self._get_range_by_path(path)
+            colend = colstart + 2
+            rowend = rowstart + 4   
+            
+            # This image is rendered at(relative to the worker's destdir):
+            tilepath = [str(x) for x in path]
+            tilepath = os.sep.join(tilepath)
+            #logging.debug("this is rendered at %s", dest)
+        
+            # Put this in the batch to be submited to the pool     
+            yield [self,colstart, colend, rowstart, rowend, tilepath]
+        
+    def get_innertiles(self,zoom):
+        """Same as get_worldtiles but for the inntertile routine.
+        """    
+        for path in iterate_base4(zoom):
+            # This image is rendered at(relative to the worker's destdir):
+            tilepath = [str(x) for x in path[:-1]]
+            tilepath = os.sep.join(tilepath)
+            name = str(path[-1])
+  
+            yield [self,tilepath, name]
     
-    # Now check the hashes
-    hasher = hashlib.md5()
-    if q0hash:
-        hasher.update(open(q0hash, "rb").read())
-    if q1hash:
-        hasher.update(open(q1hash, "rb").read())
-    if q2hash:
-        hasher.update(open(q2hash, "rb").read())
-    if q3hash:
-        hasher.update(open(q3hash, "rb").read())
-    if os.path.exists(hashpath):
-        oldhash = open(hashpath, "rb").read()
-    else:
-        oldhash = None
-    newhash = hasher.digest()
+    def render_innertile(self, dest, name):
+        """
+        Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
+        os.path.join(dest, name, "{0,1,2,3}.png")
+        """
+        imgformat = self.imgformat 
+        imgpath = os.path.join(dest, name) + "." + imgformat
 
-    if newhash == oldhash:
-        # Nothing to do
-        return
-
-    # Create the actual image now
-    img = Image.new("RGBA", (384, 384), (38,92,255,0))
-    
-    # we'll use paste (NOT alpha_over) for quadtree generation because
-    # this is just straight image stitching, not alpha blending
-    
-    if q0path:
-        try:
-            quad0 = Image.open(q0path).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad0, (0,0))
-        except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q0path, e)
-    if q1path:
-        try:
-            quad1 = Image.open(q1path).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad1, (192,0))
-        except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q1path, e)
-    if q2path:
-        try:
-            quad2 = Image.open(q2path).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad2, (0, 192))
-        except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q2path, e)
-    if q3path:
-        try:
-            quad3 = Image.open(q3path).resize((192,192), Image.ANTIALIAS)
-            img.paste(quad3, (192, 192))
-        except Exception, e:
-            logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", q3path, e)
-
-    # Save it
-    if imgformat == 'jpg':
-        img.save(imgpath, quality=95, subsampling=0)
-    else: # png
-        img.save(imgpath)
-        if optimizeimg:
-            optimize_image(imgpath, imgformat, optimizeimg)
-
-    with open(hashpath, "wb") as hashout:
-        hashout.write(newhash)
-
-
-@catch_keyboardinterrupt
-def render_worldtile(chunks, colstart, colend, rowstart, rowend, path, imgformat, optimizeimg):
-    """Renders just the specified chunks into a tile and save it. Unlike usual
-    python conventions, rowend and colend are inclusive. Additionally, the
-    chunks around the edges are half-way cut off (so that neighboring tiles
-    will render the other half)
-
-    chunks is a list of (col, row, filename) of chunk images that are relevant
-    to this call
-
-    The image is saved to path+".ext" and a hash is saved to path+".hash"
-
-    If there are no chunks, this tile is not saved (if it already exists, it is
-    deleted)
-
-    If the hash file already exists, it is checked against the hash of each chunk.
-
-    Standard tile size has colend-colstart=2 and rowend-rowstart=4
-
-    There is no return value
-    """
-    # width of one chunk is 384. Each column is half a chunk wide. The total
-    # width is (384 + 192*(numcols-1)) since the first column contributes full
-    # width, and each additional one contributes half since they're staggered.
-    # However, since we want to cut off half a chunk at each end (384 less
-    # pixels) and since (colend - colstart + 1) is the number of columns
-    # inclusive, the equation simplifies to:
-    width = 192 * (colend - colstart)
-    # Same deal with height
-    height = 96 * (rowend - rowstart)
-
-    # The standard tile size is 3 columns by 5 rows, which works out to 384x384
-    # pixels for 8 total chunks. (Since the chunks are staggered but the grid
-    # is not, some grid coordinates do not address chunks) The two chunks on
-    # the middle column are shown in full, the two chunks in the middle row are
-    # half cut off, and the four remaining chunks are one quarter shown.
-    # The above example with cols 0-3 and rows 0-4 has the chunks arranged like this:
-    #   0,0         2,0
-    #         1,1
-    #   0,2         2,2
-    #         1,3
-    #   0,4         2,4
-
-    # Due to how the tiles fit together, we may need to render chunks way above
-    # this (since very few chunks actually touch the top of the sky, some tiles
-    # way above this one are possibly visible in this tile). Render them
-    # anyways just in case). "chunks" should include up to rowstart-16
-
-    # Before we render any tiles, check the hash of each image in this tile to
-    # see if it's changed.
-    hashpath = path + ".hash"
-    imgpath = path + "." + imgformat
-
-    if not chunks:
-        # No chunks were found in this tile
-        if os.path.exists(imgpath):
-            os.unlink(imgpath)
-        if os.path.exists(hashpath):
-            os.unlink(hashpath)
-        return None
-
-    # Create the directory if not exists
-    dirdest = os.path.dirname(path)
-    if not os.path.exists(dirdest):
-        try:
-            os.makedirs(dirdest)
+        if name == "base":
+            quadPath = [[(0,0),os.path.join(dest, "0." + imgformat)],[(192,0),os.path.join(dest, "1." + imgformat)], [(0, 192),os.path.join(dest, "2." + imgformat)],[(192,192),os.path.join(dest, "3." + imgformat)]]
+        else:
+            quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
+       
+        #stat the tile, we need to know if it exists or it's mtime
+        try:    
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
         except OSError, e:
-            # Ignore errno EEXIST: file exists. Since this is multithreaded,
-            # two processes could conceivably try and create the same directory
-            # at the same time.
-            import errno
-            if e.errno != errno.EEXIST:
+            if e.errno != errno.ENOENT:
                 raise
-
-    imghash = hashlib.md5()
-    for col, row, chunkfile in chunks:
-        # Get the hash of this image and add it to our hash for this tile
-        imghash.update(
-                os.path.basename(chunkfile).split(".")[4]
-                )
-    digest = imghash.digest()
-
-    if os.path.exists(hashpath):
-        oldhash = open(hashpath, 'rb').read()
-    else:
-        oldhash = None
-
-    if digest == oldhash:
-        # All the chunks for this tile have not changed according to the hash
-        return
-
-    # Compile this image
-    tileimg = Image.new("RGBA", (width, height), (38,92,255,0))
-
-    # col colstart will get drawn on the image starting at x coordinates -(384/2)
-    # row rowstart will get drawn on the image starting at y coordinates -(192/2)
-    for col, row, chunkfile in chunks:
-        try:
-            chunkimg = Image.open(chunkfile)
-            chunkimg.load()
-        except Exception, e:
-            # If for some reason the chunk failed to load (perhaps a previous
-            # run was canceled and the file was only written half way,
-            # corrupting it), then this could error.
-            # Since we have no easy way of determining how this chunk was
-            # generated, we need to just ignore it.
-            logging.warning("Could not open chunk '{0}' ({1})".format(chunkfile,e))
+            tile_mtime = None
+            
+        #check mtimes on each part of the quad, this also checks if they exist
+        needs_rerender = tile_mtime is None
+        quadPath_filtered = []
+        for path in quadPath:
             try:
-                # Remove the file so that the next run will re-generate it.
-                os.unlink(chunkfile)
+                quad_mtime = os.stat(path[1])[stat.ST_MTIME]; 
+                quadPath_filtered.append(path)
+                if quad_mtime > tile_mtime:     
+                    needs_rerender = True            
+            except OSError:
+                # We need to stat all the quad files, so keep looping
+                pass      
+        # do they all not exist?
+        if quadPath_filtered == []:
+            if tile_mtime is not None:
+                os.unlink(imgpath)
+            return
+        # quit now if we don't need rerender            
+        if not needs_rerender:
+            return    
+        #logging.debug("writing out innertile {0}".format(imgpath))
+
+        # Create the actual image now
+        img = Image.new("RGBA", (384, 384), self.bgcolor)
+        
+        # we'll use paste (NOT alpha_over) for quadtree generation because
+        # this is just straight image stitching, not alpha blending
+        
+        for path in quadPath_filtered:
+            try:
+                quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
+                img.paste(quad, path[0])
+            except Exception, e:
+                logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", path[1], e)
+
+        # Save it
+        if self.imgformat == 'jpg':
+            img.save(imgpath, quality=95, subsampling=0)
+        else: # png
+            img.save(imgpath)
+            
+        if self.optimizeimg:
+            optimize_image(imgpath, self.imgformat, self.optimizeimg)
+
+
+
+    def render_worldtile(self, chunks, colstart, colend, rowstart, rowend, path, poi_queue=None):
+        """Renders just the specified chunks into a tile and save it. Unlike usual
+        python conventions, rowend and colend are inclusive. Additionally, the
+        chunks around the edges are half-way cut off (so that neighboring tiles
+        will render the other half)
+
+        chunks is a list of (col, row, chunkx, chunky, filename) of chunk
+        images that are relevant to this call (with their associated regions)
+
+        The image is saved to path+"."+self.imgformat
+
+        If there are no chunks, this tile is not saved (if it already exists, it is
+        deleted)
+
+        Standard tile size has colend-colstart=2 and rowend-rowstart=4
+
+        There is no return value
+        """    
+        
+        # width of one chunk is 384. Each column is half a chunk wide. The total
+        # width is (384 + 192*(numcols-1)) since the first column contributes full
+        # width, and each additional one contributes half since they're staggered.
+        # However, since we want to cut off half a chunk at each end (384 less
+        # pixels) and since (colend - colstart + 1) is the number of columns
+        # inclusive, the equation simplifies to:
+        width = 192 * (colend - colstart)
+        # Same deal with height
+        height = 96 * (rowend - rowstart)
+
+        # The standard tile size is 3 columns by 5 rows, which works out to 384x384
+        # pixels for 8 total chunks. (Since the chunks are staggered but the grid
+        # is not, some grid coordinates do not address chunks) The two chunks on
+        # the middle column are shown in full, the two chunks in the middle row are
+        # half cut off, and the four remaining chunks are one quarter shown.
+        # The above example with cols 0-3 and rows 0-4 has the chunks arranged like this:
+        #   0,0         2,0
+        #         1,1
+        #   0,2         2,2
+        #         1,3
+        #   0,4         2,4
+
+        # Due to how the tiles fit together, we may need to render chunks way above
+        # this (since very few chunks actually touch the top of the sky, some tiles
+        # way above this one are possibly visible in this tile). Render them
+        # anyways just in case). "chunks" should include up to rowstart-16
+
+        imgpath = path + "." + self.imgformat
+        world = self.world
+        #stat the file, we need to know if it exists or it's mtime
+        try:    
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
+        except OSError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            tile_mtime = None
+            
+        if not chunks:
+            # No chunks were found in this tile
+            if tile_mtime is not None:
+                os.unlink(imgpath)
+            return None
+
+        # Create the directory if not exists
+        dirdest = os.path.dirname(path)
+        if not os.path.exists(dirdest):
+            try:
+                os.makedirs(dirdest)
             except OSError, e:
-                import errno
-                # Ignore if file doesn't exist, another task could have already
-                # removed it.
-                if e.errno != errno.ENOENT:
-                    logging.warning("Could not remove chunk '{0}'!".format(chunkfile))
+                # Ignore errno EEXIST: file exists. Since this is multithreaded,
+                # two processes could conceivably try and create the same directory
+                # at the same time.            
+                if e.errno != errno.EEXIST:
                     raise
-            else:
-                logging.warning("Removed the corrupt file")
+        
+        # check chunk mtimes to see if they are newer
+        try:
+            needs_rerender = False
+            get_region_mtime = world.get_region_mtime
+            for col, row, chunkx, chunky, regionfile in chunks:
+                # check region file mtime first. 
+                region,regionMtime = get_region_mtime(regionfile)  
+                if regionMtime <= tile_mtime:
+                    continue
+                
+                # checking chunk mtime
+                if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
+                    needs_rerender = True
+                    break
+            
+            # if after all that, we don't need a rerender, return
+            if not needs_rerender:
+                return None
+        except OSError:
+            # couldn't get tile mtime, skip check
+            pass
+        
+        #logging.debug("writing out worldtile {0}".format(imgpath))
 
-            logging.warning("You will need to re-run the Overviewer to fix this chunk")
-            continue
+        # Compile this image
+        tileimg = Image.new("RGBA", (width, height), self.bgcolor)
 
-        xpos = -192 + (col-colstart)*192
-        ypos = -96 + (row-rowstart)*96
+        world = self.world
+        rendermode = self.rendermode
+        # col colstart will get drawn on the image starting at x coordinates -(384/2)
+        # row rowstart will get drawn on the image starting at y coordinates -(192/2)
+        for col, row, chunkx, chunky, regionfile in chunks:
+            xpos = -192 + (col-colstart)*192
+            ypos = -96 + (row-rowstart)*96
 
-        composite.alpha_over(tileimg, chunkimg.convert("RGB"), (xpos, ypos), chunkimg)
+            # draw the chunk!
+            try:
+                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue)
+                a.chunk_render(tileimg, xpos, ypos, None)
+            except chunk.ChunkCorrupt:
+                # an error was already printed
+                pass
+        
+        # Save them
+        tileimg.save(imgpath)
 
-    # Save them
-    tileimg.save(imgpath)
-
-    if optimizeimg:
-        optimize_image(imgpath, imgformat, optimizeimg)
-
-    with open(hashpath, "wb") as hashout:
-        hashout.write(digest)
-
-class FakeResult(object):
-    def __init__(self, res):
-        self.res = res
-    def get(self):
-        return self.res
-class FakePool(object):
-    """A fake pool used to render things in sync. Implements a subset of
-    multiprocessing.Pool"""
-    def apply_async(self, func, args=(), kwargs=None):
-        if not kwargs:
-            kwargs = {}
-        result = func(*args, **kwargs)
-        return FakeResult(result)
-    def close(self):
-        pass
-    def join(self):
-        pass
+        if self.optimizeimg:
+            optimize_image(imgpath, self.imgformat, self.optimizeimg)
