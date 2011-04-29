@@ -109,7 +109,7 @@ var overviewerConfig = {
         /* regions -- A list of region groups.  A region can fall into zero,
          * one, or more than one group.  See below for some examples.
          * Regions have been designed to work with the WorldGuard Overviewer
-         * Region importer at @link https://github.com/pironic/WG2OvR but your
+         * Region importer at @link http://goo.gl/dc0tV but your
          * host must support php in order to run WG2OvR. You can also continue
          * to use any other region format.
          *
