@@ -3,15 +3,21 @@ build
 terrain.png
 cachedir*
 
+# vim swap files
+.*.swp
+
+# user-provided settings file
+settings.py
+
 # header files that may be copied over, if missing
 ImPlatform.h
 Imaging.h
 
-# various forms of compiled _composite extensions
-_composite.so
-_composite.pyd
-_composite_d.pyd
-_composite.dylib
+# various forms of compiled c_overviewer extensions
+c_overviewer.so
+c_overviewer.pyd
+c_overviewer_d.pyd
+c_overviewer.dylib
 
 # Mac OS X noise
 .DS_Store

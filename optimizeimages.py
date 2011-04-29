@@ -23,11 +23,14 @@ advdef = "advdef"
 
 def check_programs(level):
     path = os.environ.get("PATH").split(os.pathsep)
-
+    
+    def exists_in_path(prog):
+        result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
+        return len(result) != 0
+    
     for prog,l in [(pngcrush,1), (optipng,2), (advdef,2)]:
         if l <= level:
-            result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
-            if len(result) == 0:
+            if (not exists_in_path(prog)) and (not exists_in_path(prog + ".exe")):
                 raise Exception("Optimization prog %s for level %d not found!" % (prog, l))
 
 def optimize_image(imgpath, imgformat, optimizeimg):

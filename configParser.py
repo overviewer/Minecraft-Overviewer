@@ -1,8 +1,11 @@
 from optparse import OptionParser
 import sys
+import os.path
+import logging
 
 class OptionsResults(object):
-    pass
+    def get(self, *args):
+        return self.__dict__.get(*args)
 
 class ConfigOptionParser(object):
     def __init__(self, **kwargs):
@@ -12,16 +15,20 @@ class ConfigOptionParser(object):
 
         # these are arguments not understood by OptionParser, so they must be removed
         # in add_option before being passed to the OptionParser
+
         # note that default is a valid OptionParser argument, but we remove it
         # because we want to do our default value handling
-        self.customArgs = ["required", "commandLineOnly", "default"]
+
+        self.customArgs = ["required", "commandLineOnly", "default", "listify", "listdelim", "choices"]
 
         self.requiredArgs = []
 
     def display_config(self):
+        logging.info("Using the following settings:")
         for x in self.configVars:
             n = x['dest']
             print  "%s: %r" % (n, self.configResults.__dict__[n])
+
 
     def add_option(self, *args, **kwargs):
 
@@ -34,6 +41,8 @@ class ConfigOptionParser(object):
             for arg in self.customArgs:
                 if arg in kwargs.keys(): del kwargs[arg]
 
+            if kwargs.get("type", None):
+                kwargs['type'] = 'string' # we'll do our own converting later
             self.cmdParser.add_option(*args, **kwargs)
 
     def print_help(self):
@@ -61,18 +70,19 @@ class ConfigOptionParser(object):
         g['args'] = args
 
         try:
-            execfile(self.configFile, g, l)
+            if os.path.exists(self.configFile):
+                execfile(self.configFile, g, l)
         except NameError, ex:
             import traceback
             traceback.print_exc()
-            print "\nError parsing %s.  Please check the trackback above" % self.configFile
+            logging.error("Error parsing %s.  Please check the trackback above" % self.configFile)
             sys.exit(1)
         except SyntaxError, ex:
             import traceback
             traceback.print_exc()
             tb = sys.exc_info()[2]
             #print tb.tb_frame.f_code.co_filename
-            print "\nError parsing %s.  Please check the trackback above" % self.configFile
+            logging.error("Error parsing %s.  Please check the trackback above" % self.configFile)
             sys.exit(1)
 
         #print l.keys()
@@ -83,7 +93,7 @@ class ConfigOptionParser(object):
             n = a['dest']
             if a.get('commandLineOnly', False):
                 if n in l.keys():
-                    print "Error: %s can only be specified on the command line.  It is not valid in the config file" % n
+                    logging.error("Error: %s can only be specified on the command line.  It is not valid in the config file" % n)
                     sys.exit(1)
 
             configResults.__dict__[n] = l.get(n)
@@ -107,33 +117,23 @@ class ConfigOptionParser(object):
         for a in self.configVars:
             n = a['dest']
             if configResults.__dict__[n] == None and a.get('required',False):
-                raise Exception("%s is required" % n)
+                logging.error("%s is required" % n)
+                sys.exit(1)
 
         # sixth, check types
         for a in self.configVars:
             n = a['dest']
+            if 'listify' in a.keys():
+                # this thing may be a list!
+                if configResults.__dict__[n] != None and type(configResults.__dict__[n]) == str:
+                    configResults.__dict__[n] = configResults.__dict__[n].split(a.get("listdelim",","))
+                elif type(configResults.__dict__[n]) != list:
+                    configResults.__dict__[n] = [configResults.__dict__[n]]
             if 'type' in a.keys() and configResults.__dict__[n] != None:
                 try:
-                    # switch on type.  there are only 6 types that can be used with optparse
-                    if a['type'] == "int":
-                        configResults.__dict__[n] = int(configResults.__dict__[n])
-                    elif a['type'] == "string":
-                        configResults.__dict__[n] = str(configResults.__dict__[n])
-                    elif a['type'] == "long":
-                        configResults.__dict__[n] = long(configResults.__dict__[n])
-                    elif a['type'] == "choice":
-                        if configResults.__dict__[n] not in a['choices']:
-                            print "The value '%s' is not valid for config parameter '%s'" % (configResults.__dict__[n], n)
-                            sys.exit(1)
-                    elif a['type'] == "float":
-                        configResults.__dict__[n] = long(configResults.__dict__[n])
-                    elif a['type'] == "complex":
-                        configResults.__dict__[n] = complex(configResults.__dict__[n])
-                    else:
-                        print "Unknown type!"
-                        sys.exit(1)
+                    configResults.__dict__[n] = self.checkType(configResults.__dict__[n], a)
                 except ValueError, ex:
-                    print "There was a problem converting the value '%s' to type %s for config parameter '%s'" % (configResults.__dict__[n], a['type'], n)
+                    logging.error("There was a problem converting the value '%s' to type %s for config parameter '%s'" % (configResults.__dict__[n], a['type'], n))
                     import traceback
                     #traceback.print_exc()
                     sys.exit(1)
@@ -144,3 +144,30 @@ class ConfigOptionParser(object):
 
         return configResults, args
 
+    def checkType(self, value, a):
+
+        if type(value) == list:
+            return map(lambda x: self.checkType(x, a), value)
+
+        # switch on type.  there are only 7 types that can be used with optparse
+        if a['type'] == "int":
+            return int(value)
+        elif a['type'] == "string":
+            return str(value)
+        elif a['type'] == "long":
+            return long(value)
+        elif a['type'] == "choice":
+            if value not in a['choices']:
+                logging.error("The value '%s' is not valid for config parameter '%s'" % (value, a['dest']))
+                sys.exit(1)
+            return value
+        elif a['type'] == "float":
+            return long(value)
+        elif a['type'] == "complex":
+            return complex(value)
+        elif a['type'] == "function":
+            if not callable(value):
+                raise ValueError("Not callable")
+        else:
+            logging.error("Unknown type!")
+            sys.exit(1)
