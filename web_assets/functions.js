@@ -5,6 +5,7 @@ function prepareSignMarker(marker, item) {
     var c = "<div class=\"infoWindow\"><img src=\"signpost.png\" /><p>" + item.msg.replace(/\n/g,"<br/>") + "</p></div>";
     var infowindow = new google.maps.InfoWindow({content: c
             });
+    marker.infowindow = infowindow
     google.maps.event.addListener(marker, 'click', function() {
             if (prevInfoWindow)
                 prevInfoWindow.close()
@@ -238,27 +239,72 @@ function initMarkers() {
     }
 }
 
+var oldHash = "";
 
-function makeLink() {
-    location.hash = "#/"+map.getCenter().lat().toFixed(3)+"/"+map.getCenter().lng().toFixed(3)+"/"+map.getZoom();
+function setHash() {
+    var hard_permalink = isHardPermalink;
+    var hash = window.location.hash
+    var params = hash.split("/")
+    if (params.length > 1) {
+      if (permalinks[params[1]]) {
+        hard_permalink = true;
+      }
+    }
+    //if (!hard_permalink) {
+      location.hash = "#/"+map.getCenter().lat().toFixed(3)+"/"+map.getCenter().lng().toFixed(3)+"/"+map.getZoom();
+      oldHash = location.hash
+    //}
 }
+
+var permalinks = {
+  "rent": "Rent is $200/month jeff@ unterbahn.com",
+}
+
+function openSign(markerName) {
+    var marker = null;
+    for (i=0;i<markerCollection.All.length;i++) {
+      if (markerCollection.All[i].title == permalinks[markerName]) marker = markerCollection.All[i];
+    }
+    if (marker) {
+      if (prevInfoWindow)
+          prevInfoWindow.close()
+      marker.infowindow.open(map,marker);
+      prevInfoWindow = marker.infowindow
+    }
+}
+
+var isHardPermalink = false
+document.addEventListener("mousedown",function() {isHardPermalink = false})
+
+function readHash(mapOptions) {
+    var hash = window.location.hash
+    var params = hash.split("/")
+    if (params.length > 1) {
+      if (params[1] == "rent") {
+        mapOptions = {lat: 0.546875, lng: 0.48046875, zoom: 6}
+        isHardPermalink = true
+        if (markerCollection.All) openSign("rent");
+      } else {
+        mapOptions = mapOptions || {}
+        mapOptions.lat = parseFloat(params[1])
+        mapOptions.lng = parseFloat(params[2])
+        mapOptions.zoom = parseInt(params[3])
+      }
+      if (map) map.setCenter(new google.maps.LatLng(mapOptions.lat, mapOptions.lng))
+      if (map) map.setZoom(mapOptions.zoom)
+    }
+}
+
+var map = null;
 
 function initialize() {
 
     var query = location.search.substring(1);
 
-    var lat = 0.5;
-    var lng = 0.5;
+    var lat = 0.547;
+    var lng = 0.460;
     var zoom = config.defaultZoom;
-
-    // Jeff's hash rewriting:
-    var hash = window.location.hash
-    var params = hash.split("/")
-    if (params.length > 1) {
-    lat = parseFloat(params[1])
-    lng = parseFloat(params[2])
-    zoom = parseInt(params[3])
-    }
+    setInterval(readHash,500);
 
     var mapTyepControlToggle = false
     if (mapTypeIds.length > 1) {
@@ -277,6 +323,7 @@ function initialize() {
         streetViewControl: false,
         backgroundColor: config.bg_color,
     };
+    readHash(mapOptions);
     map = new google.maps.Map(document.getElementById('mcmap'), mapOptions);
 
     if(config.debug) {
@@ -307,14 +354,14 @@ function initialize() {
     initRegions();
     drawMapControls();
 
-    //makeLink();
+    readHash(mapOptions);
 
     // Make the link again whenever the map changes
     google.maps.event.addListener(map, 'zoom_changed', function() {
-        makeLink();
+        setHash();
     });
     google.maps.event.addListener(map, 'center_changed', function() {
-        makeLink();
+        setHash();
     });
 
 }

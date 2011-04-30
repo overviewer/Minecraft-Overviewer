@@ -1,9 +1,25 @@
 html {
     height: 100%;
+<<<<<<< HEAD:web_assets/style.css
     font-family: lucida grande, lucida sans console, sans-serif;
 }
 body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
 #mcmap { height: 100% }
+=======
+}
+
+body {
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    background-color: #000;
+}
+
+#mcmap {
+    width: 100%;
+    height: 100%;
+}
+>>>>>>> f20d81c39f0302a44e02a6f42f6eb0d13b9fcc18:web_assets/overviewer.css
 
 #mcmap div div a img, #mcmap div div div a {
     display:none;
@@ -24,13 +40,17 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
     font-family: monospace;
 }
 
-#signControl {
+#customControl {
     padding: 5px;
     height: 15px;
 }
 
+<<<<<<< HEAD:web_assets/style.css
 #signControl > div#top {
     display:none;
+=======
+#customControl > div#top {
+>>>>>>> f20d81c39f0302a44e02a6f42f6eb0d13b9fcc18:web_assets/overviewer.css
     background-color: #fff;
     border: 2px solid #000;
     text-align: center;
@@ -40,7 +60,14 @@ body { height: 100%; margin: 0px; padding: 0px ; background-color: #000; }
     cursor: pointer;
 }
 
-#signControl > div#dropDown {
+#customControl > div#dropDown {
+    border: 1px solid #000;
+    font-size: 12px;
+    background-color: #fff;
+    display: none;
+}
+
+#customControl > div#button {
     border: 1px solid #000;
     font-size: 12px;
     background-color: #fff;

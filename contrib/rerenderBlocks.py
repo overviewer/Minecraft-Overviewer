@@ -3,12 +3,12 @@
 '''
 This is used to force the regeneration of any chunks that contain a certain
 blockID.  The output is a chunklist file that is suitable to use with the
---chunklist option to gmap.py.
+--chunklist option to overviewer.py.
 
 Example:
 
-python contrib/rerenderBlocks.py --ids=46,79,91 --world=world/> chunklist.txt
-    python gmap.py --chunklist=chunklist.txt world/ output_dir/
+python contrib/rerenderBlocks.py --ids=46,79,91 --world=world/> regionlist.txt
+    python overviewer.py --regionlist=regionlist.txt world/ output_dir/
 
 This will rerender any chunks that contain either TNT (46), Ice (79), or 
 a Jack-O-Lantern (91)
@@ -42,15 +42,20 @@ ids = map(lambda x: int(x),options.ids.split(","))
 sys.stderr.write("Searching for these blocks: %r...\n" % ids)
 
 
-matcher = re.compile(r"^c\..*\.dat$")
+matcher = re.compile(r"^r\..*\.mcr$")
 
 for dirpath, dirnames, filenames in os.walk(options.world):
     for f in filenames:
         if matcher.match(f):
             full = os.path.join(dirpath, f)
-            blocks = get_blockarray_fromfile(full)
-            for i in ids:
-                if i in blocks:
-                    print full
-                    break
+            r = nbt.load_region(full)
+            chunks = r.get_chunks()
+            for x,y in chunks:
+                chunk = r.load_chunk(x,y).read_all()                
+                blocks = get_blockarray(chunk[1]['Level'])
+                for i in ids:
+                    if i in blocks:
+                        print full
+                        break
+
 
