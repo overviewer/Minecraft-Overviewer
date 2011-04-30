@@ -58,6 +58,7 @@ var overviewer = {
             overviewer.util.initializeMarkers();
             overviewer.util.initializeRegions();
             overviewer.util.createMapControls();
+            setInterval(overviewer.goToHash,500);
         },
         /**
          * This adds some methods to these classes because Javascript is stupid
@@ -141,11 +142,14 @@ var overviewer = {
             var defaultCenter = overviewer.util.fromWorldToLatLng(
                 overviewerConfig.map.center[0], overviewerConfig.map.center[1],
                 overviewerConfig.map.center[2]);
+
             var lat = defaultCenter.lat();
             var lng = defaultCenter.lng();
             var zoom = overviewerConfig.map.defaultZoom;
+
             var mapcenter;
             queryParams = overviewer.util.parseQueryString();
+            queryParams = overviewer.readHash(queryParams);
             if (queryParams.lat) {
                 lat = parseFloat(queryParams.lat);
             }
@@ -162,10 +166,10 @@ var overviewer = {
                     if (zoom < 0 && zoom + overviewerConfig.map.maxZoom >= 0) {
                         //if zoom is negative, try to treat as "zoom out from max zoom"
                         zoom += overviewerConfig.map.maxZoom;
-                    } else {
+                    } //else {
                         //fall back to default zoom
-                        zoom = overviewerConfig.map.defaultZoom;
-                    }
+                        //zoom = overviewerConfig.map.defaultZoom;
+                    //}
                 }
             }
             if (queryParams.x && queryParams.y && queryParams.z) {
@@ -234,6 +238,14 @@ var overviewer = {
             });
             // We can now set the map to use the 'coordinate' map type
             overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
+
+            // Make the link again whenever the map changes
+            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
+              overviewer.setHash();
+            });
+            google.maps.event.addListener(overviewer.map, 'center_changed', function() {
+              overviewer.setHash();
+            });
         },
         /**
          * Read through overviewer.collections.markerDatas and create Marker
@@ -301,7 +313,7 @@ var overviewer = {
                                 'map':      overviewer.map,
                                 'title':    jQuery.trim(item.msg), 
                                 'icon':     iconURL,
-                                'visible':  false
+                                'visible': true 
                             });
                             overviewer.util.debug(label);
                             overviewer.collections.markers[label].push(marker);
@@ -889,5 +901,54 @@ var overviewer = {
                 return(urlBase + url);
             }
         }
-    }
+    },
+    setHash: function() {
+      var hash = window.location.hash
+      var params = hash.split("/")
+      if (params.length > 1) {
+        if (overviewer.permalinks[params[1]]) {
+          hard_permalink = true;
+        }
+      }
+      location.hash = "#/"+overviewer.map.getCenter().lat().toFixed(3)+"/"+overviewer.map.getCenter().lng().toFixed(3)+"/"+overviewer.map.getZoom();
+    },
+    permalinks: {
+      "rent": {
+        text: "Rent is $200/month jeff@ unterbahn.com",
+        position: {lat: 0.546875, lng: 0.48046875, zoom: 6}
+      }
+    },
+    openSign: function(markerName) {
+       var marker = null;
+       for (i=0;i<markerCollection.All.length;i++) {
+         if (markerCollection.All[i].title == overviewer.permalinks[markerName]) marker = markerCollection.All[i];
+       }
+       if (marker) {
+         if (prevInfoWindow)
+             prevInfoWindow.close()
+         marker.infowindow.open(map,marker);
+         prevInfoWindow = marker.infowindow
+       }
+    },
+    readHash: function(mapOptions) {
+         mapOptions = mapOptions || {}
+         var hash = window.location.hash
+         var params = hash.split("/")
+         if (params.length > 1) {
+           if (params[1] == "rent") {
+             mapOptions = overviewer.permalinks[params[1]].position
+             if (overviewer.collections.markers.All) openSign("rent");
+           } else {
+             mapOptions.lat = parseFloat(params[1])
+             mapOptions.lng = parseFloat(params[2])
+             mapOptions.zoom = parseInt(params[3])
+           }
+	}
+	return mapOptions
+    },
+    goToHash: function() {
+         mapOptions = overviewer.readHash();
+         if (overviewer.map) overviewer.map.setCenter(new google.maps.LatLng(mapOptions.lat, mapOptions.lng))
+         if (overviewer.map) overviewer.map.setZoom(mapOptions.zoom)
+     }
 };
