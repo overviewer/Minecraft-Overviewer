@@ -138,7 +138,9 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         
         switch (state->block) {
         case 2:
-            /* grass */
+            /* grass -- skip for snowgrass */
+            if (state->z < 127 && getArrayByte3D(state->blocks, state->x, state->y, state->z+1) == 78)
+                break;
             color = PySequence_GetItem(self->grasscolor, index);
             facemask = self->grass_texture;
             alpha_over(state->img, self->grass_texture, self->grass_texture, state->imgx, state->imgy, 0, 0);

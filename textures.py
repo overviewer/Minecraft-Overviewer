@@ -429,9 +429,14 @@ def generate_special_texture(blockID, data):
     # all need to behandled here (and in chunkpy)
     
     if blockID == 2: # grass
-        img = _build_block(terrain_images[0], terrain_images[3], 2)
-        colored = tintTexture(biome_grass_texture, (115, 175, 71))
-        composite.alpha_over(img, colored, (0, 0), colored)
+        # data & 0x10 means SNOW sides
+        side_img = terrain_images[3]
+        if data & 0x10:
+            side_img = terrain_images[68]
+        img = _build_block(terrain_images[0], side_img, 2)
+        if not data & 0x10:
+            colored = tintTexture(biome_grass_texture, (115, 175, 71))
+            composite.alpha_over(img, colored, (0, 0), colored)
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1327,10 +1332,11 @@ special_map[92] = range(6) # cake!
 # grass and leaves are graysacle in terrain.png
 # we treat them as special so we can manually tint them
 # it is unknown how the specific tint (biomes) is calculated
-special_map[2] = range(11)       # grass, grass has not ancildata but is used
-                                # in the mod WildGrass, and this small fix
-                                # shows the map as expected, and is harmless
-                                # for normal maps
+# also, 0x10 means SNOW sides
+special_map[2] = range(11) + [0x10,]  # grass, grass has not ancildata but is
+                                      # used in the mod WildGrass, and this
+                                      # small fix shows the map as expected,
+                                      # and is harmless for normal maps
 special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
 
 

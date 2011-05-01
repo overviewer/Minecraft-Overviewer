@@ -155,7 +155,12 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
     int x = state->x, y = state->y, z = state->z;
     unsigned char data = 0;
     
-    if (state->block == 9) { /* water */
+    if (state->block == 2) { /* grass */
+        /* return 0x10 if grass is covered in snow */
+        if (z < 127 && getArrayByte3D(state->blocks, x, y, z+1) == 78)
+            return 0x10;
+        return ancilData;
+    } else if (state->block == 9) { /* water */
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
         if ((ancilData == 0) || (ancilData >= 10)) { /* static water, only top, and unkown ancildata values */
             data = 16;
@@ -393,7 +398,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *tmp;
                     
                     unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
-                    if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) ) {
+                    if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) || (state.block == 2)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                     }
                     
