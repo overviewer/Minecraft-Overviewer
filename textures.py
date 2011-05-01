@@ -509,18 +509,6 @@ def generate_special_texture(blockID, data):
         t = tintTexture(terrain_images[52], (37, 118, 25))
         img = _build_block(t, t, 18)
         return (img.convert("RGB"), img.split()[3])
-        
-    if blockID == 23: # dispenser
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[46])
-        side2 = transform_image_side(terrain_images[45]).transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
-        return (img.convert("RGB"), img.split()[3])
 
 
     if blockID == 35: # wool
@@ -853,29 +841,28 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
 
-    if blockID == 61: #furnace
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[45])
-        side2 = transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
+    if blockID in (61, 62, 23): #furnace and burning furnace
+        top = terrain_images[62]
+        side = terrain_images[45]
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        if blockID == 61:
+            front = terrain_images[44]
 
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
-        return (img.convert("RGB"), img.split()[3])
+        elif blockID == 62:
+            front = terrain_images[45+16]
 
+        elif blockID == 23:
+            front = terrain_images[46]
 
-    if blockID == 62: # lit furnace
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[45])
-        side2 = transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
+        if data == 3: # pointing west
+            img = _build_full_block(top, None, None, side, front)
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+        elif data == 4: # pointing north
+            img = _build_full_block(top, None, None, front, side)
+
+        else: # in any other direction the front can't be seen
+            img = _build_full_block(top, None, None, side, side)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1135,16 +1122,20 @@ def generate_special_texture(blockID, data):
 
 
     if blockID in (86,91): # pumpkins, jack-o-lantern
-        top = transform_image(terrain_images[102])
+        top = terrain_images[102]
         frontID = 119 if blockID == 86 else 120
-        side1 = transform_image_side(terrain_images[frontID])
-        side2 = transform_image_side(terrain_images[118]).transpose(Image.FLIP_LEFT_RIGHT)
+        front = terrain_images[frontID]
+        side = terrain_images[118]
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        if data == 0: # pointing west
+            img = _build_full_block(top, None, None, side, front)
 
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+        elif data == 1: # pointing north
+            img = _build_full_block(top, None, None, front, side)
+
+        else: # in any other direction the front can't be seen
+            img = _build_full_block(top, None, None, side, side)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1276,8 +1267,8 @@ special_map[53] = range(4)  # wooden stairs, orientation
 special_map[55] = range(128) # redstone wire, all the possible combinations
 special_map[58] = (0,)      # crafting table
 special_map[59] = range(8)  # crops, grow from 0 to 7
-special_map[61] = range(6)  # furnace, orientation (not implemented)
-special_map[62] = range(6)  # burning furnace, orientation (not implemented)
+special_map[61] = range(6)  # furnace, orientation
+special_map[62] = range(6)  # burning furnace, orientation
 special_map[64] = range(16) # wooden door, open/close and orientation
 special_map[65] = (2,3,4,5) # ladder, orientation
 special_map[66] = range(10) # minecrart tracks, orientation, slope
@@ -1286,8 +1277,8 @@ special_map[71] = range(16) # iron door, open/close and orientation
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
 special_map[85] = range(17) # fences, all the possible combination
-special_map[86] = range(5)  # pumpkin, orientation (not implemented)
-special_map[91] = range(5)  # jack-o-lantern, orientation (not implemented)
+special_map[86] = range(5)  # pumpkin, orientation
+special_map[91] = range(5)  # jack-o-lantern, orientation
 special_map[92] = range(6) # cake!
 
 # grass and leaves are graysacle in terrain.png
