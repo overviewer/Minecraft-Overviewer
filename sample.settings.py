@@ -2,8 +2,9 @@
 # Please see the README or https://github.com/brownan/Minecraft-Overviewer/wiki/DTT-Upgrade-Guide
 # for more details.
 
-# To use this file, simply copy it to settings.py and make any necessary changes
-# to suite your needs.
+# This file is not meant to be used directly, but instead it is supposed to
+# provide examples of interesting things you can do with the settings file. Most
+# of the time, a simple 'setting_name = value' will work.
 
 # This file is a python script, so you can import and python module you wish or
 # use any built-in python function, though this is not normally necessary
