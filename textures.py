@@ -350,7 +350,7 @@ def _build_blockimages():
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8,  4, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, -1, -1, 65, -1, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
+               36, 37, -1, -1, 65, -1, -1, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
        #       80  81  82  83  84  85  86  87  88  89  90  91
@@ -367,7 +367,7 @@ def _build_blockimages():
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, -1, -1, 65, -1, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
+                36, 37, -1, -1, 65, -1, -1,101, 98, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
@@ -738,6 +738,48 @@ def generate_special_texture(blockID, data):
             # touch up a (horrible) pixel
             img.putpixel((18,3),(0,0,0,0))
             
+        return (img.convert("RGB"), img.split()[3])
+
+    if blockID == 54: # chests
+        # First to bits of the pseudo data store if it's a single chest
+        # or it's a double chest, first half or second half.
+        # The to last bits store the orientation.
+
+        top = terrain_images[25]
+        side = terrain_images[26]
+
+        if data & 12 == 0: # single chest
+            front = terrain_images[27]
+            back = terrain_images[26]
+
+        elif data & 12 == 4: # double, first half
+            front = terrain_images[41]
+            back = terrain_images[57]
+
+        elif data & 12 == 8: # double, second half
+            front = terrain_images[42]
+            back = terrain_images[58]
+
+        else: # just in case
+            front = terrain_images[25]
+            side = terrain_images[25]
+            back = terrain_images[25]
+
+        if data & 3 == 0: # facing west
+            img = _build_full_block(top, None, None, side, front)
+
+        elif data & 3 == 1: # north
+            img = _build_full_block(top, None, None, front, side)
+
+        elif data & 3 == 2: # east
+            img = _build_full_block(top, None, None, side, back)
+
+        elif data & 3 == 3: # south
+            img = _build_full_block(top, None, None, back, side)
+            
+        else:
+            img = _build_full_block(top, None, None, back, side)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1244,8 +1286,8 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # please, if possible, keep the ascending order of blockid value)
 
 special_blocks = set([ 2,  6,  9, 17, 18, 23, 27, 28, 35, 43, 44, 50, 51,
-                      53, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71, 75, 76,
-                      85, 86, 91, 92])
+                      53, 54, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71, 75,
+                      76, 85, 86, 91, 92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1253,7 +1295,7 @@ special_blocks = set([ 2,  6,  9, 17, 18, 23, 27, 28, 35, 43, 44, 50, 51,
 special_map = {}
 
 special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
-special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values.
+special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values, uses pseudo data
 special_map[17] = range(4)  # wood: normal, birch and pine
 special_map[23] = range(6)  # dispensers, orientation
 special_map[27] = range(14) # powered rail, orientation/slope and powered/unpowered
@@ -1264,7 +1306,8 @@ special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
 special_map[50] = (1,2,3,4,5) # torch, position in the block
 special_map[51] = range(16) # fire, position in the block (not implemented)
 special_map[53] = range(4)  # wooden stairs, orientation
-special_map[55] = range(128) # redstone wire, all the possible combinations
+special_map[54] = range(12) # chests, orientation and type (single or double), uses pseudo data
+special_map[55] = range(128) # redstone wire, all the possible combinations, uses pseudo data
 special_map[58] = (0,)      # crafting table
 special_map[59] = range(8)  # crops, grow from 0 to 7
 special_map[61] = range(6)  # furnace, orientation
@@ -1276,7 +1319,7 @@ special_map[67] = range(4)  # cobblestone stairs, orientation
 special_map[71] = range(16) # iron door, open/close and orientation
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
-special_map[85] = range(17) # fences, all the possible combination
+special_map[85] = range(17) # fences, all the possible combination, uses pseudo data
 special_map[86] = range(5)  # pumpkin, orientation
 special_map[91] = range(5)  # jack-o-lantern, orientation
 special_map[92] = range(6) # cake!
