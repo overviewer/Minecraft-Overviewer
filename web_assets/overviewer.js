@@ -623,7 +623,7 @@ var overviewer = {
                         'checked': signGroup.checked,
                         'icon': iconURL,
                         'action': function(n, item, checked) {
-                            jQuery.each(overviewer.collections.markers[item],
+                            jQuery.each(overviewer.collections.markers[item.label],
                                         function(i, elem) {
                                             elem.setVisible(checked);
                                         }
@@ -645,7 +645,7 @@ var overviewer = {
                         'label': regionGroup.label, 
                         'checked': regionGroup.checked,
                         'action': function(n, item, checked) {
-                            jQuery.each(overviewer.collections.regions[item],
+                            jQuery.each(overviewer.collections.regions[item.label],
                                 function(i,elem) {
                                     // Thanks to LeastWeasel for this line!
                                     elem.setMap(checked ? overviewer.map : null);
@@ -738,7 +738,7 @@ var overviewer = {
                 // if its checked, its gotta do something, do that here.
                 if (item.checked) {
                     itemInput.checked = true;
-                    item.action(i, item.label, item.checked);
+                    item.action(i, item, item.checked);
                 }
                 dropdownDiv.appendChild(itemDiv);
                 itemDiv.appendChild(itemInput);
