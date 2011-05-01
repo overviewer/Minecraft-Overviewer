@@ -207,8 +207,72 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         if ((above_level_data & 0x08)) { /* draw top right going up redstonewire */
             final_data = final_data | 0x10;
         }
-        return final_data;        
+        return final_data;
+
+    } else if (state-> block == 54) { /* chests */
+        /* the top 2 bits are used to store the type of chest
+         * (single or double), the 2 bottom bits are used for 
+         * orientation, look textures.py for more information. */
+
+        /* if placed alone chests always face west, return 0 to make a 
+         * chest facing west */
+        unsigned char chest_data = 0, air_data = 0, final_data = 0;
+
+        /* search for chests */
+        chest_data = check_adjacent_blocks(state, x, y, z, 54);
+
+        /* search for air */
+        air_data = check_adjacent_blocks(state, x, y, z, 0);
+
+        if (chest_data == 1) { /* another chest in the east */
+            final_data = final_data | 0x8; /* only can face to north or south */
+            if ( (air_data & 0x2) == 2 ) {
+                final_data = final_data | 0x1; /* facing north */
+            } else {
+                final_data = final_data | 0x3; /* facing south */
+            }
+
+        } else if (chest_data == 2) { /* in the north */
+            final_data = final_data | 0x4; /* only can face to east or west */
+            if ( !((air_data & 0x4) == 4) ) { /* 0 = west */
+                final_data = final_data | 0x2; /* facing east */
+            }
+
+        } else if (chest_data == 4) { /*in the west */
+            final_data = final_data | 0x4;
+            if ( (air_data & 0x2) == 2 ) {
+                final_data = final_data | 0x1; /* facing north */
+            } else {
+                final_data = final_data | 0x3; /* facing south */
+            }
+
+        } else if (chest_data == 8) { /*in the south */
+            final_data = final_data | 0x8;
+            if ( !((air_data & 0x4) == 4) ) {
+                final_data = final_data | 0x2; /* facing east */
+            }
+
+        } else if (chest_data == 0) {
+            /* Single chest, determine the orientation */
+            if ( ((air_data & 0x8) == 0) && ((air_data & 0x2) == 2)  ) { /* block in +x and no block in -x */
+                final_data = final_data | 0x1; /* facing north */
+
+            } else if ( ((air_data & 0x2) == 0) && ((air_data & 0x8) == 8)) {
+                final_data = final_data | 0x3;
+
+            } else if ( ((air_data & 0x4) == 0) && ((air_data & 0x1) == 1)) {
+                final_data = final_data | 0x2;
+            } /* else, facing west, value = 0 */
+
+        } else {
+            /* more than one adjacent chests! render as normal chest */
+            return 0;
+        }
+
+        return final_data;
+
     }
+
 
     return 0;
 
@@ -329,7 +393,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *tmp;
                     
                     unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
-                    if ((state.block == 85) || (state.block == 9) || (state.block == 55)) {
+                    if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) ) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                     }
                     

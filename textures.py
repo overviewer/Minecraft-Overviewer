@@ -210,9 +210,8 @@ def _build_block(top, side, blockID=None):
         return img
 
     side = transform_image_side(side, blockID)
-
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-    
+
     # Darken the sides slightly. These methods also affect the alpha layer,
     # so save them first (we don't want to "darken" the alpha layer making
     # the block transparent)
@@ -224,8 +223,6 @@ def _build_block(top, side, blockID=None):
     otherside.putalpha(othersidealpha)
 
     ## special case for non-block things
-    # TODO once torches are handled by generate_special_texture, remove
-    # them from this list
     if blockID in (37,38,6,39,40,83): ## flowers, sapling, mushrooms, reeds
         #
         # instead of pasting these blocks at the cube edges, place them in the middle:
@@ -351,13 +348,13 @@ def _build_blockimages():
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, -1, -1, # Cloths are left out, sandstone (it has top, side, and bottom wich is ignored here), note block
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
+               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8,  4, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, -1, -1, 65, -1, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
+               36, 37, -1, -1, 65, -1, -1, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
        #       80  81  82  83  84  85  86  87  88  89  90  91
-               66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
+               66, 69, 72, 73, 75, -1,102,103,104,105,-1, 102 # clay?
         ]
 
     # NOTE: For non-block textures, the sideid is ignored, but can't be -1
@@ -370,7 +367,7 @@ def _build_blockimages():
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, -1, -1, 65, -1, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
+                36, 37, -1, -1, 65, -1, -1,101, 98, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
@@ -439,18 +436,25 @@ def generate_special_texture(blockID, data):
 
 
     if blockID == 6: # saplings
-        if data == 1: # spruce sapling
+        # The bottom two bits are used fo the sapling type, the top two
+        # bits are used as a grow-counter for the tree.
+
+        if data & 0x3 == 0: # usual saplings
+            toptexture = terrain_images[15]
+            sidetexture = terrain_images[15]
+
+        if data & 0x3 == 1: # spruce sapling
             toptexture = terrain_images[63]
             sidetexture = terrain_images[63]
         
-        if data == 2: # birch sapling
+        if data & 0x3 == 2: # birch sapling
             toptexture = terrain_images[79]
             sidetexture = terrain_images[79]
-            
-        else: # usual and future saplings
+        
+        if data & 0x3 == 3: # unused usual sapling
             toptexture = terrain_images[15]
             sidetexture = terrain_images[15]
-        
+
         img = _build_block(toptexture, sidetexture, blockID)
         return (img.convert("RGB"),img.split()[3])
 
@@ -504,18 +508,6 @@ def generate_special_texture(blockID, data):
     if blockID == 18: # leaves
         t = tintTexture(terrain_images[52], (37, 118, 25))
         img = _build_block(t, t, 18)
-        return (img.convert("RGB"), img.split()[3])
-        
-    if blockID == 23: # dispenser
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[46])
-        side2 = transform_image_side(terrain_images[45]).transpose(Image.FLIP_LEFT_RIGHT)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -748,6 +740,48 @@ def generate_special_texture(blockID, data):
             
         return (img.convert("RGB"), img.split()[3])
 
+    if blockID == 54: # chests
+        # First to bits of the pseudo data store if it's a single chest
+        # or it's a double chest, first half or second half.
+        # The to last bits store the orientation.
+
+        top = terrain_images[25]
+        side = terrain_images[26]
+
+        if data & 12 == 0: # single chest
+            front = terrain_images[27]
+            back = terrain_images[26]
+
+        elif data & 12 == 4: # double, first half
+            front = terrain_images[41]
+            back = terrain_images[57]
+
+        elif data & 12 == 8: # double, second half
+            front = terrain_images[42]
+            back = terrain_images[58]
+
+        else: # just in case
+            front = terrain_images[25]
+            side = terrain_images[25]
+            back = terrain_images[25]
+
+        if data & 3 == 0: # facing west
+            img = _build_full_block(top, None, None, side, front)
+
+        elif data & 3 == 1: # north
+            img = _build_full_block(top, None, None, front, side)
+
+        elif data & 3 == 2: # east
+            img = _build_full_block(top, None, None, side, back)
+
+        elif data & 3 == 3: # south
+            img = _build_full_block(top, None, None, back, side)
+            
+        else:
+            img = _build_full_block(top, None, None, back, side)
+
+        return (img.convert("RGB"), img.split()[3])
+
 
     if blockID == 55: # redstone wire
         
@@ -849,29 +883,28 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
 
-    if blockID == 61: #furnace
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[45])
-        side2 = transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
+    if blockID in (61, 62, 23): #furnace and burning furnace
+        top = terrain_images[62]
+        side = terrain_images[45]
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        if blockID == 61:
+            front = terrain_images[44]
 
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
-        return (img.convert("RGB"), img.split()[3])
+        elif blockID == 62:
+            front = terrain_images[45+16]
 
+        elif blockID == 23:
+            front = terrain_images[46]
 
-    if blockID == 62: # lit furnace
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[45])
-        side2 = transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
+        if data == 3: # pointing west
+            img = _build_full_block(top, None, None, side, front)
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+        elif data == 4: # pointing north
+            img = _build_full_block(top, None, None, front, side)
+
+        else: # in any other direction the front can't be seen
+            img = _build_full_block(top, None, None, side, side)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1131,16 +1164,20 @@ def generate_special_texture(blockID, data):
 
 
     if blockID in (86,91): # pumpkins, jack-o-lantern
-        top = transform_image(terrain_images[102])
+        top = terrain_images[102]
         frontID = 119 if blockID == 86 else 120
-        side1 = transform_image_side(terrain_images[frontID])
-        side2 = transform_image_side(terrain_images[118]).transpose(Image.FLIP_LEFT_RIGHT)
+        front = terrain_images[frontID]
+        side = terrain_images[118]
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        if data == 0: # pointing west
+            img = _build_full_block(top, None, None, side, front)
 
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+        elif data == 1: # pointing north
+            img = _build_full_block(top, None, None, front, side)
+
+        else: # in any other direction the front can't be seen
+            img = _build_full_block(top, None, None, side, side)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1249,16 +1286,16 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # please, if possible, keep the ascending order of blockid value)
 
 special_blocks = set([ 2,  6,  9, 17, 18, 23, 27, 28, 35, 43, 44, 50, 51,
-                      53, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71, 75, 76,
-                      85, 86, 91, 92])
+                      53, 54, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71, 75,
+                      76, 85, 86, 91, 92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
 
 special_map = {}
 
-special_map[6] = range(4)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
-special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values.
+special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
+special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values, uses pseudo data
 special_map[17] = range(4)  # wood: normal, birch and pine
 special_map[23] = range(6)  # dispensers, orientation
 special_map[27] = range(14) # powered rail, orientation/slope and powered/unpowered
@@ -1269,11 +1306,12 @@ special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
 special_map[50] = (1,2,3,4,5) # torch, position in the block
 special_map[51] = range(16) # fire, position in the block (not implemented)
 special_map[53] = range(4)  # wooden stairs, orientation
-special_map[55] = range(128) # redstone wire, all the possible combinations
+special_map[54] = range(12) # chests, orientation and type (single or double), uses pseudo data
+special_map[55] = range(128) # redstone wire, all the possible combinations, uses pseudo data
 special_map[58] = (0,)      # crafting table
 special_map[59] = range(8)  # crops, grow from 0 to 7
-special_map[61] = range(6)  # furnace, orientation (not implemented)
-special_map[62] = range(6)  # burning furnace, orientation (not implemented)
+special_map[61] = range(6)  # furnace, orientation
+special_map[62] = range(6)  # burning furnace, orientation
 special_map[64] = range(16) # wooden door, open/close and orientation
 special_map[65] = (2,3,4,5) # ladder, orientation
 special_map[66] = range(10) # minecrart tracks, orientation, slope
@@ -1281,9 +1319,9 @@ special_map[67] = range(4)  # cobblestone stairs, orientation
 special_map[71] = range(16) # iron door, open/close and orientation
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
-special_map[85] = range(17) # fences, all the possible combination
-special_map[86] = range(5)  # pumpkin, orientation (not implemented)
-special_map[91] = range(5)  # jack-o-lantern, orientation (not implemented)
+special_map[85] = range(17) # fences, all the possible combination, uses pseudo data
+special_map[86] = range(5)  # pumpkin, orientation
+special_map[91] = range(5)  # jack-o-lantern, orientation
 special_map[92] = range(6) # cake!
 
 # grass and leaves are graysacle in terrain.png
