@@ -623,12 +623,12 @@ var overviewer = {
                         'checked': signGroup.checked,
                         'icon': iconURL,
                         'action': function(n, item, checked) {
-                            jQuery.each(overviewer.collections.markers[item.label],
+                            jQuery.each(overviewer.collections.markers[item],
                                         function(i, elem) {
                                             elem.setVisible(checked);
                                         }
                             );
-                            overviewer.util.debug('Adding sign item: ' + item.label);
+                            overviewer.util.debug('Adding sign item: ' + item);
                         }
                     });
                 }
@@ -645,11 +645,13 @@ var overviewer = {
                         'label': regionGroup.label, 
                         'checked': regionGroup.checked,
                         'action': function(n, item, checked) {
-                            jQuery.each(overviewer.collections.regions[item.label],
+                            jQuery.each(overviewer.collections.regions[item],
                                 function(i,elem) {
                                     // Thanks to LeastWeasel for this line!
                                     elem.setMap(checked ? overviewer.map : null);
                                 });
+                                overviewer.util.debug('Adding region item: ' + item);
+
                         }
                     });
                 }
