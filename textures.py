@@ -210,9 +210,8 @@ def _build_block(top, side, blockID=None):
         return img
 
     side = transform_image_side(side, blockID)
-
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-    
+
     # Darken the sides slightly. These methods also affect the alpha layer,
     # so save them first (we don't want to "darken" the alpha layer making
     # the block transparent)
@@ -224,8 +223,6 @@ def _build_block(top, side, blockID=None):
     otherside.putalpha(othersidealpha)
 
     ## special case for non-block things
-    # TODO once torches are handled by generate_special_texture, remove
-    # them from this list
     if blockID in (37,38,6,39,40,83): ## flowers, sapling, mushrooms, reeds
         #
         # instead of pasting these blocks at the cube edges, place them in the middle:
@@ -439,18 +436,25 @@ def generate_special_texture(blockID, data):
 
 
     if blockID == 6: # saplings
-        if data == 1: # spruce sapling
+        # The bottom two bits are used fo the sapling type, the top two
+        # bits are used as a grow-counter for the tree.
+
+        if data & 0x3 == 0: # usual saplings
+            toptexture = terrain_images[15]
+            sidetexture = terrain_images[15]
+
+        if data & 0x3 == 1: # spruce sapling
             toptexture = terrain_images[63]
             sidetexture = terrain_images[63]
         
-        if data == 2: # birch sapling
+        if data & 0x3 == 2: # birch sapling
             toptexture = terrain_images[79]
             sidetexture = terrain_images[79]
-            
-        else: # usual and future saplings
+        
+        if data & 0x3 == 3: # unused usual sapling
             toptexture = terrain_images[15]
             sidetexture = terrain_images[15]
-        
+
         img = _build_block(toptexture, sidetexture, blockID)
         return (img.convert("RGB"),img.split()[3])
 
@@ -1257,7 +1261,7 @@ special_blocks = set([ 2,  6,  9, 17, 18, 23, 27, 28, 35, 43, 44, 50, 51,
 
 special_map = {}
 
-special_map[6] = range(4)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
+special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values.
 special_map[17] = range(4)  # wood: normal, birch and pine
 special_map[23] = range(6)  # dispensers, orientation
