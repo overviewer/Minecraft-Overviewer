@@ -348,13 +348,13 @@ def _build_blockimages():
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, -1, -1, # Cloths are left out, sandstone (it has top, side, and bottom wich is ignored here), note block
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
+               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8,  4, # Gold/iron blocks? Doublestep? TNT from above?
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                36, 37, -1, -1, 65, -1, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
        #       80  81  82  83  84  85  86  87  88  89  90  91
-               66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
+               66, 69, 72, 73, 75, -1,102,103,104,105,-1, 102 # clay?
         ]
 
     # NOTE: For non-block textures, the sideid is ignored, but can't be -1
