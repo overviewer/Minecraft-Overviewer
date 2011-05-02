@@ -628,7 +628,7 @@ var overviewer = {
                                             elem.setVisible(checked);
                                         }
                             );
-                            overviewer.util.debug('Adding sign item: ' + item.label);
+                            overviewer.util.debug('Adding sign item: ' + item);
                         }
                     });
                 }
@@ -650,6 +650,8 @@ var overviewer = {
                                     // Thanks to LeastWeasel for this line!
                                     elem.setMap(checked ? overviewer.map : null);
                                 });
+                                overviewer.util.debug('Adding region item: ' + item);
+
                         }
                     });
                 }
@@ -736,7 +738,7 @@ var overviewer = {
                 // if its checked, its gotta do something, do that here.
                 if (item.checked) {
                     itemInput.checked = true;
-                    item.action(i, item.label, item.checked);
+                    item.action(i, item, item.checked);
                 }
                 dropdownDiv.appendChild(itemDiv);
                 itemDiv.appendChild(itemInput);
