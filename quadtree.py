@@ -49,7 +49,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, imgformat=None, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -61,6 +61,7 @@ class QuadtreeGen(object):
         """
         assert(imgformat)
         self.imgformat = imgformat
+        self.imgquality = imgquality
         self.optimizeimg = optimizeimg
         self.bgcolor = bgcolor
         self.rendermode = rendermode
@@ -336,7 +337,7 @@ class QuadtreeGen(object):
 
         # Save it
         if self.imgformat == 'jpg':
-            img.save(imgpath, quality=95, subsampling=0)
+            img.save(imgpath, quality=self.imgquality, subsampling=0)
         else: # png
             img.save(imgpath)
             
@@ -463,7 +464,10 @@ class QuadtreeGen(object):
                 pass
         
         # Save them
-        tileimg.save(imgpath)
+        if self.imgformat == 'jpg':
+            tileimg.save(imgpath, quality=self.imgquality, subsampling=0)
+        else: # png
+            tileimg.save(imgpath)
 
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
