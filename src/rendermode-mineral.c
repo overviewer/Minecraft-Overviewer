@@ -19,24 +19,24 @@
 
 struct OreColor {
     unsigned char blockid;
-    unsigned char r, g, b, a;
+    unsigned char r, g, b;
 };
 
 /* put more valuable ores first -- they take precedence */
 static struct OreColor orecolors[] = {
-    {56 /* Diamond Ore  */, 32, 230, 220, 200},
+    {56 /* Diamond Ore  */, 32, 230, 220},
 
-    {14 /* Gold Ore     */, 255, 234, 0, 200},
-    {21 /* Lapis Lazuli */, 0, 23, 176, 200},
+    {14 /* Gold Ore     */, 255, 234, 0},
+    {21 /* Lapis Lazuli */, 0, 23, 176},
 
-    {15 /* Iron Ore     */, 204, 204, 204, 200},
-    {16 /* Coal Ore     */, 54, 54, 54, 200},
+    {15 /* Iron Ore     */, 204, 204, 204},
+    {16 /* Coal Ore     */, 54, 54, 54},
 
-    {73 /* Redstone     */, 186, 0, 0, 200},
-    {74 /* Lit Redstone */, 186, 0, 0, 200},
+    {73 /* Redstone     */, 186, 0, 0},
+    {74 /* Lit Redstone */, 186, 0, 0},
     
     /* end of list marker */
-    {0, 0, 0, 0, 0}
+    {0, 0, 0, 0}
 };
 
 static void get_color(void *data, RenderState *state,
@@ -47,7 +47,7 @@ static void get_color(void *data, RenderState *state,
     *a = 0;
     
     for (z = 0; z <= z_max; z++) {
-        int i, max_i = sizeof(orecolors) / sizeof(struct OreColor);
+        int i, tmp, max_i = sizeof(orecolors) / sizeof(struct OreColor);
         unsigned char blockid = getArrayByte3D(state->blocks, x, y, z);
         
         for (i = 0; i < max_i && orecolors[i].blockid != 0; i++) {
@@ -55,7 +55,10 @@ static void get_color(void *data, RenderState *state,
                 *r = orecolors[i].r;
                 *g = orecolors[i].g;
                 *b = orecolors[i].b;
-                *a = orecolors[i].a;
+                
+                tmp = (128 - z_max + z) * 2 - 40;
+                *a = MIN(MAX(0, tmp), 255);
+                
                 max_i = i;
                 break;
             }
