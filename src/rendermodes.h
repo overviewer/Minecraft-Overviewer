@@ -156,4 +156,11 @@ typedef struct {
 } RenderModeCave;
 extern RenderModeInterface rendermode_cave;
 
+/* MINERAL */
+typedef struct {
+    /* inherits from overlay */
+    RenderModeOverlay parent;
+} RenderModeMineral;
+extern RenderModeInterface rendermode_mineral;
+
 #endif /* __RENDERMODES_H_INCLUDED__ */
