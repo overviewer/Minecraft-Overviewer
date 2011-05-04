@@ -24,16 +24,17 @@ struct OreColor {
 
 /* put more valuable ores first -- they take precedence */
 static struct OreColor orecolors[] = {
+    {48 /* Mossy Stone  */, 31, 153, 9},
+    
     {56 /* Diamond Ore  */, 32, 230, 220},
 
-    {14 /* Gold Ore     */, 255, 234, 0},
     {21 /* Lapis Lazuli */, 0, 23, 176},
+    {14 /* Gold Ore     */, 255, 234, 0},
 
     {15 /* Iron Ore     */, 204, 204, 204},
-    {16 /* Coal Ore     */, 54, 54, 54},
-
     {73 /* Redstone     */, 186, 0, 0},
     {74 /* Lit Redstone */, 186, 0, 0},
+    {16 /* Coal Ore     */, 54, 54, 54},
     
     /* end of list marker */
     {0, 0, 0, 0}
