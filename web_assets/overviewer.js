@@ -245,6 +245,9 @@ var overviewer = {
             google.maps.event.addListener(overviewer.map, 'dragend', function() {
               overviewer.setHash();
             });
+            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
+              overviewer.setHash();
+            });
         },
         /**
          * Read through overviewer.collections.markerDatas and create Marker
