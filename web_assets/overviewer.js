@@ -58,6 +58,8 @@ var overviewer = {
             overviewer.util.initializeMarkers();
             overviewer.util.initializeRegions();
             overviewer.util.createMapControls();
+            //window.addEventListener("hashchange",overviewer.goToHash,false);
+            //window.onhashchange = overviewer.goToHash;
             setInterval(overviewer.goToHash,500);
         },
         /**
@@ -240,10 +242,7 @@ var overviewer = {
             overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
 
             // Make the link again whenever the map changes
-            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
-              overviewer.setHash();
-            });
-            google.maps.event.addListener(overviewer.map, 'center_changed', function() {
+            google.maps.event.addListener(overviewer.map, 'dragend', function() {
               overviewer.setHash();
             });
         },
