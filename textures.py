@@ -1296,10 +1296,30 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, side, (2,12), side)
         composite.alpha_over(img, otherside, (10,12), otherside)
         composite.alpha_over(img, top, (0,8), top)
+
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID in (93, 94): # redstone repeaters, ON and OFF
+
+        top = terrain_images[131] if blockID == 93 else terrain_images[147]
+        side = terrain_images[5]
+        increment = 9
         
-        #~ composite.alpha_over(img, side, (2,6), side)
-        #~ composite.alpha_over(img, otherside, (10,6), otherside)
-        #~ composite.alpha_over(img, top, (0,2), top)
+        if (data & 0x3) == 0: # pointing east
+            pass
+        
+        if (data & 0x3) == 1: # pointing south
+            top = top.rotate(270)
+
+        if (data & 0x3) == 2: # pointing west
+            top = top.rotate(180)
+
+        if (data & 0x3) == 3: # pointing north
+            top = top.rotate(90)
+
+        img = _build_full_block( (top, increment), None, None, side, side)
+        
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1382,7 +1402,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 35, 43, 44, 50,
                       51, 53, 54, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71,
-                      75, 76, 85, 86, 90, 91, 92])
+                      75, 76, 85, 86, 90, 91, 92, 93, 94])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1420,6 +1440,8 @@ special_map[86] = range(5)  # pumpkin, orientation
 special_map[90] = (1,2,4,8) # portal, in 2 orientations, 4 cases, uses pseudo data
 special_map[91] = range(5)  # jack-o-lantern, orientation
 special_map[92] = range(6) # cake!
+special_map[93] = range(16) # OFF redstone repeater, orientation and delay (delay not implemented)
+special_map[94] = range(16) # ON redstone repeater, orientation and delay (delay not implemented)
 
 # grass and leaves are graysacle in terrain.png
 # we treat them as special so we can manually tint them
