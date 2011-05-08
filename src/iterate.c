@@ -276,6 +276,8 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 
         return final_data;
 
+    } else if (state->block == 90) {
+        return check_adjacent_blocks(state, x, y, z, state->block);
     }
 
 
@@ -398,7 +400,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *tmp;
                     
                     unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
-                    if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) || (state.block == 2)) {
+                    if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) || (state.block == 2) || (state.block == 90)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                     }
                     

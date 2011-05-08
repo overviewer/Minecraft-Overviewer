@@ -1186,6 +1186,22 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
 
+    if blockID == 90: # portal
+        portaltexture = _load_image("portal.png")
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        side = transform_image_side(portaltexture)
+        otherside = side.transpose(Image.FLIP_TOP_BOTTOM)
+
+        if data in (1,4):
+            composite.alpha_over(img, side, (5,4), side)
+
+        if data in (2,8):
+            composite.alpha_over(img, otherside, (5,4), otherside)
+
+        return (img.convert("RGB"), img.split()[3])
+
+
     if blockID == 92: # cake! (without bites, at the moment)
     
         top = terrain_images[121]
@@ -1292,7 +1308,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 special_blocks = set([ 2,  6,  9, 17, 18, 23, 27, 28, 35, 43, 44, 50, 51,
                       53, 54, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71, 75,
-                      76, 85, 86, 91, 92])
+                      76, 85, 86, 90, 91, 92])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1326,6 +1342,7 @@ special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
 special_map[85] = range(17) # fences, all the possible combination, uses pseudo data
 special_map[86] = range(5)  # pumpkin, orientation
+special_map[90] = (1,2,4,8) # portal, in 2 orientations, 4 cases, uses pseudo data
 special_map[91] = range(5)  # jack-o-lantern, orientation
 special_map[92] = range(6) # cake!
 
