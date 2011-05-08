@@ -1301,6 +1301,8 @@ def generate_special_texture(blockID, data):
 
 
     if blockID in (93, 94): # redstone repeaters, ON and OFF
+        # NOTE: this function uses the redstone torches generated above,
+        # this must run after the function of the torches.
 
         top = terrain_images[131] if blockID == 93 else terrain_images[147]
         side = terrain_images[5]
@@ -1320,6 +1322,99 @@ def generate_special_texture(blockID, data):
 
         img = _build_full_block( (top, increment), None, None, side, side)
         
+        # paste redstone torches everywhere!
+        t = specialblockmap[(75,5)] if blockID == 93 else specialblockmap[(76,5)]
+        torch = t[0].copy()        # textures are stored as tuples (RGB,A)
+        torch.putalpha(t[1])
+        
+        # the torch is too tall for the repeater, crop the bottom.
+        ImageDraw.Draw(torch).rectangle((0,16,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        # touch up the 3d effect with big rectangles, just in case, for other texture packs
+        ImageDraw.Draw(torch).rectangle((0,24,10,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(torch).rectangle((12,15,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        # torch positions for every redstone torch orientation.
+        #
+        # This is a horrible list of torch orientations. I tried to 
+        # obtain these orientations by rotating the positions for one
+        # orientation, but pixel rounding is horrible and messes the
+        # torches.
+
+        if (data & 0x3) == 0: # pointing east
+            if (data & 0xC) == 0: # one tick delay
+                moving_torch = (1,1)
+                static_torch = (-3,-1)
+                
+            elif (data & 0xC) == 4: # two ticks delay
+                moving_torch = (2,2)
+                static_torch = (-3,-1)
+                
+            elif (data & 0xC) == 8: # three ticks delay
+                moving_torch = (3,2)
+                static_torch = (-3,-1)
+                
+            elif (data & 0xC) == 12: # four ticks delay
+                moving_torch = (4,3)
+                static_torch = (-3,-1)
+        
+        elif (data & 0x3) == 1: # pointing south
+            if (data & 0xC) == 0: # one tick delay
+                moving_torch = (1,1)
+                static_torch = (5,-1)
+                
+            elif (data & 0xC) == 4: # two ticks delay
+                moving_torch = (2,0)
+                static_torch = (5,-1)
+                
+            elif (data & 0xC) == 8: # three ticks delay
+                moving_torch = (3,0)
+                static_torch = (5,-1)
+                
+            elif (data & 0xC) == 12: # four ticks delay
+                moving_torch = (4,-1)
+                static_torch = (5,-1)
+
+        elif (data & 0x3) == 2: # pointing west
+            if (data & 0xC) == 0: # one tick delay
+                moving_torch = (1,1)
+                static_torch = (5,3)
+                
+            elif (data & 0xC) == 4: # two ticks delay
+                moving_torch = (0,0)
+                static_torch = (5,3)
+                
+            elif (data & 0xC) == 8: # three ticks delay
+                moving_torch = (-1,0)
+                static_torch = (5,3)
+                
+            elif (data & 0xC) == 12: # four ticks delay
+                moving_torch = (-2,-1)
+                static_torch = (5,3)
+
+        elif (data & 0x3) == 3: # pointing north
+            if (data & 0xC) == 0: # one tick delay
+                moving_torch = (1,1)
+                static_torch = (-3,3)
+                
+            elif (data & 0xC) == 4: # two ticks delay
+                moving_torch = (2,0)
+                static_torch = (-3,3)
+                
+            elif (data & 0xC) == 8: # three ticks delay
+                moving_torch = (3,0)
+                static_torch = (-3,3)
+                
+            elif (data & 0xC) == 12: # four ticks delay
+                moving_torch = (4,-1)
+                static_torch = (-3,3)
+        
+        # this paste order it's ok for east and south orientation
+        # but it's wrong for north and west orientations. But using the
+        # default texture pack the torches are small enough to no overlap.
+        composite.alpha_over(img, torch, static_torch, torch) 
+        composite.alpha_over(img, torch, moving_torch, torch)
+
         return (img.convert("RGB"), img.split()[3])
 
 
