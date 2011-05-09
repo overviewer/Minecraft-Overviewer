@@ -121,14 +121,9 @@ def transform_image(img, blockID=None):
 
     """
 
-    if blockID in (81,92): # cacti and cake
-        # Resize to 15x15, since the cactus and the cake textures are a little smaller than the other textures
-        img = img.resize((15, 15), Image.ANTIALIAS)
-
-    else:
-        # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
-        # even number that can be split in half twice
-        img = img.resize((17, 17), Image.ANTIALIAS)
+    # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
+    # even number that can be split in half twice
+    img = img.resize((17, 17), Image.ANTIALIAS)
 
     # Build the Affine transformation matrix for this perspective
     transform = numpy.matrix(numpy.identity(3))
@@ -223,7 +218,7 @@ def _build_block(top, side, blockID=None):
     otherside.putalpha(othersidealpha)
 
     ## special case for non-block things
-    if blockID in (37,38,6,39,40,83): ## flowers, sapling, mushrooms, reeds
+    if blockID in (37,38,6,39,40,83,30): ## flowers, sapling, mushrooms, reeds, web
         #
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
@@ -233,9 +228,9 @@ def _build_block(top, side, blockID=None):
 
 
     if blockID in (81,): # cacti!
-        composite.alpha_over(img, side, (2,6), side)
-        composite.alpha_over(img, otherside, (10,6), otherside)
-        composite.alpha_over(img, top, (0,2), top)
+        composite.alpha_over(img, side, (1,6), side)
+        composite.alpha_over(img, otherside, (11,6), otherside)
+        composite.alpha_over(img, top, (0,0), top)
     elif blockID in (44,): # half step
         # shift each texture down 6 pixels
         composite.alpha_over(img, side, (0,12), side)
@@ -374,7 +369,7 @@ def _build_blockimages():
        #        0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
     topids = [ -1,  1,  0,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-               34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, -1, -1,
+               34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, 11, -1,
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  9,  4, 
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
@@ -391,7 +386,7 @@ def _build_blockimages():
        #         0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
     sideids = [ -1,  1,  3,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-                34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, -1, -1,
+                34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, 11, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
@@ -399,7 +394,7 @@ def _build_blockimages():
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
-                66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
+                66, 70, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
 
     # This maps block id to the texture that goes on the side of the block
@@ -1293,9 +1288,10 @@ def generate_special_texture(blockID, data):
         
         img = Image.new("RGBA", (24,24), (38,92,255,0))
         
-        composite.alpha_over(img, side, (2,12), side)
-        composite.alpha_over(img, otherside, (10,12), otherside)
-        composite.alpha_over(img, top, (0,8), top)
+        composite.alpha_over(img, side, (1,12), side)
+        composite.alpha_over(img, otherside, (11,13), otherside) # workaround, fixes a hole
+        composite.alpha_over(img, otherside, (12,12), otherside)
+        composite.alpha_over(img, top, (0,6), top)
 
         return (img.convert("RGB"), img.split()[3])
 
