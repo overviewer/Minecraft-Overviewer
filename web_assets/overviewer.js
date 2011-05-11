@@ -831,8 +831,8 @@ var overviewer = {
 		},
 		'goToHash': function() {
 			var coords = window.location.hash.split("/");
-			var latlngcoords = overviewer.util.fromWorldToLatLng(parseFloat(coords[1]), 64, parseFloat(coords[2]));
-			overviewer.map.setCenter(latlngcoords[1], latlngcoords[3]);
+			var latlngcoords = overviewer.util.fromWorldToLatLng(parseFloat(coords[1]), parseFloat(coords[2]), 64);
+			overviewer.map.setCenter(latlngcoords);
 			overviewer.map.setZoom(parseInt(coords[3]));
 		},
     },
