@@ -28,6 +28,7 @@ for many different parts of the code.
  * Aaron Griffith <aargri@gmail.com>
  * Alex Headley <aheadley@waysaboutstuff.com>
  * Alex Jurkiewicz <alex@bluebottle.net.au>
+ * Michael Writhe <michael@writhem.com>
  * Xon <Xon@localhost>
 
 ------------------------
