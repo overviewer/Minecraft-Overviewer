@@ -235,8 +235,11 @@ var overviewer = {
             });
 			*/
 			
-			// Init live hash updating
+			// Add live hash update listener
+			google.maps.event.addListener(overviewer.map, 'dragend', function() { overviewer.updateHash(); });
+			// Jump to the hash if given
 			initHash();
+			
 			
             // We can now set the map to use the 'coordinate' map type
             overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
@@ -868,7 +871,6 @@ var overviewer = {
 		if(window.location.hash.split("/").length > 1) {
 			goToHash();
 		}
-		google.maps.event.addListener(overviewer.map, 'dragend', function() { overviewer.updateHash(); });
 	},
 	'setHash': function(lat, lng, zoom)	{
 		window.location.replace("#/" + lat + "/" + lng + "/" + zoom);
