@@ -823,7 +823,7 @@ var overviewer = {
 			}
 		},
 		'setHash': function(x, y, z, zoom)	{
-			window.location.replace("#/" + x.toFloor() + "/" + y + "/" + z.toFloor() + "/" + zoom);
+			window.location.replace("#/" + Math.toFloor(x) + "/" + Math.toFloor(y) + "/" + Math.toFloor(z) + "/" + zoom);
 		},
 		'updateHash': function() {
 			var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
