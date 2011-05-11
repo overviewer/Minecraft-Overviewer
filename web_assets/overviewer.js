@@ -226,14 +226,12 @@ var overviewer = {
                     overviewer.collections.mapTypes[i]);
             }
 			
-			/*
             // Make the link again whenever the map changes
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
                 $('#'+overviewerConfig.CONST.mapDivId).css(
                     'background-color', overviewer.util.getMapTypeBackgroundColor(
                         overviewer.map.getMapTypeId()));
             });
-			*/
 			
 			// Add live hash update listener
 			google.maps.event.addListener(overviewer.map, 'dragend', function() {
@@ -471,29 +469,6 @@ var overviewer = {
             }
             return results;
         },
-        /**
-         * Set the link (at the bottom of the screen) to the current view.
-         * TODO: make this preserve the mapTypeId as well
-         */
-        'setViewUrl': function() {
-            var displayZoom = overviewer.map.getZoom();
-            if (displayZoom == overviewerConfig.map.maxZoom) {
-                displayZoom = 'max';
-            } else {
-                displayZoom -= overviewerConfig.map.maxZoom;
-            }
-            var point;
-            var point = overviewer.util.fromLatLngToWorld(
-                overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
-            var viewUrl = location.href.substring(0, location.href.lastIndexOf(
-                    location.search))
-                + '?x=' + Math.floor(point.x)
-                + '&y=' + Math.floor(point.y)
-                + '&z=' + Math.floor(point.z)
-                + '&zoom=' + displayZoom;
-            document.getElementById('link').innerHTML = viewUrl;
-            
-        },
         'getDefaultMapTypeId': function() {
             return overviewer.collections.mapTypeIds[0];
         },
@@ -593,21 +568,6 @@ var overviewer = {
          * like the compass, current view link, etc.
          */
         'createMapControls': function() {
-            // viewstate link (little link to where you're looking at the map,
-            // normally bottom left)
-            var viewStateDiv = document.createElement('DIV');
-            viewStateDiv.id='link';
-            // add it to the map, bottom left.
-            if (overviewerConfig.map.controls.link) {
-                google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
-                    overviewer.util.setViewUrl();
-                });
-                google.maps.event.addListener(overviewer.map, 'center_changed', function() {
-                    overviewer.util.setViewUrl();
-                });
-                overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(viewStateDiv);
-            }
-
             // compass rose, in the top right corner
             var compassDiv = document.createElement('DIV');
             compassDiv.style.padding = '5px';
