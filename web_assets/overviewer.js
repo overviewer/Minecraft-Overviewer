@@ -816,7 +816,23 @@ var overviewer = {
                 infowindow.open(overviewer.map, marker);
                 overviewer.collections.infoWindow = infowindow;
             });
-        }
+        },
+		'initHash': function() {
+			if(window.location.hash.split("/").length > 1) {
+				overviewer.util.goToHash();
+			}
+		},
+		'setHash': function(lat, lng, zoom)	{
+			window.location.replace("#/" + lat.toFixed(3) + "/" + lng.toFixed(3) + "/" + zoom);
+		},
+		'updateHash': function() {
+			overviewer.util.setHash(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng(), overviewer.map.getZoom());
+		},
+		'goToHash': function() {
+			coords = window.location.hash.split("/");
+			overviewer.map.setCenter(coords[1], coords[2]);
+			overviewer.map.setZoom(coords[3]);
+		},
     },
     /**
      * The various classes needed in this file.
@@ -872,22 +888,6 @@ var overviewer = {
             this.tileSize = tileSize;
         }
     },
-	'initHash': function() {
-		if(window.location.hash.split("/").length > 1) {
-			overviewer.util.goToHash();
-		}
-	},
-	'setHash': function(lat, lng, zoom)	{
-		window.location.replace("#/" + lat.toFixed(3) + "/" + lng.toFixed(3) + "/" + zoom);
-	},
-	'updateHash': function() {
-		overviewer.util.setHash(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng(), overviewer.map.getZoom());
-	},
-	'goToHash': function() {
-		coords = window.location.hash.split("/");
-		overviewer.map.setCenter(coords[1], coords[2]);
-		overviewer.map.setZoom(coords[3]);
-	},
     /**
      * Stuff that we give to the google maps code instead of using ourselves
      * goes in here.
