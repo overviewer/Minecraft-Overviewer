@@ -164,10 +164,18 @@ def main():
             logging.error("Invalid world number")
             sys.exit(1)
 
-    if len(args) != 2:
+    if len(args) < 2:
         if options.delete:
             return delete_all(worlddir, None)
-        parser.error("Where do you want to save the tiles?")
+        logging.error("Where do you want to save the tiles?")
+        sys.exit(1)
+    elif len(args) > 2:
+        if options.delete:
+            return delete_all(worlddir, None)
+        parser.print_help()
+        logging.error("Sorry, you specified too many arguments")
+        sys.exit(1)
+
 
     destdir = args[1]
     if options.display_config:

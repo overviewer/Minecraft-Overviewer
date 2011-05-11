@@ -368,6 +368,14 @@ var overviewer = {
                             clickable = false; // if it doesn't have a name, we dont have to show it.
                         }
 
+                        if(region.opacity) {
+                            var strokeOpacity = region.opacity;
+                            var fillOpacity = region.opacity * 0.25;
+                        } else {
+                            var strokeOpacity = region.strokeOpacity;
+                            var fillOpacity = region.fillOpacity;
+                        }
+
                         if (region.closed) {
                             var shape = new google.maps.Polygon({
                                 'name': name,
@@ -375,10 +383,10 @@ var overviewer = {
                                 'geodesic':         false,
                                 'map':              null,
                                 'strokeColor':      region.color,
-                                'strokeOpacity':    region.opacity,
+                                'strokeOpacity':    strokeOpacity,
                                 'strokeWeight':     overviewerConfig.CONST.regionStrokeWeight,
                                 'fillColor':        region.color,
-                                'fillOpacity':      region.opacity * 0.25,
+                                'fillOpacity':      fillOpacity,
                                 'zIndex':           j,
                                 'paths':            converted
                             });
@@ -389,7 +397,7 @@ var overviewer = {
                                     'geodesic':         false,
                                     'map':              null,
                                     'strokeColor':      region.color,
-                                    'strokeOpacity':    region.opacity,
+                                    'strokeOpacity':    strokeOpacity,
                                     'strokeWeight':     overviewerConfig.CONST.regionStrokeWeight,
                                     'zIndex':           j,
                                     'path':             converted
