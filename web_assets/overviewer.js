@@ -822,18 +822,18 @@ var overviewer = {
 				overviewer.util.goToHash();
 			}
 		},
-		'setHash': function(x, y, z)	{
-			window.location.replace("#/" + x.toFixed(3) + "/" + y + "/" + z.toFixed(3));
+		'setHash': function(x, z, zoom)	{
+			window.location.replace("#/" + x.toFixed(3) + "/" + z.toFixed(3) + "/" + zoom);
 		},
 		'updateHash': function() {
-			var coordinates = overviewer.util.fromLatLngtoWorld(overviewer.map.getCenter());
+			var coordinates = overviewer.util.fromLatLngtoWorld(overviewer.map.getCenter().lat, overviewer.map.getCenter().lng);
 			overviewer.util.setHash(coordinates[1], coordinates[2], coordinates[3]);
 		},
 		'goToHash': function() {
 			var coords = window.location.hash.split("/");
-			var latlngcoords = overviewer.util.fromWorldToLatLng(parseFloat(coords[1]), parseInt(coords[2]), parseFloat(coords[3]));
+			var latlngcoords = overviewer.util.fromWorldToLatLng(parseFloat(coords[1]), 64, parseFloat(coords[2]));
 			overviewer.map.setCenter(latlngcoords[1], latlngcoords[3]);
-			overviewer.map.setZoom(parseInt(latlngcoords[2]));
+			overviewer.map.setZoom(parseInt(coords[3]));
 		},
     },
     /**
