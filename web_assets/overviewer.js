@@ -830,7 +830,7 @@ var overviewer = {
 		},
 		'goToHash': function() {
 			coords = window.location.hash.split("/");
-			overviewer.map.setCenter(coords[1], coords[2]);
+			overviewer.map.setCenter(new google.maps.LatLng(coords[1], coords[2]));
 			overviewer.map.setZoom(coords[3]);
 		},
     },
