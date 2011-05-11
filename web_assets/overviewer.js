@@ -775,9 +775,11 @@ var overviewer = {
                     overviewer.collections.infoWindow.close();
                 }
                 // Replace our Info Window's content and position
+                var point = overviewer.util.fromLatLngToWorld(event.latLng.lat(),event.latLng.lng());
                 var contentString = '<b>Region: ' + shape.name + '</b><br />' +
-                    'Clicked Location: <br />' + event.latLng.lat() + ', ' +
-                    event.latLng.lng() + '<br />';
+                    'Clicked Location: <br />' + Math.round(point.x,1) + ', ' + point.y
+                     + ', ' + Math.round(point.z,1)
+                     + '<br />';
                 infowindow.setContent(contentString);
                 infowindow.setPosition(event.latLng);
                 infowindow.open(overviewer.map);
