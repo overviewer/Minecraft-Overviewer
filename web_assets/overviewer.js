@@ -822,16 +822,16 @@ var overviewer = {
 				overviewer.util.goToHash();
 			}
 		},
-		'setHash': function(lat, lng, zoom)	{
-			window.location.replace("#/" + lat.toFixed(3) + "/" + lng.toFixed(3) + "/" + zoom);
+		'setHash': function(x, y, z)	{
+			window.location.replace("#/" + x.toFixed(3) + "/" + y + "/" + z.toFixed(3));
 		},
 		'updateHash': function() {
-			overviewer.util.setHash(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng(), overviewer.map.getZoom());
+			overviewer.util.setHash(overviewer.map.getCenter().x(), overviewer.map.getZoom(), overviewer.map.getCenter().x());
 		},
 		'goToHash': function() {
 			coords = window.location.hash.split("/");
-			overviewer.map.setCenter(new google.maps.LatLng(coords[1], coords[2]));
-			overviewer.map.setZoom(coords[3]);
+			overviewer.map.setCenter(new google.maps.Point(parseFloat(coords[1]), parseFloat(coords[3]));
+			overviewer.map.setZoom(parseInt(coords[2]));
 		},
     },
     /**
