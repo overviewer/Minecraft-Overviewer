@@ -4,7 +4,8 @@ import os.path
 import logging
 
 class OptionsResults(object):
-    pass
+    def get(self, *args):
+        return self.__dict__.get(*args)
 
 class ConfigOptionParser(object):
     def __init__(self, **kwargs):

@@ -21,6 +21,7 @@ except ImportError:
 setup_kwargs = {}
 setup_kwargs['ext_modules'] = []
 setup_kwargs['cmdclass'] = {}
+setup_kwargs['options'] = {}
 
 #
 # metadata
@@ -41,7 +42,6 @@ if py2exe is not None:
         b = 3
     else:
         b = 1
-    setup_kwargs['options'] = {}
     setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter'}
 
 #
@@ -51,7 +51,7 @@ if py2exe is not None:
 setup_kwargs['packages'] = ['overviewer_core']
 setup_kwargs['scripts'] = ['overviewer.py']
 setup_kwargs['package_data'] = {'overviewer_core':
-                                    ['data/config.js',
+                                    ['data/overviewerConfig.js',
                                      'data/textures/*',
                                      'data/web_assets/*']}
 
@@ -73,8 +73,11 @@ try:
 except:
     pil_include = []
 
-c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c']
-c_overviewer_files += ['rendermodes.c', 'rendermode-normal.c', 'rendermode-lighting.c', 'rendermode-night.c', 'rendermode-spawn.c']
+# used to figure out what files to compile
+render_modes = ['normal', 'overlay', 'lighting', 'night', 'spawn', 'cave']
+
+c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
+c_overviewer_files += map(lambda mode: 'rendermode-%s.c' % (mode,), render_modes)
 c_overviewer_files += ['Draw.c']
 c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
 
@@ -82,6 +85,7 @@ c_overviewer_files = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_files)
 c_overviewer_includes = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_includes)
 
 setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
+
 
 # tell build_ext to build the extension in-place
 # (NOT in build/)

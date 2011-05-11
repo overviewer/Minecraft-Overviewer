@@ -149,7 +149,6 @@ class RenderNode(object):
             total += 4**q.p
             if q.p > max_p:
                 max_p = q.p
-            q.go(procs) 
         self.max_p = max_p
         # Render the highest level of tiles from the chunks
         results = collections.deque()

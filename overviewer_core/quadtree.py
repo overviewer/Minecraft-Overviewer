@@ -34,6 +34,7 @@ from PIL import Image
 
 import nbt
 import chunk
+from c_overviewer import get_render_mode_inheritance
 from optimizeimages import optimize_image
 import composite
 
@@ -48,7 +49,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, depth=None, tiledir=None, imgformat=None, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -60,16 +61,18 @@ class QuadtreeGen(object):
         """
         assert(imgformat)
         self.imgformat = imgformat
+        self.imgquality = imgquality
         self.optimizeimg = optimizeimg
-        
-        self.lighting = rendermode in ("lighting", "night", "spawn")
-        self.night = rendermode in ("night", "spawn")
-        self.spawn = rendermode in ("spawn",)
+        self.bgcolor = bgcolor
         self.rendermode = rendermode
+        
+        # force png renderformat if we're using an overlay mode
+        if 'overlay' in get_render_mode_inheritance(rendermode):
+            self.imgformat = "png"
 
         # Make the destination dir
         if not os.path.exists(destdir):
-            os.mkdir(destdir)
+            os.makedirs(os.path.abspath(destdir))
         if tiledir is None:
             tiledir = rendermode
         self.tiledir = tiledir        
@@ -89,7 +92,7 @@ class QuadtreeGen(object):
                         yradius >= worldobj.maxrow and -yradius <= worldobj.minrow:
                     break
             else:
-                raise ValueError("Your map is waaaay too big! Use the '-z' or '--zoom' options.")
+                raise ValueError("Your map is waaaay too big! Use the 'zoom' option in 'settings.py'.")
 
             self.p = p
         else:
@@ -113,10 +116,10 @@ class QuadtreeGen(object):
         returns -1 if it couldn't be detected, file not found, or nothing in
         config.js matched
         """
-        indexfile = os.path.join(self.destdir, "config.js")
+        indexfile = os.path.join(self.destdir, "overviewerConfig.js")
         if not os.path.exists(indexfile):
             return -1
-        matcher = re.compile(r"maxZoom:\s*(\d+)")
+        matcher = re.compile(r"maxZoom.*:\s*(\d+)")
         p = -1
         for line in open(indexfile, "r"):
             res = matcher.search(line)
@@ -320,7 +323,7 @@ class QuadtreeGen(object):
         #logging.debug("writing out innertile {0}".format(imgpath))
 
         # Create the actual image now
-        img = Image.new("RGBA", (384, 384), (38,92,255,0))
+        img = Image.new("RGBA", (384, 384), self.bgcolor)
         
         # we'll use paste (NOT alpha_over) for quadtree generation because
         # this is just straight image stitching, not alpha blending
@@ -334,7 +337,7 @@ class QuadtreeGen(object):
 
         # Save it
         if self.imgformat == 'jpg':
-            img.save(imgpath, quality=95, subsampling=0)
+            img.save(imgpath, quality=self.imgquality, subsampling=0)
         else: # png
             img.save(imgpath)
             
@@ -442,7 +445,7 @@ class QuadtreeGen(object):
         #logging.debug("writing out worldtile {0}".format(imgpath))
 
         # Compile this image
-        tileimg = Image.new("RGBA", (width, height), (38,92,255,0))
+        tileimg = Image.new("RGBA", (width, height), self.bgcolor)
 
         world = self.world
         rendermode = self.rendermode
@@ -461,7 +464,10 @@ class QuadtreeGen(object):
                 pass
         
         # Save them
-        tileimg.save(imgpath)
+        if self.imgformat == 'jpg':
+            tileimg.save(imgpath, quality=self.imgquality, subsampling=0)
+        else: # png
+            tileimg.save(imgpath)
 
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)

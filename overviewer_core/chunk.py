@@ -114,13 +114,15 @@ def get_tileentity_data(level):
     return data
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
-transparent_blocks = set([0, 6, 8, 9, 18, 20, 37, 38, 39, 40, 44, 50, 51, 52, 53, 55,
-    59, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85, 92])
+transparent_blocks = set([ 0,  6,  8,  9, 18, 20, 26, 27, 28, 30, 37, 38, 39, 40,
+                          44, 50, 51, 52, 53, 55, 59, 63, 64, 65, 66, 67, 68, 69,
+                          70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85, 90, 92,
+                          93, 94])
 
 # This set holds block ids that are solid blocks
 solid_blocks = set([1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
     23, 24, 25, 35, 41, 42, 43, 44, 45, 46, 47, 48, 49, 53, 54, 56, 57, 58, 60, 
-    61, 62, 64, 65, 66, 67, 71, 73, 74, 78, 79, 80, 81, 82, 84, 86, 87, 88, 89, 91, 92])
+    61, 62, 67, 73, 74, 78, 79, 80, 81, 82, 84, 86, 87, 88, 89, 91])
 
 # This set holds block ids that are fluid blocks
 fluid_blocks = set([8,9,10,11])
@@ -284,7 +286,14 @@ class ChunkRenderer(object):
             self._load_up_right()
         return self._up_right_blocks
     up_right_blocks = property(_load_up_right_blocks)
-    
+
+    def _load_up_right_skylight(self):
+        """Loads and returns lower-right skylight array"""
+        if not hasattr(self, "_up_right_skylight"):
+            self._load_up_right()
+        return self._up_right_skylight
+    up_right_skylight = property(_load_up_right_skylight)
+
     def _load_up_left(self):
         """Loads and sets data from upper-left chunk"""
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY - 1)
@@ -304,6 +313,13 @@ class ChunkRenderer(object):
             self._load_up_left()
         return self._up_left_blocks
     up_left_blocks = property(_load_up_left_blocks)
+
+    def _load_up_left_skylight(self):
+        """Loads and returns lower-right skylight array"""
+        if not hasattr(self, "_up_left_skylight"):
+            self._load_up_left()
+        return self._up_left_skylight
+    up_left_skylight = property(_load_up_left_skylight)
 
     def generate_pseudo_ancildata(self,x,y,z,blockid, north_position = 0 ):
         """ Generates a pseudo ancillary data for blocks that depend of 
@@ -449,7 +465,7 @@ def generate_facemasks():
     return (top, left, right)
 facemasks = generate_facemasks()
 black_color = Image.new("RGB", (24,24), (0,0,0))
-red_color = Image.new("RGB", (24,24), (229,36,38))
+white_color = Image.new("RGB", (24,24), (255,255,255))
 
 # Render 128 different color images for color coded depth blending in cave mode
 def generate_depthcolors():
@@ -458,8 +474,10 @@ def generate_depthcolors():
     g = 0
     b = 0
     for z in range(128):
-        img = Image.new("RGB", (24,24), (r,g,b))
-        depth_colors.append(img)
+        depth_colors.append(r)
+        depth_colors.append(g)
+        depth_colors.append(b)
+        
         if z < 32:
             g += 7
         elif z < 64:

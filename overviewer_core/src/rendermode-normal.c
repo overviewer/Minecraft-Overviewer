@@ -120,17 +120,8 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     RenderModeNormal *self = (RenderModeNormal *)data;
     
     /* first, check to see if we should use biome-compatible src, mask */
-    if (self->biome_data) {
-        switch (state->block) {
-        case 2:
-            src = mask = self->grass_texture;
-            break;
-        case 18:
-            src = mask = self->leaf_texture;
-            break;
-        default:
-            break;
-        };
+    if (self->biome_data && state->block == 18) {
+        src = mask = self->leaf_texture;
     }
     
     /* draw the block! */
@@ -147,9 +138,12 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         
         switch (state->block) {
         case 2:
-            /* grass */
+            /* grass -- skip for snowgrass */
+            if (state->z < 127 && getArrayByte3D(state->blocks, state->x, state->y, state->z+1) == 78)
+                break;
             color = PySequence_GetItem(self->grasscolor, index);
-            facemask = self->facemask_top;
+            facemask = self->grass_texture;
+            alpha_over(state->img, self->grass_texture, self->grass_texture, state->imgx, state->imgy, 0, 0);
             break;
         case 18:
             /* leaves */
@@ -169,7 +163,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
             Py_DECREF(color);
 
-            tint_with_mask(state->img, r, g, b, facemask, state->imgx, state->imgy, 0, 0);
+            tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
         }
     }
 
@@ -183,7 +177,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         int increment=0;
         if (state->block == 44)  // half-step
             increment=6;
-        else if (state->block == 78) // snow
+        else if ((state->block == 78) || (state->block == 93) || (state->block == 94)) // snow, redstone repeaters (on and off)
             increment=9;
 
         if ((state->x == 15) && (state->up_right_blocks != Py_None)) {
@@ -221,6 +215,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
 
 RenderModeInterface rendermode_normal = {
     "normal", "nothing special, just render the blocks",
+    NULL,
     sizeof(RenderModeNormal),
     rendermode_normal_start,
     rendermode_normal_finish,

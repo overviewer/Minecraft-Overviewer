@@ -23,6 +23,7 @@ from time import strftime, gmtime
 import json
 
 import util
+from c_overviewer import get_render_mode_inheritance
 
 """
 This module has routines related to generating a Google Maps-based
@@ -59,25 +60,25 @@ def mirror_dir(src, dst, entities=None):
                 # if this stills throws an error, let it propagate up
 
 class MapGen(object):
-    def __init__(self, quadtrees, skipjs=False, web_assets_hook=None):
+    def __init__(self, quadtrees, configInfo):
         """Generates a Google Maps interface for the given list of
         quadtrees. All of the quadtrees must have the same destdir,
         image format, and world. 
         Note:tiledir for each quadtree should be unique. By default the tiledir is determined by the rendermode"""
         
-        self.skipjs = skipjs
-        self.web_assets_hook = web_assets_hook
+        self.skipjs = configInfo.get('skipjs', None)
+        self.web_assets_hook = configInfo.get('web_assets_hook', None)
+        self.bg_color = configInfo.get('bg_color')
         
         if not len(quadtrees) > 0:
             raise ValueError("there must be at least one quadtree to work on")
         
         self.destdir = quadtrees[0].destdir
-        self.imgformat = quadtrees[0].imgformat
         self.world = quadtrees[0].world
         self.p = quadtrees[0].p
         for i in quadtrees:
-            if i.destdir != self.destdir or i.imgformat != self.imgformat or i.world != self.world:
-                raise ValueError("all the given quadtrees must have the same destdir")
+            if i.destdir != self.destdir or i.world != self.world:
+                raise ValueError("all the given quadtrees must have the same destdir and world")
         
         self.quadtrees = quadtrees
         
@@ -85,32 +86,38 @@ class MapGen(object):
         """Writes out config.js, marker.js, and region.js
         Copies web assets into the destdir"""
         zoomlevel = self.p
-        imgformat = self.imgformat
-        configpath = os.path.join(util.get_program_path(), "config.js")
+        configpath = os.path.join(util.get_program_path(), "overviewerConfig.js")
 
         config = open(configpath, 'r').read()
         config = config.replace(
-                "{maxzoom}", str(zoomlevel))
+                "{minzoom}", str(0))
         config = config.replace(
-                "{imgformat}", str(imgformat))
+                "{maxzoom}", str(zoomlevel))
         
         config = config.replace("{spawn_coords}",
                                 json.dumps(list(self.world.spawn)))
+
+        #config = config.replace("{bg_color}", self.bg_color)
         
         # create generated map type data, from given quadtrees
         maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
-                                     'path' : q.tiledir}, self.quadtrees)
+                                     'path' : q.tiledir,
+                                     'bg_color': self.bg_color,
+                                     'overlay' : 'overlay' in get_render_mode_inheritance(q.rendermode),
+                                     'imgformat' : q.imgformat},
+                          self.quadtrees)
         config = config.replace("{maptypedata}", json.dumps(maptypedata))
         
-        with open(os.path.join(self.destdir, "config.js"), 'w') as output:
+        with open(os.path.join(self.destdir, "overviewerConfig.js"), 'w') as output:
             output.write(config)
 
+        bgcolor = (int(self.bg_color[1:3],16), int(self.bg_color[3:5],16), int(self.bg_color[5:7],16), 0)
+        blank = Image.new("RGBA", (1,1), bgcolor)
         # Write a blank image
         for quadtree in self.quadtrees:
-            blank = Image.new("RGBA", (1,1))
             tileDir = os.path.join(self.destdir, quadtree.tiledir)
             if not os.path.exists(tileDir): os.mkdir(tileDir)
-            blank.save(os.path.join(tileDir, "blank."+self.imgformat))
+            blank.save(os.path.join(tileDir, "blank."+quadtree.imgformat))
 
         # copy web assets into destdir:
         mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)
@@ -144,13 +151,13 @@ class MapGen(object):
 
         # write out the default marker table
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
-            output.write("var markerData=[\n")
+            output.write("overviewer.collections.markerDatas.push([\n")
             for marker in self.world.POI:
                 output.write(json.dumps(marker))
                 if marker != self.world.POI[-1]:
                     output.write(",")
                 output.write("\n")
-            output.write("]\n")
+            output.write("]);\n")
         
         # save persistent data
         self.world.persistentData['POI'] = self.world.POI
@@ -159,11 +166,11 @@ class MapGen(object):
 
         # write out the default (empty, but documented) region table
         with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
-            output.write('var regionData=[\n')
+            output.write('overviewer.collections.regionDatas.push([\n')
             output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
             output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
             output.write('  //   {"x": 0, "y": 10, "z": 0},\n')
             output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
             output.write('  // ]},\n')
-            output.write('];')
+            output.write(']);')
         

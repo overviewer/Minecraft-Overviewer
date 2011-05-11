@@ -121,14 +121,9 @@ def transform_image(img, blockID=None):
 
     """
 
-    if blockID in (81,92): # cacti and cake
-        # Resize to 15x15, since the cactus and the cake textures are a little smaller than the other textures
-        img = img.resize((15, 15), Image.BILINEAR)
-
-    else:
-        # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
-        # even number that can be split in half twice
-        img = img.resize((17, 17), Image.BILINEAR)
+    # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
+    # even number that can be split in half twice
+    img = img.resize((17, 17), Image.ANTIALIAS)
 
     # Build the Affine transformation matrix for this perspective
     transform = numpy.matrix(numpy.identity(3))
@@ -168,7 +163,7 @@ def transform_image_side(img, blockID=None):
         img = n
 
     # Size of the cube side before shear
-    img = img.resize((12,12))
+    img = img.resize((12,12), Image.ANTIALIAS)
 
     # Apply shear
     transform = numpy.matrix(numpy.identity(3))
@@ -184,7 +179,7 @@ def transform_image_slope(img, blockID=None):
     in the -y direction (reflect for +x direction). Used for minetracks"""
 
     # Take the same size as trasform_image_side
-    img = img.resize((12,12))
+    img = img.resize((12,12), Image.ANTIALIAS)
 
     # Apply shear
     transform = numpy.matrix(numpy.identity(3))
@@ -210,9 +205,8 @@ def _build_block(top, side, blockID=None):
         return img
 
     side = transform_image_side(side, blockID)
-
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-    
+
     # Darken the sides slightly. These methods also affect the alpha layer,
     # so save them first (we don't want to "darken" the alpha layer making
     # the block transparent)
@@ -224,10 +218,7 @@ def _build_block(top, side, blockID=None):
     otherside.putalpha(othersidealpha)
 
     ## special case for non-block things
-    # TODO once torches are handled by generate_special_texture, remove
-    # them from this list
-    if blockID in (37,38,6,39,40,50,83,75,76): ## flowers, sapling, mushrooms,  regular torch, reeds,
-        # redstone torch on, redstone torch off
+    if blockID in (37,38,6,39,40,83,30): ## flowers, sapling, mushrooms, reeds, web
         #
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
@@ -237,9 +228,9 @@ def _build_block(top, side, blockID=None):
 
 
     if blockID in (81,): # cacti!
-        composite.alpha_over(img, side, (2,6), side)
-        composite.alpha_over(img, otherside, (10,6), otherside)
-        composite.alpha_over(img, top, (0,2), top)
+        composite.alpha_over(img, side, (1,6), side)
+        composite.alpha_over(img, otherside, (11,6), otherside)
+        composite.alpha_over(img, top, (0,0), top)
     elif blockID in (44,): # half step
         # shift each texture down 6 pixels
         composite.alpha_over(img, side, (0,12), side)
@@ -277,9 +268,37 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
     side3 is in the -x                      (bottom left, north)
     side4 is in the +y                      (bottom right, west)
     
-    A non transparent block uses top, side 3 and side 4
+    A non transparent block uses top, side 3 and side 4.
+    
+    If top is a tuple then first member is the top image and the second
+    member is an increment (integer) from 0 to 12. This increment will
+    used to crop the side images to look like a block and to paste all
+    the images increment pixels lower. Using increment = 6 will create
+    a half-block.
+    
+    NOTE: this method uses the top of the texture image (as done in 
+    minecraft with beds)
     
     """
+    
+    increment = 0
+    if isinstance(top, tuple):
+        increment = top[1]
+        crop_height = int(increment * 16./12.)
+        top = top[0]
+        if side1 != None:
+            side1 = side1.copy()
+            ImageDraw.Draw(side1).rectangle((0, 16 - crop_height,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        if side2 != None:
+            side2 = side2.copy()
+            ImageDraw.Draw(side2).rectangle((0, 16 - crop_height,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        if side3 != None:
+            side3 = side3.copy()
+            ImageDraw.Draw(side3).rectangle((0, 16 - crop_height,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        if side4 != None:
+            side4 = side4.copy()
+            ImageDraw.Draw(side4).rectangle((0, 16 - crop_height,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+
     img = Image.new("RGBA", (24,24), (38,92,255,0))
     
     # first back sides
@@ -292,7 +311,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side1 = ImageEnhance.Brightness(side1).enhance(0.9)
         side1.putalpha(sidealpha)        
         
-        composite.alpha_over(img, side1, (0,0), side1)
+        composite.alpha_over(img, side1, (0,0 + increment), side1)
 
         
     if side2 != None :
@@ -303,7 +322,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side2 = ImageEnhance.Brightness(side2).enhance(0.8)
         side2.putalpha(sidealpha2)
 
-        composite.alpha_over(img, side2, (12,0), side2)
+        composite.alpha_over(img, side2, (12,0 + increment), side2)
 
     if bottom != None :
         bottom = transform_image(bottom, blockID)
@@ -318,7 +337,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side3 = ImageEnhance.Brightness(side3).enhance(0.9)
         side3.putalpha(sidealpha)
         
-        composite.alpha_over(img, side3, (0,6), side3)
+        composite.alpha_over(img, side3, (0,6 + increment), side3)
         
     if side4 != None :
         side4 = transform_image_side(side4, blockID)
@@ -329,11 +348,11 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side4 = ImageEnhance.Brightness(side4).enhance(0.8)
         side4.putalpha(sidealpha)
         
-        composite.alpha_over(img, side4, (12,6), side4)
+        composite.alpha_over(img, side4, (12,6 + increment), side4)
 
     if top != None :
         top = transform_image(top, blockID)
-        composite.alpha_over(img, top, (0,0), top)
+        composite.alpha_over(img, top, (0, increment), top)
 
     return img
 
@@ -348,34 +367,34 @@ def _build_blockimages():
     # texture array (terrain_images), which comes from terrain.png's cells, left to right top to
     # bottom.
        #        0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
-    topids = [ -1,  1,  0,  2, 16,  4, 15, 17,205,205,237,237, 18, 19, 32, 33,
+    topids = [ -1,  1,  0,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-               34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, -1, -1, # Cloths are left out, sandstone (it has top, side, and bottom wich is ignored here), note block
+               34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, 11, -1,
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35, # Gold/iron blocks? Doublestep? TNT from above?
+               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  9,  4, 
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-               36, 37, -1, -1, 65, -1, 25, -1, 98, 24, -1, -1, 86, -1, -1, -1, # Torch from above? leaving out fire. Redstone wire? Crops/furnaces handled elsewhere. sign post
+               36, 37, -1, -1, 65, -1, -1, -1, 50, 24, -1, -1, 86, -1, -1, -1,
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-               -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67, # door,ladder left out. Minecart rail orientation, redstone torches
+               -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #       80  81  82  83  84  85  86  87  88  89  90  91
-               66, 69, 72, 73, 74, -1,102,103,104,105,-1, 102 # clay?
+               66, 69, 72, 73, 75, -1,102,103,104,105,-1, 102 # clay?
         ]
 
     # NOTE: For non-block textures, the sideid is ignored, but can't be -1
 
     # And side textures of all block types
        #         0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
-    sideids = [ -1,  1,  3,  2, 16,  4, 15, 17,205,205,237,237, 18, 19, 32, 33,
+    sideids = [ -1,  1,  3,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-                34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, -1, -1,
+                34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, 11, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-                36, 37, -1, -1, 65, -1, 25,101, 98, 24, -1, -1, 86, -1, -1, -1,
+                36, 37, -1, -1, 65, -1, -1,101, 50, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
        #        80  81  82  83  84  85  86  87  88  89  90  91
-                66, 69, 72, 73, 74,-1 ,118,103,104,105, -1, 118
+                66, 70, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
 
     # This maps block id to the texture that goes on the side of the block
@@ -433,9 +452,39 @@ def generate_special_texture(blockID, data):
     # all need to behandled here (and in chunkpy)
     
     if blockID == 2: # grass
-        top = tintTexture(terrain_images[0],(115,175,71))
-        img = _build_block(top, terrain_images[3], 2)
+        # data & 0x10 means SNOW sides
+        side_img = terrain_images[3]
+        if data & 0x10:
+            side_img = terrain_images[68]
+        img = _build_block(terrain_images[0], side_img, 2)
+        if not data & 0x10:
+            colored = tintTexture(biome_grass_texture, (115, 175, 71))
+            composite.alpha_over(img, colored, (0, 0), colored)
         return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 6: # saplings
+        # The bottom two bits are used fo the sapling type, the top two
+        # bits are used as a grow-counter for the tree.
+
+        if data & 0x3 == 0: # usual saplings
+            toptexture = terrain_images[15]
+            sidetexture = terrain_images[15]
+
+        if data & 0x3 == 1: # spruce sapling
+            toptexture = terrain_images[63]
+            sidetexture = terrain_images[63]
+        
+        if data & 0x3 == 2: # birch sapling
+            toptexture = terrain_images[79]
+            sidetexture = terrain_images[79]
+        
+        if data & 0x3 == 3: # unused usual sapling
+            toptexture = terrain_images[15]
+            sidetexture = terrain_images[15]
+
+        img = _build_block(toptexture, sidetexture, blockID)
+        return (img.convert("RGB"),img.split()[3])
 
 
     if blockID == 9: # spring water, flowing water and waterfall water
@@ -488,17 +537,51 @@ def generate_special_texture(blockID, data):
         t = tintTexture(terrain_images[52], (37, 118, 25))
         img = _build_block(t, t, 18)
         return (img.convert("RGB"), img.split()[3])
-        
-    if blockID == 23: # dispenser
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[46])
-        side2 = transform_image_side(terrain_images[45]).transpose(Image.FLIP_LEFT_RIGHT)
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+
+    if blockID == 26: # bed
+        increment = 5
+        left_face = None
+        right_face = None
+        if data & 0x8 == 0x8: # head of the bed
+            top = terrain_images[135]
+            if data & 0x00 == 0x00: # head pointing to West
+                top = top.copy().rotate(270)
+                left_face = terrain_images[151]
+                right_face = terrain_images[152]
+            if data & 0x01 == 0x01: # ... North
+                top = top.rotate(270)
+                left_face = terrain_images[152]
+                right_face = terrain_images[151]
+            if data & 0x02 == 0x02: # East
+                top = top.rotate(180)
+                left_face = terrain_images[151].transpose(Image.FLIP_LEFT_RIGHT)
+                right_face = None
+            if data & 0x03 == 0x03: # South
+                right_face = None
+                right_face = terrain_images[151].transpose(Image.FLIP_LEFT_RIGHT)
+
+        else: # foot of the bed
+            top = terrain_images[134]
+            if data & 0x00 == 0x00: # head pointing to West
+                top = top.rotate(270)
+                left_face = terrain_images[150]
+                right_face = None
+            if data & 0x01 == 0x01: # ... North
+                top = top.rotate(270)
+                left_face = None
+                right_face = terrain_images[150]
+            if data & 0x02 == 0x02: # East
+                top = top.rotate(180)
+                left_face = terrain_images[150].transpose(Image.FLIP_LEFT_RIGHT)
+                right_face = terrain_images[149].transpose(Image.FLIP_LEFT_RIGHT)
+            if data & 0x03 == 0x03: # South
+                left_face = terrain_images[149]
+                right_face = terrain_images[150].transpose(Image.FLIP_LEFT_RIGHT)
+
+        top = (top, increment)
+        img = _build_full_block(top, None, None, left_face, right_face)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -731,6 +814,48 @@ def generate_special_texture(blockID, data):
             
         return (img.convert("RGB"), img.split()[3])
 
+    if blockID == 54: # chests
+        # First to bits of the pseudo data store if it's a single chest
+        # or it's a double chest, first half or second half.
+        # The to last bits store the orientation.
+
+        top = terrain_images[25]
+        side = terrain_images[26]
+
+        if data & 12 == 0: # single chest
+            front = terrain_images[27]
+            back = terrain_images[26]
+
+        elif data & 12 == 4: # double, first half
+            front = terrain_images[41]
+            back = terrain_images[57]
+
+        elif data & 12 == 8: # double, second half
+            front = terrain_images[42]
+            back = terrain_images[58]
+
+        else: # just in case
+            front = terrain_images[25]
+            side = terrain_images[25]
+            back = terrain_images[25]
+
+        if data & 3 == 0: # facing west
+            img = _build_full_block(top, None, None, side, front)
+
+        elif data & 3 == 1: # north
+            img = _build_full_block(top, None, None, front, side)
+
+        elif data & 3 == 2: # east
+            img = _build_full_block(top, None, None, side, back)
+
+        elif data & 3 == 3: # south
+            img = _build_full_block(top, None, None, back, side)
+            
+        else:
+            img = _build_full_block(top, None, None, back, side)
+
+        return (img.convert("RGB"), img.split()[3])
+
 
     if blockID == 55: # redstone wire
         
@@ -832,29 +957,28 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
 
-    if blockID == 61: #furnace
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[45])
-        side2 = transform_image_side(terrain_images[44]).transpose(Image.FLIP_LEFT_RIGHT)
+    if blockID in (61, 62, 23): #furnace and burning furnace
+        top = terrain_images[62]
+        side = terrain_images[45]
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        if blockID == 61:
+            front = terrain_images[44]
 
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
-        return (img.convert("RGB"), img.split()[3])
+        elif blockID == 62:
+            front = terrain_images[45+16]
 
+        elif blockID == 23:
+            front = terrain_images[46]
 
-    if blockID == 62: # lit furnace
-        top = transform_image(terrain_images[62])
-        side1 = transform_image_side(terrain_images[45])
-        side2 = transform_image_side(terrain_images[45+16]).transpose(Image.FLIP_LEFT_RIGHT)
+        if data == 3: # pointing west
+            img = _build_full_block(top, None, None, side, front)
 
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+        elif data == 4: # pointing north
+            img = _build_full_block(top, None, None, front, side)
+
+        else: # in any other direction the front can't be seen
+            img = _build_full_block(top, None, None, side, side)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -938,11 +1062,27 @@ def generate_special_texture(blockID, data):
             return (img.convert("RGB"), img.split()[3])
 
 
-    if blockID == 66: # minetrack:
+    if blockID in (27, 28, 66): # minetrack:
     
-        raw_straight = terrain_images[128]
-        raw_corner = terrain_images[112]
-    
+        if blockID == 27: # powered rail
+            if data & 0x8 == 0: # unpowered
+                raw_straight = terrain_images[163]
+                raw_corner = terrain_images[112]    # they don't exist but make the code
+                                                    # much simplier
+            elif data & 0x8 == 0x8: # powered
+                raw_straight = terrain_images[179]
+                raw_corner = terrain_images[112]    # leave corners for code simplicity
+            # filter the 'powered' bit
+            data = data & 0x7
+            
+        elif blockID == 28: # detector rail
+            raw_straight = terrain_images[195]
+            raw_corner = terrain_images[112]    # leave corners for code simplicity
+
+        elif blockID == 66: # normal rail
+            raw_straight = terrain_images[128]
+            raw_corner = terrain_images[112]
+
         ## use transform_image to scale and shear
         if data == 0:
             track = transform_image(raw_straight, blockID)
@@ -1034,9 +1174,9 @@ def generate_special_texture(blockID, data):
 
         # Compose the fence big stick
         fence_big = Image.new("RGBA", (24,24), (38,92,255,0))
-        composite.alpha_over(fence_big,fence_side, (4,4),fence_side)
-        composite.alpha_over(fence_big,fence_other_side, (8,4),fence_other_side)
-        composite.alpha_over(fence_big,fence_top, (-1,1),fence_top)
+        composite.alpha_over(fence_big,fence_side, (5,4),fence_side)
+        composite.alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
+        composite.alpha_over(fence_big,fence_top, (0,1),fence_top)
         
         # Now render the small sticks.
         # Create needed images
@@ -1098,16 +1238,36 @@ def generate_special_texture(blockID, data):
 
 
     if blockID in (86,91): # pumpkins, jack-o-lantern
-        top = transform_image(terrain_images[102])
+        top = terrain_images[102]
         frontID = 119 if blockID == 86 else 120
-        side1 = transform_image_side(terrain_images[frontID])
-        side2 = transform_image_side(terrain_images[118]).transpose(Image.FLIP_LEFT_RIGHT)
+        front = terrain_images[frontID]
+        side = terrain_images[118]
 
+        if data == 0: # pointing west
+            img = _build_full_block(top, None, None, side, front)
+
+        elif data == 1: # pointing north
+            img = _build_full_block(top, None, None, front, side)
+
+        else: # in any other direction the front can't be seen
+            img = _build_full_block(top, None, None, side, side)
+
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID == 90: # portal
+        portaltexture = _load_image("portal.png")
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
-        composite.alpha_over(img, side1, (0,6), side1)
-        composite.alpha_over(img, side2, (12,6), side2)
-        composite.alpha_over(img, top, (0,0), top)
+        side = transform_image_side(portaltexture)
+        otherside = side.transpose(Image.FLIP_TOP_BOTTOM)
+
+        if data in (1,4):
+            composite.alpha_over(img, side, (5,4), side)
+
+        if data in (2,8):
+            composite.alpha_over(img, otherside, (5,4), otherside)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1128,13 +1288,129 @@ def generate_special_texture(blockID, data):
         
         img = Image.new("RGBA", (24,24), (38,92,255,0))
         
-        composite.alpha_over(img, side, (2,12), side)
-        composite.alpha_over(img, otherside, (10,12), otherside)
-        composite.alpha_over(img, top, (0,8), top)
+        composite.alpha_over(img, side, (1,12), side)
+        composite.alpha_over(img, otherside, (11,13), otherside) # workaround, fixes a hole
+        composite.alpha_over(img, otherside, (12,12), otherside)
+        composite.alpha_over(img, top, (0,6), top)
+
+        return (img.convert("RGB"), img.split()[3])
+
+
+    if blockID in (93, 94): # redstone repeaters, ON and OFF
+        # NOTE: this function uses the redstone torches generated above,
+        # this must run after the function of the torches.
+
+        top = terrain_images[131] if blockID == 93 else terrain_images[147]
+        side = terrain_images[5]
+        increment = 9
         
-        #~ composite.alpha_over(img, side, (2,6), side)
-        #~ composite.alpha_over(img, otherside, (10,6), otherside)
-        #~ composite.alpha_over(img, top, (0,2), top)
+        if (data & 0x3) == 0: # pointing east
+            pass
+        
+        if (data & 0x3) == 1: # pointing south
+            top = top.rotate(270)
+
+        if (data & 0x3) == 2: # pointing west
+            top = top.rotate(180)
+
+        if (data & 0x3) == 3: # pointing north
+            top = top.rotate(90)
+
+        img = _build_full_block( (top, increment), None, None, side, side)
+        
+        # paste redstone torches everywhere!
+        t = specialblockmap[(75,5)] if blockID == 93 else specialblockmap[(76,5)]
+        torch = t[0].copy()        # textures are stored as tuples (RGB,A)
+        torch.putalpha(t[1])
+        
+        # the torch is too tall for the repeater, crop the bottom.
+        ImageDraw.Draw(torch).rectangle((0,16,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        # touch up the 3d effect with big rectangles, just in case, for other texture packs
+        ImageDraw.Draw(torch).rectangle((0,24,10,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(torch).rectangle((12,15,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        # torch positions for every redstone torch orientation.
+        #
+        # This is a horrible list of torch orientations. I tried to 
+        # obtain these orientations by rotating the positions for one
+        # orientation, but pixel rounding is horrible and messes the
+        # torches.
+
+        if (data & 0x3) == 0: # pointing east
+            if (data & 0xC) == 0: # one tick delay
+                moving_torch = (1,1)
+                static_torch = (-3,-1)
+                
+            elif (data & 0xC) == 4: # two ticks delay
+                moving_torch = (2,2)
+                static_torch = (-3,-1)
+                
+            elif (data & 0xC) == 8: # three ticks delay
+                moving_torch = (3,2)
+                static_torch = (-3,-1)
+                
+            elif (data & 0xC) == 12: # four ticks delay
+                moving_torch = (4,3)
+                static_torch = (-3,-1)
+        
+        elif (data & 0x3) == 1: # pointing south
+            if (data & 0xC) == 0: # one tick delay
+                moving_torch = (1,1)
+                static_torch = (5,-1)
+                
+            elif (data & 0xC) == 4: # two ticks delay
+                moving_torch = (2,0)
+                static_torch = (5,-1)
+                
+            elif (data & 0xC) == 8: # three ticks delay
+                moving_torch = (3,0)
+                static_torch = (5,-1)
+                
+            elif (data & 0xC) == 12: # four ticks delay
+                moving_torch = (4,-1)
+                static_torch = (5,-1)
+
+        elif (data & 0x3) == 2: # pointing west
+            if (data & 0xC) == 0: # one tick delay
+                moving_torch = (1,1)
+                static_torch = (5,3)
+                
+            elif (data & 0xC) == 4: # two ticks delay
+                moving_torch = (0,0)
+                static_torch = (5,3)
+                
+            elif (data & 0xC) == 8: # three ticks delay
+                moving_torch = (-1,0)
+                static_torch = (5,3)
+                
+            elif (data & 0xC) == 12: # four ticks delay
+                moving_torch = (-2,-1)
+                static_torch = (5,3)
+
+        elif (data & 0x3) == 3: # pointing north
+            if (data & 0xC) == 0: # one tick delay
+                moving_torch = (1,1)
+                static_torch = (-3,3)
+                
+            elif (data & 0xC) == 4: # two ticks delay
+                moving_torch = (2,0)
+                static_torch = (-3,3)
+                
+            elif (data & 0xC) == 8: # three ticks delay
+                moving_torch = (3,0)
+                static_torch = (-3,3)
+                
+            elif (data & 0xC) == 12: # four ticks delay
+                moving_torch = (4,-1)
+                static_torch = (-3,3)
+        
+        # this paste order it's ok for east and south orientation
+        # but it's wrong for north and west orientations. But using the
+        # default texture pack the torches are small enough to no overlap.
+        composite.alpha_over(img, torch, static_torch, torch) 
+        composite.alpha_over(img, torch, moving_torch, torch)
+
         return (img.convert("RGB"), img.split()[3])
 
 
@@ -1147,7 +1423,7 @@ def tintTexture(im, c):
     return i
 
 # generate biome (still grayscale) leaf, grass textures
-biome_grass_texture = _build_block(terrain_images[0], terrain_images[3], 2)
+biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
 biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
 
 
@@ -1215,28 +1491,34 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # (when adding new blocks here and in generate_special_textures,
 # please, if possible, keep the ascending order of blockid value)
 
-special_blocks = set([2, 9, 17, 18, 23, 35, 43, 44, 50, 51, 53, 55, 58, 59, \
-                      61, 62, 64, 65, 66, 67, 71, 75, 76, 85, 86, 91, 92])
+special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 35, 43, 44, 50,
+                      51, 53, 54, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71,
+                      75, 76, 85, 86, 90, 91, 92, 93, 94])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
 
 special_map = {}
 
-special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values.
+special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
+special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values, uses pseudo data
 special_map[17] = range(4)  # wood: normal, birch and pine
+special_map[26] = range(12) # bed, orientation
 special_map[23] = range(6)  # dispensers, orientation
+special_map[27] = range(14) # powered rail, orientation/slope and powered/unpowered
+special_map[28] = range(6) # detector rail, orientation/slope
 special_map[35] = range(16) # wool, colored and white
 special_map[43] = range(4)  # stone, sandstone, wooden and cobblestone double-slab
 special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
 special_map[50] = (1,2,3,4,5) # torch, position in the block
 special_map[51] = range(16) # fire, position in the block (not implemented)
 special_map[53] = range(4)  # wooden stairs, orientation
-special_map[55] = range(128) # redstone wire, all the possible combinations
+special_map[54] = range(12) # chests, orientation and type (single or double), uses pseudo data
+special_map[55] = range(128) # redstone wire, all the possible combinations, uses pseudo data
 special_map[58] = (0,)      # crafting table
 special_map[59] = range(8)  # crops, grow from 0 to 7
-special_map[61] = range(6)  # furnace, orientation (not implemented)
-special_map[62] = range(6)  # burning furnace, orientation (not implemented)
+special_map[61] = range(6)  # furnace, orientation
+special_map[62] = range(6)  # burning furnace, orientation
 special_map[64] = range(16) # wooden door, open/close and orientation
 special_map[65] = (2,3,4,5) # ladder, orientation
 special_map[66] = range(10) # minecrart tracks, orientation, slope
@@ -1244,18 +1526,22 @@ special_map[67] = range(4)  # cobblestone stairs, orientation
 special_map[71] = range(16) # iron door, open/close and orientation
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
-special_map[85] = range(17) # fences, all the possible combination
-special_map[86] = range(5)  # pumpkin, orientation (not implemented)
-special_map[91] = range(5)  # jack-o-lantern, orientation (not implemented)
+special_map[85] = range(17) # fences, all the possible combination, uses pseudo data
+special_map[86] = range(5)  # pumpkin, orientation
+special_map[90] = (1,2,4,8) # portal, in 2 orientations, 4 cases, uses pseudo data
+special_map[91] = range(5)  # jack-o-lantern, orientation
 special_map[92] = range(6) # cake!
+special_map[93] = range(16) # OFF redstone repeater, orientation and delay (delay not implemented)
+special_map[94] = range(16) # ON redstone repeater, orientation and delay (delay not implemented)
 
 # grass and leaves are graysacle in terrain.png
 # we treat them as special so we can manually tint them
 # it is unknown how the specific tint (biomes) is calculated
-special_map[2] = range(11)       # grass, grass has not ancildata but is used
-                                # in the mod WildGrass, and this small fix
-                                # shows the map as expected, and is harmless
-                                # for normal maps
+# also, 0x10 means SNOW sides
+special_map[2] = range(11) + [0x10,]  # grass, grass has not ancildata but is
+                                      # used in the mod WildGrass, and this
+                                      # small fix shows the map as expected,
+                                      # and is harmless for normal maps
 special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
 
 

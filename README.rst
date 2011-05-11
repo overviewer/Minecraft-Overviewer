@@ -1,21 +1,26 @@
 ====================
 Minecraft Overviewer
 ====================
-By Andrew Brown and contributors
+By Andrew Brown and contributors (see CONTRIBUTORS.rst).
 
 http://github.com/brownan/Minecraft-Overviewer
 
 Generates large resolution images of a Minecraft map.
 
 In short, this program reads in Minecraft world files and renders very large
-resolution images. It performs a similar function to the existing Minecraft
-Cartographer program but with a slightly different goal in mind: to generate
-large resolution images such that one can zoom in and see details.
+resolution images that can be viewed through a Google Maps interface. It
+performs a similar function to the existing Minecraft Cartographer program but
+with a slightly different goal in mind: to generate large resolution images
+such that one can zoom in and see details.
 
 See some examples here!
 http://github.com/brownan/Minecraft-Overviewer/wiki/Map-examples
 
-(To contact me, send me a message on Github)
+Further documentation may be found at
+https://github.com/brownan/Minecraft-Overviewer/wiki/Documentation
+
+To contact the developers and other users, go to the site at the top of this
+README, or go to #overviewer on irc.freenode.net.
 
 Features
 ========
@@ -56,6 +61,12 @@ If something doesn't work, let me know.
 Using the Overviewer
 ====================
 
+For a quick-start guide, see
+https://github.com/brownan/Minecraft-Overviewer/wiki/Quick-Start-Guide
+
+If you are upgrading from an older Overviewer to the new DTT code, see
+https://github.com/brownan/Minecraft-Overviewer/wiki/DTT-Upgrade-Guide
+
 Disclaimers
 -----------
 Before you dive into using this, just be aware that, for large maps, there is a
@@ -89,7 +100,7 @@ you can use the Overviewer:
   texture packs out there.
 
 Biome Tinting
-~~~~~~~~~~~~~
+-------------
 With the Halloween update, biomes were added to Minecraft.  In order to get
 biome-accurate tinting, the Overviewer can use biome data produced by the
 Minecraft Biome Extractor tool.  This tool can be downloaded from:
@@ -102,12 +113,12 @@ then the Overviewer will use a static tinting for grass and leaves.
 
 Compiling the C Extension
 ------------------------- 
-The C Extension for Overviewer is no longer optional.  In addition to providing
-a higher quality image compositing function that looks better on maps with lighting
-enabled, it now does the bulk of the rendering.
+The C Extension for Overviewer is no longer optional.  In addition to
+providing a higher quality image compositing function that looks better on
+maps with lighting enabled, it now does the bulk of the rendering.
 
-If you downloaded Overviewer as a binary package, this extension will already be
-compiled for you. 
+If you downloaded Overviewer as a binary package, this extension will already
+be compiled for you.
 
 If you have a C compiler and the Python development libraries set up, you can
 compile this extension like this::
@@ -119,7 +130,7 @@ look for a package named 'python-dev', 'python-devel' or similar. Also, some
 Python distributions do not install "Imaging.h" and "ImPlatform.h" properly. If
 you get errors complaining about them, you can get them from the PIL source, or
 at <http://svn.effbot.org/public/tags/pil-1.1.7/libImaging/>. Just put them in
-the same directory as "_composite.c".
+the same directory as "overviewer.py".
 
 For more detailed instructions, check the wiki: 
 https://github.com/brownan/Minecraft-Overviewer/wiki/Build-Instructions
@@ -142,12 +153,6 @@ Options
 -h, --help
     Shows the list of options and exits
 
---imgformat=FORMAT
-    Set the output image format used for the tiles. The default is 'png',
-    but 'jpg' is also supported. Note that regardless of what you choose,
-    Overviewer will still use PNG for cached images to avoid recompression
-    artifacts.
-
 -p PROCS, --processes=PROCS
     Adding the "-p" option will utilize more cores during processing.  This
     can speed up rendering quite a bit. The default is set to the same
@@ -156,34 +161,6 @@ Options
     Example to run 5 worker processes in parallel::
 
         python overviewer.py -p 5 <Path to World> <Output Directory>
-
--z ZOOM, --zoom=ZOOM
-    The Overviewer by default will detect how many zoom levels are required
-    to show your entire map. This option sets it manually.
-
-    *You do not normally need to set this option!*
-
-    This is equivalent to setting the dimensions of the highest zoom level. It
-    does not actually change how the map is rendered, but rather *how much of
-    the map is rendered.* (Calling this option "zoom" may be a bit misleading,
-    I know)
-   
-    To be precise, it sets the width and height of the highest zoom level, in
-    tiles. A zoom level of z means the highest zoom level of your map will be
-    2^z by 2^z tiles.
-
-    This option map be useful if you have some outlier chunks causing your map
-    to be too large, or you want to render a smaller portion of your map,
-    instead of rendering everything.
-
-    This will render your map with 7 zoom levels::
-
-        python overviewer.py -z 7 <Path to World> <Output Directory>
-
-    Remember that each additional zoom level adds 4 times as many tiles as
-    the last. This can add up fast, zoom level 10 has over a million tiles.
-    Tiles with no content will not be rendered, but they still take a small
-    amount of time to process.
 
 -d, --delete
     This option changes the mode of execution. No tiles are rendered, and
@@ -204,38 +181,65 @@ Options
     a certain date. Or perhaps you can incrementally update your map by passing
     in a subset of regions each time. It's up to you!
 
---lighting
-    This option enables map lighting, using lighting information stored by
-    Minecraft inside the chunks. This will make your map prettier, at the cost
-    of update speed.
-    
-    Note that for existing, unlit maps, you may want to clear your cache
-    (with -d) before updating the map to use lighting. Otherwise, only updated
-    chunks will have lighting enabled.
+--rendermodes=MODE1[,MODE2,...]
+    Use this option to specify which render mode to use, such as lighting or
+    night. Use --list-rendermodes to get a list of available rendermodes, and
+    a short description of each. If you provide more than one mode (separated
+    by commas), Overviewer will render all of them at once, and provide a
+    toggle on the resulting map to switch between them.
 
---night
-    This option enables --lighting, and renders the world at night.
-
---web-assets-hook=HOOK
-    This option lets you specify a script to run after the web assets have been
-    copied into the output directory, but before any tile rendering takes
-    place. This is an ideal time to do any custom postprocessing for markers.js
-    or other web assets.
-    
-    The script should be executable, and it should accept one argument:
-    the path to the output directory.
+--list-rendermodes
+    List the available render modes, and a short description of each.
 
 
 Settings
 --------
-
 You can optionally store settings in a file named settings.py.  It is a regular
 python script, so you can use any python functions or modules you want.  
 
-This section needs to be expanded
+For a sample settings file, look at 'sample.settings.py'. Note that this file
+is not meant to be used directly, but instead it should be used as a
+collection of examples to guide writing your own.
 
-For a sample settings file, look at sample.settings.py
+Here's a (possibly incomplete) list of available settings, which are available
+in settings.py. Note that you can also set command-line options in a similar
+way.
 
+imgformat=FORMAT
+    Set the output image format used for the tiles. The default is 'png',
+    but 'jpg' is also supported.
+
+zoom=ZOOM
+    The Overviewer by default will detect how many zoom levels are required
+    to show your entire map. This option sets it manually.
+
+    *You do not normally need to set this option!*
+
+    This is equivalent to setting the dimensions of the highest zoom level. It
+    does not actually change how the map is rendered, but rather *how much of
+    the map is rendered.* (Calling this option "zoom" may be a bit misleading,
+    I know)
+   
+    To be precise, it sets the width and height of the highest zoom level, in
+    tiles. A zoom level of z means the highest zoom level of your map will be
+    2^z by 2^z tiles.
+
+    This option map be useful if you have some outlier chunks causing your map
+    to be too large, or you want to render a smaller portion of your map,
+    instead of rendering everything.
+
+    Remember that each additional zoom level adds 4 times as many tiles as
+    the last. This can add up fast, zoom level 10 has over a million tiles.
+    Tiles with no content will not be rendered, but they still take a small
+    amount of time to process.
+
+web_assets_hook
+    This option lets you define a function to run after the web assets have
+    been copied into the output directory, but before any tile rendering takes
+    place. This is an ideal time to do any custom postprocessing for
+    markers.js or other web assets.
+    
+    This function should accept one argument: a QuadtreeGen object.
 
 Viewing the Results
 -------------------
