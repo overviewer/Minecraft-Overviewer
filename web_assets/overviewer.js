@@ -236,10 +236,14 @@ var overviewer = {
 			*/
 			
 			// Add live hash update listener
-			google.maps.event.addListener(overviewer.map, 'dragend', function() { overviewer.updateHash(); });
-			google.maps.event.addListener(overviewer.map, 'zoom_changed', function() { overviewer.updateHash(); });
+			google.maps.event.addListener(overviewer.map, 'dragend', function() {
+				overviewer.util.updateHash();
+			});
+			google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
+				overviewer.util.updateHash();
+			});
 			// Jump to the hash if given
-			overviewer.initHash();
+			overviewer.util.initHash();
 			
 			
             // We can now set the map to use the 'coordinate' map type
@@ -812,7 +816,25 @@ var overviewer = {
                 infowindow.open(overviewer.map, marker);
                 overviewer.collections.infoWindow = infowindow;
             });
-        }
+        },
+		'initHash': function() {
+			if(window.location.hash.split("/").length > 1) {
+				overviewer.util.goToHash();
+			}
+		},
+		'setHash': function(x, z, zoom)	{
+			window.location.replace("#/" + x.toFixed(3) + "/" + z.toFixed(3) + "/" + zoom);
+		},
+		'updateHash': function() {
+			var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
+			overviewer.util.setHash(coordinates.x, coordinates.z, overviewer.map.getZoom());
+		},
+		'goToHash': function() {
+			var coords = window.location.hash.split("/");
+			var latlngcoords = overviewer.util.fromWorldToLatLng(parseFloat(coords[1]), parseFloat(coords[2]), 64);
+			overviewer.map.setCenter(latlngcoords);
+			overviewer.map.setZoom(parseInt(coords[3]));
+		},
     },
     /**
      * The various classes needed in this file.
@@ -868,22 +890,6 @@ var overviewer = {
             this.tileSize = tileSize;
         }
     },
-	'initHash': function() {
-		if(window.location.hash.split("/").length > 1) {
-			overviewer.goToHash();
-		}
-	},
-	'setHash': function(lat, lng, zoom)	{
-		window.location.replace("#/" + lat + "/" + lng + "/" + zoom);
-	},
-	'updateHash': function() {
-		overviewer.setHash(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng(), overviewer.map.getZoom());
-	},
-	'goToHash': function() {
-		coords = window.location.hash.split("/");
-		overviewer.map.setCenter(coords[1], coords[2]);
-		overviewer.map.setZoom(coords[3]);
-	},
     /**
      * Stuff that we give to the google maps code instead of using ourselves
      * goes in here.
