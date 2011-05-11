@@ -827,7 +827,7 @@ var overviewer = {
 		},
 		'updateHash': function() {
 			var coordinates = overviewer.util.fromLatLngtoWorld(overviewer.map.getCenter().lat, overviewer.map.getCenter().lng);
-			overviewer.util.setHash(coordinates[1], coordinates[2], coordinates[3]);
+			overviewer.util.setHash(coordinates.x, coordinates.z, overviewer.map.getZoom());
 		},
 		'goToHash': function() {
 			var coords = window.location.hash.split("/");
