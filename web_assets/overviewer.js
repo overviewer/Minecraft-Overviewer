@@ -225,13 +225,19 @@ var overviewer = {
                     overviewer.collections.mapTypes[i].name,
                     overviewer.collections.mapTypes[i]);
             }
-
+			
+			/*
             // Make the link again whenever the map changes
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
                 $('#'+overviewerConfig.CONST.mapDivId).css(
                     'background-color', overviewer.util.getMapTypeBackgroundColor(
                         overviewer.map.getMapTypeId()));
             });
+			*/
+			
+			// Init live hash updating
+			initHash();
+			
             // We can now set the map to use the 'coordinate' map type
             overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
         },
@@ -858,6 +864,23 @@ var overviewer = {
             this.tileSize = tileSize;
         }
     },
+	'initHash': function() {
+		if(window.location.hash.split("/").length > 1) {
+			goToHash();
+		}
+		google.maps.event.addListener(overviewer.map, 'dragend', function() { overviewer.updateHash(); });
+	},
+	'setHash': function(lat, lng, zoom)	{
+		window.location.replace("#/" + lat + "/" + lng + "/" + zoom);
+	},
+	'updateHash': function() {
+		setHash(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng(), overviewer.map.getZoom());
+	},
+	'goToHash': function() {
+		coords = window.location.hash.split("/");
+		overviewer.map.setCenter(coords[1], coords[2]);
+		overviewer.map.setZoom(coords[3]);
+	},
     /**
      * Stuff that we give to the google maps code instead of using ourselves
      * goes in here.
