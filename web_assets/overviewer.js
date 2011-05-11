@@ -826,12 +826,14 @@ var overviewer = {
 			window.location.replace("#/" + x.toFixed(3) + "/" + y + "/" + z.toFixed(3));
 		},
 		'updateHash': function() {
-			overviewer.util.setHash(overviewer.map.getCenter().x(), overviewer.map.getZoom(), overviewer.map.getCenter().x());
+			var coordinates = overviewer.util.fromLatLngtoWorld(overviewer.map.getCenter());
+			overviewer.util.setHash(coordinates[1], coordinates[2], coordinates[3]);
 		},
 		'goToHash': function() {
-			coords = window.location.hash.split("/");
-			overviewer.map.setCenter(new google.maps.Point(parseFloat(coords[1]), parseFloat(coords[3]));
-			overviewer.map.setZoom(parseInt(coords[2]));
+			var coords = window.location.hash.split("/");
+			var latlngcoords = overviewer.util.fromWorldToLatLng(parseFloat(coords[1]), parseInt(coords[2]), parseFloat(coords[3]));
+			overviewer.map.setCenter(latlngcoords[1], latlngcoords[3]);
+			overviewer.map.setZoom(parseInt(latlngcoords[2]));
 		},
     },
     /**
