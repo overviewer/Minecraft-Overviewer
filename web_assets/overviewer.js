@@ -236,8 +236,12 @@ var overviewer = {
 			*/
 			
 			// Add live hash update listener
-			google.maps.event.addListener(overviewer.map, 'dragend', function() { overviewer.util.updateHash(); });
-			google.maps.event.addListener(overviewer.map, 'zoom_changed', function() { overviewer.util.updateHash(); });
+			google.maps.event.addListener(overviewer.map, 'dragend', function() {
+				overviewer.util.updateHash();
+			});
+			google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
+				overviewer.util.updateHash();
+			});
 			// Jump to the hash if given
 			overviewer.util.initHash();
 			
