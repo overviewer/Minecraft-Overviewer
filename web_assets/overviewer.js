@@ -237,8 +237,9 @@ var overviewer = {
 			
 			// Add live hash update listener
 			google.maps.event.addListener(overviewer.map, 'dragend', function() { overviewer.updateHash(); });
+			google.maps.event.addListener(overviewer.map, 'zoom_changed', function() { overviewer.updateHash(); });
 			// Jump to the hash if given
-			initHash();
+			overviewer.initHash();
 			
 			
             // We can now set the map to use the 'coordinate' map type
