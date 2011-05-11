@@ -869,14 +869,14 @@ var overviewer = {
     },
 	'initHash': function() {
 		if(window.location.hash.split("/").length > 1) {
-			goToHash();
+			overviewer.goToHash();
 		}
 	},
 	'setHash': function(lat, lng, zoom)	{
 		window.location.replace("#/" + lat + "/" + lng + "/" + zoom);
 	},
 	'updateHash': function() {
-		setHash(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng(), overviewer.map.getZoom());
+		overviewer.setHash(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng(), overviewer.map.getZoom());
 	},
 	'goToHash': function() {
 		coords = window.location.hash.split("/");
