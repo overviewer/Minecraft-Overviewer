@@ -27,7 +27,7 @@ setup_kwargs['options'] = {}
 # metadata
 #
 
-setup_kwargs['name'] = 'minecraft-overviewer'
+setup_kwargs['name'] = 'Minecraft-Overviewer'
 setup_kwargs['version'] = '0.0.0' # TODO useful version
 
 #
@@ -36,7 +36,7 @@ setup_kwargs['version'] = '0.0.0' # TODO useful version
 
 if py2exe is not None:
     setup_kwargs['console'] = ['overviewer.py']
-    setup_kwargs['data_files'] = [('', ['COPYING.txt', 'README.rst'])]
+    setup_kwargs['data_files'] = [('', ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst'])]
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
