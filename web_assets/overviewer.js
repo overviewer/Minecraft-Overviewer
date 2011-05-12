@@ -145,7 +145,7 @@ var overviewer = {
             var lng = defaultCenter.lng();
             var zoom = overviewerConfig.map.defaultZoom;
             var mapcenter;
-            queryParams = overviewer.util.parseQueryString();
+            var queryParams = overviewer.util.parseQueryString();
             if (queryParams.lat) {
                 lat = parseFloat(queryParams.lat);
             }
@@ -782,6 +782,15 @@ var overviewer = {
         'initHash': function() {
             if(window.location.hash.split("/").length > 1) {
                 overviewer.util.goToHash();
+                
+                // Add a marker indicating the user-supplied position
+                var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
+                overviewer.collections.markerDatas.push([{
+                    'msg': 'Coordinates ' + Math.floor(coordinates.x) + ', ' + Math.floor(coordinates.y) + ', ' + Math.floor(coordinates.z),
+                    'x': coordinates.x,
+                    'y': coordinates.y,
+                    'z': coordinates.z,
+                    'type': 'querypos'}]);
             }
         },
         'setHash': function(x, y, z, zoom)    {
@@ -789,13 +798,37 @@ var overviewer = {
         },
         'updateHash': function() {
             var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
-            overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, overviewer.map.getZoom());
+            var zoom = overviewer.map.getZoom();
+            if (zoom == overviewerConfig.map.maxZoom) {
+                zoom = 'max';
+            } else if (zoom == overviewerConfig.map.minZoom) {
+                zoom = 'min';
+            } else {
+                // default to (map-update friendly) negative zooms
+                zoom -= overviewerConfig.map.maxZoom;
+            }
+            overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom);
         },
         'goToHash': function() {
             var coords = window.location.hash.split("/");
             var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), parseInt(coords[2]), parseInt(coords[3]));
+            var zoom = coords[4];
+            if (zoom == 'max') {
+                zoom = overviewerConfig.map.maxZoom;
+            } else if (zoom == 'min') {
+                zoom = overviewerConfig.map.minZoom;
+            } else {
+                zoom = parseInt(zoom);
+                if (zoom < 0 && zoom + overviewerConfig.map.maxZoom >= 0) {
+                    // if zoom is negative, treat it as a "zoom out from max"
+                    zoom += overviewerConfig.map.maxZoom;
+                } else {
+                    // fall back to default zoom
+                    zoom = overviewerConfig.map.defaultZoom;
+                }
+            }
             overviewer.map.setCenter(latlngcoords);
-            overviewer.map.setZoom(parseInt(coords[4]));
+            overviewer.map.setZoom(zoom);
         },
     },
     /**
@@ -829,6 +862,7 @@ var overviewer = {
                         overviewerConfig.map.center[0],
                         overviewerConfig.map.center[1],
                         overviewerConfig.map.center[2]));
+                    overviewer.util.updateHash();
                 });
         },
         /**
