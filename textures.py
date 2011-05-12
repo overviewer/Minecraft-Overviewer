@@ -1025,7 +1025,7 @@ def generate_special_texture(blockID, data):
     if blockID == 63: # singposts
         
         texture = terrain_images[4].copy()
-        # cut the wood to the size of a signpost
+        # cut the planks to the size of a signpost
         ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
         # If the signpost is looking directly to the image, draw some 
@@ -1223,6 +1223,39 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
 
+    if blockID == 68: # wall sign
+        texture = terrain_images[4].copy()
+        # cut the planks to the size of a signpost
+        ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # draw some random black dots, they will look as text
+        if data in (3,4):
+            for i in range(15):
+                x = randint(4,11)
+                y = randint(3,7)
+                texture.putpixel((x,y),(0,0,0,255))
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        incrementx = 0
+        if data == 2:  # east
+            incrementx = +1
+            sign = _build_full_block(None, None, None, None, texture)
+        elif data == 3:  # west
+            incrementx = -1
+            sign = _build_full_block(None, texture, None, None, None)
+        elif data == 4:  # north
+            incrementx = +1
+            sign = _build_full_block(None, None, texture, None, None)
+        elif data == 5:  # south
+            incrementx = -1
+            sign = _build_full_block(None, None, None, texture, None)
+
+        sign2 = ImageEnhance.Brightness(sign).enhance(1.2)
+        composite.alpha_over(img, sign2,(incrementx, 2),sign2)
+        composite.alpha_over(img, sign, (0,3), sign)
+
+        return (img.convert("RGB"), img.split()[3])
 
     if blockID == 85: # fences
         # create needed images for Big stick fence
@@ -1443,15 +1476,15 @@ def generate_special_texture(blockID, data):
                 static_torch = (5,-1)
                 
             elif (data & 0xC) == 4: # two ticks delay
-                moving_torch = (2,0)
+                moving_torch = (0,2)
                 static_torch = (5,-1)
                 
             elif (data & 0xC) == 8: # three ticks delay
-                moving_torch = (3,0)
+                moving_torch = (-1,2)
                 static_torch = (5,-1)
                 
             elif (data & 0xC) == 12: # four ticks delay
-                moving_torch = (4,-1)
+                moving_torch = (-2,3)
                 static_torch = (5,-1)
 
         elif (data & 0x3) == 2: # pointing west
@@ -1576,7 +1609,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 35, 43, 44, 50,
                       51, 53, 54, 55, 58, 59, 61, 62, 63, 64, 65, 66, 67,
-                      71, 75, 76, 85, 86, 90, 91, 92, 93, 94])
+                      68, 71, 75, 76, 85, 86, 90, 91, 92, 93, 94])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1607,6 +1640,7 @@ special_map[64] = range(16) # wooden door, open/close and orientation
 special_map[65] = (2,3,4,5) # ladder, orientation
 special_map[66] = range(10) # minecrart tracks, orientation, slope
 special_map[67] = range(4)  # cobblestone stairs, orientation
+special_map[68] = (2,3,4,5) # wall sing, orientation
 special_map[71] = range(16) # iron door, open/close and orientation
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
