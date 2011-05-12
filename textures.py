@@ -1229,12 +1229,15 @@ def generate_special_texture(blockID, data):
         ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
         # draw some random black dots, they will look as text
+        """ don't draw text at the moment, they are used in blank for decoration
+        
         if data in (3,4):
             for i in range(15):
                 x = randint(4,11)
                 y = randint(3,7)
                 texture.putpixel((x,y),(0,0,0,255))
-
+        """
+        
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
         incrementx = 0
