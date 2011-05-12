@@ -42,6 +42,7 @@ feature.
  * Kyle Brantley <kyle@averageurl.com>
  * cbarber <CraigBarber@taryx.com>
  * Alex Cline <cline@vivisimo.com>
+ * CounterPillow <spam@tes-cheese.ch>
  * Stephen Fluin <stephen@mistuph.com>
  * Benjamin Herr <ben@0x539.de>
  * Ryan Hitchman <hitchmanr@gmail.com>
@@ -52,3 +53,4 @@ feature.
  * Gregory Short <gshort2@gmail.com>
  * Sam Steele <sam@sigbox.c99.org>
  * timwolla <timwolla@mail.develfusion.com>
+ * Jeffrey Warren <warren@mit.edu>
