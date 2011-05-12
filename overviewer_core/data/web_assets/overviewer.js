@@ -145,7 +145,7 @@ var overviewer = {
             var lng = defaultCenter.lng();
             var zoom = overviewerConfig.map.defaultZoom;
             var mapcenter;
-            queryParams = overviewer.util.parseQueryString();
+            var queryParams = overviewer.util.parseQueryString();
             if (queryParams.lat) {
                 lat = parseFloat(queryParams.lat);
             }
@@ -225,13 +225,25 @@ var overviewer = {
                     overviewer.collections.mapTypes[i].name,
                     overviewer.collections.mapTypes[i]);
             }
-
+            
             // Make the link again whenever the map changes
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
                 $('#'+overviewerConfig.CONST.mapDivId).css(
                     'background-color', overviewer.util.getMapTypeBackgroundColor(
                         overviewer.map.getMapTypeId()));
             });
+            
+            // Add live hash update listener
+            google.maps.event.addListener(overviewer.map, 'dragend', function() {
+                overviewer.util.updateHash();
+            });
+            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
+                overviewer.util.updateHash();
+            });
+            // Jump to the hash if given
+            overviewer.util.initHash();
+            
+            
             // We can now set the map to use the 'coordinate' map type
             overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
         },
@@ -457,29 +469,6 @@ var overviewer = {
             }
             return results;
         },
-        /**
-         * Set the link (at the bottom of the screen) to the current view.
-         * TODO: make this preserve the mapTypeId as well
-         */
-        'setViewUrl': function() {
-            var displayZoom = overviewer.map.getZoom();
-            if (displayZoom == overviewerConfig.map.maxZoom) {
-                displayZoom = 'max';
-            } else {
-                displayZoom -= overviewerConfig.map.maxZoom;
-            }
-            var point;
-            var point = overviewer.util.fromLatLngToWorld(
-                overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
-            var viewUrl = location.href.substring(0, location.href.lastIndexOf(
-                    location.search))
-                + '?x=' + Math.floor(point.x)
-                + '&y=' + Math.floor(point.y)
-                + '&z=' + Math.floor(point.z)
-                + '&zoom=' + displayZoom;
-            document.getElementById('link').innerHTML = viewUrl;
-            
-        },
         'getDefaultMapTypeId': function() {
             return overviewer.collections.mapTypeIds[0];
         },
@@ -579,21 +568,6 @@ var overviewer = {
          * like the compass, current view link, etc.
          */
         'createMapControls': function() {
-            // viewstate link (little link to where you're looking at the map,
-            // normally bottom left)
-            var viewStateDiv = document.createElement('DIV');
-            viewStateDiv.id='link';
-            // add it to the map, bottom left.
-            if (overviewerConfig.map.controls.link) {
-                google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
-                    overviewer.util.setViewUrl();
-                });
-                google.maps.event.addListener(overviewer.map, 'center_changed', function() {
-                    overviewer.util.setViewUrl();
-                });
-                overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(viewStateDiv);
-            }
-
             // compass rose, in the top right corner
             var compassDiv = document.createElement('DIV');
             compassDiv.style.padding = '5px';
@@ -775,9 +749,11 @@ var overviewer = {
                     overviewer.collections.infoWindow.close();
                 }
                 // Replace our Info Window's content and position
+                var point = overviewer.util.fromLatLngToWorld(event.latLng.lat(),event.latLng.lng());
                 var contentString = '<b>Region: ' + shape.name + '</b><br />' +
-                    'Clicked Location: <br />' + event.latLng.lat() + ', ' +
-                    event.latLng.lng() + '<br />';
+                    'Clicked Location: <br />' + Math.round(point.x,1) + ', ' + point.y
+                     + ', ' + Math.round(point.z,1)
+                     + '<br />';
                 infowindow.setContent(contentString);
                 infowindow.setPosition(event.latLng);
                 infowindow.open(overviewer.map);
@@ -802,7 +778,58 @@ var overviewer = {
                 infowindow.open(overviewer.map, marker);
                 overviewer.collections.infoWindow = infowindow;
             });
-        }
+        },
+        'initHash': function() {
+            if(window.location.hash.split("/").length > 1) {
+                overviewer.util.goToHash();
+                
+                // Add a marker indicating the user-supplied position
+                var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
+                overviewer.collections.markerDatas.push([{
+                    'msg': 'Coordinates ' + Math.floor(coordinates.x) + ', ' + Math.floor(coordinates.y) + ', ' + Math.floor(coordinates.z),
+                    'x': coordinates.x,
+                    'y': coordinates.y,
+                    'z': coordinates.z,
+                    'type': 'querypos'}]);
+            }
+        },
+        'setHash': function(x, y, z, zoom)    {
+            window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom);
+        },
+        'updateHash': function() {
+            var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
+            var zoom = overviewer.map.getZoom();
+            if (zoom == overviewerConfig.map.maxZoom) {
+                zoom = 'max';
+            } else if (zoom == overviewerConfig.map.minZoom) {
+                zoom = 'min';
+            } else {
+                // default to (map-update friendly) negative zooms
+                zoom -= overviewerConfig.map.maxZoom;
+            }
+            overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom);
+        },
+        'goToHash': function() {
+            var coords = window.location.hash.split("/");
+            var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), parseInt(coords[2]), parseInt(coords[3]));
+            var zoom = coords[4];
+            if (zoom == 'max') {
+                zoom = overviewerConfig.map.maxZoom;
+            } else if (zoom == 'min') {
+                zoom = overviewerConfig.map.minZoom;
+            } else {
+                zoom = parseInt(zoom);
+                if (zoom < 0 && zoom + overviewerConfig.map.maxZoom >= 0) {
+                    // if zoom is negative, treat it as a "zoom out from max"
+                    zoom += overviewerConfig.map.maxZoom;
+                } else {
+                    // fall back to default zoom
+                    zoom = overviewerConfig.map.defaultZoom;
+                }
+            }
+            overviewer.map.setCenter(latlngcoords);
+            overviewer.map.setZoom(zoom);
+        },
     },
     /**
      * The various classes needed in this file.
@@ -835,6 +862,7 @@ var overviewer = {
                         overviewerConfig.map.center[0],
                         overviewerConfig.map.center[1],
                         overviewerConfig.map.center[2]));
+                    overviewer.util.updateHash();
                 });
         },
         /**

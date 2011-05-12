@@ -19,7 +19,7 @@ import os.path
 import zipfile
 from cStringIO import StringIO
 import math
-
+from random import randint
 import numpy
 from PIL import Image, ImageEnhance, ImageOps, ImageDraw
 
@@ -189,7 +189,47 @@ def transform_image_slope(img, blockID=None):
     newimg = img.transform((24,24), Image.AFFINE, transform)
     
     return newimg
+
+
+def transform_image_angle(img, angle, blockID=None):
+    """Takes an image an shears it in arbitrary angle with the axis of
+    rotation being vertical.
     
+    WARNING! Don't use angle = pi/2 (or multiplies), it will return
+    a blank image (or maybe garbage).
+    
+    NOTE: angle is in the image not in game, so for the left side of a
+    block angle = 30 degree.
+    """
+    
+    # Take the same size as trasform_image_side
+    img = img.resize((12,12), Image.ANTIALIAS)
+
+    # some values
+    cos_angle = math.cos(angle)
+    sin_angle = math.sin(angle)
+
+    # function_x and function_y are used to keep the result image in the 
+    # same position, and constant_x and constant_y are the coordinates
+    # for the center for angle = 0.
+    constant_x = 6.
+    constant_y = 6.
+    function_x = 6.*(1-cos_angle)
+    function_y = -6*sin_angle
+    big_term = ( (sin_angle * (function_x + constant_x)) - cos_angle* (function_y + constant_y))/cos_angle
+
+    # The numpy array is not really used, but is helpful to 
+    # see the matrix used for the transformation.
+    transform = numpy.array([[1./cos_angle, 0, -(function_x + constant_x)/cos_angle],
+                             [-sin_angle/(cos_angle), 1., big_term ],
+                             [0, 0, 1.]])
+
+    transform = tuple(transform[0]) + tuple(transform[1])
+
+    newimg = img.transform((24,24), Image.AFFINE, transform)
+
+    return newimg
+
 
 def _build_block(top, side, blockID=None):
     """From a top texture and a side texture, build a block image.
@@ -982,6 +1022,49 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
 
+    if blockID == 63: # singposts
+        
+        texture = terrain_images[4].copy()
+        # cut the planks to the size of a signpost
+        ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # If the signpost is looking directly to the image, draw some 
+        # random dots, they will look as text.
+        if data in (0,1,2,3,4,5,15):
+            for i in range(15):
+                x = randint(4,11)
+                y = randint(3,7)
+                texture.putpixel((x,y),(0,0,0,255))
+
+        # Minecraft uses wood texture for the signpost stick
+        texture_stick = terrain_images[20]
+        texture_stick = texture_stick.resize((12,12), Image.ANTIALIAS)
+        ImageDraw.Draw(texture_stick).rectangle((2,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        #         W                N      ~90       E                   S        ~270
+        angles = (330.,345.,0.,15.,30.,55.,95.,120.,150.,165.,180.,195.,210.,230.,265.,310.)
+        angle = math.radians(angles[data])
+        post = transform_image_angle(texture, angle)
+
+        # choose the position of the "3D effect"
+        incrementx = 0
+        if data in (1,6,7,8,9,14):
+            incrementx = -1
+        elif data in (3,4,5,11,12,13):
+            incrementx = +1
+
+        composite.alpha_over(img, texture_stick,(11, 8),texture_stick)
+        # post2 is a brighter signpost pasted with a small sift,
+        # gives to the signpost some 3D effect.
+        post2 = ImageEnhance.Brightness(post).enhance(1.2)
+        composite.alpha_over(img, post2,(incrementx, -3),post2)
+        composite.alpha_over(img, post, (0,-2), post)
+
+        return (img.convert("RGB"), img.split()[3])
+
+
     if blockID in (64,71): #wooden door, or iron door
         if data & 0x8 == 0x8: # top of the door
             raw_door = terrain_images[81 if blockID == 64 else 82]
@@ -1140,6 +1223,42 @@ def generate_special_texture(blockID, data):
         return (img.convert("RGB"), img.split()[3])
 
 
+    if blockID == 68: # wall sign
+        texture = terrain_images[4].copy()
+        # cut the planks to the size of a signpost
+        ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # draw some random black dots, they will look as text
+        """ don't draw text at the moment, they are used in blank for decoration
+        
+        if data in (3,4):
+            for i in range(15):
+                x = randint(4,11)
+                y = randint(3,7)
+                texture.putpixel((x,y),(0,0,0,255))
+        """
+        
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+
+        incrementx = 0
+        if data == 2:  # east
+            incrementx = +1
+            sign = _build_full_block(None, None, None, None, texture)
+        elif data == 3:  # west
+            incrementx = -1
+            sign = _build_full_block(None, texture, None, None, None)
+        elif data == 4:  # north
+            incrementx = +1
+            sign = _build_full_block(None, None, texture, None, None)
+        elif data == 5:  # south
+            incrementx = -1
+            sign = _build_full_block(None, None, None, texture, None)
+
+        sign2 = ImageEnhance.Brightness(sign).enhance(1.2)
+        composite.alpha_over(img, sign2,(incrementx, 2),sign2)
+        composite.alpha_over(img, sign, (0,3), sign)
+
+        return (img.convert("RGB"), img.split()[3])
 
     if blockID == 85: # fences
         # create needed images for Big stick fence
@@ -1360,15 +1479,15 @@ def generate_special_texture(blockID, data):
                 static_torch = (5,-1)
                 
             elif (data & 0xC) == 4: # two ticks delay
-                moving_torch = (2,0)
+                moving_torch = (0,2)
                 static_torch = (5,-1)
                 
             elif (data & 0xC) == 8: # three ticks delay
-                moving_torch = (3,0)
+                moving_torch = (-1,2)
                 static_torch = (5,-1)
                 
             elif (data & 0xC) == 12: # four ticks delay
-                moving_torch = (4,-1)
+                moving_torch = (-2,3)
                 static_torch = (5,-1)
 
         elif (data & 0x3) == 2: # pointing west
@@ -1492,8 +1611,8 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # please, if possible, keep the ascending order of blockid value)
 
 special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 35, 43, 44, 50,
-                      51, 53, 54, 55, 58, 59, 61, 62, 64, 65, 66, 67, 71,
-                      75, 76, 85, 86, 90, 91, 92, 93, 94])
+                      51, 53, 54, 55, 58, 59, 61, 62, 63, 64, 65, 66, 67,
+                      68, 71, 75, 76, 85, 86, 90, 91, 92, 93, 94])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1519,10 +1638,12 @@ special_map[58] = (0,)      # crafting table
 special_map[59] = range(8)  # crops, grow from 0 to 7
 special_map[61] = range(6)  # furnace, orientation
 special_map[62] = range(6)  # burning furnace, orientation
+special_map[63] = range(16) # signpost, orientation
 special_map[64] = range(16) # wooden door, open/close and orientation
 special_map[65] = (2,3,4,5) # ladder, orientation
 special_map[66] = range(10) # minecrart tracks, orientation, slope
 special_map[67] = range(4)  # cobblestone stairs, orientation
+special_map[68] = (2,3,4,5) # wall sing, orientation
 special_map[71] = range(16) # iron door, open/close and orientation
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation

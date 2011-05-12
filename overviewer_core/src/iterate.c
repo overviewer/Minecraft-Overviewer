@@ -364,6 +364,12 @@ chunk_render(PyObject *self, PyObject *args) {
             
             for (state.z = 0; state.z < 128; state.z++) {
                 state.imgy -= 12;
+		
+		/* get blockid */
+                state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
+                if (state.block == 0) {
+                    continue;
+                }
                 
                 /* make sure we're rendering inside the image boundaries */
                 if ((state.imgx >= imgsize0 + 24) || (state.imgx <= -24)) {
@@ -373,11 +379,6 @@ chunk_render(PyObject *self, PyObject *args) {
                     continue;
                 }
 
-                /* get blockid */
-                state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
-                if (state.block == 0) {
-                    continue;
-                }
                 
                 /* decref'd on replacement *and* at the end of the z for block */
                 if (blockid) {
