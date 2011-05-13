@@ -24,7 +24,7 @@ class ConfigOptionParser(object):
         self.requiredArgs = []
         
         # add the *very* special config-file path option
-        self.add_option("--config-file", dest="config_file", help="Specifies a configuration file to load, by name. This file's format is discussed in the README.", metavar="PATH", type="string", commandLineOnly=True)
+        self.add_option("--settings", dest="config_file", help="Specifies a settings file to load, by name. This file's format is discussed in the README.", metavar="PATH", type="string", commandLineOnly=True)
 
     def display_config(self):
         logging.info("Using the following settings:")
@@ -77,7 +77,7 @@ class ConfigOptionParser(object):
                 self.configFile = options.config_file
             elif os.path.exists(self.configFile):
                 # warn about automatic loading
-                logging.warning("Automatic settings.py loading is DEPRECATED, and may be removed in the future. Please use --config-file instead.")
+                logging.warning("Automatic settings.py loading is DEPRECATED, and may be removed in the future. Please use --settings instead.")
             
             if os.path.exists(self.configFile):
                 execfile(self.configFile, g, l)
