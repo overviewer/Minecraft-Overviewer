@@ -26,11 +26,14 @@ from PIL import Image, ImageEnhance, ImageOps, ImageDraw
 import util
 import composite
 
+_find_file_local_path = None
 def _find_file(filename, mode="rb"):
     """Searches for the given file and returns an open handle to it.
     This searches the following locations in this order:
     
+    * the textures_path given in the config file (if present)
     * The program dir (same dir as this file)
+    * The program dir / textures
     * On Darwin, in /Applications/Minecraft
     * Inside minecraft.jar, which is looked for at these locations
 
@@ -38,12 +41,19 @@ def _find_file(filename, mode="rb"):
       * On Darwin, at $HOME/Library/Application Support/minecraft/bin/minecraft.jar
       * at $HOME/.minecraft/bin/minecraft.jar
 
-    * The current working directory
-    * The program dir / textures
-
     """
+    
+    if _find_file_local_path:
+        path = os.path.join(_find_file_local_path, filename)
+        if os.path.exists(path):
+            return open(path, mode)
+    
     programdir = util.get_program_path()
     path = os.path.join(programdir, filename)
+    if os.path.exists(path):
+        return open(path, mode)
+    
+    path = os.path.join(programdir, "textures", filename)
     if os.path.exists(path):
         return open(path, mode)
 
@@ -72,14 +82,6 @@ def _find_file(filename, mode="rb"):
                 return jar.open(filename)
             except (KeyError, IOError):
                 pass
-
-    path = filename
-    if os.path.exists(path):
-        return open(path, mode)
-
-    path = os.path.join(programdir, "textures", filename)
-    if os.path.exists(path):
-        return open(path, mode)
 
     raise IOError("Could not find the file {0}. Is Minecraft installed? If so, I couldn't find the minecraft.jar file.".format(filename))
 
@@ -1661,7 +1663,10 @@ biome_grass_texture = None
 biome_leaf_texture = None
 specialblockmap = None
 
-def generate():
+def generate(path=None):
+    global _find_file_local_path
+    _find_file_local_path = path
+    
     # This maps terainids to 16x16 images
     global terrain_images
     terrain_images = _split_terrain(_get_terrain_image())

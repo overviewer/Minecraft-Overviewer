@@ -68,6 +68,7 @@ class MapGen(object):
         
         self.skipjs = configInfo.get('skipjs', None)
         self.web_assets_hook = configInfo.get('web_assets_hook', None)
+        self.web_assets_path = configInfo.get('web_assets_path', None)
         self.bg_color = configInfo.get('bg_color')
         
         if not len(quadtrees) > 0:
@@ -81,14 +82,28 @@ class MapGen(object):
                 raise ValueError("all the given quadtrees must have the same destdir and world")
         
         self.quadtrees = quadtrees
-        
+    
     def go(self, procs):
         """Writes out config.js, marker.js, and region.js
         Copies web assets into the destdir"""
         zoomlevel = self.p
-        configpath = os.path.join(util.get_program_path(), "overviewerConfig.js")
 
-        config = open(configpath, 'r').read()
+        bgcolor = (int(self.bg_color[1:3],16), int(self.bg_color[3:5],16), int(self.bg_color[5:7],16), 0)
+        blank = Image.new("RGBA", (1,1), bgcolor)
+        # Write a blank image
+        for quadtree in self.quadtrees:
+            tileDir = os.path.join(self.destdir, quadtree.tiledir)
+            if not os.path.exists(tileDir): os.mkdir(tileDir)
+            blank.save(os.path.join(tileDir, "blank."+quadtree.imgformat))
+
+        # copy web assets into destdir:
+        mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)
+        # do the same with the local copy, if we have it
+        if self.web_assets_path:
+            mirror_dir(self.web_assets_path, self.destdir)
+        
+        # replace the config js stuff
+        config = open(os.path.join(self.destdir, 'overviewerConfig.js'), 'r').read()
         config = config.replace(
                 "{minzoom}", str(0))
         config = config.replace(
@@ -111,18 +126,7 @@ class MapGen(object):
         with open(os.path.join(self.destdir, "overviewerConfig.js"), 'w') as output:
             output.write(config)
 
-        bgcolor = (int(self.bg_color[1:3],16), int(self.bg_color[3:5],16), int(self.bg_color[5:7],16), 0)
-        blank = Image.new("RGBA", (1,1), bgcolor)
-        # Write a blank image
-        for quadtree in self.quadtrees:
-            tileDir = os.path.join(self.destdir, quadtree.tiledir)
-            if not os.path.exists(tileDir): os.mkdir(tileDir)
-            blank.save(os.path.join(tileDir, "blank."+quadtree.imgformat))
-
-        # copy web assets into destdir:
-        mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)
-
-        # Add time in index.html
+        # Add time and version in index.html
         indexpath = os.path.join(self.destdir, "index.html")
 
         index = open(indexpath, 'r').read()

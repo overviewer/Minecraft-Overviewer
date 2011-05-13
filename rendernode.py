@@ -65,7 +65,7 @@ def pool_initializer(rendernode):
     
     # make sure textures are generated for this process
     # and initialize c_overviewer
-    textures.generate()
+    textures.generate(path=rendernode.options.get('textures_path', None))
     c_overviewer.init_chunk_render()
     
     # load biome data in each process, if needed
@@ -94,12 +94,13 @@ def roundrobin(iterables):
 
             
 class RenderNode(object):
-    def __init__(self, quadtrees):
+    def __init__(self, quadtrees, options):
         """Distributes the rendering of a list of quadtrees."""
 
         if not len(quadtrees) > 0:
             raise ValueError("there must be at least one quadtree to work on")    
 
+        self.options = options
         self.quadtrees = quadtrees
         #bind an index value to the quadtree so we can find it again
         #and figure out which worlds are where
