@@ -112,9 +112,6 @@ def _split_terrain(terrain):
 
     return textures
 
-# This maps terainids to 16x16 images
-terrain_images = _split_terrain(_get_terrain_image())
-
 def transform_image(img, blockID=None):
     """Takes a PIL image and rotates it left 45 degrees and shrinks the y axis
     by a factor of 2. Returns the resulting image, which will be 24x12 pixels
@@ -460,7 +457,6 @@ def _build_blockimages():
     while len(allimages) < 256:
         allimages.append(None)
     return allimages
-blockmap = _build_blockimages()
 
 def load_water():
     """Evidentially, the water and lava textures are not loaded from any files
@@ -482,8 +478,6 @@ def load_water():
     lavablock = _build_block(lavatexture, lavatexture)
     blockmap[10] = lavablock.convert("RGB"), lavablock
     blockmap[11] = blockmap[10]
-load_water()
-
 
 def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
@@ -1541,11 +1535,6 @@ def tintTexture(im, c):
     i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
     return i
 
-# generate biome (still grayscale) leaf, grass textures
-biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
-biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
-
-
 currentBiomeFile = None
 currentBiomeData = None
 grasscolor = None
@@ -1665,9 +1654,31 @@ special_map[2] = range(11) + [0x10,]  # grass, grass has not ancildata but is
                                       # and is harmless for normal maps
 special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
 
+# placeholders that are generated in generate()
+terrain_images = None
+blockmap = None
+biome_grass_texture = None
+biome_leaf_texture = None
+specialblockmap = None
 
-specialblockmap = {}
-
-for blockID in special_blocks:
-    for data in special_map[blockID]:
-        specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)
+def generate():
+    # This maps terainids to 16x16 images
+    global terrain_images
+    terrain_images = _split_terrain(_get_terrain_image())
+    
+    # generate the normal blocks
+    global blockmap
+    blockmap = _build_blockimages()
+    load_water()
+    
+    # generate biome (still grayscale) leaf, grass textures
+    global biome_grass_texture, biome_leaf_texture
+    biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
+    biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
+    
+    # generate the special blocks
+    global specialblockmap, special_blocks
+    specialblockmap = {}
+    for blockID in special_blocks:
+        for data in special_map[blockID]:
+            specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)

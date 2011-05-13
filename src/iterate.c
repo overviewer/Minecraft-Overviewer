@@ -24,43 +24,41 @@ static PyObject *special_blocks = NULL;
 static PyObject *specialblockmap = NULL;
 static PyObject *transparent_blocks = NULL;
 
-int init_chunk_render(void) {
+PyObject *init_chunk_render(PyObject *self, PyObject *args) {
    
-    /* if blockmap (or any of these) is not NULL, then that means that we've 
-     * somehow called this function twice.  error out so we can notice this
-     * */
-    if (blockmap) return 1;
+    /* this function only needs to be called once, anything more is an
+     * error... */
+    if (blockmap) {
+        PyErr_SetString(PyExc_RuntimeError, "init_chunk_render should only be called once per process.");
+        return NULL;
+    }
 
     textures = PyImport_ImportModule("textures");
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
-        fprintf(stderr, "\ninit_chunk_render failed to load; textures\n");
-        PyErr_Print();
-        return 1;
+        return NULL;
     }
 
     chunk_mod = PyImport_ImportModule("chunk");
     /* ensure none of these pointers are NULL */    
     if ((!chunk_mod)) {
-        fprintf(stderr, "\ninit_chunk_render failed to load; chunk\n");
-        PyErr_Print();
-        return 1;
+        return NULL;
     }
     
     blockmap = PyObject_GetAttrString(textures, "blockmap");
+    if (!blockmap)
+        return NULL;
     special_blocks = PyObject_GetAttrString(textures, "special_blocks");
+    if (!special_blocks)
+        return NULL;
     specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
+    if (!specialblockmap)
+        return NULL;
     transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
+    if (!transparent_blocks)
+        return NULL;
     
-    /* ensure none of these pointers are NULL */    
-    if ((!transparent_blocks) || (!blockmap) || (!special_blocks) || (!specialblockmap)) {
-        fprintf(stderr, "\ninit_chunk_render failed\n");
-        PyErr_Print();
-        return 1;
-    }
-
-    return 0;
-
+    Py_RETURN_NONE;
 }
 
 int
@@ -310,7 +308,7 @@ chunk_render(PyObject *self, PyObject *args) {
     PyObject *t = NULL;
     
     if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &blockdata_expanded))
-        return Py_BuildValue("i", "-1");
+        return NULL;
     
     /* fill in important modules */
     state.textures = textures;
@@ -435,7 +433,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 blockid = NULL;
             }
         }
-    } 
+    }
 
     /* free up the rendermode info */
     rendermode->finish(rm_data, &state);
