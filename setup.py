@@ -67,7 +67,7 @@ setup_kwargs['scripts'] = ['overviewer.py']
 setup_kwargs['package_data'] = {'overviewer_core':
                                     ['data/textures/*',
                                      'data/web_assets/*']}
-setup_kwargs['data_files'] = [('Minecraft-Overviewer', ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample.settings.py'])]
+setup_kwargs['data_files'] = [('share/doc/minecraft-overviewer', ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample.settings.py'])]
 
 
 #
