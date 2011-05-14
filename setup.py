@@ -28,7 +28,7 @@ setup_kwargs['cmdclass'] = {}
 if py2exe is not None:
     setup_kwargs['console'] = ['overviewer.py']
     setup_kwargs['data_files'] = [('textures', ['textures/lava.png', 'textures/water.png', 'textures/fire.png', 'textures/portal.png']),
-                                  ('', ['overviewerConfig.js', 'COPYING.txt', 'README.rst']),
+                                  ('', ['COPYING.txt', 'README.rst']),
                                   ('web_assets', glob.glob('web_assets/*'))]
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
