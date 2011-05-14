@@ -24,6 +24,7 @@ import json
 
 import util
 from c_overviewer import get_render_mode_inheritance
+import overviewer_version
 
 """
 This module has routines related to generating a Google Maps-based
@@ -132,7 +133,8 @@ class MapGen(object):
         index = open(indexpath, 'r').read()
         index = index.replace(
                 "{time}", str(strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())))
-        index = index.replace("{version}", util.findGitVersion())
+        versionstr = "%s (%s)" % (overviewer_version.VERSION, overviewer_version.HASH[:7])
+        index = index.replace("{version}", versionstr)
 
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(index)

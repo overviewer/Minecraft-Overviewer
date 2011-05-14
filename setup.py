@@ -11,6 +11,7 @@ import os, os.path
 import glob
 import platform
 import time
+import overviewer_core.util as util
 
 try:
     import py2exe
@@ -28,11 +29,21 @@ setup_kwargs['options'] = {}
 # metadata
 #
 
+# Utility function to read the README file.  
+# Used for the long_description.  It's nice, because now 1) we have a top level
+# README file and 2) it's easier to type in the README file than to put a raw
+# string in below ...
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
 setup_kwargs['name'] = 'Minecraft-Overviewer'
-setup_kwargs['version'] = '0.0.0' # TODO useful version
+setup_kwargs['version'] = util.findGitVersion()
+setup_kwargs['description'] = 'Generates large resolution images of a Minecraft map.'
+setup_kwargs['url'] = 'http://overviewer.org/'
 setup_kwargs['author'] = 'Andrew Brown'
 setup_kwargs['author_email'] = 'brownan@gmail.com'
-setup_kwargs['url'] = 'http://overviewer.org/'
+setup_kwargs['license'] = 'GNU General Public License v3'
+setup_kwargs['long_description'] = read('README.rst')
 
 #
 # py2exe options
@@ -130,9 +141,9 @@ class CustomClean(clean):
 
 def generate_version_py():
     try:
-        import overviewer_core.util as util
         outstr = ""
         outstr += "VERSION=%r\n" % util.findGitVersion()
+        outstr += "HASH=%r\n" % util.findGitHash()
         outstr += "BUILD_DATE=%r\n" % time.asctime()
         outstr += "BUILD_PLATFORM=%r\n" % platform.processor()
         outstr += "BUILD_OS=%r\n" % platform.platform()
@@ -153,6 +164,7 @@ class CustomBuild(build):
         # generate the version file
         generate_version_py()
         build.run(self)
+        print "\nBuild Complete"
 
 class CustomBuildExt(build_ext):
     def build_extensions(self):
@@ -177,5 +189,3 @@ setup_kwargs['cmdclass']['build_ext'] = CustomBuildExt
 
 setup(**setup_kwargs)
 
-
-print "\nBuild Complete"

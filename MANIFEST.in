@@ -2,6 +2,7 @@ include COPYING.txt
 include README.rst
 include CONTRIBUTORS.rst
 include overviewer.py
+include sample.settings.py
 recursive-include contrib/ *.py
 recursive-include overviewer_core/*.py
 recursive-include overviewer_core/src/ *.c *.h

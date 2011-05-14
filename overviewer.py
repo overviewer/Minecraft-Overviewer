@@ -39,7 +39,7 @@ try:
     from overviewer_core import c_overviewer
 except ImportError:
     ## try to find the build extension
-    ext = os.path.join(this_dir, "c_overviewer.%s" % ("pyd" if platform.system() == "Windows" else "so"))
+    ext = os.path.join(this_dir, "overviewer_core", "c_overviewer.%s" % ("pyd" if platform.system() == "Windows" else "so"))
     if os.path.exists(ext):
         print "Something has gone wrong importing the c_overviewer extension.  Please"
         print "make sure it is up-to-date (clean and rebuild)"
@@ -113,13 +113,14 @@ def main():
 
 
     if options.version:
-        print "Minecraft-Overviewer"
-        print "Git version: %s" % util.findGitVersion()
         try:
             import overviewer_core.overviewer_version as overviewer_version
+            print "Minecraft-Overviewer %s" % overviewer_version.VERSION
+            print "Git commit: %s" % overviewer_version.HASH
             print "built on %s" % overviewer_version.BUILD_DATE
             print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
         except:
+            print "version info not found"
             pass
         sys.exit(0)
     
