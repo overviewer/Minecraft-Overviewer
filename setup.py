@@ -51,8 +51,7 @@ if py2exe is not None:
 setup_kwargs['packages'] = ['overviewer_core']
 setup_kwargs['scripts'] = ['overviewer.py']
 setup_kwargs['package_data'] = {'overviewer_core':
-                                    ['data/overviewerConfig.js',
-                                     'data/textures/*',
+                                    ['data/textures/*',
                                      'data/web_assets/*']}
 
 

@@ -101,6 +101,8 @@ def main():
     parser.add_option("--bg_color", dest="bg_color", help="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", configFileOnly=True, type="string", default="#1A1A1A")
     parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+optipng+advdef. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", configFileOnly=True)
     parser.add_option("--web-assets-hook", dest="web_assets_hook", help="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a QuadtreeGen object as its only argument.", action="store", metavar="SCRIPT", type="function", configFileOnly=True)
+    parser.add_option("--web-assets-path", dest="web_assets_path", help="Specifies a non-standard web_assets directory to use. Files here will overwrite the default web assets.", metavar="PATH", type="string", configFileOnly=True)
+    parser.add_option("--textures-path", dest="textures_path", help="Specifies a non-standard textures path, from which terrain.png and other textures are loaded.", metavar="PATH", type="string", configFileOnly=True)
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, help="Print more output. You can specify this option multiple times.")
     parser.add_option("--skip-js", dest="skipjs", action="store_true", help="Don't output marker.js or regions.js")
@@ -242,7 +244,7 @@ def main():
         qtree.go(options.procs)
 
     # create the distributed render
-    r = rendernode.RenderNode(q)
+    r = rendernode.RenderNode(q, options)
     
     # write out the map and web assets
     m = googlemap.MapGen(q, configInfo=options)

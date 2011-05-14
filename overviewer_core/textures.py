@@ -26,11 +26,14 @@ from PIL import Image, ImageEnhance, ImageOps, ImageDraw
 import util
 import composite
 
+_find_file_local_path = None
 def _find_file(filename, mode="rb"):
     """Searches for the given file and returns an open handle to it.
     This searches the following locations in this order:
     
+    * the textures_path given in the config file (if present)
     * The program dir (same dir as this file)
+    * The program dir / textures
     * On Darwin, in /Applications/Minecraft
     * Inside minecraft.jar, which is looked for at these locations
 
@@ -38,12 +41,19 @@ def _find_file(filename, mode="rb"):
       * On Darwin, at $HOME/Library/Application Support/minecraft/bin/minecraft.jar
       * at $HOME/.minecraft/bin/minecraft.jar
 
-    * The current working directory
-    * The program dir / textures
-
     """
+    
+    if _find_file_local_path:
+        path = os.path.join(_find_file_local_path, filename)
+        if os.path.exists(path):
+            return open(path, mode)
+    
     programdir = util.get_program_path()
     path = os.path.join(programdir, filename)
+    if os.path.exists(path):
+        return open(path, mode)
+    
+    path = os.path.join(programdir, "textures", filename)
     if os.path.exists(path):
         return open(path, mode)
 
@@ -72,14 +82,6 @@ def _find_file(filename, mode="rb"):
                 return jar.open(filename)
             except (KeyError, IOError):
                 pass
-
-    path = filename
-    if os.path.exists(path):
-        return open(path, mode)
-
-    path = os.path.join(programdir, "textures", filename)
-    if os.path.exists(path):
-        return open(path, mode)
 
     raise IOError("Could not find the file {0}. Is Minecraft installed? If so, I couldn't find the minecraft.jar file.".format(filename))
 
@@ -111,9 +113,6 @@ def _split_terrain(terrain):
             textures.append(region)
 
     return textures
-
-# This maps terainids to 16x16 images
-terrain_images = _split_terrain(_get_terrain_image())
 
 def transform_image(img, blockID=None):
     """Takes a PIL image and rotates it left 45 degrees and shrinks the y axis
@@ -460,7 +459,6 @@ def _build_blockimages():
     while len(allimages) < 256:
         allimages.append(None)
     return allimages
-blockmap = _build_blockimages()
 
 def load_water():
     """Evidentially, the water and lava textures are not loaded from any files
@@ -482,8 +480,6 @@ def load_water():
     lavablock = _build_block(lavatexture, lavatexture)
     blockmap[10] = lavablock.convert("RGB"), lavablock
     blockmap[11] = blockmap[10]
-load_water()
-
 
 def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
@@ -1541,11 +1537,6 @@ def tintTexture(im, c):
     i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
     return i
 
-# generate biome (still grayscale) leaf, grass textures
-biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
-biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
-
-
 currentBiomeFile = None
 currentBiomeData = None
 grasscolor = None
@@ -1665,9 +1656,34 @@ special_map[2] = range(11) + [0x10,]  # grass, grass has not ancildata but is
                                       # and is harmless for normal maps
 special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
 
+# placeholders that are generated in generate()
+terrain_images = None
+blockmap = None
+biome_grass_texture = None
+biome_leaf_texture = None
+specialblockmap = None
 
-specialblockmap = {}
-
-for blockID in special_blocks:
-    for data in special_map[blockID]:
-        specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)
+def generate(path=None):
+    global _find_file_local_path
+    _find_file_local_path = path
+    
+    # This maps terainids to 16x16 images
+    global terrain_images
+    terrain_images = _split_terrain(_get_terrain_image())
+    
+    # generate the normal blocks
+    global blockmap
+    blockmap = _build_blockimages()
+    load_water()
+    
+    # generate biome (still grayscale) leaf, grass textures
+    global biome_grass_texture, biome_leaf_texture
+    biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
+    biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
+    
+    # generate the special blocks
+    global specialblockmap, special_blocks
+    specialblockmap = {}
+    for blockID in special_blocks:
+        for data in special_map[blockID]:
+            specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)

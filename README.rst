@@ -191,11 +191,18 @@ Options
 --list-rendermodes
     List the available render modes, and a short description of each.
 
+--settings=PATH
+    Use this option to load settings from a file. The format of this file is
+    given below.
+
 
 Settings
 --------
-You can optionally store settings in a file named settings.py.  It is a regular
-python script, so you can use any python functions or modules you want.  
+
+You can optionally store settings in a file named settings.py (or really,
+anything you want).  It is a regular python script, so you can use any python
+functions or modules you want. To use a settings file, use the --settings
+command line option.
 
 For a sample settings file, look at 'sample.settings.py'. Note that this file
 is not meant to be used directly, but instead it should be used as a
@@ -240,6 +247,18 @@ web_assets_hook
     markers.js or other web assets.
     
     This function should accept one argument: a QuadtreeGen object.
+
+web_assets_path
+    This option lets you provide alternative web assets to use when
+    rendering. The contents of this folder will be copied into the output folder
+    during render, and will overwrite any default files already copied by
+    Overviewer. See the web_assets folder included with Overviewer for the
+    default assets.
+
+textures_path
+    This is like web_assets_path, but instead it provides an alternative texture
+    source. Overviewer looks in here for terrain.png and other textures before
+    it looks anywhere else.
 
 Viewing the Results
 -------------------

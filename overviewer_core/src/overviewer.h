@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 5
+#define OVERVIEWER_EXTENSION_VERSION 6
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -76,7 +76,7 @@ typedef struct {
     PyObject *left_blocks;
     PyObject *right_blocks;
 } RenderState;
-int init_chunk_render(void);
+PyObject *init_chunk_render(PyObject *self, PyObject *args);
 int is_transparent(unsigned char b);
 PyObject *chunk_render(PyObject *self, PyObject *args);
 

@@ -26,6 +26,8 @@ import collections
 import json
 import logging
 import util
+import textures
+import c_overviewer
 import cPickle
 import stat
 import errno 
@@ -59,14 +61,22 @@ def pool_initializer(rendernode):
     logging.debug("Child process {0}".format(os.getpid()))
     #stash the quadtree objects in a global variable after fork() for windows compat.
     global child_rendernode
-    child_rendernode = rendernode  
+    child_rendernode = rendernode
+    
+    # make sure textures are generated for this process
+    # and initialize c_overviewer
+    textures.generate(path=rendernode.options.get('textures_path', None))
+    c_overviewer.init_chunk_render()
+    
+    # load biome data in each process, if needed
     for quadtree in rendernode.quadtrees:
         if quadtree.world.useBiomeData:
-            import textures
             # make sure we've at least *tried* to load the color arrays in this process...
             textures.prepareBiomeData(quadtree.world.worlddir)
             if not textures.grasscolor or not textures.foliagecolor:
                 raise Exception("Can't find grasscolor.png or foliagecolor.png")
+            # only load biome data once
+            break
                     
 #http://docs.python.org/library/itertools.html    
 def roundrobin(iterables):
@@ -84,12 +94,13 @@ def roundrobin(iterables):
 
             
 class RenderNode(object):
-    def __init__(self, quadtrees):
+    def __init__(self, quadtrees, options):
         """Distributes the rendering of a list of quadtrees."""
 
         if not len(quadtrees) > 0:
             raise ValueError("there must be at least one quadtree to work on")    
 
+        self.options = options
         self.quadtrees = quadtrees
         #bind an index value to the quadtree so we can find it again
         #and figure out which worlds are where
