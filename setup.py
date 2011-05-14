@@ -4,6 +4,7 @@ from distutils.core import setup, Extension
 from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.command.build_ext import build_ext
+from distutils.command.sdist import sdist
 from distutils.dir_util import remove_tree
 from distutils import log
 import os, os.path
@@ -130,20 +131,30 @@ class CustomClean(clean):
 def generate_version_py():
     try:
         import overviewer_core.util as util
+        outstr = ""
+        outstr += "VERSION=%r\n" % util.findGitVersion()
+        outstr += "BUILD_DATE=%r\n" % time.asctime()
+        outstr += "BUILD_PLATFORM=%r\n" % platform.processor()
+        outstr += "BUILD_OS=%r\n" % platform.platform()
         f = open("overviewer_core/overviewer_version.py", "w")
-        f.write("VERSION=%r\n" % util.findGitVersion())
-        f.write("BUILD_DATE=%r\n" % time.asctime())
-        f.write("BUILD_PLATFORM=%r\n" % platform.processor())
-        f.write("BUILD_OS=%r\n" % platform.platform())
+        f.write(outstr)
         f.close()
     except:
         print "WARNING: failed to build overview_version file"
 
-class CustomBuild(build_ext):
+class CustomSDist(sdist):
     def run(self):
         # generate the version file
         generate_version_py()
-        build_ext.run(self)
+        sdist.run(self)
+
+class CustomBuild(build):
+    def run(self):
+        # generate the version file
+        generate_version_py()
+        build.run(self)
+
+class CustomBuildExt(build_ext):
     def build_extensions(self):
         c = self.compiler.compiler_type
         if c == "msvc":
@@ -159,7 +170,9 @@ class CustomBuild(build_ext):
         
 
 setup_kwargs['cmdclass']['clean'] = CustomClean
-setup_kwargs['cmdclass']['build_ext'] = CustomBuild
+setup_kwargs['cmdclass']['sdist'] = CustomSDist
+setup_kwargs['cmdclass']['build'] = CustomBuild
+setup_kwargs['cmdclass']['build_ext'] = CustomBuildExt
 ###
 
 setup(**setup_kwargs)

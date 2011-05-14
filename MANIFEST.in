@@ -4,6 +4,5 @@ include CONTRIBUTORS.rst
 include overviewer.py
 recursive-include contrib/ *.py
 recursive-include overviewer_core/*.py
-exclude overviewer_core/overviewer_version.py
 recursive-include overviewer_core/src/ *.c *.h
 recursive-include overviewer_core/data/ *.png *.js index.html style.css
