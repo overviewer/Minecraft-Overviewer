@@ -56,8 +56,8 @@ if hasattr(sys, "frozen"):
     pass # we don't bother with a compat test since it should always be in sync
 elif "extension_version" in dir(c_overviewer):
     # check to make sure the binary matches the headers
-    if os.path.exists(os.path.join(this_dir, "src", "overviewer.h")):
-        with open(os.path.join(this_dir, "src", "overviewer.h")) as f:
+    if os.path.exists(os.path.join(this_dir, "overviewer_core", "src", "overviewer.h")):
+        with open(os.path.join(this_dir, "overviewer_core", "src", "overviewer.h")) as f:
             lines = f.readlines()
             lines = filter(lambda x: x.startswith("#define OVERVIEWER_EXTENSION_VERSION"), lines)
             if lines:
@@ -116,10 +116,9 @@ def main():
         print "Minecraft-Overviewer"
         print "Git version: %s" % util.findGitVersion()
         try:
-            import overviewer_version
-            if hasattr(sys, "frozen"):
-                print "py2exe version build on %s" % overviewer_version.BUILD_DATE
-                print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
+            import overviewer_core.overviewer_version as overviewer_version
+            print "built on %s" % overviewer_version.BUILD_DATE
+            print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
         except:
             pass
         sys.exit(0)

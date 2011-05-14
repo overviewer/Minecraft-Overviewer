@@ -29,6 +29,9 @@ setup_kwargs['options'] = {}
 
 setup_kwargs['name'] = 'Minecraft-Overviewer'
 setup_kwargs['version'] = '0.0.0' # TODO useful version
+setup_kwargs['author'] = 'Andrew Brown'
+setup_kwargs['author_email'] = 'brownan@gmail.com'
+setup_kwargs['url'] = 'http://overviewer.org/'
 
 #
 # py2exe options
@@ -36,7 +39,6 @@ setup_kwargs['version'] = '0.0.0' # TODO useful version
 
 if py2exe is not None:
     setup_kwargs['console'] = ['overviewer.py']
-    setup_kwargs['data_files'] = [('', ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst'])]
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
@@ -53,6 +55,7 @@ setup_kwargs['scripts'] = ['overviewer.py']
 setup_kwargs['package_data'] = {'overviewer_core':
                                     ['data/textures/*',
                                      'data/web_assets/*']}
+setup_kwargs['data_files'] = [('Minecraft-Overviewer', ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample.settings.py'])]
 
 
 #
@@ -93,6 +96,7 @@ setup_kwargs['options']['build_ext'] = {'inplace' : 1}
 build.sub_commands = [('build_ext', None)]
 
 # custom clean command to remove in-place extension
+# and the version file
 class CustomClean(clean):
     def run(self):
         # do the normal cleanup
@@ -114,8 +118,32 @@ class CustomClean(clean):
         else:
             log.debug("'%s' does not exist -- can't clean it",
                       pretty_fname)
+        
+        versionpath = os.path.join("overviewer_core", "overviewer_version.py")
+        try:
+            if not self.dry_run:
+                os.remove(versionpath)
+            log.info("removing '%s'", versionpath)
+        except OSError:
+            log.warn("'%s' could not be cleaned -- permission denied", versionpath)
+
+def generate_version_py():
+    try:
+        import overviewer_core.util as util
+        f = open("overviewer_core/overviewer_version.py", "w")
+        f.write("VERSION=%r\n" % util.findGitVersion())
+        f.write("BUILD_DATE=%r\n" % time.asctime())
+        f.write("BUILD_PLATFORM=%r\n" % platform.processor())
+        f.write("BUILD_OS=%r\n" % platform.platform())
+        f.close()
+    except:
+        print "WARNING: failed to build overview_version file"
 
 class CustomBuild(build_ext):
+    def run(self):
+        # generate the version file
+        generate_version_py()
+        build_ext.run(self)
     def build_extensions(self):
         c = self.compiler.compiler_type
         if c == "msvc":
@@ -129,24 +157,6 @@ class CustomBuild(build_ext):
         self.inplace = True
         build_ext.build_extensions(self)
         
-
-if py2exe  is not None:
-# define a subclass of py2exe to build our version file on the fly
-    class CustomPy2exe(py2exe.build_exe.py2exe):
-        def run(self):
-            try:
-                import util
-                f = open("overviewer_version.py", "w")
-                f.write("VERSION=%r\n" % util.findGitVersion())
-                f.write("BUILD_DATE=%r\n" % time.asctime())
-                f.write("BUILD_PLATFORM=%r\n" % platform.processor())
-                f.write("BUILD_OS=%r\n" % platform.platform())
-                f.close()
-                setup_kwargs['data_files'].append(('.', ['overviewer_version.py']))
-            except:
-                print "WARNING: failed to build overview_version file"
-            py2exe.build_exe.py2exe.run(self)
-    setup_kwargs['cmdclass']['py2exe'] = CustomPy2exe
 
 setup_kwargs['cmdclass']['clean'] = CustomClean
 setup_kwargs['cmdclass']['build_ext'] = CustomBuild

@@ -32,8 +32,8 @@ def _find_file(filename, mode="rb"):
     This searches the following locations in this order:
     
     * the textures_path given in the config file (if present)
-    * The program dir (same dir as this file)
-    * The program dir / textures
+    * The program dir (same dir as overviewer.py)
+    * The overviewer_core textures dir
     * On Darwin, in /Applications/Minecraft
     * Inside minecraft.jar, which is looked for at these locations
 
@@ -53,7 +53,7 @@ def _find_file(filename, mode="rb"):
     if os.path.exists(path):
         return open(path, mode)
     
-    path = os.path.join(programdir, "textures", filename)
+    path = os.path.join(programdir, "overviewer_core", "data", "textures", filename)
     if os.path.exists(path):
         return open(path, mode)
 

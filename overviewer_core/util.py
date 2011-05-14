@@ -27,9 +27,9 @@ def get_program_path():
         return os.path.dirname(sys.executable)
     else:
         try:
-            # normally, we're in ./overviewer/util.py
-            # we want ./overviewer/data/
-            return os.path.join(os.path.dirname(__file__), 'data')
+            # normally, we're in ./overviewer_core/util.py
+            # we want ./
+            return os.path.dirname(os.path.dirname(__file__))
         except NameError:
             return os.path.dirname(sys.argv[0])
 
