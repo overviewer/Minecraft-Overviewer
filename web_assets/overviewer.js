@@ -194,6 +194,7 @@ var overviewer = {
                 },
                 mapTypeId:              overviewer.util.getDefaultMapTypeId(),
                 streetViewControl:      false,
+                overviewMapControl:     true,
                 zoomControl:            overviewerConfig.map.controls.zoom,
                 backgroundColor:        overviewer.util.getMapTypeBackgroundColor(
                     overviewer.util.getDefaultMapTypeId())
