@@ -226,27 +226,28 @@ var overviewer = {
                     overviewer.collections.mapTypes[i].name,
                     overviewer.collections.mapTypes[i]);
             }
-            
-            // Make the link again whenever the map changes
+			
+			// Jump to the hash if given
+            overviewer.util.initHash();
+			
+			// Add live hash update listeners
+			// Note: It is important to add them after jumping to the hash
+            google.maps.event.addListener(overviewer.map, 'dragend', function() {
+                overviewer.util.updateHash();
+            });
+			
+            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
+                overviewer.util.updateHash();
+            });
+			
+			// Make the link again whenever the map changes
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
                 $('#'+overviewerConfig.CONST.mapDivId).css(
                     'background-color', overviewer.util.getMapTypeBackgroundColor(
                         overviewer.map.getMapTypeId()));
+				//smuggled this one in here for maptypeid hash generation --CounterPillow
+				overviewer.util.updateHash();
             });
-            
-            // Add live hash update listener
-            google.maps.event.addListener(overviewer.map, 'dragend', function() {
-                overviewer.util.updateHash();
-            });
-            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
-                overviewer.util.updateHash();
-            });
-            // Jump to the hash if given
-            overviewer.util.initHash();
-            
-            
-            // We can now set the map to use the 'coordinate' map type
-            overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
         },
         /**
          * Read through overviewer.collections.markerDatas and create Marker
@@ -783,6 +784,8 @@ var overviewer = {
         'initHash': function() {
             if(window.location.hash.split("/").length > 1) {
                 overviewer.util.goToHash();
+				// Clean up the hash.
+				overviewer.util.updateHash();
                 
                 // Add a marker indicating the user-supplied position
                 var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
@@ -792,14 +795,15 @@ var overviewer = {
                     'y': coordinates.y,
                     'z': coordinates.z,
                     'type': 'querypos'}]);
-            }
+            }	
         },
-        'setHash': function(x, y, z, zoom)    {
-            window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom);
+        'setHash': function(x, y, z, zoom, maptype)    {
+            window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + maptype);
         },
         'updateHash': function() {
             var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
             var zoom = overviewer.map.getZoom();
+			var maptype = overviewer.map.getMapTypeId();
             if (zoom == overviewerConfig.map.maxZoom) {
                 zoom = 'max';
             } else if (zoom == overviewerConfig.map.minZoom) {
@@ -808,12 +812,22 @@ var overviewer = {
                 // default to (map-update friendly) negative zooms
                 zoom -= overviewerConfig.map.maxZoom;
             }
-            overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom);
+            overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, maptype);
         },
         'goToHash': function() {
+			// Note: the actual data begins at coords[1], coords[0] is empty.
             var coords = window.location.hash.split("/");
             var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), parseInt(coords[2]), parseInt(coords[3]));
-            var zoom = coords[4];
+			var zoom;
+			var maptype = '';
+			// The if-statements try to prevent unexpected behaviour when using incomplete hashes, e.g. older links
+			if (coords.length > 4) {
+				zoom = coords[4];
+			}
+			if (coords.length > 5) {
+				maptype = coords[5];
+			}
+			
             if (zoom == 'max') {
                 zoom = overviewerConfig.map.maxZoom;
             } else if (zoom == 'min') {
@@ -828,6 +842,14 @@ var overviewer = {
                     zoom = overviewerConfig.map.defaultZoom;
                 }
             }
+			// If the maptype isn't set, set the default one.
+			if (maptype == '') {
+				// We can now set the map to use the 'coordinate' map type
+				overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
+			} else {
+				overviewer.map.setMapTypeId(maptype);
+			}
+			
             overviewer.map.setCenter(latlngcoords);
             overviewer.map.setZoom(zoom);
         },
