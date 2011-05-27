@@ -93,7 +93,7 @@ def main():
     parser.add_option("-p", "--processes", dest="procs", help="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
     parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", configFileOnly=True)
     parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true", commandLineOnly=True)
-    parser.add_option("--chunklist", dest="chunklist", help="A file containing, on each line, a path to a chunkfile to update. Instead of scanning the world directory for chunks, it will just use this list. Normal caching rules still apply.")
+    parser.add_option("--regionlist", dest="regionlist", help="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
     parser.add_option("--rendermodes", dest="rendermode", help="Specifies the render types, separated by commas. Use --list-rendermodes to list them all.", type="choice", choices=avail_rendermodes, required=True, default=avail_rendermodes[0], listify=True)
     parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", help="List available render modes and exit.", commandLineOnly=True)
     parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg.", configFileOnly=True )
@@ -189,10 +189,10 @@ def main():
     if options.delete:
         return delete_all(worlddir, destdir)
 
-    if options.chunklist:
-        chunklist = open(options.chunklist, 'r')
+    if options.regionlist:
+        regionlist = map(str.strip, open(options.regionlist, 'r'))
     else:
-        chunklist = None
+        regionlist = None
 
     if options.imgformat:
         if options.imgformat not in ('jpg','png'):
@@ -221,7 +221,7 @@ def main():
         logging.info("Notice: Not using biome data for tinting")
     
     # First do world-level preprocessing
-    w = world.World(worlddir, useBiomeData=useBiomeData)
+    w = world.World(worlddir, useBiomeData=useBiomeData, regionlist=regionlist)
     w.go(options.procs)
 
     logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
