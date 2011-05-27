@@ -160,8 +160,12 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         return ancilData;
     } else if (state->block == 9) { /* water */
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
-        if (ancilData == 0) { /* static water, only top, and unkown ancildata values */
-            data = 16;
+        if (ancilData == 0) { /* static water */
+            if ((z != 127) && (getArrayByte3D(state->blocks, x, y, z+1) == 9)) {
+                data = 0;
+            } else { 
+                data = 16;
+            }
             return data; /* = 0b10000 */
         } else if ((ancilData > 0) && (ancilData < 8)) { /* flowing water */
             data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | 0x10;
