@@ -98,7 +98,11 @@ class MapGen(object):
             blank.save(os.path.join(tileDir, "blank."+quadtree.imgformat))
 
         # copy web assets into destdir:
-        mirror_dir(os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets"), self.destdir)
+        global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
+        if not os.path.isdir(global_assets):
+            global_assets = os.path.join(util.get_program_path(), "web_assets")
+        mirror_dir(global_assets, self.destdir)
+        
         # do the same with the local copy, if we have it
         if self.web_assets_path:
             mirror_dir(self.web_assets_path, self.destdir)

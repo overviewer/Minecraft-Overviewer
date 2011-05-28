@@ -45,12 +45,18 @@ setup_kwargs['author_email'] = 'brownan@gmail.com'
 setup_kwargs['license'] = 'GNU General Public License v3'
 setup_kwargs['long_description'] = read('README.rst')
 
+# top-level files that should be included as documentation
+doc_files = ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample.settings.py']
+
 #
 # py2exe options
 #
 
 if py2exe is not None:
     setup_kwargs['console'] = ['overviewer.py']
+    setup_kwargs['data_files'] = [('', doc_files),
+                                  ('textures', glob.glob('overviewer_core/data/textures/*')),
+                                  ('web_assets', glob.glob('overviewer_core/data/web_assets/*'))]
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
@@ -67,7 +73,8 @@ setup_kwargs['scripts'] = ['overviewer.py']
 setup_kwargs['package_data'] = {'overviewer_core':
                                     ['data/textures/*',
                                      'data/web_assets/*']}
-setup_kwargs['data_files'] = [('share/doc/minecraft-overviewer', ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample.settings.py'])]
+if py2exe is None:
+    setup_kwargs['data_files'] = [('share/doc/minecraft-overviewer', doc_files)]
 
 
 #

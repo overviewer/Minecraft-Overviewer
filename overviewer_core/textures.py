@@ -14,6 +14,7 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import imp
 import os
 import os.path
 import zipfile
@@ -56,6 +57,11 @@ def _find_file(filename, mode="rb"):
     path = os.path.join(programdir, "overviewer_core", "data", "textures", filename)
     if os.path.exists(path):
         return open(path, mode)
+    elif hasattr(sys, "frozen") or imp.is_frozen("__main__"):
+        # windows special case, when the package dir doesn't exist
+        path = os.path.join(programdir, "textures", filename)
+        if os.path.exists(path):
+            return open(path, mode)
 
     if sys.platform == "darwin":
         path = os.path.join("/Applications/Minecraft", filename)
