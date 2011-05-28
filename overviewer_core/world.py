@@ -78,7 +78,8 @@ class World(object):
         logging.info("Scanning regions")
         regionfiles = {}
         self.regions = {}
-        for x, y, regionfile in self._iterate_regionfiles():  
+        self.regionlist = regionlist # a list of paths
+        for x, y, regionfile in self._iterate_regionfiles():
             mcr = self.reload_region(regionfile) 
             mcr.get_chunk_info()
             regionfiles[(x,y)]	= (x,y,regionfile,mcr)
@@ -277,16 +278,22 @@ class World(object):
         """Returns an iterator of all of the region files, along with their 
         coordinates
 
+        Note: the regionlist here will be used to determinte the size of the
+        world. 
+
         Returns (regionx, regiony, filename)"""
         join = os.path.join
         if regionlist is not None:
             for path in regionlist:
-                if path.endswith("\n"):
-                    path = path[:-1]            
+                path = path.strip()
                 f = os.path.basename(path)
                 if f.startswith("r.") and f.endswith(".mcr"):
                     p = f.split(".")
+                    logging.debug("Using path %s from regionlist", f)
                     yield (int(p[1]), int(p[2]), join(self.worlddir, 'region', f))        
+                else:
+                    logging.warning("Ignore path '%s' in regionlist", f)
+
         else:                    
             for path in glob(os.path.join(self.worlddir, 'region') + "/r.*.*.mcr"):
                 dirpath, f = os.path.split(path)
