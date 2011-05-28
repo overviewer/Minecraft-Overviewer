@@ -1,13 +1,14 @@
 #!/usr/bin/python
 
-from distutils.core import setup, Extension
+from distutils.core import setup
+from distutils.extension import Extension
 from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
 from distutils.dir_util import remove_tree
 from distutils import log
-import os, os.path
+import sys, os, os.path
 import glob
 import platform
 import time
@@ -18,8 +19,14 @@ try:
 except ImportError:
     py2exe = None
 
+try:
+    import py2app
+    from setuptools.extension import Extension
+except ImportError:
+    py2app = None
+
 # now, setup the keyword arguments for setup
-# (because we don't know until runtime if py2exe is available)
+# (because we don't know until runtime if py2exe/py2app is available)
 setup_kwargs = {}
 setup_kwargs['ext_modules'] = []
 setup_kwargs['cmdclass'] = {}
@@ -63,6 +70,15 @@ if py2exe is not None:
     else:
         b = 1
     setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter'}
+
+#
+# py2app options
+#
+
+if py2app is not None:
+    setup_kwargs['app'] = ['overviewer.py']
+    setup_kwargs['options']['py2app'] = {'argv_emulation' : False}
+    setup_kwargs['setup_requires'] = ['py2app']
 
 #
 # script, package, and data
@@ -111,8 +127,6 @@ setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_o
 # tell build_ext to build the extension in-place
 # (NOT in build/)
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
-# tell the build command to only run build_ext
-build.sub_commands = [('build_ext', None)]
 
 # custom clean command to remove in-place extension
 # and the version file
