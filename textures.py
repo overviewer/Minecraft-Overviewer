@@ -1225,24 +1225,26 @@ def generate_special_texture(blockID, data):
 
     if blockID == 85: # fences
         # create needed images for Big stick fence
-        raw_texture = terrain_images[4]
-        raw_fence_top = Image.new("RGBA", (16,16), (38,92,255,0))
-        raw_fence_side = Image.new("RGBA", (16,16), (38,92,255,0))
-        fence_top_mask = Image.new("RGBA", (16,16), (38,92,255,0))
-        fence_side_mask = Image.new("RGBA", (16,16), (38,92,255,0))
-        
-        # generate the masks images for textures of the fence
-        ImageDraw.Draw(fence_top_mask).rectangle((6,6,9,9),outline=(0,0,0),fill=(0,0,0))
-        ImageDraw.Draw(fence_side_mask).rectangle((6,1,9,15),outline=(0,0,0),fill=(0,0,0))
 
-        # create textures top and side for fence big stick
-        composite.alpha_over(raw_fence_top,raw_texture,(0,0),fence_top_mask)
-        composite.alpha_over(raw_fence_side,raw_texture,(0,0),fence_side_mask)
+        fence_top = terrain_images[4].copy()
+        fence_side = terrain_images[4].copy()
+        
+        # generate the textures of the fence
+        ImageDraw.Draw(fence_top).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_top).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_top).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_top).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        fence_top.save("fence_top.png")
+
+        ImageDraw.Draw(fence_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_side).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_side).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        fence_side.save("fence_side.png")
 
         # Create the sides and the top of the big stick
-        fence_side = transform_image_side(raw_fence_side,85)
+        fence_side = transform_image_side(fence_side,85)
         fence_other_side = fence_side.transpose(Image.FLIP_LEFT_RIGHT)
-        fence_top = transform_image(raw_fence_top,85)
+        fence_top = transform_image(fence_top,85)
 
         # Darken the sides slightly. These methods also affect the alpha layer,
         # so save them first (we don't want to "darken" the alpha layer making
@@ -1262,18 +1264,18 @@ def generate_special_texture(blockID, data):
         
         # Now render the small sticks.
         # Create needed images
-        raw_fence_small_side = Image.new("RGBA", (16,16), (38,92,255,0))
-        fence_small_side_mask = Image.new("RGBA", (16,16), (38,92,255,0))
+        fence_small_side = terrain_images[4].copy()
         
         # Generate mask
-        ImageDraw.Draw(fence_small_side_mask).rectangle((10,1,15,3),outline=(0,0,0),fill=(0,0,0))
-        ImageDraw.Draw(fence_small_side_mask).rectangle((10,7,15,9),outline=(0,0,0),fill=(0,0,0))
-        
-         # create the texture for the side of small sticks fence
-        composite.alpha_over(raw_fence_small_side,raw_texture,(0,0),fence_small_side_mask)
-        
+        ImageDraw.Draw(fence_small_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_small_side).rectangle((0,4,15,6),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_small_side).rectangle((0,10,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_small_side).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_small_side).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        fence_small_side.save("fence_small_side.png")
+
         # Create the sides and the top of the small sticks
-        fence_small_side = transform_image_side(raw_fence_small_side,85)
+        fence_small_side = transform_image_side(fence_small_side,85)
         fence_small_other_side = fence_small_side.transpose(Image.FLIP_LEFT_RIGHT)
         
         # Darken the sides slightly. These methods also affect the alpha layer,
@@ -1286,18 +1288,16 @@ def generate_special_texture(blockID, data):
         fence_small_side = ImageEnhance.Brightness(fence_small_side).enhance(0.9)
         fence_small_side.putalpha(sidealpha)
 
-
        # Create img to compose the fence
-
         img = Image.new("RGBA", (24,24), (38,92,255,0))
 
         # Position of fence small sticks in img.
         # These postitions are strange because the small sticks of the 
         # fence are at the very left and at the very right of the 16x16 images
-        pos_top_left = (-2,0)
-        pos_top_right = (14,0)
-        pos_bottom_right = (6,4)
-        pos_bottom_left = (6,4)
+        pos_top_left = (2,3)
+        pos_top_right = (10,3)
+        pos_bottom_right = (10,7)
+        pos_bottom_left = (2,7)
         
         # +x axis points top right direction
         # +y axis points bottom right direction
