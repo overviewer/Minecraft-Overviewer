@@ -1316,7 +1316,6 @@ def generate_special_texture(blockID, data):
         if (data & 0b0100) == 4:
             composite.alpha_over(img,fence_small_side, pos_bottom_right,fence_small_side)                  # bottom right
             
-        img.save("fence" + str(data) + ".png")
         return generate_texture_tuple(img, blockID)
 
 
