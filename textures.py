@@ -453,7 +453,7 @@ def _build_blockimages():
         ## of the block or the texture ID
         img = _build_block(toptexture, sidetexture, blockID)
 
-        allimages.append((img.convert("RGB"), img.split()[3]))
+        allimages.append(generate_texture_tuple(img, blockID))
 
     # Future block types:
     while len(allimages) < 256:
@@ -472,14 +472,31 @@ def load_water():
 
     watertexture = _load_image("water.png")
     w1 = _build_block(watertexture, None)
-    blockmap[9] = w1.convert("RGB"), w1
+    blockmap[9] = generate_texture_tuple(w1,9)
     w2 = _build_block(watertexture, watertexture)
-    blockmap[8] = w2.convert("RGB"), w2
+    blockmap[8] = generate_texture_tuple(w2,8)
 
     lavatexture = _load_image("lava.png")
     lavablock = _build_block(lavatexture, lavatexture)
-    blockmap[10] = lavablock.convert("RGB"), lavablock
+    blockmap[10] = generate_texture_tuple(lavablock,10)
     blockmap[11] = blockmap[10]
+
+def generate_opaque_mask(img):
+    alpha = img.split()[3]
+    pixel = alpha.load()
+    
+    for x in range(img.size[0]):
+        for y in range(img.size[1]):
+            if pixel[x,y] != 0:
+                pixel[x,y] = 255
+    
+    return alpha
+
+def generate_texture_tuple(img, blockid):
+    if blockid in (8,9,79,85):
+        return (img.convert("RGB"), img.split()[3], generate_opaque_mask(img))
+    else:
+        return (img.convert("RGB"), img.split()[3], img.split()[3])
 
 def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
@@ -496,7 +513,7 @@ def generate_special_texture(blockID, data):
         if not data & 0x10:
             colored = tintTexture(biome_grass_texture, (115, 175, 71))
             composite.alpha_over(img, colored, (0, 0), colored)
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 6: # saplings
@@ -520,7 +537,7 @@ def generate_special_texture(blockID, data):
             sidetexture = terrain_images[15]
 
         img = _build_block(toptexture, sidetexture, blockID)
-        return (img.convert("RGB"),img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 9: # spring water, flowing water and waterfall water
@@ -548,9 +565,9 @@ def generate_special_texture(blockID, data):
             side4 = watertexture    # bottom right
         else: side4 = None
         
-        img = _build_full_block(top,side1,side2,side3,side4)
+        img = _build_full_block(top,None,None,side3,side4)
         
-        return (img.convert("RGB"),img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 17: # wood: normal, birch and pines
@@ -558,21 +575,20 @@ def generate_special_texture(blockID, data):
         if data == 0:
             side = terrain_images[20]
             img = _build_block(top, side, 17)
-            return (img.convert("RGB"), img.split()[3])
         if data == 1:
             side = terrain_images[116]
             img = _build_block(top, side, 17)
-            return (img.convert("RGB"), img.split()[3])
         if data == 2:
             side = terrain_images[117]
             img = _build_block(top, side, 17)
-            return (img.convert("RGB"), img.split()[3])
+        
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 18: # leaves
         t = tintTexture(terrain_images[52], (37, 118, 25))
         img = _build_block(t, t, 18)
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 26: # bed
@@ -618,74 +634,45 @@ def generate_special_texture(blockID, data):
         top = (top, increment)
         img = _build_full_block(top, None, None, left_face, right_face)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 35: # wool
         if data == 0: # white
             top = side = terrain_images[64]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 1: # orange
+        elif data == 1: # orange
             top = side = terrain_images[210]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 2: # magenta
+        elif data == 2: # magenta
             top = side = terrain_images[194]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 3: # light blue
+        elif data == 3: # light blue
             top = side = terrain_images[178]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 4: # yellow
+        elif data == 4: # yellow
             top = side = terrain_images[162]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 5: # light green
+        elif data == 5: # light green
             top = side = terrain_images[146]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 6: # pink
+        elif data == 6: # pink
             top = side = terrain_images[130]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 7: # grey
+        elif data == 7: # grey
             top = side = terrain_images[114]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 8: # light grey
+        elif data == 8: # light grey
             top = side = terrain_images[225]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 9: # cyan
+        elif data == 9: # cyan
             top = side = terrain_images[209]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 10: # purple
+        elif data == 10: # purple
             top = side = terrain_images[193]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 11: # blue
+        elif data == 11: # blue
             top = side = terrain_images[177]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 12: # brown
+        elif data == 12: # brown
             top = side = terrain_images[161]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 13: # dark green
+        elif data == 13: # dark green
             top = side = terrain_images[145]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 14: # red
+        elif data == 14: # red
             top = side = terrain_images[129]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
-        if data == 15: # black
+        elif data == 15: # black
             top = side = terrain_images[113]
-            img = _build_block(top, side, 35)
-            return (img.convert("RGB"), img.split()[3])
+
+        img = _build_block(top, side, 35)
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID in (43,44): # slab and double-slab
@@ -693,24 +680,16 @@ def generate_special_texture(blockID, data):
         if data == 0: # stone slab
             top = terrain_images[6]
             side = terrain_images[5]
-            img = _build_block(top, side, blockID)
-            return (img.convert("RGB"), img.split()[3])
-            
         if data == 1: # stone slab
             top = terrain_images[176]
             side = terrain_images[192]
-            img = _build_block(top, side, blockID)
-            return (img.convert("RGB"), img.split()[3])
-            
         if data == 2: # wooden slab
             top = side = terrain_images[4]
-            img = _build_block(top, side, blockID)
-            return (img.convert("RGB"), img.split()[3])
-            
         if data == 3: # cobblestone slab
             top = side = terrain_images[16]
-            img = _build_block(top, side, blockID)
-            return (img.convert("RGB"), img.split()[3])
+
+        img = _build_block(top, side, blockID)
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID in (50,75,76): # torch, off redstone torch, on redstone torch
@@ -763,7 +742,7 @@ def generate_special_texture(blockID, data):
             composite.alpha_over(img, small_crop, (6,5))
             composite.alpha_over(img, slice, (6,6))
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 51: # fire
@@ -779,7 +758,7 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, side1, (0,6), side1)
         composite.alpha_over(img, side2, (12,6), side2)
         
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID in (53,67): # wooden and cobblestone stairs.
@@ -848,7 +827,7 @@ def generate_special_texture(blockID, data):
             # touch up a (horrible) pixel
             img.putpixel((18,3),(0,0,0,0))
             
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
     if blockID == 54: # chests
         # First to bits of the pseudo data store if it's a single chest
@@ -890,7 +869,7 @@ def generate_special_texture(blockID, data):
         else:
             img = _build_full_block(top, None, None, back, side)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 55: # redstone wire
@@ -968,7 +947,7 @@ def generate_special_texture(blockID, data):
             
         img = _build_full_block(None,side1,side2,None,None,bottom)
 
-        return (img.convert("RGB"),img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 58: # crafting table
@@ -977,7 +956,7 @@ def generate_special_texture(blockID, data):
         side4 = terrain_images[43+16+1]
         
         img = _build_full_block(top, None, None, side3, side4, None, 58)
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 59: # crops
@@ -990,7 +969,7 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, crop1, (0,12), crop1)
         composite.alpha_over(img, crop2, (6,3), crop2)
         composite.alpha_over(img, crop3, (6,3), crop3)
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID in (61, 62, 23): #furnace and burning furnace
@@ -1015,7 +994,7 @@ def generate_special_texture(blockID, data):
         else: # in any other direction the front can't be seen
             img = _build_full_block(top, None, None, side, side)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 63: # singposts
@@ -1058,7 +1037,7 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, post2,(incrementx, -3),post2)
         composite.alpha_over(img, post, (0,-2), post)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID in (64,71): #wooden door, or iron door
@@ -1110,10 +1089,11 @@ def generate_special_texture(blockID, data):
                 tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
                 composite.alpha_over(img, tex, (0,6), tex)
         
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 65: # ladder
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
         raw_texture = terrain_images[83]
         #print "ladder is facing: %d" % data
         if data == 5:
@@ -1121,28 +1101,25 @@ def generate_special_texture(blockID, data):
             # but since ladders can apparently be placed on transparent blocks, we 
             # have to render this thing anyway.  same for data == 2
             tex = transform_image_side(raw_texture)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
             composite.alpha_over(img, tex, (0,6), tex)
-            return (img.convert("RGB"), img.split()[3])
+            return generate_texture_tuple(img, blockID)
         if data == 2:
             tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
             composite.alpha_over(img, tex, (12,6), tex)
-            return (img.convert("RGB"), img.split()[3])
+            return generate_texture_tuple(img, blockID)
         if data == 3:
             tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
             composite.alpha_over(img, tex, (0,0), tex)
-            return (img.convert("RGB"), img.split()[3])
+            return generate_texture_tuple(img, blockID)
         if data == 4:
             tex = transform_image_side(raw_texture)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
             composite.alpha_over(img, tex, (12,0), tex)
-            return (img.convert("RGB"), img.split()[3])
+            return generate_texture_tuple(img, blockID)
 
 
     if blockID in (27, 28, 66): # minetrack:
-    
+        img = Image.new("RGBA", (24,24), (38,92,255,0))
+        
         if blockID == 27: # powered rail
             if data & 0x8 == 0: # unpowered
                 raw_straight = terrain_images[163]
@@ -1165,58 +1142,48 @@ def generate_special_texture(blockID, data):
         ## use transform_image to scale and shear
         if data == 0:
             track = transform_image(raw_straight, blockID)
+            composite.alpha_over(img, track, (0,12), track)
         elif data == 6:
             track = transform_image(raw_corner, blockID)
+            composite.alpha_over(img, track, (0,12), track)
         elif data == 7:
             track = transform_image(raw_corner.rotate(270), blockID)
+            composite.alpha_over(img, track, (0,12), track)
         elif data == 8:
             # flip
             track = transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90), 
                     blockID)
+            composite.alpha_over(img, track, (0,12), track)
         elif data == 9:
             track = transform_image(raw_corner.transpose(Image.FLIP_TOP_BOTTOM), 
                     blockID)
+            composite.alpha_over(img, track, (0,12), track)
         elif data == 1:
             track = transform_image(raw_straight.rotate(90), blockID)
+            composite.alpha_over(img, track, (0,12), track)
             
         #slopes
         elif data == 2: # slope going up in +x direction
             track = transform_image_slope(raw_straight,blockID)
             track = track.transpose(Image.FLIP_LEFT_RIGHT)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
             composite.alpha_over(img, track, (2,0), track)
             # the 2 pixels move is needed to fit with the adjacent tracks
-            return (img.convert("RGB"), img.split()[3])
 
         elif data == 3: # slope going up in -x direction
             # tracks are sprites, in this case we are seeing the "side" of 
             # the sprite, so draw a line to make it beautiful.
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
             ImageDraw.Draw(img).line([(11,11),(23,17)],fill=(164,164,164))
             # grey from track texture (exterior grey).
             # the track doesn't start from image corners, be carefull drawing the line!
-            return (img.convert("RGB"), img.split()[3])
-            
         elif data == 4: # slope going up in -y direction
             track = transform_image_slope(raw_straight,blockID)
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
             composite.alpha_over(img, track, (0,0), track)
-            return (img.convert("RGB"), img.split()[3])
-            
+
         elif data == 5: # slope going up in +y direction
             # same as "data == 3"
-            img = Image.new("RGBA", (24,24), (38,92,255,0))
             ImageDraw.Draw(img).line([(1,17),(12,11)],fill=(164,164,164))
-            return (img.convert("RGB"), img.split()[3])
-            
 
-        else: # just in case
-            track = transform_image(raw_straight, blockID)
-
-        img = Image.new("RGBA", (24,24), (38,92,255,0))
-        composite.alpha_over(img, track, (0,12), track)
-
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 68: # wall sign
@@ -1254,7 +1221,7 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, sign2,(incrementx, 2),sign2)
         composite.alpha_over(img, sign, (0,3), sign)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
     if blockID == 85: # fences
         # create needed images for Big stick fence
@@ -1349,7 +1316,8 @@ def generate_special_texture(blockID, data):
         if (data & 0b0100) == 4:
             composite.alpha_over(img,fence_small_side, pos_bottom_right,fence_small_side)                  # bottom right
             
-        return (img.convert("RGB"),img.split()[3])
+        img.save("fence" + str(data) + ".png")
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID in (86,91): # pumpkins, jack-o-lantern
@@ -1367,7 +1335,7 @@ def generate_special_texture(blockID, data):
         else: # in any other direction the front can't be seen
             img = _build_full_block(top, None, None, side, side)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 90: # portal
@@ -1383,7 +1351,7 @@ def generate_special_texture(blockID, data):
         if data in (2,8):
             composite.alpha_over(img, otherside, (5,4), otherside)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID == 92: # cake! (without bites, at the moment)
@@ -1408,7 +1376,7 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, otherside, (12,12), otherside)
         composite.alpha_over(img, top, (0,6), top)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     if blockID in (93, 94): # redstone repeaters, ON and OFF
@@ -1526,7 +1494,7 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, torch, static_torch, torch) 
         composite.alpha_over(img, torch, moving_torch, torch)
 
-        return (img.convert("RGB"), img.split()[3])
+        return generate_texture_tuple(img, blockID)
 
 
     return None
@@ -1612,7 +1580,7 @@ special_map = {}
 
 special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values, uses pseudo data
-special_map[17] = range(4)  # wood: normal, birch and pine
+special_map[17] = range(3)  # wood: normal, birch and pine
 special_map[26] = range(12) # bed, orientation
 special_map[23] = range(6)  # dispensers, orientation
 special_map[27] = range(14) # powered rail, orientation/slope and powered/unpowered

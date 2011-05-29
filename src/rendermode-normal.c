@@ -116,7 +116,7 @@ rendermode_normal_occluded(void *data, RenderState *state) {
 }
 
 static void
-rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeNormal *self = (RenderModeNormal *)data;
     
     /* first, check to see if we should use biome-compatible src, mask */

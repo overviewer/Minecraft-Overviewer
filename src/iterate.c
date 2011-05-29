@@ -421,14 +421,15 @@ chunk_render(PyObject *self, PyObject *args) {
                 /* if we found a proper texture, render it! */
                 if (t != NULL && t != Py_None)
                 {
-                    PyObject *src, *mask;
+                    PyObject *src, *mask, *mask_light;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 1);
-                    
+                    mask_light = PyTuple_GetItem(t, 2);
+
                     if (mask == Py_None)
                         mask = src;
                     
-                    rendermode->draw(rm_data, &state, src, mask);
+                    rendermode->draw(rm_data, &state, src, mask, mask_light);
                 }               
             }
             
