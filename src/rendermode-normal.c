@@ -177,7 +177,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         int increment=0;
         if (state->block == 44)  // half-step
             increment=6;
-        else if (state->block == 78) // snow
+        else if ((state->block == 78) || (state->block == 93) || (state->block == 94)) // snow, redstone repeaters (on and off)
             increment=9;
 
         if ((state->x == 15) && (state->up_right_blocks != Py_None)) {

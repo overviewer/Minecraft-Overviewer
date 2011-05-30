@@ -246,7 +246,7 @@ class QuadtreeGen(object):
                     regiony = regiony_
                     _, _, c, mcr = get_region((regionx, regiony),(None,None,None,None))
                     
-                if c is not None and mcr.chunkExists(chunkx,chunky):                  
+                if c is not None and mcr.chunkExists(chunkx,chunky):
                     chunklist.append((col, row, chunkx, chunky, c))
                     
         return chunklist   
@@ -427,6 +427,8 @@ class QuadtreeGen(object):
             for col, row, chunkx, chunky, regionfile in chunks:
                 # check region file mtime first. 
                 region,regionMtime = get_region_mtime(regionfile)  
+                if self.world.regionlist and region._filename not in self.world.regionlist:
+                    continue
                 if regionMtime <= tile_mtime:
                     continue
                 

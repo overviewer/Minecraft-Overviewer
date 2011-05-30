@@ -24,43 +24,41 @@ static PyObject *special_blocks = NULL;
 static PyObject *specialblockmap = NULL;
 static PyObject *transparent_blocks = NULL;
 
-int init_chunk_render(void) {
+PyObject *init_chunk_render(PyObject *self, PyObject *args) {
    
-    /* if blockmap (or any of these) is not NULL, then that means that we've 
-     * somehow called this function twice.  error out so we can notice this
-     * */
-    if (blockmap) return 1;
+    /* this function only needs to be called once, anything more is an
+     * error... */
+    if (blockmap) {
+        PyErr_SetString(PyExc_RuntimeError, "init_chunk_render should only be called once per process.");
+        return NULL;
+    }
 
     textures = PyImport_ImportModule("textures");
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
-        fprintf(stderr, "\ninit_chunk_render failed to load; textures\n");
-        PyErr_Print();
-        return 1;
+        return NULL;
     }
 
     chunk_mod = PyImport_ImportModule("chunk");
     /* ensure none of these pointers are NULL */    
     if ((!chunk_mod)) {
-        fprintf(stderr, "\ninit_chunk_render failed to load; chunk\n");
-        PyErr_Print();
-        return 1;
+        return NULL;
     }
     
     blockmap = PyObject_GetAttrString(textures, "blockmap");
+    if (!blockmap)
+        return NULL;
     special_blocks = PyObject_GetAttrString(textures, "special_blocks");
+    if (!special_blocks)
+        return NULL;
     specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
+    if (!specialblockmap)
+        return NULL;
     transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
+    if (!transparent_blocks)
+        return NULL;
     
-    /* ensure none of these pointers are NULL */    
-    if ((!transparent_blocks) || (!blockmap) || (!special_blocks) || (!specialblockmap)) {
-        fprintf(stderr, "\ninit_chunk_render failed\n");
-        PyErr_Print();
-        return 1;
-    }
-
-    return 0;
-
+    Py_RETURN_NONE;
 }
 
 int
@@ -276,6 +274,8 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 
         return final_data;
 
+    } else if (state->block == 90) {
+        return check_adjacent_blocks(state, x, y, z, state->block);
     }
 
 
@@ -308,7 +308,7 @@ chunk_render(PyObject *self, PyObject *args) {
     PyObject *t = NULL;
     
     if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &blockdata_expanded))
-        return Py_BuildValue("i", "-1");
+        return NULL;
     
     /* fill in important modules */
     state.textures = textures;
@@ -362,6 +362,12 @@ chunk_render(PyObject *self, PyObject *args) {
             
             for (state.z = 0; state.z < 128; state.z++) {
                 state.imgy -= 12;
+		
+		/* get blockid */
+                state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
+                if (state.block == 0) {
+                    continue;
+                }
                 
                 /* make sure we're rendering inside the image boundaries */
                 if ((state.imgx >= imgsize0 + 24) || (state.imgx <= -24)) {
@@ -371,11 +377,6 @@ chunk_render(PyObject *self, PyObject *args) {
                     continue;
                 }
 
-                /* get blockid */
-                state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
-                if (state.block == 0) {
-                    continue;
-                }
                 
                 /* decref'd on replacement *and* at the end of the z for block */
                 if (blockid) {
@@ -398,7 +399,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *tmp;
                     
                     unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
-                    if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) || (state.block == 2)) {
+                    if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) || (state.block == 2) || (state.block == 90)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                     }
                     
@@ -432,7 +433,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 blockid = NULL;
             }
         }
-    } 
+    }
 
     /* free up the rendermode info */
     rendermode->finish(rm_data, &state);

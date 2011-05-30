@@ -22,6 +22,9 @@ class ConfigOptionParser(object):
         self.customArgs = ["required", "commandLineOnly", "default", "listify", "listdelim", "choices"]
 
         self.requiredArgs = []
+        
+        # add the *very* special config-file path option
+        self.add_option("--settings", dest="config_file", help="Specifies a settings file to load, by name. This file's format is discussed in the README.", metavar="PATH", type="string", commandLineOnly=True)
 
     def display_config(self):
         logging.info("Using the following settings:")
@@ -68,8 +71,14 @@ class ConfigOptionParser(object):
                 # if this has a default, use that to seed the globals dict
                 if a.get("default", None): g[n] = a['default']
         g['args'] = args
-
+        
         try:
+            if options.config_file:
+                self.configFile = options.config_file
+            elif os.path.exists(self.configFile):
+                # warn about automatic loading
+                logging.warning("Automatic settings.py loading is DEPRECATED, and may be removed in the future. Please use --settings instead.")
+            
             if os.path.exists(self.configFile):
                 execfile(self.configFile, g, l)
         except NameError, ex:
