@@ -71,7 +71,7 @@ rendermode_overlay_occluded(void *data, RenderState *state) {
 }
 
 static void
-rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeOverlay *self = (RenderModeOverlay *)data;
     unsigned char r, g, b, a;
     PyObject *top_block_py, *block_py;

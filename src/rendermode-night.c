@@ -54,9 +54,9 @@ rendermode_night_occluded(void *data, RenderState *state) {
 }
 
 static void
-rendermode_night_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+rendermode_night_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     /* nothing special to do */
-    rendermode_lighting.draw(data, state, src, mask);
+    rendermode_lighting.draw(data, state, src, mask, mask_light);
 }
 
 RenderModeInterface rendermode_night = {

@@ -91,7 +91,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
     
     /* only do special half-step handling if no authoratative pointer was
        passed in, which is a sign that we're recursing */
-    if (block == 44 && authoratative == NULL) {
+    if ((block == 44 || block == 53 || block == 67) && authoratative == NULL) {
         float average_gather = 0.0f;
         unsigned int average_count = 0;
         int auth;
@@ -206,19 +206,19 @@ rendermode_lighting_occluded(void *data, RenderState *state) {
 }
 
 static void
-rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeLighting* self;
     int x, y, z;
 
     /* first, chain up */
-    rendermode_normal.draw(data, state, src, mask);
+    rendermode_normal.draw(data, state, src, mask, mask_light);
     
     self = (RenderModeLighting *)data;
     x = state->x, y = state->y, z = state->z;
     
     if (is_transparent(state->block)) {
         /* transparent: do shading on whole block */
-        do_shading_with_mask(self, state, x, y, z, mask);
+        do_shading_with_mask(self, state, x, y, z, mask_light);
     } else {
         /* opaque: do per-face shading */
         do_shading_with_mask(self, state, x, y, z+1, self->facemasks[0]);
