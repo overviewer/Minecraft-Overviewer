@@ -1506,6 +1506,24 @@ def generate_special_texture(blockID, data):
         composite.alpha_over(img, torch, moving_torch, torch)
 
         return generate_texture_tuple(img, blockID)
+        
+        
+    if blockID == 96: # trapdoor
+        texture = terrain_images[84]
+        if data & 0x4 == 0x4: # opened trapdoor
+            if data & 0x3 == 0: # west
+                img = _build_full_block(None, None, None, None, texture)
+            if data & 0x3 == 1: # east
+                img = _build_full_block(None, texture, None, None, None)
+            if data & 0x3 == 2: # south
+                img = _build_full_block(None, None, texture, None, None)
+            if data & 0x3 == 3: # north
+                img = _build_full_block(None, None, None, texture, None)
+            
+        elif data & 0x4 == 0: # closed trapdoor
+            img = _build_full_block((texture, 9), None, None, texture, texture)
+        
+        return generate_texture_tuple(img, blockID)
 
 
     return None
@@ -1582,7 +1600,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 31, 35, 43, 44,
                       50, 51, 53, 54, 55, 58, 59, 61, 62, 63, 64, 65, 66,
-                      67, 68, 71, 75, 76, 85, 86, 90, 91, 92, 93, 94])
+                      67, 68, 71, 75, 76, 85, 86, 90, 91, 92, 93, 94, 96])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1624,6 +1642,7 @@ special_map[91] = range(5)  # jack-o-lantern, orientation
 special_map[92] = range(6) # cake!
 special_map[93] = range(16) # OFF redstone repeater, orientation and delay (delay not implemented)
 special_map[94] = range(16) # ON redstone repeater, orientation and delay (delay not implemented)
+special_map[96] = range(8)  # trapdoor, open, closed, orientation
 
 # grass and leaves are graysacle in terrain.png
 # we treat them as special so we can manually tint them
