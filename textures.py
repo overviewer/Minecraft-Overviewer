@@ -482,21 +482,23 @@ def load_water():
     blockmap[11] = blockmap[10]
 
 def generate_opaque_mask(img):
+    """ Takes the alpha channel of the image and generates a mask
+    (used for lighting the block) that deprecates values of alpha
+    smallers than 50, and sets every other value to 255. """
+    
     alpha = img.split()[3]
     pixel = alpha.load()
-    
     for x in range(img.size[0]):
         for y in range(img.size[1]):
-            if pixel[x,y] != 0:
+            if pixel[x,y] > 25:
                 pixel[x,y] = 255
     
     return alpha
 
 def generate_texture_tuple(img, blockid):
-    if blockid in (8,9,79,85):
-        return (img.convert("RGB"), img.split()[3], generate_opaque_mask(img))
-    else:
-        return (img.convert("RGB"), img.split()[3], img.split()[3])
+    """ This takes a image and returns the needed tuple for the blockmap
+    list and specialblockmap dictionary."""
+    return (img.convert("RGB"), img.split()[3], generate_opaque_mask(img))
 
 def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
@@ -1234,12 +1236,10 @@ def generate_special_texture(blockID, data):
         ImageDraw.Draw(fence_top).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_top).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_top).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        fence_top.save("fence_top.png")
 
         ImageDraw.Draw(fence_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_side).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_side).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        fence_side.save("fence_side.png")
 
         # Create the sides and the top of the big stick
         fence_side = transform_image_side(fence_side,85)
@@ -1272,7 +1272,6 @@ def generate_special_texture(blockID, data):
         ImageDraw.Draw(fence_small_side).rectangle((0,10,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_small_side).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_small_side).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        fence_small_side.save("fence_small_side.png")
 
         # Create the sides and the top of the small sticks
         fence_small_side = transform_image_side(fence_small_side,85)
