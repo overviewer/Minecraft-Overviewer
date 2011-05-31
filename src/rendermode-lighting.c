@@ -91,7 +91,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
     
     /* only do special half-step handling if no authoratative pointer was
        passed in, which is a sign that we're recursing */
-    if (block == 44 && authoratative == NULL) {
+    if ((block == 44 || block == 53 || block == 67) && authoratative == NULL) {
         float average_gather = 0.0f;
         unsigned int average_count = 0;
         int auth;
