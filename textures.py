@@ -257,7 +257,7 @@ def _build_block(top, side, blockID=None):
     otherside.putalpha(othersidealpha)
 
     ## special case for non-block things
-    if blockID in (37,38,6,39,40,83,30): ## flowers, sapling, mushrooms, reeds, web
+    if blockID in (31,32,37,38,6,39,40,83,30): ## tall grass, dead shrubs, flowers, sapling, mushrooms, reeds, web
         #
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
@@ -410,7 +410,7 @@ def _build_blockimages():
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, 11, -1,
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-               -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  9,  4, 
+               55, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  9,  4, 
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                36, 37, -1, -1, 65, -1, -1, -1, 50, 24, -1, -1, 86, -1, -1, -1,
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
@@ -427,7 +427,7 @@ def _build_blockimages():
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
                 34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, 11, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-                -1, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
+                55, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                 36, 37, -1, -1, 65, -1, -1,101, 50, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
@@ -496,8 +496,8 @@ def generate_opaque_mask(img):
     return alpha
 
 def generate_texture_tuple(img, blockid):
-    """ This takes a image and returns the needed tuple for the blockmap
-    list and specialblockmap dictionary."""
+    """ This takes an image and returns the needed tuple for the
+    blockmap list and specialblockmap dictionary."""
     return (img.convert("RGB"), img.split()[3], generate_opaque_mask(img))
 
 def generate_special_texture(blockID, data):
@@ -638,7 +638,20 @@ def generate_special_texture(blockID, data):
 
         return generate_texture_tuple(img, blockID)
 
-
+    if blockID == 31: # tall grass
+        if data == 0: # dead shrub
+            texture = terrain_images[55]
+        elif data == 1: # tall grass
+            texture = terrain_images[39].copy()
+            texture = tintTexture(texture, (115, 175, 71))
+        elif data == 2: # fern
+            texture = terrain_images[56].copy()
+            texture = tintTexture(texture, (115, 175, 71))
+        
+        img = _build_block(texture, texture, blockID)
+        return generate_texture_tuple(img,31)
+        
+            
     if blockID == 35: # wool
         if data == 0: # white
             top = side = terrain_images[64]
@@ -1567,9 +1580,9 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # (when adding new blocks here and in generate_special_textures,
 # please, if possible, keep the ascending order of blockid value)
 
-special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 35, 43, 44, 50,
-                      51, 53, 54, 55, 58, 59, 61, 62, 63, 64, 65, 66, 67,
-                      68, 71, 75, 76, 85, 86, 90, 91, 92, 93, 94])
+special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 31, 35, 43, 44,
+                      50, 51, 53, 54, 55, 58, 59, 61, 62, 63, 64, 65, 66,
+                      67, 68, 71, 75, 76, 85, 86, 90, 91, 92, 93, 94])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1621,6 +1634,7 @@ special_map[2] = range(11) + [0x10,]  # grass, grass has not ancildata but is
                                       # small fix shows the map as expected,
                                       # and is harmless for normal maps
 special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
+special_map[31] = range(3) # tall grass, dead shrub, fern and tall grass itself
 
 # placeholders that are generated in generate()
 terrain_images = None
