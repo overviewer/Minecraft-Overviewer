@@ -70,6 +70,7 @@ typedef struct {
     /* the block position and type, and the block array */
     int x, y, z;
     unsigned char block;
+    PyObject *blockdata_expanded;
     PyObject *blocks;
     PyObject *up_left_blocks;
     PyObject *up_right_blocks;

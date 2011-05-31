@@ -293,7 +293,6 @@ PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
 
-    PyObject *blockdata_expanded; 
     int xoff, yoff;
     
     PyObject *imgsize, *imgsize0_py, *imgsize1_py;
@@ -311,7 +310,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 
     PyObject *t = NULL;
     
-    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &blockdata_expanded))
+    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.blockdata_expanded))
         return NULL;
     
     /* fill in important modules */
@@ -402,7 +401,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 } else {
                     PyObject *tmp;
                     
-                    unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
+                    unsigned char ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
                     if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) || (state.block == 2) || (state.block == 90)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                     }

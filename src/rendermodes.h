@@ -79,7 +79,7 @@ typedef struct {
     /* grasscolor and foliagecolor lookup tables */
     PyObject *grasscolor, *foliagecolor;
     /* biome-compatible grass/leaf textures */
-    PyObject *grass_texture, *leaf_texture;
+    PyObject *grass_texture, *leaf_texture, *tall_grass_texture, *tall_fern_texture;
     /* top facemask for grass biome tinting */
     PyObject *facemask_top;
 } RenderModeNormal;

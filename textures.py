@@ -1659,6 +1659,8 @@ special_map[31] = range(3) # tall grass, dead shrub, fern and tall grass itself
 terrain_images = None
 blockmap = None
 biome_grass_texture = None
+biome_tall_grass_texture = None
+biome_tall_fern_texture = None
 biome_leaf_texture = None
 specialblockmap = None
 
@@ -1676,9 +1678,11 @@ def generate(path=None):
     load_water()
     
     # generate biome (still grayscale) leaf, grass textures
-    global biome_grass_texture, biome_leaf_texture
+    global biome_grass_texture, biome_leaf_texture, biome_tall_grass_texture
     biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
     biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
+    biome_tall_grass_texture = _build_block(terrain_images[39], terrain_images[39], 31)
+    biome_tall_fern_texture = _build_block(terrain_images[56], terrain_images[56], 31)
     
     # generate the special blocks
     global specialblockmap, special_blocks
