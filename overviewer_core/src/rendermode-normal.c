@@ -56,6 +56,7 @@ rendermode_normal_start(void *data, RenderState *state) {
 
             self->leaf_texture = NULL;
             self->grass_texture = NULL;
+            self->tall_grass_texture = NULL;
             self->facemask_top = NULL;
         } else {
 
@@ -64,6 +65,8 @@ rendermode_normal_start(void *data, RenderState *state) {
 
             self->leaf_texture = PyObject_GetAttrString(state->textures, "biome_leaf_texture");
             self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
+            self->tall_grass_texture = PyObject_GetAttrString(state->textures, "biome_tall_grass_texture");
+            self->tall_fern_texture = PyObject_GetAttrString(state->textures, "biome_tall_fern_texture");
 
             facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
             /* borrowed reference, needs to be incref'd if we keep it */
@@ -78,6 +81,8 @@ rendermode_normal_start(void *data, RenderState *state) {
         
         self->leaf_texture = NULL;
         self->grass_texture = NULL;
+        self->tall_grass_texture = NULL;
+        self->tall_fern_texture = NULL;
         self->facemask_top = NULL;
     }
     
@@ -98,6 +103,8 @@ rendermode_normal_finish(void *data, RenderState *state) {
     Py_XDECREF(self->grasscolor);
     Py_XDECREF(self->leaf_texture);
     Py_XDECREF(self->grass_texture);
+    Py_XDECREF(self->tall_grass_texture);
+    Py_XDECREF(self->tall_fern_texture);
     Py_XDECREF(self->facemask_top);
 }
 
@@ -116,12 +123,21 @@ rendermode_normal_occluded(void *data, RenderState *state) {
 }
 
 static void
-rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeNormal *self = (RenderModeNormal *)data;
     
     /* first, check to see if we should use biome-compatible src, mask */
-    if (self->biome_data && state->block == 18) {
-        src = mask = self->leaf_texture;
+    if (self->biome_data) {
+        if (state->block == 18) {
+            src = mask = self->leaf_texture;
+        } else if (state->block == 31) {
+            unsigned char data = getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z);
+            if (data == 1) {
+                src = mask = self->tall_grass_texture;
+            } else if (data == 2) {
+                src = mask = self->tall_fern_texture;
+            }
+        }
     }
     
     /* draw the block! */
@@ -149,6 +165,15 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             /* leaves */
             color = PySequence_GetItem(self->foliagecolor, index);
             facemask = mask;
+            break;
+        case 31:
+            /* tall grass */
+            if ( getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z) != 0 )
+            { /* do not tint dead shrubs */
+                color = PySequence_GetItem(self->grasscolor, index);
+                facemask = mask;
+                break;
+            }
             break;
         default:
             break;

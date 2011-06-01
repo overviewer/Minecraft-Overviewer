@@ -100,9 +100,6 @@ class World(object):
             logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
             sys.exit(1)
 
-        if self.useBiomeData:
-            textures.prepareBiomeData(worlddir)
-
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example
         self.POI = []

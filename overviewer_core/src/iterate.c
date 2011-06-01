@@ -160,13 +160,17 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         return ancilData;
     } else if (state->block == 9) { /* water */
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
-        if ((ancilData == 0) || (ancilData >= 10)) { /* static water, only top, and unkown ancildata values */
-            data = 16;
+        if (ancilData == 0) { /* static water */
+            if ((z != 127) && (getArrayByte3D(state->blocks, x, y, z+1) == 9)) {
+                data = 0;
+            } else { 
+                data = 16;
+            }
             return data; /* = 0b10000 */
         } else if ((ancilData > 0) && (ancilData < 8)) { /* flowing water */
             data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | 0x10;
             return data;
-        } else if ((ancilData == 8) || (ancilData == 9)) { /* falling water */
+        } else if (ancilData >= 8) { /* falling water */
             data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f);
             return data;
         }
@@ -289,7 +293,6 @@ PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
 
-    PyObject *blockdata_expanded; 
     int xoff, yoff;
     
     PyObject *imgsize, *imgsize0_py, *imgsize1_py;
@@ -307,7 +310,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 
     PyObject *t = NULL;
     
-    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &blockdata_expanded))
+    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.blockdata_expanded))
         return NULL;
     
     /* fill in important modules */
@@ -398,7 +401,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 } else {
                     PyObject *tmp;
                     
-                    unsigned char ancilData = getArrayByte3D(blockdata_expanded, state.x, state.y, state.z);
+                    unsigned char ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
                     if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) || (state.block == 2) || (state.block == 90)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                     }
@@ -417,14 +420,15 @@ chunk_render(PyObject *self, PyObject *args) {
                 /* if we found a proper texture, render it! */
                 if (t != NULL && t != Py_None)
                 {
-                    PyObject *src, *mask;
+                    PyObject *src, *mask, *mask_light;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 1);
-                    
+                    mask_light = PyTuple_GetItem(t, 2);
+
                     if (mask == Py_None)
                         mask = src;
                     
-                    rendermode->draw(rm_data, &state, src, mask);
+                    rendermode->draw(rm_data, &state, src, mask, mask_light);
                 }               
             }
             

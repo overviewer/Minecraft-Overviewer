@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 6
+#define OVERVIEWER_EXTENSION_VERSION 7
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -70,6 +70,7 @@ typedef struct {
     /* the block position and type, and the block array */
     int x, y, z;
     unsigned char block;
+    PyObject *blockdata_expanded;
     PyObject *blocks;
     PyObject *up_left_blocks;
     PyObject *up_right_blocks;
