@@ -66,6 +66,7 @@ rendermode_normal_start(void *data, RenderState *state) {
             self->leaf_texture = PyObject_GetAttrString(state->textures, "biome_leaf_texture");
             self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
             self->tall_grass_texture = PyObject_GetAttrString(state->textures, "biome_tall_grass_texture");
+            self->tall_fern_texture = PyObject_GetAttrString(state->textures, "biome_tall_fern_texture");
 
             facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
             /* borrowed reference, needs to be incref'd if we keep it */
@@ -81,6 +82,7 @@ rendermode_normal_start(void *data, RenderState *state) {
         self->leaf_texture = NULL;
         self->grass_texture = NULL;
         self->tall_grass_texture = NULL;
+        self->tall_fern_texture = NULL;
         self->facemask_top = NULL;
     }
     
@@ -102,6 +104,7 @@ rendermode_normal_finish(void *data, RenderState *state) {
     Py_XDECREF(self->leaf_texture);
     Py_XDECREF(self->grass_texture);
     Py_XDECREF(self->tall_grass_texture);
+    Py_XDECREF(self->tall_fern_texture);
     Py_XDECREF(self->facemask_top);
 }
 

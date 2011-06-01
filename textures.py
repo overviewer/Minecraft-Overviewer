@@ -1678,7 +1678,7 @@ def generate(path=None):
     load_water()
     
     # generate biome (still grayscale) leaf, grass textures
-    global biome_grass_texture, biome_leaf_texture, biome_tall_grass_texture
+    global biome_grass_texture, biome_leaf_texture, biome_tall_grass_texture, biome_tall_fern_texture
     biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
     biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
     biome_tall_grass_texture = _build_block(terrain_images[39], terrain_images[39], 31)
