@@ -560,8 +560,8 @@ var overviewer = {
 
             // Adjust for the fact that we we can't figure out what Y is given
             // only latitude and longitude, so assume Y=64.
-            point.x += 64 + 1;
-            point.z -= 64 + 2;
+            point.x += 64;
+            point.z -= 64;
 
             return point;
         },
