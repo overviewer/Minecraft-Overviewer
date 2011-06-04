@@ -585,7 +585,7 @@ var overviewer = {
             // Spawn button
             var homeControlDiv = document.createElement('DIV');
             var homeControl = new overviewer.classes.HomeControl(homeControlDiv);  
-            homeControlDiv.id = 'customControl';
+            $(homeControlDiv).addClass('customControl');
             homeControlDiv.index = 1;
             if (overviewerConfig.map.controls.spawn) {
                 overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
@@ -680,18 +680,18 @@ var overviewer = {
         'createDropDown': function(title, items) {
             var control = document.createElement('DIV');
             // let's let a style sheet do most of the styling here
-            control.id = 'customControl';
+            $(control).addClass('customControl');
 
             var controlText = document.createElement('DIV');
             controlText.innerHTML = title;
 
             var controlBorder = document.createElement('DIV');
-            controlBorder.id='top';
+            $(controlBorder).addClass('top');
             control.appendChild(controlBorder);
             controlBorder.appendChild(controlText);
 
             var dropdownDiv = document.createElement('DIV');
-            dropdownDiv.id='dropDown';
+            $(dropdownDiv).addClass('dropDown');
             control.appendChild(dropdownDiv);
             dropdownDiv.innerHTML='';
 
@@ -868,14 +868,14 @@ var overviewer = {
             controlDiv.style.padding = '5px';
             // Set CSS for the control border
             var control = document.createElement('DIV');
-            control.id='top';
+            $(control).addClass('top');
             control.title = 'Click to center the map on the Spawn';
             controlDiv.appendChild(control);
 
             // Set CSS for the control interior
             var controlText = document.createElement('DIV');
             controlText.innerHTML = 'Spawn';
-            controlText.id='button';
+            $(controlText).addClass('button');
             control.appendChild(controlText);
 
             // Setup the click event listeners: simply set the map to map center

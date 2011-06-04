@@ -29,13 +29,13 @@ body {
     font-family: monospace;
 }
 
-#customControl {
+.customControl {
     padding: 5px;
     height: 15px;
     font-family: Arial, sans-serif;
 }
 
-#customControl > div#top {
+.customControl > div.top {
     background-color: #fff;
     border: 2px solid #000;
     text-align: center;
@@ -45,14 +45,14 @@ body {
     cursor: pointer;
 }
 
-#customControl > div#dropDown {
+.customControl > div.dropDown {
     border: 1px solid #000;
     font-size: 12px;
     background-color: #fff;
     display: none;
 }
 
-#customControl > div#button {
+.customControl > div.button {
     border: 1px solid #000;
     font-size: 12px;
     background-color: #fff;
