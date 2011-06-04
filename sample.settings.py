@@ -50,10 +50,13 @@ zoom = 9
 ## Example:  Dynamically create regionlist of only regions older than 2 days
 
 import os, time
+# the following two lines are needed to the lambda to work
+globals()['os'] = os
+globals()['time'] = time
 regionDir = os.path.join(args[0], "region")
 regionFiles = filter(lambda x: x.endswith(".mcr"), os.listdir(regionDir))
 def olderThanTwoDays(f):
-    return time.time() - os.stat(f).st_mtime > (60*60*24*2)
+    return time.time() - os.stat(os.path.join(args[0], 'region',f)).st_mtime > (60*60*24*2)
 oldRegionFiles = filter(olderThanTwoDays, regionFiles)
 with open("regionlist.txt", "w") as f:
     f.write("\n".join(oldRegionFiles))
@@ -148,3 +151,9 @@ if "web_assets_hook" in locals():
     skipjs = True
 
 
+
+
+### As a reminder, don't use this file verbatim, it should only be used as
+### a guide.
+import sys
+sys.exit("This sample-settings file shouldn't be used directly!")
