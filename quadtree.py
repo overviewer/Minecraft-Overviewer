@@ -49,7 +49,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -60,6 +60,7 @@ class QuadtreeGen(object):
 
         """
         assert(imgformat)
+        self.forcerender = forcerender
         self.imgformat = imgformat
         self.imgquality = imgquality
         self.optimizeimg = optimizeimg
@@ -425,10 +426,17 @@ class QuadtreeGen(object):
             needs_rerender = False
             get_region_mtime = world.get_region_mtime
             for col, row, chunkx, chunky, regionfile in chunks:
-                # check region file mtime first. 
-                region,regionMtime = get_region_mtime(regionfile)  
+                # don't even check if it's not in the regionlist
                 if self.world.regionlist and region._filename not in self.world.regionlist:
                     continue
+                
+                # bail early if forcerender is set
+                if self.forcerender:
+                    needs_rerender = True
+                    break
+                
+                # check region file mtime first. 
+                region,regionMtime = get_region_mtime(regionfile)
                 if regionMtime <= tile_mtime:
                     continue
                 
