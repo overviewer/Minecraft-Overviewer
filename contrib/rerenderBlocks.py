@@ -20,7 +20,7 @@ import sys
 sys.path.insert(0,".")
 
 import nbt
-from chunk import get_blockarray_fromfile
+from chunk import get_blockarray_fromfile, get_blockarray
 import os
 import re
 

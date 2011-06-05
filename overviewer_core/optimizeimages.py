@@ -45,7 +45,8 @@ def optimize_image(imgpath, imgformat, optimizeimg):
             os.rename(imgpath+".tmp", imgpath)
 
         if optimizeimg >= 2:
-            subprocess.Popen([optipng, imgpath], stderr=subprocess.STDOUT,
+            # the "-nc" it's needed to no broke the transparency of tiles
+            subprocess.Popen([optipng, "-nc", imgpath], stderr=subprocess.STDOUT,
                 stdout=subprocess.PIPE).communicate()[0]
             subprocess.Popen([advdef, "-z4",imgpath], stderr=subprocess.STDOUT,
                 stdout=subprocess.PIPE).communicate()[0]
