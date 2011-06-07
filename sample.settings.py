@@ -92,9 +92,11 @@ imgformat = "jpg"
 ################################################################################
 ### optimizeimg
 ## If using png, perform image file size optimizations on the output. Specify 1
-## for pngcrush, 2 for pngcrush+optipng+advdef.  This may double (or more) 
-## render times, but will produce up to 30% smaller images. NOTE: requires 
-## corresponding programs in $PATH or %PATH%
+## for pngcrush, 2 for pngcrush+advdef, 3 for pngcrush+advdef with more agressive
+## options. Option 1 gives around 19% of reduction, option 2 gives around 21% 
+## (it doubles the optimizing time) and option 3 gives around 23% (it doubles, 
+## again, the optimizing time). Using this option may double (or more) 
+## render times. NOTE: requires corresponding programs in $PATH or %PATH%
 ## Default: not set
 ## Type: integer
 ## Example:
