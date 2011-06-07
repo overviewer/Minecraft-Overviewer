@@ -26,6 +26,8 @@ static PyMethodDef COverviewerMethods[] = {
     {"alpha_over", alpha_over_wrap, METH_VARARGS,
      "alpha over composite function"},
     
+    {"init_chunk_render", init_chunk_render, METH_VARARGS,
+     "Initializes the stuffs renderer."},
     {"render_loop", chunk_render, METH_VARARGS,
      "Renders stuffs"},
     
@@ -53,12 +55,6 @@ initc_overviewer(void)
     (void)Py_InitModule("c_overviewer", COverviewerMethods);
     /* for numpy */
     import_array();
-
-    /* initialize some required variables in iterage.c */
-    if (init_chunk_render()) {
-        fprintf(stderr, "failed to init_chunk_render\n");
-        exit(1); // TODO better way to indicate error?
-    }
     
     init_endian();
 }

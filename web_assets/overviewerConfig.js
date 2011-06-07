@@ -79,7 +79,7 @@ var overviewerConfig = {
          * Set to true to turn on debug mode, which adds a grid to the map along
          * with co-ordinates and a bunch of console output.
          */
-        'debug':        false,
+        'debug':        false
     },
     /**
      * Group definitions for objects that are partially selectable (signs and

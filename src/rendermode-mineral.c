@@ -101,9 +101,9 @@ rendermode_mineral_occluded(void *data, RenderState *state) {
 }
 
 static void
-rendermode_mineral_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+rendermode_mineral_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     /* draw normally */
-    rendermode_overlay.draw(data, state, src, mask);
+    rendermode_overlay.draw(data, state, src, mask, mask_light);
 }
 
 RenderModeInterface rendermode_mineral = {

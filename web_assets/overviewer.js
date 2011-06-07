@@ -194,6 +194,7 @@ var overviewer = {
                 },
                 mapTypeId:              overviewer.util.getDefaultMapTypeId(),
                 streetViewControl:      false,
+                overviewMapControl:     true,
                 zoomControl:            overviewerConfig.map.controls.zoom,
                 backgroundColor:        overviewer.util.getMapTypeBackgroundColor(
                     overviewer.util.getDefaultMapTypeId())
@@ -225,27 +226,28 @@ var overviewer = {
                     overviewer.collections.mapTypes[i].name,
                     overviewer.collections.mapTypes[i]);
             }
-            
-            // Make the link again whenever the map changes
+			
+			// Jump to the hash if given
+            overviewer.util.initHash();
+			
+			// Add live hash update listeners
+			// Note: It is important to add them after jumping to the hash
+            google.maps.event.addListener(overviewer.map, 'dragend', function() {
+                overviewer.util.updateHash();
+            });
+			
+            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
+                overviewer.util.updateHash();
+            });
+			
+			// Make the link again whenever the map changes
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
                 $('#'+overviewerConfig.CONST.mapDivId).css(
                     'background-color', overviewer.util.getMapTypeBackgroundColor(
                         overviewer.map.getMapTypeId()));
+				//smuggled this one in here for maptypeid hash generation --CounterPillow
+				overviewer.util.updateHash();
             });
-            
-            // Add live hash update listener
-            google.maps.event.addListener(overviewer.map, 'dragend', function() {
-                overviewer.util.updateHash();
-            });
-            google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
-                overviewer.util.updateHash();
-            });
-            // Jump to the hash if given
-            overviewer.util.initHash();
-            
-            
-            // We can now set the map to use the 'coordinate' map type
-            overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
         },
         /**
          * Read through overviewer.collections.markerDatas and create Marker
@@ -558,8 +560,8 @@ var overviewer = {
 
             // Adjust for the fact that we we can't figure out what Y is given
             // only latitude and longitude, so assume Y=64.
-            point.x += 64 + 1;
-            point.z -= 64 + 2;
+            point.x += 64;
+            point.z -= 64;
 
             return point;
         },
@@ -583,7 +585,7 @@ var overviewer = {
             // Spawn button
             var homeControlDiv = document.createElement('DIV');
             var homeControl = new overviewer.classes.HomeControl(homeControlDiv);  
-            homeControlDiv.id = 'customControl';
+            $(homeControlDiv).addClass('customControl');
             homeControlDiv.index = 1;
             if (overviewerConfig.map.controls.spawn) {
                 overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
@@ -678,18 +680,18 @@ var overviewer = {
         'createDropDown': function(title, items) {
             var control = document.createElement('DIV');
             // let's let a style sheet do most of the styling here
-            control.id = 'customControl';
+            $(control).addClass('customControl');
 
             var controlText = document.createElement('DIV');
             controlText.innerHTML = title;
 
             var controlBorder = document.createElement('DIV');
-            controlBorder.id='top';
+            $(controlBorder).addClass('top');
             control.appendChild(controlBorder);
             controlBorder.appendChild(controlText);
 
             var dropdownDiv = document.createElement('DIV');
-            dropdownDiv.id='dropDown';
+            $(dropdownDiv).addClass('dropDown');
             control.appendChild(dropdownDiv);
             dropdownDiv.innerHTML='';
 
@@ -782,6 +784,8 @@ var overviewer = {
         'initHash': function() {
             if(window.location.hash.split("/").length > 1) {
                 overviewer.util.goToHash();
+				// Clean up the hash.
+				overviewer.util.updateHash();
                 
                 // Add a marker indicating the user-supplied position
                 var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
@@ -791,14 +795,15 @@ var overviewer = {
                     'y': coordinates.y,
                     'z': coordinates.z,
                     'type': 'querypos'}]);
-            }
+            }	
         },
-        'setHash': function(x, y, z, zoom)    {
-            window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom);
+        'setHash': function(x, y, z, zoom, maptype)    {
+            window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + maptype);
         },
         'updateHash': function() {
             var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
             var zoom = overviewer.map.getZoom();
+			var maptype = overviewer.map.getMapTypeId();
             if (zoom == overviewerConfig.map.maxZoom) {
                 zoom = 'max';
             } else if (zoom == overviewerConfig.map.minZoom) {
@@ -807,12 +812,22 @@ var overviewer = {
                 // default to (map-update friendly) negative zooms
                 zoom -= overviewerConfig.map.maxZoom;
             }
-            overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom);
+            overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, maptype);
         },
         'goToHash': function() {
+			// Note: the actual data begins at coords[1], coords[0] is empty.
             var coords = window.location.hash.split("/");
             var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), parseInt(coords[2]), parseInt(coords[3]));
-            var zoom = coords[4];
+			var zoom;
+			var maptype = '';
+			// The if-statements try to prevent unexpected behaviour when using incomplete hashes, e.g. older links
+			if (coords.length > 4) {
+				zoom = coords[4];
+			}
+			if (coords.length > 5) {
+				maptype = coords[5];
+			}
+			
             if (zoom == 'max') {
                 zoom = overviewerConfig.map.maxZoom;
             } else if (zoom == 'min') {
@@ -827,6 +842,14 @@ var overviewer = {
                     zoom = overviewerConfig.map.defaultZoom;
                 }
             }
+			// If the maptype isn't set, set the default one.
+			if (maptype == '') {
+				// We can now set the map to use the 'coordinate' map type
+				overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
+			} else {
+				overviewer.map.setMapTypeId(maptype);
+			}
+			
             overviewer.map.setCenter(latlngcoords);
             overviewer.map.setZoom(zoom);
         },
@@ -845,14 +868,14 @@ var overviewer = {
             controlDiv.style.padding = '5px';
             // Set CSS for the control border
             var control = document.createElement('DIV');
-            control.id='top';
+            $(control).addClass('top');
             control.title = 'Click to center the map on the Spawn';
             controlDiv.appendChild(control);
 
             // Set CSS for the control interior
             var controlText = document.createElement('DIV');
             controlText.innerHTML = 'Spawn';
-            controlText.id='button';
+            $(controlText).addClass('button');
             control.appendChild(controlText);
 
             // Setup the click event listeners: simply set the map to map center
