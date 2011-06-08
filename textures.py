@@ -257,8 +257,7 @@ def _build_block(top, side, blockID=None):
     otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
     otherside.putalpha(othersidealpha)
 
-    ## special case for tall-grass, fern and dead shrub, they are the only sprite-blocks 
-    ## that have the sprites in the diagonal of the block
+    ## special case for tall-grass, fern and dead shrub, 
     if blockID in (31,32):
         front = original_texture.resize((14,11), Image.ANTIALIAS)
         composite.alpha_over(img, front, (5,9))
