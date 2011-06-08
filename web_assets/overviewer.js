@@ -706,6 +706,7 @@ var overviewer = {
 
             // add the functionality to toggle visibility of the items
             $(controlText).click(function() {
+                    $(controlBorder).toggleClass('top-active');
                     $(dropdownDiv).toggle();
                 });
 
