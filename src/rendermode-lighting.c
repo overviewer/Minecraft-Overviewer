@@ -110,7 +110,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         }
 
         if (skylevel) { /* if we have a good skylevel use it, if not iterate */
-            return calculate_darkness(skylevel, blocklevel);
+            return self->calculate_darkness(skylevel, blocklevel);
         } else {
 
             /* iterate through all surrounding blocks to take an average */
