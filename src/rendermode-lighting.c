@@ -93,27 +93,44 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
        passed in, which is a sign that we're recursing */
     if ((block == 44 || block == 53 || block == 67) && authoratative == NULL) {
         float average_gather = 0.0f;
-        unsigned int average_count = 0;
+        unsigned int average_count = 0, upper_block;
         int auth;
         float coeff;
         
-        /* iterate through all surrounding blocks to take an average */
-        int dx, dy, dz;
-        for (dx = -1; dx <= 1; dx += 2) {
-            for (dy = -1; dy <= 1; dy += 2) {
-                for (dz = -1; dz <= 1; dz += 2) {
-                    coeff = get_lighting_coefficient(self, state, x+dx, y+dy, z+dz, &auth);
-                    if (auth) {
-                        average_gather += coeff;
-                        average_count++;
+        if (local_z != 127) { /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
+            upper_block = getArrayByte3D(blocks, local_x, local_y, local_z + 1);
+            if (is_transparent(upper_block)) {
+                skylevel = getArrayByte3D(skylight, local_x, local_y, local_z + 1);
+            }
+            blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
+        } else {
+            upper_block = 0;
+            skylevel = 15;
+            blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
+        }
+
+        if (skylevel) { /* if we have a good skylevel use it, if not iterate */
+            return self->calculate_darkness(skylevel, blocklevel);
+        } else {
+
+            /* iterate through all surrounding blocks to take an average */
+            int dx, dy, dz;
+            for (dx = -1; dx <= 1; dx += 2) {
+                for (dy = -1; dy <= 1; dy += 2) {
+                    for (dz = -1; dz <= 1; dz += 2) {
+                        coeff = get_lighting_coefficient(self, state, x+dx, y+dy, z+dz, &auth);
+                        if (auth) {
+                            average_gather += coeff;
+                            average_count++;
+                        }
                     }
                 }
             }
+            
+            /* only return the average if at least one was authoratative */
+            if (average_count > 0)
+                return average_gather / average_count;
         }
-        
-        /* only return the average if at least one was authoratative */
-        if (average_count > 0)
-            return average_gather / average_count;
     }
     
     if (block == 10 || block == 11) {

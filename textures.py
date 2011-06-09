@@ -236,7 +236,8 @@ def _build_block(top, side, blockID=None):
 
     """
     img = Image.new("RGBA", (24,24), (38,92,255,0))
-
+    
+    original_texture = top.copy()
     top = transform_image(top, blockID)
 
     if not side:
@@ -256,15 +257,20 @@ def _build_block(top, side, blockID=None):
     otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
     otherside.putalpha(othersidealpha)
 
+    ## special case for tall-grass, fern and dead shrub, 
+    if blockID in (31,32):
+        front = original_texture.resize((14,11), Image.ANTIALIAS)
+        composite.alpha_over(img, front, (5,9))
+        return img
+
     ## special case for non-block things
-    if blockID in (31,32,37,38,6,39,40,83,30): ## tall grass, dead shrubs, flowers, sapling, mushrooms, reeds, web
+    if blockID in (37,38,6,39,40,83,30): ## flowers, sapling, mushrooms, reeds, web
         #
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
         composite.alpha_over(img, side, (6,3), side)
         composite.alpha_over(img, otherside, (6,3), otherside)
         return img
-
 
     if blockID in (81,): # cacti!
         composite.alpha_over(img, side, (1,6), side)
