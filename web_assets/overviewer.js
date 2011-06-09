@@ -598,6 +598,11 @@ var overviewer = {
                 var items = [];
                 for (i in overviewerConfig.objectGroups.signs) {
                     var signGroup = overviewerConfig.objectGroups.signs[i];
+                    // don't create an option for this group if empty
+                    if (overviewer.collections.markers[signGroup.label].length == 0) {
+                        continue;
+                    }
+                    
                     var iconURL = signGroup.icon;
                     if(!iconURL) {
                         iconURL = overviewerConfig.CONST.image.defaultMarker;
@@ -616,7 +621,11 @@ var overviewer = {
                         }
                     });
                 }
-                overviewer.util.createDropDown('Signposts', items);
+                
+                // only create drop down if there's used options
+                if (items.length > 0) {
+                    overviewer.util.createDropDown('Signposts', items);
+                }
             }
 
             // if there are any regions data, lets show the option to hide/show them.
@@ -697,6 +706,7 @@ var overviewer = {
 
             // add the functionality to toggle visibility of the items
             $(controlText).click(function() {
+                    $(controlBorder).toggleClass('top-active');
                     $(dropdownDiv).toggle();
                 });
 
