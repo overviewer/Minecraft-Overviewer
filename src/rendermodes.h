@@ -59,8 +59,19 @@ struct _RenderModeInterface {
     void (*draw)(void *, RenderState *, PyObject *, PyObject *, PyObject *);
 };
 
-/* figures out the render mode to use from the given ChunkRenderer */
-RenderModeInterface *get_render_mode(RenderState *state);
+/* wrapper for passing around rendermodes */
+typedef struct {
+    void *mode;
+    RenderModeInterface *iface;
+    RenderState *state;
+} RenderMode;
+
+/* functions for creating / using rendermodes */
+RenderMode *render_mode_create(const char *mode, RenderState *state);
+void render_mode_destroy(RenderMode *self);
+int render_mode_occluded(RenderMode *self);
+void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light);
+
 /* python bindings */
 PyObject *get_render_modes(PyObject *self, PyObject *args);
 PyObject *get_render_mode_info(PyObject *self, PyObject *args);
@@ -117,8 +128,6 @@ typedef struct {
     float (*calculate_darkness)(unsigned char, unsigned char);
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
-inline float get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
-                                      int x, int y, int z, int *authoratative);
 
 /* NIGHT */
 typedef struct {

@@ -292,6 +292,7 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
+    PyObject *rendermode_py;
 
     int xoff, yoff;
     
@@ -304,10 +305,8 @@ chunk_render(PyObject *self, PyObject *args) {
     PyObject *up_left_blocks_py;
     PyObject *up_right_blocks_py;
 
-    RenderModeInterface *rendermode;
+    RenderMode *rendermode;
 
-    void *rm_data;
-                
     PyObject *t = NULL;
     
     if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.blockdata_expanded))
@@ -318,10 +317,10 @@ chunk_render(PyObject *self, PyObject *args) {
     state.chunk = chunk_mod;
     
     /* set up the render mode */
-    rendermode = get_render_mode(&state);
-    rm_data = calloc(1, rendermode->data_size);
-    if (rendermode->start(rm_data, &state)) {
-        free(rm_data);
+    rendermode_py = PyObject_GetAttrString(state.self, "rendermode");
+    rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
+    Py_DECREF(rendermode_py);
+    if (rendermode == NULL) {
         return Py_BuildValue("i", "-1");
     }
 
@@ -388,7 +387,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 blockid = PyInt_FromLong(state.block);
 
                 // check for occlusion
-                if (rendermode->occluded(rm_data, &state)) {
+                if (render_mode_occluded(rendermode)) {
                     continue;
                 }
                 
@@ -428,7 +427,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     if (mask == Py_None)
                         mask = src;
                     
-                    rendermode->draw(rm_data, &state, src, mask, mask_light);
+                    render_mode_draw(rendermode, src, mask, mask_light);
                 }               
             }
             
@@ -440,8 +439,7 @@ chunk_render(PyObject *self, PyObject *args) {
     }
 
     /* free up the rendermode info */
-    rendermode->finish(rm_data, &state);
-    free(rm_data);
+    render_mode_destroy(rendermode);
     
     Py_DECREF(blocks_py);
     Py_XDECREF(left_blocks_py);

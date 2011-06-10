@@ -30,23 +30,54 @@ static RenderModeInterface *render_modes[] = {
     NULL
 };
 
-/* decides which render mode to use */
-RenderModeInterface *get_render_mode(RenderState *state) {
+RenderMode *render_mode_create(const char *mode, RenderState *state) {
     unsigned int i;
-    /* default: NULL --> an error */
+    RenderMode *ret = NULL;
     RenderModeInterface *iface = NULL;
-    PyObject *rendermode_py = PyObject_GetAttrString(state->self, "rendermode");
-    const char *rendermode = PyString_AsString(rendermode_py);
-    
     for (i = 0; render_modes[i] != NULL; i++) {
-        if (strcmp(render_modes[i]->name, rendermode) == 0) {
+        if (strcmp(render_modes[i]->name, mode) == 0) {
             iface = render_modes[i];
             break;
         }
     }
     
-    Py_DECREF(rendermode_py);
-    return iface;
+    if (iface == NULL)
+        return NULL;
+    
+    ret = malloc(sizeof(RenderMode));
+    if (ret == NULL)
+        return NULL;
+    
+    ret->mode = malloc(iface->data_size);
+    if (ret->mode == NULL) {
+        free(ret);
+        return NULL;
+    }
+    
+    ret->iface = iface;
+    ret->state = state;
+    
+    if (iface->start(ret->mode, state)) {
+        free(ret->mode);
+        free(ret);
+        return NULL;
+    }
+    
+    return ret;
+}
+    
+void render_mode_destroy(RenderMode *self) {
+    self->iface->finish(self->mode, self->state);
+    free(self->mode);
+    free(self);
+}
+
+int render_mode_occluded(RenderMode *self) {
+    return self->iface->occluded(self->mode, self->state);
+}
+
+void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light) {
+    self->iface->draw(self->mode, self->state, img, mask, mask_light);
 }
 
 /* bindings for python -- get all the rendermode names */
