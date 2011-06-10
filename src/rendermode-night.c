@@ -26,11 +26,11 @@ static float calculate_darkness(unsigned char skylight, unsigned char blocklight
 }
 
 static int
-rendermode_night_start(void *data, RenderState *state) {
+rendermode_night_start(void *data, RenderState *state, PyObject *options) {
     RenderModeNight* self;    
 
     /* first, chain up */
-    int ret = rendermode_lighting.start(data, state);
+    int ret = rendermode_lighting.start(data, state, options);
     if (ret != 0)
         return ret;
     

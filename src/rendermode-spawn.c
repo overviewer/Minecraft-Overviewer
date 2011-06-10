@@ -62,11 +62,11 @@ static void get_color(void *data, RenderState *state,
 }
 
 static int
-rendermode_spawn_start(void *data, RenderState *state) {
+rendermode_spawn_start(void *data, RenderState *state, PyObject *options) {
     RenderModeSpawn* self;
 
     /* first, chain up */
-    int ret = rendermode_overlay.start(data, state);
+    int ret = rendermode_overlay.start(data, state, options);
     if (ret != 0)
         return ret;
     

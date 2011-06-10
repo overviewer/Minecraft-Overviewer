@@ -169,11 +169,11 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
 }
 
 static int
-rendermode_lighting_start(void *data, RenderState *state) {
+rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
     RenderModeLighting* self;
 
     /* first, chain up */
-    int ret = rendermode_normal.start(data, state);
+    int ret = rendermode_normal.start(data, state, options);
     if (ret != 0)
         return ret;
     

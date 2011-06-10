@@ -50,8 +50,8 @@ struct _RenderModeInterface {
     /* the size of the local storage for this rendermode */
     unsigned int data_size;
     
-    /* may return non-zero on error */
-    int (*start)(void *, RenderState *);
+    /* may return non-zero on error, last arg is options */
+    int (*start)(void *, RenderState *, PyObject *);
     void (*finish)(void *, RenderState *);
     /* returns non-zero to skip rendering this block */
     int (*occluded)(void *, RenderState *);
@@ -72,12 +72,15 @@ void render_mode_destroy(RenderMode *self);
 int render_mode_occluded(RenderMode *self);
 void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light);
 
-/* python bindings */
+/* python metadata bindings */
 PyObject *get_render_modes(PyObject *self, PyObject *args);
 PyObject *get_render_mode_info(PyObject *self, PyObject *args);
 PyObject *get_render_mode_parent(PyObject *self, PyObject *args);
 PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args);
 PyObject *get_render_mode_children(PyObject *self, PyObject *args);
+
+/* python rendermode options bindings */
+PyObject *set_render_mode_options(PyObject *self, PyObject *args);
 
 /* individual rendermode interface declarations follow */
 

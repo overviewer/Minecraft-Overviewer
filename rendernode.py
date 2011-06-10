@@ -68,6 +68,10 @@ def pool_initializer(rendernode):
     textures.generate(path=rendernode.options.get('textures_path', None))
     c_overviewer.init_chunk_render()
     
+    # setup c_overviewer rendermode options
+    for mode in rendernode.options.rendermode_options:
+        c_overviewer.set_render_mode_options(mode, rendernode.options.rendermode_options[mode])
+    
     # load biome data in each process, if needed
     for quadtree in rendernode.quadtrees:
         if quadtree.world.useBiomeData:

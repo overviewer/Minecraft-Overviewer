@@ -18,7 +18,7 @@
 #include "overviewer.h"
 
 static int
-rendermode_normal_start(void *data, RenderState *state) {
+rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
     PyObject *chunk_x_py, *chunk_y_py, *world, *use_biomes, *worlddir;
     RenderModeNormal *self = (RenderModeNormal *)data;
     

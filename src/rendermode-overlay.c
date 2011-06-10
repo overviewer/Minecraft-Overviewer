@@ -26,7 +26,7 @@ static void get_color(void *data, RenderState *state,
 }
 
 static int
-rendermode_overlay_start(void *data, RenderState *state) {
+rendermode_overlay_start(void *data, RenderState *state, PyObject *options) {
     PyObject *facemasks_py;
     RenderModeOverlay *self = (RenderModeOverlay *)data;
     

@@ -30,8 +30,41 @@ static RenderModeInterface *render_modes[] = {
     NULL
 };
 
+static PyObject *render_mode_options = NULL;
+
+/* rendermode encapsulation */
+
+/* helper to recursively find options for a given mode */
+static inline PyObject *
+render_mode_create_options(RenderModeInterface *iface) {
+    PyObject *base_options, *ret, *parent_options;
+    if (render_mode_options == NULL)
+        return PyDict_New();
+    
+    base_options = PyDict_GetItemString(render_mode_options, iface->name);
+    if (base_options) {
+        ret = PyDict_Copy(base_options);
+    } else {
+        ret = PyDict_New();
+    }
+    
+    if (iface->parent) {
+        parent_options = render_mode_create_options(iface->parent);
+        if (parent_options) {
+            if (PyDict_Merge(ret, parent_options, 0) == -1) {
+                Py_DECREF(parent_options);
+                return NULL;
+            }
+            Py_DECREF(parent_options);
+        }
+    }
+    
+    return ret;
+}
+
 RenderMode *render_mode_create(const char *mode, RenderState *state) {
     unsigned int i;
+    PyObject *options;
     RenderMode *ret = NULL;
     RenderModeInterface *iface = NULL;
     for (i = 0; render_modes[i] != NULL; i++) {
@@ -44,12 +77,19 @@ RenderMode *render_mode_create(const char *mode, RenderState *state) {
     if (iface == NULL)
         return NULL;
     
-    ret = malloc(sizeof(RenderMode));
-    if (ret == NULL)
+    options = render_mode_create_options(iface);
+    if (options == NULL)
         return NULL;
+    
+    ret = malloc(sizeof(RenderMode));
+    if (ret == NULL) {
+        Py_DECREF(options);
+        return NULL;
+    }
     
     ret->mode = malloc(iface->data_size);
     if (ret->mode == NULL) {
+        Py_DECREF(options);
         free(ret);
         return NULL;
     }
@@ -57,12 +97,14 @@ RenderMode *render_mode_create(const char *mode, RenderState *state) {
     ret->iface = iface;
     ret->state = state;
     
-    if (iface->start(ret->mode, state)) {
+    if (iface->start(ret->mode, state, options)) {
+        Py_DECREF(options);
         free(ret->mode);
         free(ret);
         return NULL;
     }
     
+    Py_DECREF(options);
     return ret;
 }
     
@@ -212,4 +254,20 @@ PyObject *get_render_mode_children(PyObject *self, PyObject *args) {
     }
     
     return children;
+}
+
+/* python rendermode options bindings */
+PyObject *set_render_mode_options(PyObject *self, PyObject *args) {
+    const char *rendermode;
+    PyObject *opts;
+    if (!PyArg_ParseTuple(args, "sO!", &rendermode, &PyDict_Type, &opts))
+        return NULL;
+    
+    /* check options here */
+    
+    if (render_mode_options == NULL)
+        render_mode_options = PyDict_New();
+    
+    PyDict_SetItemString(render_mode_options, rendermode, opts);
+    Py_RETURN_NONE;
 }

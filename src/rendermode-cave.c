@@ -161,13 +161,13 @@ rendermode_cave_occluded(void *data, RenderState *state) {
 }
 
 static int
-rendermode_cave_start(void *data, RenderState *state) {
+rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
     RenderModeCave* self;
     int ret;
     self = (RenderModeCave *)data;
 
     /* first, chain up */
-    ret = rendermode_normal.start(data, state);
+    ret = rendermode_normal.start(data, state, options);
     if (ret != 0)
         return ret;
 
