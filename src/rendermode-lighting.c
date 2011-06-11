@@ -165,11 +165,13 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
     }
     
     black_coeff = get_lighting_coefficient(self, state, x, y, z, NULL);
+    black_coeff *= self->shade_strength;
     alpha_over_full(state->img, self->black_color, mask, black_coeff, state->imgx, state->imgy, 0, 0);
 }
 
 static int
 rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
+    PyObject *opt;
     RenderModeLighting* self;
 
     /* first, chain up */
@@ -178,6 +180,17 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
         return ret;
     
     self = (RenderModeLighting *)data;
+
+    opt = PyDict_GetItemString(options, "shade_strength");
+    if (opt) {
+        if (!PyNumber_Check(opt)) {
+            PyErr_SetString(PyExc_TypeError, "'shade_strength' must be a number");
+            return 1;
+        }
+        self->shade_strength = PyFloat_AsDouble(opt);
+    } else {
+        self->shade_strength = 1.0;
+    }
     
     self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
     self->facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
@@ -244,9 +257,13 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
     }
 }
 
+RenderModeOption rendermode_lighting_options[] = {
+    {"shade_strength", "how dark to make the shadows, from 0.0 to 1.0 (default: 1.0)"},
+};
+
 RenderModeInterface rendermode_lighting = {
     "lighting", "draw shadows from the lighting data",
-    NULL,
+    rendermode_lighting_options,
     &rendermode_normal,
     sizeof(RenderModeLighting),
     rendermode_lighting_start,

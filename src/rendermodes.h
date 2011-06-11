@@ -141,6 +141,8 @@ typedef struct {
     /* can be overridden in derived rendermodes to control lighting
        arguments are skylight, blocklight */
     float (*calculate_darkness)(unsigned char, unsigned char);
+    
+    float shade_strength;
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
 
@@ -177,6 +179,7 @@ typedef struct {
     /* colors used for tinting */
     PyObject *depth_colors;
     
+    int depth_tinting;
 } RenderModeCave;
 extern RenderModeInterface rendermode_cave;
 

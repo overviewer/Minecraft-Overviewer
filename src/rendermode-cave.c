@@ -17,19 +17,16 @@
 
 #include "overviewer.h"
 #include <math.h>
-//~ 
-//~ /* figures out the black_coeff from a given skylight and blocklight, used in
-   //~ lighting calculations -- note this is *different* from the one in
-   //~ rendermode-lighting.c (the "skylight - 11" part) */
-//~ static float calculate_darkness(unsigned char skylight, unsigned char blocklight) {
-    //~ return 1.0f - powf(0.8f, 15.0 - MAX(blocklight, skylight - 11));
-//~ }
 
 static int
 rendermode_cave_occluded(void *data, RenderState *state) {
     int x = state->x, y = state->y, z = state->z, dz = 0;
     RenderModeCave* self;
     self = (RenderModeCave *)data;
+    
+    /* first, check to see if it's "normally" occluded */
+    if (rendermode_normal.occluded(data, state))
+        return 1;
 
     /* check if the block is touching skylight */
     if (z != 127) { 
@@ -164,12 +161,20 @@ static int
 rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
     RenderModeCave* self;
     int ret;
+    PyObject *opt;
     self = (RenderModeCave *)data;
 
     /* first, chain up */
     ret = rendermode_normal.start(data, state, options);
     if (ret != 0)
         return ret;
+    
+    opt = PyDict_GetItemString(options, "depth_tinting");
+    if (opt) {
+        self->depth_tinting = PyObject_IsTrue(opt);
+    } else {
+        self->depth_tinting = 1;
+    }
 
     /* if there's skylight we are in the surface! */
     self->skylight = PyObject_GetAttrString(state->self, "skylight");
@@ -213,19 +218,24 @@ rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
     /* draw the normal block */
     rendermode_normal.draw(data, state, src, mask, mask_light);
 
-    /* get the colors and tint and tint */
-    /* TODO TODO   for a nether mode there isn't tinting! */
-    r = PyInt_AsLong(PyList_GetItem(self->depth_colors, 0 + z*3));
-    g = PyInt_AsLong(PyList_GetItem(self->depth_colors, 1 + z*3));
-    b = PyInt_AsLong(PyList_GetItem(self->depth_colors, 2 + z*3));
-
-    tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
+    if (self->depth_tinting) {
+        /* get the colors and tint and tint */
+        r = PyInt_AsLong(PyList_GetItem(self->depth_colors, 0 + z*3));
+        g = PyInt_AsLong(PyList_GetItem(self->depth_colors, 1 + z*3));
+        b = PyInt_AsLong(PyList_GetItem(self->depth_colors, 2 + z*3));
+        
+        tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
+    }
 
 }
 
+static RenderModeOption rendermode_cave_options[] = {
+    {"depth_tinting", "tint caves based on how deep they are (default: True)"},
+};
+
 RenderModeInterface rendermode_cave = {
     "cave", "render only caves in normal mode",
-    NULL,
+    rendermode_cave_options,
     &rendermode_normal,
     sizeof(RenderModeCave),
     rendermode_cave_start,
