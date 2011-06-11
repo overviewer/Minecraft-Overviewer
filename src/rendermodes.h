@@ -105,6 +105,10 @@ typedef struct {
     PyObject *grass_texture, *leaf_texture, *tall_grass_texture, *tall_fern_texture;
     /* top facemask for grass biome tinting */
     PyObject *facemask_top;
+    
+    float edge_opacity;
+    unsigned int min_depth;
+    unsigned int max_depth;
 } RenderModeNormal;
 extern RenderModeInterface rendermode_normal;
 

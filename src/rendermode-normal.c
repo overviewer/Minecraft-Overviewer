@@ -19,8 +19,43 @@
 
 static int
 rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
-    PyObject *chunk_x_py, *chunk_y_py, *world, *use_biomes, *worlddir;
+    PyObject *opt, *chunk_x_py, *chunk_y_py, *world, *use_biomes, *worlddir;
     RenderModeNormal *self = (RenderModeNormal *)data;
+    
+    /* load up the given options, first */
+    
+    opt = PyDict_GetItemString(options, "edge_opacity");
+    if (opt) {
+        if (!PyNumber_Check(opt)) {
+            PyErr_SetString(PyExc_TypeError, "'edge_opacity' must be a number");
+            return 1;
+        }
+        self->edge_opacity = PyFloat_AsDouble(opt);
+    } else {
+        self->edge_opacity = 0.15;
+    }
+    
+    opt = PyDict_GetItemString(options, "min_depth");
+    if (opt) {
+        if (!PyInt_Check(opt)) {
+            PyErr_SetString(PyExc_TypeError, "'min_depth' must be an integer");
+            return 1;
+        }
+        self->min_depth = PyInt_AsLong(opt);
+    } else {
+        self->min_depth = 0;
+    }
+
+    opt = PyDict_GetItemString(options, "max_depth");
+    if (opt) {
+        if (!PyInt_Check(opt)) {
+            PyErr_SetString(PyExc_TypeError, "'max_depth' must be an integer");
+            return 1;
+        }
+        self->max_depth = PyInt_AsLong(opt);
+    } else {
+        self->max_depth = 127;
+    }
     
     chunk_x_py = PyObject_GetAttrString(state->self, "chunkX");
     chunk_y_py = PyObject_GetAttrString(state->self, "chunkY");
@@ -110,9 +145,14 @@ rendermode_normal_finish(void *data, RenderState *state) {
 
 static int
 rendermode_normal_occluded(void *data, RenderState *state) {
+    RenderModeNormal *self = (RenderModeNormal *)data;
     int x = state->x, y = state->y, z = state->z;
     
-    if ( (x != 0) && (y != 15) && (z != 127) &&
+    if (z > self->max_depth || z < self->min_depth) {
+        return 1;
+    }
+    
+    if ( (x != 0) && (y != 15) && (z != self->max_depth) &&
          !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
          !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
          !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
@@ -203,7 +243,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     // draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
     if (state->block == 44 || state->block == 78 || !is_transparent(state->block)) {
         Imaging img_i = imaging_python_to_c(state->img);
-        unsigned char ink[] = {0,0,0,40};
+        unsigned char ink[] = {0, 0, 0, 255 * self->edge_opacity};
 
         int increment=0;
         if (state->block == 44)  // half-step
@@ -245,9 +285,9 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
 }
 
 static RenderModeOption rendermode_normal_options[] = {
-    {"edge_opacity", "darkness of the edge lines, from 0.0 to 1.0"},
-    {"min_depth", "lowest level of blocks to render, default: 0"},
-    {"max_depth", "highest level of blocks to render, default: 127"},
+    {"edge_opacity", "darkness of the edge lines, from 0.0 to 1.0 (default: 0.15)"},
+    {"min_depth", "lowest level of blocks to render (default: 0)"},
+    {"max_depth", "highest level of blocks to render (default: 127)"},
 };
 
 RenderModeInterface rendermode_normal = {
