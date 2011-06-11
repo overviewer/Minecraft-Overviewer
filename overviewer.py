@@ -135,10 +135,14 @@ def main():
         c_overviewer.set_render_mode_options(mode, options.rendermode_options[mode])
     
     if options.list_rendermodes:
+        avail_rendermodes = c_overviewer.get_render_modes()
         rendermode_info = map(c_overviewer.get_render_mode_info, avail_rendermodes)
         name_width = max(map(lambda i: len(i['name']), rendermode_info))
         for info in rendermode_info:
-            print "{name:{0}} {description}".format(name_width, **info)
+            if not 'description' in info:
+                print "{name:{0}} (no description)".format(name_width, **info)
+            else:
+                print "{name:{0}} {description}".format(name_width, **info)
         sys.exit(0)
 
     if len(args) < 1:

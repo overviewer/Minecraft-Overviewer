@@ -259,6 +259,7 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
 
 RenderModeOption rendermode_lighting_options[] = {
     {"shade_strength", "how dark to make the shadows, from 0.0 to 1.0 (default: 1.0)"},
+    {NULL, NULL}
 };
 
 RenderModeInterface rendermode_lighting = {

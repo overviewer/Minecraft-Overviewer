@@ -231,6 +231,7 @@ rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
 
 static RenderModeOption rendermode_cave_options[] = {
     {"depth_tinting", "tint caves based on how deep they are (default: True)"},
+    {NULL, NULL}
 };
 
 RenderModeInterface rendermode_cave = {
