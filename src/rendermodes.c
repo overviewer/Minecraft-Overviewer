@@ -301,14 +301,56 @@ PyObject *get_render_mode_options(PyObject *self, PyObject *args)
     return options;
 }
 
+/* helper to decide if a rendermode supports a given option */
+static inline int
+render_mode_supports_option(RenderModeInterface *iface, const char *name) {
+    unsigned int i;
+    
+    if (iface->options != NULL) {
+        for (i = 0; iface->options[i].name != NULL; i++) {
+            if (strcmp(iface->options[i].name, name) == 0) {
+                return 1;
+            }
+        }
+    }
+    
+    if (iface->parent != NULL)
+        return render_mode_supports_option(iface->parent, name);
+    
+    return 0;
+}
+
 /* python rendermode options bindings */
 PyObject *set_render_mode_options(PyObject *self, PyObject *args) {
     const char *rendermode;
-    PyObject *opts;
+    PyObject *opts, *key, *value;
+    Py_ssize_t pos = 0;
+    RenderModeInterface *iface = NULL;
+    unsigned int i;
     if (!PyArg_ParseTuple(args, "sO!", &rendermode, &PyDict_Type, &opts))
         return NULL;
     
-    /* check options here */
+    for (i = 0; render_modes[i] != NULL; i++) {
+        if (strcmp(render_modes[i]->name, rendermode) == 0) {
+            iface = render_modes[i];
+            break;
+        }
+    }
+    
+    if (iface == NULL) {
+        return PyErr_Format(PyExc_ValueError, "'%s' is not a valid rendermode name", rendermode);
+    }
+    
+    /* check options to make sure they're available */
+    while (PyDict_Next(opts, &pos, &key, &value)) {
+        const char *name = PyString_AsString(key);
+        if (name == NULL)
+            return NULL;
+        
+        if (!render_mode_supports_option(iface, name)) {
+            return PyErr_Format(PyExc_ValueError, "'%s' is not a valid option for rendermode '%s'", name, rendermode);
+        }
+    }
     
     if (render_mode_options == NULL)
         render_mode_options = PyDict_New();

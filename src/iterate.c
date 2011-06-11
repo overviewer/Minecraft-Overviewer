@@ -26,11 +26,10 @@ static PyObject *transparent_blocks = NULL;
 
 PyObject *init_chunk_render(PyObject *self, PyObject *args) {
    
-    /* this function only needs to be called once, anything more is an
-     * error... */
+    /* this function only needs to be called once, anything more should be
+     * ignored */
     if (blockmap) {
-        PyErr_SetString(PyExc_RuntimeError, "init_chunk_render should only be called once per process.");
-        return NULL;
+        Py_RETURN_NONE;
     }
 
     textures = PyImport_ImportModule("textures");

@@ -148,7 +148,9 @@ class RenderNode(object):
             pool = FakePool()
             pool_initializer(self)
         else:
+            pool_initializer(self)
             pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
+            
             #warm up the pool so it reports all the worker id's
             if logging.getLogger().level >= 10:
                 pool.map(bool,xrange(multiprocessing.cpu_count()),1)
