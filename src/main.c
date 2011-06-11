@@ -41,6 +41,8 @@ static PyMethodDef COverviewerMethods[] = {
      "returns inheritance chain for a particular render mode"},
     {"get_render_mode_children", get_render_mode_children, METH_VARARGS,
      "returns (direct) children for a particular render mode"},
+    {"get_render_mode_options", get_render_mode_options, METH_VARARGS,
+     "returns a list of options for this render mode"},
     
     {"set_render_mode_options", set_render_mode_options, METH_VARARGS,
      "sets the default options for a given render mode"},

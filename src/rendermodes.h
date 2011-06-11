@@ -37,13 +37,21 @@
 
 #include <Python.h>
 
+typedef struct {
+    const char *name;
+    const char *description;
+} RenderModeOption;
+
 /* rendermode interface */
 typedef struct _RenderModeInterface RenderModeInterface;
 struct _RenderModeInterface {
     /* the name of this mode */
-    const char* name;
+    const char *name;
     /* the short description of this render mode */
-    const char* description;
+    const char *description;
+    
+    /* a NULL-terminated list of render mode options, or NULL */
+    RenderModeOption *options;
     
     /* the rendermode this is derived from, or NULL */
     RenderModeInterface *parent;
@@ -78,6 +86,7 @@ PyObject *get_render_mode_info(PyObject *self, PyObject *args);
 PyObject *get_render_mode_parent(PyObject *self, PyObject *args);
 PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args);
 PyObject *get_render_mode_children(PyObject *self, PyObject *args);
+PyObject *get_render_mode_options(PyObject *self, PyObject *args);
 
 /* python rendermode options bindings */
 PyObject *set_render_mode_options(PyObject *self, PyObject *args);

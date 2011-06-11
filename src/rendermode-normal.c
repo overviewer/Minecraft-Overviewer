@@ -244,8 +244,15 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     }
 }
 
+static RenderModeOption rendermode_normal_options[] = {
+    {"edge_opacity", "darkness of the edge lines, from 0.0 to 1.0"},
+    {"min_depth", "lowest level of blocks to render, default: 0"},
+    {"max_depth", "highest level of blocks to render, default: 127"},
+};
+
 RenderModeInterface rendermode_normal = {
     "normal", "nothing special, just render the blocks",
+    rendermode_normal_options,
     NULL,
     sizeof(RenderModeNormal),
     rendermode_normal_start,

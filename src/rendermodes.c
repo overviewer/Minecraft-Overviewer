@@ -256,6 +256,51 @@ PyObject *get_render_mode_children(PyObject *self, PyObject *args) {
     return children;
 }
 
+/* bindings -- get list of options */
+PyObject *get_render_mode_options(PyObject *self, PyObject *args)
+{
+    const char *rendermode;
+    PyObject *options;
+    unsigned int i, j;
+    if (!PyArg_ParseTuple(args, "s", &rendermode))
+        return NULL;
+    
+    options = PyList_New(0);
+    if (!options)
+        return NULL;
+    
+    for (i = 0; render_modes[i] != NULL; i++) {
+        if (strcmp(render_modes[i]->name, rendermode) == 0) {
+            if (render_modes[i]->options == NULL)
+                break;
+            
+            for (j = 0; render_modes[i]->options[j].name != NULL; j++) {
+                RenderModeOption opt = render_modes[i]->options[j];
+                PyObject *name = PyString_FromString(opt.name);
+                PyObject *description = PyString_FromString(opt.description);
+                PyObject *option = PyDict_New();
+                if (!name || !description || !option) {
+                    Py_XDECREF(name);
+                    Py_XDECREF(description);
+                    Py_XDECREF(option);
+                    Py_DECREF(options);
+                    return NULL;
+                }
+                
+                PyDict_SetItemString(option, "name", name);
+                PyDict_SetItemString(option, "description", description);
+                PyList_Append(options, option);
+                Py_DECREF(name);
+                Py_DECREF(description);
+                Py_DECREF(option);
+            }
+            break;
+        }
+    }
+    
+    return options;
+}
+
 /* python rendermode options bindings */
 PyObject *set_render_mode_options(PyObject *self, PyObject *args) {
     const char *rendermode;

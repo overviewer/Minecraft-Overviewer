@@ -129,6 +129,7 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
 RenderModeInterface rendermode_overlay = {
     "overlay", "base rendermode for informational overlays",
     NULL,
+    NULL,
     sizeof(RenderModeOverlay),
     rendermode_overlay_start,
     rendermode_overlay_finish,
