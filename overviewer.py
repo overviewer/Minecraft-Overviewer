@@ -95,9 +95,10 @@ def main():
     parser.add_option("-d", "--delete", dest="delete", help="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true", commandLineOnly=True)
     parser.add_option("--regionlist", dest="regionlist", help="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
     parser.add_option("--forcerender", dest="forcerender", help="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting the entire map with --delete.", action="store_true")
-    parser.add_option("--rendermodes", dest="rendermode", help="Specifies the render types, separated by commas. Use --list-rendermodes to list them all.", type="choice", choices=avail_rendermodes, required=True, default=avail_rendermodes[0], listify=True)
+    parser.add_option("--rendermodes", dest="rendermode", help="Specifies the render types, separated by commas. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
     parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", help="List available render modes and exit.", commandLineOnly=True)
     parser.add_option("--rendermode-options", dest="rendermode_options", default={}, configFileOnly=True)
+    parser.add_option("--custom-rendermodes", dest="custom_rendermodes", default={}, configFileOnly=True)
     parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg.", configFileOnly=True )
     parser.add_option("--imgquality", dest="imgquality", default=95, help="Specify the quality of image output when using imgformat=\"jpg\".", type="int", configFileOnly=True)
     parser.add_option("--bg_color", dest="bg_color", help="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", configFileOnly=True, type="string", default="#1A1A1A")
@@ -126,6 +127,12 @@ def main():
         except:
             pass
         sys.exit(0)
+
+    # setup c_overviewer rendermode customs / options
+    for mode in options.custom_rendermodes:
+        c_overviewer.add_custom_render_mode(mode, options.custom_rendermodes[mode])
+    for mode in options.rendermode_options:
+        c_overviewer.set_render_mode_options(mode, options.rendermode_options[mode])
     
     if options.list_rendermodes:
         rendermode_info = map(c_overviewer.get_render_mode_info, avail_rendermodes)

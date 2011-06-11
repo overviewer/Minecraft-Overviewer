@@ -83,13 +83,12 @@ void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject 
 /* python metadata bindings */
 PyObject *get_render_modes(PyObject *self, PyObject *args);
 PyObject *get_render_mode_info(PyObject *self, PyObject *args);
-PyObject *get_render_mode_parent(PyObject *self, PyObject *args);
 PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args);
 PyObject *get_render_mode_children(PyObject *self, PyObject *args);
-PyObject *get_render_mode_options(PyObject *self, PyObject *args);
 
 /* python rendermode options bindings */
 PyObject *set_render_mode_options(PyObject *self, PyObject *args);
+PyObject *add_custom_render_mode(PyObject *self, PyObject *args);
 
 /* individual rendermode interface declarations follow */
 
