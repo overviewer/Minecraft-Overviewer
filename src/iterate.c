@@ -317,7 +317,7 @@ chunk_render(PyObject *self, PyObject *args) {
     
     /* set up the render mode */
     rendermode_py = PyObject_GetAttrString(state.self, "rendermode");
-    rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
+    state.rendermode = rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
     Py_DECREF(rendermode_py);
     if (rendermode == NULL) {
         return Py_BuildValue("i", "-1");
@@ -386,7 +386,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 blockid = PyInt_FromLong(state.block);
 
                 // check for occlusion
-                if (render_mode_occluded(rendermode)) {
+                if (render_mode_occluded(rendermode, state.x, state.y, state.z)) {
                     continue;
                 }
                 

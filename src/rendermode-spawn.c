@@ -96,9 +96,9 @@ rendermode_spawn_finish(void *data, RenderState *state) {
 }
 
 static int
-rendermode_spawn_occluded(void *data, RenderState *state) {
+rendermode_spawn_occluded(void *data, RenderState *state, int x, int y, int z) {
     /* no special occlusion here */
-    return rendermode_overlay.occluded(data, state);
+    return rendermode_overlay.occluded(data, state, x, y, z);
 }
 
 static void

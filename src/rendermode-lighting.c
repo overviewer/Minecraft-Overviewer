@@ -83,12 +83,6 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
     
     block = getArrayByte3D(blocks, local_x, local_y, local_z);
     
-    /* if this block is opaque, use a fully-lit coeff instead
-       to prevent stippled lines along chunk boundaries! */
-    if (!is_transparent(block)) {
-        return self->calculate_darkness(15, 0);
-    }
-    
     /* only do special half-step handling if no authoratative pointer was
        passed in, which is a sign that we're recursing */
     if ((block == 44 || block == 53 || block == 67) && authoratative == NULL) {
@@ -154,11 +148,14 @@ static inline void
 do_shading_with_mask(RenderModeLighting *self, RenderState *state,
                      int x, int y, int z, PyObject *mask) {
     float black_coeff;
-
+    PyObject *blocks;
+    
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
         unsigned char block = getArrayByte3D(state->blocks, x, y, z);
-        if (!is_transparent(block)) {
+        int occluded = render_mode_occluded(state->rendermode, x, y, z);
+        
+        if (!occluded && !is_transparent(block)) {
             /* this face isn't visible, so don't draw anything */
             return;
         }
@@ -230,9 +227,9 @@ rendermode_lighting_finish(void *data, RenderState *state) {
 }
 
 static int
-rendermode_lighting_occluded(void *data, RenderState *state) {
+rendermode_lighting_occluded(void *data, RenderState *state, int x, int y, int z) {
     /* no special occlusion here */
-    return rendermode_normal.occluded(data, state);
+    return rendermode_normal.occluded(data, state, x, y, z);
 }
 
 static void

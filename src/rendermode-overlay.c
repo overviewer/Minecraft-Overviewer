@@ -57,9 +57,7 @@ rendermode_overlay_finish(void *data, RenderState *state) {
 }
 
 static int
-rendermode_overlay_occluded(void *data, RenderState *state) {
-    int x = state->x, y = state->y, z = state->z;
-    
+rendermode_overlay_occluded(void *data, RenderState *state, int x, int y, int z) {
     if ( (x != 0) && (y != 15) && (z != 127) &&
          !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
          !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&

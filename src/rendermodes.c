@@ -164,8 +164,8 @@ void render_mode_destroy(RenderMode *self) {
     free(self);
 }
 
-int render_mode_occluded(RenderMode *self) {
-    return self->iface->occluded(self->mode, self->state);
+int render_mode_occluded(RenderMode *self, int x, int y, int z) {
+    return self->iface->occluded(self->mode, self->state, x, y, z);
 }
 
 void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light) {

@@ -80,13 +80,13 @@ touches_light(unsigned int x, unsigned int y, unsigned int z,
 }
 
 static int
-rendermode_cave_occluded(void *data, RenderState *state) {
-    int x = state->x, y = state->y, z = state->z, dz = 0;
+rendermode_cave_occluded(void *data, RenderState *state, int x, int y, int z) {
     RenderModeCave* self;
+    int dz = 0;
     self = (RenderModeCave *)data;
     
     /* first, check to see if it's "normally" occluded */
-    if (rendermode_normal.occluded(data, state))
+    if (rendermode_lighting.occluded(data, state, x, y, z))
         return 1;
 
     /* check if the block is touching skylight */
@@ -182,7 +182,7 @@ rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
     self = (RenderModeCave *)data;
 
     /* first, chain up */
-    ret = rendermode_normal.start(data, state, options);
+    ret = rendermode_lighting.start(data, state, options);
     if (ret != 0)
         return ret;
     
@@ -198,6 +198,13 @@ rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
         self->only_lit = PyObject_IsTrue(opt);
     } else {
         self->only_lit = 0;
+    }
+
+    opt = PyDict_GetItemString(options, "lighting");
+    if (opt) {
+        self->lighting = PyObject_IsTrue(opt);
+    } else {
+        self->lighting = 0;
     }
 
     /* if there's skylight we are in the surface! */
@@ -242,7 +249,7 @@ rendermode_cave_finish(void *data, RenderState *state) {
     
     Py_DECREF(self->depth_colors);
 
-    rendermode_normal.finish(data, state);
+    rendermode_lighting.finish(data, state);
 }
 
 static void
@@ -255,7 +262,11 @@ rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
     r = 0, g = 0, b = 0;
 
     /* draw the normal block */
-    rendermode_normal.draw(data, state, src, mask, mask_light);
+    if (self->lighting) {
+        rendermode_lighting.draw(data, state, src, mask, mask_light);
+    } else {
+        rendermode_normal.draw(data, state, src, mask, mask_light);
+    }
 
     if (self->depth_tinting) {
         /* get the colors and tint and tint */
@@ -271,13 +282,14 @@ rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
 static RenderModeOption rendermode_cave_options[] = {
     {"depth_tinting", "tint caves based on how deep they are (default: True)"},
     {"only_lit", "only render lit caves (default: False)"},
+    {"lighting", "render caves with lighting enabled (default: False)"},
     {NULL, NULL}
 };
 
 RenderModeInterface rendermode_cave = {
-    "cave", "render only caves in normal mode",
+    "cave", "render only caves",
     rendermode_cave_options,
-    &rendermode_normal,
+    &rendermode_lighting,
     sizeof(RenderModeCave),
     rendermode_cave_start,
     rendermode_cave_finish,

@@ -36,6 +36,7 @@
 #define __RENDERMODES_H_INCLUDED__
 
 #include <Python.h>
+#include "overviewer.h"
 
 typedef struct {
     const char *name;
@@ -62,22 +63,22 @@ struct _RenderModeInterface {
     int (*start)(void *, RenderState *, PyObject *);
     void (*finish)(void *, RenderState *);
     /* returns non-zero to skip rendering this block */
-    int (*occluded)(void *, RenderState *);
+    int (*occluded)(void *, RenderState *, int, int, int);
     /* last two arguments are img and mask, from texture lookup */
     void (*draw)(void *, RenderState *, PyObject *, PyObject *, PyObject *);
 };
 
 /* wrapper for passing around rendermodes */
-typedef struct {
+struct _RenderMode {
     void *mode;
     RenderModeInterface *iface;
     RenderState *state;
-} RenderMode;
+};
 
 /* functions for creating / using rendermodes */
 RenderMode *render_mode_create(const char *mode, RenderState *state);
 void render_mode_destroy(RenderMode *self);
-int render_mode_occluded(RenderMode *self);
+int render_mode_occluded(RenderMode *self, int x, int y, int z);
 void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light);
 
 /* python metadata bindings */
@@ -167,7 +168,7 @@ extern RenderModeInterface rendermode_spawn;
 /* CAVE */
 typedef struct {
     /* render blocks with lighting mode */
-    RenderModeNormal parent;
+    RenderModeLighting parent;
 
     /* data used to know where the surface is */
     PyObject *skylight;
@@ -188,6 +189,7 @@ typedef struct {
     
     int depth_tinting;
     int only_lit;
+    int lighting;
 } RenderModeCave;
 extern RenderModeInterface rendermode_cave;
 

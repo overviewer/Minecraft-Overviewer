@@ -476,6 +476,10 @@ def generate_facemasks():
     for x,y in [(3,4), (7,2), (11,0)]:
         top.putpixel((x,y), 255)
     
+    # special fix for chunk boundary stipple
+    for x,y in [(13,11), (17,9), (21,7)]:
+        right.putpixel((x,y), 0)
+    
     return (top, left, right)
 facemasks = generate_facemasks()
 black_color = Image.new("RGB", (24,24), (0,0,0))

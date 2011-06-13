@@ -48,9 +48,9 @@ rendermode_night_finish(void *data, RenderState *state) {
 }
 
 static int
-rendermode_night_occluded(void *data, RenderState *state) {
+rendermode_night_occluded(void *data, RenderState *state, int x, int y, int z) {
     /* no special occlusion here */
-    return rendermode_lighting.occluded(data, state);
+    return rendermode_lighting.occluded(data, state, x, y, z);
 }
 
 static void

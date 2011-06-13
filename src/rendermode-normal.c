@@ -144,9 +144,8 @@ rendermode_normal_finish(void *data, RenderState *state) {
 }
 
 static int
-rendermode_normal_occluded(void *data, RenderState *state) {
+rendermode_normal_occluded(void *data, RenderState *state, int x, int y, int z) {
     RenderModeNormal *self = (RenderModeNormal *)data;
-    int x = state->x, y = state->y, z = state->z;
     
     if (z > self->max_depth || z < self->min_depth) {
         return 1;
