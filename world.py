@@ -208,23 +208,25 @@ class World(object):
 
         ## The filename of this chunk
         chunkFile = self.get_region_path(chunkX, chunkY)
-
-        data=nbt.load_from_region(chunkFile, chunkX, chunkY)[1]
-        level = data['Level']
-        blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
-
-        ## The block for spawn *within* the chunk
-        inChunkX = spawnX - (chunkX*16)
-        inChunkZ = spawnZ - (chunkY*16)
-
-        ## find the first air block
-        while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
-            spawnY += 1
-            if spawnY == 128:
-                break
+        
+        if chunkFile is not None:
+            data = nbt.load_from_region(chunkFile, chunkX, chunkY)[1]
+            if data is not None:
+                level = data['Level']
+                blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
+                
+                ## The block for spawn *within* the chunk
+                inChunkX = spawnX - (chunkX*16)
+                inChunkZ = spawnZ - (chunkY*16)
+                
+                ## find the first air block
+                while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
+                    spawnY += 1
+                    if spawnY == 128:
+                        break
 
         self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, 
-                msg="Spawn", type="spawn", chunk=(inChunkX,inChunkZ)))
+                msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
         self.spawn = (spawnX, spawnY, spawnZ)
 
     def go(self, procs):

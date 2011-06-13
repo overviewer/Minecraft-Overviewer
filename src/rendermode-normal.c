@@ -165,6 +165,7 @@ static void
 rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeNormal *self = (RenderModeNormal *)data;
     int randx = 0,randy = 0;
+    unsigned char data_byte;
     
     /* first, check to see if we should use biome-compatible src, mask */
     if (self->biome_data) {
@@ -176,10 +177,10 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             randy = rand() % 6 + 1 - 3;
             state->imgx = state->imgx + randx;
             state->imgy = state->imgy + randy;
-            unsigned char data = getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z);
-            if (data == 1) {
+            data_byte = getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z);
+            if (data_byte == 1) {
                 src = mask = self->tall_grass_texture;
-            } else if (data == 2) {
+            } else if (data_byte == 2) {
                 src = mask = self->tall_fern_texture;
             }
         }
