@@ -18,6 +18,67 @@
 #include "overviewer.h"
 #include <math.h>
 
+static inline int
+touches_light(unsigned int x, unsigned int y, unsigned int z,
+              PyObject *light, PyObject *left_light, PyObject *right_light,
+              PyObject *up_left_light, PyObject *up_right_light) {
+    
+    
+    if (getArrayByte3D(light, x, y, z+1) != 0) {
+        return 1;
+    }
+
+    if ((x == 15)) {
+        if  (up_right_light != Py_None) {
+            if (getArrayByte3D(up_right_light, 0, y, z) != 0) {
+                return 1;
+            }
+        }
+    } else {
+        if (getArrayByte3D(light, x+1, y, z) != 0) {
+            return 1;
+        }
+    }
+        
+    if (x == 0) {
+        if  (left_light != Py_None) {
+            if (getArrayByte3D(left_light, 15, y, z) != 0) {
+                return 1;
+            }
+        }
+    } else {
+        if (getArrayByte3D(light, x-1, y, z) != 0) {
+            return 1;
+        }
+    }
+
+    if (y == 15) {
+        if  (right_light != Py_None) {
+            if (getArrayByte3D(right_light, 0, y, z) != 0) {
+                return 1;
+            }
+        }
+    } else {
+        if (getArrayByte3D(light, x, y+1, z) != 0) {
+            return 1;
+        }
+    }
+
+    if (y == 0) {
+        if  (up_left_light != Py_None) {
+            if (getArrayByte3D(up_left_light, 15, y, z) != 0) {
+                return 1;
+            }
+        }
+    } else {
+        if (getArrayByte3D(light, x, y-1, z) != 0) {
+            return 1;
+        }
+    }
+        
+    return 0;
+}
+
 static int
 rendermode_cave_occluded(void *data, RenderState *state) {
     int x = state->x, y = state->y, z = state->z, dz = 0;
@@ -31,56 +92,12 @@ rendermode_cave_occluded(void *data, RenderState *state) {
     /* check if the block is touching skylight */
     if (z != 127) { 
         
-        if (getArrayByte3D(self->skylight, x, y, z+1) != 0) {
+        if (touches_light(x, y, z, self->skylight, self->left_skylight, self->right_skylight, self->up_left_skylight, self->up_right_skylight)) {
             return 1;
         }
 
-        if ((x == 15)) {
-            if  (self->up_right_skylight != Py_None) {
-                if (getArrayByte3D(self->up_right_skylight, 0, y, z) != 0) {
-                    return 1;
-                }
-            }
-        } else {
-            if (getArrayByte3D(self->skylight, x+1, y, z) != 0) {
-                return 1;
-            }
-        }
-        
-        if (x == 0) {
-            if  (self->left_skylight != Py_None) {
-                if (getArrayByte3D(self->left_skylight, 15, y, z) != 0) {
-                    return 1;
-                }
-            }
-        } else {
-            if (getArrayByte3D(self->skylight, x-1, y, z) != 0) {
-                return 1;
-            }
-        }
-
-        if (y == 15) {
-            if  (self->right_skylight != Py_None) {
-                if (getArrayByte3D(self->right_skylight, 0, y, z) != 0) {
-                    return 1;
-                }
-            }
-        } else {
-            if (getArrayByte3D(self->skylight, x, y+1, z) != 0) {
-                return 1;
-            }
-        }
-
-        if (y == 0) {
-            if  (self->up_left_skylight != Py_None) {
-                if (getArrayByte3D(self->up_left_skylight, 15, y, z) != 0) {
-                    return 1;
-                }
-            }
-        } else {
-            if (getArrayByte3D(self->skylight, x, y-1, z) != 0) {
-                return 1;
-            }
+        if (self->only_lit && !touches_light(x, y, z, self->blocklight, self->left_blocklight, self->right_blocklight, self->up_left_blocklight, self->up_right_blocklight)) {
+            return 1;
         }
 
         /* check for normal occlusion */
@@ -176,16 +193,30 @@ rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
         self->depth_tinting = 1;
     }
 
+    opt = PyDict_GetItemString(options, "only_lit");
+    if (opt) {
+        self->only_lit = PyObject_IsTrue(opt);
+    } else {
+        self->only_lit = 0;
+    }
+
     /* if there's skylight we are in the surface! */
     self->skylight = PyObject_GetAttrString(state->self, "skylight");
     self->left_skylight = PyObject_GetAttrString(state->self, "left_skylight");
     self->right_skylight = PyObject_GetAttrString(state->self, "right_skylight");
     self->up_left_skylight = PyObject_GetAttrString(state->self, "up_left_skylight");
     self->up_right_skylight = PyObject_GetAttrString(state->self, "up_right_skylight");
+    
+    if (self->only_lit) {
+        self->blocklight = PyObject_GetAttrString(state->self, "blocklight");
+        self->left_blocklight = PyObject_GetAttrString(state->self, "left_blocklight");
+        self->right_blocklight = PyObject_GetAttrString(state->self, "right_blocklight");
+        self->up_left_blocklight = PyObject_GetAttrString(state->self, "up_left_blocklight");
+        self->up_right_blocklight = PyObject_GetAttrString(state->self, "up_right_blocklight");
+    }
 
     /* colors for tinting */
     self->depth_colors = PyObject_GetAttrString(state->chunk, "depth_colors");
-
 
     return 0;
 }
@@ -194,13 +225,21 @@ static void
 rendermode_cave_finish(void *data, RenderState *state) {
     RenderModeCave* self;
     self = (RenderModeCave *)data;
-
+    
     Py_DECREF(self->skylight);
     Py_DECREF(self->left_skylight);
     Py_DECREF(self->right_skylight);
     Py_DECREF(self->up_left_skylight);
     Py_DECREF(self->up_right_skylight);
-
+    
+    if (self->only_lit) {
+        Py_DECREF(self->blocklight);
+        Py_DECREF(self->left_blocklight);
+        Py_DECREF(self->right_blocklight);
+        Py_DECREF(self->up_left_blocklight);
+        Py_DECREF(self->up_right_blocklight);
+    }
+    
     Py_DECREF(self->depth_colors);
 
     rendermode_normal.finish(data, state);
@@ -231,6 +270,7 @@ rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
 
 static RenderModeOption rendermode_cave_options[] = {
     {"depth_tinting", "tint caves based on how deep they are (default: True)"},
+    {"only_lit", "only render lit caves (default: False)"},
     {NULL, NULL}
 };
 

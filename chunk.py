@@ -294,6 +294,13 @@ class ChunkRenderer(object):
         return self._up_right_skylight
     up_right_skylight = property(_load_up_right_skylight)
 
+    def _load_up_right_blocklight(self):
+        """Loads and returns lower-right blocklight array"""
+        if not hasattr(self, "_up_right_blocklight"):
+            self._load_up_right()
+        return self._up_right_blocklight
+    up_right_blocklight = property(_load_up_right_blocklight)
+
     def _load_up_left(self):
         """Loads and sets data from upper-left chunk"""
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY - 1)
@@ -320,6 +327,13 @@ class ChunkRenderer(object):
             self._load_up_left()
         return self._up_left_skylight
     up_left_skylight = property(_load_up_left_skylight)
+
+    def _load_up_left_blocklight(self):
+        """Loads and returns lower-left blocklight array"""
+        if not hasattr(self, "_up_left_blocklight"):
+            self._load_up_left()
+        return self._up_left_blocklight
+    up_left_blocklight = property(_load_up_left_blocklight)
 
     def generate_pseudo_ancildata(self,x,y,z,blockid, north_position = 0 ):
         """ Generates a pseudo ancillary data for blocks that depend of 
