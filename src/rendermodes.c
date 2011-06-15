@@ -80,6 +80,7 @@ render_mode_create_options(const char *mode) {
         parent_options = render_mode_create_options(parent);
         if (parent_options) {
             if (PyDict_Merge(ret, parent_options, 0) == -1) {
+                Py_DECREF(ret);
                 Py_DECREF(parent_options);
                 return NULL;
             }
