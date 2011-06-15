@@ -493,13 +493,7 @@ def generate_opaque_mask(img):
     smallers than 50, and sets every other value to 255. """
     
     alpha = img.split()[3]
-    pixel = alpha.load()
-    for x in range(img.size[0]):
-        for y in range(img.size[1]):
-            if pixel[x,y] > 25:
-                pixel[x,y] = 255
-    
-    return alpha
+    return alpha.point(lambda a: int(min(a, 25.5) * 10))
 
 def generate_texture_tuple(img, blockid):
     """ This takes an image and returns the needed tuple for the
