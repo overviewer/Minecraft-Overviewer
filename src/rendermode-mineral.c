@@ -43,7 +43,7 @@ static struct MineralColor default_minerals[] = {
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
     
-    int x = state->x, y = state->y, z_max = state->z, z;
+    int x = state->x, y = state->y, z_max = state->z + 1, z;
     int max_i = -1;
     RenderModeMineral* self = (RenderModeMineral *)data;
     struct MineralColor *minerals = (struct MineralColor *)(self->minerals);
