@@ -17,13 +17,13 @@
 
 #include "overviewer.h"
 
-struct OreColor {
+struct MineralColor {
     unsigned char blockid;
     unsigned char r, g, b;
 };
 
 /* put more valuable ores first -- they take precedence */
-static struct OreColor orecolors[] = {
+static struct MineralColor default_minerals[] = {
     {48 /* Mossy Stone  */, 31, 153, 9},
     
     {56 /* Diamond Ore  */, 32, 230, 220},
@@ -44,18 +44,20 @@ static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
     
     int x = state->x, y = state->y, z_max = state->z, z;
-    //RenderModeMineral* self = (RenderModeMineral *)data;
+    int max_i = -1;
+    RenderModeMineral* self = (RenderModeMineral *)data;
+    struct MineralColor *minerals = (struct MineralColor *)(self->minerals);
     *a = 0;
     
     for (z = 0; z <= z_max; z++) {
-        int i, tmp, max_i = sizeof(orecolors) / sizeof(struct OreColor);
+        int i, tmp;
         unsigned char blockid = getArrayByte3D(state->blocks, x, y, z);
         
-        for (i = 0; i < max_i && orecolors[i].blockid != 0; i++) {
-            if (orecolors[i].blockid == blockid) {
-                *r = orecolors[i].r;
-                *g = orecolors[i].g;
-                *b = orecolors[i].b;
+        for (i = 0; (max_i == -1 || i < max_i) && minerals[i].blockid != 0; i++) {
+            if (minerals[i].blockid == blockid) {
+                *r = minerals[i].r;
+                *g = minerals[i].g;
+                *b = minerals[i].b;
                 
                 tmp = (128 - z_max + z) * 2 - 40;
                 *a = MIN(MAX(0, tmp), 255);
@@ -69,6 +71,7 @@ static void get_color(void *data, RenderState *state,
 
 static int
 rendermode_mineral_start(void *data, RenderState *state, PyObject *options) {
+    PyObject *opt;
     RenderModeMineral* self;
 
     /* first, chain up */
@@ -79,6 +82,35 @@ rendermode_mineral_start(void *data, RenderState *state, PyObject *options) {
     /* now do custom initializations */
     self = (RenderModeMineral *)data;
     
+    opt = PyDict_GetItemString(options, "minerals");
+    if (opt) {
+        struct MineralColor *minerals = NULL;
+        Py_ssize_t minerals_size = 0, i;
+        /* create custom minerals */
+        
+        if (!PyList_Check(opt)) {
+            PyErr_SetString(PyExc_TypeError, "'minerals' must be a list");
+            return 1;
+        }
+        
+        minerals_size = PyList_GET_SIZE(opt);
+        minerals = self->minerals = calloc(minerals_size + 1, sizeof(struct MineralColor));
+        if (minerals == NULL) {
+            return 1;
+        }
+        
+        for (i = 0; i < minerals_size; i++) {
+            PyObject *mineral = PyList_GET_ITEM(opt, i);
+            if (!PyArg_ParseTuple(mineral, "b(bbb)", &(minerals[i].blockid), &(minerals[i].r), &(minerals[i].g), &(minerals[i].b))) {
+                free(minerals);
+                self->minerals = NULL;
+                return 1;
+            }
+        }
+    } else {
+        self->minerals = default_minerals;
+    }
+    
     /* setup custom color */
     self->parent.get_color = get_color;
     
@@ -88,7 +120,11 @@ rendermode_mineral_start(void *data, RenderState *state, PyObject *options) {
 static void
 rendermode_mineral_finish(void *data, RenderState *state) {
     /* first free all *our* stuff */
-    //RenderModeMineral* self = (RenderModeMineral *)data;
+    RenderModeMineral* self = (RenderModeMineral *)data;
+    
+    if (self->minerals && self->minerals != default_minerals) {
+        free(self->minerals);
+    }
     
     /* now, chain up */
     rendermode_overlay.finish(data, state);
@@ -106,9 +142,14 @@ rendermode_mineral_draw(void *data, RenderState *state, PyObject *src, PyObject 
     rendermode_overlay.draw(data, state, src, mask, mask_light);
 }
 
+const RenderModeOption rendermode_mineral_options[] = {
+    {"minerals", "a list of (blockid, (r, g, b)) tuples for coloring minerals"},
+    {NULL, NULL}
+};
+
 RenderModeInterface rendermode_mineral = {
     "mineral", "draws a colored overlay showing where ores are located",
-    NULL,
+    rendermode_mineral_options,
     &rendermode_overlay,
     sizeof(RenderModeMineral),
     rendermode_mineral_start,
