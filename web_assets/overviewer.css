@@ -7,6 +7,10 @@ body {
     margin: 0px;
     padding: 0px;
     background-color: #000;
+
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    line-height: 160%;
 }
 
 #mcmap {
