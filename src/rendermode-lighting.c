@@ -85,17 +85,17 @@ estimate_blocklevel(RenderModeLighting *self, RenderState *state,
         
         /* iterate through all surrounding blocks to take an average */
         int dx, dy, dz, local_block;
-        //~ printf("\n[Starting loop]\n");
         for (dx = -1; dx <= 1; dx += 2) {
             for (dy = -1; dy <= 1; dy += 2) {
                 for (dz = -1; dz <= 1; dz += 2) {
                     coeff = estimate_blocklevel(self, state, x+dx, y+dy, z+dz, &auth);
                     local_block = getArrayByte3D(blocks, x+dx, y+dy, z+dz);
+                    /* only add if the block is transparent, this seems to look better than
+                       using every block */
                     if (auth && is_transparent(local_block)) {
                         average_gather += coeff;
                         average_count++;
                     }
-                    //~ printf("    [Inside the loop] Coeff = %d, average_gather = %d, average_count = %d, auth = %d, block = %d\n", coeff, average_gather, average_count, auth, local_block);
                 }
             }
         }
@@ -103,12 +103,6 @@ estimate_blocklevel(RenderModeLighting *self, RenderState *state,
     
     /* only return the average if at least one was authoratative */
     if (average_count > 0) {
-        int result;
-        float resultf;
-        result = average_gather / average_count;
-        resultf = average_gather / average_count;
-        //~ printf("[Outside the loop] average_gather = %d, average_count = %d\n", average_gather, average_count);
-        //~ printf("[Outside the loop] result = %d, resultf = %f\n", result, resultf);
         return average_gather / average_count;
     }
     
@@ -176,16 +170,13 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
     
     skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
     blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
-    //~ if (block == 0 && blocklevel != 0) {
-        //~ printf("Para este aire tenemos skylevel %d, blocklevel %d\n", skylevel, blocklevel);
-    //~ }
 
-    /* only do special half-step handling if no authoratative pointer was
-       passed in, which is a sign that we're recursing */
+    /* special half-step handling */
     if (block == 44 || block == 53 || block == 67) {
         unsigned int upper_block;
         
-        if (local_z != 127) { /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
+        /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
+        if (local_z != 127) {
             upper_block = getArrayByte3D(blocks, local_x, local_y, local_z + 1);
             if (is_transparent(upper_block)) {
                 skylevel = getArrayByte3D(skylight, local_x, local_y, local_z + 1);
@@ -197,6 +188,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
             blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
         }
         
+        /* the block has a bad blocklevel, estimate it from neigborhood
         /* use given coordinates, no local ones! */
         blocklevel = estimate_blocklevel(self, state, x, y, z, NULL);
 
