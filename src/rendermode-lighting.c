@@ -181,11 +181,9 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
             if (is_transparent(upper_block)) {
                 skylevel = getArrayByte3D(skylight, local_x, local_y, local_z + 1);
             }
-            blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
         } else {
             upper_block = 0;
             skylevel = 15;
-            blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
         }
         
         /* the block has a bad blocklevel, estimate it from neigborhood
