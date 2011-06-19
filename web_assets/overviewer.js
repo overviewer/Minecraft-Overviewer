@@ -591,6 +591,17 @@ var overviewer = {
                 overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
             }
 
+            // Coords box
+            var coordsDiv = document.createElement('DIV');
+            coordsDiv.id = 'coordsDiv';
+            coordsDiv.innerHTML = '';
+            overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(coordsDiv);
+            // Update coords on mousemove
+            google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
+                var worldcoords = overviewer.util.fromLatLngToWorld(event.latLng.lat(), event.latLng.lng());
+                coordsDiv.innerHTML = "Coords: X " + Math.round(worldcoords.x) + ", Z " + Math.round(worldcoords.z);
+            });
+
             // only need to create the control if there are items in the list.
             // as defined in config.js
             if (overviewerConfig.objectGroups.signs.length > 0) {

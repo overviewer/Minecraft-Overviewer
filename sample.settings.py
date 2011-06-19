@@ -6,7 +6,7 @@
 # provide examples of interesting things you can do with the settings file. Most
 # of the time, a simple 'setting_name = value' will work.
 
-# This file is a python script, so you can import and python module you wish or
+# This file is a python script, so you can import any python module you wish or
 # use any built-in python function, though this is not normally necessary
 
 # Lines that start with a hash mark are comments

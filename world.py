@@ -78,7 +78,10 @@ class World(object):
         logging.info("Scanning regions")
         regionfiles = {}
         self.regions = {}
-        self.regionlist = regionlist # a list of paths
+        if regionlist:
+            self.regionlist = map(os.path.abspath, regionlist) # a list of paths
+        else:
+            self.regionlist = None
         for x, y, regionfile in self._iterate_regionfiles():
             mcr = self.reload_region(regionfile) 
             mcr.get_chunk_info()
