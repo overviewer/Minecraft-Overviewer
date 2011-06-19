@@ -118,7 +118,7 @@ typedef struct {
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
 inline float get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
-                                      int x, int y, int z, int *authoratative);
+                                      int x, int y, int z);
 
 /* NIGHT */
 typedef struct {
