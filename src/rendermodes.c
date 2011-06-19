@@ -66,7 +66,7 @@ render_mode_create_options(const char *mode) {
     }
     
     /* check custom mode info if needed */
-    if (found_concrete == 1 && custom_render_modes != NULL) {
+    if (found_concrete == 0 && custom_render_modes != NULL) {
         PyObject *custom = PyDict_GetItemString(custom_render_modes, mode);
         if (custom) {
             custom = PyDict_GetItemString(custom, "parent");
@@ -134,13 +134,13 @@ RenderMode *render_mode_create(const char *mode, RenderState *state) {
     if (options == NULL)
         return NULL;
     
-    ret = malloc(sizeof(RenderMode));
+    ret = calloc(1, sizeof(RenderMode));
     if (ret == NULL) {
         Py_DECREF(options);
         return NULL;
     }
     
-    ret->mode = malloc(iface->data_size);
+    ret->mode = calloc(1, iface->data_size);
     if (ret->mode == NULL) {
         Py_DECREF(options);
         free(ret);
