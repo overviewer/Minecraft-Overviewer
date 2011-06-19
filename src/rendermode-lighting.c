@@ -33,21 +33,100 @@ static float calculate_darkness(unsigned char skylight, unsigned char blocklight
  * was calculated correctly from available light data, it will be true. You
  * may (and probably should) pass NULL.
  */
+
+inline unsigned char
+estimate_blocklevel(RenderModeLighting *self, RenderState *state,
+                         int x, int y, int z, int *authoratative) {
+
+    /* placeholders for later data arrays, coordinates */
+    PyObject *blocks = NULL;
+    PyObject *blocklight = NULL;
+    int local_x = x, local_y = y, local_z = z;
+    unsigned char block, blocklevel;
+    unsigned int average_count = 0, average_gather = 0, coeff = 0;
+
+    /* defaults to "guess" until told otherwise */
+    if (authoratative)
+        *authoratative = 0;
+    
+    /* find out what chunk we're in, and translate accordingly */
+    if (x >= 0 && y < 16) {
+        blocks = state->blocks;
+        blocklight = self->blocklight;
+    } else if (x < 0) {
+        local_x += 16;        
+        blocks = state->left_blocks;
+        blocklight = self->left_blocklight;
+    } else if (y >= 16) {
+        local_y -= 16;
+        blocks = state->right_blocks;
+        blocklight = self->right_blocklight;
+    }
+    
+    /* make sure we have correctly-ranged coordinates */
+    if (!(local_x >= 0 && local_x < 16 &&
+          local_y >= 0 && local_y < 16 &&
+          local_z >= 0 && local_z < 128)) {
+        
+        return 0;
+    }
+
+    /* also, make sure we have enough info to correctly calculate lighting */
+    if (blocks == Py_None || blocks == NULL ||
+        blocklight == Py_None || blocklight == NULL) {
+        
+        return 0;
+    }
+
+    block = getArrayByte3D(blocks, local_x, local_y, local_z);
+    
+    if (authoratative == NULL) {
+        int auth;
+        
+        /* iterate through all surrounding blocks to take an average */
+        int dx, dy, dz, local_block;
+        for (dx = -1; dx <= 1; dx += 2) {
+            for (dy = -1; dy <= 1; dy += 2) {
+                for (dz = -1; dz <= 1; dz += 2) {
+                    coeff = estimate_blocklevel(self, state, x+dx, y+dy, z+dz, &auth);
+                    local_block = getArrayByte3D(blocks, x+dx, y+dy, z+dz);
+                    /* only add if the block is transparent, this seems to look better than
+                       using every block */
+                    if (auth && is_transparent(local_block)) {
+                        average_gather += coeff;
+                        average_count++;
+                    }
+                }
+            }
+        }
+    }
+    
+    /* only return the average if at least one was authoratative */
+    if (average_count > 0) {
+        return average_gather / average_count;
+    }
+    
+    blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
+    
+    /* no longer a guess */
+    if (!(block == 44 || block == 53 || block == 67) && authoratative) {
+        *authoratative = 1;
+    }
+    
+    return blocklevel;
+}
+
 inline float
 get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
-                         int x, int y, int z, int *authoratative) {
-    
+                         int x, int y, int z) {
+
     /* placeholders for later data arrays, coordinates */
     PyObject *blocks = NULL;
     PyObject *skylight = NULL;
     PyObject *blocklight = NULL;
     int local_x = x, local_y = y, local_z = z;
     unsigned char block, skylevel, blocklevel;
-    
-    /* defaults to "guess" until told otherwise */
-    if (authoratative)
-        *authoratative = 0;
-    
+
     /* find out what chunk we're in, and translate accordingly */
     if (x >= 0 && y < 16) {
         blocks = state->blocks;
@@ -64,7 +143,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         skylight = self->right_skylight;
         blocklight = self->right_blocklight;
     }
-    
+
     /* make sure we have correctly-ranged coordinates */
     if (!(local_x >= 0 && local_x < 16 &&
           local_y >= 0 && local_y < 16 &&
@@ -72,7 +151,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         
         return self->calculate_darkness(15, 0);
     }
-    
+
     /* also, make sure we have enough info to correctly calculate lighting */
     if (blocks == Py_None || blocks == NULL ||
         skylight == Py_None || skylight == NULL ||
@@ -89,61 +168,34 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         return self->calculate_darkness(15, 0);
     }
     
-    /* only do special half-step handling if no authoratative pointer was
-       passed in, which is a sign that we're recursing */
-    if ((block == 44 || block == 53 || block == 67) && authoratative == NULL) {
-        float average_gather = 0.0f;
-        unsigned int average_count = 0, upper_block;
-        int auth;
-        float coeff;
+    skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
+    blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
+
+    /* special half-step handling */
+    if (block == 44 || block == 53 || block == 67) {
+        unsigned int upper_block;
         
-        if (local_z != 127) { /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
+        /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
+        if (local_z != 127) {
             upper_block = getArrayByte3D(blocks, local_x, local_y, local_z + 1);
             if (is_transparent(upper_block)) {
                 skylevel = getArrayByte3D(skylight, local_x, local_y, local_z + 1);
             }
-            blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
         } else {
             upper_block = 0;
             skylevel = 15;
-            blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
         }
+        
+        /* the block has a bad blocklevel, estimate it from neigborhood
+        /* use given coordinates, no local ones! */
+        blocklevel = estimate_blocklevel(self, state, x, y, z, NULL);
 
-        if (skylevel) { /* if we have a good skylevel use it, if not iterate */
-            return self->calculate_darkness(skylevel, blocklevel);
-        } else {
-
-            /* iterate through all surrounding blocks to take an average */
-            int dx, dy, dz;
-            for (dx = -1; dx <= 1; dx += 2) {
-                for (dy = -1; dy <= 1; dy += 2) {
-                    for (dz = -1; dz <= 1; dz += 2) {
-                        coeff = get_lighting_coefficient(self, state, x+dx, y+dy, z+dz, &auth);
-                        if (auth) {
-                            average_gather += coeff;
-                            average_count++;
-                        }
-                    }
-                }
-            }
-            
-            /* only return the average if at least one was authoratative */
-            if (average_count > 0)
-                return average_gather / average_count;
-        }
     }
     
     if (block == 10 || block == 11) {
         /* lava blocks should always be lit! */
         return 0.0f;
     }
-    
-    skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
-    blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
-    
-    /* no longer a guess */
-    if (authoratative)
-        *authoratative = 1;
     
     return self->calculate_darkness(skylevel, blocklevel);
 }
@@ -164,7 +216,7 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
         }
     }
     
-    black_coeff = get_lighting_coefficient(self, state, x, y, z, NULL);
+    black_coeff = get_lighting_coefficient(self, state, x, y, z);
     alpha_over_full(state->img, self->black_color, mask, black_coeff, state->imgx, state->imgy, 0, 0);
 }
 
