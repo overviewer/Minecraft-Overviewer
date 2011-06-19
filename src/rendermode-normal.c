@@ -19,44 +19,23 @@
 
 static int
 rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
-    PyObject *opt, *chunk_x_py, *chunk_y_py, *world, *use_biomes, *worlddir;
+    PyObject *chunk_x_py, *chunk_y_py, *world, *use_biomes, *worlddir;
     RenderModeNormal *self = (RenderModeNormal *)data;
     
     /* load up the given options, first */
     
-    opt = PyDict_GetItemString(options, "edge_opacity");
-    if (opt) {
-        if (!PyNumber_Check(opt)) {
-            PyErr_SetString(PyExc_TypeError, "'edge_opacity' must be a number");
-            return 1;
-        }
-        self->edge_opacity = PyFloat_AsDouble(opt);
-    } else {
-        self->edge_opacity = 0.15;
-    }
+    self->edge_opacity = 0.15;
+    if (!render_mode_parse_option(options, "edge_opacity", "f", &(self->edge_opacity)))
+        return 1;
     
-    opt = PyDict_GetItemString(options, "min_depth");
-    if (opt) {
-        if (!PyInt_Check(opt)) {
-            PyErr_SetString(PyExc_TypeError, "'min_depth' must be an integer");
-            return 1;
-        }
-        self->min_depth = PyInt_AsLong(opt);
-    } else {
-        self->min_depth = 0;
-    }
+    self->min_depth = 0;
+    if (!render_mode_parse_option(options, "min_depth", "I", &(self->min_depth)))
+        return 1;
 
-    opt = PyDict_GetItemString(options, "max_depth");
-    if (opt) {
-        if (!PyInt_Check(opt)) {
-            PyErr_SetString(PyExc_TypeError, "'max_depth' must be an integer");
-            return 1;
-        }
-        self->max_depth = PyInt_AsLong(opt);
-    } else {
-        self->max_depth = 127;
-    }
-    
+    self->max_depth = 127;
+    if (!render_mode_parse_option(options, "max_depth", "I", &(self->max_depth)))
+        return 1;
+
     chunk_x_py = PyObject_GetAttrString(state->self, "chunkX");
     chunk_y_py = PyObject_GetAttrString(state->self, "chunkY");
     

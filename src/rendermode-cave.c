@@ -178,7 +178,6 @@ static int
 rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
     RenderModeCave* self;
     int ret;
-    PyObject *opt;
     self = (RenderModeCave *)data;
 
     /* first, chain up */
@@ -186,26 +185,17 @@ rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
     if (ret != 0)
         return ret;
     
-    opt = PyDict_GetItemString(options, "depth_tinting");
-    if (opt) {
-        self->depth_tinting = PyObject_IsTrue(opt);
-    } else {
-        self->depth_tinting = 1;
-    }
+    self->depth_tinting = 1;
+    if (!render_mode_parse_option(options, "depth_tinting", "i", &(self->depth_tinting)))
+        return 1;
 
-    opt = PyDict_GetItemString(options, "only_lit");
-    if (opt) {
-        self->only_lit = PyObject_IsTrue(opt);
-    } else {
-        self->only_lit = 0;
-    }
-
-    opt = PyDict_GetItemString(options, "lighting");
-    if (opt) {
-        self->lighting = PyObject_IsTrue(opt);
-    } else {
-        self->lighting = 0;
-    }
+    self->only_lit = 0;
+    if (!render_mode_parse_option(options, "only_lit", "i", &(self->only_lit)))
+        return 1;
+    
+    self->lighting = 0;
+    if (!render_mode_parse_option(options, "lighting", "i", &(self->lighting)))
+        return 1;
 
     /* if there's skylight we are in the surface! */
     self->skylight = PyObject_GetAttrString(state->self, "skylight");

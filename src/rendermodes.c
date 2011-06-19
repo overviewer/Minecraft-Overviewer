@@ -17,6 +17,7 @@
 
 #include "overviewer.h"
 #include <string.h>
+#include <stdarg.h>
 
 /* list of all render modes, ending in NULL
    all of these will be available to the user, so DON'T include modes
@@ -172,6 +173,50 @@ int render_mode_occluded(RenderMode *self, int x, int y, int z) {
 
 void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light) {
     self->iface->draw(self->mode, self->state, img, mask, mask_light);
+}
+
+/* options parse helper */
+int render_mode_parse_option(PyObject *dict, const char *name, const char *format, ...) {
+    va_list ap;
+    PyObject *item;
+    int ret;
+    
+    if (dict == NULL || name == NULL)
+        return 1;
+    
+    item = PyDict_GetItemString(dict, name);
+    if (item == NULL)
+        return 1;
+    
+    /* make sure the item we're parsing is a tuple
+       for VaParse to work correctly */
+    if (!PyTuple_Check(item)) {
+        item = PyTuple_Pack(1, item);
+    } else {
+        Py_INCREF(item);
+    }
+    
+    va_start(ap, format);
+    ret = PyArg_VaParse(item, format, ap);
+    va_end(ap);
+    
+    Py_DECREF(item);
+    
+    if (!ret) {
+        PyObject *errtype, *errvalue, *errtraceback;
+        const char *errstring;
+        
+        PyErr_Fetch(&errtype, &errvalue, &errtraceback);
+        errstring = PyString_AsString(errvalue);
+        
+        PyErr_Format(PyExc_TypeError, "rendermode option \"%s\" has incorrect type (%s)", name, errstring);
+        
+        Py_DECREF(errtype);
+        Py_DECREF(errvalue);
+        Py_XDECREF(errtraceback);
+    }
+    
+    return ret;
 }
 
 /* bindings for python -- get all the rendermode names */

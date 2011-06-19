@@ -320,7 +320,7 @@ chunk_render(PyObject *self, PyObject *args) {
     state.rendermode = rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
     Py_DECREF(rendermode_py);
     if (rendermode == NULL) {
-        return Py_BuildValue("i", "-1");
+        return NULL;
     }
 
     /* get the image size */

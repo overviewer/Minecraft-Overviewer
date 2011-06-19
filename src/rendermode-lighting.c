@@ -168,7 +168,6 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
 
 static int
 rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
-    PyObject *opt;
     RenderModeLighting* self;
 
     /* first, chain up */
@@ -178,16 +177,9 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
     
     self = (RenderModeLighting *)data;
 
-    opt = PyDict_GetItemString(options, "shade_strength");
-    if (opt) {
-        if (!PyNumber_Check(opt)) {
-            PyErr_SetString(PyExc_TypeError, "'shade_strength' must be a number");
-            return 1;
-        }
-        self->shade_strength = PyFloat_AsDouble(opt);
-    } else {
-        self->shade_strength = 1.0;
-    }
+    self->shade_strength = 1.0;
+    if (!render_mode_parse_option(options, "shade_strength", "f", &(self->shade_strength)))
+        return 1;
     
     self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
     self->facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");

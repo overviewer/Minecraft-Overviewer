@@ -81,6 +81,10 @@ void render_mode_destroy(RenderMode *self);
 int render_mode_occluded(RenderMode *self, int x, int y, int z);
 void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light);
 
+/* helper function for reading in rendermode options
+   works like PyArg_ParseTuple on a dictionary item */
+int render_mode_parse_option(PyObject *dict, const char *name, const char *format, ...);
+
 /* python metadata bindings */
 PyObject *get_render_modes(PyObject *self, PyObject *args);
 PyObject *get_render_mode_info(PyObject *self, PyObject *args);
