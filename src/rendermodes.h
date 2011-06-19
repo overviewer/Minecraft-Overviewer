@@ -110,9 +110,13 @@ typedef struct {
     /* top facemask for grass biome tinting */
     PyObject *facemask_top;
     
+    /* black and white colors for height fading */
+    PyObject *black_color, *white_color;
+    
     float edge_opacity;
     unsigned int min_depth;
     unsigned int max_depth;
+    int height_fading;
 } RenderModeNormal;
 extern RenderModeInterface rendermode_normal;
 

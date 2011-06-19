@@ -36,6 +36,15 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
     if (!render_mode_parse_option(options, "max_depth", "I", &(self->max_depth)))
         return 1;
 
+    self->height_fading = 0;
+    if (!render_mode_parse_option(options, "height_fading", "i", &(self->height_fading)))
+        return 1;
+    
+    if (self->height_fading) {
+        self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
+        self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
+    }
+
     chunk_x_py = PyObject_GetAttrString(state->self, "chunkX");
     chunk_y_py = PyObject_GetAttrString(state->self, "chunkY");
     
@@ -120,6 +129,8 @@ rendermode_normal_finish(void *data, RenderState *state) {
     Py_XDECREF(self->tall_grass_texture);
     Py_XDECREF(self->tall_fern_texture);
     Py_XDECREF(self->facemask_top);
+    Py_XDECREF(self->black_color);
+    Py_XDECREF(self->white_color);
 }
 
 static int
@@ -216,7 +227,21 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
         }
     }
-
+    
+    if (self->height_fading) {
+        /* do some height fading */
+        PyObject *height_color = self->white_color;
+        /* negative alpha => darkness, positive => light */
+        float alpha = (1.0 / (1 + expf((70 - state->z) / 11.0))) * 0.6 - 0.55;
+        
+        if (alpha < 0.0) {
+            alpha *= -1;
+            height_color = self->black_color;
+        }
+        
+        alpha_over_full(state->img, height_color, mask_light, alpha, state->imgx, state->imgy, 0, 0);
+    }
+    
 
     /* Draw some edge lines! */
     // draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
@@ -267,6 +292,7 @@ const RenderModeOption rendermode_normal_options[] = {
     {"edge_opacity", "darkness of the edge lines, from 0.0 to 1.0 (default: 0.15)"},
     {"min_depth", "lowest level of blocks to render (default: 0)"},
     {"max_depth", "highest level of blocks to render (default: 127)"},
+    {"height_fading", "darken or lighten blocks based on height (default: False)"},
     {NULL, NULL}
 };
 
