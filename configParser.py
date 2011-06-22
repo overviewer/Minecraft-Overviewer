@@ -81,6 +81,10 @@ class ConfigOptionParser(object):
             
             if os.path.exists(self.configFile):
                 execfile(self.configFile, g, l)
+            elif options.config_file:
+                # file does not exist, but *was* specified on the command line
+                logging.error("Could not open %s." % self.configFile)
+                sys.exit(1)
         except NameError, ex:
             import traceback
             traceback.print_exc()
