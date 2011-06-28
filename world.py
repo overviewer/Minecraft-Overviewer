@@ -78,7 +78,10 @@ class World(object):
         logging.info("Scanning regions")
         regionfiles = {}
         self.regions = {}
-        self.regionlist = regionlist # a list of paths
+        if regionlist:
+            self.regionlist = map(os.path.abspath, regionlist) # a list of paths
+        else:
+            self.regionlist = None
         for x, y, regionfile in self._iterate_regionfiles():
             mcr = self.reload_region(regionfile) 
             mcr.get_chunk_info()
@@ -99,9 +102,6 @@ class World(object):
         if not ('version' in data and data['version'] == 19132):
             logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
             sys.exit(1)
-
-        if self.useBiomeData:
-            textures.prepareBiomeData(worlddir)
 
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example
@@ -211,23 +211,25 @@ class World(object):
 
         ## The filename of this chunk
         chunkFile = self.get_region_path(chunkX, chunkY)
-
-        data=nbt.load_from_region(chunkFile, chunkX, chunkY)[1]
-        level = data['Level']
-        blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
-
-        ## The block for spawn *within* the chunk
-        inChunkX = spawnX - (chunkX*16)
-        inChunkZ = spawnZ - (chunkY*16)
-
-        ## find the first air block
-        while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
-            spawnY += 1
-            if spawnY == 128:
-                break
+        
+        if chunkFile is not None:
+            data = nbt.load_from_region(chunkFile, chunkX, chunkY)[1]
+            if data is not None:
+                level = data['Level']
+                blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
+                
+                ## The block for spawn *within* the chunk
+                inChunkX = spawnX - (chunkX*16)
+                inChunkZ = spawnZ - (chunkY*16)
+                
+                ## find the first air block
+                while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
+                    spawnY += 1
+                    if spawnY == 128:
+                        break
 
         self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, 
-                msg="Spawn", type="spawn", chunk=(inChunkX,inChunkZ)))
+                msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
         self.spawn = (spawnX, spawnY, spawnZ)
 
     def go(self, procs):

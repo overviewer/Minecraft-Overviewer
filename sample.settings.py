@@ -6,7 +6,7 @@
 # provide examples of interesting things you can do with the settings file. Most
 # of the time, a simple 'setting_name = value' will work.
 
-# This file is a python script, so you can import and python module you wish or
+# This file is a python script, so you can import any python module you wish or
 # use any built-in python function, though this is not normally necessary
 
 # Lines that start with a hash mark are comments
@@ -50,10 +50,13 @@ zoom = 9
 ## Example:  Dynamically create regionlist of only regions older than 2 days
 
 import os, time
+# the following two lines are needed to the lambda to work
+globals()['os'] = os
+globals()['time'] = time
 regionDir = os.path.join(args[0], "region")
 regionFiles = filter(lambda x: x.endswith(".mcr"), os.listdir(regionDir))
 def olderThanTwoDays(f):
-    return time.time() - os.stat(f).st_mtime > (60*60*24*2)
+    return time.time() - os.stat(os.path.join(args[0], 'region',f)).st_mtime > (60*60*24*2)
 oldRegionFiles = filter(olderThanTwoDays, regionFiles)
 with open("regionlist.txt", "w") as f:
     f.write("\n".join(oldRegionFiles))
@@ -89,9 +92,11 @@ imgformat = "jpg"
 ################################################################################
 ### optimizeimg
 ## If using png, perform image file size optimizations on the output. Specify 1
-## for pngcrush, 2 for pngcrush+optipng+advdef.  This may double (or more) 
-## render times, but will produce up to 30% smaller images. NOTE: requires 
-## corresponding programs in $PATH or %PATH%
+## for pngcrush, 2 for pngcrush+advdef, 3 for pngcrush+advdef with more agressive
+## options. Option 1 gives around 19% of reduction, option 2 gives around 21% 
+## (it doubles the optimizing time) and option 3 gives around 23% (it doubles, 
+## again, the optimizing time). Using this option may double (or more) 
+## render times. NOTE: requires corresponding programs in $PATH or %PATH%
 ## Default: not set
 ## Type: integer
 ## Example:
@@ -148,3 +153,9 @@ if "web_assets_hook" in locals():
     skipjs = True
 
 
+
+
+### As a reminder, don't use this file verbatim, it should only be used as
+### a guide.
+import sys
+sys.exit("This sample-settings file shouldn't be used directly!")

@@ -56,7 +56,7 @@ struct _RenderModeInterface {
     /* returns non-zero to skip rendering this block */
     int (*occluded)(void *, RenderState *);
     /* last two arguments are img and mask, from texture lookup */
-    void (*draw)(void *, RenderState *, PyObject *, PyObject *);
+    void (*draw)(void *, RenderState *, PyObject *, PyObject *, PyObject *);
 };
 
 /* figures out the render mode to use from the given ChunkRenderer */
@@ -79,7 +79,7 @@ typedef struct {
     /* grasscolor and foliagecolor lookup tables */
     PyObject *grasscolor, *foliagecolor;
     /* biome-compatible grass/leaf textures */
-    PyObject *grass_texture, *leaf_texture;
+    PyObject *grass_texture, *leaf_texture, *tall_grass_texture, *tall_fern_texture;
     /* top facemask for grass biome tinting */
     PyObject *facemask_top;
 } RenderModeNormal;
@@ -118,7 +118,7 @@ typedef struct {
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
 inline float get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
-                                      int x, int y, int z, int *authoratative);
+                                      int x, int y, int z);
 
 /* NIGHT */
 typedef struct {

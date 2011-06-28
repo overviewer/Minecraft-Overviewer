@@ -202,7 +202,7 @@ rendermode_cave_finish(void *data, RenderState *state) {
 }
 
 static void
-rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *mask) {
+rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeCave* self;
     int z, r, g, b;
     self = (RenderModeCave *)data;
@@ -211,7 +211,7 @@ rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
     r = 0, g = 0, b = 0;
 
     /* draw the normal block */
-    rendermode_normal.draw(data, state, src, mask);
+    rendermode_normal.draw(data, state, src, mask, mask_light);
 
     /* get the colors and tint and tint */
     /* TODO TODO   for a nether mode there isn't tinting! */

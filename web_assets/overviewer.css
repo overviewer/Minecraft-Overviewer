@@ -7,6 +7,10 @@ body {
     margin: 0px;
     padding: 0px;
     background-color: #000;
+
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    line-height: 160%;
 }
 
 #mcmap {
@@ -29,38 +33,60 @@ body {
     font-family: monospace;
 }
 
-#customControl {
+.customControl {
     padding: 5px;
     height: 15px;
+    color: black;
     font-family: Arial, sans-serif;
 }
 
-#customControl > div#top {
-    background-color: #fff;
-    border: 2px solid #000;
-    text-align: center;
-    width: 70px;
+.customControl > div.top {
     font-size: 12px;
-    width: 70px;
+    line-height: 160%;
+    text-align: center;
+    padding: 0px 6px;
+    
+    background-image: url('control-bg.png');
+    background-repeat: repeat-x;
+    
+    border: 1px solid #A9BBDF;
+    border-radius: 2px 2px;
+    box-shadow: rgba(0, 0, 0, 0.347656) 2px 2px 3px;
     cursor: pointer;
 }
 
-#customControl > div#dropDown {
+.customControl > div.top:hover {
+    border: 1px solid #678AC7;
+}
+
+.customControl > div.top-active {
+    color: white;
+    font-weight: bold;
+    padding: 0px 5px;
+    border: 1px solid #678AC7;
+    background-image: url('control-bg-active.png');
+}
+
+.customControl > div.dropDown {
+    font-size: 12px;
+    background-color: white;
+    
+    border: 1px solid #A9BBDF;
+    border-radius: 2px 2px;
+    box-shadow: rgba(0, 0, 0, 0.347656) 2px 2px 3px;
+    
+    display: none;
+}
+
+.customControl > div.button {
     border: 1px solid #000;
     font-size: 12px;
     background-color: #fff;
     display: none;
 }
 
-#customControl > div#button {
-    border: 1px solid #000;
-    font-size: 12px;
-    background-color: #fff;
-    display: none;
-}
 
-
-#link {
+#link, #coordsDiv {
     background-color: #fff; /* fallback */
     background-color: rgba(255,255,255,0.55);
     border: 1px solid rgb(0, 0, 0);

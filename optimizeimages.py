@@ -28,7 +28,7 @@ def check_programs(level):
         result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
         return len(result) != 0
     
-    for prog,l in [(pngcrush,1), (optipng,2), (advdef,2)]:
+    for prog,l in [(pngcrush,1), (advdef,2)]:
         if l <= level:
             if (not exists_in_path(prog)) and (not exists_in_path(prog + ".exe")):
                 raise Exception("Optimization prog %s for level %d not found!" % (prog, l))
@@ -45,8 +45,8 @@ def optimize_image(imgpath, imgformat, optimizeimg):
             os.rename(imgpath+".tmp", imgpath)
 
         if optimizeimg >= 2:
-            subprocess.Popen([optipng, imgpath], stderr=subprocess.STDOUT,
-                stdout=subprocess.PIPE).communicate()[0]
-            subprocess.Popen([advdef, "-z4",imgpath], stderr=subprocess.STDOUT,
+            # the "-nc" it's needed to no broke the transparency of tiles
+            recompress_option = "-z2" if optimizeimg == 2 else "-z4"
+            subprocess.Popen([advdef, recompress_option,imgpath], stderr=subprocess.STDOUT,
                 stdout=subprocess.PIPE).communicate()[0]
 

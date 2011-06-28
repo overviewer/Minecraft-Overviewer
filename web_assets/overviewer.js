@@ -560,8 +560,8 @@ var overviewer = {
 
             // Adjust for the fact that we we can't figure out what Y is given
             // only latitude and longitude, so assume Y=64.
-            point.x += 64 + 1;
-            point.z -= 64 + 2;
+            point.x += 64;
+            point.z -= 64;
 
             return point;
         },
@@ -585,11 +585,22 @@ var overviewer = {
             // Spawn button
             var homeControlDiv = document.createElement('DIV');
             var homeControl = new overviewer.classes.HomeControl(homeControlDiv);  
-            homeControlDiv.id = 'customControl';
+            $(homeControlDiv).addClass('customControl');
             homeControlDiv.index = 1;
             if (overviewerConfig.map.controls.spawn) {
                 overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
             }
+
+            // Coords box
+            var coordsDiv = document.createElement('DIV');
+            coordsDiv.id = 'coordsDiv';
+            coordsDiv.innerHTML = '';
+            overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(coordsDiv);
+            // Update coords on mousemove
+            google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
+                var worldcoords = overviewer.util.fromLatLngToWorld(event.latLng.lat(), event.latLng.lng());
+                coordsDiv.innerHTML = "Coords: X " + Math.round(worldcoords.x) + ", Z " + Math.round(worldcoords.z);
+            });
 
             // only need to create the control if there are items in the list.
             // as defined in config.js
@@ -598,6 +609,11 @@ var overviewer = {
                 var items = [];
                 for (i in overviewerConfig.objectGroups.signs) {
                     var signGroup = overviewerConfig.objectGroups.signs[i];
+                    // don't create an option for this group if empty
+                    if (overviewer.collections.markers[signGroup.label].length == 0) {
+                        continue;
+                    }
+                    
                     var iconURL = signGroup.icon;
                     if(!iconURL) {
                         iconURL = overviewerConfig.CONST.image.defaultMarker;
@@ -616,7 +632,11 @@ var overviewer = {
                         }
                     });
                 }
-                overviewer.util.createDropDown('Signposts', items);
+                
+                // only create drop down if there's used options
+                if (items.length > 0) {
+                    overviewer.util.createDropDown('Signposts', items);
+                }
             }
 
             // if there are any regions data, lets show the option to hide/show them.
@@ -680,23 +700,24 @@ var overviewer = {
         'createDropDown': function(title, items) {
             var control = document.createElement('DIV');
             // let's let a style sheet do most of the styling here
-            control.id = 'customControl';
+            $(control).addClass('customControl');
 
             var controlText = document.createElement('DIV');
             controlText.innerHTML = title;
 
             var controlBorder = document.createElement('DIV');
-            controlBorder.id='top';
+            $(controlBorder).addClass('top');
             control.appendChild(controlBorder);
             controlBorder.appendChild(controlText);
 
             var dropdownDiv = document.createElement('DIV');
-            dropdownDiv.id='dropDown';
+            $(dropdownDiv).addClass('dropDown');
             control.appendChild(dropdownDiv);
             dropdownDiv.innerHTML='';
 
             // add the functionality to toggle visibility of the items
             $(controlText).click(function() {
+                    $(controlBorder).toggleClass('top-active');
                     $(dropdownDiv).toggle();
                 });
 
@@ -868,14 +889,14 @@ var overviewer = {
             controlDiv.style.padding = '5px';
             // Set CSS for the control border
             var control = document.createElement('DIV');
-            control.id='top';
+            $(control).addClass('top');
             control.title = 'Click to center the map on the Spawn';
             controlDiv.appendChild(control);
 
             // Set CSS for the control interior
             var controlText = document.createElement('DIV');
             controlText.innerHTML = 'Spawn';
-            controlText.id='button';
+            $(controlText).addClass('button');
             control.appendChild(controlText);
 
             // Setup the click event listeners: simply set the map to map center
