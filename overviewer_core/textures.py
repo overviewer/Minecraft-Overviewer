@@ -1675,7 +1675,7 @@ biome_tall_fern_texture = None
 biome_leaf_texture = None
 specialblockmap = None
 
-def generate(path=None,texture_size=10):
+def generate(path=None,texture_size=24):
     global _find_file_local_path, texture_dimensions
     _find_file_local_path = path
     texture_dimensions = (texture_size, texture_size)
