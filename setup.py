@@ -22,6 +22,24 @@ setup_kwargs['options'] = {}
 setup_kwargs['ext_modules'] = []
 setup_kwargs['cmdclass'] = {}
 
+# helper to create a 'data_files'-type sequence recursively for a given dir
+def recursive_data_files(src, dest=None):
+    if dest is None:
+        dest = src
+    
+    ret = []
+    for dirpath, dirnames, filenames in os.walk(src):
+        current_dest = os.path.relpath(dirpath, src)
+        if current_dest == '.':
+            current_dest = dest
+        else:
+            current_dest = os.path.join(dest, current_dest)
+        
+        current_sources = map(lambda p: os.path.join(dirpath, p), filenames)
+        
+        ret.append((current_dest, current_sources))
+    return ret
+
 #
 # py2exe options
 #
@@ -29,8 +47,8 @@ setup_kwargs['cmdclass'] = {}
 if py2exe is not None:
     setup_kwargs['console'] = ['overviewer.py']
     setup_kwargs['data_files'] = [('textures', ['textures/lava.png', 'textures/water.png', 'textures/fire.png', 'textures/portal.png']),
-                                  ('', ['COPYING.txt', 'README.rst']),
-                                  ('web_assets', glob.glob('web_assets/*'))]
+                                  ('', ['COPYING.txt', 'README.rst'])]
+    setup_kwargs['data_files'] += recursive_data_files('web_assets')
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
