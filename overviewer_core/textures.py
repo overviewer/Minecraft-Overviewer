@@ -1675,7 +1675,7 @@ biome_tall_fern_texture = None
 biome_leaf_texture = None
 specialblockmap = None
 
-def generate(path=None,texture_size=24):
+def generate(path=None,texture_size=10):
     global _find_file_local_path, texture_dimensions
     _find_file_local_path = path
     texture_dimensions = (texture_size, texture_size)
@@ -1704,6 +1704,12 @@ def generate(path=None,texture_size=24):
             specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)
 
     if texture_size != 24:
+        # rescale biome textures.
+        biome_grass_texture = biome_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
+        biome_leaf_texture = biome_leaf_texture.resize(texture_dimensions, Image.ANTIALIAS)
+        biome_tall_grass_texture = biome_tall_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
+        biome_tall_fern_texture = biome_tall_fern_texture.resize(texture_dimensions, Image.ANTIALIAS)
+
         # rescale the normal block images
         for i in range(len(blockmap)):
             if blockmap[i] != None:
