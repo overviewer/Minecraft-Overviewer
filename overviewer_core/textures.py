@@ -1675,9 +1675,10 @@ biome_tall_fern_texture = None
 biome_leaf_texture = None
 specialblockmap = None
 
-def generate(path=None):
-    global _find_file_local_path
+def generate(path=None,texture_size=24):
+    global _find_file_local_path, texture_dimensions
     _find_file_local_path = path
+    texture_dimensions = (texture_size, texture_size)
     
     # This maps terainids to 16x16 images
     global terrain_images
@@ -1701,3 +1702,24 @@ def generate(path=None):
     for blockID in special_blocks:
         for data in special_map[blockID]:
             specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)
+
+    if texture_size != 24:
+        # rescale the normal block images
+        for i in range(len(blockmap)):
+            if blockmap[i] != None:
+                block = blockmap[i]
+                alpha = block[1]
+                block = block[0]
+                block.putalpha(alpha)
+                scaled_block = block.resize(texture_dimensions, Image.ANTIALIAS)
+                blockmap[i] = generate_texture_tuple(scaled_block, i)
+
+        # rescale the special block images
+        for blockid, data in iter(specialblockmap):
+            block = specialblockmap[(blockid,data)]
+            if block != None:
+                alpha = block[1]
+                block = block[0]
+                block.putalpha(alpha)
+                scaled_block = block.resize(texture_dimensions, Image.ANTIALIAS)
+                specialblockmap[(blockid,data)] = generate_texture_tuple(scaled_block, blockid)
