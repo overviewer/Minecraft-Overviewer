@@ -39,6 +39,15 @@ this_dir = util.get_program_path()
 try:
     import c_overviewer
 except ImportError:
+    ## if this is a frozen windows package, the following error messages about
+    ## building the c_overviewer extension are not appropriate
+    if hasattr(sys, "frozen"):
+        print "Something has gone wrong importing the c_overviewer extension.  Please"
+        print "make sure the 2008 and 2010 redistributable packages from Microsoft"
+        print "are installed."
+        sys.exit(1)
+
+
     ## try to find the build extension
     ext = os.path.join(this_dir, "c_overviewer.%s" % ("pyd" if platform.system() == "Windows" else "so"))
     if os.path.exists(ext):
