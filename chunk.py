@@ -56,6 +56,7 @@ def get_lvldata(world, filename, x, y, retries=2):
     
     try:
         d =  world.load_from_region(filename, x, y)
+        #TODO should probably do rotation from here
     except Exception, e:
         if retries > 0:
             # wait a little bit, and try again (up to `retries` times)
@@ -70,21 +71,21 @@ def get_lvldata(world, filename, x, y, retries=2):
     if not d: raise NoSuchChunk(x,y)
     return d
 
-def get_blockarray(level):
+def get_blockarray(level, north_direction):
     """Takes the level struct as returned from get_lvldata, and returns the
     Block array, which just contains all the block ids"""
-    return numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
+    return numpy.rot90(numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)), get_north_rotations(north_direction))
 
-def get_blockarray_fromfile(filename):
+def get_blockarray_fromfile(filename, north_direction):
     """Same as get_blockarray except takes a filename. This is a shortcut"""
     d =  nbt.load_from_region(filename, x, y)
     level = d[1]['Level']
-    return get_blockarray(level)
+    return get_blockarray(level, north_direction)
 
-def get_skylight_array(level):
+def get_skylight_array(level, north_direction):
     """Returns the skylight array. This is 4 bits per block, but it is
     expanded for you so you may index it normally."""
-    skylight = numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
+    skylight = numpy.rot90(numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)), get_north_rotations(north_direction))
     # this array is 2 blocks per byte, so expand it
     skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
     # Even elements get the lower 4 bits
@@ -93,25 +94,35 @@ def get_skylight_array(level):
     skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
     return skylight_expanded
 
-def get_blocklight_array(level):
+def get_blocklight_array(level, north_direction):
     """Returns the blocklight array. This is 4 bits per block, but it
     is expanded for you so you may index it normally."""
     # expand just like get_skylight_array()
-    blocklight = numpy.frombuffer(level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64))
+    blocklight = numpy.rot90(numpy.frombuffer(level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)), get_north_rotations(north_direction))
     blocklight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
     blocklight_expanded[:,:,::2] = blocklight & 0x0F
     blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
     return blocklight_expanded
 
-def get_blockdata_array(level):
+def get_blockdata_array(level, north_direction):
     """Returns the ancillary data from the 'Data' byte array.  Data is packed
     in a similar manner to skylight data"""
-    return numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
+    return numpy.rot90(numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64)), get_north_rotations(north_direction))
 
 def get_tileentity_data(level):
     """Returns the TileEntities TAG_List from chunk dat file"""
     data = level['TileEntities']
     return data
+
+def get_north_rotations(north_direction):
+    if north_direction == "upper-left":
+        return 1
+    elif north_direction == "upper-right":
+        return 2
+    elif north_direction == "lower-right":
+        return 3
+    elif north_direction == "lower-left":
+        return 0
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
 transparent_blocks = set([ 0,  6,  8,  9, 18, 20, 26, 27, 28, 30, 31, 32, 37, 38,
@@ -138,13 +149,14 @@ class NoSuchChunk(Exception):
     pass
 
 class ChunkRenderer(object):
-    def __init__(self, chunkcoords, worldobj, rendermode, queue):
+    def __init__(self, chunkcoords, worldobj, rendermode, queue, north_direction):
         """Make a new chunk renderer for the given chunk coordinates.
         chunkcoors should be a tuple: (chunkX, chunkY)
         
         cachedir is a directory to save the resulting chunk images to
         """
         self.queue = queue
+        self.north_direction = north_direction
         
         self.regionfile = worldobj.get_region_path(*chunkcoords)    
         #if not os.path.exists(self.regionfile):
@@ -181,21 +193,21 @@ class ChunkRenderer(object):
     def _load_blocks(self):
         """Loads and returns the block array"""
         if not hasattr(self, "_blocks"):
-            self._blocks = get_blockarray(self._load_level())
+            self._blocks = get_blockarray(self._load_level(), self.north_direction)
         return self._blocks
     blocks = property(_load_blocks)
     
     def _load_skylight(self):
         """Loads and returns skylight array"""
         if not hasattr(self, "_skylight"):
-            self._skylight = get_skylight_array(self.level)
+            self._skylight = get_skylight_array(self.level, self.north_direction)
         return self._skylight
     skylight = property(_load_skylight)
 
     def _load_blocklight(self):
         """Loads and returns blocklight array"""
         if not hasattr(self, "_blocklight"):
-            self._blocklight = get_blocklight_array(self.level)
+            self._blocklight = get_blocklight_array(self.level, self.north_direction)
         return self._blocklight
     blocklight = property(_load_blocklight)
     
@@ -204,9 +216,9 @@ class ChunkRenderer(object):
         chunk_path = self.world.get_region_path(self.chunkX - 1, self.chunkY)
         try:
             chunk_data = get_lvldata(self.world,chunk_path, self.chunkX - 1, self.chunkY)
-            self._left_skylight = get_skylight_array(chunk_data)
-            self._left_blocklight = get_blocklight_array(chunk_data)
-            self._left_blocks = get_blockarray(chunk_data)
+            self._left_skylight = get_skylight_array(chunk_data, self.north_direction)
+            self._left_blocklight = get_blocklight_array(chunk_data, self.north_direction)
+            self._left_blocks = get_blockarray(chunk_data, self.north_direction)
         except NoSuchChunk:
             self._left_skylight = None
             self._left_blocklight = None
@@ -238,9 +250,9 @@ class ChunkRenderer(object):
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY + 1)
         try:
             chunk_data = get_lvldata(self.world,chunk_path, self.chunkX, self.chunkY + 1)
-            self._right_skylight = get_skylight_array(chunk_data)
-            self._right_blocklight = get_blocklight_array(chunk_data)
-            self._right_blocks = get_blockarray(chunk_data)
+            self._right_skylight = get_skylight_array(chunk_data, self.north_direction)
+            self._right_blocklight = get_blocklight_array(chunk_data, self.north_direction)
+            self._right_blocks = get_blockarray(chunk_data, self.north_direction)
         except NoSuchChunk:
             self._right_skylight = None
             self._right_blocklight = None
@@ -272,9 +284,9 @@ class ChunkRenderer(object):
         chunk_path = self.world.get_region_path(self.chunkX + 1, self.chunkY)
         try:
             chunk_data = get_lvldata(self.world,chunk_path, self.chunkX + 1, self.chunkY)
-            self._up_right_skylight = get_skylight_array(chunk_data)
-            self._up_right_blocklight = get_blocklight_array(chunk_data)
-            self._up_right_blocks = get_blockarray(chunk_data)
+            self._up_right_skylight = get_skylight_array(chunk_data, self.north_direction)
+            self._up_right_blocklight = get_blocklight_array(chunk_data, self.north_direction)
+            self._up_right_blocks = get_blockarray(chunk_data, self.north_direction)
         except NoSuchChunk:
             self._up_right_skylight = None
             self._up_right_blocklight = None
@@ -299,9 +311,9 @@ class ChunkRenderer(object):
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY - 1)
         try:
             chunk_data = get_lvldata(self.world,chunk_path, self.chunkX, self.chunkY - 1)
-            self._up_left_skylight = get_skylight_array(chunk_data)
-            self._up_left_blocklight = get_blocklight_array(chunk_data)
-            self._up_left_blocks = get_blockarray(chunk_data)
+            self._up_left_skylight = get_skylight_array(chunk_data, self.north_direction)
+            self._up_left_blocklight = get_blocklight_array(chunk_data, self.north_direction)
+            self._up_left_blocks = get_blockarray(chunk_data, self.north_direction)
         except NoSuchChunk:
             self._up_left_skylight = None
             self._up_left_blocklight = None
@@ -391,7 +403,7 @@ class ChunkRenderer(object):
         rendered, and blocks are drawn with a color tint depending on their
         depth."""
         
-        blockData = get_blockdata_array(self.level)
+        blockData = get_blockdata_array(self.level, self.north_direction)
         blockData_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
         # Even elements get the lower 4 bits
         blockData_expanded[:,:,::2] = blockData & 0x0F
