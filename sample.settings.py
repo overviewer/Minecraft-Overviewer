@@ -152,6 +152,13 @@ verbose = 1
 if "web_assets_hook" in locals():
     skipjs = True
 
+################################################################################
+### north_direction
+## Make north point somewhere else!
+## default: upper-right
+## Type: string
+## Example:
+north_direction = "upper-right"
 
 
 
