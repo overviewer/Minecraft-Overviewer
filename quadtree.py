@@ -49,7 +49,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal", north_direction='upper-right'):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -66,6 +66,7 @@ class QuadtreeGen(object):
         self.optimizeimg = optimizeimg
         self.bgcolor = bgcolor
         self.rendermode = rendermode
+        self.north_direction = north_direction
         
         # force png renderformat if we're using an overlay mode
         if 'overlay' in get_render_mode_inheritance(rendermode):
@@ -239,6 +240,10 @@ class QuadtreeGen(object):
                     continue
                 
                 chunkx, chunky = unconvert_coords(col, row)
+                if self.north_direction == 'upper-right':
+                    chunky = -chunky
+                elif self.north_direction == 'lower-right':
+                    chunkx = -chunkx
 
                 regionx_ = chunkx//32
                 regiony_ = chunky//32
@@ -468,7 +473,7 @@ class QuadtreeGen(object):
 
             # draw the chunk!
             try:
-                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue)
+                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue, self.north_direction)
                 a.chunk_render(tileimg, xpos, ypos, None)
             except chunk.ChunkCorrupt:
                 # an error was already printed
