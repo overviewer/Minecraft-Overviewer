@@ -516,11 +516,11 @@ var overviewer = {
             // so the Y coordinate is at 0.5, and the X is at 0.5 -
             // ((tileSize / 2) / (tileSize * 2^maxZoom))
             // or equivalently, 0.5 - (1 / 2^(maxZoom + 1))
-            lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
             lat = 0.5;
-            if(overviewerConfig.map.north_direction == 'upper-right'){
-                lng = 0.5 + (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
-            } else if(overviewerConfig.map.north_direction == 'upper-left'){
+            if(overviewerConfig.map.north_direction == 'lower-left' ||
+                    overviewerConfig.map.north_direction == 'lower-right'){
+                lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
+            } else{
                 lng = 0.5 + (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
             }
 
@@ -568,12 +568,12 @@ var overviewer = {
 
             // Revert base positioning
             // See equivalent code in fromWorldToLatLng()
-            lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
             lat -= 0.5;
 
-            if(overviewerConfig.map.north_direction == 'upper-right'){
-                lng -= 0.5 + (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
-            } else if(overviewerConfig.map.north_direction == 'upper-left'){
+            if(overviewerConfig.map.north_direction == 'lower-left' || 
+                    overviewerConfig.map.north_direction == 'lower-right'){
+                lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
+            } else{
                 lng -= 0.5 + (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
             }
 
