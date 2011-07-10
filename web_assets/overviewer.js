@@ -58,6 +58,7 @@ var overviewer = {
             overviewer.util.initializeMarkers();
             overviewer.util.initializeRegions();
             overviewer.util.createMapControls();
+            overviewer.util.createSearchBox();
         },
         /**
          * This adds some methods to these classes because Javascript is stupid
@@ -95,6 +96,25 @@ var overviewer = {
                 div.style.borderColor = '#AAAAAA';
                 return div;
             };
+        },
+        /**
+         * Quote an arbitrary string for use in a regex matcher.
+         * WTB parametized regexes, JavaScript...
+         *
+         *   From http://kevin.vanzonneveld.net
+         *   original by: booeyOH
+         *   improved by: Ates Goral (http://magnetiq.com)
+         *   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+         *   bugfixed by: Onno Marsman
+         *     example 1: preg_quote("$40");
+         *     returns 1: '\$40'
+         *     example 2: preg_quote("*RRRING* Hello?");
+         *     returns 2: '\*RRRING\* Hello\?'
+         *     example 3: preg_quote("\\.+*?[^]$(){}=!<>|:");
+         *     returns 3: '\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:'
+         */
+        "pregQuote": function(str) {
+            return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
         },
         /**
          * Setup the varous mapTypes before we actually create the map. This used
@@ -317,6 +337,7 @@ var overviewer = {
                                 'icon':     iconURL,
                                 'visible':  false
                             });
+                            item.marker = marker;
                             overviewer.util.debug(label);
                             overviewer.collections.markers[label].push(marker);
                             if (item.type == 'sign') {
@@ -339,6 +360,7 @@ var overviewer = {
                             'icon':     iconURL,
                             'visible':  false
                         });
+                        item.marker = marker;
                         if (overviewer.collections.markers['__others__']) {
                             overviewer.collections.markers['__others__'].push(marker);
                         } else {
@@ -757,6 +779,61 @@ var overviewer = {
 
                 itemDiv.appendChild(textNode);
             }
+        },
+        /**
+         * Create search box and dropdown in the top right google maps area.
+        */
+        'createSearchBox': function() {
+            var searchControl = document.createElement("div");
+            searchControl.id = "searchControl";
+
+            var searchInput = document.createElement("input");
+            searchInput.type = "text";
+
+            searchControl.appendChild(searchInput);
+
+            var searchDropDown = document.createElement("div");
+            searchDropDown.id = "searchDropDown";
+            searchControl.appendChild(searchDropDown);
+
+            $(searchInput).keyup(function(e) {
+                var newline_stripper = new RegExp("[\\r\\n]", "g")
+                if(searchInput.value.length !== 0) {
+                    $(searchDropDown).fadeIn();
+                        
+                    $(searchDropDown).empty();
+
+                    overviewer.collections.markerDatas.forEach(function(marker_list) {
+                        marker_list.forEach(function(sign) {
+                            var regex = new RegExp(overviewer.util.pregQuote(searchInput.value), "mi");
+                            if(sign.msg.match(regex)) {
+                                if(sign.marker !== undefined && sign.marker.getVisible()) {
+                                    var t = document.createElement("div");
+                                    t.className = "searchResultItem";
+                                    var i = document.createElement("img");
+                                    i.src = sign.marker.getIcon();
+                                    t.appendChild(i);
+                                    var s = document.createElement("span");
+                                    
+                                    $(s).text(sign.msg.replace(newline_stripper, ""));
+                                    t.appendChild(s);
+                                    searchDropDown.appendChild(t);
+                                    $(t).click(function(e) {
+                                        $(searchDropDown).fadeOut();
+                                        overviewer.map.setZoom(7);
+                                        overviewer.map.setCenter(sign.marker.getPosition());
+                                    });
+
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    $(searchDropDown).fadeOut();
+                }
+            });
+
+            overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchControl);
         },
         /**
          * Create the pop-up infobox for when you click on a region, this can't
