@@ -109,6 +109,7 @@ def main():
     parser.add_option("--skip-js", dest="skipjs", action="store_true", help="Don't output marker.js or regions.js")
     parser.add_option("--no-signs", dest="nosigns", action="store_true", help="Don't output signs to markers.js")
     parser.add_option("--display-config", dest="display_config", action="store_true", help="Display the configuration parameters, but don't render the map.  Requires all required options to be specified", commandLineOnly=True)
+    parser.add_option("--north-direction", dest="north_direction", help="Specifies which corner of the screen North will point to.", type="string", default="upper-right")
     #parser.add_option("--write-config", dest="write_config", action="store_true", help="Writes out a sample config file", commandLineOnly=True)
 
     options, args = parser.parse_args()
@@ -209,6 +210,11 @@ def main():
         optimizeimages.check_programs(optimizeimg)
     else:
         optimizeimg = None
+
+    if options.north_direction:
+        north_direction = options.north_direction
+    else:
+        north_direction = 'upper-right'
     
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)
@@ -223,7 +229,8 @@ def main():
         logging.info("Notice: Not using biome data for tinting")
     
     # First do world-level preprocessing
-    w = world.World(worlddir, useBiomeData=useBiomeData, regionlist=regionlist)
+    w = world.World(worlddir, useBiomeData=useBiomeData, regionlist=regionlist,
+            north_direction=north_direction)
     w.go(options.procs)
 
     logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
@@ -233,7 +240,7 @@ def main():
     # create the quadtrees
     # TODO chunklist
     q = []
-    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'imgquality' : options.imgquality, 'optimizeimg' : optimizeimg, 'bgcolor' : bgcolor, 'forcerender' : options.forcerender}
+    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'imgquality' : options.imgquality, 'optimizeimg' : optimizeimg, 'bgcolor' : bgcolor, 'forcerender' : options.forcerender, 'north_direction' : north_direction}
     for rendermode in options.rendermode:
         if rendermode == 'normal':
             qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, tiledir='tiles', **qtree_args)
