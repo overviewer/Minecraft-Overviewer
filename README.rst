@@ -169,6 +169,10 @@ Options
     *Note*: Currently only the overviewer.dat file is deleted when you run with
     this option
 
+--forcerender
+    Force re-rendering the entire map (or the given regionlist). This
+    is an easier way to completely re-render without deleting the map.
+
 --regionlist=regionlist
     Use this option to specify manually a list of regions to consider for
     updating. Without this option, every chunk in every region is checked for
