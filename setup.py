@@ -182,6 +182,15 @@ class CustomClean(clean):
         except OSError:
             log.warn("'%s' could not be cleaned -- permission denied", versionpath)
 
+        # now try to purge all *.pyc files
+        for root, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), ".")):
+            for f in files:
+                if f.endswith(".pyc"):
+                    if self.dry_run:
+                        log.warn("Would remove %s", os.path.join(root,f))
+                    else:
+                        os.remove(os.path.join(root, f))
+
 def generate_version_py():
     try:
         outstr = ""
