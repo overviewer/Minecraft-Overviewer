@@ -69,9 +69,11 @@ class World(object):
 
     mincol = maxcol = minrow = maxrow = 0
     
-    def __init__(self, worlddir, useBiomeData=False,regionlist=None):
+    def __init__(self, worlddir, useBiomeData=False,regionlist=None,
+            north_direction="upper-right"):
         self.worlddir = worlddir
         self.useBiomeData = useBiomeData
+        self.north_direction = north_direction
                 
         #find region files, or load the region list
         #this also caches all the region file header info
@@ -182,17 +184,27 @@ class World(object):
         in the chunk coordinate system, and figures out the row and column
         in the image each one should be. Returns (col, row)."""
         
-        # columns are determined by the sum of the chunk coords, rows are the
-        # difference (TODO: be able to change direction of north)
         # change this function, and you MUST change unconvert_coords
-        return (chunkx + chunky, chunky - chunkx)
+        if self.north_direction == 'lower-left':
+            return (chunkx + chunky, chunky - chunkx)
+        elif self.north_direction == 'lower-right':
+            return (chunkx + chunky, chunkx - chunky)
+        elif self.north_direction == 'upper-left':
+            return (chunkx - chunky, chunkx + chunky)
+        elif self.north_direction == 'upper-right':
+            return (chunky - chunkx, chunkx + chunky)
     
     def unconvert_coords(self, col, row):
         """Undoes what convert_coords does. Returns (chunkx, chunky)."""
         
-        # col + row = chunky + chunky => (col + row)/2 = chunky
-        # col - row = chunkx + chunkx => (col - row)/2 = chunkx
-        return ((col - row) / 2, (col + row) / 2)
+        if self.north_direction == 'lower-left':
+            return ((col - row) / 2, (row + col) / 2)
+        if self.north_direction == 'lower-right':
+            return ((col + row) / 2, (col - row) / 2)
+        if self.north_direction == 'upper-left':
+            return ((col + row) / 2, (row - col) / 2)
+        if self.north_direction == 'upper-right':
+            return ((row - col) / 2, (col + row) / 2)
     
     def findTrueSpawn(self):
         """Adds the true spawn location to self.POI.  The spawn Y coordinate
