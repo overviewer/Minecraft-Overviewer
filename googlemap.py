@@ -71,6 +71,7 @@ class MapGen(object):
         self.web_assets_hook = configInfo.get('web_assets_hook', None)
         self.web_assets_path = configInfo.get('web_assets_path', None)
         self.bg_color = configInfo.get('bg_color')
+        self.north_direction = configInfo.get('north_direction', 'upper-right')
         
         if not len(quadtrees) > 0:
             raise ValueError("there must be at least one quadtree to work on")
@@ -109,6 +110,8 @@ class MapGen(object):
                 "{minzoom}", str(0))
         config = config.replace(
                 "{maxzoom}", str(zoomlevel))
+        config = config.replace(
+                "{north_direction}", self.north_direction)
         
         config = config.replace("{spawn_coords}",
                                 json.dumps(list(self.world.spawn)))
