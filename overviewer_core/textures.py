@@ -28,7 +28,7 @@ import util
 import composite
 
 _find_file_local_path = None
-def _find_file(filename, mode="rb"):
+def _find_file(filename, mode="rb", verbose=False):
     """Searches for the given file and returns an open handle to it.
     This searches the following locations in this order:
     
@@ -47,11 +47,13 @@ def _find_file(filename, mode="rb"):
     if _find_file_local_path:
         path = os.path.join(_find_file_local_path, filename)
         if os.path.exists(path):
+            if verbose: print "Found %s in '%s'" % (filename, path)
             return open(path, mode)
     
     programdir = util.get_program_path()
     path = os.path.join(programdir, filename)
     if os.path.exists(path):
+        if verbose: print "Found %s in '%s'" % (filename, path)
         return open(path, mode)
     
     path = os.path.join(programdir, "overviewer_core", "data", "textures", filename)
@@ -61,11 +63,13 @@ def _find_file(filename, mode="rb"):
         # windows special case, when the package dir doesn't exist
         path = os.path.join(programdir, "textures", filename)
         if os.path.exists(path):
+            if verbose: print "Found %s in '%s'" % (filename, path)
             return open(path, mode)
 
     if sys.platform == "darwin":
         path = os.path.join("/Applications/Minecraft", filename)
         if os.path.exists(path):
+            if verbose: print "Found %s in '%s'" % (filename, path)
             return open(path, mode)
 
     # Find minecraft.jar.
@@ -85,6 +89,7 @@ def _find_file(filename, mode="rb"):
         if os.path.exists(jarpath):
             try:
                 jar = zipfile.ZipFile(jarpath)
+                if verbose: print "Found %s in '%s'" % (filename, jarpath)
                 return jar.open(filename)
             except (KeyError, IOError):
                 pass

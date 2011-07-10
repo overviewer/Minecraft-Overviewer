@@ -6,6 +6,7 @@ from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
+from distutils.cmd import Command
 from distutils.dir_util import remove_tree
 from distutils.sysconfig import get_python_inc
 from distutils import log
@@ -232,11 +233,32 @@ class CustomBuildExt(build_ext):
         self.inplace = True
         build_ext.build_extensions(self)
         
+class CheckTerrain(Command):
+    user_options=[]
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        from overviewer_core.textures import _find_file
+        import hashlib
+        import zipfile
+        print "checking..."
+        try:
+            f = _find_file("terrain.png", verbose=True)
+        except IOError:
+            log.error("Could not find the file terrain.png")
+            return
+
+        h = hashlib.sha1()
+        h.update(f.read())
+        log.info("Hash of terrain.png file is: %s", h.hexdigest())
 
 setup_kwargs['cmdclass']['clean'] = CustomClean
 setup_kwargs['cmdclass']['sdist'] = CustomSDist
 setup_kwargs['cmdclass']['build'] = CustomBuild
 setup_kwargs['cmdclass']['build_ext'] = CustomBuildExt
+setup_kwargs['cmdclass']['check_terrain'] = CheckTerrain
 ###
 
 setup(**setup_kwargs)
