@@ -24,6 +24,7 @@ import json
 
 import util
 from c_overviewer import get_render_mode_inheritance
+import overviewer_version
 
 """
 This module has routines related to generating a Google Maps-based
@@ -98,7 +99,11 @@ class MapGen(object):
             blank.save(os.path.join(tileDir, "blank."+quadtree.imgformat))
 
         # copy web assets into destdir:
-        mirror_dir(os.path.join(util.get_program_path(), "web_assets"), self.destdir)
+        global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
+        if not os.path.isdir(global_assets):
+            global_assets = os.path.join(util.get_program_path(), "web_assets")
+        mirror_dir(global_assets, self.destdir)
+        
         # do the same with the local copy, if we have it
         if self.web_assets_path:
             mirror_dir(self.web_assets_path, self.destdir)
@@ -131,9 +136,9 @@ class MapGen(object):
         indexpath = os.path.join(self.destdir, "index.html")
 
         index = open(indexpath, 'r').read()
-        index = index.replace(
-                "{time}", str(strftime("%a, %d %b %Y %H:%M:%S %Z", localtime())))
-        index = index.replace("{version}", util.findGitVersion())
+        index = index.replace("{time}", str(strftime("%a, %d %b %Y %H:%M:%S %Z", localtime())))
+        versionstr = "%s (%s)" % (overviewer_version.VERSION, overviewer_version.HASH[:7])
+        index = index.replace("{version}", versionstr)
 
         with open(os.path.join(self.destdir, "index.html"), 'w') as output:
             output.write(index)

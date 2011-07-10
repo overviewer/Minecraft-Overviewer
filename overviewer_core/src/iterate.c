@@ -33,13 +33,13 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    textures = PyImport_ImportModule("textures");
+    textures = PyImport_ImportModule("overviewer_core.textures");
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
         return NULL;
     }
 
-    chunk_mod = PyImport_ImportModule("chunk");
+    chunk_mod = PyImport_ImportModule("overviewer_core.chunk");
     /* ensure none of these pointers are NULL */    
     if ((!chunk_mod)) {
         return NULL;
