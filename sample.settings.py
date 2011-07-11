@@ -155,6 +155,7 @@ if "web_assets_hook" in locals():
 ################################################################################
 ### north_direction
 ## Make north point somewhere else!
+## Valid options are 'lower-left', 'upper-left', 'upper-right', 'upper-left'
 ## default: upper-right
 ## Type: string
 ## Example:
