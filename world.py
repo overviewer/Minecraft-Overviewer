@@ -189,7 +189,6 @@ class World(object):
     
     def unconvert_coords(self, col, row):
         """Undoes what convert_coords does. Returns (chunkx, chunky)."""
-        
         return ((col - row) / 2, (row + col) / 2)
     
     def findTrueSpawn(self):
@@ -285,6 +284,7 @@ class World(object):
         world. 
 
         Returns (regionx, regiony, filename)"""
+
         join = os.path.join
         if regionlist is not None:
             for path in regionlist:
@@ -293,7 +293,20 @@ class World(object):
                 if f.startswith("r.") and f.endswith(".mcr"):
                     p = f.split(".")
                     logging.debug("Using path %s from regionlist", f)
-                    yield (int(p[1]), int(p[2]), join(self.worlddir, 'region', f))        
+                    x = int(p[1])
+                    y = int(p[2])
+                    if self.north_direction == 'upper-right':
+                        x = -x
+                        y = -y
+                    elif self.north_direction == 'upper-left':
+                        temp = x
+                        x = -y
+                        y = temp
+                    elif self.north_direction == 'lower-right':
+                        temp = x
+                        x = y
+                        y = -temp
+                    yield (x, y, join(self.worlddir, 'region', f))        
                 else:
                     logging.warning("Ignore path '%s' in regionlist", f)
 
@@ -301,7 +314,20 @@ class World(object):
             for path in glob(os.path.join(self.worlddir, 'region') + "/r.*.*.mcr"):
                 dirpath, f = os.path.split(path)
                 p = f.split(".")
-                yield (int(p[1]), int(p[2]), join(dirpath, f))
+                x = int(p[1])
+                y = int(p[2])
+                if self.north_direction == 'upper-right':
+                    x = -x
+                    y = -y
+                elif self.north_direction == 'upper-left':
+                    temp = x
+                    x = -y
+                    y = temp
+                elif self.north_direction == 'lower-right':
+                    temp = x
+                    x = y
+                    y = -temp
+                yield (x, y, join(dirpath, f))
 
 def get_save_dir():
     """Returns the path to the local saves directory
