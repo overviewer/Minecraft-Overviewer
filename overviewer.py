@@ -96,6 +96,7 @@ def main():
         cpus = 1
     
     avail_rendermodes = c_overviewer.get_render_modes()
+    avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right']
     
     parser = ConfigOptionParser(usage=helptext, config="settings.py")
     parser.add_option("-V", "--version", dest="version", help="Displays version information and then exits", action="store_true")
@@ -118,7 +119,7 @@ def main():
     parser.add_option("--skip-js", dest="skipjs", action="store_true", help="Don't output marker.js or regions.js")
     parser.add_option("--no-signs", dest="nosigns", action="store_true", help="Don't output signs to markers.js")
     parser.add_option("--display-config", dest="display_config", action="store_true", help="Display the configuration parameters, but don't render the map.  Requires all required options to be specified", commandLineOnly=True)
-    parser.add_option("--north-direction", dest="north_direction", help="Specifies which corner of the screen North will point to.", type="string", default="upper-right")
+    parser.add_option("--north-direction", dest="north_direction", help="Specifies which corner of the screen north will point to. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default=avail_north_dirs[0], choices=avail_north_dirs)
     #parser.add_option("--write-config", dest="write_config", action="store_true", help="Writes out a sample config file", commandLineOnly=True)
 
     options, args = parser.parse_args()
