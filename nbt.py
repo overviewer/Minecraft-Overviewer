@@ -17,6 +17,7 @@ import gzip, zlib
 import struct
 import StringIO
 import os
+import numpy
 
 # decorator to handle filename or object as first parameter
 def _file_loader(func):
@@ -34,15 +35,15 @@ def _file_loader(func):
 def load(fileobj):
     return NBTFileReader(fileobj).read_all()
 
-def load_from_region(filename, x, y):
-    nbt = load_region(filename).load_chunk(x, y)
+def load_from_region(filename, x, y, north_direction):
+    nbt = load_region(filename, north_direction).load_chunk(x, y)
     if nbt is None:
         return None ## return none.  I think this is who we should indicate missing chunks
         #raise IOError("No such chunk in region: (%i, %i)" % (x, y))     
     return nbt.read_all()
   
-def load_region(filename):            
-    return MCRFileReader(filename)
+def load_region(filename, north_direction):
+    return MCRFileReader(filename, north_direction)
   
   
 # compile the unpacker's into a classes
@@ -199,13 +200,25 @@ class MCRFileReader(object):
     chunks (as instances of NBTFileReader), getting chunk timestamps,
     and for listing chunks contained in the file."""
     
-    def __init__(self, filename):
+    def __init__(self, filename, north_direction):
         self._file = None
         self._filename = filename
+        self.north_direction = north_direction
         # cache used when the entire header tables are read in get_chunks()
         self._locations = None
         self._timestamps = None
         self._chunks = None
+
+    def get_north_rotations(self):
+        #Upper-left and lower-right are swapped from chunk.py rots
+        if self.north_direction == "upper-left":
+            return 3
+        elif self.north_direction == "upper-right":
+            return 2
+        elif self.north_direction == "lower-right":
+            return 1
+        elif self.north_direction == "lower-left":
+            return 0
     
     def _read_24bit_int(self):
         """Read in a 24-bit, big-endian int, used in the chunk
@@ -328,11 +341,13 @@ class MCRFileReader(object):
         locations_append = self._locations.append
         for _ in xrange(32*32): 
             locations_append(self._read_chunk_location())
+        self._locations = numpy.reshape(numpy.rot90(numpy.reshape(self._locations, (32,32)),self.get_north_rotations()), -1)
         
         # read chunk timestamp table
         timestamp_append = self._timestamps.append
         for _ in xrange(32*32): 
             timestamp_append(self._read_chunk_timestamp())
+        self._timestamps = numpy.reshape(numpy.rot90(numpy.reshape(self._timestamps, (32,32)),self.get_north_rotations()), -1)
  
         if closeFile:        
             self.closefile()
@@ -344,10 +359,10 @@ class MCRFileReader(object):
         load_chunk(), this will wrap x and y into the range [0, 31].
         """
         x = x % 32
-        y = y % 32        
+        y = y % 32
         if self._timestamps is None:
             self.get_chunk_info() 
-        return self._timestamps[x + y * 32]   
+        return self._timestamps[x + y * 32]
     
     def chunkExists(self, x, y):
         """Determines if a chunk exists without triggering loading of the backend data"""

@@ -240,10 +240,6 @@ class QuadtreeGen(object):
                     continue
                 
                 chunkx, chunky = unconvert_coords(col, row)
-                if self.north_direction == 'upper-right':
-                    chunky = -chunky
-                elif self.north_direction == 'lower-right':
-                    chunkx = -chunkx
 
                 regionx_ = chunkx//32
                 regiony_ = chunky//32

@@ -169,7 +169,7 @@ class World(object):
         if self.regions.get(filename) is not None:
             self.regions[filename][0].closefile()
         chunkcache = {}    
-        mcr = nbt.MCRFileReader(filename)
+        mcr = nbt.MCRFileReader(filename, self.north_direction)
         self.regions[filename] = (mcr,os.path.getmtime(filename),chunkcache)
         return mcr
         
@@ -185,26 +185,12 @@ class World(object):
         in the image each one should be. Returns (col, row)."""
         
         # change this function, and you MUST change unconvert_coords
-        if self.north_direction == 'lower-left':
-            return (chunkx + chunky, chunky - chunkx)
-        elif self.north_direction == 'lower-right':
-            return (chunkx + chunky, chunkx - chunky)
-        elif self.north_direction == 'upper-left':
-            return (chunkx - chunky, chunkx + chunky)
-        elif self.north_direction == 'upper-right':
-            return (chunky - chunkx, chunkx + chunky)
+        return (chunkx + chunky, chunky - chunkx)
     
     def unconvert_coords(self, col, row):
         """Undoes what convert_coords does. Returns (chunkx, chunky)."""
         
-        if self.north_direction == 'lower-left':
-            return ((col - row) / 2, (row + col) / 2)
-        if self.north_direction == 'lower-right':
-            return ((col + row) / 2, (col - row) / 2)
-        if self.north_direction == 'upper-left':
-            return ((col + row) / 2, (row - col) / 2)
-        if self.north_direction == 'upper-right':
-            return ((row - col) / 2, (col + row) / 2)
+        return ((col - row) / 2, (row + col) / 2)
     
     def findTrueSpawn(self):
         """Adds the true spawn location to self.POI.  The spawn Y coordinate
@@ -225,7 +211,10 @@ class World(object):
         chunkFile = self.get_region_path(chunkX, chunkY)
         
         if chunkFile is not None:
-            data = nbt.load_from_region(chunkFile, chunkX, chunkY)[1]
+            #TODO I broke it
+
+            #data = nbt.load_from_region(chunkFile, chunkX, chunkY, self.north_direction)[1]
+            data = None
             if data is not None:
                 level = data['Level']
                 blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))

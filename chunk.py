@@ -55,8 +55,7 @@ def get_lvldata(world, filename, x, y, retries=2):
         raise NoSuchChunk
     
     try:
-        d =  world.load_from_region(filename, x, y)
-        #TODO should probably do rotation from here
+        d = world.load_from_region(filename, x, y)
     except Exception, e:
         if retries > 0:
             # wait a little bit, and try again (up to `retries` times)
@@ -78,7 +77,7 @@ def get_blockarray(level, north_direction):
 
 def get_blockarray_fromfile(filename, north_direction):
     """Same as get_blockarray except takes a filename. This is a shortcut"""
-    d =  nbt.load_from_region(filename, x, y)
+    d = nbt.load_from_region(filename, x, y, north_direction)
     level = d[1]['Level']
     return get_blockarray(level, north_direction)
 
