@@ -22,6 +22,25 @@ https://github.com/brownan/Minecraft-Overviewer/wiki/Documentation
 To contact the developers and other users, go to the site at the top of this
 README, or go to #overviewer on irc.freenode.net.
 
+###Additional Features
+A configurable north direction! I'm not a big fan of north point to the bottom
+left corner of the screen, and I bet you aren't either. So here you go. Either
+use the commandline option --north-direction, or in the settings file use
+north_direction. Valid options are 'lower-left', 'upper-left', 'upper-right',
+and 'lower-right'.
+
+###Additional Bugs
+The upper-right direction seems to exacerbate an existing bug that will
+not let you click on a sign in some cases. The upper-right direction seems to
+mostly always trigger this bug. Still investigating. And banging my head on
+my desk.
+
+Some blocks don't rotate properly in the upper-left and lower-right directions.
+
+###Upstream
+Once I've squashed some bugs and cleaned up the code a bit, I will look to
+getting this included in the official Minecraft Overviewer.
+
 Features
 ========
 
