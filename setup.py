@@ -75,6 +75,17 @@ def recursive_data_files(src, dest=None):
         ret.append((current_dest, current_sources))
     return ret
 
+# helper to create a 'package_data'-type sequence recursively for a given dir
+def recursive_package_data(src, package_dir='overviewer_core'):
+    full_src = os.path.join(package_dir, src)
+    ret = []
+    for dirpath, dirnames, filenames in os.walk(full_src, topdown=False):
+        current_path = os.path.relpath(dirpath, package_dir)
+        for filename in filenames:
+            ret.append(os.path.join(current_path, filename))
+    
+    return ret
+
 #
 # py2exe options
 #
@@ -106,9 +117,8 @@ if py2app is not None:
 
 setup_kwargs['packages'] = ['overviewer_core']
 setup_kwargs['scripts'] = ['overviewer.py']
-setup_kwargs['package_data'] = {'overviewer_core':
-                                    ['data/textures/*',
-                                     'data/web_assets/*']}
+setup_kwargs['package_data'] = {'overviewer_core': recursive_package_data('data/textures') + recursive_package_data('data/web_assets')}
+
 if py2exe is None:
     setup_kwargs['data_files'] = [('share/doc/minecraft-overviewer', doc_files)]
 
@@ -176,12 +186,15 @@ class CustomClean(clean):
                       pretty_fname)
         
         versionpath = os.path.join("overviewer_core", "overviewer_version.py")
-        try:
-            if not self.dry_run:
-                os.remove(versionpath)
-            log.info("removing '%s'", versionpath)
-        except OSError:
-            log.warn("'%s' could not be cleaned -- permission denied", versionpath)
+        if os.path.exists(versionpath):
+            try:
+                if not self.dry_run:
+                    os.remove(versionpath)
+                log.info("removing '%s'", versionpath)
+            except OSError:
+                log.warn("'%s' could not be cleaned -- permission denied", versionpath)
+        else:
+            log.debug("'%s' does not exist -- can't clean it", versionpath)
 
         # now try to purge all *.pyc files
         for root, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), ".")):
