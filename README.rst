@@ -22,6 +22,8 @@ https://github.com/brownan/Minecraft-Overviewer/wiki/Documentation
 To contact the developers and other users, go to the site at the top of this
 README, or go to #overviewer on irc.freenode.net.
 
+## Configurable North changes
+
 ### Additional Features
 
 A configurable north direction! I'm not a big fan of north pointing to the
