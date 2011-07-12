@@ -492,20 +492,17 @@ var overviewer = {
             var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
                 Math.pow(2, overviewerConfig.map.maxZoom));
 
-            if(overviewerConfig.map.north_direction == 'lower-left'){
-                x = x;
-                y = y;
-            } else if(overviewerConfig.map.north_direction == 'upper-right'){
-                x = -x-1;
-                y = -y-1;
+            if(overviewerConfig.map.north_direction == 'upper-right'){
+                x = -x-1+512;
+                y = -y-1+512;
             } else if(overviewerConfig.map.north_direction == 'upper-left'){
                 temp = x;
-                x = -y-1;
-                y = temp-16;
+                x = -y-1+512;
+                y = temp;
             } else if(overviewerConfig.map.north_direction == 'lower-right'){
                 temp = x;
                 x = y;
-                y = -temp-1+16;
+                y = -temp-1+512;
             }
 
             // This information about where the center column is may change with
@@ -517,13 +514,7 @@ var overviewer = {
             // ((tileSize / 2) / (tileSize * 2^maxZoom))
             // or equivalently, 0.5 - (1 / 2^(maxZoom + 1))
             lat = 0.5;
-            if(overviewerConfig.map.north_direction == 'lower-left' ||
-                    overviewerConfig.map.north_direction == 'lower-right'){
-                lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
-            } else{
-                lng = 0.5 + (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
-            }
-
+            lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
 
             // the following metrics mimic those in ChunkRenderer.chunk_render
             // in "chunk.py" or, equivalently, chunk_render in src/iterate.c
@@ -570,12 +561,7 @@ var overviewer = {
             // See equivalent code in fromWorldToLatLng()
             lat -= 0.5;
 
-            if(overviewerConfig.map.north_direction == 'lower-left' || 
-                    overviewerConfig.map.north_direction == 'lower-right'){
-                lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
-            } else{
-                lng -= 0.5 + (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
-            }
+            lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
 
             // I'll admit, I plugged this into Wolfram Alpha:
             //   a = (x * 12 * r) + (z * 12 * r), b = (z * 6 * r) - (x * 6 * r)
@@ -591,20 +577,17 @@ var overviewer = {
             point.x += 64;
             point.z -= 64;
 
-            if(overviewerConfig.map.north_direction == 'lower-left'){
-                point.x = point.x;
-                point.z = point.z;
-            } else if(overviewerConfig.map.north_direction == 'upper-right'){
-                point.x = -point.x;
-                point.z = -point.z;
+            if(overviewerConfig.map.north_direction == 'upper-right'){
+                point.x = -point.x+512;
+                point.z = -point.z+512;
             } else if(overviewerConfig.map.north_direction == 'upper-left'){
                 temp = point.z;
-                point.z = -point.x;
-                point.x = temp+16;
+                point.z = -point.x+512;
+                point.x = temp;
             } else if(overviewerConfig.map.north_direction == 'lower-right'){
                 temp = point.z;
                 point.z = point.x;
-                point.x = -temp+16;
+                point.x = -temp+512;
             }
 
             return point;

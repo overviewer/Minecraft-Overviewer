@@ -505,7 +505,9 @@ def generate_special_texture(blockID, data, north_direction):
     #print "%s has ancillary data: %X" %(blockID, data)
     # TODO ladders, stairs, levers, buttons, and signs
     # all need to behandled here (and in chunkpy)
-    
+
+    data = convert_data(blockID, data, north_direction)
+
     if blockID == 2: # grass
         # data & 0x10 means SNOW sides
         side_img = terrain_images[3]
@@ -594,11 +596,6 @@ def generate_special_texture(blockID, data, north_direction):
 
 
     if blockID == 26: # bed
-        if north_direction == 'upper-right':
-            if (data & 0x3) == 0: data = data & 0x8 | 0x2
-            elif (data & 0x3) == 1: data = data & 0x8 | 0x3
-            elif (data & 0x3) == 2: data = data & 0x8 | 0x0
-            elif (data & 0x3) == 3: data = data & 0x8 | 0x1
         increment = 5
         left_face = None
         right_face = None
@@ -713,12 +710,6 @@ def generate_special_texture(blockID, data, north_direction):
 
 
     if blockID in (50,75,76): # torch, off redstone torch, on redstone torch
-        if north_direction == 'upper-right':
-            if data == 1: data = 2
-            elif data == 2: data = 1
-            elif data == 3: data = 4
-            elif data == 4: data = 3
-    
         # choose the proper texture
         if blockID == 50: # torch
             small = terrain_images[80]
@@ -787,11 +778,6 @@ def generate_special_texture(blockID, data, north_direction):
 
 
     if blockID in (53,67): # wooden and cobblestone stairs.
-        if north_direction == 'upper-right':
-            if data == 0: data = 1
-            elif data == 1: data = 0
-            elif data == 2: data = 3
-            elif data == 3: data = 2
         
         if blockID == 53: # wooden
             texture = terrain_images[4]
@@ -1003,11 +989,6 @@ def generate_special_texture(blockID, data, north_direction):
 
 
     if blockID in (61, 62, 23): #furnace and burning furnace
-        if north_direction == 'upper-right':
-            if data == 2: data = 3
-            elif data == 3: data = 2
-            elif data == 4: data = 5
-            elif data == 5: data = 4
         top = terrain_images[62]
         side = terrain_images[45]
 
@@ -1033,13 +1014,10 @@ def generate_special_texture(blockID, data, north_direction):
 
 
     if blockID == 63: # singposts
-        
         texture = terrain_images[4].copy()
         # cut the planks to the size of a signpost
         ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
-        if north_direction == 'upper-right':
-            data = (data + 8) % 16
         # If the signpost is looking directly to the image, draw some 
         # random dots, they will look as text.
         if data in (0,1,2,3,4,5,15):
@@ -1092,11 +1070,6 @@ def generate_special_texture(blockID, data, north_direction):
 
         # mask out the high bits to figure out the orientation 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
-        if north_direction == 'upper-right':
-            if (data & 0x3) == 0: data = data & 0xc | 0x2
-            elif (data & 0x3) == 1: data = data & 0xc | 0x3
-            elif (data & 0x3) == 2: data = data & 0xc | 0x0
-            elif (data & 0x3) == 3: data = data & 0xc | 0x1
         if (data & 0x03) == 0:
             if not swung:
                 tex = transform_image_side(raw_door)
@@ -1135,11 +1108,6 @@ def generate_special_texture(blockID, data, north_direction):
 
 
     if blockID == 65: # ladder
-        if north_direction == 'upper-right':
-            if data == 2: data = 3
-            elif data == 3: data = 2
-            elif data == 4: data = 5
-            elif data == 5: data = 4
         img = Image.new("RGBA", (24,24), (38,92,255,0))
         raw_texture = terrain_images[83]
         #print "ladder is facing: %d" % data
@@ -1185,17 +1153,6 @@ def generate_special_texture(blockID, data, north_direction):
         elif blockID == 66: # normal rail
             raw_straight = terrain_images[128]
             raw_corner = terrain_images[112]
-
-        if north_direction == 'upper-right':
-            if data == 2: data = 3
-            elif data == 3: data = 2
-            elif data == 4: data = 5
-            elif data == 5: data = 4
-
-            elif data == 6: data = 8
-            elif data == 7: data = 9
-            elif data == 8: data = 6
-            elif data == 9: data = 7
 
         ## use transform_image to scale and shear
         if data == 0:
@@ -1245,11 +1202,6 @@ def generate_special_texture(blockID, data, north_direction):
 
 
     if blockID == 68: # wall sign
-        if north_direction == 'upper-right':
-            if data == 2: data = 3
-            elif data == 3: data = 2
-            elif data == 4: data = 5
-            elif data == 5: data = 4
         texture = terrain_images[4].copy()
         # cut the planks to the size of a signpost
         ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -1380,11 +1332,6 @@ def generate_special_texture(blockID, data, north_direction):
 
 
     if blockID in (86,91): # pumpkins, jack-o-lantern
-        if north_direction == 'upper-right':
-            if data == 0: data = 2
-            elif data == 1: data = 3
-            elif data == 2: data = 0
-            elif data == 3: data = 1
         top = terrain_images[102]
         frontID = 119 if blockID == 86 else 120
         front = terrain_images[frontID]
@@ -1446,11 +1393,6 @@ def generate_special_texture(blockID, data, north_direction):
     if blockID in (93, 94): # redstone repeaters, ON and OFF
         # NOTE: this function uses the redstone torches generated above,
         # this must run after the function of the torches.
-        if north_direction == 'upper-right':
-            if (data & 0x3) == 0: data = data & 0xc | 0x2
-            elif (data & 0x3) == 1: data = data & 0xc | 0x3
-            elif (data & 0x3) == 2: data = data & 0xc | 0x0
-            elif (data & 0x3) == 3: data = data & 0xc | 0x1
 
         top = terrain_images[131] if blockID == 93 else terrain_images[147]
         side = terrain_images[5]
@@ -1567,11 +1509,6 @@ def generate_special_texture(blockID, data, north_direction):
         
         
     if blockID == 96: # trapdoor
-        if north_direction == 'upper-right':
-            if (data & 0x3) == 0: data = data & 0x4 | 0x1
-            elif (data & 0x3) == 1: data = data & 0x4 | 0x0
-            elif (data & 0x3) == 2: data = data & 0x4 | 0x3
-            elif (data & 0x3) == 3: data = data & 0x4 | 0x2
         texture = terrain_images[84]
         if data & 0x4 == 0x4: # opened trapdoor
             if data & 0x3 == 0: # west
@@ -1588,8 +1525,93 @@ def generate_special_texture(blockID, data, north_direction):
         
         return generate_texture_tuple(img, blockID)
 
-
     return None
+
+def convert_data(blockID, data, north_direction):
+    if blockID == 26: # bed
+        if north_direction == 'upper-right':
+            #Masked to not clobber block head/foot info
+            if (data & 0b0011) == 0: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+    if blockID in (27, 28, 66): # minetrack:
+        if north_direction == 'upper-right':
+            #Masked to not clobber powered rail on/off info
+            #Ascending
+            if (data & 0b0111) == 2: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 4
+    if blockID == 66: #normal minetrack only
+        if north_direction == 'upper-right':
+            #Corners
+            if data == 6: data = 8
+            elif data == 7: data = 9
+            elif data == 8: data = 6
+            elif data == 9: data = 7
+    if blockID in (50, 75, 76): # torch, off/on redstone torch
+        if north_direction == 'upper-right':
+            if data == 1: data = 2
+            elif data == 2: data = 1
+            elif data == 3: data = 4
+            elif data == 4: data = 3
+    if blockID in (53,67): # wooden and cobblestone stairs.
+        if north_direction == 'upper-right':
+            if data == 0: data = 1
+            elif data == 1: data = 0
+            elif data == 2: data = 3
+            elif data == 3: data = 2
+    if blockID in (61, 62, 23): # furnace and burning furnace
+        if north_direction == 'upper-right':
+            if data == 2: data = 3
+            elif data == 3: data = 2
+            elif data == 4: data = 5
+            elif data == 5: data = 4
+    if blockID == 63: # signposts
+        if north_direction == 'upper-right':
+            data = (data + 8) % 16
+    if blockID in (64,71): # wooden door, or iron door
+        if north_direction == 'upper-right':
+            #Masked to not clobber block top/bottom & swung info
+            if (data & 0b0011) == 0: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+    if blockID == 65: # ladder
+        if north_direction == 'upper-right':
+            if data == 2: data = 3
+            elif data == 3: data = 2
+            elif data == 4: data = 5
+            elif data == 5: data = 4
+    if blockID == 68: # wall sign
+        if north_direction == 'upper-right':
+            if data == 2: data = 3
+            elif data == 3: data = 2
+            elif data == 4: data = 5
+            elif data == 5: data = 4
+    if blockID in (86,91): # pumpkins, jack-o-lantern
+        if north_direction == 'upper-right':
+            if data == 0: data = 2
+            elif data == 1: data = 3
+            elif data == 2: data = 0
+            elif data == 3: data = 1
+    if blockID in (93, 94): # redstone repeaters, ON and OFF
+        if north_direction == 'upper-right':
+            #Masked to not clobber delay info
+            if (data & 0b0011) == 0: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+    if blockID == 96: # trapdoor
+        if north_direction == 'upper-right':
+            #Masked to not clobber opened/closed info
+            if (data & 0b0011) == 0: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+
+    return data
 
 def tintTexture(im, c):
     # apparently converting to grayscale drops the alpha channel?
