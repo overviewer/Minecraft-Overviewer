@@ -88,6 +88,14 @@ estimate_blocklevel(RenderModeLighting *self, RenderState *state,
         for (dx = -1; dx <= 1; dx += 2) {
             for (dy = -1; dy <= 1; dy += 2) {
                 for (dz = -1; dz <= 1; dz += 2) {
+                    
+                    /* skip if block is out of range */
+                    if (x+dx < 0 || x+dx >= 16 ||
+                        y+dy < 0 || y+dy >= 16 ||
+                        z+dz < 0 || z+dz >= 128) {
+                        continue;
+                    }
+
                     coeff = estimate_blocklevel(self, state, x+dx, y+dy, z+dz, &auth);
                     local_block = getArrayByte3D(blocks, x+dx, y+dy, z+dz);
                     /* only add if the block is transparent, this seems to look better than

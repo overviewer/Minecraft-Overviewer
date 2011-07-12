@@ -100,3 +100,34 @@ body {
     background-color: #fff; /* fallback */
     background-color: rgba(255,255,255,0.8);
 }
+
+#searchControl {
+    padding: 5px;
+    height: 20px;
+    font-family: Arial, sans-serif;
+}
+
+#searchControl > input {
+    border: 2px solid #000;
+    font-size: 12pt;
+    width: 20em;
+    background-colour: #fff;
+}
+
+div#searchDropDown {
+    border: 1px solid #000;
+    width: 17em;
+    font-size: 14pt;
+    background-color: #fff;
+    display: none;
+}
+
+div.searchResultItem  {
+    overflow: hidden;
+    text-overflow: ellipsis;    
+}
+
+div.searchResultItem img {
+    width: 24px;
+    height: 24px;
+}

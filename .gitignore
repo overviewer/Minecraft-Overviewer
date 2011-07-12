@@ -1,5 +1,8 @@
 *.pyc
-build
+MANIFEST
+build/
+dist/
+Minecraft_Overviewer.egg-info
 terrain.png
 cachedir*
 
@@ -14,10 +17,13 @@ ImPlatform.h
 Imaging.h
 
 # various forms of compiled c_overviewer extensions
-c_overviewer.so
-c_overviewer.pyd
-c_overviewer_d.pyd
-c_overviewer.dylib
+overviewer_core/c_overviewer.so
+overviewer_core/c_overviewer.pyd
+overviewer_core/c_overviewer_d.pyd
+overviewer_core/c_overviewer.dylib
+
+# generated version file
+overviewer_core/overviewer_version.py
 
 # Mac OS X noise
 .DS_Store

@@ -22,14 +22,13 @@ if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
 
 import os
 import os.path
-from configParser import ConfigOptionParser
 import re
 import subprocess
 import multiprocessing
 import time
 import logging
-import util
 import platform
+from overviewer_core import util
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -37,10 +36,19 @@ this_dir = util.get_program_path()
 
 # make sure the c_overviewer extension is available
 try:
-    import c_overviewer
+    from overviewer_core import c_overviewer
 except ImportError:
+    ## if this is a frozen windows package, the following error messages about
+    ## building the c_overviewer extension are not appropriate
+    if hasattr(sys, "frozen"):
+        print "Something has gone wrong importing the c_overviewer extension.  Please"
+        print "make sure the 2008 and 2010 redistributable packages from Microsoft"
+        print "are installed."
+        sys.exit(1)
+
+
     ## try to find the build extension
-    ext = os.path.join(this_dir, "c_overviewer.%s" % ("pyd" if platform.system() == "Windows" else "so"))
+    ext = os.path.join(this_dir, "overviewer_core", "c_overviewer.%s" % ("pyd" if platform.system() == "Windows" else "so"))
     if os.path.exists(ext):
         print "Something has gone wrong importing the c_overviewer extension.  Please"
         print "make sure it is up-to-date (clean and rebuild)"
@@ -48,14 +56,17 @@ except ImportError:
 
     print "You need to compile the c_overviewer module to run Minecraft Overviewer."
     print "Run `python setup.py build`, or see the README for details."
+    import traceback
+    traceback.print_exc()
     sys.exit(1)
+
 
 if hasattr(sys, "frozen"):
     pass # we don't bother with a compat test since it should always be in sync
 elif "extension_version" in dir(c_overviewer):
     # check to make sure the binary matches the headers
-    if os.path.exists(os.path.join(this_dir, "src", "overviewer.h")):
-        with open(os.path.join(this_dir, "src", "overviewer.h")) as f:
+    if os.path.exists(os.path.join(this_dir, "overviewer_core", "src", "overviewer.h")):
+        with open(os.path.join(this_dir, "overviewer_core", "src", "overviewer.h")) as f:
             lines = f.readlines()
             lines = filter(lambda x: x.startswith("#define OVERVIEWER_EXTENSION_VERSION"), lines)
             if lines:
@@ -67,12 +78,10 @@ else:
     print "Please rebuild your c_overviewer module.  It is out of date!"
     sys.exit(1)
 
+from overviewer_core.configParser import ConfigOptionParser
+from overviewer_core import optimizeimages, world, quadtree
+from overviewer_core import googlemap, rendernode
 
-import optimizeimages
-import world
-import quadtree
-import googlemap
-import rendernode
 
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>
@@ -117,14 +126,14 @@ def main():
 
 
     if options.version:
-        print "Minecraft-Overviewer"
-        print "Git version: %s" % util.findGitVersion()
         try:
-            import overviewer_version
-            if hasattr(sys, "frozen"):
-                print "py2exe version build on %s" % overviewer_version.BUILD_DATE
-                print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
+            import overviewer_core.overviewer_version as overviewer_version
+            print "Minecraft-Overviewer %s" % overviewer_version.VERSION
+            print "Git commit: %s" % overviewer_version.HASH
+            print "built on %s" % overviewer_version.BUILD_DATE
+            print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
         except:
+            print "version info not found"
             pass
         sys.exit(0)
 
