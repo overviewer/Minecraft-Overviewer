@@ -339,9 +339,21 @@ class MCRFileReader(object):
         
         # read chunk location table
         locations_append = self._locations.append
-        for _ in xrange(32*32): 
+        locations_index = []
+        for x in xrange(32*32): 
             locations_append(self._read_chunk_location())
-        self._locations = numpy.reshape(numpy.rot90(numpy.reshape(self._locations, (32,32)),self.get_north_rotations()), -1)
+            locations_index.append(x)
+        try:
+            temp = numpy.reshape(self._locations, (32, 32))
+            temp = numpy.rot90(temp, self.get_north_rotations())
+            self._locations = numpy.reshape(temp, -1)
+        except ValueError:
+            temp = numpy.reshape(locations_index, (32, 32))
+            temp = numpy.rot90(temp, self.get_north_rotations())
+            temp = numpy.reshape(temp, -1)
+            ttemp = self._locations[:]
+            for i, e in enumerate(temp):
+                self._locations[i] = ttemp[e]
         
         # read chunk timestamp table
         timestamp_append = self._timestamps.append
