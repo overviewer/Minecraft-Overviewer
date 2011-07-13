@@ -47,7 +47,8 @@ you are really looking for, anyway. Probably.
 
 It's slow! One of the rotation methods is very, very inefficient. It needs to be
 rewritten, but I don't seem to be smart enough to do it right now. I must
-investigate! No hard numbers but I will run a benchmark soon.
+investigate! On my SMP map the initial render took 30% longer vs the original.
+Be warned.
 
 ### Upstream
 
