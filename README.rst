@@ -22,9 +22,11 @@ https://github.com/brownan/Minecraft-Overviewer/wiki/Documentation
 To contact the developers and other users, go to the site at the top of this
 README, or go to #overviewer on irc.freenode.net.
 
-## Configurable North changes
+Configurable North changes
+==========================
 
-### Additional Features
+Additional Features
+-------------------
 
 A configurable north direction! I'm not a big fan of north pointing to the
 bottom left corner of the screen, and I bet you aren't either. So here you go!
@@ -33,7 +35,8 @@ north_direction in the settings file. Valid options are 'lower-left',
 'upper-left', 'upper-right', and 'lower-right'. I'm partial to 'upper-right',
 myself.
 
-### Additional Bugs
+Additional Bugs
+---------------
 
 With very small testing maps, the upper-right direction seems to exacerbate an
 existing bug that will not let you click on a sign in some cases. This is a
@@ -41,16 +44,13 @@ bang-head-on-desk sort of thing, I should be able to find it but I cannot.
 Somehow it does seem to work fine on my actual SMP map, but there is a good
 chance that is just luck.
 
-Some blocks don't rotate properly in the upper-left and lower-right directions.
-This is an easy fix, it just takes time. And besides, the upper-right is what
-you are really looking for, anyway. Probably.
-
 It's slow! One of the rotation methods is very, very inefficient. It needs to be
 rewritten, but I don't seem to be smart enough to do it right now. I must
 investigate! On my SMP map the initial render took 30% longer vs the original.
 Be warned.
 
-### Upstream
+Upstream
+--------
 
 Once I've squashed some bugs and cleaned up the code a bit, I will see about
 getting this included in the official Minecraft Overviewer.
