@@ -14,7 +14,7 @@ var overviewerConfig = {
         'image': {
             'defaultMarker':    'signpost.png',
             'signMarker':       'signpost_icon.png',
-            'compass':          'compass.png',
+            'compass':          'compass_{north_direction}.png',
             'spawnMarker':      'http://google-maps-icons.googlecode.com/files/home.png',
             'queryMarker':      'http://google-maps-icons.googlecode.com/files/regroup.png'
         },
