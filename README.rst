@@ -33,27 +33,31 @@ bottom left corner of the screen, and I bet you aren't either. So here you go!
 Either use the commandline option --north-direction, or use the option
 north_direction in the settings file. Valid options are 'lower-left',
 'upper-left', 'upper-right', and 'lower-right'. I'm partial to 'upper-right',
-myself.
+myself. Defaults to 'lower-left' to match official behavior.
 
 Additional Bugs
 ---------------
 
-With very small testing maps, the upper-right direction seems to exacerbate an
+Sometimes the upper- and lower-right direction seems to exacerbate an
 existing bug that will not let you click on a sign in some cases. This is a
-bang-head-on-desk sort of thing, I should be able to find it but I cannot.
-Somehow it does seem to work fine on my actual SMP map, but there is a good
-chance that is just luck.
+bang-head-on-desk sort of thing, I should be able to find it but I just haven't
+yet. It does seem to work fine on my actual SMP map, for what that's worth.
 
 It's slow! One of the rotation methods is very, very inefficient. It needs to be
 rewritten, but I don't seem to be smart enough to do it right now. I must
-investigate! On my SMP map the initial render took 30% longer vs the original.
-Be warned.
+investigate! On my SMP map the initial render took 30% longer vs the official
+Minecraft Overviewer. Totally worth it, though.
+
+So far only blocks where direction is important (minecart tracks, doors, signs,
+etc) rotate. Blocks like grass, stone, gravel, etc do not, however for the most
+part it isn't noticeable because they look very similar no matter which
+direction we are viewing them from.
 
 Upstream
 --------
 
-Once I've squashed some bugs and cleaned up the code a bit, I will see about
-getting this included in the official Minecraft Overviewer.
+Once I've squashed the additional bugs and cleaned up the code a bit, I will
+see about getting this included in the official Minecraft Overviewer.
 
 Features
 ========
