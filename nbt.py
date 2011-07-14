@@ -331,35 +331,24 @@ class MCRFileReader(object):
         self.openfile()
 
         self._chunks = None
-        self._locations = []
+        self._locations = [0]*32*32
         self._timestamps = []
         
         # go to the beginning of the file
         self._file.seek(0)        
         
         # read chunk location table
-        locations_append = self._locations.append
-        locations_index = []
-        for x in xrange(32*32): 
-            locations_append(self._read_chunk_location())
-            locations_index.append(x)
-        try:
-            temp = numpy.reshape(self._locations, (32, 32))
-            temp = numpy.rot90(temp, self.get_north_rotations())
-            self._locations = numpy.reshape(temp, -1)
-        except ValueError:
-            temp = numpy.reshape(locations_index, (32, 32))
-            temp = numpy.rot90(temp, self.get_north_rotations())
-            temp = numpy.reshape(temp, -1)
-            ttemp = self._locations[:]
-            for i, e in enumerate(temp):
-                self._locations[i] = ttemp[e]
+        locations_index = numpy.reshape(numpy.rot90(numpy.reshape(range(32*32),
+                (32, 32)), self.get_north_rotations()), -1)
+        for i in locations_index:
+            self._locations[i] = self._read_chunk_location()
         
         # read chunk timestamp table
         timestamp_append = self._timestamps.append
         for _ in xrange(32*32): 
             timestamp_append(self._read_chunk_timestamp())
-        self._timestamps = numpy.reshape(numpy.rot90(numpy.reshape(self._timestamps, (32,32)),self.get_north_rotations()), -1)
+        self._timestamps = numpy.reshape(numpy.rot90(numpy.reshape(
+                self._timestamps, (32,32)),self.get_north_rotations()), -1)
  
         if closeFile:        
             self.closefile()
