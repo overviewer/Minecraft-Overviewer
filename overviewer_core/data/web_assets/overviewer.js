@@ -166,6 +166,9 @@ var overviewer = {
             var zoom = overviewerConfig.map.defaultZoom;
             var mapcenter;
             var queryParams = overviewer.util.parseQueryString();
+            if (queryParams.debug) {
+                overviewerConfig.map.debug=true;
+            }
             if (queryParams.lat) {
                 lat = parseFloat(queryParams.lat);
             }
