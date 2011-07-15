@@ -58,7 +58,6 @@ var overviewer = {
             overviewer.util.initializeMarkers();
             overviewer.util.initializeRegions();
             overviewer.util.createMapControls();
-            overviewer.util.createSearchBox();
         },
         /**
          * This adds some methods to these classes because Javascript is stupid
@@ -620,7 +619,10 @@ var overviewer = {
             var coordsDiv = document.createElement('DIV');
             coordsDiv.id = 'coordsDiv';
             coordsDiv.innerHTML = '';
-            overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(coordsDiv);
+            if (overviewerConfig.map.controls.coordsBox) {
+                overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(coordsDiv);
+            }
+            
             // Update coords on mousemove
             google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
                 var worldcoords = overviewer.util.fromLatLngToWorld(event.latLng.lat(), event.latLng.lng());
@@ -687,7 +689,7 @@ var overviewer = {
                 overviewer.util.createDropDown('Regions', items);
             }
 
-            if (overviewer.collections.overlays.length > 0) {
+            if (overviewerConfig.map.controls.overlays && overviewer.collections.overlays.length > 0) {
                 // overlay maps control
                 var items = [];
                 for (i in overviewer.collections.overlays) {
@@ -715,6 +717,9 @@ var overviewer = {
                 }
                 overviewer.util.createDropDown('Overlays', items);
             }
+            
+            // call out to create search box, as it's pretty complicated
+            overviewer.util.createSearchBox();
         },
         /**
          * Reusable method for creating drop-down menus
@@ -835,8 +840,10 @@ var overviewer = {
                     $(searchDropDown).fadeOut();
                 }
             });
-
-            overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchControl);
+            
+            if (overviewerConfig.map.controls.searchBox) {
+                overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchControl);
+            }
         },
         /**
          * Create the pop-up infobox for when you click on a region, this can't

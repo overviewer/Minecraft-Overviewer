@@ -50,9 +50,18 @@ var overviewerConfig = {
              */
             'mapType':  true,
             /**
-             * The small box at the bottom that displays the link to the current map view.
+             * The coordsBox control is the box showing the XYZ coordinates
+             * under the cursor.
              */
-            'link':     true
+            'coordsBox': true,
+            /**
+             * The overlays control is the drop-down box for selecting overlays.
+             */
+            'overlays': true,
+            /**
+             * The searchBox control is the search box for markers.
+             */
+            'searchBox': true
         },
         /**
          * The zoom level when the page is loaded without a specific zoom setting
