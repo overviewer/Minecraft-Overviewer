@@ -217,7 +217,7 @@ def generate_version_py():
         f.write(outstr)
         f.close()
     except:
-        print "WARNING: failed to build overview_version file"
+        print "WARNING: failed to build overviewer_version file"
 
 class CustomSDist(sdist):
     def run(self):
