@@ -339,7 +339,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
     
     increment = 0
     if isinstance(top, tuple):
-        increment = math.floor((top[1] / 16.)*12.) # range increment in the block height in pixels (half texture size)
+        increment = int(math.floor((top[1] / 16.)*12.)) # range increment in the block height in pixels (half texture size)
         crop_height = increment
         top = top[0]
         if side1 != None:
