@@ -210,13 +210,12 @@ class MCRFileReader(object):
         self._chunks = None
 
     def get_north_rotations(self):
-        #Upper-left and lower-right are swapped from chunk.py rots
         if self.north_direction == "upper-left":
-            return 3
+            return 1
         elif self.north_direction == "upper-right":
             return 2
         elif self.north_direction == "lower-right":
-            return 1
+            return 3
         elif self.north_direction == "lower-left":
             return 0
     

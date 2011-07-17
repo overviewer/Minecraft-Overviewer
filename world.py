@@ -153,6 +153,18 @@ class World(object):
             data = nbt.read_all()    
             level = data[1]['Level']
             chunk_data = level
+            chunk_data['Blocks'] = numpy.rot90(numpy.frombuffer(
+                    level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
+                    self._get_north_rotations())
+            chunk_data['Data'] = numpy.rot90(numpy.frombuffer(
+                    level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations())
+            chunk_data['SkyLight'] = numpy.rot90(numpy.frombuffer(
+                    level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations())
+            chunk_data['BlockLight'] = numpy.rot90(numpy.frombuffer(
+                    level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations())
             #chunk_data = {}
             #chunk_data['skylight'] = chunk.get_skylight_array(level)
             #chunk_data['blocklight'] = chunk.get_blocklight_array(level)
@@ -275,6 +287,16 @@ class World(object):
         self.maxrow = maxrow
 
         self.findTrueSpawn()
+
+    def _get_north_rotations(self):
+        if self.north_direction == "upper-left":
+            return 1
+        elif self.north_direction == "upper-right":
+            return 2
+        elif self.north_direction == "lower-right":
+            return 3
+        elif self.north_direction == "lower-left":
+            return 0
 
     def _iterate_regionfiles(self,regionlist=None):
         """Returns an iterator of all of the region files, along with their 

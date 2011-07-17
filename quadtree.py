@@ -469,7 +469,7 @@ class QuadtreeGen(object):
 
             # draw the chunk!
             try:
-                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue, self.north_direction)
+                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue)
                 a.chunk_render(tileimg, xpos, ypos, None)
             except chunk.ChunkCorrupt:
                 # an error was already printed
