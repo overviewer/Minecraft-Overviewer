@@ -32,8 +32,8 @@ static RenderModeInterface *render_modes[] = {
     NULL
 };
 
-static PyObject *render_mode_options = NULL;
-static PyObject *custom_render_modes = NULL;
+PyObject *render_mode_options = NULL;
+PyObject *custom_render_modes = NULL;
 
 /* rendermode encapsulation */
 
@@ -43,8 +43,6 @@ render_mode_create_options(const char *mode) {
     const char *parent = NULL;
     PyObject *base_options, *ret, *parent_options;
     unsigned int i, found_concrete;
-    if (render_mode_options == NULL)
-        return PyDict_New();
     
     base_options = PyDict_GetItemString(render_mode_options, mode);
     if (base_options) {
@@ -66,7 +64,7 @@ render_mode_create_options(const char *mode) {
     }
     
     /* check custom mode info if needed */
-    if (found_concrete == 0 && custom_render_modes != NULL) {
+    if (found_concrete == 0) {
         PyObject *custom = PyDict_GetItemString(custom_render_modes, mode);
         if (custom) {
             custom = PyDict_GetItemString(custom, "parent");
@@ -106,8 +104,6 @@ render_mode_find_interface(const char *mode) {
     }
     
     /* check for custom modes */
-    if (custom_render_modes == NULL)
-        return NULL;
     custom = PyDict_GetItemString(custom_render_modes, mode);
     if (custom == NULL)
         return NULL;
@@ -236,13 +232,11 @@ PyObject *get_render_modes(PyObject *self, PyObject *args) {
         Py_DECREF(name);
     }
     
-    if (custom_render_modes != NULL) {
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
-        
-        while (PyDict_Next(custom_render_modes, &pos, &key, &value)) {
-            PyList_Append(modes, key);
-        }
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    
+    while (PyDict_Next(custom_render_modes, &pos, &key, &value)) {
+        PyList_Append(modes, key);
     }
     
     return modes;
@@ -329,22 +323,20 @@ PyObject *get_render_mode_info(PyObject *self, PyObject *args) {
         }
     }
     
-    if (custom_render_modes != NULL) {
-        PyObject *custom = PyDict_GetItemString(custom_render_modes, rendermode);
-        if (custom) {
-            PyObject *tmp, *copy = PyDict_Copy(custom);
-            Py_DECREF(info);
-            
-            tmp = PyString_FromString(rendermode);
-            PyDict_SetItemString(copy, "name", tmp);
-            Py_DECREF(tmp);
-            
-            tmp = PyList_New(0);
-            PyDict_SetItemString(copy, "options", tmp);
-            Py_DECREF(tmp);
-            
-            return copy;
-        }
+    PyObject *custom = PyDict_GetItemString(custom_render_modes, rendermode);
+    if (custom) {
+        PyObject *tmp, *copy = PyDict_Copy(custom);
+        Py_DECREF(info);
+        
+        tmp = PyString_FromString(rendermode);
+        PyDict_SetItemString(copy, "name", tmp);
+        Py_DECREF(tmp);
+        
+        tmp = PyList_New(0);
+        PyDict_SetItemString(copy, "options", tmp);
+        Py_DECREF(tmp);
+        
+        return copy;
     }
     
     Py_DECREF(info);
@@ -365,17 +357,15 @@ PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args) {
         return NULL;
     
     /* take care of the chain of custom modes, if there are any */
-    if (custom_render_modes != NULL) {
-        PyObject *custom = PyDict_GetItemString(custom_render_modes, rendermode);
-        while (custom != NULL) {
-            PyObject *name = PyString_FromString(rendermode);
-            PyList_Append(parents, name);
-            Py_DECREF(name);
-            
-            custom = PyDict_GetItemString(custom, "parent");
-            rendermode = PyString_AsString(custom);
-            custom = PyDict_GetItem(custom_render_modes, custom);
-        }
+    PyObject *custom = PyDict_GetItemString(custom_render_modes, rendermode);
+    while (custom != NULL) {
+        PyObject *name = PyString_FromString(rendermode);
+        PyList_Append(parents, name);
+        Py_DECREF(name);
+        
+        custom = PyDict_GetItemString(custom, "parent");
+        rendermode = PyString_AsString(custom);
+        custom = PyDict_GetItem(custom_render_modes, custom);
     }
     
     /* now handle concrete modes */
@@ -423,17 +413,15 @@ PyObject *get_render_mode_children(PyObject *self, PyObject *args) {
         }
     }
     
-    if (custom_render_modes != NULL) {
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    
+    while (PyDict_Next(custom_render_modes, &pos, &key, &value)) {
+        PyObject *pyparent = PyDict_GetItemString(value, "parent");
+        const char *parent = PyString_AsString(pyparent);
         
-        while (PyDict_Next(custom_render_modes, &pos, &key, &value)) {
-            PyObject *pyparent = PyDict_GetItemString(value, "parent");
-            const char *parent = PyString_AsString(pyparent);
-            
-            if (strcmp(parent, rendermode) == 0) {
-                PyList_Append(children, key);
-            }
+        if (strcmp(parent, rendermode) == 0) {
+            PyList_Append(children, key);
         }
     }
     
@@ -485,9 +473,6 @@ PyObject *set_render_mode_options(PyObject *self, PyObject *args) {
         }
     }
     
-    if (render_mode_options == NULL)
-        render_mode_options = PyDict_New();
-    
     PyDict_SetItemString(render_mode_options, rendermode, opts);
     Py_RETURN_NONE;
 }
@@ -498,9 +483,6 @@ PyObject *add_custom_render_mode(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "sO!", &rendermode, &PyDict_Type, &opts))
         return NULL;
 
-    if (custom_render_modes == NULL)
-        custom_render_modes = PyDict_New();
-    
     /* first, make sure the parent is set correctly */
     pyparent = PyDict_GetItemString(opts, "parent");
     if (pyparent == NULL)
