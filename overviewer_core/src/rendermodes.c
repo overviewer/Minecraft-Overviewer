@@ -219,6 +219,9 @@ int render_mode_parse_option(PyObject *dict, const char *name, const char *forma
 PyObject *get_render_modes(PyObject *self, PyObject *args) {
     PyObject *modes;
     unsigned int i;
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+
     if (!PyArg_ParseTuple(args, ""))
         return NULL;
     
@@ -232,8 +235,6 @@ PyObject *get_render_modes(PyObject *self, PyObject *args) {
         Py_DECREF(name);
     }
     
-    PyObject *key, *value;
-    Py_ssize_t pos = 0;
     
     while (PyDict_Next(custom_render_modes, &pos, &key, &value)) {
         PyList_Append(modes, key);
@@ -290,6 +291,8 @@ PyObject *get_render_mode_info(PyObject *self, PyObject *args) {
     const char* rendermode;
     PyObject *info;
     unsigned int i;
+    PyObject *custom;
+
     if (!PyArg_ParseTuple(args, "s", &rendermode))
         return NULL;
     
@@ -323,7 +326,7 @@ PyObject *get_render_mode_info(PyObject *self, PyObject *args) {
         }
     }
     
-    PyObject *custom = PyDict_GetItemString(custom_render_modes, rendermode);
+    custom = PyDict_GetItemString(custom_render_modes, rendermode);
     if (custom) {
         PyObject *tmp, *copy = PyDict_Copy(custom);
         Py_DECREF(info);
@@ -349,6 +352,8 @@ PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args) {
     PyObject *parents;
     unsigned int i;
     RenderModeInterface *iface = NULL;
+    PyObject *custom;
+    
     if (!PyArg_ParseTuple(args, "s", &rendermode))
         return NULL;
     
@@ -357,7 +362,7 @@ PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args) {
         return NULL;
     
     /* take care of the chain of custom modes, if there are any */
-    PyObject *custom = PyDict_GetItemString(custom_render_modes, rendermode);
+    custom = PyDict_GetItemString(custom_render_modes, rendermode);
     while (custom != NULL) {
         PyObject *name = PyString_FromString(rendermode);
         PyList_Append(parents, name);
@@ -398,6 +403,9 @@ PyObject *get_render_mode_children(PyObject *self, PyObject *args) {
     const char *rendermode;
     PyObject *children;
     unsigned int i;
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+
     if (!PyArg_ParseTuple(args, "s", &rendermode))
         return NULL;
     
@@ -413,8 +421,6 @@ PyObject *get_render_mode_children(PyObject *self, PyObject *args) {
         }
     }
     
-    PyObject *key, *value;
-    Py_ssize_t pos = 0;
     
     while (PyDict_Next(custom_render_modes, &pos, &key, &value)) {
         PyObject *pyparent = PyDict_GetItemString(value, "parent");
