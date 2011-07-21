@@ -326,34 +326,34 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
     
     A non transparent block uses top, side 3 and side 4.
     
-    If top is a tuple then first member is the top image and the second
-    member is an increment (integer) from 0 to 12. This increment will
-    used to crop the side images to look like a block and to paste all
-    the images increment pixels lower. Using increment = 6 will create
-    a half-block.
+    If top is a tuple then first item is the top image and the second
+    item is an increment (integer) from 0 to 16 (pixels in the
+    original minecraft texture). This increment will be used to crop the
+    side images and to paste the top image increment pixels lower, so if
+    you use an increment of 8, it willll draw a half-block.
     
-    NOTE: this method uses the top of the texture image (as done in 
-    minecraft with beds)
+    NOTE: this method uses the bottom of the texture image (as done in 
+    minecraft with beds and cackes)
     
     """
     
     increment = 0
     if isinstance(top, tuple):
-        increment = top[1]
-        crop_height = int(increment * 16./12.)
+        increment = int(math.floor((top[1] / 16.)*12.)) # range increment in the block height in pixels (half texture size)
+        crop_height = increment
         top = top[0]
         if side1 != None:
             side1 = side1.copy()
-            ImageDraw.Draw(side1).rectangle((0, 16 - crop_height,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(side1).rectangle((0, 0,16,crop_height),outline=(0,0,0,0),fill=(0,0,0,0))
         if side2 != None:
             side2 = side2.copy()
-            ImageDraw.Draw(side2).rectangle((0, 16 - crop_height,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(side2).rectangle((0, 0,16,crop_height),outline=(0,0,0,0),fill=(0,0,0,0))
         if side3 != None:
             side3 = side3.copy()
-            ImageDraw.Draw(side3).rectangle((0, 16 - crop_height,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(side3).rectangle((0, 0,16,crop_height),outline=(0,0,0,0),fill=(0,0,0,0))
         if side4 != None:
             side4 = side4.copy()
-            ImageDraw.Draw(side4).rectangle((0, 16 - crop_height,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(side4).rectangle((0, 0,16,crop_height),outline=(0,0,0,0),fill=(0,0,0,0))
 
     img = Image.new("RGBA", (24,24), (38,92,255,0))
     
@@ -367,7 +367,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side1 = ImageEnhance.Brightness(side1).enhance(0.9)
         side1.putalpha(sidealpha)        
         
-        composite.alpha_over(img, side1, (0,0 + increment), side1)
+        composite.alpha_over(img, side1, (0,0), side1)
 
         
     if side2 != None :
@@ -378,7 +378,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side2 = ImageEnhance.Brightness(side2).enhance(0.8)
         side2.putalpha(sidealpha2)
 
-        composite.alpha_over(img, side2, (12,0 + increment), side2)
+        composite.alpha_over(img, side2, (12,0), side2)
 
     if bottom != None :
         bottom = transform_image(bottom, blockID)
@@ -393,7 +393,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side3 = ImageEnhance.Brightness(side3).enhance(0.9)
         side3.putalpha(sidealpha)
         
-        composite.alpha_over(img, side3, (0,6 + increment), side3)
+        composite.alpha_over(img, side3, (0,6), side3)
         
     if side4 != None :
         side4 = transform_image_side(side4, blockID)
@@ -404,7 +404,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
         side4 = ImageEnhance.Brightness(side4).enhance(0.8)
         side4.putalpha(sidealpha)
         
-        composite.alpha_over(img, side4, (12,6 + increment), side4)
+        composite.alpha_over(img, side4, (12,6), side4)
 
     if top != None :
         top = transform_image(top, blockID)
@@ -605,7 +605,7 @@ def generate_special_texture(blockID, data):
 
 
     if blockID == 26: # bed
-        increment = 5
+        increment = 8
         left_face = None
         right_face = None
         if data & 0x8 == 0x8: # head of the bed
@@ -1393,21 +1393,21 @@ def generate_special_texture(blockID, data):
         
         img = Image.new("RGBA", (24,24), (38,92,255,0))
         
-        composite.alpha_over(img, side, (1,12), side)
-        composite.alpha_over(img, otherside, (11,13), otherside) # workaround, fixes a hole
-        composite.alpha_over(img, otherside, (12,12), otherside)
+        composite.alpha_over(img, side, (1,6), side)
+        composite.alpha_over(img, otherside, (11,7), otherside) # workaround, fixes a hole
+        composite.alpha_over(img, otherside, (12,6), otherside)
         composite.alpha_over(img, top, (0,6), top)
 
         return generate_texture_tuple(img, blockID)
 
 
-    if blockID in (93, 94): # redstone repeaters, ON and OFF
+    if blockID in (93, 94): # redstone repeaters (diodes), ON and OFF
         # NOTE: this function uses the redstone torches generated above,
         # this must run after the function of the torches.
 
         top = terrain_images[131] if blockID == 93 else terrain_images[147]
         side = terrain_images[5]
-        increment = 9
+        increment = 13
         
         if (data & 0x3) == 0: # pointing east
             pass
@@ -1532,7 +1532,7 @@ def generate_special_texture(blockID, data):
                 img = _build_full_block(None, None, None, texture, None)
             
         elif data & 0x4 == 0: # closed trapdoor
-            img = _build_full_block((texture, 9), None, None, texture, texture)
+            img = _build_full_block((texture, 12), None, None, texture, texture)
         
         return generate_texture_tuple(img, blockID)
 
@@ -1675,9 +1675,10 @@ biome_tall_fern_texture = None
 biome_leaf_texture = None
 specialblockmap = None
 
-def generate(path=None):
-    global _find_file_local_path
+def generate(path=None,texture_size=24):
+    global _find_file_local_path, texture_dimensions
     _find_file_local_path = path
+    texture_dimensions = (texture_size, texture_size)
     
     # This maps terainids to 16x16 images
     global terrain_images
@@ -1701,3 +1702,30 @@ def generate(path=None):
     for blockID in special_blocks:
         for data in special_map[blockID]:
             specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)
+
+    if texture_size != 24:
+        # rescale biome textures.
+        biome_grass_texture = biome_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
+        biome_leaf_texture = biome_leaf_texture.resize(texture_dimensions, Image.ANTIALIAS)
+        biome_tall_grass_texture = biome_tall_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
+        biome_tall_fern_texture = biome_tall_fern_texture.resize(texture_dimensions, Image.ANTIALIAS)
+
+        # rescale the normal block images
+        for i in range(len(blockmap)):
+            if blockmap[i] != None:
+                block = blockmap[i]
+                alpha = block[1]
+                block = block[0]
+                block.putalpha(alpha)
+                scaled_block = block.resize(texture_dimensions, Image.ANTIALIAS)
+                blockmap[i] = generate_texture_tuple(scaled_block, i)
+
+        # rescale the special block images
+        for blockid, data in iter(specialblockmap):
+            block = specialblockmap[(blockid,data)]
+            if block != None:
+                alpha = block[1]
+                block = block[0]
+                block.putalpha(alpha)
+                scaled_block = block.resize(texture_dimensions, Image.ANTIALIAS)
+                specialblockmap[(blockid,data)] = generate_texture_tuple(scaled_block, blockid)
