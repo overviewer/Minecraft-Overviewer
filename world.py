@@ -70,7 +70,7 @@ class World(object):
     mincol = maxcol = minrow = maxrow = 0
     
     def __init__(self, worlddir, useBiomeData=False,regionlist=None,
-            north_direction="upper-right"):
+            north_direction="lower-left"):
         self.worlddir = worlddir
         self.useBiomeData = useBiomeData
         self.north_direction = north_direction

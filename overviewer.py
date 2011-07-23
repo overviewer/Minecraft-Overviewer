@@ -224,7 +224,7 @@ def main():
     if options.north_direction:
         north_direction = options.north_direction
     else:
-        north_direction = 'upper-right'
+        north_direction = 'lower-left'
     
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)

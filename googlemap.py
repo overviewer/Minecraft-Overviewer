@@ -71,7 +71,7 @@ class MapGen(object):
         self.web_assets_hook = configInfo.get('web_assets_hook', None)
         self.web_assets_path = configInfo.get('web_assets_path', None)
         self.bg_color = configInfo.get('bg_color')
-        self.north_direction = configInfo.get('north_direction', 'upper-right')
+        self.north_direction = configInfo.get('north_direction', 'lower-left')
         
         if not len(quadtrees) > 0:
             raise ValueError("there must be at least one quadtree to work on")
