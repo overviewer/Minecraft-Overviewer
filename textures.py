@@ -1784,8 +1784,25 @@ def getBiomeData(worlddir, chunkX, chunkY):
     '''
 
     global currentBiomeFile, currentBiomeData
+    biomeX = chunkX // 32
+    biomeY = chunkY // 32
+    rots = 0
+    if _north == 'upper-right':
+        biomeX = -biomeX
+        biomeY = -biomeY
+        rots = 2
+    elif _north == 'lower-right':
+        temp = biomeX
+        biomeX = -biomeY
+        biomeY = temp
+        rots = 1
+    elif _north == 'upper-left':
+        temp = biomeX
+        biomeX = biomeY
+        biomeY = -temp
+        rots = 3
 
-    biomeFile = "b.%d.%d.biome" % (chunkX // 32, chunkY // 32)
+    biomeFile = "b.%d.%d.biome" % (biomeX, biomeY)
     if biomeFile == currentBiomeFile:
         return currentBiomeData
 
@@ -1795,7 +1812,9 @@ def getBiomeData(worlddir, chunkX, chunkY):
             # make sure the file size is correct
             if not len(rawdata) == 512 * 512 * 2:
                 raise Exception("Biome file %s is not valid." % (biomeFile,))
-            data = numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2"))
+            data = numpy.reshape(numpy.rot90(numpy.reshape(
+                    numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2")),
+                    (512,512)),rots), -1)
     except IOError:
         data = None
         pass # no biome data   
@@ -1878,6 +1897,8 @@ biome_leaf_texture = None
 specialblockmap = None
 
 def generate(north_direction, path=None):
+    global _north
+    _north = north_direction
     global _find_file_local_path
     _find_file_local_path = path
     
