@@ -425,7 +425,7 @@ def _build_blockimages():
        #        0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
     topids = [ -1,  1,  0,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-               34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, 11, -1,
+               34, -1, 52, 48, -1,160,144, -1,176, 74, -1, -1, -1, -1, 11, -1,
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                55, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  9,  4, 
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
@@ -442,7 +442,7 @@ def _build_blockimages():
        #         0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
     sideids = [ -1,  1,  3,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-                34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, 11, -1,
+                34, -1, 52, 48, -1,160,144, -1,192, 74, -1, -1,- 1, -1, 11, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 55, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
@@ -553,33 +553,35 @@ def generate_special_texture(blockID, data):
         return generate_texture_tuple(img, blockID)
 
 
-    if blockID == 9: # spring water, flowing water and waterfall water
-
-        watertexture = _load_image("water.png")
+    if blockID == 9 or blockID == 20: # spring water, flowing water and waterfall water, AND glass
+        # water and glass share the way to be rendered
+        if blockID == 9:
+            texture = _load_image("water.png")
+        else:
+            texture = terrain_images[49]
         
         if (data & 0b10000) == 16:
-            top = watertexture
+            top = texture
             
         else: top = None
 
         if (data & 0b0001) == 1:
-            side1 = watertexture    # top left
+            side1 = texture    # top left
         else: side1 = None
         
         if (data & 0b1000) == 8:
-            side2 = watertexture    # top right           
+            side2 = texture    # top right           
         else: side2 = None
         
         if (data & 0b0010) == 2:
-            side3 = watertexture    # bottom left    
+            side3 = texture    # bottom left    
         else: side3 = None
         
         if (data & 0b0100) == 4:
-            side4 = watertexture    # bottom right
+            side4 = texture    # bottom right
         else: side4 = None
         
         img = _build_full_block(top,None,None,side3,side4)
-        
         return generate_texture_tuple(img, blockID)
 
 
@@ -1736,10 +1738,10 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # (when adding new blocks here and in generate_special_textures,
 # please, if possible, keep the ascending order of blockid value)
 
-special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 29, 31, 33, 34,
-                      35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62, 63,
-                      64, 65, 66, 67, 68, 71, 75, 76, 85, 86, 90, 91, 92,
-                      93, 94, 96])
+special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
+                      34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
+                      63, 64, 65, 66, 67, 68, 71, 75, 76, 85, 86, 90, 91,
+                      92, 93, 94, 96])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1749,6 +1751,7 @@ special_map = {}
 special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values, uses pseudo data
 special_map[17] = range(3)  # wood: normal, birch and pine
+special_map[20] = range(32) # glass, used to only render the exterior surface, uses pseudo data
 special_map[26] = range(12) # bed, orientation
 special_map[23] = range(6)  # dispensers, orientation
 special_map[27] = range(14) # powered rail, orientation/slope and powered/unpowered
