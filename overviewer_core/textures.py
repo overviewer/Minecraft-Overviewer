@@ -339,7 +339,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
     
     increment = 0
     if isinstance(top, tuple):
-        increment = int(math.floor((top[1] / 16.)*12.)) # range increment in the block height in pixels (half texture size)
+        increment = int(round((top[1] / 16.)*12.)) # range increment in the block height in pixels (half texture size)
         crop_height = increment
         top = top[0]
         if side1 != None:
@@ -382,7 +382,7 @@ def _build_full_block(top, side1, side2, side3, side4, bottom=None, blockID=None
 
     if bottom != None :
         bottom = transform_image(bottom, blockID)
-        composite.alpha_over(img, bottom, (0,12), top)
+        composite.alpha_over(img, bottom, (0,12), bottom)
         
     # front sides
     if side3 != None :
@@ -425,7 +425,7 @@ def _build_blockimages():
        #        0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
     topids = [ -1,  1,  0,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-               34, -1, 52, 48, 49,160,144, -1,176, 74, -1, -1, -1, -1, 11, -1,
+               34, -1, 52, 48, -1,160,144, -1,176, 74, -1, -1, -1, -1, 11, -1,
        #       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                55, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  9,  4, 
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
@@ -442,7 +442,7 @@ def _build_blockimages():
        #         0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
     sideids = [ -1,  1,  3,  2, 16,  4, -1, 17,205,205,237,237, 18, 19, 32, 33,
        #        16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-                34, -1, 52, 48, 49,160,144, -1,192, 74, -1, -1,- 1, -1, 11, -1,
+                34, -1, 52, 48, -1,160,144, -1,192, 74, -1, -1,- 1, -1, 11, -1,
        #        32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
                 55, -1, -1, -1, -1, 13, 12, 29, 28, 23, 22, -1, -1,  7,  8, 35,
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
@@ -553,33 +553,35 @@ def generate_special_texture(blockID, data):
         return generate_texture_tuple(img, blockID)
 
 
-    if blockID == 9: # spring water, flowing water and waterfall water
-
-        watertexture = _load_image("water.png")
+    if blockID == 9 or blockID == 20: # spring water, flowing water and waterfall water, AND glass
+        # water and glass share the way to be rendered
+        if blockID == 9:
+            texture = _load_image("water.png")
+        else:
+            texture = terrain_images[49]
         
         if (data & 0b10000) == 16:
-            top = watertexture
+            top = texture
             
         else: top = None
 
         if (data & 0b0001) == 1:
-            side1 = watertexture    # top left
+            side1 = texture    # top left
         else: side1 = None
         
         if (data & 0b1000) == 8:
-            side2 = watertexture    # top right           
+            side2 = texture    # top right           
         else: side2 = None
         
         if (data & 0b0010) == 2:
-            side3 = watertexture    # bottom left    
+            side3 = texture    # bottom left    
         else: side3 = None
         
         if (data & 0b0100) == 4:
-            side4 = watertexture    # bottom right
+            side4 = texture    # bottom right
         else: side4 = None
         
         img = _build_full_block(top,None,None,side3,side4)
-        
         return generate_texture_tuple(img, blockID)
 
 
@@ -649,6 +651,7 @@ def generate_special_texture(blockID, data):
 
         return generate_texture_tuple(img, blockID)
 
+
     if blockID == 31: # tall grass
         if data == 0: # dead shrub
             texture = terrain_images[55]
@@ -661,8 +664,134 @@ def generate_special_texture(blockID, data):
         
         img = _build_block(texture, texture, blockID)
         return generate_texture_tuple(img,31)
+
+
+    if blockID in (29,33): # sticky and normal body piston.
+        if blockID == 29: # sticky
+            piston_t = terrain_images[106].copy()
+        else: # normal
+            piston_t = terrain_images[107].copy()
         
+        # other textures
+        side_t = terrain_images[108].copy()
+        back_t = terrain_images[109].copy()
+        interior_t = terrain_images[110].copy()
+        
+        if data & 0x08 == 0x08: # pushed out, non full blocks, tricky stuff
+            # remove piston texture from piston body
+            ImageDraw.Draw(side_t).rectangle((0, 0,16,3),outline=(0,0,0,0),fill=(0,0,0,0))
             
+            if data & 0x07 == 0x0: # down
+                side_t = side_t.rotate(180)
+                img = _build_full_block(back_t ,None ,None ,side_t, side_t)
+
+            elif data & 0x07 == 0x1: # up
+                img = _build_full_block((interior_t, 4) ,None ,None ,side_t, side_t)
+
+            elif data & 0x07 == 0x2: # east
+                img = _build_full_block(side_t , None, None ,side_t.rotate(90), back_t)
+
+            elif data & 0x07 == 0x3: # west
+                img = _build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), None)
+                temp = transform_image_side(interior_t, blockID)
+                temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
+                composite.alpha_over(img, temp, (9,5), temp)
+
+            elif data & 0x07 == 0x4: # north
+                img = _build_full_block(side_t.rotate(90) ,None ,None , None, side_t.rotate(270))
+                temp = transform_image_side(interior_t, blockID)
+                composite.alpha_over(img, temp, (3,5), temp)
+
+            elif data & 0x07 == 0x5: # south
+                img = _build_full_block(side_t.rotate(270) ,None , None ,back_t, side_t.rotate(90))
+
+        else: # pushed in, normal full blocks, easy stuff
+            if data & 0x07 == 0x0: # down
+                side_t = side_t.rotate(180)
+                img = _build_full_block(back_t ,None ,None ,side_t, side_t)
+            elif data & 0x07 == 0x1: # up
+                img = _build_full_block(piston_t ,None ,None ,side_t, side_t)
+            elif data & 0x07 == 0x2: # east 
+                img = _build_full_block(side_t ,None ,None ,side_t.rotate(90), back_t)
+            elif data & 0x07 == 0x3: # west
+                img = _build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
+            elif data & 0x07 == 0x4: # north
+                img = _build_full_block(side_t.rotate(90) ,None ,None ,piston_t, side_t.rotate(270))
+            elif data & 0x07 == 0x5: # south
+                img = _build_full_block(side_t.rotate(270) ,None ,None ,back_t, side_t.rotate(90))
+            
+
+        return generate_texture_tuple(img, blockID)
+
+
+    if blockID == 34: # piston extension (sticky and normal)
+        if (data & 0x8) == 0x8: # sticky
+            piston_t = terrain_images[106].copy()
+        else: # normal
+            piston_t = terrain_images[107].copy()
+
+        # other textures
+        side_t = terrain_images[108].copy()
+        back_t = terrain_images[107].copy()
+        # crop piston body
+        ImageDraw.Draw(side_t).rectangle((0, 4,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # generate the horizontal piston extension stick
+        h_stick = Image.new("RGBA", (24,24), (38,92,255,0))
+        temp = transform_image_side(side_t, blockID)
+        composite.alpha_over(h_stick, temp, (1,7), temp)
+        temp = transform_image(side_t.rotate(90))
+        composite.alpha_over(h_stick, temp, (1,1), temp)
+        # Darken it
+        sidealpha = h_stick.split()[3]
+        h_stick = ImageEnhance.Brightness(h_stick).enhance(0.85)
+        h_stick.putalpha(sidealpha)
+
+        # generate the vertical piston extension stick
+        v_stick = Image.new("RGBA", (24,24), (38,92,255,0))
+        temp = transform_image_side(side_t.rotate(90), blockID)
+        composite.alpha_over(v_stick, temp, (12,6), temp)
+        temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
+        composite.alpha_over(v_stick, temp, (1,6), temp)
+        # Darken it
+        sidealpha = v_stick.split()[3]
+        v_stick = ImageEnhance.Brightness(v_stick).enhance(0.85)
+        v_stick.putalpha(sidealpha)
+
+        # Piston orientation is stored in the 3 first bits
+        if data & 0x07 == 0x0: # down
+            side_t = side_t.rotate(180)
+            img = _build_full_block((back_t, 12) ,None ,None ,side_t, side_t)
+            composite.alpha_over(img, v_stick, (0,-3), v_stick)
+        elif data & 0x07 == 0x1: # up
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            img2 = _build_full_block(piston_t ,None ,None ,side_t, side_t)
+            composite.alpha_over(img, v_stick, (0,4), v_stick)
+            composite.alpha_over(img, img2, (0,0), img2)
+        elif data & 0x07 == 0x2: # east 
+            img = _build_full_block(side_t ,None ,None ,side_t.rotate(90), None)
+            temp = transform_image_side(back_t, blockID).transpose(Image.FLIP_LEFT_RIGHT)
+            composite.alpha_over(img, temp, (2,2), temp)
+            composite.alpha_over(img, h_stick, (6,3), h_stick)
+        elif data & 0x07 == 0x3: # west
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            img2 = _build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
+            composite.alpha_over(img, h_stick, (0,0), h_stick)
+            composite.alpha_over(img, img2, (0,0), img2)            
+        elif data & 0x07 == 0x4: # north
+            img = _build_full_block(side_t.rotate(90) ,None ,None , piston_t, side_t.rotate(270))
+            composite.alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (0,0), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
+        elif data & 0x07 == 0x5: # south
+            img = Image.new("RGBA", (24,24), (38,92,255,0))
+            img2 = _build_full_block(side_t.rotate(270) ,None ,None ,None, side_t.rotate(90))
+            temp = transform_image_side(back_t, blockID)
+            composite.alpha_over(img2, temp, (10,2), temp)
+            composite.alpha_over(img, img2, (0,0), img2)
+            composite.alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (-3,2), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
+
+        return generate_texture_tuple(img, blockID)
+
+
     if blockID == 35: # wool
         if data == 0: # white
             top = side = terrain_images[64]
@@ -1081,7 +1210,7 @@ def generate_special_texture(blockID, data):
 
         # mask out the high bits to figure out the orientation 
         img = Image.new("RGBA", (24,24), (38,92,255,0))
-        if (data & 0x03) == 0:
+        if (data & 0x03) == 0: # northeast corner
             if not swung:
                 tex = transform_image_side(raw_door)
                 composite.alpha_over(img, tex, (0,6), tex)
@@ -1091,7 +1220,7 @@ def generate_special_texture(blockID, data):
                 tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
                 composite.alpha_over(img, tex, (0,0), tex)
         
-        if (data & 0x03) == 1:
+        if (data & 0x03) == 1: # southeast corner
             if not swung:
                 tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
                 composite.alpha_over(img, tex, (0,0), tex)
@@ -1099,7 +1228,7 @@ def generate_special_texture(blockID, data):
                 tex = transform_image_side(raw_door)
                 composite.alpha_over(img, tex, (12,0), tex)
 
-        if (data & 0x03) == 2:
+        if (data & 0x03) == 2: # southwest corner
             if not swung:
                 tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
                 composite.alpha_over(img, tex, (12,0), tex)
@@ -1107,7 +1236,7 @@ def generate_special_texture(blockID, data):
                 tex = transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
                 composite.alpha_over(img, tex, (12,6), tex)
 
-        if (data & 0x03) == 3:
+        if (data & 0x03) == 3: # northwest corner
             if not swung:
                 tex = transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
                 composite.alpha_over(img, tex, (12,6), tex)
@@ -1609,9 +1738,10 @@ def getBiomeData(worlddir, chunkX, chunkY):
 # (when adding new blocks here and in generate_special_textures,
 # please, if possible, keep the ascending order of blockid value)
 
-special_blocks = set([ 2,  6,  9, 17, 18, 26, 23, 27, 28, 31, 35, 43, 44,
-                      50, 51, 53, 54, 55, 58, 59, 61, 62, 63, 64, 65, 66,
-                      67, 68, 71, 75, 76, 85, 86, 90, 91, 92, 93, 94, 96])
+special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
+                      34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
+                      63, 64, 65, 66, 67, 68, 71, 75, 76, 85, 86, 90, 91,
+                      92, 93, 94, 96])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1621,10 +1751,14 @@ special_map = {}
 special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values, uses pseudo data
 special_map[17] = range(3)  # wood: normal, birch and pine
+special_map[20] = range(32) # glass, used to only render the exterior surface, uses pseudo data
 special_map[26] = range(12) # bed, orientation
 special_map[23] = range(6)  # dispensers, orientation
 special_map[27] = range(14) # powered rail, orientation/slope and powered/unpowered
 special_map[28] = range(6) # detector rail, orientation/slope
+special_map[29] = (0,1,2,3,4,5,8,9,10,11,12,13) # sticky piston body, orientation, pushed in/out
+special_map[33] = (0,1,2,3,4,5,8,9,10,11,12,13) # normal piston body, orientation, pushed in/out
+special_map[34] = (0,1,2,3,4,5,8,9,10,11,12,13) # normal and sticky piston extension, orientation, sticky/normal
 special_map[35] = range(16) # wool, colored and white
 special_map[43] = range(4)  # stone, sandstone, wooden and cobblestone double-slab
 special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
