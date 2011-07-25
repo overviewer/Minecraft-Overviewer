@@ -176,6 +176,11 @@ def main():
             parser.print_help()
             logging.error("Invalid world number")
             sys.exit(1)
+    
+    # final sanity check for worlddir
+    if not os.path.exists(os.path.join(worlddir, 'level.dat')):
+        logging.error("Invalid world path -- does not contain level.dat")
+        sys.exit(1)
 
     if len(args) < 2:
         if options.delete:
