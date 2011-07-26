@@ -114,10 +114,10 @@ def get_tileentity_data(level):
     return data
 
 # This set holds blocks ids that can be seen through, for occlusion calculations
-transparent_blocks = set([ 0,  6,  8,  9, 18, 20, 26, 27, 28, 30, 31, 32, 37, 38,
-                          39, 40, 44, 50, 51, 52, 53, 55, 59, 63, 64, 65, 66, 67,
-                          68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79, 81, 83, 85, 
-                          90, 92, 93, 94, 96])
+transparent_blocks = set([ 0,  6,  8,  9, 18, 20, 26, 27, 28, 29, 30, 31, 32, 33,
+                          34, 37, 38, 39, 40, 44, 50, 51, 52, 53, 55, 59, 63, 64,
+                          65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79,
+                          81, 83, 85, 90, 92, 93, 94, 96])
 
 # This set holds block ids that are solid blocks
 solid_blocks = set([1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -321,67 +321,6 @@ class ChunkRenderer(object):
         return self._up_left_skylight
     up_left_skylight = property(_load_up_left_skylight)
 
-    def generate_pseudo_ancildata(self,x,y,z,blockid, north_position = 0 ):
-        """ Generates a pseudo ancillary data for blocks that depend of 
-        what are surrounded and don't have ancillary data
-        
-        This uses a binary number of 4 digits to encode the info. 
-        The encode is:
-        
-        Bit:   1   2   3   4
-        Side:  x   y  -x  -y
-        Values: bit = 0 -> The corresponding side block has different blockid
-                bit = 1 -> The corresponding side block has same blockid
-        Example: if the bit1 is 1 that means that there is a block with 
-        blockid in the side of the +x direction.
-        
-        You can rotate the pseudo data multiplying by 2 and
-        if it is > 15 subtracting 15 and adding 1. (moving bits
-        in the left direction is like rotate 90 degree in anticlockwise
-        direction). In this way can be used for maps with other
-        north orientation.
-        
-        North position can have the values 0, 1, 2, 3, corresponding to 
-        north in bottom-left, bottom-right, top-right and top-left of
-        the screen.
-        
-        The rotation feature is not used anywhere yet.
-        """
-        
-        blocks = self.blocks
-        up_left_blocks = self.up_left_blocks 
-        up_right_blocks = self.up_right_blocks
-        left_blocks = self.left_blocks
-        right_blocks = self.right_blocks
-
-        pseudo_data = 0
-
-        # first check if we are in the border of a chunk, next check for chunks adjacent to this 
-        # and finally check for a block with same blockid. I we aren't in the border of a chunk, 
-        # check for the block having the sme blockid.
-        
-        if (up_right_blocks is not None and up_right_blocks[0,y,z] == blockid) if x == 15 else blocks[x+1,y,z] == blockid:
-            pseudo_data = pseudo_data | 0b1000
-        
-        if (right_blocks is not None and right_blocks[x,0,z] == blockid) if y == 15 else blocks[x,y + 1,z] == blockid:
-            pseudo_data = pseudo_data | 0b0100
-        
-        if (left_blocks is not None and left_blocks[15,y,z] == blockid) if x == 0 else blocks[x - 1,y,z] == blockid:
-            pseudo_data = pseudo_data | 0b0010
-            
-        if (up_left_blocks is not None and up_left_blocks[x,15,z] == blockid) if y == 0 else blocks[x,y - 1,z] == blockid:
-            pseudo_data = pseudo_data | 0b0001
-
-        # rotate the bits for other north orientations
-        while north_position > 0:
-            pseudo_data *= 2
-            if pseudo_data > 15:
-                pseudo_data -= 16
-                pseudo_data +=1
-            north_position -= 1
-            
-        return pseudo_data
-        
     def chunk_render(self, img=None, xoff=0, yoff=0, cave=False):
         """Renders a chunk with the given parameters, and returns the image.
         If img is given, the chunk is rendered to that image object. Otherwise,
