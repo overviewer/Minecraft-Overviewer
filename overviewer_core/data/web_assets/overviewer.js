@@ -313,6 +313,9 @@ var overviewer = {
                              'title':   jQuery.trim(item.msg),
                              'icon':    overviewerConfig.CONST.image.queryMarker
                         });
+                        google.maps.event.addListener(marker, 'click', function(){ marker.setVisible(false); });
+
+
                         continue;
                     }
 
