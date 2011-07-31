@@ -426,6 +426,11 @@ class QuadtreeGen(object):
             needs_rerender = False
             get_region_mtime = world.get_region_mtime
             for col, row, chunkx, chunky, regionfile in chunks:
+				# check region file mtime first. 
+                region, regionMtime = get_region_mtime(regionfile)
+                if regionMtime <= tile_mtime:
+                    continue
+
                 # don't even check if it's not in the regionlist
                 if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
                     continue
@@ -434,11 +439,6 @@ class QuadtreeGen(object):
                 if self.forcerender:
                     needs_rerender = True
                     break
-                
-                # check region file mtime first. 
-                region, regionMtime = get_region_mtime(regionfile)
-                if regionMtime <= tile_mtime:
-                    continue
                
                 # checking chunk mtime
                 if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
