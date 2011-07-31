@@ -534,7 +534,7 @@ var overviewer = {
             // the width and height of all the highest-zoom tiles combined,
             // inverted
             var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
-                Math.pow(2, overviewerConfig.map.maxZoom));
+                Math.pow(2, overviewerConfig.map.zoomLevels));
 
             // This information about where the center column is may change with
             // a different drawing implementation -- check it again after any
@@ -542,13 +542,13 @@ var overviewer = {
 
             // point (0, 0, 127) is at (0.5, 0.0) of tile (tiles/2 - 1, tiles/2)
             // so the Y coordinate is at 0.5, and the X is at 0.5 -
-            // ((tileSize / 2) / (tileSize * 2^maxZoom))
-            // or equivalently, 0.5 - (1 / 2^(maxZoom + 1))
-            var lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
+            // ((tileSize / 2) / (tileSize * 2^zoomLevels))
+            // or equivalently, 0.5 - (1 / 2^(zoomLevels + 1))
+            var lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.zoomLevels + 1));
             var lat = 0.5;
 
-            // the following metrics mimic those in ChunkRenderer.chunk_render
-            // in "chunk.py" or, equivalently, chunk_render in src/iterate.c
+            // the following metrics mimic those in
+            // chunk_render in src/iterate.c
 
             // each block on X axis adds 12px to x and subtracts 6px from y
             lng += 12 * x * perPixel;
@@ -586,11 +586,11 @@ var overviewer = {
             // the width and height of all the highest-zoom tiles combined,
             // inverted
             var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
-                Math.pow(2, overviewerConfig.map.maxZoom));
+                Math.pow(2, overviewerConfig.map.zoomLevels));
 
             // Revert base positioning
             // See equivalent code in fromWorldToLatLng()
-            lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
+            lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.zoomLevels + 1));
             lat -= 0.5;
 
             // I'll admit, I plugged this into Wolfram Alpha:

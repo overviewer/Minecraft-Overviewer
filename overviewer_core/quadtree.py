@@ -120,7 +120,7 @@ class QuadtreeGen(object):
         indexfile = os.path.join(self.destdir, "overviewerConfig.js")
         if not os.path.exists(indexfile):
             return -1
-        matcher = re.compile(r"maxZoom.*:\s*(\d+)")
+        matcher = re.compile(r"zoomLevels(?:\'|\")\s*:\s*(\d+)")
         p = -1
         for line in open(indexfile, "r"):
             res = matcher.search(line)

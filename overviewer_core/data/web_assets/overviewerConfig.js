@@ -76,6 +76,12 @@ var overviewerConfig = {
          */
         'maxZoom':      {maxzoom},
         /**
+         * This tells us how many total zoom levels Overviewer rendered.
+         * DO NOT change this, even if you change minZoom and maxZoom, because
+         * it's used for marker position calculations and map resizing.
+         */
+        'zoomLevels':   {zoomlevels},
+        /**
          * Center on this point, in world coordinates. Should be an array, ex:
          * [0,0,0]
          */
