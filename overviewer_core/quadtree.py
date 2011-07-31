@@ -426,7 +426,7 @@ class QuadtreeGen(object):
             needs_rerender = False
             get_region_mtime = world.get_region_mtime
             for col, row, chunkx, chunky, regionfile in chunks:
-			    region, regionMtime = get_region_mtime(regionfile)
+                region, regionMtime = get_region_mtime(regionfile)
 
                 # don't even check if it's not in the regionlist
                 if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
