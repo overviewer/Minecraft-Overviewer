@@ -892,10 +892,10 @@ def generate_special_texture(blockID, data):
             ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
             ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
             
-            composite.alpha_over(img, slice, (6,4))
-            composite.alpha_over(img, small_crop, (5,5))
-            composite.alpha_over(img, small_crop, (6,5))
-            composite.alpha_over(img, slice, (6,6))
+            composite.alpha_over(img, slice, (7,5))
+            composite.alpha_over(img, small_crop, (6,6))
+            composite.alpha_over(img, small_crop, (7,6))
+            composite.alpha_over(img, slice, (7,7))
 
         return generate_texture_tuple(img, blockID)
 
@@ -1390,7 +1390,6 @@ def generate_special_texture(blockID, data):
         ImageDraw.Draw(fence_top).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_top).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
-        ImageDraw.Draw(fence_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_side).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_side).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
@@ -1413,7 +1412,7 @@ def generate_special_texture(blockID, data):
         fence_big = Image.new("RGBA", (24,24), (38,92,255,0))
         composite.alpha_over(fence_big,fence_side, (5,4),fence_side)
         composite.alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
-        composite.alpha_over(fence_big,fence_top, (0,1),fence_top)
+        composite.alpha_over(fence_big,fence_top, (0,0),fence_top)
         
         # Now render the small sticks.
         # Create needed images
@@ -1531,9 +1530,7 @@ def generate_special_texture(blockID, data):
 
 
     if blockID in (93, 94): # redstone repeaters (diodes), ON and OFF
-        # NOTE: this function uses the redstone torches generated above,
-        # this must run after the function of the torches.
-
+        # generate the diode
         top = terrain_images[131] if blockID == 93 else terrain_images[147]
         side = terrain_images[5]
         increment = 13
@@ -1551,12 +1548,22 @@ def generate_special_texture(blockID, data):
             top = top.rotate(90)
 
         img = _build_full_block( (top, increment), None, None, side, side)
+
+        # compose a "3d" redstone torch
+        t = terrain_images[115].copy() if blockID == 93 else terrain_images[99].copy()
+        torch = Image.new("RGBA", (24,24), (38,92,255,0))
+        
+        t_crop = t.crop((2,2,14,14))
+        slice = t_crop.copy()
+        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        composite.alpha_over(torch, slice, (6,4))
+        composite.alpha_over(torch, t_crop, (5,5))
+        composite.alpha_over(torch, t_crop, (6,5))
+        composite.alpha_over(torch, slice, (6,6))
         
         # paste redstone torches everywhere!
-        t = specialblockmap[(75,5)] if blockID == 93 else specialblockmap[(76,5)]
-        torch = t[0].copy()        # textures are stored as tuples (RGB,A)
-        torch.putalpha(t[1])
-        
         # the torch is too tall for the repeater, crop the bottom.
         ImageDraw.Draw(torch).rectangle((0,16,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
         
