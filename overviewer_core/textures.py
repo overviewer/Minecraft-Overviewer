@@ -581,6 +581,10 @@ def generate_special_texture(blockID, data):
             side4 = texture    # bottom right
         else: side4 = None
         
+        # if nothing shown do not draw at all
+        if top == side3 == side4 == None:
+            return None
+        
         img = _build_full_block(top,None,None,side3,side4)
         return generate_texture_tuple(img, blockID)
 
