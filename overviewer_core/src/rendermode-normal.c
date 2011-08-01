@@ -125,7 +125,6 @@ rendermode_normal_occluded(void *data, RenderState *state) {
 static void
 rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeNormal *self = (RenderModeNormal *)data;
-    int offx = 0, offy = 0;
     unsigned char data_byte;
     
     /* first, check to see if we should use biome-compatible src, mask */
@@ -142,14 +141,8 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         }
     }
     
-    if (state->block == 31) {
-        /* add a random offset to the postion of the tall grass to make it more wild */
-        offx = rand() % 6 + 1 - 3;
-        offy = rand() % 6 + 1 - 3;
-    }
-    
     /* draw the block! */
-    alpha_over(state->img, src, mask, state->imgx + offx, state->imgy + offy, 0, 0);
+    alpha_over(state->img, src, mask, state->imgx, state->imgy, 0, 0);
     
     if (self->biome_data) {
         /* do the biome stuff! */
@@ -167,7 +160,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 break;
             color = PySequence_GetItem(self->grasscolor, index);
             facemask = self->grass_texture;
-            alpha_over(state->img, self->grass_texture, self->grass_texture, state->imgx + offx, state->imgy + offy, 0, 0);
+            alpha_over(state->img, self->grass_texture, self->grass_texture, state->imgx, state->imgy, 0, 0);
             break;
         case 18:
             /* leaves */
@@ -196,7 +189,7 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
             Py_DECREF(color);
 
-            tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx + offx, state->imgy + offy, 0, 0);
+            tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
         }
     }
 

@@ -372,7 +372,7 @@ chunk_render(PyObject *self, PyObject *args) {
             for (state.z = 0; state.z < 128; state.z++) {
                 state.imgy -= 12;
 		
-		/* get blockid */
+                /* get blockid */
                 state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
                 if (state.block == 0) {
                     continue;
@@ -430,14 +430,29 @@ chunk_render(PyObject *self, PyObject *args) {
                 if (t != NULL && t != Py_None)
                 {
                     PyObject *src, *mask, *mask_light;
+                    int randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 1);
                     mask_light = PyTuple_GetItem(t, 2);
 
                     if (mask == Py_None)
                         mask = src;
+
+                    if (state.block == 31) {
+                        /* add a random offset to the postion of the tall grass to make it more wild */
+                        randx = rand() % 6 + 1 - 3;
+                        randy = rand() % 6 + 1 - 3;
+                        state.imgx += randx;
+                        state.imgy += randy;
+                    }
                     
                     rendermode->draw(rm_data, &state, src, mask, mask_light);
+                    
+                    if (state.block == 31) {
+                        /* undo the random offsets */
+                        state.imgx -= randx;
+                        state.imgy -= randy;
+                    }
                 }               
             }
             
