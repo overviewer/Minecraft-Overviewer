@@ -360,6 +360,10 @@ chunk_render(PyObject *self, PyObject *args) {
     up_right_blocks_py = PyObject_GetAttrString(state.self, "up_right_blocks");
     state.up_right_blocks = up_right_blocks_py;
     
+    /* set up the random number generator again for each chunk
+       so tallgrass is in the same place, no matter what mode is used */
+    srand(1);
+    
     for (state.x = 15; state.x > -1; state.x--) {
         for (state.y = 0; state.y < 16; state.y++) {
             PyObject *blockid = NULL;
