@@ -6,6 +6,7 @@ from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
+from distutils.cmd import Command
 from distutils.dir_util import remove_tree
 from distutils.sysconfig import get_python_inc
 from distutils import log
@@ -74,6 +75,17 @@ def recursive_data_files(src, dest=None):
         ret.append((current_dest, current_sources))
     return ret
 
+# helper to create a 'package_data'-type sequence recursively for a given dir
+def recursive_package_data(src, package_dir='overviewer_core'):
+    full_src = os.path.join(package_dir, src)
+    ret = []
+    for dirpath, dirnames, filenames in os.walk(full_src, topdown=False):
+        current_path = os.path.relpath(dirpath, package_dir)
+        for filename in filenames:
+            ret.append(os.path.join(current_path, filename))
+    
+    return ret
+
 #
 # py2exe options
 #
@@ -105,9 +117,8 @@ if py2app is not None:
 
 setup_kwargs['packages'] = ['overviewer_core']
 setup_kwargs['scripts'] = ['overviewer.py']
-setup_kwargs['package_data'] = {'overviewer_core':
-                                    ['data/textures/*',
-                                     'data/web_assets/*']}
+setup_kwargs['package_data'] = {'overviewer_core': recursive_package_data('data/textures') + recursive_package_data('data/web_assets')}
+
 if py2exe is None:
     setup_kwargs['data_files'] = [('share/doc/minecraft-overviewer', doc_files)]
 
@@ -175,12 +186,15 @@ class CustomClean(clean):
                       pretty_fname)
         
         versionpath = os.path.join("overviewer_core", "overviewer_version.py")
-        try:
-            if not self.dry_run:
-                os.remove(versionpath)
-            log.info("removing '%s'", versionpath)
-        except OSError:
-            log.warn("'%s' could not be cleaned -- permission denied", versionpath)
+        if os.path.exists(versionpath):
+            try:
+                if not self.dry_run:
+                    os.remove(versionpath)
+                log.info("removing '%s'", versionpath)
+            except OSError:
+                log.warn("'%s' could not be cleaned -- permission denied", versionpath)
+        else:
+            log.debug("'%s' does not exist -- can't clean it", versionpath)
 
         # now try to purge all *.pyc files
         for root, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), ".")):
@@ -203,7 +217,7 @@ def generate_version_py():
         f.write(outstr)
         f.close()
     except:
-        print "WARNING: failed to build overview_version file"
+        print "WARNING: failed to build overviewer_version file"
 
 class CustomSDist(sdist):
     def run(self):
@@ -232,11 +246,32 @@ class CustomBuildExt(build_ext):
         self.inplace = True
         build_ext.build_extensions(self)
         
+class CheckTerrain(Command):
+    user_options=[]
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        from overviewer_core.textures import _find_file
+        import hashlib
+        import zipfile
+        print "checking..."
+        try:
+            f = _find_file("terrain.png", verbose=True)
+        except IOError:
+            log.error("Could not find the file terrain.png")
+            return
+
+        h = hashlib.sha1()
+        h.update(f.read())
+        log.info("Hash of terrain.png file is: %s", h.hexdigest())
 
 setup_kwargs['cmdclass']['clean'] = CustomClean
 setup_kwargs['cmdclass']['sdist'] = CustomSDist
 setup_kwargs['cmdclass']['build'] = CustomBuild
 setup_kwargs['cmdclass']['build_ext'] = CustomBuildExt
+setup_kwargs['cmdclass']['check_terrain'] = CheckTerrain
 ###
 
 setup(**setup_kwargs)

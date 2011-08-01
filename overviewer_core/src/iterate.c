@@ -173,11 +173,17 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
             data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f);
             return data;
         }
-
-
+    } else if (state->block == 20) { /* glass */
+        /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
+        if ((z != 127) && (getArrayByte3D(state->blocks, x, y, z+1) == 20)) {
+            data = 0;
+        } else { 
+            data = 16;
+        }
+        data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
+        return data;
     } else if (state->block == 85) { /* fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
-
 
     } else if (state->block == 55) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
@@ -352,6 +358,10 @@ chunk_render(PyObject *self, PyObject *args) {
     up_right_blocks_py = PyObject_GetAttrString(state.self, "up_right_blocks");
     state.up_right_blocks = up_right_blocks_py;
     
+    /* set up the random number generator again for each chunk
+       so tallgrass is in the same place, no matter what mode is used */
+    srand(1);
+    
     for (state.x = 15; state.x > -1; state.x--) {
         for (state.y = 0; state.y < 16; state.y++) {
             PyObject *blockid = NULL;
@@ -364,7 +374,7 @@ chunk_render(PyObject *self, PyObject *args) {
             for (state.z = 0; state.z < 128; state.z++) {
                 state.imgy -= 12;
 		
-		/* get blockid */
+                /* get blockid */
                 state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
                 if (state.block == 0) {
                     continue;
@@ -400,7 +410,10 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *tmp;
                     
                     unsigned char ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
-                    if ((state.block == 85) || (state.block == 9) || (state.block == 55) || (state.block == 54) || (state.block == 2) || (state.block == 90)) {
+                    if ((state.block ==  2) || (state.block ==  9) || 
+                        (state.block == 20) || (state.block == 54) || 
+                        (state.block == 55) || (state.block == 85) || 
+                        (state.block == 90)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                     }
                     
@@ -419,14 +432,29 @@ chunk_render(PyObject *self, PyObject *args) {
                 if (t != NULL && t != Py_None)
                 {
                     PyObject *src, *mask, *mask_light;
+                    int randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 1);
                     mask_light = PyTuple_GetItem(t, 2);
 
                     if (mask == Py_None)
                         mask = src;
+
+                    if (state.block == 31) {
+                        /* add a random offset to the postion of the tall grass to make it more wild */
+                        randx = rand() % 6 + 1 - 3;
+                        randy = rand() % 6 + 1 - 3;
+                        state.imgx += randx;
+                        state.imgy += randy;
+                    }
                     
                     render_mode_draw(rendermode, src, mask, mask_light);
+                    
+                    if (state.block == 31) {
+                        /* undo the random offsets */
+                        state.imgx -= randx;
+                        state.imgy -= randy;
+                    }
                 }               
             }
             

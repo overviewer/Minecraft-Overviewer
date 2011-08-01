@@ -114,6 +114,8 @@ class MapGen(object):
                 "{minzoom}", str(0))
         config = config.replace(
                 "{maxzoom}", str(zoomlevel))
+        config = config.replace(
+                "{zoomlevels}", str(zoomlevel))
         
         config = config.replace("{spawn_coords}",
                                 json.dumps(list(self.world.spawn)))
