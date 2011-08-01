@@ -41,6 +41,7 @@ feature.
 
  * arrai <array.of.intellect@gmail.com>
  * Kyle Brantley <kyle@averageurl.com>
+ * but2002 <barryt_9@hotmail.com>
  * Eric Carr <eric@carr.no>
  * cbarber <CraigBarber@taryx.com>
  * Alex Cline <cline@vivisimo.com>
