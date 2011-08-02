@@ -513,9 +513,7 @@ def generate_texture_tuple(img, blockid):
 
 def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
-    #print "%s has ancillary data: %X" %(blockID, data)
-    # TODO ladders, stairs, levers, buttons, and signs
-    # all need to behandled here (and in chunkpy)
+    # blocks need to be handled here (and in chunk.py)
     
     if blockID == 2: # grass
         # data & 0x10 means SNOW sides
@@ -1778,7 +1776,7 @@ special_map[51] = range(16) # fire, position in the block (not implemented)
 special_map[53] = range(4)  # wooden stairs, orientation
 special_map[54] = range(12) # chests, orientation and type (single or double), uses pseudo data
 special_map[55] = range(128) # redstone wire, all the possible combinations, uses pseudo data
-special_map[58] = (0,)      # crafting table
+special_map[58] = (0,)      # crafting table, it has 2 different sides
 special_map[59] = range(8)  # crops, grow from 0 to 7
 special_map[61] = range(6)  # furnace, orientation
 special_map[62] = range(6)  # burning furnace, orientation
@@ -1795,9 +1793,9 @@ special_map[85] = range(17) # fences, all the possible combination, uses pseudo 
 special_map[86] = range(5)  # pumpkin, orientation
 special_map[90] = (1,2,4,8) # portal, in 2 orientations, 4 cases, uses pseudo data
 special_map[91] = range(5)  # jack-o-lantern, orientation
-special_map[92] = range(6) # cake!
-special_map[93] = range(16) # OFF redstone repeater, orientation and delay (delay not implemented)
-special_map[94] = range(16) # ON redstone repeater, orientation and delay (delay not implemented)
+special_map[92] = range(6) # cake, eaten amount, (not implemented)
+special_map[93] = range(16) # OFF redstone repeater, orientation and delay
+special_map[94] = range(16) # ON redstone repeater, orientation and delay
 special_map[96] = range(8)  # trapdoor, open, closed, orientation
 
 # grass and leaves are graysacle in terrain.png
