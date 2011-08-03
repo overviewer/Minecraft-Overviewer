@@ -412,11 +412,15 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *tmp;
                     
                     unsigned char ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
+                    state.block_data = ancilData;
                     if ((state.block ==  2) || (state.block ==  9) || 
                         (state.block == 20) || (state.block == 54) || 
                         (state.block == 55) || (state.block == 85) || 
                         (state.block == 90)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
+                        state.block_pdata = ancilData;
+                    } else {
+                        state.block_pdata = 0;
                     }
                     
                     tmp = PyTuple_New(2);

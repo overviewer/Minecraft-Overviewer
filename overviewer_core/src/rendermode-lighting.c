@@ -293,7 +293,20 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
     self = (RenderModeLighting *)data;
     x = state->x, y = state->y, z = state->z;
     
-    if (is_transparent(state->block)) {
+    if (state->block == 9) { /* special case for water */
+        /* looks like we need a new case for lighting, there are
+         * blocks that are transparent and need per-face shading
+         * if the face is drawn. */
+        if ((state->block_pdata & 16) == 16) {
+            do_shading_with_mask(self, state, x, y, z+1, self->facemasks[0]);
+        }
+        if ((state->block_pdata & 2) == 2) { /* bottom left */
+            do_shading_with_mask(self, state, x-1, y, z, self->facemasks[1]);
+        }
+        if ((state->block_pdata & 4) == 4) { /* bottom right */
+            do_shading_with_mask(self, state, x, y+1, z, self->facemasks[2]);
+        }
+    } else if (is_transparent(state->block)) {
         /* transparent: do shading on whole block */
         do_shading_with_mask(self, state, x, y, z, mask_light);
     } else {
