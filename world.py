@@ -210,9 +210,20 @@ class World(object):
 
         ## read spawn info from level.dat
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]
-        spawnX = data['Data']['SpawnX']
+        disp_spawnX = spawnX = data['Data']['SpawnX']
         spawnY = data['Data']['SpawnY']
-        spawnZ = data['Data']['SpawnZ']
+        disp_spawnZ = spawnZ = data['Data']['SpawnZ']
+        if self.north_direction == 'upper-right':
+            spawnX = -spawnX
+            spawnZ = -spawnZ
+        elif self.north_direction == 'upper-left':
+            temp = spawnX
+            spawnX = -spawnZ
+            spawnZ = temp
+        elif self.north_direction == 'lower-right':
+            temp = spawnX
+            spawnX = spawnZ
+            spawnZ = -temp
    
         ## The chunk that holds the spawn location 
         chunkX = spawnX/16
@@ -222,10 +233,7 @@ class World(object):
         chunkFile = self.get_region_path(chunkX, chunkY)
         
         if chunkFile is not None:
-            #TODO I broke it
-
-            #data = nbt.load_from_region(chunkFile, chunkX, chunkY, self.north_direction)[1]
-            data = None
+            data = nbt.load_from_region(chunkFile, chunkX, chunkY, self.north_direction)[1]
             if data is not None:
                 level = data['Level']
                 blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
@@ -240,9 +248,9 @@ class World(object):
                     if spawnY == 128:
                         break
 
-        self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, 
+        self.POI.append( dict(x=disp_spawnX, y=spawnY, z=disp_spawnZ,
                 msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
-        self.spawn = (spawnX, spawnY, spawnZ)
+        self.spawn = (disp_spawnX, spawnY, disp_spawnZ)
 
     def go(self, procs):
         """Scan the world directory, to fill in
