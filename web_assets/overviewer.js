@@ -493,16 +493,16 @@ var overviewer = {
                 Math.pow(2, overviewerConfig.map.maxZoom));
 
             if(overviewerConfig.map.north_direction == 'upper-right'){
-                x = -x-1+512;
-                y = -y-1+512;
+                x = -x-1;
+                y = -y-1;
             } else if(overviewerConfig.map.north_direction == 'upper-left'){
                 temp = x;
-                x = -y-1+512;
+                x = -y-1;
                 y = temp;
             } else if(overviewerConfig.map.north_direction == 'lower-right'){
                 temp = x;
                 x = y;
-                y = -temp-1+512;
+                y = -temp-1;
             }
 
             // This information about where the center column is may change with
@@ -578,16 +578,16 @@ var overviewer = {
             point.z -= 64;
 
             if(overviewerConfig.map.north_direction == 'upper-right'){
-                point.x = -point.x+512;
-                point.z = -point.z+512;
+                point.x = -point.x;
+                point.z = -point.z;
             } else if(overviewerConfig.map.north_direction == 'upper-left'){
                 temp = point.z;
-                point.z = -point.x+512;
+                point.z = -point.x;
                 point.x = temp;
             } else if(overviewerConfig.map.north_direction == 'lower-right'){
                 temp = point.z;
                 point.z = point.x;
-                point.x = -temp+512;
+                point.x = -temp;
             }
 
             return point;

@@ -1788,18 +1788,18 @@ def getBiomeData(worlddir, chunkX, chunkY):
     biomeY = chunkY // 32
     rots = 0
     if _north == 'upper-right':
-        biomeX = -biomeX
-        biomeY = -biomeY
+        biomeX = -biomeX-1
+        biomeY = -biomeY-1
         rots = 2
     elif _north == 'lower-right':
         temp = biomeX
-        biomeX = -biomeY
+        biomeX = -biomeY-1
         biomeY = temp
         rots = 1
     elif _north == 'upper-left':
         temp = biomeX
         biomeX = biomeY
-        biomeY = -temp
+        biomeY = -temp-1
         rots = 3
 
     biomeFile = "b.%d.%d.biome" % (biomeX, biomeY)

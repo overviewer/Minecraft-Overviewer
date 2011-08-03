@@ -318,16 +318,16 @@ class World(object):
                     x = int(p[1])
                     y = int(p[2])
                     if self.north_direction == 'upper-right':
-                        x = -x
-                        y = -y
+                        x = -x-1
+                        y = -y-1
                     elif self.north_direction == 'upper-left':
                         temp = x
-                        x = -y
+                        x = -y-1
                         y = temp
                     elif self.north_direction == 'lower-right':
                         temp = x
                         x = y
-                        y = -temp
+                        y = -temp-1
                     yield (x, y, join(self.worlddir, 'region', f))        
                 else:
                     logging.warning("Ignore path '%s' in regionlist", f)
@@ -339,16 +339,16 @@ class World(object):
                 x = int(p[1])
                 y = int(p[2])
                 if self.north_direction == 'upper-right':
-                    x = -x
-                    y = -y
+                    x = -x-1
+                    y = -y-1
                 elif self.north_direction == 'upper-left':
                     temp = x
-                    x = -y
+                    x = -y-1
                     y = temp
                 elif self.north_direction == 'lower-right':
                     temp = x
                     x = y
-                    y = -temp
+                    y = -temp-1
                 yield (x, y, join(dirpath, f))
 
 def get_save_dir():
