@@ -77,10 +77,22 @@ def get_blockarray(level):
 
 def get_blockarray_fromfile(filename, north_direction):
     """Same as get_blockarray except takes a filename. This is a shortcut"""
-    #TODO Update this for configurable-north
     d = nbt.load_from_region(filename, x, y, north_direction)
     level = d[1]['Level']
-    return get_blockarray(level)
+    chunk_data = level
+    chunk_data['Blocks'] = numpy.rot90(numpy.frombuffer(
+            level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
+            self._get_north_rotations())
+    chunk_data['Data'] = numpy.rot90(numpy.frombuffer(
+            level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
+            self._get_north_rotations())
+    chunk_data['SkyLight'] = numpy.rot90(numpy.frombuffer(
+            level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
+            self._get_north_rotations())
+    chunk_data['BlockLight'] = numpy.rot90(numpy.frombuffer(
+            level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
+            self._get_north_rotations())
+    return get_blockarray(chunk_data)
 
 def get_skylight_array(level):
     """Returns the skylight array. This is 4 bits per block, but it is
