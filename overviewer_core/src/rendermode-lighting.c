@@ -293,7 +293,7 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
     self = (RenderModeLighting *)data;
     x = state->x, y = state->y, z = state->z;
     
-    if (state->block == 9) { /* special case for water */
+    if ((state->block == 9) || (state->block == 79)) { /* special case for water and ice */
         /* looks like we need a new case for lighting, there are
          * blocks that are transparent and need per-face shading
          * if the face is drawn. */

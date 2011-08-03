@@ -174,7 +174,7 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
             data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f);
             return data;
         }
-    } else if (state->block == 20) { /* glass */
+    } else if ((state->block == 20) || (state->block == 79)) { /* glass and ice */
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
         if ((z != 127) && (getArrayByte3D(state->blocks, x, y, z+1) == 20)) {
             data = 0;
@@ -413,10 +413,13 @@ chunk_render(PyObject *self, PyObject *args) {
                     
                     unsigned char ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
                     state.block_data = ancilData;
+                    /* block that need pseudo ancildata:
+                     * grass, water, glass, chest, restone wire,
+                     * ice, fence and portal. */
                     if ((state.block ==  2) || (state.block ==  9) || 
                         (state.block == 20) || (state.block == 54) || 
-                        (state.block == 55) || (state.block == 85) || 
-                        (state.block == 90)) {
+                        (state.block == 55) || (state.block == 79) ||
+                        (state.block == 85) || (state.block == 90)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
                     } else {
