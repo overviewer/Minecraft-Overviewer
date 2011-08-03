@@ -295,8 +295,8 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
     
     if ((state->block == 9) || (state->block == 79)) { /* special case for water and ice */
         /* looks like we need a new case for lighting, there are
-         * blocks that are transparent and need per-face shading
-         * if the face is drawn. */
+         * blocks that are transparent for occlusion calculations and
+         * need per-face shading if the face is drawn. */
         if ((state->block_pdata & 16) == 16) {
             do_shading_with_mask(self, state, x, y, z+1, self->facemasks[0]);
         }
@@ -306,7 +306,9 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
         if ((state->block_pdata & 4) == 4) { /* bottom right */
             do_shading_with_mask(self, state, x, y+1, z, self->facemasks[2]);
         }
-    } else if (is_transparent(state->block)) {
+        /* leaves are transparent for occlusion calculations but they 
+         * per face-shading to look as in game */
+    } else if (is_transparent(state->block) && (state->block != 18)) {
         /* transparent: do shading on whole block */
         do_shading_with_mask(self, state, x, y, z, mask_light);
     } else {
