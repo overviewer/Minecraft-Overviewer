@@ -121,7 +121,7 @@ class QuadtreeGen(object):
         indexfile = os.path.join(self.destdir, "overviewerConfig.js")
         if not os.path.exists(indexfile):
             return -1
-        matcher = re.compile(r"maxZoom.*:\s*(\d+)")
+        matcher = re.compile(r"zoomLevels(?:\'|\")\s*:\s*(\d+)")
         p = -1
         for line in open(indexfile, "r"):
             res = matcher.search(line)
@@ -427,19 +427,19 @@ class QuadtreeGen(object):
             needs_rerender = False
             get_region_mtime = world.get_region_mtime
             for col, row, chunkx, chunky, regionfile in chunks:
-                
+                region, regionMtime = get_region_mtime(regionfile)
+
+                # don't even check if it's not in the regionlist
+                if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
+                    continue
+
                 # bail early if forcerender is set
                 if self.forcerender:
                     needs_rerender = True
                     break
                 
                 # check region file mtime first. 
-                region,regionMtime = get_region_mtime(regionfile)
                 if regionMtime <= tile_mtime:
-                    continue
-               
-                # don't even check if it's not in the regionlist
-                if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
                     continue
                
                 # checking chunk mtime

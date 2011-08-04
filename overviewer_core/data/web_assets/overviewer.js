@@ -97,6 +97,25 @@ var overviewer = {
             };
         },
         /**
+         * Quote an arbitrary string for use in a regex matcher.
+         * WTB parametized regexes, JavaScript...
+         *
+         *   From http://kevin.vanzonneveld.net
+         *   original by: booeyOH
+         *   improved by: Ates Goral (http://magnetiq.com)
+         *   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+         *   bugfixed by: Onno Marsman
+         *     example 1: preg_quote("$40");
+         *     returns 1: '\$40'
+         *     example 2: preg_quote("*RRRING* Hello?");
+         *     returns 2: '\*RRRING\* Hello\?'
+         *     example 3: preg_quote("\\.+*?[^]$(){}=!<>|:");
+         *     returns 3: '\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:'
+         */
+        "pregQuote": function(str) {
+            return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
+        },
+        /**
          * Setup the varous mapTypes before we actually create the map. This used
          * to be a bunch of crap down at the bottom of functions.js
          */
@@ -146,6 +165,9 @@ var overviewer = {
             var zoom = overviewerConfig.map.defaultZoom;
             var mapcenter;
             var queryParams = overviewer.util.parseQueryString();
+            if (queryParams.debug) {
+                overviewerConfig.map.debug=true;
+            }
             if (queryParams.lat) {
                 lat = parseFloat(queryParams.lat);
             }
@@ -291,6 +313,9 @@ var overviewer = {
                              'title':   jQuery.trim(item.msg),
                              'icon':    overviewerConfig.CONST.image.queryMarker
                         });
+                        google.maps.event.addListener(marker, 'click', function(){ marker.setVisible(false); });
+
+
                         continue;
                     }
 
@@ -317,6 +342,7 @@ var overviewer = {
                                 'icon':     iconURL,
                                 'visible':  false
                             });
+                            item.marker = marker;
                             overviewer.util.debug(label);
                             overviewer.collections.markers[label].push(marker);
                             if (item.type == 'sign') {
@@ -339,6 +365,7 @@ var overviewer = {
                             'icon':     iconURL,
                             'visible':  false
                         });
+                        item.marker = marker;
                         if (overviewer.collections.markers['__others__']) {
                             overviewer.collections.markers['__others__'].push(marker);
                         } else {
@@ -370,58 +397,75 @@ var overviewer = {
                             point.x, point.y, point.z));
 
                     }
+                    
+                    if (region.label) {
+                        var name = region.label;
+                    } else {
+                        var name = "rawr";
+                    }
+                    
+                    if(region.opacity) {
+                        var strokeOpacity = region.opacity;
+                        var fillOpacity = region.opacity * 0.25;
+                    } else {
+                        var strokeOpacity = region.strokeOpacity;
+                        var fillOpacity = region.fillOpacity;
+                    }
+                    
+                    var shapeOptions = {
+                            'name':             name,
+                            'geodesic':         false,
+                            'map':              null,
+                            'strokeColor':      region.color,
+                            'strokeOpacity':    strokeOpacity,
+                            'strokeWeight':     overviewerConfig.CONST.regionStrokeWeight,
+                            'zIndex':           j
+                    };
+                    if (region.closed) {
+                        shapeOptions["fillColor"] = region.color;
+                        shapeOptions["fillOpacity"] = fillOpacity;
+                        shapeOptions["paths"] = converted;
+                    } else {
+                        shapeOptions["path"] = converted;
+                    }
+
+                    var matched = false;
+
                     for (k in overviewerConfig.objectGroups.regions) {
                         var regionGroup = overviewerConfig.objectGroups.regions[k];
                         var clickable = regionGroup.clickable;
                         var label = regionGroup.label;
-
-                        if(region.label) {
-                            var name = region.label
-                        } else {
-                            var name = 'rawr';
+                        
+                        if (!regionGroup.match(region))
+                            continue;
+                        matched = true;
+                        
+                        if (!region.label) {
                             clickable = false; // if it doesn't have a name, we dont have to show it.
                         }
 
-                        if(region.opacity) {
-                            var strokeOpacity = region.opacity;
-                            var fillOpacity = region.opacity * 0.25;
+                        if (region.closed) {
+                            var shape = new google.maps.Polygon(shapeOptions);
                         } else {
-                            var strokeOpacity = region.strokeOpacity;
-                            var fillOpacity = region.fillOpacity;
+                            var shape = new google.maps.Polyline(shapeOptions);
                         }
 
-                        if (region.closed) {
-                            var shape = new google.maps.Polygon({
-                                'name': name,
-                                'clickable':        clickable,
-                                'geodesic':         false,
-                                'map':              null,
-                                'strokeColor':      region.color,
-                                'strokeOpacity':    strokeOpacity,
-                                'strokeWeight':     overviewerConfig.CONST.regionStrokeWeight,
-                                'fillColor':        region.color,
-                                'fillOpacity':      fillOpacity,
-                                'zIndex':           j,
-                                'paths':            converted
-                            });
-                        } else {
-                            var shape = new google.maps.Polyline({
-                                    'name':             name,
-                                    'clickable':        clickable,
-                                    'geodesic':         false,
-                                    'map':              null,
-                                    'strokeColor':      region.color,
-                                    'strokeOpacity':    strokeOpacity,
-                                    'strokeWeight':     overviewerConfig.CONST.regionStrokeWeight,
-                                    'zIndex':           j,
-                                    'path':             converted
-                                });
-                        }
                         overviewer.collections.regions[label].push(shape); 
 
                         if (clickable) {
                             overviewer.util.createRegionInfoWindow(shape);
                         }
+                    }
+                    
+                    // if we haven't matched anything, go ahead and add it
+                    if (!matched) {
+                        if (region.closed) {
+                            var shape = new google.maps.Polygon(shapeOptions);
+                        } else {
+                            var shape = new google.maps.Polyline(shapeOptions);
+                        }
+                        
+                        shape.setMap(overviewer.map);
                     }
                 }
             }
@@ -490,7 +534,7 @@ var overviewer = {
             // the width and height of all the highest-zoom tiles combined,
             // inverted
             var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
-                Math.pow(2, overviewerConfig.map.maxZoom));
+                Math.pow(2, overviewerConfig.map.zoomLevels));
 
             if(overviewerConfig.map.north_direction == 'upper-right'){
                 x = -x-1;
@@ -511,13 +555,13 @@ var overviewer = {
 
             // point (0, 0, 127) is at (0.5, 0.0) of tile (tiles/2 - 1, tiles/2)
             // so the Y coordinate is at 0.5, and the X is at 0.5 -
-            // ((tileSize / 2) / (tileSize * 2^maxZoom))
-            // or equivalently, 0.5 - (1 / 2^(maxZoom + 1))
-            lat = 0.5;
-            lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
+            // ((tileSize / 2) / (tileSize * 2^zoomLevels))
+            // or equivalently, 0.5 - (1 / 2^(zoomLevels + 1))
+            var lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.zoomLevels + 1));
+            var lat = 0.5;
 
-            // the following metrics mimic those in ChunkRenderer.chunk_render
-            // in "chunk.py" or, equivalently, chunk_render in src/iterate.c
+            // the following metrics mimic those in
+            // chunk_render in src/iterate.c
 
             // each block on X axis adds 12px to x and subtracts 6px from y
             lng += 12 * x * perPixel;
@@ -555,13 +599,12 @@ var overviewer = {
             // the width and height of all the highest-zoom tiles combined,
             // inverted
             var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
-                Math.pow(2, overviewerConfig.map.maxZoom));
+                Math.pow(2, overviewerConfig.map.zoomLevels));
 
             // Revert base positioning
             // See equivalent code in fromWorldToLatLng()
+            lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.zoomLevels + 1));
             lat -= 0.5;
-
-            lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.maxZoom + 1));
 
             // I'll admit, I plugged this into Wolfram Alpha:
             //   a = (x * 12 * r) + (z * 12 * r), b = (z * 6 * r) - (x * 6 * r)
@@ -622,7 +665,10 @@ var overviewer = {
             var coordsDiv = document.createElement('DIV');
             coordsDiv.id = 'coordsDiv';
             coordsDiv.innerHTML = '';
-            overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(coordsDiv);
+            if (overviewerConfig.map.controls.coordsBox) {
+                overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(coordsDiv);
+            }
+            
             // Update coords on mousemove
             google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
                 var worldcoords = overviewer.util.fromLatLngToWorld(event.latLng.lat(), event.latLng.lng());
@@ -689,7 +735,7 @@ var overviewer = {
                 overviewer.util.createDropDown('Regions', items);
             }
 
-            if (overviewer.collections.overlays.length > 0) {
+            if (overviewerConfig.map.controls.overlays && overviewer.collections.overlays.length > 0) {
                 // overlay maps control
                 var items = [];
                 for (i in overviewer.collections.overlays) {
@@ -717,6 +763,9 @@ var overviewer = {
                 }
                 overviewer.util.createDropDown('Overlays', items);
             }
+            
+            // call out to create search box, as it's pretty complicated
+            overviewer.util.createSearchBox();
         },
         /**
          * Reusable method for creating drop-down menus
@@ -783,6 +832,63 @@ var overviewer = {
                 }
 
                 itemDiv.appendChild(textNode);
+            }
+        },
+        /**
+         * Create search box and dropdown in the top right google maps area.
+        */
+        'createSearchBox': function() {
+            var searchControl = document.createElement("div");
+            searchControl.id = "searchControl";
+
+            var searchInput = document.createElement("input");
+            searchInput.type = "text";
+
+            searchControl.appendChild(searchInput);
+
+            var searchDropDown = document.createElement("div");
+            searchDropDown.id = "searchDropDown";
+            searchControl.appendChild(searchDropDown);
+
+            $(searchInput).keyup(function(e) {
+                var newline_stripper = new RegExp("[\\r\\n]", "g")
+                if(searchInput.value.length !== 0) {
+                    $(searchDropDown).fadeIn();
+                        
+                    $(searchDropDown).empty();
+
+                    overviewer.collections.markerDatas.forEach(function(marker_list) {
+                        marker_list.forEach(function(sign) {
+                            var regex = new RegExp(overviewer.util.pregQuote(searchInput.value), "mi");
+                            if(sign.msg.match(regex)) {
+                                if(sign.marker !== undefined && sign.marker.getVisible()) {
+                                    var t = document.createElement("div");
+                                    t.className = "searchResultItem";
+                                    var i = document.createElement("img");
+                                    i.src = sign.marker.getIcon();
+                                    t.appendChild(i);
+                                    var s = document.createElement("span");
+                                    
+                                    $(s).text(sign.msg.replace(newline_stripper, ""));
+                                    t.appendChild(s);
+                                    searchDropDown.appendChild(t);
+                                    $(t).click(function(e) {
+                                        $(searchDropDown).fadeOut();
+                                        overviewer.map.setZoom(7);
+                                        overviewer.map.setCenter(sign.marker.getPosition());
+                                    });
+
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    $(searchDropDown).fadeOut();
+                }
+            });
+            
+            if (overviewerConfig.map.controls.searchBox) {
+                overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(searchControl);
             }
         },
         /**

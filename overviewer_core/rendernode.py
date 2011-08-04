@@ -133,8 +133,8 @@ class RenderNode(object):
         else:
             if not complete % 1000 == 0:
                 return
-        logging.info("{0}/{1} tiles complete on level {2}/{3}".format(
-                complete, total, level, self.max_p))
+        logging.info("{0}/{1} ({4}%) tiles complete on level {2}/{3}".format(
+                complete, total, level, self.max_p, '%.1f' % ( (100.0 * complete) / total) ))
                 
     def go(self, procs):
         """Renders all tiles"""

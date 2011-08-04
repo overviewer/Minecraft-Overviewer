@@ -125,7 +125,6 @@ rendermode_normal_occluded(void *data, RenderState *state) {
 static void
 rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeNormal *self = (RenderModeNormal *)data;
-    int randx = 0,randy = 0;
     unsigned char data_byte;
     
     /* first, check to see if we should use biome-compatible src, mask */
@@ -133,11 +132,6 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         if (state->block == 18) {
             src = mask = self->leaf_texture;
         } else if (state->block == 31) {
-            /* add a random offset to the postion of the tall grass to make it more wild */
-            randx = rand() % 6 + 1 - 3;
-            randy = rand() % 6 + 1 - 3;
-            state->imgx = state->imgx + randx;
-            state->imgy = state->imgy + randy;
             data_byte = getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z);
             if (data_byte == 1) {
                 src = mask = self->tall_grass_texture;
