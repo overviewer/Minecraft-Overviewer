@@ -255,7 +255,7 @@ def main():
     # create the quadtrees
     # TODO chunklist
     q = []
-    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'imgquality' : options.imgquality, 'optimizeimg' : optimizeimg, 'bgcolor' : bgcolor, 'forcerender' : options.forcerender, 'north_direction' : north_direction}
+    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'imgquality' : options.imgquality, 'optimizeimg' : optimizeimg, 'bgcolor' : bgcolor, 'forcerender' : options.forcerender}
     for rendermode in options.rendermode:
         if rendermode == 'normal':
             qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, tiledir='tiles', **qtree_args)

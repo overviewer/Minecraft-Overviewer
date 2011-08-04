@@ -55,7 +55,7 @@ def get_lvldata(world, filename, x, y, retries=2):
         raise NoSuchChunk
     
     try:
-        d = world.load_from_region(filename, x, y)
+        d =  world.load_from_region(filename, x, y)
     except Exception, e:
         if retries > 0:
             # wait a little bit, and try again (up to `retries` times)

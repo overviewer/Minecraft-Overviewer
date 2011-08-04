@@ -536,13 +536,13 @@ var overviewer = {
             var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
                 Math.pow(2, overviewerConfig.map.zoomLevels));
 
-            if(overviewerConfig.map.north_direction == 'upper-right'){
-                x = -x-1;
-                y = -y-1;
-            } else if(overviewerConfig.map.north_direction == 'upper-left'){
+            if(overviewerConfig.map.north_direction == 'upper-left'){
                 temp = x;
                 x = -y-1;
                 y = temp;
+            } else if(overviewerConfig.map.north_direction == 'upper-right'){
+                x = -x-1;
+                y = -y-1;
             } else if(overviewerConfig.map.north_direction == 'lower-right'){
                 temp = x;
                 x = y;
@@ -620,13 +620,13 @@ var overviewer = {
             point.x += 64;
             point.z -= 64;
 
-            if(overviewerConfig.map.north_direction == 'upper-right'){
-                point.x = -point.x;
-                point.z = -point.z;
-            } else if(overviewerConfig.map.north_direction == 'upper-left'){
+            if(overviewerConfig.map.north_direction == 'upper-left'){
                 temp = point.z;
                 point.z = -point.x;
                 point.x = temp;
+            } else if(overviewerConfig.map.north_direction == 'upper-right'){
+                point.x = -point.x;
+                point.z = -point.z;
             } else if(overviewerConfig.map.north_direction == 'lower-right'){
                 temp = point.z;
                 point.z = point.x;

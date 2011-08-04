@@ -210,13 +210,13 @@ class MCRFileReader(object):
         self._chunks = None
 
     def get_north_rotations(self):
-        if self.north_direction == "upper-left":
+        if self.north_direction == 'upper-left':
             return 1
-        elif self.north_direction == "upper-right":
+        elif self.north_direction == 'upper-right':
             return 2
-        elif self.north_direction == "lower-right":
+        elif self.north_direction == 'lower-right':
             return 3
-        elif self.north_direction == "lower-left":
+        elif self.north_direction == 'lower-left':
             return 0
     
     def _read_24bit_int(self):
@@ -359,10 +359,10 @@ class MCRFileReader(object):
         load_chunk(), this will wrap x and y into the range [0, 31].
         """
         x = x % 32
-        y = y % 32
+        y = y % 32        
         if self._timestamps is None:
             self.get_chunk_info() 
-        return self._timestamps[x + y * 32]
+        return self._timestamps[x + y * 32]   
     
     def chunkExists(self, x, y):
         """Determines if a chunk exists without triggering loading of the backend data"""

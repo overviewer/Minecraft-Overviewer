@@ -218,13 +218,13 @@ class World(object):
         disp_spawnX = spawnX = data['Data']['SpawnX']
         spawnY = data['Data']['SpawnY']
         disp_spawnZ = spawnZ = data['Data']['SpawnZ']
-        if self.north_direction == 'upper-right':
-            spawnX = -spawnX
-            spawnZ = -spawnZ
-        elif self.north_direction == 'upper-left':
+        if self.north_direction == 'upper-left':
             temp = spawnX
             spawnX = -spawnZ
             spawnZ = temp
+        elif self.north_direction == 'upper-right':
+            spawnX = -spawnX
+            spawnZ = -spawnZ
         elif self.north_direction == 'lower-right':
             temp = spawnX
             spawnX = spawnZ
@@ -304,13 +304,13 @@ class World(object):
         self.findTrueSpawn()
 
     def _get_north_rotations(self):
-        if self.north_direction == "upper-left":
+        if self.north_direction == 'upper-left':
             return 1
-        elif self.north_direction == "upper-right":
+        elif self.north_direction == 'upper-right':
             return 2
-        elif self.north_direction == "lower-right":
+        elif self.north_direction == 'lower-right':
             return 3
-        elif self.north_direction == "lower-left":
+        elif self.north_direction == 'lower-left':
             return 0
 
     def _iterate_regionfiles(self,regionlist=None):
@@ -331,18 +331,18 @@ class World(object):
                     logging.debug("Using path %s from regionlist", f)
                     x = int(p[1])
                     y = int(p[2])
-                    if self.north_direction == 'upper-right':
-                        x = -x-1
-                        y = -y-1
-                    elif self.north_direction == 'upper-left':
+                    if self.north_direction == 'upper-left':
                         temp = x
                         x = -y-1
                         y = temp
+                    elif self.north_direction == 'upper-right':
+                        x = -x-1
+                        y = -y-1
                     elif self.north_direction == 'lower-right':
                         temp = x
                         x = y
                         y = -temp-1
-                    yield (x, y, join(self.worlddir, 'region', f))        
+                    yield (x, y, join(self.worlddir, 'region', f))
                 else:
                     logging.warning("Ignore path '%s' in regionlist", f)
 
@@ -352,13 +352,13 @@ class World(object):
                 p = f.split(".")
                 x = int(p[1])
                 y = int(p[2])
-                if self.north_direction == 'upper-right':
-                    x = -x-1
-                    y = -y-1
-                elif self.north_direction == 'upper-left':
+                if self.north_direction == 'upper-left':
                     temp = x
                     x = -y-1
                     y = temp
+                elif self.north_direction == 'upper-right':
+                    x = -x-1
+                    y = -y-1
                 elif self.north_direction == 'lower-right':
                     temp = x
                     x = y

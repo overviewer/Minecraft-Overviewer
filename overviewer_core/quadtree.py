@@ -49,7 +49,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal", north_direction='lower-left'):
+    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -66,7 +66,6 @@ class QuadtreeGen(object):
         self.optimizeimg = optimizeimg
         self.bgcolor = bgcolor
         self.rendermode = rendermode
-        self.north_direction = north_direction
         
         # force png renderformat if we're using an overlay mode
         if 'overlay' in get_render_mode_inheritance(rendermode):

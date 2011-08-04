@@ -511,10 +511,10 @@ def generate_texture_tuple(img, blockid):
     blockmap list and specialblockmap dictionary."""
     return (img.convert("RGB"), img.split()[3], generate_opaque_mask(img))
 
-def generate_special_texture(blockID, data, north_direction):
+def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
 
-    data = convert_data(blockID, data, north_direction)
+    data = convert_data(blockID, data)
 
     # blocks need to be handled here (and in chunk.py)
     
@@ -1680,37 +1680,37 @@ def generate_special_texture(blockID, data, north_direction):
 
     return None
 
-def convert_data(blockID, data, north_direction):
+def convert_data(blockID, data):
     if blockID == 26: # bed
         #Masked to not clobber block head/foot info
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if (data & 0b0011) == 0: data = data & 0b1100 | 1
             elif (data & 0b0011) == 1: data = data & 0b1100 | 2
             elif (data & 0b0011) == 2: data = data & 0b1100 | 3
             elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 2
             elif (data & 0b0011) == 1: data = data & 0b1100 | 3
             elif (data & 0b0011) == 2: data = data & 0b1100 | 0
             elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 3
             elif (data & 0b0011) == 1: data = data & 0b1100 | 0
             elif (data & 0b0011) == 2: data = data & 0b1100 | 1
             elif (data & 0b0011) == 3: data = data & 0b1100 | 2
     if blockID in (29, 33, 34): # sticky piston, piston, piston extension
         #Masked to not clobber block head/foot info
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if (data & 0b0111) == 2: data = data & 0b1000 | 5
             elif (data & 0b0111) == 3: data = data & 0b1000 | 4
             elif (data & 0b0111) == 4: data = data & 0b1000 | 2
             elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if (data & 0b0111) == 2: data = data & 0b1000 | 3
             elif (data & 0b0111) == 3: data = data & 0b1000 | 2
             elif (data & 0b0111) == 4: data = data & 0b1000 | 5
             elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if (data & 0b0111) == 2: data = data & 0b1000 | 4
             elif (data & 0b0111) == 3: data = data & 0b1000 | 5
             elif (data & 0b0111) == 4: data = data & 0b1000 | 3
@@ -1718,19 +1718,19 @@ def convert_data(blockID, data, north_direction):
     if blockID in (27, 28, 66): # minetrack:
         #Masked to not clobber powered rail on/off info
         #Ascending and flat straight
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if (data & 0b0111) == 0: data = data & 0b1000 | 1
             elif (data & 0b0111) == 1: data = data & 0b1000 | 0
             elif (data & 0b0111) == 2: data = data & 0b1000 | 5
             elif (data & 0b0111) == 3: data = data & 0b1000 | 4
             elif (data & 0b0111) == 4: data = data & 0b1000 | 2
             elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if (data & 0b0111) == 2: data = data & 0b1000 | 3
             elif (data & 0b0111) == 3: data = data & 0b1000 | 2
             elif (data & 0b0111) == 4: data = data & 0b1000 | 5
             elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if (data & 0b0111) == 0: data = data & 0b1000 | 1
             elif (data & 0b0111) == 1: data = data & 0b1000 | 0
             elif (data & 0b0111) == 2: data = data & 0b1000 | 4
@@ -1739,171 +1739,171 @@ def convert_data(blockID, data, north_direction):
             elif (data & 0b0111) == 5: data = data & 0b1000 | 2
     if blockID == 66: # normal minetrack only
         #Corners
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if data == 6: data = 7
             elif data == 7: data = 8
             elif data == 8: data = 6
             elif data == 9: data = 9
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if data == 6: data = 8
             elif data == 7: data = 9
             elif data == 8: data = 6
             elif data == 9: data = 7
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if data == 6: data = 9
             elif data == 7: data = 6
             elif data == 8: data = 8
             elif data == 9: data = 7
     if blockID in (50, 75, 76): # torch, off/on redstone torch
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if data == 1: data = 3
             elif data == 2: data = 4
             elif data == 3: data = 2
             elif data == 4: data = 1
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if data == 1: data = 2
             elif data == 2: data = 1
             elif data == 3: data = 4
             elif data == 4: data = 3
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if data == 1: data = 4
             elif data == 2: data = 3
             elif data == 3: data = 1
             elif data == 4: data = 2
     if blockID in (53,67): # wooden and cobblestone stairs.
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if data == 0: data = 2
             elif data == 1: data = 3
             elif data == 2: data = 1
             elif data == 3: data = 0
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if data == 0: data = 1
             elif data == 1: data = 0
             elif data == 2: data = 3
             elif data == 3: data = 2
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if data == 0: data = 3
             elif data == 1: data = 2
             elif data == 2: data = 0
             elif data == 3: data = 1
     if blockID in (61, 62, 23): # furnace and burning furnace
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if data == 2: data = 5
             elif data == 3: data = 4
             elif data == 4: data = 2
             elif data == 5: data = 3
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if data == 2: data = 3
             elif data == 3: data = 2
             elif data == 4: data = 5
             elif data == 5: data = 4
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if data == 2: data = 4
             elif data == 3: data = 5
             elif data == 4: data = 3
             elif data == 5: data = 2
     if blockID == 63: # signposts
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             data = (data + 4) % 16
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             data = (data + 8) % 16
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             data = (data + 12) % 16
     if blockID in (64,71): # wooden/iron door
         #Masked to not clobber block top/bottom & swung info
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if (data & 0b0011) == 0: data = data & 0b1100 | 1
             elif (data & 0b0011) == 1: data = data & 0b1100 | 2
             elif (data & 0b0011) == 2: data = data & 0b1100 | 3
             elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 2
             elif (data & 0b0011) == 1: data = data & 0b1100 | 3
             elif (data & 0b0011) == 2: data = data & 0b1100 | 0
             elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 3
             elif (data & 0b0011) == 1: data = data & 0b1100 | 0
             elif (data & 0b0011) == 2: data = data & 0b1100 | 1
             elif (data & 0b0011) == 3: data = data & 0b1100 | 2
     if blockID == 65: # ladder
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if data == 2: data = 5
             elif data == 3: data = 4
             elif data == 4: data = 2
             elif data == 5: data = 3
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if data == 2: data = 3
             elif data == 3: data = 2
             elif data == 4: data = 5
             elif data == 5: data = 4
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if data == 2: data = 4
             elif data == 3: data = 5
             elif data == 4: data = 3
             elif data == 5: data = 2
     if blockID == 68: # wall sign
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if data == 2: data = 5
             elif data == 3: data = 4
             elif data == 4: data = 2
             elif data == 5: data = 3
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if data == 2: data = 3
             elif data == 3: data = 2
             elif data == 4: data = 5
             elif data == 5: data = 4
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if data == 2: data = 4
             elif data == 3: data = 5
             elif data == 4: data = 3
             elif data == 5: data = 2
     if blockID in (86,91): # pumpkins, jack-o-lantern
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if data == 0: data = 1
             elif data == 1: data = 2
             elif data == 2: data = 3
             elif data == 3: data = 0
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if data == 0: data = 2
             elif data == 1: data = 3
             elif data == 2: data = 0
             elif data == 3: data = 1
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if data == 0: data = 3
             elif data == 1: data = 0
             elif data == 2: data = 1
             elif data == 3: data = 2
     if blockID in (93, 94): # redstone repeaters, ON and OFF
         #Masked to not clobber delay info
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if (data & 0b0011) == 0: data = data & 0b1100 | 1
             elif (data & 0b0011) == 1: data = data & 0b1100 | 2
             elif (data & 0b0011) == 2: data = data & 0b1100 | 3
             elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 2
             elif (data & 0b0011) == 1: data = data & 0b1100 | 3
             elif (data & 0b0011) == 2: data = data & 0b1100 | 0
             elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 3
             elif (data & 0b0011) == 1: data = data & 0b1100 | 0
             elif (data & 0b0011) == 2: data = data & 0b1100 | 1
             elif (data & 0b0011) == 3: data = data & 0b1100 | 2
     if blockID == 96: # trapdoor
         #Masked to not clobber opened/closed info
-        if north_direction == 'upper-left':
+        if _north == 'upper-left':
             if (data & 0b0011) == 0: data = data & 0b1100 | 3
             elif (data & 0b0011) == 1: data = data & 0b1100 | 2
             elif (data & 0b0011) == 2: data = data & 0b1100 | 0
             elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-        elif north_direction == 'upper-right':
+        elif _north == 'upper-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 1
             elif (data & 0b0011) == 1: data = data & 0b1100 | 0
             elif (data & 0b0011) == 2: data = data & 0b1100 | 3
             elif (data & 0b0011) == 3: data = data & 0b1100 | 2
-        elif north_direction == 'lower-right':
+        elif _north == 'lower-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 2
             elif (data & 0b0011) == 1: data = data & 0b1100 | 3
             elif (data & 0b0011) == 2: data = data & 0b1100 | 1
@@ -1957,7 +1957,12 @@ def getBiomeData(worlddir, chunkX, chunkY):
     biomeX = chunkX // 32
     biomeY = chunkY // 32
     rots = 0
-    if _north == 'upper-right':
+    if _north == 'upper-left':
+        temp = biomeX
+        biomeX = biomeY
+        biomeY = -temp-1
+        rots = 3
+    elif _north == 'upper-right':
         biomeX = -biomeX-1
         biomeY = -biomeY-1
         rots = 2
@@ -1966,11 +1971,6 @@ def getBiomeData(worlddir, chunkX, chunkY):
         biomeX = -biomeY-1
         biomeY = temp
         rots = 1
-    elif _north == 'upper-left':
-        temp = biomeX
-        biomeX = biomeY
-        biomeY = -temp-1
-        rots = 3
 
     biomeFile = "b.%d.%d.biome" % (biomeX, biomeY)
     if biomeFile == currentBiomeFile:
@@ -2103,7 +2103,7 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
     specialblockmap = {}
     for blockID in special_blocks:
         for data in special_map[blockID]:
-            specialblockmap[(blockID, data)] = generate_special_texture(blockID, data, north_direction)
+            specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)
 
     if texture_size != 24:
         # rescale biome textures.

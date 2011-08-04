@@ -22,38 +22,6 @@ https://github.com/brownan/Minecraft-Overviewer/wiki/Documentation
 To contact the developers and other users, go to the site at the top of this
 README, or go to #overviewer on irc.freenode.net.
 
-Configurable North changes
-==========================
-
-Additional Features
--------------------
-
-A configurable north direction! I'm not a big fan of north pointing to the
-bottom left corner of the screen, and I bet you aren't either. So here you go!
-Either use the commandline option --north-direction, or use the option
-north_direction in the settings file. Valid options are 'lower-left',
-'upper-left', 'upper-right', and 'lower-right'. I'm partial to 'upper-right',
-myself. Defaults to 'lower-left' to match official behavior.
-
-Additional Bugs
----------------
-
-Sometimes the upper- and lower-right direction seems to exacerbate an
-existing bug that will not let you click on a sign in some cases. This is a
-bang-head-on-desk sort of thing, I should be able to find it but I just haven't
-yet. It does seem to work fine on my actual SMP map, for what that's worth.
-
-So far only blocks where direction is important (minecart tracks, doors, signs,
-etc) rotate. Blocks like grass, stone, gravel, etc do not, however for the most
-part it isn't noticeable because they look very similar no matter which
-direction we are viewing them from.
-
-Upstream
---------
-
-Once I've squashed the additional bugs and cleaned up the code a bit, I will
-see about getting this included in the official Minecraft Overviewer.
-
 Features
 ========
 
@@ -227,6 +195,10 @@ Options
 --list-rendermodes
     List the available render modes, and a short description of each.
 
+--north-direction=NORTH_DIRECTION
+    Specifies which corner of the screen north will point to.
+    Valid options are: lower-left, upper-left, upper-right, lower-right.
+
 --settings=PATH
     Use this option to load settings from a file. The format of this file is
     given below.
@@ -295,6 +267,10 @@ textures_path
     This is like web_assets_path, but instead it provides an alternative texture
     source. Overviewer looks in here for terrain.png and other textures before
     it looks anywhere else.
+
+north_direction
+    Specifies which corner of the screen north will point to.
+    Valid options are: lower-left, upper-left, upper-right, lower-right.
 
 Viewing the Results
 -------------------

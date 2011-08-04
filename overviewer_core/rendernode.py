@@ -65,8 +65,8 @@ def pool_initializer(rendernode):
     
     # make sure textures are generated for this process
     # and initialize c_overviewer
-    textures.generate(north_direction=rendernode.options.get('north_direction', None),
-            path=rendernode.options.get('textures_path', None))
+    textures.generate(path=rendernode.options.get('textures_path', None),
+            north_direction=rendernode.options.get('north_direction', None))
     c_overviewer.init_chunk_render()
     
     # load biome data in each process, if needed
