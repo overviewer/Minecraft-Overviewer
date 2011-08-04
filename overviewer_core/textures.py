@@ -1687,7 +1687,7 @@ def convert_data(blockID, data, north_direction):
             if (data & 0b0011) == 0: data = data & 0b1100 | 1
             elif (data & 0b0011) == 1: data = data & 0b1100 | 2
             elif (data & 0b0011) == 2: data = data & 0b1100 | 3
-            elif (data & 0b0011) == 3: data = data & 0b1100 | 4
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 0
         elif north_direction == 'upper-right':
             if (data & 0b0011) == 0: data = data & 0b1100 | 2
             elif (data & 0b0011) == 1: data = data & 0b1100 | 3
