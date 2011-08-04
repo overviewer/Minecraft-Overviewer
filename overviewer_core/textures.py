@@ -431,7 +431,7 @@ def _build_blockimages():
        #       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                36, 37, -1, -1, 65, -1, -1, -1, 50, 24, -1, -1, 86, -1, -1, -1,
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-               -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
+               -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, -1,
        #       80  81  82  83  84  85  86  87  88  89  90  91
                66, 69, 72, 73, 75, -1,102,103,104,105,-1, 102 # clay?
         ]
@@ -448,7 +448,7 @@ def _build_blockimages():
        #        48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
                 36, 37, -1, -1, 65, -1, -1,101, 50, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-                -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, 67,
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, -1,
        #        80  81  82  83  84  85  86  87  88  89  90  91
                 66, 70, 72, 73, 74,-1 ,118,103,104,105, -1, 118
         ]
@@ -551,12 +551,14 @@ def generate_special_texture(blockID, data):
         return generate_texture_tuple(img, blockID)
 
 
-    if blockID == 9 or blockID == 20: # spring water, flowing water and waterfall water, AND glass
-        # water and glass share the way to be rendered
+    if blockID == 9 or blockID == 20 or blockID == 79: # spring water, flowing water and waterfall water, AND glass, AND ice
+        # water,glass and ice share the way to be rendered
         if blockID == 9:
             texture = _load_image("water.png")
-        else:
+        elif blockID == 20:
             texture = terrain_images[49]
+        else:
+            texture = terrain_images[67]
         
         if (data & 0b10000) == 16:
             top = texture
@@ -1749,8 +1751,8 @@ def getBiomeData(worlddir, chunkX, chunkY):
 
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
-                      63, 64, 65, 66, 67, 68, 71, 75, 76, 85, 86, 90, 91,
-                      92, 93, 94, 96])
+                      63, 64, 65, 66, 67, 68, 71, 75, 76, 79, 85, 86, 90,
+                      91, 92, 93, 94, 96])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -1789,6 +1791,7 @@ special_map[68] = (2,3,4,5) # wall sing, orientation
 special_map[71] = range(16) # iron door, open/close and orientation
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
+special_map[79] = range(32) # ice, used to only render the exterior surface, uses pseudo data
 special_map[85] = range(17) # fences, all the possible combination, uses pseudo data
 special_map[86] = range(5)  # pumpkin, orientation
 special_map[90] = (1,2,4,8) # portal, in 2 orientations, 4 cases, uses pseudo data
