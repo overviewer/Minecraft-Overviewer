@@ -53,10 +53,15 @@ def mirror_dir(src, dst, entities=None):
         elif os.path.isfile(os.path.join(src,entry)):
             try:
                 shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
-            except IOError:
-                # maybe permission problems?
-                os.chmod(os.path.join(src, entry), stat.S_IRUSR)
-                os.chmod(os.path.join(dst, entry), stat.S_IWUSR)
+            except IOError as outer: 
+                try:
+                    # maybe permission problems?
+                    src_stat = os.stat(os.path.join(src, entry))
+                    os.chmod(os.path.join(src, entry), src_stat.st_mode | stat.S_IRUSR)
+                    dst_stat = os.stat(os.path.join(dst, entry))
+                    os.chmod(os.path.join(dst, entry), dst_stat.st_mode | stat.S_IWUSR)
+                except OSError: # we don't care if this fails
+                    pass
                 shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
                 # if this stills throws an error, let it propagate up
 
