@@ -75,7 +75,7 @@ def get_blockarray(level):
     Block array, which just contains all the block ids"""
     return level['Blocks']
 
-def get_blockarray_fromfile(filename, north_direction):
+def get_blockarray_fromfile(filename, north_direction='lower-left'):
     """Same as get_blockarray except takes a filename. This is a shortcut"""
     d = nbt.load_from_region(filename, x, y, north_direction)
     level = d[1]['Level']
