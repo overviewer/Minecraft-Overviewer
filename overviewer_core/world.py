@@ -153,18 +153,18 @@ class World(object):
             data = nbt.read_all()    
             level = data[1]['Level']
             chunk_data = level
-            chunk_data['Blocks'] = numpy.rot90(numpy.frombuffer(
+            chunk_data['Blocks'] = numpy.array(numpy.rot90(numpy.frombuffer(
                     level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
-                    self._get_north_rotations())
-            chunk_data['Data'] = numpy.rot90(numpy.frombuffer(
+                    self._get_north_rotations()))
+            chunk_data['Data'] = numpy.array(numpy.rot90(numpy.frombuffer(
                     level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations())
-            chunk_data['SkyLight'] = numpy.rot90(numpy.frombuffer(
+                    self._get_north_rotations()))
+            chunk_data['SkyLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
                     level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations())
-            chunk_data['BlockLight'] = numpy.rot90(numpy.frombuffer(
+                    self._get_north_rotations()))
+            chunk_data['BlockLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
                     level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations())
+                    self._get_north_rotations()))
             #chunk_data = {}
             #chunk_data['skylight'] = chunk.get_skylight_array(level)
             #chunk_data['blocklight'] = chunk.get_blocklight_array(level)

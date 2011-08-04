@@ -43,11 +43,6 @@ existing bug that will not let you click on a sign in some cases. This is a
 bang-head-on-desk sort of thing, I should be able to find it but I just haven't
 yet. It does seem to work fine on my actual SMP map, for what that's worth.
 
-It's slow! One of the rotation methods is very, very inefficient. It needs to be
-rewritten, but I don't seem to be smart enough to do it right now. I must
-investigate! On my SMP map the initial render took 30% longer vs the official
-Minecraft Overviewer. Totally worth it, though.
-
 So far only blocks where direction is important (minecart tracks, doors, signs,
 etc) rotate. Blocks like grass, stone, gravel, etc do not, however for the most
 part it isn't noticeable because they look very similar no matter which
