@@ -1698,6 +1698,23 @@ def convert_data(blockID, data, north_direction):
             elif (data & 0b0011) == 1: data = data & 0b1100 | 0
             elif (data & 0b0011) == 2: data = data & 0b1100 | 1
             elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+    if blockID in (29, 33, 34): # sticky piston, piston, piston extension
+        #Masked to not clobber block head/foot info
+        if north_direction == 'upper-left':
+            if (data & 0b0111) == 2: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 4
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 3
+        elif north_direction == 'upper-right':
+            if (data & 0b0111) == 2: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 4
+        elif north_direction == 'lower-right':
+            if (data & 0b0111) == 2: data = data & 0b1000 | 4
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 2
     if blockID in (27, 28, 66): # minetrack:
         #Masked to not clobber powered rail on/off info
         #Ascending and flat straight
