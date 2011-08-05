@@ -144,14 +144,7 @@ def main():
         c_overviewer.set_render_mode_options(mode, options.rendermode_options[mode])
     
     if options.list_rendermodes:
-        avail_rendermodes = c_overviewer.get_render_modes()
-        rendermode_info = map(c_overviewer.get_render_mode_info, avail_rendermodes)
-        name_width = max(map(lambda i: len(i['name']), rendermode_info))
-        for info in rendermode_info:
-            if not 'description' in info:
-                print "{name:{0}} (no description)".format(name_width, **info)
-            else:
-                print "{name:{0}} {description}".format(name_width, **info)
+        list_rendermodes()
         sys.exit(0)
 
     if len(args) < 1:
@@ -293,6 +286,47 @@ def delete_all(worlddir, tiledir):
     if os.path.exists(datfile):
         os.unlink(datfile)
         logging.info("Deleting {0}".format(datfile))
+
+def list_rendermodes():
+    "Prints out a pretty list of supported rendermodes"
+    
+    def print_mode_tree(line_max, mode, prefix='', last=False):
+        "Prints out a mode tree for the given mode, with an indent."
+        
+        try:
+            info = c_overviewer.get_render_mode_info(mode)
+        except ValueError:
+            info = {}
+        
+        print prefix + '+-',  mode,
+        
+        if 'description' in info:
+            print " " * (line_max - len(prefix) - len(mode) - 2),
+            print info['description']
+        else:
+            print
+        
+        children = c_overviewer.get_render_mode_children(mode)
+        for child in children:
+            child_last = (child == children[-1])
+            if last:
+                child_prefix = '  '
+            else:
+                child_prefix = '| '
+            print_mode_tree(line_max, child, prefix=prefix + child_prefix, last=child_last)
+    
+    avail_rendermodes = c_overviewer.get_render_modes()
+    line_lengths = {}
+    parent_modes = []
+    for mode in avail_rendermodes:
+        inherit = c_overviewer.get_render_mode_inheritance(mode)
+        if not inherit[0] in parent_modes:
+            parent_modes.append(inherit[0])
+        line_lengths[mode] = 2 * len(inherit) + 1 + len(mode)
+    
+    line_length = max(line_lengths.values())
+    for mode in parent_modes:
+        print_mode_tree(line_length, mode, last=(mode == parent_modes[-1]))
 
 def list_worlds():
     "Prints out a brief summary of saves found in the default directory"
