@@ -21,19 +21,22 @@ import imp
 import os
 import os.path
 import sys
+from subprocess import Popen, PIPE
 
 def get_program_path():
     if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
         return os.path.dirname(sys.executable)
     else:
         try:
-            return os.path.dirname(__file__)
+            # normally, we're in ./overviewer_core/util.py
+            # we want ./
+            return os.path.dirname(os.path.dirname(__file__))
         except NameError:
             return os.path.dirname(sys.argv[0])
 
 
-
-def findGitVersion():
+# does not require git, very likely to work everywhere
+def findGitHash():
     this_dir = get_program_path()
     if os.path.exists(os.path.join(this_dir,".git")):
         with open(os.path.join(this_dir,".git","HEAD")) as f:
@@ -46,6 +49,24 @@ def findGitVersion():
         else:
             return data
     else:
+        try:
+            import overviewer_version
+            return overviewer_version.HASH
+        except:
+            return "unknown"
+
+def findGitVersion():
+    try:
+        p = Popen(['git', 'describe', '--tags'], stdout=PIPE, stderr=PIPE)
+        p.stderr.close()
+        line = p.stdout.readlines()[0]
+        if line.startswith('release-'):
+            line = line.split('-', 1)[1]
+        # turn 0.1.2-50-somehash into 0.1.2-50
+        # and 0.1.3 into 0.1.3
+        line = '-'.join(line.split('-', 2)[:2])
+        return line.strip()
+    except:
         try:
             import overviewer_version
             return overviewer_version.VERSION
