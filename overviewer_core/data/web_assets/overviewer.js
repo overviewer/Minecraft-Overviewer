@@ -817,22 +817,25 @@ var overviewer = {
 
             var searchInput = document.createElement("input");
             searchInput.type = "text";
-			searchInput.value = "Sign Search"
-			searchInput.title = "Sign Search"
+			searchInput.value = "Sign Search";
+			searchInput.title = "Sign Search";
+            $(searchInput).addClass("inactive");
 			
 			/* Hey dawg, I heard you like functions.
 			 * So we defined a function inside your function.
-			 */
-			searchInput.onfocus = function() {
-					if (searchInput.value == "Sign Search") {
-							searchInput.value = "";
-					}
-			};
+             */
+            searchInput.onfocus = function() {
+                if (searchInput.value == "Sign Search") {
+                    searchInput.value = "";
+                    $(searchInput).removeClass("inactive").addClass("active");
+                }
+            };
 			searchInput.onblur = function() {
-				if (searchInput.value == "") {
-					searchInput.value = "Sign Search";
-				}
-			};
+                if (searchInput.value == "") {
+                    searchInput.value = "Sign Search";
+                    $(searchInput).removeClass("active").addClass("inactive");
+                }
+            };
 
             searchControl.appendChild(searchInput);
 
