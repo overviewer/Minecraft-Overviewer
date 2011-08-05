@@ -817,6 +817,22 @@ var overviewer = {
 
             var searchInput = document.createElement("input");
             searchInput.type = "text";
+			searchInput.value = "Sign Search"
+			searchInput.title = "Sign Search"
+			
+			/* Hey dawg, I heard you like functions.
+			 * So we defined a function inside your function.
+			 */
+			searchInput.onfocus = function() {
+					if (searchInput.value == "Sign Search") {
+							searchInput.value = "";
+					}
+			};
+			searchInput.onblur = function() {
+				if (searchInput.value == "") {
+					searchInput.value = "Sign Search";
+				}
+			};
 
             searchControl.appendChild(searchInput);
 
