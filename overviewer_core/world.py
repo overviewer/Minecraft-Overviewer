@@ -82,7 +82,7 @@ class World(object):
             self.regionlist = map(os.path.abspath, regionlist) # a list of paths
         else:
             self.regionlist = None
-        for x, y, regionfile in self._iterate_regionfiles():
+        for x, y, regionfile in self._iterate_regionfiles(regionlist):
             mcr = self.reload_region(regionfile) 
             mcr.get_chunk_info()
             regionfiles[(x,y)]	= (x,y,regionfile,mcr)
