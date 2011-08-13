@@ -114,6 +114,14 @@ body {
     background-colour: #fff;
 }
 
+#searchControl>input.inactive {
+    color: #ccc;
+}
+
+#searchControl>input.active {
+    color: #000;
+}
+
 div#searchDropDown {
     border: 1px solid #000;
     width: 17em;
