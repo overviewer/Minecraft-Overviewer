@@ -211,11 +211,11 @@ class MCRFileReader(object):
 
     def get_north_rotations(self):
         if self.north_direction == 'upper-left':
-            return 1
+            return 3
         elif self.north_direction == 'upper-right':
             return 2
         elif self.north_direction == 'lower-right':
-            return 3
+            return 1
         elif self.north_direction == 'lower-left':
             return 0
     
@@ -338,7 +338,7 @@ class MCRFileReader(object):
         
         # read chunk location table
         locations_index = numpy.reshape(numpy.rot90(numpy.reshape(range(32*32),
-                (32, 32)), self.get_north_rotations()), -1)
+                (32, 32)), -self.get_north_rotations()), -1)
         for i in locations_index:
             self._locations[i] = self._read_chunk_location()
         
