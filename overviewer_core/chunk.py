@@ -73,18 +73,30 @@ def get_lvldata(world, filename, x, y, retries=2):
 def get_blockarray(level):
     """Takes the level struct as returned from get_lvldata, and returns the
     Block array, which just contains all the block ids"""
-    return numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
+    return level['Blocks']
 
-def get_blockarray_fromfile(filename):
+def get_blockarray_fromfile(filename, north_direction='lower-left'):
     """Same as get_blockarray except takes a filename. This is a shortcut"""
-    d =  nbt.load_from_region(filename, x, y)
+    d = nbt.load_from_region(filename, x, y, north_direction)
     level = d[1]['Level']
-    return get_blockarray(level)
+    chunk_data = level
+    rots = 0
+    if self.north_direction == 'upper-left':
+        rots = 1
+    elif self.north_direction == 'upper-right':
+        rots = 2
+    elif self.north_direction == 'lower-right':
+        rots = 3
+
+    chunk_data['Blocks'] = numpy.rot90(numpy.frombuffer(
+            level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
+            rots)
+    return get_blockarray(chunk_data)
 
 def get_skylight_array(level):
     """Returns the skylight array. This is 4 bits per block, but it is
     expanded for you so you may index it normally."""
-    skylight = numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
+    skylight = level['SkyLight']
     # this array is 2 blocks per byte, so expand it
     skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
     # Even elements get the lower 4 bits
@@ -97,7 +109,7 @@ def get_blocklight_array(level):
     """Returns the blocklight array. This is 4 bits per block, but it
     is expanded for you so you may index it normally."""
     # expand just like get_skylight_array()
-    blocklight = numpy.frombuffer(level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64))
+    blocklight = level['BlockLight']
     blocklight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
     blocklight_expanded[:,:,::2] = blocklight & 0x0F
     blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
@@ -106,7 +118,7 @@ def get_blocklight_array(level):
 def get_blockdata_array(level):
     """Returns the ancillary data from the 'Data' byte array.  Data is packed
     in a similar manner to skylight data"""
-    return numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
+    return level['Data']
 
 def get_tileentity_data(level):
     """Returns the TileEntities TAG_List from chunk dat file"""

@@ -14,7 +14,7 @@ var overviewerConfig = {
         'image': {
             'defaultMarker':    'signpost.png',
             'signMarker':       'signpost_icon.png',
-            'compass':          'compass.png',
+            'compass':          'compass_{north_direction}.png',
             'spawnMarker':      'http://google-maps-icons.googlecode.com/files/home.png',
             'queryMarker':      'http://google-maps-icons.googlecode.com/files/regroup.png'
         },
@@ -94,7 +94,11 @@ var overviewerConfig = {
          * Set to true to turn on debug mode, which adds a grid to the map along
          * with co-ordinates and a bunch of console output.
          */
-        'debug':        false
+        'debug':        false,
+        /**
+         * Set which way north points.
+         */
+        'north_direction': '{north_direction}'
     },
     /**
      * Group definitions for objects that are partially selectable (signs and

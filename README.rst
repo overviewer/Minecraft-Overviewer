@@ -195,6 +195,10 @@ Options
 --list-rendermodes
     List the available render modes, and a short description of each.
 
+--north-direction=NORTH_DIRECTION
+    Specifies which corner of the screen north will point to.
+    Valid options are: lower-left, upper-left, upper-right, lower-right.
+
 --settings=PATH
     Use this option to load settings from a file. The format of this file is
     given below.
@@ -263,6 +267,10 @@ textures_path
     This is like web_assets_path, but instead it provides an alternative texture
     source. Overviewer looks in here for terrain.png and other textures before
     it looks anywhere else.
+
+north_direction
+    Specifies which corner of the screen north will point to.
+    Valid options are: lower-left, upper-left, upper-right, lower-right.
 
 Viewing the Results
 -------------------
