@@ -80,9 +80,17 @@ def get_blockarray_fromfile(filename, north_direction='lower-left'):
     d = nbt.load_from_region(filename, x, y, north_direction)
     level = d[1]['Level']
     chunk_data = level
+    rots = 0
+    if self.north_direction == 'upper-left':
+        rots = 1
+    elif self.north_direction == 'upper-right':
+        rots = 2
+    elif self.north_direction == 'lower-right':
+        rots = 3
+
     chunk_data['Blocks'] = numpy.rot90(numpy.frombuffer(
             level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
-            self._get_north_rotations())
+            rots)
     return get_blockarray(chunk_data)
 
 def get_skylight_array(level):
