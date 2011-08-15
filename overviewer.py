@@ -145,7 +145,7 @@ def main():
 
     if options.advanced_help:
         parser.advanced_help()
-	sys.exit(0)
+        sys.exit(0)
 
     if len(args) < 1:
         logging.error("You need to give me your world number or directory")
