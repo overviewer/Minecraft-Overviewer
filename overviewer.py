@@ -241,7 +241,7 @@ def main():
         logging.info("Notice: Not using biome data for tinting")
     
     # First do world-level preprocessing
-    w = world.World(worlddir, useBiomeData=useBiomeData, regionlist=regionlist)
+    w = world.World(worlddir, destdir, useBiomeData=useBiomeData, regionlist=regionlist)
     w.go(options.procs)
 
     logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
@@ -281,7 +281,7 @@ def delete_all(worlddir, tiledir):
     # TODO should we delete tiledir here too?
     
     # delete the overviewer.dat persistant data file
-    datfile = os.path.join(worlddir,"overviewer.dat")
+    datfile = os.path.join(tiledir,"overviewer.dat")
     if os.path.exists(datfile):
         os.unlink(datfile)
         logging.info("Deleting {0}".format(datfile))
