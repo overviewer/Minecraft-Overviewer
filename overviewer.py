@@ -17,7 +17,9 @@
 
 import sys
 if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
-    print "Sorry, the Overviewer requires at least Python 2.6 to run"  # Python3.0 is not supported either
+    print "Sorry, the Overviewer requires at least Python 2.6 to run"
+    if sys.version_info[0] >= 3:
+        print "and will not run on Python 3.0 or later"
     sys.exit(1)
 
 import os
@@ -84,9 +86,7 @@ from overviewer_core import googlemap, rendernode
 
 
 helptext = """
-%prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>
-%prog -d <World # / Name / Path to World / Path to cache dir> [tiles dest dir]"""
-
+%prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
 
 
 def main():
@@ -101,14 +101,13 @@ def main():
     parser.add_option("-V", "--version", dest="version", helptext="Displays version information and then exits", action="store_true")
     parser.add_option("-p", "--processes", dest="procs", helptext="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
     parser.add_option("-z", "--zoom", dest="zoom", helptext="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", advanced=True)
-    parser.add_option("-d", "--delete", dest="delete", helptext="Clear all caches. Next time you render your world, it will have to start completely over again. This is probably not a good idea for large worlds. Use this if you change texture packs and want to re-render everything.", action="store_true", commandLineOnly=True)
     parser.add_option("--regionlist", dest="regionlist", helptext="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
-    parser.add_option("--forcerender", dest="forcerender", helptext="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting the entire map with --delete.", action="store_true")
+    parser.add_option("--forcerender", dest="forcerender", helptext="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting it.", action="store_true")
     parser.add_option("--rendermodes", dest="rendermode", helptext="Specifies the render types, separated by commas. Use --list-rendermodes to list them all.", type="choice", choices=avail_rendermodes, required=True, default=avail_rendermodes[0], listify=True)
     parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", helptext="List available render modes and exit.", commandLineOnly=True)
     parser.add_option("--imgformat", dest="imgformat", helptext="The image output format to use. Currently supported: png(default), jpg.", advanced=True )
     parser.add_option("--imgquality", dest="imgquality", default=95, helptext="Specify the quality of image output when using imgformat=\"jpg\".", type="int", advanced=True)
-    parser.add_option("--bg_color", dest="bg_color", helptext="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", advanced=True, type="string", default="#1A1A1A")
+    parser.add_option("--bg-color", dest="bg_color", helptext="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", advanced=True, type="string", default="#1A1A1A")
     parser.add_option("--optimize-img", dest="optimizeimg", helptext="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+advdef and 3 for pngcrush-advdef with more agressive settings. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", advanced=True)
     parser.add_option("--web-assets-hook", dest="web_assets_hook", helptext="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a QuadtreeGen object as its only argument.", action="store", metavar="SCRIPT", type="function", advanced=True)
     parser.add_option("--web-assets-path", dest="web_assets_path", helptext="Specifies a non-standard web_assets directory to use. Files here will overwrite the default web assets.", metavar="PATH", type="string", advanced=True)
@@ -187,13 +186,9 @@ def main():
         sys.exit(1)
 
     if len(args) < 2:
-        if options.delete:
-            return delete_all(worlddir, None)
         logging.error("Where do you want to save the tiles?")
         sys.exit(1)
     elif len(args) > 2:
-        if options.delete:
-            return delete_all(worlddir, None)
         parser.print_help()
         logging.error("Sorry, you specified too many arguments")
         sys.exit(1)
@@ -205,9 +200,6 @@ def main():
         parser.display_config()
         sys.exit(0)
 
-
-    if options.delete:
-        return delete_all(worlddir, destdir)
 
     if options.regionlist:
         regionlist = map(str.strip, open(options.regionlist, 'r'))
@@ -241,7 +233,7 @@ def main():
         logging.info("Notice: Not using biome data for tinting")
     
     # First do world-level preprocessing
-    w = world.World(worlddir, useBiomeData=useBiomeData, regionlist=regionlist)
+    w = world.World(worlddir, destdir, useBiomeData=useBiomeData, regionlist=regionlist)
     w.go(options.procs)
 
     logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
@@ -276,15 +268,6 @@ def main():
     # finish up the map
     m.finalize()
 
-
-def delete_all(worlddir, tiledir):
-    # TODO should we delete tiledir here too?
-    
-    # delete the overviewer.dat persistant data file
-    datfile = os.path.join(worlddir,"overviewer.dat")
-    if os.path.exists(datfile):
-        os.unlink(datfile)
-        logging.info("Deleting {0}".format(datfile))
 
 def list_worlds():
     "Prints out a brief summary of saves found in the default directory"

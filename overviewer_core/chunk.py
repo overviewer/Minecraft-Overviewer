@@ -128,8 +128,8 @@ solid_blocks = set([1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
 fluid_blocks = set([8,9,10,11])
 
 # This set holds block ids that are not candidates for spawning mobs on
-# (glass, half blocks)
-nospawn_blocks = set([20,44])
+# (glass, half blocks, fluids)
+nospawn_blocks = set([20,44]).union(fluid_blocks)
 
 class ChunkCorrupt(Exception):
     pass

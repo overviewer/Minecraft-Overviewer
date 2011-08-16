@@ -78,7 +78,6 @@ class ConfigOptionParser(object):
         g = dict()
         for a in self.configVars:
             n = a['dest']
-            if a.get('advanced', False): continue
             if a.get('commandLineOnly', False): continue
             v = getattr(options, n)
             if v != None:
@@ -133,7 +132,6 @@ class ConfigOptionParser(object):
         # third, merge options into configReslts (with options overwriting anything in configResults)
         for a in self.configVars:
             n = a['dest']
-            if a.get('advanced', False): continue
             if getattr(options, n) != None:
                 configResults.__dict__[n] = getattr(options, n)
 
