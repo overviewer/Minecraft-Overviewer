@@ -1,4 +1,4 @@
-from optparse import OptionParser
+import optparse
 import sys
 import os.path
 import logging
@@ -9,22 +9,23 @@ class OptionsResults(object):
 
 class ConfigOptionParser(object):
     def __init__(self, **kwargs):
-        self.cmdParser = OptionParser(usage=kwargs.get("usage",""))
+        self.cmdParser = optparse.OptionParser(usage=kwargs.get("usage",""))
         self.configFile = kwargs.get("config","settings.py")
         self.configVars = []
-
+        self.advancedHelp = []
         # these are arguments not understood by OptionParser, so they must be removed
         # in add_option before being passed to the OptionParser
 
         # note that default is a valid OptionParser argument, but we remove it
         # because we want to do our default value handling
 
-        self.customArgs = ["required", "commandLineOnly", "default", "listify", "listdelim", "choices"]
+        self.customArgs = ["required", "commandLineOnly", "default", "listify", "listdelim", "choices", "helptext", "advanced"]
 
         self.requiredArgs = []
         
-        # add the *very* special config-file path option
-        self.add_option("--settings", dest="config_file", help="Specifies a settings file to load, by name. This file's format is discussed in the README.", metavar="PATH", type="string", commandLineOnly=True)
+        # add the *very* special advanced help and config-file path options
+        self.add_option("--advanced-help", dest="advanced_help", action="store_true", helptext="Display help - including advanced options", commandLineOnly=True)
+        self.add_option("--settings", dest="config_file", helptext="Specifies a settings file to load, by name. This file's format is discussed in the README.", metavar="PATH", type="string", commandLineOnly=True)
 
     def display_config(self):
         logging.info("Using the following settings:")
@@ -35,21 +36,37 @@ class ConfigOptionParser(object):
 
     def add_option(self, *args, **kwargs):
 
-        if kwargs.get("configFileOnly", False) and kwargs.get("commandLineOnly", False):
-            raise Exception(args, "configFileOnly and commandLineOnly are mututally exclusive")
-
         self.configVars.append(kwargs.copy())
 
-        if not kwargs.get("configFileOnly", False):
-            for arg in self.customArgs:
-                if arg in kwargs.keys(): del kwargs[arg]
+        if kwargs.get("advanced"):
+            kwargs['help'] = optparse.SUPPRESS_HELP
+            self.advancedHelp.append((args, kwargs.copy()))
+        else:
+            kwargs["help"]=kwargs["helptext"]
 
-            if kwargs.get("type", None):
-                kwargs['type'] = 'string' # we'll do our own converting later
-            self.cmdParser.add_option(*args, **kwargs)
+        for arg in self.customArgs:
+            if arg in kwargs.keys(): del kwargs[arg]
+        if kwargs.get("type", None):
+            kwargs['type'] = 'string' # we'll do our own converting later
+        self.cmdParser.add_option(*args, **kwargs)
+
 
     def print_help(self):
         self.cmdParser.print_help()
+
+    def advanced_help(self):
+        self.cmdParser.set_conflict_handler('resolve') # Allows us to overwrite the previous definitions
+        for opt in self.advancedHelp:
+            opt[1]['help']="[!]" + opt[1]['helptext']
+            for arg in self.customArgs:
+                if arg in opt[1].keys():
+                    del opt[1][arg]
+            if opt[1].get("type", None):
+                opt[1]['type'] = 'string' # we'll do our own converting later
+            self.cmdParser.add_option(*opt[0], **opt[1])
+            self.cmdParser.epilog = "Advanced options indicated by [!]. These options should not normally be required, and may have caveats regarding their use. See README file for more details"
+        self.print_help()
+
 
     def parse_args(self):
 
@@ -61,7 +78,7 @@ class ConfigOptionParser(object):
         g = dict()
         for a in self.configVars:
             n = a['dest']
-            if a.get('configFileOnly', False): continue
+            if a.get('advanced', False): continue
             if a.get('commandLineOnly', False): continue
             v = getattr(options, n)
             if v != None:
@@ -116,7 +133,7 @@ class ConfigOptionParser(object):
         # third, merge options into configReslts (with options overwriting anything in configResults)
         for a in self.configVars:
             n = a['dest']
-            if a.get('configFileOnly', False): continue
+            if a.get('advanced', False): continue
             if getattr(options, n) != None:
                 configResults.__dict__[n] = getattr(options, n)
 
