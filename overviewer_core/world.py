@@ -69,8 +69,9 @@ class World(object):
 
     mincol = maxcol = minrow = maxrow = 0
     
-    def __init__(self, worlddir, useBiomeData=False,regionlist=None):
+    def __init__(self, worlddir, outputdir, useBiomeData=False,regionlist=None):
         self.worlddir = worlddir
+        self.outputdir = outputdir
         self.useBiomeData = useBiomeData
                 
         #find region files, or load the region list
@@ -111,8 +112,20 @@ class World(object):
         # info self.persistentData.  This dictionary can hold any information
         # that may be needed between runs.
         # Currently only holds into about POIs (more more details, see quadtree)
-        # TODO maybe store this with the tiles, not with the world?
+        
         self.pickleFile = os.path.join(self.worlddir, "overviewer.dat")
+        if os.path.exists(self.pickleFile):
+            logging.warning("overviewer.dat detected in WorldDir - this is no longer the correct location")
+            logging.warning("Moving overviewer.dat to OutputDir")
+            import shutil
+            try:
+                shutil.move(self.pickleFile, self.outputdir)
+                logging.info("overviewer.dat moved")
+            except BaseException as ex:
+                logging.error("Unable to move overviewer.dat")
+                logging.debug(ex.str())
+
+        self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")    
         if os.path.exists(self.pickleFile):
             with open(self.pickleFile,"rb") as p:
                 self.persistentData = cPickle.load(p)

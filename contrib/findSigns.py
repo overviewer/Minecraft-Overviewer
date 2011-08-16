@@ -5,16 +5,14 @@ This script will scan through every chunk looking for signs and write out an
 updated overviewer.dat file.  This can be useful if your overviewer.dat file
 is either out-of-date or non-existant.  
 
-To run, simply give a path to your world directory, for example:
+To run, simply give a path to your world directory and the path to your
+output directory. For example:
 
-    python contrib/findSigns.py ../world.test/
+    python contrib/findSigns.py ../world.test/ output_dir/
 
 Once that is done, simply re-run the overviewer to generate markers.js:
 
     python overviewer.py ../world.test/ output_dir/
-
-Note: if your cachedir is not the same as your world-dir, you'll need to manually
-move overviewer.dat into the correct location.
 
 '''
 import sys
@@ -23,15 +21,21 @@ import os
 import cPickle
 
 sys.path.append(".")
-import nbt
+from overviewer_core import nbt
 
 from pprint import pprint
 
 worlddir = sys.argv[1]
+outputdir = sys.argv[2]
 if os.path.exists(worlddir):
     print "Scanning chunks in ", worlddir
 else:
     sys.exit("Bad WorldDir")
+
+if os.path.exists(outputdir):
+    print "Output directory is ", outputdir
+else:
+    sys.exit("Bad OutputDir")
 
 matcher = re.compile(r"^r\..*\.mcr$")
 
@@ -63,8 +67,12 @@ for dirpath, dirnames, filenames in os.walk(worlddir):
                             print "Found sign at (%d, %d, %d): %r" % (newPOI['x'], newPOI['y'], newPOI['z'], newPOI['msg'])
 
 
+if os.path.isfile(os.path.join(worlddir, "overviewer.dat")):
+    print "Overviewer.dat detected in WorldDir - this is no longer the correct location\n"
+    print "You may wish to delete the old file. A new overviewer.dat will be created\n"
+    print "Old file: ", os.path.join(worlddir, "overviewer.dat")
 
-pickleFile = os.path.join(worlddir,"overviewer.dat")
+pickleFile = os.path.join(outputdir,"overviewer.dat")
 with open(pickleFile,"wb") as f:
     cPickle.dump(dict(POI=POI), f)
 
