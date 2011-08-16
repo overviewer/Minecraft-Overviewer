@@ -119,6 +119,11 @@ class World(object):
             logging.warning("Moving overviewer.dat to OutputDir")
             import shutil
             try:
+                # make sure destination dir actually exists
+                try:
+                    os.mkdir(self.outputdir)
+                except OSError: # already exists, or failed
+                    pass
                 shutil.move(self.pickleFile, self.outputdir)
                 logging.info("overviewer.dat moved")
             except BaseException as ex:
