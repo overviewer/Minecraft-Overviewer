@@ -91,10 +91,11 @@ def recursive_package_data(src, package_dir='overviewer_core'):
 #
 
 if py2exe is not None:
-    setup_kwargs['console'] = ['overviewer.py']
+    setup_kwargs['console'] = ['overviewer.py', 'contribManager.py']
     setup_kwargs['data_files'] = [('', doc_files)]
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/textures', 'textures')
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/web_assets', 'web_assets')
+    setup_kwargs['data_files'] += recursive_data_files('contrib', 'contrib')
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
