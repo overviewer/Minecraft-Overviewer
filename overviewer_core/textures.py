@@ -513,6 +513,9 @@ def generate_texture_tuple(img, blockid):
 
 def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
+
+    data = convert_data(blockID, data)
+
     # blocks need to be handled here (and in chunk.py)
     
     if blockID == 2: # grass
@@ -1679,6 +1682,237 @@ def generate_special_texture(blockID, data):
 
     return None
 
+def convert_data(blockID, data):
+    if blockID == 26: # bed
+        #Masked to not clobber block head/foot info
+        if _north == 'upper-left':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+        elif _north == 'upper-right':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+        elif _north == 'lower-right':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+    if blockID in (29, 33, 34): # sticky piston, piston, piston extension
+        #Masked to not clobber block head/foot info
+        if _north == 'upper-left':
+            if (data & 0b0111) == 2: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 4
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 3
+        elif _north == 'upper-right':
+            if (data & 0b0111) == 2: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 4
+        elif _north == 'lower-right':
+            if (data & 0b0111) == 2: data = data & 0b1000 | 4
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 2
+    if blockID in (27, 28, 66): # minetrack:
+        #Masked to not clobber powered rail on/off info
+        #Ascending and flat straight
+        if _north == 'upper-left':
+            if (data & 0b0111) == 0: data = data & 0b1000 | 1
+            elif (data & 0b0111) == 1: data = data & 0b1000 | 0
+            elif (data & 0b0111) == 2: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 4
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 3
+        elif _north == 'upper-right':
+            if (data & 0b0111) == 2: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 4
+        elif _north == 'lower-right':
+            if (data & 0b0111) == 0: data = data & 0b1000 | 1
+            elif (data & 0b0111) == 1: data = data & 0b1000 | 0
+            elif (data & 0b0111) == 2: data = data & 0b1000 | 4
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 2
+    if blockID == 66: # normal minetrack only
+        #Corners
+        if _north == 'upper-left':
+            if data == 6: data = 7
+            elif data == 7: data = 8
+            elif data == 8: data = 6
+            elif data == 9: data = 9
+        elif _north == 'upper-right':
+            if data == 6: data = 8
+            elif data == 7: data = 9
+            elif data == 8: data = 6
+            elif data == 9: data = 7
+        elif _north == 'lower-right':
+            if data == 6: data = 9
+            elif data == 7: data = 6
+            elif data == 8: data = 8
+            elif data == 9: data = 7
+    if blockID in (50, 75, 76): # torch, off/on redstone torch
+        if _north == 'upper-left':
+            if data == 1: data = 3
+            elif data == 2: data = 4
+            elif data == 3: data = 2
+            elif data == 4: data = 1
+        elif _north == 'upper-right':
+            if data == 1: data = 2
+            elif data == 2: data = 1
+            elif data == 3: data = 4
+            elif data == 4: data = 3
+        elif _north == 'lower-right':
+            if data == 1: data = 4
+            elif data == 2: data = 3
+            elif data == 3: data = 1
+            elif data == 4: data = 2
+    if blockID in (53,67): # wooden and cobblestone stairs.
+        if _north == 'upper-left':
+            if data == 0: data = 2
+            elif data == 1: data = 3
+            elif data == 2: data = 1
+            elif data == 3: data = 0
+        elif _north == 'upper-right':
+            if data == 0: data = 1
+            elif data == 1: data = 0
+            elif data == 2: data = 3
+            elif data == 3: data = 2
+        elif _north == 'lower-right':
+            if data == 0: data = 3
+            elif data == 1: data = 2
+            elif data == 2: data = 0
+            elif data == 3: data = 1
+    if blockID in (61, 62, 23): # furnace and burning furnace
+        if _north == 'upper-left':
+            if data == 2: data = 5
+            elif data == 3: data = 4
+            elif data == 4: data = 2
+            elif data == 5: data = 3
+        elif _north == 'upper-right':
+            if data == 2: data = 3
+            elif data == 3: data = 2
+            elif data == 4: data = 5
+            elif data == 5: data = 4
+        elif _north == 'lower-right':
+            if data == 2: data = 4
+            elif data == 3: data = 5
+            elif data == 4: data = 3
+            elif data == 5: data = 2
+    if blockID == 63: # signposts
+        if _north == 'upper-left':
+            data = (data + 4) % 16
+        elif _north == 'upper-right':
+            data = (data + 8) % 16
+        elif _north == 'lower-right':
+            data = (data + 12) % 16
+    if blockID in (64,71): # wooden/iron door
+        #Masked to not clobber block top/bottom & swung info
+        if _north == 'upper-left':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+        elif _north == 'upper-right':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+        elif _north == 'lower-right':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+    if blockID == 65: # ladder
+        if _north == 'upper-left':
+            if data == 2: data = 5
+            elif data == 3: data = 4
+            elif data == 4: data = 2
+            elif data == 5: data = 3
+        elif _north == 'upper-right':
+            if data == 2: data = 3
+            elif data == 3: data = 2
+            elif data == 4: data = 5
+            elif data == 5: data = 4
+        elif _north == 'lower-right':
+            if data == 2: data = 4
+            elif data == 3: data = 5
+            elif data == 4: data = 3
+            elif data == 5: data = 2
+    if blockID == 68: # wall sign
+        if _north == 'upper-left':
+            if data == 2: data = 5
+            elif data == 3: data = 4
+            elif data == 4: data = 2
+            elif data == 5: data = 3
+        elif _north == 'upper-right':
+            if data == 2: data = 3
+            elif data == 3: data = 2
+            elif data == 4: data = 5
+            elif data == 5: data = 4
+        elif _north == 'lower-right':
+            if data == 2: data = 4
+            elif data == 3: data = 5
+            elif data == 4: data = 3
+            elif data == 5: data = 2
+    if blockID in (86,91): # pumpkins, jack-o-lantern
+        if _north == 'upper-left':
+            if data == 0: data = 1
+            elif data == 1: data = 2
+            elif data == 2: data = 3
+            elif data == 3: data = 0
+        elif _north == 'upper-right':
+            if data == 0: data = 2
+            elif data == 1: data = 3
+            elif data == 2: data = 0
+            elif data == 3: data = 1
+        elif _north == 'lower-right':
+            if data == 0: data = 3
+            elif data == 1: data = 0
+            elif data == 2: data = 1
+            elif data == 3: data = 2
+    if blockID in (93, 94): # redstone repeaters, ON and OFF
+        #Masked to not clobber delay info
+        if _north == 'upper-left':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+        elif _north == 'upper-right':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+        elif _north == 'lower-right':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+    if blockID == 96: # trapdoor
+        #Masked to not clobber opened/closed info
+        if _north == 'upper-left':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+        elif _north == 'upper-right':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+        elif _north == 'lower-right':
+            if (data & 0b0011) == 0: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+
+    return data
+
 def tintTexture(im, c):
     # apparently converting to grayscale drops the alpha channel?
     i = ImageOps.colorize(ImageOps.grayscale(im), (0,0,0), c)
@@ -1722,8 +1956,25 @@ def getBiomeData(worlddir, chunkX, chunkY):
     '''
 
     global currentBiomeFile, currentBiomeData
+    biomeX = chunkX // 32
+    biomeY = chunkY // 32
+    rots = 0
+    if _north == 'upper-left':
+        temp = biomeX
+        biomeX = biomeY
+        biomeY = -temp-1
+        rots = 3
+    elif _north == 'upper-right':
+        biomeX = -biomeX-1
+        biomeY = -biomeY-1
+        rots = 2
+    elif _north == 'lower-right':
+        temp = biomeX
+        biomeX = -biomeY-1
+        biomeY = temp
+        rots = 1
 
-    biomeFile = "b.%d.%d.biome" % (chunkX // 32, chunkY // 32)
+    biomeFile = "b.%d.%d.biome" % (biomeX, biomeY)
     if biomeFile == currentBiomeFile:
         return currentBiomeData
 
@@ -1733,7 +1984,9 @@ def getBiomeData(worlddir, chunkX, chunkY):
             # make sure the file size is correct
             if not len(rawdata) == 512 * 512 * 2:
                 raise Exception("Biome file %s is not valid." % (biomeFile,))
-            data = numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2"))
+            data = numpy.reshape(numpy.rot90(numpy.reshape(
+                    numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2")),
+                    (512,512)),rots), -1)
     except IOError:
         data = None
         pass # no biome data   
@@ -1822,7 +2075,10 @@ biome_tall_fern_texture = None
 biome_leaf_texture = None
 specialblockmap = None
 
-def generate(path=None,texture_size=24,bgc = (26,26,26,0)):
+def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower-left'):
+    global _north
+    _north = north_direction
+    global _find_file_local_path
     global bgcolor
     bgcolor = bgc
     global _find_file_local_path, texture_dimensions
