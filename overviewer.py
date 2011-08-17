@@ -96,7 +96,7 @@ def main():
         cpus = 1
     
     avail_rendermodes = c_overviewer.get_render_modes()
-    avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right']
+    avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right', 'auto']
     
     parser = ConfigOptionParser(usage=helptext, config="settings.py")
     parser.add_option("-V", "--version", dest="version", helptext="Displays version information and then exits", action="store_true")
@@ -117,7 +117,7 @@ def main():
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, helptext="Print more output. You can specify this option multiple times.")
     parser.add_option("--skip-js", dest="skipjs", action="store_true", helptext="Don't output marker.js or regions.js")
     parser.add_option("--no-signs", dest="nosigns", action="store_true", helptext="Don't output signs to markers.js")
-    parser.add_option("--north-direction", dest="north_direction", action="store", helptext="Specifies which corner of the screen north will point to. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default=avail_north_dirs[0], choices=avail_north_dirs)
+    parser.add_option("--north-direction", dest="north_direction", action="store", helptext="Specifies which corner of the screen north will point to. Defaults to whatever the current map uses, or lower-left for new maps. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default="auto", choices=avail_north_dirs)
     parser.add_option("--display-config", dest="display_config", action="store_true", helptext="Display the configuration parameters, but don't render the map.  Requires all required options to be specified", commandLineOnly=True)
     #parser.add_option("--write-config", dest="write_config", action="store_true", helptext="Writes out a sample config file", commandLineOnly=True)
 
@@ -225,7 +225,7 @@ def main():
     if options.north_direction:
         north_direction = options.north_direction
     else:
-        north_direction = 'lower-left'
+        north_direction = 'auto'
     
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)
@@ -241,7 +241,10 @@ def main():
     
     # First do world-level preprocessing
     w = world.World(worlddir, destdir, useBiomeData=useBiomeData, regionlist=regionlist, north_direction=north_direction)
-    if not (w.persistentData['north_direction'] == north_direction) and not options.forcerender:
+    if north_direction == 'auto':
+        north_direction = w.persistentData['north_direction']
+        options.north_direction = north_direction
+    elif w.persistentData['north_direction'] != north_direction and not options.forcerender:
         logging.error("Conflicting north-direction setting!")
         logging.error("Overviewer.dat gives previous north-direction as "+w.persistentData['north_direction'])
         logging.error("Requested north-direction was "+north_direction)

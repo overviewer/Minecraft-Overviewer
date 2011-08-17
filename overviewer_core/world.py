@@ -69,33 +69,11 @@ class World(object):
 
     mincol = maxcol = minrow = maxrow = 0
     
-    def __init__(self, worlddir, outputdir, useBiomeData=False, regionlist=None, north_direction="lower-left"):
+    def __init__(self, worlddir, outputdir, useBiomeData=False, regionlist=None, north_direction="auto"):
         self.worlddir = worlddir
         self.outputdir = outputdir
         self.useBiomeData = useBiomeData
         self.north_direction = north_direction
-                
-        #find region files, or load the region list
-        #this also caches all the region file header info
-        logging.info("Scanning regions")
-        regionfiles = {}
-        self.regions = {}
-        if regionlist:
-            self.regionlist = map(os.path.abspath, regionlist) # a list of paths
-        else:
-            self.regionlist = None
-        for x, y, regionfile in self._iterate_regionfiles(regionlist):
-            mcr = self.reload_region(regionfile) 
-            mcr.get_chunk_info()
-            regionfiles[(x,y)]	= (x,y,regionfile,mcr)
-        self.regionfiles = regionfiles	
-        # set the number of region file handles we will permit open at any time before we start closing them
-#        self.regionlimit = 1000
-        # the max number of chunks we will keep before removing them (includes emptry chunks)
-        self.chunklimit = 1024 
-        self.chunkcount = 0
-        self.empty_chunk = [None,None]
-        logging.debug("Done scanning regions")
         
         # figure out chunk format is in use
         # if not mcregion, error out early
@@ -136,10 +114,38 @@ class World(object):
             with open(self.pickleFile,"rb") as p:
                 self.persistentData = cPickle.load(p)
                 if not self.persistentData.get('north_direction', False):
-                    self.persistentData['north_direction']=='lower-left'
+                    # this is a pre-configurable-north map, so add the north_direction key
+                    self.persistentData['north_direction'] = 'lower-left'
         else:
-            # some defaults
-            self.persistentData = dict(POI=[], north_direction=self.north_direction)
+            # some defaults, presumably a new map
+            self.persistentData = dict(POI=[], north_direction='lower-left')
+        
+        # handle 'auto' north
+        if self.north_direction == 'auto':
+            self.north_direction = self.persistentData['north_direction']
+            north_direction = self.north_direction
+        
+        #find region files, or load the region list
+        #this also caches all the region file header info
+        logging.info("Scanning regions")
+        regionfiles = {}
+        self.regions = {}
+        if regionlist:
+            self.regionlist = map(os.path.abspath, regionlist) # a list of paths
+        else:
+            self.regionlist = None
+        for x, y, regionfile in self._iterate_regionfiles(regionlist):
+            mcr = self.reload_region(regionfile) 
+            mcr.get_chunk_info()
+            regionfiles[(x,y)]	= (x,y,regionfile,mcr)
+        self.regionfiles = regionfiles	
+        # set the number of region file handles we will permit open at any time before we start closing them
+#        self.regionlimit = 1000
+        # the max number of chunks we will keep before removing them (includes emptry chunks)
+        self.chunklimit = 1024 
+        self.chunkcount = 0
+        self.empty_chunk = [None,None]
+        logging.debug("Done scanning regions")
         
  
     def get_region_path(self, chunkX, chunkY):

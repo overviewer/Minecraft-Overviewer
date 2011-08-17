@@ -198,6 +198,9 @@ Options
 --north-direction=NORTH_DIRECTION
     Specifies which corner of the screen north will point to.
     Valid options are: lower-left, upper-left, upper-right, lower-right.
+    If you do not specify this option, it will default to whatever direction
+    the existing map uses. For new maps, it defaults to lower-left for
+    historical reasons.
 
 --settings=PATH
     Use this option to load settings from a file. The format of this file is
