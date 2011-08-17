@@ -187,6 +187,7 @@ class MapGen(object):
         
         # save persistent data
         self.world.persistentData['POI'] = self.world.POI
+        self.world.persistentData['north_direction'] = self.world.north_direction
         with open(self.world.pickleFile,"wb") as f:
             cPickle.dump(self.world.persistentData,f)
 

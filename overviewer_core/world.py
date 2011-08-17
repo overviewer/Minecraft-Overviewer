@@ -135,9 +135,11 @@ class World(object):
         if os.path.exists(self.pickleFile):
             with open(self.pickleFile,"rb") as p:
                 self.persistentData = cPickle.load(p)
+                if not self.persistentData.get('north_direction', False):
+                    self.persistentData['north_direction']=='lower-left'
         else:
             # some defaults
-            self.persistentData = dict(POI=[])
+            self.persistentData = dict(POI=[], north_direction=self.north_direction)
         
  
     def get_region_path(self, chunkX, chunkY):
