@@ -111,6 +111,7 @@ class World(object):
 
         self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")    
         if os.path.exists(self.pickleFile):
+            self.persistentDataIsNew = False;
             with open(self.pickleFile,"rb") as p:
                 self.persistentData = cPickle.load(p)
                 if not self.persistentData.get('north_direction', False):
@@ -119,6 +120,7 @@ class World(object):
         else:
             # some defaults, presumably a new map
             self.persistentData = dict(POI=[], north_direction='lower-left')
+            self.persistentDataIsNew = True # indicates that the values in persistentData are new defaults, and it's OK to override them
         
         # handle 'auto' north
         if self.north_direction == 'auto':

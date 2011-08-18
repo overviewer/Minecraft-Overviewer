@@ -244,7 +244,7 @@ def main():
     if north_direction == 'auto':
         north_direction = w.persistentData['north_direction']
         options.north_direction = north_direction
-    elif w.persistentData['north_direction'] != north_direction and not options.forcerender:
+    elif w.persistentData['north_direction'] != north_direction and not options.forcerender and not w.persistentDataIsNew:
         logging.error("Conflicting north-direction setting!")
         logging.error("Overviewer.dat gives previous north-direction as "+w.persistentData['north_direction'])
         logging.error("Requested north-direction was "+north_direction)
