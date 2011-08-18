@@ -160,9 +160,6 @@ class MapGen(object):
 
 
     def finalize(self):
-        if self.skipjs:
-            return
-
         # since we will only discover PointsOfInterest in chunks that need to be 
         # [re]rendered, POIs like signs in unchanged chunks will not be listed
         # in self.world.POI.  To make sure we don't remove these from markers.js
@@ -175,6 +172,17 @@ class MapGen(object):
         else:
             markers = self.world.POI
 
+        # save persistent data
+        self.world.persistentData['POI'] = self.world.POI
+        self.world.persistentData['north_direction'] = self.world.north_direction
+        with open(self.world.pickleFile,"wb") as f:
+            cPickle.dump(self.world.persistentData,f)
+
+        
+        # the rest of the function is javascript stuff
+        if self.skipjs:
+            return
+
         # write out the default marker table
         with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
             output.write("overviewer.collections.markerDatas.push([\n")
@@ -185,12 +193,6 @@ class MapGen(object):
                 output.write("\n")
             output.write("]);\n")
         
-        # save persistent data
-        self.world.persistentData['POI'] = self.world.POI
-        self.world.persistentData['north_direction'] = self.world.north_direction
-        with open(self.world.pickleFile,"wb") as f:
-            cPickle.dump(self.world.persistentData,f)
-
         # write out the default (empty, but documented) region table
         with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
             output.write('overviewer.collections.regionDatas.push([\n')
