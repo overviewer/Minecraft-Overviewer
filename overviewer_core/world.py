@@ -92,24 +92,30 @@ class World(object):
         # that may be needed between runs.
         # Currently only holds into about POIs (more more details, see quadtree)
         
-        self.pickleFile = os.path.join(self.worlddir, "overviewer.dat")
-        if os.path.exists(self.pickleFile):
-            logging.warning("overviewer.dat detected in WorldDir - this is no longer the correct location")
-            logging.warning("Moving overviewer.dat to OutputDir")
-            import shutil
-            try:
-                # make sure destination dir actually exists
-                try:
-                    os.mkdir(self.outputdir)
-                except OSError: # already exists, or failed
-                    pass
-                shutil.move(self.pickleFile, self.outputdir)
-                logging.info("overviewer.dat moved")
-            except BaseException as ex:
-                logging.error("Unable to move overviewer.dat")
-                logging.debug(ex.str())
-
+        self.oldPickleFile = os.path.join(self.worlddir, "overviewer.dat")
         self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")    
+        
+        if os.path.exists(self.oldPickleFile):
+            logging.warning("overviewer.dat detected in WorldDir - this is no longer the correct location")
+            if os.path.exists(self.pickleFile):
+                # new file exists, so make a note of it
+                logging.warning("you should delete the `overviewer.dat' file in your world directory")
+            else:
+                # new file does not exist, so move the old one
+                logging.warning("Moving overviewer.dat to OutputDir")
+                import shutil
+                try:
+                    # make sure destination dir actually exists
+                    try:
+                        os.mkdir(self.outputdir)
+                    except OSError: # already exists, or failed
+                        pass
+                    shutil.move(self.oldPickleFile, self.pickleFile)
+                    logging.info("overviewer.dat moved")
+                except BaseException as ex:
+                    logging.error("Unable to move overviewer.dat")
+                    logging.debug(ex.str())
+
         if os.path.exists(self.pickleFile):
             self.persistentDataIsNew = False;
             with open(self.pickleFile,"rb") as p:
