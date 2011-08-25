@@ -91,6 +91,10 @@ def recursive_package_data(src, package_dir='overviewer_core'):
 #
 
 if py2exe is not None:
+    setup_kwargs['comments'] = "http://overviewer.org"
+    # py2exe likes a very particular type of version number:
+    setup_kwargs['version'] = util.findGitVersion().replace("-",".")
+
     setup_kwargs['console'] = ['overviewer.py', 'contribManager.py']
     setup_kwargs['data_files'] = [('', doc_files)]
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/textures', 'textures')

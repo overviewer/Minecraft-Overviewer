@@ -302,7 +302,7 @@ class QuadtreeGen(object):
             tile_mtime = None
             
         #check mtimes on each part of the quad, this also checks if they exist
-        needs_rerender = tile_mtime is None
+        needs_rerender = (tile_mtime is None) or self.forcerender
         quadPath_filtered = []
         for path in quadPath:
             try:
@@ -318,7 +318,7 @@ class QuadtreeGen(object):
             if tile_mtime is not None:
                 os.unlink(imgpath)
             return
-        # quit now if we don't need rerender            
+        # quit now if we don't need rerender
         if not needs_rerender:
             return    
         #logging.debug("writing out innertile {0}".format(imgpath))

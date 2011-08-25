@@ -185,9 +185,14 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         
         /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
         if (local_z != 127) {
-            upper_block = getArrayByte3D(blocks, local_x, local_y, local_z + 1);
+            int upper_counter = 0;
+            /* but if the upper_block is one of these special half-steps, we need to look at *its* upper_block */
+            do {
+                upper_counter++; 
+                upper_block = getArrayByte3D(blocks, local_x, local_y, local_z + upper_counter);
+            } while ((upper_block == 44 || upper_block == 54 || upper_block == 67) && local_z < 127);
             if (is_transparent(upper_block)) {
-                skylevel = getArrayByte3D(skylight, local_x, local_y, local_z + 1);
+                skylevel = getArrayByte3D(skylight, local_x, local_y, local_z + upper_counter);
             }
         } else {
             upper_block = 0;
@@ -195,7 +200,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         }
         
         /* the block has a bad blocklevel, estimate it from neigborhood
-        /* use given coordinates, no local ones! */
+         * use given coordinates, no local ones! */
         blocklevel = estimate_blocklevel(self, state, x, y, z, NULL);
 
     }

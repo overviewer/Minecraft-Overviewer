@@ -69,11 +69,70 @@ class World(object):
 
     mincol = maxcol = minrow = maxrow = 0
     
-    def __init__(self, worlddir, outputdir, useBiomeData=False,regionlist=None):
+    def __init__(self, worlddir, outputdir, useBiomeData=False, regionlist=None, north_direction="auto"):
         self.worlddir = worlddir
         self.outputdir = outputdir
         self.useBiomeData = useBiomeData
-                
+        self.north_direction = north_direction
+        
+        # figure out chunk format is in use
+        # if not mcregion, error out early
+        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
+        #print data
+        if not ('version' in data and data['version'] == 19132):
+            logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
+            sys.exit(1)
+
+        #  stores Points Of Interest to be mapped with markers
+        #  a list of dictionaries, see below for an example
+        self.POI = []
+
+        # if it exists, open overviewer.dat, and read in the data structure
+        # info self.persistentData.  This dictionary can hold any information
+        # that may be needed between runs.
+        # Currently only holds into about POIs (more more details, see quadtree)
+        
+        self.oldPickleFile = os.path.join(self.worlddir, "overviewer.dat")
+        self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")    
+        
+        if os.path.exists(self.oldPickleFile):
+            logging.warning("overviewer.dat detected in WorldDir - this is no longer the correct location")
+            if os.path.exists(self.pickleFile):
+                # new file exists, so make a note of it
+                logging.warning("you should delete the `overviewer.dat' file in your world directory")
+            else:
+                # new file does not exist, so move the old one
+                logging.warning("Moving overviewer.dat to OutputDir")
+                import shutil
+                try:
+                    # make sure destination dir actually exists
+                    try:
+                        os.mkdir(self.outputdir)
+                    except OSError: # already exists, or failed
+                        pass
+                    shutil.move(self.oldPickleFile, self.pickleFile)
+                    logging.info("overviewer.dat moved")
+                except BaseException as ex:
+                    logging.error("Unable to move overviewer.dat")
+                    logging.debug(ex.str())
+
+        if os.path.exists(self.pickleFile):
+            self.persistentDataIsNew = False;
+            with open(self.pickleFile,"rb") as p:
+                self.persistentData = cPickle.load(p)
+                if not self.persistentData.get('north_direction', False):
+                    # this is a pre-configurable-north map, so add the north_direction key
+                    self.persistentData['north_direction'] = 'lower-left'
+        else:
+            # some defaults, presumably a new map
+            self.persistentData = dict(POI=[], north_direction='lower-left')
+            self.persistentDataIsNew = True # indicates that the values in persistentData are new defaults, and it's OK to override them
+        
+        # handle 'auto' north
+        if self.north_direction == 'auto':
+            self.north_direction = self.persistentData['north_direction']
+            north_direction = self.north_direction
+        
         #find region files, or load the region list
         #this also caches all the region file header info
         logging.info("Scanning regions")
@@ -95,43 +154,6 @@ class World(object):
         self.chunkcount = 0
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
-        
-        # figure out chunk format is in use
-        # if not mcregion, error out early
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-        #print data
-        if not ('version' in data and data['version'] == 19132):
-            logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
-            sys.exit(1)
-
-        #  stores Points Of Interest to be mapped with markers
-        #  a list of dictionaries, see below for an example
-        self.POI = []
-
-        # if it exists, open overviewer.dat, and read in the data structure
-        # info self.persistentData.  This dictionary can hold any information
-        # that may be needed between runs.
-        # Currently only holds into about POIs (more more details, see quadtree)
-        
-        self.pickleFile = os.path.join(self.worlddir, "overviewer.dat")
-        if os.path.exists(self.pickleFile):
-            logging.warning("overviewer.dat detected in WorldDir - this is no longer the correct location")
-            logging.warning("Moving overviewer.dat to OutputDir")
-            import shutil
-            try:
-                shutil.move(self.pickleFile, self.outputdir)
-                logging.info("overviewer.dat moved")
-            except BaseException as ex:
-                logging.error("Unable to move overviewer.dat")
-                logging.debug(ex.str())
-
-        self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")    
-        if os.path.exists(self.pickleFile):
-            with open(self.pickleFile,"rb") as p:
-                self.persistentData = cPickle.load(p)
-        else:
-            # some defaults
-            self.persistentData = dict(POI=[])
         
  
     def get_region_path(self, chunkX, chunkY):
@@ -164,6 +186,18 @@ class World(object):
             data = nbt.read_all()    
             level = data[1]['Level']
             chunk_data = level
+            chunk_data['Blocks'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                    level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
+                    self._get_north_rotations()))
+            chunk_data['Data'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                    level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations()))
+            chunk_data['SkyLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                    level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations()))
+            chunk_data['BlockLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                    level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations()))
             #chunk_data = {}
             #chunk_data['skylight'] = chunk.get_skylight_array(level)
             #chunk_data['blocklight'] = chunk.get_blocklight_array(level)
@@ -180,7 +214,7 @@ class World(object):
         if self.regions.get(filename) is not None:
             self.regions[filename][0].closefile()
         chunkcache = {}    
-        mcr = nbt.MCRFileReader(filename)
+        mcr = nbt.MCRFileReader(filename, self.north_direction)
         self.regions[filename] = (mcr,os.path.getmtime(filename),chunkcache)
         return mcr
         
@@ -196,7 +230,7 @@ class World(object):
         in the image each one should be. Returns (col, row)."""
         
         # columns are determined by the sum of the chunk coords, rows are the
-        # difference (TODO: be able to change direction of north)
+        # difference
         # change this function, and you MUST change unconvert_coords
         return (chunkx + chunky, chunky - chunkx)
     
@@ -214,9 +248,20 @@ class World(object):
 
         ## read spawn info from level.dat
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]
-        spawnX = data['Data']['SpawnX']
+        disp_spawnX = spawnX = data['Data']['SpawnX']
         spawnY = data['Data']['SpawnY']
-        spawnZ = data['Data']['SpawnZ']
+        disp_spawnZ = spawnZ = data['Data']['SpawnZ']
+        if self.north_direction == 'upper-left':
+            temp = spawnX
+            spawnX = -spawnZ
+            spawnZ = temp
+        elif self.north_direction == 'upper-right':
+            spawnX = -spawnX
+            spawnZ = -spawnZ
+        elif self.north_direction == 'lower-right':
+            temp = spawnX
+            spawnX = spawnZ
+            spawnZ = -temp
    
         ## The chunk that holds the spawn location 
         chunkX = spawnX/16
@@ -226,7 +271,7 @@ class World(object):
             ## The filename of this chunk
             chunkFile = self.get_region_path(chunkX, chunkY)
             if chunkFile is not None:
-                data = nbt.load_from_region(chunkFile, chunkX, chunkY)[1]
+                data = nbt.load_from_region(chunkFile, chunkX, chunkY, self.north_direction)[1]
                 if data is not None:
                     level = data['Level']
                     blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
@@ -243,9 +288,9 @@ class World(object):
         except ChunkCorrupt:
             #ignore corrupt spawn, and continue
             pass
-        self.POI.append( dict(x=spawnX, y=spawnY, z=spawnZ, 
+        self.POI.append( dict(x=disp_spawnX, y=spawnY, z=disp_spawnZ,
                 msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
-        self.spawn = (spawnX, spawnY, spawnZ)
+        self.spawn = (disp_spawnX, spawnY, disp_spawnZ)
 
     def go(self, procs):
         """Scan the world directory, to fill in
@@ -291,6 +336,16 @@ class World(object):
 
         self.findTrueSpawn()
 
+    def _get_north_rotations(self):
+        if self.north_direction == 'upper-left':
+            return 1
+        elif self.north_direction == 'upper-right':
+            return 2
+        elif self.north_direction == 'lower-right':
+            return 3
+        elif self.north_direction == 'lower-left':
+            return 0
+
     def _iterate_regionfiles(self,regionlist=None):
         """Returns an iterator of all of the region files, along with their 
         coordinates
@@ -307,7 +362,20 @@ class World(object):
                 if f.startswith("r.") and f.endswith(".mcr"):
                     p = f.split(".")
                     logging.debug("Using path %s from regionlist", f)
-                    yield (int(p[1]), int(p[2]), join(self.worlddir, 'region', f))        
+                    x = int(p[1])
+                    y = int(p[2])
+                    if self.north_direction == 'upper-left':
+                        temp = x
+                        x = -y-1
+                        y = temp
+                    elif self.north_direction == 'upper-right':
+                        x = -x-1
+                        y = -y-1
+                    elif self.north_direction == 'lower-right':
+                        temp = x
+                        x = y
+                        y = -temp-1
+                    yield (x, y, join(self.worlddir, 'region', f))
                 else:
                     logging.warning("Ignore path '%s' in regionlist", f)
 
@@ -315,7 +383,20 @@ class World(object):
             for path in glob(os.path.join(self.worlddir, 'region') + "/r.*.*.mcr"):
                 dirpath, f = os.path.split(path)
                 p = f.split(".")
-                yield (int(p[1]), int(p[2]), join(dirpath, f))
+                x = int(p[1])
+                y = int(p[2])
+                if self.north_direction == 'upper-left':
+                    temp = x
+                    x = -y-1
+                    y = temp
+                elif self.north_direction == 'upper-right':
+                    x = -x-1
+                    y = -y-1
+                elif self.north_direction == 'lower-right':
+                    temp = x
+                    x = y
+                    y = -temp-1
+                yield (x, y, join(dirpath, f))
 
 def get_save_dir():
     """Returns the path to the local saves directory
