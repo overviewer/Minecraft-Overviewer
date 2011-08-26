@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 '''
+Updates overviewer.dat file sign info
+
 This script will scan through every chunk looking for signs and write out an
 updated overviewer.dat file.  This can be useful if your overviewer.dat file
 is either out-of-date or non-existant.  

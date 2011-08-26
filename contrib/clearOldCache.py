@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+"""Deletes files from the old chunk-based cache"""
+
+
 usage = "python contrib/%prog [OPTIONS] <World # / Name / Path to World>"
 
 description = """
