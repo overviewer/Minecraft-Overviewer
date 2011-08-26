@@ -13,7 +13,8 @@ scripts=dict( # keys are names, values are scripts
         benchmark       = "benchmark.py",
         findSigns       = "findSigns.py",
         validate        = "validateRegionFile.py",
-        playerInspect   = "playerInspect.py"
+        playerInspect   = "playerInspect.py",
+        convertCyrillic = "cyrillic_convert.py"
         )
 
 # you can symlink or hardlink contribManager.py to another name to have it

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+"""Convert gibberish back into Cyrillic"""
+
 import fileinput
 import os
 import sys
