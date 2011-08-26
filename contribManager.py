@@ -7,11 +7,13 @@ import sys
 import os.path
 sys.path.append("overviewer_core")
 import nbt
+import ast
 
 scripts=dict( # keys are names, values are scripts
-        benchmark="benchmark.py",
-        findSigns="findSigns.py",
-        validate="validateRegionFile.py"
+        benchmark       = "benchmark.py",
+        findSigns       = "findSigns.py",
+        validate        = "validateRegionFile.py",
+        playerInspect   = "playerInspect.py"
         )
 
 # you can symlink or hardlink contribManager.py to another name to have it
@@ -29,18 +31,40 @@ if argv[-4:] == ".exe":
 if argv[-3:] == ".py":
     argv=argv[0:-3]
 
+
+usage="""Usage:
+%s --list-contribs | <script name> <arguments>
+
+Executes a contrib script.  
+
+Options:
+  --list-contribs           Lists the supported contrib scripts
+
+""" % os.path.basename(sys.argv[0])
+
 if argv in scripts.keys():
     script = scripts[argv]
     sys.argv[0] = script
 else:
     if "--list-contribs" in sys.argv:
-        print scripts.keys()
+        for contrib in scripts.keys():
+            # use an AST to extract the docstring for this module
+            script = scripts[contrib]
+            with open(os.path.join("contrib",script)) as f:
+                d = f.read()
+            node=ast.parse(d, script);
+            docstring = ast.get_docstring(node)
+            if docstring:
+                docstring = docstring.strip().splitlines()[0]
+            else:
+                docstring="(no description found.  add one by adding a docstring to %s)" % script
+            print "%s : %s" % (contrib, docstring)
         sys.exit(0)
     if len(sys.argv) > 1 and sys.argv[1] in scripts.keys():
         script = scripts[sys.argv[1]]
         sys.argv = [script] + sys.argv[2:]
     else:
-        print "what do you want to run?"
+        print usage
         sys.exit(1)
 
 
