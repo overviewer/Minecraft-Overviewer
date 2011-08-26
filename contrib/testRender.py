@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+"Test Render Script"
+
 import os, shutil, tempfile, time, sys, math, re
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from optparse import OptionParser

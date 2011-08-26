@@ -1,3 +1,7 @@
+"""Produces block counts
+
+"""
+
 import world, chunk
 
 import sys

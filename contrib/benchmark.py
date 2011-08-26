@@ -1,3 +1,13 @@
+"""Simple Benchmarking script.
+
+Usage and example:
+
+$ python contrib/benchmark.py World4/
+Rendering 50 chunks...
+Took 20.290062 seconds or 0.405801 seconds per chunk, or 2.464261 chunks per second
+"""
+
+
 import chunk
 import world
 import tempfile
@@ -7,12 +17,6 @@ import cProfile
 import os
 import sys
 import shutil
-
-# Simple Benchmarking script.  Usage and example:
-
-#  $ python contrib/benchmark.py World4/
-#  Rendering 50 chunks...
-#  Took 20.290062 seconds or 0.405801 seconds per chunk, or 2.464261 chunks per second
 
 
 # create a new, empty, cache dir

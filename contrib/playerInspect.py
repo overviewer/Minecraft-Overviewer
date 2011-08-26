@@ -1,5 +1,9 @@
 import sys
 
+"""
+Very basic player.dat inspection script
+"""
+
 sys.path.append(".")
 
 from overviewer_core.nbt import load

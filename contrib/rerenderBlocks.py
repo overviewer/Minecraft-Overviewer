@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 '''
+Generate a region list to rerender certain chunks
+
 This is used to force the regeneration of any chunks that contain a certain
 blockID.  The output is a chunklist file that is suitable to use with the
 --chunklist option to overviewer.py.
