@@ -191,6 +191,10 @@ Options
     a short description of each. If you provide more than one mode (separated
     by commas), Overviewer will render all of them at once, and provide a
     toggle on the resulting map to switch between them.
+    
+    If for some reason commas do not work for your shell (like if you're using
+    Powershell on Windows), you can also use a colon ':' or a forward slash '/'
+    to separate the modes.
 
 --list-rendermodes
     List the available render modes, and a short description of each.
