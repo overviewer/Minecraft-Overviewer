@@ -194,7 +194,7 @@ alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alp
             }
             
             /* special cases */
-            if (in_alpha == 255 || *outmask == 0) {
+            if (in_alpha == 255 || (*outmask == 0 && in_alpha > 0)) {
                 *outmask = in_alpha;
 
                 *out = *in;

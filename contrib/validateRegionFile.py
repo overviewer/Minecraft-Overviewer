@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+'''
+Validate a region file
+
+TODO description here'''
+
 import os.path
 import sys
 overviewer_dir = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]

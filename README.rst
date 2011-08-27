@@ -235,8 +235,8 @@ zoom=ZOOM
 
     This is equivalent to setting the dimensions of the highest zoom level. It
     does not actually change how the map is rendered, but rather *how much of
-    the map is rendered.* (Calling this option "zoom" may be a bit misleading,
-    I know)
+    the map is rendered.* Setting this option too low *will crop your map.*
+    (Calling this option "zoom" may be a bit misleading, I know)
    
     To be precise, it sets the width and height of the highest zoom level, in
     tiles. A zoom level of z means the highest zoom level of your map will be

@@ -33,7 +33,9 @@ if procs < 1: procs = 1
 ## Sets the zoom level manually instead of calculating it. This can be useful
 ## if you have outlier chunks that make your world too big.  This value will
 ## make the highest zoom level contain (2**ZOOM)^2 tiles
-## Normally you should not need to set this variable.
+## ***Normally you should not need to set this variable.***
+## ***Setting it too low will crop your map!***
+## Seriously, check the README before using this.
 ## Default: Automatically calculated from your world
 ## Type: integer
 ## Example:
@@ -163,7 +165,8 @@ north_direction = "upper-right"
 
 
 
-### As a reminder, don't use this file verbatim, it should only be used as
-### a guide.
+### As a reminder, *don't use this file verbatim*, it should only be used as
+### a guide. Be sure to read what each option does before you set it.
+### See the README for more details.
 import sys
 sys.exit("This sample-settings file shouldn't be used directly!")

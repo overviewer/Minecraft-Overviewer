@@ -159,6 +159,17 @@ def main():
         sys.exit(1)
     worlddir = args[0]
 
+    if len(args) > 2:
+        # it's possible the user has a space in one of their paths but didn't properly escape it
+        # attempt to detect this case
+        for start in range(len(args)):
+            if not os.path.exists(args[start]):
+                for end in range(start+1, len(args)+1):
+                    if os.path.exists(" ".join(args[start:end])):
+                        logging.warning("It looks like you meant to specify \"%s\" as your world dir or your output\n\
+dir but you forgot to put quotes around the directory, since it contains spaces." % " ".join(args[start:end]))
+                        sys.exit(1)
+
     if not os.path.exists(worlddir):
         # world given is either world number, or name
         worlds = world.get_worlds()
