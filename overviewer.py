@@ -238,6 +238,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     else:
         north_direction = 'auto'
     
+    # Expand user dir in directories strings
+    if options.textures_path:
+        options.textures_path = os.path.expanduser(options.textures_path)
+    if options.web_assets_path:
+        options.web_assets_path = os.path.expanduser(options.web_assets_path)
+    
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)
     logging.getLogger().setLevel(
