@@ -21,7 +21,7 @@ import os.path
 overviewer_dir = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
 sys.path.insert(0, overviewer_dir)
 
-import world
+from overviewer_core import world
 from overviewer import list_worlds
 
 def main():

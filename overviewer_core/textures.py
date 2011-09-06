@@ -23,6 +23,7 @@ import math
 from random import randint
 import numpy
 from PIL import Image, ImageEnhance, ImageOps, ImageDraw
+import logging
 
 import util
 import composite
@@ -47,13 +48,13 @@ def _find_file(filename, mode="rb", verbose=False):
     if _find_file_local_path:
         path = os.path.join(_find_file_local_path, filename)
         if os.path.exists(path):
-            if verbose: print "Found %s in '%s'" % (filename, path)
+            if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
     
     programdir = util.get_program_path()
     path = os.path.join(programdir, filename)
     if os.path.exists(path):
-        if verbose: print "Found %s in '%s'" % (filename, path)
+        if verbose: logging.info("Found %s in '%s'", filename, path)
         return open(path, mode)
     
     path = os.path.join(programdir, "overviewer_core", "data", "textures", filename)
@@ -63,13 +64,13 @@ def _find_file(filename, mode="rb", verbose=False):
         # windows special case, when the package dir doesn't exist
         path = os.path.join(programdir, "textures", filename)
         if os.path.exists(path):
-            if verbose: print "Found %s in '%s'" % (filename, path)
+            if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
     if sys.platform == "darwin":
         path = os.path.join("/Applications/Minecraft", filename)
         if os.path.exists(path):
-            if verbose: print "Found %s in '%s'" % (filename, path)
+            if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
     # Find minecraft.jar.
@@ -82,14 +83,16 @@ def _find_file(filename, mode="rb", verbose=False):
                 "Application Support", "minecraft","bin","minecraft.jar"))
         jarpaths.append(os.path.join(os.environ['HOME'], ".minecraft", "bin",
                 "minecraft.jar"))
-    jarpaths.append(programdir)
-    jarpaths.append(os.getcwd())
+    jarpaths.append(os.path.join(programdir,"minecraft.jar"))
+    jarpaths.append(os.path.join(os.getcwd(), "minecraft.jar"))
+    if _find_file_local_path:
+        jarpaths.append(os.path.join(_find_file_local_path, "minecraft.jar"))
 
     for jarpath in jarpaths:
         if os.path.exists(jarpath):
             try:
                 jar = zipfile.ZipFile(jarpath)
-                if verbose: print "Found %s in '%s'" % (filename, jarpath)
+                if verbose: logging.info("Found %s in '%s'", filename, jarpath)
                 return jar.open(filename)
             except (KeyError, IOError):
                 pass

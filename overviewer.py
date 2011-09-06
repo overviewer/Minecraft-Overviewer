@@ -104,7 +104,7 @@ def main():
     parser.add_option("-z", "--zoom", dest="zoom", helptext="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", advanced=True)
     parser.add_option("--regionlist", dest="regionlist", helptext="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
     parser.add_option("--forcerender", dest="forcerender", helptext="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting it.", action="store_true")
-    parser.add_option("--rendermodes", dest="rendermode", helptext="Specifies the render types, separated by commas. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
+    parser.add_option("--rendermodes", dest="rendermode", helptext="Specifies the render types, separated by ',', ':', or '/'. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
     parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", helptext="List available render modes and exit.", commandLineOnly=True)
     parser.add_option("--rendermode-options", dest="rendermode_options", default={}, advanced=True)
     parser.add_option("--custom-rendermodes", dest="custom_rendermodes", default={}, advanced=True)
@@ -115,6 +115,7 @@ def main():
     parser.add_option("--web-assets-hook", dest="web_assets_hook", helptext="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a QuadtreeGen object as its only argument.", action="store", metavar="SCRIPT", type="function", advanced=True)
     parser.add_option("--web-assets-path", dest="web_assets_path", helptext="Specifies a non-standard web_assets directory to use. Files here will overwrite the default web assets.", metavar="PATH", type="string", advanced=True)
     parser.add_option("--textures-path", dest="textures_path", helptext="Specifies a non-standard textures path, from which terrain.png and other textures are loaded.", metavar="PATH", type="string", advanced=True)
+    parser.add_option("--check-terrain", dest="check_terrain", helptext="Prints the location and hash of terrain.png, useful for debugging terrain.png problems", action="store_true", advanced=False, commandLineOnly=True)
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, helptext="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, helptext="Print more output. You can specify this option multiple times.")
     parser.add_option("--skip-js", dest="skipjs", action="store_true", helptext="Don't output marker.js or regions.js")
@@ -148,6 +149,24 @@ def main():
         list_rendermodes()
         sys.exit(0)
 
+    if options.check_terrain:
+        import hashlib
+        from overviewer_core.textures import _find_file
+        from overviewer_core import textures
+        if options.textures_path:
+            textures._find_file_local_path = options.textures_path
+
+        try:
+            f = _find_file("terrain.png", verbose=True)
+        except IOError:
+            logging.error("Could not find the file terrain.png")
+            sys.exit(1)
+
+        h = hashlib.sha1()
+        h.update(f.read())
+        logging.info("Hash of terrain.png file is: %s", h.hexdigest())
+        sys.exit(0)
+        
     if options.advanced_help:
         parser.advanced_help()
         sys.exit(0)
@@ -242,6 +261,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         north_direction = options.north_direction
     else:
         north_direction = 'auto'
+    
+    # Expand user dir in directories strings
+    if options.textures_path:
+        options.textures_path = os.path.expanduser(options.textures_path)
+    if options.web_assets_path:
+        options.web_assets_path = os.path.expanduser(options.web_assets_path)
     
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)

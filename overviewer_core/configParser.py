@@ -11,6 +11,7 @@ class ConfigOptionParser(object):
     def __init__(self, **kwargs):
         self.cmdParser = optparse.OptionParser(usage=kwargs.get("usage",""))
         self.configFile = kwargs.get("config","settings.py")
+        self.listifyDelimiters = kwargs.get("listdelim", ",:/")
         self.configVars = []
         self.advancedHelp = []
         # these are arguments not understood by OptionParser, so they must be removed
@@ -154,7 +155,12 @@ class ConfigOptionParser(object):
             if 'listify' in a.keys():
                 # this thing may be a list!
                 if configResults.__dict__[n] != None and type(configResults.__dict__[n]) == str:
-                    configResults.__dict__[n] = configResults.__dict__[n].split(a.get("listdelim",","))
+                    delimiters = a.get("listdelim", self.listifyDelimiters)
+                    # replace the rest of the delimiters with the first
+                    for delim in delimiters[1:]:
+                        configResults.__dict__[n] = configResults.__dict__[n].replace(delim, delimiters[0])
+                    # split at each occurance of the first delimiter
+                    configResults.__dict__[n] = configResults.__dict__[n].split(delimiters[0])
                 elif type(configResults.__dict__[n]) != list:
                     configResults.__dict__[n] = [configResults.__dict__[n]]
             if 'type' in a.keys() and configResults.__dict__[n] != None:

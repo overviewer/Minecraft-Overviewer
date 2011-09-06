@@ -223,6 +223,24 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
             /* this face isn't visible, so don't draw anything */
             return;
         }
+    } else if ((x == -1) && (state->left_blocks != Py_None)) {
+        unsigned char block = getArrayByte3D(state->left_blocks, 15, state->y, state->z);
+        if (!is_transparent(block)) {
+            /* the same thing but for adjacent chunks, this solves an
+               ugly black doted line between chunks in night rendermode.
+               This wouldn't be necessary if the textures were truly
+               tessellate-able */
+               return;
+           }
+    } else if ((y == 16) && (state->right_blocks != Py_None)) {
+        unsigned char block = getArrayByte3D(state->right_blocks, state->x, 0, state->z);
+        if (!is_transparent(block)) {
+            /* the same thing but for adjacent chunks, this solves an
+               ugly black doted line between chunks in night rendermode.
+               This wouldn't be necessary if the textures were truly
+               tessellate-able */
+               return;
+           }
     }
     
     black_coeff = get_lighting_coefficient(self, state, x, y, z);
