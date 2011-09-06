@@ -113,6 +113,7 @@ def main():
     parser.add_option("--web-assets-hook", dest="web_assets_hook", helptext="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a QuadtreeGen object as its only argument.", action="store", metavar="SCRIPT", type="function", advanced=True)
     parser.add_option("--web-assets-path", dest="web_assets_path", helptext="Specifies a non-standard web_assets directory to use. Files here will overwrite the default web assets.", metavar="PATH", type="string", advanced=True)
     parser.add_option("--textures-path", dest="textures_path", helptext="Specifies a non-standard textures path, from which terrain.png and other textures are loaded.", metavar="PATH", type="string", advanced=True)
+    parser.add_option("--check-terrain", dest="check_terrain", helptext="Prints the location and hash of terrain.png, useful for debugging terrain.png problems", action="store_true", advanced=False, commandLineOnly=True)
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, helptext="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, helptext="Print more output. You can specify this option multiple times.")
     parser.add_option("--skip-js", dest="skipjs", action="store_true", helptext="Don't output marker.js or regions.js")
@@ -142,6 +143,25 @@ def main():
         for info in rendermode_info:
             print "{name:{0}} {description}".format(name_width, **info)
         sys.exit(0)
+
+    if options.check_terrain:
+        import hashlib
+        from overviewer_core.textures import _find_file
+        from overviewer_core import textures
+        if options.textures_path:
+            textures._find_file_local_path = options.textures_path
+
+        try:
+            f = _find_file("terrain.png", verbose=True)
+        except IOError:
+            logging.error("Could not find the file terrain.png")
+            sys.exit(1)
+
+        h = hashlib.sha1()
+        h.update(f.read())
+        logging.info("Hash of terrain.png file is: %s", h.hexdigest())
+        sys.exit(0)
+
 
     if options.advanced_help:
         parser.advanced_help()
