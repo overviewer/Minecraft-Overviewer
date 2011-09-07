@@ -97,7 +97,7 @@ def _find_file(filename, mode="rb", verbose=False):
             except (KeyError, IOError):
                 pass
 
-    raise IOError("Could not find the file {0}. Is Minecraft installed? If so, I couldn't find the minecraft.jar file.".format(filename))
+    raise IOError("Could not find the file `{0}'. You can either place it in the same place as overviewer.py, use --textures-path, or install the Minecraft client.".format(filename))
 
 def _load_image(filename):
     """Returns an image object"""

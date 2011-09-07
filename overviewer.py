@@ -30,7 +30,7 @@ import multiprocessing
 import time
 import logging
 import platform
-from overviewer_core import util
+from overviewer_core import util, textures
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -147,7 +147,6 @@ def main():
     if options.check_terrain:
         import hashlib
         from overviewer_core.textures import _find_file
-        from overviewer_core import textures
         if options.textures_path:
             textures._find_file_local_path = options.textures_path
 
@@ -275,6 +274,13 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     useBiomeData = os.path.exists(os.path.join(worlddir, 'biomes'))
     if not useBiomeData:
         logging.info("Notice: Not using biome data for tinting")
+    
+    # make sure that the textures can be found
+    try:
+        textures.generate()
+    except IOError, e:
+        logging.error(str(e))
+        sys.exit(1)
     
     # First do world-level preprocessing
     w = world.World(worlddir, destdir, useBiomeData=useBiomeData, regionlist=regionlist, north_direction=north_direction)
