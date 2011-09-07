@@ -167,6 +167,10 @@ int render_mode_occluded(RenderMode *self, int x, int y, int z) {
     return self->iface->occluded(self->mode, self->state, x, y, z);
 }
 
+int render_mode_hidden(RenderMode *self, int x, int y, int z) {
+    return self->iface->hidden(self->mode, self->state, x, y, z);
+}
+
 void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light) {
     self->iface->draw(self->mode, self->state, img, mask, mask_light);
 }

@@ -136,6 +136,12 @@ rendermode_mineral_occluded(void *data, RenderState *state, int x, int y, int z)
     return rendermode_overlay.occluded(data, state, x, y, z);
 }
 
+static int
+rendermode_mineral_hidden(void *data, RenderState *state, int x, int y, int z) {
+    /* no special hiding here */
+    return rendermode_overlay.hidden(data, state, x, y, z);
+}
+
 static void
 rendermode_mineral_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     /* draw normally */
@@ -155,5 +161,6 @@ RenderModeInterface rendermode_mineral = {
     rendermode_mineral_start,
     rendermode_mineral_finish,
     rendermode_mineral_occluded,
+    rendermode_mineral_hidden,
     rendermode_mineral_draw,
 };

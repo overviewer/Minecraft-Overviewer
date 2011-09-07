@@ -53,6 +53,12 @@ rendermode_night_occluded(void *data, RenderState *state, int x, int y, int z) {
     return rendermode_lighting.occluded(data, state, x, y, z);
 }
 
+static int
+rendermode_night_hidden(void *data, RenderState *state, int x, int y, int z) {
+    /* no special hiding here */
+    return rendermode_lighting.hidden(data, state, x, y, z);
+}
+
 static void
 rendermode_night_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     /* nothing special to do */
@@ -67,5 +73,6 @@ RenderModeInterface rendermode_night = {
     rendermode_night_start,
     rendermode_night_finish,
     rendermode_night_occluded,
+    rendermode_night_hidden,
     rendermode_night_draw,
 };

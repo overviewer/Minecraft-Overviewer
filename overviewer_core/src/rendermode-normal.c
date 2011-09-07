@@ -135,16 +135,24 @@ rendermode_normal_finish(void *data, RenderState *state) {
 
 static int
 rendermode_normal_occluded(void *data, RenderState *state, int x, int y, int z) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
-    
-    if (z > self->max_depth || z < self->min_depth) {
-        return 1;
-    }
-    
-    if ( (x != 0) && (y != 15) && (z != self->max_depth) &&
+    if ( (x != 0) && (y != 15) && (z != 127) &&
+         !render_mode_hidden(state->rendermode, x-1, y, z) &&
+         !render_mode_hidden(state->rendermode, x, y, z+1) &&
+         !render_mode_hidden(state->rendermode, x, y+1, z) &&
          !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
          !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
          !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
+        return 1;
+    }
+
+    return 0;
+}
+
+static int
+rendermode_normal_hidden(void *data, RenderState *state, int x, int y, int z) {
+    RenderModeNormal *self = (RenderModeNormal *)data;
+    
+    if (z > self->max_depth || z < self->min_depth) {
         return 1;
     }
 
@@ -298,5 +306,6 @@ RenderModeInterface rendermode_normal = {
     rendermode_normal_start,
     rendermode_normal_finish,
     rendermode_normal_occluded,
+    rendermode_normal_hidden,
     rendermode_normal_draw,
 };

@@ -80,13 +80,69 @@ touches_light(unsigned int x, unsigned int y, unsigned int z,
 }
 
 static int
-rendermode_cave_occluded(void *data, RenderState *state, int x, int y, int z) {
+rendermode_cave_occluded(void *data, RenderState *state, int x, int y, int z) { 
+    /* first, check to see if it's "normally" occluded */
+    if (rendermode_lighting.occluded(data, state, x, y, z))
+        return 1;
+
+    /* check for normal occlusion */
+    /* use ajacent chunks, if not you get blocks spreaded in chunk edges */
+    if ( (x == 0) && (y != 15) ) {
+        if (state->left_blocks != Py_None) {
+            if (!is_transparent(getArrayByte3D(state->left_blocks, 15, y, z)) &&
+                !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
+                !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
+                return 1;
+            }
+        } else {
+            return 1;
+        }
+    }
+    
+    if ( (x != 0) && (y == 15) ) {
+        if (state->right_blocks != Py_None) {
+            if (!is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
+                !is_transparent(getArrayByte3D(state->right_blocks, x, 0, z)) &&
+                !is_transparent(getArrayByte3D(state->blocks, x, y, z+1))) {
+                return 1;
+            }
+        } else {
+            return 1;
+        }
+    }
+    
+    if ( (x == 0) && (y == 15) ) {
+        if ((state->left_blocks != Py_None) &&
+            (state->right_blocks != Py_None)) {
+            if (!is_transparent(getArrayByte3D(state->left_blocks, 15, y, z)) &&
+                !is_transparent(getArrayByte3D(state->right_blocks, x, 0, z)) &&
+                !is_transparent(getArrayByte3D(state->blocks, x, y, z+1))) {
+                return 1;
+            }
+        } else {
+            return 1;
+        }
+    }
+    
+    if ( (x != 0) && (y != 15) &&
+         !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
+         !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
+         !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
+        return 1;
+    }
+    
+    /* guess we're not occluded */
+    return 0;
+}
+
+static int
+rendermode_cave_hidden(void *data, RenderState *state, int x, int y, int z) {
     RenderModeCave* self;
     int dz = 0;
     self = (RenderModeCave *)data;
     
-    /* first, check to see if it's "normally" occluded */
-    if (rendermode_lighting.occluded(data, state, x, y, z))
+    /* first, check to see if it's "normally" hidden */
+    if (rendermode_lighting.hidden(data, state, x, y, z))
         return 1;
 
     /* check if the block is touching skylight */
@@ -99,61 +155,14 @@ rendermode_cave_occluded(void *data, RenderState *state, int x, int y, int z) {
         if (self->only_lit && !touches_light(x, y, z, self->blocklight, self->left_blocklight, self->right_blocklight, self->up_left_blocklight, self->up_right_blocklight)) {
             return 1;
         }
-
-        /* check for normal occlusion */
-        /* use ajacent chunks, if not you get blocks spreaded in chunk edges */
-        if ( (x == 0) && (y != 15) ) {
-            if (state->left_blocks != Py_None) {
-                if (!is_transparent(getArrayByte3D(state->left_blocks, 15, y, z)) &&
-                    !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
-                    !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
-                    return 1;
-                }
-            } else {
-                return 1;
-            }
-        }
-        
-        if ( (x != 0) && (y == 15) ) {
-            if (state->right_blocks != Py_None) {
-                if (!is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
-                    !is_transparent(getArrayByte3D(state->right_blocks, x, 0, z)) &&
-                    !is_transparent(getArrayByte3D(state->blocks, x, y, z+1))) {
-                    return 1;
-                }
-            } else {
-                return 1;
-            }
-        }
-        
-        if ( (x == 0) && (y == 15) ) {
-            if ((state->left_blocks != Py_None) &&
-                (state->right_blocks != Py_None)) {
-                if (!is_transparent(getArrayByte3D(state->left_blocks, 15, y, z)) &&
-                    !is_transparent(getArrayByte3D(state->right_blocks, x, 0, z)) &&
-                    !is_transparent(getArrayByte3D(state->blocks, x, y, z+1))) {
-                    return 1;
-                }
-            } else {
-                return 1;
-            }
-        }
-        
-        if ( (x != 0) && (y != 15) &&
-            !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
-            !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
-            !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
-            return 1;
-        }
-
     } else { /* if z == 127 skip */
         return 1;
     }
 
-    /* check for lakes and seas and don't render them */
-    /* at this point of the code the block has no skylight
-     * and is not occluded, but a deep sea can fool these
-     * 2 tests */
+    /* check for lakes and seas and don't render them
+     * at this point of the code the block has no skylight
+     * but a deep sea can be completely dark
+     */
     
     if ((getArrayByte3D(state->blocks, x, y, z) == 9) ||
         (getArrayByte3D(state->blocks, x, y, z+1) == 9)) {
@@ -169,8 +178,7 @@ rendermode_cave_occluded(void *data, RenderState *state, int x, int y, int z) {
             }
         }
     }
-        
-
+    
     return 0;
 }
 
@@ -284,5 +292,6 @@ RenderModeInterface rendermode_cave = {
     rendermode_cave_start,
     rendermode_cave_finish,
     rendermode_cave_occluded,
+    rendermode_cave_hidden,
     rendermode_cave_draw,
 };

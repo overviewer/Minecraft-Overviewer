@@ -376,7 +376,7 @@ chunk_render(PyObject *self, PyObject *args) {
 		
                 /* get blockid */
                 state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
-                if (state.block == 0) {
+                if (state.block == 0 || render_mode_hidden(rendermode, state.x, state.y, state.z)) {
                     continue;
                 }
                 

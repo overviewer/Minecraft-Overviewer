@@ -212,14 +212,12 @@ static inline void
 do_shading_with_mask(RenderModeLighting *self, RenderState *state,
                      int x, int y, int z, PyObject *mask) {
     float black_coeff;
-    PyObject *blocks;
     
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
         unsigned char block = getArrayByte3D(state->blocks, x, y, z);
-        int occluded = render_mode_occluded(state->rendermode, x, y, z);
         
-        if (!occluded && !is_transparent(block)) {
+        if (!is_transparent(block) && !render_mode_hidden(state->rendermode, x, y, z)) {
             /* this face isn't visible, so don't draw anything */
             return;
         }
@@ -306,6 +304,12 @@ rendermode_lighting_occluded(void *data, RenderState *state, int x, int y, int z
     return rendermode_normal.occluded(data, state, x, y, z);
 }
 
+static int
+rendermode_lighting_hidden(void *data, RenderState *state, int x, int y, int z) {
+    /* no special hiding here */
+    return rendermode_normal.hidden(data, state, x, y, z);
+}
+
 static void
 rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeLighting* self;
@@ -356,5 +360,6 @@ RenderModeInterface rendermode_lighting = {
     rendermode_lighting_start,
     rendermode_lighting_finish,
     rendermode_lighting_occluded,
+    rendermode_lighting_hidden,
     rendermode_lighting_draw,
 };

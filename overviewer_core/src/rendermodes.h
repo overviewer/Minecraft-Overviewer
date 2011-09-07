@@ -62,11 +62,29 @@ struct _RenderModeInterface {
     /* may return non-zero on error, last arg is options */
     int (*start)(void *, RenderState *, PyObject *);
     void (*finish)(void *, RenderState *);
-    /* returns non-zero to skip rendering this block */
+    /* returns non-zero to skip rendering this block because it's not visible */
     int (*occluded)(void *, RenderState *, int, int, int);
+    /* returns non-zero to skip rendering this block because the user doesn't
+     * want it visible */
+    int (*hidden)(void *, RenderState *, int, int, int);
     /* last two arguments are img and mask, from texture lookup */
     void (*draw)(void *, RenderState *, PyObject *, PyObject *, PyObject *);
 };
+
+/* A quick note about the difference between occluded and hidden:
+ *
+ * Occluded should be used to tell the renderer that a block will not be
+ * visible in the final image because other blocks will be drawn on top of
+ * it. This is a potentially *expensive* check that should be used rarely,
+ * usually only once per block. The idea is this check is expensive, but not
+ * as expensive as drawing the block itself.
+ *
+ * Hidden is used to tell the renderer not to draw the block, usually because
+ * the current rendermode depends on those blocks being hidden to do its
+ * job. For example, cave mode uses this to hide non-cave blocks. This check
+ * should be *cheap*, as it's potentially called many times per block. For
+ * example, in lighting mode it is called at most 4 times per block.
+ */
 
 /* wrapper for passing around rendermodes */
 struct _RenderMode {
@@ -79,6 +97,7 @@ struct _RenderMode {
 RenderMode *render_mode_create(const char *mode, RenderState *state);
 void render_mode_destroy(RenderMode *self);
 int render_mode_occluded(RenderMode *self, int x, int y, int z);
+int render_mode_hidden(RenderMode *self, int x, int y, int z);
 void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light);
 
 /* helper function for reading in rendermode options
