@@ -221,7 +221,7 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
             /* this face isn't visible, so don't draw anything */
             return;
         }
-    } else if ((x == -1) && (state->left_blocks != Py_None)) {
+    } else if (self->skip_sides && (x == -1) && (state->left_blocks != Py_None)) {
         unsigned char block = getArrayByte3D(state->left_blocks, 15, state->y, state->z);
         if (!is_transparent(block)) {
             /* the same thing but for adjacent chunks, this solves an
@@ -230,7 +230,7 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
                tessellate-able */
                return;
            }
-    } else if ((y == 16) && (state->right_blocks != Py_None)) {
+    } else if (self->skip_sides && (y == 16) && (state->right_blocks != Py_None)) {
         unsigned char block = getArrayByte3D(state->right_blocks, state->x, 0, state->z);
         if (!is_transparent(block)) {
             /* the same thing but for adjacent chunks, this solves an
@@ -256,6 +256,9 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
         return ret;
     
     self = (RenderModeLighting *)data;
+    
+    /* skip sides by default */
+    self->skip_sides = 1;
 
     self->shade_strength = 1.0;
     if (!render_mode_parse_option(options, "shade_strength", "f", &(self->shade_strength)))

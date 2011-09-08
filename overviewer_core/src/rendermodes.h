@@ -170,6 +170,11 @@ typedef struct {
        arguments are skylight, blocklight */
     float (*calculate_darkness)(unsigned char, unsigned char);
     
+    /* can be set to 0 in derived modes to indicate that lighting the chunk
+     * sides is actually important. Right now, this is used in cave mode
+     */
+    int skip_sides;
+    
     float shade_strength;
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
