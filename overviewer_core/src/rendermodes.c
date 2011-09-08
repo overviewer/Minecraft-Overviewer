@@ -312,6 +312,10 @@ PyObject *get_render_mode_info(PyObject *self, PyObject *args) {
             PyDict_SetItemString(info, "name", tmp);
             Py_DECREF(tmp);
             
+            tmp = PyString_FromString(render_modes[i]->label);
+            PyDict_SetItemString(info, "label", tmp);
+            Py_DECREF(tmp);
+            
             tmp = PyString_FromString(render_modes[i]->description);
             PyDict_SetItemString(info, "description", tmp);
             Py_DECREF(tmp);

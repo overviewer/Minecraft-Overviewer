@@ -356,7 +356,8 @@ const RenderModeOption rendermode_lighting_options[] = {
 };
 
 RenderModeInterface rendermode_lighting = {
-    "lighting", "draw shadows from the lighting data",
+    "lighting", "Lighting",
+    "draw shadows from the lighting data",
     rendermode_lighting_options,
     &rendermode_normal,
     sizeof(RenderModeLighting),

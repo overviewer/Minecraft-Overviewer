@@ -316,7 +316,8 @@ const RenderModeOption rendermode_cave_options[] = {
 };
 
 RenderModeInterface rendermode_cave = {
-    "cave", "render only caves",
+    "cave", "Cave",
+    "render only caves",
     rendermode_cave_options,
     &rendermode_lighting,
     sizeof(RenderModeCave),

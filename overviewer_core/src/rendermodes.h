@@ -48,6 +48,8 @@ typedef struct _RenderModeInterface RenderModeInterface;
 struct _RenderModeInterface {
     /* the name of this mode */
     const char *name;
+    /* the label to use in the map */
+    const char *label;
     /* the short description of this render mode */
     const char *description;
     

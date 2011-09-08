@@ -66,7 +66,8 @@ rendermode_night_draw(void *data, RenderState *state, PyObject *src, PyObject *m
 }
 
 RenderModeInterface rendermode_night = {
-    "night", "like \"lighting\", except at night",
+    "night", "Night",
+    "like \"lighting\", except at night",
     NULL,
     &rendermode_lighting,
     sizeof(RenderModeNight),

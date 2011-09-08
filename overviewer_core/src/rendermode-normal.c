@@ -299,7 +299,8 @@ const RenderModeOption rendermode_normal_options[] = {
 };
 
 RenderModeInterface rendermode_normal = {
-    "normal", "nothing special, just render the blocks",
+    "normal", "Normal",
+    "nothing special, just render the blocks",
     rendermode_normal_options,
     NULL,
     sizeof(RenderModeNormal),

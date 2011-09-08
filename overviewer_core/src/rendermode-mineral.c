@@ -154,7 +154,8 @@ const RenderModeOption rendermode_mineral_options[] = {
 };
 
 RenderModeInterface rendermode_mineral = {
-    "mineral", "draws a colored overlay showing where ores are located",
+    "mineral", "Mineral",
+    "draws a colored overlay showing where ores are located",
     rendermode_mineral_options,
     &rendermode_overlay,
     sizeof(RenderModeMineral),
