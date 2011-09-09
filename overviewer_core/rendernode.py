@@ -69,6 +69,12 @@ def pool_initializer(rendernode):
             north_direction=rendernode.options.get('north_direction', None))
     c_overviewer.init_chunk_render()
     
+    # setup c_overviewer rendermode customs / options
+    for mode in rendernode.options.custom_rendermodes:
+        c_overviewer.add_custom_render_mode(mode, rendernode.options.custom_rendermodes[mode])
+    for mode in rendernode.options.rendermode_options:
+        c_overviewer.set_render_mode_options(mode, rendernode.options.rendermode_options[mode])
+    
     # load biome data in each process, if needed
     for quadtree in rendernode.quadtrees:
         if quadtree.world.useBiomeData:
@@ -145,7 +151,9 @@ class RenderNode(object):
             pool = FakePool()
             pool_initializer(self)
         else:
+            pool_initializer(self)
             pool = multiprocessing.Pool(processes=procs,initializer=pool_initializer,initargs=(self,))
+            
             #warm up the pool so it reports all the worker id's
             if logging.getLogger().level >= 10:
                 pool.map(bool,xrange(multiprocessing.cpu_count()),1)

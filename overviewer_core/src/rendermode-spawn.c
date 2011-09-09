@@ -62,11 +62,11 @@ static void get_color(void *data, RenderState *state,
 }
 
 static int
-rendermode_spawn_start(void *data, RenderState *state) {
+rendermode_spawn_start(void *data, RenderState *state, PyObject *options) {
     RenderModeSpawn* self;
 
     /* first, chain up */
-    int ret = rendermode_overlay.start(data, state);
+    int ret = rendermode_overlay.start(data, state, options);
     if (ret != 0)
         return ret;
     
@@ -96,9 +96,15 @@ rendermode_spawn_finish(void *data, RenderState *state) {
 }
 
 static int
-rendermode_spawn_occluded(void *data, RenderState *state) {
+rendermode_spawn_occluded(void *data, RenderState *state, int x, int y, int z) {
     /* no special occlusion here */
-    return rendermode_overlay.occluded(data, state);
+    return rendermode_overlay.occluded(data, state, x, y, z);
+}
+
+static int
+rendermode_spawn_hidden(void *data, RenderState *state, int x, int y, int z) {
+    /* no special hiding here */
+    return rendermode_overlay.hidden(data, state, x, y, z);
 }
 
 static void
@@ -108,11 +114,14 @@ rendermode_spawn_draw(void *data, RenderState *state, PyObject *src, PyObject *m
 }
 
 RenderModeInterface rendermode_spawn = {
-    "spawn", "draws a red overlay where monsters can spawn at night",
+    "spawn", "Spawn",
+    "draws a red overlay where monsters can spawn at night",
+    NULL,
     &rendermode_overlay,
     sizeof(RenderModeSpawn),
     rendermode_spawn_start,
     rendermode_spawn_finish,
     rendermode_spawn_occluded,
+    rendermode_spawn_hidden,
     rendermode_spawn_draw,
 };

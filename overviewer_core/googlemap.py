@@ -23,7 +23,7 @@ from time import strftime, localtime
 import json
 
 import util
-from c_overviewer import get_render_mode_inheritance
+from c_overviewer import get_render_mode_inheritance, get_render_mode_info
 import overviewer_version
 
 """
@@ -130,8 +130,15 @@ class MapGen(object):
 
         #config = config.replace("{bg_color}", self.bg_color)
         
+        # helper function to get a label for the given rendermode
+        def get_render_mode_label(rendermode):
+            info = get_render_mode_info(rendermode)
+            if 'label' in info:
+                return info['label']
+            return rendermode.capitalize()
+        
         # create generated map type data, from given quadtrees
-        maptypedata = map(lambda q: {'label' : q.rendermode.capitalize(),
+        maptypedata = map(lambda q: {'label' : get_render_mode_label(q.rendermode),
                                      'path' : q.tiledir,
                                      'bg_color': self.bg_color,
                                      'overlay' : 'overlay' in get_render_mode_inheritance(q.rendermode),

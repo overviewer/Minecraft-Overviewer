@@ -306,6 +306,13 @@ class ChunkRenderer(object):
         return self._up_right_skylight
     up_right_skylight = property(_load_up_right_skylight)
 
+    def _load_up_right_blocklight(self):
+        """Loads and returns lower-right blocklight array"""
+        if not hasattr(self, "_up_right_blocklight"):
+            self._load_up_right()
+        return self._up_right_blocklight
+    up_right_blocklight = property(_load_up_right_blocklight)
+
     def _load_up_left(self):
         """Loads and sets data from upper-left chunk"""
         chunk_path = self.world.get_region_path(self.chunkX, self.chunkY - 1)
@@ -332,6 +339,13 @@ class ChunkRenderer(object):
             self._load_up_left()
         return self._up_left_skylight
     up_left_skylight = property(_load_up_left_skylight)
+
+    def _load_up_left_blocklight(self):
+        """Loads and returns lower-left blocklight array"""
+        if not hasattr(self, "_up_left_blocklight"):
+            self._load_up_left()
+        return self._up_left_blocklight
+    up_left_blocklight = property(_load_up_left_blocklight)
 
     def chunk_render(self, img=None, xoff=0, yoff=0, cave=False):
         """Renders a chunk with the given parameters, and returns the image.
@@ -412,6 +426,10 @@ def generate_facemasks():
         right.putpixel((x,y), 255)
     for x,y in [(3,4), (7,2), (11,0)]:
         top.putpixel((x,y), 255)
+    
+    # special fix for chunk boundary stipple
+    for x,y in [(13,11), (17,9), (21,7)]:
+        right.putpixel((x,y), 0)
     
     return (top, left, right)
 facemasks = generate_facemasks()

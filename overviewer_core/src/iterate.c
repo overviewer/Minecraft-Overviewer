@@ -26,11 +26,10 @@ static PyObject *transparent_blocks = NULL;
 
 PyObject *init_chunk_render(PyObject *self, PyObject *args) {
    
-    /* this function only needs to be called once, anything more is an
-     * error... */
+    /* this function only needs to be called once, anything more should be
+     * ignored */
     if (blockmap) {
-        PyErr_SetString(PyExc_RuntimeError, "init_chunk_render should only be called once per process.");
-        return NULL;
+        Py_RETURN_NONE;
     }
 
     textures = PyImport_ImportModule("overviewer_core.textures");
@@ -298,6 +297,7 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
+    PyObject *rendermode_py;
 
     int xoff, yoff;
     
@@ -310,10 +310,8 @@ chunk_render(PyObject *self, PyObject *args) {
     PyObject *up_left_blocks_py;
     PyObject *up_right_blocks_py;
 
-    RenderModeInterface *rendermode;
+    RenderMode *rendermode;
 
-    void *rm_data;
-                
     PyObject *t = NULL;
     
     if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.blockdata_expanded))
@@ -324,11 +322,11 @@ chunk_render(PyObject *self, PyObject *args) {
     state.chunk = chunk_mod;
     
     /* set up the render mode */
-    rendermode = get_render_mode(&state);
-    rm_data = calloc(1, rendermode->data_size);
-    if (rendermode->start(rm_data, &state)) {
-        free(rm_data);
-        return Py_BuildValue("i", "-1");
+    rendermode_py = PyObject_GetAttrString(state.self, "rendermode");
+    state.rendermode = rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
+    Py_DECREF(rendermode_py);
+    if (rendermode == NULL) {
+        return NULL;
     }
 
     /* get the image size */
@@ -378,7 +376,7 @@ chunk_render(PyObject *self, PyObject *args) {
 		
                 /* get blockid */
                 state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
-                if (state.block == 0) {
+                if (state.block == 0 || render_mode_hidden(rendermode, state.x, state.y, state.z)) {
                     continue;
                 }
                 
@@ -398,7 +396,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 blockid = PyInt_FromLong(state.block);
 
                 // check for occlusion
-                if (rendermode->occluded(rm_data, &state)) {
+                if (render_mode_occluded(rendermode, state.x, state.y, state.z)) {
                     continue;
                 }
                 
@@ -457,7 +455,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         state.imgy += randy;
                     }
                     
-                    rendermode->draw(rm_data, &state, src, mask, mask_light);
+                    render_mode_draw(rendermode, src, mask, mask_light);
                     
                     if (state.block == 31) {
                         /* undo the random offsets */
@@ -475,8 +473,7 @@ chunk_render(PyObject *self, PyObject *args) {
     }
 
     /* free up the rendermode info */
-    rendermode->finish(rm_data, &state);
-    free(rm_data);
+    render_mode_destroy(rendermode);
     
     Py_DECREF(blocks_py);
     Py_XDECREF(left_blocks_py);

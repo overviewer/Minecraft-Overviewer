@@ -17,6 +17,10 @@
 
 #include "overviewer.h"
 
+/* global variables from rendermodes.c -- both are dictionaries */
+extern PyObject *render_mode_options;
+extern PyObject *custom_render_modes;
+
 PyObject *get_extension_version(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("i", OVERVIEWER_EXTENSION_VERSION);
@@ -35,12 +39,15 @@ static PyMethodDef COverviewerMethods[] = {
      "returns available render modes"},
     {"get_render_mode_info", get_render_mode_info, METH_VARARGS,
      "returns info for a particular render mode"},
-    {"get_render_mode_parent", get_render_mode_parent, METH_VARARGS,
-     "returns parent for a particular render mode"},
     {"get_render_mode_inheritance", get_render_mode_inheritance, METH_VARARGS,
      "returns inheritance chain for a particular render mode"},
     {"get_render_mode_children", get_render_mode_children, METH_VARARGS,
      "returns (direct) children for a particular render mode"},
+    
+    {"set_render_mode_options", set_render_mode_options, METH_VARARGS,
+     "sets the default options for a given render mode"},
+    {"add_custom_render_mode", add_custom_render_mode, METH_VARARGS,
+     "add a new rendermode derived from an existing mode"},
     
     {"extension_version", get_extension_version, METH_VARARGS, 
         "Returns the extension version"},
@@ -52,9 +59,22 @@ static PyMethodDef COverviewerMethods[] = {
 PyMODINIT_FUNC
 initc_overviewer(void)
 {
-    (void)Py_InitModule("c_overviewer", COverviewerMethods);
+    PyObject *mod = Py_InitModule("c_overviewer", COverviewerMethods);
+
     /* for numpy */
     import_array();
+    
+    /* create the render mode data structures, and attatch them to the module
+     * so that the Python garbage collector doesn't freak out
+     */
+    
+    render_mode_options = PyDict_New();
+    PyObject_SetAttrString(mod, "_render_mode_options", render_mode_options);
+    Py_DECREF(render_mode_options);
+    
+    custom_render_modes = PyDict_New();
+    PyObject_SetAttrString(mod, "_custom_render_modes", custom_render_modes);
+    Py_DECREF(custom_render_modes);
     
     init_endian();
 }

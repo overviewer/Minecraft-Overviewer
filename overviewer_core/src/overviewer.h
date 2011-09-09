@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 10
+#define OVERVIEWER_EXTENSION_VERSION 11
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -52,6 +52,9 @@ PyObject *tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
                          unsigned char sb, unsigned char sa,
                          PyObject *mask, int dx, int dy, int xsize, int ysize);
 
+/* forward declaration of RenderMode object */
+typedef struct _RenderMode RenderMode;
+
 /* in iterate.c */
 typedef struct {
     /* the ChunkRenderer object */
@@ -60,6 +63,9 @@ typedef struct {
     /* important modules, for convenience */
     PyObject *textures;
     PyObject *chunk;
+    
+    /* the current render mode in use */
+    RenderMode *rendermode;
     
     /* the rest only make sense for occluded() and draw() !! */
     

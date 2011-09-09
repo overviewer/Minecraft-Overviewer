@@ -104,8 +104,10 @@ def main():
     parser.add_option("-z", "--zoom", dest="zoom", helptext="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", advanced=True)
     parser.add_option("--regionlist", dest="regionlist", helptext="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
     parser.add_option("--forcerender", dest="forcerender", helptext="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting it.", action="store_true")
-    parser.add_option("--rendermodes", dest="rendermode", helptext="Specifies the render types, separated by ',', ':', or '/'. Use --list-rendermodes to list them all.", type="choice", choices=avail_rendermodes, required=True, default=avail_rendermodes[0], listify=True)
+    parser.add_option("--rendermodes", dest="rendermode", helptext="Specifies the render types, separated by ',', ':', or '/'. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
     parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", helptext="List available render modes and exit.", commandLineOnly=True)
+    parser.add_option("--rendermode-options", dest="rendermode_options", default={}, advanced=True)
+    parser.add_option("--custom-rendermodes", dest="custom_rendermodes", default={}, advanced=True)
     parser.add_option("--imgformat", dest="imgformat", helptext="The image output format to use. Currently supported: png(default), jpg.", advanced=True )
     parser.add_option("--imgquality", dest="imgquality", default=95, helptext="Specify the quality of image output when using imgformat=\"jpg\".", type="int", advanced=True)
     parser.add_option("--bg-color", dest="bg_color", helptext="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", advanced=True, type="string", default="#1A1A1A")
@@ -136,12 +138,15 @@ def main():
             print "version info not found"
             pass
         sys.exit(0)
+
+    # setup c_overviewer rendermode customs / options
+    for mode in options.custom_rendermodes:
+        c_overviewer.add_custom_render_mode(mode, options.custom_rendermodes[mode])
+    for mode in options.rendermode_options:
+        c_overviewer.set_render_mode_options(mode, options.rendermode_options[mode])
     
     if options.list_rendermodes:
-        rendermode_info = map(c_overviewer.get_render_mode_info, avail_rendermodes)
-        name_width = max(map(lambda i: len(i['name']), rendermode_info))
-        for info in rendermode_info:
-            print "{name:{0}} {description}".format(name_width, **info)
+        list_rendermodes()
         sys.exit(0)
 
     if options.check_terrain:
@@ -160,8 +165,7 @@ def main():
         h.update(f.read())
         logging.info("Hash of terrain.png file is: %s", h.hexdigest())
         sys.exit(0)
-
-
+        
     if options.advanced_help:
         parser.advanced_help()
         sys.exit(0)
@@ -270,7 +274,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
-   
+       
     useBiomeData = os.path.exists(os.path.join(worlddir, 'biomes'))
     if not useBiomeData:
         logging.info("Notice: Not using biome data for tinting")
@@ -328,6 +332,47 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # finish up the map
     m.finalize()
 
+
+def list_rendermodes():
+    "Prints out a pretty list of supported rendermodes"
+    
+    def print_mode_tree(line_max, mode, prefix='', last=False):
+        "Prints out a mode tree for the given mode, with an indent."
+        
+        try:
+            info = c_overviewer.get_render_mode_info(mode)
+        except ValueError:
+            info = {}
+        
+        print prefix + '+-',  mode,
+        
+        if 'description' in info:
+            print " " * (line_max - len(prefix) - len(mode) - 2),
+            print info['description']
+        else:
+            print
+        
+        children = c_overviewer.get_render_mode_children(mode)
+        for child in children:
+            child_last = (child == children[-1])
+            if last:
+                child_prefix = '  '
+            else:
+                child_prefix = '| '
+            print_mode_tree(line_max, child, prefix=prefix + child_prefix, last=child_last)
+    
+    avail_rendermodes = c_overviewer.get_render_modes()
+    line_lengths = {}
+    parent_modes = []
+    for mode in avail_rendermodes:
+        inherit = c_overviewer.get_render_mode_inheritance(mode)
+        if not inherit[0] in parent_modes:
+            parent_modes.append(inherit[0])
+        line_lengths[mode] = 2 * len(inherit) + 1 + len(mode)
+    
+    line_length = max(line_lengths.values())
+    for mode in parent_modes:
+        print_mode_tree(line_length, mode, last=(mode == parent_modes[-1]))
 
 def list_worlds():
     "Prints out a brief summary of saves found in the default directory"

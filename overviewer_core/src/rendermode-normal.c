@@ -18,10 +18,33 @@
 #include "overviewer.h"
 
 static int
-rendermode_normal_start(void *data, RenderState *state) {
+rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
     PyObject *chunk_x_py, *chunk_y_py, *world, *use_biomes, *worlddir;
     RenderModeNormal *self = (RenderModeNormal *)data;
     
+    /* load up the given options, first */
+    
+    self->edge_opacity = 0.15;
+    if (!render_mode_parse_option(options, "edge_opacity", "f", &(self->edge_opacity)))
+        return 1;
+    
+    self->min_depth = 0;
+    if (!render_mode_parse_option(options, "min_depth", "I", &(self->min_depth)))
+        return 1;
+
+    self->max_depth = 127;
+    if (!render_mode_parse_option(options, "max_depth", "I", &(self->max_depth)))
+        return 1;
+
+    self->height_fading = 0;
+    if (!render_mode_parse_option(options, "height_fading", "i", &(self->height_fading)))
+        return 1;
+    
+    if (self->height_fading) {
+        self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
+        self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
+    }
+
     chunk_x_py = PyObject_GetAttrString(state->self, "chunkX");
     chunk_y_py = PyObject_GetAttrString(state->self, "chunkY");
     
@@ -106,16 +129,30 @@ rendermode_normal_finish(void *data, RenderState *state) {
     Py_XDECREF(self->tall_grass_texture);
     Py_XDECREF(self->tall_fern_texture);
     Py_XDECREF(self->facemask_top);
+    Py_XDECREF(self->black_color);
+    Py_XDECREF(self->white_color);
 }
 
 static int
-rendermode_normal_occluded(void *data, RenderState *state) {
-    int x = state->x, y = state->y, z = state->z;
-    
+rendermode_normal_occluded(void *data, RenderState *state, int x, int y, int z) {
     if ( (x != 0) && (y != 15) && (z != 127) &&
+         !render_mode_hidden(state->rendermode, x-1, y, z) &&
+         !render_mode_hidden(state->rendermode, x, y, z+1) &&
+         !render_mode_hidden(state->rendermode, x, y+1, z) &&
          !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
          !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
          !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
+        return 1;
+    }
+
+    return 0;
+}
+
+static int
+rendermode_normal_hidden(void *data, RenderState *state, int x, int y, int z) {
+    RenderModeNormal *self = (RenderModeNormal *)data;
+    
+    if (z > self->max_depth || z < self->min_depth) {
         return 1;
     }
 
@@ -192,13 +229,27 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
         }
     }
-
+    
+    if (self->height_fading) {
+        /* do some height fading */
+        PyObject *height_color = self->white_color;
+        /* negative alpha => darkness, positive => light */
+        float alpha = (1.0 / (1 + expf((70 - state->z) / 11.0))) * 0.6 - 0.55;
+        
+        if (alpha < 0.0) {
+            alpha *= -1;
+            height_color = self->black_color;
+        }
+        
+        alpha_over_full(state->img, height_color, mask_light, alpha, state->imgx, state->imgy, 0, 0);
+    }
+    
 
     /* Draw some edge lines! */
     // draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
     if (state->block == 44 || state->block == 78 || !is_transparent(state->block)) {
         Imaging img_i = imaging_python_to_c(state->img);
-        unsigned char ink[] = {0,0,0,40};
+        unsigned char ink[] = {0, 0, 0, 255 * self->edge_opacity};
 
         int increment=0;
         if (state->block == 44)  // half-step
@@ -239,12 +290,23 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     }
 }
 
+const RenderModeOption rendermode_normal_options[] = {
+    {"edge_opacity", "darkness of the edge lines, from 0.0 to 1.0 (default: 0.15)"},
+    {"min_depth", "lowest level of blocks to render (default: 0)"},
+    {"max_depth", "highest level of blocks to render (default: 127)"},
+    {"height_fading", "darken or lighten blocks based on height (default: False)"},
+    {NULL, NULL}
+};
+
 RenderModeInterface rendermode_normal = {
-    "normal", "nothing special, just render the blocks",
+    "normal", "Normal",
+    "nothing special, just render the blocks",
+    rendermode_normal_options,
     NULL,
     sizeof(RenderModeNormal),
     rendermode_normal_start,
     rendermode_normal_finish,
     rendermode_normal_occluded,
+    rendermode_normal_hidden,
     rendermode_normal_draw,
 };

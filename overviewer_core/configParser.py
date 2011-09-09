@@ -191,7 +191,7 @@ class ConfigOptionParser(object):
         elif a['type'] == "long":
             return long(value)
         elif a['type'] == "choice":
-            if value not in a['choices']:
+            if ('choices' in a) and (value not in a['choices']):
                 logging.error("The value '%s' is not valid for config parameter '%s'" % (value, a['dest']))
                 sys.exit(1)
             return value
