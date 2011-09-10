@@ -435,8 +435,10 @@ def _build_blockimages():
                36, 37, -1, -1, 65, -1, -1, -1, 50, 24, -1, -1, 86, -1, -1, -1,
        #       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, -1,
-       #       80  81  82  83  84  85  86  87  88  89  90  91
-               66, 69, 72, 73, 75, -1,102,103,104,105,-1, 102 # clay?
+       #       80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
+               66, 69, 72, 73, 75, -1,102,103,104,105,-1, 102, -1, -1, -1, -1,
+       #       96  97  98  99  100
+               -1, -1, 54, -1, -1
         ]
 
     # NOTE: For non-block textures, the sideid is ignored, but can't be -1
@@ -452,8 +454,10 @@ def _build_blockimages():
                 36, 37, -1, -1, 65, -1, -1,101, 50, 24, -1, -1, 86, -1, -1, -1,
        #        64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, 51, 51, -1, -1, -1, 66, -1,
-       #        80  81  82  83  84  85  86  87  88  89  90  91
-                66, 70, 72, 73, 74,-1 ,118,103,104,105, -1, 118
+       #        80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
+                66, 70, 72, 73, 74,-1 ,118,103,104,105, -1, 118,-1, -1, -1, -1,
+       #        96  97  98  99  100
+                -1, -1, 54, -1, -1
         ]
 
     # This maps block id to the texture that goes on the side of the block
@@ -845,13 +849,17 @@ def generate_special_texture(blockID, data):
         if data == 0: # stone slab
             top = terrain_images[6]
             side = terrain_images[5]
-        if data == 1: # stone slab
+        elif data == 1: # stone slab
             top = terrain_images[176]
             side = terrain_images[192]
-        if data == 2: # wooden slab
+        elif data == 2: # wooden slab
             top = side = terrain_images[4]
-        if data == 3: # cobblestone slab
+        elif data == 3: # cobblestone slab
             top = side = terrain_images[16]
+        elif data == 4: # brick?
+            top = side = terrain_images[7]
+        elif data == 5: # stone brick?
+            top = side = terrain_images[54]
 
         img = _build_block(top, side, blockID)
         return generate_texture_tuple(img, blockID)
@@ -926,13 +934,16 @@ def generate_special_texture(blockID, data):
         return generate_texture_tuple(img, blockID)
 
 
-    if blockID in (53,67): # wooden and cobblestone stairs.
+    if blockID in (53,67, 108, 109): # wooden, stone brick, and cobblestone stairs.
         
         if blockID == 53: # wooden
             texture = terrain_images[4]
-            
         elif blockID == 67: # cobblestone
             texture = terrain_images[16]
+        elif blockID == 108: # red brick stairs
+            texture = terrain_images[7]
+        elif blockID == 109: # stone brick stairs
+            texture = terrain_images[54]
         
         side = texture.copy()
         half_block_u = texture.copy() # up, down, left, right
@@ -2008,7 +2019,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 71, 75, 76, 79, 85, 86, 90,
-                      91, 92, 93, 94, 96])
+                      91, 92, 93, 94, 96, 108, 109])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2027,8 +2038,8 @@ special_map[29] = (0,1,2,3,4,5,8,9,10,11,12,13) # sticky piston body, orientatio
 special_map[33] = (0,1,2,3,4,5,8,9,10,11,12,13) # normal piston body, orientation, pushed in/out
 special_map[34] = (0,1,2,3,4,5,8,9,10,11,12,13) # normal and sticky piston extension, orientation, sticky/normal
 special_map[35] = range(16) # wool, colored and white
-special_map[43] = range(4)  # stone, sandstone, wooden and cobblestone double-slab
-special_map[44] = range(4)  # stone, sandstone, wooden and cobblestone slab
+special_map[43] = range(6)  # stone, sandstone, wooden and cobblestone double-slab
+special_map[44] = range(6)  # stone, sandstone, wooden and cobblestone slab
 special_map[50] = (1,2,3,4,5) # torch, position in the block
 special_map[51] = range(16) # fire, position in the block (not implemented)
 special_map[53] = range(4)  # wooden stairs, orientation
@@ -2056,6 +2067,8 @@ special_map[92] = range(6) # cake, eaten amount, (not implemented)
 special_map[93] = range(16) # OFF redstone repeater, orientation and delay
 special_map[94] = range(16) # ON redstone repeater, orientation and delay
 special_map[96] = range(8)  # trapdoor, open, closed, orientation
+special_map[108]= range(4)  # red stairs, orientation
+special_map[109]= range(4)  # stonebrick stairs, orientation
 
 # grass and leaves are graysacle in terrain.png
 # we treat them as special so we can manually tint them
