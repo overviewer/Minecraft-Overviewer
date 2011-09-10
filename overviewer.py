@@ -30,7 +30,7 @@ import multiprocessing
 import time
 import logging
 import platform
-from overviewer_core import util, textures
+from overviewer_core import util
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -56,12 +56,15 @@ except ImportError:
         print "make sure it is up-to-date (clean and rebuild)"
         sys.exit(1)
 
-    print "You need to compile the c_overviewer module to run Minecraft Overviewer."
-    print "Run `python setup.py build`, or see the README for details."
     import traceback
     traceback.print_exc()
+
+    print ""
+    print "You need to compile the c_overviewer module to run Minecraft Overviewer."
+    print "Run `python setup.py build`, or see the README for details."
     sys.exit(1)
 
+from overviewer_core import textures
 
 if hasattr(sys, "frozen"):
     pass # we don't bother with a compat test since it should always be in sync
