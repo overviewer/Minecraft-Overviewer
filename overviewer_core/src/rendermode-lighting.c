@@ -117,7 +117,7 @@ estimate_blocklevel(RenderModeLighting *self, RenderState *state,
     blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
     
     /* no longer a guess */
-    if (!(block == 44 || block == 53 || block == 67) && authoratative) {
+    if (!(block == 44 || block == 53 || block == 67 || block == 108 || block == 109) && authoratative) {
         *authoratative = 1;
     }
     
@@ -173,7 +173,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
     blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
 
     /* special half-step handling */
-    if (block == 44 || block == 53 || block == 67) {
+    if (block == 44 || block == 53 || block == 67 || block == 108 || block == 109) {
         unsigned int upper_block;
         
         /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
@@ -183,7 +183,7 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
             do {
                 upper_counter++; 
                 upper_block = getArrayByte3D(blocks, local_x, local_y, local_z + upper_counter);
-            } while ((upper_block == 44 || upper_block == 54 || upper_block == 67) && local_z < 127);
+            } while ((upper_block == 44 || upper_block == 53 || upper_block == 67 || upper_block == 108 || upper_block == 109) && local_z < 127);
             if (is_transparent(upper_block)) {
                 skylevel = getArrayByte3D(skylight, local_x, local_y, local_z + upper_counter);
             }
