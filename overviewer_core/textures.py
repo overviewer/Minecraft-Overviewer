@@ -1789,19 +1789,19 @@ def generate_special_texture(blockID, data):
         img = Image.new("RGBA", (24,24), bgcolor)
         raw_texture = terrain_images[143]
         # print "vine is facing: %d" % data
-        if data == 2:   # don't trust these values - found by sheer luck.
+        if data == 2:   # south
             tex = transform_image_side(raw_texture)
             composite.alpha_over(img, tex, (0,6), tex)
             return generate_texture_tuple(img, blockID)
-        if data == 3:
+        if data == 1:	# east
             tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
             composite.alpha_over(img, tex, (12,6), tex)
             return generate_texture_tuple(img, blockID)
-        if data == 4:
+        if data == 4:	# west
             tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
             composite.alpha_over(img, tex, (0,0), tex)
             return generate_texture_tuple(img, blockID)
-        if data == 5:
+        if data == 8:	# north
             tex = transform_image_side(raw_texture)
             composite.alpha_over(img, tex, (12,0), tex)
             return generate_texture_tuple(img, blockID)
@@ -2066,20 +2066,20 @@ def convert_data(blockID, data):
             elif data == 9: data = 3
     if blockID == 106: # vine
         if _north == 'upper-left':
-            if data == 2: data = 5
-            elif data == 3: data = 4
-            elif data == 4: data = 2
-            elif data == 5: data = 3
+            if data == 1: data = 2
+            elif data == 4: data = 8
+            elif data == 8: data = 1
+            elif data == 2: data = 4
         elif _north == 'upper-right':
-            if data == 2: data = 3
-            elif data == 3: data = 2
-            elif data == 4: data = 5
-            elif data == 5: data = 4
+            if data == 1: data = 4
+            elif data == 4: data = 1
+            elif data == 8: data = 2
+            elif data == 2: data = 8
         elif _north == 'lower-right':
-            if data == 2: data = 4
-            elif data == 3: data = 5
-            elif data == 4: data = 3
-            elif data == 5: data = 2
+            if data == 1: data = 8
+            elif data == 4: data = 2
+            elif data == 8: data = 4
+            elif data == 2: data = 1
     return data
 
 def tintTexture(im, c):
@@ -2228,7 +2228,7 @@ special_map[99] = range(11) # huge brown mushroom, side, corner, etc, piece
 special_map[100] = range(11) # huge red mushroom, side, corner, etc, piece
 special_map[101]= range(16)  # iron bars, all the possible combination, uses pseudo data
 special_map[102]= range(16)  # glass panes, all the possible combination, uses pseudo data
-special_map[106] = (2,3,4,5) # vine, orientation
+special_map[106] = (1,2,4,8) # vine, orientation
 special_map[108]= range(4)  # red stairs, orientation
 special_map[109]= range(4)  # stonebrick stairs, orientation
 
@@ -2251,6 +2251,7 @@ biome_grass_texture = None
 biome_tall_grass_texture = None
 biome_tall_fern_texture = None
 biome_leaf_texture = None
+biome_vine_texture = None
 specialblockmap = None
 
 def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower-left'):
@@ -2273,11 +2274,12 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
     load_water()
     
     # generate biome (still grayscale) leaf, grass textures
-    global biome_grass_texture, biome_leaf_texture, biome_tall_grass_texture, biome_tall_fern_texture
+    global biome_grass_texture, biome_leaf_texture, biome_tall_grass_texture, biome_tall_fern_texture, biome_vine_texture
     biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
     biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
     biome_tall_grass_texture = _build_block(terrain_images[39], terrain_images[39], 31)
     biome_tall_fern_texture = _build_block(terrain_images[56], terrain_images[56], 31)
+    biome_vine_texture = _build_block(terrain_images[143], terrain_images[143], 106)
     
     # generate the special blocks
     global specialblockmap, special_blocks
@@ -2292,6 +2294,7 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
         biome_leaf_texture = biome_leaf_texture.resize(texture_dimensions, Image.ANTIALIAS)
         biome_tall_grass_texture = biome_tall_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
         biome_tall_fern_texture = biome_tall_fern_texture.resize(texture_dimensions, Image.ANTIALIAS)
+        biome_vine_texture = biome_vine_texture.resize(texture_dimensions, Image.ANTIALIAS)
 
         # rescale the normal block images
         for i in range(len(blockmap)):
