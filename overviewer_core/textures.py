@@ -1693,6 +1693,43 @@ def generate_special_texture(blockID, data):
         
         return generate_texture_tuple(img, blockID)
 
+    if blockID == 101 or blockID == 102: # iron bars and glass panes
+        if blockID == 101:
+            # iron bars
+            t = terrain_images[85]
+        else:
+            # glass panes
+            t = terrain_images[49]
+        left = t.copy()
+        right = t.copy()
+
+        # generate the four small pieces of the glass pane
+        ImageDraw.Draw(right).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(left).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        up_left = transform_image_side(left)
+        up_right = transform_image_side(right).transpose(Image.FLIP_TOP_BOTTOM)
+        dw_right = transform_image_side(right)
+        dw_left = transform_image_side(left).transpose(Image.FLIP_TOP_BOTTOM)
+
+        # Create img to compose the texture
+        img = Image.new("RGBA", (24,24), bgcolor)
+
+        # +x axis points top right direction
+        # +y axis points bottom right direction
+        # First compose things in the back of the image, 
+        # then things in the front.
+
+        if (data & 0b0001) == 1 or data == 0:
+            composite.alpha_over(img,up_left, (6,3),up_left)    # top left
+        if (data & 0b1000) == 8 or data == 0:
+            composite.alpha_over(img,up_right, (6,3),up_right)  # top right
+        if (data & 0b0010) == 2 or data == 0:
+            composite.alpha_over(img,dw_left, (6,3),dw_left)    # bottom left    
+        if (data & 0b0100) == 4 or data == 0:
+            composite.alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
+
+        return generate_texture_tuple(img, blockID)
 
     return None
 
@@ -2019,7 +2056,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 71, 75, 76, 79, 85, 86, 90,
-                      91, 92, 93, 94, 96, 108, 109])
+                      91, 92, 93, 94, 96, 101, 102, 108, 109])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2067,6 +2104,8 @@ special_map[92] = range(6) # cake, eaten amount, (not implemented)
 special_map[93] = range(16) # OFF redstone repeater, orientation and delay
 special_map[94] = range(16) # ON redstone repeater, orientation and delay
 special_map[96] = range(8)  # trapdoor, open, closed, orientation
+special_map[101]= range(16)  # iron bars, all the possible combination, uses pseudo data
+special_map[102]= range(16)  # glass panes, all the possible combination, uses pseudo data
 special_map[108]= range(4)  # red stairs, orientation
 special_map[109]= range(4)  # stonebrick stairs, orientation
 
