@@ -213,6 +213,11 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 break;
             }
             break;
+		case 106:
+			/* vines */
+			color = PySequence_GetItem(self->grasscolor, index);
+			facemask = mask;
+			break;
         default:
             break;
         };

@@ -1730,6 +1730,26 @@ def generate_special_texture(blockID, data):
             composite.alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
 
         return generate_texture_tuple(img, blockID)
+    if blockID == 106: # vine
+        img = Image.new("RGBA", (24,24), bgcolor)
+        raw_texture = terrain_images[143]
+        # print "vine is facing: %d" % data
+        if data == 2:   # don't trust these values - found by sheer luck.
+            tex = transform_image_side(raw_texture)
+            composite.alpha_over(img, tex, (0,6), tex)
+            return generate_texture_tuple(img, blockID)
+        if data == 3:
+            tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+            composite.alpha_over(img, tex, (12,6), tex)
+            return generate_texture_tuple(img, blockID)
+        if data == 4:
+            tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+            composite.alpha_over(img, tex, (0,0), tex)
+            return generate_texture_tuple(img, blockID)
+        if data == 5:
+            tex = transform_image_side(raw_texture)
+            composite.alpha_over(img, tex, (12,0), tex)
+            return generate_texture_tuple(img, blockID)
 
     return None
 
@@ -1961,7 +1981,22 @@ def convert_data(blockID, data):
             elif (data & 0b0011) == 1: data = data & 0b1100 | 3
             elif (data & 0b0011) == 2: data = data & 0b1100 | 1
             elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-
+    if blockID == 106: # vine
+        if _north == 'upper-left':
+            if data == 2: data = 5
+            elif data == 3: data = 4
+            elif data == 4: data = 2
+            elif data == 5: data = 3
+        elif _north == 'upper-right':
+            if data == 2: data = 3
+            elif data == 3: data = 2
+            elif data == 4: data = 5
+            elif data == 5: data = 4
+        elif _north == 'lower-right':
+            if data == 2: data = 4
+            elif data == 3: data = 5
+            elif data == 4: data = 3
+            elif data == 5: data = 2
     return data
 
 def tintTexture(im, c):
@@ -2056,7 +2091,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 71, 75, 76, 79, 85, 86, 90,
-                      91, 92, 93, 94, 96, 101, 102, 108, 109])
+                      91, 92, 93, 94, 96, 101, 102, 106, 108, 109])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2106,6 +2141,7 @@ special_map[94] = range(16) # ON redstone repeater, orientation and delay
 special_map[96] = range(8)  # trapdoor, open, closed, orientation
 special_map[101]= range(16)  # iron bars, all the possible combination, uses pseudo data
 special_map[102]= range(16)  # glass panes, all the possible combination, uses pseudo data
+special_map[106] = (2,3,4,5) # vine, orientation
 special_map[108]= range(4)  # red stairs, orientation
 special_map[109]= range(4)  # stonebrick stairs, orientation
 
