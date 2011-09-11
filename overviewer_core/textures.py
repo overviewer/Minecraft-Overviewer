@@ -438,7 +438,7 @@ def _build_blockimages():
        #       80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
                66, 69, 72, 73, 75, -1,102,103,104,105,-1, 102, -1, -1, -1, -1,
        #       96  97  98  99  100  101  102  103 
-               -1, -1, 54, -1, -1,   -1,  -1, 137,
+               -1, -1, -1, -1, -1,   -1,  -1, 137,
         ]
 
     # NOTE: For non-block textures, the sideid is ignored, but can't be -1
@@ -457,7 +457,7 @@ def _build_blockimages():
        #        80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
                 66, 70, 72, 73, 74,-1 ,118,103,104,105, -1, 118,-1, -1, -1, -1,
        #        96  97  98  99  100  101  102  103 
-                -1, -1, 54, -1, -1,   -1,  -1, 136,
+                -1, -1, -1, -1, -1,   -1,  -1, 136,
         ]
 
     # This maps block id to the texture that goes on the side of the block
@@ -1693,6 +1693,18 @@ def generate_special_texture(blockID, data):
         
         return generate_texture_tuple(img, blockID)
 
+    if blockID == 98: # normal, mossy and cracked stone brick
+        if data == 0: # normal
+            t = terrain_images[54]
+        elif data == 1: # mossy
+            t = terrain_images[100]
+        else: # cracked
+            t = terrain_images[101]
+
+        img = _build_full_block(t, None, None, t, t)
+
+        return generate_texture_tuple(img, blockID)
+
     if blockID == 99 or blockID == 100: # huge brown and red mushroom
         if blockID == 99: # brown
             cap = terrain_images[126]
@@ -2126,7 +2138,7 @@ def getBiomeData(worlddir, chunkX, chunkY):
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 71, 75, 76, 79, 85, 86, 90,
-                      91, 92, 93, 94, 96, 99, 100, 101, 102, 108, 109])
+                      91, 92, 93, 94, 96, 98, 99, 100, 101, 102, 108, 109])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2174,6 +2186,7 @@ special_map[92] = range(6) # cake, eaten amount, (not implemented)
 special_map[93] = range(16) # OFF redstone repeater, orientation and delay
 special_map[94] = range(16) # ON redstone repeater, orientation and delay
 special_map[96] = range(8)  # trapdoor, open, closed, orientation
+special_map[98] = range(3)  # stone brick, normal, mossy and cracked
 special_map[99] = range(11) # huge brown mushroom, side, corner, etc, piece
 special_map[100] = range(11) # huge red mushroom, side, corner, etc, piece
 special_map[101]= range(16)  # iron bars, all the possible combination, uses pseudo data
