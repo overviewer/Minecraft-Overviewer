@@ -62,6 +62,8 @@ def findGitVersion():
         line = p.stdout.readlines()[0]
         if line.startswith('release-'):
             line = line.split('-', 1)[1]
+        if line.startswith('v'):
+            line = line[1:]
         # turn 0.1.2-50-somehash into 0.1.2-50
         # and 0.1.3 into 0.1.3
         line = '-'.join(line.split('-', 2)[:2])
