@@ -283,7 +283,9 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 
         return final_data;
 
-    } else if (state->block == 90) {
+    /* fences, iron bars and glass panes */
+    } else if ((state->block == 90) || (state->block == 101) ||
+               (state->block == 102)) {
         return check_adjacent_blocks(state, x, y, z, state->block);
     }
 
@@ -413,11 +415,12 @@ chunk_render(PyObject *self, PyObject *args) {
                     state.block_data = ancilData;
                     /* block that need pseudo ancildata:
                      * grass, water, glass, chest, restone wire,
-                     * ice, fence and portal. */
+                     * ice, fence, portal, iron bars, glass panes */
                     if ((state.block ==  2) || (state.block ==  9) || 
                         (state.block == 20) || (state.block == 54) || 
                         (state.block == 55) || (state.block == 79) ||
-                        (state.block == 85) || (state.block == 90)) {
+                        (state.block == 85) || (state.block == 90) ||
+                        (state.block == 101) || (state.block == 102)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
                     } else {
