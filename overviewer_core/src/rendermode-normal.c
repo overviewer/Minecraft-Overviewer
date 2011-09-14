@@ -44,6 +44,9 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
         self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
         self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
     }
+    
+    /* biome-compliant grass mask (includes sides!) */
+    self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
 
     chunk_x_py = PyObject_GetAttrString(state->self, "chunkX");
     chunk_y_py = PyObject_GetAttrString(state->self, "chunkY");
@@ -68,45 +71,21 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
     Py_DECREF(world);
     
     if (PyObject_IsTrue(use_biomes)) {
-        PyObject *facemasks_py;
-        
         self->biome_data = PyObject_CallMethod(state->textures, "getBiomeData", "OOO",
                                                worlddir, chunk_x_py, chunk_y_py);
         if (self->biome_data == Py_None) {
+            Py_DECREF(self->biome_data);
             self->biome_data = NULL;
             self->foliagecolor = NULL;
             self->grasscolor = NULL;
-
-            self->leaf_texture = NULL;
-            self->grass_texture = NULL;
-            self->tall_grass_texture = NULL;
-            self->facemask_top = NULL;
         } else {
-
             self->foliagecolor = PyObject_GetAttrString(state->textures, "foliagecolor");
             self->grasscolor = PyObject_GetAttrString(state->textures, "grasscolor");
-
-            self->leaf_texture = PyObject_GetAttrString(state->textures, "biome_leaf_texture");
-            self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
-            self->tall_grass_texture = PyObject_GetAttrString(state->textures, "biome_tall_grass_texture");
-            self->tall_fern_texture = PyObject_GetAttrString(state->textures, "biome_tall_fern_texture");
-
-            facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
-            /* borrowed reference, needs to be incref'd if we keep it */
-            self->facemask_top = PyTuple_GetItem(facemasks_py, 0);
-            Py_INCREF(self->facemask_top);
-            Py_DECREF(facemasks_py);
         }
     } else {
         self->biome_data = NULL;
         self->foliagecolor = NULL;
         self->grasscolor = NULL;
-        
-        self->leaf_texture = NULL;
-        self->grass_texture = NULL;
-        self->tall_grass_texture = NULL;
-        self->tall_fern_texture = NULL;
-        self->facemask_top = NULL;
     }
     
     Py_DECREF(use_biomes);
@@ -124,11 +103,7 @@ rendermode_normal_finish(void *data, RenderState *state) {
     Py_XDECREF(self->biome_data);
     Py_XDECREF(self->foliagecolor);
     Py_XDECREF(self->grasscolor);
-    Py_XDECREF(self->leaf_texture);
     Py_XDECREF(self->grass_texture);
-    Py_XDECREF(self->tall_grass_texture);
-    Py_XDECREF(self->tall_fern_texture);
-    Py_XDECREF(self->facemask_top);
     Py_XDECREF(self->black_color);
     Py_XDECREF(self->white_color);
 }
@@ -162,77 +137,88 @@ rendermode_normal_hidden(void *data, RenderState *state, int x, int y, int z) {
 static void
 rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeNormal *self = (RenderModeNormal *)data;
-    unsigned char data_byte;
-    
-    /* first, check to see if we should use biome-compatible src, mask */
-    if (self->biome_data) {
-        if (state->block == 18) {
-            src = mask = self->leaf_texture;
-        } else if (state->block == 31) {
-            data_byte = getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z);
-            if (data_byte == 1) {
-                src = mask = self->tall_grass_texture;
-            } else if (data_byte == 2) {
-                src = mask = self->tall_fern_texture;
-            }
-        }
-    }
-    
+
     /* draw the block! */
     alpha_over(state->img, src, mask, state->imgx, state->imgy, 0, 0);
     
-    if (self->biome_data) {
+    /* check for biome-compatible blocks
+     *
+     * NOTES for maintainers:
+     *
+     * To add a biome-compatible block, add an OR'd condition to this
+     * following if block, a case to the first switch statement to handle when
+     * biome info IS available, and another case to the second switch
+     * statement for when biome info ISN'T available.
+     *
+     * Make sure that in textures.py, the generated textures are the
+     * biome-compliant ones! The tinting is now all done here.
+     */
+    if (/* grass, but not snowgrass */
+        (state->block == 2 && !(state->z < 127 && getArrayByte3D(state->blocks, state->x, state->y, state->z+1) == 78)) ||
+        /* leaves */
+        state->block == 18 ||
+        /* tallgrass, but not dead shrubs */
+        (state->block == 31 && getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z) != 0) ||
+        /* vines */
+        state->block == 106)
+    {
         /* do the biome stuff! */
-        unsigned int index;
-        PyObject *color = NULL, *facemask = NULL;
+        PyObject *facemask = mask;
         unsigned char r, g, b;
         
-        index = ((self->chunk_y * 16) + state->y) * 16 * 32 + (self->chunk_x * 16) + state->x;
-        index = big_endian_ushort(getArrayShort1D(self->biome_data, index));
-        
-        switch (state->block) {
-        case 2:
-            /* grass -- skip for snowgrass */
-            if (state->z < 127 && getArrayByte3D(state->blocks, state->x, state->y, state->z+1) == 78)
-                break;
-            color = PySequence_GetItem(self->grasscolor, index);
+        if (state->block == 2) {
+            /* grass needs a special facemask */
             facemask = self->grass_texture;
-            alpha_over(state->img, self->grass_texture, self->grass_texture, state->imgx, state->imgy, 0, 0);
-            break;
-        case 18:
-            /* leaves */
-            color = PySequence_GetItem(self->foliagecolor, index);
-            facemask = mask;
-            break;
-        case 31:
-            /* tall grass */
-            if ( getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z) != 0 )
-            { /* do not tint dead shrubs */
-                color = PySequence_GetItem(self->grasscolor, index);
-                facemask = mask;
-                break;
-            }
-            break;
-		case 106:
-			/* vines */
-			color = PySequence_GetItem(self->grasscolor, index);
-			facemask = mask;
-			break;
-        default:
-            break;
-        };
-        
-        if (color)
-        {
-            /* we've got work to do */
-            
-            r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
-            g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
-            b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
-            Py_DECREF(color);
-
-            tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
         }
+        
+        if (self->biome_data) {
+            /* we have data, so use it! */
+            unsigned int index;
+            PyObject *color = NULL;
+            
+            index = ((self->chunk_y * 16) + state->y) * 16 * 32 + (self->chunk_x * 16) + state->x;
+            index = big_endian_ushort(getArrayShort1D(self->biome_data, index));
+            
+            switch (state->block) {
+            case 2:
+                /* grass */
+                color = PySequence_GetItem(self->grasscolor, index);
+                break;
+            case 18:
+                /* leaves */
+                color = PySequence_GetItem(self->foliagecolor, index);
+                break;
+            case 31:
+                /* tall grass */
+                color = PySequence_GetItem(self->grasscolor, index);
+                break;
+            case 106:
+                /* vines */
+                color = PySequence_GetItem(self->grasscolor, index);
+                break;
+            default:
+                break;
+            };
+            
+            if (color)
+            {
+                /* we've got work to do */
+                
+                r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
+                g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
+                b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+                Py_DECREF(color);
+            }
+        } else {
+            /* manual tinting required */
+            
+            /* FIXME */
+            r = 255;
+            g = 255;
+            b = 255;
+        }
+        
+        tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
     }
     
     if (self->height_fading) {

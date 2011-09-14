@@ -532,8 +532,8 @@ def generate_special_texture(blockID, data):
             side_img = terrain_images[68]
         img = _build_block(terrain_images[0], side_img, 2)
         if not data & 0x10:
-            colored = tintTexture(biome_grass_texture, (115, 175, 71))
-            composite.alpha_over(img, colored, (0, 0), colored)
+            global biome_grass_texture
+            composite.alpha_over(img, biome_grass_texture, (0, 0), biome_grass_texture)
         return generate_texture_tuple(img, blockID)
 
 
@@ -615,7 +615,7 @@ def generate_special_texture(blockID, data):
 
 
     if blockID == 18: # leaves
-        t = tintTexture(terrain_images[52], (37, 118, 25))
+        t = terrain_images[52]
         img = _build_block(t, t, 18)
         return generate_texture_tuple(img, blockID)
 
@@ -670,11 +670,9 @@ def generate_special_texture(blockID, data):
         if data == 0: # dead shrub
             texture = terrain_images[55]
         elif data == 1: # tall grass
-            texture = terrain_images[39].copy()
-            texture = tintTexture(texture, (115, 175, 71))
+            texture = terrain_images[39]
         elif data == 2: # fern
-            texture = terrain_images[56].copy()
-            texture = tintTexture(texture, (115, 175, 71))
+            texture = terrain_images[56]
         
         img = _build_block(texture, texture, blockID)
         return generate_texture_tuple(img,31)
@@ -2182,15 +2180,22 @@ special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
 
 special_map = {}
 
+# 0x10 means SNOW sides
+special_map[2] = range(11) + [0x10,]  # grass, grass has not ancildata but is
+                                      # used in the mod WildGrass, and this
+                                      # small fix shows the map as expected,
+                                      # and is harmless for normal maps
 special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values, uses pseudo data
 special_map[17] = range(3)  # wood: normal, birch and pine
+special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
 special_map[20] = range(32) # glass, used to only render the exterior surface, uses pseudo data
 special_map[26] = range(12) # bed, orientation
 special_map[23] = range(6)  # dispensers, orientation
 special_map[27] = range(14) # powered rail, orientation/slope and powered/unpowered
 special_map[28] = range(6) # detector rail, orientation/slope
 special_map[29] = (0,1,2,3,4,5,8,9,10,11,12,13) # sticky piston body, orientation, pushed in/out
+special_map[31] = range(3) # tall grass, dead shrub, fern and tall grass itself
 special_map[33] = (0,1,2,3,4,5,8,9,10,11,12,13) # normal piston body, orientation, pushed in/out
 special_map[34] = (0,1,2,3,4,5,8,9,10,11,12,13) # normal and sticky piston extension, orientation, sticky/normal
 special_map[35] = range(16) # wool, colored and white
@@ -2232,26 +2237,11 @@ special_map[106] = (1,2,4,8) # vine, orientation
 special_map[108]= range(4)  # red stairs, orientation
 special_map[109]= range(4)  # stonebrick stairs, orientation
 
-# grass and leaves are graysacle in terrain.png
-# we treat them as special so we can manually tint them
-# it is unknown how the specific tint (biomes) is calculated
-# also, 0x10 means SNOW sides
-special_map[2] = range(11) + [0x10,]  # grass, grass has not ancildata but is
-                                      # used in the mod WildGrass, and this
-                                      # small fix shows the map as expected,
-                                      # and is harmless for normal maps
-special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
-special_map[31] = range(3) # tall grass, dead shrub, fern and tall grass itself
-
 # placeholders that are generated in generate()
 bgcolor = None
 terrain_images = None
 blockmap = None
 biome_grass_texture = None
-biome_tall_grass_texture = None
-biome_tall_fern_texture = None
-biome_leaf_texture = None
-biome_vine_texture = None
 specialblockmap = None
 
 def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower-left'):
@@ -2273,13 +2263,9 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
     blockmap = _build_blockimages()
     load_water()
     
-    # generate biome (still grayscale) leaf, grass textures
-    global biome_grass_texture, biome_leaf_texture, biome_tall_grass_texture, biome_tall_fern_texture, biome_vine_texture
+    # generate biome grass mask
+    global biome_grass_texture
     biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
-    biome_leaf_texture = _build_block(terrain_images[52], terrain_images[52], 18)
-    biome_tall_grass_texture = _build_block(terrain_images[39], terrain_images[39], 31)
-    biome_tall_fern_texture = _build_block(terrain_images[56], terrain_images[56], 31)
-    biome_vine_texture = _build_block(terrain_images[143], terrain_images[143], 106)
     
     # generate the special blocks
     global specialblockmap, special_blocks
@@ -2291,10 +2277,6 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
     if texture_size != 24:
         # rescale biome textures.
         biome_grass_texture = biome_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
-        biome_leaf_texture = biome_leaf_texture.resize(texture_dimensions, Image.ANTIALIAS)
-        biome_tall_grass_texture = biome_tall_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
-        biome_tall_fern_texture = biome_tall_fern_texture.resize(texture_dimensions, Image.ANTIALIAS)
-        biome_vine_texture = biome_vine_texture.resize(texture_dimensions, Image.ANTIALIAS)
 
         # rescale the normal block images
         for i in range(len(blockmap)):
