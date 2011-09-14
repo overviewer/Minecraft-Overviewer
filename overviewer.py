@@ -148,6 +148,14 @@ def main():
     for mode in options.rendermode_options:
         c_overviewer.set_render_mode_options(mode, options.rendermode_options[mode])
     
+    
+    # Expand user dir in directories strings
+    if options.textures_path:
+        options.textures_path = os.path.expanduser(options.textures_path)
+    if options.web_assets_path:
+        options.web_assets_path = os.path.expanduser(options.web_assets_path)
+        
+    
     if options.list_rendermodes:
         list_rendermodes()
         sys.exit(0)
@@ -178,7 +186,7 @@ def main():
         parser.print_help()
         list_worlds()
         sys.exit(1)
-    worlddir = args[0]
+    worlddir = os.path.expanduser(args[0])
 
     if len(args) > 2:
         # it's possible the user has a space in one of their paths but didn't properly escape it
@@ -233,7 +241,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         sys.exit(1)
 
 
-    destdir = args[1]
+    destdir = os.path.expanduser(args[1])
     if options.display_config:
         # just display the config file and exit
         parser.display_config()
@@ -264,12 +272,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     else:
         north_direction = 'auto'
     
-    # Expand user dir in directories strings
-    if options.textures_path:
-        options.textures_path = os.path.expanduser(options.textures_path)
-    if options.web_assets_path:
-        options.web_assets_path = os.path.expanduser(options.web_assets_path)
-    
     logging.getLogger().setLevel(
         logging.getLogger().level + 10*options.quiet)
     logging.getLogger().setLevel(
@@ -284,7 +286,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     
     # make sure that the textures can be found
     try:
-        textures.generate()
+        textures.generate(path=options.textures_path)
     except IOError, e:
         logging.error(str(e))
         sys.exit(1)
