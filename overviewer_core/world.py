@@ -27,7 +27,7 @@ import itertools
 
 import numpy
 
-import chunk
+from chunk import ChunkCorrupt
 import nbt
 import textures
 import time
