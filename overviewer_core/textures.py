@@ -1803,6 +1803,64 @@ def generate_special_texture(blockID, data):
             tex = transform_image_side(raw_texture)
             composite.alpha_over(img, tex, (12,0), tex)
             return generate_texture_tuple(img, blockID)
+    
+    if blockID == 107:
+        # create the closed gate side
+        gate_side = terrain_images[4].copy()
+        gate_side_draw = ImageDraw.Draw(gate_side)
+        gate_side_draw.rectangle((7,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((7,4,9,6),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((7,10,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((0,12,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((14,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        # darken the sides slightly, as with the fences
+        sidealpha = gate_side.split()[3]
+        gate_side = ImageEnhance.Brightness(gate_side).enhance(0.9)
+        gate_side.putalpha(sidealpha)
+        
+        # create the other sides
+        mirror_gate_side = transform_image_side(gate_side.transpose(Image.FLIP_LEFT_RIGHT), blockID)
+        gate_side = transform_image_side(gate_side, blockID)
+        gate_other_side = gate_side.transpose(Image.FLIP_LEFT_RIGHT)
+        mirror_gate_other_side = mirror_gate_side.transpose(Image.FLIP_LEFT_RIGHT)
+        
+        # Create img to compose the fence gate
+        img = Image.new("RGBA", (24,24), bgcolor)
+        
+        if data & 0x4:
+            # opened
+            data = data & 0x3
+            if data == 0:
+                composite.alpha_over(img, gate_side, (2,8), gate_side)
+                composite.alpha_over(img, gate_side, (13,3), gate_side)
+            elif data == 1:
+                composite.alpha_over(img, gate_other_side, (-1,3), gate_other_side)
+                composite.alpha_over(img, gate_other_side, (10,8), gate_other_side)
+            elif data == 2:
+                composite.alpha_over(img, mirror_gate_side, (-1,7), mirror_gate_side)
+                composite.alpha_over(img, mirror_gate_side, (10,2), mirror_gate_side)
+            elif data == 3:
+                composite.alpha_over(img, mirror_gate_other_side, (2,1), mirror_gate_other_side)
+                composite.alpha_over(img, mirror_gate_other_side, (13,7), mirror_gate_other_side)
+        else:
+            # closed
+            
+            # positions for pasting the fence sides, as with fences
+            pos_top_left = (2,3)
+            pos_top_right = (10,3)
+            pos_bottom_right = (10,7)
+            pos_bottom_left = (2,7)
+            
+            if data == 0 or data == 2:
+                composite.alpha_over(img, gate_other_side, pos_top_right, gate_other_side)
+                composite.alpha_over(img, mirror_gate_other_side, pos_bottom_left, mirror_gate_other_side)
+            elif data == 1 or data == 3:
+                composite.alpha_over(img, gate_side, pos_top_left, gate_side)
+                composite.alpha_over(img, mirror_gate_side, pos_bottom_right, mirror_gate_side)
+        
+        return generate_texture_tuple(img, blockID)
 
     return None
 
@@ -2078,6 +2136,29 @@ def convert_data(blockID, data):
             elif data == 4: data = 2
             elif data == 8: data = 4
             elif data == 2: data = 1
+    if blockID == 107: # fence gates
+        opened = False
+        if data & 0x4:
+            data = data & 0x3
+            opened = True
+        if _north == 'upper-left':
+            if data == 0: data = 1
+            elif data == 1: data = 2
+            elif data == 2: data = 3
+            elif data == 3: data = 0
+        elif _north == 'upper-right':
+            if data == 0: data = 2
+            elif data == 1: data = 3
+            elif data == 2: data = 0
+            elif data == 3: data = 1
+        elif _north == 'lower-right':
+            if data == 0: data = 3
+            elif data == 1: data = 0
+            elif data == 2: data = 1
+            elif data == 3: data = 2
+        if opened:
+            data = data | 0x4
+            
     return data
 
 def tintTexture(im, c):
@@ -2172,8 +2253,8 @@ def getBiomeData(worlddir, chunkX, chunkY):
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 71, 75, 76, 79, 85, 86, 90,
-                      91, 92, 93, 94, 96, 98, 99, 100, 101, 102, 106, 108,
-                      109])
+                      91, 92, 93, 94, 96, 98, 99, 100, 101, 102, 106, 107,
+                      108, 109])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2234,6 +2315,7 @@ special_map[100] = range(11) # huge red mushroom, side, corner, etc, piece
 special_map[101]= range(16)  # iron bars, all the possible combination, uses pseudo data
 special_map[102]= range(16)  # glass panes, all the possible combination, uses pseudo data
 special_map[106] = (1,2,4,8) # vine, orientation
+special_map[107] = range(8) # fence gates, orientation + open bit
 special_map[108]= range(4)  # red stairs, orientation
 special_map[109]= range(4)  # stonebrick stairs, orientation
 

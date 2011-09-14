@@ -183,7 +183,8 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return data;
     } else if (state->block == 85) { /* fences */
-        return check_adjacent_blocks(state, x, y, z, state->block);
+        /* check for fences AND fence gates */
+        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107);
 
     } else if (state->block == 55) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
