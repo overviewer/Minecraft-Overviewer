@@ -210,12 +210,19 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 Py_DECREF(color);
             }
         } else {
-            /* manual tinting required */
-            
-            /* FIXME */
-            r = 255;
-            g = 255;
-            b = 255;
+           if (state->block == 2 || state->block == 31) /* grass */
+            {
+                /* grass */
+                r = 115;
+                g = 175;
+                b = 71;
+            }
+            if (state->block == 18 || state->block == 106) /* leaves and vines */
+            {
+                r = 37;
+                g = 118;
+                b = 25;
+            }
         }
         
         tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
