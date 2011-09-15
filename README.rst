@@ -55,17 +55,11 @@ This program requires:
 
 If you download a binary package, then some or all of these may not be required.
 
-I develop and test this on Linux, but need help testing it on Windows and Mac.
-If something doesn't work, let me know.
-
 Using the Overviewer
 ====================
 
 For a quick-start guide, see
 https://github.com/brownan/Minecraft-Overviewer/wiki/Quick-Start-Guide
-
-If you are upgrading from an older Overviewer to the new DTT code, see
-https://github.com/brownan/Minecraft-Overviewer/wiki/DTT-Upgrade-Guide
 
 Disclaimers
 -----------
@@ -152,6 +146,9 @@ Options
 
 -h, --help
     Shows the list of options and exits
+
+--advanced-help
+    Display help - including advanced options
 
 -p PROCS, --processes=PROCS
     Adding the "-p" option will utilize more cores during processing.  This
