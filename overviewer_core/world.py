@@ -271,9 +271,9 @@ class World(object):
             ## The filename of this chunk
             chunkFile = self.get_region_path(chunkX, chunkY)
             if chunkFile is not None:
-                data = nbt.load_from_region(chunkFile, chunkX, chunkY, self.north_direction)[1]
+                data = nbt.load_from_region(chunkFile, chunkX, chunkY, self.north_direction)
                 if data is not None:
-                    level = data['Level']
+                    level = data[1]['Level']
                     blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
                 
                     ## The block for spawn *within* the chunk
