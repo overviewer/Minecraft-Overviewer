@@ -158,9 +158,10 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         /* leaves */
         state->block == 18 ||
         /* tallgrass, but not dead shrubs */
-        (state->block == 31 && getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z) != 0) ||
-        /* pumpkin/melon stem */
-        ((state->block == 104) || (state->block == 105)) ||
+        (state->block == 31 && state->block_data != 0) ||
+        /* pumpkin/melon stem, not fully grown. Fully grown stems
+         * get constant brown color (see textures.py) */
+        (((state->block == 104) || (state->block == 105)) && (state->block_data != 7)) ||
         /* vines */
         state->block == 106)
     {

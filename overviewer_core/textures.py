@@ -1794,7 +1794,11 @@ def generate_special_texture(blockID, data):
             img = Image.new("RGBA", (16,16), bgcolor)
             composite.alpha_over(img, t, (0, int(16 - 16*((data + 1)/8.))), t)
             img = _build_block(img, img, blockID)
-            img.save("stem-" + str(data) + ".png")
+            if data & 7 == 7:
+                # fully grown stem gets brown color!
+                # there is a conditional in rendermode-normal to not
+                # tint the data value 7
+                img = tintTexture(img, (211,169,116))
             return generate_texture_tuple(img, blockID)
         
         else: # fully grown, and a pumpking/melon touching it,
