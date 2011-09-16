@@ -10,7 +10,14 @@ is either out-of-date or non-existant.
 To run, simply give a path to your world directory and the path to your
 output directory. For example:
 
-    python contrib/findSigns.py ../world.test/ output_dir/
+    python contrib/findSigns.py ../world.test/ output_dir/ 
+
+An optional north direction may be specified as follows:
+    
+    python contrib/findSigns.py ../world.test/ output_dir/ lower-right
+
+Valid options are upper-left, upper-right, lower-left and lower-right.
+If no direction is specified, lower-left is assumed
 
 Once that is done, simply re-run the overviewer to generate markers.js:
 
@@ -26,9 +33,23 @@ sys.path.append(".")
 from overviewer_core import nbt
 
 from pprint import pprint
-
+if len(sys.argv) < 3:
+    sys.exit("Usage: %s <worlddir> <outputdir> [north_direction]" % sys.argv[0])
+    
 worlddir = sys.argv[1]
 outputdir = sys.argv[2]
+
+directions=["upper-left","upper-right","lower-left","lower-right"]
+if len(sys.argv) < 4:
+    print "No north direction specified - assuming lower-left"
+    north_direction="lower-left"
+else:
+    north_direction=sys.argv[3]
+
+if (north_direction not in directions):
+    print north_direction, " is not a valid direction"
+    sys.exit("Bad north-direction")
+
 if os.path.exists(worlddir):
     print "Scanning chunks in ", worlddir
 else:
@@ -48,7 +69,7 @@ for dirpath, dirnames, filenames in os.walk(worlddir):
         if matcher.match(f):
             print f
             full = os.path.join(dirpath, f)
-            r = nbt.load_region(full)
+            r = nbt.load_region(full,north_direction)
             chunks = r.get_chunks()
             for x,y in chunks:
                 chunk = r.load_chunk(x,y).read_all()                
@@ -76,5 +97,5 @@ if os.path.isfile(os.path.join(worlddir, "overviewer.dat")):
 
 pickleFile = os.path.join(outputdir,"overviewer.dat")
 with open(pickleFile,"wb") as f:
-    cPickle.dump(dict(POI=POI), f)
+    cPickle.dump(dict(POI=POI,north_direction=north_direction), f)
 
