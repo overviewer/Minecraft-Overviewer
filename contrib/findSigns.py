@@ -97,5 +97,5 @@ if os.path.isfile(os.path.join(worlddir, "overviewer.dat")):
 
 pickleFile = os.path.join(outputdir,"overviewer.dat")
 with open(pickleFile,"wb") as f:
-    cPickle.dump(dict(POI=POI), f)
+    cPickle.dump(dict(POI=POI,north_direction=north_direction), f)
 
