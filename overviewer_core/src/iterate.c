@@ -284,7 +284,12 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 
         return final_data;
 
-    /* fences, iron bars and glass panes */
+    /* portal, iron bars and glass panes
+     * Note: iron bars and glass panes "stick" to other blocks, but
+     * at the moment of writing this is not clear which ones stick and
+     * which others no, so for the moment stick only with himself.
+     * This is a TODO!
+     */
     } else if ((state->block == 90) || (state->block == 101) ||
                (state->block == 102)) {
         return check_adjacent_blocks(state, x, y, z, state->block);
