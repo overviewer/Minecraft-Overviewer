@@ -5,22 +5,25 @@ Validate a region file
 
 TODO description here'''
 
-import os.path
+import os
 import sys
-overviewer_dir = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
-sys.path.insert(0, overviewer_dir)
-import nbt
+
+# incantation to be able to import overviewer_core
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '..')))
+
+from overviewer_core import nbt
 
 def check_region(region_filename):
     chunk_errors = []
     if not os.path.exists(region_filename):
         raise Exception('Region file not found: %s' % region_filename)
     try:
-        region = nbt.load_region(region_filename)
+        region = nbt.load_region(region_filename, 'lower-left')
     except IOError, e:
         raise Exception('Error loading region (%s): %s' % (region_filename, e))
     try:
-        chunks = region.get_chunk_info(False)
+        region.get_chunk_info(False)
+        chunks = region.get_chunks()
     except IOError, e:
         raise Exception('Error reading region header (%s): %s' % (region_filename, e))
     except Exception, e:

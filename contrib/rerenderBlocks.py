@@ -17,14 +17,15 @@ a Jack-O-Lantern (91)
 '''
 
 from optparse import OptionParser
-
-import sys
-sys.path.insert(0,".")
-
-import nbt
-from chunk import get_blockarray_fromfile, get_blockarray
-import os
+import sys,os
 import re
+
+# incantation to be able to import overviewer_core
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '..')))
+
+from overviewer_core import nbt
+from overviewer_core import world
+from overviewer_core.chunk import get_blockarray_fromfile, get_blockarray
 
 parser = OptionParser()
 parser.add_option("--ids", dest="ids", type="string")
@@ -50,14 +51,18 @@ for dirpath, dirnames, filenames in os.walk(options.world):
     for f in filenames:
         if matcher.match(f):
             full = os.path.join(dirpath, f)
-            r = nbt.load_region(full)
+            r = nbt.load_region(full, 'lower-left')
             chunks = r.get_chunks()
+            found = False
             for x,y in chunks:
                 chunk = r.load_chunk(x,y).read_all()                
                 blocks = get_blockarray(chunk[1]['Level'])
                 for i in ids:
-                    if i in blocks:
+                    if chr(i) in blocks:
                         print full
+                        found = True
                         break
+                if found:
+                    break
 
 

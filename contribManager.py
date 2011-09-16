@@ -5,16 +5,21 @@
 
 import sys
 import os.path
-sys.path.append("overviewer_core")
-import nbt
 import ast
 
+# incantation to be able to import overviewer_core
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '.')))
+
+from overviewer_core import nbt
+
 scripts=dict( # keys are names, values are scripts
-        benchmark       = "benchmark.py",
+        clearOldCache   = "clearOldCache.py",
+        convertCyrillic = "cyrillic_convert.py",
         findSigns       = "findSigns.py",
-        validate        = "validateRegionFile.py",
         playerInspect   = "playerInspect.py",
-        convertCyrillic = "cyrillic_convert.py"
+        rerenderBlocks  = "rerenderBlocks.py",
+        testRender      = "testRender.py",
+        validate        = "validateRegionFile.py",
         )
 
 # you can symlink or hardlink contribManager.py to another name to have it

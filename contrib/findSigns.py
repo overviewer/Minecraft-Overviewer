@@ -29,7 +29,9 @@ import re
 import os
 import cPickle
 
-sys.path.append(".")
+# incantation to be able to import overviewer_core
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '..')))
+
 from overviewer_core import nbt
 
 from pprint import pprint
@@ -69,7 +71,8 @@ for dirpath, dirnames, filenames in os.walk(worlddir):
         if matcher.match(f):
             print f
             full = os.path.join(dirpath, f)
-            r = nbt.load_region(full,north_direction)
+            # force lower-left so chunks are loaded in correct positions
+            r = nbt.load_region(full, 'lower-left')
             chunks = r.get_chunks()
             for x,y in chunks:
                 chunk = r.load_chunk(x,y).read_all()                
