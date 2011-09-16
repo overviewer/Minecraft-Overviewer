@@ -271,8 +271,8 @@ def _build_block(top, side, blockID=None):
     otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
     otherside.putalpha(othersidealpha)
 
-    ## special case for tall-grass, fern and dead shrub, 
-    if blockID in (31,32):
+    ## special case for tall-grass, fern, dead shrub, and pumpkin/melon stem
+    if blockID in (31,32,104,105):
         front = original_texture.resize((14,11), Image.ANTIALIAS)
         composite.alpha_over(img, front, (5,9))
         return img
@@ -1783,6 +1783,23 @@ def generate_special_texture(blockID, data):
             composite.alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
 
         return generate_texture_tuple(img, blockID)
+
+    if blockID == 104 or blockID == 105: # pumpkin and melon stems.
+        # the ancildata value indicates how much of the texture
+        # is shown.
+        if data & 7 != 7 or data & 48 == 0:
+            # not fully grown stem or no pumpkin/melon touching it,
+            # straight up stem
+            t = terrain_images[111].copy()
+            ImageDraw.Draw(t).rectangle((0,0,15,int(16 - 16*((data + 1)/8.))),outline=(0,0,0,0),fill=(0,0,0,0))
+            img = _build_block(t, t, blockID)
+            return generate_texture_tuple(img, blockID)
+        
+        else: # fully grown, and a pumpking/melon touching it,
+              # corner stem
+            pass
+            
+            
     if blockID == 106: # vine
         img = Image.new("RGBA", (24,24), bgcolor)
         raw_texture = terrain_images[143]
@@ -2253,8 +2270,8 @@ def getBiomeData(worlddir, chunkX, chunkY):
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 71, 75, 76, 79, 85, 86, 90,
-                      91, 92, 93, 94, 96, 98, 99, 100, 101, 102, 106, 107,
-                      108, 109])
+                      91, 92, 93, 94, 96, 98, 99, 100, 101, 102, 104, 105,
+                      106, 107, 108, 109])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2314,6 +2331,8 @@ special_map[99] = range(11) # huge brown mushroom, side, corner, etc, piece
 special_map[100] = range(11) # huge red mushroom, side, corner, etc, piece
 special_map[101]= range(16)  # iron bars, all the possible combination, uses pseudo data
 special_map[102]= range(16)  # glass panes, all the possible combination, uses pseudo data
+special_map[104] = range(8) # pumpkin stem, size of the stem
+special_map[105] = range(8) # melon stem, size of the stem
 special_map[106] = (1,2,4,8) # vine, orientation
 special_map[107] = range(8) # fence gates, orientation + open bit
 special_map[108]= range(4)  # red stairs, orientation

@@ -159,6 +159,8 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         state->block == 18 ||
         /* tallgrass, but not dead shrubs */
         (state->block == 31 && getArrayByte3D(state->blockdata_expanded, state->x, state->y, state->z) != 0) ||
+        /* pumpkin/melon stem */
+        ((state->block == 104) || (state->block == 105)) ||
         /* vines */
         state->block == 106)
     {
@@ -192,6 +194,14 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 /* tall grass */
                 color = PySequence_GetItem(self->grasscolor, index);
                 break;
+            case 104:
+                /* pumpkin stem */
+                color = PySequence_GetItem(self->grasscolor, index);
+                break;
+            case 105:
+                /* melon stem */
+                color = PySequence_GetItem(self->grasscolor, index);
+                break;
             case 106:
                 /* vines */
                 color = PySequence_GetItem(self->grasscolor, index);
@@ -210,9 +220,10 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 Py_DECREF(color);
             }
         } else {
-           if (state->block == 2 || state->block == 31) /* grass */
+           if (state->block == 2 || state->block == 31 ||
+               state->block == 104 || state->block == 105)
+               /* grass and pumpkin/melon stems */
             {
-                /* grass */
                 r = 115;
                 g = 175;
                 b = 71;
