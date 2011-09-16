@@ -103,7 +103,7 @@ def _load_image(filename):
     """Returns an image object"""
     fileobj = _find_file(filename)
     buffer = StringIO(fileobj.read())
-    return Image.open(buffer)
+    return Image.open(buffer).convert("RGBA")
 
 def _get_terrain_image():
     return _load_image("terrain.png")
