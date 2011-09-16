@@ -200,7 +200,7 @@ class MCRFileReader(object):
     chunks (as instances of NBTFileReader), getting chunk timestamps,
     and for listing chunks contained in the file."""
     
-    def __init__(self, filename, north_direction='lower-left'):
+    def __init__(self, filename, north_direction):
         self._file = None
         self._filename = filename
         self.north_direction = north_direction

@@ -69,7 +69,7 @@ for dirpath, dirnames, filenames in os.walk(worlddir):
         if matcher.match(f):
             print f
             full = os.path.join(dirpath, f)
-            r = nbt.load_region(full)
+            r = nbt.load_region(full,north_direction)
             chunks = r.get_chunks()
             for x,y in chunks:
                 chunk = r.load_chunk(x,y).read_all()                
