@@ -1787,12 +1787,14 @@ def generate_special_texture(blockID, data):
     if blockID == 104 or blockID == 105: # pumpkin and melon stems.
         # the ancildata value indicates how much of the texture
         # is shown.
-        if data & 7 != 7 or data & 48 == 0:
+        if data & 48 == 0:
             # not fully grown stem or no pumpkin/melon touching it,
             # straight up stem
             t = terrain_images[111].copy()
-            ImageDraw.Draw(t).rectangle((0,0,15,int(16 - 16*((data + 1)/8.))),outline=(0,0,0,0),fill=(0,0,0,0))
-            img = _build_block(t, t, blockID)
+            img = Image.new("RGBA", (16,16), bgcolor)
+            composite.alpha_over(img, t, (0, int(16 - 16*((data + 1)/8.))), t)
+            img = _build_block(img, img, blockID)
+            img.save("stem-" + str(data) + ".png")
             return generate_texture_tuple(img, blockID)
         
         else: # fully grown, and a pumpking/melon touching it,
