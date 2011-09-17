@@ -479,6 +479,8 @@ class QuadtreeGen(object):
             tileimg.save(imgpath, quality=self.imgquality, subsampling=0)
         else: # png
             tileimg.save(imgpath)
+        #Add tile to list of rendered tiles
+        poi_queue.put(['rendered',imgpath])
 
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)

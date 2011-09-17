@@ -36,7 +36,7 @@ from time import gmtime, strftime, sleep
 
 
 """
-This module has routines related to distributing the render job to multipule nodes
+This module has routines related to distributing the render job to multiple nodes
 
 """
 
@@ -109,6 +109,9 @@ class RenderNode(object):
 
         self.options = options
         self.quadtrees = quadtrees
+        #List of changed tiles
+        self.rendered_tiles = []
+
         #bind an index value to the quadtree so we can find it again
         #and figure out which worlds are where
         i = 0
@@ -162,7 +165,8 @@ class RenderNode(object):
                 
         quadtrees = self.quadtrees
         
-        # do per-quadtree init.
+        # do per-quadtree init
+
         max_p = 0        
         total = 0
         for q in quadtrees:
@@ -203,6 +207,10 @@ class RenderNode(object):
                                         world.POI.append(item[1])
                                 elif item[0] == "removePOI":
                                     world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], world.persistentData['POI'])
+
+                                elif item[0] == "rendered":
+                                    self.rendered_tiles.append(item[1])
+
                         except Queue.Empty:
                             pass
                     while count_to_remove > 0:
@@ -231,6 +239,9 @@ class RenderNode(object):
                             world.POI.append(item[1])
                     elif item[0] == "removePOI":
                         world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], world.persistentData['POI'])
+                    elif item[0] == "rendered":
+                        self.rendered_tiles.append(item[1])
+
             except Queue.Empty:
                 pass
 
@@ -278,7 +289,7 @@ class RenderNode(object):
         # Do the final one right here:
         for q in quadtrees:
             q.render_innertile(os.path.join(q.destdir, q.tiledir), "base")
-        
+
     def _apply_render_worldtiles(self, pool,batch_size):
         """Returns an iterator over result objects. Each time a new result is
         requested, a new task is added to the pool and a result returned.
