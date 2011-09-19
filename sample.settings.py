@@ -1,5 +1,5 @@
 ################################################################################
-# Please see the README or https://github.com/brownan/Minecraft-Overviewer/wiki/DTT-Upgrade-Guide
+# Please see the README or https://github.com/overviewer/Minecraft-Overviewer/wiki/DTT-Upgrade-Guide
 # for more details.
 
 # This file is not meant to be used directly, but instead it is supposed to
