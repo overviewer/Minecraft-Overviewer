@@ -124,6 +124,8 @@ def main():
     parser.add_option("--skip-js", dest="skipjs", action="store_true", helptext="Don't output marker.js or regions.js")
     parser.add_option("--no-signs", dest="nosigns", action="store_true", helptext="Don't output signs to markers.js")
     parser.add_option("--north-direction", dest="north_direction", action="store", helptext="Specifies which corner of the screen north will point to. Defaults to whatever the current map uses, or lower-left for new maps. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default="auto", choices=avail_north_dirs)
+    parser.add_option("--changelist", dest="changelist", action="store", helptext="Output list of changed tiles to file. If the file exists, it's contents will be overwritten.",advanced=True)
+    parser.add_option("--changelist-format", dest="changelist_format", action="store", helptext="Output relative or absolute paths for --changelist. Only valid when --changelist is used", type="choice", default="relative", choices=["relative","absolute"],advanced=True)
     parser.add_option("--display-config", dest="display_config", action="store_true", helptext="Display the configuration parameters, but don't render the map.  Requires all required options to be specified", commandLineOnly=True)
     #parser.add_option("--write-config", dest="write_config", action="store_true", helptext="Writes out a sample config file", commandLineOnly=True)
 
@@ -277,6 +279,18 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     logging.getLogger().setLevel(
         logging.getLogger().level - 10*options.verbose)
 
+    if options.changelist:
+        try:
+            changefile = open(options.changelist,'w+')
+        except IOError as e:
+            logging.error("Unable to open file %s to use for changelist." % options.changelist)
+            logging.error("I/O Error: %s" % e.strerror)
+            sys.exit(1)
+
+    if options.changelist_format and not options.changelist:
+        logging.error("changelist_format specified without changelist.")
+        sys.exit(1)
+
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
        
@@ -337,6 +351,21 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # finish up the map
     m.finalize()
 
+    if options.changelist:
+        changed=[]
+        for tile in r.rendered_tiles:
+            if options.changelist_format=="absolute":
+                tile=os.path.abspath(tile)
+            changed.append(tile)
+            for zl in range(q[0].p - 1):
+                tile=os.path.dirname(tile)
+                changed.append("%s.%s" % (tile, imgformat))
+        #Quick and nasty way to remove duplicate entries
+        changed=list(set(changed))
+        changed.sort()
+        for path in changed:
+            changefile.write("%s\n" % path)
+        changefile.close()
 
 def list_rendermodes():
     "Prints out a pretty list of supported rendermodes"
