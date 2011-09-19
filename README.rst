@@ -3,7 +3,7 @@ Minecraft Overviewer
 ====================
 By Andrew Brown and contributors (see CONTRIBUTORS.rst).
 
-http://github.com/brownan/Minecraft-Overviewer
+http://github.com/overviewer/Minecraft-Overviewer
 
 Generates large resolution images of a Minecraft map.
 
@@ -14,10 +14,10 @@ with a slightly different goal in mind: to generate large resolution images
 such that one can zoom in and see details.
 
 See some examples here!
-http://github.com/brownan/Minecraft-Overviewer/wiki/Map-examples
+http://github.com/overviewer/Minecraft-Overviewer/wiki/Map-examples
 
 Further documentation may be found at
-https://github.com/brownan/Minecraft-Overviewer/wiki/Documentation
+https://github.com/overviewer/Minecraft-Overviewer/wiki/Documentation
 
 To contact the developers and other users, go to the site at the top of this
 README, or go to #overviewer on irc.freenode.net.
@@ -59,7 +59,7 @@ Using the Overviewer
 ====================
 
 For a quick-start guide, see
-https://github.com/brownan/Minecraft-Overviewer/wiki/Quick-Start-Guide
+https://github.com/overviewer/Minecraft-Overviewer/wiki/Quick-Start-Guide
 
 Disclaimers
 -----------
@@ -127,7 +127,7 @@ at <http://svn.effbot.org/public/tags/pil-1.1.7/libImaging/>. Just put them in
 the same directory as "overviewer.py".
 
 For more detailed instructions, check the wiki: 
-https://github.com/brownan/Minecraft-Overviewer/wiki/Build-Instructions
+https://github.com/overviewer/Minecraft-Overviewer/wiki/Build-Instructions
 
 Running
 -------
@@ -320,7 +320,7 @@ completely useless program. However, there are a number of things that I want
 to fix or improve.
 
 For a current list of issues, visit
-http://github.com/brownan/Minecraft-Overviewer/issues
+http://github.com/overviewer/Minecraft-Overviewer/issues
 
 Feel free to comment on issues, report new issues, and vote on issues that are
 important to you, so I can prioritize accordingly.
