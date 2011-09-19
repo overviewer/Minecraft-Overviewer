@@ -176,7 +176,7 @@ def main():
 
         h = hashlib.sha1()
         h.update(f.read())
-        logging.info("Hash of terrain.png file is: %s", h.hexdigest())
+        logging.info("Hash of terrain.png file is: `%s`", h.hexdigest())
         sys.exit(0)
         
     if options.advanced_help:
