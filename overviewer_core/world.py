@@ -86,7 +86,7 @@ class World(object):
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example
         self.POI = []
-
+        
         # if it exists, open overviewer.dat, and read in the data structure
         # info self.persistentData.  This dictionary can hold any information
         # that may be needed between runs.
