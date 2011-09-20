@@ -90,12 +90,13 @@ def _find_file(filename, mode="rb", verbose=False):
 
     for jarpath in jarpaths:
         if os.path.exists(jarpath):
-            try:
-                jar = zipfile.ZipFile(jarpath)
-                if verbose: logging.info("Found %s in '%s'", filename, jarpath)
-                return jar.open(filename)
-            except (KeyError, IOError):
-                pass
+            jar = zipfile.ZipFile(jarpath)
+            for jarfilename in [filename, 'misc/' + filename]:
+                try:
+                    if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
+                    return jar.open(jarfilename)
+                except (KeyError, IOError), e:
+                    pass
 
     raise IOError("Could not find the file `{0}'. You can either place it in the same place as overviewer.py, use --textures-path, or install the Minecraft client.".format(filename))
 
@@ -2194,9 +2195,10 @@ currentBiomeFile = None
 currentBiomeData = None
 grasscolor = None
 foliagecolor = None
+watercolor = None
 
 def prepareBiomeData(worlddir):
-    global grasscolor, foliagecolor
+    global grasscolor, foliagecolor, watercolor
     
     # skip if the color files are already loaded
     if grasscolor and foliagecolor:
@@ -2209,8 +2211,14 @@ def prepareBiomeData(worlddir):
     # try to find the biome color images.  If _find_file can't locate them
     # then try looking in the EXTRACTEDBIOMES folder
     try:
-        grasscolor = list(Image.open(_find_file("grasscolor.png")).getdata())
-        foliagecolor = list(Image.open(_find_file("foliagecolor.png")).getdata())
+        grasscolor = list(_load_image("grasscolor.png").getdata())
+        foliagecolor = list(_load_image("foliagecolor.png").getdata())
+        # don't force the water color just yet
+        # since the biome extractor doesn't know about it
+        try:
+            watercolor = list(_load_image("watercolor.png").getdata())
+        except IOError:
+            pass
     except IOError:
         try:
             grasscolor = list(Image.open(os.path.join(biomeDir,"grasscolor.png")).getdata())
@@ -2219,6 +2227,7 @@ def prepareBiomeData(worlddir):
             # clear anything that managed to get set
             grasscolor = None
             foliagecolor = None
+            watercolor = None
 
 def getBiomeData(worlddir, chunkX, chunkY):
     '''Opens the worlddir and reads in the biome color information

@@ -81,11 +81,18 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
         } else {
             self->foliagecolor = PyObject_GetAttrString(state->textures, "foliagecolor");
             self->grasscolor = PyObject_GetAttrString(state->textures, "grasscolor");
+            self->watercolor = PyObject_GetAttrString(state->textures, "watercolor");
+            if (self->watercolor == Py_None)
+            {
+                Py_DECREF(self->watercolor);
+                self->watercolor = NULL;
+            }
         }
     } else {
         self->biome_data = NULL;
         self->foliagecolor = NULL;
         self->grasscolor = NULL;
+        self->watercolor = NULL;
     }
     
     Py_DECREF(use_biomes);
@@ -103,6 +110,7 @@ rendermode_normal_finish(void *data, RenderState *state) {
     Py_XDECREF(self->biome_data);
     Py_XDECREF(self->foliagecolor);
     Py_XDECREF(self->grasscolor);
+    Py_XDECREF(self->watercolor);
     Py_XDECREF(self->grass_texture);
     Py_XDECREF(self->black_color);
     Py_XDECREF(self->white_color);
@@ -155,6 +163,8 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
      */
     if (/* grass, but not snowgrass */
         (state->block == 2 && !(state->z < 127 && getArrayByte3D(state->blocks, state->x, state->y, state->z+1) == 78)) ||
+        /* water */
+        state->block == 8 || state->block == 9 ||
         /* leaves */
         state->block == 18 ||
         /* tallgrass, but not dead shrubs */
@@ -186,6 +196,17 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             case 2:
                 /* grass */
                 color = PySequence_GetItem(self->grasscolor, index);
+                break;
+            case 8:
+            case 9:
+                /* water */
+                if (self->watercolor)
+                {
+                    color = PySequence_GetItem(self->watercolor, index);
+                } else {
+                    color = NULL;
+                    facemask = NULL;
+                }
                 break;
             case 18:
                 /* leaves */
@@ -221,14 +242,22 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 Py_DECREF(color);
             }
         } else {
-           if (state->block == 2 || state->block == 31 ||
-               state->block == 104 || state->block == 105)
-               /* grass and pumpkin/melon stems */
+            if (state->block == 2 || state->block == 31 ||
+                state->block == 104 || state->block == 105)
+                /* grass and pumpkin/melon stems */
             {
                 r = 115;
                 g = 175;
                 b = 71;
             }
+            
+            if (state->block == 8 || state->block == 9)
+                /* water */
+            {
+                /* by default water is fine with nothing */
+                facemask = NULL;
+            }
+            
             if (state->block == 18 || state->block == 106) /* leaves and vines */
             {
                 r = 37;
@@ -237,7 +266,8 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
             }
         }
         
-        tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
+        if (facemask)
+            tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
     }
     
     if (self->height_fading) {
