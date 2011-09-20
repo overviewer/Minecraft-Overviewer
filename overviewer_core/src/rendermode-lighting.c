@@ -18,10 +18,37 @@
 #include "overviewer.h"
 #include <math.h>
 
-/* figures out the black_coeff from a given skylight and blocklight,
+/* figures out the color from a given skylight and blocklight,
    used in lighting calculations */
-static float calculate_darkness(unsigned char skylight, unsigned char blocklight) {
-    return 1.0f - powf(0.8f, 15.0 - MAX(blocklight, skylight));
+static void
+calculate_light_color(void *data,
+                      unsigned char skylight, unsigned char blocklight,
+                      unsigned char *r, unsigned char *g, unsigned char *b) {
+    unsigned char v = 255 * powf(0.8f, 15.0 - MAX(blocklight, skylight));
+    *r = v;
+    *g = v;
+    *b = v;
+}
+
+/* fancy version that uses the colored light texture */
+static void
+calculate_light_color_fancy(void *data,
+                            unsigned char skylight, unsigned char blocklight,
+                            unsigned char *r, unsigned char *g, unsigned char *b) {
+    RenderModeLighting *mode = (RenderModeLighting *)(data);
+    unsigned int index;
+    PyObject *color;
+    
+    blocklight = MAX(blocklight, skylight);
+    
+    index = skylight + blocklight * 16;
+    color = PySequence_GetItem(mode->lightcolor, index);
+    
+    *r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
+    *g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
+    *b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+    
+    Py_DECREF(color);
 }
 
 /* loads the appropriate light data for the given (possibly non-local)
@@ -124,9 +151,10 @@ estimate_blocklevel(RenderModeLighting *self, RenderState *state,
     return blocklevel;
 }
 
-inline float
-get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
-                         int x, int y, int z) {
+inline void
+get_lighting_color(RenderModeLighting *self, RenderState *state,
+                   int x, int y, int z,
+                   unsigned char *r, unsigned char *g, unsigned char *b) {
 
     /* placeholders for later data arrays, coordinates */
     PyObject *blocks = NULL;
@@ -157,7 +185,8 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
           local_y >= 0 && local_y < 16 &&
           local_z >= 0 && local_z < 128)) {
         
-        return self->calculate_darkness(15, 0);
+        self->calculate_light_color(self, 15, 0, r, g, b);
+        return;
     }
 
     /* also, make sure we have enough info to correctly calculate lighting */
@@ -165,7 +194,8 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         skylight == Py_None || skylight == NULL ||
         blocklight == Py_None || blocklight == NULL) {
         
-        return self->calculate_darkness(15, 0);
+        self->calculate_light_color(self, 15, 0, r, g, b);
+        return;
     }
     
     block = getArrayByte3D(blocks, local_x, local_y, local_z);
@@ -203,15 +233,16 @@ get_lighting_coefficient(RenderModeLighting *self, RenderState *state,
         return 0.0f;
     }
     
-    return self->calculate_darkness(skylevel, blocklevel);
+    self->calculate_light_color(self, MIN(skylevel, 15), MIN(blocklevel, 15), r, g, b);
 }
 
-/* shades the drawn block with the given facemask/black_color, based on the
+/* shades the drawn block with the given facemask, based on the
    lighting results from (x, y, z) */
 static inline void
 do_shading_with_mask(RenderModeLighting *self, RenderState *state,
                      int x, int y, int z, PyObject *mask) {
-    float black_coeff;
+    unsigned char r, g, b;
+    float comp_shade_strength;
     
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
@@ -241,9 +272,14 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
            }
     }
     
-    black_coeff = get_lighting_coefficient(self, state, x, y, z);
-    black_coeff *= self->shade_strength;
-    alpha_over_full(state->img, self->black_color, mask, black_coeff, state->imgx, state->imgy, 0, 0);
+    get_lighting_color(self, state, x, y, z, &r, &g, &b);
+    comp_shade_strength = 1.0 - self->shade_strength;
+    
+    r += (255 - r) * comp_shade_strength;
+    g += (255 - g) * comp_shade_strength;
+    b += (255 - b) * comp_shade_strength;
+    
+    tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
 }
 
 static int
@@ -263,8 +299,11 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
     self->shade_strength = 1.0;
     if (!render_mode_parse_option(options, "shade_strength", "f", &(self->shade_strength)))
         return 1;
+
+    self->color_light = 0;
+    if (!render_mode_parse_option(options, "color_light", "i", &(self->color_light)))
+        return 1;
     
-    self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
     self->facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
     // borrowed references, don't need to be decref'd
     self->facemasks[0] = PyTuple_GetItem(self->facemasks_py, 0);
@@ -278,7 +317,20 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
     self->right_skylight = PyObject_GetAttrString(state->self, "right_skylight");
     self->right_blocklight = PyObject_GetAttrString(state->self, "right_blocklight");
     
-    self->calculate_darkness = calculate_darkness;
+    self->calculate_light_color = calculate_light_color;
+    
+    if (self->color_light) {
+        self->lightcolor = PyObject_CallMethod(state->textures, "loadLightColor", "");
+        if (self->lightcolor == Py_None) {
+            Py_DECREF(self->lightcolor);
+            self->lightcolor = NULL;
+            self->color_light = 0;
+        } else {
+            self->calculate_light_color = calculate_light_color_fancy;
+        }
+    } else {
+        self->lightcolor = NULL;
+    }
     
     return 0;
 }
@@ -287,7 +339,6 @@ static void
 rendermode_lighting_finish(void *data, RenderState *state) {
     RenderModeLighting *self = (RenderModeLighting *)data;
     
-    Py_DECREF(self->black_color);
     Py_DECREF(self->facemasks_py);
     
     Py_DECREF(self->skylight);
@@ -352,6 +403,7 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
 
 const RenderModeOption rendermode_lighting_options[] = {
     {"shade_strength", "how dark to make the shadows, from 0.0 to 1.0 (default: 1.0)"},
+    {"color_light", "whether to use colored light (default: False)"},
     {NULL, NULL}
 };
 

@@ -158,7 +158,7 @@ typedef struct {
     /* inherits from normal render mode */
     RenderModeNormal parent;
     
-    PyObject *black_color, *facemasks_py;
+    PyObject *facemasks_py;
     PyObject *facemasks[3];
     
     /* extra data, loaded off the chunk class */
@@ -166,9 +166,12 @@ typedef struct {
     PyObject *left_skylight, *left_blocklight;
     PyObject *right_skylight, *right_blocklight;
     
+    /* light color image, loaded if color_light is True */
+    PyObject *lightcolor;
+    
     /* can be overridden in derived rendermodes to control lighting
-       arguments are skylight, blocklight */
-    float (*calculate_darkness)(unsigned char, unsigned char);
+       arguments are data, skylight, blocklight, return RGB */
+    void (*calculate_light_color)(void *, unsigned char, unsigned char, unsigned char *, unsigned char *, unsigned char *);
     
     /* can be set to 0 in derived modes to indicate that lighting the chunk
      * sides is actually important. Right now, this is used in cave mode
@@ -176,6 +179,7 @@ typedef struct {
     int skip_sides;
     
     float shade_strength;
+    int color_light;
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
 
