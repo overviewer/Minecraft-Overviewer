@@ -1401,6 +1401,35 @@ def generate_special_texture(blockID, data):
 
         return generate_texture_tuple(img, blockID)
 
+    if blockID == 70 or blockID == 72: # wooden and stone pressure plates
+        if blockID == 70: # stone
+            t = terrain_images[1].copy()
+        else: # wooden
+            t = terrain_images[4].copy()
+        
+        # cut out the outside border, pressure plates are smaller
+        # than a normal block
+        ImageDraw.Draw(t).rectangle((0,0,15,15),outline=(0,0,0,0))
+        
+        # create the textures and a darker version to make a 3d by 
+        # pasting them with an offstet of 1 pixel
+        img = Image.new("RGBA", (24,24), bgcolor)
+        
+        top = transform_image(t, blockID)
+        
+        alpha = top.split()[3]
+        topd = ImageEnhance.Brightness(top).enhance(0.8)
+        topd.putalpha(alpha)
+        
+        #show it 3d or 2d if unpressed or pressed
+        if data == 0:
+            composite.alpha_over(img,topd, (0,12),topd)
+            composite.alpha_over(img,top, (0,11),top)
+        elif data == 1:
+            composite.alpha_over(img,top, (0,12),top)
+        
+        return generate_texture_tuple(img, blockID)
+
     if blockID == 85: # fences
         # create needed images for Big stick fence
 
@@ -2301,9 +2330,9 @@ def loadLightColor():
 
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
-                      63, 64, 65, 66, 67, 68, 71, 75, 76, 79, 85, 86, 90,
-                      91, 92, 93, 94, 96, 98, 99, 100, 101, 102, 104, 105,
-                      106, 107, 108, 109])
+                      63, 64, 65, 66, 67, 68, 70, 71, 72, 75, 76, 79, 85,
+                      86, 90, 91, 92, 93, 94, 96, 98, 99, 100, 101, 102,
+                      104, 105, 106, 107, 108, 109])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2346,7 +2375,9 @@ special_map[65] = (2,3,4,5) # ladder, orientation
 special_map[66] = range(10) # minecrart tracks, orientation, slope
 special_map[67] = range(4)  # cobblestone stairs, orientation
 special_map[68] = (2,3,4,5) # wall sing, orientation
+special_map[70] = (0,1)     # stone pressure plate, non pressed and pressed
 special_map[71] = range(16) # iron door, open/close and orientation
+special_map[72] = (0,1)     # wooden pressure plate, non pressed and pressed
 special_map[75] = (1,2,3,4,5) # off redstone torch, orientation
 special_map[76] = (1,2,3,4,5) # on redstone torch, orientation
 special_map[79] = range(32) # ice, used to only render the exterior surface, uses pseudo data
