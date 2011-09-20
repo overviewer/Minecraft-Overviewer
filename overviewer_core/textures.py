@@ -617,6 +617,9 @@ def generate_special_texture(blockID, data):
 
     if blockID == 18: # leaves
         t = terrain_images[52]
+        if data == 1:
+            # pine!
+            t = terrain_images[132]
         img = _build_block(t, t, 18)
         return generate_texture_tuple(img, blockID)
 
@@ -2301,7 +2304,7 @@ special_map[2] = range(11) + [0x10,]  # grass, grass has not ancildata but is
 special_map[6] = range(16)  # saplings: usual, spruce, birch and future ones (rendered as usual saplings)
 special_map[9] = range(32)  # water: spring,flowing, waterfall, and others (unknown) ancildata values, uses pseudo data
 special_map[17] = range(3)  # wood: normal, birch and pine
-special_map[18] = range(16) # leaves, birch, normal or pine leaves (not implemented)
+special_map[18] = range(16) # leaves, birch, normal or pine leaves
 special_map[20] = range(32) # glass, used to only render the exterior surface, uses pseudo data
 special_map[26] = range(12) # bed, orientation
 special_map[23] = range(6)  # dispensers, orientation
