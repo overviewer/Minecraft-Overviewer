@@ -125,7 +125,7 @@ typedef struct {
     /* biome data for the region */
     PyObject *biome_data;
     /* grasscolor and foliagecolor lookup tables */
-    PyObject *grasscolor, *foliagecolor;
+    PyObject *grasscolor, *foliagecolor, *watercolor;
     /* biome-compatible grass/leaf textures */
     PyObject *grass_texture;
     
