@@ -210,7 +210,19 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 break;
             case 18:
                 /* leaves */
-                color = PySequence_GetItem(self->foliagecolor, index);
+                if (state->block_data != 2)
+                {
+                    /* not birch! */
+                    color = PySequence_GetItem(self->foliagecolor, index);
+                } else {
+                    /* birch!
+                       birch foliage color is flipped XY-ways */
+                    unsigned int index_x = 255 - (index % 256);
+                    unsigned int index_y = 255 - (index / 256);
+                    index = index_y * 256 + index_x;
+                    
+                    color = PySequence_GetItem(self->foliagecolor, index);
+                }
                 break;
             case 31:
                 /* tall grass */
