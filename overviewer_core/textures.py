@@ -91,7 +91,7 @@ def _find_file(filename, mode="rb", verbose=False):
     for jarpath in jarpaths:
         if os.path.exists(jarpath):
             jar = zipfile.ZipFile(jarpath)
-            for jarfilename in [filename, 'misc/' + filename]:
+            for jarfilename in [filename, 'misc/' + filename, 'environment/' + filename]:
                 try:
                     if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
                     return jar.open(jarfilename)
@@ -2277,6 +2277,20 @@ def getBiomeData(worlddir, chunkX, chunkY):
     currentBiomeFile = biomeFile
     currentBiomeData = data
     return data
+
+lightcolor = None
+lightcolor_checked = False
+def loadLightColor():
+    global lightcolor, lightcolor_checked
+    
+    if not lightcolor_checked:
+        lightcolor_checked = True
+        try:
+            lightcolor = list(_load_image("light_normal.png").getdata())
+        except:
+            logging.warning("Light color image could not be found.")
+            lightcolor = None
+    return lightcolor
 
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)

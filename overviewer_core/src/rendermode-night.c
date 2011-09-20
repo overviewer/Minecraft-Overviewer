@@ -18,11 +18,36 @@
 #include "overviewer.h"
 #include <math.h>
 
-/* figures out the black_coeff from a given skylight and blocklight, used in
+/* figures out the color from a given skylight and blocklight, used in
    lighting calculations -- note this is *different* from the one in
    rendermode-lighting.c (the "skylight - 11" part) */
-static float calculate_darkness(unsigned char skylight, unsigned char blocklight) {
-    return 1.0f - powf(0.8f, 15.0 - MAX(blocklight, skylight - 11));
+static void
+calculate_light_color(void *data,
+                      unsigned char skylight, unsigned char blocklight,
+                      unsigned char *r, unsigned char *g, unsigned char *b) {
+    unsigned char v = 255 * powf(0.8f, 15.0 - MAX(blocklight, skylight - 11));
+    *r = v;
+    *g = v;
+    *b = v;
+}
+
+/* fancy version that uses the colored light texture */
+static void
+calculate_light_color_fancy(void *data,
+                            unsigned char skylight, unsigned char blocklight,
+                            unsigned char *r, unsigned char *g, unsigned char *b) {
+    RenderModeLighting *mode = (RenderModeLighting *)(data);
+    unsigned int index;
+    PyObject *color;
+    
+    index = skylight + blocklight * 16;
+    color = PySequence_GetItem(mode->lightcolor, index);
+    
+    *r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
+    *g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
+    *b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+    
+    Py_DECREF(color);
 }
 
 static int
@@ -36,7 +61,9 @@ rendermode_night_start(void *data, RenderState *state, PyObject *options) {
     
     /* override the darkness function with our night version! */
     self = (RenderModeNight *)data;    
-    self->parent.calculate_darkness = calculate_darkness;
+    self->parent.calculate_light_color = calculate_light_color;
+    if (self->parent.color_light)
+        self->parent.calculate_light_color = calculate_light_color_fancy;
     
     return 0;
 }
