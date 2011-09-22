@@ -1025,7 +1025,7 @@ var overviewer = {
 			
             overviewer.map.setCenter(latlngcoords);
             overviewer.map.setZoom(zoom);
-        },
+        }
     },
     /**
      * The various classes needed in this file.
