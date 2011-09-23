@@ -2033,7 +2033,8 @@ def convert_data(blockID, data):
             elif data == 2: data = 3
             elif data == 3: data = 1
             elif data == 4: data = 2
-    if blockID in (53,67,108,109): # wooden and cobblestone stairs.
+    if blockID in (53,67,108,109,114): # wooden, cobblestone, brick 
+                                       # stonebrick and netherbrick stairs.
         if _north == 'upper-left':
             if data == 0: data = 2
             elif data == 1: data = 3
