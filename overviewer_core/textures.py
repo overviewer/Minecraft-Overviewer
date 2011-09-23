@@ -940,7 +940,7 @@ def generate_special_texture(blockID, data):
         return generate_texture_tuple(img, blockID)
 
 
-    if blockID in (53,67, 108, 109): # wooden, stone brick, and cobblestone stairs.
+    if blockID in (53,67, 108, 109, 114): # wooden, stone brick, cobblestone and netherbrick stairs.
         
         if blockID == 53: # wooden
             texture = terrain_images[4]
@@ -950,6 +950,8 @@ def generate_special_texture(blockID, data):
             texture = terrain_images[7]
         elif blockID == 109: # stone brick stairs
             texture = terrain_images[54]
+        elif blockID == 114: # netherbrick stairs
+            texture = terrain_images[224]
         
         side = texture.copy()
         half_block_u = texture.copy() # up, down, left, right
@@ -2338,7 +2340,7 @@ special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 70, 71, 72, 75, 76, 79, 85,
                       86, 90, 91, 92, 93, 94, 96, 98, 99, 100, 101, 102,
-                      104, 105, 106, 107, 108, 109, 113])
+                      104, 105, 106, 107, 108, 109, 113, 114])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2407,6 +2409,7 @@ special_map[107] = range(8) # fence gates, orientation + open bit
 special_map[108] = range(4)  # red stairs, orientation
 special_map[109] = range(4)  # stonebrick stairs, orientation
 special_map[113] = range(16) # netherbrick fence, uses pseudo data
+special_map[114] = range(4) # netherbrick stairs, orientation
 
 # placeholders that are generated in generate()
 bgcolor = None
