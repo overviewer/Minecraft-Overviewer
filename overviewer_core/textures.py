@@ -1434,12 +1434,17 @@ def generate_special_texture(blockID, data):
         
         return generate_texture_tuple(img, blockID)
 
-    if blockID == 85: # fences
+    if blockID == 85 or blockID == 113: # normal fences and nether fences
         # create needed images for Big stick fence
+        if blockID == 85: # normal fence
+            fence_top = terrain_images[4].copy()
+            fence_side = terrain_images[4].copy()
+            fence_small_side = terrain_images[4].copy()
+        else: # netherbrick fence
+            fence_top = terrain_images[224].copy()
+            fence_side = terrain_images[224].copy()
+            fence_small_side = terrain_images[224].copy()
 
-        fence_top = terrain_images[4].copy()
-        fence_side = terrain_images[4].copy()
-        
         # generate the textures of the fence
         ImageDraw.Draw(fence_top).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_top).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -1472,9 +1477,6 @@ def generate_special_texture(blockID, data):
         
         # Now render the small sticks.
         # Create needed images
-        fence_small_side = terrain_images[4].copy()
-        
-        # Generate mask
         ImageDraw.Draw(fence_small_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_small_side).rectangle((0,4,15,6),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(fence_small_side).rectangle((0,10,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -2336,7 +2338,7 @@ special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 70, 71, 72, 75, 76, 79, 85,
                       86, 90, 91, 92, 93, 94, 96, 98, 99, 100, 101, 102,
-                      104, 105, 106, 107, 108, 109])
+                      104, 105, 106, 107, 108, 109, 113])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2396,14 +2398,15 @@ special_map[96] = range(8)  # trapdoor, open, closed, orientation
 special_map[98] = range(3)  # stone brick, normal, mossy and cracked
 special_map[99] = range(11) # huge brown mushroom, side, corner, etc, piece
 special_map[100] = range(11) # huge red mushroom, side, corner, etc, piece
-special_map[101]= range(16)  # iron bars, all the possible combination, uses pseudo data
-special_map[102]= range(16)  # glass panes, all the possible combination, uses pseudo data
+special_map[101] = range(16)  # iron bars, all the possible combination, uses pseudo data
+special_map[102] = range(16)  # glass panes, all the possible combination, uses pseudo data
 special_map[104] = range(8) # pumpkin stem, size of the stem
 special_map[105] = range(8) # melon stem, size of the stem
 special_map[106] = (1,2,4,8) # vine, orientation
 special_map[107] = range(8) # fence gates, orientation + open bit
-special_map[108]= range(4)  # red stairs, orientation
-special_map[109]= range(4)  # stonebrick stairs, orientation
+special_map[108] = range(4)  # red stairs, orientation
+special_map[109] = range(4)  # stonebrick stairs, orientation
+special_map[113] = range(16) # netherbrick fence, uses pseudo data
 
 # placeholders that are generated in generate()
 bgcolor = None
