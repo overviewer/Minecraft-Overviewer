@@ -272,8 +272,9 @@ def _build_block(top, side, blockID=None):
     otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
     otherside.putalpha(othersidealpha)
 
-    ## special case for tall-grass, fern, dead shrub, and pumpkin/melon stem
-    if blockID in (31,32,104,105):
+    ## special case for tall-grass, fern, dead shrub, pumpkin/melon stem
+    ## and nether wart
+    if blockID in (31,32,104,105,115):
         front = original_texture.resize((14,11), Image.ANTIALIAS)
         composite.alpha_over(img, front, (5,9))
         return img
@@ -1926,6 +1927,20 @@ def generate_special_texture(blockID, data):
         
         return generate_texture_tuple(img, blockID)
 
+    if blockID == 115: # nether wart
+        if data == 0: # just come up
+            t = terrain_images[226]
+        elif data in (1, 2):
+            t = terrain_images[227]
+        elif data >= 3: # fully grown
+            t = terrain_images[228]
+        
+        # use the same technic as tall grass
+        img = _build_block(t, t, blockID)
+
+        return generate_texture_tuple(img, blockID)
+
+
     return None
 
 def convert_data(blockID, data):
@@ -2340,7 +2355,7 @@ special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 70, 71, 72, 75, 76, 79, 85,
                       86, 90, 91, 92, 93, 94, 96, 98, 99, 100, 101, 102,
-                      104, 105, 106, 107, 108, 109, 113, 114])
+                      104, 105, 106, 107, 108, 109, 113, 114, 115])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2410,6 +2425,7 @@ special_map[108] = range(4)  # red stairs, orientation
 special_map[109] = range(4)  # stonebrick stairs, orientation
 special_map[113] = range(16) # netherbrick fence, uses pseudo data
 special_map[114] = range(4) # netherbrick stairs, orientation
+special_map[115] = range(4) # nether wart, size of the plant
 
 # placeholders that are generated in generate()
 bgcolor = None
