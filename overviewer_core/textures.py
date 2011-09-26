@@ -1733,6 +1733,18 @@ def generate_special_texture(blockID, data):
         
         return generate_texture_tuple(img, blockID)
 
+    if blockID == 97: # silverfish in stone block
+        if data == 0: # stone
+            t = terrain_images[1]
+        elif data == 1: # cobblestone
+            t = terrain_images[16]
+        elif data == 2: # stone brick
+            t = terrain_images[54]
+        
+        img = _build_block(t, t, blockID)
+        
+        return generate_texture_tuple(img, blockID)
+
     if blockID == 98: # normal, mossy and cracked stone brick
         if data == 0: # normal
             t = terrain_images[54]
@@ -2355,8 +2367,8 @@ def loadLightColor():
 special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 70, 71, 72, 75, 76, 79, 85,
-                      86, 90, 91, 92, 93, 94, 96, 98, 99, 100, 101, 102,
-                      104, 105, 106, 107, 108, 109, 113, 114, 115])
+                      86, 90, 91, 92, 93, 94, 96, 97, 98, 99, 100, 101,
+                      102, 104, 105, 106, 107, 108, 109, 113, 114, 115])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2413,6 +2425,7 @@ special_map[92] = range(6) # cake, eaten amount, (not implemented)
 special_map[93] = range(16) # OFF redstone repeater, orientation and delay
 special_map[94] = range(16) # ON redstone repeater, orientation and delay
 special_map[96] = range(8)  # trapdoor, open, closed, orientation
+special_map[97] = range(3)  # silverfish in stony block, type of block
 special_map[98] = range(3)  # stone brick, normal, mossy and cracked
 special_map[99] = range(11) # huge brown mushroom, side, corner, etc, piece
 special_map[100] = range(11) # huge red mushroom, side, corner, etc, piece
