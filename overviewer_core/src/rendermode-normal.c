@@ -173,7 +173,9 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
          * get constant brown color (see textures.py) */
         (((state->block == 104) || (state->block == 105)) && (state->block_data != 7)) ||
         /* vines */
-        state->block == 106)
+        state->block == 106 ||
+        /* lily pads */
+        state->block == 111)
     {
         /* do the biome stuff! */
         PyObject *facemask = mask;
@@ -240,6 +242,10 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 /* vines */
                 color = PySequence_GetItem(self->grasscolor, index);
                 break;
+            case 111:
+                /* lily padas */
+                color = PySequence_GetItem(self->grasscolor, index);
+                break;
             default:
                 break;
             };
@@ -270,7 +276,8 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
                 facemask = NULL;
             }
             
-            if (state->block == 18 || state->block == 106) /* leaves and vines */
+            if (state->block == 18 || state->block == 106 || state->block == 111)
+                /* leaves, vines and lyli pads */
             {
                 r = 37;
                 g = 118;

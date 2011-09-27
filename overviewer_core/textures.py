@@ -1939,6 +1939,20 @@ def generate_special_texture(blockID, data):
         
         return generate_texture_tuple(img, blockID)
 
+    if blockID == 111: # lily pad
+        t = terrain_images[76] # NOTE: using same data as stairs, no 
+                               # info in minepedia at the moment.
+        if data == 0: # pointing south
+            img = _build_full_block(None, None, None, None, None, t)
+        elif data == 1: # pointing north
+            img = _build_full_block(None, None, None, None, None, t.rotate(180))
+        elif data == 2: # pointing west
+            img = _build_full_block(None, None, None, None, None, t.rotate(270))
+        elif data == 3: # pointing east
+            img = _build_full_block(None, None, None, None, None, t.rotate(90))
+        
+        return generate_texture_tuple(img, blockID)
+
     if blockID == 115: # nether wart
         if data == 0: # just come up
             t = terrain_images[226]
@@ -2045,8 +2059,9 @@ def convert_data(blockID, data):
             elif data == 2: data = 3
             elif data == 3: data = 1
             elif data == 4: data = 2
-    if blockID in (53,67,108,109,114): # wooden, cobblestone, brick 
+    if blockID in (53,67,108,109,111,114): # wooden, cobblestone, brick 
                                        # stonebrick and netherbrick stairs.
+                                       # AND lily pad.
         if _north == 'upper-left':
             if data == 0: data = 2
             elif data == 1: data = 3
@@ -2368,7 +2383,8 @@ special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       34, 35, 43, 44, 50, 51, 53, 54, 55, 58, 59, 61, 62,
                       63, 64, 65, 66, 67, 68, 70, 71, 72, 75, 76, 79, 85,
                       86, 90, 91, 92, 93, 94, 96, 97, 98, 99, 100, 101,
-                      102, 104, 105, 106, 107, 108, 109, 113, 114, 115])
+                      102, 104, 105, 106, 107, 108, 109, 111, 113, 114,
+                      115])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2437,6 +2453,7 @@ special_map[106] = (1,2,4,8) # vine, orientation
 special_map[107] = range(8) # fence gates, orientation + open bit
 special_map[108] = range(4)  # red stairs, orientation
 special_map[109] = range(4)  # stonebrick stairs, orientation
+special_map[111] = range(4)  # lily pad, orientation
 special_map[113] = range(16) # netherbrick fence, uses pseudo data
 special_map[114] = range(4) # netherbrick stairs, orientation
 special_map[115] = range(4) # nether wart, size of the plant
