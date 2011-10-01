@@ -29,15 +29,24 @@ Windows Build Instructions
 First, you'll need a compiler.  You can either use Visual Studio, or
 cygwin/mingw. The free `Visual Studio Express
 <http://www.microsoft.com/express/Windows/>`_ is okay. You will want the C++
-version (Microsoft® Visual C++® 2010 Express)
+version (Microsoft® Visual C++® 2010 Express).  Note that the Express version of
+Visual Studio will only build 32-bit executables.  We currently don't have a
+recommended way of building Overviewer on 64-bit Windows using free tools.  If you
+have bought a copy of Visual Studio, you can use it for 64-bit builds.
+
+
+Prerequisits
+~~~~~~~~~~~~
+
+You will need a copy of the `PIL sources <http://www.pythonware.com/products/pil/>`_.
 
 Building with Visual Studio
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Get the latest source code as per above
+1. Get the latest Overviewer source code as per above.
 2. From the Start menu, navigate to the 'Microsoft Visual Studio 2010 Express' and open the 'Visual Studio Command Prompt (2010)' shortcut.
-3. cd to the folder containing the Overviewer source code
-4. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory
+3. cd to the folder containing the Overviewer source code.
+4. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory.
 5. First try a build::
 
     c:\python26\python setup.py build
@@ -57,9 +66,9 @@ If the build was successful, there should be a c_overviewer.pyd file in your cur
 Building with mingw
 ~~~~~~~~~~~~~~~~~~~
 
-1. Open a MinGW shell
-2. cd to the Overviewer directory
-3. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory
+1. Open a MinGW shell.
+2. cd to the Overviewer directory.
+3. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory.
 4. Build::
 
     python setup.py build --compiler=mingw32
@@ -69,8 +78,8 @@ Linux
 -----
 
 You will need the gcc compiler and a working build environment. On Ubuntu and
-Debian, this can be done by installing the ``build-essential`` package. *For
-CentOS machines, see the `CentOS`_ section below*
+Debian, this can be done by installing the ``build-essential`` package. For
+CentOS machines, see the :ref:`centos` section below
 
 You will need the following packages (at least):
 
