@@ -112,6 +112,8 @@ The following script (copied into your MCO source directory) should handle every
     # build MCO
     C_INCLUDE_PATH="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
 
+.. _centos:
+
 CentOS
 ------
 Since CentOS has an older version of Python (2.4), there are some difficulties

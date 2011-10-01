@@ -15,6 +15,8 @@ Overviewer development.
 
 So let's get started!
 
+.. contents::
+
 Background Info
 ===============
 The Overviewer's task is to take Minecraft worlds and render them into a set of tiles that can be displayed with a Google Maps interface.
@@ -190,6 +192,9 @@ This is done at the end of :func:`textures._build_block`
 
 .. image:: pixelfix.png
     :alt: The 6 pixels manually added to each cube.
+
+Other Cube Types
+----------------
 
 Chunk Rendering
 ===============

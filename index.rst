@@ -54,6 +54,8 @@ Documentation Contents
    building
    installing
    running
+   options
+   faq
    design/designdoc
 
 
