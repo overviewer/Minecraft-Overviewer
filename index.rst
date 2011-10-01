@@ -19,21 +19,40 @@ examples, see `The Example Wiki Page <https://github.com/overviewer/Minecraft-Ov
 
 Download
 ========
-The Overviewer works with Linux, Mac, and Windows! We provide Windows and Debian
-built executables available for download on our `Github Homepage`_.
 
-To get your copy, head over to our `Github Homepage`_. If you are familiar with Git, you can clone the repository from there. If you would like a Debian or Windows executable, click on the Downloads link, or go `directly there <https://github.com/overviewer/Minecraft-Overviewer/downloads>`_.
+The Overviewer works with Linux, Mac, and Windows! We provide Windows and Debian
+built executables for your convenience. Find them as well as the full sources on
+our `Github Homepage`_.
+
+**If you are running Windows, Debian, or Ubuntu and would like the pre-built
+packages and don't want to have to compile anything yourself**, head to the
+`Installation <installing.html>`_ page.
+
+**If you would like to build the Overviewer from source yourself (it's not that
+bad)**, head to the `Building <building.html>`_ page.
 
 .. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
 
-Documentation
-=============
+Help
+====
+**IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to pop in
+IRC: #overviewer on freenode. Not familiar with IRC? `Use the web client
+<http://webchat.freenode.net/?channels=overviewer>`_. There's usually someone on
+there that can help you out.
+
+If you think you've found a bug or other issue, file an issue on our `Issue
+Tracker <https://github.com/overviewer/Minecraft-Overviewer/issues>`_. Filing or
+commenting on an issue sends a notice to our IRC channel, so the response time
+is often very good!
+
+Documentation Contents
+======================
 
 .. toctree::
    :maxdepth: 2
 
-   quickstart
    building
+   installing
    running
    design/designdoc
 
