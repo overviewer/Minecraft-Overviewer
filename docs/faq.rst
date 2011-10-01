@@ -3,13 +3,13 @@ Frequently Asked Questions
 ==========================
 
 **The full map doesn't display even when fully zoomed out!**
-    Are you using the `-z` or `--zoom` option on your commandline or in
+    Are you using the ``-z`` or ``--zoom`` option on your commandline or in
     settings.py? If so, try removing it, or increasing the value you set. It's
     quite likely you don't need it at all.
 
 **You've added a few feature, but it's not showing up on my map!**
     Some new features will only show up in newly-rendered areas. Use the
-    `--forcerender` option to update the entire map.
+    ``--forcerender`` option to update the entire map.
 
 **How do I use this on CentOS 5?**
     CentOS 5 comes with Python 2.4, but the Overviewer needs 2.6 or higher. See
