@@ -18,7 +18,7 @@ Command line options
 
 Useful Options
 --------------
-.. cmdoption:: --rendermodes=MODE1[,MODE2,...]
+.. cmdoption:: --rendermodes <MODE1>[,MODE2,...]
 
     Use this option to specify which render mode to use, such as lighting or
     night. Use --list-rendermodes to get a list of available rendermodes, and
@@ -36,7 +36,7 @@ Useful Options
 
     List the available render modes, and a short description of each.
 
-.. cmdoption:: --north-direction=NORTH_DIRECTION
+.. cmdoption:: --north-direction <NORTH_DIRECTION>
 
     Specifies which corner of the screen north will point to.
     Valid options are: lower-left, upper-left, upper-right, lower-right.
@@ -44,7 +44,7 @@ Useful Options
     the existing map uses. For new maps, it defaults to lower-left for
     historical reasons.
 
-.. cmdoption:: --settings=PATH
+.. cmdoption:: --settings <PATH>
 
     Use this option to load settings from a file. For more information see the
     `Settings File`_ section below.
@@ -52,7 +52,7 @@ Useful Options
 Less Useful Options
 -------------------
 
-.. cmdoption:: -p PROCS, --processes=PROCS
+.. cmdoption:: -p <PROCS>, --processes <PROCS>
 
     Adding the "-p" option will utilize more cores during processing.  This
     can speed up rendering quite a bit. The default is set to the same
@@ -75,7 +75,7 @@ Less Useful Options
     Force re-rendering the entire map (or the given regionlist). This
     is an easier way to completely re-render without deleting the map.
 
-.. cmdoption:: --regionlist=regionlist
+.. cmdoption:: --regionlist <regionlist>
 
     Use this option to specify manually a list of regions to consider for
     updating. Without this option, every chunk in every region is checked for
@@ -88,7 +88,18 @@ Less Useful Options
     a certain date. Or perhaps you can incrementally update your map by passing
     in a subset of regions each time. It's up to you!
 
+.. cmdoption:: -z <zoom>, --zoom <zoom>
 
+    See the :ref:`zoom <zoom>` section below.
+
+.. cmdoption:: --bg-color <color>
+
+    Configures the background color for the Google Map output. Specify in
+    #RRGGBB format.
+
+*This list is currently incomplete. Use the* :option:`--help <-h>` *and*
+:option:`--advanced-help` *options to see the complete list of accepted command
+line options.*
 
 Settings File
 =============
@@ -109,6 +120,8 @@ way.
 imgformat=FORMAT
     Set the output image format used for the tiles. The default is 'png',
     but 'jpg' is also supported.
+
+.. _zoom:
 
 zoom=ZOOM
     The Overviewer by default will detect how many zoom levels are required
