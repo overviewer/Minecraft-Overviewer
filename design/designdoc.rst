@@ -6,9 +6,9 @@ to the right place!
 
 This document's scope does not cover the details of the code. The code is fairly
 well commented and not difficult to understand. Instead, this document is
-intended to give an explanation to how the Overviewer was designed and how all
-the pieces fit together. Think of this document as commenting on how all the
-high level pieces of the code work.
+intended to give an explanation to how the Overviewer was designed, why certain
+decisions were made, and how all the pieces fit together. Think of this document
+as commenting on how all the high level pieces of the code work.
 
 This document is probably a good read to anyone that wants to get involved in
 Overviewer development.
@@ -54,15 +54,14 @@ exist.
 About the Rendering
 ===================
 
-Minecraft worlds are rendered in an approximated Isometric projection
-[#isomorphicref]_, or
-what I call the "Sim City projection" [#isomorphicnote]_. In the original design, the projection
-acts as if your eye is infinitely far away looking down at the world at a 45
-degree angle in the South-East direction (now, the world can be rendered at any
-of the 4 oblique directions).
+Minecraft worlds are rendered in an approximated Isometric projection at an
+oblique angle. In the original design, the projection acts as if your eye is
+infinitely far away looking down at the world at a 45 degree angle in the
+South-East direction (now, the world can be rendered at any of the 4 oblique
+directions).
 
-.. [#isomorphicref] http://en.wikipedia.org/wiki/Isometric_projection
-.. [#isomorphicnote] To be honest, I'm not entirely sure it's technically an isomorphic projection. There are a lot of very similar projections.
+.. image:: screenshot.png
+    :alt: A screenshot of Overviewer output
 
 In order to render a Minecraft world, there are a few steps that need to happen.
 These steps are explained in detail in the next few sections.
@@ -76,28 +75,27 @@ Block Rendering
 ===============
 .. This section shows how each block is pre-rendered
 
-The first step is rendering the blocks from the textures. Each block is built
-and cached in global variables of the :mod:`textures` module.
+The first step is rendering the blocks from the textures. Each block is "built"
+from its textures into an image of a cube and cached in global variables of the
+:mod:`textures` module.
 
-Textures come in the size 16 by 16 [#f1]_. In order to render a cube out of
-this, I apply an `affine transformation`_ to the texture in order to skew it to
-the right shape.
+Textures come in the size 16 by 16 (higher resolution textures are resized and
+the process remains the same). In order to render a cube out of this, an `affine
+transformation`_ is applied to the texture in order to transform it to the top,
+left, and right faces of the cube.
 
 .. image:: texturecubing.png
     :alt: A texture gets rendered into a cube
 
-.. [#f1]
-    Textures can come in other sizes and are re-sized so this section applies
-    just the same.
-
 .. _affine transformation: http://en.wikipedia.org/wiki/Affine_transformation
 
-The result is an image of a cube that is 24 by 24 pixels large. This particular
-size for the cubes was chosen for an important reason: 24 is divisible by 2 and
-by 4. This makes placement much easier. E.g. in order to draw two cubes that are
-next to each other in the world, one are drawn exactly 12 pixels over and 6
-pixels down from the other. These kind of placement decisions all happen on
-exact pixel boundaries.
+The result is an image of a cube that is 24 by 24 pixels in size. This
+particular size for the cubes was chosen for an important reason: 24 is
+divisible by 2 and by 4. This makes placement much easier. E.g. in order to draw
+two cubes that are next to each other in the world, one is drawn exactly 12
+pixels over and 6 pixels down from the other. All placements of the cubes happen
+on exact pixel boundaries and no further resolution is lost beyond the initial
+transformations.
 
 The transformation happens in two stages. First, the texture is transformed for
 the top of the cube. Then the texture is transformed for the left side of the
@@ -105,11 +103,12 @@ cube, which is mirrored for the right side of the cube.
 
 Top Transformation
 ------------------
-The transformation from the top is a simple `affine transformation`_. It is
-actually several affine transformations: a re-size, a rotation, and a scaling;
-but since multiple affine transformations can be chained together simply by
-multiplying the transformation matrices together, only one transformation is
-actually done.
+
+The transformation for the top face of the cube is a simple `affine
+transformation`_ from the original square texture. It is actually several affine
+transformations: a re-size, a rotation, and a scaling; but since multiple affine
+transformations can be chained together simply by multiplying the transformation
+matrices together, only one transformation is actually done.
 
 This can be seen in the function :func:`textures.transform_image`. It takes
 these steps:
@@ -139,9 +138,11 @@ interpolation to show the pixels.
 
 Side Transformation
 -------------------
-The texture square is transformed for the sides of the cube in
-:func:`textures.transform_image_side`. This is another `affine transformation`_,
-but this time only two transformations are done: a re-size and a shear.
+
+The texture square is transformed for the sides of the cube in the
+:func:`textures.transform_image_side` function. This is another `affine
+transformation`_, but this time only two transformations are done: a re-size and
+a shear.
 
 1. First the texture is re-sized to 12 by 12 pixels. This is half the width of
    24 so it will have the correct width after the shear.
