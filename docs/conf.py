@@ -41,14 +41,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Overviewer'
-copyright = u'2011, Andrew Brown and Contributors'
+copyright = u'2010-2011 the Overviewer Team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.3.0'
+version = '0.3'
 # The full version, including alpha/beta/rc tags.
 release = '0.3.0'
 
@@ -179,7 +179,7 @@ htmlhelp_basename = 'Overviewerdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'Overviewer.tex', u'Overviewer Documentation',
-   u'Andrew Brown and Contributors', 'manual'),
+   u'The Overviewer Team', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -212,5 +212,5 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'overviewer', u'Overviewer Documentation',
-     [u'Andrew Brown and Contributors'], 1)
+     [u'The Overviewer Team'], 1)
 ]
