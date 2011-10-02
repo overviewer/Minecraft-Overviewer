@@ -6,7 +6,7 @@ Frequently Asked Questions
     Are you using the ``-z`` or ``--zoom`` option on your commandline or
     in settings.py? If so, try removing it, or increasing the value you set.
     It's quite likely you don't need it at all. See the documentation for the
-    :option:`--zoom <-z>` option.
+    :ref:`zoom <zoom>` option.
 
 **You've added a few feature, but it's not showing up on my map!**
     Some new features will only show up in newly-rendered areas. Use the

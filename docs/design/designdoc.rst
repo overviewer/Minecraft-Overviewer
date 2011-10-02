@@ -131,10 +131,10 @@ This produces an image of size 24 by 12 as seen in the following sequence.
 
 The final image, shown below, becomes the top of the cube.
 
-.. image:: dirt_top.png
-    :alt: Top of dirt
+.. image:: cube_top.png
+    :alt: Top of the cube
 
-On the left is the top of the dirt block at actual size after the
+On the left is what will become the top of the block at actual size after the
 transformation, the right is the same but blown up by a factor of 10 with no
 interpolation to show the pixels.
 
@@ -158,11 +158,11 @@ a shear.
 This image is simply flipped along the horizontal axis for the other visible
 side of the cube.
 
-.. image:: dirt_side.png
-    :alt: The sides of the dirt block
+.. image:: cube_sides.png
+    :alt: The sides of the block
 
-Again, the left are the two sides of the dirt block at actual size, the right is
-scaled with no interpolation by a factor of 10 to show the pixels.
+Again, shown on the left are the two sides of the block at actual size, the
+right is scaled with no interpolation by a factor of 10 to show the pixels.
 
 An Entire Cube
 --------------
