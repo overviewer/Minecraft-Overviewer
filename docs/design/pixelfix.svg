@@ -16,7 +16,7 @@
    version="1.1"
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="pixelfix.svg"
-   inkscape:export-filename="/home/andrew/mc/overviewerdocs/design/pixelfix.png"
+   inkscape:export-filename="/home/andrew/mc/overviewer/docs/design/pixelfix.png"
    inkscape:export-xdpi="61.016949"
    inkscape:export-ydpi="61.016949">
   <defs
@@ -102,7 +102,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
