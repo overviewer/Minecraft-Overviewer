@@ -18,6 +18,6 @@ Frequently Asked Questions
 
 **The background color of the map is black, and I don't like it!**
     You can change this by using the :option:`--bg-color` command line option, or
-    ``bg_color`` in settings.py. See the `Options <options.html>`_ page for more
+    ``bg_color`` in settings.py. See the :doc:`options` page for more
     details.
 

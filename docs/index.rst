@@ -26,10 +26,10 @@ our `Github Homepage`_.
 
 **If you are running Windows, Debian, or Ubuntu and would like the pre-built
 packages and don't want to have to compile anything yourself**, head to the
-`Installation <installing.html>`_ page.
+:doc:`installing` page.
 
 **If you would like to build the Overviewer from source yourself (it's not that
-bad)**, head to the `Building <building.html>`_ page.
+bad)**, head to the :doc:`Building <building>` page.
 
 .. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
 

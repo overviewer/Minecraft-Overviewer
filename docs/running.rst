@@ -33,7 +33,7 @@ And similarly for other systems::
     tiles that need rendering on subsequent runs.
 
 **options**
-    See the `Options <options.html>`_ page for a list of options you can
+    See the :doc:`options` page for a list of options you can
     specify.
 
 For example, on Windows if your Minecraft server runs out of ``c:\server\`` and you want

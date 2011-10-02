@@ -3,8 +3,8 @@ Installing
 ==========
 
 This page is for installing the pre-compiled binary versions of the Overviewer.
-If you have built the Overviewer from source yourself, head back to `Building
-<building.html>`_.
+If you have built the Overviewer from source yourself, head back to
+:doc:`Building <building>`.
 
 
 Windows
@@ -18,7 +18,7 @@ right place!
 
    For 64 bit, you'll want these instead: `VC++ 2008 <http://www.microsoft.com/downloads/en/details.aspx?familyid=bd2a6171-e2d6-4230-b809-9a8d7548c1b6>`_ and `VC++ 2010 <http://www.microsoft.com/download/en/details.aspx?id=14632>`_
 
-3. That's it! Proceed with instructions on `Running <running.html>`_ the
+3. That's it! Proceed with instructions on :doc:`Running <running>` the
    Overviewer.
 
 Debian / Ubuntu
@@ -32,4 +32,4 @@ Ubuntu users. To do this, add the following line to your
     deb http://overviewer.org/debian ./
 
 Then run ``apt-get update`` and ``apt-get install minecraft-overviewer`` and
-you're all set! See you at the `Running the Overviewer <running.html>`_ page!
+you're all set! See you at the :doc:`running` page!

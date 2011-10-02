@@ -6,7 +6,7 @@ These instructions are for building the C extension for Overviewer. Also note
 that pre-built Windows and Debian executables are available in the `Downloads
 <https://github.com/overviewer/Minecraft-Overviewer/downloads>`_ section.  These
 kits already contain the compiled extension and require no further setup (so you
-can skip to the `Running <running.html>`_ section of the docs).
+can skip to the :doc:`Running <running>` section of the docs).
 
 Get The Source
 ==============
@@ -152,7 +152,7 @@ regular user.
 4. Run Overviewer as usual
 
   1. ``$ ./overviewer.py path/to/world/ path/to/output/`` or ``$ python26 path/to/overviewer.py path/to/world/ path/to/output/``
-  2. Proceed to the `Running <running.html>`_ instructions for more info.
+  2. Proceed to the :doc:`Running <running>` instructions for more info.
 
 
 Installing the Compiled Code
