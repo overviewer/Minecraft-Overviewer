@@ -253,8 +253,8 @@ Two cubes that are neighbors after projection to the image (diagonally
 neighboring in the world) have a horizontal offset of 24 pixels from each other,
 as shown below on the left.  This is mostly trivial, since the images don't end
 up overlapping at all. Two cubes in the same configuration but rotated 90
-degrees have some overlap, and are only vertically offset by 12 pixels, as shown
-on the right.
+degrees have some overlap in the image, and are only vertically offset by 12
+pixels, as shown on the right.
 
 .. image:: cubepositionimgs/cube_horizontal_offset.png
     :alt: Two cubes horizontally positioned are offset by 24 pixels on the X axis.
@@ -269,9 +269,9 @@ image, but by how much?
 Interestingly enough, due to the projection, this is exactly the same offset as
 the situation above for diagonally neighboring cubes. The cube outlined in green
 is drawn 12 pixels below the other one. Only the order that the cubes are drawn
-is changed.
+is different.
 
-And finally, what about cubes that are next to each other in the world, or
+And finally, what about cubes that are next to each other in the world ---
 diagonally next to each other in the image?
 
 .. image:: cubepositionimgs/cube_neighbors.png
@@ -326,18 +326,11 @@ red cube is at vertical offset 1524 below.
 
 The green cube at the bottom most tip is the cube with the lowest vertical
 placement on the image, so its offset plus 24 pixels for its height will be the
-chunk height. Since cubes in that configuration are 12 pixels lower, add 15*12
+chunk height. Since the green cubes each have an offset of 12 pixels, add 15*12
 pixels to get the offset of the lowest green cube: 1704.
 
-So the total size of a chunk in pixels is 384 wide by 1704 tall. That's pretty
+So the total size of a chunk in pixels is 384 wide by 1728 tall. That's pretty
 tall!
-
-.. note::
-    
-    The original code had an incorrect height for a chunk, but it turns out not
-    to matter, since the chunk image will either have some blank space or be
-    slightly cut off. Now that chunks are rendered directly to tiles, it matters
-    even less, but this is still important for calculating some later things.
 
 Tile Rendering
 ==============

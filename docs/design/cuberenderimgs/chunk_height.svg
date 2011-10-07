@@ -54,9 +54,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.3840074"
-     inkscape:cx="126.00362"
-     inkscape:cy="123.42865"
+     inkscape:zoom="1.6857478"
+     inkscape:cx="180.45474"
+     inkscape:cy="219.80008"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -4163,7 +4163,7 @@
        sodipodi:cy="85.117432"
        sodipodi:rx="0.5"
        sodipodi:ry="0.5"
-       d="m 2,85.117432 a 0.5,0.5 0 1 1 -1,0 0.5,0.5 0 1 1 1,0 z"
+       d="m 2,85.117432 c 0,0.276142 -0.2238576,0.5 -0.5,0.5 -0.2761424,0 -0.5,-0.223858 -0.5,-0.5 0,-0.276143 0.2238576,-0.5 0.5,-0.5 0.2761424,0 0.5,0.223857 0.5,0.5 z"
        transform="matrix(2,0,0,2,62.037936,613.88763)" />
     <text
        xml:space="preserve"
@@ -4184,7 +4184,7 @@
        sodipodi:cy="85.117432"
        sodipodi:rx="0.5"
        sodipodi:ry="0.5"
-       d="m 2,85.117432 a 0.5,0.5 0 1 1 -1,0 0.5,0.5 0 1 1 1,0 z"
+       d="m 2,85.117432 c 0,0.276142 -0.2238576,0.5 -0.5,0.5 -0.2761424,0 -0.5,-0.223858 -0.5,-0.5 0,-0.276143 0.2238576,-0.5 0.5,-0.5 0.2761424,0 0.5,0.223857 0.5,0.5 z"
        transform="matrix(2,0,0,2,232.03794,697.88763)" />
     <text
        xml:space="preserve"
@@ -4197,7 +4197,7 @@
          sodipodi:role="line"
          id="tspan13132"
          x="116.86209"
-         y="475.16006">1680</tspan></text>
+         y="475.16006">1704</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Mend)"
        d="m 141,463.61743 c 16,-13 20,12 29,-19"
@@ -4235,6 +4235,6 @@
          sodipodi:role="line"
          id="tspan13420"
          x="234.03793"
-         y="904.1225">1704</tspan></text>
+         y="904.1225">1728</tspan></text>
   </g>
 </svg>
