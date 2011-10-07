@@ -15,6 +15,10 @@ Overviewer development.
 
 So let's get started!
 
+.. note::
+
+    This page is still under construction
+
 .. contents::
 
 Background Info
@@ -195,10 +199,145 @@ This is done at the end of :func:`textures._build_block`
 
 Other Cube Types
 ----------------
+Many block types are not rendered as cubes. Fences, rails, doors, torches, and
+many other types of blocks have custom rendering routines.
 
 Chunk Rendering
 ===============
-.. This goes over the rendering of a chunk
+
+So now that each type of cube is rendered and cached in global variables within
+the :mod:`textures` module, the next step is to use the data from a chunk of
+the world to arrange these cubes on an image, rendering an entire chunk.
+
+How big is a chunk going to be? A chunk is 16 by 16 blocks across, 128 blocks
+high. The diagonal of a 16 by 16 grid is 16 squares. Observe.
+
+This is the top-down view of a single chunk. It is essentially a 16 by 16 grid,
+extending 128 units into the page.
+
+.. image:: cuberenderimgs/chunk_topdown.png
+    :alt: A 16x16 square grid
+
+Rendered at the appropriate perspective, we'll have something like this
+(continued down for 128 layers).
+
+.. image:: cuberenderimgs/chunk_perspective.png
+    :alt: Perspective rendering of the two top layers of a chunk.
+
+Each of those cubes shown is where one of the pre-rendered cubes gets pasted.
+This happens from back to front, bottom to top, so that the chunk gets drawn
+correctly. Obviously if a cube in the back is pasted on the image after the
+cubes in the front, it will be drawn on top of everything.
+
+Cube Positioning
+----------------
+A single cube is drawn in a 24 by 24 square. Before we can construct a chunk out
+of individual cubes, we must figure out how to position neighboring cubes.
+
+First, to review, these are the measurements of a cube:
+
+.. image:: cubepositionimgs/cube_measurements.png
+    :alt: The measurements of a cube
+
+* The cube is bounded by a 24 by 24 pixel square.
+
+* The side vertical edges are 12 pixels high.
+
+* The top (and bottom) face of the cube takes 12 vertical pixels (and 24
+  horizontal pixels).
+
+* The edges of the top and bottom of the cube take up 6 vertical pixels and 12
+  horizontal pixels each.
+
+Two cubes that are neighbors after projection to the image (diagonally
+neighboring in the world) have a horizontal offset of 24 pixels from each other,
+as shown below on the left.  This is mostly trivial, since the images don't end
+up overlapping at all. Two cubes in the same configuration but rotated 90
+degrees have some overlap, and are only vertically offset by 12 pixels, as shown
+on the right.
+
+.. image:: cubepositionimgs/cube_horizontal_offset.png
+    :alt: Two cubes horizontally positioned are offset by 24 pixels on the X axis.
+
+Now for something slightly less trivial: two cubes that are stacked on top of
+each other in the world. One is rendered lower on the vertical axis of the
+image, but by how much?
+
+.. image:: cubepositionimgs/cube_stacking.png
+    :alt: Two cubes stacked are offset in the image by 12 pixels.
+
+Interestingly enough, due to the projection, this is exactly the same offset as
+the situation above for diagonally neighboring cubes. The cube outlined in green
+is drawn 12 pixels below the other one. Only the order that the cubes are drawn
+is changed.
+
+And finally, what about cubes that are next to each other in the world, or
+diagonally next to each other in the image?
+
+.. image:: cubepositionimgs/cube_neighbors.png
+    :alt: Cubes that are neighbors are offset by 12 on the X and 6 on the Y
+
+The cube outlined in green is offset on the horizontal axis by half the cube
+width, or 12 pixels. It is offset on the vertical axis by half the width of the
+cube's top, or 6 pixels. For the other 3 directions this could go, the
+directions of the offsets are changed, but the amounts are the same.
+
+The size of a chunk
+-------------------
+Now that we know how to place cubes relative to each other, we can begin to
+construct a chunk.
+
+Since the cube images are 24 by 24 pixels, and the diagonal of the 16 by 16 grid
+is 16 squares, the width of one rendered chunk will be 384 pixels. Just
+considering the top layer of the chunk:
+
+.. image:: cuberenderimgs/chunk_width.png
+    :alt: Illustrating the width of a single chunk
+
+Since cubes next to each other in the same "diagonal row" are offset by 24
+pixels, this is trivially calculated.
+
+The height is a bit more tricky to calculate. Let's start by calculating the
+height of a single stack of 128 cubes.
+
+If the top of a stack of cubes is at Y value 0, the 128th cube down must be
+drawn (128-1)*12=1524 pixels below. However, that's not the end of the story.
+The bottom cube has a height of 24 pixels, so the height of a rendered stack of
+128 cube is 1548 pixels.
+
+.. image:: cuberenderimgs/cube_stack128.png
+    :alt: A stack of 128 cubes takes 1560 vertical pixels to draw.
+
+You can also calculate this by looking at the sides of the cubes, which don't
+overlap at all. They are 12 pixels each, times 128 cubes in the stack, gives
+1536 pixels. Add in the 6 pixels for the top cube and the 6 pixels for the
+bottom cube to get the total height of 1548 pixels.
+
+So what about the entire chunk? Let's take a look at the top and bottom few
+layers of a chunk.
+
+.. image:: cuberenderimgs/chunk_height.png
+    :alt: The highest and lowest positioned cubes in a chunk
+
+Let's let the red cubes represent the stack from above. The one on the top we'll
+define as position 0, with our vertical axis running positively downward (as is
+the case in a lot of imaging library coordinate systems) Therefore, the bottom
+red cube is at vertical offset 1524 below.
+
+The green cube at the bottom most tip is the cube with the lowest vertical
+placement on the image, so its offset plus 24 pixels for its height will be the
+chunk height. Since cubes in that configuration are 12 pixels lower, add 15*12
+pixels to get the offset of the lowest green cube: 1704.
+
+So the total size of a chunk in pixels is 384 wide by 1704 tall. That's pretty
+tall!
+
+.. note::
+    
+    The original code had an incorrect height for a chunk, but it turns out not
+    to matter, since the chunk image will either have some blank space or be
+    slightly cut off. Now that chunks are rendered directly to tiles, it matters
+    even less, but this is still important for calculating some later things.
 
 Tile Rendering
 ==============
