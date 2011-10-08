@@ -280,7 +280,7 @@ def _build_block(top, side, blockID=None):
         return img
 
     ## special case for non-block things
-    if blockID in (37,38,6,39,40,83,30): ## flowers, sapling, mushrooms, reeds, web
+    if blockID in (37,38,6,39,40,83,30,120): ## flowers, sapling, mushrooms, reeds, web, broken air portal frame(data = 1)
         #
         # instead of pasting these blocks at the cube edges, place them in the middle:
         # and omit the top
@@ -1963,6 +1963,73 @@ def generate_special_texture(blockID, data):
         
         # use the same technic as tall grass
         img = _build_block(t, t, blockID)
+        return generate_texture_tuple(img, blockID)
+
+    if blockID == 116: # enchantment table
+        # no book at the moment
+        top = terrain_images[166]
+        side = terrain_images[182]
+        img = _build_full_block((top, 4), None, None, side, side)
+        return generate_texture_tuple(img, blockID)
+
+    if blockID == 117: # brewing stand
+        # place holder. just paste it in 2d!
+        t = terrain_images[157]
+        img = Image.new("RGBA", (24,24), bgcolor)
+        
+        composite.alpha_over(img, t, (4, 4), t)
+        return generate_texture_tuple(img, blockID)
+
+    if blockID == 118: # cauldron
+        side = terrain_images[154]
+        top = terrain_images[138]
+        bottom = terrain_images[139]
+        water = transform_image(_load_image("water.png"))
+        if data == 0: # empty
+            img = _build_full_block(top, side, side, side, side)
+
+        if data == 1: # 1/3 filled
+            img = _build_full_block(None , side, side, None, None)
+            composite.alpha_over(img, water, (0,8), water)
+            img2 = _build_full_block(top , None, None, side, side)
+            composite.alpha_over(img, img2, (0,0), img2)
+
+        if data == 2: # 2/3 filled
+            img = _build_full_block(None , side, side, None, None)
+            composite.alpha_over(img, water, (0,4), water)
+            img2 = _build_full_block(top , None, None, side, side)
+            composite.alpha_over(img, img2, (0,0), img2)
+
+        if data == 3: # 3/3 filled
+            img = _build_full_block(None , side, side, None, None)
+            composite.alpha_over(img, water, (0,0), water)
+            img2 = _build_full_block(top , None, None, side, side)
+            composite.alpha_over(img, img2, (0,0), img2)
+
+        return generate_texture_tuple(img, blockID)
+
+    if blockID == 119: # air portal
+        img = Image.new("RGBA", (24,24), bgcolor)
+        # generate a black texure with white, blue and grey dots resembling stars
+        t = Image.new("RGBA", (16,16), (0,0,0,255))
+        for color in [(155,155,155,255), (100,255,100,255), (255,255,255,255)]:
+            for i in range(6):
+                x = randint(0,15)
+                y = randint(0,15)
+                t.putpixel((x,y),color)
+
+        t = transform_image(t, blockID)
+        composite.alpha_over(img, t, (0,0), t)
+
+        return generate_texture_tuple(img, blockID)
+
+    if blockID == 120: # air portal frame
+        if data == 0: # fixed block
+            t = terrain_images[159]
+            img = _build_full_block(t, None, None, t, t)
+        if data == 1: # broken block
+            t = terrain_images[158]
+            img = _build_block(t, t, blockID)
 
         return generate_texture_tuple(img, blockID)
 
@@ -2384,7 +2451,7 @@ special_blocks = set([ 2,  6,  9, 17, 18, 20, 26, 23, 27, 28, 29, 31, 33,
                       63, 64, 65, 66, 67, 68, 70, 71, 72, 75, 76, 79, 85,
                       86, 90, 91, 92, 93, 94, 96, 97, 98, 99, 100, 101,
                       102, 104, 105, 106, 107, 108, 109, 111, 113, 114,
-                      115])
+                      115, 116, 117, 118, 119, 120])
 
 # this is a map of special blockIDs to a list of all 
 # possible values for ancillary data that it might have.
@@ -2457,6 +2524,11 @@ special_map[111] = range(4)  # lily pad, orientation
 special_map[113] = range(16) # netherbrick fence, uses pseudo data
 special_map[114] = range(4) # netherbrick stairs, orientation
 special_map[115] = range(4) # nether wart, size of the plant
+special_map[116] = (0,) # enchantment table, nothings special. book not implemented
+special_map[117] = range(8) # brewing stand, number of bottles. (not implemented)
+special_map[118] = range(4) # cauldron, amount of water in it.
+special_map[119] = (0,) # air portal, generated texture
+special_map[120] = range(2) # air portal frame, fixed or broken block
 
 # placeholders that are generated in generate()
 bgcolor = None
