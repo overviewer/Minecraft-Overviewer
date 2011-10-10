@@ -708,7 +708,7 @@ var overviewer = {
                 
                 // only create drop down if there's used options
                 if (items.length > 0) {
-                    overviewer.util.createDropDown('Signposts', items);
+                    overviewer.util.createDropDown('Markers', items);
                 }
             }
 
