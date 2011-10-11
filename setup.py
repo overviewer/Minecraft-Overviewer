@@ -149,7 +149,7 @@ except:
         
 
 # used to figure out what files to compile
-render_modes = ['normal', 'overlay', 'lighting', 'night', 'spawn', 'cave', 'mineral']
+render_modes = ['normal', 'overlay', 'lighting', 'night', 'smooth-lighting', 'spawn', 'cave', 'mineral']
 
 c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
 c_overviewer_files += map(lambda mode: 'rendermode-%s.c' % (mode,), render_modes)

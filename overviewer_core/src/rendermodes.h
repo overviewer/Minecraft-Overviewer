@@ -190,6 +190,13 @@ typedef struct {
 } RenderModeNight;
 extern RenderModeInterface rendermode_night;
 
+/* SMOOTH LIGHTING */
+typedef struct {
+    /* inherits from lighting */
+    RenderModeLighting parent;
+} RenderModeSmoothLighting;
+extern RenderModeInterface rendermode_smooth_lighting;
+
 /* SPAWN */
 typedef struct {
     /* inherits from overlay */
