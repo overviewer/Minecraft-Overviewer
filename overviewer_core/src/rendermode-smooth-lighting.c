@@ -50,8 +50,50 @@ rendermode_smooth_lighting_hidden(void *data, RenderState *state, int x, int y, 
 
 static void
 rendermode_smooth_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    /* nothing special to do */
-    rendermode_lighting.draw(data, state, src, mask, mask_light);
+    int x = state->imgx, y = state->imgy;
+    
+    if (is_transparent(state->block))
+    {
+        /* transparent blocks are rendered as usual, with flat lighting */
+        rendermode_lighting.draw(data, state, src, mask, mask_light);
+        return;
+    }
+    
+    /* non-transparent blocks get the special smooth treatment */
+    
+    /* nothing special to do, but we do want to avoid vanilla
+     * lighting mode draws */
+    rendermode_normal.draw(data, state, src, mask, mask_light);
+    
+    /* draw a triangle on top of each block */
+    draw_triangle(state->img,
+                  x+12, y, 255, 0, 0,
+                  x+24, y+6, 0, 255, 0,
+                  x, y+6, 0, 0, 255);
+    draw_triangle(state->img,
+                  x+24, y+6, 255, 0, 0,
+                  x, y+6, 0, 255, 0,
+                  x+12, y+12, 0, 0, 255);
+    
+    /* left side... */
+    draw_triangle(state->img,
+                  x, y+6, 255, 0, 0,
+                  x+12, y+12, 0, 255, 0,
+                  x+12, y+24, 0, 0, 255);
+    draw_triangle(state->img,
+                  x+12, y+24, 255, 0, 0,
+                  x, y+6, 0, 255, 0,
+                  x, y+18, 0, 0, 255);
+
+    /* right side... */
+    draw_triangle(state->img,
+                  x+24, y+6, 255, 0, 0,
+                  x+12, y+12, 0, 255, 0,
+                  x+12, y+24, 0, 0, 255);
+    draw_triangle(state->img,
+                  x+12, y+24, 255, 0, 0,
+                  x+24, y+6, 0, 255, 0,
+                  x+24, y+18, 0, 0, 255);
 }
 
 RenderModeInterface rendermode_smooth_lighting = {
