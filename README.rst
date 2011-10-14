@@ -311,7 +311,7 @@ need to be doubled up if this is in a batch file.
 
 ::
 
-    FOR /R c:\path\to\tiles\folder %v IN (*.png) DO pngout %v /y
+    FOR /R c:\path\to\tiles\folder %v IN (*.png) DO pngout "%v" /y
 
 Bugs
 ====
