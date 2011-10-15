@@ -302,9 +302,9 @@ def _build_block(top, side, blockID=None):
         composite.alpha_over(img, otherside, (12,6), otherside)
         composite.alpha_over(img, top, (0,9), top)
     else:
+        composite.alpha_over(img, top, (0,0), top)
         composite.alpha_over(img, side, (0,6), side)
         composite.alpha_over(img, otherside, (12,6), otherside)
-        composite.alpha_over(img, top, (0,0), top)
 
     # Manually touch up 6 pixels that leave a gap because of how the
     # shearing works out. This makes the blocks perfectly tessellate-able
