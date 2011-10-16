@@ -183,6 +183,14 @@ typedef struct {
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
 
+/* exposed so it can be used in other per-face occlusion checks */
+int rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z);
+
+/* exposed so sub-modes can look at colors directly */
+void get_lighting_color(RenderModeLighting *self, RenderState *state,
+                        int x, int y, int z,
+                        unsigned char *r, unsigned char *g, unsigned char *b);
+
 /* NIGHT */
 typedef struct {
     /* inherits from lighting */

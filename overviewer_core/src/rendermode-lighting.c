@@ -162,7 +162,7 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     PyObject *blocklight = NULL;
     int local_x = x, local_y = y, local_z = z;
     unsigned char block, skylevel, blocklevel;
-
+    
     /* find out what chunk we're in, and translate accordingly */
     if (x >= 0 && y < 16) {
         blocks = state->blocks;
@@ -184,7 +184,7 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     if (!(local_x >= 0 && local_x < 16 &&
           local_y >= 0 && local_y < 16 &&
           local_z >= 0 && local_z < 128)) {
-        
+
         self->calculate_light_color(self, 15, 0, r, g, b);
         return;
     }
@@ -193,7 +193,7 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     if (blocks == Py_None || blocks == NULL ||
         skylight == Py_None || skylight == NULL ||
         blocklight == Py_None || blocklight == NULL) {
-        
+
         self->calculate_light_color(self, 15, 0, r, g, b);
         return;
     }
@@ -236,6 +236,39 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     self->calculate_light_color(self, MIN(skylevel, 15), MIN(blocklevel, 15), r, g, b);
 }
 
+/* does per-face occlusion checking for do_shading_with_mask */
+inline int
+rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z) {
+    /* first, check for occlusion if the block is in the local chunk */
+    if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
+        unsigned char block = getArrayByte3D(state->blocks, x, y, z);
+        
+        if (!is_transparent(block) && !render_mode_hidden(state->rendermode, x, y, z)) {
+            /* this face isn't visible, so don't draw anything */
+            return 1;
+        }
+    } else if (skip_sides && (x == -1) && (state->left_blocks != Py_None)) {
+        unsigned char block = getArrayByte3D(state->left_blocks, 15, state->y, state->z);
+        if (!is_transparent(block)) {
+            /* the same thing but for adjacent chunks, this solves an
+               ugly black doted line between chunks in night rendermode.
+               This wouldn't be necessary if the textures were truly
+               tessellate-able */
+               return 1;
+           }
+    } else if (skip_sides && (y == 16) && (state->right_blocks != Py_None)) {
+        unsigned char block = getArrayByte3D(state->right_blocks, state->x, 0, state->z);
+        if (!is_transparent(block)) {
+            /* the same thing but for adjacent chunks, this solves an
+               ugly black doted line between chunks in night rendermode.
+               This wouldn't be necessary if the textures were truly
+               tessellate-able */
+               return 1;
+           }
+    }
+    return 0;
+}
+
 /* shades the drawn block with the given facemask, based on the
    lighting results from (x, y, z) */
 static inline void
@@ -244,33 +277,9 @@ do_shading_with_mask(RenderModeLighting *self, RenderState *state,
     unsigned char r, g, b;
     float comp_shade_strength;
     
-    /* first, check for occlusion if the block is in the local chunk */
-    if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
-        unsigned char block = getArrayByte3D(state->blocks, x, y, z);
-        
-        if (!is_transparent(block) && !render_mode_hidden(state->rendermode, x, y, z)) {
-            /* this face isn't visible, so don't draw anything */
-            return;
-        }
-    } else if (self->skip_sides && (x == -1) && (state->left_blocks != Py_None)) {
-        unsigned char block = getArrayByte3D(state->left_blocks, 15, state->y, state->z);
-        if (!is_transparent(block)) {
-            /* the same thing but for adjacent chunks, this solves an
-               ugly black doted line between chunks in night rendermode.
-               This wouldn't be necessary if the textures were truly
-               tessellate-able */
-               return;
-           }
-    } else if (self->skip_sides && (y == 16) && (state->right_blocks != Py_None)) {
-        unsigned char block = getArrayByte3D(state->right_blocks, state->x, 0, state->z);
-        if (!is_transparent(block)) {
-            /* the same thing but for adjacent chunks, this solves an
-               ugly black doted line between chunks in night rendermode.
-               This wouldn't be necessary if the textures were truly
-               tessellate-able */
-               return;
-           }
-    }
+    /* check occlusion */
+    if (rendermode_lighting_is_face_occluded(state, self->skip_sides, x, y, z))
+        return;
     
     get_lighting_color(self, state, x, y, z, &r, &g, &b);
     comp_shade_strength = 1.0 - self->shade_strength;

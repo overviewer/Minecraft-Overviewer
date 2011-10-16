@@ -51,7 +51,7 @@ PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
 PyObject *tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
                          unsigned char sb, unsigned char sa,
                          PyObject *mask, int dx, int dy, int xsize, int ysize);
-PyObject *draw_triangle(PyObject *dest,
+PyObject *draw_triangle(PyObject *dest, int inclusive,
                         int x0, int y0,
                         unsigned char r0, unsigned char g0, unsigned char b0,
                         int x1, int y1,

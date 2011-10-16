@@ -369,7 +369,7 @@ tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
  *  http://www.gidforums.com/t-20838.html )
  */
 PyObject *
-draw_triangle(PyObject *dest,
+draw_triangle(PyObject *dest, int inclusive,
               int x0, int y0,
               unsigned char r0, unsigned char g0, unsigned char b0,
               int x1, int y1,
@@ -433,7 +433,8 @@ draw_triangle(PyObject *dest,
             beta  = beta_norm  * ((a20 * x) + (b20 * y) + c20);
             gamma = gamma_norm * ((a01 * x) + (b01 * y) + c01);
             
-            if (alpha >= 0 && beta >= 0 && gamma >= 0) {
+            if (alpha >= 0 && beta >= 0 && gamma >= 0 &&
+                (inclusive || (alpha * beta * gamma > 0))) {
                 unsigned int r = alpha * r0 + beta * r1 + gamma * r2;
                 unsigned int g = alpha * g0 + beta * g1 + gamma * g2;
                 unsigned int b = alpha * b0 + beta * b1 + gamma * b2;
