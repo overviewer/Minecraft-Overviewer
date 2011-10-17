@@ -1,3 +1,7 @@
+..
+    Hey! You! Read these docs at http://docs.overviewer.org
+    Go there now!
+
 ========================
 The Minecraft Overviewer
 ========================
@@ -35,10 +39,11 @@ bad)**, head to the :doc:`Building <building>` page.
 
 Help
 ====
-**IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to pop in
-IRC: #overviewer on freenode. Not familiar with IRC? `Use the web client
-<http://webchat.freenode.net/?channels=overviewer>`_. There's usually someone on
-there that can help you out.
+
+**IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to chat with
+us live in IRC: #overviewer on Freenode. There's usually someone on there that
+can help you out. Not familiar with IRC? `Use the web client
+<http://webchat.freenode.net/?channels=overviewer>`_. 
 
 If you think you've found a bug or other issue, file an issue on our `Issue
 Tracker <https://github.com/overviewer/Minecraft-Overviewer/issues>`_. Filing or

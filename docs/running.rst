@@ -25,8 +25,8 @@ And similarly for other systems::
     1. The path to your Minecraft world on your hard drive
     2. The name of a single player world on your current system. Note that if it
        has spaces, you will need to put the world name in quotes.
-    3. If the world name is in the format "World #" (e.g. "World 1"), you can just specify the
-       number.
+    3. If your single-player world name is in the format "World #" (e.g. "World
+       1"), you can just specify the number.
 
 **Output Dir**
     This is the directory you would like to put the rendered tiles and
