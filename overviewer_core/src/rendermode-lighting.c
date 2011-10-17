@@ -164,7 +164,7 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     unsigned char block, skylevel, blocklevel;
     
     /* find out what chunk we're in, and translate accordingly */
-    if (x >= 0 && y < 16) {
+    if (x >= 0 && x < 16 && y >= 0 && y < 16) {
         blocks = state->blocks;
         skylight = self->skylight;
         blocklight = self->blocklight;
@@ -178,6 +178,16 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
         blocks = state->right_blocks;
         skylight = self->right_skylight;
         blocklight = self->right_blocklight;
+    } else if (y < 0) {
+        local_y += 16;
+        blocks = state->up_left_blocks;
+        skylight = self->up_left_skylight;
+        blocklight = self->up_left_blocklight;
+    } else if (x >= 16) {
+        local_x -= 16;
+        blocks = state->up_right_blocks;
+        skylight = self->up_right_skylight;
+        blocklight = self->up_right_blocklight;
     }
 
     /* make sure we have correctly-ranged coordinates */
@@ -325,6 +335,10 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
     self->left_blocklight = PyObject_GetAttrString(state->self, "left_blocklight");
     self->right_skylight = PyObject_GetAttrString(state->self, "right_skylight");
     self->right_blocklight = PyObject_GetAttrString(state->self, "right_blocklight");
+    self->up_left_skylight = PyObject_GetAttrString(state->self, "up_left_skylight");
+    self->up_left_blocklight = PyObject_GetAttrString(state->self, "up_left_blocklight");
+    self->up_right_skylight = PyObject_GetAttrString(state->self, "up_right_skylight");
+    self->up_right_blocklight = PyObject_GetAttrString(state->self, "up_right_blocklight");
     
     self->calculate_light_color = calculate_light_color;
     
@@ -356,6 +370,10 @@ rendermode_lighting_finish(void *data, RenderState *state) {
     Py_DECREF(self->left_blocklight);
     Py_DECREF(self->right_skylight);
     Py_DECREF(self->right_blocklight);
+    Py_DECREF(self->up_left_skylight);
+    Py_DECREF(self->up_left_blocklight);
+    Py_DECREF(self->up_right_skylight);
+    Py_DECREF(self->up_right_blocklight);
     
     /* now chain up */
     rendermode_normal.finish(data, state);
