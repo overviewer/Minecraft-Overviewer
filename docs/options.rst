@@ -263,8 +263,8 @@ Less Useful Options
 
     Use this option to specify manually a list of regions to consider for
     updating. In normal operation, every chunk in every region is checked for
-    update and if necessary, re-rendered. With this option, only the specified
-    chunks are checked.
+    update and if necessary, re-rendered. With this option, only the chunks in
+    the specified regions are checked.
     
     This option should name a file containing, 1 per line, the path to the
     region files to be considered for update.
@@ -346,7 +346,6 @@ Less Useful Options
     When The Overviewer runs, it copies the files from the web_assets directory
     to the destination directory. If you wish to override these files with your
     own, for example, to make changes, you may put them in your own directory
-    :make
     and specify the :option:`--web-assets-path` option.
 
     Files in the folder specified by ``path`` will override files from the
