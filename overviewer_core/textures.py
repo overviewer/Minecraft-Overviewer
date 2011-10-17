@@ -35,7 +35,7 @@ def _find_file(filename, mode="rb", verbose=False):
     
     * the textures_path given in the config file (if present)
     * The program dir (same dir as overviewer.py)
-    * The overviewer_core textures dir
+    * The overviewer_core/data/textures dir
     * On Darwin, in /Applications/Minecraft
     * Inside minecraft.jar, which is looked for at these locations
 

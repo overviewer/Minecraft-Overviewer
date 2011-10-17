@@ -1,6 +1,22 @@
-=======
-Options
-=======
+====================
+Settings and Options
+====================
+
+Overviewer settings can be set in two places, on the command line when you run
+the overviewer, or in a settings file. You specify a settings file to use with
+the :option:`--settings` command line option.
+
+.. note::
+    Any command line option can optionally be set in the settings file. However,
+    there are some settings that can only be set in the settings file.
+
+.. note::
+    Some options go by different names on the command line and the settings
+    file. Those are noted in bold below.
+
+The first section of this document covers command line options. The second part
+covers the more advanced ways of customizing The Overviewer using settings
+files.
 
 .. contents::
     :local:
@@ -18,23 +34,13 @@ Command line options
 
 Useful Options
 --------------
-.. cmdoption:: --rendermodes <MODE1>[,MODE2,...]
 
-    Use this option to specify which render mode to use, such as lighting or
-    night. Use --list-rendermodes to get a list of available rendermodes, and
-    a short description of each. If you provide more than one mode (separated
-    by commas), Overviewer will render all of them at once, and provide a
-    toggle on the resulting map to switch between them.
-    
-    If for some reason commas do not work for your shell (like if you're using
-    Powershell on Windows), you can also use a colon ':' or a forward slash '/'
-    to separate the modes.
+.. cmdoption:: --settings <PATH>
 
-    See the `Render Modes`_ section for more information.
+    Use this option to load settings from a file. For more information see the
+    `Settings File`_ section below.
 
-.. cmdoption:: --list-rendermodes
-
-    List the available render modes, and a short description of each.
+    **Not available in settings file (duh)**
 
 .. cmdoption:: --north-direction <NORTH_DIRECTION>
 
@@ -44,96 +50,336 @@ Useful Options
     the existing map uses. For new maps, it defaults to lower-left for
     historical reasons.
 
-.. cmdoption:: --settings <PATH>
+    .. note::
+        We define cardinal directions by the sun in game; the sun rises in the
+        East and sets in the West.
 
-    Use this option to load settings from a file. For more information see the
-    `Settings File`_ section below.
+    **Settings file:**
+        Option name: ``north_direction``
+
+        Format: One of the above strings.
+
+.. cmdoption:: --rendermodes <MODE1>[,MODE2,...]
+
+    Use this option to specify which render mode to use, such as lighting or
+    night. Use :option:`--list-rendermodes` to get a list of available
+    rendermodes, and a short description of each. If you provide more than one
+    mode (separated by commas), Overviewer will render all of them at once, and
+    provide a toggle on the resulting map to switch between them.
+    
+    If for some reason commas do not work for your shell (like if you're using
+    Powershell on Windows), you can also use a colon ':' or a forward slash '/'
+    to separate the modes.
+
+    Incomplete list of common render-modes for your convenience:
+    
+    * normal,
+    * lighting
+    * night
+
+    **Settings file:**
+        Option name: ``rendermode`` **Note the lack of an s**
+
+        Format: a list of strings.
+
+        Default: ["normal"]
+
+    See the `Render Modes`_ section for more information.
+
+.. cmdoption:: --list-rendermodes
+
+    List the available render modes, and a short description of each, and exit.
+
+    **Not available in settings file**
 
 Less Useful Options
 -------------------
-
-.. cmdoption:: -p <PROCS>, --processes <PROCS>
-
-    Adding the "-p" option will utilize more cores during processing.  This
-    can speed up rendering quite a bit. The default is set to the same
-    number of cores in your computer, but you can adjust it.
-
-    Example to run 5 worker processes in parallel::
-
-        python overviewer.py -p 5 <Path to World> <Output Directory>
-
-.. cmdoption:: -d, --delete
-
-    This option changes the mode of execution. No tiles are rendered, and
-    instead, files are deleted.
-
-    *Note*: Currently only the overviewer.dat file is deleted when you run with
-    this option
-
-.. cmdoption:: --forcerender
-
-    Force re-rendering the entire map (or the given regionlist). This
-    is an easier way to completely re-render without deleting the map.
-
-.. cmdoption:: --regionlist <regionlist>
-
-    Use this option to specify manually a list of regions to consider for
-    updating. Without this option, every chunk in every region is checked for
-    update and if necessary, re-rendered. If this option points to a file
-    containing, 1 per line, the path to a region data file, then only those
-    in the list will be considered for update.
-
-    It's up to you to build such a list. On Linux or Mac, try using the "find"
-    command. You could, for example, output all region files that are older than
-    a certain date. Or perhaps you can incrementally update your map by passing
-    in a subset of regions each time. It's up to you!
-
-.. cmdoption:: -z <zoom>, --zoom <zoom>
-
-    See the :ref:`zoom <zoom>` section below.
 
 .. cmdoption:: --bg-color <color>
 
     Configures the background color for the Google Map output. Specify in
     #RRGGBB format.
 
-*This list is currently incomplete. Use the* :option:`--help <-h>` *and*
-:option:`--advanced-help` *options to see the complete list of accepted command
-line options.*
+    **Settings file:**
+        Option name: ``bg_color``
 
-Settings File
-=============
+        Format: A string in the above format.
 
-You can optionally store settings in a file named settings.py (or really,
-anything you want).  It is a regular python script, so you can use any python
-functions or modules you want. To use a settings file, use the --settings
-command line option.
+        Default: "#1A1A1A"
 
-For a sample settings file, look at 'sample.settings.py'. Note that this file
-is not meant to be used directly, but instead it should be used as a
-collection of examples to guide writing your own.
+.. cmdoption:: --changelist <filename>
 
-Here's a (possibly incomplete) list of available settings, which are available
-in settings.py. Note that you can also set command-line options in a similar
-way.
+    Outputs a list of changed tiles to the named file. If the file doesn't
+    exist, it is created. If it does exist, its contents are overwritten.
 
-imgformat=FORMAT
-    Set the output image format used for the tiles. The default is 'png',
-    but 'jpg' is also supported.
+    This could be useful for example in conjunction with a script to upload only
+    changed tiles to your web server.
 
-.. _zoom:
+    **Settings file:**
+        Option name: ``changelist``
 
-zoom=ZOOM
-    The Overviewer by default will detect how many zoom levels are required
-    to show your entire map. This option sets it manually.
+        Format: String (path plus filename)
 
-    *You do not normally need to set this option!*
+        Default: Not specified (no changelist outputted)
 
-    This is equivalent to setting the dimensions of the highest zoom level. It
-    does not actually change how the map is rendered, but rather *how much of
-    the map is rendered.* Setting this option too low *will crop your map.*
-    (Calling this option "zoom" may be a bit misleading, I know)
-   
+.. cmdoption:: --changelist-format <format>
+
+    Chooses absolute or relative paths for the output with the
+    :option:`--changelist` option. Valid values for format are "relative" or
+    "absolute".
+
+    **Settings file:**
+        Option name: ``changelist_format``
+
+        Format: A string (one of the above)
+
+        Default: "relative"
+
+.. cmdoption:: --check-terrain
+
+    When this option appears on the command line, Overviewer prints the location
+    and hash of the terrain.png it will use, and then exits.
+
+    This is useful for debugging terrain.png path problems, especially with
+    :option:`--textures-path`. Use this to see what terrain.png your current
+    setup has selected.
+
+    **Not available in settings file**
+
+.. cmdoption:: --display-config
+
+    Display the configuration parameters and exit. Doesn't render the map. This
+    is useful to help validate a configuration setup.
+
+    **Not available in settings file**
+
+.. cmdoption:: --forcerender
+
+    Force re-rendering the entire map (or the given regionlist). This
+    is an easier way to completely re-render without deleting the map.
+
+    This is useful if you change texture packs and want to re-render everything
+    in the new textures, or if you're changing the :option:`--north-direction`.
+
+    **Settings file:**
+        Option name: ``forcerender``
+
+        Format: A boolean
+
+        Default: False
+
+.. cmdoption:: --imgformat
+
+    Specifies the output format for the tiles. Currently supported options are
+    "png" or "jpg".
+
+    **Settings file:**
+        Option name: ``imgformat``
+
+        Format: A string, either "png" or "jpg"
+
+        Default: "png"
+
+.. cmdoption:: --imgquality
+
+    When using ":option:`--imgformat` jpg", this specifies the jpeg quality
+    parameter. This can help save disk space for larger maps.
+
+    For saving space with pngs, see :option:`--optimize-img`
+
+    **Settings file:**
+        Option name: ``imgquality``
+
+        Format: An integer 1-100
+
+        Default: 95
+
+.. cmdoption:: --no-signs
+
+    Doesn't output signs to markers.js. This has the effect of disabling signs
+    on your map.
+
+    **Settings file:**
+        Option name: ``nosigns``
+
+        Format: Boolean
+
+        Default: False
+
+.. cmdoption:: --optimize-img <level>
+
+    When using ":option:`--imgformat` png" (the default), this performs file
+    size optimizations on the output. The level parameter is an integer
+    specifying one of the following:
+
+    1. Run pngcrush on all tiles
+
+    2. Run pngcrush plus advdef on all tiles
+
+    3. Run pngcrush plus advdef with more aggressive settings.
+
+    These options may double the time or worse it takes to render your map, and
+    can be expected to give around 19-23% reduction in file size.
+
+    These options also require the corresponding program(s) installed and in
+    your system path ($PATH or %PATH% environment variable)
+
+    **Settings file:**
+        Option name: ``optimizeimg``
+
+        Format: an integer
+
+        Default: not set (no optimization)
+
+.. cmdoption:: -p <PROCS>, --processes <PROCS>
+
+    On multi-cored or multi-processor machines, The Overviewer will perform its
+    work on *all* cores by default. If you want to manually specify how many
+    workers to run in parallel, use this option.
+
+    Example to run 5 worker processes in parallel::
+
+        overviewer.py -p 5 <Path to World> <Output Directory>
+
+    **Settings file:**
+        Option name: ``procs``
+
+        Format: an integer.
+
+        Default: ``multiprocessing.cpu_count()``
+
+.. cmdoption:: -q, --quiet
+
+    Prints less output. You can specify this multiple times.
+
+    **Settings file:**
+        Option name: ``quiet``
+
+        Format: an integer
+
+        Default: 0
+
+.. cmdoption:: --regionlist <regionlist>
+
+    Use this option to specify manually a list of regions to consider for
+    updating. In normal operation, every chunk in every region is checked for
+    update and if necessary, re-rendered. With this option, only the specified
+    chunks are checked.
+    
+    This option should name a file containing, 1 per line, the path to the
+    region files to be considered for update.
+
+    It's up to you to build such a list. On Linux or Mac, try using the "find"
+    command. You could, for example, output all region files that are older than
+    a certain date. Or perhaps you can incrementally update your map by passing
+    in a subset of regions each time. It's up to you!
+
+    **Settings file:**
+        Option name: ``regionlist``
+
+        Format: A string representing the region list file.
+
+        Default: Scan all region files.
+
+    .. note::
+        See sample.settings.py for an example for how to build a region list
+        file.
+
+.. cmdoption:: --skip-js
+
+    Skip the generation and output of markers.js and regions.js to the output
+    directory.
+
+    **Settings file:**
+        Option name: ``skipjs``
+
+        Format: Boolean
+
+        Default: False
+
+.. cmdoption:: --textures-path <path>
+
+    Use this option to specify an alternate terrain.png to use for textures when
+    rendering a world. ``path`` specifies the **containing directory** of
+    terrain.png.
+
+    The Overviewer will look for terrain.png in the following places in this
+    order: path specified by this option, the program's directory, the
+    overviewer_core/data/textures directory within the source directory, the
+    default textures that come with Minecraft if it's installed.
+
+    .. note::
+    
+        If you installed Overviewer from the Debian package, then there isn't a
+        source directory; you must use this option to specify non-default
+        textures.
+
+    If you're having trouble getting The Overviewer to recognize your textures,
+    see the :option:`--check-terrain` option.
+
+    **Settings file:**
+        Option name: ``textures_path``
+
+        Format: A string (path to a dir with a terrain.png)
+
+        Default: None
+
+.. cmdoption:: -v, --verbose
+
+    Prints more output. You can specify this multiple times.
+
+    **Settings file:**
+        Option name: ``verbose``
+
+        Format: an integer
+
+        Default: 0
+
+.. cmdoption:: -V, --version
+
+    Displays the version information and exits
+
+    **Not available in settings file**
+
+.. cmdoption:: --web-assets-path <path>
+
+    When The Overviewer runs, it copies the files from the web_assets directory
+    to the destination directory. If you wish to override these files with your
+    own, for example, to make changes, you may put them in your own directory
+    :make
+    and specify the :option:`--web-assets-path` option.
+
+    Files in the folder specified by ``path`` will override files from the
+    web_assets directory, letting you customize the files.
+
+    If you're running from source and are comfortable merging with Git, it may
+    be better to edit the web_assets directly. If we update one of the files,
+    you can use Git to merge in our changes with yours.
+
+    If, however, you do not like Git, and don't mind having to manually update
+    or merge web assets (or don't care for web asset updates at all), then copy
+    all the web assets to a directory of your own and use this option.
+
+    **Settings file:**
+        Option name: ``web_assets_path``
+
+        Format: A string (path to a directory to use for custom web assets)
+
+        Default: Not set (no additional web assets used)
+
+.. cmdoption:: -z <zoom>, --zoom <zoom>
+
+    .. warning::
+
+        This option does not do what you think it does. You almost certainly do
+        not want to set this.
+
+    This option effectively sets *how far the map can be zoomed out*. The
+    Overviewer will by default determine how many *zoom levels* your map needs
+    to show the entire map. This option overrides that; setting this option
+    lower than automatically determined will *crop your map* and parts will be
+    cut off. (We acknowledge that name zoom is misleading)
+
     To be precise, it sets the width and height of the highest zoom level, in
     tiles. A zoom level of z means the highest zoom level of your map will be
     2^z by 2^z tiles.
@@ -142,43 +388,92 @@ zoom=ZOOM
     to be too large, or you want to render a smaller portion of your map,
     instead of rendering everything.
 
-    Remember that each additional zoom level adds 4 times as many tiles as
-    the last. This can add up fast, zoom level 10 has over a million tiles.
-    Tiles with no content will not be rendered, but they still take a small
-    amount of time to process.
+    **Settings file:**
+        Option name: ``zoom``
 
-web_assets_hook
+        Format: An integer.
+
+        Default: Automatically calculated from the world size.
+
+.. note::
+
+    There are **more settings** that cannot be specified on the command line.
+    See the section below!
+
+Settings File
+=============
+
+You can optionally store settings in a file named settings.py (or really,
+anything you want).  It is a regular python script, so you can use any python
+functions or modules you want. To use a settings file, use the
+:option:`--settings` command line option when you run the Overviewer.
+
+For a sample settings file, look at 'sample.settings.py'. Note that this file is
+not meant to be used directly, but instead it should be used as a collection of
+examples to guide writing your own. It contains a number of examples to get you
+started, but you almost certainly don't want to use it as-is.
+
+You can specify *any of the above* options in your settings file *in addition to
+the ones documented below*. For the command-line options, find its listed
+"Option name" which is the Python identifier you will use. For example, if you
+wanted to specify :option:`--bg-color`, you would look and see its option name
+is "bg_color" (note the underscore) and you would put this line in your settings
+file::
+
+    bg_color = "#000000"
+
+Settings file options
+---------------------
+
+In addition to the `Command line options`_, you can specify these options.
+
+
+.. describe:: web_assets_hook
+
     This option lets you define a function to run after the web assets have
     been copied into the output directory, but before any tile rendering takes
     place. This is an ideal time to do any custom postprocessing for
     markers.js or other web assets.
+
+    Set this identifier to a Python *function object* to be called.
     
-    This function should accept one argument: a QuadtreeGen object.
+    This function should accept one argument: a
+    :class:`overviewer_core.googlemap.MapGen` object.
 
-web_assets_path
-    This option lets you provide alternative web assets to use when
-    rendering. The contents of this folder will be copied into the output folder
-    during render, and will overwrite any default files already copied by
-    Overviewer. See the web_assets folder included with Overviewer for the
-    default assets.
+    .. warning::
 
-textures_path
-    This is like web_assets_path, but instead it provides an alternative texture
-    source. Overviewer looks in here for terrain.png and other textures before
-    it looks anywhere else.
+        Currently, this option only works if the :option:`--skip-js` option is
+        set
 
-north_direction
-    Specifies which corner of the screen north will point to.
-    Valid options are: lower-left, upper-left, upper-right, lower-right.
+.. describe:: rendermode-options
+
+    Different rendermodes have different options. This option is a dictionary
+    that maps rendermode names to option dictionaries.
+
+    See the `Render Modes`_ section for relevant options to the render modes.
+
+.. describe:: custom_rendermodes
+
+    You can also specify your own custom rendermodes with this option. This is a
+    dictionary mapping your rendermode name to a dictionary of parameters to
+    use.
+
+    See the `Defining Custom Rendermodes`_ section for more information.
 
 Render Modes
 ============
 
-.. _rendermode-options: https://github.com/agrif/Minecraft-Overviewer/tree/rendermode-options
+A rendermode is a unique way of rendering a Minecraft map. The normal render
+mode was the original, and we've since added a render mode with proper lighting,
+a rendermode for nighttime lighting, and we have a rendermode that only shows
+caves.
 
-Rendermode options are a new way of changing how existing render modes
-work, by passing in values at startup. For example, you can change how
-dark the 'night' mode is, or enable lighting in 'cave' mode.
+Beyond that, there are also render "overlays" that can be toggled on or off,
+overlaying a proper rendering. These can be used to show where minerals are and
+such.
+
+Specify your rendermodes with :option:`--rendermodes`. You can get a list of all
+rendermodes installed with :option:`--list-rendermodes`.
 
 Options and Rendermode Inheritance
 ----------------------------------
@@ -211,9 +506,8 @@ relationships. Right now, it looks something like this:
 How to Set Options
 ------------------
 
-Available options for each mode are listed below, but once you know
-what to set you'll have to edit *settings.py* to set them. Here's an
-example::
+Available options for each mode are listed below, but once you know what to set
+you'll have to edit your settings file to set them. Here's an example::
 
     rendermode_options = {
         'lighting': {
@@ -230,39 +524,6 @@ As you can see, each entry in ``rendermode_options`` starts with the mode name
 you want to apply the options to, then a dictionary containing each option. So
 in this example, 'lighting' mode has 'edge_opacity' set to 0.5, and 'cave' mode
 has 'lighting' turned on and 'depth_tinting' turned off.
-
-Defining Custom Rendermodes
----------------------------
-
-Sometimes, you want to render two map layers with the same mode, but with two
-different sets of options. For example, you way want to render a cave mode with
-depth tinting, and another cave mode with lighting and no depth tinting. In this
-case, you will want to define a 'custom' render mode that inherits from 'cave'
-and uses the options you want. For example::
-
-    custom_rendermodes = {
-        'cave-lighting': {
-            'parent': 'cave',
-            'label': 'Lit Cave',
-            'description': 'cave mode, with lighting',
-            'options': {
-                'depth_tinting': False,
-                'lighting': True,
-            }
-        },
-    }
-
-    rendermode = ['cave', 'cave-lighting']
-
-Each entry in ``custom_rendermodes`` starts with the mode name, and is followed
-by a dictionary of mode information, such as the parent mode and description
-(for your reference), a label for use on the map, as well as the options to
-apply.
-
-Every custom rendermode you define is on exactly equal footing with the built-in
-modes: you can put them in the ``rendermode`` list to render them, you can
-inherit from them in other custom modes, and you can even add options to them
-with ``rendermode_options``, though that's a little redundant.
 
 Option Listing
 --------------
@@ -310,6 +571,39 @@ with that block id is found underground, the surface is colored with the given
 color.
 
 See the *settings.py* example below for an example usage of **minerals**.
+
+Defining Custom Rendermodes
+---------------------------
+
+Sometimes, you want to render two map layers with the same mode, but with two
+different sets of options. For example, you way want to render a cave mode with
+depth tinting, and another cave mode with lighting and no depth tinting. In this
+case, you will want to define a 'custom' render mode that inherits from 'cave'
+and uses the options you want. For example::
+
+    custom_rendermodes = {
+        'cave-lighting': {
+            'parent': 'cave',
+            'label': 'Lit Cave',
+            'description': 'cave mode, with lighting',
+            'options': {
+                'depth_tinting': False,
+                'lighting': True,
+            }
+        },
+    }
+
+    rendermode = ['cave', 'cave-lighting']
+
+Each entry in ``custom_rendermodes`` starts with the mode name, and is followed
+by a dictionary of mode information, such as the parent mode and description
+(for your reference), a label for use on the map, as well as the options to
+apply.
+
+Every custom rendermode you define is on exactly equal footing with the built-in
+modes: you can put them in the ``rendermode`` list to render them, you can
+inherit from them in other custom modes, and you can even add options to them
+with ``rendermode_options``, though that's a little redundant.
 
 Example *settings.py*
 ---------------------
