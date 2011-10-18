@@ -73,7 +73,7 @@ Useful Options
 
     Incomplete list of common render-modes for your convenience:
     
-    * normal,
+    * normal
     * lighting
     * night
 
@@ -82,7 +82,7 @@ Useful Options
 
         Format: a list of strings.
 
-        Default: ["normal"]
+        Default: only render the normal mode
 
     See the `Render Modes`_ section for more information.
 
@@ -143,6 +143,8 @@ Less Useful Options
     This is useful for debugging terrain.png path problems, especially with
     :option:`--textures-path`. Use this to see what terrain.png your current
     setup has selected.
+
+    See the :ref:`installing-textures` section for an example.
 
     **Not available in settings file**
 
@@ -310,12 +312,15 @@ Less Useful Options
 
     .. note::
     
-        If you installed Overviewer from the Debian package, then there isn't a
-        source directory; you must use this option to specify non-default
-        textures.
+        If you installed Overviewer from the Debian package or chose to install
+        the overviewer from source (``python setup.py install``), then there
+        isn't a source directory; this option may be necessary to specify
+        non-default textures.
 
     If you're having trouble getting The Overviewer to recognize your textures,
     see the :option:`--check-terrain` option.
+    
+    Also see the :ref:`installing-textures` section of the documentation.
 
     **Settings file:**
         Option name: ``textures_path``
