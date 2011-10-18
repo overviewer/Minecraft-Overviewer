@@ -375,7 +375,9 @@ draw_triangle(PyObject *dest, int inclusive,
               int x1, int y1,
               unsigned char r1, unsigned char g1, unsigned char b1,
               int x2, int y2,
-              unsigned char r2, unsigned char g2, unsigned char b2) {
+              unsigned char r2, unsigned char g2, unsigned char b2,
+              int tux, int tuy, int *touchups, unsigned int num_touchups) {
+    
     /* destination image */
     Imaging imDest;
     /* ranges of pixels that are affected */
@@ -450,6 +452,34 @@ draw_triangle(PyObject *dest, int inclusive,
                 out += 4;
             }
         }
+    }
+    
+    while (num_touchups > 0) {
+        float alpha, beta, gamma;
+        unsigned int r, g, b;
+        UINT8 *out;
+        
+        x = touchups[0] + tux;
+        y = touchups[1] + tuy;
+        touchups += 2;
+        num_touchups--;
+        
+        if (x < 0 || x >= imDest->xsize || y < 0 || y >= imDest->ysize)
+            continue;
+
+        out = (UINT8 *)imDest->image[y] + x * 4;
+
+        alpha = alpha_norm * ((a12 * x) + (b12 * y) + c12);
+        beta  = beta_norm  * ((a20 * x) + (b20 * y) + c20);
+        gamma = gamma_norm * ((a01 * x) + (b01 * y) + c01);
+        
+        r = alpha * r0 + beta * r1 + gamma * r2;
+        g = alpha * g0 + beta * g1 + gamma * g2;
+        b = alpha * b0 + beta * b1 + gamma * b2;
+                
+        *out = MULDIV255(*out, r, tmp); out++;
+        *out = MULDIV255(*out, g, tmp); out++;
+        *out = MULDIV255(*out, b, tmp); out++;
     }
     
     return dest;

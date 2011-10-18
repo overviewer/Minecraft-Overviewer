@@ -36,10 +36,32 @@ struct SmoothLightingFace {
     
     /* the points that form the corners of this face */
     struct SmoothLightingCorner corners[4];
+    
+    /* pairs of (x,y) in order, as touch-up points, or NULL for none */
+    int *touch_up_points;
+    unsigned int num_touch_up_points;
 };
+
+/* top face touchups, pulled from textures.py (_build_block) */
+static int top_touchups[] = {3, 4, 7, 2, 11, 0};
 
 /* the lighting face rule list! */
 static struct SmoothLightingFace lighting_rules[] = {
+    /* since this is getting a little insane, here's the general layout:
+       
+    {dx, dy, dz, {        // direction this face is towards
+                          // now, a list of 4 corners...
+            {imgx, imgy,  // where the corner is on the block image
+             x1, y1, z1,  // two vectors, describing the 4 (!!!)
+             x2, y2, z2}, // blocks neighboring this corner
+            // ...
+        },
+     {x, y, x, y}, 2}, // touch-up points, and how many there are (may be NULL)
+     
+    // ...
+    
+    */
+    
     /* top */
     {0, 0, 1, {
             {0, 6,
@@ -54,7 +76,9 @@ static struct SmoothLightingFace lighting_rules[] = {
             {12, 12,
              -1, 0, 0,
              0, 1, 0},
-        }},
+        },
+     top_touchups, 3},
+    
     /* left */
     {-1, 0, 0, {
             {12, 24,
@@ -69,7 +93,9 @@ static struct SmoothLightingFace lighting_rules[] = {
             {12, 12,
              0, 1, 0,
              0, 0, 1},
-        }},
+        },
+     NULL, 0},
+    
     /* right */
     {0, 1, 0, {
             {12, 12,
@@ -84,7 +110,8 @@ static struct SmoothLightingFace lighting_rules[] = {
             {24, 6,
              1, 0, 0,
              0, 0, 1},
-        }},
+        },
+     NULL, 0},
 };
 
 /* helpers for indexing the rule list */
@@ -147,11 +174,13 @@ do_shading_with_rule(RenderModeSmoothLighting *self, RenderState *state, struct 
     draw_triangle(state->img, 1,
                   x+pts[0].imgx, y+pts[0].imgy, pts_r[0], pts_g[0], pts_b[0],
                   x+pts[1].imgx, y+pts[1].imgy, pts_r[1], pts_g[1], pts_b[1],
-                  x+pts[2].imgx, y+pts[2].imgy, pts_r[2], pts_g[2], pts_b[2]);
+                  x+pts[2].imgx, y+pts[2].imgy, pts_r[2], pts_g[2], pts_b[2],
+                  x, y, face.touch_up_points, face.num_touch_up_points);
     draw_triangle(state->img, 0,
                   x+pts[0].imgx, y+pts[0].imgy, pts_r[0], pts_g[0], pts_b[0],
                   x+pts[2].imgx, y+pts[2].imgy, pts_r[2], pts_g[2], pts_b[2],
-                  x+pts[3].imgx, y+pts[3].imgy, pts_r[3], pts_g[3], pts_b[3]);
+                  x+pts[3].imgx, y+pts[3].imgy, pts_r[3], pts_g[3], pts_b[3],
+                  x, y, NULL, 0);
 }
 
 static int

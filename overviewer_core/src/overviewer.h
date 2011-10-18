@@ -57,7 +57,8 @@ PyObject *draw_triangle(PyObject *dest, int inclusive,
                         int x1, int y1,
                         unsigned char r1, unsigned char g1, unsigned char b1,
                         int x2, int y2,
-                        unsigned char r2, unsigned char g2, unsigned char b2);
+                        unsigned char r2, unsigned char g2, unsigned char b2,
+                        int tux, int tuy, int *touchups, unsigned int num_touchups);
 
 /* forward declaration of RenderMode object */
 typedef struct _RenderMode RenderMode;
