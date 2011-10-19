@@ -1,13 +1,14 @@
 var overviewerConfig = {
     /**
-     * These are things that will probably not need to be changed, but are there because 
-     * otherwise changing them is a giant PITA. If you, the user, sees that its crucial for 
-     * you to change these settings then the document repository might be able to assit you.
-     * http://docs.overviewer.org/en/latest/options/#cmdoption--web-assets-path
+     * These are things that will probably not need to be changed, but are there
+     * because otherwise changing them is a giant PITA. If you, the user, sees
+     * that its crucial for you to change these settings then the document
+     * repository might be able to assist you.
+     * http://docs.overviewer.org/en/latest/options/#customizing-web-assets
      */
     'CONST': {
         /**
-         * Height and width of the tiles in pixels (I think).
+         * Height and width of the tiles in pixels.
          */
         'tileSize':             384,
         /**
