@@ -368,6 +368,9 @@ Less Useful Options
     or merge web assets (or don't care for web asset updates at all), then copy
     all the web assets to a directory of your own and use this option.
 
+    See the :ref:`web-assets` section for more info on customizing your web
+    assets.
+
     **Settings file:**
         Option name: ``web_assets_path``
 
@@ -653,3 +656,36 @@ tracks instead of ore.
     #    'night' : {'shade_strength' : 0.5},
     #    'cave' : {'only_lit' : True, 'lighting' : True, 'depth_tinting' : False},
     }
+
+.. _web-assets:
+
+Customizing Web Assets
+======================
+
+The web assets are the static html files stored in
+overviewer_core/data/web_assets that are copied to the destination directory
+when you run the Overviewer. Some of these files are actually templates and
+certain parameters are set at render time depending on various factors. Others
+are just straight up copied.
+
+You should not typically need to edit the files in here, but if you like
+customizing things or want to edit them for whatever reason, here's two ways:
+
+1. If you're not afraid of Git and you're running the Overviewer from a Git
+   clone of our repository, you can edit the files in
+   overviewer_core/data/web_assets directly. When you pull in changes from us,
+   you will have to merge, but using Git should make this relatively painless.
+
+2. Otherwise, the recommended way is to use the :option:`--web-assets-path`
+   option. Use this option and point it to a directory of customized web assets
+   to copy.
+
+   Files from the original web_assets directory are still copied, but any files
+   in the custom web assets directory will override the originals. This way you
+   can customize a few files and leave the rest alone.
+
+   The downside is, if you want to upgrade you will have to merge in your
+   changes with any of our changes manually. To avoid merging entirely, just
+   copy *all* the web assets to your custom web assets folder. You'll keep the
+   old version of all files for eternity, missing out on new features we may
+   add, but you won't have to deal with merges at all.
