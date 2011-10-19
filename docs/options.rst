@@ -77,6 +77,10 @@ Useful Options
     * lighting
     * night
 
+    Example::
+    
+        ./overviewer.py --rendermodes=lighting,night /opt/server/world /opt/map
+
     **Settings file:**
         Option name: ``rendermode`` **Note the lack of an s**
 
@@ -170,7 +174,7 @@ Less Useful Options
 
         Default: False
 
-.. cmdoption:: --imgformat
+.. cmdoption:: --imgformat <format>
 
     Specifies the output format for the tiles. Currently supported options are
     "png" or "jpg".
@@ -182,7 +186,7 @@ Less Useful Options
 
         Default: "png"
 
-.. cmdoption:: --imgquality
+.. cmdoption:: --imgquality <quality>
 
     When using ":option:`--imgformat` jpg", this specifies the jpeg quality
     parameter. This can help save disk space for larger maps.
@@ -233,7 +237,7 @@ Less Useful Options
 
         Default: not set (no optimization)
 
-.. cmdoption:: -p <PROCS>, --processes <PROCS>
+.. cmdoption:: -p <procs>, --processes <procs>
 
     On multi-cored or multi-processor machines, The Overviewer will perform its
     work on *all* cores by default. If you want to manually specify how many
@@ -284,7 +288,7 @@ Less Useful Options
         Default: Scan all region files.
 
     .. note::
-        See sample.settings.py for an example for how to build a region list
+        See sample.settings.py for an example on how to build a region list
         file.
 
 .. cmdoption:: --skip-js
@@ -449,7 +453,7 @@ In addition to the `Command line options`_, you can specify these options.
         Currently, this option only works if the :option:`--skip-js` option is
         set
 
-.. describe:: rendermode-options
+.. describe:: rendermode_options
 
     Different rendermodes have different options. This option is a dictionary
     that maps rendermode names to option dictionaries.
