@@ -353,9 +353,9 @@ Less Useful Options
 .. cmdoption:: --web-assets-path <path>
 
     When The Overviewer runs, it copies the files from the web_assets directory
-    to the destination directory. If you wish to override these files with your
-    own, for example, to make changes, you may put them in your own directory
-    and specify the :option:`--web-assets-path` option.
+    to the destination directory. If you wish to override a file with your own,
+    for example, to make changes, you may put your modified copies in your own
+    directory and specify the directory with this option.
 
     Files in the folder specified by ``path`` will override files from the
     web_assets directory, letting you customize the files.
@@ -398,6 +398,14 @@ Less Useful Options
     This option map be useful if you have some outlier chunks causing your map
     to be too large, or you want to render a smaller portion of your map,
     instead of rendering everything.
+
+    **If you are getting a "your map is waaaay too big" error** then this option
+    may help you render your map. That error is unlikely in naturally generated
+    worlds, but some really giant worlds may still cross the threshold. The
+    Overviewer will refuse to automatically render maps that require zoom level
+    15 and above, so if you get this error, try specifying ``--zoom 15``. If
+    your map is still cut off around the edges, increase the zoom level by 1 and
+    try again.
 
     **Settings file:**
         Option name: ``zoom``
