@@ -295,7 +295,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         options.changelist_format = "relative"
 
     if options.default_zoom < 0:
-        logging.error("default-zoom setting cannot be negative.".format(options.default_zoom))
+        logging.error("default-zoom setting cannot be negative.")
         sys.exit(1)
 
     logging.info("Welcome to Minecraft Overviewer!")
