@@ -111,7 +111,7 @@ if imgformat != "jpg":
 ################################################################################
 ### web_assets_hook
 ## If provided, run this function after the web assets have been copied, but 
-## before actual tile rendering beings.  It should accept a QuadtreeGen
+## before actual tile rendering beings.  It should accept a MapGen
 ## object as its only argument.  Note: this is only called if skipjs is True
 ## Default: not yet
 ## Type: function

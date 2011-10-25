@@ -248,27 +248,27 @@ var overviewer = {
                     overviewer.collections.mapTypes[i].name,
                     overviewer.collections.mapTypes[i]);
             }
-			
-			// Jump to the hash if given
+            
+            // Jump to the hash if given
             overviewer.util.initHash();
-			
-			// Add live hash update listeners
-			// Note: It is important to add them after jumping to the hash
+            
+            // Add live hash update listeners
+            // Note: It is important to add them after jumping to the hash
             google.maps.event.addListener(overviewer.map, 'dragend', function() {
                 overviewer.util.updateHash();
             });
-			
+            
             google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
                 overviewer.util.updateHash();
             });
-			
-			// Make the link again whenever the map changes
+            
+            // Make the link again whenever the map changes
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
                 $('#'+overviewerConfig.CONST.mapDivId).css(
                     'background-color', overviewer.util.getMapTypeBackgroundColor(
                         overviewer.map.getMapTypeId()));
-				//smuggled this one in here for maptypeid hash generation --CounterPillow
-				overviewer.util.updateHash();
+                //smuggled this one in here for maptypeid hash generation --CounterPillow
+                overviewer.util.updateHash();
             });
         },
         /**
@@ -708,7 +708,7 @@ var overviewer = {
                 
                 // only create drop down if there's used options
                 if (items.length > 0) {
-                    overviewer.util.createDropDown('Signposts', items);
+                    overviewer.util.createDropDown('Markers', items);
                 }
             }
 
@@ -843,12 +843,12 @@ var overviewer = {
 
             var searchInput = document.createElement("input");
             searchInput.type = "text";
-			searchInput.value = "Sign Search";
-			searchInput.title = "Sign Search";
+            searchInput.value = "Sign Search";
+            searchInput.title = "Sign Search";
             $(searchInput).addClass("inactive");
-			
-			/* Hey dawg, I heard you like functions.
-			 * So we defined a function inside your function.
+            
+            /* Hey dawg, I heard you like functions.
+            * So we defined a function inside your function.
              */
             searchInput.onfocus = function() {
                 if (searchInput.value == "Sign Search") {
@@ -856,7 +856,7 @@ var overviewer = {
                     $(searchInput).removeClass("inactive").addClass("active");
                 }
             };
-			searchInput.onblur = function() {
+            searchInput.onblur = function() {
                 if (searchInput.value == "") {
                     searchInput.value = "Sign Search";
                     $(searchInput).removeClass("active").addClass("inactive");
@@ -957,8 +957,8 @@ var overviewer = {
         'initHash': function() {
             if(window.location.hash.split("/").length > 1) {
                 overviewer.util.goToHash();
-				// Clean up the hash.
-				overviewer.util.updateHash();
+                // Clean up the hash.
+                overviewer.util.updateHash();
                 
                 // Add a marker indicating the user-supplied position
                 var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
@@ -968,7 +968,7 @@ var overviewer = {
                     'y': coordinates.y,
                     'z': coordinates.z,
                     'type': 'querypos'}]);
-            }	
+            }
         },
         'setHash': function(x, y, z, zoom, maptype)    {
             window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + maptype);
@@ -976,7 +976,7 @@ var overviewer = {
         'updateHash': function() {
             var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
             var zoom = overviewer.map.getZoom();
-			var maptype = overviewer.map.getMapTypeId();
+            var maptype = overviewer.map.getMapTypeId();
             if (zoom == overviewerConfig.map.maxZoom) {
                 zoom = 'max';
             } else if (zoom == overviewerConfig.map.minZoom) {
@@ -988,19 +988,19 @@ var overviewer = {
             overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, maptype);
         },
         'goToHash': function() {
-			// Note: the actual data begins at coords[1], coords[0] is empty.
+            // Note: the actual data begins at coords[1], coords[0] is empty.
             var coords = window.location.hash.split("/");
             var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), parseInt(coords[2]), parseInt(coords[3]));
-			var zoom;
-			var maptype = '';
-			// The if-statements try to prevent unexpected behaviour when using incomplete hashes, e.g. older links
-			if (coords.length > 4) {
-				zoom = coords[4];
-			}
-			if (coords.length > 5) {
-				maptype = coords[5];
-			}
-			
+            var zoom;
+            var maptype = '';
+            // The if-statements try to prevent unexpected behaviour when using incomplete hashes, e.g. older links
+            if (coords.length > 4) {
+                zoom = coords[4];
+            }
+            if (coords.length > 5) {
+                maptype = coords[5];
+            }
+            
             if (zoom == 'max') {
                 zoom = overviewerConfig.map.maxZoom;
             } else if (zoom == 'min') {
@@ -1015,14 +1015,14 @@ var overviewer = {
                     zoom = overviewerConfig.map.defaultZoom;
                 }
             }
-			// If the maptype isn't set, set the default one.
-			if (maptype == '') {
-				// We can now set the map to use the 'coordinate' map type
-				overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
-			} else {
-				overviewer.map.setMapTypeId(maptype);
-			}
-			
+            // If the maptype isn't set, set the default one.
+            if (maptype == '') {
+                // We can now set the map to use the 'coordinate' map type
+                overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
+            } else {
+                overviewer.map.setMapTypeId(maptype);
+            }
+            
             overviewer.map.setCenter(latlngcoords);
             overviewer.map.setZoom(zoom);
         }

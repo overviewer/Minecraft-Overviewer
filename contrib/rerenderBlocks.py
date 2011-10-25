@@ -21,7 +21,8 @@ import sys,os
 import re
 
 # incantation to be able to import overviewer_core
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '..')))
+if not hasattr(sys, "frozen"):
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '..')))
 
 from overviewer_core import nbt
 from overviewer_core import world
