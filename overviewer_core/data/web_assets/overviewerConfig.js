@@ -1,11 +1,14 @@
 var overviewerConfig = {
     /**
-     * These are things that will probably not need to be changed by the user,
-     * but are there because otherwise changing them is a giant PITA.
+     * These are things that will probably not need to be changed, but are there
+     * because otherwise changing them is a giant PITA. If you, the user, sees
+     * that its crucial for you to change these settings then the document
+     * repository might be able to assist you.
+     * http://docs.overviewer.org/en/latest/options/#customizing-web-assets
      */
     'CONST': {
         /**
-         * Height and width of the tiles in pixels (I think).
+         * Height and width of the tiles in pixels.
          */
         'tileSize':             384,
         /**
@@ -88,6 +91,11 @@ var overviewerConfig = {
         'center':       {spawn_coords},
         /**
          * Set this to tell browsers how long they should cache tiles in minutes.
+         * Essentially if set to 0, the url for tiles will end in .png
+         * if not set to 0 it will amend a number derived from the current time 
+         * to the end of the url, like .png?c=123456. This is a great method for 
+         * preventing browsers from caching the images. 0 saves bandwidth, not 0
+         * prevents caching.
          */
         'cacheMinutes': 0,
         /**

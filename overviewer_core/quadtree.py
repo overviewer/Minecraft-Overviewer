@@ -80,7 +80,7 @@ class QuadtreeGen(object):
         
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
-            for p in xrange(15):
+            for p in xrange(64):
                 # Will 2^p tiles wide and high suffice?
 
                 # X has twice as many chunks as tiles, then halved since this is a
@@ -92,10 +92,12 @@ class QuadtreeGen(object):
                 if xradius >= worldobj.maxcol and -xradius <= worldobj.mincol and \
                         yradius >= worldobj.maxrow and -yradius <= worldobj.minrow:
                     break
+            
+            if p < 15:
+                self.p = p
             else:
-                raise ValueError("Your map is waaaay too big! Use the 'zoom' option in 'settings.py'.")
+                raise ValueError("Your map is waaaay too big! Use the 'zoom' option in 'settings.py'. Overviewer is estimating %i zoom levels, but you probably want less." % (p,))
 
-            self.p = p
         else:
             self.p = depth
             xradius = 2**depth

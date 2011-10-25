@@ -25,8 +25,8 @@ And similarly for other systems::
     1. The path to your Minecraft world on your hard drive
     2. The name of a single player world on your current system. Note that if it
        has spaces, you will need to put the world name in quotes.
-    3. If the world name is in the format "World #" (e.g. "World 1"), you can just specify the
-       number.
+    3. If your single-player world name is in the format "World #" (e.g. "World
+       1"), you can just specify the number.
 
 **Output Dir**
     This is the directory you would like to put the rendered tiles and
@@ -59,6 +59,8 @@ Incremental updates are just as easy, and a lot faster. If you go and change
 something inside your world, run the command again and Overviewer will
 automatically re-render only what's needed.
 
+.. _installing-textures:
+
 Installing the Textures
 =======================
 If you're running on a machine without the Minecraft client installed, you will
@@ -89,10 +91,10 @@ You have several options:
   installations, you will need to specify the path... see the next bullet.
 
 * You can put a terrain.png file anywhere you want and point to its location
-  with the ``--textures-path`` option. This should point to the directory containing
+  with the :option:`--textures-path` option. This should point to the directory containing
   the terrain.png, not to the file itself.
 
-Note: the ``--check-terrain`` option is useful for debugging terrain.png issues.
+Note: the :option:`--check-terrain` option is useful for debugging terrain.png issues.
 For example::
 
     $ ./overviewer.py --check-terrain

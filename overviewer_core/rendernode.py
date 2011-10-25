@@ -108,15 +108,16 @@ class RenderNode(object):
             raise ValueError("there must be at least one quadtree to work on")    
 
         self.options = options
+        # A list of quadtree.QuadTree objects representing each rendermode
+        # requested
         self.quadtrees = quadtrees
         #List of changed tiles
         self.rendered_tiles = []
 
         #bind an index value to the quadtree so we can find it again
         #and figure out which worlds are where
-        i = 0
         self.worlds = []
-        for q in quadtrees:
+        for i, q in enumerate(quadtrees):
             q._render_index = i
             i += 1   
             if q.world not in self.worlds:
@@ -163,18 +164,23 @@ class RenderNode(object):
             else:
                 pool.map_async(bool,xrange(multiprocessing.cpu_count()),1)
                 
+        # 1 quadtree object per rendermode requested
         quadtrees = self.quadtrees
         
-        # do per-quadtree init
-
-        max_p = 0        
+        # Determine the total number of tiles by adding up the number of tiles
+        # from each quadtree. Also find the max zoom level (max_p). Even though
+        # each quadtree will always have the same zoom level, this bit of code
+        # does not make that assumption.
+        max_p = 0
         total = 0
         for q in quadtrees:
             total += 4**q.p
             if q.p > max_p:
                 max_p = q.p
         self.max_p = max_p
-        # Render the highest level of tiles from the chunks
+
+        # The next sections of code render the highest zoom level of tiles. The
+        # section after render the other levels.
         results = collections.deque()
         complete = 0
         logging.info("Rendering highest zoom level of tiles now.")
@@ -247,7 +253,8 @@ class RenderNode(object):
 
         self.print_statusline(complete, total, 1, True)
 
-        # Now do the other layers
+        # The highest zoom level has been rendered.
+        # Now do the lower zoom levels
         for zoom in xrange(self.max_p-1, 0, -1):
             level = self.max_p - zoom + 1
             assert len(results) == 0
@@ -295,21 +302,21 @@ class RenderNode(object):
         requested, a new task is added to the pool and a result returned.
         """
         if batch_size < len(self.quadtrees):
-            batch_size = len(self.quadtrees)         
+            batch_size = len(self.quadtrees)
         batch = []
-        jobcount = 0       
+        jobcount = 0
         # roundrobin add tiles to a batch job (thus they should all roughly work on similar chunks)
         iterables = [q.get_worldtiles() for q in self.quadtrees]
         for job in roundrobin(iterables):
             # fixup so the worker knows which quadtree this is                 
-            job[0] = job[0]._render_index      
+            job[0] = job[0]._render_index
             # Put this in the batch to be submited to the pool  
             batch.append(job)
             jobcount += 1
             if jobcount >= batch_size:
-                jobcount = 0        
+                jobcount = 0
                 yield pool.apply_async(func=render_worldtile_batch, args= [batch])
-                batch = []              
+                batch = []
         if jobcount > 0:
             yield pool.apply_async(func=render_worldtile_batch, args= [batch])
 
@@ -341,6 +348,7 @@ class RenderNode(object):
             
 @catch_keyboardinterrupt
 def render_worldtile_batch(batch):
+    # batch is a list. Each item is [quadtree_id, colstart, colend, rowstart, rowend, tilepath]
     global child_rendernode
     rendernode = child_rendernode
     count = 0

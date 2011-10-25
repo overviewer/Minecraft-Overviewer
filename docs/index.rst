@@ -1,3 +1,7 @@
+..
+    Hey! You! Read these docs at http://docs.overviewer.org
+    Go there now!
+
 ========================
 The Minecraft Overviewer
 ========================
@@ -17,8 +21,44 @@ For a simple example of what your renders will look like, head over to `The
 "Exmaple" Map <http://overviewer.org/example/>`_. For more user-contributed
 examples, see `The Example Wiki Page <https://github.com/overviewer/Minecraft-Overviewer/wiki/Map-examples>`_.
 
-Download
+Features
 ========
+
+* Renders large resolution images of your world, such that you can zoom in and
+  see details
+
+* Customizable textures! Pulls textures straight from your installed texture
+  pack!
+
+* Outputs a Google Map powered interface that is memory efficient, both in
+  generating and viewing.
+
+* Renders efficiently in parallel, using as many simultaneous processes as you
+  want!
+
+* Utilizes caching to speed up subsequent renderings of your world.
+
+* Throw the output directory up on a web server to share your Minecraft world
+  with everyone!
+
+Requirements
+============
+This is a quick list of what's required to run The Overviewer. It runs on
+Windows, Mac, and Linux as long as you have these software packages installed:
+
+* Python 2.6 or 2.7
+
+* PIL (Python Imaging Library)
+
+* Numpy
+
+* Either a Minecraft Client installed or a terrain.png for the textures.
+
+There are additional requirements for compiling it. More details are available
+in either the :doc:`Building <building>` or :doc:`Installing <installing>` pages.
+
+Getting Started
+===============
 
 The Overviewer works with Linux, Mac, and Windows! We provide Windows and Debian
 built executables for your convenience. Find them as well as the full sources on
@@ -35,10 +75,11 @@ bad)**, head to the :doc:`Building <building>` page.
 
 Help
 ====
-**IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to pop in
-IRC: #overviewer on freenode. Not familiar with IRC? `Use the web client
-<http://webchat.freenode.net/?channels=overviewer>`_. There's usually someone on
-there that can help you out.
+
+**IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to chat with
+us live in IRC: #overviewer on Freenode. There's usually someone on there that
+can help you out. Not familiar with IRC? `Use the web client
+<http://webchat.freenode.net/?channels=overviewer>`_. 
 
 If you think you've found a bug or other issue, file an issue on our `Issue
 Tracker <https://github.com/overviewer/Minecraft-Overviewer/issues>`_. Filing or
