@@ -124,7 +124,11 @@ var overviewer = {
             for (i in overviewerConfig.mapTypes) {
                 var view = overviewerConfig.mapTypes[i];
                 var imageFormat = view.imgformat ? view.imgformat : 'png';
-                mapOptions[view.label] = {
+                
+                if (view.shortname == null)
+                    view.shortname = view.label.replace(/\s+/g, "");
+                
+                mapOptions[view.shortname] = {
                     'getTileUrl':   overviewer.gmap.getTileUrlGenerator(view.path,
                         view.base, imageFormat),
                     'tileSize':     new google.maps.Size(
@@ -134,19 +138,20 @@ var overviewer = {
                     'minZoom':      overviewerConfig.map.minZoom,
                     'isPng':        imageFormat.toLowerCase() == 'png'
                 }
-                overviewer.collections.mapTypes[view.label] = new google.maps.ImageMapType(
-                    mapOptions[view.label]);
-                overviewer.collections.mapTypes[view.label].name = view.label;
-                overviewer.collections.mapTypes[view.label].alt = 'Minecraft ' +
+                overviewer.collections.mapTypes[view.shortname] = new google.maps.ImageMapType(
+                    mapOptions[view.shortname]);
+                overviewer.collections.mapTypes[view.shortname].name = view.label;
+                overviewer.collections.mapTypes[view.shortname].shortname = view.shortname;
+                overviewer.collections.mapTypes[view.shortname].alt = 'Minecraft ' +
                     view.label + ' Map';
-                overviewer.collections.mapTypes[view.label].projection  =
+                overviewer.collections.mapTypes[view.shortname].projection  =
                     new overviewer.classes.MapProjection();
                 if (view.overlay) {
                     overviewer.collections.overlays.push(
-                        overviewer.collections.mapTypes[view.label]);
+                        overviewer.collections.mapTypes[view.shortname]);
                 } else {
                     overviewer.collections.mapTypeIds.push(
-                        overviewerConfig.CONST.mapDivId + view.label);
+                        overviewerConfig.CONST.mapDivId + view.shortname);
                 }
             }
         },
@@ -245,7 +250,7 @@ var overviewer = {
             // Now attach the coordinate map type to the map's registry
             for (i in overviewer.collections.mapTypes) {
                 overviewer.map.mapTypes.set(overviewerConfig.CONST.mapDivId +
-                    overviewer.collections.mapTypes[i].name,
+                    overviewer.collections.mapTypes[i].shortname,
                     overviewer.collections.mapTypes[i]);
             }
             
@@ -479,7 +484,7 @@ var overviewer = {
         'getMapTypeBackgroundColor': function(mapTypeId) {
             for(i in overviewerConfig.mapTypes) {
                 if( overviewerConfig.CONST.mapDivId +
-                        overviewerConfig.mapTypes[i].label == mapTypeId ) {
+                        overviewerConfig.mapTypes[i].shortname == mapTypeId ) {
                     overviewer.util.debug('Found background color for: ' +
                         overviewerConfig.mapTypes[i].bg_color);
                     return overviewerConfig.mapTypes[i].bg_color;
@@ -971,6 +976,11 @@ var overviewer = {
             }
         },
         'setHash': function(x, y, z, zoom, maptype)    {
+            // remove the div prefix from the maptype (looks better)
+            if (maptype)
+            {
+                maptype = maptype.replace(overviewerConfig.CONST.mapDivId, "");
+            }
             window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + maptype);
         },
         'updateHash': function() {
@@ -1020,7 +1030,20 @@ var overviewer = {
                 // We can now set the map to use the 'coordinate' map type
                 overviewer.map.setMapTypeId(overviewer.util.getDefaultMapTypeId());
             } else {
-                overviewer.map.setMapTypeId(maptype);
+                // normalize the map type (this supports old-style,
+                // 'mcmapLabel' style map types, converts them to 'shortname'
+                if (maptype.lastIndexOf(overviewerConfig.CONST.mapDivId, 0) === 0) {
+                    maptype = maptype.replace(overviewerConfig.CONST.mapDivId, "");
+                    for (i in overviewer.collections.mapTypes) {
+                        var type = overviewer.collections.mapTypes[i];
+                        if (type.name == maptype) {
+                            maptype = type.shortname;
+                            break;
+                        }
+                    }
+                }
+                
+                overviewer.map.setMapTypeId(overviewerConfig.CONST.mapDivId + maptype);
             }
             
             overviewer.map.setCenter(latlngcoords);

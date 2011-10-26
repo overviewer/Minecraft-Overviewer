@@ -172,6 +172,10 @@ var overviewerConfig = {
      *                        the js/html server.
      *    imgformat : string. File extension used for these tiles. Defaults to png.
      *    overlay   : bool. If true, this tile set will be treated like an overlay
+     *    bg_color  : string. A #RRGGBB format background color.
+     *    shortname : string. Used in the dynamic anchor link mechanism. If not
+     *                        present, label is used instead.
+     *
      * Example:
      *  'mapTypes': [
      *      {'label': 'Day',   'path': 'lighting/tiles'},
