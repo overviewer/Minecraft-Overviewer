@@ -2024,12 +2024,26 @@ def generate_special_texture(blockID, data):
         return generate_texture_tuple(img, blockID)
 
     if blockID == 120: # air portal frame
-        if data == 0: # fixed block
-            t = terrain_images[159]
-            img = _build_full_block(t, None, None, t, t)
-        if data == 1: # broken block
-            t = terrain_images[158]
-            img = _build_block(t, t, blockID)
+        # The bottom 2 bits are oritation info but seems there is no
+        # graphical difference between orientations
+        top = terrain_images[158]
+        eye_t = terrain_images[174]
+        side = terrain_images[159]
+        img = _build_full_block((top, 4), None, None, side, side)
+        if data & 0x4 == 0x4: # ender eye on it
+            # generate the eye
+            eye_t = terrain_images[174].copy()
+            eye_t_s = terrain_images[174].copy()
+            # cut out from the texture the side and the top of the eye
+            ImageDraw.Draw(eye_t).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(eye_t_s).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+            # trnasform images and paste
+            eye = transform_image(eye_t)
+            eye_s = transform_image_side(eye_t_s)
+            eye_os = eye_s.transpose(Image.FLIP_LEFT_RIGHT)
+            composite.alpha_over(img, eye_s, (5,5), eye_s)
+            composite.alpha_over(img, eye_os, (9,5), eye_os)
+            composite.alpha_over(img, eye, (0,0), eye)
 
         return generate_texture_tuple(img, blockID)
 
@@ -2528,7 +2542,7 @@ special_map[116] = (0,) # enchantment table, nothings special. book not implemen
 special_map[117] = range(8) # brewing stand, number of bottles. (not implemented)
 special_map[118] = range(4) # cauldron, amount of water in it.
 special_map[119] = (0,) # air portal, generated texture
-special_map[120] = range(2) # air portal frame, fixed or broken block
+special_map[120] = range(5) # air portal frame orientation, with or without eye of ender
 
 # placeholders that are generated in generate()
 bgcolor = None
