@@ -52,7 +52,7 @@ def findGitHash():
         try:
             import overviewer_version
             return overviewer_version.HASH
-        except:
+        except Exception:
             return "unknown"
 
 def findGitVersion():
@@ -68,9 +68,9 @@ def findGitVersion():
         # and 0.1.3 into 0.1.3
         line = '-'.join(line.split('-', 2)[:2])
         return line.strip()
-    except:
+    except Exception:
         try:
             import overviewer_version
             return overviewer_version.VERSION
-        except:
+        except Exception:
             return "unknown"

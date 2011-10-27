@@ -2255,7 +2255,7 @@ def prepareBiomeData(worlddir):
         try:
             grasscolor = list(Image.open(os.path.join(biomeDir,"grasscolor.png")).getdata())
             foliagecolor = list(Image.open(os.path.join(biomeDir,"foliagecolor.png")).getdata())
-        except:
+        except Exception:
             # clear anything that managed to get set
             grasscolor = None
             foliagecolor = None
@@ -2316,7 +2316,7 @@ def loadLightColor():
         lightcolor_checked = True
         try:
             lightcolor = list(_load_image("light_normal.png").getdata())
-        except:
+        except Exception:
             logging.warning("Light color image could not be found.")
             lightcolor = None
     return lightcolor

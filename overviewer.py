@@ -139,7 +139,7 @@ def main():
             print "Git commit: %s" % overviewer_version.HASH
             print "built on %s" % overviewer_version.BUILD_DATE
             print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
-        except:
+        except Exception:
             print "version info not found"
             pass
         sys.exit(0)
