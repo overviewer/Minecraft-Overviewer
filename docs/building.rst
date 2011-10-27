@@ -14,12 +14,17 @@ have finished with these instructions, head to :doc:`running`.
 
 Get The Source
 ==============
-First step: download the source! Either clone with Git or download the most recent snapshot
 
-* URL to clone: ``git://github.com/overviewer/Minecraft-Overviewer.git``
+First step: download the platform-independent source! Either clone with Git
+(recommended if you know Git) or download the most recent snapshot
+
+* Git URL to clone: ``git://github.com/overviewer/Minecraft-Overviewer.git``
 * `Download most recent tar archive <https://github.com/overviewer/Minecraft-Overviewer/tarball/master>`_
 
 * `Download most recent zip archive <https://github.com/overviewer/Minecraft-Overviewer/zipball/master>`_
+
+Once you have the source, see below for instructions on building for your
+system.
 
 Build Instructions For Various Operating Systems
 ================================================
@@ -161,5 +166,10 @@ regular user.
 
 Installing the Compiled Code
 ----------------------------
-You can run the ``overviewer.py`` script from the build directory just fine. If
-you'd like to install, run ``python setup.py install``
+
+You can run the ``overviewer.py`` script from the build directory just fine;
+installation is unnecessary. If you'd like to install, run
+
+::
+
+    python setup.py install
