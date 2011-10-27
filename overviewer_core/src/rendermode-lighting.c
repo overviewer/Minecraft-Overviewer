@@ -51,6 +51,39 @@ calculate_light_color_fancy(void *data,
     Py_DECREF(color);
 }
 
+/* figures out the color from a given skylight and blocklight, used in
+   lighting calculations -- note this is *different* from the one above
+   (the "skylight - 11" part)
+*/
+static void
+calculate_light_color_night(void *data,
+                            unsigned char skylight, unsigned char blocklight,
+                            unsigned char *r, unsigned char *g, unsigned char *b) {
+    unsigned char v = 255 * powf(0.8f, 15.0 - MAX(blocklight, skylight - 11));
+    *r = v;
+    *g = v;
+    *b = v;
+}
+
+/* fancy night version that uses the colored light texture */
+static void
+calculate_light_color_fancy_night(void *data,
+                                  unsigned char skylight, unsigned char blocklight,
+                                  unsigned char *r, unsigned char *g, unsigned char *b) {
+    RenderModeLighting *mode = (RenderModeLighting *)(data);
+    unsigned int index;
+    PyObject *color;
+    
+    index = skylight + blocklight * 16;
+    color = PySequence_GetItem(mode->lightcolor, index);
+    
+    *r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
+    *g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
+    *b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+    
+    Py_DECREF(color);
+}
+
 /* loads the appropriate light data for the given (possibly non-local)
  * coordinates, and returns a black_coeff this is exposed, so other (derived)
  * rendermodes can use it
@@ -319,6 +352,10 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
     if (!render_mode_parse_option(options, "shade_strength", "f", &(self->shade_strength)))
         return 1;
 
+    self->night = 0;
+    if (!render_mode_parse_option(options, "night", "i", &(self->night)))
+        return 1;
+
     self->color_light = 0;
     if (!render_mode_parse_option(options, "color_light", "i", &(self->color_light)))
         return 1;
@@ -340,7 +377,11 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
     self->up_right_skylight = PyObject_GetAttrString(state->self, "up_right_skylight");
     self->up_right_blocklight = PyObject_GetAttrString(state->self, "up_right_blocklight");
     
-    self->calculate_light_color = calculate_light_color;
+    if (self->night) {
+        self->calculate_light_color = calculate_light_color_night;
+    } else {
+        self->calculate_light_color = calculate_light_color;
+    }
     
     if (self->color_light) {
         self->lightcolor = PyObject_CallMethod(state->textures, "loadLightColor", "");
@@ -349,7 +390,11 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
             self->lightcolor = NULL;
             self->color_light = 0;
         } else {
-            self->calculate_light_color = calculate_light_color_fancy;
+            if (self->night) {
+                self->calculate_light_color = calculate_light_color_fancy_night;
+            } else {
+                self->calculate_light_color = calculate_light_color_fancy;
+            }
         }
     } else {
         self->lightcolor = NULL;
@@ -430,6 +475,7 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
 
 const RenderModeOption rendermode_lighting_options[] = {
     {"shade_strength", "how dark to make the shadows, from 0.0 to 1.0 (default: 1.0)"},
+    {"night", "whether to use nighttime skylight settings (default: False)"},
     {"color_light", "whether to use colored light (default: False)"},
     {NULL, NULL}
 };

@@ -182,6 +182,7 @@ typedef struct {
     
     float shade_strength;
     int color_light;
+    int night;
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
 
@@ -192,13 +193,6 @@ int rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int
 void get_lighting_color(RenderModeLighting *self, RenderState *state,
                         int x, int y, int z,
                         unsigned char *r, unsigned char *g, unsigned char *b);
-
-/* NIGHT */
-typedef struct {
-    /* inherits from lighting */
-    RenderModeLighting parent;
-} RenderModeNight;
-extern RenderModeInterface rendermode_night;
 
 /* SMOOTH LIGHTING */
 typedef struct {

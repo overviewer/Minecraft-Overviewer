@@ -87,6 +87,24 @@ from overviewer_core.configParser import ConfigOptionParser
 from overviewer_core import optimizeimages, world, quadtree
 from overviewer_core import googlemap, rendernode
 
+# definitions of built-in custom modes
+# usually because what used to be a mode became an option
+# for example, night mode
+builtin_custom_rendermodes = {
+    'night' : {
+        'parent' : 'lighting',
+        'label' : 'Night',
+        'description' : 'like "lighting", except at night',
+        'options' : {'night' : True}
+    },
+
+    'smooth-night' : {
+        'parent' : 'smooth-lighting',
+        'label' : 'Smooth Night',
+        'description' : 'like "lighting", except smooth and at night',
+        'options' : {'night' : True}
+    },
+}
 
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
@@ -145,6 +163,8 @@ def main():
         sys.exit(0)
 
     # setup c_overviewer rendermode customs / options
+    for mode in builtin_custom_rendermodes:
+        c_overviewer.add_custom_render_mode(mode, builtin_custom_rendermodes[mode])
     for mode in options.custom_rendermodes:
         c_overviewer.add_custom_render_mode(mode, options.custom_rendermodes[mode])
     for mode in options.rendermode_options:

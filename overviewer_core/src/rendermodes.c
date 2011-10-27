@@ -25,7 +25,6 @@
 static RenderModeInterface *render_modes[] = {
     &rendermode_normal,
     &rendermode_lighting,
-    &rendermode_night,
     &rendermode_smooth_lighting,
     &rendermode_spawn,
     &rendermode_cave,
