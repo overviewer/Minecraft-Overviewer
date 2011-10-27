@@ -54,8 +54,10 @@ Windows, Mac, and Linux as long as you have these software packages installed:
 
 * Either a Minecraft Client installed or a terrain.png for the textures.
 
-There are additional requirements for compiling it. More details are available
-in either the :doc:`Building <building>` or :doc:`Installing <installing>` pages.
+The first three are included in the Windows binary download. Also, there are
+additional requirements for compiling it (like a compiler). More details are
+available in either the :doc:`Building <building>` or :doc:`Installing
+<installing>` pages.
 
 Getting Started
 ===============
@@ -92,8 +94,8 @@ Documentation Contents
 .. toctree::
    :maxdepth: 2
 
-   building
    installing
+   building
    running
    options
    faq

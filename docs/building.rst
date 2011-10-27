@@ -2,11 +2,15 @@
 Building the Overviewer from Source
 ===================================
 
-These instructions are for building the C extension for Overviewer. Also note
-that pre-built Windows and Debian executables are available in the `Downloads
-<https://github.com/overviewer/Minecraft-Overviewer/downloads>`_ section.  These
-kits already contain the compiled extension and require no further setup (so you
-can skip to the :doc:`Running <running>` section of the docs).
+These instructions are for building the C extension for Overviewer. Once you
+have finished with these instructions, head to :doc:`running`.
+
+.. note::
+
+    Pre-built Windows and Debian executables are available on the
+    :doc:`installing` page.  These kits already contain the compiled code and
+    require no further setup, so you can skip to the next section of the docs:
+    :doc:`running`.
 
 Get The Source
 ==============
