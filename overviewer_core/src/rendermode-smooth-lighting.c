@@ -81,9 +81,6 @@ static struct SmoothLightingFace lighting_rules[] = {
     
     /* left */
     {-1, 0, 0, {
-            {12, 24,
-             0, 1, 0,
-             0, 0, -1},
             {0, 18,
              0, -1, 0,
              0, 0, -1},
@@ -93,11 +90,17 @@ static struct SmoothLightingFace lighting_rules[] = {
             {12, 12,
              0, 1, 0,
              0, 0, 1},
+            {12, 24,
+             0, 1, 0,
+             0, 0, -1},
         },
      NULL, 0},
     
     /* right */
     {0, 1, 0, {
+            {24, 6,
+             1, 0, 0,
+             0, 0, 1},
             {12, 12,
              -1, 0, 0,
              0, 0, 1},
@@ -107,9 +110,6 @@ static struct SmoothLightingFace lighting_rules[] = {
             {24, 18,
              1, 0, 0,
              0, 0, -1},
-            {24, 6,
-             1, 0, 0,
-             0, 0, 1},
         },
      NULL, 0},
 };
