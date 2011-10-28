@@ -266,6 +266,9 @@ var overviewer = {
             google.maps.event.addListener(overviewer.map, 'zoom_changed', function() {
                 overviewer.util.updateHash();
             });
+            google.maps.event.addListener(overviewer.map, 'dblclick', function() {
+                overviewer.util.updateHash();
+            });
             
             // Make the link again whenever the map changes
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {

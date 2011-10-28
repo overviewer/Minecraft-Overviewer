@@ -15,7 +15,25 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+import platform
 import sys
+
+if platform.system() == 'Windows':
+    try:
+        import ctypes
+        GetConsoleProcessList = ctypes.windll.kernel32.GetConsoleProcessList
+        num = GetConsoleProcessList(ctypes.byref(ctypes.c_int(0)), ctypes.c_int(1))
+        if (num == 1):
+            print "The Overviewer is a console program.  Please open a Windows command prompt"
+            print "first and run Overviewer from there.   Further documentation is available at"
+            print "http://docs.overviewer.org/\n"
+            print "Press [Enter] to close this window."
+            raw_input()
+            sys.exit(1)
+
+    except Exception:
+        pass
+
 if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
     print "Sorry, the Overviewer requires at least Python 2.6 to run"
     if sys.version_info[0] >= 3:
@@ -29,7 +47,6 @@ import subprocess
 import multiprocessing
 import time
 import logging
-import platform
 from overviewer_core import util
 
 logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
@@ -157,7 +174,7 @@ def main():
             print "Git commit: %s" % overviewer_version.HASH
             print "built on %s" % overviewer_version.BUILD_DATE
             print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
-        except:
+        except Exception:
             print "version info not found"
             pass
         sys.exit(0)

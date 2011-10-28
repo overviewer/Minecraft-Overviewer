@@ -6,6 +6,10 @@
 The Minecraft Overviewer
 ========================
 
+See also the `Github Homepage`_
+
+.. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
+
 Introduction
 ============
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
@@ -54,8 +58,9 @@ Windows, Mac, and Linux as long as you have these software packages installed:
 
 * Either a Minecraft Client installed or a terrain.png for the textures.
 
-There are additional requirements for compiling it. More details are available
-in either the :doc:`Building <building>` or :doc:`Installing <installing>` pages.
+The first three are included in the Windows download. Also, there are additional
+requirements for compiling it (like a compiler). More details are available in
+either the :doc:`Building <building>` or :doc:`Installing <installing>` pages.
 
 Getting Started
 ===============
@@ -71,7 +76,9 @@ packages and don't want to have to compile anything yourself**, head to the
 **If you would like to build the Overviewer from source yourself (it's not that
 bad)**, head to the :doc:`Building <building>` page.
 
-.. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
+**For all other platforms** you will need to build it yourself.
+:doc:`building`.
+
 
 Help
 ====
@@ -92,8 +99,8 @@ Documentation Contents
 .. toctree::
    :maxdepth: 2
 
-   building
    installing
+   building
    running
    options
    faq

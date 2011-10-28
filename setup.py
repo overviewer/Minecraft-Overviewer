@@ -142,7 +142,7 @@ except AttributeError:
 
 try:
     pil_include = os.environ['PIL_INCLUDE_DIR'].split(os.pathsep)
-except:
+except Exception:
     pil_include = [ os.path.join(get_python_inc(plat_specific=1), 'Imaging') ]
     if not os.path.exists(pil_include[0]):
         pil_include = [ ]
@@ -221,7 +221,7 @@ def generate_version_py():
         f = open("overviewer_core/overviewer_version.py", "w")
         f.write(outstr)
         f.close()
-    except:
+    except Exception:
         print "WARNING: failed to build overviewer_version file"
 
 class CustomSDist(sdist):

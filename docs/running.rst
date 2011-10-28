@@ -137,3 +137,23 @@ modification times intact, use ``cp -p``. For people who render from backups,
 GNU ``tar`` automatically handles modification times correctly. ``rsync -a``
 will handle this correctly as well. If you use some other tool, you'll have to
 figure out how to do this yourself.
+
+Biome Support
+=============
+
+Minecraft Overviewer has support for using the biome info from the `Minecraft
+Biome Extractor`_. If you run the biome extractor on your world, during the
+next run Overviewer will automatically recognize the biome info and use it to
+colorize your grass and leaves appropriately. This will only appear on updated
+chunks, though; to colorize the entire world you will need to re-render from
+scratch by using :option:`--forcerender`
+
+.. note::
+
+    as of Minecraft 1.8, you currently need to use a patched Biome Extractor
+    that can be found `here
+    <http://www.minecraftforum.net/topic/76063-minecraft-biome-extractor-add-biome-support-to-your-mapper/page__st__140__gopid__8431028#entry8431028>`_,
+    or `here on GitHub
+    <https://github.com/overviewer/minecraft-biome-extractor>`_.
+
+.. _Minecraft Biome Extractor: http://www.minecraftforum.net/viewtopic.php?f=25&t=80902

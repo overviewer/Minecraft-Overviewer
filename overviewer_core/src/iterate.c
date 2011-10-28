@@ -193,7 +193,7 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         unsigned char above_level_data = 0, same_level_data = 0, below_level_data = 0, possibly_connected = 0, final_data = 0;
 
         /* check for air in z+1, no air = no connection with upper level */        
-        if ((z != 127) && (getArrayByte3D(state->left_blocks, x, y, z) == 0)) { 
+        if ((z != 127) && (getArrayByte3D(state->blocks, x, y, z + 1) == 0)) { 
             above_level_data = check_adjacent_blocks(state, x, y, z + 1, state->block);
         }   /* else above_level_data = 0 */
         

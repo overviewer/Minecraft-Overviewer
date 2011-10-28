@@ -439,9 +439,12 @@ class QuadtreeGen(object):
                     needs_rerender = True
                     break
                 
-                # check region file mtime first. 
-                if regionMtime <= tile_mtime:
-                    continue
+                # check region file mtime first.
+                # on windows (and possibly elsewhere) minecraft won't update
+                # the region file mtime until after shutdown.
+                # for servers this is unacceptable, so skip this check.
+                #if regionMtime <= tile_mtime:
+                #    continue
                
                 # checking chunk mtime
                 if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
