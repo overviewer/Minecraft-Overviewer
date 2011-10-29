@@ -187,7 +187,15 @@ class QuadtreeGen(object):
             os.rename(getpath("3", "0"), getpath("new3"))
             shutil.rmtree(getpath("3"))
             os.rename(getpath("new3"), getpath("3"))
-        
+
+        # Delete the files in the top directory to make sure they get re-created.
+        files = [str(num)+"."+self.imgformat for num in xrange(4)] + ["base." + self.imgformat]
+        for f in files:
+            try:
+                os.unlink(getpath(f))
+            except OSError, e:
+                pass # doesn't exist maybe?
+
     def go(self, procs):
         """Processing before tile rendering"""
 
