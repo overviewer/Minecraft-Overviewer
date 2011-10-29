@@ -47,8 +47,8 @@ chunk a block is in, simply divide its X and Z coordinates by 16 and take the
 floor.
 
 Minecraft worlds are generated on-the-fly by the chunk. This means not all
-chunks will exist. There is no pattern to chunk generation, the game simply
-generates them as needed.
+chunks will exist. There is no pattern to which chunks are generated, the game
+generates them as needed as players explore the area.
 
 Chunks are stored on-disk in region files. A Minecraft region is a "region" of
 32 by 32 chunks. Regions have their own address, and for a particular chunk one
@@ -278,7 +278,7 @@ diagonally next to each other in the image?
     :alt: Cubes that are neighbors are offset by 12 on the X and 6 on the Y
 
 The cube outlined in green is offset on the horizontal axis by half the cube
-width, or 12 pixels. It is offset on the vertical axis by half the width of the
+width, or 12 pixels. It is offset on the vertical axis by half the height of the
 cube's top, or 6 pixels. For the other 3 directions this could go, the
 directions of the offsets are changed, but the amounts are the same.
 
@@ -331,6 +331,42 @@ pixels to get the offset of the lowest green cube: 1704.
 
 So the total size of a chunk in pixels is 384 wide by 1728 tall. That's pretty
 tall!
+
+Assembling a Chunk
+------------------
+Now that we know how to place blocks, assembling the chunk is a relatively
+simple process. Frist, create an image 384 by 1728 pixels. Then, paste the
+blocks in order from back to front, bottom to top. This ensures that block
+visually closer to the viewer are drawn on top, while blocks that should be
+obstructed are drawn first and get hidden.
+
+From the data file on disk, block information in a chunk is a three-dimensional
+array of bytes, each representing a `block id
+<http://www.minecraftwiki.net/wiki/Data_values#Block_IDs_.28Minecraft_Beta.29>`_.
+The process of assembling a chunk is essentially reading these values, looking
+up the appropriate pre-rendered image representing that block type, and pasting
+it on the chunk image at the appropriate location.
+
+First, a bit about how blocks are addressed in a chunk. Consider this diagram of
+the *bottom* layer of a chunk: Y=0.
+
+.. image:: cubepositionimgs/chunk_coords.png
+    :alt: Illustrating how cubes are addressed in a chunk
+
+The 16x128x16 array of block is iterated over. The inner loop iterates over the
+Y axis from bottom to top, the middle loop iterates over the Z axis from 0 to
+15, and the outer loop iterates over the X axis from 15 down to 0.
+
+.. note::
+
+    The iteration happens in ``iterate.c`` in the :c:func:`chunk_render`
+    function. In the code, the Y and Z axes are switched in name only. (oops)
+
+In other words, the column of blocks at X=15, Z=0 is drawn from bottom to top.
+Then the next column over on the Z axis (X=15, Z=1) is drawn, and so fourth
+until the entire plane of cubes at X=15 is drawn (the upper-right face). Then it
+starts with the next plane at X=14, and so fourth until the entire chunk is
+drawn.
 
 Tile Rendering
 ==============
