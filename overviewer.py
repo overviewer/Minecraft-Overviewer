@@ -124,6 +124,7 @@ def main():
     parser.add_option("-z", "--zoom", dest="zoom", helptext="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", advanced=True)
     parser.add_option("--regionlist", dest="regionlist", helptext="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
     parser.add_option("--forcerender", dest="forcerender", helptext="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting it.", action="store_true")
+    parser.add_option("--stochastic-render", dest="stochastic_render", helptext="Rerender a non-updated tile randomly, with the given probability (between 0 and 1). Useful for incrementally updating a map with a new mode.", type="float", advanced=True, default=0.0, metavar="PROBABILITY")
     parser.add_option("--rendermodes", dest="rendermode", helptext="Specifies the render types, separated by ',', ':', or '/'. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
     parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", helptext="List available render modes and exit.", commandLineOnly=True)
     parser.add_option("--rendermode-options", dest="rendermode_options", default={}, advanced=True, helptext="Used to specify options for different rendermodes.  Only useful in a settings.py file")
@@ -345,7 +346,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # create the quadtrees
     # TODO chunklist
     q = []
-    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'imgquality' : options.imgquality, 'optimizeimg' : optimizeimg, 'bgcolor' : bgcolor, 'forcerender' : options.forcerender}
+    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'imgquality' : options.imgquality, 'optimizeimg' : optimizeimg, 'bgcolor' : bgcolor, 'forcerender' : options.forcerender, 'rerender_prob' : options.stochastic_render}
     for rendermode in options.rendermode:
         if rendermode == 'normal':
             qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, tiledir='tiles', **qtree_args)
