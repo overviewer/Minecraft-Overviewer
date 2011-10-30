@@ -336,6 +336,128 @@ Tile Rendering
 ==============
 .. Covers the placement of chunk images on a tile
 
+So now that we know how to draw a single chunk, we can move on to placing them
+on an image.
+
+For the diagrams in this section, we are positioning an entire chunk, but
+frequently, only the top face of the chunk is drawn (shown in green below).
+
+.. image:: tilerendering/topofchunk.png
+    :alt: The top of a chunk is highlighted
+
+This makes it easier and less cumbersome to describe chunk positionings. Just
+remember that chunks extend down for 1536 more pixels.
+
+Chunk Addressing
+----------------
+
+Chunks in Minecraft have an X,Z address, starting at 0,0 and extending to
+positive and negative infinity on both axes. Since we're looking at things
+diagonally, however, we need a way of addressing these chunks in the final
+image. For that, we refer to them in rows and columns. Consider this grid
+showing the tops of a five by five region of chunks, labeled with their in-game
+addresses.
+
+.. image:: tilerendering/chunkgrid.png
+    :alt: A grid of 5x5 chunks showing how chunks are addressed.
+
+Now, we want to transform each chunk to a row/column address as shown here:
+
+.. image:: tilerendering/chunkgridwithrowcol.png
+    :alt: A grid of 5x5 chunks showing how chunks are addressed.
+
+So the chunk at address 0,0 would be at col 0, row 0; while the chunk at address
+1,1 would be at col 2, row 0. The intersection of the red and green lines
+addresses the chunk in col,row format.
+
+Notice that as a consequence of this addressing scheme, there is no chunk at
+e.g. column 1 row 0. There are some col,row addresses that lie between chunks
+(as can be seen where the red/green lines intersect at a chunk boundary instead
+of the middle of a chunk). Something to keep in mind.
+
+So how does one translate between them? It turns out that a chunk's column
+address is simply the sum of the X and the Z coordinate, while the row is the
+difference. Try it!
+
+::
+
+    col = X + Z
+    row = Z - X
+
+    X = (col - row) / 2
+    Z = (col + row) / 2
+
+Chunk Positioning
+-----------------
+Again just looking at the top of a chunk, we can work out how to position them
+relative to each other. This is similar to how to position blocks relative to
+each other, but this time, for chunks.
+
+A chunk's top face is 384 pixels wide by 192 pixels tall. Similar to the block,
+neighboring chunks have these relationships:
+
+.. image:: tilerendering/chunkpositioning.png
+    :alt: Chunk positioning diagram
+
+But that's all pretty trivial. With this knowledge, we could draw the chunks at
+the above offsets in one large image, but for large worlds, that would quickly
+become too much to handle. (Early versions of the Overviewer did this, but the
+large, unwieldy images quickly motivated the development of rendering to
+individual tiles)
+
+Tile Layout
+-----------
+
+Instead of rendering to one large image, chunks are rendered to small tiles.
+Only a handful of chunks need to be rendered into each tile. The downside is
+that chunks must be rendered multiple times for each tile they appear in, but
+the upside is that arbitrarily sized maps can be viewed.
+
+The Overviewer uses a tile size of 384 by 384 pixels. This is the same as a
+width of a chunk and is no coincidence. Just considering the top face of a
+chunk, 8 chunks get rendered into a tile in this configuration:
+
+.. image:: tilerendering/chunksintile.png
+    :alt: The 8 chunks that get rendered into a tile
+
+So the overall strategy is to convert all chunks into diagonal col,row
+coordinates, then for each tile decide which chunks belong in it, then render
+them in the appropriate place on the tile.
+
+The rendering routines are actually passed a range of chunks to render, e.g.
+rows 4-6, cols 20-24. The lower bound col,row chunk given in the range is
+rendered at position 0,0 in the diagram above. That is, at offset -192,-96
+pixels.
+
+The rendering routines takes the given range of columns and rows, converts it
+back into chunk coordinates, and renders the given 8 chunks plus all chunks from
+the 16 rows above the given range (see the note below). The chunks are
+positioned correctly with the above positioning rules, so any chunks that are
+out of the bounds get rendered off the tile and don't affect the final image.
+(There is therefore no penalty for rendering out-of-bounds chunks for a tile
+except increased processing)
+
+.. note::
+
+    Remember that chunks are actually very tall, so there are actually several
+    rows above 0 in the above diagram that are rendered into the tile. Since the
+    chunk outlines in the diagrams are only the top face of the chunk, they most
+    likely don't contribute to the image since chunks usually don't have
+    anything to render way up at the top near the sky.
+
+Since every other column of chunks is half-way in two tiles, they must be
+rendered twice. Each neighboring tile is therefore only 2 columns over, not 3 as
+one may suspect at first. Same goes for the rows: The next tile down is 4 rows
+down, not 5.
+
+Quadtrees
+=========
+.. About the tile output 
+
+get_range_by_path
+-----------------
+.. Explain the quadtree.QuadtreeGen._get_range_by_path method
+
 Reading the Data Files
 ======================
 ..
