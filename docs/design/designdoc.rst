@@ -90,7 +90,7 @@ the process remains the same). In order to render a cube out of this, an `affine
 transformation`_ is applied to the texture in order to transform it to the top,
 left, and right faces of the cube.
 
-.. image:: texturecubing.png
+.. image:: blockrendering/texturecubing.png
     :alt: A texture gets rendered into a cube
 
 .. _affine transformation: http://en.wikipedia.org/wiki/Affine_transformation
@@ -130,12 +130,12 @@ these steps:
 
 This produces an image of size 24 by 12 as seen in the following sequence.
 
-.. image:: texturetopsteps.png
+.. image:: blockrendering/texturetopsteps.png
     :alt: The 4 steps for transforming a texture square into the top of the cube.
 
 The final image, shown below, becomes the top of the cube.
 
-.. image:: cube_top.png
+.. image:: blockrendering/cube_top.png
     :alt: Top of the cube
 
 On the left is what will become the top of the block at actual size after the
@@ -156,13 +156,13 @@ a shear.
 2. The 12 by 12 square is sheared by a factor of 1.5 in the Y direction,
    producing an image that is bounded by a 12 by 18 pixel square.
 
-.. image:: texturesidesteps.png
+.. image:: blockrendering/texturesidesteps.png
     :alt: Texture being sheared for the side of the cube.
 
 This image is simply flipped along the horizontal axis for the other visible
 side of the cube.
 
-.. image:: cube_sides.png
+.. image:: blockrendering/cube_sides.png
     :alt: The sides of the block
 
 Again, shown on the left are the two sides of the block at actual size, the
@@ -177,7 +177,7 @@ However, notice from the middle of the three images in the sequence below that
 the images as transformed don't fit together exactly. There is some overlap when
 put in the 24 by 24 box in which they must fit.
 
-.. image:: cube_parts.png
+.. image:: blockrendering/cube_parts.png
     :alt: How the cube parts fit together
 
 There is one more complication. The cubes don't tessellate perfectly. This
@@ -185,7 +185,7 @@ diagram illustrates when a cube is positioned next to another. The lower cubes
 are 18 pixels lower and 12 pixels to either side, which is half the width and
 3/4 the height respectively.
 
-.. image:: tessellation.png
+.. image:: blockrendering/tessellation.png
     :alt: Cubes don't tessellate perfectly
 
 The solution is to manually touch up those 6 pixels. 3 pixels are added on the
@@ -194,7 +194,7 @@ perfectly!
 
 This is done at the end of :func:`textures._build_block`
 
-.. image:: pixelfix.png
+.. image:: blockrendering/pixelfix.png
     :alt: The 6 pixels manually added to each cube.
 
 Other Cube Types
