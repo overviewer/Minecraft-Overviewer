@@ -196,7 +196,7 @@ class ConfigOptionParser(object):
                 sys.exit(1)
             return value
         elif a['type'] == "float":
-            return long(value)
+            return float(value)
         elif a['type'] == "complex":
             return complex(value)
         elif a['type'] == "function":
