@@ -500,3 +500,121 @@ class QuadtreeGen(object):
 
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
+
+
+class DirtyTiles(object):
+    """This tree holds which tiles need rendering.
+    Each instance is a node, and the root of a subtree.
+
+    Each node knows its "level", which corresponds to the zoom level where 0 is
+    the inner-most (most zoomed in) tiles.
+
+    Instances hold the clean/dirty state of their children. Leaf nodes are
+    images and do not physically exist in the tree, level 1 nodes keep track of
+    leaf image state. Level 2 nodes keep track of level 1 state, and so fourth.
+
+    In attempt to keep things memory efficient, subtrees that are completely
+    dirty are collapsed
+    
+    """
+    def __init__(self, level):
+        """Initialize a new node of the tree at the specified level
+
+        """
+        self.level = level
+
+        # the self.children array holds the 4 children of this node. This
+        # follows the same quadtree convention as elsewhere: children 0, 1, 2,
+        # 3 are the upper-left, upper-right, lower-left, and lower-right
+        # respectively
+        # Values are:
+        # False
+        #   All children down this subtree are clean
+        # True
+        #   All children down this subtree are dirty
+        # A DirtyTileTree instance
+        #   the instance defines which children down that subtree are
+        #   clean/dirty.
+        # A node with level=1 cannot have a DirtyTileTree instance in its
+        # children since its leaves are images, not more tree
+        self.children = [False] * 4
+
+    def set_dirty(self, path):
+        """Marks the requested leaf node as "dirty".
+        
+        Path is a list of integers representing the path to the leaf node
+        that is requested to be marked as dirty. Path must be presented in
+        reverse order (leaf node at index 0, root node at index -1)
+
+        If *all* the nodes below this one are dirty, this function returns
+        true. Otherwise, returns None.
+        
+        """
+        assert len(path) == self.level
+
+        if self.level == 1:
+            # Base case
+            self.children[path[0]] = True
+
+            # Check to see if all children are dirty
+            if all(self.children):
+                return True
+        else:
+            # Recursive case
+            if not isinstance(path,list):
+                path = list(path)
+
+            childnum = path.pop()
+            child = self.children[childnum]
+
+            if child == False:
+                # Create a new node
+                child = self.__class__(self.level-1)
+                child.set_dirty(path)
+                self.children[childnum] = child
+            elif child == True:
+                # Every child is already dirty. Nothing to do.
+                return
+            else:
+                # subtree is mixed clean/dirty. Recurse
+                ret = child.set_dirty(path)
+                if ret:
+                    # Child says it's completely dirty, so we can purge the
+                    # subtree and mark it as dirty. The subtree will be garbage
+                    # collected when this method exits.
+                    self.children[childnum] = True
+
+                    # Since we've marked an entire sub-tree as dirty, we may be
+                    # able to signal to our parent
+                    if all(x is True for x in self.children):
+                        return True
+
+    def iterate_dirty(self):
+        """Returns an iterator over every dirty tile in this subtree. Each item
+        yielded is a sequence of integers representing the quadtree path to the
+        dirty tile. Yielded sequences are of length self.level.
+
+        Remember yielded paths are in reverse order. Leaf nodes at index 0!
+
+        """
+        if self.level == 1:
+            # Base case
+            if self.children[0]: yield [0]
+            if self.children[1]: yield [1]
+            if self.children[2]: yield [2]
+            if self.children[3]: yield [3]
+
+        else:
+            # Higher levels:
+            for c, child in enumerate(self.children):
+                if child == True:
+                    # All dirty down this subtree, iterate over every leaf
+                    for x in quadtree.iterate_base4(self.level-1):
+                        x = list(x)
+                        x.append(c)
+                        yield x
+                elif child != False:
+                    # Mixed dirty/clean down this subtree, recurse
+                    for path in child.iterate_dirty():
+                        path.append(c)
+                        yield path

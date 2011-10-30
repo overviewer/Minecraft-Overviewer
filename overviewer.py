@@ -379,7 +379,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # Create the quadtrees. There is one quadtree per rendermode requested, and
     # therefore, per output directory hierarchy of tiles. Each quadtree
     # individually computes its depth and size. The constructor computes the
-    # depth of the tree, while the go() method re-arranges tiles if teh current
+    # depth of the tree, while the go() method re-arranges tiles if the current
     # depth differs from the computed depth.
     q = []
     qtree_args = {'depth' : options.zoom,

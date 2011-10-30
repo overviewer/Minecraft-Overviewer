@@ -24,13 +24,13 @@ import logging
 import cPickle
 import collections
 import itertools
+import time
 
 import numpy
 
-from chunk import ChunkCorrupt
+import chunk
 import nbt
 import textures
-import time
 
 """
 This module has routines for extracting information about available worlds
@@ -291,7 +291,7 @@ class World(object):
                         spawnY += 1
                         if spawnY == 128:
                             break
-        except ChunkCorrupt:
+        except chunk.ChunkCorrupt:
             #ignore corrupt spawn, and continue
             pass
         self.POI.append( dict(x=disp_spawnX, y=spawnY, z=disp_spawnZ,
@@ -447,3 +447,4 @@ def get_worlds():
             ret[info['Data']['LevelName']] = info['Data']
 
     return ret
+
