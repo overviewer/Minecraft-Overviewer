@@ -496,15 +496,22 @@ def load_water():
     Block 8, flowing water, is given a full 3 sided cube."""
 
     watertexture = _load_image("water.png")
-    w1 = _build_block(watertexture, None)
-    blockmap[9] = generate_texture_tuple(w1,9)
-    w2 = _build_block(watertexture, watertexture)
-    blockmap[8] = generate_texture_tuple(w2,8)
-
     lavatexture = _load_image("lava.png")
+    
+    w1 = _build_block(watertexture, None)
+    w1 = generate_texture_tuple(w1,9)
+    w2 = _build_block(watertexture, watertexture)
+    w2 = generate_texture_tuple(w2,8)
+    
     lavablock = _build_block(lavatexture, lavatexture)
-    blockmap[10] = generate_texture_tuple(lavablock,10)
-    blockmap[11] = blockmap[10]
+    lava = generate_texture_tuple(lavablock,10)
+    
+    for data in range(16):
+        blockmap[(9, data)] = w1
+        blockmap[(8, data)] = w2
+        
+        blockmap[(10, data)] = lava
+        blockmap[(11, data)] = lava
 
 def generate_opaque_mask(img):
     """ Takes the alpha channel of the image and generates a mask
@@ -516,7 +523,7 @@ def generate_opaque_mask(img):
 
 def generate_texture_tuple(img, blockid):
     """ This takes an image and returns the needed tuple for the
-    blockmap list and specialblockmap dictionary."""
+    blockmap dictionary."""
     return (img, generate_opaque_mask(img))
 
 def generate_special_texture(blockID, data):
@@ -2425,7 +2432,6 @@ bgcolor = None
 terrain_images = None
 blockmap = None
 biome_grass_texture = None
-specialblockmap = None
 
 def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower-left'):
     global _north
@@ -2443,7 +2449,10 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
     
     # generate the normal blocks
     global blockmap
-    blockmap = _build_blockimages()
+    blockmap = {}
+    for blockID, t in enumerate(_build_blockimages()):
+        blockmap[(blockID, 0)] = t
+    
     load_water()
     
     # generate biome grass mask
@@ -2451,32 +2460,19 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
     biome_grass_texture = _build_block(terrain_images[0], terrain_images[38], 2)
     
     # generate the special blocks
-    global specialblockmap, special_blocks
-    specialblockmap = {}
+    global special_blocks
     for blockID in special_blocks:
         for data in special_map[blockID]:
-            specialblockmap[(blockID, data)] = generate_special_texture(blockID, data)
+            blockmap[(blockID, data)] = generate_special_texture(blockID, data)
 
     if texture_size != 24:
         # rescale biome textures.
         biome_grass_texture = biome_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
 
-        # rescale the normal block images
-        for i in range(len(blockmap)):
-            if blockmap[i] != None:
-                block = blockmap[i]
-                alpha = block[1]
-                block = block[0]
-                block.putalpha(alpha)
-                scaled_block = block.resize(texture_dimensions, Image.ANTIALIAS)
-                blockmap[i] = generate_texture_tuple(scaled_block, i)
-
         # rescale the special block images
-        for blockid, data in iter(specialblockmap):
-            block = specialblockmap[(blockid,data)]
+        for blockid, data in iter(blockmap):
+            block = blockmap[(blockid,data)]
             if block != None:
-                alpha = block[1]
                 block = block[0]
-                block.putalpha(alpha)
                 scaled_block = block.resize(texture_dimensions, Image.ANTIALIAS)
-                specialblockmap[(blockid,data)] = generate_texture_tuple(scaled_block, blockid)
+                blockmap[(blockid,data)] = generate_texture_tuple(scaled_block, blockid)
