@@ -53,7 +53,7 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
     if (!specialblockmap)
         return NULL;
-    transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
+    transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
     if (!transparent_blocks)
         return NULL;
     

@@ -2321,6 +2321,25 @@ def loadLightColor():
             lightcolor = None
     return lightcolor
 
+# This set holds blocks ids that can be seen through, for occlusion calculations
+transparent_blocks = set([ 0,  6,  8,  9, 18, 20, 26, 27, 28, 29, 30, 31, 32, 33,
+                          34, 37, 38, 39, 40, 44, 50, 51, 52, 53, 55, 59, 63, 64,
+                          65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79,
+                          81, 83, 85, 90, 92, 93, 94, 96, 101, 102, 104, 105,
+                          106, 107, 108, 109])
+
+# This set holds block ids that are solid blocks
+solid_blocks = set([1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+    23, 24, 25, 35, 41, 42, 43, 44, 45, 46, 47, 48, 49, 53, 54, 56, 57, 58, 60, 
+    61, 62, 67, 73, 74, 78, 79, 80, 81, 82, 84, 86, 87, 88, 89, 91])
+
+# This set holds block ids that are fluid blocks
+fluid_blocks = set([8,9,10,11])
+
+# This set holds block ids that are not candidates for spawning mobs on
+# (glass, slabs, stairs, fluids, ice, pistons, webs,TNT, wheat, cactus, iron bars, glass planes, fences, fence gate, cake, bed, repeaters, trapdoor)
+nospawn_blocks = set([20,26, 29, 30, 33, 34, 44, 46, 53, 59, 67, 79, 81, 85, 92, 93, 94, 96, 107, 109, 101, 102]).union(fluid_blocks)
+
 # This set holds block ids that require special pre-computing.  These are typically
 # things that require ancillary data to render properly (i.e. ladder plus orientation)
 # A good source of information is:
