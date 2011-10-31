@@ -450,8 +450,8 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *src, *mask, *mask_light;
                     int randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
-                    mask = PyTuple_GetItem(t, 1);
-                    mask_light = PyTuple_GetItem(t, 2);
+                    mask = PyTuple_GetItem(t, 0);
+                    mask_light = PyTuple_GetItem(t, 1);
 
                     if (mask == Py_None)
                         mask = src;

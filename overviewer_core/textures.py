@@ -517,7 +517,7 @@ def generate_opaque_mask(img):
 def generate_texture_tuple(img, blockid):
     """ This takes an image and returns the needed tuple for the
     blockmap list and specialblockmap dictionary."""
-    return (img.convert("RGB"), img.split()[3], generate_opaque_mask(img))
+    return (img, generate_opaque_mask(img))
 
 def generate_special_texture(blockID, data):
     """Generates a special texture, such as a correctly facing minecraft track"""
