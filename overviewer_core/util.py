@@ -22,6 +22,7 @@ import os
 import os.path
 import sys
 from subprocess import Popen, PIPE
+import logging
 
 def get_program_path():
     if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
@@ -74,3 +75,108 @@ def findGitVersion():
             return overviewer_version.VERSION
         except Exception:
             return "unknown"
+
+
+# Logging related classes are below
+
+# Some cool code for colored logging:
+# For background, add 40. For foreground, add 30
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+
+RESET_SEQ = "\033[0m"
+COLOR_SEQ = "\033[1;%dm"
+BOLD_SEQ = "\033[1m"
+
+COLORIZE = {
+    #'INFO': WHITE,
+    'DEBUG': BLUE,
+}
+HIGHLIGHT = {
+    'CRITICAL': RED,
+    'ERROR': RED,
+    'WARNING': YELLOW,
+}
+
+class HighlightingFormatter(logging.Formatter):
+    """Base class of our custom formatter
+    
+    """
+    fmtstr = '%(fileandlineno)-18s:PID(%(pid)s):%(asctime)s ' \
+             '%(levelname)-8s %(message)s'
+    datefmt = "%H:%M:%S"
+    funcName_len = 15
+
+    def __init__(self):
+        logging.Formatter.__init__(self, self.fmtstr, self.datefmt)
+
+    def format(self, record):
+        """Add a few extra options to the record
+
+        pid
+            The process ID
+
+        fileandlineno
+            A combination filename:linenumber string, so it can be justified as
+            one entry in a format string.
+
+        funcName
+            The function name truncated/padded to a fixed width characters
+        
+        """
+        record.pid = os.getpid()
+        record.fileandlineno = "%s:%s" % (record.filename, record.lineno)
+
+        # Set the max length for the funcName field, and left justify
+        l = self.funcName_len
+        record.funcName = ("%-" + str(l) + 's') % record.funcName[:l]
+
+        return self.highlight(record)
+
+    def highlight(self, record):
+        """This method applies any special effects such as colorization. It
+        should modify the records in the record object, and should return the
+        *formatted line*. This probably involves calling
+        logging.Formatter.format()
+
+        Override this in subclasses
+
+        """
+        return logging.Formatter.format(self, record)
+
+class DumbFormatter(HighlightingFormatter):
+    """Formatter for dumb terminals that don't support color, or log files.
+    Prints a bunch of stars before a highlighted line.
+
+    """
+    def highlight(self, record):
+        if record.levelname in HIGHLIGHT:
+            line = logging.Formatter.format(self, record)
+            line = "*" * min(79,len(line)) + "\n" + line
+            return line
+        else:
+            return super(DumbFormatter, self).highlight(record)
+
+class ANSIColorFormatter(HighlightingFormatter):
+    """Highlights and colorizes log entries with ANSI escape sequences
+
+    """
+    def highlight(self, record):
+        if record.levelname in COLORIZE:
+            # Colorize just the levelname
+            # left justify again because the color sequence bumps the length up
+            # above 8 chars
+            levelname_color = COLOR_SEQ % (30 + COLORIZE[record.levelname]) + \
+                    "%-8s" % record.levelname + RESET_SEQ
+            record.levelname = levelname_color
+            return logging.Formatter.format(self, record)
+
+        elif record.levelname in HIGHLIGHT:
+            # Colorize the entire line
+            line = logging.Formatter.format(self, record)
+            line = COLOR_SEQ % (40 + HIGHLIGHT[record.levelname]) + line + \
+                    RESET_SEQ
+            return line
+
+        else:
+            # No coloring if it's not to be highlighted or colored
+            return logging.Formatter.format(self, record)
