@@ -113,19 +113,22 @@ HIGHLIGHT = {
 }
 
 
-class OverviewerHandler(logging.Handler):
-    def __init__(self, stream=sys.stderr):
-        logging.Handler.__init__(self)
-        self.stream = stream
+class WindowsOutputStream(object):
+    """A file-like object that proxies sys.stderr and interprets simple ANSI
+    escape codes for color, translating them to the appropriate Windows calls.
+
+    """
+    def __init__(self, stream=None):
+        assert platform.system() == 'Windows'
+        self.stream = stream or sys.stderr
 
         # go go gadget ctypes 
-        if platform.system() == 'Windows':
-            self.GetStdHandle = ctypes.windll.kernel32.GetStdHandle
-            self.SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
-            self.STD_OUTPUT_HANDLE = ctypes.c_int(0xFFFFFFF5)
-            self.output_handle = self.GetStdHandle(self.STD_OUTPUT_HANDLE)
-            if self.output_handle == 0xFFFFFFFF:
-                raise Exception("Something failed in WindowsColorFormatter")
+        self.GetStdHandle = ctypes.windll.kernel32.GetStdHandle
+        self.SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
+        self.STD_OUTPUT_HANDLE = ctypes.c_int(0xFFFFFFF5)
+        self.output_handle = self.GetStdHandle(self.STD_OUTPUT_HANDLE)
+        if self.output_handle == 0xFFFFFFFF:
+            raise Exception("Something failed in WindowsColorFormatter")
 
 
         # default is white text on a black background
@@ -144,78 +147,73 @@ class OverviewerHandler(logging.Handler):
         self.SetConsoleTextAttribute(self.output_handle,
                 ctypes.c_int(self.currentForeground | self.currentBackground | self.currentBold))
 
-    def emit(self, record):
-        msg = str(self.format(record))
+    def write(self, s):
 
-        msg_strm = StringIO(msg) 
+        msg_strm = StringIO(s) 
     
-        # only on Windows do we do this fancy ANSI parsing magic
-        if platform.system() == 'Windows':
-            while (True):
-                c = msg_strm.read(1)
-                if c == '': break
-                if c == '\033':
-                    c1 = msg_strm.read(1)
-                    if c1 != '[': # 
-                        sys.stream.write(c + c1)
-                        continue
-                    c2 = msg_strm.read(2)
-                    if c2 == "0m": # RESET_SEQ
-                        self.updateWinColor(Fore=FOREGROUND_WHITE, Back=BACKGROUND_BLACK)
+        while (True):
+            c = msg_strm.read(1)
+            if c == '': break
+            if c == '\033':
+                c1 = msg_strm.read(1)
+                if c1 != '[': # 
+                    sys.stream.write(c + c1)
+                    continue
+                c2 = msg_strm.read(2)
+                if c2 == "0m": # RESET_SEQ
+                    self.updateWinColor(Fore=FOREGROUND_WHITE, Back=BACKGROUND_BLACK)
 
-                    elif c2 == "1;":
-                        color = ""
-                        while(True):
-                            nc = msg_strm.read(1)
-                            if nc == 'm': break
-                            color += nc
-                        color = int(color) 
-                        if (color >= 40): # background
-                            color = color - 40
-                            if color == BLACK:
-                                self.updateWinColor(Back=BACKGROUND_BLACK)
-                            if color == RED:
-                                self.updateWinColor(Back=BACKGROUND_RED)
-                            elif color == GREEN:
-                                self.updateWinColor(Back=BACKGROUND_GREEN)
-                            elif color == YELLOW:
-                                self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_GREEN)
-                            elif color == BLUE:
-                                self.updateWinColor(Back=BACKGROUND_BLUE)
-                            elif color == MAGENTA:
-                                self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_BLUE)
-                            elif color == CYAN:
-                                self.updateWinColor(Back=BACKGROUND_GREEN | BACKGROUND_BLUE)
-                            elif color == WHITE:
-                                self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE)
-                        elif (color >= 30): # foreground
-                            color = color - 30
-                            if color == BLACK:
-                                self.updateWinColor(Fore=FOREGROUND_BLACK)
-                            if color == RED:
-                                self.updateWinColor(Fore=FOREGROUND_RED)
-                            elif color == GREEN:
-                                self.updateWinColor(Fore=FOREGROUND_GREEN)
-                            elif color == YELLOW:
-                                self.updateWinColor(Fore=FOREGROUND_RED | FOREGROUND_GREEN)
-                            elif color == BLUE:
-                                self.updateWinColor(Fore=FOREGROUND_BLUE)
-                            elif color == MAGENTA:
-                                self.updateWinColor(Fore=FOREGROUND_RED | FOREGROUND_BLUE)
-                            elif color == CYAN:
-                                self.updateWinColor(Fore=FOREGROUND_GREEN | FOREGROUND_BLUE)
-                            elif color == WHITE:
-                                self.updateWinColor(Fore=FOREGROUND_WHITE)
+                elif c2 == "1;":
+                    color = ""
+                    while(True):
+                        nc = msg_strm.read(1)
+                        if nc == 'm': break
+                        color += nc
+                    color = int(color) 
+                    if (color >= 40): # background
+                        color = color - 40
+                        if color == BLACK:
+                            self.updateWinColor(Back=BACKGROUND_BLACK)
+                        if color == RED:
+                            self.updateWinColor(Back=BACKGROUND_RED)
+                        elif color == GREEN:
+                            self.updateWinColor(Back=BACKGROUND_GREEN)
+                        elif color == YELLOW:
+                            self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_GREEN)
+                        elif color == BLUE:
+                            self.updateWinColor(Back=BACKGROUND_BLUE)
+                        elif color == MAGENTA:
+                            self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_BLUE)
+                        elif color == CYAN:
+                            self.updateWinColor(Back=BACKGROUND_GREEN | BACKGROUND_BLUE)
+                        elif color == WHITE:
+                            self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE)
+                    elif (color >= 30): # foreground
+                        color = color - 30
+                        if color == BLACK:
+                            self.updateWinColor(Fore=FOREGROUND_BLACK)
+                        if color == RED:
+                            self.updateWinColor(Fore=FOREGROUND_RED)
+                        elif color == GREEN:
+                            self.updateWinColor(Fore=FOREGROUND_GREEN)
+                        elif color == YELLOW:
+                            self.updateWinColor(Fore=FOREGROUND_RED | FOREGROUND_GREEN)
+                        elif color == BLUE:
+                            self.updateWinColor(Fore=FOREGROUND_BLUE)
+                        elif color == MAGENTA:
+                            self.updateWinColor(Fore=FOREGROUND_RED | FOREGROUND_BLUE)
+                        elif color == CYAN:
+                            self.updateWinColor(Fore=FOREGROUND_GREEN | FOREGROUND_BLUE)
+                        elif color == WHITE:
+                            self.updateWinColor(Fore=FOREGROUND_WHITE)
 
-                             
-                        
-                    elif c2 == "1m": # BOLD_SEQ
-                        pass
+                         
                     
-                else:
-                    self.stream.write(c)
-        else:
-            self.stream.write(msg) 
+                elif c2 == "1m": # BOLD_SEQ
+                    pass
+                
+            else:
+                self.stream.write(c)
 
         self.stream.write("\n")
 
@@ -284,7 +282,7 @@ class DumbFormatter(HighlightingFormatter):
 
 
 class ANSIColorFormatter(HighlightingFormatter):
-    """Highlights and colorizes log entries with ANSI escape sequences
+    """Uses ANSI escape sequences to enable GLORIOUS EXTRA-COLOR!
 
     """
     def highlight(self, record):

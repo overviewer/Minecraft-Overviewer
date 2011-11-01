@@ -107,20 +107,25 @@ helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
 
 def configure_logger():
-    # Configure the root logger to our liking
-    logger = logging.getLogger()
-    handler = util.OverviewerHandler(sys.stdout)
+    "Configures the root logger to our liking"
+
+    outstream = sys.stderr
     if platform.system() == 'Windows':
-        # Our custom OverviewerHandler knows how to deal with select
-        # ANSI color escape sequences
+        # Our custom output stream processor knows how to deal with select ANSI
+        # color escape sequences
+        outstream = util.WindowsOutputStream()
         formatter = util.ANSIColorFormatter()
+
     elif sys.stderr.isatty():
         # terminal logging with ANSI color
         formatter = util.ANSIColorFormatter()
+
     else:
         # Let's not assume anything. Just text.
         formatter = util.DumbFormatter()
 
+    logger = logging.getLogger()
+    handler = logging.StreamHandler(outstream)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
