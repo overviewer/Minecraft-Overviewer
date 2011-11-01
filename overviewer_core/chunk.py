@@ -393,7 +393,7 @@ def generate_facemasks():
     left = Image.new("L", (24,24), 0)
     whole = Image.new("L", (24,24), 0)
     
-    toppart = textures.transform_image(white)
+    toppart = textures.transform_image_top(white)
     leftpart = textures.transform_image_side(white)
     
     # using the real PIL paste here (not alpha_over) because there is
