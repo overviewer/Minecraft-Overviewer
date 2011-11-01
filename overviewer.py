@@ -109,11 +109,11 @@ helptext = """
 def configure_logger():
     # Configure the root logger to our liking
     logger = logging.getLogger()
-    handler = logging.StreamHandler(sys.stderr)
+    handler = util.OverviewerHandler(sys.stdout)
     if platform.system() == 'Windows':
-        # Windows logging for windows terminals
-        # TODO (this is a placeholder)
-        formatter = util.DumbFormatter()
+        # Our custom OverviewerHandler knows how to deal with select
+        # ANSI color escape sequences
+        formatter = util.ANSIColorFormatter()
     elif sys.stderr.isatty():
         # terminal logging with ANSI color
         formatter = util.ANSIColorFormatter()

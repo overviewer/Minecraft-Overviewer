@@ -23,6 +23,9 @@ import os.path
 import sys
 from subprocess import Popen, PIPE
 import logging
+from cStringIO import StringIO
+import ctypes
+import platform
 
 def get_program_path():
     if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
@@ -87,15 +90,138 @@ RESET_SEQ = "\033[0m"
 COLOR_SEQ = "\033[1;%dm"
 BOLD_SEQ = "\033[1m"
 
+# Windows colors, taken from WinCon.h
+FOREGROUND_BLUE   = 0x01
+FOREGROUND_GREEN  = 0x02
+FOREGROUND_RED    = 0x04
+FOREGROUND_BOLD   = 0x08
+FOREGROUND_WHITE  = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED
+
+BACKGROUND_BLACK  = 0x00
+BACKGROUND_BLUE   = 0x10
+BACKGROUND_GREEN  = 0x20
+BACKGROUND_RED    = 0x40
+
 COLORIZE = {
-    #'INFO': WHITE,
-    'DEBUG': BLUE,
+    #'INFO': WHITe,
+    'DEBUG': CYAN,
 }
 HIGHLIGHT = {
     'CRITICAL': RED,
     'ERROR': RED,
     'WARNING': YELLOW,
 }
+
+
+class OverviewerHandler(logging.Handler):
+    def __init__(self, stream=sys.stderr):
+        logging.Handler.__init__(self)
+        self.stream = stream
+
+        # go go gadget ctypes 
+        if platform.system() == 'Windows':
+            self.GetStdHandle = ctypes.windll.kernel32.GetStdHandle
+            self.SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
+            self.STD_OUTPUT_HANDLE = ctypes.c_int(0xFFFFFFF5)
+            self.output_handle = self.GetStdHandle(self.STD_OUTPUT_HANDLE)
+            if self.output_handle == 0xFFFFFFFF:
+                raise Exception("Something failed in WindowsColorFormatter")
+
+
+        # default is white text on a black background
+        self.currentForeground = FOREGROUND_WHITE
+        self.currentBackground = BACKGROUND_BLACK
+        self.currentBold       = 0
+
+    def updateWinColor(self, Fore=None, Back=None, Bold=False):
+        if Fore != None: self.currentForeground = Fore
+        if Back != None: self.currentBackground = Back
+        if Bold: 
+            self.currentBold = FOREGROUND_BOLD
+        else:
+            self.currentBold = 0
+
+        self.SetConsoleTextAttribute(self.output_handle,
+                ctypes.c_int(self.currentForeground | self.currentBackground | self.currentBold))
+
+    def emit(self, record):
+        msg = str(self.format(record))
+
+        msg_strm = StringIO(msg) 
+    
+        # only on Windows do we do this fancy ANSI parsing magic
+        if platform.system() == 'Windows':
+            while (True):
+                c = msg_strm.read(1)
+                if c == '': break
+                if c == '\033':
+                    c1 = msg_strm.read(1)
+                    if c1 != '[': # 
+                        sys.stream.write(c + c1)
+                        continue
+                    c2 = msg_strm.read(2)
+                    if c2 == "0m": # RESET_SEQ
+                        self.updateWinColor(Fore=FOREGROUND_WHITE, Back=BACKGROUND_BLACK)
+
+                    elif c2 == "1;":
+                        color = ""
+                        while(True):
+                            nc = msg_strm.read(1)
+                            if nc == 'm': break
+                            color += nc
+                        color = int(color) 
+                        if (color >= 40): # background
+                            color = color - 40
+                            if color == BLACK:
+                                self.updateWinColor(Back=BACKGROUND_BLACK)
+                            if color == RED:
+                                self.updateWinColor(Back=BACKGROUND_RED)
+                            elif color == GREEN:
+                                self.updateWinColor(Back=BACKGROUND_GREEN)
+                            elif color == YELLOW:
+                                self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_GREEN)
+                            elif color == BLUE:
+                                self.updateWinColor(Back=BACKGROUND_BLUE)
+                            elif color == MAGENTA:
+                                self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_BLUE)
+                            elif color == CYAN:
+                                self.updateWinColor(Back=BACKGROUND_GREEN | BACKGROUND_BLUE)
+                            elif color == WHITE:
+                                self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE)
+                        elif (color >= 30): # foreground
+                            color = color - 30
+                            if color == BLACK:
+                                self.updateWinColor(Fore=FOREGROUND_BLACK)
+                            if color == RED:
+                                self.updateWinColor(Fore=FOREGROUND_RED)
+                            elif color == GREEN:
+                                self.updateWinColor(Fore=FOREGROUND_GREEN)
+                            elif color == YELLOW:
+                                self.updateWinColor(Fore=FOREGROUND_RED | FOREGROUND_GREEN)
+                            elif color == BLUE:
+                                self.updateWinColor(Fore=FOREGROUND_BLUE)
+                            elif color == MAGENTA:
+                                self.updateWinColor(Fore=FOREGROUND_RED | FOREGROUND_BLUE)
+                            elif color == CYAN:
+                                self.updateWinColor(Fore=FOREGROUND_GREEN | FOREGROUND_BLUE)
+                            elif color == WHITE:
+                                self.updateWinColor(Fore=FOREGROUND_WHITE)
+
+                             
+                        
+                    elif c2 == "1m": # BOLD_SEQ
+                        pass
+                    
+                else:
+                    self.stream.write(c)
+        else:
+            self.stream.write(msg) 
+
+        self.stream.write("\n")
+
+
+    def flush(self):
+        self.stream.flush()
 
 class HighlightingFormatter(logging.Formatter):
     """Base class of our custom formatter
@@ -155,6 +281,7 @@ class DumbFormatter(HighlightingFormatter):
             return line
         else:
             return super(DumbFormatter, self).highlight(record)
+
 
 class ANSIColorFormatter(HighlightingFormatter):
     """Highlights and colorizes log entries with ANSI escape sequences
