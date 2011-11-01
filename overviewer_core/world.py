@@ -298,10 +298,11 @@ class World(object):
                 msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
         self.spawn = (disp_spawnX, spawnY, disp_spawnZ)
 
-    def go(self, procs):
+    def determine_bounds(self):
         """Scan the world directory, to fill in
-        self.{min,max}{col,row} for use later in quadtree.py. This
-        also does other world-level processing."""
+        self.{min,max}{col,row} for use later in quadtree.py.
+        
+        """
         
         logging.info("Scanning chunks")
         # find the dimensions of the map, in region files
@@ -339,8 +340,6 @@ class World(object):
         self.maxcol = maxcol
         self.minrow = minrow
         self.maxrow = maxrow
-
-        self.find_true_spawn()
 
     def _get_north_rotations(self):
         if self.north_direction == 'upper-left':

@@ -365,7 +365,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.error("To change north-direction of an existing render, use --forcerender")
         sys.exit(1)
     
-    w.go(options.procs)
+    # A couple other things we need to figure out about the world:
+    w.determine_bounds()
+    w.find_true_spawn()
 
     logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
 
@@ -394,9 +396,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, **qtree_args)
         q.append(qtree)
     
-    # do quadtree-level preprocessing
+    # Make sure the quadtrees are the correct depth
     for qtree in q:
-        qtree.go(options.procs)
+        qtree.check_depth()
 
     # create the distributed render
     r = rendernode.RenderNode(q, options)

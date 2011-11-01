@@ -196,8 +196,11 @@ class QuadtreeGen(object):
             except OSError, e:
                 pass # doesn't exist maybe?
 
-    def go(self, procs):
-        """Processing before tile rendering"""
+    def check_depth(self):
+        """Ensure the current quadtree is the correct depth. If it's not,
+        employ some simple re-arranging of tiles to save on computation.
+        
+        """
 
         curdepth = self._get_cur_depth()
         if curdepth != -1:
