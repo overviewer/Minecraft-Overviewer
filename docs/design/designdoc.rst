@@ -490,6 +490,55 @@ Quadtrees
 =========
 .. About the tile output 
 
+Tiles are rendered and stored in a quadtree on disk. Each node is a tile of the
+world, and each node has four children representing a zoomed-in tile of the four
+quadrants.
+
+.. image:: tilerendering/4children.png
+    :alt: A tile has 4 children, each is a zoomed-in tile of one of the quadrants.
+
+The tree is generated from the bottom-up. The highest zoom level is rendered
+directly from the chunks and the blocks, then four of those rendered tiles are
+shrunk and concatenated to get the next zoom level. The tree is built up in this
+way until the entire world is compressed down to a single tile.
+
+We've already seen how tiles can be identified by the column,row range of the
+chunks that make up the tile. More precisely, since tiles are always the same
+size, the chunk that goes in the tile's 0,0 col,row slot identifies the tile.
+
+Now, tiles are also identified by their path in the quadtree. For example,
+``3/0/0/1/1/2.png`` refers to the tile starting at the base, under the third
+quadrant, then the 0th quadrant, then the 0th, and so fourth.
+
+Quadtree Size
+-------------
+The size of the quadtree must be known before it's generated, that way the code
+knows where to save the images. This is easily calculated from a few
+realizations. Each depth in the quadtree doubles the number of tiles in each
+dimension, or, quadruples the total tiles. While there is only one tile at level
+0, there are four at level 1, 16 at level 2, and 4^n at level n.
+
+To find how deep the quadtree must be, we look at the size of the world. First
+find the maximum and minimum row and column of the chunks. Just looking at
+columns, let's say the maximum column is 82 and the minimum column is -136. A
+zoom level of 6 will be 2^6 tile across and 2^6 tiles high at the highest level.
+
+Since horizontally tiles are two chunks wide, multiply 2^6 by 2 to get the total
+diameter of this map in chunks: 2*2^6. Is this wide enough for our map?
+
+It turns out it isn't (2*2^6=128, 136+82=218). A zoom level of 7 is 2^7 tiles
+across, or 2*2^7 chunks across. This turns out is wide enough (2*2^7 = 256),
+however, Overviewer maps are always centered at point 0,0 in the world. This is
+so tiles will always line up no mater how the map may expand in the future.
+
+So zoom level 7 is *not* enough because, while the chunk diameter is wide
+enough, it only extends half that far from the origin. The chunk *radius* is 2^7
+(half the diameter) and 2^7=128 is not wide enough for the minimum column at
+absolute position 136.
+
+So this example requires zoom level 8 (at least in the horizontal direction.
+The vertical direction must also be checked).
+
 get_range_by_path
 -----------------
 .. Explain the quadtree.QuadtreeGen._get_range_by_path method
