@@ -49,8 +49,6 @@ import time
 import logging
 from overviewer_core import util
 
-logging.basicConfig(level=logging.INFO,format="%(asctime)s [%(levelname)s] %(message)s")
-
 this_dir = util.get_program_path()
 
 # make sure the c_overviewer extension is available
@@ -108,8 +106,34 @@ from overviewer_core import googlemap, rendernode
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
 
+def configure_logger():
+    "Configures the root logger to our liking"
+
+    outstream = sys.stderr
+    if platform.system() == 'Windows':
+        # Our custom output stream processor knows how to deal with select ANSI
+        # color escape sequences
+        outstream = util.WindowsOutputStream()
+        formatter = util.ANSIColorFormatter()
+
+    elif sys.stderr.isatty():
+        # terminal logging with ANSI color
+        formatter = util.ANSIColorFormatter()
+
+    else:
+        # Let's not assume anything. Just text.
+        formatter = util.DumbFormatter()
+
+    logger = logging.getLogger()
+    handler = logging.StreamHandler(outstream)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 def main():
+
+    configure_logger()
+
     try:
         cpus = multiprocessing.cpu_count()
     except NotImplementedError:
