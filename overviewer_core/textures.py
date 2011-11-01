@@ -541,15 +541,15 @@ fluid_blocks = set()
 nospawn_blocks = set()
 
 # the material registration decorator
-def material(blockIds, data=[0], **kwargs):
+def material(blockid=[], data=[0], **kwargs):
     # mapping from property name to the set to store them in
     properties = {"transparent" : transparent_blocks, "solid" : solid_blocks, "fluid" : fluid_blocks, "nospawn" : nospawn_blocks}
     
-    # make sure blockIds and data are iterable
+    # make sure blockid and data are iterable
     try:
-        blockIds = iter(blockIds)
+        blockid = iter(blockid)
     except:
-        blockIds = [blockIds,]
+        blockid = [blockid,]
     try:
         data = iter(data)
     except:
@@ -560,13 +560,13 @@ def material(blockIds, data=[0], **kwargs):
 
         # create a wrapper function with a known signature
         @functools.wraps(func)
-        def func_wrapper(blockId, data, north):
+        def func_wrapper(blockid, data, north):
             try:
-                return func(blockId, data, north)
+                return func(blockid, data, north)
             except TypeError:
-                return func(blockId, data)
+                return func(blockid, data)
         
-        for block in blockIds:
+        for block in blockid:
             # set the property sets appropriately
             for prop in properties:
                 if kwargs.get(prop, False):
@@ -580,14 +580,17 @@ def material(blockIds, data=[0], **kwargs):
     return inner_material
 
 # shortcut function for pure blocks, default to solid
-def block(blockid, top_index, side_index=None, **kwargs):
+def block(blockid=[], top_index=None, side_index=None, **kwargs):
     new_kwargs = {'solid' : True}
     new_kwargs.update(kwargs)
+    
+    if top_index is None:
+        raise ValueError("top_index was not provided")
     
     if side_index is None:
         side_index = top_index
     
-    @material(blockid, **new_kwargs)
+    @material(blockid=blockid, **new_kwargs)
     def inner_block(unused_id, unused_data):
         return build_block(terrain_images[top_index], terrain_images[side_index])
     return inner_block
@@ -635,9 +638,9 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
 ##
 
 # stone
-block(1, 1)
+block(blockid=1, top_index=1)
 
-@material(2, range(11) + [0x10,], solid=True)
+@material(blockid=2, data=range(11)+[0x10,], solid=True)
 def grass(blockid, data):
     # 0x10 bit means SNOW
     side_img = terrain_images[3]
@@ -650,13 +653,13 @@ def grass(blockid, data):
     return img
 
 # dirt
-block(3, 2)
+block(blockid=3, top_index=2)
 # cobblestone
-block(4, 16)
+block(blockid=4, top_index=16)
 # wooden plank
-block(5, 4)
+block(blockid=5, top_index=4)
 
-@material(6, range(16), transparent=True)
+@material(blockid=6, data=range(16), transparent=True)
 def saplings(blockid, data):
     # usual saplings
     tex = terrain_images[15]
