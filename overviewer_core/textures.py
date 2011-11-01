@@ -415,6 +415,8 @@ def tintTexture(im, c):
 def generate_texture_tuple(img):
     """ This takes an image and returns the needed tuple for the
     blockmap dictionary."""
+    if img is None:
+        return None
     return (img, generate_opaque_mask(img))
 
 ##
@@ -547,11 +549,11 @@ def material(blockid=[], data=[0], **kwargs):
     
     # make sure blockid and data are iterable
     try:
-        blockid = iter(blockid)
+        iter(blockid)
     except:
         blockid = [blockid,]
     try:
-        data = iter(data)
+        iter(data)
     except:
         data = [data,]
         
@@ -670,3 +672,137 @@ def saplings(blockid, data):
         tex = terrain_images[79]
     
     return build_sprite(tex)
+
+# bedrock
+block(blockid=7, top_index=17)
+
+@material(blockid=8, data=range(16), fluid=True, transparent=True)
+def water(blockid, data):
+    watertex = _load_image("water.png")
+    return build_block(watertex, watertex)
+
+# other water, glass, and ice (no inner surfaces)
+# uses pseudo-ancildata found in iterate.c
+@material(blockid=[9, 20, 79], data=range(32), transparent=True, nospawn=True)
+def no_inner_surfaces(blockid, data):
+    if blockid == 9:
+        texture = _load_image("water.png")
+    elif blockid == 20:
+        texture = terrain_images[49]
+    else:
+        texture = terrain_images[67]
+        
+    if (data & 0b10000) == 16:
+        top = texture
+    else:
+        top = None
+        
+    if (data & 0b0001) == 1:
+        side1 = texture    # top left
+    else:
+        side1 = None
+    
+    if (data & 0b1000) == 8:
+        side2 = texture    # top right           
+    else:
+        side2 = None
+    
+    if (data & 0b0010) == 2:
+        side3 = texture    # bottom left    
+    else:
+        side3 = None
+    
+    if (data & 0b0100) == 4:
+        side4 = texture    # bottom right
+    else:
+        side4 = None
+    
+    # if nothing shown do not draw at all
+    if top is None and side3 is None and side4 is None:
+        return None
+    
+    img = build_full_block(top,None,None,side3,side4)
+    return img
+
+@material(blockid=[10, 11], data=range(16), fluid=True, transparent=False)
+def lava(blockid, data):
+    lavatex = _load_image("lava.png")
+    return build_block(lavatex, lavatex)
+
+# sand
+block(blockid=12, top_index=18)
+# gravel
+block(blockid=13, top_index=19)
+# gold ore
+block(blockid=14, top_index=32)
+# iron ore
+block(blockid=15, top_index=33)
+# coal ore
+block(blockid=16, top_index=34)
+
+@material(blockid=17, data=range(3), solid=True)
+def wood(blockid, data):
+    top = terrain_images[21]
+    if data == 0: # normal
+        return build_block(top, terrain_images[20])
+    if data == 1: # birch
+        return build_block(top, terrain_images[116])
+    if data == 2: # pine
+        return build_block(top, terrain_images[117])
+
+@material(blockid=18, data=range(16), transparent=True, solid=True)
+def leaves(blockid, data):
+    t = terrain_images[52]
+    if data == 1:
+        # pine!
+        t = terrain_images[132]
+    return build_block(t, t)
+
+# sponge
+block(blockid=19, top_index=48)
+# lapis lazuli ore
+block(blockid=21, top_index=160)
+# lapis lazuli block
+block(blockid=22, top_index=144)
+
+# dispensers, furnaces, and burning furnaces
+@material(blockid=[23, 61, 62], data=range(6), solid=True)
+def furnaces(blockid, data, north):
+    # first, do the north rotation if needed
+    if north == 'upper-left':
+        if data == 2: data = 5
+        elif data == 3: data = 4
+        elif data == 4: data = 2
+        elif data == 5: data = 3
+    elif north == 'upper-right':
+        if data == 2: data = 3
+        elif data == 3: data = 2
+        elif data == 4: data = 5
+        elif data == 5: data = 4
+    elif north == 'lower-right':
+        if data == 2: data = 4
+        elif data == 3: data = 5
+        elif data == 4: data = 3
+        elif data == 5: data = 2
+    
+    top = terrain_images[62]
+    side = terrain_images[45]
+    
+    if blockid == 61:
+        front = terrain_images[44]
+    elif blockid == 62:
+        front = terrain_images[61]
+    elif blockid == 23:
+        front = terrain_images[46]
+    
+    if data == 3: # pointing west
+        return build_full_block(top, None, None, side, front)
+    elif data == 4: # pointing north
+        return build_full_block(top, None, None, front, side)
+    else: # in any other direction the front can't be seen
+        return build_full_block(top, None, None, side, side)
+
+# sandstone
+block(blockid=24, top_index=176, side_index=192)
+# note block
+block(blockid=25, top_index=74)
