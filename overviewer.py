@@ -348,28 +348,45 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.error(str(e))
         sys.exit(1)
     
-    # First do world-level preprocessing
+    # First do world-level preprocessing. This scans the world hierarchy, reads
+    # in the region files and caches chunk modified times, and determines the
+    # chunk bounds (max and min in both dimensions)
     w = world.World(worlddir, destdir, useBiomeData=useBiomeData, regionlist=regionlist, north_direction=north_direction)
     if north_direction == 'auto':
         north_direction = w.persistentData['north_direction']
         options.north_direction = north_direction
-    elif w.persistentData['north_direction'] != north_direction and not options.forcerender and not w.persistentDataIsNew:
+    elif (w.persistentData['north_direction'] != north_direction and
+            not options.forcerender and
+            not w.persistentDataIsNew
+            ):
         logging.error("Conflicting north-direction setting!")
         logging.error("Overviewer.dat gives previous north-direction as "+w.persistentData['north_direction'])
         logging.error("Requested north-direction was "+north_direction)
-        logging.error("To change north-direction of an existing render, --forcerender must be specified")
+        logging.error("To change north-direction of an existing render, use --forcerender")
         sys.exit(1)
     
     w.go(options.procs)
 
     logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
 
-    bgcolor = (int(options.bg_color[1:3],16), int(options.bg_color[3:5],16), int(options.bg_color[5:7],16), 0)
+    bgcolor = (int(options.bg_color[1:3],16),
+               int(options.bg_color[3:5],16),
+               int(options.bg_color[5:7],16),
+               0)
 
-    # create the quadtrees
-    # TODO chunklist
+    # Create the quadtrees. There is one quadtree per rendermode requested, and
+    # therefore, per output directory hierarchy of tiles. Each quadtree
+    # individually computes its depth and size. The constructor computes the
+    # depth of the tree, while the go() method re-arranges tiles if teh current
+    # depth differs from the computed depth.
     q = []
-    qtree_args = {'depth' : options.zoom, 'imgformat' : imgformat, 'imgquality' : options.imgquality, 'optimizeimg' : optimizeimg, 'bgcolor' : bgcolor, 'forcerender' : options.forcerender}
+    qtree_args = {'depth' : options.zoom,
+                  'imgformat' : imgformat,
+                  'imgquality' : options.imgquality,
+                  'optimizeimg' : optimizeimg,
+                  'bgcolor' : bgcolor,
+                  'forcerender' : options.forcerender,
+                  }
     for rendermode in options.rendermode:
         if rendermode == 'normal':
             qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, tiledir='tiles', **qtree_args)

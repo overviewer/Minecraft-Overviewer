@@ -80,7 +80,7 @@ class QuadtreeGen(object):
         
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
-            for p in xrange(64):
+            for p in xrange(33):
                 # Will 2^p tiles wide and high suffice?
 
                 # X has twice as many chunks as tiles, then halved since this is a

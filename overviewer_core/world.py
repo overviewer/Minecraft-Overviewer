@@ -241,7 +241,7 @@ class World(object):
         # col - row = chunkx + chunkx => (col - row)/2 = chunkx
         return ((col - row) / 2, (col + row) / 2)
     
-    def findTrueSpawn(self):
+    def find_true_spawn(self):
         """Adds the true spawn location to self.POI.  The spawn Y coordinate
         is almost always the default of 64.  Find the first air block above
         that point for the true spawn location"""
@@ -340,7 +340,7 @@ class World(object):
         self.minrow = minrow
         self.maxrow = maxrow
 
-        self.findTrueSpawn()
+        self.find_true_spawn()
 
     def _get_north_rotations(self):
         if self.north_direction == 'upper-left':
