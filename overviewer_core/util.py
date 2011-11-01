@@ -215,7 +215,6 @@ class WindowsOutputStream(object):
             else:
                 self.stream.write(c)
 
-        self.stream.write("\n")
 
 
     def flush(self):
