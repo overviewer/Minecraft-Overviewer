@@ -128,6 +128,7 @@ do_shading_with_rule(RenderModeSmoothLighting *self, RenderState *state, struct 
     RenderModeLighting *lighting = (RenderModeLighting *)self;
     int x = state->imgx, y = state->imgy;
     struct SmoothLightingCorner *pts = face.corners;
+    float comp_shade_strength = 1.0 - lighting->shade_strength;
     unsigned char pts_r[4] = {0, 0, 0, 0};
     unsigned char pts_g[4] = {0, 0, 0, 0};
     unsigned char pts_b[4] = {0, 0, 0, 0};
@@ -165,6 +166,10 @@ do_shading_with_rule(RenderModeSmoothLighting *self, RenderState *state, struct 
                            &r, &g, &b);
         rgather += r; ggather += g; bgather += b;
         
+        rgather += (255*4 - rgather) * comp_shade_strength;
+        ggather += (255*4 - ggather) * comp_shade_strength;
+        bgather += (255*4 - bgather) * comp_shade_strength;
+    
         pts_r[i] = rgather / 4;
         pts_g[i] = ggather / 4;
         pts_b[i] = bgather / 4;
