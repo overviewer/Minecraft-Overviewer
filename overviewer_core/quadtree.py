@@ -430,15 +430,7 @@ class QuadtreeGen(object):
             needs_rerender = False
             get_region_mtime = world.get_region_mtime
             
-            # stochastic render check
-            if random.uniform(0, 1) < self.rerender_probability:
-                needs_rerender = True
-            
             for col, row, chunkx, chunky, regionfile in chunks:
-                # skip if we already know
-                if needs_rerender:
-                    break
-                
                 region, regionMtime = get_region_mtime(regionfile)
 
                 # don't even check if it's not in the regionlist
@@ -461,6 +453,10 @@ class QuadtreeGen(object):
                 if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
                     needs_rerender = True
                     break
+            
+            # stochastic render check
+            if not needs_rerender and self.rerender_probability > 0.0 and random.uniform(0, 1) < self.rerender_probability:
+                needs_rerender = True
             
             # if after all that, we don't need a rerender, return
             if not needs_rerender:
