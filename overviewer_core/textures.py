@@ -398,6 +398,15 @@ def build_sprite(side):
     composite.alpha_over(img, otherside, (6,3), otherside)
     return img
 
+def build_billboard(tex):
+    """From a texture, create a billboard-like texture such as those used for
+    tall grass or melon stems."""
+    img = Image.new("RGBA", (24,24), bgcolor)
+    
+    front = tex.resize((14, 11), Image.ANTIALIAS)
+    composite.alpha_over(img, front, (5,9))
+    return img
+
 def generate_opaque_mask(img):
     """ Takes the alpha channel of the image and generates a mask
     (used for lighting the block) that deprecates values of alpha
@@ -571,8 +580,12 @@ def material(blockid=[], data=[0], **kwargs):
         for block in blockid:
             # set the property sets appropriately
             for prop in properties:
-                if kwargs.get(prop, False):
-                    properties[prop].update([block])
+                try:
+                    if block in kwargs.get(prop, []):
+                        properties[prop].update([block])
+                except TypeError:
+                    if kwargs.get(prop, False):
+                        properties[prop].update([block])
             
             # populate blockmap_generators with our function
             for d in data:
@@ -596,6 +609,32 @@ def block(blockid=[], top_index=None, side_index=None, **kwargs):
     def inner_block(unused_id, unused_data):
         return build_block(terrain_images[top_index], terrain_images[side_index])
     return inner_block
+
+# shortcut function for sprite blocks, defaults to transparent
+def sprite(blockid=[], index=None, **kwargs):
+    new_kwargs = {'transparent' : True}
+    new_kwargs.update(kwargs)
+    
+    if index is None:
+        raise ValueError("index was not provided")
+    
+    @material(blockid=blockid, **new_kwargs)
+    def inner_sprite(unused_id, unused_data):
+        return build_sprite(terrain_images[index])
+    return inner_sprite
+
+# shortcut function for billboard blocks, defaults to transparent
+def billboard(blockid=[], index=None, **kwargs):
+    new_kwargs = {'transparent' : True}
+    new_kwargs.update(kwargs)
+    
+    if index is None:
+        raise ValueError("index was not provided")
+    
+    @material(blockid=blockid, **new_kwargs)
+    def inner_billboard(unused_id, unused_data):
+        return build_billboard(terrain_images[index])
+    return inner_billboard
 
 def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower-left'):
     global _find_file_local_path
@@ -683,7 +722,7 @@ def water(blockid, data):
 
 # other water, glass, and ice (no inner surfaces)
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[9, 20, 79], data=range(32), transparent=True, nospawn=True)
+@material(blockid=[9, 20, 79], data=range(32), fluid=(9,), transparent=True, nospawn=True)
 def no_inner_surfaces(blockid, data):
     if blockid == 9:
         texture = _load_image("water.png")
@@ -806,3 +845,507 @@ def furnaces(blockid, data, north):
 block(blockid=24, top_index=176, side_index=192)
 # note block
 block(blockid=25, top_index=74)
+
+@material(blockid=26, data=range(12), transparent=True)
+def bed(blockid, data, north):
+    # first get north rotation done
+    # Masked to not clobber block head/foot info
+    if north == 'upper-left':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 1
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 2
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+    elif north == 'upper-right':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 2
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+    elif north == 'lower-right':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 1
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+    
+    increment = 8
+    left_face = None
+    right_face = None
+    if data & 0x8 == 0x8: # head of the bed
+        top = terrain_images[135]
+        if data & 0x00 == 0x00: # head pointing to West
+            top = top.copy().rotate(270)
+            left_face = terrain_images[151]
+            right_face = terrain_images[152]
+        if data & 0x01 == 0x01: # ... North
+            top = top.rotate(270)
+            left_face = terrain_images[152]
+            right_face = terrain_images[151]
+        if data & 0x02 == 0x02: # East
+            top = top.rotate(180)
+            left_face = terrain_images[151].transpose(Image.FLIP_LEFT_RIGHT)
+            right_face = None
+        if data & 0x03 == 0x03: # South
+            right_face = None
+            right_face = terrain_images[151].transpose(Image.FLIP_LEFT_RIGHT)
+    
+    else: # foot of the bed
+        top = terrain_images[134]
+        if data & 0x00 == 0x00: # head pointing to West
+            top = top.rotate(270)
+            left_face = terrain_images[150]
+            right_face = None
+        if data & 0x01 == 0x01: # ... North
+            top = top.rotate(270)
+            left_face = None
+            right_face = terrain_images[150]
+        if data & 0x02 == 0x02: # East
+            top = top.rotate(180)
+            left_face = terrain_images[150].transpose(Image.FLIP_LEFT_RIGHT)
+            right_face = terrain_images[149].transpose(Image.FLIP_LEFT_RIGHT)
+        if data & 0x03 == 0x03: # South
+            left_face = terrain_images[149]
+            right_face = terrain_images[150].transpose(Image.FLIP_LEFT_RIGHT)
+    
+    top = (top, increment)
+    return build_full_block(top, None, None, left_face, right_face)
+
+# powered, detector, and normal rails
+@material(blockid=[27, 28, 66], data=range(14), transparent=True)
+def rails(blockid, data, north):
+    # first, do north rotation
+    # Masked to not clobber powered rail on/off info
+    # Ascending and flat straight
+    if north == 'upper-left':
+        if (data & 0b0111) == 0: data = data & 0b1000 | 1
+        elif (data & 0b0111) == 1: data = data & 0b1000 | 0
+        elif (data & 0b0111) == 2: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 4
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 2
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 3
+    elif north == 'upper-right':
+        if (data & 0b0111) == 2: data = data & 0b1000 | 3
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 2
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 4
+    elif north == 'lower-right':
+        if (data & 0b0111) == 0: data = data & 0b1000 | 1
+        elif (data & 0b0111) == 1: data = data & 0b1000 | 0
+        elif (data & 0b0111) == 2: data = data & 0b1000 | 4
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 3
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 2
+        
+    img = Image.new("RGBA", (24,24), bgcolor)
+    
+    if blockid == 27: # powered rail
+        if data & 0x8 == 0: # unpowered
+            raw_straight = terrain_images[163]
+            raw_corner = terrain_images[112]    # they don't exist but make the code
+                                                # much simplier
+        elif data & 0x8 == 0x8: # powered
+            raw_straight = terrain_images[179]
+            raw_corner = terrain_images[112]    # leave corners for code simplicity
+        # filter the 'powered' bit
+        data = data & 0x7
+            
+    elif blockid == 28: # detector rail
+        raw_straight = terrain_images[195]
+        raw_corner = terrain_images[112]    # leave corners for code simplicity
+        
+    elif blockid == 66: # normal rail
+        raw_straight = terrain_images[128]
+        raw_corner = terrain_images[112]
+        
+    ## use transform_image to scale and shear
+    if data == 0:
+        track = transform_image_top(raw_straight)
+        composite.alpha_over(img, track, (0,12), track)
+    elif data == 6:
+        track = transform_image_top(raw_corner)
+        composite.alpha_over(img, track, (0,12), track)
+    elif data == 7:
+        track = transform_image_top(raw_corner.rotate(270))
+        composite.alpha_over(img, track, (0,12), track)
+    elif data == 8:
+        # flip
+        track = transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90))
+        composite.alpha_over(img, track, (0,12), track)
+    elif data == 9:
+        track = transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM))
+        composite.alpha_over(img, track, (0,12), track)
+    elif data == 1:
+        track = transform_image_top(raw_straight.rotate(90))
+        composite.alpha_over(img, track, (0,12), track)
+        
+    #slopes
+    elif data == 2: # slope going up in +x direction
+        track = transform_image_slope(raw_straight)
+        track = track.transpose(Image.FLIP_LEFT_RIGHT)
+        composite.alpha_over(img, track, (2,0), track)
+        # the 2 pixels move is needed to fit with the adjacent tracks
+        
+    elif data == 3: # slope going up in -x direction
+        # tracks are sprites, in this case we are seeing the "side" of 
+        # the sprite, so draw a line to make it beautiful.
+        ImageDraw.Draw(img).line([(11,11),(23,17)],fill=(164,164,164))
+        # grey from track texture (exterior grey).
+        # the track doesn't start from image corners, be carefull drawing the line!
+    elif data == 4: # slope going up in -y direction
+        track = transform_image_slope(raw_straight)
+        composite.alpha_over(img, track, (0,0), track)
+        
+    elif data == 5: # slope going up in +y direction
+        # same as "data == 3"
+        ImageDraw.Draw(img).line([(1,17),(12,11)],fill=(164,164,164))
+        
+    return img
+
+# sticky and normal piston body
+@material(blockid=[29, 33], data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, solid=True)
+def piston(blockid, data, north):
+    # first, north rotation
+    # Masked to not clobber block head/foot info
+    if north == 'upper-left':
+        if (data & 0b0111) == 2: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 4
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 2
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 3
+    elif north == 'upper-right':
+        if (data & 0b0111) == 2: data = data & 0b1000 | 3
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 2
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 4
+    elif north == 'lower-right':
+        if (data & 0b0111) == 2: data = data & 0b1000 | 4
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 3
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 2
+    
+    if blockid == 29: # sticky
+        piston_t = terrain_images[106].copy()
+    else: # normal
+        piston_t = terrain_images[107].copy()
+        
+    # other textures
+    side_t = terrain_images[108].copy()
+    back_t = terrain_images[109].copy()
+    interior_t = terrain_images[110].copy()
+    
+    if data & 0x08 == 0x08: # pushed out, non full blocks, tricky stuff
+        # remove piston texture from piston body
+        ImageDraw.Draw(side_t).rectangle((0, 0,16,3),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        if data & 0x07 == 0x0: # down
+            side_t = side_t.rotate(180)
+            img = build_full_block(back_t ,None ,None ,side_t, side_t)
+            
+        elif data & 0x07 == 0x1: # up
+            img = build_full_block((interior_t, 4) ,None ,None ,side_t, side_t)
+            
+        elif data & 0x07 == 0x2: # east
+            img = build_full_block(side_t , None, None ,side_t.rotate(90), back_t)
+            
+        elif data & 0x07 == 0x3: # west
+            img = build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), None)
+            temp = transform_image_side(interior_t)
+            temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
+            composite.alpha_over(img, temp, (9,5), temp)
+            
+        elif data & 0x07 == 0x4: # north
+            img = build_full_block(side_t.rotate(90) ,None ,None , None, side_t.rotate(270))
+            temp = transform_image_side(interior_t)
+            composite.alpha_over(img, temp, (3,5), temp)
+            
+        elif data & 0x07 == 0x5: # south
+            img = build_full_block(side_t.rotate(270) ,None , None ,back_t, side_t.rotate(90))
+
+    else: # pushed in, normal full blocks, easy stuff
+        if data & 0x07 == 0x0: # down
+            side_t = side_t.rotate(180)
+            img = build_full_block(back_t ,None ,None ,side_t, side_t)
+        elif data & 0x07 == 0x1: # up
+            img = build_full_block(piston_t ,None ,None ,side_t, side_t)
+        elif data & 0x07 == 0x2: # east 
+            img = build_full_block(side_t ,None ,None ,side_t.rotate(90), back_t)
+        elif data & 0x07 == 0x3: # west
+            img = build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
+        elif data & 0x07 == 0x4: # north
+            img = build_full_block(side_t.rotate(90) ,None ,None ,piston_t, side_t.rotate(270))
+        elif data & 0x07 == 0x5: # south
+            img = build_full_block(side_t.rotate(270) ,None ,None ,back_t, side_t.rotate(90))
+            
+    return img
+
+# sticky and normal piston shaft
+@material(blockid=34, data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True)
+def piston_extension(blockid, data, north):
+    # first, north rotation
+    # Masked to not clobber block head/foot info
+    if north == 'upper-left':
+        if (data & 0b0111) == 2: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 4
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 2
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 3
+    elif north == 'upper-right':
+        if (data & 0b0111) == 2: data = data & 0b1000 | 3
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 2
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 4
+    elif north == 'lower-right':
+        if (data & 0b0111) == 2: data = data & 0b1000 | 4
+        elif (data & 0b0111) == 3: data = data & 0b1000 | 5
+        elif (data & 0b0111) == 4: data = data & 0b1000 | 3
+        elif (data & 0b0111) == 5: data = data & 0b1000 | 2
+    
+    if (data & 0x8) == 0x8: # sticky
+        piston_t = terrain_images[106].copy()
+    else: # normal
+        piston_t = terrain_images[107].copy()
+    
+    # other textures
+    side_t = terrain_images[108].copy()
+    back_t = terrain_images[107].copy()
+    # crop piston body
+    ImageDraw.Draw(side_t).rectangle((0, 4,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    
+    # generate the horizontal piston extension stick
+    h_stick = Image.new("RGBA", (24,24), bgcolor)
+    temp = transform_image_side(side_t)
+    composite.alpha_over(h_stick, temp, (1,7), temp)
+    temp = transform_image_top(side_t.rotate(90))
+    composite.alpha_over(h_stick, temp, (1,1), temp)
+    # Darken it
+    sidealpha = h_stick.split()[3]
+    h_stick = ImageEnhance.Brightness(h_stick).enhance(0.85)
+    h_stick.putalpha(sidealpha)
+    
+    # generate the vertical piston extension stick
+    v_stick = Image.new("RGBA", (24,24), bgcolor)
+    temp = transform_image_side(side_t.rotate(90))
+    composite.alpha_over(v_stick, temp, (12,6), temp)
+    temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
+    composite.alpha_over(v_stick, temp, (1,6), temp)
+    # Darken it
+    sidealpha = v_stick.split()[3]
+    v_stick = ImageEnhance.Brightness(v_stick).enhance(0.85)
+    v_stick.putalpha(sidealpha)
+    
+    # Piston orientation is stored in the 3 first bits
+    if data & 0x07 == 0x0: # down
+        side_t = side_t.rotate(180)
+        img = build_full_block((back_t, 12) ,None ,None ,side_t, side_t)
+        composite.alpha_over(img, v_stick, (0,-3), v_stick)
+    elif data & 0x07 == 0x1: # up
+        img = Image.new("RGBA", (24,24), bgcolor)
+        img2 = build_full_block(piston_t ,None ,None ,side_t, side_t)
+        composite.alpha_over(img, v_stick, (0,4), v_stick)
+        composite.alpha_over(img, img2, (0,0), img2)
+    elif data & 0x07 == 0x2: # east 
+        img = build_full_block(side_t ,None ,None ,side_t.rotate(90), None)
+        temp = transform_image_side(back_t).transpose(Image.FLIP_LEFT_RIGHT)
+        composite.alpha_over(img, temp, (2,2), temp)
+        composite.alpha_over(img, h_stick, (6,3), h_stick)
+    elif data & 0x07 == 0x3: # west
+        img = Image.new("RGBA", (24,24), bgcolor)
+        img2 = build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
+        composite.alpha_over(img, h_stick, (0,0), h_stick)
+        composite.alpha_over(img, img2, (0,0), img2)            
+    elif data & 0x07 == 0x4: # north
+        img = build_full_block(side_t.rotate(90) ,None ,None , piston_t, side_t.rotate(270))
+        composite.alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (0,0), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
+    elif data & 0x07 == 0x5: # south
+        img = Image.new("RGBA", (24,24), bgcolor)
+        img2 = build_full_block(side_t.rotate(270) ,None ,None ,None, side_t.rotate(90))
+        temp = transform_image_side(back_t)
+        composite.alpha_over(img2, temp, (10,2), temp)
+        composite.alpha_over(img, img2, (0,0), img2)
+        composite.alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (-3,2), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
+        
+    return img
+
+# cobweb
+sprite(blockid=30, index=11)
+
+@material(blockid=31, data=range(3), transparent=True)
+def tall_grass(blockid, data):
+    if data == 0: # dead shrub
+        texture = terrain_images[55]
+    elif data == 1: # tall grass
+        texture = terrain_images[39]
+    elif data == 2: # fern
+        texture = terrain_images[56]
+    
+    return build_billboard(texture)
+
+# dead bush
+billboard(blockid=32, index=55)
+
+@material(blockid=35, data=range(16), solid=True)
+def wool(blockid, data):
+    if data == 0: # white
+        texture = terrain_images[64]
+    elif data == 1: # orange
+        texture = terrain_images[210]
+    elif data == 2: # magenta
+        texture = terrain_images[194]
+    elif data == 3: # light blue
+        texture = terrain_images[178]
+    elif data == 4: # yellow
+        texture = terrain_images[162]
+    elif data == 5: # light green
+        texture = terrain_images[146]
+    elif data == 6: # pink
+        texture = terrain_images[130]
+    elif data == 7: # grey
+        texture = terrain_images[114]
+    elif data == 8: # light grey
+        texture = terrain_images[225]
+    elif data == 9: # cyan
+        texture = terrain_images[209]
+    elif data == 10: # purple
+        texture = terrain_images[193]
+    elif data == 11: # blue
+        texture = terrain_images[177]
+    elif data == 12: # brown
+        texture = terrain_images[161]
+    elif data == 13: # dark green
+        texture = terrain_images[145]
+    elif data == 14: # red
+        texture = terrain_images[129]
+    elif data == 15: # black
+        texture = terrain_images[113]
+    
+    return build_block(texture, texture)
+
+# dandelion
+sprite(blockid=37, index=13)
+# rose
+sprite(blockid=38, index=12)
+# brown mushroom
+sprite(blockid=39, index=29)
+# red mushroom
+sprite(blockid=40, index=28)
+# block of gold
+block(blockid=41, top_index=23)
+# block of iron
+block(blockid=42, top_index=22)
+
+# double slabs and slabs
+@material(blockid=[43, 44], data=range(6), transparent=(44,), solid=(43,))
+def slabs(blockid, data):
+    if data == 0: # stone slab
+        top = terrain_images[6]
+        side = terrain_images[5]
+    elif data == 1: # stone slab
+        top = terrain_images[176]
+        side = terrain_images[192]
+    elif data == 2: # wooden slab
+        top = side = terrain_images[4]
+    elif data == 3: # cobblestone slab
+        top = side = terrain_images[16]
+    elif data == 4: # brick?
+        top = side = terrain_images[7]
+    elif data == 5: # stone brick?
+        top = side = terrain_images[54]
+    
+    if blockid == 43: # double slab
+        return build_block(top, side)
+    
+    # plain slab
+    top = transform_image_top(top)
+    side = transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+    
+    img = Image.new("RGBA", (24,24), bgcolor)
+    composite.alpha_over(img, side, (0,12), side)
+    composite.alpha_over(img, otherside, (12,12), otherside)
+    composite.alpha_over(img, top, (0,6), top)
+    
+    return img
+
+# brick block
+block(blockid=45, top_index=7)
+# TNT
+block(blockid=46, top_index=9, side_index=8)
+# bookshelf
+block(blockid=47, top_index=4, side_index=35)
+# moss stone
+block(blockid=48, top_index=36)
+# obsidian
+block(blockid=49, top_index=37)
+
+# torch, redstone torch (off), redstone torch(on)
+@material(blockid=[50, 75, 76], data=[1, 2, 3, 4, 5], transparent=True)
+def torches(blockid, data, north):
+    # first, north rotations
+    if north == 'upper-left':
+        if data == 1: data = 3
+        elif data == 2: data = 4
+        elif data == 3: data = 2
+        elif data == 4: data = 1
+    elif north == 'upper-right':
+        if data == 1: data = 2
+        elif data == 2: data = 1
+        elif data == 3: data = 4
+        elif data == 4: data = 3
+    elif north == 'lower-right':
+        if data == 1: data = 4
+        elif data == 2: data = 3
+        elif data == 3: data = 1
+        elif data == 4: data = 2
+    
+    # choose the proper texture
+    if blockid == 50: # torch
+        small = terrain_images[80]
+    elif blockid == 75: # off redstone torch
+        small = terrain_images[115]
+    else: # on redstone torch
+        small = terrain_images[99]
+        
+    # compose a torch bigger than the normal
+    # (better for doing transformations)
+    torch = Image.new("RGBA", (16,16), bgcolor)
+    composite.alpha_over(torch,small,(-4,-3))
+    composite.alpha_over(torch,small,(-5,-2))
+    composite.alpha_over(torch,small,(-3,-2))
+    
+    # angle of inclination of the texture
+    rotation = 15
+    
+    if data == 1: # pointing south
+        torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
+        img = build_full_block(None, None, None, torch, None, None)
+        
+    elif data == 2: # pointing north
+        torch = torch.rotate(rotation, Image.NEAREST)
+        img = build_full_block(None, None, torch, None, None, None)
+        
+    elif data == 3: # pointing west
+        torch = torch.rotate(rotation, Image.NEAREST)
+        img = build_full_block(None, torch, None, None, None, None)
+        
+    elif data == 4: # pointing east
+        torch = torch.rotate(-rotation, Image.NEAREST)
+        img = build_full_block(None, None, None, None, torch, None)
+        
+    elif data == 5: # standing on the floor
+        # compose a "3d torch".
+        img = Image.new("RGBA", (24,24), bgcolor)
+        
+        small_crop = small.crop((2,2,14,14))
+        slice = small_crop.copy()
+        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        composite.alpha_over(img, slice, (7,5))
+        composite.alpha_over(img, small_crop, (6,6))
+        composite.alpha_over(img, small_crop, (7,6))
+        composite.alpha_over(img, slice, (7,7))
+        
+    return img
