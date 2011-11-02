@@ -312,7 +312,7 @@ Less Useful Options
     **Settings file:**
         Option name: ``stochastic_render``
 
-        Format: a floating-point number
+        Format: a floating-point number in the range 0.0 to 1.0
 
         Default: 0.0
 
