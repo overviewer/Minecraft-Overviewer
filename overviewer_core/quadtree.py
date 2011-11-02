@@ -28,6 +28,7 @@ import cPickle
 import stat
 import errno 
 import time
+import random
 from time import gmtime, strftime, sleep
 
 from PIL import Image
@@ -49,7 +50,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, rerender_prob=0.0, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -61,6 +62,7 @@ class QuadtreeGen(object):
         """
         assert(imgformat)
         self.forcerender = forcerender
+        self.rerender_probability = rerender_prob
         self.imgformat = imgformat
         self.imgquality = imgquality
         self.optimizeimg = optimizeimg
@@ -427,7 +429,16 @@ class QuadtreeGen(object):
         try:
             needs_rerender = False
             get_region_mtime = world.get_region_mtime
+            
+            # stochastic render check
+            if random.uniform(0, 1) < self.rerender_probability:
+                needs_rerender = True
+            
             for col, row, chunkx, chunky, regionfile in chunks:
+                # skip if we already know
+                if needs_rerender:
+                    break
+                
                 region, regionMtime = get_region_mtime(regionfile)
 
                 # don't even check if it's not in the regionlist
