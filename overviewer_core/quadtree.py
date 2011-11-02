@@ -215,23 +215,6 @@ class QuadtreeGen(object):
                     self._decrease_depth()
     
     
-    def _get_range_by_path(self, path):
-        """Returns the x, y chunk coordinates of this tile"""
-        x, y = self.mincol, self.minrow
-        
-        xsize = self.maxcol
-        ysize = self.maxrow
-
-        for p in path:
-            if p in (1, 3):
-                x += xsize
-            if p in (2, 3):
-                y += ysize
-            xsize //= 2
-            ysize //= 2
-
-        return x, y
-        
     def get_chunks_in_range(self, colstart, colend, rowstart, rowend):
         """Get chunks that are relevant to the tile rendering function that's
         rendering that range"""
@@ -270,17 +253,13 @@ class QuadtreeGen(object):
         """
         for path in iterate_base4(self.p):
             # Get the range for this tile
-            colstart, rowstart = self._get_range_by_path(path)
-            colend = colstart + 2
-            rowend = rowstart + 4   
+            tile = Tile.from_path(path)
             
-            # This image is rendered at(relative to the worker's destdir):
-            tilepath = [str(x) for x in path]
-            tilepath = os.sep.join(tilepath)
-            #logging.debug("this is rendered at %s", dest)
-        
-            # Put this in the batch to be submited to the pool     
-            yield [self,colstart, colend, rowstart, rowend, tilepath]
+            # Put this in the batch to be submited to the pool.
+            # The quadtree object gets replaced by the caller in rendernode.py,
+            # but we still have to let them know which quadtree this tile
+            # belongs to.
+            yield [self, tile]
         
     def get_innertiles(self,zoom):
         """Same as get_worldtiles but for the inntertile routine.
@@ -360,53 +339,37 @@ class QuadtreeGen(object):
 
 
 
-    def render_worldtile(self, chunks, colstart, colend, rowstart, rowend, path, poi_queue=None):
-        """Renders just the specified chunks into a tile and save it. Unlike usual
-        python conventions, rowend and colend are inclusive. Additionally, the
-        chunks around the edges are half-way cut off (so that neighboring tiles
-        will render the other half)
+    def render_worldtile(self, tile):
+        """Renders the given tile. All the other relevant information is
+        already stored in this quadtree object or in self.world.
 
-        chunks is a list of (col, row, chunkx, chunky, filename) of chunk
-        images that are relevant to this call (with their associated regions)
-
-        The image is saved to path+"."+self.imgformat
+        The image is rendered and saved to disk in the place this quadtree is
+        configured to store images.
 
         If there are no chunks, this tile is not saved (if it already exists, it is
         deleted)
 
-        Standard tile size has colend-colstart=2 and rowend-rowstart=4
-
         There is no return value
         """    
-        
-        # width of one chunk is 384. Each column is half a chunk wide. The total
-        # width is (384 + 192*(numcols-1)) since the first column contributes full
-        # width, and each additional one contributes half since they're staggered.
-        # However, since we want to cut off half a chunk at each end (384 less
-        # pixels) and since (colend - colstart + 1) is the number of columns
-        # inclusive, the equation simplifies to:
-        width = 192 * (colend - colstart)
-        # Same deal with height
-        height = 96 * (rowend - rowstart)
 
-        # The standard tile size is 3 columns by 5 rows, which works out to 384x384
-        # pixels for 8 total chunks. (Since the chunks are staggered but the grid
-        # is not, some grid coordinates do not address chunks) The two chunks on
-        # the middle column are shown in full, the two chunks in the middle row are
-        # half cut off, and the four remaining chunks are one quarter shown.
-        # The above example with cols 0-3 and rows 0-4 has the chunks arranged like this:
-        #   0,0         2,0
-        #         1,1
-        #   0,2         2,2
-        #         1,3
-        #   0,4         2,4
+        poi_queue = self.world.poi_q
 
-        # Due to how the tiles fit together, we may need to render chunks way above
-        # this (since very few chunks actually touch the top of the sky, some tiles
-        # way above this one are possibly visible in this tile). Render them
-        # anyways just in case). "chunks" should include up to rowstart-16
-
+        path = os.path.join(self.full_tiledir, *(str(x) for x in tile.path))
         imgpath = path + "." + self.imgformat
+
+        # Tiles always involve 3 columns of chunks and 5 rows of tiles (end
+        # ranges are inclusive)
+        colstart = tile.col
+        colend = colstart + 2
+        rowstart = tile.row
+        rowend = rowstart + 4
+        
+        width = 384
+        height = 384
+
+        # Calculate which chunks are relevant to this tile
+        chunks = self.get_chunks_in_range(colstart, colend, rowstart, rowend)
+
         world = self.world
         #stat the file, we need to know if it exists or it's mtime
         try:    
@@ -618,3 +581,54 @@ class DirtyTiles(object):
                     for path in child.iterate_dirty():
                         path.append(c)
                         yield path
+
+class Tile(object):
+    """A simple container class that represents a single render-tile.
+
+    A render-tile is a tile that is rendered, not a tile composed of other
+    tiles.
+
+    """
+    __slots__ = ("col", "row", "path")
+    def __init__(self, col, row, path):
+        """Initialize the tile obj with the given parameters. It's probably
+        better to use one of the other constructors though
+
+        """
+        self.col = col
+        self.row = row
+        self.path = path
+
+    @classmethod
+    def from_path(cls, path):
+        """Constructor that takes a path and computes the col,row address of
+        the tile and constructs a new tile object.
+
+        """
+        depth = len(path)
+
+        # Radius of the world in chunk cols/rows
+        xradius = 2**depth
+        yradius = 2*2**depth
+
+        x = -xradius
+        y = -yradius
+        xsize = xradius
+        ysize = yradius
+
+        for p in path:
+            if p in (1,3):
+                x += xsize
+            if p in (2,3):
+                y += ysize
+            xsize //= 2
+            ysize //= 2
+
+        return cls(x, y, path)
+
+    @classmethod
+    def compute_path(cls, col, row, depth):
+        """Constructor that takes a col,row of a tile and computes the path. 
+
+        """
+        raise NotImplementedError()

@@ -348,7 +348,7 @@ class RenderNode(object):
             
 @catch_keyboardinterrupt
 def render_worldtile_batch(batch):
-    # batch is a list. Each item is [quadtree_id, colstart, colend, rowstart, rowend, tilepath]
+    # batch is a list of items to process. Each item is [quadtree_id, Tile object]
     global child_rendernode
     rendernode = child_rendernode
     count = 0
@@ -356,20 +356,9 @@ def render_worldtile_batch(batch):
     for job in batch:
         count += 1    
         quadtree = rendernode.quadtrees[job[0]]
-        colstart = job[1]
-        colend = job[2]
-        rowstart = job[3]
-        rowend = job[4]
-        path = job[5]
-        poi_queue = quadtree.world.poi_q
-        path = quadtree.full_tiledir+os.sep+path        
-        # (even if tilechunks is empty, render_worldtile will delete
-        # existing images if appropriate)    
-        # And uses these chunks
-        tilechunks = quadtree.get_chunks_in_range(colstart, colend, rowstart,rowend)
-        #logging.debug(" tilechunks: %r", tilechunks)
-        
-        quadtree.render_worldtile(tilechunks,colstart, colend, rowstart, rowend, path, poi_queue)
+        tile = job[1]
+
+        quadtree.render_worldtile(tile)
     return count
 
 @catch_keyboardinterrupt
