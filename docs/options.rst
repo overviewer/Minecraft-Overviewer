@@ -303,6 +303,19 @@ Less Useful Options
 
         Default: False
 
+.. cmdoption:: --stochastic-render <probability>
+
+    Provides a probability that a non-updated tile will be rerendered
+    anyway. Use this if there's a new rendering feature you want to
+    use, but you don't want to rerender the entire map at once.
+
+    **Settings file:**
+        Option name: ``stochastic_render``
+
+        Format: a floating-point number
+
+        Default: 0.0
+
 .. cmdoption:: --textures-path <path>
 
     Use this option to specify an alternate terrain.png to use for textures when
