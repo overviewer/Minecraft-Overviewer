@@ -1250,6 +1250,11 @@ def slabs(blockid, data):
     if blockid == 43: # double slab
         return build_block(top, side)
     
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, bgcolor)
+    composite.alpha_over(side, mask,(0,0,16,8), mask)
+    
     # plain slab
     top = transform_image_top(top)
     side = transform_image_side(side)
@@ -1898,12 +1903,18 @@ block(blockid=[73, 74], top_index=51)
 @material(blockid=78, data=range(8), transparent=True)
 def snow(blockid, data):
     # still not rendered correctly: data other than 0
+    
     tex = terrain_images[66]
+    
+    # make the side image, top 3/4 transparent
+    mask = tex.crop((0,12,16,16))
+    sidetex = Image.new(tex.mode, tex.size, bgcolor)
+    composite.alpha_over(sidetex, mask, (0,12,16,16), mask)
     
     img = Image.new("RGBA", (24,24), bgcolor)
     
     top = transform_image_top(tex)
-    side = transform_image_side(tex)
+    side = transform_image_side(sidetex)
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
     
     composite.alpha_over(img, side, (0,6), side)
