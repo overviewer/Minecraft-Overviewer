@@ -1589,6 +1589,11 @@ def wire(blockid, data):
 
     return img
 
+# diamond ore
+block(blockid=56, top_index=50)
+# diamond block
+block(blockid=57, top_index=24)
+
 # crafting table
 # needs two different sides
 @material(blockid=58, solid=True)
@@ -1613,6 +1618,14 @@ def crops(blockid, data):
     composite.alpha_over(img, crop2, (6,3), crop2)
     composite.alpha_over(img, crop3, (6,3), crop3)
     return img
+
+# farmland
+@material(blockid=60, data=range(9), solid=True)
+def farmland(blockid, data):
+    top = terrain_images[86]
+    if data == 0:
+        top = terrain_images[87]
+    return build_block(top, terrain_images[2])
 
 # signposts
 @material(blockid=63, data=range(16), transparent=True)
@@ -1839,6 +1852,9 @@ def wall_sign(blockid, data, north): # wall sign
 
     return img
 
+##
+## not rendered: levers
+##
 
 # wooden and stone pressure plates
 @material(blockid=[70, 72], data=[0,1], transparent=True)
@@ -1871,6 +1887,72 @@ def pressure_plate(blockid, data):
     
     return img
 
+# normal and glowing redstone ore
+block(blockid=[73, 74], top_index=51)
+
+##
+## not rendered: buttons
+##
+
+# snow
+@material(blockid=78, data=range(8), transparent=True)
+def snow(blockid, data):
+    # still not rendered correctly: data other than 0
+    tex = terrain_images[66]
+    
+    img = Image.new("RGBA", (24,24), bgcolor)
+    
+    top = transform_image_top(tex)
+    side = transform_image_side(tex)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    composite.alpha_over(img, side, (0,6), side)
+    composite.alpha_over(img, otherside, (12,6), otherside)
+    composite.alpha_over(img, top, (0,9), top)
+    
+    return img
+
+# snow block
+block(blockid=80, top_index=66)
+
+# cactus
+@material(blockid=81, data=range(15), transparent=True, solid=True, nospawn=True)
+def cactus(blockid, data):
+    top = terrain_images[69]
+    side = terrain_images[70]
+
+    img = Image.new("RGBA", (24,24), bgcolor)
+    
+    top = transform_image_top(top)
+    side = transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    composite.alpha_over(img, side, (1,6), side)
+    composite.alpha_over(img, otherside, (11,6), otherside)
+    composite.alpha_over(img, top, (0,0), top)
+    
+    return img
+
+# clay block
+block(blockid=82, top_index=72)
+
+# sugar cane
+@material(blockid=83, data=range(16), transparent=True)
+def sugar_cane(blockid, data):
+    tex = terrain_images[73]
+    return build_sprite(tex)
+
+# jukebox
+@material(blockid=84, data=range(16), solid=True)
+def jukebox(blockid, data):
+    return build_block(terrain_images[75], terrain_images[74])
 
 # nether and normal fences
 # uses pseudo-ancildata found in iterate.c
