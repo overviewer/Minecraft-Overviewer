@@ -1783,7 +1783,7 @@ def ladder(blockid, data, north):
 
 
 # wall signs
-@material(blockid=68, data=[2, 3, 4, 5], trasnparent=True)
+@material(blockid=68, data=[2, 3, 4, 5], transparent=True)
 def wall_sign(blockid, data, north): # wall sign
 
     # first north rotations
