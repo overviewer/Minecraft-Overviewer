@@ -363,7 +363,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     
     w.go(options.procs)
 
-    logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
+    logging.info("Rendering the following tilesets: %s", ",".join(options.rendermode))
 
     bgcolor = (int(options.bg_color[1:3],16), int(options.bg_color[3:5],16), int(options.bg_color[5:7],16), 0)
 
