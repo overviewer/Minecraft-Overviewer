@@ -617,23 +617,25 @@ class Tile(object):
         depth = len(path)
 
         # Radius of the world in chunk cols/rows
+        # (Diameter in X is 2**depth, divided by 2 for a radius, multiplied by
+        # 2 for 2 chunks per tile. Similarly for Y)
         xradius = 2**depth
         yradius = 2*2**depth
 
-        x = -xradius
-        y = -yradius
+        col = -xradius
+        row = -yradius
         xsize = xradius
         ysize = yradius
 
         for p in path:
             if p in (1,3):
-                x += xsize
+                col += xsize
             if p in (2,3):
-                y += ysize
+                row += ysize
             xsize //= 2
             ysize //= 2
 
-        return cls(x, y, path)
+        return cls(col, row, path)
 
     @classmethod
     def compute_path(cls, col, row, depth):
