@@ -597,7 +597,16 @@ class Tile(object):
         """
         self.col = col
         self.row = row
-        self.path = path
+        self.path = tuple(path)
+
+    def __repr__(self):
+        return "%s(%r,%r,%r)" % (self.__class__.__name__, self.col, self.row, self.path)
+
+    def __eq__(self,other):
+        return self.col == other.col and self.row == other.row and tuple(self.path) == tuple(other.path)
+
+    def __ne__(self, other):
+        return not self == other
 
     @classmethod
     def from_path(cls, path):
