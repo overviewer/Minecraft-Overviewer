@@ -350,6 +350,11 @@ Less Useful Options
 
     Prints more output. You can specify this multiple times.
 
+    Specifying this option also has the effect of changing the output format to
+    a more verbose one with additional information, in addition to outputting
+    more lines. If you specify both :option:`-v` and :option:`-q`, you can get
+    the more verbose line without additional output from debug lines.
+
     **Settings file:**
         Option name: ``verbose``
 
