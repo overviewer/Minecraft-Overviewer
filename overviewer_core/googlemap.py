@@ -74,6 +74,7 @@ class MapGen(object):
         
         self.skipjs = configInfo.get('skipjs', False)
         self.nosigns = configInfo.get('nosigns', False)
+        self.noanimals = configInfo.get('noanimals', False)
         self.web_assets_hook = configInfo.get('web_assets_hook', None)
         self.web_assets_path = configInfo.get('web_assets_path', None)
         self.bg_color = configInfo.get('bg_color')
@@ -173,11 +174,14 @@ class MapGen(object):
         # we need to merge self.world.POI with the persistant data in world.PersistentData
 
         self.world.POI += filter(lambda x: x['type'] != 'spawn', self.world.persistentData['POI'])
-        
+
+        markers = self.world.POI
+
         if self.nosigns:
             markers = filter(lambda x: x['type'] != 'sign', self.world.POI)
-        else:
-            markers = self.world.POI
+
+        if self.noanimals:
+			markers = filter(lambda x: x['type'] not in set(( 'cow', 'sheep', 'pig', 'squid', 'chicken' )), markers)
 
         # save persistent data
         self.world.persistentData['POI'] = self.world.POI

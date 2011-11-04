@@ -125,6 +125,11 @@ def get_tileentity_data(level):
     data = level['TileEntities']
     return data
 
+def get_entity_data(level):
+    """Returns the Entities TAG_List from chunk dat file"""
+    data = level['Entities']
+    return data
+
 # This set holds blocks ids that can be seen through, for occlusion calculations
 transparent_blocks = set([ 0,  6,  8,  9, 18, 20, 26, 27, 28, 29, 30, 31, 32, 33,
                           34, 37, 38, 39, 40, 44, 50, 51, 52, 53, 55, 59, 63, 64,
@@ -394,6 +399,15 @@ class ChunkRenderer(object):
                     if self.queue:
                         self.queue.put(["newpoi", newPOI])
 
+		# we're going to look for animals here
+#        entities = get_entity_data(self.level)
+#        for entity in entities:
+#			if entity['id'] == 'Cow':
+#				newPOI = dict(type="cow",
+#								x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='moo', chunk=(self.chunkX, self.chunkY),
+#							   )
+#			    if self.queue:
+#					self.queue.put(["cow", newPOI])
 
         # check to see if there are any signs in the persistentData list that are from this chunk.
         # if so, remove them from the persistentData list (since they're have been added to the world.POI
