@@ -399,15 +399,32 @@ class ChunkRenderer(object):
                     if self.queue:
                         self.queue.put(["newpoi", newPOI])
 
-		# we're going to look for animals here
-#        entities = get_entity_data(self.level)
-#        for entity in entities:
-#			if entity['id'] == 'Cow':
-#				newPOI = dict(type="cow",
-#								x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='moo', chunk=(self.chunkX, self.chunkY),
-#							   )
-#			    if self.queue:
-#					self.queue.put(["cow", newPOI])
+        # we're going to look for animals here
+        entities = get_entity_data(self.level)
+        for entity in entities:
+            newPOI = None
+            if entity['id'] == 'Cow':
+                newPOI = dict(type="cow",
+                                x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='', chunk=(self.chunkX, self.chunkY),
+                               )
+            elif entity['id'] == 'Pig':
+                newPOI = dict(type="pig",
+                                x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='', chunk=(self.chunkX, self.chunkY),
+                               )
+            elif entity['id'] == 'Chicken':
+                newPOI = dict(type="chicken",
+                                x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='', chunk=(self.chunkX, self.chunkY),
+                               )
+            elif entity['id'] == 'Sheep':
+                newPOI = dict(type="sheep",
+                                x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='', chunk=(self.chunkX, self.chunkY),
+                               )
+            elif entity['id'] == 'Squid':
+                newPOI = dict(type="squid",
+                                x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='', chunk=(self.chunkX, self.chunkY),
+                               )
+            if self.queue and newPOI is not None:
+                self.queue.put(["animal", newPOI])
 
         # check to see if there are any signs in the persistentData list that are from this chunk.
         # if so, remove them from the persistentData list (since they're have been added to the world.POI
