@@ -106,32 +106,44 @@ from overviewer_core import googlemap, rendernode
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
 
-def configure_logger():
+def configure_logger(options=None):
     "Configures the root logger to our liking"
+
+    if not options:
+        verbose = False
+    else:
+        verbose = options.verbose
+    
+    logger = logging.getLogger()
 
     outstream = sys.stderr
     if platform.system() == 'Windows':
         # Our custom output stream processor knows how to deal with select ANSI
         # color escape sequences
         outstream = util.WindowsOutputStream()
-        formatter = util.ANSIColorFormatter()
+        formatter = util.ANSIColorFormatter(verbose)
 
     elif sys.stderr.isatty():
         # terminal logging with ANSI color
-        formatter = util.ANSIColorFormatter()
+        formatter = util.ANSIColorFormatter(verbose)
 
     else:
         # Let's not assume anything. Just text.
-        formatter = util.DumbFormatter()
+        formatter = util.DumbFormatter(verbose)
 
-    logger = logging.getLogger()
-    handler = logging.StreamHandler(outstream)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    if hasattr(logger, 'overviewerHandler'):
+        # we have already set up logging so just replace the formatter
+        # this time with the correct value for verbose
+        logger.overviewerHandler.setFormatter(formatter)
+    else:
+        logger.overviewerHandler = logging.StreamHandler(outstream)
+        logger.overviewerHandler.setFormatter(formatter)
+        logger.addHandler(logger.overviewerHandler)
+        logger.setLevel(logging.INFO)
 
 def main():
 
+    # bootstrap the logger with defaults
     configure_logger()
 
     try:
@@ -173,6 +185,8 @@ def main():
 
     options, args = parser.parse_args()
 
+    # the details of the logger options can depend on the command line options
+    configure_logger(options)
 
     if options.version:
         try:
