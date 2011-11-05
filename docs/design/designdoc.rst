@@ -486,6 +486,14 @@ rendered twice. Each neighboring tile is therefore only 2 columns over, not 3 as
 one may suspect at first. Same goes for the rows: The next tile down is 4 rows
 down, not 5.
 
+To further illustrate this point, here are four tiles arranged on the grid of
+chunks. Notice how the tiles are addressed by the col,row of the chunk in the
+upper-left corner. Also notice how neighboring tiles are 2 columns apart but 4
+rows apart.
+
+.. image:: tilerendering/tilegrid.png
+    :alt: 4 tiles arranged on the grid of chunks
+
 Quadtrees
 =========
 .. About the tile output 
