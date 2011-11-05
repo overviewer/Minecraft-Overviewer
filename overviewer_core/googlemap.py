@@ -74,7 +74,7 @@ class MapGen(object):
         
         self.skipjs = configInfo.get('skipjs', False)
         self.nosigns = configInfo.get('nosigns', False)
-        self.noanimals = configInfo.get('noanimals', False)
+        self.wantanimals = configInfo.get('wantanimals', False)
         self.web_assets_hook = configInfo.get('web_assets_hook', None)
         self.web_assets_path = configInfo.get('web_assets_path', None)
         self.bg_color = configInfo.get('bg_color')
@@ -180,7 +180,7 @@ class MapGen(object):
         if self.nosigns:
             markers = filter(lambda x: x['type'] != 'sign', self.world.POI)
 
-        if self.noanimals:
+        if not self.wantanimals:
 			markers = filter(lambda x: x['type'] not in set(( 'cow', 'sheep', 'pig', 'squid', 'chicken' )), markers)
 
         # save persistent data
