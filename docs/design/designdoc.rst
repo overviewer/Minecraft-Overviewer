@@ -547,6 +547,20 @@ absolute position 136.
 So this example requires zoom level 8 (at least in the horizontal direction.
 The vertical direction must also be checked).
 
+Quadtree Paths
+--------------
+
+To illustrate the relationship between tile col,row addresses and their path,
+consider these 16 tiles from a depth 2 quadtree:
+
+.. image:: quadtree/depth2addresses.png
+    :alt: Addresses and paths for 16 tiles in a depth 2 tree
+
+The top address in each tile is the col,row address, where the chunk outlined in
+green in the center is at 0,0. The lower address in each tile is the path. The
+first number indicates which quadrant the tile is in overall, and the second is
+which quadrant within the first one.
+
 get_range_by_path
 -----------------
 .. Explain the quadtree.QuadtreeGen._get_range_by_path method
