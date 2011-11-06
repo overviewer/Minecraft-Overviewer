@@ -132,23 +132,30 @@ class World(object):
         if self.north_direction == 'auto':
             self.north_direction = self.persistentData['north_direction']
             north_direction = self.north_direction
-        
-        #find region files, or load the region list
-        #this also caches all the region file header info
-        logging.info("Scanning regions")
-        regionfiles = {}
+
+        # This is populated by reload_region(). It is a mapping from region
+        # filename to: (region object, mtime, chunkcache)
         self.regions = {}
+
+        # This is populated below. It is a mapping from (x,y) region coords to
+        # (x,y,filename, region object)
+        self.regionfiles = {}
+        
+        # If a region list was given, make sure the given paths are absolute
         if regionlist:
-            self.regionlist = map(os.path.abspath, regionlist) # a list of paths
+            self.regionlist = map(os.path.abspath, regionlist)
         else:
             self.regionlist = None
+
+        logging.info("Scanning regions")
+
+        # Loads requested/all regions, caching region header info
         for x, y, regionfile in self._iterate_regionfiles(regionlist):
+            # reload_region caches the region object in self.regions
             mcr = self.reload_region(regionfile) 
             mcr.get_chunk_info()
-            regionfiles[(x,y)]	= (x,y,regionfile,mcr)
-        self.regionfiles = regionfiles	
-        # set the number of region file handles we will permit open at any time before we start closing them
-#        self.regionlimit = 1000
+            self.regionfiles[(x,y)] = (x,y,regionfile,mcr)
+
         # the max number of chunks we will keep before removing them (includes emptry chunks)
         self.chunklimit = 1024 
         self.chunkcount = 0
@@ -182,7 +189,7 @@ class World(object):
                 return None ## return none.  I think this is who we should indicate missing chunks
                 #raise IOError("No such chunk in region: (%i, %i)" % (x, y))                 
 
-            #we cache the transformed data, not it's raw form
+            #we cache the transformed data, not its raw form
             data = nbt.read_all()    
             level = data[1]['Level']
             chunk_data = level
@@ -382,7 +389,7 @@ class World(object):
                         y = -temp-1
                     yield (x, y, join(self.worlddir, 'region', f))
                 else:
-                    logging.warning("Ignore path '%s' in regionlist", f)
+                    logging.warning("Ignoring non region file '%s' in regionlist", f)
 
         else:                    
             for path in glob(os.path.join(self.worlddir, 'region') + "/r.*.*.mcr"):
