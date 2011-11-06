@@ -218,10 +218,14 @@ rendermode_smooth_lighting_hidden(void *data, RenderState *state, int x, int y, 
 
 static void
 rendermode_smooth_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+    int light_top = 1;
+    int light_left = 1;
+    int light_right = 1;
     RenderModeSmoothLighting *self = (RenderModeSmoothLighting *)data;
     
-    /* special case for leaves -- these are also smooth-lit! */
-    if (state->block != 18 && is_transparent(state->block))
+    /* special case for leaves, water 8, water 9
+       -- these are also smooth-lit! */
+    if (state->block != 18 && state->block != 8 && state->block != 9 && is_transparent(state->block))
     {
         /* transparent blocks are rendered as usual, with flat lighting */
         rendermode_lighting.draw(data, state, src, mask, mask_light);
@@ -234,9 +238,23 @@ rendermode_smooth_lighting_draw(void *data, RenderState *state, PyObject *src, P
      * lighting mode draws */
     rendermode_normal.draw(data, state, src, mask, mask_light);
     
-    do_shading_with_rule(self, state, lighting_rules[FACE_TOP]);
-    do_shading_with_rule(self, state, lighting_rules[FACE_LEFT]);
-    do_shading_with_rule(self, state, lighting_rules[FACE_RIGHT]);
+    /* special code for water */
+    if (state->block == 9)
+    {
+        if (!(state->block_pdata & (1 << 4)))
+            light_top = 0;
+        if (!(state->block_pdata & (1 << 1)))
+            light_left = 0;
+        if (!(state->block_pdata & (1 << 2)))
+            light_right = 0;
+    }
+    
+    if (light_top)
+        do_shading_with_rule(self, state, lighting_rules[FACE_TOP]);
+    if (light_left)
+        do_shading_with_rule(self, state, lighting_rules[FACE_LEFT]);
+    if (light_right)
+        do_shading_with_rule(self, state, lighting_rules[FACE_RIGHT]);
 }
 
 RenderModeInterface rendermode_smooth_lighting = {
