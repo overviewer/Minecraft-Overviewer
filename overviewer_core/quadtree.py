@@ -642,4 +642,42 @@ class Tile(object):
         """Constructor that takes a col,row of a tile and computes the path. 
 
         """
-        raise NotImplementedError()
+        assert col % 2 == 0
+        assert row % 4 == 0
+
+        xradius = 2**depth
+        yradius = 2*2**depth
+
+        colbounds = [-xradius, xradius]
+        rowbounds = [-yradius, yradius]
+
+        path = []
+
+        for level in xrange(depth):
+            # Strategy: Find the midpoint of this level, and determine which
+            # quadrant this row/col is in. Then set the bounds to that level
+            # and repeat
+
+            xmid = (colbounds[1] + colbounds[0]) // 2
+            ymid = (rowbounds[1] + rowbounds[0]) // 2
+
+            if col < xmid:
+                if row < ymid:
+                    path.append(0)
+                    colbounds[1] = xmid
+                    rowbounds[1] = ymid
+                else:
+                    path.append(2)
+                    colbounds[1] = xmid
+                    rowbounds[0] = ymid
+            else:
+                if row < ymid:
+                    path.append(1)
+                    colbounds[0] = xmid
+                    rowbounds[1] = ymid
+                else:
+                    path.append(3)
+                    colbounds[0] = xmid
+                    rowbounds[0] = ymid
+
+        return cls(col, row, path)
