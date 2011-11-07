@@ -1862,6 +1862,10 @@ def wall_sign(blockid, data, north): # wall sign
 ##
 ## not rendered: levers
 ##
+@material(blockid=69, data=range(16), transparent=True)
+def levers(blockid, data, north):
+    # place holder, used to mae the block transparent
+    return None
 
 # wooden and stone pressure plates
 @material(blockid=[70, 72], data=[0,1], transparent=True)
@@ -1900,6 +1904,10 @@ block(blockid=[73, 74], top_index=51)
 ##
 ## not rendered: buttons
 ##
+@material(blockid=77, data=range(16), transparent=True)
+def buttons(blockid, data, north):
+    # place holder, used to make the block transparent
+    return None
 
 # snow
 @material(blockid=78, data=range(8), transparent=True)
