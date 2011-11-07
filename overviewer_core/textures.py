@@ -2061,3 +2061,282 @@ def fence(blockid, data):
         composite.alpha_over(img,fence_small_side, pos_bottom_right,fence_small_side)                  # bottom right
         
     return img
+
+# pumpkin
+@material(blockid=[86, 91], data=range(4), solid=True)
+def pumpkin(blockid, data, north): # pumpkins, jack-o-lantern
+    # north rotation
+    if north == 'upper-left':
+        if data == 0: data = 1
+        elif data == 1: data = 2
+        elif data == 2: data = 3
+        elif data == 3: data = 0
+    elif north == 'upper-right':
+        if data == 0: data = 2
+        elif data == 1: data = 3
+        elif data == 2: data = 0
+        elif data == 3: data = 1
+    elif north == 'lower-right':
+        if data == 0: data = 3
+        elif data == 1: data = 0
+        elif data == 2: data = 1
+        elif data == 3: data = 2
+    
+    # texture generation
+    top = terrain_images[102]
+    frontID = 119 if blockid == 86 else 120
+    front = terrain_images[frontID]
+    side = terrain_images[118]
+
+    if data == 0: # pointing west
+        img = build_full_block(top, None, None, side, front)
+
+    elif data == 1: # pointing north
+        img = build_full_block(top, None, None, front, side)
+
+    else: # in any other direction the front can't be seen
+        img = build_full_block(top, None, None, side, side)
+
+    return img
+
+# netherrack
+block(blockid=87, top_index=103)
+
+# soul sand
+block(blockid=88, top_index=104)
+
+# glowstone
+block(blockid=89, top_index=105)
+
+# portal
+@material(blockid=90, data=[1, 2, 4, 8], transparent=True)
+def portal(blockid, data):
+    # no north orientation uses pseudo data
+    portaltexture = _load_image("portal.png")
+    img = Image.new("RGBA", (24,24), bgcolor)
+
+    side = transform_image_side(portaltexture)
+    otherside = side.transpose(Image.FLIP_TOP_BOTTOM)
+
+    if data in (1,4):
+        composite.alpha_over(img, side, (5,4), side)
+
+    if data in (2,8):
+        composite.alpha_over(img, otherside, (5,4), otherside)
+
+    return img
+
+# cake!
+# TODO is rendered un-bitten
+@material(blockid=92, data=range(6), transparent=True)
+def cake(blockid, data):
+
+    # choose textures for cake
+    top = terrain_images[121]
+    side = terrain_images[122]
+    top = transform_image_top(top)
+    side = transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    # darken sides slightly
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+    
+    img = Image.new("RGBA", (24,24), bgcolor)
+    
+    # composite the cake
+    composite.alpha_over(img, side, (1,6), side)
+    composite.alpha_over(img, otherside, (11,7), otherside) # workaround, fixes a hole
+    composite.alpha_over(img, otherside, (12,6), otherside)
+    composite.alpha_over(img, top, (0,6), top)
+
+    return img
+
+# redstone repeaters ON and OFF
+@material(blockid=[93,94], data=range(16), transparent=True)
+def repeater(blockid, data, north):
+    # north rotation
+    # Masked to not clobber delay info
+    if north == 'upper-left':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 1
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 2
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+    elif north == 'upper-right':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 2
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+    elif north == 'lower-right':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 1
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+    
+    # generate the diode
+    top = terrain_images[131] if blockid == 93 else terrain_images[147]
+    side = terrain_images[5]
+    increment = 13
+    
+    if (data & 0x3) == 0: # pointing east
+        pass
+    
+    if (data & 0x3) == 1: # pointing south
+        top = top.rotate(270)
+
+    if (data & 0x3) == 2: # pointing west
+        top = top.rotate(180)
+
+    if (data & 0x3) == 3: # pointing north
+        top = top.rotate(90)
+
+    img = build_full_block( (top, increment), None, None, side, side)
+
+    # compose a "3d" redstone torch
+    t = terrain_images[115].copy() if blockid == 93 else terrain_images[99].copy()
+    torch = Image.new("RGBA", (24,24), bgcolor)
+    
+    t_crop = t.crop((2,2,14,14))
+    slice = t_crop.copy()
+    ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+    
+    composite.alpha_over(torch, slice, (6,4))
+    composite.alpha_over(torch, t_crop, (5,5))
+    composite.alpha_over(torch, t_crop, (6,5))
+    composite.alpha_over(torch, slice, (6,6))
+    
+    # paste redstone torches everywhere!
+    # the torch is too tall for the repeater, crop the bottom.
+    ImageDraw.Draw(torch).rectangle((0,16,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
+    
+    # touch up the 3d effect with big rectangles, just in case, for other texture packs
+    ImageDraw.Draw(torch).rectangle((0,24,10,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(torch).rectangle((12,15,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
+    
+    # torch positions for every redstone torch orientation.
+    #
+    # This is a horrible list of torch orientations. I tried to 
+    # obtain these orientations by rotating the positions for one
+    # orientation, but pixel rounding is horrible and messes the
+    # torches.
+
+    if (data & 0x3) == 0: # pointing east
+        if (data & 0xC) == 0: # one tick delay
+            moving_torch = (1,1)
+            static_torch = (-3,-1)
+            
+        elif (data & 0xC) == 4: # two ticks delay
+            moving_torch = (2,2)
+            static_torch = (-3,-1)
+            
+        elif (data & 0xC) == 8: # three ticks delay
+            moving_torch = (3,2)
+            static_torch = (-3,-1)
+            
+        elif (data & 0xC) == 12: # four ticks delay
+            moving_torch = (4,3)
+            static_torch = (-3,-1)
+    
+    elif (data & 0x3) == 1: # pointing south
+        if (data & 0xC) == 0: # one tick delay
+            moving_torch = (1,1)
+            static_torch = (5,-1)
+            
+        elif (data & 0xC) == 4: # two ticks delay
+            moving_torch = (0,2)
+            static_torch = (5,-1)
+            
+        elif (data & 0xC) == 8: # three ticks delay
+            moving_torch = (-1,2)
+            static_torch = (5,-1)
+            
+        elif (data & 0xC) == 12: # four ticks delay
+            moving_torch = (-2,3)
+            static_torch = (5,-1)
+
+    elif (data & 0x3) == 2: # pointing west
+        if (data & 0xC) == 0: # one tick delay
+            moving_torch = (1,1)
+            static_torch = (5,3)
+            
+        elif (data & 0xC) == 4: # two ticks delay
+            moving_torch = (0,0)
+            static_torch = (5,3)
+            
+        elif (data & 0xC) == 8: # three ticks delay
+            moving_torch = (-1,0)
+            static_torch = (5,3)
+            
+        elif (data & 0xC) == 12: # four ticks delay
+            moving_torch = (-2,-1)
+            static_torch = (5,3)
+
+    elif (data & 0x3) == 3: # pointing north
+        if (data & 0xC) == 0: # one tick delay
+            moving_torch = (1,1)
+            static_torch = (-3,3)
+            
+        elif (data & 0xC) == 4: # two ticks delay
+            moving_torch = (2,0)
+            static_torch = (-3,3)
+            
+        elif (data & 0xC) == 8: # three ticks delay
+            moving_torch = (3,0)
+            static_torch = (-3,3)
+            
+        elif (data & 0xC) == 12: # four ticks delay
+            moving_torch = (4,-1)
+            static_torch = (-3,3)
+    
+    # this paste order it's ok for east and south orientation
+    # but it's wrong for north and west orientations. But using the
+    # default texture pack the torches are small enough to no overlap.
+    composite.alpha_over(img, torch, static_torch, torch) 
+    composite.alpha_over(img, torch, moving_torch, torch)
+
+    return img
+    
+# trapdoor
+# TODO the trapdoor is looks like a sprite when opened, that's not good
+@material(blockid=96, data=range(8), transparent=True)
+def trapdoor(blockid, data, north):
+
+    # north rotation
+    # Masked to not clobber opened/closed info
+    if north == 'upper-left':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 2
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+    elif north == 'upper-right':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 1
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+    elif north == 'lower-right':
+        if (data & 0b0011) == 0: data = data & 0b1100 | 2
+        elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+        elif (data & 0b0011) == 2: data = data & 0b1100 | 1
+        elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+
+    # texture generation
+    texture = terrain_images[84]
+    if data & 0x4 == 0x4: # opened trapdoor
+        if data & 0x3 == 0: # west
+            img = build_full_block(None, None, None, None, texture)
+        if data & 0x3 == 1: # east
+            img = build_full_block(None, texture, None, None, None)
+        if data & 0x3 == 2: # south
+            img = build_full_block(None, None, texture, None, None)
+        if data & 0x3 == 3: # north
+            img = build_full_block(None, None, None, texture, None)
+        
+    elif data & 0x4 == 0: # closed trapdoor
+        img = build_full_block((texture, 12), None, None, texture, texture)
+    
+    return img
