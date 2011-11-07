@@ -299,7 +299,7 @@ class QuadtreeGen(object):
        
         #stat the tile, we need to know if it exists or it's mtime
         try:    
-            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
         except OSError, e:
             if e.errno != errno.ENOENT:
                 raise
@@ -401,7 +401,7 @@ class QuadtreeGen(object):
         world = self.world
         #stat the file, we need to know if it exists or it's mtime
         try:    
-            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
         except OSError, e:
             if e.errno != errno.ENOENT:
                 raise

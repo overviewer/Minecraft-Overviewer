@@ -117,7 +117,7 @@ class World(object):
                     logging.debug(ex.str())
 
         if os.path.exists(self.pickleFile):
-            self.persistentDataIsNew = False;
+            self.persistentDataIsNew = False
             with open(self.pickleFile,"rb") as p:
                 self.persistentData = cPickle.load(p)
                 if not self.persistentData.get('north_direction', False):
@@ -159,7 +159,7 @@ class World(object):
     def get_region_path(self, chunkX, chunkY):
         """Returns the path to the region that contains chunk (chunkX, chunkY)
         """
-        _, _, regionfile,_ = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None,None));
+        _, _, regionfile,_ = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None,None))
         return regionfile
             
     def load_from_region(self,filename, x, y):
