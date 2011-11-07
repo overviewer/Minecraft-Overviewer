@@ -2509,23 +2509,20 @@ block(blockid=103, top_index=137, side_index=136, solid=True)
 def stem(blockid, data, north):
     # the ancildata value indicates how much of the texture
     # is shown.
-    if data & 7 == 0:
-        # not fully grown stem or no pumpkin/melon touching it,
-        # straight up stem
-        t = terrain_images[111].copy()
-        img = Image.new("RGBA", (16,16), bgcolor)
-        composite.alpha_over(img, t, (0, int(16 - 16*((data + 1)/8.))), t)
-        img = build_sprite(t)
-        if data & 7 == 7:
-            # fully grown stem gets brown color!
-            # there is a conditional in rendermode-normal to not
-            # tint the data value 7
-            img = tintTexture(img, (211,169,116))
-        return img
+
+    # not fully grown stem or no pumpkin/melon touching it,
+    # straight up stem
+    t = terrain_images[111].copy()
+    img = Image.new("RGBA", (16,16), bgcolor)
+    composite.alpha_over(img, t, (0, int(16 - 16*((data + 1)/8.))), t)
+    img = build_sprite(t)
+    if data & 7 == 7:
+        # fully grown stem gets brown color!
+        # there is a conditional in rendermode-normal.c to not
+        # tint the data value 7
+        img = tintTexture(img, (211,169,116))
+    return img
     
-    else: # fully grown, and a pumpking/melon touching it,
-          # corner stem
-        return None
 
 # vines
 # TODO multiple sides of a block can contain vines! At the moment
