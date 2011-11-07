@@ -589,5 +589,72 @@ Caching
 Lighting
 ========
 
+Minecraft stores precomputed lighting information in the chunk files
+themselves, so rendering shadows on the map is a simple matter of
+interpreting this data, then adding a few extra steps to the render
+process. These few extra steps may be found in
+``rendermode-lighting.c`` or ``rendermode-smooth-lighting.c``,
+depending on the exact method used.
+
+Each chunk contains two lighting arrays, each of which contains one
+value between 0 and 15 for each block. These two arrays are the
+BlockLight array, containing light received from other blocks, and the
+SkyLight array, containing light received from the sky. Storing these
+two seperately makes it easier to switch between daytime and
+nighttime. To turn these two values into one value between 0 and 1
+representing how much light there is in a block, we use the following
+equation (where l\ :sub:`b` and l\ :sub:`s` are the block light and
+sky light values, respectively):
+
+.. image:: lighting/light-eqn.png
+    :alt: c = 0.8^{15 - min(l_b, l_s)}
+
+For night lighting, the sky light values are shifted down by 11 before
+this lighting coefficient is calculated.
+
+Each block of light data applies to all the block faces that touch
+it. So, each solid block doesn't receive lighting from the block it's
+in, but from the three blocks it touches above, to the left, and to
+the right. For transparent blocks with potentially strange shapes,
+lighting is approximated by using the local block lighting on the
+entire image.
+
+.. image:: lighting/lighting-process.png
+    :alt: The lighting process
+
+For some blocks, notably half-steps and stairs, Minecraft doesn't
+generate valid lighting data in the local block like it does for all
+other transparent blocks. In these cases, the lighting data is
+estimated by averaging data from nearby blocks. This is not an ideal
+solution, but it produces acceptable results in almost all cases.
+
+Smooth Lighting
+---------------
+
+In the smooth-lighting rendermode, solid blocks are lit per-vertex
+instead of per-face. This is done by covering all three faces with a
+quadralateral where each corner has a lighting value associated with
+it. These lighting values are then smoothly interpolated across the
+entire face.
+
+To calculate these values on each corner, we look at lighting data in
+the 8 blocks surrounding the corner, and ignore the 4 blocks behind
+the face the corner belongs to. We then calculate the lighting
+coefficient for all 4 remaining blocks as normal, and average them to
+obtain the coefficient for the corner. This is repeated for all 4
+corners on a given face, and for all visible faces.
+
+.. image:: lighting/smooth-average.png
+    :alt: An example face and vertex, with the 4 light sources.
+
+The `ambient occlusion`_ effect so strongly associated with smooth
+lighting in-game is a side effect of this method. Since solid blocks
+have both light values set to 0, the lighting coefficient is very
+close to 0. For verticies in corners, at least 1 (or more) of the 4
+averaged lighting values is therefore 0, dragging the average down,
+and creating the "dark corners" effect.
+
+.. _ambient occlusion: http://en.wikipedia.org/wiki/Ambient_occlusion
+
 Cave Mode
 =========

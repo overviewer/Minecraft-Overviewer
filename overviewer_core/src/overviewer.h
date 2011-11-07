@@ -51,6 +51,14 @@ PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
 PyObject *tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
                          unsigned char sb, unsigned char sa,
                          PyObject *mask, int dx, int dy, int xsize, int ysize);
+PyObject *draw_triangle(PyObject *dest, int inclusive,
+                        int x0, int y0,
+                        unsigned char r0, unsigned char g0, unsigned char b0,
+                        int x1, int y1,
+                        unsigned char r1, unsigned char g1, unsigned char b1,
+                        int x2, int y2,
+                        unsigned char r2, unsigned char g2, unsigned char b2,
+                        int tux, int tuy, int *touchups, unsigned int num_touchups);
 
 /* forward declaration of RenderMode object */
 typedef struct _RenderMode RenderMode;
