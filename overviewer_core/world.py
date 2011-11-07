@@ -78,7 +78,6 @@ class World(object):
         # figure out chunk format is in use
         # if not mcregion, error out early
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-        #print data
         if not ('version' in data and data['version'] == 19132):
             logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
             sys.exit(1)
@@ -357,6 +356,20 @@ class World(object):
             return 3
         elif self.north_direction == 'lower-left':
             return 0
+
+    def iterate_chunk_metadata(self):
+        """Returns an iterator over (x,y,chunk mtime) of every chunk loaded in
+        memory. Provides a public way for external routines to iterate over the
+        world.
+
+        Written for use in quadtree.py's QuadtreeGen.scan_chunks, which only
+        needs chunk locations and mtimes.
+
+        """
+
+        for regionx, regiony, _, mcr in self.regionfiles.itervalues():
+            for chunkx, chunky in mcr.get_chunks():
+                yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
     def _iterate_regionfiles(self,regionlist=None):
         """Returns an iterator of all of the region files, along with their 

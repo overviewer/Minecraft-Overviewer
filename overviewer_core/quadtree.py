@@ -462,6 +462,61 @@ class QuadtreeGen(object):
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
 
+    def scan_chunks(self):
+        """Scans the chunks of the world object and produce an iterator over
+        the tiles that need to be rendered.
+
+        """
+
+        depth = self.p
+
+        dirty = DirtyTiles(depth)
+
+        # For each chunk, do this:
+        #   For each tile that the chunk touches, do this:
+        #       Compare the last modified time of the chunk and tile. If the
+        #       tile is older, mark it in a DirtyTiles object as dirty.
+        #
+        # IDEA: check last render time against mtime of the region to short
+        # circuit checking mtimes of all chunks in a region
+        for chunkx, chunky, chunkmtime in self.world.iterate_chunk_metadata():
+
+            chunkcol, chunkrow = self.world.convert_coords(chunkx, chunky)
+            #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
+
+            # find tile coordinates
+            tilex = chunkcol - chunkcol % 2
+            tiley = chunkrow - chunkrow % 4
+
+            if chunkcol % 2 == 0:
+                # This chunk is half-in one column and half-in another column.
+                # tilex is the right one, also do tilex-2
+                x_tiles = 2
+            else:
+                x_tiles = 1
+
+            # The tile at tilex,tiley obviously contains chunk, but so do the
+            # next 4 tiles down because chunks are very tall
+            for i in xrange(x_tiles):
+                for j in xrange(5):
+                    tile = Tile.compute_path(tilex-2*i, tiley+4*j, depth)
+
+                    tile_path = tile.get_filepath(self.full_tiledir, self.imgformat)
+                    try:
+                        tile_mtime = os.stat(tile_path)[stat.ST_MTIME]
+                    except OSError, e:
+                        if e.errno != errno.ENOENT:
+                            raise
+                        tile_mtime = 0
+                    #logging.debug("tile %s(%s) vs chunk %s,%s (%s)",
+                    #        tile, tile_mtime, chunkcol, chunkrow, chunkmtime)
+                    if tile_mtime < chunkmtime:
+                        dirty.set_dirty(tile.path)
+                        #logging.debug("	Setting tile as dirty. Will render.")
+
+        # Now that we know which tiles need rendering, return an iterator over them
+        return (Tile.from_path(tpath) for tpath in dirty.iterate_dirty())
+
 
 class DirtyTiles(object):
     """This tree holds which tiles need rendering.
@@ -503,15 +558,24 @@ class DirtyTiles(object):
     def set_dirty(self, path):
         """Marks the requested leaf node as "dirty".
         
-        Path is a list of integers representing the path to the leaf node
-        that is requested to be marked as dirty. Path must be presented in
-        reverse order (leaf node at index 0, root node at index -1)
+        Path is an iterable of integers representing the path to the leaf node
+        that is requested to be marked as dirty.
+        
+        """
+        path = list(path)
+        assert len(path) == self.level
+        path.reverse()
+        self._set_dirty_helper(path)
+
+    def _set_dirty_helper(self, path):
+        """Recursive call for set_dirty()
+
+        Expects path to be a list in reversed order
 
         If *all* the nodes below this one are dirty, this function returns
         true. Otherwise, returns None.
-        
+
         """
-        assert len(path) == self.level
 
         if self.level == 1:
             # Base case
@@ -522,8 +586,6 @@ class DirtyTiles(object):
                 return True
         else:
             # Recursive case
-            if not isinstance(path,list):
-                path = list(path)
 
             childnum = path.pop()
             child = self.children[childnum]
@@ -531,14 +593,14 @@ class DirtyTiles(object):
             if child == False:
                 # Create a new node
                 child = self.__class__(self.level-1)
-                child.set_dirty(path)
+                child._set_dirty_helper(path)
                 self.children[childnum] = child
             elif child == True:
                 # Every child is already dirty. Nothing to do.
                 return
             else:
                 # subtree is mixed clean/dirty. Recurse
-                ret = child.set_dirty(path)
+                ret = child._set_dirty_helper(path)
                 if ret:
                     # Child says it's completely dirty, so we can purge the
                     # subtree and mark it as dirty. The subtree will be garbage
@@ -555,9 +617,10 @@ class DirtyTiles(object):
         yielded is a sequence of integers representing the quadtree path to the
         dirty tile. Yielded sequences are of length self.level.
 
-        Remember yielded paths are in reverse order. Leaf nodes at index 0!
-
         """
+        return (reversed(rpath) for rpath in self._iterate_dirty_helper())
+
+    def _iterate_dirty_helper(self):
         if self.level == 1:
             # Base case
             if self.children[0]: yield [0]
@@ -576,7 +639,7 @@ class DirtyTiles(object):
                         yield x
                 elif child != False:
                     # Mixed dirty/clean down this subtree, recurse
-                    for path in child.iterate_dirty():
+                    for path in child._iterate_dirty_helper():
                         path.append(c)
                         yield path
 
@@ -620,6 +683,8 @@ class Tile(object):
         the tile and constructs a new tile object.
 
         """
+        path = tuple(path)
+
         depth = len(path)
 
         # Radius of the world in chunk cols/rows
