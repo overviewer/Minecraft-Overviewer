@@ -1430,6 +1430,7 @@ def stairs(blockid, data, north):
         tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.8)
         tmp1.putalpha(sidealpha)
         
+        composite.alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
         composite.alpha_over(img, tmp1, (6,3))
         tmp2 = transform_image_top(half_block_l)
         composite.alpha_over(img, tmp2, (0,6))
@@ -1458,6 +1459,7 @@ def stairs(blockid, data, north):
         tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.7)
         tmp1.putalpha(sidealpha)
         
+        composite.alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
         composite.alpha_over(img, tmp1, (6,3))
         tmp2 = transform_image_top(half_block_d)
         composite.alpha_over(img, tmp2, (0,6))
