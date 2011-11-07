@@ -529,13 +529,23 @@ def load_water():
     Block 9, standing water, is given a block with only the top face showing.
     Block 8, flowing water, is given a full 3 sided cube."""
 
-    watertexture = _load_image("water.png")
+    try:
+        # try the MCPatcher water first, in case it's present
+        watertexture = _load_image("custom_water_still.png")
+        watertexture = watertexture.crop((0, 0, watertexture.size[0], watertexture.size[0]))
+    except IOError:
+        watertexture = _load_image("water.png")
     w1 = _build_block(watertexture, None)
     blockmap[9] = generate_texture_tuple(w1,9)
     w2 = _build_block(watertexture, watertexture)
     blockmap[8] = generate_texture_tuple(w2,8)
-
-    lavatexture = _load_image("lava.png")
+    
+    try:
+        # try the MCPatcher lava first, in case it's present
+        lavatexture = _load_image("custom_lava_still.png")
+        lavatexture = lavatexture.crop((0, 0, lavatexture.size[0], lavatexture.size[0]))
+    except IOError:
+        lavatexture = _load_image("lava.png")
     lavablock = _build_block(lavatexture, lavatexture)
     blockmap[10] = generate_texture_tuple(lavablock,10)
     blockmap[11] = blockmap[10]
@@ -599,7 +609,11 @@ def generate_special_texture(blockID, data):
     if blockID == 9 or blockID == 20 or blockID == 79: # spring water, flowing water and waterfall water, AND glass, AND ice
         # water,glass and ice share the way to be rendered
         if blockID == 9:
-            texture = _load_image("water.png")
+            try:
+                texture = _load_image("custom_water_still.png")
+                texture = texture.crop((0, 0, texture.size[0], texture.size[0]))
+            except IOError:
+                texture = _load_image("water.png")
         elif blockID == 20:
             texture = terrain_images[49]
         else:
