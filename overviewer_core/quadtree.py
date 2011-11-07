@@ -49,7 +49,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor="#1A1A1A", depth=None, tiledir=None, forcerender=False, imgformat='png', imgquality=95, optimizeimg=None, rendermode="normal"):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -59,7 +59,6 @@ class QuadtreeGen(object):
         minimum depth that contains all chunks is calculated and used.
 
         """
-        assert(imgformat)
         self.forcerender = forcerender
         self.imgformat = imgformat
         self.imgquality = imgquality
