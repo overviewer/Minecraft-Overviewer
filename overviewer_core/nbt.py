@@ -18,14 +18,13 @@ import struct
 import StringIO
 import os
 import numpy
+from functools import wraps
 
 # decorator to handle filename or object as first parameter
 def _file_loader(func):
+    @wraps(func)
     def wrapper(fileobj, *args):
         if isinstance(fileobj, basestring):
-            if not os.path.isfile(fileobj):
-               return None
-
             # Is actually a filename
             fileobj = open(fileobj, 'rb',4096)
         return func(fileobj, *args)
