@@ -276,14 +276,15 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 
         return final_data;
 
-    /* portal, iron bars and glass panes
-     * Note: iron bars and glass panes "stick" to other blocks, but
-     * at the moment of writing this is not clear which ones stick and
-     * which others no, so for the moment stick only with himself.
-     * This is a TODO!
-     */
-    } else if ((state->block == 90) || (state->block == 101) ||
-               (state->block == 102)) {
+    } else if ((state->block == 101) || (state->block == 102)) {
+        /* iron bars and glass panes:
+         * they seem to stick to almost everything but air, but
+         * not sure yet! Still a TODO! */
+        /* return check adjacent blocks with air, bit inverted */
+        return check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f;
+
+    } else if ((state->block == 90) || (state->block == 113)) {
+        /* portal and nether brick fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
     }
 
@@ -414,7 +415,8 @@ chunk_render(PyObject *self, PyObject *args) {
                     (state.block == 20) || (state.block == 54) || 
                     (state.block == 55) || (state.block == 79) ||
                     (state.block == 85) || (state.block == 90) ||
-                    (state.block == 101) || (state.block == 102)) {
+                    (state.block == 101) || (state.block == 102) ||
+                    (state.block == 113)) {
                     ancilData = generate_pseudo_data(&state, ancilData);
                     state.block_pdata = ancilData;
                 } else {
