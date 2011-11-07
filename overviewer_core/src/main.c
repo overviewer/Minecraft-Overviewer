@@ -51,6 +51,11 @@ static PyMethodDef COverviewerMethods[] = {
     
     {"extension_version", get_extension_version, METH_VARARGS, 
         "Returns the extension version"},
+
+    {"print_cl_info", print_cl_info, METH_VARARGS,
+        "Print out openCL info"},
+    {"cl_init", do_cl_init, METH_VARARGS,
+        "Initialize the openCL system"},
     
     {NULL, NULL, 0, NULL}       /* Sentinel */
 };

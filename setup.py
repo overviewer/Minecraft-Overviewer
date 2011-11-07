@@ -151,7 +151,7 @@ except Exception:
 # used to figure out what files to compile
 render_modes = ['normal', 'overlay', 'lighting', 'night', 'spawn', 'cave', 'mineral']
 
-c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
+c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c', 'cl_utils.c']
 c_overviewer_files += map(lambda mode: 'rendermode-%s.c' % (mode,), render_modes)
 c_overviewer_files += ['Draw.c']
 c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
@@ -159,7 +159,7 @@ c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
 c_overviewer_files = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_files)
 c_overviewer_includes = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_includes)
 
-setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
+setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=['-framework', 'OpenCL']))
 
 
 # tell build_ext to build the extension in-place
