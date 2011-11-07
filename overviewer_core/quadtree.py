@@ -353,8 +353,7 @@ class QuadtreeGen(object):
 
         poi_queue = self.world.poi_q
 
-        path = os.path.join(self.full_tiledir, *(str(x) for x in tile.path))
-        imgpath = path + "." + self.imgformat
+        imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
 
         # Tiles always involve 3 columns of chunks and 5 rows of tiles (end
         # ranges are inclusive)
@@ -385,7 +384,7 @@ class QuadtreeGen(object):
             return None
 
         # Create the directory if not exists
-        dirdest = os.path.dirname(path)
+        dirdest = os.path.dirname(imgpath)
         if not os.path.exists(dirdest):
             try:
                 os.makedirs(dirdest)
@@ -606,6 +605,14 @@ class Tile(object):
 
     def __ne__(self, other):
         return not self == other
+
+    def get_filepath(self, tiledir, imgformat):
+        """Returns the path to this file given the directory to the tiles
+
+        """
+        path = os.path.join(tiledir, *(str(x) for x in self.path))
+        imgpath = path + "." + imgformat
+        return imgpath
 
     @classmethod
     def from_path(cls, path):
