@@ -124,17 +124,21 @@ builtin_custom_rendermodes = {
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
 
-def configure_logger(options=None):
-    "Configures the root logger to our liking"
+def configure_logger(loglevel=logging.INFO, verbose=False):
+    """Configures the root logger to our liking
 
-    if not options:
-        verbose = False
-    else:
-        verbose = options.verbose
-    
+    For a non-standard loglevel, pass in the level with which to configure the handler.
+
+    For a more verbose options line, pass in verbose=True
+
+    This function may be called more than once.
+
+    """
+
     logger = logging.getLogger()
 
     outstream = sys.stderr
+
     if platform.system() == 'Windows':
         # Our custom output stream processor knows how to deal with select ANSI
         # color escape sequences
@@ -151,16 +155,17 @@ def configure_logger(options=None):
 
     if hasattr(logger, 'overviewerHandler'):
         # we have already set up logging so just replace the formatter
-        # this time with the new values from options
+        # this time with the new values
         logger.overviewerHandler.setFormatter(formatter)
-        logger.setLevel(logger.level + 10*options.quiet)
-        logger.setLevel(logger.level - 10*options.verbose)
+        logger.setLevel(loglevel)
 
     else:
+        # Save our handler here so we can tell which handler was ours if the
+        # function is called again
         logger.overviewerHandler = logging.StreamHandler(outstream)
         logger.overviewerHandler.setFormatter(formatter)
         logger.addHandler(logger.overviewerHandler)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(loglevel)
 
 def main():
 
@@ -206,8 +211,9 @@ def main():
 
     options, args = parser.parse_args()
 
-    # the details of the logger options can depend on the command line options
-    configure_logger(options)
+    # re-configure the logger now that we've processed the command line options
+    configure_logger(logging.INFO + 10*options.quiet - 10*options.verbose,
+            options.verbose > 0)
 
     if options.version:
         try:
