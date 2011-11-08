@@ -224,13 +224,17 @@ class HighlightingFormatter(logging.Formatter):
     """Base class of our custom formatter
     
     """
-    fmtstr = '%(fileandlineno)-18s:PID(%(pid)s):%(asctime)s ' \
-             '%(levelname)-8s %(message)s'
-    datefmt = "%H:%M:%S"
+    datefmt = "%Y-%m-%d %H:%M:%S"
     funcName_len = 15
 
-    def __init__(self):
-        logging.Formatter.__init__(self, self.fmtstr, self.datefmt)
+    def __init__(self, verbose=False):
+        if verbose:
+            fmtstr = '%(fileandlineno)-18s %(pid)s %(asctime)s ' \
+                    '%(levelname)-8s %(message)s'
+        else:
+            fmtstr = '%(asctime)s ' '%(shortlevelname)-1s%(message)s'
+
+        logging.Formatter.__init__(self, fmtstr, self.datefmt)
 
     def format(self, record):
         """Add a few extra options to the record
@@ -244,8 +248,15 @@ class HighlightingFormatter(logging.Formatter):
 
         funcName
             The function name truncated/padded to a fixed width characters
+
+        shortlevelname
+            The level name truncated to 1 character
         
         """
+
+        record.shortlevelname = record.levelname[0] + ' ' 
+        if record.levelname == 'INFO': record.shortlevelname = ''
+
         record.pid = os.getpid()
         record.fileandlineno = "%s:%s" % (record.filename, record.lineno)
 

@@ -102,36 +102,74 @@ from overviewer_core.configParser import ConfigOptionParser
 from overviewer_core import optimizeimages, world, quadtree
 from overviewer_core import googlemap, rendernode
 
+# definitions of built-in custom modes
+# usually because what used to be a mode became an option
+# for example, night mode
+builtin_custom_rendermodes = {
+    'night' : {
+        'parent' : 'lighting',
+        'label' : 'Night',
+        'description' : 'like "lighting", except at night',
+        'options' : {'night' : True}
+    },
+
+    'smooth-night' : {
+        'parent' : 'smooth-lighting',
+        'label' : 'Smooth Night',
+        'description' : 'like "lighting", except smooth and at night',
+        'options' : {'night' : True}
+    },
+}
 
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
 
-def configure_logger():
-    "Configures the root logger to our liking"
+def configure_logger(loglevel=logging.INFO, verbose=False):
+    """Configures the root logger to our liking
+
+    For a non-standard loglevel, pass in the level with which to configure the handler.
+
+    For a more verbose options line, pass in verbose=True
+
+    This function may be called more than once.
+
+    """
+
+    logger = logging.getLogger()
 
     outstream = sys.stderr
+
     if platform.system() == 'Windows':
         # Our custom output stream processor knows how to deal with select ANSI
         # color escape sequences
         outstream = util.WindowsOutputStream()
-        formatter = util.ANSIColorFormatter()
+        formatter = util.ANSIColorFormatter(verbose)
 
     elif sys.stderr.isatty():
         # terminal logging with ANSI color
-        formatter = util.ANSIColorFormatter()
+        formatter = util.ANSIColorFormatter(verbose)
 
     else:
         # Let's not assume anything. Just text.
-        formatter = util.DumbFormatter()
+        formatter = util.DumbFormatter(verbose)
 
-    logger = logging.getLogger()
-    handler = logging.StreamHandler(outstream)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    if hasattr(logger, 'overviewerHandler'):
+        # we have already set up logging so just replace the formatter
+        # this time with the new values
+        logger.overviewerHandler.setFormatter(formatter)
+        logger.setLevel(loglevel)
+
+    else:
+        # Save our handler here so we can tell which handler was ours if the
+        # function is called again
+        logger.overviewerHandler = logging.StreamHandler(outstream)
+        logger.overviewerHandler.setFormatter(formatter)
+        logger.addHandler(logger.overviewerHandler)
+        logger.setLevel(loglevel)
 
 def main():
 
+    # bootstrap the logger with defaults
     configure_logger()
 
     try:
@@ -148,6 +186,7 @@ def main():
     parser.add_option("-z", "--zoom", dest="zoom", helptext="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", advanced=True)
     parser.add_option("--regionlist", dest="regionlist", helptext="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
     parser.add_option("--forcerender", dest="forcerender", helptext="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting it.", action="store_true")
+    parser.add_option("--stochastic-render", dest="stochastic_render", helptext="Rerender a non-updated tile randomly, with the given probability (between 0 and 1). Useful for incrementally updating a map with a new mode.", type="float", advanced=True, default=0.0, metavar="PROBABILITY")
     parser.add_option("--rendermodes", dest="rendermode", helptext="Specifies the render types, separated by ',', ':', or '/'. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
     parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", helptext="List available render modes and exit.", commandLineOnly=True)
     parser.add_option("--rendermode-options", dest="rendermode_options", default={}, advanced=True, helptext="Used to specify options for different rendermodes.  Only useful in a settings.py file")
@@ -172,6 +211,9 @@ def main():
 
     options, args = parser.parse_args()
 
+    # re-configure the logger now that we've processed the command line options
+    configure_logger(logging.INFO + 10*options.quiet - 10*options.verbose,
+            options.verbose > 0)
 
     if options.version:
         try:
@@ -186,6 +228,8 @@ def main():
         sys.exit(0)
 
     # setup c_overviewer rendermode customs / options
+    for mode in builtin_custom_rendermodes:
+        c_overviewer.add_custom_render_mode(mode, builtin_custom_rendermodes[mode])
     for mode in options.custom_rendermodes:
         c_overviewer.add_custom_render_mode(mode, options.custom_rendermodes[mode])
     for mode in options.rendermode_options:
@@ -314,11 +358,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         north_direction = options.north_direction
     else:
         north_direction = 'auto'
-    
-    logging.getLogger().setLevel(
-        logging.getLogger().level + 10*options.quiet)
-    logging.getLogger().setLevel(
-        logging.getLogger().level - 10*options.verbose)
 
     if options.changelist:
         try:
@@ -369,7 +408,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     w.determine_bounds()
     w.find_true_spawn()
 
-    logging.info("Rending the following tilesets: %s", ",".join(options.rendermode))
+    logging.info("Rendering the following tilesets: %s", ",".join(options.rendermode))
 
     bgcolor = (int(options.bg_color[1:3],16),
                int(options.bg_color[3:5],16),
@@ -388,6 +427,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
                   'optimizeimg' : optimizeimg,
                   'bgcolor' : bgcolor,
                   'forcerender' : options.forcerender,
+                  'rerender_prob' : options.stochastic_render
                   }
     for rendermode in options.rendermode:
         if rendermode == 'normal':
@@ -478,6 +518,13 @@ def list_worlds():
         print 'No world saves found in the usual place'
         return
     print "Detected saves:"
+
+    # get max length of world name
+    worldNameLen = max([len(str(x)) for x in worlds] + [len("World")])
+
+    formatString = "%-" + str(worldNameLen) + "s | %-8s | %-8s | %-16s "
+    print formatString % ("World", "Size", "Playtime", "Modified")
+    print formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16)
     for name, info in sorted(worlds.iteritems()):
         if isinstance(name, basestring) and name.startswith("World") and len(name) == 6:
             try:
@@ -492,9 +539,15 @@ def list_worlds():
         playtime = info['Time'] / 20
         playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
         size = "%.2fMB" % (info['SizeOnDisk'] / 1024. / 1024.)
-        print "World %s: %s Playtime: %s Modified: %s" % (name, size, playstamp, timestamp)
+        print formatString % (name, size, playstamp, timestamp)
 
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
-    main()
+    try:
+        main()
+    except Exception, e:
+        logging.exception("""An error has occurred. This may be a bug. Please let us know!
+See http://docs.overviewer.org/en/latest/index.html#help
+
+This is the error that occurred:""")

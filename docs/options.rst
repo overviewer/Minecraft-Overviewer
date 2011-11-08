@@ -303,6 +303,19 @@ Less Useful Options
 
         Default: False
 
+.. cmdoption:: --stochastic-render <probability>
+
+    Provides a probability that a non-updated tile will be rerendered
+    anyway. Use this if there's a new rendering feature you want to
+    use, but you don't want to rerender the entire map at once.
+
+    **Settings file:**
+        Option name: ``stochastic_render``
+
+        Format: a floating-point number in the range 0.0 to 1.0
+
+        Default: 0.0
+
 .. cmdoption:: --textures-path <path>
 
     Use this option to specify an alternate terrain.png to use for textures when
@@ -336,6 +349,11 @@ Less Useful Options
 .. cmdoption:: -v, --verbose
 
     Prints more output. You can specify this multiple times.
+
+    Specifying this option also has the effect of changing the output format to
+    a more verbose one with additional information, in addition to outputting
+    more lines. If you specify both :option:`-v` and :option:`-q`, you can get
+    the more verbose line without additional output from debug lines.
 
     **Settings file:**
         Option name: ``verbose``

@@ -486,9 +486,80 @@ rendered twice. Each neighboring tile is therefore only 2 columns over, not 3 as
 one may suspect at first. Same goes for the rows: The next tile down is 4 rows
 down, not 5.
 
+To further illustrate this point, here are four tiles arranged on the grid of
+chunks. Notice how the tiles are addressed by the col,row of the chunk in the
+upper-left corner. Also notice how neighboring tiles are 2 columns apart but 4
+rows apart.
+
+.. image:: tilerendering/tilegrid.png
+    :alt: 4 tiles arranged on the grid of chunks
+
 Quadtrees
 =========
 .. About the tile output 
+
+Tiles are rendered and stored in a quadtree on disk. Each node is a tile of the
+world, and each node has four children representing a zoomed-in tile of the four
+quadrants.
+
+.. image:: tilerendering/4children.png
+    :alt: A tile has 4 children, each is a zoomed-in tile of one of the quadrants.
+
+The tree is generated from the bottom-up. The highest zoom level is rendered
+directly from the chunks and the blocks, then four of those rendered tiles are
+shrunk and concatenated to get the next zoom level. The tree is built up in this
+way until the entire world is compressed down to a single tile.
+
+We've already seen how tiles can be identified by the column,row range of the
+chunks that make up the tile. More precisely, since tiles are always the same
+size, the chunk that goes in the tile's 0,0 col,row slot identifies the tile.
+
+Now, tiles are also identified by their path in the quadtree. For example,
+``3/0/0/1/1/2.png`` refers to the tile starting at the base, under the third
+quadrant, then the 0th quadrant, then the 0th, and so fourth.
+
+Quadtree Size
+-------------
+The size of the quadtree must be known before it's generated, that way the code
+knows where to save the images. This is easily calculated from a few
+realizations. Each depth in the quadtree doubles the number of tiles in each
+dimension, or, quadruples the total tiles. While there is only one tile at level
+0, there are four at level 1, 16 at level 2, and 4^n at level n.
+
+To find how deep the quadtree must be, we look at the size of the world. First
+find the maximum and minimum row and column of the chunks. Just looking at
+columns, let's say the maximum column is 82 and the minimum column is -136. A
+zoom level of 6 will be 2^6 tile across and 2^6 tiles high at the highest level.
+
+Since horizontally tiles are two chunks wide, multiply 2^6 by 2 to get the total
+diameter of this map in chunks: 2*2^6. Is this wide enough for our map?
+
+It turns out it isn't (2*2^6=128, 136+82=218). A zoom level of 7 is 2^7 tiles
+across, or 2*2^7 chunks across. This turns out is wide enough (2*2^7 = 256),
+however, Overviewer maps are always centered at point 0,0 in the world. This is
+so tiles will always line up no mater how the map may expand in the future.
+
+So zoom level 7 is *not* enough because, while the chunk diameter is wide
+enough, it only extends half that far from the origin. The chunk *radius* is 2^7
+(half the diameter) and 2^7=128 is not wide enough for the minimum column at
+absolute position 136.
+
+So this example requires zoom level 8 (at least in the horizontal direction.
+The vertical direction must also be checked).
+
+Quadtree Paths
+--------------
+
+To illustrate the relationship between tile col,row addresses and their path,
+consider these 16 tiles from a depth 2 quadtree:
+
+.. image:: quadtree/depth2addresses.png
+    :alt: Addresses and paths for 16 tiles in a depth 2 tree
+
+The top address in each tile is the col,row address, where the chunk outlined in
+green in the center is at 0,0. The lower address in each tile is the path. The
+first number indicates which quadrant the tile is in overall, and the second is
+which quadrant within the first one.
 
 get_range_by_path
 -----------------
@@ -517,6 +588,73 @@ Caching
 
 Lighting
 ========
+
+Minecraft stores precomputed lighting information in the chunk files
+themselves, so rendering shadows on the map is a simple matter of
+interpreting this data, then adding a few extra steps to the render
+process. These few extra steps may be found in
+``rendermode-lighting.c`` or ``rendermode-smooth-lighting.c``,
+depending on the exact method used.
+
+Each chunk contains two lighting arrays, each of which contains one
+value between 0 and 15 for each block. These two arrays are the
+BlockLight array, containing light received from other blocks, and the
+SkyLight array, containing light received from the sky. Storing these
+two seperately makes it easier to switch between daytime and
+nighttime. To turn these two values into one value between 0 and 1
+representing how much light there is in a block, we use the following
+equation (where l\ :sub:`b` and l\ :sub:`s` are the block light and
+sky light values, respectively):
+
+.. image:: lighting/light-eqn.png
+    :alt: c = 0.8^{15 - min(l_b, l_s)}
+
+For night lighting, the sky light values are shifted down by 11 before
+this lighting coefficient is calculated.
+
+Each block of light data applies to all the block faces that touch
+it. So, each solid block doesn't receive lighting from the block it's
+in, but from the three blocks it touches above, to the left, and to
+the right. For transparent blocks with potentially strange shapes,
+lighting is approximated by using the local block lighting on the
+entire image.
+
+.. image:: lighting/lighting-process.png
+    :alt: The lighting process
+
+For some blocks, notably half-steps and stairs, Minecraft doesn't
+generate valid lighting data in the local block like it does for all
+other transparent blocks. In these cases, the lighting data is
+estimated by averaging data from nearby blocks. This is not an ideal
+solution, but it produces acceptable results in almost all cases.
+
+Smooth Lighting
+---------------
+
+In the smooth-lighting rendermode, solid blocks are lit per-vertex
+instead of per-face. This is done by covering all three faces with a
+quadralateral where each corner has a lighting value associated with
+it. These lighting values are then smoothly interpolated across the
+entire face.
+
+To calculate these values on each corner, we look at lighting data in
+the 8 blocks surrounding the corner, and ignore the 4 blocks behind
+the face the corner belongs to. We then calculate the lighting
+coefficient for all 4 remaining blocks as normal, and average them to
+obtain the coefficient for the corner. This is repeated for all 4
+corners on a given face, and for all visible faces.
+
+.. image:: lighting/smooth-average.png
+    :alt: An example face and vertex, with the 4 light sources.
+
+The `ambient occlusion`_ effect so strongly associated with smooth
+lighting in-game is a side effect of this method. Since solid blocks
+have both light values set to 0, the lighting coefficient is very
+close to 0. For verticies in corners, at least 1 (or more) of the 4
+averaged lighting values is therefore 0, dragging the average down,
+and creating the "dark corners" effect.
+
+.. _ambient occlusion: http://en.wikipedia.org/wiki/Ambient_occlusion
 
 Cave Mode
 =========

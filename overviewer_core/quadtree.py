@@ -28,6 +28,7 @@ import cPickle
 import stat
 import errno 
 import time
+import random
 from time import gmtime, strftime, sleep
 
 from PIL import Image
@@ -49,7 +50,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor="#1A1A1A", depth=None, tiledir=None, forcerender=False, imgformat='png', imgquality=95, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor="#1A1A1A", depth=None, tiledir=None, forcerender=False, imgformat='png', imgquality=95, optimizeimg=None, rendermode="normal", rerender_prob=0.0):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -60,6 +61,7 @@ class QuadtreeGen(object):
 
         """
         self.forcerender = forcerender
+        self.rerender_probability = rerender_prob
         self.imgformat = imgformat
         self.imgquality = imgquality
         self.optimizeimg = optimizeimg
@@ -286,7 +288,7 @@ class QuadtreeGen(object):
        
         #stat the tile, we need to know if it exists or it's mtime
         try:    
-            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
         except OSError, e:
             if e.errno != errno.ENOENT:
                 raise
@@ -371,7 +373,7 @@ class QuadtreeGen(object):
         world = self.world
         #stat the file, we need to know if it exists or it's mtime
         try:    
-            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME];
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
         except OSError, e:
             if e.errno != errno.ENOENT:
                 raise
@@ -399,6 +401,7 @@ class QuadtreeGen(object):
         try:
             needs_rerender = False
             get_region_mtime = world.get_region_mtime
+            
             for col, row, chunkx, chunky, regionfile in chunks:
                 region, regionMtime = get_region_mtime(regionfile)
 
@@ -422,6 +425,10 @@ class QuadtreeGen(object):
                 if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
                     needs_rerender = True
                     break
+            
+            # stochastic render check
+            if not needs_rerender and self.rerender_probability > 0.0 and random.uniform(0, 1) < self.rerender_probability:
+                needs_rerender = True
             
             # if after all that, we don't need a rerender, return
             if not needs_rerender:
