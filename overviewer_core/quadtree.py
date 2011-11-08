@@ -261,7 +261,7 @@ class QuadtreeGen(object):
         # This quadtree object gets replaced by the caller in rendernode.py,
         # but we still have to let them know which quadtree this tile belongs
         # to. Hence returning both self and the tile.
-        return ((self, tile) for tile in self.scan_chunks())
+        return ([self, tile] for tile in self.scan_chunks())
         
     def get_innertiles(self,zoom):
         """Same as get_worldtiles but for the inntertile routine.
@@ -338,8 +338,6 @@ class QuadtreeGen(object):
             
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
-
-
 
     def render_worldtile(self, tile, check_tile=False):
         """Renders the given tile. All the other relevant information is
@@ -651,7 +649,7 @@ class DirtyTiles(object):
             for c, child in enumerate(self.children):
                 if child == True:
                     # All dirty down this subtree, iterate over every leaf
-                    for x in quadtree.iterate_base4(self.level-1):
+                    for x in iterate_base4(self.level-1):
                         x = list(x)
                         x.append(c)
                         yield x
