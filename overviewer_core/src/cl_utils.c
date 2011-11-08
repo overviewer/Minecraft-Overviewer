@@ -177,6 +177,9 @@ print_cl_info(PyObject *self, PyObject *args)
             printf("  Vendor: %s\n", name);
 
         }
+        if (clGetPlatformInfo(plat, CL_PLATFORM_VERSION, 120, name, NULL) == CL_SUCCESS) {
+            printf("  Version: %s\n", name);
+        }
     }
     printf("\n");
 

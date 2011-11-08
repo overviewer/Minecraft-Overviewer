@@ -184,6 +184,7 @@ def main():
     parser.add_option("--changelist", dest="changelist", action="store", helptext="Output list of changed tiles to file. If the file exists, its contents will be overwritten.",advanced=True)
     parser.add_option("--changelist-format", dest="changelist_format", action="store", helptext="Output relative or absolute paths for --changelist. Only valid when --changelist is used", type="choice", default="auto", choices=["auto", "relative","absolute"],advanced=True)
     parser.add_option("--display-config", dest="display_config", action="store_true", helptext="Display the configuration parameters, but don't render the map.  Requires all required options to be specified", commandLineOnly=True)
+    parser.add_option("--opencl", dest="opencl", action="store_true", helptext="Enables *experimental* OpenCL support.  Overviewer may crash, run twice as slow, or eat all of the food in your fridge.  Be careful")
     #parser.add_option("--write-config", dest="write_config", action="store_true", helptext="Writes out a sample config file", commandLineOnly=True)
 
     options, args = parser.parse_args()
