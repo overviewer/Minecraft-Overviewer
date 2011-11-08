@@ -89,7 +89,7 @@ def _find_file(filename, mode="rb", verbose=False):
         jarpaths.append(os.path.join(_find_file_local_path, "minecraft.jar"))
 
     for jarpath in jarpaths:
-        if os.path.exists(jarpath):
+        if os.path.isfile(jarpath):
             jar = zipfile.ZipFile(jarpath)
             for jarfilename in [filename, 'misc/' + filename, 'environment/' + filename]:
                 try:
@@ -97,6 +97,12 @@ def _find_file(filename, mode="rb", verbose=False):
                     return jar.open(jarfilename)
                 except (KeyError, IOError), e:
                     pass
+        elif os.path.isdir(jarpath):
+            for jarfilename in [filename, 'misc/' + filename, 'environment/' + filename]:
+                ondiskfilename = os.path.join(jarpath, jarfilename)
+                if os.path.isfile(ondiskfilename):
+                    if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
+                    return open(ondiskfilename, 'rb')
 
     raise IOError("Could not find the file `{0}'. You can either place it in the same place as overviewer.py, use --textures-path, or install the Minecraft client.".format(filename))
 
