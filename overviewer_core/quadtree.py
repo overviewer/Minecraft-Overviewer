@@ -112,6 +112,12 @@ class QuadtreeGen(object):
         self.world = worldobj
         self.destdir = destdir
         self.full_tiledir = os.path.join(destdir, tiledir)
+
+        # Check now if full_tiledir doesn't exist. If not, we can trigger
+        # --fullrender, which skips some mtime checks to speed things up
+        if not os.path.exists(self.full_tiledir):
+            logging.debug("%s doesn't exist, doing a full render", self.full_tiledir)
+            self.fullrender = True
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
@@ -484,11 +490,18 @@ class QuadtreeGen(object):
         """Scans the chunks of the world object and produce an iterator over
         the tiles that need to be rendered.
 
+        Checks mtimes of tiles in the process, unless forcerender is set on the
+        object.
+
         """
 
         depth = self.p
 
         dirty = DirtyTiles(depth)
+
+        logging.debug("Scanning chunks for tiles that need rendering...")
+        chunkcount = 0
+        stime = time.time()
 
         # For each chunk, do this:
         #   For each tile that the chunk touches, do this:
@@ -498,6 +511,7 @@ class QuadtreeGen(object):
         # IDEA: check last render time against mtime of the region to short
         # circuit checking mtimes of all chunks in a region
         for chunkx, chunky, chunkmtime in self.world.iterate_chunk_metadata():
+            chunkcount += 1
 
             chunkcol, chunkrow = self.world.convert_coords(chunkx, chunky)
             #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
@@ -519,6 +533,11 @@ class QuadtreeGen(object):
                 for j in xrange(5):
                     tile = Tile.compute_path(tilex-2*i, tiley+4*j, depth)
 
+                    if self.forcerender:
+                        dirty.set_dirty(tile.path)
+                        continue
+
+                    # Check mtimes and conditionally add tile to dirty set
                     tile_path = tile.get_filepath(self.full_tiledir, self.imgformat)
                     try:
                         tile_mtime = os.stat(tile_path)[stat.ST_MTIME]
@@ -532,9 +551,19 @@ class QuadtreeGen(object):
                         dirty.set_dirty(tile.path)
                         #logging.debug("	Setting tile as dirty. Will render.")
 
+        logging.debug("Done. %s chunks scanned in %s seconds", chunkcount, int(time.time()-stime))
+
+        logging.debug("Counting tiles that need rendering...")
+        tilecount = 0
+        stime = time.time()
+        for _ in dirty.iterate_dirty():
+            tilecount += 1
+        logging.debug("Done. %s tiles need to be rendered. (count took %s seconds)",
+                tilecount, int(time.time()-stime))
+        
+
         # Now that we know which tiles need rendering, return an iterator over them
         return (Tile.from_path(tpath) for tpath in dirty.iterate_dirty())
-
 
 class DirtyTiles(object):
     """This tree holds which tiles need rendering.
