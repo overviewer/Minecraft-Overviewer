@@ -527,6 +527,9 @@ if __name__ == "__main__":
     try:
         main()
     except Exception, e:
+        if e.message == "Exiting":
+            logging.info("Exiting...")
+            sys.exit(0)
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
 
