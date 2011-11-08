@@ -498,6 +498,13 @@ def list_worlds():
         print 'No world saves found in the usual place'
         return
     print "Detected saves:"
+
+    # get max length of world name
+    worldNameLen = max([len(str(x)) for x in worlds] + [len("World")])
+
+    formatString = "%-" + str(worldNameLen) + "s | %-8s | %-8s | %-16s "
+    print formatString % ("World", "Size", "Playtime", "Modified")
+    print formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16)
     for name, info in sorted(worlds.iteritems()):
         if isinstance(name, basestring) and name.startswith("World") and len(name) == 6:
             try:
@@ -512,7 +519,7 @@ def list_worlds():
         playtime = info['Time'] / 20
         playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
         size = "%.2fMB" % (info['SizeOnDisk'] / 1024. / 1024.)
-        print "World %s: %s Playtime: %s Modified: %s" % (name, size, playstamp, timestamp)
+        print formatString % (name, size, playstamp, timestamp)
 
 
 if __name__ == "__main__":
