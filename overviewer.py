@@ -517,4 +517,10 @@ def list_worlds():
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
-    main()
+    try:
+        main()
+    except Exception, e:
+        logging.exception("""An error has occurred. This may be a bug. Please let us know!
+See http://docs.overviewer.org/en/latest/index.html#help
+
+This is the error that occurred:""")
