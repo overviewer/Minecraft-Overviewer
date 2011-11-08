@@ -218,7 +218,11 @@ class QuadtreeGen(object):
     
     def get_chunks_in_range(self, colstart, colend, rowstart, rowend):
         """Get chunks that are relevant to the tile rendering function that's
-        rendering that range"""
+        rendering that range
+        
+        Returns a list of chunks where each item is
+        (col, row, chunkx, chunky, regionfilename)
+        """
         chunklist = []
         unconvert_coords = self.world.unconvert_coords
         #get_region_path = self.world.get_region_path
@@ -250,17 +254,14 @@ class QuadtreeGen(object):
         return chunklist   
         
     def get_worldtiles(self):
-        """Returns an iterator over the tiles of the most detailed layer
+        """Returns an iterator over the tiles of the most detailed layer that
+        need to be rendered
+
         """
-        for path in iterate_base4(self.p):
-            # Get the range for this tile
-            tile = Tile.from_path(path)
-            
-            # Put this in the batch to be submited to the pool.
-            # The quadtree object gets replaced by the caller in rendernode.py,
-            # but we still have to let them know which quadtree this tile
-            # belongs to.
-            yield [self, tile]
+        # This quadtree object gets replaced by the caller in rendernode.py,
+        # but we still have to let them know which quadtree this tile belongs
+        # to. Hence returning both self and the tile.
+        return ((self, tile) for tile in self.scan_chunks())
         
     def get_innertiles(self,zoom):
         """Same as get_worldtiles but for the inntertile routine.
@@ -340,15 +341,21 @@ class QuadtreeGen(object):
 
 
 
-    def render_worldtile(self, tile):
+    def render_worldtile(self, tile, check_tile=False):
         """Renders the given tile. All the other relevant information is
         already stored in this quadtree object or in self.world.
+
+        This function is typically called in the child process. The tile is
+        assumed to need rendering unless the check_tile flag is given.
+
+        If check_tile is true, the mtimes of the chunk are compared with the
+        mtime of this tile and the tile is conditionally rendered.
 
         The image is rendered and saved to disk in the place this quadtree is
         configured to store images.
 
-        If there are no chunks, this tile is not saved (if it already exists, it is
-        deleted)
+        If there are no chunks, this tile is not saved. If this is the case but
+        the tile exists, it is deleted
 
         There is no return value
         """    
@@ -371,19 +378,26 @@ class QuadtreeGen(object):
         chunks = self.get_chunks_in_range(colstart, colend, rowstart, rowend)
 
         world = self.world
-        #stat the file, we need to know if it exists or it's mtime
-        try:    
-            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
-        except OSError, e:
-            if e.errno != errno.ENOENT:
-                raise
-            tile_mtime = None
+
+        tile_mtime = None
+        if check_tile:
+            #stat the file, we need to know if it exists or it's mtime
+            try:    
+                tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
+            except OSError, e:
+                # ignore only if the error was "file not found"
+                if e.errno != errno.ENOENT:
+                    raise
             
         if not chunks:
             # No chunks were found in this tile
-            if tile_mtime is not None:
+            try:
                 os.unlink(imgpath)
-            return None
+            except OSError, e:
+                # ignore only if the error was "file not found"
+                if e.errno != errno.ENOENT:
+                    raise
+            return
 
         # Create the directory if not exists
         dirdest = os.path.dirname(imgpath)
@@ -391,58 +405,55 @@ class QuadtreeGen(object):
             try:
                 os.makedirs(dirdest)
             except OSError, e:
-                # Ignore errno EEXIST: file exists. Since this is multithreaded,
-                # two processes could conceivably try and create the same directory
-                # at the same time.            
+                # Ignore errno EEXIST: file exists. Due to a race condition,
+                # two processes could conceivably try and create the same
+                # directory at the same time
                 if e.errno != errno.EEXIST:
                     raise
         
-        # check chunk mtimes to see if they are newer
-        try:
-            needs_rerender = False
-            get_region_mtime = world.get_region_mtime
-            
-            for col, row, chunkx, chunky, regionfile in chunks:
-                region, regionMtime = get_region_mtime(regionfile)
-
-                # don't even check if it's not in the regionlist
-                if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
-                    continue
-
-                # bail early if forcerender is set
-                if self.forcerender:
-                    needs_rerender = True
-                    break
+        if check_tile:
+            # Look at all the chunks that touch this tile and their mtimes to
+            # determine if this tile actually needs rendering
+            try:
+                needs_rerender = False
+                get_region_mtime = world.get_region_mtime
                 
-                # check region file mtime first.
-                # on windows (and possibly elsewhere) minecraft won't update
-                # the region file mtime until after shutdown.
-                # for servers this is unacceptable, so skip this check.
-                #if regionMtime <= tile_mtime:
-                #    continue
-               
-                # checking chunk mtime
-                if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
+                for col, row, chunkx, chunky, regionfile in chunks:
+                    region, regionMtime = get_region_mtime(regionfile)
+
+                    # don't even check if it's not in the regionlist
+                    if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
+                        continue
+
+                    # bail early if forcerender is set
+                    if self.forcerender:
+                        needs_rerender = True
+                        break
+                    
+                    # checking chunk mtime
+                    if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
+                        needs_rerender = True
+                        break
+                
+                # stochastic render check
+                if not needs_rerender and self.rerender_probability > 0.0 and random.uniform(0, 1) < self.rerender_probability:
                     needs_rerender = True
-                    break
-            
-            # stochastic render check
-            if not needs_rerender and self.rerender_probability > 0.0 and random.uniform(0, 1) < self.rerender_probability:
-                needs_rerender = True
-            
-            # if after all that, we don't need a rerender, return
-            if not needs_rerender:
-                return None
-        except OSError:
-            # couldn't get tile mtime, skip check
-            pass
+                
+                # if after all that, we don't need a rerender, return
+                if not needs_rerender:
+                    return
+            except OSError:
+                # couldn't get tile mtime, skip check and assume it does
+                pass
         
+        # We have all the necessary info and this tile has passed the checks
+        # and should be rendered. So do it!
+
         #logging.debug("writing out worldtile {0}".format(imgpath))
 
         # Compile this image
         tileimg = Image.new("RGBA", (width, height), self.bgcolor)
 
-        world = self.world
         rendermode = self.rendermode
         # col colstart will get drawn on the image starting at x coordinates -(384/2)
         # row rowstart will get drawn on the image starting at y coordinates -(192/2)
