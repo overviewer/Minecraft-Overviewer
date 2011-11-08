@@ -23,7 +23,6 @@ import shutil
 import collections
 import json
 import logging
-import util
 import cPickle
 import stat
 import errno 
@@ -33,10 +32,10 @@ from time import gmtime, strftime, sleep
 
 from PIL import Image
 
-import nbt
-import chunk
+from . import nbt
+from . import chunk
+from .optimizeimages import optimize_image
 from c_overviewer import get_render_mode_inheritance
-from optimizeimages import optimize_image
 import composite
 
 
@@ -216,40 +215,50 @@ class QuadtreeGen(object):
                     self._decrease_depth()
     
     
-    def get_chunks_in_range(self, colstart, colend, rowstart, rowend):
-        """Get chunks that are relevant to the tile rendering function that's
-        rendering that range
+    def get_chunks_for_tile(self, tile):
+        """Get chunks that are relevant to the given tile
         
         Returns a list of chunks where each item is
-        (col, row, chunkx, chunky, regionfilename)
+        (col, row, chunkx, chunky, regionobj)
         """
+
         chunklist = []
+
         unconvert_coords = self.world.unconvert_coords
-        #get_region_path = self.world.get_region_path
         get_region = self.world.regionfiles.get
+
+        # Cached region object for consecutive iterations
         regionx = None
         regiony = None
         c = None
         mcr = None
-        for row in xrange(rowstart-16, rowend+1):
-            for col in xrange(colstart, colend+1):
-                # due to how chunks are arranged, we can only allow
-                # even row, even column or odd row, odd column
-                # otherwise, you end up with duplicates!
-                if row % 2 != col % 2:
-                    continue
-                
-                chunkx, chunky = unconvert_coords(col, row)
 
-                regionx_ = chunkx//32
-                regiony_ = chunky//32
-                if regionx_ != regionx or regiony_ != regiony:
-                    regionx = regionx_
-                    regiony = regiony_
-                    _, _, c, mcr = get_region((regionx, regiony),(None,None,None,None))
-                    
-                if c is not None and mcr.chunkExists(chunkx,chunky):
-                    chunklist.append((col, row, chunkx, chunky, c))
+        rowstart = tile.row
+        rowend = rowstart+4
+        colstart = tile.col
+        colend = colstart+2
+
+        # Start 16 rows up from the actual tile's row, since chunks are that tall.
+        # Also, every other tile doesn't exist due to how chunks are arranged. See
+        # http://docs.overviewer.org/en/latest/design/designdoc/#chunk-addressing
+        for row, col in itertools.product(
+                xrange(rowstart-16, rowend+1),
+                xrange(colstart, colend+1)
+                ):
+            if row % 2 != col % 2:
+                continue
+            
+            chunkx, chunky = unconvert_coords(col, row)
+
+            regionx_ = chunkx//32
+            regiony_ = chunky//32
+            if regionx_ != regionx or regiony_ != regiony:
+                regionx = regionx_
+                regiony = regiony_
+                _, _, fname, mcr = get_region((regionx, regiony),(None,None,None,None))
+                
+            if fname is not None and mcr.chunkExists(chunkx,chunky):
+                chunklist.append((col, row, chunkx, chunky, mcr))
                     
         return chunklist   
         
@@ -362,18 +371,8 @@ class QuadtreeGen(object):
 
         imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
 
-        # Tiles always involve 3 columns of chunks and 5 rows of tiles (end
-        # ranges are inclusive)
-        colstart = tile.col
-        colend = colstart + 2
-        rowstart = tile.row
-        rowend = rowstart + 4
-        
-        width = 384
-        height = 384
-
         # Calculate which chunks are relevant to this tile
-        chunks = self.get_chunks_in_range(colstart, colend, rowstart, rowend)
+        chunks = self.get_chunks_for_tile(tile)
 
         world = self.world
 
@@ -389,6 +388,8 @@ class QuadtreeGen(object):
             
         if not chunks:
             # No chunks were found in this tile
+            if not check_tile:
+                logging.warning("Tile %s was requested for render, but no chunks found! This may be a bug", tile)
             try:
                 os.unlink(imgpath)
             except OSError, e:
@@ -416,8 +417,7 @@ class QuadtreeGen(object):
                 needs_rerender = False
                 get_region_mtime = world.get_region_mtime
                 
-                for col, row, chunkx, chunky, regionfile in chunks:
-                    region, regionMtime = get_region_mtime(regionfile)
+                for col, row, chunkx, chunky, region in chunks:
 
                     # don't even check if it's not in the regionlist
                     if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
@@ -450,12 +450,14 @@ class QuadtreeGen(object):
         #logging.debug("writing out worldtile {0}".format(imgpath))
 
         # Compile this image
-        tileimg = Image.new("RGBA", (width, height), self.bgcolor)
+        tileimg = Image.new("RGBA", (384, 384), self.bgcolor)
 
         rendermode = self.rendermode
+        colstart = tile.col
+        rowstart = tile.row
         # col colstart will get drawn on the image starting at x coordinates -(384/2)
         # row rowstart will get drawn on the image starting at y coordinates -(192/2)
-        for col, row, chunkx, chunky, regionfile in chunks:
+        for col, row, chunkx, chunky, region in chunks:
             xpos = -192 + (col-colstart)*192
             ypos = -96 + (row-rowstart)*96
 

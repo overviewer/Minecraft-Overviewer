@@ -15,25 +15,16 @@
 
 import multiprocessing
 import Queue
-import itertools
-from itertools import cycle, islice
 import os
 import os.path
 import functools
-import re
-import shutil
 import collections
-import json
 import logging
-import util
-import textures
-import c_overviewer
-import cPickle
-import stat
-import errno 
 import time
-from time import gmtime, strftime, sleep
 
+from . import textures
+from . import util
+import c_overviewer
 
 """
 This module has routines related to distributing the render job to multiple nodes
@@ -85,20 +76,6 @@ def pool_initializer(rendernode):
             # only load biome data once
             break
                     
-#http://docs.python.org/library/itertools.html    
-def roundrobin(iterables):
-    "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
-    # Recipe credited to George Sakkis
-    pending = len(iterables)
-    nexts = cycle(iter(it).next for it in iterables)
-    while pending:
-        try:
-            for next in nexts:
-                yield next()
-        except StopIteration:
-            pending -= 1
-            nexts = cycle(islice(nexts, pending))
-
             
 class RenderNode(object):
     def __init__(self, quadtrees, options):
@@ -298,8 +275,11 @@ class RenderNode(object):
             q.render_innertile(os.path.join(q.destdir, q.tiledir), "base")
 
     def _apply_render_worldtiles(self, pool,batch_size):
-        """Returns an iterator over result objects. Each time a new result is
-        requested, a new task is added to the pool and a result returned.
+        """Adds tiles to the render queue and dispatch them to the worker pool.
+        
+        Returns an iterator over result objects. Each time a new result is
+        requested, a new batch of tasks are added to the pool and a result
+        object is returned.
         """
         if batch_size < len(self.quadtrees):
             batch_size = len(self.quadtrees)
@@ -307,7 +287,7 @@ class RenderNode(object):
         jobcount = 0
         # roundrobin add tiles to a batch job (thus they should all roughly work on similar chunks)
         iterables = [q.get_worldtiles() for q in self.quadtrees]
-        for job in roundrobin(iterables):
+        for job in util.roundrobin(iterables):
             # fixup so the worker knows which quadtree this is                 
             job[0] = job[0]._render_index
             # Put this in the batch to be submited to the pool  
@@ -332,7 +312,7 @@ class RenderNode(object):
         jobcount = 0
         # roundrobin add tiles to a batch job (thus they should all roughly work on similar chunks)
         iterables = [q.get_innertiles(zoom) for q in self.quadtrees if zoom <= q.p]
-        for job in roundrobin(iterables):
+        for job in util.roundrobin(iterables):
             # fixup so the worker knows which quadtree this is  
             job[0] = job[0]._render_index
             # Put this in the batch to be submited to the pool  
