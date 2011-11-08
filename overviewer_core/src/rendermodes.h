@@ -165,6 +165,8 @@ typedef struct {
     PyObject *skylight, *blocklight;
     PyObject *left_skylight, *left_blocklight;
     PyObject *right_skylight, *right_blocklight;
+    PyObject *up_left_skylight, *up_left_blocklight;
+    PyObject *up_right_skylight, *up_right_blocklight;
     
     /* light color image, loaded if color_light is True */
     PyObject *lightcolor;
@@ -180,15 +182,24 @@ typedef struct {
     
     float shade_strength;
     int color_light;
+    int night;
 } RenderModeLighting;
 extern RenderModeInterface rendermode_lighting;
 
-/* NIGHT */
+/* exposed so it can be used in other per-face occlusion checks */
+int rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z);
+
+/* exposed so sub-modes can look at colors directly */
+void get_lighting_color(RenderModeLighting *self, RenderState *state,
+                        int x, int y, int z,
+                        unsigned char *r, unsigned char *g, unsigned char *b);
+
+/* SMOOTH LIGHTING */
 typedef struct {
     /* inherits from lighting */
     RenderModeLighting parent;
-} RenderModeNight;
-extern RenderModeInterface rendermode_night;
+} RenderModeSmoothLighting;
+extern RenderModeInterface rendermode_smooth_lighting;
 
 /* SPAWN */
 typedef struct {

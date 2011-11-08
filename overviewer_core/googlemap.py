@@ -139,6 +139,7 @@ class MapGen(object):
         
         # create generated map type data, from given quadtrees
         maptypedata = map(lambda q: {'label' : get_render_mode_label(q.rendermode),
+                                     'shortname' : q.rendermode,
                                      'path' : q.tiledir,
                                      'bg_color': self.bg_color,
                                      'overlay' : 'overlay' in get_render_mode_inheritance(q.rendermode),

@@ -358,3 +358,129 @@ tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
 
     return dest;
 }
+
+/* draws a triangle on the destination image, multiplicatively!
+ * used for smooth lighting
+ * (excuse the ridiculous number of parameters!)
+ *
+ * Algorithm adapted from _Fundamentals_of_Computer_Graphics_
+ * by Peter Shirley, Michael Ashikhmin
+ * (or at least, the version poorly reproduced here:
+ *  http://www.gidforums.com/t-20838.html )
+ */
+PyObject *
+draw_triangle(PyObject *dest, int inclusive,
+              int x0, int y0,
+              unsigned char r0, unsigned char g0, unsigned char b0,
+              int x1, int y1,
+              unsigned char r1, unsigned char g1, unsigned char b1,
+              int x2, int y2,
+              unsigned char r2, unsigned char g2, unsigned char b2,
+              int tux, int tuy, int *touchups, unsigned int num_touchups) {
+    
+    /* destination image */
+    Imaging imDest;
+    /* ranges of pixels that are affected */
+    int xmin, xmax, ymin, ymax;
+    /* constant coefficients for alpha, beta, gamma */
+    int a12, a20, a01;
+    int b12, b20, b01;
+    int c12, c20, c01;
+    /* constant normalizers for alpha, beta, gamma */
+    float alpha_norm, beta_norm, gamma_norm;
+    /* temporary variables */
+    int tmp;
+    /* iteration variables */
+    int x, y;
+    
+    imDest = imaging_python_to_c(dest);
+    if (!imDest)
+        return NULL;
+
+    /* check the various image modes, make sure they make sense */
+    if (strcmp(imDest->mode, "RGBA") != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "given destination image does not have mode \"RGBA\"");
+        return NULL;
+    }
+    
+    /* set up draw ranges */
+    xmin = MIN(x0, MIN(x1, x2));
+    ymin = MIN(y0, MIN(y1, y2));
+    xmax = MAX(x0, MAX(x1, x2)) + 1;
+    ymax = MAX(y0, MAX(y1, y2)) + 1;
+    
+    xmin = MAX(xmin, 0);
+    ymin = MAX(ymin, 0);
+    xmax = MIN(xmax, imDest->xsize);
+    ymax = MIN(ymax, imDest->ysize);
+    
+    /* setup coefficients */
+    a12 = y1 - y2; b12 = x2 - x1; c12 = (x1 * y2) - (x2 * y1);
+    a20 = y2 - y0; b20 = x0 - x2; c20 = (x2 * y0) - (x0 * y2);
+    a01 = y0 - y1; b01 = x1 - x0; c01 = (x0 * y1) - (x1 * y0);
+    
+    /* setup normalizers */
+    alpha_norm = 1.0f / ((a12 * x0) + (b12 * y0) + c12);
+    beta_norm  = 1.0f / ((a20 * x1) + (b20 * y1) + c20);
+    gamma_norm = 1.0f / ((a01 * x2) + (b01 * y2) + c01);
+    
+    /* iterate over the destination rect */
+    for (y = ymin; y < ymax; y++) {
+        UINT8 *out = (UINT8 *)imDest->image[y] + xmin * 4;
+        
+        for (x = xmin; x < xmax; x++) {
+            float alpha, beta, gamma;
+            alpha = alpha_norm * ((a12 * x) + (b12 * y) + c12);
+            beta  = beta_norm  * ((a20 * x) + (b20 * y) + c20);
+            gamma = gamma_norm * ((a01 * x) + (b01 * y) + c01);
+            
+            if (alpha >= 0 && beta >= 0 && gamma >= 0 &&
+                (inclusive || (alpha * beta * gamma > 0))) {
+                unsigned int r = alpha * r0 + beta * r1 + gamma * r2;
+                unsigned int g = alpha * g0 + beta * g1 + gamma * g2;
+                unsigned int b = alpha * b0 + beta * b1 + gamma * b2;
+                
+                *out = MULDIV255(*out, r, tmp); out++;
+                *out = MULDIV255(*out, g, tmp); out++;
+                *out = MULDIV255(*out, b, tmp); out++;
+                
+                /* keep alpha the same */
+                out++;
+            } else {
+                /* skip */
+                out += 4;
+            }
+        }
+    }
+    
+    while (num_touchups > 0) {
+        float alpha, beta, gamma;
+        unsigned int r, g, b;
+        UINT8 *out;
+        
+        x = touchups[0] + tux;
+        y = touchups[1] + tuy;
+        touchups += 2;
+        num_touchups--;
+        
+        if (x < 0 || x >= imDest->xsize || y < 0 || y >= imDest->ysize)
+            continue;
+
+        out = (UINT8 *)imDest->image[y] + x * 4;
+
+        alpha = alpha_norm * ((a12 * x) + (b12 * y) + c12);
+        beta  = beta_norm  * ((a20 * x) + (b20 * y) + c20);
+        gamma = gamma_norm * ((a01 * x) + (b01 * y) + c01);
+        
+        r = alpha * r0 + beta * r1 + gamma * r2;
+        g = alpha * g0 + beta * g1 + gamma * g2;
+        b = alpha * b0 + beta * b1 + gamma * b2;
+                
+        *out = MULDIV255(*out, r, tmp); out++;
+        *out = MULDIV255(*out, g, tmp); out++;
+        *out = MULDIV255(*out, b, tmp); out++;
+    }
+    
+    return dest;
+}
