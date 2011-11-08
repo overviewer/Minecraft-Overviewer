@@ -211,6 +211,9 @@ class RenderNode(object):
                                     if item[1] not in world.POI:
                                         #print "got an item from the queue!"
                                         world.POI.append(item[1])
+                                elif item[0] == "animal":
+                                    if item[1] not in world.POI:
+                                        world.POI.append(item[1])
                                 elif item[0] == "removePOI":
                                     world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], world.persistentData['POI'])
 
@@ -242,6 +245,9 @@ class RenderNode(object):
                     if item[0] == "newpoi":
                         if item[1] not in world.POI:
                             #print "got an item from the queue!"
+                            world.POI.append(item[1])
+                    elif item[0] == "animal":
+                        if item[1] not in world.POI:
                             world.POI.append(item[1])
                     elif item[0] == "removePOI":
                         world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], world.persistentData['POI'])

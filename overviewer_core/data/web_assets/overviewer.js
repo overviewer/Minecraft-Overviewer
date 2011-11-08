@@ -293,6 +293,12 @@ var overviewer = {
                 overviewer.collections.markers[
                     overviewerConfig.objectGroups.signs[i].label] = [];
             }
+            for (i in overviewerConfig.objectGroups.animals) {
+                overviewer.util.debug('Found animal group: ' +
+                    overviewerConfig.objectGroups.animals[i].label);
+                overviewer.collections.markers[
+                    overviewerConfig.objectGroups.animals[i].label] = [];
+            }
             for (i in overviewer.collections.markerDatas) {
                 var markerData = overviewer.collections.markerDatas[i];
                 for (j in markerData) {
@@ -323,7 +329,62 @@ var overviewer = {
                         });
                         google.maps.event.addListener(marker, 'click', function(){ marker.setVisible(false); });
 
+                        continue;
+                    }
 
+                    if (item.type == 'cow') { 
+                        var marker = new google.maps.Marker({
+                            'position': overviewer.util.fromWorldToLatLng(item.x, item.y, item.z),
+                             'map':     overviewer.map,
+                             'icon':    overviewerConfig.CONST.image.cowMarker,
+							 'visible':  false
+                        });
+						overviewer.collections.markers['ark'].push(marker);
+						overviewer.collections.markers[item.type].push(marker);
+                        continue;
+                    }
+                    if (item.type == 'sheep') { 
+                        var marker = new google.maps.Marker({
+                            'position': overviewer.util.fromWorldToLatLng(item.x, item.y, item.z),
+                             'map':     overviewer.map,
+                             'icon':    overviewerConfig.CONST.image.sheepMarker,
+							 'visible':  false
+                        });
+						overviewer.collections.markers['ark'].push(marker);
+						overviewer.collections.markers[item.type].push(marker);
+                        continue;
+                    }
+                    if (item.type == 'pig') { 
+                        var marker = new google.maps.Marker({
+                            'position': overviewer.util.fromWorldToLatLng(item.x, item.y, item.z),
+                             'map':     overviewer.map,
+                             'icon':    overviewerConfig.CONST.image.pigMarker,
+							 'visible':  false
+                        });
+						overviewer.collections.markers['ark'].push(marker);
+						overviewer.collections.markers[item.type].push(marker);
+                        continue;
+                    }
+                    if (item.type == 'chicken') { 
+                        var marker = new google.maps.Marker({
+                            'position': overviewer.util.fromWorldToLatLng(item.x, item.y, item.z),
+                             'map':     overviewer.map,
+                             'icon':    overviewerConfig.CONST.image.chickenMarker,
+							 'visible':  false
+                        });
+						overviewer.collections.markers['ark'].push(marker);
+						overviewer.collections.markers[item.type].push(marker);
+                        continue;
+                    }
+                    if (item.type == 'squid') { 
+                        var marker = new google.maps.Marker({
+                            'position': overviewer.util.fromWorldToLatLng(item.x, item.y, item.z),
+                             'map':     overviewer.map,
+                             'icon':    overviewerConfig.CONST.image.squidMarker,
+							 'visible':  false
+                        });
+						overviewer.collections.markers['ark'].push(marker);
+						overviewer.collections.markers[item.type].push(marker);
                         continue;
                     }
 
@@ -358,7 +419,7 @@ var overviewer = {
                             }
                         }
                     }
-
+					
                     if (!matched) {
                         // is this signpost doesn't match any of the groups in
                         // config.js, add it automatically to the "__others__" group
@@ -717,6 +778,44 @@ var overviewer = {
                 // only create drop down if there's used options
                 if (items.length > 0) {
                     overviewer.util.createDropDown('Markers', items);
+                }
+            }
+
+
+            // only need to create the control if there are items in the list.
+            // as defined in config.js
+            if (overviewerConfig.objectGroups.animals.length > 0) {
+                // signpost display control
+                var items = [];
+                for (i in overviewerConfig.objectGroups.animals) {
+                    var signGroup = overviewerConfig.objectGroups.animals[i];
+                    // don't create an option for this group if empty
+                    if (overviewer.collections.markers[signGroup.label].length == 0) {
+                        continue;
+                    }
+                    
+                    var iconURL = signGroup.icon;
+                    if(!iconURL) {
+                        iconURL = overviewerConfig.CONST.image.defaultMarker;
+                    }
+                    items.push({
+                        'label': signGroup.label, 
+                        'checked': signGroup.checked,
+                        'icon': iconURL,
+                        'action': function(n, item, checked) {
+                            jQuery.each(overviewer.collections.markers[item.label],
+                                        function(i, elem) {
+                                            elem.setVisible(checked);
+                                        }
+                            );
+                            overviewer.util.debug('Adding sign item: ' + item);
+                        }
+                    });
+                }
+                
+                // only create drop down if there's used options
+                if (items.length > 0) {
+                    overviewer.util.createDropDown('Animals', items);
                 }
             }
 

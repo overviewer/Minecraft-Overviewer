@@ -10,11 +10,11 @@ is either out-of-date or non-existant.
 To run, simply give a path to your world directory and the path to your
 output directory. For example:
 
-    python contrib/findSigns.py ../world.test/ output_dir/ 
+    python contrib/findAnimals.py ../world.test/ output_dir/ 
 
 An optional north direction may be specified as follows:
     
-    python contrib/findSigns.py ../world.test/ output_dir/ lower-right
+    python contrib/findAnimals.py ../world.test/ output_dir/ lower-right
 
 Valid options are upper-left, upper-right, lower-left and lower-right.
 If no direction is specified, lower-left is assumed
@@ -34,6 +34,9 @@ if not hasattr(sys, "frozen"):
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '..')))
 
 from overviewer_core import nbt
+
+print "finding animals, fuck yeah!"
+
 
 from pprint import pprint
 if len(sys.argv) < 3:
@@ -77,21 +80,34 @@ for dirpath, dirnames, filenames in os.walk(worlddir):
             chunks = r.get_chunks()
             for x,y in chunks:
                 chunk = r.load_chunk(x,y).read_all()                
-                data = chunk[1]['Level']['TileEntities']
+                data = chunk[1]['Level']['Entities']
                 for entity in data:
-                    if entity['id'] == 'Sign':
-                        msg=' \n'.join([entity['Text1'], entity['Text2'], entity['Text3'], entity['Text4']])
-                        #print "checking -->%s<--" % msg.strip()
-                        if msg.strip():
-                            newPOI = dict(type="sign",
-                                            x= entity['x'],
-                                            y= entity['y'],
-                                            z= entity['z'],
-                                            msg=msg,
-                                            chunk= (entity['x']/16, entity['z']/16),
-                                           )
-                            POI.append(newPOI)
-                            print "Found sign at (%d, %d, %d): %r" % (newPOI['x'], newPOI['y'], newPOI['z'], newPOI['msg'])
+                    if entity['id'] == 'Cow':
+                        newPOI = dict(type="cow",
+                                        x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='moo', chunk= (entity['Pos'][0]/16, entity['Pos'][2]/16),
+                                       )
+                        POI.append(newPOI)
+                    elif entity['id'] == 'Sheep':
+                        newPOI = dict(type="sheep",
+                                        x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='baa', chunk= (entity['Pos'][0]/16, entity['Pos'][2]/16),
+                                       )
+                        POI.append(newPOI)
+                    elif entity['id'] == 'Pig':
+                        newPOI = dict(type="pig",
+                                        x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='oink',chunk= (entity['Pos'][0]/16, entity['Pos'][2]/16),
+                                       )
+                        POI.append(newPOI)
+                    elif entity['id'] == 'Chicken':
+                        newPOI = dict(type="chicken",
+                                        x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='cluck', chunk= (entity['Pos'][0]/16, entity['Pos'][2]/16),
+                                       )
+                        POI.append(newPOI)
+                    elif entity['id'] == 'Squid':
+                        newPOI = dict(type="squid",
+                                        x= entity['Pos'][0], y= entity['Pos'][1], z= entity['Pos'][2], msg='squelch', chunk= (entity['Pos'][0]/16, entity['Pos'][2]/16),
+                                       )
+                        POI.append(newPOI)
+                    print "Found %s at (%d, %d, %d)" % (newPOI['type'], newPOI['x'], newPOI['y'], newPOI['z'])
 
 
 if os.path.isfile(os.path.join(worlddir, "overviewer.dat")):

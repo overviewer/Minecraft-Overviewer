@@ -17,6 +17,7 @@ scripts=dict( # keys are names, values are scripts
         clearOldCache   = "clearOldCache.py",
         convertCyrillic = "cyrillic_convert.py",
         findSigns       = "findSigns.py",
+        findAnimals     = "findAnimals.py",
         playerInspect   = "playerInspect.py",
         rerenderBlocks  = "rerenderBlocks.py",
         testRender      = "testRender.py",
