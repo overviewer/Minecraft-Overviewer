@@ -57,6 +57,7 @@ feature.
  * Ryan McCue <ryanmccue@cubegames.net>
  * Morlok8k <otis.spankmeyer@gmail.com>
  * Ryan Rector <rmrector@gmail.com>
+ * Jason Scheirer <jason.scheirer@gmail.com>
  * Gregory Short <gshort2@gmail.com>
  * Sam Steele <sam@sigbox.c99.org>
  * timwolla <timwolla@mail.develfusion.com>

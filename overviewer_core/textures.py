@@ -34,6 +34,7 @@ def _find_file(filename, mode="rb", verbose=False):
     This searches the following locations in this order:
     
     * the textures_path given in the config file (if present)
+      this can be either a directory or a zip file (texture pack)
     * The program dir (same dir as overviewer.py)
     * The overviewer_core/data/textures dir
     * On Darwin, in /Applications/Minecraft
@@ -42,34 +43,61 @@ def _find_file(filename, mode="rb", verbose=False):
       * On Windows, at %APPDATA%/.minecraft/bin/minecraft.jar
       * On Darwin, at $HOME/Library/Application Support/minecraft/bin/minecraft.jar
       * at $HOME/.minecraft/bin/minecraft.jar
+    
+    In all of these, files are searched for in '.', 'misc/', and 'environment/'.
 
     """
     
+    # a list of subdirectories to search for a given file,
+    # after the obvious '.'
+    search_dirs = ['misc', 'environment']
+    search_zip_paths = [filename,] + [d + '/' + filename for d in search_dirs]
+    def search_dir(base):
+        """Search the given base dir for filename, in search_dirs."""
+        for path in [os.path.join(base, d, filename) for d in ['',] + search_dirs]:
+            if os.path.isfile(path):
+                return path
+        return None
+    
     if _find_file_local_path:
-        path = os.path.join(_find_file_local_path, filename)
-        if os.path.exists(path):
-            if verbose: logging.info("Found %s in '%s'", filename, path)
-            return open(path, mode)
+        if os.path.isdir(_find_file_local_path):
+            path = search_dir(_find_file_local_path)
+            if path:
+                if verbose: logging.info("Found %s in '%s'", filename, path)
+                return open(path, mode)
+        elif os.path.isfile(_find_file_local_path):
+            try:
+                pack = zipfile.ZipFile(_find_file_local_path)
+                for packfilename in search_zip_paths:
+                    try:
+                        pack.getinfo(packfilename)
+                        if verbose: logging.info("Found %s in '%s'", packfilename, _find_file_local_path)
+                        return pack.open(packfilename)
+                    except (KeyError, IOError):
+                        pass
+            except (zipfile.BadZipfile, IOError):
+                pass
     
     programdir = util.get_program_path()
-    path = os.path.join(programdir, filename)
-    if os.path.exists(path):
+    path = search_dir(programdir)
+    if path:
         if verbose: logging.info("Found %s in '%s'", filename, path)
         return open(path, mode)
     
-    path = os.path.join(programdir, "overviewer_core", "data", "textures", filename)
-    if os.path.exists(path):
+    path = search_dir(os.path.join(programdir, "overviewer_core", "data", "textures"))
+    if path:
+        if verbose: logging.info("Found %s in '%s'", filename, path)
         return open(path, mode)
     elif hasattr(sys, "frozen") or imp.is_frozen("__main__"):
         # windows special case, when the package dir doesn't exist
-        path = os.path.join(programdir, "textures", filename)
-        if os.path.exists(path):
+        path = search_dir(os.path.join(programdir, "textures"))
+        if path:
             if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
     if sys.platform == "darwin":
-        path = os.path.join("/Applications/Minecraft", filename)
-        if os.path.exists(path):
+        path = search_dir("/Applications/Minecraft")
+        if path:
             if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
@@ -89,14 +117,20 @@ def _find_file(filename, mode="rb", verbose=False):
         jarpaths.append(os.path.join(_find_file_local_path, "minecraft.jar"))
 
     for jarpath in jarpaths:
-        if os.path.exists(jarpath):
+        if os.path.isfile(jarpath):
             jar = zipfile.ZipFile(jarpath)
-            for jarfilename in [filename, 'misc/' + filename, 'environment/' + filename]:
+            for jarfilename in search_zip_paths:
                 try:
+                    jar.getinfo(jarfilename)
                     if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
                     return jar.open(jarfilename)
                 except (KeyError, IOError), e:
                     pass
+        elif os.path.isdir(jarpath):
+            path = search_dir(jarpath)
+            if path:
+                if verbose: logging.info("Found %s in '%s'", filename, path)
+                return open(path, 'rb')
 
     raise IOError("Could not find the file `{0}'. You can either place it in the same place as overviewer.py, use --textures-path, or install the Minecraft client.".format(filename))
 
@@ -495,13 +529,23 @@ def load_water():
     Block 9, standing water, is given a block with only the top face showing.
     Block 8, flowing water, is given a full 3 sided cube."""
 
-    watertexture = _load_image("water.png")
+    try:
+        # try the MCPatcher water first, in case it's present
+        watertexture = _load_image("custom_water_still.png")
+        watertexture = watertexture.crop((0, 0, watertexture.size[0], watertexture.size[0]))
+    except IOError:
+        watertexture = _load_image("water.png")
     w1 = _build_block(watertexture, None)
     blockmap[9] = generate_texture_tuple(w1,9)
     w2 = _build_block(watertexture, watertexture)
     blockmap[8] = generate_texture_tuple(w2,8)
-
-    lavatexture = _load_image("lava.png")
+    
+    try:
+        # try the MCPatcher lava first, in case it's present
+        lavatexture = _load_image("custom_lava_still.png")
+        lavatexture = lavatexture.crop((0, 0, lavatexture.size[0], lavatexture.size[0]))
+    except IOError:
+        lavatexture = _load_image("lava.png")
     lavablock = _build_block(lavatexture, lavatexture)
     blockmap[10] = generate_texture_tuple(lavablock,10)
     blockmap[11] = blockmap[10]
@@ -565,7 +609,11 @@ def generate_special_texture(blockID, data):
     if blockID == 9 or blockID == 20 or blockID == 79: # spring water, flowing water and waterfall water, AND glass, AND ice
         # water,glass and ice share the way to be rendered
         if blockID == 9:
-            texture = _load_image("water.png")
+            try:
+                texture = _load_image("custom_water_still.png")
+                texture = texture.crop((0, 0, texture.size[0], texture.size[0]))
+            except IOError:
+                texture = _load_image("water.png")
         elif blockID == 20:
             texture = terrain_images[49]
         else:

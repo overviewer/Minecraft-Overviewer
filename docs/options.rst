@@ -318,9 +318,11 @@ Less Useful Options
 
 .. cmdoption:: --textures-path <path>
 
-    Use this option to specify an alternate terrain.png to use for textures when
-    rendering a world. ``path`` specifies the **containing directory** of
-    terrain.png.
+    Use this option to specify an alternate terrain.png (and other
+    textures) to when rendering a world. ``path`` specifies the
+    **containing directory** of terrain.png. Alternately, ``path`` can
+    specify a zip file containing the textures, such as a texture
+    pack.
 
     The Overviewer will look for terrain.png in the following places in this
     order: path specified by this option, the program's directory, the
