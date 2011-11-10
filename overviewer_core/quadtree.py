@@ -117,7 +117,7 @@ class QuadtreeGen(object):
         # --fullrender, which skips some mtime checks to speed things up
         if not os.path.exists(self.full_tiledir):
             logging.debug("%s doesn't exist, doing a full render", self.full_tiledir)
-            self.fullrender = True
+            self.forcerender = True
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
@@ -276,7 +276,10 @@ class QuadtreeGen(object):
         # This quadtree object gets replaced by the caller in rendernode.py,
         # but we still have to let them know which quadtree this tile belongs
         # to. Hence returning both self and the tile.
-        return ([self, tile] for tile in self.scan_chunks())
+
+        dirty_tree = self.scan_chunks()
+        dirty_tiles = (Tile.from_path(tpath) for tpath in dirty_tree.iterate_dirty())
+        return ([self, tile] for tile in dirty_tiles)
         
     def get_innertiles(self,zoom):
         """Same as get_worldtiles but for the inntertile routine.
@@ -512,6 +515,8 @@ class QuadtreeGen(object):
         # circuit checking mtimes of all chunks in a region
         for chunkx, chunky, chunkmtime in self.world.iterate_chunk_metadata():
             chunkcount += 1
+            if chunkcount % 10000 == 0:
+                logging.debug("%s chunks scanned", chunkcount)
 
             chunkcol, chunkrow = self.world.convert_coords(chunkx, chunky)
             #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
@@ -561,9 +566,8 @@ class QuadtreeGen(object):
         logging.debug("Done. %s tiles need to be rendered. (count took %s seconds)",
                 tilecount, int(time.time()-stime))
         
+        return dirty
 
-        # Now that we know which tiles need rendering, return an iterator over them
-        return (Tile.from_path(tpath) for tpath in dirty.iterate_dirty())
 
 class DirtyTiles(object):
     """This tree holds which tiles need rendering.
