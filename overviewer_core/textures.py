@@ -715,14 +715,14 @@ def saplings(blockid, data):
 # bedrock
 block(blockid=7, top_index=17)
 
-@material(blockid=8, data=range(16), fluid=True, transparent=True)
+@material(blockid=8, data=range(16), fluid=True, transparent=True, nospawn=True)
 def water(blockid, data):
     watertex = _load_image("water.png")
     return build_block(watertex, watertex)
 
 # other water, glass, and ice (no inner surfaces)
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[9, 20, 79], data=range(32), fluid=(9,), transparent=True, nospawn=True)
+@material(blockid=[9, 20, 79], data=range(32), fluid=(9,), transparent=True, nospawn=True, solid=(79, 20))
 def no_inner_surfaces(blockid, data):
     if blockid == 9:
         texture = _load_image("water.png")
@@ -763,7 +763,7 @@ def no_inner_surfaces(blockid, data):
     img = build_full_block(top,None,None,side3,side4)
     return img
 
-@material(blockid=[10, 11], data=range(16), fluid=True, transparent=False)
+@material(blockid=[10, 11], data=range(16), fluid=True, transparent=False, nospawn=True)
 def lava(blockid, data):
     lavatex = _load_image("lava.png")
     return build_block(lavatex, lavatex)
@@ -846,7 +846,7 @@ block(blockid=24, top_index=176, side_index=192)
 # note block
 block(blockid=25, top_index=74)
 
-@material(blockid=26, data=range(12), transparent=True)
+@material(blockid=26, data=range(12), transparent=True, nospawn=True)
 def bed(blockid, data, north):
     # first get north rotation done
     # Masked to not clobber block head/foot info
@@ -1000,7 +1000,7 @@ def rails(blockid, data, north):
     return img
 
 # sticky and normal piston body
-@material(blockid=[29, 33], data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, solid=True)
+@material(blockid=[29, 33], data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, solid=True, nospawn=True)
 def piston(blockid, data, north):
     # first, north rotation
     # Masked to not clobber block head/foot info
@@ -1076,7 +1076,7 @@ def piston(blockid, data, north):
     return img
 
 # sticky and normal piston shaft
-@material(blockid=34, data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True)
+@material(blockid=34, data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, nospawn=True)
 def piston_extension(blockid, data, north):
     # first, north rotation
     # Masked to not clobber block head/foot info
@@ -1163,7 +1163,7 @@ def piston_extension(blockid, data, north):
     return img
 
 # cobweb
-sprite(blockid=30, index=11)
+sprite(blockid=30, index=11, nospawn=True)
 
 @material(blockid=31, data=range(3), transparent=True)
 def tall_grass(blockid, data):
@@ -1230,7 +1230,7 @@ block(blockid=41, top_index=23)
 block(blockid=42, top_index=22)
 
 # double slabs and slabs
-@material(blockid=[43, 44], data=range(6), transparent=(44,), solid=(43,))
+@material(blockid=[43, 44], data=range(6), transparent=(44,), solid=True)
 def slabs(blockid, data):
     if data == 0: # stone slab
         top = terrain_images[6]
@@ -1277,7 +1277,7 @@ def slabs(blockid, data):
 # brick block
 block(blockid=45, top_index=7)
 # TNT
-block(blockid=46, top_index=9, side_index=8)
+block(blockid=46, top_index=9, side_index=8, nospawn=True)
 # bookshelf
 block(blockid=47, top_index=4, side_index=35)
 # moss stone
@@ -1373,10 +1373,10 @@ def fire(blockid, data):
     return img
 
 # monster spawner
-block(blockid=52, top_index=34)
+block(blockid=52, top_index=34, transparent=True)
 
 # wooden, cobblestone, red brick, stone brick and netherbrick stairs.
-@material(blockid=[53,67,108,109,114], data=range(4), transparent=True)
+@material(blockid=[53,67,108,109,114], data=range(4), transparent=True, solid=True, nospawn=True)
 def stairs(blockid, data, north):
 
     # first, north rotations
@@ -1471,7 +1471,7 @@ def stairs(blockid, data, north):
 
 # normal and locked chest (locked was the one used in april fools' day)
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[54,95], data=range(12), transparent=True)
+@material(blockid=[54,95], data=range(12), solid=True)
 def chests(blockid, data):
     # First two bits of the pseudo data store if it's a single chest
     # or it's a double chest, first half or second half (left to right).
@@ -1613,7 +1613,7 @@ def crafting_table(blockid, data):
     return img
 
 # crops
-@material(blockid=59, data=range(8), transparent=True)
+@material(blockid=59, data=range(8), transparent=True, nospawn=True)
 def crops(blockid, data):
     raw_crop = terrain_images[88+data]
     crop1 = transform_image_top(raw_crop)
@@ -1758,7 +1758,7 @@ def door(blockid, data, north):
     return img
 
 # ladder
-@material(blockd=65, data=[2, 3, 4, 5], transparent = True)
+@material(blockd=65, data=[2, 3, 4, 5], transparent=True)
 def ladder(blockid, data, north):
 
     # first north rotations
@@ -1910,7 +1910,7 @@ def buttons(blockid, data, north):
     return None
 
 # snow
-@material(blockid=78, data=range(8), transparent=True)
+@material(blockid=78, data=range(8), transparent=True, solid=True)
 def snow(blockid, data):
     # still not rendered correctly: data other than 0
     
@@ -1977,7 +1977,7 @@ def jukebox(blockid, data):
 
 # nether and normal fences
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[85, 113], data=range(16), transparent=True)
+@material(blockid=[85, 113], data=range(16), transparent=True, nospawn=True)
 def fence(blockid, data):
     # no need for north rotations, it uses pseudo data.
     # create needed images for Big stick fence
@@ -2138,7 +2138,7 @@ def portal(blockid, data):
 
 # cake!
 # TODO is rendered un-bitten
-@material(blockid=92, data=range(6), transparent=True)
+@material(blockid=92, data=range(6), transparent=True, nospawn=True)
 def cake(blockid, data):
 
     # choose textures for cake
@@ -2167,7 +2167,7 @@ def cake(blockid, data):
     return img
 
 # redstone repeaters ON and OFF
-@material(blockid=[93,94], data=range(16), transparent=True)
+@material(blockid=[93,94], data=range(16), transparent=True, nospawn=True)
 def repeater(blockid, data, north):
     # north rotation
     # Masked to not clobber delay info
@@ -2313,7 +2313,7 @@ def repeater(blockid, data, north):
     
 # trapdoor
 # TODO the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=96, data=range(8), transparent=True)
+@material(blockid=96, data=range(8), transparent=True, nospawn=True)
 def trapdoor(blockid, data, north):
 
     # north rotation
@@ -2458,7 +2458,7 @@ def huge_mushroom(blockid, data, north):
 # iron bars and glass pane
 # TODO glass pane is not a sprite, it has a texture for the side,
 # at the moment is not used
-@material(blockid=[101,102], data=range(16), transparent=True)
+@material(blockid=[101,102], data=range(16), transparent=True, nospawn=True)
 def panes(blockid, data):
     # no north rotation, uses pseudo data
     if blockid == 101:
@@ -2570,7 +2570,7 @@ def vines(blockid, data, north):
     return img
 
 # fence gates
-@material(blockid=107, data=range(8), transparent=True)
+@material(blockid=107, data=range(8), transparent=True, nospawn=True)
 def fence_gate(blockid, data, north):
 
     # north rotation
