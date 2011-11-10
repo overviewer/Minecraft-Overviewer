@@ -20,6 +20,7 @@
 static PyObject *textures = NULL;
 static PyObject *chunk_mod = NULL;
 static PyObject *blockmap = NULL;
+static PyObject *known_blocks = NULL;
 static PyObject *transparent_blocks = NULL;
 
 PyObject *init_chunk_render(PyObject *self, PyObject *args) {
@@ -45,6 +46,9 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     blockmap = PyObject_GetAttrString(textures, "blockmap");
     if (!blockmap)
         return NULL;
+    known_blocks = PyObject_GetAttrString(textures, "known_blocks");
+    if (!known_blocks)
+        return NULL;
     transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
     if (!transparent_blocks)
         return NULL;
@@ -56,6 +60,10 @@ int
 is_transparent(unsigned char b) {
     PyObject *block = PyInt_FromLong(b);
     int ret = PySequence_Contains(transparent_blocks, block);
+    if (!ret)
+    {
+        ret = !(PySequence_Contains(known_blocks, block));
+    }
     Py_DECREF(block);
     return ret;
 

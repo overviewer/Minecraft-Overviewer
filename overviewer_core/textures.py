@@ -546,7 +546,8 @@ blockmap_generators = {}
 blockmap = {}
 biome_grass_texture = None
 
-transparent_blocks = set([0,])
+known_blocks = set()
+transparent_blocks = set()
 solid_blocks = set()
 fluid_blocks = set()
 nospawn_blocks = set()
@@ -579,6 +580,7 @@ def material(blockid=[], data=[0], **kwargs):
         
         for block in blockid:
             # set the property sets appropriately
+            known_blocks.update([block])
             for prop in properties:
                 try:
                     if block in kwargs.get(prop, []):
