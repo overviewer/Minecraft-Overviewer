@@ -72,7 +72,7 @@ rendermode_spawn_start(void *data, RenderState *state, PyObject *options) {
     
     /* now do custom initializations */
     self = (RenderModeSpawn *)data;
-    self->nospawn_blocks = PyObject_GetAttrString(state->chunk, "nospawn_blocks");
+    self->nospawn_blocks = PyObject_GetAttrString(state->textures, "nospawn_blocks");
     self->blocklight = PyObject_GetAttrString(state->self, "blocklight");
     self->skylight = PyObject_GetAttrString(state->self, "skylight");
     

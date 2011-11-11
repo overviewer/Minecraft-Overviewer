@@ -38,8 +38,8 @@ rendermode_overlay_start(void *data, RenderState *state, PyObject *options) {
     
     self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
     
-    self->solid_blocks = PyObject_GetAttrString(state->chunk, "solid_blocks");
-    self->fluid_blocks = PyObject_GetAttrString(state->chunk, "fluid_blocks");
+    self->solid_blocks = PyObject_GetAttrString(state->textures, "solid_blocks");
+    self->fluid_blocks = PyObject_GetAttrString(state->textures, "fluid_blocks");
     
     self->get_color = get_color;
     

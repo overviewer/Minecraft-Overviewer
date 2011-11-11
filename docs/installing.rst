@@ -3,8 +3,9 @@ Installing
 ==========
 
 This page is for installing the pre-compiled binary versions of the Overviewer.
-If you have built the Overviewer from source yourself, head back to
-:doc:`Building <building>`.
+If you want to build the Overviewer from source yourself, head to :doc:`Building
+<building>`. If you have already built The Overviewer, proceed to
+:doc:`running`.
 
 
 Windows
@@ -18,8 +19,7 @@ right place!
 
    For 64 bit, you'll want these instead: `VC++ 2008 <http://www.microsoft.com/downloads/en/details.aspx?familyid=bd2a6171-e2d6-4230-b809-9a8d7548c1b6>`_ and `VC++ 2010 <http://www.microsoft.com/download/en/details.aspx?id=14632>`_
 
-3. That's it! Proceed with instructions on :doc:`Running <running>` the
-   Overviewer.
+3. That's it! Proceed with instructions on :doc:`running`.
 
 Debian / Ubuntu
 ===============

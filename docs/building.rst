@@ -2,20 +2,29 @@
 Building the Overviewer from Source
 ===================================
 
-These instructions are for building the C extension for Overviewer. Also note
-that pre-built Windows and Debian executables are available in the `Downloads
-<https://github.com/overviewer/Minecraft-Overviewer/downloads>`_ section.  These
-kits already contain the compiled extension and require no further setup (so you
-can skip to the :doc:`Running <running>` section of the docs).
+These instructions are for building the C extension for Overviewer. Once you
+have finished with these instructions, head to :doc:`running`.
+
+.. note::
+
+    Pre-built Windows and Debian executables are available on the
+    :doc:`installing` page.  These kits already contain the compiled code and
+    require no further setup, so you can skip to the next section of the docs:
+    :doc:`running`.
 
 Get The Source
 ==============
-First step: download the source! Either clone with Git or download the most recent snapshot
 
-* URL to clone: ``git://github.com/overviewer/Minecraft-Overviewer.git``
+First step: download the platform-independent source! Either clone with Git
+(recommended if you know Git) or download the most recent snapshot
+
+* Git URL to clone: ``git://github.com/overviewer/Minecraft-Overviewer.git``
 * `Download most recent tar archive <https://github.com/overviewer/Minecraft-Overviewer/tarball/master>`_
 
 * `Download most recent zip archive <https://github.com/overviewer/Minecraft-Overviewer/zipball/master>`_
+
+Once you have the source, see below for instructions on building for your
+system.
 
 Build Instructions For Various Operating Systems
 ================================================
@@ -157,5 +166,10 @@ regular user.
 
 Installing the Compiled Code
 ----------------------------
-You can run the ``overviewer.py`` script from the build directory just fine. If
-you'd like to install, run ``python setup.py install``
+
+You can run the ``overviewer.py`` script from the build directory just fine;
+installation is unnecessary. If you'd like to install, run
+
+::
+
+    python setup.py install

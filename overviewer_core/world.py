@@ -266,7 +266,13 @@ class World(object):
         ## The chunk that holds the spawn location 
         chunkX = spawnX/16
         chunkY = spawnZ/16
-
+        
+        ## clamp spawnY to a sane value, in-chunk value
+        if spawnY < 0:
+            spawnY = 0
+        if spawnY > 127:
+            spawnY = 127
+        
         try:
             ## The filename of this chunk
             chunkFile = self.get_region_path(chunkX, chunkY)

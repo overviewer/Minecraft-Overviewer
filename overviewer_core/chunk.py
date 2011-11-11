@@ -125,27 +125,6 @@ def get_tileentity_data(level):
     data = level['TileEntities']
     return data
 
-# This set holds blocks ids that can be seen through, for occlusion calculations
-transparent_blocks = set([ 0,  6,  8,  9, 18, 20, 26, 27, 28, 29, 30, 31, 32, 33,
-                          34, 37, 38, 39, 40, 44, 50, 51, 52, 53, 55, 59, 63, 64,
-                          65, 66, 67, 68, 69, 70, 71, 72, 74, 75, 76, 77, 78, 79,
-                          81, 83, 85, 90, 92, 93, 94, 96, 101, 102, 104, 105,
-                          106, 107, 108, 109, 111, 113, 114, 115, 116, 117, 118,
-                          119, 120])
-
-# This set holds block ids that are solid blocks
-solid_blocks = set([1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-    23, 24, 25, 35, 41, 42, 43, 44, 45, 46, 47, 48, 49, 53, 54, 56, 57, 58, 60, 
-    61, 62, 67, 73, 74, 78, 79, 80, 81, 82, 84, 86, 87, 88, 89, 91, 95, 97, 98,
-    99, 100, 103, 108, 109, 110, 112, 114, 121])
-
-# This set holds block ids that are fluid blocks
-fluid_blocks = set([8,9,10,11])
-
-# This set holds block ids that are not candidates for spawning mobs on
-# (glass, slabs, stairs, fluids, ice, pistons, webs,TNT, wheat, cactus, iron bars, glass planes, fences, fence gate, cake, bed, repeaters, trapdoor)
-nospawn_blocks = set([20,26, 29, 30, 33, 34, 44, 46, 53, 59, 67, 79, 81, 85, 92, 93, 94, 96, 107, 109, 101, 102]).union(fluid_blocks)
-
 class ChunkCorrupt(Exception):
     pass
 
@@ -414,7 +393,7 @@ def generate_facemasks():
     left = Image.new("L", (24,24), 0)
     whole = Image.new("L", (24,24), 0)
     
-    toppart = textures.transform_image(white)
+    toppart = textures.transform_image_top(white)
     leftpart = textures.transform_image_side(white)
     
     # using the real PIL paste here (not alpha_over) because there is
