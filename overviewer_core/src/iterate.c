@@ -20,14 +20,21 @@
 static PyObject *textures = NULL;
 static PyObject *chunk_mod = NULL;
 static PyObject *blockmap = NULL;
+
+unsigned int max_blockid = 0;
+unsigned int max_data = 0;
+unsigned char *block_properties = NULL;
+
 static PyObject *known_blocks = NULL;
 static PyObject *transparent_blocks = NULL;
-static unsigned int max_blockid = 0;
-static unsigned int max_data = 0;
+static PyObject *solid_blocks = NULL;
+static PyObject *fluid_blocks = NULL;
+static PyObject *nospawn_blocks = NULL;
 
 PyObject *init_chunk_render(PyObject *self, PyObject *args) {
    
     PyObject *tmp = NULL;
+    unsigned int i;
     
     /* this function only needs to be called once, anything more should be
      * ignored */
@@ -50,12 +57,6 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     blockmap = PyObject_GetAttrString(textures, "blockmap");
     if (!blockmap)
         return NULL;
-    known_blocks = PyObject_GetAttrString(textures, "known_blocks");
-    if (!known_blocks)
-        return NULL;
-    transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
-    if (!transparent_blocks)
-        return NULL;
     
     tmp = PyObject_GetAttrString(textures, "max_blockid");
     if (!tmp)
@@ -66,22 +67,43 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
         return NULL;
     max_data = PyInt_AsLong(tmp);
     
+    /* assemble the property table */
+    known_blocks = PyObject_GetAttrString(textures, "known_blocks");
+    if (!known_blocks)
+        return NULL;
+    transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
+    if (!transparent_blocks)
+        return NULL;
+    solid_blocks = PyObject_GetAttrString(textures, "solid_blocks");
+    if (!solid_blocks)
+        return NULL;
+    fluid_blocks = PyObject_GetAttrString(textures, "fluid_blocks");
+    if (!fluid_blocks)
+        return NULL;
+    nospawn_blocks = PyObject_GetAttrString(textures, "nospawn_blocks");
+    if (!nospawn_blocks)
+        return NULL;
+    
+    block_properties = calloc(max_blockid, sizeof(unsigned char));
+    for (i = 0; i < max_blockid; i++) {
+        PyObject *block = PyInt_FromLong(i);
+        
+        if (PySequence_Contains(known_blocks, block))
+            block_properties[i] |= 1 << KNOWN;
+        if (PySequence_Contains(transparent_blocks, block))
+            block_properties[i] |= 1 << TRANSPARENT;
+        if (PySequence_Contains(solid_blocks, block))
+            block_properties[i] |= 1 << SOLID;
+        if (PySequence_Contains(fluid_blocks, block))
+            block_properties[i] |= 1 << FLUID;
+        if (PySequence_Contains(nospawn_blocks, block))
+            block_properties[i] |= 1 << NOSPAWN;
+        
+        Py_DECREF(block);
+    }
+
     Py_RETURN_NONE;
 }
-
-int
-is_transparent(unsigned char b) {
-    PyObject *block = PyInt_FromLong(b);
-    int ret = PySequence_Contains(transparent_blocks, block);
-    if (!ret)
-    {
-        ret = !(PySequence_Contains(known_blocks, block));
-    }
-    Py_DECREF(block);
-    return ret;
-
-}
-
 
 unsigned char
     check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {

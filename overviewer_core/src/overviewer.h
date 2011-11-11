@@ -86,8 +86,32 @@ typedef struct {
     PyObject *right_blocks;
 } RenderState;
 PyObject *init_chunk_render(PyObject *self, PyObject *args);
-int is_transparent(unsigned char b);
 PyObject *chunk_render(PyObject *self, PyObject *args);
+typedef enum
+{
+    KNOWN,
+    TRANSPARENT,
+    SOLID,
+    FLUID,
+    NOSPAWN,
+} BlockProperty;
+/* globals set in init_chunk_render, here because they're used
+   in block_has_property */
+extern unsigned int max_blockid;
+extern unsigned int max_data;
+extern unsigned char *block_properties;
+static inline int
+block_has_property(unsigned char b, BlockProperty prop) {
+    if (b >= max_blockid || !(block_properties[b] & (1 << KNOWN))) {
+        /* block is unknown, return defaults */
+        if (prop == TRANSPARENT)
+            return 1;
+        return 0;
+    }
+    
+    return block_properties[b] & (1 << prop);
+}
+#define is_transparent(b) block_has_property((b), TRANSPARENT)
 
 /* pull in the rendermode info */
 #include "rendermodes.h"

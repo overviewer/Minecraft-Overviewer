@@ -143,8 +143,6 @@ extern RenderModeInterface rendermode_normal;
 typedef struct {
     /* top facemask and white color image, for drawing overlays */
     PyObject *facemask_top, *white_color;
-    /* only show overlay on top of solid or fluid blocks */
-    PyObject *solid_blocks, *fluid_blocks;
     /* can be overridden in derived classes to control
        overlay alpha and color
        last four vars are r, g, b, a out */
@@ -195,8 +193,6 @@ typedef struct {
     /* inherits from overlay */
     RenderModeOverlay parent;
     
-    /* used to figure out which blocks are spawnable */
-    PyObject *nospawn_blocks;
     PyObject *skylight, *blocklight;
 } RenderModeSpawn;
 extern RenderModeInterface rendermode_spawn;

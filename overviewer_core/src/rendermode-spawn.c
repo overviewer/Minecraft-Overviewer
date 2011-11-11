@@ -35,13 +35,10 @@ static void get_color(void *data, RenderState *state,
     /* default to no overlay, until told otherwise */
     *a = 0;
     
-    block_py = PyInt_FromLong(state->block);
-    if (PySequence_Contains(self->nospawn_blocks, block_py)) {
+    if (block_has_property(state->block, NOSPAWN)) {
         /* nothing can spawn on this */
-        Py_DECREF(block_py);
         return;
     }
-    Py_DECREF(block_py);
     
     blocklight = getArrayByte3D(self->blocklight, x, y, MIN(127, z_light));
     
@@ -72,7 +69,6 @@ rendermode_spawn_start(void *data, RenderState *state, PyObject *options) {
     
     /* now do custom initializations */
     self = (RenderModeSpawn *)data;
-    self->nospawn_blocks = PyObject_GetAttrString(state->textures, "nospawn_blocks");
     self->blocklight = PyObject_GetAttrString(state->self, "blocklight");
     self->skylight = PyObject_GetAttrString(state->self, "skylight");
     
@@ -87,7 +83,6 @@ rendermode_spawn_finish(void *data, RenderState *state) {
     /* first free all *our* stuff */
     RenderModeSpawn* self = (RenderModeSpawn *)data;
     
-    Py_DECREF(self->nospawn_blocks);
     Py_DECREF(self->blocklight);
     Py_DECREF(self->skylight);
     
