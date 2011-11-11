@@ -22,9 +22,13 @@ static PyObject *chunk_mod = NULL;
 static PyObject *blockmap = NULL;
 static PyObject *known_blocks = NULL;
 static PyObject *transparent_blocks = NULL;
+static unsigned int max_blockid = 0;
+static unsigned int max_data = 0;
 
 PyObject *init_chunk_render(PyObject *self, PyObject *args) {
    
+    PyObject *tmp = NULL;
+    
     /* this function only needs to be called once, anything more should be
      * ignored */
     if (blockmap) {
@@ -52,6 +56,15 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
     if (!transparent_blocks)
         return NULL;
+    
+    tmp = PyObject_GetAttrString(textures, "max_blockid");
+    if (!tmp)
+        return NULL;
+    max_blockid = PyInt_AsLong(tmp);
+    tmp = PyObject_GetAttrString(textures, "max_data");
+    if (!tmp)
+        return NULL;
+    max_data = PyInt_AsLong(tmp);
     
     Py_RETURN_NONE;
 }
@@ -373,15 +386,13 @@ chunk_render(PyObject *self, PyObject *args) {
     
     for (state.x = 15; state.x > -1; state.x--) {
         for (state.y = 0; state.y < 16; state.y++) {
-            PyObject *blockid = NULL;
-            
+
             /* set up the render coordinates */
             state.imgx = xoff + state.x*12 + state.y*12;
             /* 128*12 -- offset for z direction, 15*6 -- offset for x */
             state.imgy = yoff - state.x*6 + state.y*6 + 128*12 + 15*6;
             
             for (state.z = 0; state.z < 128; state.z++) {
-                PyObject *tmp;
                 unsigned char ancilData;
                 
                 state.imgy -= 12;
@@ -399,14 +410,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 if ((state.imgy >= imgsize1 + 24) || (state.imgy <= -24)) {
                     continue;
                 }
-
                 
-                /* decref'd on replacement *and* at the end of the z for block */
-                if (blockid) {
-                    Py_DECREF(blockid);
-                }
-                blockid = PyInt_FromLong(state.block);
-
                 /* check for occlusion */
                 if (render_mode_occluded(rendermode, state.x, state.y, state.z)) {
                     continue;
@@ -431,15 +435,12 @@ chunk_render(PyObject *self, PyObject *args) {
                     state.block_pdata = 0;
                 }
                 
-                tmp = PyTuple_New(2);
+                /* make sure our block info is in-bounds */
+                if (state.block >= max_blockid || ancilData >= max_data)
+                    continue;
                 
-                Py_INCREF(blockid); /* because SetItem steals */
-                PyTuple_SetItem(tmp, 0, blockid);
-                PyTuple_SetItem(tmp, 1, PyInt_FromLong(ancilData));
-                
-                /* this is a borrowed reference. no need to decref */
-                t = PyDict_GetItem(blockmap, tmp);
-                Py_DECREF(tmp);
+                /* get the texture */
+                t = PyList_GET_ITEM(blockmap, max_data * state.block + ancilData);
                 
                 /* if we found a proper texture, render it! */
                 if (t != NULL && t != Py_None)
@@ -469,11 +470,6 @@ chunk_render(PyObject *self, PyObject *args) {
                         state.imgy -= randy;
                     }
                 }               
-            }
-            
-            if (blockid) {
-                Py_DECREF(blockid);
-                blockid = NULL;
             }
         }
     }

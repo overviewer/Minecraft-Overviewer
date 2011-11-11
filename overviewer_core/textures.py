@@ -423,7 +423,7 @@ def tintTexture(im, c):
 
 def generate_texture_tuple(img):
     """ This takes an image and returns the needed tuple for the
-    blockmap dictionary."""
+    blockmap array."""
     if img is None:
         return None
     return (img, generate_opaque_mask(img))
@@ -543,10 +543,14 @@ def loadLightColor():
 # placeholders that are generated in generate()
 texture_dimensions = None
 blockmap_generators = {}
-blockmap = {}
+blockmap = []
 biome_grass_texture = None
 
 known_blocks = set()
+used_datas = set()
+max_blockid = 0
+max_data = 0
+
 transparent_blocks = set()
 solid_blocks = set()
 fluid_blocks = set()
@@ -578,6 +582,7 @@ def material(blockid=[], data=[0], **kwargs):
             except TypeError:
                 return func(blockid, data)
         
+        used_datas.update(data)
         for block in blockid:
             # set the property sets appropriately
             known_blocks.update([block])
@@ -658,23 +663,26 @@ def generate(path=None,texture_size=24,bgc = (26,26,26,0),north_direction='lower
 
     # generate the blocks
     global blockmap, blockmap_generators
-    blockmap = {}
+    global max_blockid, max_data
+    max_blockid = max(known_blocks) + 1
+    max_data = max(used_datas) + 1
+    blockmap = [None] * max_blockid * max_data
+    
     for blockid, data in blockmap_generators:
         texgen = blockmap_generators[(blockid, data)]
         tex = texgen(blockid, data, north_direction)
-        blockmap[(blockid, data)] = generate_texture_tuple(tex)
+        blockmap[blockid * max_data + data] = generate_texture_tuple(tex)
     
     if texture_size != 24:
         # rescale biome textures.
         biome_grass_texture = biome_grass_texture.resize(texture_dimensions, Image.ANTIALIAS)
 
         # rescale the special block images
-        for blockid, data in iter(blockmap):
-            block = blockmap[(blockid,data)]
-            if block != None:
-                block = block[0]
+        for i, tex in enumerate(blockmap):
+            if tex != None:
+                block = tex[0]
                 scaled_block = block.resize(texture_dimensions, Image.ANTIALIAS)
-                blockmap[(blockid,data)] = generate_texture_tuple(scaled_block, blockid)
+                blockmap[i] = generate_texture_tuple(scaled_block)
 
 ##
 ## and finally: actual texture definitions
