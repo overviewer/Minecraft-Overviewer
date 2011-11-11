@@ -542,6 +542,11 @@ class QuadtreeGen(object):
                         dirty.set_dirty(tile.path)
                         continue
 
+                    # Check if this tile has already been marked dirty. If so,
+                    # no need to do any of the below.
+                    if dirty.query_path(tile.path):
+                        continue
+
                     # Check mtimes and conditionally add tile to dirty set
                     tile_path = tile.get_filepath(self.full_tiledir, self.imgformat)
                     try:
@@ -584,6 +589,7 @@ class DirtyTiles(object):
     dirty are collapsed
     
     """
+    __slots__ = ("level", "children")
     def __init__(self, level):
         """Initialize a new node of the tree at the specified level
 
@@ -599,10 +605,10 @@ class DirtyTiles(object):
         #   All children down this subtree are clean
         # True
         #   All children down this subtree are dirty
-        # A DirtyTileTree instance
+        # A DirtyTiles instance
         #   the instance defines which children down that subtree are
         #   clean/dirty.
-        # A node with level=1 cannot have a DirtyTileTree instance in its
+        # A node with level=1 cannot have a DirtyTiles instance in its
         # children since its leaves are images, not more tree
         self.children = [False] * 4
 
@@ -694,6 +700,41 @@ class DirtyTiles(object):
                         path.append(c)
                         yield path
 
+    def query_path(self, path):
+        """Queries for the state of the given tile in the tree.
+
+        Returns False for "clean", True for "dirty"
+
+        """
+        # Traverse the tree down the given path. If the tree has been
+        # collapsed, then just return what the subtree is. Otherwise, if we
+        # find the specific DirtyTree requested, return its state using the
+        # __nonzero__ call.
+        treenode = self
+        for pathelement in path:
+            treenode = treenode.children[pathelement]
+            if not isinstance(treenode, DirtyTiles):
+                return treenode
+
+        # If the method has not returned at this point, treenode is the
+        # requested node, but it is an inner node with possibly mixed state
+        # subtrees. If any of the children are True return True. This call
+        # relies on the __nonzero__ method
+        return bool(treenode)
+
+    def __nonzero__(self):
+        """Returns the boolean context of this particular node. If any
+        descendent of this node is True return True. Otherwise, False.
+
+        """
+        # Any chilren that are True or are DirtyTiles that evaluate to True
+        # IDEA: look at all children for True before recursing
+        # Better idea: every node except the root /must/ have a dirty
+        # descendent or it wouldn't exist. This assumption is only valid as
+        # long as an unset_dirty() method or similar does not exist.
+        return any(self.children)
+
+
 class Tile(object):
     """A simple container class that represents a single render-tile.
 
@@ -724,8 +765,14 @@ class Tile(object):
         """Returns the path to this file given the directory to the tiles
 
         """
-        path = os.path.join(tiledir, *(str(x) for x in self.path))
-        imgpath = path + "." + imgformat
+        # os.path.join would be the proper way to do this path concatenation,
+        # but it is surprisingly slow, probably because it checks each path
+        # element if it begins with a slash. Since we know these components are
+        # all relative, just concatinate with os.path.sep
+        pathcomponents = [tiledir]
+        pathcomponents.extend(str(x) for x in self.path)
+        path = os.path.sep.join(pathcomponents)
+        imgpath = ".".join((path, imgformat))
         return imgpath
 
     @classmethod
