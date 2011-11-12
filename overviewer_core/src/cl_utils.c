@@ -65,6 +65,8 @@ static const char* getClError(cl_int e) {
         return "CL_INVALID_SAMPLER";
     if (e == CL_INVALID_ARG_SIZE)
         return "CL_INVALID_ARG_SIZE";
+    if (e == CL_INVALID_QUEUE_PROPERTIES) 
+        return "CL_INVALID_QUEUE_PROPERTIES";
 
     return "UNKNOWN";
 }
@@ -265,6 +267,7 @@ stitch_quad_images(PyObject* self, PyObject *args)
         }
 
         size_t global_ws[2] = {192, 192};
+        size_t local_ws[2] = {16, 16};
 
         // enqueue this shit!
         oErr = clEnqueueNDRangeKernel(queue, // queue
@@ -272,7 +275,7 @@ stitch_quad_images(PyObject* self, PyObject *args)
                 2, // work dim
                 NULL, // global_work_offset
                 global_ws, // global_work_size
-                NULL, // local_work_size
+                local_ws, // local_work_size
                 0,
                 NULL,
                 NULL);
@@ -371,6 +374,9 @@ print_cl_info(PyObject *self, PyObject *args)
         if (clGetPlatformInfo(plat, CL_PLATFORM_VERSION, 120, name, NULL) == CL_SUCCESS) {
             printf("  Version: %s\n", name);
         }
+        if (clGetPlatformInfo(plat, CL_PLATFORM_EXTENSIONS, 120, name, NULL) == CL_SUCCESS) {
+            printf("  Extensions: %s\n", name);
+        }
     }
     printf("\n");
 
@@ -392,6 +398,10 @@ print_cl_info(PyObject *self, PyObject *args)
 
         if (clGetDeviceInfo(dev, CL_DEVICE_NAME, 120, name, &actual_size) == CL_SUCCESS)
             printf("  Name: %s\n", name);
+        if (clGetDeviceInfo(dev, CL_DEVICE_VENDOR, 120, name, &actual_size) == CL_SUCCESS)
+            printf("  Vendor: %s\n", name);
+        if (clGetDeviceInfo(dev, CL_DEVICE_VERSION, 120, name, &actual_size) == CL_SUCCESS)
+            printf("  Version: %s\n", name);
 
         if (clGetDeviceInfo(dev, CL_DEVICE_TYPE, sizeof(cl_device_type), &type, NULL) == CL_SUCCESS) {
             printf("  Type: ");
@@ -432,6 +442,17 @@ print_cl_info(PyObject *self, PyObject *args)
         if (clGetDeviceInfo(dev, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &actual_size, NULL) == CL_SUCCESS) {
             printf("  Max workgroup size: %lu\n", actual_size);
         }
+
+        cl_command_queue_properties props;
+        if (clGetDeviceInfo(dev, CL_DEVICE_QUEUE_PROPERTIES, sizeof(cl_command_queue_properties), &props, NULL) == CL_SUCCESS) {
+            printf("  Supported queue properties: \n");
+            if ((props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) == CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+                printf("    CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE\n");
+            if ((props & CL_QUEUE_PROFILING_ENABLE) == CL_QUEUE_PROFILING_ENABLE)
+                printf("    CL_QUEUE_PROFILING_ENABLE\n");
+        }
+
+
         printf("\n");
     }
 
