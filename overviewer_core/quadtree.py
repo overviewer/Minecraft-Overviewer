@@ -309,17 +309,21 @@ class QuadtreeGen(object):
         #check mtimes on each part of the quad, this also checks if they exist
         needs_rerender = (tile_mtime is None) or self.forcerender
         quadPath_filtered = []
+        foundTile=False
         for path in quadPath:
             try:
                 quad_mtime = os.stat(path)[stat.ST_MTIME]; 
-                quadPath_filtered.append(path)
+                i = Image.open(path)
+                i.load()
+                quadPath_filtered.append(i)
+                foundTile=True
                 if quad_mtime > tile_mtime:     
                     needs_rerender = True            
             except OSError:
                 # We need to stat all the quad files, so keep looping
                 quadPath_filtered.append(None)
         # do they all not exist?
-        if quadPath_filtered == [None, None, None, None]:
+        if not foundTile:
             if tile_mtime is not None:
                 os.unlink(imgpath)
             return
@@ -335,19 +339,11 @@ class QuadtreeGen(object):
         # this is just straight image stitching, not alpha blending
        
         #logging.debug("Attempting CL stitching")
-        quadPath_imgs = []
-        for path in quadPath_filtered:
-            if path:
-                i = Image.open(path)
-                i.load()
-                quadPath_imgs.append(i)
-            else:
-                quadPath_imgs.append(None)
 
         #logging.debug("list: %r", quadPath_imgs)
         # cl_stitch_quad_images expects the second argument to be a list of image objects.  be sure to 
         # all .load of them, since PIL will lazyload
-        cl_stitch_quad_images(img, quadPath_imgs);
+        cl_stitch_quad_images(img, quadPath_filtered);
         ##for path in quadPath_filtered:
         ##    try:
         ##        quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)

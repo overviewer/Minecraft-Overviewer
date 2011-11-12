@@ -207,11 +207,19 @@ stitch_quad_images(PyObject* self, PyObject *args)
         printf("Something went wrong creating Image2d\n");
     }
     //printf("Created 2dImage with width=%d and height=%d\n", imDest->xsize, imDest->ysize);
+       
+    oErr = clSetKernelArg(kernel, 0, sizeof(cl_mem), &clImg);
+    if (oErr != CL_SUCCESS) {
+        printf("Error: %s\n", getClError(oErr));
+        PyErr_SetString(PyExc_RuntimeError,  "Failed setting kernel args 0");
+        return NULL;
+
+    }
 
 
     // load up our 4 input images
 
-    cl_mem quadCLImg[4]; // to hold our 4 input images
+    cl_mem quadCLImg[4] = {0}; // to hold our 4 input images
 
     for(x=0; x < 4; x++) {
         PyObject *img_py = PySequence_GetItem(imgList, x); // new reference
@@ -241,14 +249,6 @@ stitch_quad_images(PyObject* self, PyObject *args)
 
         Py_DECREF(img_py);
 
-       
-        oErr = clSetKernelArg(kernel, 0, sizeof(cl_mem), &clImg);
-        if (oErr != CL_SUCCESS) {
-            printf("Error: %s\n", getClError(oErr));
-            PyErr_SetString(PyExc_RuntimeError,  "Failed setting kernel args 0");
-            return NULL;
-
-        }
         oErr = clSetKernelArg(kernel, 1, sizeof(cl_mem), & quadCLImg[x]);
         if (oErr != CL_SUCCESS) {
             printf("Error: %s\n", getClError(oErr));
@@ -325,6 +325,13 @@ stitch_quad_images(PyObject* self, PyObject *args)
     // clean up
     if (clImg != NULL)
         clReleaseMemObject(clImg);
+    for(x=0; x < 4; x++) {
+        if (quadCLImg[x] != NULL)
+            clReleaseMemObject(quadCLImg[x]);
+    }
+
+
+
 
     //printf("about to buildValue\n");
 
