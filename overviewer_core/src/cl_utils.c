@@ -2,8 +2,11 @@
 
 #include "overviewer.h"
 
-
+#ifdef __APPLE__
 #include <OpenCL/OpenCL.h>
+#else
+#include <CL/OpenCl.h>
+#endif
 
 #include <sys/stat.h>
 
@@ -67,6 +70,12 @@ static const char* getClError(cl_int e) {
         return "CL_INVALID_ARG_SIZE";
     if (e == CL_INVALID_QUEUE_PROPERTIES) 
         return "CL_INVALID_QUEUE_PROPERTIES";
+    if (e == CL_INVALID_PLATFORM)
+        return "CL_INVALID_PLATFORM";
+    if (e == CL_INVALID_DEVICE_TYPE)
+        return "CL_INVALID_DEVICE_TYPE";
+    if (e == CL_DEVICE_NOT_FOUND)
+        return "CL_DEVICE_NOT_FOUND"; 
 
     return "UNKNOWN";
 }
@@ -80,12 +89,30 @@ do_cl_init(PyObject *self, PyObject *args)
 
     cl_device_id    work_device;
     cl_int error;
-    if (clGetDeviceIDs(NULL, CL_DEVICE_TYPE_GPU, 1, &work_device, NULL) != CL_SUCCESS) {
+    const char *program_name = "paste.cl";
+    struct stat s;
+    FILE* prog_file;
+    size_t filesize, read_so_far;
+    char * source;
+    size_t len;
+    cl_uint num_plats;
+    cl_platform_id platform;
+
+    if (clGetPlatformIDs(1, &platform, 0) != CL_SUCCESS) {
+        printf("Failed to get plats\n");
+        return NULL;
+    }
+
+    printf("getting device ids\n");
+    error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &work_device, NULL);
+    if (error != CL_SUCCESS) {
+        printf("Error: %s\n", getClError(error));
         PyErr_SetString(PyExc_RuntimeError,
                 "Failed clGetDeviceIDs");
         return NULL;
     }
 
+    printf("creating context\n");
     context =clCreateContext(0, 1, &work_device, NULL, NULL, &error);
     if (error != CL_SUCCESS) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -93,6 +120,7 @@ do_cl_init(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    printf("creating command queue\n");
     queue = clCreateCommandQueue(context, work_device, 0, &error);
     if (error != CL_SUCCESS) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -101,11 +129,6 @@ do_cl_init(PyObject *self, PyObject *args)
     }    
 
 
-
-
-
-    const char *program_name = "/Users/achin/devel/overviewer-readonly/paste.cl";
-    struct stat s;
     if (stat(program_name,&s) != 0) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Failed stat paste.cl");
@@ -114,18 +137,25 @@ do_cl_init(PyObject *self, PyObject *args)
     }
 
 
-    FILE* prog_file = fopen(program_name, "r");
-    size_t filesize = s.st_size+1;
-    char * source = (char*)malloc(filesize);
-    bzero(source, filesize);
-    if (fread(source, 1, filesize-1, prog_file) != filesize-1) {
+    prog_file = fopen(program_name, "r");
+    filesize = s.st_size+1;
+    source = (char*)malloc(filesize);
+    printf("Attempting to read %d bytes of paste.cl\n", filesize);
+    memset(source, 0, filesize);
+
+    read_so_far = fread(source, 1, filesize-1, prog_file);
+    printf("read so far: %d\n", read_so_far);
+
+    if (!feof(prog_file)) {
+
         PyErr_SetString(PyExc_RuntimeError,
                 "Failed read all of paste.cl");
         return NULL;
     }
     fclose(prog_file);
 
-    const size_t len = strlen(source);
+    len = strlen(source);
+    printf("Compiling: %s\n", source);
 
     program = clCreateProgramWithSource(context, 1, (const char**)&source, &len, &error);
     free(source);
@@ -140,11 +170,12 @@ do_cl_init(PyObject *self, PyObject *args)
     error = clBuildProgram(program, 1, &work_device, NULL, NULL, NULL);
     if (error != CL_SUCCESS) {
         /* fetch and print build log */
+        size_t logSize;
+        char *buildLog;
         printf("error: %s\n", getClError(error));
 
-        size_t logSize;
         clGetProgramBuildInfo(program, work_device, CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
-        char *buildLog = malloc(logSize);
+        buildLog = malloc(logSize);
         clGetProgramBuildInfo(program, work_device, CL_PROGRAM_BUILD_LOG, logSize, buildLog, 0);
         printf("-----\nBuild log:\n-----\n\n%s\n\n", buildLog);
         free(buildLog);
@@ -189,6 +220,13 @@ stitch_quad_images(PyObject* self, PyObject *args)
     cl_int oErr = 0;
     cl_image_format imgFormat = {CL_RGBA, CL_UNSIGNED_INT8};
     int x;
+    cl_mem clImg;
+    cl_mem quadCLImg[4] = {0}; // to hold our 4 input images
+    
+    const size_t offset[3] = {0,0,0};
+    const size_t region[3] = {384, 384, 1};
+
+    char *destImage;
 
 
     if (!PyArg_ParseTuple(args, "OO",  &destImg, &imgList))
@@ -196,7 +234,7 @@ stitch_quad_images(PyObject* self, PyObject *args)
 
     imDest = imaging_python_to_c(destImg);
 
-    cl_mem clImg = clCreateImage2D(context, // context
+    clImg = clCreateImage2D(context, // context
             CL_MEM_WRITE_ONLY, // mem flags
             &imgFormat, // img format
             imDest->xsize, // image widht
@@ -221,16 +259,19 @@ stitch_quad_images(PyObject* self, PyObject *args)
 
     // load up our 4 input images
 
-    cl_mem quadCLImg[4] = {0}; // to hold our 4 input images
-
     for(x=0; x < 4; x++) {
+        const unsigned char quadrant = x;
+        Imaging img_img;
+        void* img_buf;
+        size_t global_ws[2] = {192, 192};
+
         PyObject *img_py = PySequence_GetItem(imgList, x); // new reference
         if (img_py == Py_None) { continue; }
   
 
-        Imaging img_img = imaging_python_to_c(img_py);
+        img_img = imaging_python_to_c(img_py);
         //printf("Recieved a img with size %d,%d and pixelsize:%d\n", img_img->xsize, img_img->ysize, img_img->pixelsize);
-        void* img_buf = *(img_img->image);
+        img_buf = *(img_img->image);
         //printf("  image buffer is at %p\n", img_buf);
 
         // create a 2dImage with this data
@@ -258,7 +299,6 @@ stitch_quad_images(PyObject* self, PyObject *args)
             return NULL;
         }
 
-        const unsigned char quadrant = x;
         oErr = clSetKernelArg(kernel, 2, sizeof(cl_uchar), &quadrant);
         if (oErr != CL_SUCCESS) {
             printf("Error: %s\n", getClError(oErr));
@@ -266,8 +306,6 @@ stitch_quad_images(PyObject* self, PyObject *args)
             return NULL;
         }
 
-        size_t global_ws[2] = {192, 192};
-        size_t local_ws[2] = {16, 16};
 
         // enqueue this shit!
         oErr = clEnqueueNDRangeKernel(queue, // queue
@@ -292,11 +330,7 @@ stitch_quad_images(PyObject* self, PyObject *args)
 
 
 
-    const size_t offset[3] = {0,0,0};
-    const size_t region[3] = {384, 384, 1};
-    char dummyBuffer[384*384*4];
-
-    char *destImage = *(imDest->image);
+    destImage = *(imDest->image);
 
     oErr = clEnqueueReadImage(queue, // queue
             clImg, // image to read from
@@ -347,21 +381,24 @@ PyObject *
 print_cl_info(PyObject *self, PyObject *args)
 {
 
+    int i;
     cl_uint num_devs, num_plats;
     cl_int rc;
+    cl_platform_id *plats;
+    cl_device_id *ids;
 
     clGetPlatformIDs(0, NULL, &num_plats);
     printf("Total number of platforms: %d\n", num_plats);
 
 
-    cl_platform_id *plats = malloc(sizeof(cl_platform_id) *num_plats);
+    plats = malloc(sizeof(cl_platform_id) *num_plats);
     clGetPlatformIDs(num_plats, plats, 0);
-    int i;
     for (i = 0; i < num_plats; i++) {
-        printf("Platform #%d\n", i);
-        printf("-----------\n");
         cl_platform_id plat = plats[i];
         char name[120];
+        
+        printf("Platform #%d\n", i);
+        printf("-----------\n");
 
         if (clGetPlatformInfo(plat, CL_PLATFORM_NAME, 120, name, NULL) == CL_SUCCESS) {
             printf("  Name: %s\n", name);
@@ -380,21 +417,29 @@ print_cl_info(PyObject *self, PyObject *args)
     }
     printf("\n");
 
-    rc = clGetDeviceIDs(NULL, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devs);
+    rc = clGetDeviceIDs(plats[0], CL_DEVICE_TYPE_ALL, 0, NULL, &num_devs);
+    if (rc != CL_SUCCESS) {
+        printf("Failed to clGetDeviceIDs\n");
+        return NULL;
+    }
     printf("Total number of devices: %d\n", num_devs);
 
-    cl_device_id *ids = malloc(sizeof(cl_device_id)*num_devs);
-    rc = clGetDeviceIDs(NULL, CL_DEVICE_TYPE_ALL, num_devs, ids, NULL);
+    ids = malloc(sizeof(cl_device_id)*num_devs);
+    rc = clGetDeviceIDs(plats[0], CL_DEVICE_TYPE_ALL, num_devs, ids, NULL);
+    if (rc != CL_SUCCESS) {
+        printf("Failed to clGetDeviceIDs (2) \n");
+        return NULL;
+    }
 
     for (i = 0; i < num_devs; i++ ){
-        printf("Device #%d\n", i);
-        printf("---------\n");
         cl_device_id dev = ids[i];
         char name[120];
         cl_device_type type;
         cl_uint uint_ret;
         cl_bool bool_ret;
         size_t actual_size;
+        printf("Device #%d\n", i);
+        printf("---------\n");
 
         if (clGetDeviceInfo(dev, CL_DEVICE_NAME, 120, name, &actual_size) == CL_SUCCESS)
             printf("  Name: %s\n", name);
