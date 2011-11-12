@@ -56,6 +56,8 @@ static PyMethodDef COverviewerMethods[] = {
         "Print out openCL info"},
     {"cl_init", do_cl_init, METH_VARARGS,
         "Initialize the openCL system"},
+    {"cl_stitch_quad_images", stitch_quad_images, METH_VARARGS,
+        "Stich some images together"},
     
     {NULL, NULL, 0, NULL}       /* Sentinel */
 };

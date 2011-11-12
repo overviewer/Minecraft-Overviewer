@@ -100,5 +100,6 @@ unsigned int big_endian_uint(unsigned int in);
 /* in cl_utils.c */
 PyObject *print_cl_info(PyObject *self, PyObject *args);
 PyObject *do_cl_init(PyObject *self, PyObject *args);
+PyObject *stitch_quad_images(PyObject* self, PyObject *args);
 
 #endif /* __OVERVIEWER_H_INCLUDED__ */

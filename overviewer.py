@@ -361,6 +361,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     except IOError, e:
         logging.error(str(e))
         sys.exit(1)
+
+    # if openCL is request, get it started up
+    c_overviewer.cl_init()
+    c_overviewer.print_cl_info()
     
     # First do world-level preprocessing
     w = world.World(worlddir, destdir, useBiomeData=useBiomeData, regionlist=regionlist, north_direction=north_direction)

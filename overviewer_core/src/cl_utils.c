@@ -45,7 +45,26 @@ static const char* getClError(cl_int e) {
         return "CL_INVALID_WORK_DIMENSION";
     if (e == CL_INVALID_WORK_GROUP_SIZE)
         return "CL_INVALID_WORK_GROUP_SIZE";
-
+    if (e == CL_INVALID_IMAGE_FORMAT_DESCRIPTOR)
+        return "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
+    if (e == CL_INVALID_IMAGE_SIZE)
+        return "CL_INVALID_IMAGE_SIZE";
+    if (e == CL_INVALID_HOST_PTR)
+        return "CL_INVALID_HOST_PTR";
+    if (e == CL_IMAGE_FORMAT_NOT_SUPPORTED)
+        return "CL_IMAGE_FORMAT_NOT_SUPPORTED";
+    if (e == CL_MEM_OBJECT_ALLOCATION_FAILURE)
+        return "CL_MEM_OBJECT_ALLOCATION_FAILURE";
+    if (e == CL_INVALID_ARG_INDEX)
+        return "CL_INVALID_ARG_INDEX";
+    if (e == CL_INVALID_ARG_VALUE)
+        return "CL_INVALID_ARG_VALUE";
+    if (e == CL_INVALID_MEM_OBJECT)
+        return "CL_INVALID_MEM_OBJECT";
+    if (e == CL_INVALID_SAMPLER) 
+        return "CL_INVALID_SAMPLER";
+    if (e == CL_INVALID_ARG_SIZE)
+        return "CL_INVALID_ARG_SIZE";
 
     return "UNKNOWN";
 }
@@ -78,6 +97,8 @@ do_cl_init(PyObject *self, PyObject *args)
                 "Failed clCreateCommandQueue");
         return NULL;
     }    
+
+
 
 
 
@@ -147,6 +168,169 @@ do_cl_init(PyObject *self, PyObject *args)
 }
 
 
+/*
+ stich_quad_images
+ args: 1: PIL image to paste into
+       2: list of images and coords in the form
+          [[(x,y), "path"], [(x,y), "path"], ... ]
+ *
+ */
+PyObject *
+stitch_quad_images(PyObject* self, PyObject *args)
+{
+    PyObject* destImg;
+    PyObject* imgList;
+    PyObject* imgsize;
+
+    PyObject* imgsize0_py, *imgsize1_py;
+    Imaging imDest;
+    cl_int oErr = 0;
+    cl_image_format imgFormat = {CL_RGBA, CL_UNSIGNED_INT8};
+    int x;
+
+
+    if (!PyArg_ParseTuple(args, "OO",  &destImg, &imgList))
+        return NULL;
+
+    imDest = imaging_python_to_c(destImg);
+
+    cl_mem clImg = clCreateImage2D(context, // context
+            CL_MEM_WRITE_ONLY, // mem flags
+            &imgFormat, // img format
+            imDest->xsize, // image widht
+            imDest->ysize, // image height
+            0, // image pitch
+            NULL, // host ptr
+            &oErr);
+
+    if (clImg == NULL || oErr != CL_SUCCESS) {
+        printf("Something went wrong creating Image2d\n");
+    }
+    //printf("Created 2dImage with width=%d and height=%d\n", imDest->xsize, imDest->ysize);
+
+
+    // load up our 4 input images
+
+    cl_mem quadCLImg[4]; // to hold our 4 input images
+
+    for(x=0; x < 4; x++) {
+        PyObject *img_py = PySequence_GetItem(imgList, x); // new reference
+        if (img_py == Py_None) { continue; }
+  
+
+        Imaging img_img = imaging_python_to_c(img_py);
+        //printf("Recieved a img with size %d,%d and pixelsize:%d\n", img_img->xsize, img_img->ysize, img_img->pixelsize);
+        void* img_buf = *(img_img->image);
+        //printf("  image buffer is at %p\n", img_buf);
+
+        // create a 2dImage with this data
+        quadCLImg[x] = clCreateImage2D(context, // context
+                CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, // mem flags
+                &imgFormat, // img format
+                img_img->xsize, // image widht
+                img_img->ysize, // image height
+                0, // image pitch
+                img_buf, // host ptr
+                &oErr);
+        if (quadCLImg[x] != NULL) {
+            //printf("Created 2d image with hostdata\n");
+        } else {
+            printf("Failed to create 2dimage with hostdata: %s\n", getClError(oErr));
+            return NULL;
+        }
+
+        Py_DECREF(img_py);
+
+       
+        oErr = clSetKernelArg(kernel, 0, sizeof(cl_mem), &clImg);
+        if (oErr != CL_SUCCESS) {
+            printf("Error: %s\n", getClError(oErr));
+            PyErr_SetString(PyExc_RuntimeError,  "Failed setting kernel args 0");
+            return NULL;
+
+        }
+        oErr = clSetKernelArg(kernel, 1, sizeof(cl_mem), & quadCLImg[x]);
+        if (oErr != CL_SUCCESS) {
+            printf("Error: %s\n", getClError(oErr));
+            PyErr_SetString(PyExc_RuntimeError,  "Failed setting kernel args 1");
+            return NULL;
+        }
+
+        const unsigned char quadrant = x;
+        oErr = clSetKernelArg(kernel, 2, sizeof(cl_uchar), &quadrant);
+        if (oErr != CL_SUCCESS) {
+            printf("Error: %s\n", getClError(oErr));
+            PyErr_SetString(PyExc_RuntimeError,  "Failed setting kernel args 2");
+            return NULL;
+        }
+
+        size_t global_ws[2] = {192, 192};
+
+        // enqueue this shit!
+        oErr = clEnqueueNDRangeKernel(queue, // queue
+                kernel, // kernel
+                2, // work dim
+                NULL, // global_work_offset
+                global_ws, // global_work_size
+                NULL, // local_work_size
+                0,
+                NULL,
+                NULL);
+
+        if (oErr != CL_SUCCESS) {
+            printf("Error: %s\n", getClError(oErr));
+            PyErr_SetString(PyExc_RuntimeError,  "Failed to enqueue kernel");
+            return NULL;
+        }
+        //printf("Enqueued kernel\n");
+
+
+    }
+
+
+
+    const size_t offset[3] = {0,0,0};
+    const size_t region[3] = {384, 384, 1};
+    char dummyBuffer[384*384*4];
+
+    char *destImage = *(imDest->image);
+
+    oErr = clEnqueueReadImage(queue, // queue
+            clImg, // image to read from
+            0, // blocking?
+            offset, // offset
+            region, // region
+            384*4, // row pitch
+            0, // slice pitch.  0 if 2d
+            destImage, // host ptr
+            0, NULL, NULL);
+    if (oErr != CL_SUCCESS) {
+        printf("Error: %s\n", getClError(oErr));
+        PyErr_SetString(PyExc_RuntimeError,  "Failed to enqueue readimage");
+        return NULL;
+    }
+
+
+    oErr = clFinish(queue);
+    if (oErr != CL_SUCCESS) {
+        printf("Error: %s\n", getClError(oErr));
+        PyErr_SetString(PyExc_RuntimeError,  "failed to finish queue");
+        return NULL;
+    }
+    //printf("finished queue\n");
+    //printf("size of imDest: %d,%d  x%d\n", imDest->xsize, imDest->ysize, imDest->pixelsize);
+    //memcpy(imDest->image, dummyBuffer, 10*10*4);
+    //printf("memcpy\n");
+
+    // clean up
+    if (clImg != NULL)
+        clReleaseMemObject(clImg);
+
+    //printf("about to buildValue\n");
+
+    return Py_BuildValue("i", 0);
+
+}
 
 
 PyObject *

@@ -36,6 +36,7 @@ from PIL import Image
 import nbt
 import chunk
 from c_overviewer import get_render_mode_inheritance
+from c_overviewer import cl_stitch_quad_images
 from optimizeimages import optimize_image
 import composite
 
@@ -293,9 +294,9 @@ class QuadtreeGen(object):
         imgpath = os.path.join(dest, name) + "." + imgformat
 
         if name == "base":
-            quadPath = [[(0,0),os.path.join(dest, "0." + imgformat)],[(192,0),os.path.join(dest, "1." + imgformat)], [(0, 192),os.path.join(dest, "2." + imgformat)],[(192,192),os.path.join(dest, "3." + imgformat)]]
+            quadPath = [os.path.join(dest, "0." + imgformat),os.path.join(dest, "1." + imgformat),os.path.join(dest, "2." + imgformat),os.path.join(dest, "3." + imgformat)]
         else:
-            quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
+            quadPath = [os.path.join(dest, name, "0." + imgformat),os.path.join(dest, name, "1." + imgformat),os.path.join(dest, name, "2." + imgformat),os.path.join(dest, name, "3." + imgformat)]    
        
         #stat the tile, we need to know if it exists or it's mtime
         try:    
@@ -310,15 +311,15 @@ class QuadtreeGen(object):
         quadPath_filtered = []
         for path in quadPath:
             try:
-                quad_mtime = os.stat(path[1])[stat.ST_MTIME]; 
+                quad_mtime = os.stat(path)[stat.ST_MTIME]; 
                 quadPath_filtered.append(path)
                 if quad_mtime > tile_mtime:     
                     needs_rerender = True            
             except OSError:
                 # We need to stat all the quad files, so keep looping
-                pass      
+                quadPath_filtered.append(None)
         # do they all not exist?
-        if quadPath_filtered == []:
+        if quadPath_filtered == [None, None, None, None]:
             if tile_mtime is not None:
                 os.unlink(imgpath)
             return
@@ -332,13 +333,30 @@ class QuadtreeGen(object):
         
         # we'll use paste (NOT alpha_over) for quadtree generation because
         # this is just straight image stitching, not alpha blending
-        
+       
+        #logging.debug("Attempting CL stitching")
+        quadPath_imgs = []
         for path in quadPath_filtered:
-            try:
-                quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
-                img.paste(quad, path[0])
-            except Exception, e:
-                logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", path[1], e)
+            if path:
+                i = Image.open(path)
+                i.load()
+                quadPath_imgs.append(i)
+            else:
+                quadPath_imgs.append(None)
+
+        #logging.debug("list: %r", quadPath_imgs)
+        # cl_stitch_quad_images expects the second argument to be a list of image objects.  be sure to 
+        # all .load of them, since PIL will lazyload
+        cl_stitch_quad_images(img, quadPath_imgs);
+        ##for path in quadPath_filtered:
+        ##    try:
+        ##        quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
+        ##        img.paste(quad, path[0])
+        ##        # path[0] is a tuple of x,y coords
+        ##        #cl_stitch_quad_images(img, [1,2,3]);
+        ##        logging.debug("Stitching %s into img %s", path[1], path[0])
+        ##    except Exception, e:
+        ##        logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", path[1], e)
 
         # Save it
         if self.imgformat == 'jpg':
