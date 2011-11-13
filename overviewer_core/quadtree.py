@@ -118,6 +118,9 @@ class QuadtreeGen(object):
         if not os.path.exists(self.full_tiledir):
             logging.debug("%s doesn't exist, doing a full render", self.full_tiledir)
             self.forcerender = True
+
+    def __repr__(self):
+        return "<QuadTreeGen for rendermode %r>" % self.rendermode
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
@@ -268,21 +271,9 @@ class QuadtreeGen(object):
                     
         return chunklist   
         
-    def get_worldtiles(self):
-        """Returns an iterator over the tiles of the most detailed layer that
-        need to be rendered
-
-        """
-        # This quadtree object gets replaced by the caller in rendernode.py,
-        # but we still have to let them know which quadtree this tile belongs
-        # to. Hence returning both self and the tile.
-
-        dirty_tree = self.scan_chunks()
-        dirty_tiles = (Tile.from_path(tpath) for tpath in dirty_tree.iterate_dirty())
-        return ([self, tile] for tile in dirty_tiles)
-        
     def get_innertiles(self,zoom):
-        """Same as get_worldtiles but for the inntertile routine.
+        """Returns the inner tiles at the given zoom level that need to be rendered
+
         """    
         for path in iterate_base4(zoom):
             # This image is rendered at(relative to the worker's destdir):
@@ -376,6 +367,9 @@ class QuadtreeGen(object):
         There is no return value
         """    
 
+        # The poi_q (point of interest queue) is a multiprocessing Queue
+        # object, and it gets stashed in the world object by the constructor to
+        # RenderNode so we can find it right here.
         poi_queue = self.world.poi_q
 
         imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
@@ -398,13 +392,15 @@ class QuadtreeGen(object):
         if not chunks:
             # No chunks were found in this tile
             if not check_tile:
-                logging.warning("Tile %s was requested for render, but no chunks found! This may be a bug", tile)
+                logging.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
             try:
                 os.unlink(imgpath)
             except OSError, e:
                 # ignore only if the error was "file not found"
                 if e.errno != errno.ENOENT:
                     raise
+            else:
+                logging.debug("%s deleted", tile)
             return
 
         # Create the directory if not exists
@@ -502,7 +498,7 @@ class QuadtreeGen(object):
 
         dirty = DirtyTiles(depth)
 
-        logging.debug("Scanning chunks for tiles that need rendering...")
+        logging.debug("	Scanning chunks for tiles that need rendering...")
         chunkcount = 0
         stime = time.time()
 
@@ -516,7 +512,7 @@ class QuadtreeGen(object):
         for chunkx, chunky, chunkmtime in self.world.iterate_chunk_metadata():
             chunkcount += 1
             if chunkcount % 10000 == 0:
-                logging.debug("%s chunks scanned", chunkcount)
+                logging.info("	%s chunks scanned", chunkcount)
 
             chunkcol, chunkrow = self.world.convert_coords(chunkx, chunky)
             #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
@@ -561,15 +557,18 @@ class QuadtreeGen(object):
                         dirty.set_dirty(tile.path)
                         #logging.debug("	Setting tile as dirty. Will render.")
 
-        logging.debug("Done. %s chunks scanned in %s seconds", chunkcount, int(time.time()-stime))
+        t = int(time.time()-stime)
+        logging.debug("	Done. %s chunks scanned in %s second%s", chunkcount, t,
+                "s" if t != 1 else "")
 
-        logging.debug("Counting tiles that need rendering...")
-        tilecount = 0
-        stime = time.time()
-        for _ in dirty.iterate_dirty():
-            tilecount += 1
-        logging.debug("Done. %s tiles need to be rendered. (count took %s seconds)",
-                tilecount, int(time.time()-stime))
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug("	Counting tiles that need rendering...")
+            tilecount = 0
+            stime = time.time()
+            for _ in dirty.iterate_dirty():
+                tilecount += 1
+            logging.debug("	Done. %s tiles need to be rendered. (count took %s seconds)",
+                    tilecount, int(time.time()-stime))
         
         return dirty
 
@@ -734,6 +733,16 @@ class DirtyTiles(object):
         # long as an unset_dirty() method or similar does not exist.
         return any(self.children)
 
+    def count(self):
+        """Returns the total number of dirty leaf nodes.
+
+        """
+        # TODO: Make this more efficient (although for even the largest trees,
+        # this takes only seconds)
+        c = 0
+        for _ in self.iterate_dirty():
+            c += 1
+        return c
 
 class Tile(object):
     """A simple container class that represents a single render-tile.
