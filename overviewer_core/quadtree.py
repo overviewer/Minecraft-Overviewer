@@ -439,7 +439,7 @@ class QuadtreeGen(object):
                         break
                 
                 # stochastic render check
-                if not needs_rerender and self.rerender_probability > 0.0 and random.uniform(0, 1) < self.rerender_probability:
+                if not needs_rerender and self.rerender_probability > 0.0 and random.random() < self.rerender_probability:
                     needs_rerender = True
                 
                 # if after all that, we don't need a rerender, return
@@ -535,6 +535,17 @@ class QuadtreeGen(object):
                     tile = Tile.compute_path(tilex-2*i, tiley+4*j, depth)
 
                     if self.forcerender:
+                        dirty.set_dirty(tile.path)
+                        continue
+
+                    # Stochastic check. Since we're scanning by chunks and not
+                    # by tiles, and the tiles get checked multiple times for
+                    # each chunk, this is only an approximation. The given
+                    # probability is for a particular tile that needs
+                    # rendering, but since a tile gets touched up to 32 times
+                    # (once for each chunk in it), divide the probability by
+                    # 32.
+                    if self.rerender_probability and self.rerender_probability/32 > random.random():
                         dirty.set_dirty(tile.path)
                         continue
 
