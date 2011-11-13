@@ -161,7 +161,7 @@ c_overviewer_includes = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_inc
 
 xla = []
 if platform.system() == 'Darwin':
-    xla += ['-framework', 'OpenCL']
+    xla += ['-framework', 'OpenCL', '-lc']
 if platform.system() == 'Windows':
     xla += ['OpenCL.lib']
 

@@ -140,13 +140,13 @@ do_cl_init(PyObject *self, PyObject *args)
     prog_file = fopen(program_name, "r");
     filesize = s.st_size+1;
     source = (char*)malloc(filesize);
-    printf("Attempting to read %d bytes of paste.cl\n", filesize);
     memset(source, 0, filesize);
 
     read_so_far = fread(source, 1, filesize-1, prog_file);
-    printf("read so far: %d\n", read_so_far);
+    printf("read_so_far: %d\n", read_so_far);
 
-    if (!feof(prog_file)) {
+    //if (!((read_so_far == filesize-1) || foef(prog_file))) {
+    if (!((read_so_far == filesize-1))) {
 
         PyErr_SetString(PyExc_RuntimeError,
                 "Failed read all of paste.cl");
@@ -264,6 +264,7 @@ stitch_quad_images(PyObject* self, PyObject *args)
         Imaging img_img;
         void* img_buf;
         size_t global_ws[2] = {192, 192};
+        size_t local_ws[2] = {16, 16};
 
         PyObject *img_py = PySequence_GetItem(imgList, x); // new reference
         if (img_py == Py_None) { continue; }
