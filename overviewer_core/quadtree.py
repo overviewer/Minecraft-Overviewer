@@ -343,7 +343,7 @@ class QuadtreeGen(object):
                 try:
                     os.unlink(path[1])
                 except Exception, e:
-                    logging.warning("I couldn't delete it. You will need to delete it yourself. Error was '%s'", e)
+                    logging.error("I couldn't delete it. You will need to delete it yourself. Error was '%s'", e)
 
         # Save it
         if self.imgformat == 'jpg':
