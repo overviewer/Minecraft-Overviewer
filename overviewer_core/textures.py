@@ -1911,13 +1911,73 @@ def pressure_plate(blockid, data):
 # normal and glowing redstone ore
 block(blockid=[73, 74], top_index=51)
 
-##
-## not rendered: buttons
-##
 @material(blockid=77, data=range(16), transparent=True)
 def buttons(blockid, data, north):
-    # place holder, used to make the block transparent
-    return None
+
+    # 0x8 is set if the button is pressed mask this info and render
+    # it as unpressed
+    data = data & 0x7
+
+    if north == 'upper-left':
+        if data == 1: data = 3
+        elif data == 2: data = 4
+        elif data == 3: data = 2
+        elif data == 4: data = 1
+    elif north == 'upper-right':
+        if data == 1: data = 2
+        elif data == 2: data = 1
+        elif data == 3: data = 4
+        elif data == 4: data = 3
+    elif north == 'lower-right':
+        if data == 1: data = 4
+        elif data == 2: data = 3
+        elif data == 3: data = 1
+        elif data == 4: data = 2
+
+    t = terrain_images[1].copy()
+
+    # generate the texture for the button
+    ImageDraw.Draw(t).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(t).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(t).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(t).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    img = Image.new("RGBA", (24,24), bgcolor)
+
+    button = transform_image_side(t)
+    
+    if data == 1: # facing SOUTH
+        # buttons can't be placed in transparent blocks, so this
+        # direction can't be seen
+        return None
+
+    elif data == 2: # facing NORTH
+        # paste it twice with different brightness to make a 3D effect
+        composite.alpha_over(img, button, (12,-1), button)
+
+        alpha = button.split()[3]
+        button = ImageEnhance.Brightness(button).enhance(0.9)
+        button.putalpha(alpha)
+        
+        composite.alpha_over(img, button, (11,0), button)
+
+    elif data == 3: # facing WEST
+        # paste it twice with different brightness to make a 3D effect
+        button = button.transpose(Image.FLIP_LEFT_RIGHT)
+        composite.alpha_over(img, button, (0,-1), button)
+
+        alpha = button.split()[3]
+        button = ImageEnhance.Brightness(button).enhance(0.9)
+        button.putalpha(alpha)
+        
+        composite.alpha_over(img, button, (1,0), button)
+
+    elif data == 4: # facing EAST
+        # buttons can't be placed in transparent blocks, so this
+        # direction can't be seen
+        return None
+
+    return img
 
 # snow
 @material(blockid=78, data=range(8), transparent=True, solid=True)
