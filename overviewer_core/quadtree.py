@@ -296,7 +296,7 @@ class QuadtreeGen(object):
         else:
             quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
        
-        #stat the tile, we need to know if it exists or it's mtime
+        #stat the tile, we need to know if it exists and its mtime
         try:    
             tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
         except OSError, e:
@@ -381,7 +381,7 @@ class QuadtreeGen(object):
 
         tile_mtime = None
         if check_tile:
-            #stat the file, we need to know if it exists or it's mtime
+            # stat the file, we need to know if it exists and its mtime
             try:    
                 tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
             except OSError, e:
@@ -486,8 +486,8 @@ class QuadtreeGen(object):
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
 
     def scan_chunks(self):
-        """Scans the chunks of the world object and produce an iterator over
-        the tiles that need to be rendered.
+        """Scans the chunks of the world object and return the dirty tree object
+        holding the tiles that need to be rendered.
 
         Checks mtimes of tiles in the process, unless forcerender is set on the
         object.
@@ -523,7 +523,7 @@ class QuadtreeGen(object):
 
             if chunkcol % 2 == 0:
                 # This chunk is half-in one column and half-in another column.
-                # tilex is the right one, also do tilex-2
+                # tilex is the right one, also do tilex-2, the left one
                 x_tiles = 2
             else:
                 x_tiles = 1
