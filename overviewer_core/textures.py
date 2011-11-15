@@ -943,7 +943,23 @@ def rails(blockid, data, north):
         elif (data & 0b0111) == 3: data = data & 0b1000 | 5
         elif (data & 0b0111) == 4: data = data & 0b1000 | 3
         elif (data & 0b0111) == 5: data = data & 0b1000 | 2
-        
+    if blockid == 66: # normal minetrack only
+        #Corners
+        if north == 'upper-left':
+            if data == 6: data = 7
+            elif data == 7: data = 8
+            elif data == 8: data = 6
+            elif data == 9: data = 9
+        elif north == 'upper-right':
+            if data == 6: data = 8
+            elif data == 7: data = 9
+            elif data == 8: data = 6
+            elif data == 9: data = 7
+        elif north == 'lower-right':
+            if data == 6: data = 9
+            elif data == 7: data = 6
+            elif data == 8: data = 8
+            elif data == 9: data = 7
     img = Image.new("RGBA", (24,24), bgcolor)
     
     if blockid == 27: # powered rail
