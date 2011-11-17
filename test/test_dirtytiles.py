@@ -65,7 +65,7 @@ class DirtyTilesTest(unittest.TestCase):
         self.tree.set_dirty((1,1,1))
         self.assertRaises(AssertionError, self.test_iterate)
 
-        # If something was supposed to be returned but didn't
+        # If something was supposed to be returned but wasn't
         tree = DirtyTiles(3)
         c = len(self.dirty_paths) // 2
         for t in self.dirty_paths:
@@ -115,6 +115,15 @@ class DirtyTilesTest(unittest.TestCase):
             self.assertTrue(p in l2, "%s was not supposed to be returned!" % (p,))
             l2.remove(p)
         self.assertEqual(len(dirty), 0, "Never iterated over these items: %s" % l2)
+
+        # level 1
+        l1 = set()
+        for p in self.dirty_paths:
+            l1.add(p[0:1])
+        for p in self.tree.iterate_dirty(1):
+            self.assertTrue(p in l1, "%s was not supposed to be returned!" % (p,))
+            l1.remove(p)
+        self.assertEqual(len(dirty), 0, "Never iterated over these items: %s" % l1)
 
 if __name__ == "__main__":
     unittest.main()

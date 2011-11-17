@@ -599,12 +599,16 @@ class DirtyTiles(object):
     dirty are collapsed
     
     """
-    __slots__ = ("level", "children")
-    def __init__(self, level):
-        """Initialize a new node of the tree at the specified level
+    __slots__ = ("depth", "children")
+    def __init__(self, depth):
+        """Initialize a new tree with the specified depth. This actually
+        initializes a node, which is the root of a subtree, with `depth` levels
+        beneath it.
 
         """
-        self.level = level
+        # Stores the depth of the tree according to this node. This is not the
+        # depth of this node, but rather the number of levels below this node.
+        self.depth = depth
 
         # the self.children array holds the 4 children of this node. This
         # follows the same quadtree convention as elsewhere: children 0, 1, 2,
@@ -618,7 +622,7 @@ class DirtyTiles(object):
         # A DirtyTiles instance
         #   the instance defines which children down that subtree are
         #   clean/dirty.
-        # A node with level=1 cannot have a DirtyTiles instance in its
+        # A node with depth=1 cannot have a DirtyTiles instance in its
         # children since its leaves are images, not more tree
         self.children = [False] * 4
 
@@ -630,7 +634,7 @@ class DirtyTiles(object):
         
         """
         path = list(path)
-        assert len(path) == self.level
+        assert len(path) == self.depth
         path.reverse()
         self._set_dirty_helper(path)
 
@@ -644,7 +648,7 @@ class DirtyTiles(object):
 
         """
 
-        if self.level == 1:
+        if self.depth == 1:
             # Base case
             self.children[path[0]] = True
 
@@ -659,7 +663,7 @@ class DirtyTiles(object):
 
             if child == False:
                 # Create a new node
-                child = self.__class__(self.level-1)
+                child = self.__class__(self.depth-1)
                 child._set_dirty_helper(path)
                 self.children[childnum] = child
             elif child == True:
@@ -679,16 +683,21 @@ class DirtyTiles(object):
                     if all(x is True for x in self.children):
                         return True
 
-    def iterate_dirty(self):
+    def iterate_dirty(self, depth=None):
         """Returns an iterator over every dirty tile in this subtree. Each item
         yielded is a sequence of integers representing the quadtree path to the
-        dirty tile. Yielded sequences are of length self.level.
+        dirty tile. Yielded sequences are of length self.depth.
+
+        If zoom is None, iterates over tiles of the highest level, i.e.
+        worldtiles. If zoom is a value between 0 and the depth, iterates over
+        tiles at that zoom level. Zoom level 0 is zoomed all the way out, zoom
+        level `depth` is all the way in.
 
         """
-        return (reversed(rpath) for rpath in self._iterate_dirty_helper())
+        return (tuple(reversed(rpath)) for rpath in self._iterate_dirty_helper())
 
     def _iterate_dirty_helper(self):
-        if self.level == 1:
+        if self.depth == 1:
             # Base case
             if self.children[0]: yield [0]
             if self.children[1]: yield [1]
@@ -700,7 +709,7 @@ class DirtyTiles(object):
             for c, child in enumerate(self.children):
                 if child == True:
                     # All dirty down this subtree, iterate over every leaf
-                    for x in iterate_base4(self.level-1):
+                    for x in iterate_base4(self.depth-1):
                         x = list(x)
                         x.append(c)
                         yield x
