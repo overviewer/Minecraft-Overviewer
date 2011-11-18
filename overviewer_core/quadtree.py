@@ -518,21 +518,35 @@ class QuadtreeGen(object):
             #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
 
             # find tile coordinates
-            tilex = chunkcol - chunkcol % 2
-            tiley = chunkrow - chunkrow % 4
+            tilecol = chunkcol - chunkcol % 2
+            tilerow = chunkrow - chunkrow % 4
 
             if chunkcol % 2 == 0:
                 # This chunk is half-in one column and half-in another column.
-                # tilex is the right one, also do tilex-2, the left one
+                # tilecol is the right one, also do tilecol-2, the left one
                 x_tiles = 2
             else:
                 x_tiles = 1
 
-            # The tile at tilex,tiley obviously contains chunk, but so do the
-            # next 4 tiles down because chunks are very tall
+            # The tile at tilecol,tilerow obviously contains chunk, but so do
+            # the next 4 tiles down because chunks are very tall
             for i in xrange(x_tiles):
                 for j in xrange(5):
-                    tile = Tile.compute_path(tilex-2*i, tiley+4*j, depth)
+
+                    c = tilecol - 2*i
+                    r = tilerow + 4*j
+                    # Make sure the tile is in the range according to the given
+                    # depth. This won't happen unless the user has given -z to
+                    # render a smaller area of the map than everything
+                    if (
+                            c < self.mincol or
+                            c >= self.maxcol or
+                            r < self.minrow or
+                            r >= self.maxrow
+                            ):
+                        continue
+
+                    tile = Tile.compute_path(c, r, depth)
 
                     if self.forcerender:
                         dirty.set_dirty(tile.path)
