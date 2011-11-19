@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
 import multiprocessing
 import Queue
 import os
@@ -123,6 +124,9 @@ class RenderNode(object):
         for world in self.worlds:
             world.poi_q = manager.Queue() 
 
+        self._last_print_count = 0
+        self._last_print_level = 0
+        self._last_print_time = None
 
     def print_statusline(self, complete, total, level, unconditional=False):
         if unconditional:
@@ -138,6 +142,19 @@ class RenderNode(object):
                 return
         logging.info("{0}/{1} ({4}%) tiles complete on level {2}/{3}".format(
                 complete, total, level, self.max_p, '%.1f' % ( (100.0 * complete) / total) ))
+
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            now = time.time()
+            if self._last_print_level == level:
+                deltacount = complete - self._last_print_count
+                deltat = now - self._last_print_time
+                avg = deltacount / deltat
+                logging.debug("%i tiles rendered in %.1f seconds. Avg: %.1f tiles per sec",
+                        deltacount, deltat, avg)
+
+            self._last_print_level = level
+            self._last_print_count = complete
+            self._last_print_time = now
                 
     def go(self, procs):
         """Renders all tiles"""
@@ -338,8 +355,8 @@ class RenderNode(object):
                             count_to_remove -= 1
                             complete += results.popleft().get()
                             self.print_statusline(complete, total, level)
-                if len(results) > (10000/batch_size):
-                    while len(results) > (500/batch_size):
+                if len(results) > (10000//batch_size):
+                    while len(results) > (500//batch_size):
                         complete += results.popleft().get()
                         self.print_statusline(complete, total, level)
             # Empty the queue
