@@ -120,9 +120,9 @@ class RenderNode(object):
         # management process won't do much processing, part of the point of p=1
         # is to ease debugging and profiling by keeping everything in one
         # process/thread)
-        manager = multiprocessing.Manager() 
-        for world in self.worlds:
-            world.poi_q = manager.Queue() 
+        #manager = multiprocessing.Manager() 
+        #for world in self.worlds:
+        #    world.poi_q = manager.Queue() 
 
         self._last_print_count = 0
         self._last_print_level = 0
@@ -251,26 +251,26 @@ class RenderNode(object):
                 # items from the results queue
                 if count_to_remove < len(results):
                     # Drain the point of interest queue for each world
-                    for world in self.worlds:
-                        try:
-                            while (1):
-                                # an exception will break us out of this loop
-                                item = world.poi_q.get(block=False)
-                                if item[0] == "newpoi":
-                                    if item[1] not in world.POI:
-                                        #print "got an item from the queue!"
-                                        world.POI.append(item[1])
-                                elif item[0] == "removePOI":
-                                    world.persistentData['POI'] = filter(
-                                            lambda x: x['chunk'] != item[1],
-                                            world.persistentData['POI']
-                                            )
+                    #for world in self.worlds:
+                    #    try:
+                    #        while (1):
+                    #            # an exception will break us out of this loop
+                    #            item = world.poi_q.get(block=False)
+                    #            if item[0] == "newpoi":
+                    #                if item[1] not in world.POI:
+                    #                    #print "got an item from the queue!"
+                    #                    world.POI.append(item[1])
+                    #            elif item[0] == "removePOI":
+                    #                world.persistentData['POI'] = filter(
+                    #                        lambda x: x['chunk'] != item[1],
+                    #                        world.persistentData['POI']
+                    #                        )
 
-                                elif item[0] == "rendered":
-                                    self.rendered_tiles.append(item[1])
+                    #            elif item[0] == "rendered":
+                    #                self.rendered_tiles.append(item[1])
 
-                        except Queue.Empty:
-                            pass
+                    #    except Queue.Empty:
+                    #        pass
                     # Now drain the results queue. results has more than
                     # count_to_remove items in it (as checked above)
                     while count_to_remove > 0:
@@ -296,22 +296,22 @@ class RenderNode(object):
             self.print_statusline(complete, total_rendertiles, 1)
 
         # Now drain the point of interest queues for each world
-        for world in self.worlds:    
-            try:
-                while (1):
-                    # an exception will break us out of this loop
-                    item = world.poi_q.get(block=False)
-                    if item[0] == "newpoi":
-                        if item[1] not in world.POI:
-                            #print "got an item from the queue!"
-                            world.POI.append(item[1])
-                    elif item[0] == "removePOI":
-                        world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], world.persistentData['POI'])
-                    elif item[0] == "rendered":
-                        self.rendered_tiles.append(item[1])
+        #for world in self.worlds:    
+        #    try:
+        #        while (1):
+        #            # an exception will break us out of this loop
+        #            item = world.poi_q.get(block=False)
+        #            if item[0] == "newpoi":
+        #                if item[1] not in world.POI:
+        #                    #print "got an item from the queue!"
+        #                    world.POI.append(item[1])
+        #            elif item[0] == "removePOI":
+        #                world.persistentData['POI'] = filter(lambda x: x['chunk'] != item[1], world.persistentData['POI'])
+        #            elif item[0] == "rendered":
+        #                self.rendered_tiles.append(item[1])
 
-            except Queue.Empty:
-                pass
+        #    except Queue.Empty:
+        #        pass
 
         # Print the final status line unconditionally
         self.print_statusline(complete, total_rendertiles, 1, True)

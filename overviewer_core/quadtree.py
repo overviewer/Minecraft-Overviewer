@@ -370,7 +370,7 @@ class QuadtreeGen(object):
         # The poi_q (point of interest queue) is a multiprocessing Queue
         # object, and it gets stashed in the world object by the constructor to
         # RenderNode so we can find it right here.
-        poi_queue = self.world.poi_q
+        #poi_queue = self.world.poi_q
 
         imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
 
@@ -468,7 +468,7 @@ class QuadtreeGen(object):
 
             # draw the chunk!
             try:
-                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue)
+                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, None)
                 a.chunk_render(tileimg, xpos, ypos, None)
             except chunk.ChunkCorrupt:
                 # an error was already printed
@@ -480,7 +480,7 @@ class QuadtreeGen(object):
         else: # png
             tileimg.save(imgpath)
         #Add tile to list of rendered tiles
-        poi_queue.put(['rendered',imgpath])
+        #poi_queue.put(['rendered',imgpath])
 
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
