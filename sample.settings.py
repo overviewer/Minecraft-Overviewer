@@ -1,10 +1,17 @@
 ################################################################################
-# Please see the README or https://github.com/overviewer/Minecraft-Overviewer/wiki/DTT-Upgrade-Guide
-# for more details.
+# This is a SAMPLE settings file.
 
-# This file is not meant to be used directly, but instead it is supposed to
-# provide examples of interesting things you can do with the settings file. Most
-# of the time, a simple 'setting_name = value' will work.
+# THIS FILE IS NOT MEANT TO BE USED DIRECTLY, BUT INSTEAD IT IS SUPPOSED TO
+# PROVIDE EXAMPLES OF INTERESTING THINGS YOU CAN DO WITH THE SETTINGS FILE.
+
+# THIS IS NOT A BASE FOR YOUR OWN SETTINGS FILE. CREATE A BLANK SETTINGS FILE
+# AND PUT YOUR OPTIONS AND CUSOMIZATIONS IN THERE.
+
+# See http://docs.overviewer.org/en/latest/options/#command-line-options
+# for options you can set
+
+# See http://docs.overviewer.org/en/latest/options/#settings-file
+# for more info about settings files.
 
 # This file is a python script, so you can import any python module you wish or
 # use any built-in python function, though this is not normally necessary
@@ -169,4 +176,9 @@ north_direction = "upper-right"
 ### a guide. Be sure to read what each option does before you set it.
 ### See the README for more details.
 import sys
-sys.exit("This sample-settings file shouldn't be used directly!")
+sys.exit("""
+The sample-settings file shouldn't be used! It contains lots of things you
+don't want, and is just a set of examples to give you ideas of what's possible.
+You must instead create a blank file and put your options and customizations in
+there.
+""")
