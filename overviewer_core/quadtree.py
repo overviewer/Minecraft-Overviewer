@@ -503,7 +503,7 @@ class QuadtreeGen(object):
 
         dirty = DirtyTiles(depth)
 
-        logging.debug("	Scanning chunks for tiles that need rendering...")
+        #logging.debug("	Scanning chunks for tiles that need rendering...")
         chunkcount = 0
         stime = time.time()
 
@@ -516,8 +516,8 @@ class QuadtreeGen(object):
         # circuit checking mtimes of all chunks in a region
         for chunkx, chunky, chunkmtime in self.world.iterate_chunk_metadata():
             chunkcount += 1
-            if chunkcount % 10000 == 0:
-                logging.info("	%s chunks scanned", chunkcount)
+            #if chunkcount % 10000 == 0:
+            #    logging.info("	%s chunks scanned", chunkcount)
 
             chunkcol, chunkrow = self.world.convert_coords(chunkx, chunky)
             #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
@@ -588,17 +588,18 @@ class QuadtreeGen(object):
                         #logging.debug("	Setting tile as dirty. Will render.")
 
         t = int(time.time()-stime)
-        logging.debug("	Done. %s chunks scanned in %s second%s", chunkcount, t,
+        logging.debug("Done with scan for '%s'. %s chunks scanned in %s second%s", 
+                self.rendermode, chunkcount, t,
                 "s" if t != 1 else "")
 
-        if logging.getLogger().isEnabledFor(logging.DEBUG):
-            logging.debug("	Counting tiles that need rendering...")
-            tilecount = 0
-            stime = time.time()
-            for _ in dirty.iterate_dirty():
-                tilecount += 1
-            logging.debug("	Done. %s tiles need to be rendered. (count took %s seconds)",
-                    tilecount, int(time.time()-stime))
+        #if logging.getLogger().isEnabledFor(logging.DEBUG):
+        #    logging.debug("	Counting tiles that need rendering...")
+        #    tilecount = 0
+        #    stime = time.time()
+        #    for _ in dirty.iterate_dirty():
+        #        tilecount += 1
+        #    logging.debug("	Done. %s tiles need to be rendered. (count took %s seconds)",
+        #            tilecount, int(time.time()-stime))
         
         return dirty
 
