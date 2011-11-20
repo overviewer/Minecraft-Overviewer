@@ -621,7 +621,8 @@ class DirtyTiles(object):
 
         """
         # Stores the depth of the tree according to this node. This is not the
-        # depth of this node, but rather the number of levels below this node.
+        # depth of this node, but rather the number of levels below this node
+        # (including this node).
         self.depth = depth
 
         # the self.children array holds the 4 children of this node. This
@@ -697,21 +698,31 @@ class DirtyTiles(object):
                     if all(x is True for x in self.children):
                         return True
 
-    def iterate_dirty(self, depth=None):
+    def iterate_dirty(self, level=None):
         """Returns an iterator over every dirty tile in this subtree. Each item
         yielded is a sequence of integers representing the quadtree path to the
         dirty tile. Yielded sequences are of length self.depth.
 
-        If zoom is None, iterates over tiles of the highest level, i.e.
-        worldtiles. If zoom is a value between 0 and the depth, iterates over
-        tiles at that zoom level. Zoom level 0 is zoomed all the way out, zoom
-        level `depth` is all the way in.
+        If level is None, iterates over tiles of the highest level, i.e.
+        worldtiles. If level is a value between 0 and the depth of this tree,
+        this method iterates over tiles at that level. Zoom level 0 is zoomed
+        all the way out, zoom level `depth` is all the way in.
+
+        In other words, specifying level causes the tree to be iterated as if
+        it was only that depth.
 
         """
-        return (tuple(reversed(rpath)) for rpath in self._iterate_dirty_helper())
+        if level is None:
+            todepth = 1
+        else:
+            if not (level > 0 and level <= self.depth):
+                raise ValueError("Level parameter must be between 1 and %s" % self.depth)
+            todepth = self.depth - level + 1
 
-    def _iterate_dirty_helper(self):
-        if self.depth == 1:
+        return (tuple(reversed(rpath)) for rpath in self._iterate_dirty_helper(todepth))
+
+    def _iterate_dirty_helper(self, todepth):
+        if self.depth == todepth:
             # Base case
             if self.children[0]: yield [0]
             if self.children[1]: yield [1]
@@ -723,13 +734,13 @@ class DirtyTiles(object):
             for c, child in enumerate(self.children):
                 if child == True:
                     # All dirty down this subtree, iterate over every leaf
-                    for x in iterate_base4(self.depth-1):
+                    for x in iterate_base4(self.depth-todepth):
                         x = list(x)
                         x.append(c)
                         yield x
                 elif child != False:
                     # Mixed dirty/clean down this subtree, recurse
-                    for path in child._iterate_dirty_helper():
+                    for path in child._iterate_dirty_helper(todepth):
                         path.append(c)
                         yield path
 

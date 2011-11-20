@@ -59,6 +59,19 @@ class DirtyTilesTest(unittest.TestCase):
         # Make sure they were all returned
         self.assertEqual(len(dirty), 0)
 
+    def test_iterate_levelmax(self):
+        """Same as test_iterate, but specifies the level explicitly"""
+        dirty = set(self.dirty_paths)
+        for p in self.tree.iterate_dirty(3):
+            # Can't use assertIn, was only added in 2.7
+            self.assertTrue(p in dirty)
+
+            # Should not see this one again
+            dirty.remove(p)
+
+        # Make sure they were all returned
+        self.assertEqual(len(dirty), 0)
+
     def test_iterate_fail(self):
         """Meta-test: Make sure test_iterate() would actually fail"""
         # if an extra item were returned"""
@@ -114,7 +127,7 @@ class DirtyTilesTest(unittest.TestCase):
         for p in self.tree.iterate_dirty(2):
             self.assertTrue(p in l2, "%s was not supposed to be returned!" % (p,))
             l2.remove(p)
-        self.assertEqual(len(dirty), 0, "Never iterated over these items: %s" % l2)
+        self.assertEqual(len(l2), 0, "Never iterated over these items: %s" % l2)
 
         # level 1
         l1 = set()
@@ -123,7 +136,7 @@ class DirtyTilesTest(unittest.TestCase):
         for p in self.tree.iterate_dirty(1):
             self.assertTrue(p in l1, "%s was not supposed to be returned!" % (p,))
             l1.remove(p)
-        self.assertEqual(len(dirty), 0, "Never iterated over these items: %s" % l1)
+        self.assertEqual(len(l1), 0, "Never iterated over these items: %s" % l1)
 
 if __name__ == "__main__":
     unittest.main()
