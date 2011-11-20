@@ -20,12 +20,22 @@
 static PyObject *textures = NULL;
 static PyObject *chunk_mod = NULL;
 static PyObject *blockmap = NULL;
-static PyObject *special_blocks = NULL;
-static PyObject *specialblockmap = NULL;
+
+unsigned int max_blockid = 0;
+unsigned int max_data = 0;
+unsigned char *block_properties = NULL;
+
+static PyObject *known_blocks = NULL;
 static PyObject *transparent_blocks = NULL;
+static PyObject *solid_blocks = NULL;
+static PyObject *fluid_blocks = NULL;
+static PyObject *nospawn_blocks = NULL;
 
 PyObject *init_chunk_render(PyObject *self, PyObject *args) {
    
+    PyObject *tmp = NULL;
+    unsigned int i;
+    
     /* this function only needs to be called once, anything more should be
      * ignored */
     if (blockmap) {
@@ -47,28 +57,53 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     blockmap = PyObject_GetAttrString(textures, "blockmap");
     if (!blockmap)
         return NULL;
-    special_blocks = PyObject_GetAttrString(textures, "special_blocks");
-    if (!special_blocks)
+    
+    tmp = PyObject_GetAttrString(textures, "max_blockid");
+    if (!tmp)
         return NULL;
-    specialblockmap = PyObject_GetAttrString(textures, "specialblockmap");
-    if (!specialblockmap)
+    max_blockid = PyInt_AsLong(tmp);
+    tmp = PyObject_GetAttrString(textures, "max_data");
+    if (!tmp)
         return NULL;
-    transparent_blocks = PyObject_GetAttrString(chunk_mod, "transparent_blocks");
+    max_data = PyInt_AsLong(tmp);
+    
+    /* assemble the property table */
+    known_blocks = PyObject_GetAttrString(textures, "known_blocks");
+    if (!known_blocks)
+        return NULL;
+    transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
     if (!transparent_blocks)
         return NULL;
+    solid_blocks = PyObject_GetAttrString(textures, "solid_blocks");
+    if (!solid_blocks)
+        return NULL;
+    fluid_blocks = PyObject_GetAttrString(textures, "fluid_blocks");
+    if (!fluid_blocks)
+        return NULL;
+    nospawn_blocks = PyObject_GetAttrString(textures, "nospawn_blocks");
+    if (!nospawn_blocks)
+        return NULL;
     
+    block_properties = calloc(max_blockid, sizeof(unsigned char));
+    for (i = 0; i < max_blockid; i++) {
+        PyObject *block = PyInt_FromLong(i);
+        
+        if (PySequence_Contains(known_blocks, block))
+            block_properties[i] |= 1 << KNOWN;
+        if (PySequence_Contains(transparent_blocks, block))
+            block_properties[i] |= 1 << TRANSPARENT;
+        if (PySequence_Contains(solid_blocks, block))
+            block_properties[i] |= 1 << SOLID;
+        if (PySequence_Contains(fluid_blocks, block))
+            block_properties[i] |= 1 << FLUID;
+        if (PySequence_Contains(nospawn_blocks, block))
+            block_properties[i] |= 1 << NOSPAWN;
+        
+        Py_DECREF(block);
+    }
+
     Py_RETURN_NONE;
 }
-
-int
-is_transparent(unsigned char b) {
-    PyObject *block = PyInt_FromLong(b);
-    int ret = PySequence_Contains(transparent_blocks, block);
-    Py_DECREF(block);
-    return ret;
-
-}
-
 
 unsigned char
     check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
@@ -284,14 +319,15 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 
         return final_data;
 
-    /* portal, iron bars and glass panes
-     * Note: iron bars and glass panes "stick" to other blocks, but
-     * at the moment of writing this is not clear which ones stick and
-     * which others no, so for the moment stick only with himself.
-     * This is a TODO!
-     */
-    } else if ((state->block == 90) || (state->block == 101) ||
-               (state->block == 102)) {
+    } else if ((state->block == 101) || (state->block == 102)) {
+        /* iron bars and glass panes:
+         * they seem to stick to almost everything but air, but
+         * not sure yet! Still a TODO! */
+        /* return check adjacent blocks with air, bit inverted */
+        return check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f;
+
+    } else if ((state->block == 90) || (state->block == 113)) {
+        /* portal and nether brick fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
     }
 
@@ -372,14 +408,15 @@ chunk_render(PyObject *self, PyObject *args) {
     
     for (state.x = 15; state.x > -1; state.x--) {
         for (state.y = 0; state.y < 16; state.y++) {
-            PyObject *blockid = NULL;
-            
+
             /* set up the render coordinates */
             state.imgx = xoff + state.x*12 + state.y*12;
             /* 128*12 -- offset for z direction, 15*6 -- offset for x */
             state.imgy = yoff - state.x*6 + state.y*6 + 128*12 + 15*6;
             
             for (state.z = 0; state.z < 128; state.z++) {
+                unsigned char ancilData;
+                
                 state.imgy -= 12;
 		
                 /* get blockid */
@@ -395,54 +432,37 @@ chunk_render(PyObject *self, PyObject *args) {
                 if ((state.imgy >= imgsize1 + 24) || (state.imgy <= -24)) {
                     continue;
                 }
-
                 
-                /* decref'd on replacement *and* at the end of the z for block */
-                if (blockid) {
-                    Py_DECREF(blockid);
-                }
-                blockid = PyInt_FromLong(state.block);
-
-                // check for occlusion
+                /* check for occlusion */
                 if (render_mode_occluded(rendermode, state.x, state.y, state.z)) {
                     continue;
                 }
                 
-                // everything stored here will be a borrowed ref
+                /* everything stored here will be a borrowed ref */
 
-                /* get the texture and mask from block type / ancil. data */
-                if (!PySequence_Contains(special_blocks, blockid)) {
-                    /* t = textures.blockmap[blockid] */
-                    t = PyList_GetItem(blockmap, state.block);
+                ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
+                state.block_data = ancilData;
+                /* block that need pseudo ancildata:
+                 * grass, water, glass, chest, restone wire,
+                 * ice, fence, portal, iron bars, glass panes */
+                if ((state.block ==  2) || (state.block ==  9) || 
+                    (state.block == 20) || (state.block == 54) || 
+                    (state.block == 55) || (state.block == 79) ||
+                    (state.block == 85) || (state.block == 90) ||
+                    (state.block == 101) || (state.block == 102) ||
+                    (state.block == 113)) {
+                    ancilData = generate_pseudo_data(&state, ancilData);
+                    state.block_pdata = ancilData;
                 } else {
-                    PyObject *tmp;
-                    
-                    unsigned char ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
-                    state.block_data = ancilData;
-                    /* block that need pseudo ancildata:
-                     * grass, water, glass, chest, restone wire,
-                     * ice, fence, portal, iron bars, glass panes */
-                    if ((state.block ==  2) || (state.block ==  9) || 
-                        (state.block == 20) || (state.block == 54) || 
-                        (state.block == 55) || (state.block == 79) ||
-                        (state.block == 85) || (state.block == 90) ||
-                        (state.block == 101) || (state.block == 102)) {
-                        ancilData = generate_pseudo_data(&state, ancilData);
-                        state.block_pdata = ancilData;
-                    } else {
-                        state.block_pdata = 0;
-                    }
-                    
-                    tmp = PyTuple_New(2);
-
-                    Py_INCREF(blockid); /* because SetItem steals */
-                    PyTuple_SetItem(tmp, 0, blockid);
-                    PyTuple_SetItem(tmp, 1, PyInt_FromLong(ancilData));
-                    
-                    /* this is a borrowed reference. no need to decref */
-                    t = PyDict_GetItem(specialblockmap, tmp);
-                    Py_DECREF(tmp);
+                    state.block_pdata = 0;
                 }
+                
+                /* make sure our block info is in-bounds */
+                if (state.block >= max_blockid || ancilData >= max_data)
+                    continue;
+                
+                /* get the texture */
+                t = PyList_GET_ITEM(blockmap, max_data * state.block + ancilData);
                 
                 /* if we found a proper texture, render it! */
                 if (t != NULL && t != Py_None)
@@ -450,8 +470,8 @@ chunk_render(PyObject *self, PyObject *args) {
                     PyObject *src, *mask, *mask_light;
                     int randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
-                    mask = PyTuple_GetItem(t, 1);
-                    mask_light = PyTuple_GetItem(t, 2);
+                    mask = PyTuple_GetItem(t, 0);
+                    mask_light = PyTuple_GetItem(t, 1);
 
                     if (mask == Py_None)
                         mask = src;
@@ -472,11 +492,6 @@ chunk_render(PyObject *self, PyObject *args) {
                         state.imgy -= randy;
                     }
                 }               
-            }
-            
-            if (blockid) {
-                Py_DECREF(blockid);
-                blockid = NULL;
             }
         }
     }

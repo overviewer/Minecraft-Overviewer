@@ -337,7 +337,12 @@ class QuadtreeGen(object):
                 quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
                 img.paste(quad, path[0])
             except Exception, e:
-                logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", path[1], e)
+                logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
+                logging.warning("I'm going to try and delete it. You will need to run the render again")
+                try:
+                    os.unlink(path[1])
+                except Exception, e:
+                    logging.error("I couldn't delete it. You will need to delete it yourself. Error was '%s'", e)
 
         # Save it
         if self.imgformat == 'jpg':

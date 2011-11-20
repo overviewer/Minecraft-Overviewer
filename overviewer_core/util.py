@@ -303,7 +303,7 @@ class DumbFormatter(HighlightingFormatter):
             line = "*" * min(79,len(line)) + "\n" + line
             return line
         else:
-            return super(DumbFormatter, self).highlight(record)
+            return HighlightingFormatter.highlight(self, record)
 
 
 class ANSIColorFormatter(HighlightingFormatter):

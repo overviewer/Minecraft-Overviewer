@@ -24,6 +24,41 @@ files.
 Command line options
 ====================
 
+All Options:
+
+======================================== ==================================
+:option:`--advanced-help`                Print out help on all options
+:option:`--bg-color`                     Change the background of the map
+:option:`--changelist`                   Outputs a list of changed tiles
+:option:`--changelist-format`            Sets the format of the change list
+:option:`--check-terrain`                Output information on the textures
+:option:`--display-config`               Displays the configuration
+:option:`--forcerender`                  Forces every tile to render
+:option:`-h`, :option:`--help <-h>`      Prints help on the basic options
+:option:`--imgformat`                    Choose from png or jpg output
+:option:`--imgquality`                   Change jpg output quality
+:option:`--list-rendermodes`             List the installed rendermodes
+:option:`--no-signs`                     Do not place signs on the map
+:option:`--north-direction`              Choose which direction is north
+:option:`--optimize-img`                 Run pngcrush on outputted tiles
+:option:`-p`, :option:`--processes <-p>` Choose the number of worker processes
+:option:`-q`, :option:`--quiet <-q>`     Print less output
+:option:`--regionlist`                   Only render specified areas of a map
+:option:`--rendermodes`                  Choose which rendermode(s) to use
+:option:`--settings`                     Specify an external settings file
+:option:`--skip-js`                      Do not output generated javascript files
+:option:`--stochastic-render`            Re-render parts of the map randomly
+:option:`--textures-path`                Specify custom textures to use
+:option:`-v`, :option:`--verbose <-v>`   Print more output
+:option:`-V`, :option:`--version <-V>`   Print out the version
+:option:`--web-assets-path`              Specify alternate web assets
+:option:`-z`, :option:`--zoom <-z>`      Do not touch
+======================================== ==================================
+
+
+Help Options
+------------
+
 .. cmdoption:: -h, --help
 
     Shows the list of options and exits
@@ -280,6 +315,11 @@ Less Useful Options
     a certain date. Or perhaps you can incrementally update your map by passing
     in a subset of regions each time. It's up to you!
 
+    .. warning::
+
+        This option may currently be broken. Use at your own risk! Patches
+        welcome!
+
     **Settings file:**
         Option name: ``regionlist``
 
@@ -318,9 +358,11 @@ Less Useful Options
 
 .. cmdoption:: --textures-path <path>
 
-    Use this option to specify an alternate terrain.png to use for textures when
-    rendering a world. ``path`` specifies the **containing directory** of
-    terrain.png.
+    Use this option to specify an alternate terrain.png (and other
+    textures) to when rendering a world. ``path`` specifies the
+    **containing directory** of terrain.png. Alternately, ``path`` can
+    specify a zip file containing the textures, such as a texture
+    pack.
 
     The Overviewer will look for terrain.png in the following places in this
     order: path specified by this option, the program's directory, the

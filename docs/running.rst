@@ -90,9 +90,13 @@ You have several options:
   file in the same directory as overviewer.py or overviewer.exe. For
   installations, you will need to specify the path... see the next bullet.
 
-* You can put a terrain.png file anywhere you want and point to its location
-  with the :option:`--textures-path` option. This should point to the directory containing
-  the terrain.png, not to the file itself.
+* You can put a terrain.png file anywhere you want and point to its
+  location with the :option:`--textures-path` option. This should
+  point to the directory containing the terrain.png, not to the file
+  itself.
+
+* Alternately, you can download any texture pack ZIP you like and
+  point to this directly with :option:`--textures-path`.
 
 Note: the :option:`--check-terrain` option is useful for debugging terrain.png issues.
 For example::
