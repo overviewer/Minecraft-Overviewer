@@ -62,10 +62,13 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     if (!tmp)
         return PyErr_Format(PyExc_ImportError, "Failed to get textures.max_blockid");
     max_blockid = PyInt_AsLong(tmp);
+    Py_DECREF(tmp);
+
     tmp = PyObject_GetAttrString(textures, "max_data");
     if (!tmp)
         return PyErr_Format(PyExc_ImportError, "Failed to get textures.max_blockid");
     max_data = PyInt_AsLong(tmp);
+    Py_DECREF(tmp);
     
     /* assemble the property table */
     known_blocks = PyObject_GetAttrString(textures, "known_blocks");
