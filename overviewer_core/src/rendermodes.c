@@ -124,23 +124,23 @@ RenderMode *render_mode_create(const char *mode, RenderState *state) {
     
     iface = render_mode_find_interface(mode);
     if (iface == NULL)
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to find rendermode interface");
     
     options = render_mode_create_options(mode);
     if (options == NULL)
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to create rendermode options");
     
     ret = calloc(1, sizeof(RenderMode));
     if (ret == NULL) {
         Py_DECREF(options);
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to alloc a rendermode");
     }
     
     ret->mode = calloc(1, iface->data_size);
     if (ret->mode == NULL) {
         Py_DECREF(options);
         free(ret);
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to alloc rendermode data");
     }
     
     ret->iface = iface;
@@ -150,7 +150,7 @@ RenderMode *render_mode_create(const char *mode, RenderState *state) {
         Py_DECREF(options);
         free(ret->mode);
         free(ret);
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to start rendermode interface");
     }
     
     Py_DECREF(options);

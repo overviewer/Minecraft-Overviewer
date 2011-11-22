@@ -373,7 +373,8 @@ chunk_render(PyObject *self, PyObject *args) {
     state.rendermode = rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
     Py_DECREF(rendermode_py);
     if (rendermode == NULL) {
-        return PyErr_Format(PyExc_ValueError, "Failed to create render mode");
+        return NULL; // note that render_mode_create will
+                     // set PyErr.  No need to set it here
     }
 
     /* get the image size */
