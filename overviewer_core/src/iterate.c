@@ -45,47 +45,47 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     textures = PyImport_ImportModule("overviewer_core.textures");
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
-        return PyErr_Format(PyExc_ImportError, "Failed to import overviewer_core.textures");
+        return NULL;
     }
-
+    
     chunk_mod = PyImport_ImportModule("overviewer_core.chunk");
     /* ensure none of these pointers are NULL */    
     if ((!chunk_mod)) {
-        return PyErr_Format(PyExc_ImportError, "Failed to import overviewer_core.chunk");
+        return NULL;
     }
     
     blockmap = PyObject_GetAttrString(textures, "blockmap");
     if (!blockmap)
-        return PyErr_Format(PyExc_ImportError, "Failed to get textures.blockmap");
+        return NULL;
     
     tmp = PyObject_GetAttrString(textures, "max_blockid");
     if (!tmp)
-        return PyErr_Format(PyExc_ImportError, "Failed to get textures.max_blockid");
+        return NULL;
     max_blockid = PyInt_AsLong(tmp);
     Py_DECREF(tmp);
 
     tmp = PyObject_GetAttrString(textures, "max_data");
     if (!tmp)
-        return PyErr_Format(PyExc_ImportError, "Failed to get textures.max_blockid");
+        return NULL;
     max_data = PyInt_AsLong(tmp);
     Py_DECREF(tmp);
     
     /* assemble the property table */
     known_blocks = PyObject_GetAttrString(textures, "known_blocks");
     if (!known_blocks)
-        return PyErr_Format(PyExc_ImportError, "Failed to get textures.known_blocks");
+        return NULL;
     transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
     if (!transparent_blocks)
-        return PyErr_Format(PyExc_ImportError, "Failed to get textures.transparent_blocks");
+        return NULL;
     solid_blocks = PyObject_GetAttrString(textures, "solid_blocks");
     if (!solid_blocks)
-        return PyErr_Format(PyExc_ImportError, "Failed to get textures.solid_blocks");
+        return NULL;
     fluid_blocks = PyObject_GetAttrString(textures, "fluid_blocks");
     if (!fluid_blocks)
-        return PyErr_Format(PyExc_ImportError, "Failed to get textures.fluid_blocks");
+        return NULL;
     nospawn_blocks = PyObject_GetAttrString(textures, "nospawn_blocks");
     if (!nospawn_blocks)
-        return PyErr_Format(PyExc_ImportError, "Failed to get textures.nospawn_blocks");
+        return NULL;
     
     block_properties = calloc(max_blockid, sizeof(unsigned char));
     for (i = 0; i < max_blockid; i++) {
@@ -104,7 +104,7 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
         
         Py_DECREF(block);
     }
-
+    
     Py_RETURN_NONE;
 }
 
@@ -362,7 +362,7 @@ chunk_render(PyObject *self, PyObject *args) {
     PyObject *t = NULL;
     
     if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.blockdata_expanded))
-        return PyErr_Format(PyExc_ValueError, "Failed to ParseTuple");
+        return NULL;
     
     /* fill in important modules */
     state.textures = textures;
