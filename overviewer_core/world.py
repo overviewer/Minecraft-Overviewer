@@ -24,7 +24,7 @@ import logging
 import cPickle
 import collections
 import itertools
-
+import c_overviewer
 import numpy
 
 from chunk import ChunkCorrupt
@@ -68,7 +68,7 @@ class World(object):
     """
 
     mincol = maxcol = minrow = maxrow = 0
-    persistentDataVersion = 1
+    persistentDataVersion = c_overviewer.extension_version()
     
     def __init__(self, worlddir, outputdir, useBiomeData=False, regionlist=None, north_direction="auto"):
         self.worlddir = worlddir
