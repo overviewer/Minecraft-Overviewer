@@ -50,7 +50,7 @@ Requirements
 This is a quick list of what's required to run The Overviewer. It runs on
 Windows, Mac, and Linux as long as you have these software packages installed:
 
-* Python 2.6 or 2.7
+* Python 2.6 or 2.7 (we are *not* yet compatible with Python 3.x)
 
 * PIL (Python Imaging Library)
 
