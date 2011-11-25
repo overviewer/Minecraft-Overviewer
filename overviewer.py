@@ -18,6 +18,12 @@
 import platform
 import sys
 
+if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
+    print "Sorry, the Overviewer requires at least Python 2.6 to run"
+    if sys.version_info[0] >= 3:
+        print "and will not run on Python 3.0 or later"
+    sys.exit(1)
+
 if platform.system() == 'Windows':
     try:
         import ctypes
@@ -33,12 +39,6 @@ if platform.system() == 'Windows':
 
     except Exception:
         pass
-
-if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
-    print "Sorry, the Overviewer requires at least Python 2.6 to run"
-    if sys.version_info[0] >= 3:
-        print "and will not run on Python 3.0 or later"
-    sys.exit(1)
 
 import os
 import os.path
