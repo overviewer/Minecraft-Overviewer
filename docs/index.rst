@@ -86,8 +86,8 @@ Help
 **IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to chat with
 us live in IRC: #overviewer on Freenode. There's usually someone on there that
 can help you out. Not familiar with IRC? `Use the web client
-<http://webchat.freenode.net/?channels=overviewer>`_. (If there's no response,
-try a different time of day; we have to sleep sometime)
+<http://webchat.freenode.net/?channels=overviewer>`_. (If there's no immediate
+response, wait around or try a different time of day; we have to sleep sometime)
 
 Also check our :doc:`Frequently Asked Questions <faq>` page.
 
