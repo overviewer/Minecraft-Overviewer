@@ -68,13 +68,13 @@ class World(object):
     """
 
     mincol = maxcol = minrow = maxrow = 0
+    persistentDataVersion = 1
     
     def __init__(self, worlddir, outputdir, useBiomeData=False, regionlist=None, north_direction="auto"):
         self.worlddir = worlddir
         self.outputdir = outputdir
         self.useBiomeData = useBiomeData
         self.north_direction = north_direction
-        
         # figure out chunk format is in use
         # if not mcregion, error out early
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
@@ -120,12 +120,18 @@ class World(object):
             self.persistentDataIsNew = False
             with open(self.pickleFile,"rb") as p:
                 self.persistentData = cPickle.load(p)
-                if not self.persistentData.get('north_direction', False):
-                    # this is a pre-configurable-north map, so add the north_direction key
-                    self.persistentData['north_direction'] = 'lower-left'
+                if not self.persistentData.get('version',False):
+                    # This overviewer.dat predates version information, so apply old compatibility checks
+                    if not self.persistentData.get('north_direction', False):
+                        # this is a pre-configurable-north map, so add the north_direction key
+                        self.persistentData['north_direction'] = 'lower-left'
+                # elif self.persistentData['version'] < first version to support feature
+                #   set defaults / translate old options to new options
+
+                self.persistentData['version'] = self.persistentDataVersion
         else:
             # some defaults, presumably a new map
-            self.persistentData = dict(POI=[], north_direction='lower-left')
+            self.persistentData = dict(POI=[], north_direction='lower-left',version=self.persistentDataVersion)
             self.persistentDataIsNew = True # indicates that the values in persistentData are new defaults, and it's OK to override them
         
         # handle 'auto' north
