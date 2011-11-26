@@ -389,6 +389,14 @@ class RenderNode(object):
         numqtrees = len(self.quadtrees)
         procs = min(procs, numqtrees)
 
+        # Create a private pool to do the chunk scanning. I purposfully don't
+        # use the same pool as the rendering. The process of chunk scanning
+        # seems to take a lot of memory. Even though the final tree only takes
+        # a few megabytes at most, I suspect memory fragmentation causes the
+        # process to take much more memory than that during the scanning
+        # process. Since we use a private pool just for this purpose, the trees
+        # are piped back to the master process and the fragmented
+        # memory-hogging processes exit, returning that extra memory to the OS.
         if procs == 1:
             pool = FakePool()
         else:
