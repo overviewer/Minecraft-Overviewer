@@ -210,13 +210,13 @@ class MCRFileReader(object):
         self._chunks = None
 
     def get_north_rotations(self):
-        if self.north_direction == 'upper-left':
+        if self.north_direction == 'lower-left':
             return 3
-        elif self.north_direction == 'upper-right':
+        elif self.north_direction == 'upper-left':
             return 2
-        elif self.north_direction == 'lower-right':
+        elif self.north_direction == 'upper-right':
             return 1
-        elif self.north_direction == 'lower-left':
+        elif self.north_direction == 'lower-right':
             return 0
     
     def _read_24bit_int(self):

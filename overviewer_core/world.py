@@ -124,14 +124,44 @@ class World(object):
                     # This overviewer.dat predates version information, so apply old compatibility checks
                     if not self.persistentData.get('north_direction', False):
                         # this is a pre-configurable-north map, so add the north_direction key
-                        self.persistentData['north_direction'] = 'lower-left'
+                        self.persistentData['north_direction'] = 'lower-right'
+                    else:
+                        logging.warning("Old north_direction data found in overviewer.dat - converting")
+                        logging.warning("Note that 'North' is now where 'West' used to be - consult the README for more informtation")
+
+                        if self.persistentData['north_direction'] == 'upper-left':
+                            self.persistentData['north_direction']='lower-left'
+                        elif self.persistentData['north_direction'] == 'upper-right':
+                            self.persistentData['north_direction']='upper-left'
+                        elif self.persistentData['north_direction'] == 'lower-right':
+                            self.persistentData['north_direction']='upper-right'
+                        elif self.persistentData['north_direction'] == 'lower-left':
+                            self.persistentData['north_direction']='lower-right'
+
                 # elif self.persistentData['version'] < first version to support feature
                 #   set defaults / translate old options to new options
+                elif self.persistentData['version']  < 14:
+                    
+                    logging.warning("Old north_direction data found in overviewer.dat - converting")
+                    logging.warning("Note that 'North' is now where 'West' used to be - consult the README for more informtation")
+
+                    if self.persistentData['north_direction'] == 'upper-left':
+                        self.persistentData['north_direction']='lower-left'
+                    elif self.persistentData['north_direction'] == 'upper-right':
+                        self.persistentData['north_direction']='upper-left'
+                    elif self.persistentData['north_direction'] == 'lower-right':
+                        self.persistentData['north_direction']='upper-right'
+                    elif self.persistentData['north_direction'] == 'lower-left':
+                        self.persistentData['north_direction']='lower-right'
+
+                elif self.persistentData['version'] > self.persistentDataVersion:
+                    logging.warning("Overviewer.dat appears to be from a newer version of overviewer. Potential badness!")
+                    logging.warning(self.persistentData['version'] + " reported in overviewer.dat - this copy of overviewer is version " + self.persistentDataVersion)
 
                 self.persistentData['version'] = self.persistentDataVersion
         else:
             # some defaults, presumably a new map
-            self.persistentData = dict(POI=[], north_direction='lower-left',version=self.persistentDataVersion)
+            self.persistentData = dict(POI=[], north_direction='lower-right',version=self.persistentDataVersion)
             self.persistentDataIsNew = True # indicates that the values in persistentData are new defaults, and it's OK to override them
         
         # handle 'auto' north
@@ -257,14 +287,14 @@ class World(object):
         disp_spawnX = spawnX = data['Data']['SpawnX']
         spawnY = data['Data']['SpawnY']
         disp_spawnZ = spawnZ = data['Data']['SpawnZ']
-        if self.north_direction == 'upper-left':
+        if self.north_direction == 'lower-left':
             temp = spawnX
             spawnX = -spawnZ
             spawnZ = temp
-        elif self.north_direction == 'upper-right':
+        elif self.north_direction == 'upper-left':
             spawnX = -spawnX
             spawnZ = -spawnZ
-        elif self.north_direction == 'lower-right':
+        elif self.north_direction == 'upper-right':
             temp = spawnX
             spawnX = spawnZ
             spawnZ = -temp
@@ -349,13 +379,13 @@ class World(object):
         self.findTrueSpawn()
 
     def _get_north_rotations(self):
-        if self.north_direction == 'upper-left':
+        if self.north_direction == 'lower-left':
             return 1
-        elif self.north_direction == 'upper-right':
+        elif self.north_direction == 'upper-left':
             return 2
-        elif self.north_direction == 'lower-right':
+        elif self.north_direction == 'upper-right':
             return 3
-        elif self.north_direction == 'lower-left':
+        elif self.north_direction == 'lower-right':
             return 0
 
     def _iterate_regionfiles(self,regionlist=None):
@@ -376,14 +406,14 @@ class World(object):
                     logging.debug("Using path %s from regionlist", f)
                     x = int(p[1])
                     y = int(p[2])
-                    if self.north_direction == 'upper-left':
+                    if self.north_direction == 'lower-left':
                         temp = x
                         x = -y-1
                         y = temp
-                    elif self.north_direction == 'upper-right':
+                    elif self.north_direction == 'upper-left':
                         x = -x-1
                         y = -y-1
-                    elif self.north_direction == 'lower-right':
+                    elif self.north_direction == 'upper-right':
                         temp = x
                         x = y
                         y = -temp-1
@@ -397,14 +427,14 @@ class World(object):
                 p = f.split(".")
                 x = int(p[1])
                 y = int(p[2])
-                if self.north_direction == 'upper-left':
+                if self.north_direction == 'lower-left':
                     temp = x
                     x = -y-1
                     y = temp
-                elif self.north_direction == 'upper-right':
+                elif self.north_direction == 'upper-left':
                     x = -x-1
                     y = -y-1
-                elif self.north_direction == 'lower-right':
+                elif self.north_direction == 'upper-right':
                     temp = x
                     x = y
                     y = -temp-1
