@@ -214,7 +214,7 @@ class QuadtreeGen(object):
         curdepth = self._get_cur_depth()
         if curdepth != -1:
             if self.p > curdepth:
-                logging.warning("Your map seemes to have expanded beyond its previous bounds.")
+                logging.warning("Your map seems to have expanded beyond its previous bounds.")
                 logging.warning( "Doing some tile re-arrangements... just a sec...")
                 for _ in xrange(self.p-curdepth):
                     self._increase_depth()

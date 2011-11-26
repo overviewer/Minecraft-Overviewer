@@ -47,7 +47,7 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     if ((!textures)) {
         return NULL;
     }
-
+    
     chunk_mod = PyImport_ImportModule("overviewer_core.chunk");
     /* ensure none of these pointers are NULL */    
     if ((!chunk_mod)) {
@@ -62,10 +62,13 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     if (!tmp)
         return NULL;
     max_blockid = PyInt_AsLong(tmp);
+    Py_DECREF(tmp);
+
     tmp = PyObject_GetAttrString(textures, "max_data");
     if (!tmp)
         return NULL;
     max_data = PyInt_AsLong(tmp);
+    Py_DECREF(tmp);
     
     /* assemble the property table */
     known_blocks = PyObject_GetAttrString(textures, "known_blocks");
@@ -101,7 +104,7 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
         
         Py_DECREF(block);
     }
-
+    
     Py_RETURN_NONE;
 }
 
@@ -370,7 +373,8 @@ chunk_render(PyObject *self, PyObject *args) {
     state.rendermode = rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
     Py_DECREF(rendermode_py);
     if (rendermode == NULL) {
-        return NULL;
+        return NULL; // note that render_mode_create will
+                     // set PyErr.  No need to set it here
     }
 
     /* get the image size */

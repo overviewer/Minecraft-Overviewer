@@ -106,13 +106,13 @@ render_mode_find_interface(const char *mode) {
     /* check for custom modes */
     custom = PyDict_GetItemString(custom_render_modes, mode);
     if (custom == NULL)
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to find rendermode interface (custom not found)");
     custom = PyDict_GetItemString(custom, "parent");
     if (custom == NULL)
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to find rendermode interface (parent not found)");
     custom_parent = PyString_AsString(custom);
     if (custom_parent == NULL)
-        return NULL;
+        return NULL; // PyString_AsString sets an exception
     
     return render_mode_find_interface(custom_parent);
 }
@@ -133,14 +133,14 @@ RenderMode *render_mode_create(const char *mode, RenderState *state) {
     ret = calloc(1, sizeof(RenderMode));
     if (ret == NULL) {
         Py_DECREF(options);
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to alloc a rendermode");
     }
     
     ret->mode = calloc(1, iface->data_size);
     if (ret->mode == NULL) {
         Py_DECREF(options);
         free(ret);
-        return NULL;
+        return PyErr_Format(PyExc_RuntimeError, "Failed to alloc rendermode data");
     }
     
     ret->iface = iface;
@@ -156,7 +156,7 @@ RenderMode *render_mode_create(const char *mode, RenderState *state) {
     Py_DECREF(options);
     return ret;
 }
-    
+
 void render_mode_destroy(RenderMode *self) {
     self->iface->finish(self->mode, self->state);
     free(self->mode);

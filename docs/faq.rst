@@ -8,6 +8,36 @@ Frequently Asked Questions
 General Questions
 =================
 
+When my map expands, I see remnants of another zoom level
+---------------------------------------------------------
+
+When your map expands ("Your map seems to have expanded beyond its previous
+bounds") you may see tiles at a zoom level that shouldn't be there, usually
+around the borders. This is probably not a bug, but is typically caused by
+copying the map tiles from their render destination to another location (such as
+a web server).
+
+When you're copying the rendered map, you need to be sure files that *don't*
+exist in the source are *deleted* in the destination.
+
+Explanation: When Overviewer re-arranges tiles to make room for another zoom
+level, it moves some tiles tiles at a particular zoom level and places them at a
+higher zoom level. The tiles that used to be at that zoom level should no longer
+exist there, but if you're copying tiles, there is no mechanism to *delete*
+those files at the copy destination.
+
+If that explanation doesn't make full sense, then just know that you must do one
+of the following:
+
+* Render the tiles directly to the destination
+
+* Copy the tiles from the render destination in a way that deletes extra files,
+  such as using ``rsync`` with ``--delete``
+
+* Erase and re-copy the files at the final destination when the map expands.
+  Map expansions double the width and height of the map, so you will eventually
+  hit a map size that is unlikely to need another level.
+
 The full map doesn't display even when fully zoomed out!
 --------------------------------------------------------
 
@@ -16,11 +46,13 @@ commandline or in settings.py? If so, try removing it, or increasing the value
 you set.  It's quite likely you don't need it at all. See the documentation for
 the :option:`zoom <-z>` option.
 
-You've added a few feature, but it's not showing up on my map!
---------------------------------------------------------------
+You've added a few feature or changed textures, but it's not showing up on my map!
+----------------------------------------------------------------------------------
 
 Some new features will only show up in newly-rendered areas. Use the
-:option:`--forcerender` option to update the entire map.
+:option:`--forcerender` option to update the entire map. If you have a really
+large map and don't want to re-render everything, take a look at
+the :option:`--stochastic-render` option.
 
 How do I use this on CentOS 5?
 ------------------------------

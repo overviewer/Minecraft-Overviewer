@@ -18,27 +18,24 @@
 import platform
 import sys
 
+if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
+    print "Sorry, the Overviewer requires at least Python 2.6 to run"
+    if sys.version_info[0] >= 3:
+        print "and will not run on Python 3.0 or later"
+    sys.exit(1)
+
+isBareConsole = False
+
 if platform.system() == 'Windows':
     try:
         import ctypes
         GetConsoleProcessList = ctypes.windll.kernel32.GetConsoleProcessList
         num = GetConsoleProcessList(ctypes.byref(ctypes.c_int(0)), ctypes.c_int(1))
         if (num == 1):
-            print "The Overviewer is a console program.  Please open a Windows command prompt"
-            print "first and run Overviewer from there.   Further documentation is available at"
-            print "http://docs.overviewer.org/\n"
-            print "Press [Enter] to close this window."
-            raw_input()
-            sys.exit(1)
+            isBareConsole = True
 
     except Exception:
         pass
-
-if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
-    print "Sorry, the Overviewer requires at least Python 2.6 to run"
-    if sys.version_info[0] >= 3:
-        print "and will not run on Python 3.0 or later"
-    sys.exit(1)
 
 import os
 import os.path
@@ -48,6 +45,35 @@ import multiprocessing
 import time
 import logging
 from overviewer_core import util
+
+def doExit(msg=None, code=1, wait=None, consoleMsg=True):
+    '''Exits Overviewer.  If `wait` is None, the default
+     will be true is 'isBareConsole' is true'''
+    global isBareConsole
+    if msg:
+        print msg
+
+    if wait == None:
+        if isBareConsole:
+            if consoleMsg:
+                print "\n"
+                print "The Overviewer is a console program.  Please open a Windows command prompt"
+                print "first and run Overviewer from there.   Further documentation is available at"
+                print "http://docs.overviewer.org/\n"
+            print "Press [Enter] to close this window."
+            raw_input()
+    else:
+        if wait:
+            if consoleMsg:
+                print "\n"
+                print "The Overviewer is a console program.  Please open a Windows command prompt"
+                print "first and run Overviewer from there.   Further documentation is available at"
+                print "http://docs.overviewer.org/\n"
+            print "Press [Enter] to close this window."
+            raw_input()
+
+    sys.exit(code) 
+
 
 this_dir = util.get_program_path()
 
@@ -61,7 +87,7 @@ except ImportError:
         print "Something has gone wrong importing the c_overviewer extension.  Please"
         print "make sure the 2008 and 2010 redistributable packages from Microsoft"
         print "are installed."
-        sys.exit(1)
+        doExit()
 
 
     ## try to find the build extension
@@ -69,7 +95,7 @@ except ImportError:
     if os.path.exists(ext):
         print "Something has gone wrong importing the c_overviewer extension.  Please"
         print "make sure it is up-to-date (clean and rebuild)"
-        sys.exit(1)
+        doExit()
 
     import traceback
     traceback.print_exc()
@@ -77,7 +103,7 @@ except ImportError:
     print ""
     print "You need to compile the c_overviewer module to run Minecraft Overviewer."
     print "Run `python setup.py build`, or see the README for details."
-    sys.exit(1)
+    doExit()
 
 from overviewer_core import textures
 
@@ -93,10 +119,10 @@ elif "extension_version" in dir(c_overviewer):
                 l = lines[0]
                 if int(l.split()[2].strip()) != c_overviewer.extension_version():
                     print "Please rebuild your c_overviewer module.  It is out of date!"
-                    sys.exit(1)
+                    doExit(code=1, consoleMsg=True)
 else:
     print "Please rebuild your c_overviewer module.  It is out of date!"
-    sys.exit(1)
+    doExit()
 
 from overviewer_core.configParser import ConfigOptionParser
 from overviewer_core import optimizeimages, world, quadtree
@@ -225,7 +251,7 @@ def main():
         except Exception:
             print "version info not found"
             pass
-        sys.exit(0)
+        doExit(code=0, consoleMsg=False)
 
     # setup c_overviewer rendermode customs / options
     for mode in builtin_custom_rendermodes:
@@ -245,7 +271,7 @@ def main():
     
     if options.list_rendermodes:
         list_rendermodes()
-        sys.exit(0)
+        doExit(code=0, consoleMsg=False)
 
     if options.check_terrain:
         import hashlib
@@ -257,22 +283,22 @@ def main():
             f = _find_file("terrain.png", verbose=True)
         except IOError:
             logging.error("Could not find the file terrain.png")
-            sys.exit(1)
+            doExit(code=1, consoleMsg=False)
 
         h = hashlib.sha1()
         h.update(f.read())
         logging.info("Hash of terrain.png file is: `%s`", h.hexdigest())
-        sys.exit(0)
+        doExit(code=0, consoleMsg=False)
         
     if options.advanced_help:
         parser.advanced_help()
-        sys.exit(0)
+        doExit(code=0, consoleMsg=False)
 
     if len(args) < 1:
         logging.error("You need to give me your world number or directory")
         parser.print_help()
         list_worlds()
-        sys.exit(1)
+        doExit(code=1, consoleMsg=True)
     worlddir = os.path.expanduser(args[0])
 
     if len(args) > 2:
@@ -284,7 +310,7 @@ def main():
                     if os.path.exists(" ".join(args[start:end])):
                         logging.warning("It looks like you meant to specify \"%s\" as your world dir or your output\n\
 dir but you forgot to put quotes around the directory, since it contains spaces." % " ".join(args[start:end]))
-                        sys.exit(1)
+                        doExit(code=1, consoleMsg=False)
 
     if not os.path.exists(worlddir):
         # world given is either world number, or name
@@ -294,7 +320,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         if not worlds:
             parser.print_help()
             logging.error("Invalid world path")
-            sys.exit(1)
+            doExit(code=1, consoleMsg=False)
         
         try:
             worldnum = int(worlddir)
@@ -307,32 +333,32 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
                 # it's not a number, name, or path
                 parser.print_help()
                 logging.error("Invalid world name or path")
-                sys.exit(1)
+                doExit(code=1, consoleMsg=False)
         except KeyError:
             # it was an invalid number
             parser.print_help()
             logging.error("Invalid world number")
-            sys.exit(1)
+            doExit(code=1, consoleMsg=False)
     
     # final sanity check for worlddir
     if not os.path.exists(os.path.join(worlddir, 'level.dat')):
         logging.error("Invalid world path -- does not contain level.dat")
-        sys.exit(1)
+        doExit(code=1, consoleMsg=False)
 
     if len(args) < 2:
         logging.error("Where do you want to save the tiles?")
-        sys.exit(1)
+        doExit(code=1, consoleMsg=False)
     elif len(args) > 2:
         parser.print_help()
         logging.error("Sorry, you specified too many arguments")
-        sys.exit(1)
+        doExit(code=1, consoleMsg=False)
 
 
     destdir = os.path.expanduser(args[1])
     if options.display_config:
         # just display the config file and exit
         parser.display_config()
-        sys.exit(0)
+        doExit(code=0, consoleMsg=False)
 
 
     if options.regionlist:
@@ -365,11 +391,11 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         except IOError as e:
             logging.error("Unable to open file %s to use for changelist." % options.changelist)
             logging.error("I/O Error: %s" % e.strerror)
-            sys.exit(1)
+            doExit(code=1, consoleMsg=False)
 
     if options.changelist_format != "auto" and not options.changelist:
         logging.error("changelist_format specified without changelist.")
-        sys.exit(1)
+        doExit(code=1, consoleMsg=False)
     if options.changelist_format == "auto":
         options.changelist_format = "relative"
 
@@ -385,7 +411,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         textures.generate(path=options.textures_path)
     except IOError, e:
         logging.error(str(e))
-        sys.exit(1)
+        doExit(code=1, consoleMsg=False)
     
     # First do world-level preprocessing. This scans the world hierarchy, reads
     # in the region files and caches chunk modified times, and determines the
@@ -402,7 +428,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.error("Overviewer.dat gives previous north-direction as "+w.persistentData['north_direction'])
         logging.error("Requested north-direction was "+north_direction)
         logging.error("To change north-direction of an existing render, use --forcerender")
-        sys.exit(1)
+        doExit(code=1, consoleMsg=False)
     
     # A couple other things we need to figure out about the world:
     w.determine_bounds()
@@ -549,8 +575,9 @@ if __name__ == "__main__":
     except Exception, e:
         if e.message == "Exiting":
             logging.info("Exiting...")
-            sys.exit(0)
+            doExit(code=0, wait=False)
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
 
 This is the error that occurred:""")
+        doExit(code=1, consoleMsg=False)
