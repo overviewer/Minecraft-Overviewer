@@ -24,13 +24,13 @@ import logging
 import cPickle
 import collections
 import itertools
+import time
 
 import numpy
 
-from chunk import ChunkCorrupt
+import chunk
 import nbt
 import textures
-import time
 
 """
 This module has routines for extracting information about available worlds
@@ -78,7 +78,6 @@ class World(object):
         # figure out chunk format is in use
         # if not mcregion, error out early
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-        #print data
         if not ('version' in data and data['version'] == 19132):
             logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
             sys.exit(1)
@@ -132,23 +131,30 @@ class World(object):
         if self.north_direction == 'auto':
             self.north_direction = self.persistentData['north_direction']
             north_direction = self.north_direction
-        
-        #find region files, or load the region list
-        #this also caches all the region file header info
-        logging.info("Scanning regions")
-        regionfiles = {}
+
+        # This is populated by reload_region(). It is a mapping from region
+        # filename to: (region object, mtime, chunkcache)
         self.regions = {}
+
+        # This is populated below. It is a mapping from (x,y) region coords to
+        # (x,y,filename, region object)
+        self.regionfiles = {}
+        
+        # If a region list was given, make sure the given paths are absolute
         if regionlist:
-            self.regionlist = map(os.path.abspath, regionlist) # a list of paths
+            self.regionlist = map(os.path.abspath, regionlist)
         else:
             self.regionlist = None
+
+        logging.info("Scanning regions")
+
+        # Loads requested/all regions, caching region header info
         for x, y, regionfile in self._iterate_regionfiles(regionlist):
+            # reload_region caches the region object in self.regions
             mcr = self.reload_region(regionfile) 
             mcr.get_chunk_info()
-            regionfiles[(x,y)]	= (x,y,regionfile,mcr)
-        self.regionfiles = regionfiles	
-        # set the number of region file handles we will permit open at any time before we start closing them
-#        self.regionlimit = 1000
+            self.regionfiles[(x,y)] = (x,y,regionfile,mcr)
+
         # the max number of chunks we will keep before removing them (includes emptry chunks)
         self.chunklimit = 1024 
         self.chunkcount = 0
@@ -182,7 +188,7 @@ class World(object):
                 return None ## return none.  I think this is who we should indicate missing chunks
                 #raise IOError("No such chunk in region: (%i, %i)" % (x, y))                 
 
-            #we cache the transformed data, not it's raw form
+            #we cache the transformed data, not its raw form
             data = nbt.read_all()    
             level = data[1]['Level']
             chunk_data = level
@@ -241,7 +247,7 @@ class World(object):
         # col - row = chunkx + chunkx => (col - row)/2 = chunkx
         return ((col - row) / 2, (col + row) / 2)
     
-    def findTrueSpawn(self):
+    def find_true_spawn(self):
         """Adds the true spawn location to self.POI.  The spawn Y coordinate
         is almost always the default of 64.  Find the first air block above
         that point for the true spawn location"""
@@ -291,17 +297,18 @@ class World(object):
                         spawnY += 1
                         if spawnY == 128:
                             break
-        except ChunkCorrupt:
+        except chunk.ChunkCorrupt:
             #ignore corrupt spawn, and continue
             pass
         self.POI.append( dict(x=disp_spawnX, y=spawnY, z=disp_spawnZ,
                 msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
         self.spawn = (disp_spawnX, spawnY, disp_spawnZ)
 
-    def go(self, procs):
+    def determine_bounds(self):
         """Scan the world directory, to fill in
-        self.{min,max}{col,row} for use later in quadtree.py. This
-        also does other world-level processing."""
+        self.{min,max}{col,row} for use later in quadtree.py.
+        
+        """
         
         logging.info("Scanning chunks")
         # find the dimensions of the map, in region files
@@ -340,8 +347,6 @@ class World(object):
         self.minrow = minrow
         self.maxrow = maxrow
 
-        self.findTrueSpawn()
-
     def _get_north_rotations(self):
         if self.north_direction == 'upper-left':
             return 1
@@ -351,6 +356,20 @@ class World(object):
             return 3
         elif self.north_direction == 'lower-left':
             return 0
+
+    def iterate_chunk_metadata(self):
+        """Returns an iterator over (x,y,chunk mtime) of every chunk loaded in
+        memory. Provides a public way for external routines to iterate over the
+        world.
+
+        Written for use in quadtree.py's QuadtreeGen.scan_chunks, which only
+        needs chunk locations and mtimes.
+
+        """
+
+        for regionx, regiony, _, mcr in self.regionfiles.itervalues():
+            for chunkx, chunky in mcr.get_chunks():
+                yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
     def _iterate_regionfiles(self,regionlist=None):
         """Returns an iterator of all of the region files, along with their 
@@ -383,7 +402,7 @@ class World(object):
                         y = -temp-1
                     yield (x, y, join(self.worlddir, 'region', f))
                 else:
-                    logging.warning("Ignore path '%s' in regionlist", f)
+                    logging.warning("Ignoring non region file '%s' in regionlist", f)
 
         else:                    
             for path in glob(os.path.join(self.worlddir, 'region') + "/r.*.*.mcr"):
@@ -448,3 +467,4 @@ def get_worlds():
             ret[info['Data']['LevelName']] = info['Data']
 
     return ret
+

@@ -13,31 +13,23 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import multiprocessing
 import itertools
 import os
 import os.path
 import functools
 import re
 import shutil
-import collections
-import json
 import logging
-import util
-import cPickle
 import stat
 import errno 
 import time
 import random
-from time import gmtime, strftime, sleep
 
 from PIL import Image
 
-import nbt
-import chunk
+from . import chunk
+from .optimizeimages import optimize_image
 from c_overviewer import get_render_mode_inheritance
-from optimizeimages import optimize_image
-import composite
 
 
 """
@@ -50,7 +42,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor, depth=None, tiledir=None, forcerender=False, rerender_prob=0.0, imgformat=None, imgquality=95, optimizeimg=None, rendermode="normal"):
+    def __init__(self, worldobj, destdir, bgcolor="#1A1A1A", depth=None, tiledir=None, forcerender=False, imgformat='png', imgquality=95, optimizeimg=None, rendermode="normal", rerender_prob=0.0):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -60,7 +52,6 @@ class QuadtreeGen(object):
         minimum depth that contains all chunks is calculated and used.
 
         """
-        assert(imgformat)
         self.forcerender = forcerender
         self.rerender_probability = rerender_prob
         self.imgformat = imgformat
@@ -82,7 +73,7 @@ class QuadtreeGen(object):
         
         if depth is None:
             # Determine quadtree depth (midpoint is always 0,0)
-            for p in xrange(64):
+            for p in xrange(33):
                 # Will 2^p tiles wide and high suffice?
 
                 # X has twice as many chunks as tiles, then halved since this is a
@@ -114,6 +105,15 @@ class QuadtreeGen(object):
         self.world = worldobj
         self.destdir = destdir
         self.full_tiledir = os.path.join(destdir, tiledir)
+
+        # Check now if full_tiledir doesn't exist. If not, we can trigger
+        # --fullrender, which skips some mtime checks to speed things up
+        if not os.path.exists(self.full_tiledir):
+            logging.debug("%s doesn't exist, doing a full render", self.full_tiledir)
+            self.forcerender = True
+
+    def __repr__(self):
+        return "<QuadTreeGen for rendermode %r>" % self.rendermode
         
     def _get_cur_depth(self):
         """How deep is the quadtree currently in the destdir? This glances in
@@ -189,9 +189,20 @@ class QuadtreeGen(object):
             os.rename(getpath("3", "0"), getpath("new3"))
             shutil.rmtree(getpath("3"))
             os.rename(getpath("new3"), getpath("3"))
+
+        # Delete the files in the top directory to make sure they get re-created.
+        files = [str(num)+"."+self.imgformat for num in xrange(4)] + ["base." + self.imgformat]
+        for f in files:
+            try:
+                os.unlink(getpath(f))
+            except OSError, e:
+                pass # doesn't exist maybe?
+
+    def check_depth(self):
+        """Ensure the current quadtree is the correct depth. If it's not,
+        employ some simple re-arranging of tiles to save on computation.
         
-    def go(self, procs):
-        """Processing before tile rendering"""
+        """
 
         curdepth = self._get_cur_depth()
         if curdepth != -1:
@@ -206,75 +217,56 @@ class QuadtreeGen(object):
                     self._decrease_depth()
     
     
-    def _get_range_by_path(self, path):
-        """Returns the x, y chunk coordinates of this tile"""
-        x, y = self.mincol, self.minrow
+    def get_chunks_for_tile(self, tile):
+        """Get chunks that are relevant to the given tile
         
-        xsize = self.maxcol
-        ysize = self.maxrow
+        Returns a list of chunks where each item is
+        (col, row, chunkx, chunky, regionobj)
+        """
 
-        for p in path:
-            if p in (1, 3):
-                x += xsize
-            if p in (2, 3):
-                y += ysize
-            xsize //= 2
-            ysize //= 2
-
-        return x, y
-        
-    def get_chunks_in_range(self, colstart, colend, rowstart, rowend):
-        """Get chunks that are relevant to the tile rendering function that's
-        rendering that range"""
         chunklist = []
+
         unconvert_coords = self.world.unconvert_coords
-        #get_region_path = self.world.get_region_path
         get_region = self.world.regionfiles.get
+
+        # Cached region object for consecutive iterations
         regionx = None
         regiony = None
         c = None
         mcr = None
-        for row in xrange(rowstart-16, rowend+1):
-            for col in xrange(colstart, colend+1):
-                # due to how chunks are arranged, we can only allow
-                # even row, even column or odd row, odd column
-                # otherwise, you end up with duplicates!
-                if row % 2 != col % 2:
-                    continue
-                
-                chunkx, chunky = unconvert_coords(col, row)
 
-                regionx_ = chunkx//32
-                regiony_ = chunky//32
-                if regionx_ != regionx or regiony_ != regiony:
-                    regionx = regionx_
-                    regiony = regiony_
-                    _, _, c, mcr = get_region((regionx, regiony),(None,None,None,None))
-                    
-                if c is not None and mcr.chunkExists(chunkx,chunky):
-                    chunklist.append((col, row, chunkx, chunky, c))
+        rowstart = tile.row
+        rowend = rowstart+4
+        colstart = tile.col
+        colend = colstart+2
+
+        # Start 16 rows up from the actual tile's row, since chunks are that tall.
+        # Also, every other tile doesn't exist due to how chunks are arranged. See
+        # http://docs.overviewer.org/en/latest/design/designdoc/#chunk-addressing
+        for row, col in itertools.product(
+                xrange(rowstart-16, rowend+1),
+                xrange(colstart, colend+1)
+                ):
+            if row % 2 != col % 2:
+                continue
+            
+            chunkx, chunky = unconvert_coords(col, row)
+
+            regionx_ = chunkx//32
+            regiony_ = chunky//32
+            if regionx_ != regionx or regiony_ != regiony:
+                regionx = regionx_
+                regiony = regiony_
+                _, _, fname, mcr = get_region((regionx, regiony),(None,None,None,None))
+                
+            if fname is not None and mcr.chunkExists(chunkx,chunky):
+                chunklist.append((col, row, chunkx, chunky, mcr))
                     
         return chunklist   
         
-    def get_worldtiles(self):
-        """Returns an iterator over the tiles of the most detailed layer
-        """
-        for path in iterate_base4(self.p):
-            # Get the range for this tile
-            colstart, rowstart = self._get_range_by_path(path)
-            colend = colstart + 2
-            rowend = rowstart + 4   
-            
-            # This image is rendered at(relative to the worker's destdir):
-            tilepath = [str(x) for x in path]
-            tilepath = os.sep.join(tilepath)
-            #logging.debug("this is rendered at %s", dest)
-        
-            # Put this in the batch to be submited to the pool     
-            yield [self,colstart, colend, rowstart, rowend, tilepath]
-        
     def get_innertiles(self,zoom):
-        """Same as get_worldtiles but for the inntertile routine.
+        """Returns the inner tiles at the given zoom level that need to be rendered
+
         """    
         for path in iterate_base4(zoom):
             # This image is rendered at(relative to the worker's destdir):
@@ -297,7 +289,7 @@ class QuadtreeGen(object):
         else:
             quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
        
-        #stat the tile, we need to know if it exists or it's mtime
+        #stat the tile, we need to know if it exists and its mtime
         try:    
             tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
         except OSError, e:
@@ -354,132 +346,121 @@ class QuadtreeGen(object):
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
 
+    def render_worldtile(self, tile, check_tile=False):
+        """Renders the given tile. All the other relevant information is
+        already stored in this quadtree object or in self.world.
 
+        This function is typically called in the child process. The tile is
+        assumed to need rendering unless the check_tile flag is given.
 
-    def render_worldtile(self, chunks, colstart, colend, rowstart, rowend, path, poi_queue=None):
-        """Renders just the specified chunks into a tile and save it. Unlike usual
-        python conventions, rowend and colend are inclusive. Additionally, the
-        chunks around the edges are half-way cut off (so that neighboring tiles
-        will render the other half)
+        If check_tile is true, the mtimes of the chunk are compared with the
+        mtime of this tile and the tile is conditionally rendered.
 
-        chunks is a list of (col, row, chunkx, chunky, filename) of chunk
-        images that are relevant to this call (with their associated regions)
+        The image is rendered and saved to disk in the place this quadtree is
+        configured to store images.
 
-        The image is saved to path+"."+self.imgformat
-
-        If there are no chunks, this tile is not saved (if it already exists, it is
-        deleted)
-
-        Standard tile size has colend-colstart=2 and rowend-rowstart=4
+        If there are no chunks, this tile is not saved. If this is the case but
+        the tile exists, it is deleted
 
         There is no return value
         """    
-        
-        # width of one chunk is 384. Each column is half a chunk wide. The total
-        # width is (384 + 192*(numcols-1)) since the first column contributes full
-        # width, and each additional one contributes half since they're staggered.
-        # However, since we want to cut off half a chunk at each end (384 less
-        # pixels) and since (colend - colstart + 1) is the number of columns
-        # inclusive, the equation simplifies to:
-        width = 192 * (colend - colstart)
-        # Same deal with height
-        height = 96 * (rowend - rowstart)
 
-        # The standard tile size is 3 columns by 5 rows, which works out to 384x384
-        # pixels for 8 total chunks. (Since the chunks are staggered but the grid
-        # is not, some grid coordinates do not address chunks) The two chunks on
-        # the middle column are shown in full, the two chunks in the middle row are
-        # half cut off, and the four remaining chunks are one quarter shown.
-        # The above example with cols 0-3 and rows 0-4 has the chunks arranged like this:
-        #   0,0         2,0
-        #         1,1
-        #   0,2         2,2
-        #         1,3
-        #   0,4         2,4
+        # The poi_q (point of interest queue) is a multiprocessing Queue
+        # object, and it gets stashed in the world object by the constructor to
+        # RenderNode so we can find it right here.
+        poi_queue = self.world.poi_q
 
-        # Due to how the tiles fit together, we may need to render chunks way above
-        # this (since very few chunks actually touch the top of the sky, some tiles
-        # way above this one are possibly visible in this tile). Render them
-        # anyways just in case). "chunks" should include up to rowstart-16
+        imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
 
-        imgpath = path + "." + self.imgformat
+        # Calculate which chunks are relevant to this tile
+        chunks = self.get_chunks_for_tile(tile)
+
         world = self.world
-        #stat the file, we need to know if it exists or it's mtime
-        try:    
-            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
-        except OSError, e:
-            if e.errno != errno.ENOENT:
-                raise
-            tile_mtime = None
+
+        tile_mtime = None
+        if check_tile:
+            # stat the file, we need to know if it exists and its mtime
+            try:    
+                tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
+            except OSError, e:
+                # ignore only if the error was "file not found"
+                if e.errno != errno.ENOENT:
+                    raise
             
         if not chunks:
             # No chunks were found in this tile
-            if tile_mtime is not None:
+            if not check_tile:
+                logging.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
+            try:
                 os.unlink(imgpath)
-            return None
+            except OSError, e:
+                # ignore only if the error was "file not found"
+                if e.errno != errno.ENOENT:
+                    raise
+            else:
+                logging.debug("%s deleted", tile)
+            return
 
         # Create the directory if not exists
-        dirdest = os.path.dirname(path)
+        dirdest = os.path.dirname(imgpath)
         if not os.path.exists(dirdest):
             try:
                 os.makedirs(dirdest)
             except OSError, e:
-                # Ignore errno EEXIST: file exists. Since this is multithreaded,
-                # two processes could conceivably try and create the same directory
-                # at the same time.            
+                # Ignore errno EEXIST: file exists. Due to a race condition,
+                # two processes could conceivably try and create the same
+                # directory at the same time
                 if e.errno != errno.EEXIST:
                     raise
         
-        # check chunk mtimes to see if they are newer
-        try:
-            needs_rerender = False
-            get_region_mtime = world.get_region_mtime
-            
-            for col, row, chunkx, chunky, regionfile in chunks:
-                region, regionMtime = get_region_mtime(regionfile)
-
-                # don't even check if it's not in the regionlist
-                if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
-                    continue
-
-                # bail early if forcerender is set
-                if self.forcerender:
-                    needs_rerender = True
-                    break
+        if check_tile:
+            # Look at all the chunks that touch this tile and their mtimes to
+            # determine if this tile actually needs rendering
+            try:
+                needs_rerender = False
+                get_region_mtime = world.get_region_mtime
                 
-                # check region file mtime first.
-                # on windows (and possibly elsewhere) minecraft won't update
-                # the region file mtime until after shutdown.
-                # for servers this is unacceptable, so skip this check.
-                #if regionMtime <= tile_mtime:
-                #    continue
-               
-                # checking chunk mtime
-                if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
+                for col, row, chunkx, chunky, region in chunks:
+
+                    # don't even check if it's not in the regionlist
+                    if self.world.regionlist and os.path.abspath(region._filename) not in self.world.regionlist:
+                        continue
+
+                    # bail early if forcerender is set
+                    if self.forcerender:
+                        needs_rerender = True
+                        break
+                    
+                    # checking chunk mtime
+                    if region.get_chunk_timestamp(chunkx, chunky) > tile_mtime:
+                        needs_rerender = True
+                        break
+                
+                # stochastic render check
+                if not needs_rerender and self.rerender_probability > 0.0 and random.random() < self.rerender_probability:
                     needs_rerender = True
-                    break
-            
-            # stochastic render check
-            if not needs_rerender and self.rerender_probability > 0.0 and random.uniform(0, 1) < self.rerender_probability:
-                needs_rerender = True
-            
-            # if after all that, we don't need a rerender, return
-            if not needs_rerender:
-                return None
-        except OSError:
-            # couldn't get tile mtime, skip check
-            pass
+                
+                # if after all that, we don't need a rerender, return
+                if not needs_rerender:
+                    return
+            except OSError:
+                # couldn't get tile mtime, skip check and assume it does
+                pass
         
+        # We have all the necessary info and this tile has passed the checks
+        # and should be rendered. So do it!
+
         #logging.debug("writing out worldtile {0}".format(imgpath))
 
         # Compile this image
-        tileimg = Image.new("RGBA", (width, height), self.bgcolor)
+        tileimg = Image.new("RGBA", (384, 384), self.bgcolor)
 
-        world = self.world
         rendermode = self.rendermode
+        colstart = tile.col
+        rowstart = tile.row
         # col colstart will get drawn on the image starting at x coordinates -(384/2)
         # row rowstart will get drawn on the image starting at y coordinates -(192/2)
-        for col, row, chunkx, chunky, regionfile in chunks:
+        for col, row, chunkx, chunky, region in chunks:
             xpos = -192 + (col-colstart)*192
             ypos = -96 + (row-rowstart)*96
 
@@ -501,3 +482,424 @@ class QuadtreeGen(object):
 
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
+
+    def scan_chunks(self):
+        """Scans the chunks of the world object and return the dirty tree object
+        holding the tiles that need to be rendered.
+
+        Checks mtimes of tiles in the process, unless forcerender is set on the
+        object.
+
+        """
+
+        depth = self.p
+
+        dirty = DirtyTiles(depth)
+
+        #logging.debug("	Scanning chunks for tiles that need rendering...")
+        chunkcount = 0
+        stime = time.time()
+
+        # For each chunk, do this:
+        #   For each tile that the chunk touches, do this:
+        #       Compare the last modified time of the chunk and tile. If the
+        #       tile is older, mark it in a DirtyTiles object as dirty.
+        #
+        # IDEA: check last render time against mtime of the region to short
+        # circuit checking mtimes of all chunks in a region
+        for chunkx, chunky, chunkmtime in self.world.iterate_chunk_metadata():
+            chunkcount += 1
+            #if chunkcount % 10000 == 0:
+            #    logging.info("	%s chunks scanned", chunkcount)
+
+            chunkcol, chunkrow = self.world.convert_coords(chunkx, chunky)
+            #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
+
+            # find tile coordinates
+            tilecol = chunkcol - chunkcol % 2
+            tilerow = chunkrow - chunkrow % 4
+
+            if chunkcol % 2 == 0:
+                # This chunk is half-in one column and half-in another column.
+                # tilecol is the right one, also do tilecol-2, the left one
+                x_tiles = 2
+            else:
+                x_tiles = 1
+
+            # The tile at tilecol,tilerow obviously contains chunk, but so do
+            # the next 4 tiles down because chunks are very tall
+            for i in xrange(x_tiles):
+                for j in xrange(5):
+
+                    c = tilecol - 2*i
+                    r = tilerow + 4*j
+                    # Make sure the tile is in the range according to the given
+                    # depth. This won't happen unless the user has given -z to
+                    # render a smaller area of the map than everything
+                    if (
+                            c < self.mincol or
+                            c >= self.maxcol or
+                            r < self.minrow or
+                            r >= self.maxrow
+                            ):
+                        continue
+
+                    tile = Tile.compute_path(c, r, depth)
+
+                    if self.forcerender:
+                        dirty.set_dirty(tile.path)
+                        continue
+
+                    # Stochastic check. Since we're scanning by chunks and not
+                    # by tiles, and the tiles get checked multiple times for
+                    # each chunk, this is only an approximation. The given
+                    # probability is for a particular tile that needs
+                    # rendering, but since a tile gets touched up to 32 times
+                    # (once for each chunk in it), divide the probability by
+                    # 32.
+                    if self.rerender_probability and self.rerender_probability/32 > random.random():
+                        dirty.set_dirty(tile.path)
+                        continue
+
+                    # Check if this tile has already been marked dirty. If so,
+                    # no need to do any of the below.
+                    if dirty.query_path(tile.path):
+                        continue
+
+                    # Check mtimes and conditionally add tile to dirty set
+                    tile_path = tile.get_filepath(self.full_tiledir, self.imgformat)
+                    try:
+                        tile_mtime = os.stat(tile_path)[stat.ST_MTIME]
+                    except OSError, e:
+                        if e.errno != errno.ENOENT:
+                            raise
+                        tile_mtime = 0
+                    #logging.debug("tile %s(%s) vs chunk %s,%s (%s)",
+                    #        tile, tile_mtime, chunkcol, chunkrow, chunkmtime)
+                    if tile_mtime < chunkmtime:
+                        dirty.set_dirty(tile.path)
+                        #logging.debug("	Setting tile as dirty. Will render.")
+
+        t = int(time.time()-stime)
+        logging.debug("Done with scan for '%s'. %s chunks scanned in %s second%s", 
+                self.rendermode, chunkcount, t,
+                "s" if t != 1 else "")
+
+        #if logging.getLogger().isEnabledFor(logging.DEBUG):
+        #    logging.debug("	Counting tiles that need rendering...")
+        #    tilecount = 0
+        #    stime = time.time()
+        #    for _ in dirty.iterate_dirty():
+        #        tilecount += 1
+        #    logging.debug("	Done. %s tiles need to be rendered. (count took %s seconds)",
+        #            tilecount, int(time.time()-stime))
+        
+        return dirty
+
+
+class DirtyTiles(object):
+    """This tree holds which tiles need rendering.
+    Each instance is a node, and the root of a subtree.
+
+    Each node knows its "level", which corresponds to the zoom level where 0 is
+    the inner-most (most zoomed in) tiles.
+
+    Instances hold the clean/dirty state of their children. Leaf nodes are
+    images and do not physically exist in the tree, level 1 nodes keep track of
+    leaf image state. Level 2 nodes keep track of level 1 state, and so fourth.
+
+    In attempt to keep things memory efficient, subtrees that are completely
+    dirty are collapsed
+    
+    """
+    __slots__ = ("depth", "children")
+    def __init__(self, depth):
+        """Initialize a new tree with the specified depth. This actually
+        initializes a node, which is the root of a subtree, with `depth` levels
+        beneath it.
+
+        """
+        # Stores the depth of the tree according to this node. This is not the
+        # depth of this node, but rather the number of levels below this node
+        # (including this node).
+        self.depth = depth
+
+        # the self.children array holds the 4 children of this node. This
+        # follows the same quadtree convention as elsewhere: children 0, 1, 2,
+        # 3 are the upper-left, upper-right, lower-left, and lower-right
+        # respectively
+        # Values are:
+        # False
+        #   All children down this subtree are clean
+        # True
+        #   All children down this subtree are dirty
+        # A DirtyTiles instance
+        #   the instance defines which children down that subtree are
+        #   clean/dirty.
+        # A node with depth=1 cannot have a DirtyTiles instance in its
+        # children since its leaves are images, not more tree
+        self.children = [False] * 4
+
+    def set_dirty(self, path):
+        """Marks the requested leaf node as "dirty".
+        
+        Path is an iterable of integers representing the path to the leaf node
+        that is requested to be marked as dirty.
+        
+        """
+        path = list(path)
+        assert len(path) == self.depth
+        path.reverse()
+        self._set_dirty_helper(path)
+
+    def _set_dirty_helper(self, path):
+        """Recursive call for set_dirty()
+
+        Expects path to be a list in reversed order
+
+        If *all* the nodes below this one are dirty, this function returns
+        true. Otherwise, returns None.
+
+        """
+
+        if self.depth == 1:
+            # Base case
+            self.children[path[0]] = True
+
+            # Check to see if all children are dirty
+            if all(self.children):
+                return True
+        else:
+            # Recursive case
+
+            childnum = path.pop()
+            child = self.children[childnum]
+
+            if child == False:
+                # Create a new node
+                child = self.__class__(self.depth-1)
+                child._set_dirty_helper(path)
+                self.children[childnum] = child
+            elif child == True:
+                # Every child is already dirty. Nothing to do.
+                return
+            else:
+                # subtree is mixed clean/dirty. Recurse
+                ret = child._set_dirty_helper(path)
+                if ret:
+                    # Child says it's completely dirty, so we can purge the
+                    # subtree and mark it as dirty. The subtree will be garbage
+                    # collected when this method exits.
+                    self.children[childnum] = True
+
+                    # Since we've marked an entire sub-tree as dirty, we may be
+                    # able to signal to our parent
+                    if all(x is True for x in self.children):
+                        return True
+
+    def iterate_dirty(self, level=None):
+        """Returns an iterator over every dirty tile in this subtree. Each item
+        yielded is a sequence of integers representing the quadtree path to the
+        dirty tile. Yielded sequences are of length self.depth.
+
+        If level is None, iterates over tiles of the highest level, i.e.
+        worldtiles. If level is a value between 0 and the depth of this tree,
+        this method iterates over tiles at that level. Zoom level 0 is zoomed
+        all the way out, zoom level `depth` is all the way in.
+
+        In other words, specifying level causes the tree to be iterated as if
+        it was only that depth.
+
+        """
+        if level is None:
+            todepth = 1
+        else:
+            if not (level > 0 and level <= self.depth):
+                raise ValueError("Level parameter must be between 1 and %s" % self.depth)
+            todepth = self.depth - level + 1
+
+        return (tuple(reversed(rpath)) for rpath in self._iterate_dirty_helper(todepth))
+
+    def _iterate_dirty_helper(self, todepth):
+        if self.depth == todepth:
+            # Base case
+            if self.children[0]: yield [0]
+            if self.children[1]: yield [1]
+            if self.children[2]: yield [2]
+            if self.children[3]: yield [3]
+
+        else:
+            # Higher levels:
+            for c, child in enumerate(self.children):
+                if child == True:
+                    # All dirty down this subtree, iterate over every leaf
+                    for x in iterate_base4(self.depth-todepth):
+                        x = list(x)
+                        x.append(c)
+                        yield x
+                elif child != False:
+                    # Mixed dirty/clean down this subtree, recurse
+                    for path in child._iterate_dirty_helper(todepth):
+                        path.append(c)
+                        yield path
+
+    def query_path(self, path):
+        """Queries for the state of the given tile in the tree.
+
+        Returns False for "clean", True for "dirty"
+
+        """
+        # Traverse the tree down the given path. If the tree has been
+        # collapsed, then just return what the subtree is. Otherwise, if we
+        # find the specific DirtyTree requested, return its state using the
+        # __nonzero__ call.
+        treenode = self
+        for pathelement in path:
+            treenode = treenode.children[pathelement]
+            if not isinstance(treenode, DirtyTiles):
+                return treenode
+
+        # If the method has not returned at this point, treenode is the
+        # requested node, but it is an inner node with possibly mixed state
+        # subtrees. If any of the children are True return True. This call
+        # relies on the __nonzero__ method
+        return bool(treenode)
+
+    def __nonzero__(self):
+        """Returns the boolean context of this particular node. If any
+        descendent of this node is True return True. Otherwise, False.
+
+        """
+        # Any chilren that are True or are DirtyTiles that evaluate to True
+        # IDEA: look at all children for True before recursing
+        # Better idea: every node except the root /must/ have a dirty
+        # descendent or it wouldn't exist. This assumption is only valid as
+        # long as an unset_dirty() method or similar does not exist.
+        return any(self.children)
+
+    def count(self):
+        """Returns the total number of dirty leaf nodes.
+
+        """
+        # TODO: Make this more efficient (although for even the largest trees,
+        # this takes only seconds)
+        c = 0
+        for _ in self.iterate_dirty():
+            c += 1
+        return c
+
+class Tile(object):
+    """A simple container class that represents a single render-tile.
+
+    A render-tile is a tile that is rendered, not a tile composed of other
+    tiles.
+
+    """
+    __slots__ = ("col", "row", "path")
+    def __init__(self, col, row, path):
+        """Initialize the tile obj with the given parameters. It's probably
+        better to use one of the other constructors though
+
+        """
+        self.col = col
+        self.row = row
+        self.path = tuple(path)
+
+    def __repr__(self):
+        return "%s(%r,%r,%r)" % (self.__class__.__name__, self.col, self.row, self.path)
+
+    def __eq__(self,other):
+        return self.col == other.col and self.row == other.row and tuple(self.path) == tuple(other.path)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def get_filepath(self, tiledir, imgformat):
+        """Returns the path to this file given the directory to the tiles
+
+        """
+        # os.path.join would be the proper way to do this path concatenation,
+        # but it is surprisingly slow, probably because it checks each path
+        # element if it begins with a slash. Since we know these components are
+        # all relative, just concatinate with os.path.sep
+        pathcomponents = [tiledir]
+        pathcomponents.extend(str(x) for x in self.path)
+        path = os.path.sep.join(pathcomponents)
+        imgpath = ".".join((path, imgformat))
+        return imgpath
+
+    @classmethod
+    def from_path(cls, path):
+        """Constructor that takes a path and computes the col,row address of
+        the tile and constructs a new tile object.
+
+        """
+        path = tuple(path)
+
+        depth = len(path)
+
+        # Radius of the world in chunk cols/rows
+        # (Diameter in X is 2**depth, divided by 2 for a radius, multiplied by
+        # 2 for 2 chunks per tile. Similarly for Y)
+        xradius = 2**depth
+        yradius = 2*2**depth
+
+        col = -xradius
+        row = -yradius
+        xsize = xradius
+        ysize = yradius
+
+        for p in path:
+            if p in (1,3):
+                col += xsize
+            if p in (2,3):
+                row += ysize
+            xsize //= 2
+            ysize //= 2
+
+        return cls(col, row, path)
+
+    @classmethod
+    def compute_path(cls, col, row, depth):
+        """Constructor that takes a col,row of a tile and computes the path. 
+
+        """
+        assert col % 2 == 0
+        assert row % 4 == 0
+
+        xradius = 2**depth
+        yradius = 2*2**depth
+
+        colbounds = [-xradius, xradius]
+        rowbounds = [-yradius, yradius]
+
+        path = []
+
+        for level in xrange(depth):
+            # Strategy: Find the midpoint of this level, and determine which
+            # quadrant this row/col is in. Then set the bounds to that level
+            # and repeat
+
+            xmid = (colbounds[1] + colbounds[0]) // 2
+            ymid = (rowbounds[1] + rowbounds[0]) // 2
+
+            if col < xmid:
+                if row < ymid:
+                    path.append(0)
+                    colbounds[1] = xmid
+                    rowbounds[1] = ymid
+                else:
+                    path.append(2)
+                    colbounds[1] = xmid
+                    rowbounds[0] = ymid
+            else:
+                if row < ymid:
+                    path.append(1)
+                    colbounds[0] = xmid
+                    rowbounds[1] = ymid
+                else:
+                    path.append(3)
+                    colbounds[0] = xmid
+                    rowbounds[0] = ymid
+
+        return cls(col, row, path)
