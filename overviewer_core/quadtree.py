@@ -13,30 +13,23 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import multiprocessing
 import itertools
 import os
 import os.path
 import functools
 import re
 import shutil
-import collections
-import json
 import logging
-import cPickle
 import stat
 import errno 
 import time
 import random
-from time import gmtime, strftime, sleep
 
 from PIL import Image
 
-from . import nbt
 from . import chunk
 from .optimizeimages import optimize_image
 from c_overviewer import get_render_mode_inheritance
-import composite
 
 
 """

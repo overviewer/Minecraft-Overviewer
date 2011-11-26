@@ -69,10 +69,10 @@ def pool_initializer(rendernode):
         c_overviewer.set_render_mode_options(mode, rendernode.options.rendermode_options[mode])
     
     # load biome data in each process, if needed
-    for quadtree in rendernode.quadtrees:
-        if quadtree.world.useBiomeData:
+    for qtree in rendernode.quadtrees:
+        if qtree.world.useBiomeData:
             # make sure we've at least *tried* to load the color arrays in this process...
-            textures.prepareBiomeData(quadtree.world.worlddir)
+            textures.prepareBiomeData(qtree.world.worlddir)
             if not textures.grasscolor or not textures.foliagecolor:
                 raise Exception("Can't find grasscolor.png or foliagecolor.png")
             # only load biome data once
