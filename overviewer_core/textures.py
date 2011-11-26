@@ -516,16 +516,16 @@ def getBiomeData(worlddir, chunkX, chunkY):
     biomeX = chunkX // 32
     biomeY = chunkY // 32
     rots = 0
-    if _north == 'upper-left':
+    if _north == 'lower-left':
         temp = biomeX
         biomeX = biomeY
         biomeY = -temp-1
         rots = 3
-    elif _north == 'upper-right':
+    elif _north == 'upper-left':
         biomeX = -biomeX-1
         biomeY = -biomeY-1
         rots = 2
-    elif _north == 'lower-right':
+    elif _north == 'upper-right':
         temp = biomeX
         biomeX = -biomeY-1
         biomeY = temp
@@ -852,17 +852,17 @@ block(blockid=22, top_index=144)
 @material(blockid=[23, 61, 62], data=range(6), solid=True)
 def furnaces(blockid, data, north):
     # first, do the north rotation if needed
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 2: data = 5
         elif data == 3: data = 4
         elif data == 4: data = 2
         elif data == 5: data = 3
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 2: data = 3
         elif data == 3: data = 2
         elif data == 4: data = 5
         elif data == 5: data = 4
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 2: data = 4
         elif data == 3: data = 5
         elif data == 4: data = 3
@@ -894,17 +894,17 @@ block(blockid=25, top_index=74)
 def bed(blockid, data, north):
     # first get north rotation done
     # Masked to not clobber block head/foot info
-    if north == 'upper-left':
+    if north == 'lower-left':
         if (data & 0b0011) == 0: data = data & 0b1100 | 1
         elif (data & 0b0011) == 1: data = data & 0b1100 | 2
         elif (data & 0b0011) == 2: data = data & 0b1100 | 3
         elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if (data & 0b0011) == 0: data = data & 0b1100 | 2
         elif (data & 0b0011) == 1: data = data & 0b1100 | 3
         elif (data & 0b0011) == 2: data = data & 0b1100 | 0
         elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if (data & 0b0011) == 0: data = data & 0b1100 | 3
         elif (data & 0b0011) == 1: data = data & 0b1100 | 0
         elif (data & 0b0011) == 2: data = data & 0b1100 | 1
@@ -958,19 +958,19 @@ def rails(blockid, data, north):
     # first, do north rotation
     # Masked to not clobber powered rail on/off info
     # Ascending and flat straight
-    if north == 'upper-left':
+    if north == 'lower-left':
         if (data & 0b0111) == 0: data = data & 0b1000 | 1
         elif (data & 0b0111) == 1: data = data & 0b1000 | 0
         elif (data & 0b0111) == 2: data = data & 0b1000 | 5
         elif (data & 0b0111) == 3: data = data & 0b1000 | 4
         elif (data & 0b0111) == 4: data = data & 0b1000 | 2
         elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if (data & 0b0111) == 2: data = data & 0b1000 | 3
         elif (data & 0b0111) == 3: data = data & 0b1000 | 2
         elif (data & 0b0111) == 4: data = data & 0b1000 | 5
         elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if (data & 0b0111) == 0: data = data & 0b1000 | 1
         elif (data & 0b0111) == 1: data = data & 0b1000 | 0
         elif (data & 0b0111) == 2: data = data & 0b1000 | 4
@@ -979,17 +979,17 @@ def rails(blockid, data, north):
         elif (data & 0b0111) == 5: data = data & 0b1000 | 2
     if blockid == 66: # normal minetrack only
         #Corners
-        if north == 'upper-left':
+        if north == 'lower-left':
             if data == 6: data = 7
             elif data == 7: data = 8
             elif data == 8: data = 6
             elif data == 9: data = 9
-        elif north == 'upper-right':
+        elif north == 'upper-left':
             if data == 6: data = 8
             elif data == 7: data = 9
             elif data == 8: data = 6
             elif data == 9: data = 7
-        elif north == 'lower-right':
+        elif north == 'upper-right':
             if data == 6: data = 9
             elif data == 7: data = 6
             elif data == 8: data = 8
@@ -1064,17 +1064,17 @@ def rails(blockid, data, north):
 def piston(blockid, data, north):
     # first, north rotation
     # Masked to not clobber block head/foot info
-    if north == 'upper-left':
+    if north == 'lower-left':
         if (data & 0b0111) == 2: data = data & 0b1000 | 5
         elif (data & 0b0111) == 3: data = data & 0b1000 | 4
         elif (data & 0b0111) == 4: data = data & 0b1000 | 2
         elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if (data & 0b0111) == 2: data = data & 0b1000 | 3
         elif (data & 0b0111) == 3: data = data & 0b1000 | 2
         elif (data & 0b0111) == 4: data = data & 0b1000 | 5
         elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if (data & 0b0111) == 2: data = data & 0b1000 | 4
         elif (data & 0b0111) == 3: data = data & 0b1000 | 5
         elif (data & 0b0111) == 4: data = data & 0b1000 | 3
@@ -1140,17 +1140,17 @@ def piston(blockid, data, north):
 def piston_extension(blockid, data, north):
     # first, north rotation
     # Masked to not clobber block head/foot info
-    if north == 'upper-left':
+    if north == 'lower-left':
         if (data & 0b0111) == 2: data = data & 0b1000 | 5
         elif (data & 0b0111) == 3: data = data & 0b1000 | 4
         elif (data & 0b0111) == 4: data = data & 0b1000 | 2
         elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if (data & 0b0111) == 2: data = data & 0b1000 | 3
         elif (data & 0b0111) == 3: data = data & 0b1000 | 2
         elif (data & 0b0111) == 4: data = data & 0b1000 | 5
         elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if (data & 0b0111) == 2: data = data & 0b1000 | 4
         elif (data & 0b0111) == 3: data = data & 0b1000 | 5
         elif (data & 0b0111) == 4: data = data & 0b1000 | 3
@@ -1349,17 +1349,17 @@ block(blockid=49, top_index=37)
 @material(blockid=[50, 75, 76], data=[1, 2, 3, 4, 5], transparent=True)
 def torches(blockid, data, north):
     # first, north rotations
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 1: data = 3
         elif data == 2: data = 4
         elif data == 3: data = 2
         elif data == 4: data = 1
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 1: data = 2
         elif data == 2: data = 1
         elif data == 3: data = 4
         elif data == 4: data = 3
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 1: data = 4
         elif data == 2: data = 3
         elif data == 3: data = 1
@@ -1440,17 +1440,17 @@ block(blockid=52, top_index=34, transparent=True)
 def stairs(blockid, data, north):
 
     # first, north rotations
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 0: data = 2
         elif data == 1: data = 3
         elif data == 2: data = 1
         elif data == 3: data = 0
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 0: data = 1
         elif data == 1: data = 0
         elif data == 2: data = 3
         elif data == 3: data = 2
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 0: data = 3
         elif data == 1: data = 2
         elif data == 2: data = 0
@@ -1699,11 +1699,11 @@ def farmland(blockid, data):
 def signpost(blockid, data, north):
 
     # first north rotations
-    if north == 'upper-left':
+    if north == 'lower-left':
         data = (data + 4) % 16
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         data = (data + 8) % 16
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         data = (data + 12) % 16
 
     texture = terrain_images[4].copy()
@@ -1751,17 +1751,17 @@ def signpost(blockid, data, north):
 @material(blockid=[64,71], data=range(16), transparent=True)
 def door(blockid, data, north):
     #Masked to not clobber block top/bottom & swung info
-    if north == 'upper-left':
+    if north == 'lower-left':
         if (data & 0b0011) == 0: data = data & 0b1100 | 1
         elif (data & 0b0011) == 1: data = data & 0b1100 | 2
         elif (data & 0b0011) == 2: data = data & 0b1100 | 3
         elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if (data & 0b0011) == 0: data = data & 0b1100 | 2
         elif (data & 0b0011) == 1: data = data & 0b1100 | 3
         elif (data & 0b0011) == 2: data = data & 0b1100 | 0
         elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if (data & 0b0011) == 0: data = data & 0b1100 | 3
         elif (data & 0b0011) == 1: data = data & 0b1100 | 0
         elif (data & 0b0011) == 2: data = data & 0b1100 | 1
@@ -1822,17 +1822,17 @@ def door(blockid, data, north):
 def ladder(blockid, data, north):
 
     # first north rotations
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 2: data = 5
         elif data == 3: data = 4
         elif data == 4: data = 2
         elif data == 5: data = 3
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 2: data = 3
         elif data == 3: data = 2
         elif data == 4: data = 5
         elif data == 5: data = 4
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 2: data = 4
         elif data == 3: data = 5
         elif data == 4: data = 3
@@ -1867,17 +1867,17 @@ def ladder(blockid, data, north):
 def wall_sign(blockid, data, north): # wall sign
 
     # first north rotations
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 2: data = 5
         elif data == 3: data = 4
         elif data == 4: data = 2
         elif data == 5: data = 3
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 2: data = 3
         elif data == 3: data = 2
         elif data == 4: data = 5
         elif data == 5: data = 4
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 2: data = 4
         elif data == 3: data = 5
         elif data == 4: data = 3
@@ -1968,17 +1968,17 @@ def buttons(blockid, data, north):
     # it as unpressed
     data = data & 0x7
 
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 1: data = 3
         elif data == 2: data = 4
         elif data == 3: data = 2
         elif data == 4: data = 1
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 1: data = 2
         elif data == 2: data = 1
         elif data == 3: data = 4
         elif data == 4: data = 3
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 1: data = 4
         elif data == 2: data = 3
         elif data == 3: data = 1
@@ -2196,17 +2196,17 @@ def fence(blockid, data):
 @material(blockid=[86, 91], data=range(4), solid=True)
 def pumpkin(blockid, data, north): # pumpkins, jack-o-lantern
     # north rotation
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 0: data = 1
         elif data == 1: data = 2
         elif data == 2: data = 3
         elif data == 3: data = 0
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 0: data = 2
         elif data == 1: data = 3
         elif data == 2: data = 0
         elif data == 3: data = 1
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 0: data = 3
         elif data == 1: data = 0
         elif data == 2: data = 1
@@ -2291,17 +2291,17 @@ def cake(blockid, data):
 def repeater(blockid, data, north):
     # north rotation
     # Masked to not clobber delay info
-    if north == 'upper-left':
+    if north == 'lower-left':
         if (data & 0b0011) == 0: data = data & 0b1100 | 1
         elif (data & 0b0011) == 1: data = data & 0b1100 | 2
         elif (data & 0b0011) == 2: data = data & 0b1100 | 3
         elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if (data & 0b0011) == 0: data = data & 0b1100 | 2
         elif (data & 0b0011) == 1: data = data & 0b1100 | 3
         elif (data & 0b0011) == 2: data = data & 0b1100 | 0
         elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if (data & 0b0011) == 0: data = data & 0b1100 | 3
         elif (data & 0b0011) == 1: data = data & 0b1100 | 0
         elif (data & 0b0011) == 2: data = data & 0b1100 | 1
@@ -2438,17 +2438,17 @@ def trapdoor(blockid, data, north):
 
     # north rotation
     # Masked to not clobber opened/closed info
-    if north == 'upper-left':
+    if north == 'lower-left':
         if (data & 0b0011) == 0: data = data & 0b1100 | 3
         elif (data & 0b0011) == 1: data = data & 0b1100 | 2
         elif (data & 0b0011) == 2: data = data & 0b1100 | 0
         elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if (data & 0b0011) == 0: data = data & 0b1100 | 1
         elif (data & 0b0011) == 1: data = data & 0b1100 | 0
         elif (data & 0b0011) == 2: data = data & 0b1100 | 3
         elif (data & 0b0011) == 3: data = data & 0b1100 | 2
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if (data & 0b0011) == 0: data = data & 0b1100 | 2
         elif (data & 0b0011) == 1: data = data & 0b1100 | 3
         elif (data & 0b0011) == 2: data = data & 0b1100 | 1
@@ -2503,7 +2503,7 @@ def stone_brick(blockid, data):
 @material(blockid=[99,100], data=range(11), solid=True)
 def huge_mushroom(blockid, data, north):
     # north rotation
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 1: data = 3
         elif data == 2: data = 6
         elif data == 3: data = 9
@@ -2512,7 +2512,7 @@ def huge_mushroom(blockid, data, north):
         elif data == 7: data = 1
         elif data == 8: data = 4
         elif data == 9: data = 7
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 1: data = 9
         elif data == 2: data = 8
         elif data == 3: data = 7
@@ -2521,7 +2521,7 @@ def huge_mushroom(blockid, data, north):
         elif data == 7: data = 3
         elif data == 8: data = 2
         elif data == 9: data = 1
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 1: data = 7
         elif data == 2: data = 4
         elif data == 3: data = 1
@@ -2651,17 +2651,17 @@ def stem(blockid, data, north):
 @material(blockid=106, data=range(8), transparent=True)
 def vines(blockid, data, north):
     # north rotation
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 1: data = 2
         elif data == 4: data = 8
         elif data == 8: data = 1
         elif data == 2: data = 4
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 1: data = 4
         elif data == 4: data = 1
         elif data == 8: data = 2
         elif data == 2: data = 8
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 1: data = 8
         elif data == 4: data = 2
         elif data == 8: data = 4
@@ -2698,17 +2698,17 @@ def fence_gate(blockid, data, north):
     if data & 0x4:
         data = data & 0x3
         opened = True
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 0: data = 1
         elif data == 1: data = 2
         elif data == 2: data = 3
         elif data == 3: data = 0
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 0: data = 2
         elif data == 1: data = 3
         elif data == 2: data = 0
         elif data == 3: data = 1
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 0: data = 3
         elif data == 1: data = 0
         elif data == 2: data = 1
@@ -2780,17 +2780,17 @@ block(blockid=110, top_index=78, side_index=77)
 # TODO the data-block orientation relation is not clear
 @material(blockid=111, data=range(4), transparent=True)
 def lilypad(blockid, data, north):
-    if north == 'upper-left':
+    if north == 'lower-left':
         if data == 0: data = 2
         elif data == 1: data = 3
         elif data == 2: data = 1
         elif data == 3: data = 0
-    elif north == 'upper-right':
+    elif north == 'upper-left':
         if data == 0: data = 1
         elif data == 1: data = 0
         elif data == 2: data = 3
         elif data == 3: data = 2
-    elif north == 'lower-right':
+    elif north == 'upper-right':
         if data == 0: data = 3
         elif data == 1: data = 2
         elif data == 2: data = 0

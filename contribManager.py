@@ -21,6 +21,7 @@ scripts=dict( # keys are names, values are scripts
         rerenderBlocks  = "rerenderBlocks.py",
         testRender      = "testRender.py",
         validate        = "validateRegionFile.py",
+        overviewerDump  = "overviewerDump.py",
         )
 
 # you can symlink or hardlink contribManager.py to another name to have it

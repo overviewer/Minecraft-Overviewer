@@ -81,11 +81,11 @@ def get_blockarray_fromfile(filename, north_direction='lower-left'):
     level = d[1]['Level']
     chunk_data = level
     rots = 0
-    if self.north_direction == 'upper-left':
+    if self.north_direction == 'lower-left':
         rots = 1
-    elif self.north_direction == 'upper-right':
+    elif self.north_direction == 'upper-left':
         rots = 2
-    elif self.north_direction == 'lower-right':
+    elif self.north_direction == 'upper-right':
         rots = 3
 
     chunk_data['Blocks'] = numpy.rot90(numpy.frombuffer(
