@@ -82,6 +82,10 @@ def pool_initializer(rendernode):
 class RenderNode(object):
     def __init__(self, quadtrees, options):
         """Distributes the rendering of a list of quadtrees.
+        
+        This class name is slightly misleading: it does not represent a worker
+        process, it coordinates the rendering of the given quadtrees across
+        many worker processes.
 
         This class tries not to make any assumptions on whether the given
         quadtrees share the same world or whether the given quadtrees share the
@@ -193,10 +197,6 @@ class RenderNode(object):
             if q.p > max_p:
                 max_p = q.p
         self.max_p = max_p
-
-        if total_rendertiles == 0:
-            logging.info(r"There is no work to do, your map is up to date! \o/")
-            return
 
         # Set a reasonable batch size. Groups of tiles are sent to workers in
         # batches this large. It should be a multiple of the number of
@@ -315,8 +315,9 @@ class RenderNode(object):
             except Queue.Empty:
                 pass
 
-        # Print the final status line unconditionally
-        self.print_statusline(complete, total_rendertiles, 1, True)
+        # Print the final status line almost unconditionally
+        if total_rendertiles > 0:
+            self.print_statusline(complete, total_rendertiles, 1, True)
 
         ##########################################
         # The highest zoom level has been rendered.
