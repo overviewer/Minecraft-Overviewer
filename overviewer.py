@@ -468,6 +468,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     # create the distributed render
     r = rendernode.RenderNode(q, options)
+    # for the pool_initializer
+    r.builtin_custom_rendermodes = builtin_custom_rendermodes
     
     # write out the map and web assets
     m = googlemap.MapGen(q, configInfo=options)

@@ -63,6 +63,8 @@ def pool_initializer(rendernode):
     c_overviewer.init_chunk_render()
     
     # setup c_overviewer rendermode customs / options
+    for mode in rendernode.builtin_custom_rendermodes:
+        c_overviewer.add_custom_render_mode(mode, rendernode.builtin_custom_rendermodes[mode])
     for mode in rendernode.options.custom_rendermodes:
         c_overviewer.add_custom_render_mode(mode, rendernode.options.custom_rendermodes[mode])
     for mode in rendernode.options.rendermode_options:
