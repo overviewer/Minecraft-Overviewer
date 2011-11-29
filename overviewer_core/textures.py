@@ -1919,13 +1919,148 @@ def wall_sign(blockid, data, north): # wall sign
 
     return img
 
-##
-## not rendered: levers
-##
+# levers
 @material(blockid=69, data=range(16), transparent=True)
 def levers(blockid, data, north):
-    # place holder, used to mae the block transparent
-    return None
+    # first north rotations
+    if data & 8 == 8: powered = True
+    else: powered = False
+
+    data = data & 7
+
+    if north == 'upper-left':
+        # on wall levers
+        if data == 1: data = 3
+        elif data == 2: data = 4
+        elif data == 3: data = 2
+        elif data == 4: data = 1
+        # on floor levers
+        elif data == 5: data = 6
+        elif data == 6: data = 5
+    elif north == 'upper-right':
+        if data == 1: data = 2
+        elif data == 2: data = 1
+        elif data == 3: data = 4
+        elif data == 4: data = 3
+        elif data == 5: data = 5
+        elif data == 6: data = 6
+    elif north == 'lower-right':
+        if data == 1: data = 4
+        elif data == 2: data = 3
+        elif data == 3: data = 1
+        elif data == 4: data = 2
+        elif data == 5: data = 6
+        elif data == 6: data = 5
+
+    # generate the texture for the base of the lever
+    t_base = terrain_images[16].copy()
+
+    ImageDraw.Draw(t_base).rectangle((0,0,15,3),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(t_base).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(t_base).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(t_base).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    # generate the texture for the stick
+    stick = terrain_images[96].copy()
+    c_stick = Image.new("RGBA", (16,16), bgcolor)
+    
+    tmp = ImageEnhance.Brightness(stick).enhance(0.8)
+    composite.alpha_over(c_stick, tmp, (1,0), tmp)
+    composite.alpha_over(c_stick, stick, (0,0), stick)
+    t_stick = transform_image_side(c_stick.rotate(45, Image.NEAREST))
+
+    # where the lever will be composed
+    img = Image.new("RGBA", (24,24), bgcolor)
+    
+    # wall levers
+    if data == 1: # facing SOUTH
+        # levers can't be placed in transparent blocks, so this
+        # direction is almost invisible
+        return None
+
+    elif data == 2: # facing NORTH
+        base = transform_image_side(t_base)
+        
+        # paste it twice with different brightness to make a fake 3D effect
+        composite.alpha_over(img, base, (12,-1), base)
+
+        alpha = base.split()[3]
+        base = ImageEnhance.Brightness(base).enhance(0.9)
+        base.putalpha(alpha)
+        
+        composite.alpha_over(img, base, (11,0), base)
+
+        # paste the lever stick
+        pos = (7,-7)
+        if powered:
+            t_stick = t_stick.transpose(Image.FLIP_TOP_BOTTOM)
+            pos = (7,6)
+        composite.alpha_over(img, t_stick, pos, t_stick)
+
+    elif data == 3: # facing WEST
+        base = transform_image_side(t_base)
+        
+        # paste it twice with different brightness to make a fake 3D effect
+        base = base.transpose(Image.FLIP_LEFT_RIGHT)
+        composite.alpha_over(img, base, (0,-1), base)
+
+        alpha = base.split()[3]
+        base = ImageEnhance.Brightness(base).enhance(0.9)
+        base.putalpha(alpha)
+        
+        composite.alpha_over(img, base, (1,0), base)
+        
+        # paste the lever stick
+        t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
+        pos = (5,-7)
+        if powered:
+            t_stick = t_stick.transpose(Image.FLIP_TOP_BOTTOM)
+            pos = (6,6)
+        composite.alpha_over(img, t_stick, pos, t_stick)
+
+    elif data == 4: # facing EAST
+        # levers can't be placed in transparent blocks, so this
+        # direction is almost invisible
+        return None
+
+    # floor levers
+    elif data == 5: # pointing south when off
+        # lever base, fake 3d again
+        base = transform_image_top(t_base)
+
+        alpha = base.split()[3]
+        tmp = ImageEnhance.Brightness(base).enhance(0.8)
+        tmp.putalpha(alpha)
+        
+        composite.alpha_over(img, tmp, (0,12), tmp)
+        composite.alpha_over(img, base, (0,11), base)
+
+        # lever stick
+        pos = (3,2)
+        if not powered:
+            t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
+            pos = (11,2)
+        composite.alpha_over(img, t_stick, pos, t_stick)
+
+    elif data == 6: # pointing east when off
+        # lever base, fake 3d again
+        base = transform_image_top(t_base.rotate(90))
+
+        alpha = base.split()[3]
+        tmp = ImageEnhance.Brightness(base).enhance(0.8)
+        tmp.putalpha(alpha)
+        
+        composite.alpha_over(img, tmp, (0,12), tmp)
+        composite.alpha_over(img, base, (0,11), base)
+
+        # lever stick
+        pos = (2,3)
+        if not powered:
+            t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
+            pos = (10,2)
+        composite.alpha_over(img, t_stick, pos, t_stick)
+
+    return img
 
 # wooden and stone pressure plates
 @material(blockid=[70, 72], data=[0,1], transparent=True)
