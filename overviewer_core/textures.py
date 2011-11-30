@@ -2780,47 +2780,43 @@ def stem(blockid, data, north):
     
 
 # vines
-# TODO multiple sides of a block can contain vines! At the moment
-# only pure directions are rendered
-# (source http://www.minecraftwiki.net/wiki/Data_values#Vines)
-@material(blockid=106, data=range(8), transparent=True)
+@material(blockid=106, data=range(16), transparent=True)
 def vines(blockid, data, north):
     # north rotation
+    # vines data is bit coded. decode it first.
+    # NOTE: the directions used in this function are the new ones used
+    # in minecraft 1.0.0, no the ones used by overviewer 
+    # (i.e. north is top-left by defalut)
+
+    # rotate the data by bitwise shift
+    shifts = 0
     if north == 'upper-left':
-        if data == 1: data = 2
-        elif data == 4: data = 8
-        elif data == 8: data = 1
-        elif data == 2: data = 4
+        shifts = 1
     elif north == 'upper-right':
-        if data == 1: data = 4
-        elif data == 4: data = 1
-        elif data == 8: data = 2
-        elif data == 2: data = 8
+        shifts = 2
     elif north == 'lower-right':
-        if data == 1: data = 8
-        elif data == 4: data = 2
-        elif data == 8: data = 4
-        elif data == 2: data = 1
+        shifts = 3
+    
+    for i in range(shifts):
+        data = data * 2
+        if data & 16:
+            data = (data - 16) | 1
+
+    # decode data and prepare textures
+    raw_texture = terrain_images[143]
+    s = w = n = e = None
+
+    if data & 1: # south
+        s = raw_texture
+    if data & 2: # west
+        w = raw_texture
+    if data & 4: # north
+        n = raw_texture
+    if data & 8: # east
+        e = raw_texture
 
     # texture generation
-    img = Image.new("RGBA", (24,24), bgcolor)
-    raw_texture = terrain_images[143]
-
-    if data == 2:   # south
-        tex = transform_image_side(raw_texture)
-        composite.alpha_over(img, tex, (0,6), tex)
-
-    if data == 1:	# east
-        tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, tex, (12,6), tex)
-
-    if data == 4:	# west
-        tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, tex, (0,0), tex)
-
-    if data == 8:	# north
-        tex = transform_image_side(raw_texture)
-        composite.alpha_over(img, tex, (12,0), tex)
+    img = build_full_block(None, n, e, w, s)
 
     return img
 
