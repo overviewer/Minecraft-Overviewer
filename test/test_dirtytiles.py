@@ -3,6 +3,8 @@ import unittest
 from overviewer_core.quadtree import DirtyTiles, iterate_base4
 
 class DirtyTilesTest(unittest.TestCase):
+    # If you change this definition, you must also change the hard-coded
+    # results list in test_posttraverse()
     dirty_paths = frozenset([
             # Entire subtree 0/0 is dirty, nothing else under 0
             (0,0,0),
@@ -137,6 +139,63 @@ class DirtyTilesTest(unittest.TestCase):
             self.assertTrue(p in l1, "%s was not supposed to be returned!" % (p,))
             l1.remove(p)
         self.assertEqual(len(l1), 0, "Never iterated over these items: %s" % l1)
+
+    def test_posttraverse(self):
+        """Test a post-traversal of the tree's dirty tiles"""
+        # Expect these results in this proper order.
+        expected_list = [
+            (0,0,0),
+            (0,0,1),
+            (0,0,2),
+            (0,0,3),
+            (0,0),
+            (0,),
+
+            (1,0,3),
+            (1,0),
+
+            (1,1,3),
+            (1,1),
+
+            (1,2,0),
+            (1,2),
+            (1,),
+
+            (2,0,0),
+            (2,0,1),
+            (2,0,2),
+            (2,0,3),
+            (2,0),
+
+            (2,1,0),
+            (2,1,1),
+            (2,1,2),
+            (2,1,3),
+            (2,1),
+
+            (2,2,0),
+            (2,2,1),
+            (2,2,2),
+            (2,2,3),
+            (2,2),
+
+            (2,3,0),
+            (2,3,1),
+            (2,3,2),
+            (2,3,3),
+            (2,3),
+            (2,),
+
+            # We should expect the root tile to need rendering too.
+            (),
+            ]
+        iterator = iter(self.tree.posttraversal())
+        from itertools import izip
+        for expected, actual in izip(expected_list, iterator):
+            self.assertEqual(actual, expected)
+
+        self.assertRaises(StopIteration, next, iterator)
+
 
 if __name__ == "__main__":
     unittest.main()
