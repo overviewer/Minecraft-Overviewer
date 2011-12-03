@@ -236,7 +236,8 @@ class RenderNode(object):
         # which in this case, is render_worldtile_batch()
         timestamp = time.time()
 
-        self.print_statusline(0, total_rendertiles, 1)  
+        if total_rendertiles > 0:
+            self.print_statusline(0, total_rendertiles, 1)  
 
         for result in self._apply_render_worldtiles(dirty_list, pool, batch_size):
             results.append(result)               
