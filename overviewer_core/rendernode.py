@@ -159,10 +159,14 @@ class RenderNode(object):
                     logging.debug("%i tiles rendered in %.1f seconds. Avg: %.1f tiles per sec",
                             deltacount, deltat, avg)
 
-            self._last_print_level = level
-            self._last_print_count = complete
-            self._last_print_time = now
-                
+                    self._last_print_level = level
+                    self._last_print_count = complete
+                    self._last_print_time = now
+            elif unconditional:
+                self._last_print_level = level
+                self._last_print_count = complete
+                self._last_print_time = now
+            
     def go(self, procs):
         """Renders all tiles"""
         
@@ -237,7 +241,7 @@ class RenderNode(object):
         timestamp = time.time()
 
         if total_rendertiles > 0:
-            self.print_statusline(0, total_rendertiles, 1)  
+            self.print_statusline(0, total_rendertiles, 1, True)
 
         for result in self._apply_render_worldtiles(dirty_list, pool, batch_size):
             results.append(result)               
@@ -347,7 +351,7 @@ class RenderNode(object):
             logging.info("Starting level {0}".format(level))
             timestamp = time.time()
             
-            self.print_statusline(0, total, level)
+            self.print_statusline(0, total, level, True)
 
             # Same deal as above. _apply_render_innertile adds tiles in batch
             # to the worker pool and yields result objects that return the
