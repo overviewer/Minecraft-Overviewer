@@ -285,9 +285,21 @@ class QuadtreeGen(object):
         imgpath = os.path.join(dest, name) + "." + imgformat
 
         if name == "base":
-            quadPath = [[(0,0),os.path.join(dest, "0." + imgformat)],[(192,0),os.path.join(dest, "1." + imgformat)], [(0, 192),os.path.join(dest, "2." + imgformat)],[(192,192),os.path.join(dest, "3." + imgformat)]]
+            # Special case for the base tile. Its children are in the same
+            # directory instead of in a sub-directory
+            quadPath = [
+                    ((0,0),os.path.join(dest, "0." + imgformat)),
+                    ((192,0),os.path.join(dest, "1." + imgformat)),
+                    ((0, 192),os.path.join(dest, "2." + imgformat)),
+                    ((192,192),os.path.join(dest, "3." + imgformat)),
+                    ]
         else:
-            quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
+            quadPath = [
+                    ((0,0),os.path.join(dest, name, "0." + imgformat)),
+                    ((192,0),os.path.join(dest, name, "1." + imgformat)),
+                    ((0, 192),os.path.join(dest, name, "2." + imgformat)),
+                    ((192,192),os.path.join(dest, name, "3." + imgformat)),
+                    ]
        
         #stat the tile, we need to know if it exists and its mtime
         try:    
@@ -298,19 +310,21 @@ class QuadtreeGen(object):
             tile_mtime = None
             
         #check mtimes on each part of the quad, this also checks if they exist
+        max_mtime = 0
         needs_rerender = (tile_mtime is None) or self.forcerender
         quadPath_filtered = []
         for path in quadPath:
             try:
-                quad_mtime = os.stat(path[1])[stat.ST_MTIME]; 
+                quad_mtime = os.stat(path[1])[stat.ST_MTIME]
                 quadPath_filtered.append(path)
                 if quad_mtime > tile_mtime:     
-                    needs_rerender = True            
+                    needs_rerender = True
+                max_mtime = max(max_mtime, quad_mtime)
             except OSError:
                 # We need to stat all the quad files, so keep looping
                 pass      
         # do they all not exist?
-        if quadPath_filtered == []:
+        if not quadPath_filtered:
             if tile_mtime is not None:
                 os.unlink(imgpath)
             return
@@ -345,6 +359,8 @@ class QuadtreeGen(object):
             
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
+
+        os.utime(imgpath, (max_mtime, max_mtime))
 
     def render_worldtile(self, tile, check_tile=False):
         """Renders the given tile. All the other relevant information is
@@ -412,6 +428,15 @@ class QuadtreeGen(object):
                 # directory at the same time
                 if e.errno != errno.EEXIST:
                     raise
+
+        # Compute the maximum mtime of all the chunks that go into this tile.
+        # At the end, we'll set the tile's mtime to this value.
+        max_chunk_mtime = 0
+        for col,row,chunkx,chunky,region in chunks:
+            max_chunk_mtime = max(
+                    max_chunk_mtime,
+                    region.get_chunk_timestamp(chunkx, chunky)
+                    )
         
         if check_tile:
             # Look at all the chunks that touch this tile and their mtimes to
@@ -483,12 +508,14 @@ class QuadtreeGen(object):
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
 
+        os.utime(imgpath, (max_chunk_mtime, max_chunk_mtime))
+
     def scan_chunks(self):
-        """Scans the chunks of the world object and return the dirty tree object
-        holding the tiles that need to be rendered.
+        """Scans the chunks of the world object and generates a dirty tree
+        object holding the tiles that need to be rendered.
 
         Checks mtimes of tiles in the process, unless forcerender is set on the
-        object.
+        object, in which case all tiles that exist are marked as dirty.
 
         """
 
