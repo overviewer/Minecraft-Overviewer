@@ -575,7 +575,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception, e:
-        if e.message == "Exiting":
+        if e.args[0] == "Exiting":
             logging.info("Exiting...")
             doExit(code=0, wait=False)
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
