@@ -155,6 +155,28 @@ def _load_image(filename):
     buffer = StringIO(fileobj.read())
     return Image.open(buffer).convert("RGBA")
 
+def _load_water():
+    """Special-case function for loading water, handles
+    MCPatcher-compliant custom animated water."""
+    try:
+        # try the MCPatcher case first
+        watertexture = _load_image("custom_water_still.png")
+        watertexture = watertexture.crop((0, 0, watertexture.size[0], watertexture.size[0]))
+    except IOError:
+        watertexture = _load_image("water.png")
+    return watertexture
+
+def _load_lava():
+    """Special-case function for loading lava, handles
+    MCPatcher-compliant custom animated lava."""
+    try:
+        # try the MCPatcher lava first, in case it's present
+        lavatexture = _load_image("custom_lava_still.png")
+        lavatexture = lavatexture.crop((0, 0, lavatexture.size[0], lavatexture.size[0]))
+    except IOError:
+        lavatexture = _load_image("lava.png")
+    return lavatexture
+
 def _split_terrain(terrain):
     """Builds and returns a length 256 array of each 16x16 chunk of texture"""
     textures = []
@@ -761,7 +783,7 @@ block(blockid=7, top_index=17)
 
 @material(blockid=8, data=range(16), fluid=True, transparent=True, nospawn=True)
 def water(blockid, data):
-    watertex = _load_image("water.png")
+    watertex = _load_water()
     return build_block(watertex, watertex)
 
 # other water, glass, and ice (no inner surfaces)
@@ -769,7 +791,7 @@ def water(blockid, data):
 @material(blockid=[9, 20, 79], data=range(32), fluid=(9,), transparent=True, nospawn=True, solid=(79, 20))
 def no_inner_surfaces(blockid, data):
     if blockid == 9:
-        texture = _load_image("water.png")
+        texture = _load_water()
     elif blockid == 20:
         texture = terrain_images[49]
     else:
@@ -809,7 +831,7 @@ def no_inner_surfaces(blockid, data):
 
 @material(blockid=[10, 11], data=range(16), fluid=True, transparent=False, nospawn=True)
 def lava(blockid, data):
-    lavatex = _load_image("lava.png")
+    lavatex = _load_lava()
     return build_block(lavatex, lavatex)
 
 # sand
@@ -2983,7 +3005,7 @@ def cauldron(blockid, data):
     side = terrain_images[154]
     top = terrain_images[138]
     bottom = terrain_images[139]
-    water = transform_image_top(_load_image("water.png"))
+    water = transform_image_top(_load_water())
     if data == 0: # empty
         img = build_full_block(top, side, side, side, side)
     if data == 1: # 1/3 filled
