@@ -155,8 +155,9 @@ class RenderNode(object):
                 deltacount = complete - self._last_print_count
                 deltat = now - self._last_print_time
                 avg = deltacount / deltat
-                logging.debug("%i tiles rendered in %.1f seconds. Avg: %.1f tiles per sec",
-                        deltacount, deltat, avg)
+                if deltat > 0.03: # prevent very small numbers from producing weird averages. 0.03 chosen empirically
+                    logging.debug("%i tiles rendered in %.1f seconds. Avg: %.1f tiles per sec",
+                            deltacount, deltat, avg)
 
             self._last_print_level = level
             self._last_print_count = complete
@@ -234,6 +235,9 @@ class RenderNode(object):
         # are used to access the values returned by the worker's function,
         # which in this case, is render_worldtile_batch()
         timestamp = time.time()
+
+        self.print_statusline(0, total_rendertiles, 1)  
+
         for result in self._apply_render_worldtiles(dirty_list, pool, batch_size):
             results.append(result)               
 
@@ -341,6 +345,8 @@ class RenderNode(object):
 
             logging.info("Starting level {0}".format(level))
             timestamp = time.time()
+            
+            self.print_statusline(0, total, level)
 
             # Same deal as above. _apply_render_innertile adds tiles in batch
             # to the worker pool and yields result objects that return the
