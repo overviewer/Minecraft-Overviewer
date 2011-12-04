@@ -72,7 +72,11 @@ class MapGen(object):
         """Generates a Google Maps interface for the given list of
         quadtrees. All of the quadtrees must have the same destdir,
         image format, and world. 
-        Note:tiledir for each quadtree should be unique. By default the tiledir is determined by the rendermode"""
+
+        Note:tiledir for each quadtree should be unique. By default the tiledir
+        is determined by the rendermode
+        
+        """
         
         self.skipjs = configInfo.get('skipjs', False)
         self.nosigns = configInfo.get('nosigns', False)
@@ -94,8 +98,9 @@ class MapGen(object):
         self.quadtrees = quadtrees
     
     def go(self, procs):
-        """Writes out config.js, marker.js, and region.js
-        Copies web assets into the destdir"""
+        """Writes out overviewerConfig.js and does copying of the other static web assets
+
+        """
         zoomlevel = self.p
 
         bgcolor = (int(self.bg_color[1:3],16), int(self.bg_color[3:5],16), int(self.bg_color[5:7],16), 0)
@@ -171,6 +176,9 @@ class MapGen(object):
 
 
     def finalize(self):
+        """Write out persistent data file and marker listings file
+
+        """
         # since we will only discover PointsOfInterest in chunks that need to be 
         # [re]rendered, POIs like signs in unchanged chunks will not be listed
         # in self.world.POI.  To make sure we don't remove these from markers.js
@@ -203,14 +211,3 @@ class MapGen(object):
                     output.write(",")
                 output.write("\n")
             output.write("]);\n")
-        
-        # write out the default (empty, but documented) region table
-        with codecs.open(os.path.join(self.destdir, "regions.js"), 'w', encoding='UTF-8') as output:
-            output.write('overviewer.collections.regionDatas.push([\n')
-            output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
-            output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
-            output.write('  //   {"x": 0, "y": 10, "z": 0},\n')
-            output.write('  //   {"x": 0, "y": 0, "z": 10}\n')
-            output.write('  // ]},\n')
-            output.write(']);')
-        

@@ -227,7 +227,7 @@ def main():
     parser.add_option("--check-terrain", dest="check_terrain", helptext="Prints the location and hash of terrain.png, useful for debugging terrain.png problems", action="store_true", advanced=False, commandLineOnly=True)
     parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, helptext="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, helptext="Print more output. You can specify this option multiple times.")
-    parser.add_option("--skip-js", dest="skipjs", action="store_true", helptext="Don't output marker.js or regions.js")
+    parser.add_option("--skip-js", dest="skipjs", action="store_true", helptext="Don't output marker.js")
     parser.add_option("--no-signs", dest="nosigns", action="store_true", helptext="Don't output signs to markers.js")
     parser.add_option("--north-direction", dest="north_direction", action="store", helptext="Specifies which corner of the screen north will point to. Defaults to whatever the current map uses, or lower-left for new maps. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default="auto", choices=avail_north_dirs)
     parser.add_option("--changelist", dest="changelist", action="store", helptext="Output list of changed tiles to file. If the file exists, its contents will be overwritten.",advanced=True)

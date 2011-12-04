@@ -345,8 +345,9 @@ Less Useful Options
 
 .. cmdoption:: --skip-js
 
-    Skip the generation and output of markers.js and regions.js to the output
-    directory.
+    Skip the generation and output of markers.js, which is typically generated
+    from the signs in your world. This is useful if you want to generate your
+    own and don't want this one getting in the way.
 
     **Settings file:**
         Option name: ``skipjs``
