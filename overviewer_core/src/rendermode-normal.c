@@ -40,6 +40,10 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
     if (!render_mode_parse_option(options, "height_fading", "i", &(self->height_fading)))
         return 1;
     
+    self->nether = 0;
+    if (!render_mode_parse_option(options, "nether", "i", &(self->nether)))
+        return 1;
+    
     if (self->height_fading) {
         self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
         self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
@@ -137,6 +141,26 @@ rendermode_normal_hidden(void *data, RenderState *state, int x, int y, int z) {
     
     if (z > self->max_depth || z < self->min_depth) {
         return 1;
+    }
+    
+    if (self->nether)
+    {
+        
+        /* hide all blocks above all air blocks */
+        int below_air = 0;
+        
+        while (z < 128)
+        {
+            if (getArrayByte3D(state->blocks, x, y, z) == 0)
+            {
+                below_air = 1;
+                break;
+            }
+            z++;
+        }
+        
+        if (!below_air)
+            return 1;
     }
 
     return 0;
@@ -354,6 +378,7 @@ const RenderModeOption rendermode_normal_options[] = {
     {"min_depth", "lowest level of blocks to render (default: 0)"},
     {"max_depth", "highest level of blocks to render (default: 127)"},
     {"height_fading", "darken or lighten blocks based on height (default: False)"},
+    {"nether", "if True, remove the roof of the map. Useful on nether maps. (default: False)"},
     {NULL, NULL}
 };
 
