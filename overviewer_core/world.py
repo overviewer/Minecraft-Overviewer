@@ -81,6 +81,12 @@ class World(object):
         if not ('version' in data and data['version'] == 19132):
             logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
             sys.exit(1)
+        if 'LevelName' in data:
+            # level.dat should have the LevelName attribute so we'll use that
+            self.name = data['LevelName']
+        else:
+            # but very old ones might not? so we'll just go with the world dir name if they don't
+            self.name = os.path.basename(os.path.realpath(self.worlddir))
 
         #  stores Points Of Interest to be mapped with markers
         #  a list of dictionaries, see below for an example
