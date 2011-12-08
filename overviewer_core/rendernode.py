@@ -154,8 +154,8 @@ class RenderNode(object):
             if self._last_print_level == level:
                 deltacount = complete - self._last_print_count
                 deltat = now - self._last_print_time
-                avg = deltacount / deltat
                 if deltat > 0.03: # prevent very small numbers from producing weird averages. 0.03 chosen empirically
+                    avg = deltacount / deltat
                     logging.debug("%i tiles rendered in %.1f seconds. Avg: %.1f tiles per sec",
                             deltacount, deltat, avg)
 
