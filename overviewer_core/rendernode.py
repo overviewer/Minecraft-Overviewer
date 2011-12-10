@@ -174,7 +174,7 @@ class RenderNode(object):
         # directories to find what needs to be rendered. We get from this the
         # total tiles that need to be rendered (at the highest level across all
         # quadtrees) as well as a list of [qtree, DirtyTiles object]
-        total_rendertiles, dirty_list = self._get_dirty_tiles(procs)
+        total_worldtiles, dirty_list = self._get_dirty_tiles(procs)
 
         # Create a pool
         logging.debug("Parent process {0}".format(os.getpid()))
@@ -221,7 +221,7 @@ class RenderNode(object):
         logging.info("Rendering {0} rendermode{1}".format(len(quadtrees),'s' if len(quadtrees) > 1 else '' ))
         logging.info("Started {0} worker process{1}".format(
             procs, "es" if procs != 1 else ""))
-        logging.info("There are {0} tiles to render at this level".format(total_rendertiles))        
+        logging.info("There are {0} tiles to render at this level".format(total_worldtiles))
         logging.info("There are {0} total levels".format(self.max_p))
 
         # results is a queue of multiprocessing.AsyncResult objects. They are
@@ -240,8 +240,8 @@ class RenderNode(object):
         # which in this case, is render_worldtile_batch()
         timestamp = time.time()
 
-        if total_rendertiles > 0:
-            self.print_statusline(0, total_rendertiles, 1, True)
+        if total_worldtiles > 0:
+            self.print_statusline(0, total_worldtiles, 1, True)
 
         for result in self._apply_render_worldtiles(dirty_list, pool, batch_size):
             results.append(result)               
@@ -289,7 +289,7 @@ class RenderNode(object):
                     while count_to_remove > 0:
                         count_to_remove -= 1
                         complete += results.popleft().get()
-                        self.print_statusline(complete, total_rendertiles, 1)  
+                        self.print_statusline(complete, total_worldtiles, 1)
 
             # If the results queue is getting too big, drain all but
             # 500//batch_size items from it
@@ -298,7 +298,7 @@ class RenderNode(object):
                 # required has an upper bound
                 while len(results) > (500//batch_size):
                     complete += results.popleft().get()
-                    self.print_statusline(complete, total_rendertiles, 1)
+                    self.print_statusline(complete, total_worldtiles, 1)
 
             # Loop back to the top, add more items to the queue, and repeat
 
@@ -306,7 +306,7 @@ class RenderNode(object):
         # results to come in before continuing
         while len(results) > 0:
             complete += results.popleft().get()
-            self.print_statusline(complete, total_rendertiles, 1)
+            self.print_statusline(complete, total_worldtiles, 1)
 
         # Now drain the point of interest queues for each world
         for world in self.worlds:    
@@ -327,8 +327,8 @@ class RenderNode(object):
                 pass
 
         # Print the final status line almost unconditionally
-        if total_rendertiles > 0:
-            self.print_statusline(complete, total_rendertiles, 1, True)
+        if total_worldtiles > 0:
+            self.print_statusline(complete, total_worldtiles, 1, True)
 
         ##########################################
         # The highest zoom level has been rendered.
@@ -353,13 +353,13 @@ class RenderNode(object):
             
             self.print_statusline(0, total, level, True)
 
-            # Same deal as above. _apply_render_innertile adds tiles in batch
+            # Same deal as above. _apply_render_uppertile adds tiles in batch
             # to the worker pool and yields result objects that return the
             # number of tiles rendered.
             #
             # XXX Some quadtrees may not have tiles at this zoom level if we're
             # not assuming they all have the same depth!!
-            for result in self._apply_render_innertile(pool, zoom,batch_size):
+            for result in self._apply_render_uppertile(pool, zoom,batch_size):
                 results.append(result)
                 # every second drain some of the queue
                 timestamp2 = time.time()
@@ -389,7 +389,7 @@ class RenderNode(object):
 
         # Do the final one right here:
         for q in quadtrees:
-            q.render_innertile(os.path.join(q.destdir, q.tiledir), "base")
+            q.render_uppertile(os.path.join(q.destdir, q.tiledir), "base")
 
     def _get_dirty_tiles(self, procs):
         """Returns two items:
@@ -489,8 +489,8 @@ class RenderNode(object):
         if len(batch):
             yield pool.apply_async(func=render_worldtile_batch, args= [batch])
 
-    def _apply_render_innertile(self, pool, zoom,batch_size):
-        """Same as _apply_render_worltiles but for the innertile routine.
+    def _apply_render_uppertile(self, pool, zoom,batch_size):
+        """Same as _apply_render_worltiles but for the uppertile routine.
         Returns an iterator that yields result objects from tasks that have
         been applied to the pool.
         """
@@ -500,7 +500,7 @@ class RenderNode(object):
         batch = []
         jobcount = 0
         # roundrobin add tiles to a batch job (thus they should all roughly work on similar chunks)
-        iterables = [q.get_innertiles(zoom) for q in self.quadtrees if zoom <= q.p]
+        iterables = [q.get_uppertiles(zoom) for q in self.quadtrees if zoom <= q.p]
         for job in util.roundrobin(iterables):
             # fixup so the worker knows which quadtree this is  
             job[0] = job[0]._render_index
@@ -509,11 +509,11 @@ class RenderNode(object):
             jobcount += 1
             if jobcount >= batch_size:
                 jobcount = 0
-                yield pool.apply_async(func=render_innertile_batch, args= [batch])
+                yield pool.apply_async(func=render_uppertile_batch, args= [batch])
                 batch = []
                 
         if jobcount > 0:
-            yield pool.apply_async(func=render_innertile_batch, args= [batch])    
+            yield pool.apply_async(func=render_uppertile_batch, args= [batch])
             
 
 ########################################################################################
@@ -542,7 +542,7 @@ def render_worldtile_batch(batch):
     return count
 
 @catch_keyboardinterrupt
-def render_innertile_batch(batch):    
+def render_uppertile_batch(batch):
     global child_rendernode
     rendernode = child_rendernode
     count = 0   
@@ -551,7 +551,7 @@ def render_innertile_batch(batch):
         count += 1        
         quadtree = rendernode.quadtrees[job[0]]               
         dest = quadtree.full_tiledir+os.sep+job[1]
-        quadtree.render_innertile(dest=dest,name=job[2])
+        quadtree.render_uppertile(dest=dest,name=job[2])
     return count
 
 @catch_keyboardinterrupt

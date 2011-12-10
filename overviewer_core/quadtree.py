@@ -264,7 +264,7 @@ class QuadtreeGen(object):
                     
         return chunklist   
         
-    def get_innertiles(self,zoom):
+    def get_uppertiles(self,zoom):
         """Returns the inner tiles at the given zoom level that need to be rendered
 
         """    
@@ -276,7 +276,7 @@ class QuadtreeGen(object):
   
             yield [self,tilepath, name]
     
-    def render_innertile(self, dest, name):
+    def render_uppertile(self, dest, name):
         """
         Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
         os.path.join(dest, name, "{0,1,2,3}.png")
@@ -331,7 +331,7 @@ class QuadtreeGen(object):
         # quit now if we don't need rerender
         if not needs_rerender:
             return    
-        #logging.debug("writing out innertile {0}".format(imgpath))
+        #logging.debug("writing out uppertile {0}".format(imgpath))
 
         # Create the actual image now
         img = Image.new("RGBA", (384, 384), self.bgcolor)
@@ -819,7 +819,7 @@ class Tile(object):
     """A simple container class that represents a single render-tile.
 
     A render-tile is a tile that is rendered, not a tile composed of other
-    tiles.
+    tiles (upper-tile).
 
     """
     __slots__ = ("col", "row", "path")
