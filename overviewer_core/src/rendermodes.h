@@ -136,6 +136,7 @@ typedef struct {
     unsigned int min_depth;
     unsigned int max_depth;
     int height_fading;
+    int nether;
 } RenderModeNormal;
 extern RenderModeInterface rendermode_normal;
 
