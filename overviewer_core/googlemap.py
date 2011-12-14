@@ -154,6 +154,7 @@ class MapGen(object):
         indexpath = os.path.join(self.destdir, "index.html")
 
         index = open(indexpath, 'r').read()
+        index = index.replace("{title}", "%s Map - Minecraft Overviewer" % self.world.name)
         index = index.replace("{time}", str(strftime("%a, %d %b %Y %H:%M:%S %Z", localtime())))
         versionstr = "%s (%s)" % (overviewer_version.VERSION, overviewer_version.HASH[:7])
         index = index.replace("{version}", versionstr)

@@ -63,16 +63,18 @@ def pool_initializer(rendernode):
     c_overviewer.init_chunk_render()
     
     # setup c_overviewer rendermode customs / options
+    for mode in rendernode.builtin_custom_rendermodes:
+        c_overviewer.add_custom_render_mode(mode, rendernode.builtin_custom_rendermodes[mode])
     for mode in rendernode.options.custom_rendermodes:
         c_overviewer.add_custom_render_mode(mode, rendernode.options.custom_rendermodes[mode])
     for mode in rendernode.options.rendermode_options:
         c_overviewer.set_render_mode_options(mode, rendernode.options.rendermode_options[mode])
     
     # load biome data in each process, if needed
-    for quadtree in rendernode.quadtrees:
-        if quadtree.world.useBiomeData:
+    for qtree in rendernode.quadtrees:
+        if qtree.world.useBiomeData:
             # make sure we've at least *tried* to load the color arrays in this process...
-            textures.prepareBiomeData(quadtree.world.worlddir)
+            textures.prepareBiomeData(qtree.world.worlddir)
             if not textures.grasscolor or not textures.foliagecolor:
                 raise Exception("Can't find grasscolor.png or foliagecolor.png")
             # only load biome data once
@@ -82,6 +84,10 @@ def pool_initializer(rendernode):
 class RenderNode(object):
     def __init__(self, quadtrees, options):
         """Distributes the rendering of a list of quadtrees.
+        
+        This class name is slightly misleading: it does not represent a worker
+        process, it coordinates the rendering of the given quadtrees across
+        many worker processes.
 
         This class tries not to make any assumptions on whether the given
         quadtrees share the same world or whether the given quadtrees share the
@@ -148,19 +154,30 @@ class RenderNode(object):
             if self._last_print_level == level:
                 deltacount = complete - self._last_print_count
                 deltat = now - self._last_print_time
-                avg = deltacount / deltat
-                logging.debug("%i tiles rendered in %.1f seconds. Avg: %.1f tiles per sec",
-                        deltacount, deltat, avg)
+                if deltat > 0.03: # prevent very small numbers from producing weird averages. 0.03 chosen empirically
+                    avg = deltacount / deltat
+                    logging.debug("%i tiles rendered in %.1f seconds. Avg: %.1f tiles per sec",
+                            deltacount, deltat, avg)
 
-            self._last_print_level = level
-            self._last_print_count = complete
-            self._last_print_time = now
-                
+                    self._last_print_level = level
+                    self._last_print_count = complete
+                    self._last_print_time = now
+            elif unconditional:
+                self._last_print_level = level
+                self._last_print_count = complete
+                self._last_print_time = now
+            
     def go(self, procs):
         """Renders all tiles"""
         
-        logging.debug("Parent process {0}".format(os.getpid()))
+        # Signal to the quadtrees to scan the chunks and their respective tile
+        # directories to find what needs to be rendered. We get from this the
+        # total tiles that need to be rendered (at the highest level across all
+        # quadtrees) as well as a list of [qtree, DirtyTiles object]
+        total_worldtiles, dirty_list = self._get_dirty_tiles(procs)
+
         # Create a pool
+        logging.debug("Parent process {0}".format(os.getpid()))
         if procs == 1:
             pool = FakePool()
             pool_initializer(self)
@@ -188,16 +205,6 @@ class RenderNode(object):
                 max_p = q.p
         self.max_p = max_p
 
-        # Signal to the quadtrees to scan the chunks and their respective tile
-        # directories to find what needs to be rendered. We get from this the
-        # total tiles that need to be rendered (at the highest level across all
-        # quadtrees) as well as a list of [qtree, DirtyTiles object]
-        total_rendertiles, dirty_list = self._get_dirty_tiles()
-
-        if total_rendertiles == 0:
-            logging.info(r"There is no work to do, your map is up to date! \o/")
-            return
-
         # Set a reasonable batch size. Groups of tiles are sent to workers in
         # batches this large. It should be a multiple of the number of
         # quadtrees so that each worker gets corresponding tiles from each
@@ -212,7 +219,9 @@ class RenderNode(object):
         logging.info("")
         logging.info("Rendering highest zoom level of tiles now.")
         logging.info("Rendering {0} rendermode{1}".format(len(quadtrees),'s' if len(quadtrees) > 1 else '' ))
-        logging.info("There are {0} tiles to render at this level".format(total_rendertiles))        
+        logging.info("Started {0} worker process{1}".format(
+            procs, "es" if procs != 1 else ""))
+        logging.info("There are {0} tiles to render at this level".format(total_worldtiles))
         logging.info("There are {0} total levels".format(self.max_p))
 
         # results is a queue of multiprocessing.AsyncResult objects. They are
@@ -230,6 +239,10 @@ class RenderNode(object):
         # are used to access the values returned by the worker's function,
         # which in this case, is render_worldtile_batch()
         timestamp = time.time()
+
+        if total_worldtiles > 0:
+            self.print_statusline(0, total_worldtiles, 1, True)
+
         for result in self._apply_render_worldtiles(dirty_list, pool, batch_size):
             results.append(result)               
 
@@ -276,7 +289,7 @@ class RenderNode(object):
                     while count_to_remove > 0:
                         count_to_remove -= 1
                         complete += results.popleft().get()
-                        self.print_statusline(complete, total_rendertiles, 1)  
+                        self.print_statusline(complete, total_worldtiles, 1)
 
             # If the results queue is getting too big, drain all but
             # 500//batch_size items from it
@@ -285,7 +298,7 @@ class RenderNode(object):
                 # required has an upper bound
                 while len(results) > (500//batch_size):
                     complete += results.popleft().get()
-                    self.print_statusline(complete, total_rendertiles, 1)
+                    self.print_statusline(complete, total_worldtiles, 1)
 
             # Loop back to the top, add more items to the queue, and repeat
 
@@ -293,7 +306,7 @@ class RenderNode(object):
         # results to come in before continuing
         while len(results) > 0:
             complete += results.popleft().get()
-            self.print_statusline(complete, total_rendertiles, 1)
+            self.print_statusline(complete, total_worldtiles, 1)
 
         # Now drain the point of interest queues for each world
         #for world in self.worlds:    
@@ -313,8 +326,9 @@ class RenderNode(object):
         #    except Queue.Empty:
         #        pass
 
-        # Print the final status line unconditionally
-        self.print_statusline(complete, total_rendertiles, 1, True)
+        # Print the final status line almost unconditionally
+        if total_worldtiles > 0:
+            self.print_statusline(complete, total_worldtiles, 1, True)
 
         ##########################################
         # The highest zoom level has been rendered.
@@ -336,14 +350,16 @@ class RenderNode(object):
 
             logging.info("Starting level {0}".format(level))
             timestamp = time.time()
+            
+            self.print_statusline(0, total, level, True)
 
-            # Same deal as above. _apply_render_innertile adds tiles in batch
+            # Same deal as above. _apply_render_compositetile adds tiles in batch
             # to the worker pool and yields result objects that return the
             # number of tiles rendered.
             #
             # XXX Some quadtrees may not have tiles at this zoom level if we're
             # not assuming they all have the same depth!!
-            for result in self._apply_render_innertile(pool, zoom,batch_size):
+            for result in self._apply_render_compositetile(pool, zoom,batch_size):
                 results.append(result)
                 # every second drain some of the queue
                 timestamp2 = time.time()
@@ -373,9 +389,9 @@ class RenderNode(object):
 
         # Do the final one right here:
         for q in quadtrees:
-            q.render_innertile(os.path.join(q.destdir, q.tiledir), "base")
+            q.render_compositetile(os.path.join(q.destdir, q.tiledir), "base")
 
-    def _get_dirty_tiles(self):
+    def _get_dirty_tiles(self, procs):
         """Returns two items:
         1) The total number of tiles needing rendering
         2) a list of (qtree, DirtyTiles) objects holding which tiles in the
@@ -384,17 +400,48 @@ class RenderNode(object):
         """
         all_dirty = []
         total = 0
+        numqtrees = len(self.quadtrees)
+        procs = min(procs, numqtrees)
 
-        logging.info("Scanning for tiles to update. This shouldn't take too long...")
-        for i, q in enumerate(self.quadtrees):
-            logging.info("Scanning for tiles in rendermode %s", q.rendermode)
-            dirty = q.scan_chunks()
+        # Create a private pool to do the chunk scanning. I purposfully don't
+        # use the same pool as the rendering. The process of chunk scanning
+        # seems to take a lot of memory. Even though the final tree only takes
+        # a few megabytes at most, I suspect memory fragmentation causes the
+        # process to take much more memory than that during the scanning
+        # process. Since we use a private pool just for this purpose, the trees
+        # are piped back to the master process and the fragmented
+        # memory-hogging processes exit, returning that extra memory to the OS.
+        if procs == 1:
+            pool = FakePool()
+        else:
+            pool = multiprocessing.Pool(processes=procs)
 
-            total += dirty.count()
+        logging.info("Scanning chunks and determining tiles to update for each rendermode requested.")
+        logging.info("Doing %s scan%s in %s worker process%s",
+                numqtrees, "s" if numqtrees != 1 else "",
+                procs, "es" if procs != 1 else "",
+                )
 
+        # Push all scan jobs to the workers
+        results = []
+        for q in self.quadtrees:
+            r = pool.apply_async(scan_quadtree_chunks, (q,))
+            results.append(r)
+        pool.close()
+
+        # Wait for workers to finish
+        for q, r in zip(self.quadtrees, results):
+            dirty, numtiles = r.get()
+            total += numtiles
             all_dirty.append((q, dirty))
+        pool.join() # ought to be redundant
 
-        logging.info("Scan finished. %s total tiles need to be rendered at the highest level", total)
+        logging.info("%s finished. %s %s to be rendered at the highest level",
+                "All scans" if numqtrees != 1 else "Scan",
+                total,
+                # Probably won't happen, but just in case:
+                "total tiles need" if total != 1 else "tile needs",
+                )
         return total, all_dirty
 
     def _apply_render_worldtiles(self, tileset, pool,batch_size):
@@ -442,8 +489,8 @@ class RenderNode(object):
         if len(batch):
             yield pool.apply_async(func=render_worldtile_batch, args= [batch])
 
-    def _apply_render_innertile(self, pool, zoom,batch_size):
-        """Same as _apply_render_worltiles but for the innertile routine.
+    def _apply_render_compositetile(self, pool, zoom,batch_size):
+        """Same as _apply_render_worltiles but for the compositetile routine.
         Returns an iterator that yields result objects from tasks that have
         been applied to the pool.
         """
@@ -453,7 +500,7 @@ class RenderNode(object):
         batch = []
         jobcount = 0
         # roundrobin add tiles to a batch job (thus they should all roughly work on similar chunks)
-        iterables = [q.get_innertiles(zoom) for q in self.quadtrees if zoom <= q.p]
+        iterables = [q.get_compositetiles(zoom) for q in self.quadtrees if zoom <= q.p]
         for job in util.roundrobin(iterables):
             # fixup so the worker knows which quadtree this is  
             job[0] = job[0]._render_index
@@ -462,12 +509,16 @@ class RenderNode(object):
             jobcount += 1
             if jobcount >= batch_size:
                 jobcount = 0
-                yield pool.apply_async(func=render_innertile_batch, args= [batch])
+                yield pool.apply_async(func=render_compositetile_batch, args= [batch])
                 batch = []
                 
         if jobcount > 0:
-            yield pool.apply_async(func=render_innertile_batch, args= [batch])    
+            yield pool.apply_async(func=render_compositetile_batch, args= [batch])
             
+
+########################################################################################
+# The following three functions are entry points for workers in the multiprocessing pool
+
 @catch_keyboardinterrupt
 def render_worldtile_batch(batch):
     """Main entry point for workers processing a render-tile (also called a
@@ -491,7 +542,7 @@ def render_worldtile_batch(batch):
     return count
 
 @catch_keyboardinterrupt
-def render_innertile_batch(batch):    
+def render_compositetile_batch(batch):
     global child_rendernode
     rendernode = child_rendernode
     count = 0   
@@ -500,8 +551,21 @@ def render_innertile_batch(batch):
         count += 1        
         quadtree = rendernode.quadtrees[job[0]]               
         dest = quadtree.full_tiledir+os.sep+job[1]
-        quadtree.render_innertile(dest=dest,name=job[2])
+        quadtree.render_compositetile(dest=dest,name=job[2])
     return count
+
+@catch_keyboardinterrupt
+def scan_quadtree_chunks(qtree):
+    """The entry point for workers when scanning chunks for tiles needing
+    updating. Builds and returns a dirtytiles tree.
+
+    Returns two things: the dirtytree from qtree.scan_chunks(), and the total
+    from the tree.count() method
+
+    """
+    logging.debug("Scanning chunks for rendermode '%s'", qtree.rendermode)
+    tree = qtree.scan_chunks()
+    return tree, tree.count()
     
 class FakeResult(object):
     def __init__(self, res):

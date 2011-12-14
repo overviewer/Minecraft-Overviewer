@@ -16,11 +16,11 @@
 import gzip, zlib
 import struct
 import StringIO
-import os
 import numpy
 from functools import wraps
 
-# decorator to handle filename or object as first parameter
+# decorator that turns the first argument from a string into an open file
+# handle
 def _file_loader(func):
     @wraps(func)
     def wrapper(fileobj, *args):
@@ -32,6 +32,10 @@ def _file_loader(func):
 
 @_file_loader
 def load(fileobj):
+    """Reads in the given file as NBT format, parses it, and returns the
+    result
+    
+    """
     return NBTFileReader(fileobj).read_all()
 
 def load_from_region(filename, x, y, north_direction):
@@ -59,6 +63,9 @@ _unsigned_int = struct.Struct(">I")
 _chunk_header = struct.Struct(">I B")
  
 class NBTFileReader(object):
+    """Low level class that reads the Named Binary Tag format used by Minecraft
+
+    """
     def __init__(self, fileobj, is_gzip=True):
         if is_gzip:
             self._file = gzip.GzipFile(fileobj=fileobj, mode='rb')

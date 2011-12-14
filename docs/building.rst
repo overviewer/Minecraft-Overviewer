@@ -148,8 +148,7 @@ regular user.
 
 2. Install the python26 packages and build dependancies
 
-  1. ``# yum groupinstall -y 'Development Tools'``
-  2. ``# yum install -y python26{,-imaging,-numpy}{,-devel}``
+  1. ``# yum install -y python26{,-imaging,-numpy}{,-devel} gcc``
 
 3. Install and setup Overviewer
 

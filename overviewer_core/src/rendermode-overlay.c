@@ -37,10 +37,6 @@ rendermode_overlay_start(void *data, RenderState *state, PyObject *options) {
     Py_DECREF(facemasks_py);
     
     self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
-    
-    self->solid_blocks = PyObject_GetAttrString(state->chunk, "solid_blocks");
-    self->fluid_blocks = PyObject_GetAttrString(state->chunk, "fluid_blocks");
-    
     self->get_color = get_color;
     
     return 0;
@@ -52,8 +48,6 @@ rendermode_overlay_finish(void *data, RenderState *state) {
     
     Py_DECREF(self->facemask_top);
     Py_DECREF(self->white_color);
-    Py_DECREF(self->solid_blocks);
-    Py_DECREF(self->fluid_blocks);
 }
 
 static int
@@ -81,8 +75,7 @@ static void
 rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderModeOverlay *self = (RenderModeOverlay *)data;
     unsigned char r, g, b, a;
-    PyObject *top_block_py, *block_py;
-    
+
     // exactly analogous to edge-line code for these special blocks
     int increment=0;
     if (state->block == 44)  // half-step
@@ -101,27 +94,19 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
         }
         
         /* check to be sure this block is solid/fluid */
-        top_block_py = PyInt_FromLong(top_block);
-        if (PySequence_Contains(self->solid_blocks, top_block_py) ||
-            PySequence_Contains(self->fluid_blocks, top_block_py)) {
+        if (block_has_property(top_block, SOLID) || block_has_property(top_block, FLUID)) {
             
             /* top block is fluid or solid, skip drawing */
-            Py_DECREF(top_block_py);
             return;
         }
-        Py_DECREF(top_block_py);
     }
     
     /* check to be sure this block is solid/fluid */
-    block_py = PyInt_FromLong(state->block);
-    if (!PySequence_Contains(self->solid_blocks, block_py) &&
-        !PySequence_Contains(self->fluid_blocks, block_py)) {
+    if (!block_has_property(state->block, SOLID) && !block_has_property(state->block, FLUID)) {
         
         /* not fluid or solid, skip drawing the overlay */
-        Py_DECREF(block_py);
         return;
     }
-    Py_DECREF(block_py);
 
     /* get our color info */
     self->get_color(data, state, &r, &g, &b, &a);

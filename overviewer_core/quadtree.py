@@ -13,30 +13,23 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import multiprocessing
 import itertools
 import os
 import os.path
 import functools
 import re
 import shutil
-import collections
-import json
 import logging
-import cPickle
 import stat
 import errno 
 import time
 import random
-from time import gmtime, strftime, sleep
 
 from PIL import Image
 
-from . import nbt
 from . import chunk
 from .optimizeimages import optimize_image
 from c_overviewer import get_render_mode_inheritance
-import composite
 
 
 """
@@ -142,7 +135,7 @@ class QuadtreeGen(object):
 
     def _increase_depth(self):
         """Moves existing tiles into place for a larger tree"""
-        getpath = functools.partial(os.path.join, self.destdir, self.tiledir)
+        getpath = functools.partial(os.path.join, self.full_tiledir)
 
         # At top level of the tree:
         # quadrant 0 is now 0/3
@@ -169,7 +162,7 @@ class QuadtreeGen(object):
     def _decrease_depth(self):
         """If the map size decreases, or perhaps the user has a depth override
         in effect, re-arrange existing tiles for a smaller tree"""
-        getpath = functools.partial(os.path.join, self.destdir, self.tiledir)
+        getpath = functools.partial(os.path.join, self.full_tiledir)
 
         # quadrant 0/3 goes to 0
         # 1/2 goes to 1
@@ -211,10 +204,16 @@ class QuadtreeGen(object):
         
         """
 
+        # If the tile directory has been deleted somehow, then don't bother
+        # trying to rearrange things. It wouldn't do any good and would error
+        # out anyways.
+        if not os.path.exists(self.full_tiledir):
+            return
+
         curdepth = self._get_cur_depth()
         if curdepth != -1:
             if self.p > curdepth:
-                logging.warning("Your map seemes to have expanded beyond its previous bounds.")
+                logging.warning("Your map seems to have expanded beyond its previous bounds.")
                 logging.warning( "Doing some tile re-arrangements... just a sec...")
                 for _ in xrange(self.p-curdepth):
                     self._increase_depth()
@@ -271,7 +270,7 @@ class QuadtreeGen(object):
                     
         return chunklist   
         
-    def get_innertiles(self,zoom):
+    def get_compositetiles(self,zoom):
         """Returns the inner tiles at the given zoom level that need to be rendered
 
         """    
@@ -283,7 +282,7 @@ class QuadtreeGen(object):
   
             yield [self,tilepath, name]
     
-    def render_innertile(self, dest, name):
+    def render_compositetile(self, dest, name):
         """
         Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
         os.path.join(dest, name, "{0,1,2,3}.png")
@@ -292,9 +291,21 @@ class QuadtreeGen(object):
         imgpath = os.path.join(dest, name) + "." + imgformat
 
         if name == "base":
-            quadPath = [[(0,0),os.path.join(dest, "0." + imgformat)],[(192,0),os.path.join(dest, "1." + imgformat)], [(0, 192),os.path.join(dest, "2." + imgformat)],[(192,192),os.path.join(dest, "3." + imgformat)]]
+            # Special case for the base tile. Its children are in the same
+            # directory instead of in a sub-directory
+            quadPath = [
+                    ((0,0),os.path.join(dest, "0." + imgformat)),
+                    ((192,0),os.path.join(dest, "1." + imgformat)),
+                    ((0, 192),os.path.join(dest, "2." + imgformat)),
+                    ((192,192),os.path.join(dest, "3." + imgformat)),
+                    ]
         else:
-            quadPath = [[(0,0),os.path.join(dest, name, "0." + imgformat)],[(192,0),os.path.join(dest, name, "1." + imgformat)],[(0, 192),os.path.join(dest, name, "2." + imgformat)],[(192,192),os.path.join(dest, name, "3." + imgformat)]]    
+            quadPath = [
+                    ((0,0),os.path.join(dest, name, "0." + imgformat)),
+                    ((192,0),os.path.join(dest, name, "1." + imgformat)),
+                    ((0, 192),os.path.join(dest, name, "2." + imgformat)),
+                    ((192,192),os.path.join(dest, name, "3." + imgformat)),
+                    ]
        
         #stat the tile, we need to know if it exists and its mtime
         try:    
@@ -305,26 +316,28 @@ class QuadtreeGen(object):
             tile_mtime = None
             
         #check mtimes on each part of the quad, this also checks if they exist
+        max_mtime = 0
         needs_rerender = (tile_mtime is None) or self.forcerender
         quadPath_filtered = []
         for path in quadPath:
             try:
-                quad_mtime = os.stat(path[1])[stat.ST_MTIME]; 
+                quad_mtime = os.stat(path[1])[stat.ST_MTIME]
                 quadPath_filtered.append(path)
                 if quad_mtime > tile_mtime:     
-                    needs_rerender = True            
+                    needs_rerender = True
+                max_mtime = max(max_mtime, quad_mtime)
             except OSError:
                 # We need to stat all the quad files, so keep looping
                 pass      
         # do they all not exist?
-        if quadPath_filtered == []:
+        if not quadPath_filtered:
             if tile_mtime is not None:
                 os.unlink(imgpath)
             return
         # quit now if we don't need rerender
         if not needs_rerender:
             return    
-        #logging.debug("writing out innertile {0}".format(imgpath))
+        #logging.debug("writing out compositetile {0}".format(imgpath))
 
         # Create the actual image now
         img = Image.new("RGBA", (384, 384), self.bgcolor)
@@ -337,7 +350,12 @@ class QuadtreeGen(object):
                 quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
                 img.paste(quad, path[0])
             except Exception, e:
-                logging.warning("Couldn't open %s. It may be corrupt, you may need to delete it. %s", path[1], e)
+                logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
+                logging.warning("I'm going to try and delete it. You will need to run the render again")
+                try:
+                    os.unlink(path[1])
+                except Exception, e:
+                    logging.error("I couldn't delete it. You will need to delete it yourself. Error was '%s'", e)
 
         # Save it
         if self.imgformat == 'jpg':
@@ -347,6 +365,8 @@ class QuadtreeGen(object):
             
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
+
+        os.utime(imgpath, (max_mtime, max_mtime))
 
     def render_worldtile(self, tile, check_tile=False):
         """Renders the given tile. All the other relevant information is
@@ -414,6 +434,15 @@ class QuadtreeGen(object):
                 # directory at the same time
                 if e.errno != errno.EEXIST:
                     raise
+
+        # Compute the maximum mtime of all the chunks that go into this tile.
+        # At the end, we'll set the tile's mtime to this value.
+        max_chunk_mtime = 0
+        for col,row,chunkx,chunky,region in chunks:
+            max_chunk_mtime = max(
+                    max_chunk_mtime,
+                    region.get_chunk_timestamp(chunkx, chunky)
+                    )
         
         if check_tile:
             # Look at all the chunks that touch this tile and their mtimes to
@@ -485,12 +514,14 @@ class QuadtreeGen(object):
         if self.optimizeimg:
             optimize_image(imgpath, self.imgformat, self.optimizeimg)
 
+        os.utime(imgpath, (max_chunk_mtime, max_chunk_mtime))
+
     def scan_chunks(self):
-        """Scans the chunks of the world object and return the dirty tree object
-        holding the tiles that need to be rendered.
+        """Scans the chunks of the world object and generates a dirty tree
+        object holding the tiles that need to be rendered.
 
         Checks mtimes of tiles in the process, unless forcerender is set on the
-        object.
+        object, in which case all tiles that exist are marked as dirty.
 
         """
 
@@ -498,7 +529,7 @@ class QuadtreeGen(object):
 
         dirty = DirtyTiles(depth)
 
-        logging.debug("	Scanning chunks for tiles that need rendering...")
+        #logging.debug("	Scanning chunks for tiles that need rendering...")
         chunkcount = 0
         stime = time.time()
 
@@ -511,8 +542,8 @@ class QuadtreeGen(object):
         # circuit checking mtimes of all chunks in a region
         for chunkx, chunky, chunkmtime in self.world.iterate_chunk_metadata():
             chunkcount += 1
-            if chunkcount % 10000 == 0:
-                logging.info("	%s chunks scanned", chunkcount)
+            #if chunkcount % 10000 == 0:
+            #    logging.info("	%s chunks scanned", chunkcount)
 
             chunkcol, chunkrow = self.world.convert_coords(chunkx, chunky)
             #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
@@ -583,17 +614,18 @@ class QuadtreeGen(object):
                         #logging.debug("	Setting tile as dirty. Will render.")
 
         t = int(time.time()-stime)
-        logging.debug("	Done. %s chunks scanned in %s second%s", chunkcount, t,
+        logging.debug("Done with scan for '%s'. %s chunks scanned in %s second%s", 
+                self.rendermode, chunkcount, t,
                 "s" if t != 1 else "")
 
-        if logging.getLogger().isEnabledFor(logging.DEBUG):
-            logging.debug("	Counting tiles that need rendering...")
-            tilecount = 0
-            stime = time.time()
-            for _ in dirty.iterate_dirty():
-                tilecount += 1
-            logging.debug("	Done. %s tiles need to be rendered. (count took %s seconds)",
-                    tilecount, int(time.time()-stime))
+        #if logging.getLogger().isEnabledFor(logging.DEBUG):
+        #    logging.debug("	Counting tiles that need rendering...")
+        #    tilecount = 0
+        #    stime = time.time()
+        #    for _ in dirty.iterate_dirty():
+        #        tilecount += 1
+        #    logging.debug("	Done. %s tiles need to be rendered. (count took %s seconds)",
+        #            tilecount, int(time.time()-stime))
         
         return dirty
 
@@ -621,7 +653,8 @@ class DirtyTiles(object):
 
         """
         # Stores the depth of the tree according to this node. This is not the
-        # depth of this node, but rather the number of levels below this node.
+        # depth of this node, but rather the number of levels below this node
+        # (including this node).
         self.depth = depth
 
         # the self.children array holds the 4 children of this node. This
@@ -697,21 +730,31 @@ class DirtyTiles(object):
                     if all(x is True for x in self.children):
                         return True
 
-    def iterate_dirty(self, depth=None):
+    def iterate_dirty(self, level=None):
         """Returns an iterator over every dirty tile in this subtree. Each item
         yielded is a sequence of integers representing the quadtree path to the
         dirty tile. Yielded sequences are of length self.depth.
 
-        If zoom is None, iterates over tiles of the highest level, i.e.
-        worldtiles. If zoom is a value between 0 and the depth, iterates over
-        tiles at that zoom level. Zoom level 0 is zoomed all the way out, zoom
-        level `depth` is all the way in.
+        If level is None, iterates over tiles of the highest level, i.e.
+        worldtiles. If level is a value between 0 and the depth of this tree,
+        this method iterates over tiles at that level. Zoom level 0 is zoomed
+        all the way out, zoom level `depth` is all the way in.
+
+        In other words, specifying level causes the tree to be iterated as if
+        it was only that depth.
 
         """
-        return (tuple(reversed(rpath)) for rpath in self._iterate_dirty_helper())
+        if level is None:
+            todepth = 1
+        else:
+            if not (level > 0 and level <= self.depth):
+                raise ValueError("Level parameter must be between 1 and %s" % self.depth)
+            todepth = self.depth - level + 1
 
-    def _iterate_dirty_helper(self):
-        if self.depth == 1:
+        return (tuple(reversed(rpath)) for rpath in self._iterate_dirty_helper(todepth))
+
+    def _iterate_dirty_helper(self, todepth):
+        if self.depth == todepth:
             # Base case
             if self.children[0]: yield [0]
             if self.children[1]: yield [1]
@@ -723,13 +766,13 @@ class DirtyTiles(object):
             for c, child in enumerate(self.children):
                 if child == True:
                     # All dirty down this subtree, iterate over every leaf
-                    for x in iterate_base4(self.depth-1):
+                    for x in iterate_base4(self.depth-todepth):
                         x = list(x)
                         x.append(c)
                         yield x
                 elif child != False:
                     # Mixed dirty/clean down this subtree, recurse
-                    for path in child._iterate_dirty_helper():
+                    for path in child._iterate_dirty_helper(todepth):
                         path.append(c)
                         yield path
 
@@ -782,7 +825,7 @@ class Tile(object):
     """A simple container class that represents a single render-tile.
 
     A render-tile is a tile that is rendered, not a tile composed of other
-    tiles.
+    tiles (composite-tile).
 
     """
     __slots__ = ("col", "row", "path")

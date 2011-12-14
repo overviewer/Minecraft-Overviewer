@@ -50,7 +50,7 @@ Requirements
 This is a quick list of what's required to run The Overviewer. It runs on
 Windows, Mac, and Linux as long as you have these software packages installed:
 
-* Python 2.6 or 2.7
+* Python 2.6 or 2.7 (we are *not* yet compatible with Python 3.x)
 
 * PIL (Python Imaging Library)
 
@@ -86,7 +86,10 @@ Help
 **IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to chat with
 us live in IRC: #overviewer on Freenode. There's usually someone on there that
 can help you out. Not familiar with IRC? `Use the web client
-<http://webchat.freenode.net/?channels=overviewer>`_. 
+<http://webchat.freenode.net/?channels=overviewer>`_. (If there's no immediate
+response, wait around or try a different time of day; we have to sleep sometime)
+
+Also check our :doc:`Frequently Asked Questions <faq>` page.
 
 If you think you've found a bug or other issue, file an issue on our `Issue
 Tracker <https://github.com/overviewer/Minecraft-Overviewer/issues>`_. Filing or
