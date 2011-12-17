@@ -21,6 +21,8 @@ import Image
 import shutil
 from time import strftime, localtime
 import json
+import locale
+import codecs
 
 import util
 from c_overviewer import get_render_mode_inheritance, get_render_mode_info
@@ -115,7 +117,7 @@ class MapGen(object):
             mirror_dir(self.web_assets_path, self.destdir)
         
         # replace the config js stuff
-        config = open(os.path.join(self.destdir, 'overviewerConfig.js'), 'r').read()
+        config = codecs.open(os.path.join(self.destdir, 'overviewerConfig.js'), 'r', encoding='UTF-8').read()
         config = config.replace(
                 "{minzoom}", str(0))
         config = config.replace(
@@ -147,19 +149,19 @@ class MapGen(object):
                           self.quadtrees)
         config = config.replace("{maptypedata}", json.dumps(maptypedata))
         
-        with open(os.path.join(self.destdir, "overviewerConfig.js"), 'w') as output:
+        with codecs.open(os.path.join(self.destdir, "overviewerConfig.js"), 'w', encoding='UTF-8') as output:
             output.write(config)
 
         # Add time and version in index.html
         indexpath = os.path.join(self.destdir, "index.html")
 
-        index = open(indexpath, 'r').read()
+        index = codecs.open(indexpath, 'r', encoding='UTF-8').read()
         index = index.replace("{title}", "%s Map - Minecraft Overviewer" % self.world.name)
-        index = index.replace("{time}", str(strftime("%a, %d %b %Y %H:%M:%S %Z", localtime())))
+        index = index.replace("{time}", strftime("%a, %d %b %Y %H:%M:%S %Z", localtime()).decode(locale.getpreferredencoding()))
         versionstr = "%s (%s)" % (overviewer_version.VERSION, overviewer_version.HASH[:7])
         index = index.replace("{version}", versionstr)
 
-        with open(os.path.join(self.destdir, "index.html"), 'w') as output:
+        with codecs.open(os.path.join(self.destdir, "index.html"), 'w', encoding='UTF-8') as output:
             output.write(index)
 
         if self.skipjs:
@@ -193,7 +195,7 @@ class MapGen(object):
             return
 
         # write out the default marker table
-        with open(os.path.join(self.destdir, "markers.js"), 'w') as output:
+        with codecs.open(os.path.join(self.destdir, "markers.js"), 'w', encoding='UTF-8') as output:
             output.write("overviewer.collections.markerDatas.push([\n")
             for marker in markers:
                 output.write(json.dumps(marker))
@@ -203,7 +205,7 @@ class MapGen(object):
             output.write("]);\n")
         
         # write out the default (empty, but documented) region table
-        with open(os.path.join(self.destdir, "regions.js"), 'w') as output:
+        with codecs.open(os.path.join(self.destdir, "regions.js"), 'w', encoding='UTF-8') as output:
             output.write('overviewer.collections.regionDatas.push([\n')
             output.write('  // {"color": "#FFAA00", "opacity": 0.5, "closed": true, "path": [\n')
             output.write('  //   {"x": 0, "y": 0, "z": 0},\n')
