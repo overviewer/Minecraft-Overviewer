@@ -25,6 +25,9 @@ For a simple example of what your renders will look like, head over to `The
 "Exmaple" Map <http://overviewer.org/example/>`_. For more user-contributed
 examples, see `The Example Wiki Page <https://github.com/overviewer/Minecraft-Overviewer/wiki/Map-examples>`_.
 
+.. image:: front_page_screenshot.png
+    
+
 Features
 ========
 
@@ -69,14 +72,14 @@ Full disclosure disclaimers of what The Overviewer is *not*.
   improvements to The Overviewer. Besides, for the level of detail provided,
   our users consider it worth the time!
 
-* Overviewer is not targeted at end users. We mainly see Overviewer fitting in
-  best with server operators, rendering their server's map for all users to
+* The Overviewer is not targeted at end users. We mainly see Overviewer fitting
+  in best with server operators, rendering their server's map for all users to
   view.
 
-  You are welcome to use Overviewer for your single player worlds, and it will
-  work just fine. However, since the only interface is currently command line
-  based, you will need to know a bit about the command line in order to operate
-  The Overviewer.
+  You are welcome to use The Overviewer for your single player worlds, and it
+  will work just fine. However, since the only interface is currently command
+  line based, you will need to know a bit about the command line in order to
+  operate The Overviewer.
 
 Requirements
 ============
