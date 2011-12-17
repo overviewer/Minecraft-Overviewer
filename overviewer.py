@@ -242,14 +242,15 @@ def main():
             options.verbose > 0)
 
     if options.version:
+        print "Minecraft Overviewer %s" % util.findGitVersion(),
+        print "(%s)" % util.findGitHash()[:7]
         try:
             import overviewer_core.overviewer_version as overviewer_version
-            print "Minecraft-Overviewer %s" % overviewer_version.VERSION
-            print "Git commit: %s" % overviewer_version.HASH
             print "built on %s" % overviewer_version.BUILD_DATE
-            print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
-        except Exception:
-            print "version info not found"
+            if options.verbose > 0:
+                print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
+        except ImportError:
+            print "(build info not found)"
             pass
         doExit(code=0, consoleMsg=False)
 
