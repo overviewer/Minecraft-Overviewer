@@ -84,3 +84,20 @@ command lines, but information on how to do this has also not been written.
 
 On a related note, we also welcome contributions for a graphical interface for
 the Overviewer.
+
+The Overviewer is eating up all my memory!
+------------------------------------------
+
+We have written The Overviewer with memory efficiency in mind. On even the
+largest worlds we have at our disposal to test with, it should not be taking
+more than a gigabyte or two. It varies of course, that number is only an
+estimate, but most computers with a reasonable amount of RAM should run just
+fine.
+
+If you are seeing exorbitant memory usage, then it is likely either a bug or a
+subtly corrupted world. Please file an issue or come talk to us on IRC so we can
+take a look. See :ref:`help`.
+
+We have had a few reports of The Overviewer eating all a system's RAM but we
+have been unable to figure out why or duplicate the issue. Any help or evidence
+you can provide us will help us figure this out!

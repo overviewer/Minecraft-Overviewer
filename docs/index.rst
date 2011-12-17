@@ -28,22 +28,55 @@ examples, see `The Example Wiki Page <https://github.com/overviewer/Minecraft-Ov
 Features
 ========
 
-* Renders large resolution images of your world, such that you can zoom in and
-  see details
+* Renders high resolution images of your world, let's you "deep zoom" and see
+  details!
+
+* Gloriously awesome smooth lighting is here! (use
+  :option:`--rendermodes=smooth-lighting <--rendermodes>`)
 
 * Customizable textures! Pulls textures straight from your installed texture
   pack!
 
-* Outputs a Google Map powered interface that is memory efficient, both in
-  generating and viewing.
+* Generates a Google Maps powered map!
+
+* Runs on Linux, Windows, and Mac platforms!
 
 * Renders efficiently in parallel, using as many simultaneous processes as you
   want!
 
-* Utilizes caching to speed up subsequent renderings of your world.
+* *Only* requires: Python, Numpy, and PIL (all of which are included in the
+  Windows download!)
+
+* Utilizes caching to speed up subsequent renderings of your world. Only parts
+  that need re-rendering are re-rendered.
 
 * Throw the output directory up on a web server to share your Minecraft world
-  with everyone!
+  with the internet!
+
+* Run The Overviewer from a command line or on a cron schedule for constantly
+  updated maps! Run it for your Minecraft server world to provide your users
+  with a detailed map!
+
+What The Overviewer is not
+--------------------------
+Full disclosure disclaimers of what The Overviewer is *not*.
+
+* It does not run fast. Because of the high level of detail, initial renders of
+  a world can take some time. Expect minutes for medium worlds, hours for large
+  to huge worlds. Subsequent renders are *much* faster due to the caching.
+
+  Also note that speed is improving all the time. We continually make efficiency
+  improvements to The Overviewer. Besides, for the level of detail provided,
+  our users consider it worth the time!
+
+* Overviewer is not targeted at end users. We mainly see Overviewer fitting in
+  best with server operators, rendering their server's map for all users to
+  view.
+
+  You are welcome to use Overviewer for your single player worlds, and it will
+  work just fine. However, since the only interface is currently command line
+  based, you will need to know a bit about the command line in order to operate
+  The Overviewer.
 
 Requirements
 ============
@@ -79,6 +112,7 @@ bad)**, head to the :doc:`Building <building>` page.
 **For all other platforms** you will need to build it yourself.
 :doc:`building`.
 
+.. _help:
 
 Help
 ====

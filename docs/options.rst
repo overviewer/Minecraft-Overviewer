@@ -106,11 +106,25 @@ Useful Options
     Powershell on Windows), you can also use a colon ':' or a forward slash '/'
     to separate the modes.
 
-    Incomplete list of common render-modes for your convenience:
+    **More information is available in the** :ref:`render-modes` **section of the
+    docs**
+
+    List of built-in render-modes:
     
     * normal
     * lighting
+    * smooth-lighting
+    * smooth-night
     * night
+    * cave
+
+    Built-in overlays:
+      * spawn
+      * mineral
+
+    .. note::
+        You can create custom rendermodes too! See the :ref:`custom-rendermodes`
+        section for more information!
 
     Example::
     
@@ -122,8 +136,6 @@ Useful Options
         Format: a list of strings.
 
         Default: only render the normal mode
-
-    See the `Render Modes`_ section for more information.
 
 .. cmdoption:: --list-rendermodes
 
@@ -479,6 +491,8 @@ Less Useful Options
     There are **more settings** that cannot be specified on the command line.
     See the section below!
 
+.. _settings-file:
+
 Settings File
 =============
 
@@ -539,6 +553,8 @@ In addition to the `Command line options`_, you can specify these options.
 
     See the `Defining Custom Rendermodes`_ section for more information.
 
+.. _render-modes:
+
 Render Modes
 ============
 
@@ -574,6 +590,9 @@ relationships. Right now, it looks something like this:
 
   * lighting
 
+    * smooth-lighting
+
+      * smooth-night
     * night
     * cave
 
@@ -651,14 +670,22 @@ color.
 
 See the *settings.py* example below for an example usage of **minerals**.
 
+.. _custom-rendermodes:
+
 Defining Custom Rendermodes
 ---------------------------
+Custom rendermodes allow you to take an existing rendermode, and define a new
+one with a particular set of options. You can, for example, render two map
+layers with the same mode, but with two different sets of options. You can do
+this by defining a custom rendermode in your :ref:`settings-file`
 
-Sometimes, you want to render two map layers with the same mode, but with two
-different sets of options. For example, you way want to render a cave mode with
-depth tinting, and another cave mode with lighting and no depth tinting. In this
-case, you will want to define a 'custom' render mode that inherits from 'cave'
-and uses the options you want. For example::
+.. note::
+    You *must* use a :ref:`settings file <settings-file>` in order to define custom rendermodes.
+
+Let's say you want to render a cave mode with depth tinting, and another cave
+mode with lighting and no depth tinting. In this case, you can to define a
+custom render mode that inherits from 'cave' and uses the options you want. Like
+this::
 
     custom_rendermodes = {
         'cave-lighting': {
@@ -673,6 +700,8 @@ and uses the options you want. For example::
     }
 
     rendermode = ['cave', 'cave-lighting']
+
+These lines would go in your settings file as written.
 
 Each entry in ``custom_rendermodes`` starts with the mode name, and is followed
 by a dictionary of mode information, such as the parent mode and description
