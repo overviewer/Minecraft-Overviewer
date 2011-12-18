@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 13
+#define OVERVIEWER_EXTENSION_VERSION 14
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -102,6 +102,7 @@ typedef enum
     SOLID,
     FLUID,
     NOSPAWN,
+    NODATA,
 } BlockProperty;
 /* globals set in init_chunk_render, here because they're used
    in block_has_property */

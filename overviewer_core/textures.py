@@ -611,11 +611,12 @@ transparent_blocks = set()
 solid_blocks = set()
 fluid_blocks = set()
 nospawn_blocks = set()
+nodata_blocks = set()
 
 # the material registration decorator
 def material(blockid=[], data=[0], **kwargs):
     # mapping from property name to the set to store them in
-    properties = {"transparent" : transparent_blocks, "solid" : solid_blocks, "fluid" : fluid_blocks, "nospawn" : nospawn_blocks}
+    properties = {"transparent" : transparent_blocks, "solid" : solid_blocks, "fluid" : fluid_blocks, "nospawn" : nospawn_blocks, "nodata" : nodata_blocks}
     
     # make sure blockid and data are iterable
     try:
@@ -657,9 +658,9 @@ def material(blockid=[], data=[0], **kwargs):
         return func_wrapper
     return inner_material
 
-# shortcut function for pure blocks, default to solid
+# shortcut function for pure blocks, default to solid, nodata
 def block(blockid=[], top_index=None, side_index=None, **kwargs):
-    new_kwargs = {'solid' : True}
+    new_kwargs = {'solid' : True, 'nodata' : True}
     new_kwargs.update(kwargs)
     
     if top_index is None:
@@ -673,9 +674,9 @@ def block(blockid=[], top_index=None, side_index=None, **kwargs):
         return build_block(terrain_images[top_index], terrain_images[side_index])
     return inner_block
 
-# shortcut function for sprite blocks, defaults to transparent
+# shortcut function for sprite blocks, defaults to transparent, nodata
 def sprite(blockid=[], index=None, **kwargs):
-    new_kwargs = {'transparent' : True}
+    new_kwargs = {'transparent' : True, 'nodata' : True}
     new_kwargs.update(kwargs)
     
     if index is None:
@@ -686,9 +687,9 @@ def sprite(blockid=[], index=None, **kwargs):
         return build_sprite(terrain_images[index])
     return inner_sprite
 
-# shortcut function for billboard blocks, defaults to transparent
+# shortcut function for billboard blocks, defaults to transparent, nodata
 def billboard(blockid=[], index=None, **kwargs):
-    new_kwargs = {'transparent' : True}
+    new_kwargs = {'transparent' : True, 'nodata' : True}
     new_kwargs.update(kwargs)
     
     if index is None:
@@ -1685,7 +1686,7 @@ block(blockid=57, top_index=24)
 
 # crafting table
 # needs two different sides
-@material(blockid=58, solid=True)
+@material(blockid=58, solid=True, nodata=True)
 def crafting_table(blockid, data):
     top = terrain_images[43]
     side3 = terrain_images[43+16]
@@ -2187,7 +2188,7 @@ def buttons(blockid, data, north):
     return img
 
 # snow
-@material(blockid=78, data=range(8), transparent=True, solid=True)
+@material(blockid=78, data=range(16), transparent=True, solid=True)
 def snow(blockid, data):
     # still not rendered correctly: data other than 0
     
@@ -2319,7 +2320,7 @@ def fence(blockid, data):
     fence_small_side = ImageEnhance.Brightness(fence_small_side).enhance(0.9)
     fence_small_side.putalpha(sidealpha)
 
-   # Create img to compose the fence
+    # Create img to compose the fence
     img = Image.new("RGBA", (24,24), bgcolor)
 
     # Position of fence small sticks in img.
@@ -2982,7 +2983,7 @@ def nether_wart(blockid, data):
 
 # enchantment table
 # TODO there's no book at the moment
-@material(blockid=116, transparent=True)
+@material(blockid=116, transparent=True, nodata=True)
 def enchantment_table(blockid, data):
     # no book at the moment
     top = terrain_images[166]
@@ -3027,7 +3028,7 @@ def cauldron(blockid, data):
     return img
 
 # end portal
-@material(blockid=119, transparent=True)
+@material(blockid=119, transparent=True, nodata=True)
 def end_portal(blockid, data):
     img = Image.new("RGBA", (24,24), bgcolor)
     # generate a black texure with white, blue and grey dots resembling stars
