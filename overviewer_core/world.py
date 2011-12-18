@@ -64,7 +64,12 @@ def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
 
 class World(object):
     """Does world-level preprocessing to prepare for QuadtreeGen
+
     worlddir is the path to the minecraft world
+
+    outputdir is the output path for this render. It is used only to find the
+    persistent data files to read in data from last render. Also it creates
+    this directory if it doesn't exist.
     """
 
     mincol = maxcol = minrow = maxrow = 0
@@ -98,7 +103,7 @@ class World(object):
         # Currently only holds into about POIs (more more details, see quadtree)
         
         self.oldPickleFile = os.path.join(self.worlddir, "overviewer.dat")
-        self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")    
+        self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")
         
         if os.path.exists(self.oldPickleFile):
             logging.warning("overviewer.dat detected in WorldDir - this is no longer the correct location")
