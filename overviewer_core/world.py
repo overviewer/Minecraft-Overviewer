@@ -74,18 +74,40 @@ class World(object):
 
     mincol = maxcol = minrow = maxrow = 0
     
+    ### TODO clean up all of this!
     def __init__(self, worlddir, outputdir, useBiomeData=False, regionlist=None, north_direction="auto"):
         self.worlddir = worlddir
         self.outputdir = outputdir
         self.useBiomeData = useBiomeData
         self.north_direction = north_direction
+
+        self.regionsets = []
+       
+        # Scan worlddir to try to identify all region sets
+        if not os.path.exists(os.path.join(self.worlddir, "level.dat")):
+            raise Exception("level.dat not found in %s" % self.worlddir)
+
+        for root, dirs, files in os.walk(self.worlddir):
+            # any .mcr files in this directory?
+            mcrs = filter(lambda x: x.endswith(".mcr"))
+            if mcrs:
+                # construct a regionset object for this
+                rset = RegionSet(self, os.path.join(self.worlddir, root))
+                self.regionsets.append(rset)
         
+        # TODO consider reordering self.regionsets so that the 'default' region is first
+
+        # TODO move a lot of the following code into the RegionSet
+
+
         # figure out chunk format is in use
         # if not mcregion, error out early
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
         if not ('version' in data and data['version'] == 19132):
             logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
             sys.exit(1)
+
+        # TODO move levelname into the regionsets?
         if 'LevelName' in data:
             # level.dat should have the LevelName attribute so we'll use that
             self.name = data['LevelName']
@@ -129,6 +151,9 @@ class World(object):
         logging.debug("Done scanning regions")
         
  
+    def get_regionsets(self):
+        return self.regionsets
+
     def get_region_path(self, chunkX, chunkY):
         """Returns the path to the region that contains chunk (chunkX, chunkY)
         """
@@ -389,6 +414,37 @@ class World(object):
                     x = y
                     y = -temp-1
                 yield (x, y, join(dirpath, f))
+
+class RegionSet(object):
+    """\
+This object is the gateway to a set of regions (or dimension) from the world
+we’re reading from. There is one of these per set of regions on the hard drive,
+but may be several per invocation of the Overviewer in the case of multi-world.
+    """
+
+    def __init__(self, worldobj, regiondir):
+        self.world = worldobj
+        self.regiondir = regiondir
+
+    def get_chunk(self, x, z):
+        """\
+Returns a dictionary representing the top-level NBT Compound for a chunk given
+its x, z coordinates. The coordinates are chunk coordinates.
+"""
+        raise NotImplementedError("get_chunk rewrite")
+
+    def iterate_chunks(self):
+    """\
+Returns an iterator over all chunk metadata in this world. Iterates over tuples
+of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
+"""
+        raise NotImplementedError("iterate_chunks rewrite")
+
+    def chunk_exists(self, x, z)
+    """\
+Returns True or False depending on whether the given chunk exists.
+"""
+        raise NotImplementedError("chunk_exists needs rewrite")
 
 def get_save_dir():
     """Returns the path to the local saves directory
