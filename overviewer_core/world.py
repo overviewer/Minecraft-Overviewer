@@ -129,81 +129,15 @@ class World(object):
         else:
             self.regionlist = None
 
-        logging.info("Scanning regions")
-
-        # Loads requested/all regions, caching region header info
-        for x, y, regionfile in self._iterate_regionfiles(regionlist):
-            # reload_region caches the region object in self.regions
-            mcr = self.reload_region(regionfile) 
-            mcr.get_chunk_info()
-            self.regionfiles[(x,y)] = (x,y,regionfile,mcr)
-
-        # the max number of chunks we will keep before removing them (includes emptry chunks)
-        self.chunklimit = 1024 
-        self.chunkcount = 0
-        self.empty_chunk = [None,None]
-        logging.debug("Done scanning regions")
-        
+    def get_level_dat_data(self):
+        """Returns a dictionary representing the level.dat data for this World"""
+        return nbt.load(os.path.join(self.worlddir, "level.dat"))
  
     def get_regionsets(self):
         return self.regionsets
 
-    def get_region_path(self, chunkX, chunkY):
-        """Returns the path to the region that contains chunk (chunkX, chunkY)
-        """
-        _, _, regionfile,_ = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None,None))
-        return regionfile
-            
-    def load_from_region(self,filename, x, y):
-        #we need to manage the chunk cache
-        regioninfo = self.regions[filename]
-        if regioninfo is None:
-            return None
-        chunks = regioninfo[2]
-        chunk_data = chunks.get((x,y))
-        if chunk_data is None:        
-            #prune the cache if required
-            if self.chunkcount > self.chunklimit: #todo: make the emptying the chunk cache slightly less crazy
-                [self.reload_region(regionfile) for regionfile in self.regions if regionfile <> filename]
-                self.chunkcount = 0
-            self.chunkcount += 1  
-
-            nbt = self.load_region(filename).load_chunk(x, y)
-            if nbt is None:
-                chunks[(x,y)] = self.empty_chunk
-                return None ## return none.  I think this is who we should indicate missing chunks
-                #raise IOError("No such chunk in region: (%i, %i)" % (x, y))                 
-
-            #we cache the transformed data, not its raw form
-            data = nbt.read_all()    
-            level = data[1]['Level']
-            chunk_data = level
-            chunk_data['Blocks'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                    level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
-                    self._get_north_rotations()))
-            chunk_data['Data'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                    level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations()))
-            chunk_data['SkyLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                    level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations()))
-            chunk_data['BlockLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                    level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations()))
-            #chunk_data = {}
-            #chunk_data['skylight'] = chunk.get_skylight_array(level)
-            #chunk_data['blocklight'] = chunk.get_blocklight_array(level)
-            #chunk_data['blockarray'] = chunk.get_blockdata_array(level)
-            #chunk_data['TileEntities'] = chunk.get_tileentity_data(level)
-            
-            chunks[(x,y)] = [level,time.time()]
-        else:
-            chunk_data = chunk_data[0]
-        return chunk_data      
       
         
-    def load_region(self,filename):    
-        return self.regions[filename][0]
         
     def get_region_mtime(self,filename):                  
         return (self.regions[filename][0],self.regions[filename][1])        
@@ -365,11 +299,79 @@ but may be several per invocation of the Overviewer in the case of multi-world.
             #mcr.get_chunk_info()  # get_chunk_info was removed from nbt.py. needs to be reimplemented
             self.regionfiles[(x,y)] = (x,y,regionfile,mcr)
 
+        # the max number of chunks we will keep before removing them (includes emptry chunks)
+        self.chunklimit = 1024 
+        self.chunkcount = 0
+        self.empty_chunk = [None,None]
+        logging.debug("Done scanning regions")
+
+    def get_region_path(self, chunkX, chunkY):
+        """Returns the path to the region that contains chunk (chunkX, chunkY)
+        """
+        _, _, regionfile,_ = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None,None))
+        return regionfile
+            
+    def load_from_region(self,filename, x, y):
+        #we need to manage the chunk cache
+        regioninfo = self.regions[filename]
+        if regioninfo is None:
+            return None
+        chunks = regioninfo[2]
+        chunk_data = chunks.get((x,y))
+        if chunk_data is None:        
+            #prune the cache if required
+            if self.chunkcount > self.chunklimit: #todo: make the emptying the chunk cache slightly less crazy
+                [self.reload_region(regionfile) for regionfile in self.regions if regionfile <> filename]
+                self.chunkcount = 0
+            self.chunkcount += 1  
+
+            nbt = self.load_region(filename).load_chunk(x, y)
+            if nbt is None:
+                chunks[(x,y)] = self.empty_chunk
+                return None ## return none.  I think this is who we should indicate missing chunks
+                #raise IOError("No such chunk in region: (%i, %i)" % (x, y))                 
+
+            #we cache the transformed data, not its raw form
+            data = nbt.read_all()    
+            level = data[1]['Level']
+            chunk_data = level
+            chunk_data['Blocks'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                    level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
+                    self._get_north_rotations()))
+            chunk_data['Data'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                    level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations()))
+            chunk_data['SkyLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                    level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations()))
+            chunk_data['BlockLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                    level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
+                    self._get_north_rotations()))
+            #chunk_data = {}
+            #chunk_data['skylight'] = chunk.get_skylight_array(level)
+            #chunk_data['blocklight'] = chunk.get_blocklight_array(level)
+            #chunk_data['blockarray'] = chunk.get_blockdata_array(level)
+            #chunk_data['TileEntities'] = chunk.get_tileentity_data(level)
+            
+            chunks[(x,y)] = [level,time.time()]
+        else:
+            chunk_data = chunk_data[0]
+        return chunk_data      
+    
+    def load_region(self,filename):    
+        return self.regions[filename][0]
+
     def get_chunk(self, x, z):
-        """\
-Returns a dictionary representing the top-level NBT Compound for a chunk given
+        """Returns a dictionary representing the top-level NBT Compound for a chunk given
 its x, z coordinates. The coordinates are chunk coordinates.
 """
+        
+        regionfile = self.get_region_path(x, z)
+        regioninfo = self.regions[regionfile]
+        if regioninfo is None:
+            return None
+        return regioninfo[0].load_chunk(x,z)
+
         raise NotImplementedError("get_chunk rewrite")
 
     def iterate_chunks(self):
