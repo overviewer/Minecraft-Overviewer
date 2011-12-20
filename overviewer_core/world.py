@@ -110,6 +110,10 @@ class World(object):
 
        
         # TODO figure out where to handle regionlists
+        
+        self.useBiomeData = os.path.exists(os.path.join(worlddir, 'biomes'))
+        if not self.useBiomeData:
+            logging.info("Notice: Not using biome data for tinting")
 
     def get_level_dat_data(self):
         """Returns a dictionary representing the level.dat data for this World"""

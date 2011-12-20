@@ -403,9 +403,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
        
-    useBiomeData = os.path.exists(os.path.join(worlddir, 'biomes'))
-    if not useBiomeData:
-        logging.info("Notice: Not using biome data for tinting")
     
     # make sure that the textures can be found
     try:
@@ -417,7 +414,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # First do world-level preprocessing. This scans the world hierarchy, reads
     # in the region files and caches chunk modified times, and determines the
     # chunk bounds (max and min in both dimensions)
-    w = world.World(worlddir, destdir, useBiomeData=useBiomeData, regionlist=regionlist, north_direction=north_direction)
+    w = world.World(worlddir, destdir, regionlist=regionlist, north_direction=north_direction)
     if north_direction == 'auto':
         north_direction = w.persistentData['north_direction']
         options.north_direction = north_direction
