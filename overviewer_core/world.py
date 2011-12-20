@@ -372,8 +372,6 @@ its x, z coordinates. The coordinates are chunk coordinates.
             return None
         return regioninfo[0].load_chunk(x,z)
 
-        raise NotImplementedError("get_chunk rewrite")
-
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates over tuples
 of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
@@ -387,7 +385,7 @@ Old name: world.iterate_chunk_metadata
 
     def chunk_exists(self, x, z):
         """Returns True or False depending on whether the given chunk exists.  """
-        raise NotImplementedError("chunk_exists needs rewrite")
+        return self.regions[self.get_region_path(x,z)][0].chunk_exists(x,z)
     
     #used to reload a changed region
     def _reload_region(self,filename):
