@@ -93,50 +93,6 @@ class World(object):
             # but very old ones might not? so we'll just go with the world dir name if they don't
             self.name = os.path.basename(os.path.realpath(self.worlddir))
 
-        #  stores Points Of Interest to be mapped with markers
-        #  a list of dictionaries, see below for an example
-        self.POI = []
-        
-        # if it exists, open overviewer.dat, and read in the data structure
-        # info self.persistentData.  This dictionary can hold any information
-        # that may be needed between runs.
-        # Currently only holds into about POIs (more more details, see quadtree)
-        
-        self.oldPickleFile = os.path.join(self.worlddir, "overviewer.dat")
-        self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")
-        
-        if os.path.exists(self.oldPickleFile):
-            logging.warning("overviewer.dat detected in WorldDir - this is no longer the correct location")
-            if os.path.exists(self.pickleFile):
-                # new file exists, so make a note of it
-                logging.warning("you should delete the `overviewer.dat' file in your world directory")
-            else:
-                # new file does not exist, so move the old one
-                logging.warning("Moving overviewer.dat to OutputDir")
-                import shutil
-                try:
-                    # make sure destination dir actually exists
-                    try:
-                        os.mkdir(self.outputdir)
-                    except OSError: # already exists, or failed
-                        pass
-                    shutil.move(self.oldPickleFile, self.pickleFile)
-                    logging.info("overviewer.dat moved")
-                except BaseException as ex:
-                    logging.error("Unable to move overviewer.dat")
-                    logging.debug(ex.str())
-
-        if os.path.exists(self.pickleFile):
-            self.persistentDataIsNew = False
-            with open(self.pickleFile,"rb") as p:
-                self.persistentData = cPickle.load(p)
-                if not self.persistentData.get('north_direction', False):
-                    # this is a pre-configurable-north map, so add the north_direction key
-                    self.persistentData['north_direction'] = 'lower-left'
-        else:
-            # some defaults, presumably a new map
-            self.persistentData = dict(POI=[], north_direction='lower-left')
-            self.persistentDataIsNew = True # indicates that the values in persistentData are new defaults, and it's OK to override them
         
         # handle 'auto' north
         if self.north_direction == 'auto':
