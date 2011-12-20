@@ -67,19 +67,12 @@ class World(object):
 
     worlddir is the path to the minecraft world
 
-    outputdir is the output path for this render. It is used only to find the
-    persistent data files to read in data from last render. Also it creates
-    this directory if it doesn't exist.
     """
 
     mincol = maxcol = minrow = maxrow = 0
     
-    ### TODO clean up all of this!
-    def __init__(self, worlddir, outputdir, useBiomeData=False, regionlist=None, north_direction="auto"):
+    def __init__(self, worlddir):
         self.worlddir = worlddir
-        self.outputdir = outputdir
-        self.useBiomeData = useBiomeData
-        self.north_direction = north_direction
 
         self.regionsets = []
        
@@ -115,19 +108,8 @@ class World(object):
             # but very old ones might not? so we'll just go with the world dir name if they don't
             self.name = os.path.basename(os.path.realpath(self.worlddir))
 
-        
-        # handle 'auto' north
-        if self.north_direction == 'auto':
-            self.north_direction = self.persistentData['north_direction']
-            north_direction = self.north_direction
-
-
-        
-        # If a region list was given, make sure the given paths are absolute
-        if regionlist:
-            self.regionlist = map(os.path.abspath, regionlist)
-        else:
-            self.regionlist = None
+       
+        # TODO figure out where to handle regionlists
 
     def get_level_dat_data(self):
         """Returns a dictionary representing the level.dat data for this World"""
@@ -169,17 +151,6 @@ class World(object):
         disp_spawnX = spawnX = data['Data']['SpawnX']
         spawnY = data['Data']['SpawnY']
         disp_spawnZ = spawnZ = data['Data']['SpawnZ']
-        if self.north_direction == 'upper-left':
-            temp = spawnX
-            spawnX = -spawnZ
-            spawnZ = temp
-        elif self.north_direction == 'upper-right':
-            spawnX = -spawnX
-            spawnZ = -spawnZ
-        elif self.north_direction == 'lower-right':
-            temp = spawnX
-            spawnX = spawnZ
-            spawnZ = -temp
    
         ## The chunk that holds the spawn location 
         chunkX = spawnX/16
@@ -195,7 +166,7 @@ class World(object):
             ## The filename of this chunk
             chunkFile = self.get_region_path(chunkX, chunkY)
             if chunkFile is not None:
-                data = nbt.load_from_region(chunkFile, chunkX, chunkY, self.north_direction)
+                data = nbt.load_from_region(chunkFile, chunkX, chunkY)
                 if data is not None:
                     level = data[1]['Level']
                     blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
@@ -260,14 +231,8 @@ class World(object):
         self.maxrow = maxrow
 
     def _get_north_rotations(self):
-        if self.north_direction == 'upper-left':
-            return 1
-        elif self.north_direction == 'upper-right':
-            return 2
-        elif self.north_direction == 'lower-right':
-            return 3
-        elif self.north_direction == 'lower-left':
-            return 0
+        # default to lower-left for now
+        return 0
 
 
 
