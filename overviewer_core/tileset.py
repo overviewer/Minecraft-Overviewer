@@ -75,6 +75,46 @@ class TileSet(object):
         TODO: This should probably be relative to the asset manager's output
         directory to avoid redundancy.
 
+        
+        Current valid options for the options dictionary are shown below. All
+        the options must be specified unless they are not relevant. If the
+        given options do not conform to the specifications, behavior is
+        undefined (this class does not do any error checking and assumes items
+        are given in the correct form).
+
+        bgcolor
+            A hex string specifying the background color for jpeg output.
+            e.g.: "#1A1A1A". Not relevant unless rendering jpeg.
+
+        forcerender
+            True to indicate every tile should be rendered regardless of any
+            mtime checks. False otherwise.
+
+        imgformat
+            A string indicating the output format. Must be one of 'png' or
+            'jpeg'
+
+        imgquality
+            An integer 1-100 indicating the quality of the jpeg output. Only
+            relevant in jpeg mode.
+
+        optimizeimg
+            an integer indiating optimizations to perform on png outputs. 0
+            indicates no optimizations. Only relevant in png mode.
+            1 indicates pngcrush is run on all output images
+            2 indicates pngcrush and advdef are run on all output images with advdef -z2
+            3 indicates pngcrush and advdef are run on all output images with advdef -z4
+
+        rendermode
+            Perhaps the most important/relevant option: a string indicating the
+            render mode to render. This rendermode must have already been
+            registered with the C extension module. 
+
+        rerender_prob
+            A floating point number between 0 and 1 indicating the probability
+            that a tile which is not marked for render by any mtime checks will
+            be rendered anyways. 0 disables this option.
+
         """
         pass
 
