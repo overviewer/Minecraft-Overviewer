@@ -13,6 +13,10 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+import os.path
+from collections import namedtuple
+
+from . import util
 
 """
 
@@ -116,7 +120,13 @@ class TileSet(object):
             be rendered anyways. 0 disables this option.
 
         """
-        pass
+        self.options = options
+        self.regionset = regionsetobj
+        self.am = assetmanagerobj
+
+        # Here, outputdir is an absolute path to the directory where we output
+        # tiles
+        self.outputdir = os.path.abspath(outputdir)
 
     def do_preprocessing(self):
         """For the preprocessing step of the Worker interface, this does the
@@ -124,7 +134,27 @@ class TileSet(object):
         attribute for later use in iterate_work_items()
 
         """
-        pass
+        # REMEMBER THAT ATTRIBUTES ASSIGNED IN THIS METHOD ARE NOT AVAILABLE IN
+        # THE do_work() METHOD
+
+        # Calculate the min and max column over all the chunks
+        self._find_chunk_range()
+        bounds = self.bounds
+
+        # Calculate the depth of the tree
+        for p in xrange(1,33): # max 32
+            # Will 2^p tiles wide and high suffice?
+
+            # X has twice as many chunks as tiles, then halved since this is a
+            # radius
+            xradius = 2**p
+            # Y has 4 times as many chunks as tiles, then halved since this is
+            # a radius
+            yradius = 2*2**p
+            if xradius >= bounds.maxcol and -xradius <= bounds.mincol and \
+                    yradius >= bounds.maxrow and -yradius <= bounds.minrow:
+                break
+
 
     def get_num_phases(self):
         """Returns the number of levels in the quadtree, which is equal to the
@@ -152,3 +182,24 @@ class TileSet(object):
 
         """
         pass
+
+    def _find_chunk_range(self):
+        """Finds the chunk range in rows/columns and stores them in
+        self.minrow, self.maxrow, self.mincol, self.maxcol
+
+        """
+        minrow = mincol = maxrow = maxcol = 0
+
+        for c_x, c_z, _ in self.regionset.iterate_chunks():
+            # Convert these coordinates to row/col
+            col, row = util.convert_coords(c_x, c_z)
+
+            minrow = min(minrow, row)
+            maxrow = max(maxrow, row)
+            mincol = min(mincol, col)
+            maxcol = max(maxcol, col)
+
+        self.bounds = Bounds(mincol, maxcol, minrow, maxrow)
+
+# A named tuple storing the row and column bounds for the to-be-rendered world
+Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))

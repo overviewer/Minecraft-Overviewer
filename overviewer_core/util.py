@@ -101,6 +101,22 @@ def roundrobin(iterables):
             pending -= 1
             nexts = cycle(islice(nexts, pending))
 
+def convert_coords(chunkx, chunkz):
+    """Takes a coordinate (chunkx, chunkz) where chunkx and chunkz are
+    in the chunk coordinate system, and figures out the row and column
+    in the image each one should be. Returns (col, row)."""
+    
+    # columns are determined by the sum of the chunk coords, rows are the
+    # difference
+    # change this function, and you MUST change unconvert_coords
+    return (chunkx + chunkz, chunkz - chunkx)
+
+def unconvert_coords(col, row):
+    """Undoes what convert_coords does. Returns (chunkx, chunkz)."""
+    
+    # col + row = chunkz + chunkz => (col + row)/2 = chunkz
+    # col - row = chunkx + chunkx => (col - row)/2 = chunkx
+    return ((col - row) / 2, (col + row) / 2)
 
 # Logging related classes are below
 
