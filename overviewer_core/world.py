@@ -121,13 +121,7 @@ class World(object):
             self.north_direction = self.persistentData['north_direction']
             north_direction = self.north_direction
 
-        # This is populated by reload_region(). It is a mapping from region
-        # filename to: (region object, mtime, chunkcache)
-        self.regions = {}
 
-        # This is populated below. It is a mapping from (x,y) region coords to
-        # (x,y,filename, region object)
-        self.regionfiles = {}
         
         # If a region list was given, make sure the given paths are absolute
         if regionlist:
@@ -207,14 +201,6 @@ class World(object):
             chunk_data = chunk_data[0]
         return chunk_data      
       
-    #used to reload a changed region
-    def reload_region(self,filename):
-        if self.regions.get(filename) is not None:
-            self.regions[filename][0].closefile()
-        chunkcache = {}    
-        mcr = nbt.MCRFileReader(filename, self.north_direction)
-        self.regions[filename] = (mcr,os.path.getmtime(filename),chunkcache)
-        return mcr
         
     def load_region(self,filename):    
         return self.regions[filename][0]
@@ -349,19 +335,66 @@ class World(object):
         elif self.north_direction == 'lower-left':
             return 0
 
-    def iterate_chunk_metadata(self):
-        """Returns an iterator over (x,y,chunk mtime) of every chunk loaded in
-        memory. Provides a public way for external routines to iterate over the
-        world.
 
-        Written for use in quadtree.py's QuadtreeGen.scan_chunks, which only
-        needs chunk locations and mtimes.
 
-        """
+class RegionSet(object):
+    """\
+This object is the gateway to a set of regions (or dimension) from the world
+we're reading from. There is one of these per set of regions on the hard drive,
+but may be several per invocation of the Overviewer in the case of multi-world.
+    """
+
+    def __init__(self, worldobj, regiondir):
+        self.world = worldobj
+        self.regiondir = regiondir
+
+        logging.info("Scanning regions")
+        
+        # This is populated by reload_region(). It is a mapping from region
+        # filename to: (region object, mtime, chunkcache)
+        self.regions = {}
+        
+        # This is populated below. It is a mapping from (x,y) region coords to
+        # (x,y,filename, region object)
+        self.regionfiles = {}
+        
+        # Loads requested/all regions, caching region header info
+        for x, y, regionfile in self._iterate_regionfiles():
+            # reload_region caches the region object in self.regions
+            mcr = self._reload_region(regionfile) 
+            #mcr.get_chunk_info()  # get_chunk_info was removed from nbt.py. needs to be reimplemented
+            self.regionfiles[(x,y)] = (x,y,regionfile,mcr)
+
+    def get_chunk(self, x, z):
+        """\
+Returns a dictionary representing the top-level NBT Compound for a chunk given
+its x, z coordinates. The coordinates are chunk coordinates.
+"""
+        raise NotImplementedError("get_chunk rewrite")
+
+    def iterate_chunks(self):
+        """Returns an iterator over all chunk metadata in this world. Iterates over tuples
+of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
+
+Old name: world.iterate_chunk_metadata
+"""
 
         for regionx, regiony, _, mcr in self.regionfiles.itervalues():
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
+
+    def chunk_exists(self, x, z):
+        """Returns True or False depending on whether the given chunk exists.  """
+        raise NotImplementedError("chunk_exists needs rewrite")
+    
+    #used to reload a changed region
+    def _reload_region(self,filename):
+        if self.regions.get(filename) is not None:
+            self.regions[filename][0].closefile()
+        chunkcache = {}    
+        mcr = nbt.load_region(filename)
+        self.regions[filename] = (mcr,os.path.getmtime(filename),chunkcache)
+        return mcr
 
     def _iterate_regionfiles(self,regionlist=None):
         """Returns an iterator of all of the region files, along with their 
@@ -397,54 +430,23 @@ class World(object):
                     logging.warning("Ignoring non region file '%s' in regionlist", f)
 
         else:                    
-            for path in glob(os.path.join(self.worlddir, 'region') + "/r.*.*.mcr"):
+            for path in glob(self.regiondir + "/r.*.*.mcr"):
                 dirpath, f = os.path.split(path)
                 p = f.split(".")
                 x = int(p[1])
                 y = int(p[2])
-                if self.north_direction == 'upper-left':
-                    temp = x
-                    x = -y-1
-                    y = temp
-                elif self.north_direction == 'upper-right':
-                    x = -x-1
-                    y = -y-1
-                elif self.north_direction == 'lower-right':
-                    temp = x
-                    x = y
-                    y = -temp-1
+                ##TODO if self.north_direction == 'upper-left':
+                ##TODO     temp = x
+                ##TODO     x = -y-1
+                ##TODO     y = temp
+                ##TODO elif self.north_direction == 'upper-right':
+                ##TODO     x = -x-1
+                ##TODO     y = -y-1
+                ##TODO elif self.north_direction == 'lower-right':
+                ##TODO     temp = x
+                ##TODO     x = y
+                ##TODO     y = -temp-1
                 yield (x, y, join(dirpath, f))
-
-class RegionSet(object):
-    """\
-This object is the gateway to a set of regions (or dimension) from the world
-we’re reading from. There is one of these per set of regions on the hard drive,
-but may be several per invocation of the Overviewer in the case of multi-world.
-    """
-
-    def __init__(self, worldobj, regiondir):
-        self.world = worldobj
-        self.regiondir = regiondir
-
-    def get_chunk(self, x, z):
-        """\
-Returns a dictionary representing the top-level NBT Compound for a chunk given
-its x, z coordinates. The coordinates are chunk coordinates.
-"""
-        raise NotImplementedError("get_chunk rewrite")
-
-    def iterate_chunks(self):
-    """\
-Returns an iterator over all chunk metadata in this world. Iterates over tuples
-of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
-"""
-        raise NotImplementedError("iterate_chunks rewrite")
-
-    def chunk_exists(self, x, z)
-    """\
-Returns True or False depending on whether the given chunk exists.
-"""
-        raise NotImplementedError("chunk_exists needs rewrite")
 
 def get_save_dir():
     """Returns the path to the local saves directory
