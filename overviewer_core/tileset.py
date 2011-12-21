@@ -41,10 +41,19 @@ get_num_phases()
 
 iterate_work_items(phase)
     Takes a phase number (a non-negative integer). This method should return an
-    iterator over work items. The work items can be any pickelable object; they
-    are treated as opaque by the Dispatcher. The work item objects are passed
-    back in to the do_work() method (perhaps in a different, identically
-    configured instance)
+    iterator over work items and a list of dependencies i.e. (work_item, [d1,
+    d2, ...]). The work items and dependencies can be any pickelable object;
+    they are treated as opaque by the Dispatcher. The work item objects are
+    passed back in to the do_work() method (perhaps in a different, identically
+    configured instance).
+
+    The dependency items are other work items that are compared for equality
+    with work items that are already in the queue. The dispatcher guarantees
+    that dependent items which are currently in the queue or in progress finish
+    before the corresponding work item is started. Note that dependencies must
+    have already been yielded as work items before they can be used as
+    dependencies; the dispatcher requires this ordering or it cannot guarantee
+    the dependencies are met.
 
 do_work(workobj)
     Does the work for a given work object. This method is not expected to
@@ -90,9 +99,24 @@ class TileSet(object):
             A hex string specifying the background color for jpeg output.
             e.g.: "#1A1A1A". Not relevant unless rendering jpeg.
 
-        forcerender
-            True to indicate every tile should be rendered regardless of any
-            mtime checks. False otherwise.
+        renderchecks
+            An integer indicating how to determine which tiles need updating
+            and which don't. This is one of three levels:
+
+            0
+                Only render tiles that have chunks with a greater mtime than
+                the last render timestamp (the fastest option)
+
+            1
+                Render all tiles whose chunks have an mtime greater than the
+                mtime of the tile on disk (slower due to stat calls to
+                determine tile mtimes, but safe if the last render was
+                interrupted)
+
+            2
+                Render all tiles unconditionally. This is a "forcerender" and
+                is the slowest, but SHOULD be specified if this is the first
+                render because the scan will forgo tile stat calls.
 
         imgformat
             A string indicating the output format. Must be one of 'png' or
