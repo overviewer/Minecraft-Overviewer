@@ -636,6 +636,7 @@ normal
 * **min_depth** - lowest level of blocks to render (default: 0)
 * **max_depth** - highest level of blocks to render (default: 127)
 * **height_fading** - darken or lighten blocks based on height (default: False)
+* **nether** - enables nether-mode by removing the top set of contiguous in each column (default: False)
 
 lighting
 ~~~~~~~~
