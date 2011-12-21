@@ -31,6 +31,7 @@ import numpy
 import chunk
 import nbt
 import textures
+import util
 
 """
 This module has routines for extracting information about available worlds
@@ -82,10 +83,11 @@ class World(object):
 
         for root, dirs, files in os.walk(self.worlddir):
             # any .mcr files in this directory?
-            mcrs = filter(lambda x: x.endswith(".mcr"))
+            print "looking in", root
+            mcrs = filter(lambda x: x.endswith(".mcr"), files)
             if mcrs:
                 # construct a regionset object for this
-                rset = RegionSet(self, os.path.join(self.worlddir, root))
+                rset = RegionSet(self, root)
                 self.regionsets.append(rset)
         
         # TODO consider reordering self.regionsets so that the 'default' region is first
@@ -127,23 +129,6 @@ class World(object):
         
     def get_region_mtime(self,filename):                  
         return (self.regions[filename][0],self.regions[filename][1])        
-        
-    def convert_coords(self, chunkx, chunky):
-        """Takes a coordinate (chunkx, chunky) where chunkx and chunky are
-        in the chunk coordinate system, and figures out the row and column
-        in the image each one should be. Returns (col, row)."""
-        
-        # columns are determined by the sum of the chunk coords, rows are the
-        # difference
-        # change this function, and you MUST change unconvert_coords
-        return (chunkx + chunky, chunky - chunkx)
-    
-    def unconvert_coords(self, col, row):
-        """Undoes what convert_coords does. Returns (chunkx, chunky)."""
-        
-        # col + row = chunky + chunky => (col + row)/2 = chunky
-        # col - row = chunkx + chunkx => (col - row)/2 = chunkx
-        return ((col - row) / 2, (col + row) / 2)
     
     def find_true_spawn(self):
         """Adds the true spawn location to self.POI.  The spawn Y coordinate
@@ -191,48 +176,6 @@ class World(object):
                 msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
         self.spawn = (disp_spawnX, spawnY, disp_spawnZ)
 
-    def determine_bounds(self):
-        """Scan the world directory, to fill in
-        self.{min,max}{col,row} for use later in quadtree.py.
-        
-        """
-        
-        logging.info("Scanning chunks")
-        # find the dimensions of the map, in region files
-        minx = maxx = miny = maxy = 0
-        found_regions = False
-        for x, y in self.regionfiles:
-            found_regions = True
-            minx = min(minx, x)
-            maxx = max(maxx, x)
-            miny = min(miny, y)
-            maxy = max(maxy, y)
-        if not found_regions:
-            logging.error("Error: No chunks found!")
-            sys.exit(1)
-        logging.debug("Done scanning chunks")
-        
-        # turn our region coordinates into chunk coordinates
-        minx = minx * 32
-        miny = miny * 32
-        maxx = maxx * 32 + 32
-        maxy = maxy * 32 + 32
-        
-        # Translate chunks to our diagonal coordinate system
-        mincol = maxcol = minrow = maxrow = 0
-        for chunkx, chunky in [(minx, miny), (minx, maxy), (maxx, miny), (maxx, maxy)]:
-            col, row = self.convert_coords(chunkx, chunky)
-            mincol = min(mincol, col)
-            maxcol = max(maxcol, col)
-            minrow = min(minrow, row)
-            maxrow = max(maxrow, row)
-        
-        #logging.debug("map size: (%i, %i) to (%i, %i)" % (mincol, minrow, maxcol, maxrow))
-
-        self.mincol = mincol
-        self.maxcol = maxcol
-        self.minrow = minrow
-        self.maxrow = maxrow
 
     def _get_north_rotations(self):
         # default to lower-left for now
@@ -399,6 +342,7 @@ Old name: world.iterate_chunk_metadata
                     logging.warning("Ignoring non region file '%s' in regionlist", f)
 
         else:                    
+            print "regiondir is", self.regiondir
             for path in glob(self.regiondir + "/r.*.*.mcr"):
                 dirpath, f = os.path.split(path)
                 p = f.split(".")
@@ -416,6 +360,49 @@ Old name: world.iterate_chunk_metadata
                 ##TODO     x = y
                 ##TODO     y = -temp-1
                 yield (x, y, join(dirpath, f))
+    
+    def determine_bounds(self):
+        """Scan the world directory, to fill in
+        self.{min,max}{col,row} for use later in quadtree.py.
+        
+        """
+        
+        logging.info("Scanning chunks")
+        # find the dimensions of the map, in region files
+        minx = maxx = miny = maxy = 0
+        found_regions = False
+        for x, y in self.regionfiles:
+            found_regions = True
+            minx = min(minx, x)
+            maxx = max(maxx, x)
+            miny = min(miny, y)
+            maxy = max(maxy, y)
+        if not found_regions:
+            logging.error("Error: No chunks found!")
+            sys.exit(1)
+        logging.debug("Done scanning chunks")
+        
+        # turn our region coordinates into chunk coordinates
+        minx = minx * 32
+        miny = miny * 32
+        maxx = maxx * 32 + 32
+        maxy = maxy * 32 + 32
+        
+        # Translate chunks to our diagonal coordinate system
+        mincol = maxcol = minrow = maxrow = 0
+        for chunkx, chunky in [(minx, miny), (minx, maxy), (maxx, miny), (maxx, maxy)]:
+            col, row = util.convert_coords(chunkx, chunky)
+            mincol = min(mincol, col)
+            maxcol = max(maxcol, col)
+            minrow = min(minrow, row)
+            maxrow = max(maxrow, row)
+        
+        #logging.debug("map size: (%i, %i) to (%i, %i)" % (mincol, minrow, maxcol, maxrow))
+
+        self.mincol = mincol
+        self.maxcol = maxcol
+        self.minrow = minrow
+        self.maxrow = maxrow
 
 def get_save_dir():
     """Returns the path to the local saves directory

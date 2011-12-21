@@ -30,6 +30,7 @@ from PIL import Image
 from . import chunk
 from .optimizeimages import optimize_image
 from c_overviewer import get_render_mode_inheritance
+import util
 
 
 """
@@ -540,12 +541,12 @@ class QuadtreeGen(object):
         #
         # IDEA: check last render time against mtime of the region to short
         # circuit checking mtimes of all chunks in a region
-        for chunkx, chunky, chunkmtime in self.world.iterate_chunk_metadata():
+        for chunkx, chunky, chunkmtime in self.world.get_regionsets()[0].iterate_chunks():
             chunkcount += 1
             #if chunkcount % 10000 == 0:
             #    logging.info("	%s chunks scanned", chunkcount)
 
-            chunkcol, chunkrow = self.world.convert_coords(chunkx, chunky)
+            chunkcol, chunkrow = util.convert_coords(chunkx, chunky)
             #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
 
             # find tile coordinates

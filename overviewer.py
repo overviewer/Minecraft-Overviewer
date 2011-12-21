@@ -414,23 +414,16 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # First do world-level preprocessing. This scans the world hierarchy, reads
     # in the region files and caches chunk modified times, and determines the
     # chunk bounds (max and min in both dimensions)
-    w = world.World(worlddir, destdir, regionlist=regionlist, north_direction=north_direction)
+    w = world.World(worlddir)
     if north_direction == 'auto':
-        north_direction = w.persistentData['north_direction']
+        # TODO get this from the asset manager # north_direction = w.persistentData['north_direction']
         options.north_direction = north_direction
-    elif (w.persistentData['north_direction'] != north_direction and
-            not options.forcerender and
-            not w.persistentDataIsNew
-            ):
-        logging.error("Conflicting north-direction setting!")
-        logging.error("Overviewer.dat gives previous north-direction as "+w.persistentData['north_direction'])
-        logging.error("Requested north-direction was "+north_direction)
-        logging.error("To change north-direction of an existing render, use --forcerender")
-        doExit(code=1, consoleMsg=False)
+
+    # TODO deal with changed north direction
     
     # A couple other things we need to figure out about the world:
-    w.determine_bounds()
-    w.find_true_spawn()
+    w.get_regionsets()[0].determine_bounds()
+    # w.find_true_spawn()
 
     logging.info("Rendering the following tilesets: %s", ",".join(options.rendermode))
 
