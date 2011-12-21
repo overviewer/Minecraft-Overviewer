@@ -43,7 +43,7 @@ def iterate_base4(d):
     return itertools.product(xrange(4), repeat=d)
    
 class QuadtreeGen(object):
-    def __init__(self, worldobj, destdir, bgcolor="#1A1A1A", depth=None, tiledir=None, forcerender=False, imgformat='png', imgquality=95, optimizeimg=None, rendermode="normal", rerender_prob=0.0):
+    def __init__(self, regionobj, destdir, bgcolor="#1A1A1A", depth=None, tiledir=None, forcerender=False, imgformat='png', imgquality=95, optimizeimg=None, rendermode="normal", rerender_prob=0.0):
         """Generates a quadtree from the world given into the
         given dest directory
 
@@ -60,6 +60,7 @@ class QuadtreeGen(object):
         self.optimizeimg = optimizeimg
         self.bgcolor = bgcolor
         self.rendermode = rendermode
+        self.regionobj = regionobj
         
         # force png renderformat if we're using an overlay mode
         if 'overlay' in get_render_mode_inheritance(rendermode):
@@ -83,8 +84,8 @@ class QuadtreeGen(object):
                 # Y has 4 times as many chunks as tiles, then halved since this is
                 # a radius
                 yradius = 2*2**p
-                if xradius >= worldobj.maxcol and -xradius <= worldobj.mincol and \
-                        yradius >= worldobj.maxrow and -yradius <= worldobj.minrow:
+                if xradius >= self.regionobj.maxcol and -xradius <= self.regionobj.mincol and \
+                        yradius >= self.regionobj.maxrow and -yradius <= self.regionobj.minrow:
                     break
             
             if p < 15:
@@ -97,13 +98,14 @@ class QuadtreeGen(object):
             xradius = 2**depth
             yradius = 2*2**depth
 
+        print "depth:", self.p
+
         # Make new row and column ranges
         self.mincol = -xradius
         self.maxcol = xradius
         self.minrow = -yradius
         self.maxrow = yradius
 
-        self.world = worldobj
         self.destdir = destdir
         self.full_tiledir = os.path.join(destdir, tiledir)
 
@@ -233,8 +235,8 @@ class QuadtreeGen(object):
 
         chunklist = []
 
-        unconvert_coords = self.world.unconvert_coords
-        get_region = self.world.regionfiles.get
+        unconvert_coords = util.unconvert_coords
+        get_region = self.world.get_regionsets()[0].regionfiles.get
 
         # Cached region object for consecutive iterations
         regionx = None
@@ -530,7 +532,7 @@ class QuadtreeGen(object):
 
         dirty = DirtyTiles(depth)
 
-        #logging.debug("	Scanning chunks for tiles that need rendering...")
+        logging.debug("	Scanning chunks for tiles that need rendering...")
         chunkcount = 0
         stime = time.time()
 
@@ -547,7 +549,7 @@ class QuadtreeGen(object):
             #    logging.info("	%s chunks scanned", chunkcount)
 
             chunkcol, chunkrow = util.convert_coords(chunkx, chunky)
-            #logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
+            logging.debug("Looking at chunk %s,%s", chunkcol, chunkrow)
 
             # find tile coordinates
             tilecol = chunkcol - chunkcol % 2
@@ -579,6 +581,7 @@ class QuadtreeGen(object):
                         continue
 
                     tile = Tile.compute_path(c, r, depth)
+                    print tile
 
                     if self.forcerender:
                         dirty.set_dirty(tile.path)
