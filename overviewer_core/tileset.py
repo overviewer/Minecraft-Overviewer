@@ -13,12 +13,13 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+import itertools
+import logging
 import os
 import os.path
-from collections import namedtuple
-import logging
 import shutil
-import itertools
+import random
+from collections import namedtuple
 
 from .util import iterate_base4, convert_coords
 
@@ -114,18 +115,32 @@ class TileSet(object):
 
             0
                 Only render tiles that have chunks with a greater mtime than
-                the last render timestamp (the fastest option)
+                the last render timestamp, and their ancestors.
+                
+                In other words, only renders parts of the map that have changed
+                since last render, nothing more, nothing less.
+                
+                This is the fastest option, but will not detect tiles that have
+                e.g. been deleted from the directory tree, or pick up where a
+                partial interrupted render left off.
 
             1
-                Render all tiles whose chunks have an mtime greater than the
-                mtime of the tile on disk (slower due to stat calls to
-                determine tile mtimes, but safe if the last render was
-                interrupted)
+                For render-tiles, render all whose chunks have an mtime greater
+                than the mtime of the tile on disk, and their upper-tile
+                ancestors.
+                
+                Also check all other upper-tiles and render any that have
+                children with more rencent mtimes than itself.
+                
+                This is slower due to stat calls to determine tile mtimes, but
+                safe if the last render was interrupted.
 
             2
                 Render all tiles unconditionally. This is a "forcerender" and
                 is the slowest, but SHOULD be specified if this is the first
-                render because the scan will forgo tile stat calls.
+                render because the scan will forgo tile stat calls. It's also
+                useful for changing texture packs or other options that effect
+                the output.
 
         imgformat
             A string indicating the output format. Must be one of 'png' or
@@ -176,9 +191,9 @@ class TileSet(object):
         # REMEMBER THAT ATTRIBUTES ASSIGNED IN THIS METHOD ARE NOT AVAILABLE IN
         # THE do_work() METHOD
 
-        # Calculate the min and max column over all the chunks
-        self._find_chunk_range()
-        bounds = self.bounds
+        # Calculate the min and max column over all the chunks.
+        # This sets self.bounds to a Bounds namedtuple
+        self.bounds = self._find_chunk_range()
 
         # Calculate the depth of the tree
         for p in xrange(1,33): # max 32
@@ -199,7 +214,11 @@ class TileSet(object):
                     p)
         self.treedepth = p
 
+        # Do any tile re-arranging if necessary
         self._rearrange_tiles()
+
+        # Do the chunk scan here
+        self.dirtytree = self._chunk_scan()
 
 
     def get_num_phases(self):
@@ -215,6 +234,50 @@ class TileSet(object):
         its way to the root node of the tree.
 
         """
+
+        # With renderchecks set to 0 or 2, simply iterate over the dirty tiles
+        # tree in post-traversal order and yield each tile path.
+        
+        # For 0 our caller has explicitly requested not to check mtimes on
+        # disk, to speed up the chunk scan.
+        
+        # For 2, the chunk scan holds every tile that should exist and
+        # therefore every upper tile that should exist as well. In both 0 and 2
+        # the dirtytile tree is authoritive on every tile that needs rendering.
+
+        # With renderchecks set to 1, the chunk scan has checked mtimes of all
+        # the render-tiles already and determined which render-tiles need to be
+        # rendered. However, the dirtytile tree is authoritive on render-tiles
+        # only.  We still need to account for tiles at the upper levels in the
+        # tree that may not exist or may need updating. So we can't just
+        # iterate over the dirty tile tree because that tree only tells us
+        # which render-tiles need rendering (and their ancestors)
+
+        # For example, there may be an upper-tile that needs rendering down a
+        # path of the tree that doesn't exist in the dirtytile tree because the
+        # last render was interrupted after the render-tile was rendered, but
+        # before its ancestors were.
+
+        # The strategy for this situation is to do a post-traversal of the
+        # quadtree on disk, while simultaneously keeping track of the next tile
+        # (render or upper) that is returned by the dirtytile tree in memory.
+
+        # If, during node expansion, a path is not going to be traversed but
+        # the dirtytile tree indicates a node down that path, that path must be
+        # taken.
+
+        # When a node is visited, if it matches the next node from the
+        # dirtytile tree, it must be rendered regardless of the tile's mtime.
+        # Then the next tile from the dirtytile tree is yielded and the
+        # traversal continues.
+
+        # Otherwise, for every upper-tile, check the mtime and continue
+        # traversing the tree.
+
+        # This implementation is going to be a bit complicated. I think I need
+        # to give it some more thought to figure out exactly how it's going to
+        # work.
+
         pass
 
     def do_work(self, tileobj):
@@ -245,7 +308,7 @@ class TileSet(object):
             mincol = min(mincol, col)
             maxcol = max(maxcol, col)
 
-        self.bounds = Bounds(mincol, maxcol, minrow, maxrow)
+        return Bounds(mincol, maxcol, minrow, maxrow)
 
     def _rearrange_tiles(self):
         """If the target size of the tree is not the same as the existing size
@@ -334,6 +397,137 @@ class TileSet(object):
             except OSError, e:
                 pass # doesn't exist maybe?
 
+    def _chunk_scan(self):
+        """Scans the chunks of this TileSet's world to determine which
+        render-tiles need rendering. Returns a DirtyTiles object.
+
+        For rendercheck mode 0: only compares chunk mtimes against last render
+        time of the map
+
+        For rendercheck mode 1: compares chunk mtimes against the tile mtimes
+        on disk
+
+        For rendercheck mode 2: marks every tile, does not check any mtimes.
+
+        """
+        depth = self.treedepth
+
+        dirty = DirtyTiles(depth)
+
+        chunkcount = 0
+        stime = time.time()
+
+        rendercheck = self.options['rendercheck']
+        rerender_prob = self.options['rerender_prob']
+
+        # XXX TODO:
+        last_rendertime = 0 # TODO
+
+        if rendercheck == 0:
+            def compare_times(chunkmtime, tileobj):
+                # Compare chunk mtime to last render time
+                return chunkmtime > last_rendertime
+        elif rendercheck == 1:
+            def compare_times(chunkmtime, tileobj):
+                # Compare chunk mtime to tile mtime on disk
+                tile_path = tile.get_filepath(self.full_tiledir, self.imgformat)
+                try:
+                    tile_mtime = os.stat(tile_path)[stat.ST_MTIME]
+                except OSError, e:
+                    if e.errno != errno.ENOENT:
+                        raise
+                    # File doesn't exist. Render it.
+                    return True
+
+                return chunkmtime > tile_mtime
+                
+
+        # For each chunk, do this:
+        #   For each tile that the chunk touches, do this:
+        #       Compare the last modified time of the chunk and tile. If the
+        #       tile is older, mark it in a DirtyTiles object as dirty.
+
+        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks():
+
+            chunkcount += 1
+            
+            # Convert to diagonal coordinates
+            chunkcol, chunkrow = util.convert_coords(chunkx, chunkz)
+
+            # find tile coordinates. Remember tiles are identified by the
+            # address of the chunk in their upper left corner.
+            tilecol = chunkcol - chunkcol % 2
+            tilerow = chunkrow - chunkrow % 4
+
+            # Determine if this chunk is in a column that spans two columns of
+            # tiles, which are the even columns.
+            if chunkcol % 2 == 0:
+                x_tiles = 2
+            else:
+                x_tiles = 1
+
+            # Loop over all tiles that this chunk potentially touches.
+            # The tile at tilecol,tilerow obviously contains the chunk, but so
+            # do the next 4 tiles down because chunks are very tall, and maybe
+            # the next column over too.
+            for i in xrange(x_tiles):
+                for j in xrange(5):
+
+                    # This loop iteration is for the tile at this column and
+                    # row:
+                    c = tilecol - 2*i
+                    r = tilerow + 4*j
+
+                    # Make sure the tile is in the range according to the given
+                    # depth. This won't happen unless the user has given -z to
+                    # render a smaller area of the map than everything
+                    if (
+                            c < self.bounds.mincol or
+                            c >= self.bounds.maxcol or
+                            r < self.bounds.minrow or
+                            r >= self.bounds.maxrow
+                            ):
+                        continue
+
+                    # Computes the path in the quadtree from the col,row coordinates
+                    tile = Tile.compute_path(c, r, depth)
+
+                    if rendercheck == 2:
+                        # Skip all other checks, mark tiles as dirty unconditionally
+                        dirty.set_dirty(tile.path)
+                        continue
+
+                    # Stochastic check. Since we're scanning by chunks and not
+                    # by tiles, and the tiles get checked multiple times for
+                    # each chunk, this is only an approximation. The given
+                    # probability is for a particular tile that needs
+                    # rendering, but since a tile gets touched up to 32 times
+                    # (once for each chunk in it), divide the probability by
+                    # 32.
+                    if rerender_prob and rerender_prob/32 > random.random():
+                        dirty.set_dirty(tile.path)
+                        continue
+
+                    # Check if this tile has already been marked dirty. If so,
+                    # no need to do any of the below.
+                    if dirty.query_path(tile.path):
+                        continue
+
+                    # Check mtimes and conditionally add tile to dirty set
+                    if compare_mtimes(chunkmtime, tile):
+                        dirty.set_dirty(tile.path)
+
+        t = int(time.time()-stime)
+        logging.debug("%s finished chunk scan. %s chunks scanned in %s second%s", 
+                self, chunkcount, t,
+                "s" if t != 1 else "")
+
+        return dirty
+
+    def __str__(self):
+        return "<TileSet for %s>" % os.basename(self.outputdir)
+
+
 def get_dirdepth(outputdir):
     """Returns the current depth of the tree on disk
 
@@ -403,6 +597,17 @@ class DirtyTiles(object):
         # A node with depth=1 cannot have a DirtyTiles instance in its
         # children since its leaves are images, not more tree
         self.children = [False] * 4
+
+    def posttraversal(self):
+        """Returns an iterator over tile paths for every dirty tile in the
+        tree, including the explictly marked render-tiles, as well as the
+        implicitly marked ancestors of those render-tiles. Returns in
+        post-traversal order, so that tiles with dependencies will always be
+        yielded after their dependencies.
+
+        """
+        # XXX Implement Me!
+        raise NotImplementedError()
 
     def set_dirty(self, path):
         """Marks the requested leaf node as "dirty".
