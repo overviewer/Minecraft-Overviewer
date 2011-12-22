@@ -46,7 +46,7 @@ image
 # alpha_over extension, BUT this extension may fall back to PIL's
 # paste(), which DOES need the workaround.)
 
-def get_lvldata(world, filename, x, y, retries=2):
+def get_lvldata(region, filename, x, y, retries=2):
     """Takes a filename and chunkcoords and returns the Level struct, which contains all the
     level info"""
     
@@ -55,7 +55,7 @@ def get_lvldata(world, filename, x, y, retries=2):
         raise NoSuchChunk
     
     try:
-        d =  world.load_from_region(filename, x, y)
+        d =  region.get_chunk(x, y)
     except Exception, e:
         if retries > 0:
             # wait a little bit, and try again (up to `retries` times)
@@ -118,6 +118,7 @@ def get_blocklight_array(level):
 def get_blockdata_array(level):
     """Returns the ancillary data from the 'Data' byte array.  Data is packed
     in a similar manner to skylight data"""
+    print level.keys()
     return level['Data']
 
 def get_tileentity_data(level):
@@ -132,15 +133,16 @@ class NoSuchChunk(Exception):
     pass
 
 class ChunkRenderer(object):
-    def __init__(self, chunkcoords, worldobj, rendermode, queue):
+    def __init__(self, chunkcoords, regionobj, rendermode, queue):
         """Make a new chunk renderer for the given chunk coordinates.
         chunkcoors should be a tuple: (chunkX, chunkY)
         
         cachedir is a directory to save the resulting chunk images to
         """
         self.queue = queue
+        self.region = regionobj
         
-        self.regionfile = worldobj.get_region_path(*chunkcoords)    
+        self.regionfile = regionobj.get_region_path(*chunkcoords)    
         #if not os.path.exists(self.regionfile):
         #    raise ValueError("Could not find regionfile: %s" % self.regionfile)
 
@@ -158,14 +160,13 @@ class ChunkRenderer(object):
         self.chunkX = chunkcoords[0]
         self.chunkY = chunkcoords[1]
 
-        self.world = worldobj
         self.rendermode = rendermode
 
     def _load_level(self):
         """Loads and returns the level structure"""
         if not hasattr(self, "_level"):
             try:
-                self._level = get_lvldata(self.world,self.regionfile, self.chunkX, self.chunkY)
+                self._level = get_lvldata(self.region,self.regionfile, self.chunkX, self.chunkY)
             except NoSuchChunk, e:
                 logging.debug("Skipping non-existant chunk")
                 raise

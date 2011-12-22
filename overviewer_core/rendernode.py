@@ -72,13 +72,15 @@ def pool_initializer(rendernode):
     
     # load biome data in each process, if needed
     for qtree in rendernode.quadtrees:
-        if qtree.world.useBiomeData:
-            # make sure we've at least *tried* to load the color arrays in this process...
-            textures.prepareBiomeData(qtree.world.worlddir)
-            if not textures.grasscolor or not textures.foliagecolor:
-                raise Exception("Can't find grasscolor.png or foliagecolor.png")
-            # only load biome data once
-            break
+        ## TODO biome stuffs
+        pass
+        #if qtree.world.useBiomeData:
+        #    # make sure we've at least *tried* to load the color arrays in this process...
+        #    textures.prepareBiomeData(qtree.world.worlddir)
+        #    if not textures.grasscolor or not textures.foliagecolor:
+        #        raise Exception("Can't find grasscolor.png or foliagecolor.png")
+        #    # only load biome data once
+        #    break
                     
             
 class RenderNode(object):
@@ -110,12 +112,12 @@ class RenderNode(object):
 
         #bind an index value to the quadtree so we can find it again
         #and figure out which worlds are where
-        self.worlds = []
+        self.regionsets = []
         for i, q in enumerate(quadtrees):
             q._render_index = i
             i += 1   
-            if q.world not in self.worlds:
-                self.worlds.append(q.world)            
+            if q.regionobj not in self.regionsets:
+                self.regionsets.append(q.regionobj)            
 
         # queue for receiving interesting events from the renderer
         # (like the discovery of signs!)
@@ -127,7 +129,7 @@ class RenderNode(object):
         # is to ease debugging and profiling by keeping everything in one
         # process/thread)
         manager = multiprocessing.Manager() 
-        for world in self.worlds:
+        for world in self.regionsets:
             world.poi_q = manager.Queue() 
 
         self._last_print_count = 0

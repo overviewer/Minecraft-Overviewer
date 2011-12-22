@@ -415,6 +415,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # in the region files and caches chunk modified times, and determines the
     # chunk bounds (max and min in both dimensions)
     w = world.World(worlddir)
+    rset = w.get_regionsets()[0] # use the default
     if north_direction == 'auto':
         # TODO get this from the asset manager # north_direction = w.persistentData['north_direction']
         options.north_direction = north_direction
@@ -448,9 +449,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
                   }
     for rendermode in options.rendermode:
         if rendermode == 'normal':
-            qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, tiledir='tiles', **qtree_args)
+            qtree = quadtree.QuadtreeGen(rset, destdir, rendermode=rendermode, tiledir='tiles', **qtree_args)
         else:
-            qtree = quadtree.QuadtreeGen(w, destdir, rendermode=rendermode, **qtree_args)
+            qtree = quadtree.QuadtreeGen(rset, destdir, rendermode=rendermode, **qtree_args)
         q.append(qtree)
     
     # Make sure the quadtrees are the correct depth

@@ -236,7 +236,7 @@ class QuadtreeGen(object):
         chunklist = []
 
         unconvert_coords = util.unconvert_coords
-        get_region = self.world.get_regionsets()[0].regionfiles.get
+        get_region = self.regionobj.regionfiles.get
 
         # Cached region object for consecutive iterations
         regionx = None
@@ -268,7 +268,7 @@ class QuadtreeGen(object):
                 regiony = regiony_
                 _, _, fname, mcr = get_region((regionx, regiony),(None,None,None,None))
                 
-            if fname is not None and mcr.chunkExists(chunkx,chunky):
+            if fname is not None and self.regionobj.chunk_exists(chunkx,chunky):
                 chunklist.append((col, row, chunkx, chunky, mcr))
                     
         return chunklist   
@@ -393,14 +393,14 @@ class QuadtreeGen(object):
         # The poi_q (point of interest queue) is a multiprocessing Queue
         # object, and it gets stashed in the world object by the constructor to
         # RenderNode so we can find it right here.
-        poi_queue = self.world.poi_q
+        poi_queue = self.regionobj.poi_q
 
         imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
 
         # Calculate which chunks are relevant to this tile
         chunks = self.get_chunks_for_tile(tile)
 
-        world = self.world
+        region = self.regionobj
 
         tile_mtime = None
         if check_tile:
@@ -500,7 +500,7 @@ class QuadtreeGen(object):
 
             # draw the chunk!
             try:
-                a = chunk.ChunkRenderer((chunkx, chunky), world, rendermode, poi_queue)
+                a = chunk.ChunkRenderer((chunkx, chunky), self.regionobj, rendermode, poi_queue)
                 a.chunk_render(tileimg, xpos, ypos, None)
             except chunk.ChunkCorrupt:
                 # an error was already printed
@@ -543,7 +543,7 @@ class QuadtreeGen(object):
         #
         # IDEA: check last render time against mtime of the region to short
         # circuit checking mtimes of all chunks in a region
-        for chunkx, chunky, chunkmtime in self.world.get_regionsets()[0].iterate_chunks():
+        for chunkx, chunky, chunkmtime in self.regionobj.iterate_chunks():
             chunkcount += 1
             #if chunkcount % 10000 == 0:
             #    logging.info("	%s chunks scanned", chunkcount)

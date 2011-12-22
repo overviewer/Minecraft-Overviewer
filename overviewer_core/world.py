@@ -282,7 +282,25 @@ its x, z coordinates. The coordinates are chunk coordinates.
         regioninfo = self.regions[regionfile]
         if regioninfo is None:
             return None
-        return regioninfo[0].load_chunk(x,z)
+        data = regioninfo[0].load_chunk(x,z)
+        level = chunk_data[1]['Level']
+        chunk_data = level
+        chunk_data['Blocks'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
+                self._get_north_rotations()))
+        chunk_data['Data'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
+                self._get_north_rotations()))
+        chunk_data['SkyLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
+                self._get_north_rotations()))
+        chunk_data['BlockLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
+                level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
+                self._get_north_rotations()))
+
+        ## TODO some clever caching stuff
+        return chunk_data
+
 
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates over tuples

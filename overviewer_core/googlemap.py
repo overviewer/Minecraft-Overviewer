@@ -89,10 +89,10 @@ class MapGen(object):
             raise ValueError("there must be at least one quadtree to work on")
         
         self.destdir = quadtrees[0].destdir
-        self.world = quadtrees[0].world
+        self.regionobj = quadtrees[0].regionobj
         self.p = quadtrees[0].p
         for i in quadtrees:
-            if i.destdir != self.destdir or i.world != self.world:
+            if i.destdir != self.destdir or i.regionobj != self.regionobj:
                 raise ValueError("all the given quadtrees must have the same destdir and world")
         
         self.quadtrees = quadtrees
