@@ -1,6 +1,7 @@
 import unittest
 
-from overviewer_core.quadtree import DirtyTiles, iterate_base4
+from overviewer_core.tileset import DirtyTiles
+from overviewer_core.util import iterate_base4
 
 class DirtyTilesTest(unittest.TestCase):
     # If you change this definition, you must also change the hard-coded

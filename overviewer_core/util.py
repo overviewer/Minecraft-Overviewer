@@ -26,7 +26,7 @@ import logging
 from cStringIO import StringIO
 import ctypes
 import platform
-from itertools import cycle, islice
+from itertools import cycle, islice, product
 
 def get_program_path():
     if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
@@ -100,6 +100,11 @@ def roundrobin(iterables):
         except StopIteration:
             pending -= 1
             nexts = cycle(islice(nexts, pending))
+
+def iterate_base4(d):
+    """Iterates over a base 4 number with d digits"""
+    return product(xrange(4), repeat=d)
+   
 
 def convert_coords(chunkx, chunkz):
     """Takes a coordinate (chunkx, chunkz) where chunkx and chunkz are

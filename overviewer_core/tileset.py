@@ -18,8 +18,9 @@ import os.path
 from collections import namedtuple
 import logging
 import shutil
+import itertools
 
-from . import util
+from .util import iterate_base4, convert_coords
 
 """
 
@@ -237,7 +238,7 @@ class TileSet(object):
 
         for c_x, c_z, _ in self.regionset.iterate_chunks():
             # Convert these coordinates to row/col
-            col, row = util.convert_coords(c_x, c_z)
+            col, row = convert_coords(c_x, c_z)
 
             minrow = min(minrow, row)
             maxrow = max(maxrow, row)
@@ -360,3 +361,309 @@ def get_dirdepth(outputdir):
 
     return depth
 
+class DirtyTiles(object):
+    """This tree holds which tiles need rendering.
+    Each instance is a node, and the root of a subtree.
+
+    Each node knows its "level", which corresponds to the zoom level where 0 is
+    the inner-most (most zoomed in) tiles.
+
+    Instances hold the clean/dirty state of their children. Leaf nodes are
+    images and do not physically exist in the tree, level 1 nodes keep track of
+    leaf image state. Level 2 nodes keep track of level 1 state, and so fourth.
+
+    In attempt to keep things memory efficient, subtrees that are completely
+    dirty are collapsed
+    
+    """
+    __slots__ = ("depth", "children")
+    def __init__(self, depth):
+        """Initialize a new tree with the specified depth. This actually
+        initializes a node, which is the root of a subtree, with `depth` levels
+        beneath it.
+
+        """
+        # Stores the depth of the tree according to this node. This is not the
+        # depth of this node, but rather the number of levels below this node
+        # (including this node).
+        self.depth = depth
+
+        # the self.children array holds the 4 children of this node. This
+        # follows the same quadtree convention as elsewhere: children 0, 1, 2,
+        # 3 are the upper-left, upper-right, lower-left, and lower-right
+        # respectively
+        # Values are:
+        # False
+        #   All children down this subtree are clean
+        # True
+        #   All children down this subtree are dirty
+        # A DirtyTiles instance
+        #   the instance defines which children down that subtree are
+        #   clean/dirty.
+        # A node with depth=1 cannot have a DirtyTiles instance in its
+        # children since its leaves are images, not more tree
+        self.children = [False] * 4
+
+    def set_dirty(self, path):
+        """Marks the requested leaf node as "dirty".
+        
+        Path is an iterable of integers representing the path to the leaf node
+        that is requested to be marked as dirty.
+        
+        """
+        path = list(path)
+        assert len(path) == self.depth
+        path.reverse()
+        self._set_dirty_helper(path)
+
+    def _set_dirty_helper(self, path):
+        """Recursive call for set_dirty()
+
+        Expects path to be a list in reversed order
+
+        If *all* the nodes below this one are dirty, this function returns
+        true. Otherwise, returns None.
+
+        """
+
+        if self.depth == 1:
+            # Base case
+            self.children[path[0]] = True
+
+            # Check to see if all children are dirty
+            if all(self.children):
+                return True
+        else:
+            # Recursive case
+
+            childnum = path.pop()
+            child = self.children[childnum]
+
+            if child == False:
+                # Create a new node
+                child = self.__class__(self.depth-1)
+                child._set_dirty_helper(path)
+                self.children[childnum] = child
+            elif child == True:
+                # Every child is already dirty. Nothing to do.
+                return
+            else:
+                # subtree is mixed clean/dirty. Recurse
+                ret = child._set_dirty_helper(path)
+                if ret:
+                    # Child says it's completely dirty, so we can purge the
+                    # subtree and mark it as dirty. The subtree will be garbage
+                    # collected when this method exits.
+                    self.children[childnum] = True
+
+                    # Since we've marked an entire sub-tree as dirty, we may be
+                    # able to signal to our parent
+                    if all(x is True for x in self.children):
+                        return True
+
+    def iterate_dirty(self, level=None):
+        """Returns an iterator over every dirty tile in this subtree. Each item
+        yielded is a sequence of integers representing the quadtree path to the
+        dirty tile. Yielded sequences are of length self.depth.
+
+        If level is None, iterates over tiles of the highest level, i.e.
+        worldtiles. If level is a value between 0 and the depth of this tree,
+        this method iterates over tiles at that level. Zoom level 0 is zoomed
+        all the way out, zoom level `depth` is all the way in.
+
+        In other words, specifying level causes the tree to be iterated as if
+        it was only that depth.
+
+        """
+        if level is None:
+            todepth = 1
+        else:
+            if not (level > 0 and level <= self.depth):
+                raise ValueError("Level parameter must be between 1 and %s" % self.depth)
+            todepth = self.depth - level + 1
+
+        return (tuple(reversed(rpath)) for rpath in self._iterate_dirty_helper(todepth))
+
+    def _iterate_dirty_helper(self, todepth):
+        if self.depth == todepth:
+            # Base case
+            if self.children[0]: yield [0]
+            if self.children[1]: yield [1]
+            if self.children[2]: yield [2]
+            if self.children[3]: yield [3]
+
+        else:
+            # Higher levels:
+            for c, child in enumerate(self.children):
+                if child == True:
+                    # All dirty down this subtree, iterate over every leaf
+                    for x in iterate_base4(self.depth-todepth):
+                        x = list(x)
+                        x.append(c)
+                        yield x
+                elif child != False:
+                    # Mixed dirty/clean down this subtree, recurse
+                    for path in child._iterate_dirty_helper(todepth):
+                        path.append(c)
+                        yield path
+
+    def query_path(self, path):
+        """Queries for the state of the given tile in the tree.
+
+        Returns False for "clean", True for "dirty"
+
+        """
+        # Traverse the tree down the given path. If the tree has been
+        # collapsed, then just return what the subtree is. Otherwise, if we
+        # find the specific DirtyTree requested, return its state using the
+        # __nonzero__ call.
+        treenode = self
+        for pathelement in path:
+            treenode = treenode.children[pathelement]
+            if not isinstance(treenode, DirtyTiles):
+                return treenode
+
+        # If the method has not returned at this point, treenode is the
+        # requested node, but it is an inner node with possibly mixed state
+        # subtrees. If any of the children are True return True. This call
+        # relies on the __nonzero__ method
+        return bool(treenode)
+
+    def __nonzero__(self):
+        """Returns the boolean context of this particular node. If any
+        descendent of this node is True return True. Otherwise, False.
+
+        """
+        # Any chilren that are True or are DirtyTiles that evaluate to True
+        # IDEA: look at all children for True before recursing
+        # Better idea: every node except the root /must/ have a dirty
+        # descendent or it wouldn't exist. This assumption is only valid as
+        # long as an unset_dirty() method or similar does not exist.
+        return any(self.children)
+
+    def count(self):
+        """Returns the total number of dirty leaf nodes.
+
+        """
+        # TODO: Make this more efficient (although for even the largest trees,
+        # this takes only seconds)
+        c = 0
+        for _ in self.iterate_dirty():
+            c += 1
+        return c
+
+class Tile(object):
+    """A simple container class that represents a single render-tile.
+
+    A render-tile is a tile that is rendered, not a tile composed of other
+    tiles (composite-tile).
+
+    """
+    __slots__ = ("col", "row", "path")
+    def __init__(self, col, row, path):
+        """Initialize the tile obj with the given parameters. It's probably
+        better to use one of the other constructors though
+
+        """
+        self.col = col
+        self.row = row
+        self.path = tuple(path)
+
+    def __repr__(self):
+        return "%s(%r,%r,%r)" % (self.__class__.__name__, self.col, self.row, self.path)
+
+    def __eq__(self,other):
+        return self.col == other.col and self.row == other.row and tuple(self.path) == tuple(other.path)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def get_filepath(self, tiledir, imgformat):
+        """Returns the path to this file given the directory to the tiles
+
+        """
+        # os.path.join would be the proper way to do this path concatenation,
+        # but it is surprisingly slow, probably because it checks each path
+        # element if it begins with a slash. Since we know these components are
+        # all relative, just concatinate with os.path.sep
+        pathcomponents = [tiledir]
+        pathcomponents.extend(str(x) for x in self.path)
+        path = os.path.sep.join(pathcomponents)
+        imgpath = ".".join((path, imgformat))
+        return imgpath
+
+    @classmethod
+    def from_path(cls, path):
+        """Constructor that takes a path and computes the col,row address of
+        the tile and constructs a new tile object.
+
+        """
+        path = tuple(path)
+
+        depth = len(path)
+
+        # Radius of the world in chunk cols/rows
+        # (Diameter in X is 2**depth, divided by 2 for a radius, multiplied by
+        # 2 for 2 chunks per tile. Similarly for Y)
+        xradius = 2**depth
+        yradius = 2*2**depth
+
+        col = -xradius
+        row = -yradius
+        xsize = xradius
+        ysize = yradius
+
+        for p in path:
+            if p in (1,3):
+                col += xsize
+            if p in (2,3):
+                row += ysize
+            xsize //= 2
+            ysize //= 2
+
+        return cls(col, row, path)
+
+    @classmethod
+    def compute_path(cls, col, row, depth):
+        """Constructor that takes a col,row of a tile and computes the path. 
+
+        """
+        assert col % 2 == 0
+        assert row % 4 == 0
+
+        xradius = 2**depth
+        yradius = 2*2**depth
+
+        colbounds = [-xradius, xradius]
+        rowbounds = [-yradius, yradius]
+
+        path = []
+
+        for level in xrange(depth):
+            # Strategy: Find the midpoint of this level, and determine which
+            # quadrant this row/col is in. Then set the bounds to that level
+            # and repeat
+
+            xmid = (colbounds[1] + colbounds[0]) // 2
+            ymid = (rowbounds[1] + rowbounds[0]) // 2
+
+            if col < xmid:
+                if row < ymid:
+                    path.append(0)
+                    colbounds[1] = xmid
+                    rowbounds[1] = ymid
+                else:
+                    path.append(2)
+                    colbounds[1] = xmid
+                    rowbounds[0] = ymid
+            else:
+                if row < ymid:
+                    path.append(1)
+                    colbounds[0] = xmid
+                    rowbounds[1] = ymid
+                else:
+                    path.append(3)
+                    colbounds[0] = xmid
+                    rowbounds[0] = ymid
+
+        return cls(col, row, path)

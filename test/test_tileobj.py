@@ -1,7 +1,7 @@
 import unittest
 
-from overviewer_core import quadtree
-from overviewer_core.quadtree import Tile
+from overviewer_core.util import iterate_base4
+from overviewer_core.tileset import Tile
 
 items = [
         ((-4,-8), (0,0)),
@@ -28,7 +28,7 @@ class TileTest(unittest.TestCase):
         given to compute_path
 
         """
-        for path in quadtree.iterate_base4(7):
+        for path in iterate_base4(7):
             t1 = Tile.from_path(path)
             col = t1.col
             row = t1.row
