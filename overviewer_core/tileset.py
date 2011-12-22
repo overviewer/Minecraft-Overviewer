@@ -13,8 +13,11 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import os.path
 from collections import namedtuple
+import logging
+import shutil
 
 from . import util
 
@@ -63,6 +66,11 @@ do_work(workobj)
 
 """
 
+# A named tuple class storing the row and column bounds for the to-be-rendered
+# world
+Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
+
+__all__ = ["TileSet"]
 class TileSet(object):
     """The TileSet object manages the work required to produce a set of tiles
     on disk. It calculates the work that needs to be done and tells the
@@ -84,7 +92,7 @@ class TileSet(object):
         destination directory where we'll put our tiles.
 
         outputdir is the absolute path to the tile output directory where the
-        tiles are saved.
+        tiles are saved. It is assumed to exist already.
         TODO: This should probably be relative to the asset manager's output
         directory to avoid redundancy.
 
@@ -148,9 +156,15 @@ class TileSet(object):
         self.regionset = regionsetobj
         self.am = assetmanagerobj
 
-        # Here, outputdir is an absolute path to the directory where we output
-        # tiles
+        # Throughout the class, self.outputdir is an absolute path to the
+        # directory where we output tiles. It is assumed to exist.
         self.outputdir = os.path.abspath(outputdir)
+
+        # Set the image format according to the options
+        if self.options['imgformat'] == 'png':
+            self.imgextension = 'png'
+        elif self.options['imgformat'] == 'jpeg':
+            self.imgextension = 'jpg'
 
     def do_preprocessing(self):
         """For the preprocessing step of the Worker interface, this does the
@@ -179,13 +193,20 @@ class TileSet(object):
                     yradius >= bounds.maxrow and -yradius <= bounds.minrow:
                 break
 
+        if p >= 15:
+            logging.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
+                    p)
+        self.treedepth = p
+
+        self._rearrange_tiles()
+
 
     def get_num_phases(self):
         """Returns the number of levels in the quadtree, which is equal to the
         number of phases of work that need to be done.
 
         """
-        pass
+        return 1
 
     def iterate_work_items(self, phase):
         """Iterates over the dirty tiles in the tree at level depth-phase. So
@@ -225,5 +246,117 @@ class TileSet(object):
 
         self.bounds = Bounds(mincol, maxcol, minrow, maxrow)
 
-# A named tuple storing the row and column bounds for the to-be-rendered world
-Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
+    def _rearrange_tiles(self):
+        """If the target size of the tree is not the same as the existing size
+        on disk, do some re-arranging
+
+        """
+        try:
+            curdepth = get_dirdepth(self.outputdir)
+        except Exception:
+            logging.critical("Could not determine existing tile tree depth. Does it exist?")
+            raise
+        
+        if self.treedepth != cur_depth:
+            if self.treedepth > curdepth:
+                logging.warning("Your map seems to have expanded beyond its previous bounds.")
+                logging.warning( "Doing some tile re-arrangements... just a sec...")
+                for _ in xrange(self.p-curdepth):
+                    self._increase_depth()
+            elif self.p < curdepth:
+                logging.warning("Your map seems to have shrunk. Did you delete some chunks? No problem. Re-arranging tiles, just a sec...")
+                for _ in xrange(curdepth - self.p):
+                    self._decrease_depth()
+
+    def _increase_depth(self):
+        """Moves existing tiles into place for a larger tree"""
+        getpath = functools.partial(os.path.join, self.outputdir)
+
+        # At top level of the tree:
+        # quadrant 0 is now 0/3
+        # 1 is now 1/2
+        # 2 is now 2/1
+        # 3 is now 3/0
+        # then all that needs to be done is to regenerate the new top level
+        for dirnum in range(4):
+            newnum = (3,2,1,0)[dirnum]
+
+            newdir = "new" + str(dirnum)
+            newdirpath = getpath(newdir)
+
+            files = [str(dirnum)+"."+self.imgextension, str(dirnum)]
+            newfiles = [str(newnum)+"."+self.imgextension, str(newnum)]
+
+            os.mkdir(newdirpath)
+            for f, newf in zip(files, newfiles):
+                p = getpath(f)
+                if os.path.exists(p):
+                    os.rename(p, getpath(newdir, newf))
+            os.rename(newdirpath, getpath(str(dirnum)))
+
+    def _decrease_depth(self):
+        """If the map size decreases, or perhaps the user has a depth override
+        in effect, re-arrange existing tiles for a smaller tree"""
+        getpath = functools.partial(os.path.join, self.outputdir)
+
+        # quadrant 0/3 goes to 0
+        # 1/2 goes to 1
+        # 2/1 goes to 2
+        # 3/0 goes to 3
+        # Just worry about the directories here, the files at the top two
+        # levels are cheap enough to replace
+        if os.path.exists(getpath("0", "3")):
+            os.rename(getpath("0", "3"), getpath("new0"))
+            shutil.rmtree(getpath("0"))
+            os.rename(getpath("new0"), getpath("0"))
+
+        if os.path.exists(getpath("1", "2")):
+            os.rename(getpath("1", "2"), getpath("new1"))
+            shutil.rmtree(getpath("1"))
+            os.rename(getpath("new1"), getpath("1"))
+
+        if os.path.exists(getpath("2", "1")):
+            os.rename(getpath("2", "1"), getpath("new2"))
+            shutil.rmtree(getpath("2"))
+            os.rename(getpath("new2"), getpath("2"))
+
+        if os.path.exists(getpath("3", "0")):
+            os.rename(getpath("3", "0"), getpath("new3"))
+            shutil.rmtree(getpath("3"))
+            os.rename(getpath("new3"), getpath("3"))
+
+        # Delete the files in the top directory to make sure they get re-created.
+        files = [str(num)+"."+self.imgextension for num in xrange(4)] + ["base." + self.imgextension]
+        for f in files:
+            try:
+                os.unlink(getpath(f))
+            except OSError, e:
+                pass # doesn't exist maybe?
+
+def get_dirdepth(outputdir):
+    """Returns the current depth of the tree on disk
+
+    """
+    # Traverses down the first directory until it reaches one with no
+    # subdirectories. While all paths of the tree may not exist, all paths
+    # of the tree should and are assumed to be the same depth
+
+    # This function returns a list of all subdirectories of the given
+    # directory. It's slightly more complicated than you'd think it should be
+    # because one must turn directory names returned by os.listdir into
+    # relative/absolute paths before they can be passed to os.path.isdir()
+    getsubdirs = lambda directory: [
+            abssubdir
+            for abssubdir in
+                (os.path.join(directory,subdir) for subdir in os.listdir(directory))
+            if os.path.isdir(abssubdir)
+            ]
+
+    depth = 1
+    subdirs = getsubdirs(outputdir)
+    while subdirs:
+        subdirs = getsubdirs(subdirs[0])
+        depth += 1
+
+    return depth
+
