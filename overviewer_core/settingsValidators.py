@@ -10,11 +10,12 @@ def validatePath(path):
         raise ValidationException("%r does not exist" % path)
     if not os.path.isdir(path):
         raise ValidationException("%r is not a directory" % path)
-    return os.abspath(path)
+    return os.path.abspath(path)
 
 def validateRenderMode(mode):
     # TODO get list of valid rendermodes
-    raise NotImplementedError("validateRenderMode")
+    #raise NotImplementedError("validateRenderMode")
+    return mode
 
 def validateNorthDirection(direction):
     # normalize to integers
@@ -26,7 +27,7 @@ def validateNorthDirection(direction):
         if direction == "upper-right": intdir = 1
         if direction == "lower-right": intdir = 2
         if direction == "lower-left": intdir = 3
-    if intdir < o or intdir > 3:
+    if intdir < 0 or intdir > 3:
         raise ValidationException("%r is not a valid north direction" % direction)
     return intdir
 

@@ -2,6 +2,9 @@ import optparse
 import sys
 import os.path
 import logging
+import c_overviewer
+
+import settingsDefinition
 
 class OptionsResults(object):
     def get(self, *args):
@@ -205,3 +208,61 @@ class ConfigOptionParser(object):
         else:
             logging.error("Unknown type!")
             sys.exit(1)
+
+
+class MultiWorldParser(object):
+    """A class that is used to parse a settings.py file.  It should replace
+    ConfigOptionParser class above."""
+
+    def __init__(self, settings):
+        """Settings is a path to a settings.py file"""
+        if not os.path.exists(settings) and not os.path.isfile(settings):
+            raise ValueError("bad settings file")
+
+        self.settings_file = settings
+
+    def parse(self):
+        glob = dict(render=dict(), custom_rendermodes=dict())
+
+        try:
+            execfile(self.settings_file, glob, glob)
+        except NameError, ex:
+            import traceback
+            traceback.print_exc()
+            logging.error("Error parsing %s.  Please check the trackback above" % self.settings_file)
+            sys.exit(1)
+        except SyntaxError, ex:
+            import traceback
+            traceback.print_exc()
+            tb = sys.exc_info()[2]
+            #print tb.tb_frame.f_code.co_filename
+            logging.error("Error parsing %s.  Please check the trackback above" % self.settings_file)
+            sys.exit(1)
+
+        self.render = glob['render']
+        self.custom_rendermodes = glob['custom_rendermodes']
+        #import pprint
+        #pprint.pprint(glob, indent=2)
+
+    def validate(self):
+
+
+        for worldname in self.render:
+            world = self.render[worldname]
+        
+            for key in world:
+                if key not in settingsDefinition.render:
+                    print "Warning: %r is not a known setting"
+                    next
+               
+                definition = settingsDefinition.render[key]
+                try:
+                    val = definition['validator'](world[key])
+                except Exception as e:
+                    print "Error: %r" % e
+                    next
+
+                
+
+    def get_render_things(self):
+        return self.render
