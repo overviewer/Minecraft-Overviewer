@@ -481,6 +481,9 @@ chunk_render(PyObject *self, PyObject *args) {
                 
                 /* get the texture */
                 t = PyList_GET_ITEM(blockmap, max_data * state.block + ancilData);
+                /* if we don't get a texture, try it again with 0 data */
+                if ((t == NULL || t == Py_None) && ancilData != 0)
+                    t = PyList_GET_ITEM(blockmap, max_data * state.block);
                 
                 /* if we found a proper texture, render it! */
                 if (t != NULL && t != Py_None)
