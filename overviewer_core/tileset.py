@@ -44,6 +44,12 @@ get_num_phases()
     other phases... all work done by one phase is done before the next phase is
     started.
 
+get_phase_length(phase)
+    This method returns an integer indicating how many work items there are in
+    this phase. This number is used for purely informational purposes. It can
+    be exact, or an estimate. If there is no useful information on the size of
+    a phase, return None.
+
 iterate_work_items(phase)
     Takes a phase number (a non-negative integer). This method should return an
     iterator over work items and a list of dependencies i.e. (work_item, [d1,
@@ -227,6 +233,12 @@ class TileSet(object):
 
         """
         return 1
+    
+    def get_phase_length(self, phase):
+        """Returns the number of work items in a given phase, or None if there
+        is no good estimate.
+        """
+        return None
 
     def iterate_work_items(self, phase):
         """Iterates over the dirty tiles in the tree at level depth-phase. So
