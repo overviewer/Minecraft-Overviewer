@@ -502,7 +502,7 @@ class TileSet(object):
                         continue
 
                     # Computes the path in the quadtree from the col,row coordinates
-                    tile = Tile.compute_path(c, r, depth)
+                    tile = RenderTile.compute_path(c, r, depth)
 
                     if rendercheck == 2:
                         # Skip all other checks, mark tiles as dirty unconditionally
@@ -783,7 +783,7 @@ class RendertileSet(object):
             c += 1
         return c
 
-class Tile(object):
+class RenderTile(object):
     """A simple container class that represents a single render-tile.
 
     A render-tile is a tile that is rendered, not a tile composed of other
