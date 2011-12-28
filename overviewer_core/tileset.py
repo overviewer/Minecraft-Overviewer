@@ -241,10 +241,10 @@ class TileSet(object):
         return None
 
     def iterate_work_items(self, phase):
-        """Iterates over the dirty tiles in the tree at level depth-phase. So
-        the first phase iterates over the deepest tiles in the tree, and works
-        its way to the root node of the tree.
+        """Iterates over the dirty tiles in the tree and return them in the
+        appropriate order with the appropriate dependencies.
 
+        This method returns an iterator over (obj, [dependencies, ...])
         """
 
         # With renderchecks set to 0 or 2, simply iterate over the dirty tiles
@@ -411,7 +411,7 @@ class TileSet(object):
 
     def _chunk_scan(self):
         """Scans the chunks of this TileSet's world to determine which
-        render-tiles need rendering. Returns a DirtyTiles object.
+        render-tiles need rendering. Returns a RendertileSet object.
 
         For rendercheck mode 0: only compares chunk mtimes against last render
         time of the map
@@ -424,7 +424,7 @@ class TileSet(object):
         """
         depth = self.treedepth
 
-        dirty = DirtyTiles(depth)
+        dirty = RendertileSet(depth)
 
         chunkcount = 0
         stime = time.time()
@@ -457,7 +457,7 @@ class TileSet(object):
         # For each chunk, do this:
         #   For each tile that the chunk touches, do this:
         #       Compare the last modified time of the chunk and tile. If the
-        #       tile is older, mark it in a DirtyTiles object as dirty.
+        #       tile is older, mark it in a RendertileSet object as dirty.
 
         for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks():
 
@@ -506,7 +506,7 @@ class TileSet(object):
 
                     if rendercheck == 2:
                         # Skip all other checks, mark tiles as dirty unconditionally
-                        dirty.set_dirty(tile.path)
+                        dirty.add(tile.path)
                         continue
 
                     # Stochastic check. Since we're scanning by chunks and not
@@ -517,7 +517,7 @@ class TileSet(object):
                     # (once for each chunk in it), divide the probability by
                     # 32.
                     if rerender_prob and rerender_prob/32 > random.random():
-                        dirty.set_dirty(tile.path)
+                        dirty.add(tile.path)
                         continue
 
                     # Check if this tile has already been marked dirty. If so,
@@ -527,7 +527,7 @@ class TileSet(object):
 
                     # Check mtimes and conditionally add tile to dirty set
                     if compare_mtimes(chunkmtime, tile):
-                        dirty.set_dirty(tile.path)
+                        dirty.add(tile.path)
 
         t = int(time.time()-stime)
         logging.debug("%s finished chunk scan. %s chunks scanned in %s second%s", 
@@ -567,19 +567,23 @@ def get_dirdepth(outputdir):
 
     return depth
 
-class DirtyTiles(object):
-    """This tree holds which tiles need rendering.
-    Each instance is a node, and the root of a subtree.
+class RendertileSet(object):
+    """This object holds a set of render-tiles using a quadtree data structure.
+    It is typically used to hold tiles that need rendering. This implementation
+    collapses subtrees that are completely in or out of the set to save memory.
+    
+    Each instance of this class is a node in the tree, and therefore each
+    instance is the root of a subtree.
 
     Each node knows its "level", which corresponds to the zoom level where 0 is
     the inner-most (most zoomed in) tiles.
 
-    Instances hold the clean/dirty state of their children. Leaf nodes are
-    images and do not physically exist in the tree, level 1 nodes keep track of
-    leaf image state. Level 2 nodes keep track of level 1 state, and so fourth.
+    Instances hold the state of their children (in or out of the set). Leaf
+    nodes are images and do not physically exist in the tree as objects, but
+    are represented as booleans held by the objects at the second-to-last
+    level; level 1 nodes keep track of leaf image state. Level 2 nodes keep
+    track of level 1 state, and so fourth.
 
-    In attempt to keep things memory efficient, subtrees that are completely
-    dirty are collapsed
     
     """
     __slots__ = ("depth", "children")
@@ -600,19 +604,20 @@ class DirtyTiles(object):
         # respectively
         # Values are:
         # False
-        #   All children down this subtree are clean
+        #   All children down this subtree are not in the set
         # True
-        #   All children down this subtree are dirty
-        # A DirtyTiles instance
-        #   the instance defines which children down that subtree are
-        #   clean/dirty.
-        # A node with depth=1 cannot have a DirtyTiles instance in its
-        # children since its leaves are images, not more tree
+        #   All children down this subtree are in the set
+        # A RendertileSet instance
+        #   the instance defines which children down that subtree are in the
+        #   set.
+        # A node with depth=1 cannot have a RendertileSet instance in its
+        # children since its children are leaves, representing images, not more
+        # tree
         self.children = [False] * 4
 
     def posttraversal(self):
-        """Returns an iterator over tile paths for every dirty tile in the
-        tree, including the explictly marked render-tiles, as well as the
+        """Returns an iterator over tile paths for every tile in the
+        set, including the explictly marked render-tiles, as well as the
         implicitly marked ancestors of those render-tiles. Returns in
         post-traversal order, so that tiles with dependencies will always be
         yielded after their dependencies.
@@ -621,24 +626,24 @@ class DirtyTiles(object):
         # XXX Implement Me!
         raise NotImplementedError()
 
-    def set_dirty(self, path):
-        """Marks the requested leaf node as "dirty".
+    def add(self, path):
+        """Marks the requested leaf node as in this set
         
         Path is an iterable of integers representing the path to the leaf node
-        that is requested to be marked as dirty.
+        that is to be added to the set
         
         """
         path = list(path)
         assert len(path) == self.depth
         path.reverse()
-        self._set_dirty_helper(path)
+        self._set_add_helper(path)
 
-    def _set_dirty_helper(self, path):
-        """Recursive call for set_dirty()
+    def _set_add_helper(self, path):
+        """Recursive helper for add()
 
         Expects path to be a list in reversed order
 
-        If *all* the nodes below this one are dirty, this function returns
+        If *all* the nodes below this one are in the set, this function returns
         true. Otherwise, returns None.
 
         """
@@ -647,7 +652,7 @@ class DirtyTiles(object):
             # Base case
             self.children[path[0]] = True
 
-            # Check to see if all children are dirty
+            # Check to see if all children are in the set
             if all(self.children):
                 return True
         else:
@@ -657,31 +662,36 @@ class DirtyTiles(object):
             child = self.children[childnum]
 
             if child == False:
-                # Create a new node
+                # Create a new node and recurse.
+                # (The use of __class__ is so possible subclasses of this class
+                # work as expected)
                 child = self.__class__(self.depth-1)
-                child._set_dirty_helper(path)
+                child._set_add_helper(path)
                 self.children[childnum] = child
             elif child == True:
-                # Every child is already dirty. Nothing to do.
+                # Every child is already in the set and the subtree is already
+                # collapsed. Nothing to do.
                 return
             else:
-                # subtree is mixed clean/dirty. Recurse
-                ret = child._set_dirty_helper(path)
+                # subtree is mixed. Recurse to the already existing child node
+                ret = child._set_add_helper(path)
                 if ret:
-                    # Child says it's completely dirty, so we can purge the
-                    # subtree and mark it as dirty. The subtree will be garbage
-                    # collected when this method exits.
+                    # Child says every descendent is in the set, so we can
+                    # purge the subtree and mark it as such. The subtree will
+                    # be garbage collected when this method exits.
                     self.children[childnum] = True
 
-                    # Since we've marked an entire sub-tree as dirty, we may be
-                    # able to signal to our parent
+                    # Since we've marked an entire sub-tree as in the set, we
+                    # may be able to signal to our parent to do the same
                     if all(x is True for x in self.children):
                         return True
 
-    def iterate_dirty(self, level=None):
-        """Returns an iterator over every dirty tile in this subtree. Each item
-        yielded is a sequence of integers representing the quadtree path to the
-        dirty tile. Yielded sequences are of length self.depth.
+    def __iter__(self):
+        return self.iterate()
+    def iterate(self, level=None):
+        """Returns an iterator over every tile in this set. Each item yielded
+        is a sequence of integers representing the quadtree path to the tiles
+        in the set. Yielded sequences are of length self.depth.
 
         If level is None, iterates over tiles of the highest level, i.e.
         worldtiles. If level is a value between 0 and the depth of this tree,
@@ -699,9 +709,9 @@ class DirtyTiles(object):
                 raise ValueError("Level parameter must be between 1 and %s" % self.depth)
             todepth = self.depth - level + 1
 
-        return (tuple(reversed(rpath)) for rpath in self._iterate_dirty_helper(todepth))
+        return (tuple(reversed(rpath)) for rpath in self._iterate_helper(todepth))
 
-    def _iterate_dirty_helper(self, todepth):
+    def _iterate_helper(self, todepth):
         if self.depth == todepth:
             # Base case
             if self.children[0]: yield [0]
@@ -713,31 +723,34 @@ class DirtyTiles(object):
             # Higher levels:
             for c, child in enumerate(self.children):
                 if child == True:
-                    # All dirty down this subtree, iterate over every leaf
+                    # All render-tiles are in the set down this subtree,
+                    # iterate over every leaf using iterate_base4
                     for x in iterate_base4(self.depth-todepth):
                         x = list(x)
                         x.append(c)
                         yield x
                 elif child != False:
-                    # Mixed dirty/clean down this subtree, recurse
-                    for path in child._iterate_dirty_helper(todepth):
+                    # Mixed in/out of the set down this subtree, recurse
+                    for path in child._iterate_helper(todepth):
                         path.append(c)
                         yield path
 
     def query_path(self, path):
         """Queries for the state of the given tile in the tree.
 
-        Returns False for "clean", True for "dirty"
+        Returns True for items in the set, False otherwise. Works for
+        rendertiles as well as upper tiles (which are True if they have a
+        descendent that is in the set)
 
         """
         # Traverse the tree down the given path. If the tree has been
-        # collapsed, then just return what the subtree is. Otherwise, if we
-        # find the specific DirtyTree requested, return its state using the
+        # collapsed, then just return the stored boolean. Otherwise, if we find
+        # the specific tree node requested, return its state using the
         # __nonzero__ call.
         treenode = self
         for pathelement in path:
             treenode = treenode.children[pathelement]
-            if not isinstance(treenode, DirtyTiles):
+            if not isinstance(treenode, RendertileSet):
                 return treenode
 
         # If the method has not returned at this point, treenode is the
@@ -751,21 +764,22 @@ class DirtyTiles(object):
         descendent of this node is True return True. Otherwise, False.
 
         """
-        # Any chilren that are True or are DirtyTiles that evaluate to True
-        # IDEA: look at all children for True before recursing
-        # Better idea: every node except the root /must/ have a dirty
-        # descendent or it wouldn't exist. This assumption is only valid as
-        # long as an unset_dirty() method or similar does not exist.
+        # Any chilren that are True or are a RendertileSet that evaluate to
+        # True
+        # IDEA: look at all children for True before recursing Better idea:
+        # every node except the root /must/ have a descendent in the set or it
+        # wouldn't exist. This assumption is only valid as long as there is no
+        # method to remove a tile from the set.
         return any(self.children)
 
     def count(self):
-        """Returns the total number of dirty leaf nodes.
+        """Returns the total number of render-tiles in this set.
 
         """
         # TODO: Make this more efficient (although for even the largest trees,
         # this takes only seconds)
         c = 0
-        for _ in self.iterate_dirty():
+        for _ in self.iterate():
             c += 1
         return c
 

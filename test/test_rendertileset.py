@@ -1,13 +1,13 @@
 import unittest
 
-from overviewer_core.tileset import DirtyTiles
+from overviewer_core.tileset import RendertileSet
 from overviewer_core.util import iterate_base4
 
-class DirtyTilesTest(unittest.TestCase):
+class RendertileSetTest(unittest.TestCase):
     # If you change this definition, you must also change the hard-coded
     # results list in test_posttraverse()
-    dirty_paths = frozenset([
-            # Entire subtree 0/0 is dirty, nothing else under 0
+    tile_paths = frozenset([
+            # Entire subtree 0/0 is in the set, nothing else under 0
             (0,0,0),
             (0,0,1),
             (0,0,2),
@@ -16,7 +16,7 @@ class DirtyTilesTest(unittest.TestCase):
             (1,0,3),
             (1,1,3),
             (1,2,0),
-            # Entire subtree under quadrant 2 is dirty
+            # Entire subtree under quadrant 2 is in the set
             (2,0,0),
             (2,0,1),
             (2,0,2),
@@ -37,22 +37,22 @@ class DirtyTilesTest(unittest.TestCase):
             ])
 
     def setUp(self):
-        self.tree = DirtyTiles(3)
-        for t in self.dirty_paths:
-            self.tree.set_dirty(t)
+        self.tree = RendertileSet(3)
+        for t in self.tile_paths:
+            self.tree.add(t)
 
     def test_query(self):
-        """Make sure the correct tiles are marked as dirty"""
+        """Make sure the correct tiles in the set"""
         for path in iterate_base4(3):
-            if path in self.dirty_paths:
+            if path in self.tile_paths:
                 self.assertTrue( self.tree.query_path(path) )
             else:
                 self.assertFalse( self.tree.query_path(path) )
 
     def test_iterate(self):
-        """Make sure iterating over the tree returns each dirty tile exactly once"""
-        dirty = set(self.dirty_paths)
-        for p in self.tree.iterate_dirty():
+        """Make sure iterating over the tree returns each tile exactly once"""
+        dirty = set(self.tile_paths)
+        for p in self.tree:
             # Can't use assertIn, was only added in 2.7
             self.assertTrue(p in dirty)
 
@@ -64,8 +64,8 @@ class DirtyTilesTest(unittest.TestCase):
 
     def test_iterate_levelmax(self):
         """Same as test_iterate, but specifies the level explicitly"""
-        dirty = set(self.dirty_paths)
-        for p in self.tree.iterate_dirty(3):
+        dirty = set(self.tile_paths)
+        for p in self.tree.iterate(3):
             # Can't use assertIn, was only added in 2.7
             self.assertTrue(p in dirty)
 
@@ -78,14 +78,14 @@ class DirtyTilesTest(unittest.TestCase):
     def test_iterate_fail(self):
         """Meta-test: Make sure test_iterate() would actually fail"""
         # if an extra item were returned"""
-        self.tree.set_dirty((1,1,1))
+        self.tree.add((1,1,1))
         self.assertRaises(AssertionError, self.test_iterate)
 
         # If something was supposed to be returned but wasn't
-        tree = DirtyTiles(3)
-        c = len(self.dirty_paths) // 2
-        for t in self.dirty_paths:
-            tree.set_dirty(t)
+        tree = RendertileSet(3)
+        c = len(self.tile_paths) // 2
+        for t in self.tile_paths:
+            tree.add(t)
             c -= 1
             if c <= 0:
                 break
@@ -93,21 +93,21 @@ class DirtyTilesTest(unittest.TestCase):
         self.assertRaises(AssertionError, self.test_iterate)
 
     def test_count(self):
-        self.assertEquals(self.tree.count(), len(self.dirty_paths))
+        self.assertEquals(self.tree.count(), len(self.tile_paths))
 
     def test_bool(self):
         "Tests the boolean status of a node"
         self.assertTrue(self.tree)
-        t = DirtyTiles(3)
+        t = RendertileSet(3)
         self.assertFalse(t)
-        t.set_dirty((0,0,0))
+        t.add((0,0,0))
         self.assertTrue(t)
 
     def test_query_level(self):
         "Tests querying at a level other than max"
         # level 2
         l2 = set()
-        for p in self.dirty_paths:
+        for p in self.tile_paths:
             l2.add(p[0:2])
         for path in iterate_base4(2):
             if path in l2:
@@ -125,18 +125,18 @@ class DirtyTilesTest(unittest.TestCase):
         """Test iterating at a level other than max"""
         # level 2
         l2 = set()
-        for p in self.dirty_paths:
+        for p in self.tile_paths:
             l2.add(p[0:2])
-        for p in self.tree.iterate_dirty(2):
+        for p in self.tree.iterate(2):
             self.assertTrue(p in l2, "%s was not supposed to be returned!" % (p,))
             l2.remove(p)
         self.assertEqual(len(l2), 0, "Never iterated over these items: %s" % l2)
 
         # level 1
         l1 = set()
-        for p in self.dirty_paths:
+        for p in self.tile_paths:
             l1.add(p[0:1])
-        for p in self.tree.iterate_dirty(1):
+        for p in self.tree.iterate(1):
             self.assertTrue(p in l1, "%s was not supposed to be returned!" % (p,))
             l1.remove(p)
         self.assertEqual(len(l1), 0, "Never iterated over these items: %s" % l1)
