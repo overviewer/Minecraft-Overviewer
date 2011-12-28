@@ -251,44 +251,47 @@ class TileSet(object):
         # tree in post-traversal order and yield each tile path.
         
         # For 0 our caller has explicitly requested not to check mtimes on
-        # disk, to speed up the chunk scan.
+        # disk, to speed things up. So the mode 0 chunk scan only looks at
+        # chunk mtimes and the last render mtime, and has marked only the
+        # render-tiles that need rendering. Mode 0 then iterates over all dirty
+        # render-tiles and upper-tiles that depend on them. It does not check
+        # mtimes of upper-tiles, so this is only a good option if the last
+        # render was not interrupted.
         
-        # For 2, the chunk scan holds every tile that should exist and
-        # therefore every upper tile that should exist as well. In both 0 and 2
-        # the dirtytile tree is authoritive on every tile that needs rendering.
+        # For mode 2, this is a forcerender, the caller has requested we render
+        # everything. The mode 2 chunk scan marks every tile as needing
+        # rendering, and disregards mtimes completely. Mode 2 then iterates
+        # over all render-tiles and upper-tiles that depend on them, which is
+        # every tile that should exist.
+        
+        # In both 0 and 2 the render iteration is the same: the dirtytile tree
+        # built is authoritive on every tile that needs rendering.
 
-        # With renderchecks set to 1, the chunk scan has checked mtimes of all
-        # the render-tiles already and determined which render-tiles need to be
-        # rendered. However, the dirtytile tree is authoritive on render-tiles
-        # only.  We still need to account for tiles at the upper levels in the
-        # tree that may not exist or may need updating. So we can't just
-        # iterate over the dirty tile tree because that tree only tells us
-        # which render-tiles need rendering (and their ancestors)
+        # In mode 1, things are most complicated. The mode 2 chunk scan checks
+        # every render tile's mtime for each chunk that touches it, so it can
+        # determine accurately which tiles need rendering regardless of the
+        # state on disk. The chunk scan also builds a RendertileSet of *every*
+        # render-tile that exists.
 
-        # For example, there may be an upper-tile that needs rendering down a
-        # path of the tree that doesn't exist in the dirtytile tree because the
-        # last render was interrupted after the render-tile was rendered, but
-        # before its ancestors were.
-
-        # The strategy for this situation is to do a post-traversal of the
-        # quadtree on disk, while simultaneously keeping track of the next tile
-        # (render or upper) that is returned by the dirtytile tree in memory.
-
-        # If, during node expansion, a path is not going to be traversed but
-        # the dirtytile tree indicates a node down that path, that path must be
-        # taken.
-
-        # When a node is visited, if it matches the next node from the
-        # dirtytile tree, it must be rendered regardless of the tile's mtime.
-        # Then the next tile from the dirtytile tree is yielded and the
-        # traversal continues.
-
-        # Otherwise, for every upper-tile, check the mtime and continue
-        # traversing the tree.
-
-        # This implementation is going to be a bit complicated. I think I need
-        # to give it some more thought to figure out exactly how it's going to
-        # work.
+        # The mode 1 render iteration then manually iterates over the set of
+        # all render-tiles in a post-traversal order. When it visits a
+        # render-node, it does the following:
+        # * Checks the set of dirty render-tiles to see if the node needs
+        #   rendering, and if so, renders it
+        # * If the tile was rendered, set the mtime using os.utime() to the max
+        #   of the chunk mtimes.
+        # * If the tile was rendered, return (True, mtime).
+        # * If the tile was not rendered, return (False, mtime)
+        #
+        # Then, for upper-tiles, it does the following:
+        # * Gathers the return values of each child call.
+        # * If any child returned True, render this tile.
+        # * Otherwise, check this tile's mtime. If any child's mtime is greater
+        #   than this tile's mtime, render this tile.
+        # * If the tile was rendered, set the mtime using os.utime() to the max
+        #   of the child mtimes.
+        # * If the tile was rendered, return (True, mtime).
+        # * If the tile was not rendered, return (False, mtime)
 
         pass
 
