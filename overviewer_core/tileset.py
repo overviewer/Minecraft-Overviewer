@@ -626,8 +626,36 @@ class RendertileSet(object):
         yielded after their dependencies.
 
         """
-        # XXX Implement Me!
-        raise NotImplementedError()
+        return (tuple(reversed(rpath)) for rpath in self._posttraversal_helper())
+
+    def _posttraversal_helper(self):
+        """Each node returns an iterator over lists of reversed paths"""
+        if self.depth == 1:
+            # Base case
+            if self.children[0]: yield [0]
+            if self.children[1]: yield [1]
+            if self.children[2]: yield [2]
+            if self.children[3]: yield [3]
+        else:
+            for childnum, child in enumerate(self.children):
+                if child == True:
+                    for path in post_traversal_complete_subtree_recursion_helper(self.depth-1):
+                        path.append(childnum)
+                        yield path
+
+                elif child == False:
+                    pass # do nothing
+
+                else:
+                    # Recurse
+                    for path in child._posttraversal_helper():
+                        path.append(childnum)
+                        yield path
+
+        # Now do this node itself
+        if bool(self):
+            yield []
+
 
     def add(self, path):
         """Marks the requested leaf node as in this set
@@ -769,10 +797,11 @@ class RendertileSet(object):
         """
         # Any chilren that are True or are a RendertileSet that evaluate to
         # True
-        # IDEA: look at all children for True before recursing Better idea:
-        # every node except the root /must/ have a descendent in the set or it
-        # wouldn't exist. This assumption is only valid as long as there is no
-        # method to remove a tile from the set.
+        # IDEA: look at all children for True before recursing
+        # Better idea: every node except the root /must/ have a descendent in
+        # the set or it wouldn't exist. This assumption is only valid as long
+        # as there is no method to remove a tile from the set. So this should
+        # check to see if any children are not False.
         return any(self.children)
 
     def count(self):
@@ -785,6 +814,25 @@ class RendertileSet(object):
         for _ in self.iterate():
             c += 1
         return c
+
+def post_traversal_complete_subtree_recursion_helper(depth):
+    """Fakes the recursive calls for RendertileSet.posttraversal() for the case
+    that a subtree is collapsed.
+
+    """
+    if depth == 1:
+        # Base case
+        yield [0]
+        yield [1]
+        yield [2]
+        yield [3]
+    else:
+        for childnum in xrange(4):
+            for item in post_traversal_complete_subtree_recursion_helper(depth-1):
+                item.append(childnum)
+                yield item
+
+    yield []
 
 class RenderTile(object):
     """A simple container class that represents a single render-tile.
