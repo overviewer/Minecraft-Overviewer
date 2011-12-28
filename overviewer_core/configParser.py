@@ -2,7 +2,6 @@ import optparse
 import sys
 import os.path
 import logging
-import c_overviewer
 
 import settingsDefinition
 
