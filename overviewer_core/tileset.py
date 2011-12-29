@@ -20,6 +20,7 @@ import os.path
 import shutil
 import random
 from collections import namedtuple
+import threading, Queue
 
 from .util import iterate_base4, convert_coords
 
@@ -77,6 +78,81 @@ do_work(workobj)
 # A named tuple class storing the row and column bounds for the to-be-rendered
 # world
 Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
+
+# A note about the implementation of the different rendercheck modes:
+#
+# For reference, here's what the rendercheck modes are:
+#   0
+#       Only render tiles that have chunks with a greater mtime than
+#       the last render timestamp, and their ancestors.
+#       
+#       In other words, only renders parts of the map that have changed
+#       since last render, nothing more, nothing less.
+#       
+#       This is the fastest option, but will not detect tiles that have
+#       e.g. been deleted from the directory tree, or pick up where a
+#       partial interrupted render left off.
+
+#   1
+#       For render-tiles, render all whose chunks have an mtime greater
+#       than the mtime of the tile on disk, and their upper-tile
+#       ancestors.
+#       
+#       Also check all other upper-tiles and render any that have
+#       children with more rencent mtimes than itself.
+#       
+#       This is slower due to stat calls to determine tile mtimes, but
+#       safe if the last render was interrupted.
+
+#   2
+#       Render all tiles unconditionally. This is a "forcerender" and
+#       is the slowest, but SHOULD be specified if this is the first
+#       render because the scan will forgo tile stat calls. It's also
+#       useful for changing texture packs or other options that effect
+#       the output.
+#
+# For 0 our caller has explicitly requested not to check mtimes on
+# disk, to speed things up. So the mode 0 chunk scan only looks at
+# chunk mtimes and the last render mtime, and has marked only the
+# render-tiles that need rendering. Mode 0 then iterates over all dirty
+# render-tiles and upper-tiles that depend on them. It does not check
+# mtimes of upper-tiles, so this is only a good option if the last
+# render was not interrupted.
+
+# For mode 2, this is a forcerender, the caller has requested we render
+# everything. The mode 2 chunk scan marks every tile as needing
+# rendering, and disregards mtimes completely. Mode 2 then iterates
+# over all render-tiles and upper-tiles that depend on them, which is
+# every tile that should exist.
+
+# In both 0 and 2 the render iteration is the same: the dirtytile tree
+# built is authoritive on every tile that needs rendering.
+
+# In mode 1, things are most complicated. The mode 2 chunk scan checks
+# every render tile's mtime for each chunk that touches it, so it can
+# determine accurately which tiles need rendering regardless of the
+# state on disk. The chunk scan also builds a RendertileSet of *every*
+# render-tile that exists.
+
+# The mode 1 render iteration then manually iterates over the set of
+# all render-tiles in a post-traversal order. When it visits a
+# render-node, it does the following:
+# * Checks the set of dirty render-tiles to see if the node needs
+#   rendering, and if so, renders it
+# * If the tile was rendered, set the mtime using os.utime() to the max
+#   of the chunk mtimes.
+# * If the tile was rendered, return (True, mtime).
+# * If the tile was not rendered, return (False, mtime)
+#
+# Then, for upper-tiles, it does the following:
+# * Gathers the return values of each child call.
+# * If any child returned True, render this tile.
+# * Otherwise, check this tile's mtime. If any child's mtime is greater
+#   than this tile's mtime, render this tile.
+# * If the tile was rendered, set the mtime using os.utime() to the max
+#   of the child mtimes.
+# * If the tile was rendered, return (True, mtime).
+# * If the tile was not rendered, return (False, mtime)
 
 __all__ = ["TileSet"]
 class TileSet(object):
@@ -247,53 +323,38 @@ class TileSet(object):
         This method returns an iterator over (obj, [dependencies, ...])
         """
 
-        # With renderchecks set to 0 or 2, simply iterate over the dirty tiles
-        # tree in post-traversal order and yield each tile path.
-        
-        # For 0 our caller has explicitly requested not to check mtimes on
-        # disk, to speed things up. So the mode 0 chunk scan only looks at
-        # chunk mtimes and the last render mtime, and has marked only the
-        # render-tiles that need rendering. Mode 0 then iterates over all dirty
-        # render-tiles and upper-tiles that depend on them. It does not check
-        # mtimes of upper-tiles, so this is only a good option if the last
-        # render was not interrupted.
-        
-        # For mode 2, this is a forcerender, the caller has requested we render
-        # everything. The mode 2 chunk scan marks every tile as needing
-        # rendering, and disregards mtimes completely. Mode 2 then iterates
-        # over all render-tiles and upper-tiles that depend on them, which is
-        # every tile that should exist.
-        
-        # In both 0 and 2 the render iteration is the same: the dirtytile tree
-        # built is authoritive on every tile that needs rendering.
-
-        # In mode 1, things are most complicated. The mode 2 chunk scan checks
-        # every render tile's mtime for each chunk that touches it, so it can
-        # determine accurately which tiles need rendering regardless of the
-        # state on disk. The chunk scan also builds a RendertileSet of *every*
-        # render-tile that exists.
-
-        # The mode 1 render iteration then manually iterates over the set of
-        # all render-tiles in a post-traversal order. When it visits a
-        # render-node, it does the following:
-        # * Checks the set of dirty render-tiles to see if the node needs
-        #   rendering, and if so, renders it
-        # * If the tile was rendered, set the mtime using os.utime() to the max
-        #   of the chunk mtimes.
-        # * If the tile was rendered, return (True, mtime).
-        # * If the tile was not rendered, return (False, mtime)
+        # See note at the top of this file about the rendercheck modes for an
+        # explanation of what this method does in different situations.
         #
-        # Then, for upper-tiles, it does the following:
-        # * Gathers the return values of each child call.
-        # * If any child returned True, render this tile.
-        # * Otherwise, check this tile's mtime. If any child's mtime is greater
-        #   than this tile's mtime, render this tile.
-        # * If the tile was rendered, set the mtime using os.utime() to the max
-        #   of the child mtimes.
-        # * If the tile was rendered, return (True, mtime).
-        # * If the tile was not rendered, return (False, mtime)
+        # For modes 0 and 2, iterate over the tiles in self.dirtytree by using
+        # the posttraversal() method. Yield each item. Easy.
+        #
+        # For mode 1, invoke a more complex recursive routine
+        if self.options['renderchecks'] in (0,2):
+            for tilepath in self.dirtytree.posttraversal():
+                dependencies = []
+                # These tiles may or may not exist, but the dispatcher won't
+                # care according to the worker interface protocol It will only
+                # wait for the items that do exist and are in the queue.
+                for i in range(4):
+                    dependencies.append( "%s/%s" % (tilepath, i) )
+                yield tilepath, dependencies
 
-        pass
+        else:
+            # I hope this is kosher. I couldn't think of any other good way to
+            # use a complex recursive routine as one big generator/iterator
+            torender = Queue.Queue(1)
+            thread = threading.Thread(target=self._find_dirty_tiles, args=(torender,))
+            thread.start()
+            item = torender.get()
+            while item is not None:
+                dependencies = []
+                for i in range(4):
+                    dependencies.append( "%s/%s" % (item, i) )
+                yield item, dependencies
+
+                item = torender.get()
+            
 
     def do_work(self, tileobj):
         """Renders the given tile.
@@ -420,14 +481,20 @@ class TileSet(object):
         time of the map
 
         For rendercheck mode 1: compares chunk mtimes against the tile mtimes
-        on disk
+        on disk, and also builds a tileset of every tile
 
         For rendercheck mode 2: marks every tile, does not check any mtimes.
 
         """
+        # See note at the top of this file about the rendercheck modes for an
+        # explanation of what this method does in different situations.
+
         depth = self.treedepth
 
         dirty = RendertileSet(depth)
+        build_fulltileset = self.options['renderchecks'] == 1
+        if build_fulltileset:
+            fulltileset = RendertileSet(depth)
 
         chunkcount = 0
         stime = time.time()
@@ -507,6 +574,9 @@ class TileSet(object):
                     # Computes the path in the quadtree from the col,row coordinates
                     tile = RenderTile.compute_path(c, r, depth)
 
+                    if build_fulltileset:
+                        fulltileset.add(tile.path)
+
                     if rendercheck == 2:
                         # Skip all other checks, mark tiles as dirty unconditionally
                         dirty.add(tile.path)
@@ -537,10 +607,43 @@ class TileSet(object):
                 self, chunkcount, t,
                 "s" if t != 1 else "")
 
+        if build_fulltileset:
+            self.fulltileset = fulltileset
         return dirty
 
     def __str__(self):
         return "<TileSet for %s>" % os.basename(self.outputdir)
+
+    def _find_dirty_tiles(self, renderqueue):
+        """Entry point for the tile iteration thread. This pushes a number of
+        tile paths onto the renderqueue Queue object, and then pushes a
+        sentinel None and exits
+
+        """
+        self._find_dirty_tiles_helper(renderqueue, [], self.fulltileset)
+        renderqueue.push(None)
+        return
+
+    def _find_dirty_tiles_helper(self, renderqueue, path, treenode):
+        """Helper recursion method for _find_dirty_tiles
+
+        This method takes two arguments:
+        * a path, a list of integers. Methods should either not mutate it or
+          make sure it is back as it was when it exits.
+        * treenode: a RendertileSet object corresponding to the node in
+          self.fulltileset corresponding to the above path, or None for
+          rendertiles
+
+        This method returns two things:
+        * A boolean indicating whether this tile was rendered or not
+        * An mtime indicating this tile's mtime. The parent should be rendered
+          if it is older than this value
+
+        For an explanation of what this method does, see the comments at the
+        top of this file.
+        """
+        if treenode.depth == 1:
+            # This call corresponds to the layer /above/ a render-tile
 
 
 def get_dirdepth(outputdir):
