@@ -197,6 +197,12 @@ class RendertileSetTest(unittest.TestCase):
 
         self.assertRaises(StopIteration, next, iterator)
 
+    def test_count_all(self):
+        """Tests getting a count of all tiles (render tiles plus upper tiles)
+
+        """
+        c = self.tree.count_all()
+        self.assertEqual(c, 35)
 
 if __name__ == "__main__":
     unittest.main()

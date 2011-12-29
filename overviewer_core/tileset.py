@@ -131,28 +131,12 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 # In mode 1, things are most complicated. The mode 2 chunk scan checks
 # every render tile's mtime for each chunk that touches it, so it can
 # determine accurately which tiles need rendering regardless of the
-# state on disk. The chunk scan also builds a RendertileSet of *every*
-# render-tile that exists.
+# state on disk.
 
-# The mode 1 render iteration then manually iterates over the set of
-# all render-tiles in a post-traversal order. When it visits a
-# render-node, it does the following:
-# * Checks the set of dirty render-tiles to see if the node needs
-#   rendering, and if so, renders it
-# * If the tile was rendered, set the mtime using os.utime() to the max
-#   of the chunk mtimes.
-# * If the tile was rendered, return (True, mtime).
-# * If the tile was not rendered, return (False, mtime)
-#
-# Then, for upper-tiles, it does the following:
-# * Gathers the return values of each child call.
-# * If any child returned True, render this tile.
-# * Otherwise, check this tile's mtime. If any child's mtime is greater
-#   than this tile's mtime, render this tile.
-# * If the tile was rendered, set the mtime using os.utime() to the max
-#   of the child mtimes.
-# * If the tile was rendered, return (True, mtime).
-# * If the tile was not rendered, return (False, mtime)
+# The mode 1 render iteration falls back to the old layer-by-layer instead of a
+# post-traversal iteration order. This uses the phases feature of the worker
+# API. A post-traversal is theoretically possible, but the implementation was
+# significantly more complicated and I have decided it not to be worth it.
 
 __all__ = ["TileSet"]
 class TileSet(object):
@@ -271,7 +255,8 @@ class TileSet(object):
 
         """
         # REMEMBER THAT ATTRIBUTES ASSIGNED IN THIS METHOD ARE NOT AVAILABLE IN
-        # THE do_work() METHOD
+        # THE do_work() METHOD (because this is only called in the main process
+        # not the workers)
 
         # Calculate the min and max column over all the chunks.
         # This sets self.bounds to a Bounds namedtuple
@@ -308,13 +293,23 @@ class TileSet(object):
         number of phases of work that need to be done.
 
         """
-        return 1
+        if self.options['renderchecks'] == 1:
+            # Layer by layer for this mode
+            return self.treedepth
+        else:
+            # post-traversal does everything in one phase
+            return 1
     
     def get_phase_length(self, phase):
         """Returns the number of work items in a given phase, or None if there
         is no good estimate.
         """
-        return None
+        # Yeah functional programming!
+        return {
+                0: lambda: self.dirtytree.count_all(),
+                1: lambda: self.dirtytree.count() if phase == 0 else None,
+                2: lambda: self.dirtytree.count_all(),
+                }[self.options['renderchecks']]()
 
     def iterate_work_items(self, phase):
         """Iterates over the dirty tiles in the tree and return them in the
@@ -341,32 +336,21 @@ class TileSet(object):
                 yield tilepath, dependencies
 
         else:
-            # I hope this is kosher. I couldn't think of any other good way to
-            # use a complex recursive routine as one big generator/iterator
-            torender = Queue.Queue(1)
-            thread = threading.Thread(target=self._find_dirty_tiles, args=(torender,))
-            thread.start()
-            item = torender.get()
-            while item is not None:
-                dependencies = []
-                for i in range(4):
-                    dependencies.append( "%s/%s" % (item, i) )
-                yield item, dependencies
-
-                item = torender.get()
+            raise NotImplementedError() # TODO
             
 
     def do_work(self, tileobj):
         """Renders the given tile.
 
         """
+        pass # TODO
 
     def get_persistent_data(self):
         """Returns a dictionary representing the persistent data of this
         TileSet. Typically this is called by AssetManager
 
         """
-        pass
+        return None
 
     def _find_chunk_range(self):
         """Finds the chunk range in rows/columns and stores them in
@@ -492,9 +476,6 @@ class TileSet(object):
         depth = self.treedepth
 
         dirty = RendertileSet(depth)
-        build_fulltileset = self.options['renderchecks'] == 1
-        if build_fulltileset:
-            fulltileset = RendertileSet(depth)
 
         chunkcount = 0
         stime = time.time()
@@ -574,9 +555,6 @@ class TileSet(object):
                     # Computes the path in the quadtree from the col,row coordinates
                     tile = RenderTile.compute_path(c, r, depth)
 
-                    if build_fulltileset:
-                        fulltileset.add(tile.path)
-
                     if rendercheck == 2:
                         # Skip all other checks, mark tiles as dirty unconditionally
                         dirty.add(tile.path)
@@ -607,43 +585,10 @@ class TileSet(object):
                 self, chunkcount, t,
                 "s" if t != 1 else "")
 
-        if build_fulltileset:
-            self.fulltileset = fulltileset
         return dirty
 
     def __str__(self):
         return "<TileSet for %s>" % os.basename(self.outputdir)
-
-    def _find_dirty_tiles(self, renderqueue):
-        """Entry point for the tile iteration thread. This pushes a number of
-        tile paths onto the renderqueue Queue object, and then pushes a
-        sentinel None and exits
-
-        """
-        self._find_dirty_tiles_helper(renderqueue, [], self.fulltileset)
-        renderqueue.push(None)
-        return
-
-    def _find_dirty_tiles_helper(self, renderqueue, path, treenode):
-        """Helper recursion method for _find_dirty_tiles
-
-        This method takes two arguments:
-        * a path, a list of integers. Methods should either not mutate it or
-          make sure it is back as it was when it exits.
-        * treenode: a RendertileSet object corresponding to the node in
-          self.fulltileset corresponding to the above path, or None for
-          rendertiles
-
-        This method returns two things:
-        * A boolean indicating whether this tile was rendered or not
-        * An mtime indicating this tile's mtime. The parent should be rendered
-          if it is older than this value
-
-        For an explanation of what this method does, see the comments at the
-        top of this file.
-        """
-        if treenode.depth == 1:
-            # This call corresponds to the layer /above/ a render-tile
 
 
 def get_dirdepth(outputdir):
@@ -915,6 +860,18 @@ class RendertileSet(object):
         # this takes only seconds)
         c = 0
         for _ in self.iterate():
+            c += 1
+        return c
+
+    def count_all(self):
+        """Returns the total number of render-tiles plus implicitly marked
+        upper-tiles in this set
+
+        """
+        # TODO: Optimize this too with its own recursive method that avoids
+        # some of the overheads of posttraversal()
+        c = 0
+        for _ in self.posttraversal():
             c += 1
         return c
 
