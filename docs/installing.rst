@@ -23,8 +23,9 @@ right place!
 
 Debian / Ubuntu
 ===============
-We provide an APT repository with pre-built Overviewer packages for Debian and
-Ubuntu users. To do this, add the following line to your
+We provide an APT repository with pre-built Overviewer packages for
+Debian and Ubuntu users. These packages should work on any system with
+a ``python2.6`` package. To do this, add the following line to your
 ``/etc/apt/sources.list``
 
 ::
