@@ -19,7 +19,7 @@ import stat
 import cPickle
 import Image
 import shutil
-from time import strftime, localtime
+from time import strftime, time, localtime
 import json
 import locale
 import codecs
@@ -129,6 +129,8 @@ class MapGen(object):
         
         config = config.replace("{spawn_coords}",
                                 json.dumps(list(self.world.spawn)))
+
+        config = config.replace("{cache_tag}", str(int(time())))
 
         #config = config.replace("{bg_color}", self.bg_color)
         

@@ -1141,10 +1141,8 @@ var overviewer = {
                     }
                 }
                 url = url + '.' + pathExt;
-                if(overviewerConfig.map.cacheMinutes > 0) {
-                    var d = new Date();
-                    url += '?c=' + Math.floor(d.getTime() /
-                        (1000 * 60 * overviewerConfig.map.cacheMinutes));
+                if(typeof overviewerConfig.map.cacheTag !== 'undefined') {
+                    url += '?c=' + overviewerConfig.map.cacheTag;
                 }
                 return(urlBase + url);
             }
