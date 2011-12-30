@@ -90,14 +90,14 @@ var overviewerConfig = {
          */
         'center':       {spawn_coords},
         /**
-         * Set this to tell browsers how long they should cache tiles in minutes.
-         * Essentially if set to 0, the url for tiles will end in .png
-         * if not set to 0 it will amend a number derived from the current time 
-         * to the end of the url, like .png?c=123456. This is a great method for 
-         * preventing browsers from caching the images. 0 saves bandwidth, not 0
-         * prevents caching.
+         * Overviewer will update cache_tag to a new value whenever the map has
+         * been updated. The tag will be added to the end of the tile URLs,
+         * like .png?c=123456. This is a great method for preventing browsers
+         * from loading old images from the cache when we know new versions are
+         * available. Use 'cacheTag': undefined to disable this behavior.
+         * undefined saves bandwidth, cache_tag ensures fresh image data.
          */
-        'cacheMinutes': 0,
+        'cacheTag':     {cache_tag},
         /**
          * Set to true to turn on debug mode, which adds a grid to the map along
          * with co-ordinates and a bunch of console output.
