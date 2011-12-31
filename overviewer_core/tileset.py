@@ -20,9 +20,11 @@ import os.path
 import shutil
 import random
 from collections import namedtuple
-import threading, Queue
+
+from PIL import Image
 
 from .util import iterate_base4, convert_coords
+from .optimizeimages import optimize_image
 
 """
 
@@ -247,6 +249,8 @@ class TileSet(object):
             self.imgextension = 'png'
         elif self.options['imgformat'] == 'jpeg':
             self.imgextension = 'jpg'
+        else:
+            raise ValueError("imgformat must be one of: 'png' or 'jpeg'")
 
     def do_preprocessing(self):
         """For the preprocessing step of the Worker interface, this does the
@@ -336,14 +340,46 @@ class TileSet(object):
                 yield tilepath, dependencies
 
         else:
-            raise NotImplementedError() # TODO
+
+            # Return the tiles to be rendered for layer phase-self.treedepth
+            if phase == 0:
+                # Iterate over the render-tiles
+                for rendertile_path in self.dirtytree:
+                    yield rendertile_path, []
+
+            else:
+                # Iterate over all potential upper-tiles at this level and add
+                # them to the queue. The workers will decide whether they need
+                # rendering or not.
+                for path in iterate_base4(phase-self.treedepth):
+                    yield path
             
 
-    def do_work(self, tileobj):
+    def do_work(self, tilepath):
         """Renders the given tile.
 
+        tilepath is yielded by iterate_work_items and is an iterable of
+        integers representing the path of the tile to render.
+
         """
-        pass # TODO
+        # For rendercheck modes 0 and 2: unconditionally render the specified
+        # tile.
+        # For rendercheck mode 1, unconditionally render render-tiles, but
+        # check if the given upper-tile needs rendering
+        if len(tileset) == self.treedepth:
+            # A render-tile
+            self._render_rendertile(RenderTile.from_path(tilepath))
+        else:
+            # A composite-tile
+            if len(tileset) == 0:
+                # The base tile
+                dest = self.outputdir
+                name = "base"
+            else:
+                # All others
+                dest = os.path.sep.join(self.outputdir, *(str(x) for x in tilepath[:-1]))
+                name = str(tilepath[-1])
+            self._render_compositetile(dest, base)
 
     def get_persistent_data(self):
         """Returns a dictionary representing the persistent data of this
@@ -469,6 +505,9 @@ class TileSet(object):
 
         For rendercheck mode 2: marks every tile, does not check any mtimes.
 
+        As a side-effect, the scan sets self.max_chunk_mtime to the max of all
+        the chunks' mtimes
+
         """
         # See note at the top of this file about the rendercheck modes for an
         # explanation of what this method does in different situations.
@@ -485,6 +524,8 @@ class TileSet(object):
 
         # XXX TODO:
         last_rendertime = 0 # TODO
+
+        max_chunk_mtime = 0
 
         if rendercheck == 0:
             def compare_times(chunkmtime, tileobj):
@@ -513,6 +554,9 @@ class TileSet(object):
         for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks():
 
             chunkcount += 1
+
+            if chunkmtime > max_chunk_mtime:
+                max_chunk_mtime = chunkmtime
             
             # Convert to diagonal coordinates
             chunkcol, chunkrow = util.convert_coords(chunkx, chunkz)
@@ -585,11 +629,246 @@ class TileSet(object):
                 self, chunkcount, t,
                 "s" if t != 1 else "")
 
+        self.max_chunk_mtime = max_chunk_mtime
         return dirty
 
     def __str__(self):
         return "<TileSet for %s>" % os.basename(self.outputdir)
 
+    def _render_compositetile(self, dest, name):
+        """
+        Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
+        os.path.join(dest, name, "{0,1,2,3}.png")
+
+        If name is "base" then render tile at os.path.join(dest, "base.png") by
+        taking tiles from os.path.join(dest, "{0,1,2,3}.png")
+        """
+        imgformat = self.imgextension
+        imgpath = os.path.join(dest, name) + "." + imgformat
+
+        if name == "base":
+            # Special case for the base tile. Its children are in the same
+            # directory instead of in a sub-directory
+            quadPath = [
+                    ((0,0),os.path.join(dest, "0." + imgformat)),
+                    ((192,0),os.path.join(dest, "1." + imgformat)),
+                    ((0, 192),os.path.join(dest, "2." + imgformat)),
+                    ((192,192),os.path.join(dest, "3." + imgformat)),
+                    ]
+        else:
+            quadPath = [
+                    ((0,0),os.path.join(dest, name, "0." + imgformat)),
+                    ((192,0),os.path.join(dest, name, "1." + imgformat)),
+                    ((0, 192),os.path.join(dest, name, "2." + imgformat)),
+                    ((192,192),os.path.join(dest, name, "3." + imgformat)),
+                    ]
+
+        # stat the tile, we need to know if it exists and its mtime
+        try:
+            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
+        except OSError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            tile_mtime = None
+            
+        #check mtimes on each part of the quad, this also checks if they exist
+        max_mtime = 0
+        needs_rerender = (tile_mtime is None) or self.options['renderchecks'] == 1
+        quadPath_filtered = []
+        for path in quadPath:
+            try:
+                quad_mtime = os.stat(path[1])[stat.ST_MTIME]
+                quadPath_filtered.append(path)
+                if quad_mtime > tile_mtime:
+                    needs_rerender = True
+                max_mtime = max(max_mtime, quad_mtime)
+            except OSError:
+                # We need to stat all the quad files, so keep looping
+                pass
+        # do they all not exist?
+        if not quadPath_filtered:
+            if tile_mtime is not None:
+                os.unlink(imgpath)
+            return
+        # quit now if we don't need rerender
+        if not needs_rerender:
+            return
+        #logging.debug("writing out compositetile {0}".format(imgpath))
+
+        # Create the actual image now
+        img = Image.new("RGBA", (384, 384), self.options['bgcolor'])
+        
+        # we'll use paste (NOT alpha_over) for quadtree generation because
+        # this is just straight image stitching, not alpha blending
+        
+        for path in quadPath_filtered:
+            try:
+                quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
+                img.paste(quad, path[0])
+            except Exception, e:
+                logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
+                logging.warning("I'm going to try and delete it. You will need to run the render again")
+                try:
+                    os.unlink(path[1])
+                except Exception, e:
+                    logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
+
+        # Save it
+        if imgformat == 'jpg':
+            img.save(imgpath, quality=self.options['imgquality'], subsampling=0)
+        else: # png
+            img.save(imgpath)
+            
+        if self.options['optimizeimg']:
+            optimize_image(imgpath, imgformat, self.options['optimizeimg'])
+
+        os.utime(imgpath, (max_mtime, max_mtime))
+
+    def _render_rendertile(self, tile):
+        """Renders the given render-tile.
+
+        This function is called from the public do_work() method in the child
+        process. The tile is assumed to need rendering and is rendered
+        unconditionally.
+
+        The argument is a RenderTile object
+
+        The image is rendered and saved to disk in the place this tileset is
+        configured to save images.
+
+        """
+
+        imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
+
+        # Calculate which chunks are relevant to this tile
+        chunks = self._get_chunks_for_tile(tile)
+
+        region = self.regionobj
+
+        tile_mtime = None
+        if check_tile:
+            # stat the file, we need to know if it exists and its mtime
+            try:
+                tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
+            except OSError, e:
+                # ignore only if the error was "file not found"
+                if e.errno != errno.ENOENT:
+                    raise
+            
+        if not chunks:
+            # No chunks were found in this tile
+            if not check_tile:
+                logging.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
+            try:
+                os.unlink(imgpath)
+            except OSError, e:
+                # ignore only if the error was "file not found"
+                if e.errno != errno.ENOENT:
+                    raise
+            else:
+                logging.debug("%s deleted", tile)
+            return
+
+        # Create the directory if not exists
+        dirdest = os.path.dirname(imgpath)
+        if not os.path.exists(dirdest):
+            try:
+                os.makedirs(dirdest)
+            except OSError, e:
+                # Ignore errno EEXIST: file exists. Due to a race condition,
+                # two processes could conceivably try and create the same
+                # directory at the same time
+                if e.errno != errno.EEXIST:
+                    raise
+
+        # Compute the maximum mtime of all the chunks that go into this tile.
+        # At the end, we'll set the tile's mtime to this value.
+        max_chunk_mtime = 0
+        for col,row,chunkx,chunky,region in chunks:
+            max_chunk_mtime = max(
+                    max_chunk_mtime,
+                    region.get_chunk_timestamp(chunkx, chunky)
+                    )
+
+        #logging.debug("writing out worldtile {0}".format(imgpath))
+
+        # Compile this image
+        tileimg = Image.new("RGBA", (384, 384), self.bgcolor)
+
+        rendermode = self.rendermode
+        colstart = tile.col
+        rowstart = tile.row
+        # col colstart will get drawn on the image starting at x coordinates -(384/2)
+        # row rowstart will get drawn on the image starting at y coordinates -(192/2)
+        for col, row, chunkx, chunky, region in chunks:
+            xpos = -192 + (col-colstart)*192
+            ypos = -96 + (row-rowstart)*96
+
+            # draw the chunk!
+            try:
+                a = chunk.ChunkRenderer((chunkx, chunky), self.regionobj, rendermode, poi_queue)
+                a.chunk_render(tileimg, xpos, ypos, None)
+            except chunk.ChunkCorrupt:
+                # an error was already printed
+                pass
+        
+        # Save them
+        if self.imgformat == 'jpg':
+            tileimg.save(imgpath, quality=self.imgquality, subsampling=0)
+        else: # png
+            tileimg.save(imgpath)
+
+        if self.optimizeimg:
+            optimize_image(imgpath, self.imgformat, self.optimizeimg)
+
+        os.utime(imgpath, (max_chunk_mtime, max_chunk_mtime))
+
+    def _get_chunks_for_tile(self, tile):
+        """Get chunks that are relevant to the given render-tile
+        
+        Returns a list of chunks where each item is
+        (col, row, chunkx, chunky, regionobj)
+        """
+
+        chunklist = []
+
+        unconvert_coords = util.unconvert_coords
+        get_region = self.regionobj.regionfiles.get
+
+        # Cached region object for consecutive iterations
+        regionx = None
+        regiony = None
+        c = None
+        mcr = None
+
+        rowstart = tile.row
+        rowend = rowstart+4
+        colstart = tile.col
+        colend = colstart+2
+
+        # Start 16 rows up from the actual tile's row, since chunks are that tall.
+        # Also, every other tile doesn't exist due to how chunks are arranged. See
+        # http://docs.overviewer.org/en/latest/design/designdoc/#chunk-addressing
+        for row, col in itertools.product(
+                xrange(rowstart-16, rowend+1),
+                xrange(colstart, colend+1)
+                ):
+            if row % 2 != col % 2:
+                continue
+            
+            chunkx, chunky = unconvert_coords(col, row)
+
+            regionx_ = chunkx//32
+            regiony_ = chunky//32
+            if regionx_ != regionx or regiony_ != regiony:
+                regionx = regionx_
+                regiony = regiony_
+                _, _, fname, mcr = get_region((regionx, regiony),(None,None,None,None))
+                
+            if fname is not None and self.regionobj.chunk_exists(chunkx,chunky):
+                chunklist.append((col, row, chunkx, chunky, mcr))
+                    
+        return chunklist
 
 def get_dirdepth(outputdir):
     """Returns the current depth of the tree on disk
