@@ -75,24 +75,6 @@ def get_blockarray(level):
     Block array, which just contains all the block ids"""
     return level['Blocks']
 
-def get_blockarray_fromfile(filename, north_direction='lower-left'):
-    """Same as get_blockarray except takes a filename. This is a shortcut"""
-    d = nbt.load_from_region(filename, x, y, north_direction)
-    level = d[1]['Level']
-    chunk_data = level
-    rots = 0
-    if self.north_direction == 'upper-left':
-        rots = 1
-    elif self.north_direction == 'upper-right':
-        rots = 2
-    elif self.north_direction == 'lower-right':
-        rots = 3
-
-    chunk_data['Blocks'] = numpy.rot90(numpy.frombuffer(
-            level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
-            rots)
-    return get_blockarray(chunk_data)
-
 def get_skylight_array(level):
     """Returns the skylight array. This is 4 bits per block, but it is
     expanded for you so you may index it normally."""
