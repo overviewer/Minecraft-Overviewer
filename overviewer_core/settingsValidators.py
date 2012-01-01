@@ -5,12 +5,18 @@ import os.path
 class ValidationException(Exception):
     pass
 
-def validatePath(path):
-    if not os.path.exists(path):
-        raise ValidationException("%r does not exist" % path)
-    if not os.path.isdir(path):
-        raise ValidationException("%r is not a directory" % path)
-    return os.path.abspath(path)
+def validateWorldPath(path):
+    try:
+        if not os.path.exists(path):
+            raise ValidationException("%r does not exist" % path)
+        if not os.path.isdir(path):
+            raise ValidationException("%r is not a directory" % path)
+    except ValidationException, e
+        # TODO assume this is the name of a world and try
+        # to find it
+        raise e
+    full_path = os.path.abspath(path)
+    return full_path
 
 def validateRenderMode(mode):
     # TODO get list of valid rendermodes

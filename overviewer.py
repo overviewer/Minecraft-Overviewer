@@ -292,12 +292,22 @@ def main():
     #    parser.advanced_help()
     #    doExit(code=0, consoleMsg=False)
 
-    if len(args) < 1:
+    # TODO right now, we will not let users specify worlds to render on the command line.  
+    # TODO in the future, we need to also let worlds be specified on the command line
+
+    # for multiworld, we must specify the *outputdir* on the command line
+    if len(args) == 1:
+        logging.debug("Using %r as the output_directory", args[0])
+        destdir = os.path.expanduser(args[0])
+
+    elif len(args) < 1:
         logging.error("You need to give me your world number or directory")
         parser.print_help()
         list_worlds()
         doExit(code=1, consoleMsg=True)
-    worlddir = os.path.expanduser(args[0])
+    elif len(args) == 2: # TODO support this usecase
+        worlddir = os.path.expanduser(args[0])
+        destdir = os.path.expanduser(args[1])
 
     if len(args) > 2:
         # it's possible the user has a space in one of their paths but didn't properly escape it
@@ -310,92 +320,55 @@ def main():
 dir but you forgot to put quotes around the directory, since it contains spaces." % " ".join(args[start:end]))
                         doExit(code=1, consoleMsg=False)
 
-    if not os.path.exists(worlddir):
-        # world given is either world number, or name
-        worlds = world.get_worlds()
-        
-        # if there are no worlds found at all, exit now
-        if not worlds:
-            parser.print_help()
-            logging.error("Invalid world path")
-            doExit(code=1, consoleMsg=False)
-        
-        try:
-            worldnum = int(worlddir)
-            worlddir = worlds[worldnum]['path']
-        except ValueError:
-            # it wasn't a number or path, try using it as a name
-            try:
-                worlddir = worlds[worlddir]['path']
-            except KeyError:
-                # it's not a number, name, or path
-                parser.print_help()
-                logging.error("Invalid world name or path")
-                doExit(code=1, consoleMsg=False)
-        except KeyError:
-            # it was an invalid number
-            parser.print_help()
-            logging.error("Invalid world number")
-            doExit(code=1, consoleMsg=False)
     
-    # final sanity check for worlddir
-    if not os.path.exists(os.path.join(worlddir, 'level.dat')):
-        logging.error("Invalid world path -- does not contain level.dat")
-        doExit(code=1, consoleMsg=False)
-
-    if len(args) < 2:
-        logging.error("Where do you want to save the tiles?")
-        doExit(code=1, consoleMsg=False)
-    elif len(args) > 2:
-        parser.print_help()
-        logging.error("Sorry, you specified too many arguments")
-        doExit(code=1, consoleMsg=False)
-
-
-    destdir = os.path.expanduser(args[1])
     if options.display_config:
         # just display the config file and exit
         parser.display_config()
         doExit(code=0, consoleMsg=False)
 
 
-    if options.regionlist:
-        regionlist = map(str.strip, open(options.regionlist, 'r'))
-    else:
-        regionlist = None
+    # TODO regionlists are per-world
+    #if options.regionlist:
+    #    regionlist = map(str.strip, open(options.regionlist, 'r'))
+    #else:
+    #    regionlist = None
 
-    if options.imgformat:
-        if options.imgformat not in ('jpg','png'):
-            parser.error("Unknown imgformat!")
-        else:
-            imgformat = options.imgformat
-    else:
-        imgformat = 'png'
+    # TODO imgformat is per-world
+    #if options.imgformat:
+    #    if options.imgformat not in ('jpg','png'):
+    #        parser.error("Unknown imgformat!")
+    #    else:
+    #        imgformat = options.imgformat
+    #else:
+    #    imgformat = 'png'
 
-    if options.optimizeimg:
-        optimizeimg = int(options.optimizeimg)
-        optimizeimages.check_programs(optimizeimg)
-    else:
-        optimizeimg = None
+    # TODO optimzeimg is per-world
+    #if options.optimizeimg:
+    #    optimizeimg = int(options.optimizeimg)
+    #    optimizeimages.check_programs(optimizeimg)
+    #else:
+    #    optimizeimg = None
 
-    if options.north_direction:
-        north_direction = options.north_direction
-    else:
-        north_direction = 'auto'
+    # TODO north_direction is per-world
+    #if options.north_direction:
+    #    north_direction = options.north_direction
+    #else:
+    #    north_direction = 'auto'
 
-    if options.changelist:
-        try:
-            changefile = open(options.changelist,'w+')
-        except IOError as e:
-            logging.error("Unable to open file %s to use for changelist." % options.changelist)
-            logging.error("I/O Error: %s" % e.strerror)
-            doExit(code=1, consoleMsg=False)
+    # TODO reimplement changelists
+    #if options.changelist:
+    #    try:
+    #        changefile = open(options.changelist,'w+')
+    #    except IOError as e:
+    #        logging.error("Unable to open file %s to use for changelist." % options.changelist)
+    #        logging.error("I/O Error: %s" % e.strerror)
+    #        doExit(code=1, consoleMsg=False)
 
-    if options.changelist_format != "auto" and not options.changelist:
-        logging.error("changelist_format specified without changelist.")
-        doExit(code=1, consoleMsg=False)
-    if options.changelist_format == "auto":
-        options.changelist_format = "relative"
+    #if options.changelist_format != "auto" and not options.changelist:
+    #    logging.error("changelist_format specified without changelist.")
+    #    doExit(code=1, consoleMsg=False)
+    #if options.changelist_format == "auto":
+    #    options.changelist_format = "relative"
 
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
@@ -403,7 +376,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     
     # make sure that the textures can be found
     try:
-        textures.generate(path=options.textures_path)
+        #textures.generate(path=options.textures_path)
+        # TODO(agrif): your magic goes here
+        textures.generate(path=None)
     except IOError, e:
         logging.error(str(e))
         doExit(code=1, consoleMsg=False)
