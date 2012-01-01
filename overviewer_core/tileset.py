@@ -368,7 +368,7 @@ class TileSet(object):
         # tile.
         # For rendercheck mode 1, unconditionally render render-tiles, but
         # check if the given upper-tile needs rendering
-        if len(tileset) == self.treedepth:
+        if len(tilepath) == self.treedepth:
             # A render-tile
             self._render_rendertile(RenderTile.from_path(tilepath))
         else:
@@ -521,7 +521,7 @@ class TileSet(object):
         chunkcount = 0
         stime = time.time()
 
-        rendercheck = self.options['rendercheck']
+        rendercheck = self.options['renderchecks']
         rerender_prob = self.options['rerender_prob']
 
         # XXX TODO:
@@ -623,7 +623,8 @@ class TileSet(object):
                         continue
 
                     # Check mtimes and conditionally add tile to dirty set
-                    if compare_mtimes(chunkmtime, tile):
+                    print repr(tile)
+                    if compare_times(chunkmtime, tile):
                         dirty.add(tile.path)
 
         t = int(time.time()-stime)

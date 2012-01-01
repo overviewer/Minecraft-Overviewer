@@ -29,7 +29,7 @@ render = {
     "optimize-img": dict(required=False, validator=validateOptImg),
     "no-markers": dict(required=False, validator=bool),
     "texture-path": dict(required=False, validator=validateTexturePath),
-    "rendercheck": dict(required=False, validator=int, default=0),
+    "renderchecks": dict(required=False, validator=int, default=0),
     "rerender_prob": dict(required=False, validator=float, default=0),
     }
 
