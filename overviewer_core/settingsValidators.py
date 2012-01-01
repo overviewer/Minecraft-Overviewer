@@ -58,5 +58,10 @@ def validateBGColor(color):
 def validateOptImg(opt):
     return bool(opt)
 
-
+def valiateTexturePath(path):
+    # Expand user dir in directories strings
+    path = os.path.expanduser(path)
+    # TODO assert this path exists?
+    if options.web_assets_path:
+        options.web_assets_path = os.path.expanduser(options.web_assets_path)
 

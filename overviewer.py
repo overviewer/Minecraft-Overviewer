@@ -124,7 +124,7 @@ else:
     print "Please rebuild your c_overviewer module.  It is out of date!"
     doExit()
 
-from overviewer_core.configParser import ConfigOptionParser
+from optparse import OptionParser
 from overviewer_core import optimizeimages, world, quadtree
 from overviewer_core import googlemap, rendernode
 
@@ -205,35 +205,36 @@ def main():
     
     avail_rendermodes = c_overviewer.get_render_modes()
     avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right', 'auto']
-    
-    parser = ConfigOptionParser(usage=helptext, config="settings.py")
-    parser.add_option("-V", "--version", dest="version", helptext="Displays version information and then exits", action="store_true")
-    parser.add_option("-p", "--processes", dest="procs", helptext="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
-    parser.add_option("-z", "--zoom", dest="zoom", helptext="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", advanced=True)
-    parser.add_option("--regionlist", dest="regionlist", helptext="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
-    parser.add_option("--forcerender", dest="forcerender", helptext="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting it.", action="store_true")
-    parser.add_option("--stochastic-render", dest="stochastic_render", helptext="Rerender a non-updated tile randomly, with the given probability (between 0 and 1). Useful for incrementally updating a map with a new mode.", type="float", advanced=True, default=0.0, metavar="PROBABILITY")
-    parser.add_option("--rendermodes", dest="rendermode", helptext="Specifies the render types, separated by ',', ':', or '/'. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
-    parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", helptext="List available render modes and exit.", commandLineOnly=True)
-    parser.add_option("--rendermode-options", dest="rendermode_options", default={}, advanced=True, helptext="Used to specify options for different rendermodes.  Only useful in a settings.py file")
-    parser.add_option("--custom-rendermodes", dest="custom_rendermodes", default={}, advanced=True, helptext="Used to define custom rendermodes.  Only useful in a settings.py file")
-    parser.add_option("--imgformat", dest="imgformat", helptext="The image output format to use. Currently supported: png(default), jpg.", advanced=True )
-    parser.add_option("--imgquality", dest="imgquality", default=95, helptext="Specify the quality of image output when using imgformat=\"jpg\".", type="int", advanced=True)
-    parser.add_option("--bg-color", dest="bg_color", helptext="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", advanced=True, type="string", default="#1A1A1A")
-    parser.add_option("--optimize-img", dest="optimizeimg", helptext="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+advdef and 3 for pngcrush-advdef with more aggressive settings. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", advanced=True)
-    parser.add_option("--web-assets-hook", dest="web_assets_hook", helptext="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a MapGen object as its only argument.", action="store", metavar="FUNCTION", type="function", advanced=True)
-    parser.add_option("--web-assets-path", dest="web_assets_path", helptext="Specifies a non-standard web_assets directory to use. Files here will overwrite the default web assets.", metavar="PATH", type="string", advanced=True)
-    parser.add_option("--textures-path", dest="textures_path", helptext="Specifies a non-standard textures path, from which terrain.png and other textures are loaded.", metavar="PATH", type="string", advanced=True)
-    parser.add_option("--check-terrain", dest="check_terrain", helptext="Prints the location and hash of terrain.png, useful for debugging terrain.png problems", action="store_true", advanced=False, commandLineOnly=True)
-    parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, helptext="Print less output. You can specify this option multiple times.")
-    parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, helptext="Print more output. You can specify this option multiple times.")
-    parser.add_option("--skip-js", dest="skipjs", action="store_true", helptext="Don't output marker.js")
-    parser.add_option("--no-signs", dest="nosigns", action="store_true", helptext="Don't output signs to markers.js")
-    parser.add_option("--north-direction", dest="north_direction", action="store", helptext="Specifies which corner of the screen north will point to. Defaults to whatever the current map uses, or lower-left for new maps. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default="auto", choices=avail_north_dirs)
-    parser.add_option("--changelist", dest="changelist", action="store", helptext="Output list of changed tiles to file. If the file exists, its contents will be overwritten.",advanced=True)
-    parser.add_option("--changelist-format", dest="changelist_format", action="store", helptext="Output relative or absolute paths for --changelist. Only valid when --changelist is used", type="choice", default="auto", choices=["auto", "relative","absolute"],advanced=True)
-    parser.add_option("--display-config", dest="display_config", action="store_true", helptext="Display the configuration parameters, but don't render the map.  Requires all required options to be specified", commandLineOnly=True)
-    #parser.add_option("--write-config", dest="write_config", action="store_true", helptext="Writes out a sample config file", commandLineOnly=True)
+   
+    # revert to a vanilla OptionParser for right now 
+    parser = OptionParser(usage=helptext)
+    parser.add_option("-V", "--version", dest="version", help="Displays version information and then exits", action="store_true")
+    parser.add_option("-p", "--processes", dest="procs", help="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
+    #parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", advanced=True)
+    #parser.add_option("--regionlist", dest="regionlist", help="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
+    #parser.add_option("--forcerender", dest="forcerender", help="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting it.", action="store_true")
+    #parser.add_option("--stochastic-render", dest="stochastic_render", help="Rerender a non-updated tile randomly, with the given probability (between 0 and 1). Useful for incrementally updating a map with a new mode.", type="float", advanced=True, default=0.0, metavar="PROBABILITY")
+    #parser.add_option("--rendermodes", dest="rendermode", help="Specifies the render types, separated by ',', ':', or '/'. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
+    parser.add_option("--list-rendermodes", dest="list_rendermodes", action="store_true", help="List available render modes and exit.")
+    #parser.add_option("--rendermode-options", dest="rendermode_options", default={}, advanced=True, help="Used to specify options for different rendermodes.  Only useful in a settings.py file")
+    #parser.add_option("--custom-rendermodes", dest="custom_rendermodes", default={}, advanced=True, help="Used to define custom rendermodes.  Only useful in a settings.py file")
+    #parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg.", advanced=True )
+    #parser.add_option("--imgquality", dest="imgquality", default=95, help="Specify the quality of image output when using imgformat=\"jpg\".", type="int", advanced=True)
+    #parser.add_option("--bg-color", dest="bg_color", help="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", advanced=True, type="string", default="#1A1A1A")
+    #parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+advdef and 3 for pngcrush-advdef with more aggressive settings. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", advanced=True)
+    #parser.add_option("--web-assets-hook", dest="web_assets_hook", help="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a MapGen object as its only argument.", action="store", metavar="FUNCTION", type="function", advanced=True)
+    #parser.add_option("--web-assets-path", dest="web_assets_path", help="Specifies a non-standard web_assets directory to use. Files here will overwrite the default web assets.", metavar="PATH", type="string", advanced=True)
+    #parser.add_option("--textures-path", dest="textures_path", help="Specifies a non-standard textures path, from which terrain.png and other textures are loaded.", metavar="PATH", type="string", advanced=True)
+    parser.add_option("--check-terrain", dest="check_terrain", help="Prints the location and hash of terrain.png, useful for debugging terrain.png problems", action="store_true")
+    parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
+    parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, help="Print more output. You can specify this option multiple times.")
+    #parser.add_option("--skip-js", dest="skipjs", action="store_true", help="Don't output marker.js")
+    #parser.add_option("--no-signs", dest="nosigns", action="store_true", help="Don't output signs to markers.js")
+    #parser.add_option("--north-direction", dest="north_direction", action="store", help="Specifies which corner of the screen north will point to. Defaults to whatever the current map uses, or lower-left for new maps. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default="auto", choices=avail_north_dirs)
+    #parser.add_option("--changelist", dest="changelist", action="store", help="Output list of changed tiles to file. If the file exists, its contents will be overwritten.",advanced=True)
+    #parser.add_option("--changelist-format", dest="changelist_format", action="store", help="Output relative or absolute paths for --changelist. Only valid when --changelist is used", type="choice", default="auto", choices=["auto", "relative","absolute"],advanced=True)
+    parser.add_option("--display-config", dest="display_config", action="store_true", help="Display the configuration parameters, but don't render the map.  Requires all required options to be specified")
+    #parser.add_option("--write-config", dest="write_config", action="store_true", help="Writes out a sample config file", commandLineOnly=True)
 
     options, args = parser.parse_args()
 
@@ -257,18 +258,13 @@ def main():
     # setup c_overviewer rendermode customs / options
     for mode in builtin_custom_rendermodes:
         c_overviewer.add_custom_render_mode(mode, builtin_custom_rendermodes[mode])
-    for mode in options.custom_rendermodes:
-        c_overviewer.add_custom_render_mode(mode, options.custom_rendermodes[mode])
-    for mode in options.rendermode_options:
-        c_overviewer.set_render_mode_options(mode, options.rendermode_options[mode])
+    # TODO allow custom rendermodes to be specified in a settings.py file
+    #for mode in options.custom_rendermodes:
+    #    c_overviewer.add_custom_render_mode(mode, options.custom_rendermodes[mode])
+    #for mode in options.rendermode_options:
+    #    c_overviewer.set_render_mode_options(mode, options.rendermode_options[mode])
     
     
-    # Expand user dir in directories strings
-    if options.textures_path:
-        options.textures_path = os.path.expanduser(options.textures_path)
-    if options.web_assets_path:
-        options.web_assets_path = os.path.expanduser(options.web_assets_path)
-        
     
     if options.list_rendermodes:
         list_rendermodes()
@@ -290,10 +286,11 @@ def main():
         h.update(f.read())
         logging.info("Hash of terrain.png file is: `%s`", h.hexdigest())
         doExit(code=0, consoleMsg=False)
-        
-    if options.advanced_help:
-        parser.advanced_help()
-        doExit(code=0, consoleMsg=False)
+    
+    # TODO remove advanced help?  needs discussion
+    #if options.advanced_help:
+    #    parser.advanced_help()
+    #    doExit(code=0, consoleMsg=False)
 
     if len(args) < 1:
         logging.error("You need to give me your world number or directory")
@@ -567,6 +564,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception, e:
+        print e
         if e.args[0] == "Exiting":
             logging.info("Exiting...")
             doExit(code=0, wait=False)

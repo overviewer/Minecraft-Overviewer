@@ -26,5 +26,6 @@ render = {
     "bg-color": dict(required=False, validator=validateBGColor),
     "optimize-img": dict(required=False, validator=validateOptImg),
     "no-markers": dict(required=False, validator=bool),
+    "texture-path": dict(required=False, validator=validateTexturePath),
     }
 
