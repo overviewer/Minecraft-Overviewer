@@ -19,11 +19,13 @@ import os
 import os.path
 import shutil
 import random
+import functools
+import time
 from collections import namedtuple
 
 from PIL import Image
 
-from .util import iterate_base4, convert_coords
+from .util import iterate_base4, convert_coords, unconvert_coords
 from .optimizeimages import optimize_image
 
 """
@@ -276,8 +278,8 @@ class TileSet(object):
             # Y has 4 times as many chunks as tiles, then halved since this is
             # a radius
             yradius = 2*2**p
-            if xradius >= bounds.maxcol and -xradius <= bounds.mincol and \
-                    yradius >= bounds.maxrow and -yradius <= bounds.minrow:
+            if xradius >= self.bounds.maxcol and -xradius <= self.bounds.mincol and \
+                    yradius >= self.bounds.maxrow and -yradius <= self.bounds.minrow:
                 break
 
         if p >= 15:
@@ -417,15 +419,15 @@ class TileSet(object):
             logging.critical("Could not determine existing tile tree depth. Does it exist?")
             raise
         
-        if self.treedepth != cur_depth:
+        if self.treedepth != curdepth:
             if self.treedepth > curdepth:
                 logging.warning("Your map seems to have expanded beyond its previous bounds.")
                 logging.warning( "Doing some tile re-arrangements... just a sec...")
-                for _ in xrange(self.p-curdepth):
+                for _ in xrange(self.treedepth-curdepth):
                     self._increase_depth()
-            elif self.p < curdepth:
+            elif self.treedepth < curdepth:
                 logging.warning("Your map seems to have shrunk. Did you delete some chunks? No problem. Re-arranging tiles, just a sec...")
-                for _ in xrange(curdepth - self.p):
+                for _ in xrange(curdepth - self.treedepth):
                     self._decrease_depth()
 
     def _increase_depth(self):
@@ -559,7 +561,7 @@ class TileSet(object):
                 max_chunk_mtime = chunkmtime
             
             # Convert to diagonal coordinates
-            chunkcol, chunkrow = util.convert_coords(chunkx, chunkz)
+            chunkcol, chunkrow = convert_coords(chunkx, chunkz)
 
             # find tile coordinates. Remember tiles are identified by the
             # address of the chunk in their upper left corner.
@@ -832,7 +834,6 @@ class TileSet(object):
 
         chunklist = []
 
-        unconvert_coords = util.unconvert_coords
         get_region = self.regionobj.regionfiles.get
 
         # Cached region object for consecutive iterations

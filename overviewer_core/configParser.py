@@ -247,7 +247,16 @@ class MultiWorldParser(object):
         # anything that's not 'render' or 'custom_rendermode' is a default
         del glob['render']
         del glob['custom_rendermodes']
-        self.defaults = glob
+
+        # seed with the Overviewer defaults, then update with the user defaults
+        self.defaults = dict()
+        for key in settingsDefinition.render:
+            option = settingsDefinition.render[key]
+            if option.has_key("default"):
+                self.defaults[key] = option.get("default")
+            
+        self.defaults.update(glob)
+
         
         import pprint
         pprint.pprint(glob, indent=2)

@@ -127,6 +127,7 @@ else:
 from optparse import OptionParser
 from overviewer_core import optimizeimages, world, quadtree
 from overviewer_core import googlemap, rendernode
+from overviewer_core import configParser, tileset, assetmanager, dispatcher
 
 # definitions of built-in custom modes
 # usually because what used to be a mode became an option
@@ -382,7 +383,46 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     except IOError, e:
         logging.error(str(e))
         doExit(code=1, consoleMsg=False)
-    
+
+    # look at our settings.py file
+    mw_parser = configParser.MultiWorldParser("settings.py")
+    mw_parser.parse()
+    mw_parser.validate()
+
+    # create our asset manager... ASSMAN
+    assetMrg = assetmanager.AssetManager(destdir)
+
+    render_things = mw_parser.get_render_things()
+    tilesets = []
+    for render_name in render_things:
+        render = render_things[render_name]
+        logging.debug("Found the following render thing: %r", render)
+
+        w = world.World(render['world_path'])
+
+        # if no dimension has been specified, just use the first one
+        # TODO support the case where a different dimension is specified
+        rset = w.get_regionset(2)
+        logging.debug("Using RegionSet %r", rset) 
+
+        # create our TileSet from this RegionSet
+        tileset_dir = os.path.abspath(os.path.join(destdir, render_name))
+        print "tileset_dir: %r" % tileset_dir
+        if not os.path.exists(tileset_dir):
+            os.mkdir(tileset_dir)
+        tset = tileset.TileSet(rset, assetMrg, render, tileset_dir)
+        tilesets.append(tset)
+
+   
+    # non-multiprocessing dispatcher
+    dispatch = dispatcher.Dispatcher()
+    def print_status(*args):
+        logging.info("Status callback: %r", args)
+    dispatch.render_all(tilesets, print_status)
+
+
+    sys.exit("early abort")
+ 
     # First do world-level preprocessing. This scans the world hierarchy, reads
     # in the region files and caches chunk modified times, and determines the
     # chunk bounds (max and min in both dimensions)

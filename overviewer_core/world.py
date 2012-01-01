@@ -83,7 +83,6 @@ class World(object):
 
         for root, dirs, files in os.walk(self.worlddir):
             # any .mcr files in this directory?
-            print "looking in", root
             mcrs = filter(lambda x: x.endswith(".mcr"), files)
             if mcrs:
                 # construct a regionset object for this
@@ -123,7 +122,8 @@ class World(object):
  
     def get_regionsets(self):
         return self.regionsets
-
+    def get_regionset(self, index):
+        return self.regionsets[index]
       
         
         
@@ -216,6 +216,9 @@ but may be several per invocation of the Overviewer in the case of multi-world.
         self.chunkcount = 0
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
+
+    def __repr__(self):
+        return "<RegionSet regiondir=%r>" % self.regiondir
 
     def get_region_path(self, chunkX, chunkY):
         """Returns the path to the region that contains chunk (chunkX, chunkY)

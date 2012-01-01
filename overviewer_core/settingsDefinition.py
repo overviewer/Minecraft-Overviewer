@@ -14,6 +14,8 @@
 from settingsValidators import *
 
 
+# note that all defaults go thought the validator
+
 render = {
     "world_path": dict(required=True, validator=validateWorldPath),
     "rendermode": dict(required=False, validator=validateRenderMode),
@@ -21,11 +23,13 @@ render = {
     "render-range": dict(required=False, validator=validateRenderRange),
     "force-render": dict(required=False, validator=bool),
     "stochastic-render": dict(required=False, validator=validateStochastic),
-    "imgformat": dict(required=False, validator=validateImgFormat),
+    "imgformat": dict(required=False, validator=validateImgFormat, default="png"),
     "imgquality": dict(required=False, validator=validateImgQuality),
     "bg-color": dict(required=False, validator=validateBGColor),
     "optimize-img": dict(required=False, validator=validateOptImg),
     "no-markers": dict(required=False, validator=bool),
     "texture-path": dict(required=False, validator=validateTexturePath),
+    "rendercheck": dict(required=False, validator=int, default=0),
+    "rerender_prob": dict(required=False, validator=float, default=0),
     }
 

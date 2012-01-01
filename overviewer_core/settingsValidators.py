@@ -11,7 +11,7 @@ def validateWorldPath(path):
             raise ValidationException("%r does not exist" % path)
         if not os.path.isdir(path):
             raise ValidationException("%r is not a directory" % path)
-    except ValidationException, e
+    except ValidationException, e:
         # TODO assume this is the name of a world and try
         # to find it
         raise e
@@ -64,10 +64,8 @@ def validateBGColor(color):
 def validateOptImg(opt):
     return bool(opt)
 
-def valiateTexturePath(path):
+def validateTexturePath(path):
     # Expand user dir in directories strings
     path = os.path.expanduser(path)
     # TODO assert this path exists?
-    if options.web_assets_path:
-        options.web_assets_path = os.path.expanduser(options.web_assets_path)
 
