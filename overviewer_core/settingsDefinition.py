@@ -15,8 +15,8 @@ from settingsValidators import *
 
 
 render = {
-    "path": dict(required=True, validator=validatePath),
-    "rendermodes": dict(required=False, validator=validateRenderMode),
+    "world_path": dict(required=True, validator=validatePath),
+    "rendermode": dict(required=False, validator=validateRenderMode),
     "north-direction": dict(required=False, validator=validateNorthDirection),
     "render-range": dict(required=False, validator=validateRenderRange),
     "force-render": dict(required=False, validator=bool),

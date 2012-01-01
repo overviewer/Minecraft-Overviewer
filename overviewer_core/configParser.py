@@ -224,7 +224,10 @@ class MultiWorldParser(object):
         glob = dict(render=dict(), custom_rendermodes=dict())
 
         try:
-            execfile(self.settings_file, glob, glob)
+            execfile(self.settings_file, glob, glob)    
+            # delete the builtins, we don't need it
+            del glob['__builtins__']
+        
         except NameError, ex:
             import traceback
             traceback.print_exc()
@@ -240,18 +243,25 @@ class MultiWorldParser(object):
 
         self.render = glob['render']
         self.custom_rendermodes = glob['custom_rendermodes']
-        #import pprint
-        #pprint.pprint(glob, indent=2)
+
+        # anything that's not 'render' or 'custom_rendermode' is a default
+        del glob['render']
+        del glob['custom_rendermodes']
+        self.defaults = glob
+        
+        import pprint
+        pprint.pprint(glob, indent=2)
 
     def validate(self):
 
 
         for worldname in self.render:
             world = self.render[worldname]
+            world.update(self.defaults)
         
             for key in world:
                 if key not in settingsDefinition.render:
-                    print "Warning: %r is not a known setting"
+                    print "Warning: %r is not a known setting" % key
                     next
                
                 definition = settingsDefinition.render[key]
