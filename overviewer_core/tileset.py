@@ -500,7 +500,9 @@ class TileSet(object):
             try:
                 os.unlink(getpath(f))
             except OSError, e:
-                pass # doesn't exist maybe?
+                # Ignore file doesn't exist errors
+                if e.errno != errno.ENOENT:
+                    raise
 
     def _chunk_scan(self):
         """Scans the chunks of this TileSet's world to determine which
@@ -677,36 +679,54 @@ class TileSet(object):
                     ((192,192),os.path.join(dest, name, "3." + imgformat)),
                     ]
 
-        # stat the tile, we need to know if it exists and its mtime
-        try:
-            tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
-        except OSError, e:
-            if e.errno != errno.ENOENT:
-                raise
-            tile_mtime = None
-            
-        #check mtimes on each part of the quad, this also checks if they exist
+        # If renderchecks mode is 0 or 2, the tile exists and we DO need to
+        # render it; the mtime checks have already been done.
+        # For renderchecks mode 1, we must check if this tile needs to exist
+        # and check whether we should render it.
+        check_tile = self.options['renderchecks'] == 1
+
+        # Check each of the 4 child tiles, getting their existance and mtime
+        # infomation. Also keep track of the max mtime of all children
         max_mtime = 0
-        needs_rerender = (tile_mtime is None) or self.options['renderchecks'] == 1
         quadPath_filtered = []
         for path in quadPath:
             try:
                 quad_mtime = os.stat(path[1])[stat.ST_MTIME]
-                quadPath_filtered.append(path)
-                if quad_mtime > tile_mtime:
-                    needs_rerender = True
-                max_mtime = max(max_mtime, quad_mtime)
             except OSError:
-                # We need to stat all the quad files, so keep looping
-                pass
-        # do they all not exist?
+                # This tile doesn't exist or some other error with the stat
+                # call. Move on.
+                continue
+            # The tile exists, so we need to use it in our rendering of this
+            # composite tile
+            quadPath_filtered.append(path)
+            if quad_mtime > max_mtime:
+                max_mtime = quad_mtime
+
+        # If no children exist, delete this tile
         if not quadPath_filtered:
-            if tile_mtime is not None:
+            try:
                 os.unlink(imgpath)
+            except OSError, e:
+                # Ignore errors if it's "file doesn't exist"
+                if e.errno != errno.ENOENT:
+                    raise
+            if check_tile:
+                logging.warning("Tile %s was requested for render, but no children were found! This is probably a bug", imgpath)
             return
-        # quit now if we don't need rerender
-        if not needs_rerender:
-            return
+
+        # Check if we should actually be rendering this tile
+        if check_tile:
+            # stat the tile, we need to know its mtime
+            try:
+                tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
+            except OSError, e:
+                if e.errno != errno.ENOENT:
+                    raise
+                tile_mtime = 0
+            # Abort the render if the tile is newer than all its children
+            if tile_mtime >= max_mtime:
+                return
+            
         #logging.debug("writing out compositetile {0}".format(imgpath))
 
         # Create the actual image now
