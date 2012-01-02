@@ -151,7 +151,7 @@ class TileSet(object):
 
     """
 
-    def __init__(self, regionsetobj, assetmanagerobj, options, outputdir):
+    def __init__(self, regionsetobj, assetmanagerobj, texturesobj, options, outputdir):
         """Construct a new TileSet object with the given configuration options
         dictionary.
 
@@ -162,6 +162,9 @@ class TileSet(object):
 
         assetmanagerobj is the AssetManager object that represents the
         destination directory where we'll put our tiles.
+
+        texturesobj is the Textures object to pass into the rendering routine.
+        This class does nothing with it except pass it through.
 
         outputdir is the absolute path to the tile output directory where the
         tiles are saved. It is assumed to exist already.
@@ -241,6 +244,7 @@ class TileSet(object):
         self.options = options
         self.regionset = regionsetobj
         self.am = assetmanagerobj
+        self.textures = texturesobj
 
         # Throughout the class, self.outputdir is an absolute path to the
         # directory where we output tiles. It is assumed to exist.
@@ -744,7 +748,8 @@ class TileSet(object):
         imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
 
         # Calculate which chunks are relevant to this tile
-        chunks = self._get_chunks_for_tile(tile)
+        # This is a list of (col, row, chunkx, chunkz, chunk_mtime)
+        chunks = list(self._get_chunks_for_tile(tile))
 
         region = self.regionobj
 
@@ -784,15 +789,6 @@ class TileSet(object):
                 if e.errno != errno.EEXIST:
                     raise
 
-        # Compute the maximum mtime of all the chunks that go into this tile.
-        # At the end, we'll set the tile's mtime to this value.
-        max_chunk_mtime = 0
-        for col,row,chunkx,chunky,region in chunks:
-            max_chunk_mtime = max(
-                    max_chunk_mtime,
-                    region.get_chunk_timestamp(chunkx, chunky)
-                    )
-
         #logging.debug("writing out worldtile {0}".format(imgpath))
 
         # Compile this image
@@ -803,17 +799,16 @@ class TileSet(object):
         rowstart = tile.row
         # col colstart will get drawn on the image starting at x coordinates -(384/2)
         # row rowstart will get drawn on the image starting at y coordinates -(192/2)
-        for col, row, chunkx, chunky, region in chunks:
+        max_chunk_mtime = 0
+        for col, row, chunkx, chunky, chunk_mtime in chunks:
             xpos = -192 + (col-colstart)*192
             ypos = -96 + (row-rowstart)*96
 
+            if chunk_mtime > max_chunk_mtime:
+                max_chunk_mtime = chunk_mtime
+
             # draw the chunk!
-            try:
-                a = chunk.ChunkRenderer((chunkx, chunky), self.regionobj, rendermode, poi_queue)
-                a.chunk_render(tileimg, xpos, ypos, None)
-            except chunk.ChunkCorrupt:
-                # an error was already printed
-                pass
+            # TODO RENDER THE CHUNK
         
         # Save them
         if self.imgformat == 'jpg':
@@ -829,19 +824,11 @@ class TileSet(object):
     def _get_chunks_for_tile(self, tile):
         """Get chunks that are relevant to the given render-tile
         
-        Returns a list of chunks where each item is
-        (col, row, chunkx, chunky, regionobj)
+        Returns an iterator over chunks tuples where each item is
+        (col, row, chunkx, chunkz, mtime)
         """
 
         chunklist = []
-
-        get_region = self.regionobj.regionfiles.get
-
-        # Cached region object for consecutive iterations
-        regionx = None
-        regiony = None
-        c = None
-        mcr = None
 
         rowstart = tile.row
         rowend = rowstart+4
@@ -858,19 +845,14 @@ class TileSet(object):
             if row % 2 != col % 2:
                 continue
             
-            chunkx, chunky = unconvert_coords(col, row)
+            chunkx, chunkz = unconvert_coords(col, row)
 
-            regionx_ = chunkx//32
-            regiony_ = chunky//32
-            if regionx_ != regionx or regiony_ != regiony:
-                regionx = regionx_
-                regiony = regiony_
-                _, _, fname, mcr = get_region((regionx, regiony),(None,None,None,None))
-                
-            if fname is not None and self.regionobj.chunk_exists(chunkx,chunky):
-                chunklist.append((col, row, chunkx, chunky, mcr))
+            # Query for info on the chunk at chunkx, chunkz
+            mtime = self.regionset.get_chunk_mtime(chunkx, chunkz)
+            if mtime:
+                # The chunk exists
+                yield (col, row, chunkx, chunkz, mtime)
                     
-        return chunklist
 
 def get_dirdepth(outputdir):
     """Returns the current depth of the tree on disk
