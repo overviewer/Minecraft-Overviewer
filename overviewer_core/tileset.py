@@ -504,12 +504,14 @@ class TileSet(object):
         render-tiles need rendering. Returns a RendertileSet object.
 
         For rendercheck mode 0: only compares chunk mtimes against last render
-        time of the map
+        time of the map, and marks tiles as dirty if any chunk has a greater
+        mtime than the last render time.
 
         For rendercheck mode 1: compares chunk mtimes against the tile mtimes
-        on disk, and also builds a tileset of every tile
+        on disk, doing a stat call for each tile.
 
-        For rendercheck mode 2: marks every tile, does not check any mtimes.
+        For rendercheck mode 2: marks every tile in the tileset
+        unconditionally, does not check any mtimes.
 
         As a side-effect, the scan sets self.max_chunk_mtime to the max of all
         the chunks' mtimes
@@ -535,12 +537,13 @@ class TileSet(object):
 
         if rendercheck == 0:
             def compare_times(chunkmtime, tileobj):
-                # Compare chunk mtime to last render time
+                # Compare chunk mtime to last render time, don't look at tile
+                # mtime on disk
                 return chunkmtime > last_rendertime
         elif rendercheck == 1:
             def compare_times(chunkmtime, tileobj):
                 # Compare chunk mtime to tile mtime on disk
-                tile_path = tile.get_filepath(self.full_tiledir, self.imgformat)
+                tile_path = tileobj.get_filepath(self.full_tiledir, self.imgformat)
                 try:
                     tile_mtime = os.stat(tile_path)[stat.ST_MTIME]
                 except OSError, e:
@@ -549,6 +552,7 @@ class TileSet(object):
                     # File doesn't exist. Render it.
                     return True
 
+                # Render if chunks are newer than the tile
                 return chunkmtime > tile_mtime
                 
 
@@ -606,7 +610,8 @@ class TileSet(object):
                     tile = RenderTile.compute_path(c, r, depth)
 
                     if rendercheck == 2:
-                        # Skip all other checks, mark tiles as dirty unconditionally
+                        # forcerender mode: Skip all other checks, mark tiles
+                        # as dirty unconditionally
                         dirty.add(tile.path)
                         continue
 
@@ -627,7 +632,6 @@ class TileSet(object):
                         continue
 
                     # Check mtimes and conditionally add tile to dirty set
-                    print repr(tile)
                     if compare_times(chunkmtime, tile):
                         dirty.add(tile.path)
 
