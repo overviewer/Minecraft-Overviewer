@@ -710,7 +710,7 @@ class TileSet(object):
                 # Ignore errors if it's "file doesn't exist"
                 if e.errno != errno.ENOENT:
                     raise
-            if check_tile:
+            if not check_tile:
                 logging.warning("Tile %s was requested for render, but no children were found! This is probably a bug", imgpath)
             return
 
