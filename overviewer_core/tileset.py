@@ -27,6 +27,7 @@ from PIL import Image
 
 from .util import iterate_base4, convert_coords, unconvert_coords
 from .optimizeimages import optimize_image
+import c_overviewer
 
 """
 
@@ -812,7 +813,7 @@ class TileSet(object):
                 max_chunk_mtime = chunk_mtime
 
             # draw the chunk!
-            c_renderer.render_loop(self.regionset, chunkx, chunkz, tileimg,
+            c_overviewer.render_loop(self.regionset, chunkx, chunkz, tileimg,
                     xpos, ypos, self.options['rendermode'], self.textures)
         
         # Save them
