@@ -268,19 +268,19 @@ its x, z coordinates. The coordinates are chunk coordinates.
     def rotate(self, north_direction):
         return RotatedRegionSet(self.worldobj, self.regiondir, north_direction)
     
-    def iterate_chunks(self, north_dir):
+    def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates over tuples
 of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
 
 Old name: world.iterate_chunk_metadata
 """
 
-        for regionx, regiony, regionfile in self.regionfiles.itervalues():
+        for (regionx, regiony), regionfile in self.regionfiles.iteritems():
             mcr = nbt.load_region(regionfile)
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
-    def get_chunk_mtime(self, x, z, north_dir):
+    def get_chunk_mtime(self, x, zr):
         """Returns a chunk’s mtime, or False if the chunk does not exist.
 This is therefore a dual purpose method. It corrects for the given north
 direction as described in the docs for get_chunk()"""
