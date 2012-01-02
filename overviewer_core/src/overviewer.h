@@ -93,7 +93,7 @@ typedef struct {
     PyObject *left_blocks;
     PyObject *right_blocks;
 } RenderState;
-PyObject *init_chunk_render(PyObject *self, PyObject *args);
+PyObject *init_chunk_render(void);
 PyObject *chunk_render(PyObject *self, PyObject *args);
 typedef enum
 {

@@ -29,7 +29,7 @@ static PyObject *solid_blocks = NULL;
 static PyObject *fluid_blocks = NULL;
 static PyObject *nospawn_blocks = NULL;
 
-PyObject *init_chunk_render(PyObject *self, PyObject *args) {
+PyObject *init_chunk_render(void) {
    
     PyObject *tmp = NULL;
     unsigned int i;

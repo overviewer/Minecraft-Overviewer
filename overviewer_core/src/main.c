@@ -30,8 +30,6 @@ static PyMethodDef COverviewerMethods[] = {
     {"alpha_over", alpha_over_wrap, METH_VARARGS,
      "alpha over composite function"},
     
-    {"init_chunk_render", init_chunk_render, METH_VARARGS,
-     "Initializes the stuffs renderer."},
     {"render_loop", chunk_render, METH_VARARGS,
      "Renders stuffs"},
     
@@ -63,6 +61,13 @@ initc_overviewer(void)
 
     /* for numpy */
     import_array();
+
+    /* initialize, and return if error is set */
+    if (!init_chunk_render()) {
+        PyErr_Print();
+        exit(1);
+        return;
+    }
     
     /* create the render mode data structures, and attatch them to the module
      * so that the Python garbage collector doesn't freak out

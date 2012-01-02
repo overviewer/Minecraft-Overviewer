@@ -14,7 +14,7 @@ class SettingsTest(unittest.TestCase):
         s.validate()
         things = s.get_render_things()
         # no exceptions so far.  that's good
-        self.assertEquals(things['world']['bgcolor'], (26,26,26))
+        self.assertEquals(things['world']['bgcolor'], (26,26,26,0))
 
     def test_rendermode_validation(self):
         s = configParser.MultiWorldParser("test/data/settings/settings_test_rendermode.py")
