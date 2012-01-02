@@ -125,28 +125,28 @@ else:
     doExit()
 
 from optparse import OptionParser
-from overviewer_core import optimizeimages, world, quadtree
-from overviewer_core import googlemap, rendernode
+from overviewer_core import optimizeimages, world
+from overviewer_core import googlemap
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
 
 # definitions of built-in custom modes
 # usually because what used to be a mode became an option
 # for example, night mode
-builtin_custom_rendermodes = {
-    'night' : {
-        'parent' : 'lighting',
-        'label' : 'Night',
-        'description' : 'like "lighting", except at night',
-        'options' : {'night' : True}
-    },
+builtin_custom_rendermodes = {}
+#     'night' : {
+#         'parent' : 'lighting',
+#         'label' : 'Night',
+#         'description' : 'like "lighting", except at night',
+#         'options' : {'night' : True}
+#     },
 
-    'smooth-night' : {
-        'parent' : 'smooth-lighting',
-        'label' : 'Smooth Night',
-        'description' : 'like "lighting", except smooth and at night',
-        'options' : {'night' : True}
-    },
-}
+#     'smooth-night' : {
+#         'parent' : 'smooth-lighting',
+#         'label' : 'Smooth Night',
+#         'description' : 'like "lighting", except smooth and at night',
+#         'options' : {'night' : True}
+#     },
+# }
 
 helptext = """
 %prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
@@ -378,8 +378,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # make sure that the textures can be found
     try:
         #textures.generate(path=options.textures_path)
-        # TODO(agrif): your magic goes here
-        textures.generate(path=None)
+        tex = textures.Textures()
+        tex.generate()
     except IOError, e:
         logging.error(str(e))
         doExit(code=1, consoleMsg=False)
@@ -402,7 +402,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # if no dimension has been specified, just use the first one
         # TODO support the case where a different dimension is specified
-        rset = w.get_regionset(2)
+        rset = w.get_regionset(0)
         logging.debug("Using RegionSet %r", rset) 
 
         # create our TileSet from this RegionSet
@@ -410,7 +410,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         print "tileset_dir: %r" % tileset_dir
         if not os.path.exists(tileset_dir):
             os.mkdir(tileset_dir)
-        tset = tileset.TileSet(rset, assetMrg, render, tileset_dir)
+        tset = tileset.TileSet(rset, assetMrg, tex, render, tileset_dir)
         tilesets.append(tset)
 
    
