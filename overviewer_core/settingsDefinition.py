@@ -17,19 +17,19 @@ from settingsValidators import *
 # note that all defaults go thought the validator
 
 render = {
-    "world_path": dict(required=True, validator=validateWorldPath),
+    "worldpath": dict(required=True, validator=validateWorldPath),
     "rendermode": dict(required=False, validator=validateRenderMode),
-    "north-direction": dict(required=False, validator=validateNorthDirection),
-    "render-range": dict(required=False, validator=validateRenderRange),
-    "force-render": dict(required=False, validator=bool),
-    "stochastic-render": dict(required=False, validator=validateStochastic),
+    "northdirection": dict(required=False, validator=validateNorthDirection),
+    "renderrange": dict(required=False, validator=validateRenderRange),
+    "forcerender": dict(required=False, validator=bool),
+    "stochasticrender": dict(required=False, validator=validateStochastic),
     "imgformat": dict(required=False, validator=validateImgFormat, default="png"),
     "imgquality": dict(required=False, validator=validateImgQuality),
-    "bg-color": dict(required=False, validator=validateBGColor),
-    "optimize-img": dict(required=False, validator=validateOptImg),
-    "no-markers": dict(required=False, validator=bool),
-    "texture-path": dict(required=False, validator=validateTexturePath),
+    "bgcolor": dict(required=False, validator=validateBGColor, default="1a1a1a"),
+    "optimizeimg": dict(required=False, validator=validateOptImg, default=0),
+    "nomarkers": dict(required=False, validator=bool),
+    "texturepath": dict(required=False, validator=validateTexturePath),
     "renderchecks": dict(required=False, validator=int, default=0),
-    "rerender_prob": dict(required=False, validator=float, default=0),
+    "rerenderprob": dict(required=False, validator=float, default=0),
     }
 

@@ -276,6 +276,7 @@ class MultiWorldParser(object):
                 definition = settingsDefinition.render[key]
                 try:
                     val = definition['validator'](world[key])
+                    world[key] = val
                 except Exception as e:
                     print "Error: %r" % e
                     next

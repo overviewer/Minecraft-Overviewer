@@ -529,7 +529,7 @@ class TileSet(object):
         stime = time.time()
 
         rendercheck = self.options['renderchecks']
-        rerender_prob = self.options['rerender_prob']
+        rerender_prob = self.options['rerenderprob']
 
         # XXX TODO:
         last_rendertime = 0 # TODO

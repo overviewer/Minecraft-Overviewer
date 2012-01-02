@@ -1,9 +1,9 @@
-world_path="test/data/settings/test_world"
+worldpath="test/data/settings/test_world"
 rendermode = "normal"
 
 render["world"] = { 
     "rendermode": "normal",
-    "north-direction": ["upper-left"],
+    "northdirection": ["upper-left"],
 }
 
 render["otherworld"] = {

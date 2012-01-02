@@ -398,7 +398,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         render = render_things[render_name]
         logging.debug("Found the following render thing: %r", render)
 
-        w = world.World(render['world_path'])
+        w = world.World(render['worldpath'])
 
         # if no dimension has been specified, just use the first one
         # TODO support the case where a different dimension is specified
