@@ -222,16 +222,20 @@ but may be several per invocation of the Overviewer in the case of multi-world.
         regionfile = self.regionfiles.get((chunkX//32, chunkY//32),None)
         return regionfile
             
-    def get_chunk(self,x, y):
+    def get_chunk(self,x, z):
         """Returns a dictionary representing the top-level NBT Compound for a chunk given
         its x, z coordinates. The coordinates are chunk coordinates.
         """
 
-        regionfile = self.get_region_path(x,y)
+        regionfile = self.get_region_path(x, z)
         if regionfile is None:
             return None
 
-        data = nbt.load_region(regionfile)
+        region = nbt.load_region(regionfile)
+        data = region.load_chunk(x, z)
+        region.close()
+        if data is None:
+            return None
 
         level = data[1]['Level']
         chunk_data = level
