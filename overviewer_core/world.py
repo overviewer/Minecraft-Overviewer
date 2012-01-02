@@ -28,7 +28,6 @@ import time
 
 import numpy
 
-import chunk
 import nbt
 import textures
 import util
@@ -157,27 +156,23 @@ class World(object):
         if spawnY > 127:
             spawnY = 127
         
-        try:
-            ## The filename of this chunk
-            chunkFile = self.get_region_path(chunkX, chunkY)
-            if chunkFile is not None:
-                data = nbt.load_from_region(chunkFile, chunkX, chunkY)
-                if data is not None:
-                    level = data[1]['Level']
-                    blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
-                
-                    ## The block for spawn *within* the chunk
-                    inChunkX = spawnX - (chunkX*16)
-                    inChunkZ = spawnZ - (chunkY*16)
-                
-                    ## find the first air block
-                    while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
-                        spawnY += 1
-                        if spawnY == 128:
-                            break
-        except chunk.ChunkCorrupt:
-            #ignore corrupt spawn, and continue
-            pass
+        ## The filename of this chunk
+        chunkFile = self.get_region_path(chunkX, chunkY)
+        if chunkFile is not None:
+            data = nbt.load_from_region(chunkFile, chunkX, chunkY)
+            if data is not None:
+                level = data[1]['Level']
+                blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
+
+                ## The block for spawn *within* the chunk
+                inChunkX = spawnX - (chunkX*16)
+                inChunkZ = spawnZ - (chunkY*16)
+
+                ## find the first air block
+                while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
+                    spawnY += 1
+                    if spawnY == 128:
+                        break
         self.POI.append( dict(x=disp_spawnX, y=spawnY, z=disp_spawnZ,
                 msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
         self.spawn = (disp_spawnX, spawnY, disp_spawnZ)
