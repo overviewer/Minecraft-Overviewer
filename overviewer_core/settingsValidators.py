@@ -59,7 +59,19 @@ def validateImgQuality(qual):
     return intqual
 
 def validateBGColor(color):
-    raise NotImplementedError("bg color")
+    """BG color must be an HTML color, with an option leading # (hash symbol)
+    returns an (r,b,g) 3-tuple  
+    """
+    if color[0] != "#":
+        color = "#%s" % color
+    if len(color) != 7:
+        raise ValidationException("%r is not a valid color.  Expected HTML color syntax (i.e. #RRGGBB)" % color)
+
+    r = int(color[1:3], 16)
+    g = int(color[3:5], 16)
+    b = int(color[5:7], 16)
+    return (r,g,b)
+
 
 def validateOptImg(opt):
     return bool(opt)
