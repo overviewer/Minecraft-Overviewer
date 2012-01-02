@@ -224,8 +224,8 @@ but may be several per invocation of the Overviewer in the case of multi-world.
             
     def get_chunk(self,x, y):
         """Returns a dictionary representing the top-level NBT Compound for a chunk given
-its x, z coordinates. The coordinates are chunk coordinates.
-"""
+        its x, z coordinates. The coordinates are chunk coordinates.
+        """
 
         regionfile = self.get_region_path(x,y)
         if regionfile is None:
@@ -270,22 +270,22 @@ its x, z coordinates. The coordinates are chunk coordinates.
     
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates over tuples
-of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
-
-Old name: world.iterate_chunk_metadata
-"""
+        of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
+        
+        Old name: world.iterate_chunk_metadata
+        """
 
         for (regionx, regiony), regionfile in self.regionfiles.iteritems():
             mcr = nbt.load_region(regionfile)
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
-    def get_chunk_mtime(self, x, zr):
-        """Returns a chunk’s mtime, or False if the chunk does not exist.
-This is therefore a dual purpose method. It corrects for the given north
-direction as described in the docs for get_chunk()"""
+    def get_chunk_mtime(self, x, z):
+        """Returns a chunk's mtime, or False if the chunk does not exist.
+        This is therefore a dual purpose method. It corrects for the given north
+        direction as described in the docs for get_chunk()"""
 
-        regionfile = self.get_region_path(x,y)
+        regionfile = self.get_region_path(x,z)
         if regionfile is None:
             return None
 
