@@ -74,7 +74,8 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
     use_biomes = PyObject_GetAttrString(world, "useBiomeData");
     Py_DECREF(world);
     
-    if (PyObject_IsTrue(use_biomes)) {
+    /* XXX ignore biomes for now :( */
+    if (0/*PyObject_IsTrue(use_biomes)*/) {
         self->biome_data = PyObject_CallMethod(state->textures, "getBiomeData", "OOO",
                                                worlddir, chunk_x_py, chunk_y_py);
         if (self->biome_data == Py_None) {

@@ -18,8 +18,6 @@
 #include "overviewer.h"
 
 static PyObject *textures = NULL;
-static PyObject *chunk_mod = NULL;
-static PyObject *blockmap = NULL;
 
 unsigned int max_blockid = 0;
 unsigned int max_data = 0;
@@ -38,7 +36,7 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     
     /* this function only needs to be called once, anything more should be
      * ignored */
-    if (blockmap) {
+    if (textures) {
         Py_RETURN_NONE;
     }
 
@@ -47,16 +45,6 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     if ((!textures)) {
         return NULL;
     }
-    
-    chunk_mod = PyImport_ImportModule("overviewer_core.chunk");
-    /* ensure none of these pointers are NULL */    
-    if ((!chunk_mod)) {
-        return NULL;
-    }
-    
-    blockmap = PyObject_GetAttrString(textures, "blockmap");
-    if (!blockmap)
-        return NULL;
     
     tmp = PyObject_GetAttrString(textures, "max_blockid");
     if (!tmp)
@@ -69,7 +57,7 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
         return NULL;
     max_data = PyInt_AsLong(tmp);
     Py_DECREF(tmp);
-    
+
     /* assemble the property table */
     known_blocks = PyObject_GetAttrString(textures, "known_blocks");
     if (!known_blocks)
@@ -345,6 +333,7 @@ PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
     PyObject *rendermode_py;
+    PyObject *blockmap;
 
     int xoff, yoff;
     
@@ -361,12 +350,8 @@ chunk_render(PyObject *self, PyObject *args) {
 
     PyObject *t = NULL;
     
-    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.blockdata_expanded))
+    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.textures, &state.blockdatas))
         return NULL;
-    
-    /* fill in important modules */
-    state.textures = textures;
-    state.chunk = chunk_mod;
     
     /* set up the render mode */
     rendermode_py = PyObject_GetAttrString(state.self, "rendermode");
@@ -377,6 +362,21 @@ chunk_render(PyObject *self, PyObject *args) {
                      // set PyErr.  No need to set it here
     }
 
+    /* get the blockmap from the textures object */
+    blockmap = PyObject_GetAttr(state.textures, "blockmap");
+    if (blockmap == NULL)
+        return NULL;
+    if (blockmap == Py_None) {
+        PyErr_SetString(PyExc_RuntimeError, "you must call Textures.generate()");
+        return NULL;
+    }
+    
+    /* get the chunk module */
+    state.chunk = PyImport_ImportModule("overviewer_core.chunk");
+    if (state.chunk == NULL) {
+        return NULL;
+    }
+    
     /* get the image size */
     imgsize = PyObject_GetAttrString(state.img, "size");
 
@@ -388,7 +388,6 @@ chunk_render(PyObject *self, PyObject *args) {
     imgsize1 = PyInt_AsLong(imgsize1_py);
     Py_DECREF(imgsize0_py);
     Py_DECREF(imgsize1_py);
-
 
     /* get the block data directly from numpy: */
     blocks_py = PyObject_GetAttrString(state.self, "blocks");
@@ -444,7 +443,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 
                 /* everything stored here will be a borrowed ref */
 
-                ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
+                ancilData = getArrayByte3D(state.blockdatas, state.x, state.y, state.z);
                 state.block_data = ancilData;
                 /* block that need pseudo ancildata:
                  * grass, water, glass, chest, restone wire,
@@ -504,6 +503,7 @@ chunk_render(PyObject *self, PyObject *args) {
     render_mode_destroy(rendermode);
     
     Py_DECREF(blocks_py);
+    Py_DECREF(blockmap);
     Py_XDECREF(left_blocks_py);
     Py_XDECREF(right_blocks_py);
     Py_XDECREF(up_left_blocks_py);

@@ -65,17 +65,15 @@ typedef struct _RenderMode RenderMode;
 
 /* in iterate.c */
 typedef struct {
-    /* the ChunkRenderer object */
+    /* the ChunkRenderer object, and the chunk module */
     PyObject *self;
-    
-    /* important modules, for convenience */
-    PyObject *textures;
     PyObject *chunk;
+
+    /* the Texture object */
+    PyObject *textures;
     
     /* the current render mode in use */
     RenderMode *rendermode;
-    
-    /* the rest only make sense for occluded() and draw() !! */
     
     /* the tile image and destination */
     PyObject *img;
@@ -86,7 +84,9 @@ typedef struct {
     unsigned char block;
     unsigned char block_data;
     unsigned char block_pdata;
-    PyObject *blockdata_expanded;
+
+    /* useful information about this, and neighboring, chunks */
+    PyObject *blockdatas;
     PyObject *blocks;
     PyObject *up_left_blocks;
     PyObject *up_right_blocks;

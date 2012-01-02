@@ -48,8 +48,6 @@ class Textures(object):
         
         # these are filled in in generate()
         self.terrain_images = None
-        self.max_blockid = 0
-        self.max_data = 0
         self.blockmap = []
         self.biome_grass_texture = None
     
@@ -67,13 +65,11 @@ class Textures(object):
         # generate the blocks
         global blockmap_generators
         global known_blocks, used_datas
-        self.max_blockid = max(known_blocks) + 1
-        self.max_data = max(used_datas) + 1
-        self.blockmap = [None] * self.max_blockid * self.max_data
+        self.blockmap = [None] * max_blockid * max_data
         
         for (blockid, data), texgen in blockmap_generators.iteritems():
             tex = texgen(self, blockid, data)
-            self.blockmap[blockid * self.max_data + data] = self.generate_texture_tuple(tex)
+            self.blockmap[blockid * max_data + data] = self.generate_texture_tuple(tex)
         
         if self.texture_size != 24:
             # rescale biome grass
@@ -660,6 +656,8 @@ blockmap_generators = {}
 
 known_blocks = set()
 used_datas = set()
+max_blockid = 0
+max_data = 0
 
 transparent_blocks = set()
 solid_blocks = set()
@@ -683,6 +681,7 @@ def material(blockid=[], data=[0], **kwargs):
         
     def inner_material(func):
         global blockmap_generators
+        global max_data, max_blockid
 
         # create a wrapper function with a known signature
         @functools.wraps(func)
@@ -690,9 +689,14 @@ def material(blockid=[], data=[0], **kwargs):
             return func(texobj, blockid, data)
         
         used_datas.update(data)
+        if max(data) >= max_data:
+            max_data = max(data) + 1
+        
         for block in blockid:
             # set the property sets appropriately
             known_blocks.update([block])
+            if block >= max_blockid:
+                max_blockid = block + 1
             for prop in properties:
                 try:
                     if block in kwargs.get(prop, []):

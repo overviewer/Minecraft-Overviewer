@@ -15,9 +15,9 @@ t.generate()
 
 blocks = {}
 
-for blockid in xrange(t.max_blockid):
-    for data in xrange(t.max_data):
-        tex = t.blockmap[blockid * t.max_data + data]
+for blockid in xrange(textures.max_blockid):
+    for data in xrange(textures.max_data):
+        tex = t.blockmap[blockid * textures.max_data + data]
         if tex:
             if not blockid in blocks:
                 blocks[blockid] = {}
