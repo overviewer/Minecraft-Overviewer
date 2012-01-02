@@ -79,22 +79,11 @@ def get_skylight_array(level):
     """Returns the skylight array. This is 4 bits per block, but it is
     expanded for you so you may index it normally."""
     skylight = level['SkyLight']
-    # this array is 2 blocks per byte, so expand it
-    skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
-    # Even elements get the lower 4 bits
-    skylight_expanded[:,:,::2] = skylight & 0x0F
-    # Odd elements get the upper 4 bits
-    skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
-    return skylight_expanded
+    return skylight
 
 def get_blocklight_array(level):
     """Returns the blocklight array. This is 4 bits per block, but it
     is expanded for you so you may index it normally."""
-    # expand just like get_skylight_array()
-    blocklight = level['BlockLight']
-    blocklight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
-    blocklight_expanded[:,:,::2] = blocklight & 0x0F
-    blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
     return blocklight_expanded
 
 def get_blockdata_array(level):

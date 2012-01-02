@@ -71,6 +71,12 @@ class World(object):
     """
 
     mincol = maxcol = minrow = maxrow = 0
+
+    # see RegionSet.rotate.  These values are chosen so that they can be passed directly to rot90
+    UPPER_LEFT  = 1 ## - Return the world such that north is down the -Z axis (no rotation)
+    UPPER_RIGHT = 2 ## - Return the world such that north is down the +X axis (rotate 90 degrees clockwise)
+    LOWER_RIGHT = 3 ## - Return the world such that north is down the +Z axis (rotate 180 degrees)
+    LOWER_LEFT  = 0 ## - Return the world such that north is down the -X axis (rotate 90 degrees counterclockwise)
     
     def __init__(self, worlddir):
         self.worlddir = worlddir
@@ -196,24 +202,13 @@ but may be several per invocation of the Overviewer in the case of multi-world.
 
         logging.info("Scanning regions")
         
-        # This is populated by reload_region(). It is a mapping from region
-        # filename to: (region object, mtime, chunkcache)
-        self.regions = {}
-        
-        # This is populated below. It is a mapping from (x,y) region coords to
-        # (x,y,filename, region object)
+        # This is populated below. It is a mapping from (x,y) region coords to filename
         self.regionfiles = {}
         
-        # Loads requested/all regions, caching region header info
         for x, y, regionfile in self._iterate_regionfiles():
-            # reload_region caches the region object in self.regions
-            mcr = self._reload_region(regionfile) 
-            #mcr.get_chunk_info()  # get_chunk_info was removed from nbt.py. needs to be reimplemented
-            self.regionfiles[(x,y)] = (x,y,regionfile,mcr)
+            # regionfile is a pathname
+            self.regionfiles[(x,y)] = regionfile
 
-        # the max number of chunks we will keep before removing them (includes emptry chunks)
-        self.chunklimit = 1024 
-        self.chunkcount = 0
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
 
@@ -222,112 +217,83 @@ but may be several per invocation of the Overviewer in the case of multi-world.
 
     def get_region_path(self, chunkX, chunkY):
         """Returns the path to the region that contains chunk (chunkX, chunkY)
+        Coords can be either be global chunk coords, or local to a region
         """
-        _, _, regionfile,_ = self.regionfiles.get((chunkX//32, chunkY//32),(None,None,None,None))
+        regionfile = self.regionfiles.get((chunkX//32, chunkY//32),None)
         return regionfile
             
-    def load_from_region(self,filename, x, y):
-        #we need to manage the chunk cache
-        regioninfo = self.regions[filename]
-        if regioninfo is None:
-            return None
-        chunks = regioninfo[2]
-        chunk_data = chunks.get((x,y))
-        if chunk_data is None:        
-            #prune the cache if required
-            if self.chunkcount > self.chunklimit: #todo: make the emptying the chunk cache slightly less crazy
-                [self.reload_region(regionfile) for regionfile in self.regions if regionfile <> filename]
-                self.chunkcount = 0
-            self.chunkcount += 1  
-
-            nbt = self.load_region(filename).load_chunk(x, y)
-            if nbt is None:
-                chunks[(x,y)] = self.empty_chunk
-                return None ## return none.  I think this is who we should indicate missing chunks
-                #raise IOError("No such chunk in region: (%i, %i)" % (x, y))                 
-
-            #we cache the transformed data, not its raw form
-            data = nbt.read_all()    
-            level = data[1]['Level']
-            chunk_data = level
-            chunk_data['Blocks'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                    level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
-                    self._get_north_rotations()))
-            chunk_data['Data'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                    level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations()))
-            chunk_data['SkyLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                    level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations()))
-            chunk_data['BlockLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                    level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
-                    self._get_north_rotations()))
-            #chunk_data = {}
-            #chunk_data['skylight'] = chunk.get_skylight_array(level)
-            #chunk_data['blocklight'] = chunk.get_blocklight_array(level)
-            #chunk_data['blockarray'] = chunk.get_blockdata_array(level)
-            #chunk_data['TileEntities'] = chunk.get_tileentity_data(level)
-            
-            chunks[(x,y)] = [level,time.time()]
-        else:
-            chunk_data = chunk_data[0]
-        return chunk_data      
-    
-    def load_region(self,filename):    
-        return self.regions[filename][0]
-
-    def get_chunk(self, x, z):
+    def get_chunk(self,x, y):
         """Returns a dictionary representing the top-level NBT Compound for a chunk given
 its x, z coordinates. The coordinates are chunk coordinates.
 """
-        
-        regionfile = self.get_region_path(x, z)
-        regioninfo = self.regions[regionfile]
-        if regioninfo is None:
+
+        regionfile = self.regionfiles[(x,y)]
+        if regionfile is None:
             return None
-        data = regioninfo[0].load_chunk(x,z)
-        level = chunk_data[1]['Level']
+
+        data = nbt.load_region(regionfile)
+
+        level = data[1]['Level']
         chunk_data = level
-        chunk_data['Blocks'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                level['Blocks'], dtype=numpy.uint8).reshape((16,16,128)),
-                self._get_north_rotations()))
-        chunk_data['Data'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                level['Data'], dtype=numpy.uint8).reshape((16,16,64)),
-                self._get_north_rotations()))
-        chunk_data['SkyLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64)),
-                self._get_north_rotations()))
-        chunk_data['BlockLight'] = numpy.array(numpy.rot90(numpy.frombuffer(
-                level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64)),
-                self._get_north_rotations()))
-
-        ## TODO some clever caching stuff
-        return chunk_data
+        chunk_data['Blocks'] = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
+        chunk_data['Data'] = numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
 
 
-    def iterate_chunks(self):
+        skylight = numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
+
+        # this array is 2 blocks per byte, so expand it
+        skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+        # Even elements get the lower 4 bits
+        skylight_expanded[:,:,::2] = skylight & 0x0F
+        # Odd elements get the upper 4 bits
+        skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
+        chunk_data['SkyLight'] = skylight_expanded
+
+        # expand just like skylight
+        blocklight = numpy.frombuffer(level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64))
+        blocklight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+        blocklight_expanded[:,:,::2] = blocklight & 0x0F
+        blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
+        chunk_data['BlockLight'] = blocklight_expanded
+        
+        #chunk_data = {}
+        #chunk_data['skylight'] = chunk.get_skylight_array(level)
+        #chunk_data['blocklight'] = chunk.get_blocklight_array(level)
+        #chunk_data['blockarray'] = chunk.get_blockdata_array(level)
+        #chunk_data['TileEntities'] = chunk.get_tileentity_data(level)
+        
+        return chunk_data      
+    
+
+    def rotate(self, north_direction):
+        return RotatedRegionSet(self.worldobj, self.regiondir, north_direction)
+    
+    def iterate_chunks(self, north_dir):
         """Returns an iterator over all chunk metadata in this world. Iterates over tuples
 of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
 
 Old name: world.iterate_chunk_metadata
 """
 
-        for regionx, regiony, _, mcr in self.regionfiles.itervalues():
+        for regionx, regiony, regionfile in self.regionfiles.itervalues():
+            mcr = nbt.load_region(regionfile)
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
-    def chunk_exists(self, x, z):
-        """Returns True or False depending on whether the given chunk exists.  """
-        return self.regions[self.get_region_path(x,z)][0].chunk_exists(x,z)
-    
-    #used to reload a changed region
-    def _reload_region(self,filename):
-        if self.regions.get(filename) is not None:
-            self.regions[filename][0].closefile()
-        chunkcache = {}    
-        mcr = nbt.load_region(filename)
-        self.regions[filename] = (mcr,os.path.getmtime(filename),chunkcache)
-        return mcr
+    def get_chunk_mtime(self, x, z, north_dir):
+        """Returns a chunk’s mtime, or False if the chunk does not exist.
+This is therefore a dual purpose method. It corrects for the given north
+direction as described in the docs for get_chunk()"""
+
+        regionfile = self.regionfiles[(x,y)]
+        if regionfile is None:
+            return None
+
+        data = nbt.load_region(regionfile)
+        if data.chunk_exists(x,z):
+            return data.get_chunk_timestamp(x,z)
+        return None
+
 
     def _iterate_regionfiles(self,regionlist=None):
         """Returns an iterator of all of the region files, along with their 
@@ -382,48 +348,19 @@ Old name: world.iterate_chunk_metadata
                 ##TODO     y = -temp-1
                 yield (x, y, join(dirpath, f))
     
-    def determine_bounds(self):
-        """Scan the world directory, to fill in
-        self.{min,max}{col,row} for use later in quadtree.py.
-        
-        """
-        
-        logging.info("Scanning chunks")
-        # find the dimensions of the map, in region files
-        minx = maxx = miny = maxy = 0
-        found_regions = False
-        for x, y in self.regionfiles:
-            found_regions = True
-            minx = min(minx, x)
-            maxx = max(maxx, x)
-            miny = min(miny, y)
-            maxy = max(maxy, y)
-        if not found_regions:
-            logging.error("Error: No chunks found!")
-            sys.exit(1)
-        logging.debug("Done scanning chunks")
-        
-        # turn our region coordinates into chunk coordinates
-        minx = minx * 32
-        miny = miny * 32
-        maxx = maxx * 32 + 32
-        maxy = maxy * 32 + 32
-        
-        # Translate chunks to our diagonal coordinate system
-        mincol = maxcol = minrow = maxrow = 0
-        for chunkx, chunky in [(minx, miny), (minx, maxy), (maxx, miny), (maxx, maxy)]:
-            col, row = util.convert_coords(chunkx, chunky)
-            mincol = min(mincol, col)
-            maxcol = max(maxcol, col)
-            minrow = min(minrow, row)
-            maxrow = max(maxrow, row)
-        
-        #logging.debug("map size: (%i, %i) to (%i, %i)" % (mincol, minrow, maxcol, maxrow))
 
-        self.mincol = mincol
-        self.maxcol = maxcol
-        self.minrow = minrow
-        self.maxrow = maxrow
+class RotatedRegionSet(RegionSet):
+    def __init__(self, worldobj, regiondir, north_dir):
+        super(RotatedRegionSet, self).__init__(worldobj, regiondir)
+        self.north_dir = north_dir
+    def get_chunk(self, x, z):
+        chunk_data = super(RotatedRegionSet, self).get_chunk(x,z)
+        chunk_data['Blocks'] = numpy.rot90(chunk_data['Blocks'], self.north_dir)
+        chunk_data['Data'] = numpy.rot90(chunk_data['Data'], self.north_dir)
+        chunk_data['SkyLight'] = numpy.rot90(chunk_data['SkyLight'], self.north_dir)
+        chunk_data['BlockLight'] = numpy.rot90(chunk_data['BlockLight'], self.north_dir)
+        return chunk_data
+         
 
 def get_save_dir():
     """Returns the path to the local saves directory
