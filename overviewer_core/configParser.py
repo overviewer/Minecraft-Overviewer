@@ -253,20 +253,19 @@ class MultiWorldParser(object):
         for key in settingsDefinition.render:
             option = settingsDefinition.render[key]
             if option.has_key("default"):
-                self.defaults[key] = option.get("default")
+                self.defaults[key] = option["default"]
+
             
         self.defaults.update(glob)
 
-        
-        import pprint
-        pprint.pprint(glob, indent=2)
 
     def validate(self):
 
 
         for worldname in self.render:
-            world = self.render[worldname]
+            world = dict()
             world.update(self.defaults)
+            world.update(self.render[worldname])
         
             for key in world:
                 if key not in settingsDefinition.render:
@@ -278,8 +277,9 @@ class MultiWorldParser(object):
                     val = definition['validator'](world[key])
                     world[key] = val
                 except Exception as e:
-                    print "Error: %r" % e
-                    next
+                    #print "Error validating %s: %r" % (key, e)
+                    raise e
+            self.render[worldname] = world
 
                 
 

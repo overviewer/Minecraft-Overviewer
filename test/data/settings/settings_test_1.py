@@ -7,5 +7,6 @@ render["world"] = {
 }
 
 render["otherworld"] = {
-    "rendermode": "foo"
+    "rendermode": "foo",
+    "bgcolor": "#ffffff"
 }
