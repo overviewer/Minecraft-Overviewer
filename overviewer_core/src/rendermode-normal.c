@@ -19,7 +19,6 @@
 
 static int
 rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
-    PyObject *chunk_x_py, *chunk_y_py, *world, *use_biomes, *worlddir;
     RenderModeNormal *self = (RenderModeNormal *)data;
     
     /* load up the given options, first */
@@ -37,28 +36,26 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
         return 1;
 
     self->height_fading = 0;
-    if (!render_mode_parse_option(options, "height_fading", "i", &(self->height_fading)))
-        return 1;
+    /* XXX skip height fading */
+    /*if (!render_mode_parse_option(options, "height_fading", "i", &(self->height_fading)))
+      return 1;*/
     
     self->nether = 0;
     if (!render_mode_parse_option(options, "nether", "i", &(self->nether)))
         return 1;
     
-    if (self->height_fading) {
+    /*if (self->height_fading) {
         self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
         self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
-    }
+        }*/
     
     /* biome-compliant grass mask (includes sides!) */
     self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
 
-    chunk_x_py = PyObject_GetAttrString(state->self, "chunkX");
-    chunk_y_py = PyObject_GetAttrString(state->self, "chunkY");
-    
     /* careful now -- C's % operator works differently from python's
        we can't just do x % 32 like we did before */
-    self->chunk_x = PyInt_AsLong(chunk_x_py);
-    self->chunk_y = PyInt_AsLong(chunk_y_py);
+    self->chunk_x = state->chunkx;
+    self->chunk_y = state->chunkz;
     
     while (self->chunk_x < 0)
         self->chunk_x += 32;
@@ -68,14 +65,8 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
     self->chunk_x %= 32;
     self->chunk_y %= 32;
     
-    /* fetch the biome data from textures.py, if needed */
-    world = PyObject_GetAttrString(state->self, "world");
-    worlddir = PyObject_GetAttrString(world, "worlddir");
-    use_biomes = PyObject_GetAttrString(world, "useBiomeData");
-    Py_DECREF(world);
-    
     /* XXX ignore biomes for now :( */
-    if (0/*PyObject_IsTrue(use_biomes)*/) {
+    /*if (PyObject_IsTrue(use_biomes)) {
         self->biome_data = PyObject_CallMethod(state->textures, "getBiomeData", "OOO",
                                                worlddir, chunk_x_py, chunk_y_py);
         if (self->biome_data == Py_None) {
@@ -93,17 +84,12 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
                 self->watercolor = NULL;
             }
         }
-    } else {
+        } else {*/
         self->biome_data = NULL;
         self->foliagecolor = NULL;
         self->grasscolor = NULL;
         self->watercolor = NULL;
-    }
-    
-    Py_DECREF(use_biomes);
-    Py_DECREF(worlddir);
-    Py_DECREF(chunk_x_py);
-    Py_DECREF(chunk_y_py);
+        /*}*/
     
     return 0;
 }

@@ -65,19 +65,19 @@ typedef struct _RenderMode RenderMode;
 
 /* in iterate.c */
 typedef struct {
-    /* the ChunkRenderer object, and the chunk module */
-    PyObject *self;
-    PyObject *chunk;
-
-    /* the Texture object */
-    PyObject *textures;
-    
-    /* the current render mode in use */
-    RenderMode *rendermode;
+    /* the regionset object, and chunk coords */
+    PyObject *regionset;
+    int chunkx, chunkz;
     
     /* the tile image and destination */
     PyObject *img;
     int imgx, imgy;
+    
+    /* the current render mode in use */
+    RenderMode *rendermode;
+    
+    /* the Texture object */
+    PyObject *textures;
     
     /* the block position and type, and the block array */
     int x, y, z;
@@ -120,6 +120,24 @@ block_has_property(unsigned char b, BlockProperty prop) {
     return block_properties[b] & (1 << prop);
 }
 #define is_transparent(b) block_has_property((b), TRANSPARENT)
+
+/* helper for getting chunk data arrays */
+typedef enum
+{
+    BLOCKS,
+    BLOCKDATA,
+    BLOCKLIGHT,
+    SKYLIGHT,
+} ChunkDataType;
+typedef enum
+{
+    CURRENT,
+    DOWN_RIGHT, /*  0, +1 */
+    DOWN_LEFT,  /* -1,  0 */
+    UP_RIGHT,   /* +1,  0 */
+    UP_LEFT,    /*  0, -1 */
+} ChunkNeighborName;
+PyObject *get_chunk_data(PyObject *region_set, int x, int z, ChunkNeighborName neighbor, ChunkDataType type);
 
 /* pull in the rendermode info */
 #include "rendermodes.h"

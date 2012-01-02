@@ -96,6 +96,52 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+PyObject *get_chunk_data(PyObject *region_set, int x, int z, ChunkNeighborName neighbor, ChunkDataType type) {
+    PyObject *chunk = NULL;
+    PyObject *data = NULL;
+    
+    switch (neighbor) {
+    case CURRENT:
+        break;
+    case DOWN_RIGHT:
+        z++;
+        break;
+    case DOWN_LEFT:
+        x--;
+        break;
+    case UP_RIGHT:
+        x++;
+        break;
+    case UP_LEFT:
+        z--;
+        break;
+    }
+    
+    chunk = PyObject_CallMethod(region_set, "get_chunk", "ii", x, z);
+    if (chunk == NULL || chunk == Py_None)
+        return chunk;
+    
+    switch (type) {
+    case BLOCKS:
+        data = PyDict_GetItemString(chunk, "Blocks");
+        break;
+    case BLOCKDATA:
+        data = PyDict_GetItemString(chunk, "Data");
+        break;
+    case SKYLIGHT:
+        data = PyDict_GetItemString(chunk, "SkyLight");
+        break;
+    case BLOCKLIGHT:
+        data = PyDict_GetItemString(chunk, "BlockLight");
+        break;
+    }
+    
+    /* fix the borrowed reference */
+    Py_INCREF(data);
+    Py_DECREF(chunk);
+    return data;
+}
+
 unsigned char
     check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
         /*
@@ -332,7 +378,9 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
-    PyObject *rendermode_py;
+    PyObject *regionset;
+    int chunkx, chunkz;
+    const char* rendermode_name = NULL;
     PyObject *blockmap;
 
     int xoff, yoff;
@@ -350,30 +398,27 @@ chunk_render(PyObject *self, PyObject *args) {
 
     PyObject *t = NULL;
     
-    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.textures, &state.blockdatas))
+    if (!PyArg_ParseTuple(args, "OiiOiisO",  &state.regionset, &state.chunkx, &state.chunkz, &state.img, &xoff, &yoff, &rendermode_name, &state.textures))
         return NULL;
     
+    /* conveniences */
+    regionset = state.regionset;
+    chunkx = state.chunkx;
+    chunkz = state.chunkz;
+    
     /* set up the render mode */
-    rendermode_py = PyObject_GetAttrString(state.self, "rendermode");
-    state.rendermode = rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
-    Py_DECREF(rendermode_py);
+    state.rendermode = rendermode = render_mode_create(rendermode_name, &state);
     if (rendermode == NULL) {
         return NULL; // note that render_mode_create will
                      // set PyErr.  No need to set it here
     }
 
     /* get the blockmap from the textures object */
-    blockmap = PyObject_GetAttr(state.textures, "blockmap");
+    blockmap = PyObject_GetAttrString(state.textures, "blockmap");
     if (blockmap == NULL)
         return NULL;
     if (blockmap == Py_None) {
         PyErr_SetString(PyExc_RuntimeError, "you must call Textures.generate()");
-        return NULL;
-    }
-    
-    /* get the chunk module */
-    state.chunk = PyImport_ImportModule("overviewer_core.chunk");
-    if (state.chunk == NULL) {
         return NULL;
     }
     
@@ -390,19 +435,25 @@ chunk_render(PyObject *self, PyObject *args) {
     Py_DECREF(imgsize1_py);
 
     /* get the block data directly from numpy: */
-    blocks_py = PyObject_GetAttrString(state.self, "blocks");
+    blocks_py = get_chunk_data(regionset, chunkx, chunkz, CURRENT, BLOCKS);
     state.blocks = blocks_py;
+    if (blocks_py == Py_None) {
+        PyErr_SetString(PyExc_RuntimeError, "chunk does not exist!");
+        return NULL;
+    }
+    
+    state.blockdatas = get_chunk_data(regionset, chunkx, chunkz, CURRENT, BLOCKDATA);
 
-    left_blocks_py = PyObject_GetAttrString(state.self, "left_blocks");
+    left_blocks_py = get_chunk_data(regionset, chunkx, chunkz, DOWN_LEFT, BLOCKS);
     state.left_blocks = left_blocks_py;
 
-    right_blocks_py = PyObject_GetAttrString(state.self, "right_blocks");
+    right_blocks_py = get_chunk_data(regionset, chunkx, chunkz, DOWN_RIGHT, BLOCKS);
     state.right_blocks = right_blocks_py;
 
-    up_left_blocks_py = PyObject_GetAttrString(state.self, "up_left_blocks");
+    up_left_blocks_py = get_chunk_data(regionset, chunkx, chunkz, UP_LEFT, BLOCKS);
     state.up_left_blocks = up_left_blocks_py;
 
-    up_right_blocks_py = PyObject_GetAttrString(state.self, "up_right_blocks");
+    up_right_blocks_py = get_chunk_data(regionset, chunkx, chunkz, UP_RIGHT, BLOCKS);
     state.up_right_blocks = up_right_blocks_py;
     
     /* set up the random number generator again for each chunk
