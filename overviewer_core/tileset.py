@@ -804,7 +804,7 @@ class TileSet(object):
         # col colstart will get drawn on the image starting at x coordinates -(384/2)
         # row rowstart will get drawn on the image starting at y coordinates -(192/2)
         max_chunk_mtime = 0
-        for col, row, chunkx, chunky, chunk_mtime in chunks:
+        for col, row, chunkx, chunkz, chunk_mtime in chunks:
             xpos = -192 + (col-colstart)*192
             ypos = -96 + (row-rowstart)*96
 
@@ -812,7 +812,8 @@ class TileSet(object):
                 max_chunk_mtime = chunk_mtime
 
             # draw the chunk!
-            # TODO RENDER THE CHUNK
+            c_renderer.render_loop(self.regionset, chunkx, chunkz, tileimg,
+                    xpos, ypos, self.options['rendermode'], self.textures)
         
         # Save them
         if self.imgformat == 'jpg':
