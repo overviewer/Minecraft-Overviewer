@@ -227,7 +227,7 @@ but may be several per invocation of the Overviewer in the case of multi-world.
 its x, z coordinates. The coordinates are chunk coordinates.
 """
 
-        regionfile = self.regionfiles[(x,y)]
+        regionfile = self.get_region_path(x,y)
         if regionfile is None:
             return None
 
@@ -285,7 +285,7 @@ Old name: world.iterate_chunk_metadata
 This is therefore a dual purpose method. It corrects for the given north
 direction as described in the docs for get_chunk()"""
 
-        regionfile = self.regionfiles[(x,y)]
+        regionfile = self.get_region_path(x,y)
         if regionfile is None:
             return None
 
