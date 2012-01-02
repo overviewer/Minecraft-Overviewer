@@ -21,6 +21,8 @@ import shutil
 import random
 import functools
 import time
+import errno
+import stat
 from collections import namedtuple
 
 from PIL import Image
@@ -378,15 +380,15 @@ class TileSet(object):
             self._render_rendertile(RenderTile.from_path(tilepath))
         else:
             # A composite-tile
-            if len(tileset) == 0:
+            if len(tilepath) == 0:
                 # The base tile
                 dest = self.outputdir
                 name = "base"
             else:
                 # All others
-                dest = os.path.sep.join(self.outputdir, *(str(x) for x in tilepath[:-1]))
+                dest = os.path.join(self.outputdir, *(str(x) for x in tilepath[:-1]))
                 name = str(tilepath[-1])
-            self._render_compositetile(dest, base)
+            self._render_compositetile(dest, name)
 
     def get_persistent_data(self):
         """Returns a dictionary representing the persistent data of this
@@ -544,7 +546,7 @@ class TileSet(object):
         elif rendercheck == 1:
             def compare_times(chunkmtime, tileobj):
                 # Compare chunk mtime to tile mtime on disk
-                tile_path = tileobj.get_filepath(self.full_tiledir, self.imgformat)
+                tile_path = tileobj.get_filepath(self.outputdir, self.imgextension)
                 try:
                     tile_mtime = os.stat(tile_path)[stat.ST_MTIME]
                 except OSError, e:
@@ -750,28 +752,15 @@ class TileSet(object):
 
         """
 
-        imgpath = tile.get_filepath(self.full_tiledir, self.imgformat)
+        imgpath = tile.get_filepath(self.outputdir, self.imgextension)
 
         # Calculate which chunks are relevant to this tile
         # This is a list of (col, row, chunkx, chunkz, chunk_mtime)
         chunks = list(self._get_chunks_for_tile(tile))
 
-        region = self.regionobj
-
-        tile_mtime = None
-        if check_tile:
-            # stat the file, we need to know if it exists and its mtime
-            try:
-                tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
-            except OSError, e:
-                # ignore only if the error was "file not found"
-                if e.errno != errno.ENOENT:
-                    raise
-            
         if not chunks:
             # No chunks were found in this tile
-            if not check_tile:
-                logging.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
+            logging.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
             try:
                 os.unlink(imgpath)
             except OSError, e:
@@ -797,9 +786,8 @@ class TileSet(object):
         #logging.debug("writing out worldtile {0}".format(imgpath))
 
         # Compile this image
-        tileimg = Image.new("RGBA", (384, 384), self.bgcolor)
+        tileimg = Image.new("RGBA", (384, 384), self.options['bgcolor'])
 
-        rendermode = self.rendermode
         colstart = tile.col
         rowstart = tile.row
         # col colstart will get drawn on the image starting at x coordinates -(384/2)
@@ -817,13 +805,13 @@ class TileSet(object):
                     xpos, ypos, self.options['rendermode'], self.textures)
         
         # Save them
-        if self.imgformat == 'jpg':
+        if self.imgextension == 'jpg':
             tileimg.save(imgpath, quality=self.imgquality, subsampling=0)
         else: # png
             tileimg.save(imgpath)
 
-        if self.optimizeimg:
-            optimize_image(imgpath, self.imgformat, self.optimizeimg)
+        if self.options['optimizeimg']:
+            optimize_image(imgpath, self.imgextension, self.options['optimizeimg'])
 
         os.utime(imgpath, (max_chunk_mtime, max_chunk_mtime))
 
