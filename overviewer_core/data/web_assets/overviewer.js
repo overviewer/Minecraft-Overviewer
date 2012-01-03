@@ -1059,20 +1059,16 @@ var overviewer = {
             overviewer.map.setZoom(zoom);
         },
         'startTimeUpdater': function() {
-            setInterval(function() {
-                $.ajax({
-                    url: "time.json",
-                    timeout: 3000,
-                    contentType: "text/json",
-                    dataType: "json",
-                    success: function(data) {
+            if (document.URL.substr(0, 7) != "file://") { 
+                setInterval(function() {
+                    $.getJSON('time.json', function(data) {
                         for (i in data) {
                             var item = data[i];
                             overviewer.collections.lastUpdate = item.renderTime;
-                        } 
-                    }
-                });
-            }, 300000);
+                        }
+                    });
+                }, 300000);
+            }
         }
     },
     /**
