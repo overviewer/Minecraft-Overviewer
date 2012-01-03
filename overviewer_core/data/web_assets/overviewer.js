@@ -1060,10 +1060,16 @@ var overviewer = {
         },
         'startTimeUpdater': function() {
             setInterval(function() {
-                $.getJSON('time.json', function(data) {
-                    for (i in data) {
-                        var item = data[i];
-                        overviewer.collections.lastUpdate = item.renderTime;
+                $.ajax({
+                    url: "time.json",
+                    timeout: 3000,
+                    contentType: "text/json",
+                    dataType: "json",
+                    success: function(data) {
+                        for (i in data) {
+                            var item = data[i];
+                            overviewer.collections.lastUpdate = item.renderTime;
+                        } 
                     }
                 });
             }, 300000);
