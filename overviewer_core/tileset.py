@@ -272,8 +272,8 @@ class TileSet(object):
         # not the workers)
 
         # Calculate the min and max column over all the chunks.
-        # This sets self.bounds to a Bounds namedtuple
-        self.bounds = self._find_chunk_range()
+        # This returns a Bounds namedtuple
+        bounds = self._find_chunk_range()
 
         # Calculate the depth of the tree
         for p in xrange(1,33): # max 32
@@ -285,21 +285,22 @@ class TileSet(object):
             # Y has 4 times as many chunks as tiles, then halved since this is
             # a radius
             yradius = 2*2**p
-            if xradius >= self.bounds.maxcol and -xradius <= self.bounds.mincol and \
-                    yradius >= self.bounds.maxrow and -yradius <= self.bounds.minrow:
+            if xradius >= bounds.maxcol and -xradius <= bounds.mincol and \
+                    yradius >= bounds.maxrow and -yradius <= bounds.minrow:
                 break
 
         if p >= 15:
             logging.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
                     p)
         self.treedepth = p
+        self.xradius = xradius
+        self.yradius = yradius
 
         # Do any tile re-arranging if necessary
         self._rearrange_tiles()
 
         # Do the chunk scan here
         self.dirtytree = self._chunk_scan()
-
 
     def get_num_phases(self):
         """Returns the number of levels in the quadtree, which is equal to the
@@ -412,7 +413,6 @@ class TileSet(object):
             maxrow = max(maxrow, row)
             mincol = min(mincol, col)
             maxcol = max(maxcol, col)
-
         return Bounds(mincol, maxcol, minrow, maxrow)
 
     def _rearrange_tiles(self):
@@ -525,7 +525,10 @@ class TileSet(object):
         # See note at the top of this file about the rendercheck modes for an
         # explanation of what this method does in different situations.
 
+        # Local vars for slightly faster lookups
         depth = self.treedepth
+        xradius = self.xradius
+        yradius = self.yradius
 
         dirty = RendertileSet(depth)
 
@@ -600,14 +603,15 @@ class TileSet(object):
                     c = tilecol - 2*i
                     r = tilerow + 4*j
 
-                    # Make sure the tile is in the range according to the given
-                    # depth. This won't happen unless the user has given -z to
-                    # render a smaller area of the map than everything
+                    # Make sure the tile is in the boundary we're rendering.
+                    # This can happen when rendering at lower treedepth than
+                    # can contain the entire map, but shouldn't happen if the
+                    # treedepth is correctly calculated.
                     if (
-                            c < self.bounds.mincol or
-                            c >= self.bounds.maxcol or
-                            r < self.bounds.minrow or
-                            r >= self.bounds.maxrow
+                            c < -xradius or
+                            c >= xradius or
+                            r < -yradius or
+                            r >= yradius
                             ):
                         continue
 
@@ -649,7 +653,7 @@ class TileSet(object):
         return dirty
 
     def __str__(self):
-        return "<TileSet for %s>" % os.basename(self.outputdir)
+        return "<TileSet for %s>" % os.path.basename(self.outputdir)
 
     def _render_compositetile(self, dest, name):
         """
