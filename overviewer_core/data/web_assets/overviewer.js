@@ -1058,14 +1058,10 @@ var overviewer = {
             overviewer.map.setCenter(latlngcoords);
             overviewer.map.setZoom(zoom);
         },
-        'startTimeUpdater': function()
-        {
-            setInterval(function()
-            {
-                $.getJSON('time.json', function(data)
-                {
-                    for (i in data)
-                    {
+        'startTimeUpdater': function() {
+            setInterval(function() {
+                $.getJSON('time.json', function(data) {
+                    for (i in data) {
                         var item = data[i];
                         overviewer.collections.lastUpdate = item.renderTime;
                     }
