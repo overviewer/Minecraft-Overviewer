@@ -17,7 +17,7 @@ import os
 import os.path
 import stat
 import cPickle
-import Image
+from PIL import Image
 import shutil
 from time import strftime, time, localtime
 import json
