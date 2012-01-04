@@ -584,24 +584,26 @@ class TileSet(object):
             tilecol = chunkcol - chunkcol % 2
             tilerow = chunkrow - chunkrow % 4
 
-            # Determine if this chunk is in a column that spans two columns of
-            # tiles, which are the even columns.
+            # If this chunk is in an /even/ column, then it spans two tiles.
             if chunkcol % 2 == 0:
-                x_tiles = 2
+                colrange = (tilecol-2, tilecol)
             else:
-                x_tiles = 1
+                colrange = (tilecol,)
+
+            # If this chunk is in a row divisible by 4, then it touches the
+            # tile above it as well. Also touches the next 4 tiles down (16
+            # rows)
+            if chunkrow % 4 == 0:
+                rowrange = xrange(tilerow-4, tilerow+16+1, 4)
+            else:
+                rowrange = xrange(tilerow, tilerow+16+1, 4)
 
             # Loop over all tiles that this chunk potentially touches.
             # The tile at tilecol,tilerow obviously contains the chunk, but so
             # do the next 4 tiles down because chunks are very tall, and maybe
             # the next column over too.
-            for i in xrange(x_tiles):
-                for j in xrange(5):
-
-                    # This loop iteration is for the tile at this column and
-                    # row:
-                    c = tilecol - 2*i
-                    r = tilerow + 4*j
+            for c in colrange:
+                for r in rowrange:
 
                     # Make sure the tile is in the boundary we're rendering.
                     # This can happen when rendering at lower treedepth than
@@ -827,6 +829,22 @@ class TileSet(object):
             # draw the chunk!
             c_overviewer.render_loop(self.regionset, chunkx, chunkz, tileimg,
                     xpos, ypos, self.options['rendermode'], self.textures)
+
+            if 0:
+                # Draw the outline of the top of the chunk
+                import ImageDraw
+                draw = ImageDraw.Draw(tileimg)
+                # Draw top outline
+                draw.line([(192,0), (384,96)], fill='red')
+                draw.line([(192,0), (0,96)], fill='red')
+                draw.line([(0,96), (192,192)], fill='red')
+                draw.line([(384,96), (192,192)], fill='red')
+                # Draw side outline
+                draw.line([(0,96),(0,96+1536)], fill='red')
+                draw.line([(384,96),(384,96+1536)], fill='red')
+                # Which chunk this is:
+                draw.text((96,48), "C: %s,%s" % (chunkx, chunkz), fill='red')
+                draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
         
         # Save them
         if self.imgextension == 'jpg':
@@ -848,6 +866,8 @@ class TileSet(object):
 
         chunklist = []
 
+        # Chunks that are relevant to this tile: the 8 chunks directly in this
+        # tile, and the chunks from the previous 16 rows
         rowstart = tile.row
         rowend = rowstart+4
         colstart = tile.col
@@ -870,7 +890,6 @@ class TileSet(object):
             if mtime:
                 # The chunk exists
                 yield (col, row, chunkx, chunkz, mtime)
-                    
 
 def get_dirdepth(outputdir):
     """Returns the current depth of the tree on disk
