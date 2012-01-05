@@ -394,6 +394,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     render_things = mw_parser.get_render_things()
     tilesets = []
+
+    # once we've made sure that everything validations, we can check to 
+    # make sure the destdir exists
+    if not os.path.exists(destdir):
+        os.mkdir(destdir)
+
     for render_name in render_things:
         render = render_things[render_name]
         logging.debug("Found the following render thing: %r", render)
