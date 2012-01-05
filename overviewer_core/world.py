@@ -92,7 +92,10 @@ class World(object):
             if mcrs:
                 # construct a regionset object for this
                 rset = RegionSet(self, root)
-                self.regionsets.append(rset)
+                if root == os.path.join(self.worlddir, "region"):
+                    self.regionsets.insert(0, rset)
+                else:
+                    self.regionsets.append(rset)
         
         # TODO consider reordering self.regionsets so that the 'default' region is first
 
