@@ -255,7 +255,8 @@ class Textures(object):
     ## Image Transformation Functions
     ##
 
-    def transform_image_top(self, img):
+    @staticmethod
+    def transform_image_top(img):
         """Takes a PIL image and rotates it left 45 degrees and shrinks the y axis
         by a factor of 2. Returns the resulting image, which will be 24x12 pixels
 
@@ -283,7 +284,8 @@ class Textures(object):
         newimg = img.transform((24,12), Image.AFFINE, transform)
         return newimg
 
-    def transform_image_side(self, img):
+    @staticmethod
+    def transform_image_side(img):
         """Takes an image and shears it for the left side of the cube (reflect for
         the right side)"""
 
@@ -299,7 +301,8 @@ class Textures(object):
         newimg = img.transform((12,18), Image.AFFINE, transform)
         return newimg
 
-    def transform_image_slope(self, img):
+    @staticmethod
+    def transform_image_slope(img):
         """Takes an image and shears it in the shape of a slope going up
         in the -y direction (reflect for +x direction). Used for minetracks"""
 
@@ -316,7 +319,8 @@ class Textures(object):
         return newimg
 
 
-    def transform_image_angle(self, img, angle):
+    @staticmethod
+    def transform_image_angle(img, angle):
         """Takes an image an shears it in arbitrary angle with the axis of
         rotation being vertical.
 

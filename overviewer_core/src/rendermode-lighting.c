@@ -360,22 +360,22 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
     if (!render_mode_parse_option(options, "color_light", "i", &(self->color_light)))
         return 1;
     
-    self->facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
+    self->facemasks_py = PyObject_GetAttrString(state->support, "facemasks");
     // borrowed references, don't need to be decref'd
     self->facemasks[0] = PyTuple_GetItem(self->facemasks_py, 0);
     self->facemasks[1] = PyTuple_GetItem(self->facemasks_py, 1);
     self->facemasks[2] = PyTuple_GetItem(self->facemasks_py, 2);
     
-    self->skylight = PyObject_GetAttrString(state->self, "skylight");
-    self->blocklight = PyObject_GetAttrString(state->self, "blocklight");
-    self->left_skylight = PyObject_GetAttrString(state->self, "left_skylight");
-    self->left_blocklight = PyObject_GetAttrString(state->self, "left_blocklight");
-    self->right_skylight = PyObject_GetAttrString(state->self, "right_skylight");
-    self->right_blocklight = PyObject_GetAttrString(state->self, "right_blocklight");
-    self->up_left_skylight = PyObject_GetAttrString(state->self, "up_left_skylight");
-    self->up_left_blocklight = PyObject_GetAttrString(state->self, "up_left_blocklight");
-    self->up_right_skylight = PyObject_GetAttrString(state->self, "up_right_skylight");
-    self->up_right_blocklight = PyObject_GetAttrString(state->self, "up_right_blocklight");
+    self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT);
+    self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT);
+    self->left_skylight = get_chunk_data(state, DOWN_LEFT, SKYLIGHT);
+    self->left_blocklight = get_chunk_data(state, DOWN_LEFT, BLOCKLIGHT);
+    self->right_skylight = get_chunk_data(state, DOWN_RIGHT, SKYLIGHT);
+    self->right_blocklight = get_chunk_data(state, DOWN_RIGHT, BLOCKLIGHT);
+    self->up_left_skylight = get_chunk_data(state, UP_LEFT, SKYLIGHT);
+    self->up_left_blocklight = get_chunk_data(state, UP_LEFT, BLOCKLIGHT);
+    self->up_right_skylight = get_chunk_data(state, UP_RIGHT, SKYLIGHT);
+    self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT);
     
     if (self->night) {
         self->calculate_light_color = calculate_light_color_night;

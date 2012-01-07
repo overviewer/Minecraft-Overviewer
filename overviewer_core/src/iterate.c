@@ -18,6 +18,7 @@
 #include "overviewer.h"
 
 static PyObject *textures = NULL;
+static PyObject *support = NULL;
 
 unsigned int max_blockid = 0;
 unsigned int max_data = 0;
@@ -43,6 +44,11 @@ PyObject *init_chunk_render(void) {
     textures = PyImport_ImportModule("overviewer_core.textures");
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
+        return NULL;
+    }
+    
+    support = PyImport_ImportModule("overviewer_core.rendermodes");
+    if (!support) {
         return NULL;
     }
     
@@ -96,7 +102,9 @@ PyObject *init_chunk_render(void) {
     Py_RETURN_NONE;
 }
 
-PyObject *get_chunk_data(PyObject *region_set, int x, int z, ChunkNeighborName neighbor, ChunkDataType type) {
+PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type) {
+    int x = state->chunkx;
+    int z = state->chunkz;
     PyObject *chunk = NULL;
     PyObject *data = NULL;
     
@@ -117,7 +125,7 @@ PyObject *get_chunk_data(PyObject *region_set, int x, int z, ChunkNeighborName n
         break;
     }
     
-    chunk = PyObject_CallMethod(region_set, "get_chunk", "ii", x, z);
+    chunk = PyObject_CallMethod(state->regionset, "get_chunk", "ii", x, z);
     if (chunk == NULL || chunk == Py_None)
         return chunk;
     
@@ -401,10 +409,8 @@ chunk_render(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "OiiOiisO",  &state.regionset, &state.chunkx, &state.chunkz, &state.img, &xoff, &yoff, &rendermode_name, &state.textures))
         return NULL;
     
-    /* conveniences */
-    regionset = state.regionset;
-    chunkx = state.chunkx;
-    chunkz = state.chunkz;
+    /* rendermode support */
+    state.support = support;
     
     /* set up the render mode */
     state.rendermode = rendermode = render_mode_create(rendermode_name, &state);
@@ -435,25 +441,25 @@ chunk_render(PyObject *self, PyObject *args) {
     Py_DECREF(imgsize1_py);
 
     /* get the block data directly from numpy: */
-    blocks_py = get_chunk_data(regionset, chunkx, chunkz, CURRENT, BLOCKS);
+    blocks_py = get_chunk_data(&state, CURRENT, BLOCKS);
     state.blocks = blocks_py;
     if (blocks_py == Py_None) {
         PyErr_SetString(PyExc_RuntimeError, "chunk does not exist!");
         return NULL;
     }
     
-    state.blockdatas = get_chunk_data(regionset, chunkx, chunkz, CURRENT, BLOCKDATA);
+    state.blockdatas = get_chunk_data(&state, CURRENT, BLOCKDATA);
 
-    left_blocks_py = get_chunk_data(regionset, chunkx, chunkz, DOWN_LEFT, BLOCKS);
+    left_blocks_py = get_chunk_data(&state, DOWN_LEFT, BLOCKS);
     state.left_blocks = left_blocks_py;
 
-    right_blocks_py = get_chunk_data(regionset, chunkx, chunkz, DOWN_RIGHT, BLOCKS);
+    right_blocks_py = get_chunk_data(&state, DOWN_RIGHT, BLOCKS);
     state.right_blocks = right_blocks_py;
 
-    up_left_blocks_py = get_chunk_data(regionset, chunkx, chunkz, UP_LEFT, BLOCKS);
+    up_left_blocks_py = get_chunk_data(&state, UP_LEFT, BLOCKS);
     state.up_left_blocks = up_left_blocks_py;
 
-    up_right_blocks_py = get_chunk_data(regionset, chunkx, chunkz, UP_RIGHT, BLOCKS);
+    up_right_blocks_py = get_chunk_data(&state, UP_RIGHT, BLOCKS);
     state.up_right_blocks = up_right_blocks_py;
     
     /* set up the random number generator again for each chunk

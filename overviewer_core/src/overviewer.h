@@ -79,6 +79,9 @@ typedef struct {
     /* the Texture object */
     PyObject *textures;
     
+    /* the rendermode support module (rendermodes.py) */
+    PyObject *support;
+    
     /* the block position and type, and the block array */
     int x, y, z;
     unsigned char block;
@@ -137,7 +140,7 @@ typedef enum
     UP_RIGHT,   /* +1,  0 */
     UP_LEFT,    /*  0, -1 */
 } ChunkNeighborName;
-PyObject *get_chunk_data(PyObject *region_set, int x, int z, ChunkNeighborName neighbor, ChunkDataType type);
+PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type);
 
 /* pull in the rendermode info */
 #include "rendermodes.h"
