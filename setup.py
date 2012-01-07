@@ -149,8 +149,8 @@ except Exception:
         
 
 # used to figure out what files to compile
-#render_modes = ['normal', 'overlay', 'lighting', 'smooth-lighting', 'spawn', 'cave', 'mineral']
-render_modes = ['normal', 'lighting']
+render_modes = ['normal', 'lighting', 'smooth-lighting', 'cave']
+render_modes += ['overlay', 'spawn', 'mineral']
 
 c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
 c_overviewer_files += map(lambda mode: 'rendermode-%s.c' % (mode,), render_modes)

@@ -237,22 +237,22 @@ rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
     }
     
     /* if there's skylight we are in the surface! */
-    self->skylight = PyObject_GetAttrString(state->self, "skylight");
-    self->left_skylight = PyObject_GetAttrString(state->self, "left_skylight");
-    self->right_skylight = PyObject_GetAttrString(state->self, "right_skylight");
-    self->up_left_skylight = PyObject_GetAttrString(state->self, "up_left_skylight");
-    self->up_right_skylight = PyObject_GetAttrString(state->self, "up_right_skylight");
+    self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT);
+    self->left_skylight = get_chunk_data(state, DOWN_LEFT, SKYLIGHT);
+    self->right_skylight = get_chunk_data(state, DOWN_RIGHT, SKYLIGHT);
+    self->up_left_skylight = get_chunk_data(state, UP_LEFT, SKYLIGHT);
+    self->up_right_skylight = get_chunk_data(state, UP_RIGHT, SKYLIGHT);
     
     if (self->only_lit) {
-        self->blocklight = PyObject_GetAttrString(state->self, "blocklight");
-        self->left_blocklight = PyObject_GetAttrString(state->self, "left_blocklight");
-        self->right_blocklight = PyObject_GetAttrString(state->self, "right_blocklight");
-        self->up_left_blocklight = PyObject_GetAttrString(state->self, "up_left_blocklight");
-        self->up_right_blocklight = PyObject_GetAttrString(state->self, "up_right_blocklight");
+        self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT);
+        self->left_blocklight = get_chunk_data(state, DOWN_LEFT, BLOCKLIGHT);
+        self->right_blocklight = get_chunk_data(state, DOWN_RIGHT, BLOCKLIGHT);
+        self->up_left_blocklight = get_chunk_data(state, UP_LEFT, BLOCKLIGHT);
+        self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT);
     }
 
     /* colors for tinting */
-    self->depth_colors = PyObject_GetAttrString(state->chunk, "depth_colors");
+    self->depth_colors = PyObject_GetAttrString(state->support, "depth_colors");
 
     return 0;
 }
