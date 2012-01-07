@@ -48,12 +48,13 @@ class Dispatcher(object):
         """
         # TODO use status callback
         
-        # setup tilesetlist
-        self.setup_tilesets(tilesetlist)
-        
         # preprocessing
         for tileset in tilesetlist:
             tileset.do_preprocessing()
+        
+        # setup tilesetlist
+        self.setup_tilesets(tilesetlist)
+        
         
         # iterate through all possible phases
         num_phases = [tileset.get_num_phases() for tileset in tilesetlist]
@@ -350,7 +351,7 @@ class MultiprocessingDispatcher(Dispatcher):
             finished_jobs += self._handle_messages()
         return finished_jobs
     
-    def _handle_messages(self, timeout=1.0):
+    def _handle_messages(self, timeout=0.01):
         # work function: takes results out of the result queue and
         # keeps track of how many outstanding jobs remain
         finished_jobs = []

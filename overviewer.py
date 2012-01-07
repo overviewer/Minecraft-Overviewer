@@ -420,11 +420,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         tilesets.append(tset)
 
    
-    # non-multiprocessing dispatcher
-    dispatch = dispatcher.Dispatcher()
+    # multiprocessing dispatcher
+    dispatch = dispatcher.MultiprocessingDispatcher()
     def print_status(*args):
         logging.info("Status callback: %r", args)
     dispatch.render_all(tilesets, print_status)
+    dispatch.close()
 
 
     sys.exit("early abort")

@@ -46,10 +46,25 @@ class Textures(object):
         self.texture_size = 24
         self.texture_dimensions = (self.texture_size, self.texture_size)
         
-        # these are filled in in generate()
-        self.terrain_images = None
-        self.blockmap = []
-        self.biome_grass_texture = None
+        # this is set in in generate()
+        self.generated = False
+    
+    ##
+    ## pickle support
+    ##
+    
+    def __getstate__(self):
+        # we must get rid of the huge image lists, and other images
+        attributes = self.__dict__.copy()
+        for attr in ['terrain_images', 'blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture']:
+            del attributes[attr]
+        return attributes
+    def __setstate__(self, attrs):
+        # regenerate textures, if needed
+        for attr, val in attrs.iteritems():
+            setattr(self, attr, val)
+        if self.generated:
+            self.generate()
     
     ##
     ## The big one: generate()
@@ -82,6 +97,8 @@ class Textures(object):
                 block = tex[0]
                 scaled_block = block.resize(self.texture_dimensions, Image.ANTIALIAS)
                 blockmap[i] = self.generate_texture_tuple(scaled_block)
+        
+        self.generated = True
     
     ##
     ## Helpers for opening textures
