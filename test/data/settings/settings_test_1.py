@@ -1,4 +1,6 @@
-worldpath="test/data/settings/test_world"
+world['test'] = "test/data/settings/test_world"
+worldname = 'test'
+
 rendermode = "normal"
 
 render["world"] = { 

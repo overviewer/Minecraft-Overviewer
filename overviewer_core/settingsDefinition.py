@@ -17,19 +17,19 @@ from settingsValidators import *
 # note that all defaults go thought the validator
 
 render = {
-    "worldpath": dict(required=True, validator=validateWorldPath),
+    "worldname": dict(required=True, validator=validateWorldPath),
     "rendermode": dict(required=False, validator=validateRenderMode),
     "northdirection": dict(required=False, validator=validateNorthDirection),
     "renderrange": dict(required=False, validator=validateRenderRange),
-    "forcerender": dict(required=False, validator=bool),
+    "forcerender": dict(required=False, validator=validateBool),
     "stochasticrender": dict(required=False, validator=validateStochastic),
     "imgformat": dict(required=False, validator=validateImgFormat, default="png"),
     "imgquality": dict(required=False, validator=validateImgQuality),
     "bgcolor": dict(required=False, validator=validateBGColor, default="1a1a1a"),
     "optimizeimg": dict(required=False, validator=validateOptImg, default=0),
-    "nomarkers": dict(required=False, validator=bool),
+    "nomarkers": dict(required=False, validator=validateBool),
     "texturepath": dict(required=False, validator=validateTexturePath),
-    "renderchecks": dict(required=False, validator=int, default=0),
-    "rerenderprob": dict(required=False, validator=float, default=0),
+    "renderchecks": dict(required=False, validator=validateInt, default=0),
+    "rerenderprob": dict(required=False, validator=validateFloat, default=0),
     }
 

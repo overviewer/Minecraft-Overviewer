@@ -404,11 +404,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         render = render_things[render_name]
         logging.debug("Found the following render thing: %r", render)
 
-        w = world.World(render['worldpath'])
+        # XXX we now construct the regionset directly
+        #w = world.World(render['worldpath'])
 
         # if no dimension has been specified, just use the first one
         # TODO support the case where a different dimension is specified
-        rset = w.get_regionset(0)
+        rset = world.RegionSet(render['worldpath'])
         logging.debug("Using RegionSet %r", rset) 
 
         # create our TileSet from this RegionSet

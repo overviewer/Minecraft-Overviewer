@@ -194,8 +194,8 @@ we're reading from. There is one of these per set of regions on the hard drive,
 but may be several per invocation of the Overviewer in the case of multi-world.
     """
 
-    def __init__(self, worldobj, regiondir):
-        self.world = worldobj
+    def __init__(self, regiondir):
+        #self.world = worldobj
         self.regiondir = regiondir
 
         logging.info("Scanning regions")

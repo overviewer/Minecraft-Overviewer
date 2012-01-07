@@ -5,25 +5,19 @@ import os.path
 class ValidationException(Exception):
     pass
 
-def validateWorldPath(path):
-    try:
-        if not os.path.exists(path):
-            raise ValidationException("%r does not exist" % path)
-        if not os.path.isdir(path):
-            raise ValidationException("%r is not a directory" % path)
-    except ValidationException, e:
-        # TODO assume this is the name of a world and try
-        # to find it
-        raise e
-    full_path = os.path.abspath(path)
-    return full_path
+def validateWorldPath(name, **kwargs):
+    world = kwargs.get('world', dict())
+    if name not in world.keys():
+        raise ValidationException("bad world name")
+    return os.path.abspath(world[name])
 
-def validateRenderMode(mode):
+
+def validateRenderMode(mode, **kwargs):
     # TODO get list of valid rendermodes
     #raise NotImplementedError("validateRenderMode")
     return mode
 
-def validateNorthDirection(direction):
+def validateNorthDirection(direction, **kwargs):
     # normalize to integers
     intdir = 0 #default
     if type(direction) == int:
@@ -37,28 +31,28 @@ def validateNorthDirection(direction):
         raise ValidationException("%r is not a valid north direction" % direction)
     return intdir
 
-def validateRenderRange(r):
+def validateRenderRange(r, **kwargs):
     raise NotImplementedError("render range")
 
-def validateStochastic(s):
+def validateStochastic(s, **kwargs):
     val = float(s)
     if val < 0 or val > 1:
         raise ValidationException("%r is not a valid stochastic value.  Should be between 0.0 and 1.0" % s)
     return val
 
-def validateImgFormat(fmt):
+def validateImgFormat(fmt, **kwargs):
     if fmt not in ("png", "jpg", "jpeg"):
         raise ValidationException("%r is not a valid image format" % fmt)
     if fmt == "jpeg": fmt = "jpg"
     return fmt
 
-def validateImgQuality(qual):
+def validateImgQuality(qual, **kwargs):
     intqual = int(qual)
     if (intqual < 0 or intqual > 100):
         raise ValidationException("%r is not a valid image quality" % intqual)
     return intqual
 
-def validateBGColor(color):
+def validateBGColor(color, **kwargs):
     """BG color must be an HTML color, with an option leading # (hash symbol)
     returns an (r,b,g) 3-tuple  
     """
@@ -80,11 +74,20 @@ def validateBGColor(color):
         return color
 
 
-def validateOptImg(opt):
+def validateOptImg(opt, **kwargs):
     return bool(opt)
 
-def validateTexturePath(path):
+def validateTexturePath(path, **kwargs):
     # Expand user dir in directories strings
     path = os.path.expanduser(path)
     # TODO assert this path exists?
 
+
+def validateBool(b, **kwargs):
+    return bool(b)
+
+def validateFloat(f, **kwargs):
+    return float(f)
+
+def validateInt(i, **kwargs):
+    return int(i)

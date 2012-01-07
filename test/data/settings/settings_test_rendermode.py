@@ -1,5 +1,7 @@
+world['test'] = "test/data/settings/test_world"
+
 render["world"] = { 
-    "worldpath": "test/data/settings/test_world", 
+    "worldname": "test", 
     "rendermode": "bad_rendermode",
     "northdirection": ["upper-left"],
 }

@@ -221,7 +221,7 @@ class MultiWorldParser(object):
         self.settings_file = settings
 
     def parse(self):
-        glob = dict(render=dict(), custom_rendermodes=dict())
+        glob = dict(render=dict(), custom_rendermodes=dict(), world=dict())
 
         try:
             execfile(self.settings_file, glob, glob)    
@@ -243,10 +243,12 @@ class MultiWorldParser(object):
 
         self.render = glob['render']
         self.custom_rendermodes = glob['custom_rendermodes']
+        self.world = glob['world']
 
         # anything that's not 'render' or 'custom_rendermode' is a default
         del glob['render']
         del glob['custom_rendermodes']
+        del glob['world']
 
         # seed with the Overviewer defaults, then update with the user defaults
         self.defaults = dict()
@@ -261,6 +263,11 @@ class MultiWorldParser(object):
 
     def validate(self):
 
+        # first validate the world dict
+        for worldname in self.world:
+            if not os.path.exists(self.world[worldname]):
+                raise Exception("%r does not exist for %s" % (self.world[worldname], worldname))
+
 
         for worldname in self.render:
             world = dict()
@@ -274,10 +281,10 @@ class MultiWorldParser(object):
                
                 definition = settingsDefinition.render[key]
                 try:
-                    val = definition['validator'](world[key])
+                    val = definition['validator'](world[key], world = self.world)
                     world[key] = val
                 except Exception as e:
-                    #print "Error validating %s: %r" % (key, e)
+                    print "Error validating %s: %r" % (key, e)
                     raise e
             self.render[worldname] = world
 
