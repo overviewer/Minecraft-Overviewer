@@ -346,7 +346,7 @@ class TileSet(object):
                 # care according to the worker interface protocol It will only
                 # wait for the items that do exist and are in the queue.
                 for i in range(4):
-                    dependencies.append( "%s/%s" % (tilepath, i) )
+                    dependencies.append( tilepath + (i,) )
                 yield tilepath, dependencies
 
         else:
