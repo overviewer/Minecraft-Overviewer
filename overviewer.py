@@ -126,7 +126,7 @@ else:
 
 from optparse import OptionParser
 from overviewer_core import optimizeimages, world
-from overviewer_core import googlemap
+#from overviewer_core import googlemap
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
 
 # definitions of built-in custom modes
@@ -204,7 +204,7 @@ def main():
     except NotImplementedError:
         cpus = 1
     
-    avail_rendermodes = c_overviewer.get_render_modes()
+    #avail_rendermodes = c_overviewer.get_render_modes()
     avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right', 'auto']
    
     # revert to a vanilla OptionParser for right now 

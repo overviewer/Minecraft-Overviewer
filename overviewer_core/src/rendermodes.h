@@ -106,16 +106,6 @@ void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject 
    works like PyArg_ParseTuple on a dictionary item */
 int render_mode_parse_option(PyObject *dict, const char *name, const char *format, ...);
 
-/* python metadata bindings */
-PyObject *get_render_modes(PyObject *self, PyObject *args);
-PyObject *get_render_mode_info(PyObject *self, PyObject *args);
-PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args);
-PyObject *get_render_mode_children(PyObject *self, PyObject *args);
-
-/* python rendermode options bindings */
-PyObject *set_render_mode_options(PyObject *self, PyObject *args);
-PyObject *add_custom_render_mode(PyObject *self, PyObject *args);
-
 /* individual rendermode interface declarations follow */
 
 /* NORMAL */
