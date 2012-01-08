@@ -245,8 +245,8 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
     blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
 
-    /* special half-step handling */
-    if (block == 44 || block == 53 || block == 67 || block == 108 || block == 109) {
+    /* special half-step, stairs handling */
+    if (block == 44 || block == 53 || block == 67 || block == 108 || block == 109 || block == 114) {
         unsigned int upper_block;
         
         /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
