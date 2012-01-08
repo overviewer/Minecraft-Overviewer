@@ -238,8 +238,6 @@ but may be several per invocation of the Overviewer in the case of multi-world.
         level = data[1]['Level']
         chunk_data = level
         chunk_data['Blocks'] = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
-        chunk_data['Data'] = numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
-
 
         skylight = numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
 
@@ -258,11 +256,12 @@ but may be several per invocation of the Overviewer in the case of multi-world.
         blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
         chunk_data['BlockLight'] = blocklight_expanded
         
-        #chunk_data = {}
-        #chunk_data['skylight'] = chunk.get_skylight_array(level)
-        #chunk_data['blocklight'] = chunk.get_blocklight_array(level)
-        #chunk_data['blockarray'] = chunk.get_blockdata_array(level)
-        #chunk_data['TileEntities'] = chunk.get_tileentity_data(level)
+        # expand just like skylight
+        blockdata = numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
+        blockdata_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
+        blockdata_expanded[:,:,::2] = blockdata & 0x0F
+        blockdata_expanded[:,:,1::2] = (blockdata & 0xF0) >> 4
+        chunk_data['Data'] = blockdata_expanded
         
         return chunk_data      
     
