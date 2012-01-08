@@ -28,6 +28,11 @@ class RenderPrimitive(object):
             if not key in self.options:
                 raise ValueError("primitive `{0}' has no option `{1}'".format(self.name, key))
             self.option_values[key] = val
+        
+        # set up defaults
+        for name, (description, default) in self.options.iteritems():
+            if not name in self.option_values:
+                self.option_values[name] = default
 
 class Base(RenderPrimitive):
     name = "base"
@@ -44,14 +49,14 @@ class HeightFading(RenderPrimitive):
 class Depth(RenderPrimitive):
     name = "depth"
     options = {
-        "min": "lowest level of blocks to render (default: 0)",
-        "max": "highest level of blocks to render (default: 127)",
+        "min": ("lowest level of blocks to render", 0),
+        "max": ("highest level of blocks to render", 127),
     }
 
 class EdgeLines(RenderPrimitive):
     name = "edge-lines"
     options = {
-        "opacity": "darkness of the edge lines, from 0.0 to 1.0 (default: 0.15)",
+        "opacity": ("darkness of the edge lines, from 0.0 to 1.0", 0.15),
     }
 
 # Render 3 blending masks for lighting

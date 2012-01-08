@@ -176,16 +176,16 @@ int render_mode_parse_option(PyObject *support, const char *name, const char *fo
     int ret;
     
     if (support == NULL || name == NULL)
-        return 1;
+        return 0;
     
     dict = PyObject_GetAttrString(support, "option_values");
     if (!dict)
-        return 1;
+        return 0;
     
     item = PyDict_GetItemString(dict, name);
     if (item == NULL) {
         Py_DECREF(dict);
-        return 1;
+        return 0;
     };
     
     /* make sure the item we're parsing is a tuple

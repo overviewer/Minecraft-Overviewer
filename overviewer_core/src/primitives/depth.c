@@ -26,11 +26,8 @@ static int
 depth_start(void *data, RenderState *state, PyObject *support) {
     PrimitiveDepth *self = (PrimitiveDepth *)data;
     
-    self->min = 0;
     if (!render_mode_parse_option(support, "min", "I", &(self->min)))
         return 1;
-
-    self->max = 127;
     if (!render_mode_parse_option(support, "max", "I", &(self->max)))
         return 1;
 

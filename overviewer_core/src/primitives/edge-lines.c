@@ -24,8 +24,6 @@ typedef struct {
 static int
 edge_lines_start(void *data, RenderState *state, PyObject *support) {
     PrimitiveEdgeLines *self = (PrimitiveEdgeLines *)data;
-    
-    self->opacity = 0.15;
     if (!render_mode_parse_option(support, "opacity", "f", &(self->opacity)))
         return 1;
     return 0;
