@@ -268,6 +268,7 @@ class MultiWorldParser(object):
             if not os.path.exists(self.world[worldname]):
                 raise Exception("%r does not exist for %s" % (self.world[worldname], worldname))
 
+        origs = dict()
 
         for worldname in self.render:
             world = dict()
@@ -282,10 +283,14 @@ class MultiWorldParser(object):
                 definition = settingsDefinition.render[key]
                 try:
                     val = definition['validator'](world[key], world = self.world)
+                    if definition.get('save_orig', False):
+                        origs[key + "_orig"] = world[key]
                     world[key] = val
                 except Exception as e:
                     print "Error validating %s: %r" % (key, e)
                     raise e
+            world['name'] = worldname
+            world.update(origs)
             self.render[worldname] = world
 
                 

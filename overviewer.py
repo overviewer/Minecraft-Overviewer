@@ -409,7 +409,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # if no dimension has been specified, just use the first one
         # TODO support the case where a different dimension is specified
-        rset = world.RegionSet(render['worldpath'])
+        rset = world.RegionSet(render['worldname'])
         logging.debug("Using RegionSet %r", rset) 
 
         # create our TileSet from this RegionSet
@@ -428,6 +428,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     dispatch.render_all(tilesets, print_status)
     dispatch.close()
 
+    assetMrg.finalize(tilesets)
 
     sys.exit("early abort")
  

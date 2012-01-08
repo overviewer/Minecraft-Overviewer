@@ -13,6 +13,10 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
+import os
+import codecs
+from PIL import Image
 
 class AssetManager(object):
     """\
@@ -28,6 +32,7 @@ It can read/parse and write/dump the overviewerConfig.js file into this top-leve
 directory. 
         """
         self.outputdir = outputdir
+        self.renders = dict()
 
         #  stores Points Of Interest to be mapped with markers
         #  This is a dictionary of lists of dictionaries
@@ -41,18 +46,70 @@ directory.
         POI[regionset.name].append
 
 
-    def finalize(self):
+    def finalize(self, tilesets):
 
-        # the following bit of code came from googlemap.py
-        zoomlevel = self.p
+        # dictionary to hold the overviewerConfig.js settings that we will dumps
+        dump = dict()
+        dump['CONST'] = dict(tileSize=384)
+        dump['CONST']['image'] = {
+                'defaultMarker':    'signpost.png',
+                'signMarker':       'signpost_icon.png',
+                'compass':          'compass_lower-left.png',
+                'spawnMarker':      'http://google-maps-icons.googlecode.com/files/home.png',
+                'queryMarker':      'http://google-maps-icons.googlecode.com/files/regroup.png'
+                }
+        dump['CONST']['mapDivId'] = 'mcmap'
+        dump['CONST']['regionStrokeWeight'] = 2
 
-        bgcolor = (int(self.bg_color[1:3],16), int(self.bg_color[3:5],16), int(self.bg_color[5:7],16), 0)
-        blank = Image.new("RGBA", (1,1), bgcolor)
-        # Write a blank image
-        for quadtree in self.quadtrees:
-            tileDir = os.path.join(self.destdir, quadtree.tiledir)
-            if not os.path.exists(tileDir): os.mkdir(tileDir)
-            blank.save(os.path.join(tileDir, "blank."+quadtree.imgformat))
+        # based on the tilesets we have, group them by worlds
+        worlds = []
+        for tileset in tilesets:
+            if tileset.options.get('worldname_orig') not in worlds:
+                worlds.append(tileset.options.get('worldname_orig'))
+
+        dump['worlds'] = worlds
+        dump['map'] = dict()
+        dump['map']['debug'] = True
+        dump['map']['center'] = [-314, 67, 94]
+        dump['map']['controls'] = {
+            'pan': True,
+            'zoom': True,
+            'spawn': True,
+            'compass': True,
+            'mapType': True,
+            'overlays': True,
+            'coordsBox': True,
+            'searchBox': True
+            }
+
+
+        dump['tilesets'] = []
+
+        def bgcolorformat(color):
+            return "#%02x%02x%02x" % color[0:3]
+
+        for tileset in tilesets:
+            js_tileset = dict()
+            js_tileset['name'] = tileset.options.get('name')
+            js_tileset['zoomLevels'] = tileset.treedepth
+            js_tileset['minZoom'] = 0
+            js_tileset['defaultZoom'] = 1
+            js_tileset['maxZoom'] = tileset.treedepth
+            js_tileset['path'] = tileset.options.get('name')
+            js_tileset['base'] = ''
+            js_tileset['bgcolor'] = bgcolorformat(tileset.options.get('bgcolor'))
+            dump['tilesets'].append(js_tileset)
+
+            # write a blank image
+            blank = Image.new("RGBA", (1,1), tileset.options.get('bgcolor'))
+            blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank."+tileset.options.get('imgformat')))
+
+
+        jsondump = json.dumps(dump, indent=4)
+        with codecs.open(os.path.join(self.outputdir, 'overviewerConfig.js'), 'w', encoding='UTF-8') as f:
+            f.write("var overviewerConfig = " + jsondump + ";\n")
+
+          
         
         # copy web assets into destdir:
         global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
@@ -63,21 +120,6 @@ directory.
         # do the same with the local copy, if we have it
         if self.web_assets_path:
             mirror_dir(self.web_assets_path, self.destdir)
-
-        # replace the config js stuff
-        # TODO don't replace stuff, but generate it from scratch
-        config = codecs.open(os.path.join(self.outputdir, 'overviewerConfig.js'), 'r', encoding='UTF-8').read()
-        config = config.replace(
-                "{minzoom}", str(0))
-        config = config.replace(
-                "{maxzoom}", str(zoomlevel))
-        config = config.replace(
-                "{zoomlevels}", str(zoomlevel))
-        config = config.replace(
-                "{north_direction}", self.north_direction)
-        
-        config = config.replace("{spawn_coords}",
-                                json.dumps(list(self.world.spawn)))
 
 
 

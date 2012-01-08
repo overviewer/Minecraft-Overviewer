@@ -17,7 +17,7 @@ from settingsValidators import *
 # note that all defaults go thought the validator
 
 render = {
-    "worldname": dict(required=True, validator=validateWorldPath),
+    "worldname": dict(required=True, validator=validateWorldPath, save_orig=True),
     "rendermode": dict(required=False, validator=validateRenderMode),
     "northdirection": dict(required=False, validator=validateNorthDirection),
     "renderrange": dict(required=False, validator=validateRenderRange),

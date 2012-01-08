@@ -121,12 +121,13 @@ var overviewer = {
          */
         'initializeMapTypes': function() {
             var mapOptions = {};
-            for (i in overviewerConfig.mapTypes) {
-                var view = overviewerConfig.mapTypes[i];
+            for (i in overviewerConfig.tilesets) {
+                var view = overviewerConfig.tilesets[i];
+                overviewer.util.debug("initializeMapTypes: " + view.name);
                 var imageFormat = view.imgformat ? view.imgformat : 'png';
                 
                 if (view.shortname == null)
-                    view.shortname = view.label.replace(/\s+/g, "");
+                    view.shortname = view.name.replace(/\s+/g, "");
                 
                 mapOptions[view.shortname] = {
                     'getTileUrl':   overviewer.gmap.getTileUrlGenerator(view.path,
@@ -134,16 +135,16 @@ var overviewer = {
                     'tileSize':     new google.maps.Size(
                         overviewerConfig.CONST.tileSize,
                         overviewerConfig.CONST.tileSize),
-                    'maxZoom':      overviewerConfig.map.maxZoom,
-                    'minZoom':      overviewerConfig.map.minZoom,
+                    'maxZoom':      view.maxZoom,
+                    'minZoom':      view.minZoom,
                     'isPng':        imageFormat.toLowerCase() == 'png'
                 }
                 overviewer.collections.mapTypes[view.shortname] = new google.maps.ImageMapType(
                     mapOptions[view.shortname]);
-                overviewer.collections.mapTypes[view.shortname].name = view.label;
+                overviewer.collections.mapTypes[view.shortname].name = view.name;
                 overviewer.collections.mapTypes[view.shortname].shortname = view.shortname;
                 overviewer.collections.mapTypes[view.shortname].alt = 'Minecraft ' +
-                    view.label + ' Map';
+                    view.name + ' Map';
                 overviewer.collections.mapTypes[view.shortname].projection  =
                     new overviewer.classes.MapProjection();
                 if (view.overlay) {
@@ -162,12 +163,16 @@ var overviewer = {
          * the default view.
          */
         'initializeMap': function() {
+            // use the first map as the default one
+
             var defaultCenter = overviewer.util.fromWorldToLatLng(
-                overviewerConfig.map.center[0], overviewerConfig.map.center[1],
-                overviewerConfig.map.center[2]);
+                overviewerConfig.map.center[0], 
+                overviewerConfig.map.center[1],
+                overviewerConfig.map.center[2],
+                overviewerConfig.tilesets[0].zoomLevels);
             var lat = defaultCenter.lat();
             var lng = defaultCenter.lng();
-            var zoom = overviewerConfig.map.defaultZoom;
+            var zoom = overviewerConfig.tilesets[0].defaultZoom;
             var mapcenter;
             var queryParams = overviewer.util.parseQueryString();
             if (queryParams.debug) {
@@ -223,8 +228,7 @@ var overviewer = {
                 streetViewControl:      false,
                 overviewMapControl:     true,
                 zoomControl:            overviewerConfig.map.controls.zoom,
-                backgroundColor:        overviewer.util.getMapTypeBackgroundColor(
-                    overviewer.util.getDefaultMapTypeId())
+                backgroundColor:        overviewer.util.getMapTypeBackgroundColor(0)
             };
             overviewer.map = new google.maps.Map(document.getElementById(
                 overviewerConfig.CONST.mapDivId), mapOptions);
@@ -287,12 +291,14 @@ var overviewer = {
          */
         'initializeMarkers': function() {
             //first, give all collections an empty array to work with
+            /* TODO reimplement
             for (i in overviewerConfig.objectGroups.signs) {
                 overviewer.util.debug('Found sign group: ' +
                     overviewerConfig.objectGroups.signs[i].label);
                 overviewer.collections.markers[
                     overviewerConfig.objectGroups.signs[i].label] = [];
             }
+            */
             for (i in overviewer.collections.markerDatas) {
                 var markerData = overviewer.collections.markerDatas[i];
                 for (j in markerData) {
@@ -390,9 +396,11 @@ var overviewer = {
          * Same as initializeMarkers() for the most part.
          */
         'initializeRegions': function() {
+            /* TODO reimplement
             for (i in overviewerConfig.objectGroups.regions) {
                 overviewer.collections.regions[overviewerConfig.objectGroups.regions[i].label] = [];
             }
+            */
             for (i in overviewer.collections.regionDatas) {
                 var regionData = overviewer.collections.regionDatas[i];
                 for (j in regionData) {
@@ -484,15 +492,8 @@ var overviewer = {
          * @param string mapTypeId
          * @return string
          */
-        'getMapTypeBackgroundColor': function(mapTypeId) {
-            for(i in overviewerConfig.mapTypes) {
-                if( overviewerConfig.CONST.mapDivId +
-                        overviewerConfig.mapTypes[i].shortname == mapTypeId ) {
-                    overviewer.util.debug('Found background color for: ' +
-                        overviewerConfig.mapTypes[i].bg_color);
-                    return overviewerConfig.mapTypes[i].bg_color;
-                }
-            }
+        'getMapTypeBackgroundColor': function(id) {
+            return overviewerConfig.tilesets[id].bgcolor;
         },
         /**
          * Gee, I wonder what this does.
@@ -538,11 +539,11 @@ var overviewer = {
          * 
          * @return google.maps.LatLng
          */
-        'fromWorldToLatLng': function(x, z, y) {
+        'fromWorldToLatLng': function(x, z, y, zoomLevels) {
             // the width and height of all the highest-zoom tiles combined,
             // inverted
             var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
-                Math.pow(2, overviewerConfig.map.zoomLevels));
+                Math.pow(2, zoomLevels));
 
             if(overviewerConfig.map.north_direction == 'upper-left'){
                 temp = x;
@@ -565,7 +566,7 @@ var overviewer = {
             // so the Y coordinate is at 0.5, and the X is at 0.5 -
             // ((tileSize / 2) / (tileSize * 2^zoomLevels))
             // or equivalently, 0.5 - (1 / 2^(zoomLevels + 1))
-            var lng = 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.zoomLevels + 1));
+            var lng = 0.5 - (1.0 / Math.pow(2, zoomLevels + 1));
             var lat = 0.5;
 
             // the following metrics mimic those in
@@ -597,7 +598,7 @@ var overviewer = {
          * 
          * @return Array
          */
-        'fromLatLngToWorld': function(lat, lng) {
+        'fromLatLngToWorld': function(lat, lng, zoomLevels) {
             // Initialize world x/y/z object to be returned
             var point = Array();
             point.x = 0;
@@ -607,11 +608,11 @@ var overviewer = {
             // the width and height of all the highest-zoom tiles combined,
             // inverted
             var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
-                Math.pow(2, overviewerConfig.map.zoomLevels));
+                Math.pow(2, zoomLevels));
 
             // Revert base positioning
             // See equivalent code in fromWorldToLatLng()
-            lng -= 0.5 - (1.0 / Math.pow(2, overviewerConfig.map.zoomLevels + 1));
+            lng -= 0.5 - (1.0 / Math.pow(2, zoomLevels + 1));
             lat -= 0.5;
 
             // I'll admit, I plugged this into Wolfram Alpha:
@@ -678,13 +679,16 @@ var overviewer = {
             }
             
             // Update coords on mousemove
+            /* TODO reenable
             google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
                 var worldcoords = overviewer.util.fromLatLngToWorld(event.latLng.lat(), event.latLng.lng());
                 coordsDiv.innerHTML = "Coords: X " + Math.round(worldcoords.x) + ", Z " + Math.round(worldcoords.z);
             });
+            */
 
             // only need to create the control if there are items in the list.
             // as defined in config.js
+            /* TODO reimplement
             if (overviewerConfig.objectGroups.signs.length > 0) {
                 // signpost display control
                 var items = [];
@@ -719,8 +723,10 @@ var overviewer = {
                     overviewer.util.createDropDown('Markers', items);
                 }
             }
+            */
 
             // if there are any regions data, lets show the option to hide/show them.
+            /* TODO reimplement
             if (overviewerConfig.objectGroups.regions.length > 0) {
                 // region display control
                 var items = [];
@@ -742,6 +748,7 @@ var overviewer = {
                 }
                 overviewer.util.createDropDown('Regions', items);
             }
+            */
 
             if (overviewerConfig.map.controls.overlays && overviewer.collections.overlays.length > 0) {
                 // overlay maps control
