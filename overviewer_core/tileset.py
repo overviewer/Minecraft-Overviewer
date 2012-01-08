@@ -27,7 +27,7 @@ from collections import namedtuple
 
 from PIL import Image
 
-from .util import iterate_base4, convert_coords, unconvert_coords
+from .util import iterate_base4, convert_coords, unconvert_coords, get_tiles_by_chunk
 from .optimizeimages import optimize_image
 import c_overviewer
 
@@ -239,7 +239,7 @@ class TileSet(object):
             render mode to render. This rendermode must have already been
             registered with the C extension module. 
 
-        rerender_prob
+        rerenderprob
             A floating point number between 0 and 1 indicating the probability
             that a tile which is not marked for render by any mtime checks will
             be rendered anyways. 0 disables this option.
@@ -249,6 +249,9 @@ class TileSet(object):
         self.regionset = regionsetobj
         self.am = assetmanagerobj
         self.textures = texturesobj
+
+        # XXX TODO:
+        self.last_rendertime = 0 # TODO
 
         # Throughout the class, self.outputdir is an absolute path to the
         # directory where we output tiles. It is assumed to exist.
@@ -308,12 +311,7 @@ class TileSet(object):
         number of phases of work that need to be done.
 
         """
-        if self.options['renderchecks'] == 1:
-            # Layer by layer for this mode
-            return self.treedepth
-        else:
-            # post-traversal does everything in one phase
-            return 1
+        return 1
     
     def get_phase_length(self, phase):
         """Returns the number of work items in a given phase, or None if there
@@ -322,7 +320,7 @@ class TileSet(object):
         # Yeah functional programming!
         return {
                 0: lambda: self.dirtytree.count_all(),
-                1: lambda: self.dirtytree.count() if phase == 0 else None,
+                1: lambda: None,
                 2: lambda: self.dirtytree.count_all(),
                 }[self.options['renderchecks']]()
 
@@ -422,6 +420,11 @@ class TileSet(object):
             logging.critical("Could not determine existing tile tree depth. Does it exist?")
             raise
         
+        if curdepth == 1:
+            # Skip a depth 1 tree. A depth 1 tree pretty much can't happen, so
+            # when we detect this it usually means the tree is actually empty
+            return
+        logging.debug("Current tree depth was detected to be %s. Target tree depth is %s", curdepth, self.treedepth)
         if self.treedepth != curdepth:
             if self.treedepth > curdepth:
                 logging.warning("Your map seems to have expanded beyond its previous bounds.")
@@ -533,8 +536,7 @@ class TileSet(object):
 
         rerender_prob = self.options['rerenderprob']
 
-        # XXX TODO:
-        last_rendertime = 0 # TODO
+        last_rendertime = self.last_rendertime
 
         max_chunk_mtime = 0
 
@@ -554,72 +556,48 @@ class TileSet(object):
             # Convert to diagonal coordinates
             chunkcol, chunkrow = convert_coords(chunkx, chunkz)
 
-            # find tile coordinates. Remember tiles are identified by the
-            # address of the chunk in their upper left corner.
-            tilecol = chunkcol - chunkcol % 2
-            tilerow = chunkrow - chunkrow % 4
+            for c, r in get_tiles_by_chunk(chunkcol, chunkrow):
 
-            # If this chunk is in an /even/ column, then it spans two tiles.
-            if chunkcol % 2 == 0:
-                colrange = (tilecol-2, tilecol)
-            else:
-                colrange = (tilecol,)
+                # Make sure the tile is in the boundary we're rendering.
+                # This can happen when rendering at lower treedepth than
+                # can contain the entire map, but shouldn't happen if the
+                # treedepth is correctly calculated.
+                if (
+                        c < -xradius or
+                        c >= xradius or
+                        r < -yradius or
+                        r >= yradius
+                        ):
+                    continue
 
-            # If this chunk is in a row divisible by 4, then it touches the
-            # tile above it as well. Also touches the next 4 tiles down (16
-            # rows)
-            if chunkrow % 4 == 0:
-                rowrange = xrange(tilerow-4, tilerow+16+1, 4)
-            else:
-                rowrange = xrange(tilerow, tilerow+16+1, 4)
+                # Computes the path in the quadtree from the col,row coordinates
+                tile = RenderTile.compute_path(c, r, depth)
 
-            # Loop over all tiles that this chunk potentially touches.
-            # The tile at tilecol,tilerow obviously contains the chunk, but so
-            # do the next 4 tiles down because chunks are very tall, and maybe
-            # the next column over too.
-            for c in colrange:
-                for r in rowrange:
+                if markall:
+                    # markall mode: Skip all other checks, mark tiles
+                    # as dirty unconditionally
+                    dirty.add(tile.path)
+                    continue
 
-                    # Make sure the tile is in the boundary we're rendering.
-                    # This can happen when rendering at lower treedepth than
-                    # can contain the entire map, but shouldn't happen if the
-                    # treedepth is correctly calculated.
-                    if (
-                            c < -xradius or
-                            c >= xradius or
-                            r < -yradius or
-                            r >= yradius
-                            ):
-                        continue
+                # Check if this tile has already been marked dirty. If so,
+                # no need to do any of the below.
+                if dirty.query_path(tile.path):
+                    continue
 
-                    # Computes the path in the quadtree from the col,row coordinates
-                    tile = RenderTile.compute_path(c, r, depth)
+                # Stochastic check. Since we're scanning by chunks and not
+                # by tiles, and the tiles get checked multiple times for
+                # each chunk, this is only an approximation. The given
+                # probability is for a particular tile that needs
+                # rendering, but since a tile gets touched up to 32 times
+                # (once for each chunk in it), divide the probability by
+                # 32.
+                if rerender_prob and rerender_prob/32 > random.random():
+                    dirty.add(tile.path)
+                    continue
 
-                    if markall:
-                        # markall mode: Skip all other checks, mark tiles
-                        # as dirty unconditionally
-                        dirty.add(tile.path)
-                        continue
-
-                    # Check if this tile has already been marked dirty. If so,
-                    # no need to do any of the below.
-                    if dirty.query_path(tile.path):
-                        continue
-
-                    # Stochastic check. Since we're scanning by chunks and not
-                    # by tiles, and the tiles get checked multiple times for
-                    # each chunk, this is only an approximation. The given
-                    # probability is for a particular tile that needs
-                    # rendering, but since a tile gets touched up to 32 times
-                    # (once for each chunk in it), divide the probability by
-                    # 32.
-                    if rerender_prob and rerender_prob/32 > random.random():
-                        dirty.add(tile.path)
-                        continue
-
-                    # Check mtimes and conditionally add tile to the set
-                    if chunkmtime > last_rendertime:
-                        dirty.add(tile.path)
+                # Check mtimes and conditionally add tile to the set
+                if chunkmtime > last_rendertime:
+                    dirty.add(tile.path)
 
         t = int(time.time()-stime)
         logging.debug("%s finished chunk scan. %s chunks scanned in %s second%s", 
@@ -929,7 +907,7 @@ class TileSet(object):
 
             # Now that we're done with our children and descendents, see if
             # this tile needs rendering
-            if needs_rendering:
+            if render_me:
                 # yes. yes we do. This is set when one of our children needs
                 # rendering
                 yield path, None, True
