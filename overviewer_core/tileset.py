@@ -595,8 +595,8 @@ class TileSet(object):
                     # Computes the path in the quadtree from the col,row coordinates
                     tile = RenderTile.compute_path(c, r, depth)
 
-                    if forcerender:
-                        # forcerender mode: Skip all other checks, mark tiles
+                    if markall:
+                        # markall mode: Skip all other checks, mark tiles
                         # as dirty unconditionally
                         dirty.add(tile.path)
                         continue
