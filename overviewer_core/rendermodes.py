@@ -59,6 +59,40 @@ class EdgeLines(RenderPrimitive):
         "opacity": ("darkness of the edge lines, from 0.0 to 1.0", 0.15),
     }
 
+class Cave(RenderPrimitive):
+    name = "cave"
+    options = {
+        "only_lit": ("only render lit caves", False),
+    }
+
+class DepthTinting(RenderPrimitive):
+    name = "depth-tinting"
+    
+    @property
+    def depth_colors(self):
+        depth_colors = getattr(self, "_depth_colors", [])
+        if depth_colors:
+            return depth_colors
+        r = 255
+        g = 0
+        b = 0
+        for z in range(128):
+            depth_colors.append(r)
+            depth_colors.append(g)
+            depth_colors.append(b)
+            
+            if z < 32:
+                g += 7
+            elif z < 64:
+                r -= 7
+            elif z < 96:
+                b += 7
+            else:
+                g -= 7
+
+        self._depth_colors = depth_colors
+        return depth_colors
+
 # Render 3 blending masks for lighting
 # first is top (+Z), second is left (-X), third is right (+Y)
 def generate_facemasks():
@@ -90,26 +124,3 @@ def generate_facemasks():
     
     return (top, left, right)
 facemasks = generate_facemasks()
-
-# Render 128 different color images for color coded depth blending in cave mode
-def generate_depthcolors():
-    depth_colors = []
-    r = 255
-    g = 0
-    b = 0
-    for z in range(128):
-        depth_colors.append(r)
-        depth_colors.append(g)
-        depth_colors.append(b)
-        
-        if z < 32:
-            g += 7
-        elif z < 64:
-            r -= 7
-        elif z < 96:
-            b += 7
-        else:
-            g -= 7
-
-    return depth_colors
-depth_colors = generate_depthcolors()
