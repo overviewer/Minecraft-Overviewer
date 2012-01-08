@@ -16,7 +16,12 @@
 import json
 import os
 import codecs
+import locale
+import time
 from PIL import Image
+
+import util
+import overviewer_version
 
 class AssetManager(object):
     """\
@@ -115,11 +120,12 @@ directory.
         global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
         if not os.path.isdir(global_assets):
             global_assets = os.path.join(util.get_program_path(), "web_assets")
-        mirror_dir(global_assets, self.destdir)
+        util.mirror_dir(global_assets, self.outputdir)
         
         # do the same with the local copy, if we have it
-        if self.web_assets_path:
-            mirror_dir(self.web_assets_path, self.destdir)
+        # TODO 
+        # if self.web_assets_path:
+        #    util.mirror_dir(self.web_assets_path, self.outputdir)
 
 
 
@@ -130,88 +136,17 @@ directory.
                 return info['label']
             return rendermode.capitalize()
 
-        
-        # create generated map type data, from given quadtrees
-        maptypedata = map(lambda q: {'label' : get_render_mode_label(q.rendermode),
-                                     'shortname' : q.rendermode,
-                                     'path' : q.tiledir,
-                                     'bg_color': self.bg_color,
-                                     'overlay' : 'overlay' in get_render_mode_inheritance(q.rendermode),
-                                     'imgformat' : q.imgformat},
-                          self.quadtrees)
-        config = config.replace("{maptypedata}", json.dumps(maptypedata))
-        
-        with codecs.open(os.path.join(self.destdir, "overviewerConfig.js"), 'w', encoding='UTF-8') as output:
-            output.write(config)
-   
-
 
         # Add time and version in index.html
-        indexpath = os.path.join(self.destdir, "index.html")
+        indexpath = os.path.join(self.outputdir, "index.html")
 
         index = codecs.open(indexpath, 'r', encoding='UTF-8').read()
-        index = index.replace("{title}", "%s Map - Minecraft Overviewer" % self.world.name)
-        index = index.replace("{time}", strftime("%a, %d %b %Y %H:%M:%S %Z", localtime()).decode(locale.getpreferredencoding()))
+        index = index.replace("{title}", "Minecraft Overviewer")
+        index = index.replace("{time}", time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime()).decode(locale.getpreferredencoding()))
         versionstr = "%s (%s)" % (overviewer_version.VERSION, overviewer_version.HASH[:7])
         index = index.replace("{version}", versionstr)
 
-        with codecs.open(os.path.join(self.destdir, "index.html"), 'w', encoding='UTF-8') as output:
+        with codecs.open(os.path.join(self.outputdir, "index.html"), 'w', encoding='UTF-8') as output:
             output.write(index)
 
 
-        # the following bit of code came from world.py
-
-        # if it exists, open overviewer.dat, and read in the data structure
-        # info self.persistentData.  This dictionary can hold any information
-        # that may be needed between runs.
-        # Currently only holds into about POIs (more more details, see quadtree)
-        self.pickleFile = os.path.join(self.outputdir, "overviewer.dat")
-        
-        ### TODO: Deal with old picklefiles that still live in the world directory
-
-        if os.path.exists(self.pickleFile):
-            self.persistentDataIsNew = False
-            with open(self.pickleFile,"rb") as p:
-                self.persistentData = cPickle.load(p)
-                if not self.persistentData.get('north_direction', False):
-                    # this is a pre-configurable-north map, so add the north_direction key
-                    self.persistentData['north_direction'] = 'lower-left'
-        else:
-            # some defaults, presumably a new map
-            self.persistentData = dict(POI=[], north_direction='lower-left')
-            self.persistentDataIsNew = True # indicates that the values in persistentData are new defaults, and it's OK to override them
-        
-        # the following bit of code came from googlemap.py
-        
-        # since we will only discover PointsOfInterest in chunks that need to be 
-        # [re]rendered, POIs like signs in unchanged chunks will not be listed
-        # in self.world.POI.  To make sure we don't remove these from markers.js
-        # we need to merge self.world.POI with the persistant data in world.PersistentData
-
-        self.world.POI += filter(lambda x: x['type'] != 'spawn', self.world.persistentData['POI'])
-
-        if self.nosigns:
-            markers = filter(lambda x: x['type'] != 'sign', self.world.POI)
-        else:
-            markers = self.world.POI
-
-
-        # save persistent data
-        self.world.persistentData['POI'] = self.world.POI
-        self.world.persistentData['north_direction'] = self.world.north_direction
-        with open(self.world.pickleFile,"wb") as f:
-            cPickle.dump(self.world.persistentData,f)
-
-        ### TODO find a better mechanism than --skipjs
-        if self.skipjs:
-            if self.web_assets_hook:
-                self.web_assets_hook(self)
-
-        # write out the default marker table
-        with codecs.open(os.path.join(self.outputdir, "markers.js"), 'w', encoding='UTF-8') as output:
-            output.write("// This is a generated file. Please do not edit it!\n")
-            output.write("overviewer.collections.markerDatas.push(\n")
-            output.write("// --start marker json dump--\n")
-            json.dump(markers, output, indent=1)
-            output.write("\n// --end marker json dump--\n")
-            output.write(");\n")
