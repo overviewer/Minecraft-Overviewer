@@ -15,15 +15,27 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * To make a new render primitive (the C part, at least):
+/* To make a new render primitive:
  *
- *     * add a data struct and extern'd interface declaration below
+ *  * add a new class to rendermodes.py
+ *        there are a ton of examples there, the syntax is pretty simple. If
+ *        you need any extra objects that are easy to create in python, this
+ *        is where you put them.
  *
- *     * fill in this interface struct in primitives/(yourmode).c
- *         (see primitives/base.c for an example: the "base" primitive)
+ *  * create a file in src/primitives with the same name
+ *        so, Nether (named "nether") goes in `nether.c`.
  *
- *     * add your primitive to the list in rendermodes.c
+ *  * declare a RenderPrimitiveInterface with the name primitive_name
+ *        if you have an underscore in the name, replace it with a
+ *        hyphen. height-fading uses primitive_height_fading.
+ *
+ *  * fill in the entries of this struct
+ *        the name should match, and you should declare an 'instance' struct
+ *        to use as the self argument to each function. See nether.c and
+ *        height-fading.c for simple examples.
+ *
+ * setup.py will pick up your primitive, add it to the global list, and build
+ * it for you if you follow these conventions.
  */
 
 #ifndef __RENDERMODES_H_INCLUDED__
