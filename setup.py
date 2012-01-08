@@ -151,7 +151,7 @@ except Exception:
 # used to figure out what files to compile
 #render_modes = ['normal', 'lighting', 'smooth-lighting', 'cave']
 #render_modes += ['overlay', 'spawn', 'mineral']
-primitives = ['base',]
+primitives = ['base', 'nether', 'height-fading', 'depth', 'edge-lines']
 
 c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
 c_overviewer_files += map(lambda mode: 'primitives/%s.c' % (mode,), primitives)

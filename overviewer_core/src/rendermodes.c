@@ -20,12 +20,20 @@
 #include <stdarg.h>
 
 extern RenderPrimitiveInterface primitive_base;
+extern RenderPrimitiveInterface primitive_nether;
+extern RenderPrimitiveInterface primitive_height_fading;
+extern RenderPrimitiveInterface primitive_depth;
+extern RenderPrimitiveInterface primitive_edge_lines;
 
 /* list of all render primitives, ending in NULL
    all of these will be available to the user, so DON'T include primitives
    that are only useful as a base for other primitives. */
 static RenderPrimitiveInterface *render_primitives[] = {
     &primitive_base,
+    &primitive_nether,
+    &primitive_height_fading,
+    &primitive_depth,
+    &primitive_edge_lines,
     //&rendermode_lighting,
     //&rendermode_smooth_lighting,
     //&rendermode_cave,
@@ -59,25 +67,29 @@ RenderPrimitive *render_primitive_create(PyObject *prim, RenderState *state) {
     Py_DECREF(pyname);
 
     if (iface == NULL)
-        return NULL;
+        return (RenderPrimitive *)PyErr_Format(PyExc_RuntimeError, "invalid primitive name: %s", name);
     
     ret = calloc(1, sizeof(RenderPrimitive));
     if (ret == NULL) {
         return (RenderPrimitive *)PyErr_Format(PyExc_RuntimeError, "Failed to alloc a render primitive");
     }
     
-    ret->primitive = calloc(1, iface->data_size);
-    if (ret->primitive == NULL) {
-        free(ret);
-        return (RenderPrimitive *)PyErr_Format(PyExc_RuntimeError, "Failed to alloc render primitive data");
+    if (iface->data_size > 0) {
+        ret->primitive = calloc(1, iface->data_size);
+        if (ret->primitive == NULL) {
+            free(ret);
+            return (RenderPrimitive *)PyErr_Format(PyExc_RuntimeError, "Failed to alloc render primitive data");
+        }
     }
     
     ret->iface = iface;
     
-    if (iface->start(ret->primitive, state, prim)) {
-        free(ret->primitive);
-        free(ret);
-        return NULL;
+    if (iface->start) {
+        if (iface->start(ret->primitive, state, prim)) {
+            free(ret->primitive);
+            free(ret);
+            return NULL;
+        }
     }
     
     return ret;
@@ -120,8 +132,12 @@ void render_mode_destroy(RenderMode *self) {
         /* we may be destroying a half-constructed mode, so we need this
            check */
         if (prim) {
-            prim->iface->finish(prim->primitive, self->state);
-            free(prim->primitive);
+            if (prim->iface->finish) {
+                prim->iface->finish(prim->primitive, self->state);
+            }
+            if (prim->primitive) {
+                free(prim->primitive);
+            }
             free(prim);
         }
     }
@@ -134,7 +150,10 @@ int render_mode_occluded(RenderMode *self, int x, int y, int z) {
     int occluded = 0;
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive *prim = self->primitives[i];
-        occluded |= prim->iface->occluded(prim->primitive, self->state, x, y, z);
+        if (prim->iface->occluded) {
+            occluded |= prim->iface->occluded(prim->primitive, self->state, x, y, z);
+        }
+        
         if (occluded)
             return occluded;
     }
@@ -146,7 +165,10 @@ int render_mode_hidden(RenderMode *self, int x, int y, int z) {
     int hidden = 0;
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive *prim = self->primitives[i];
-        hidden |= prim->iface->hidden(prim->primitive, self->state, x, y, z);
+        if (prim->iface->hidden) {
+            hidden |= prim->iface->hidden(prim->primitive, self->state, x, y, z);
+        }
+        
         if (hidden)
             return hidden;
     }
@@ -157,7 +179,9 @@ void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject 
     unsigned int i;
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive *prim = self->primitives[i];
-        prim->iface->draw(prim->primitive, self->state, img, mask, mask_light);
+        if (prim->iface->draw) {
+            prim->iface->draw(prim->primitive, self->state, img, mask, mask_light);
+        }
     }
 }
 

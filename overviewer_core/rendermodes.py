@@ -30,14 +30,29 @@ class RenderPrimitive(object):
             self.option_values[key] = val
 
 class Base(RenderPrimitive):
-    options = {
-        "edge_opacity": "darkness of the edge lines, from 0.0 to 1.0 (default: 0.15)",
-        "min_depth": "lowest level of blocks to render (default: 0)",
-        "max_depth": "highest level of blocks to render (default: 127)",
-        "height_fading": "darken or lighten blocks based on height (default: False)",
-        "nether": "if True, remove the roof of the map. Useful on nether maps. (defualt: False)",
-    }
     name = "base"
+
+class Nether(RenderPrimitive):
+    name = "nether"
+
+class HeightFading(RenderPrimitive):
+    name = "height-fading"
+    
+    black_color = Image.new("RGB", (24,24), (0,0,0))
+    white_color = Image.new("RGB", (24,24), (255,255,255))
+
+class Depth(RenderPrimitive):
+    name = "depth"
+    options = {
+        "min": "lowest level of blocks to render (default: 0)",
+        "max": "highest level of blocks to render (default: 127)",
+    }
+
+class EdgeLines(RenderPrimitive):
+    name = "edge-lines"
+    options = {
+        "opacity": "darkness of the edge lines, from 0.0 to 1.0 (default: 0.15)",
+    }
 
 # Render 3 blending masks for lighting
 # first is top (+Z), second is left (-X), third is right (+Y)
@@ -70,8 +85,6 @@ def generate_facemasks():
     
     return (top, left, right)
 facemasks = generate_facemasks()
-black_color = Image.new("RGB", (24,24), (0,0,0))
-white_color = Image.new("RGB", (24,24), (255,255,255))
 
 # Render 128 different color images for color coded depth blending in cave mode
 def generate_depthcolors():
