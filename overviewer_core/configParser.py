@@ -277,7 +277,7 @@ class MultiWorldParser(object):
             for key in world:
                 if key not in settingsDefinition.render:
                     print "Warning: %r is not a known setting" % key
-                    next
+                    continue
                
                 definition = settingsDefinition.render[key]
                 try:
