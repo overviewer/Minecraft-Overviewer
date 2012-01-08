@@ -923,8 +923,9 @@ class TileSet(object):
                         raise
                     tile_mtime = 0
 
-                if tile_mtime > max_child_mtime:
-                    # Needs rendering
+                if tile_mtime < max_child_mtime:
+                    # If any child was updated more recently than ourself, then
+                    # we need rendering
                     yield path, None, True
                 else:
                     # Nope.

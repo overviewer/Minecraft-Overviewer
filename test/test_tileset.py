@@ -5,7 +5,6 @@ from collections import defaultdict
 import os
 import os.path
 import random
-import pprint
 
 from overviewer_core import tileset, util
 
@@ -218,11 +217,9 @@ class TilesetTest(unittest.TestCase):
 
         """
         paths = set(x[0] for x in ts.iterate_work_items(0))
-        pprint.pprint(paths)
 
         # Get what tiles we expect to be returned
         expected = get_tile_set(chunks)
-        pprint.pprint(set(expected.iterkeys()))
 
         # Check that all paths returned are in the expected list
         for tilepath in paths:
@@ -289,6 +286,7 @@ class TilesetTest(unittest.TestCase):
         # Strategy: set some tiles on disk to mtime 3, and TileSet needs to
         # find them and update them to mtime 5 as reported by the RegionSet
         # object.
+        # Chosen at random:
         outdated_tiles = [
                 (0,3,3),
                 (1,2,1),
@@ -318,8 +316,6 @@ class TilesetTest(unittest.TestCase):
         # Now see if it's right
         paths = set(x[0] for x in ts.iterate_work_items(0))
         expected = set(outdated_tiles) | set(additional)
-        pprint.pprint(paths)
-        pprint.pprint(expected)
         for tilepath in paths:
             self.assertTrue(tilepath in expected, "%s was not expected to be returned. Expected %s" % (tilepath, expected))
 
