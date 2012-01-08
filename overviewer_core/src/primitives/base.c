@@ -15,33 +15,53 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+#include "../overviewer.h"
+
+typedef struct {
+    /* coordinates of the chunk, inside its region file */
+    int chunk_x, chunk_y;
+    /* biome data for the region */
+    PyObject *biome_data;
+    /* grasscolor and foliagecolor lookup tables */
+    PyObject *grasscolor, *foliagecolor, *watercolor;
+    /* biome-compatible grass/leaf textures */
+    PyObject *grass_texture;
+    
+    /* black and white colors for height fading */
+    PyObject *black_color, *white_color;
+    
+    float edge_opacity;
+    unsigned int min_depth;
+    unsigned int max_depth;
+    int height_fading;
+    int nether;
+} PrimitiveBase;
 
 static int
-rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
+base_start(void *data, RenderState *state, PyObject *support) {
+    PrimitiveBase *self = (PrimitiveBase *)data;
     
     /* load up the given options, first */
     
     self->edge_opacity = 0.15;
-    if (!render_mode_parse_option(options, "edge_opacity", "f", &(self->edge_opacity)))
+    if (!render_mode_parse_option(support, "edge_opacity", "f", &(self->edge_opacity)))
         return 1;
     
     self->min_depth = 0;
-    if (!render_mode_parse_option(options, "min_depth", "I", &(self->min_depth)))
+    if (!render_mode_parse_option(support, "min_depth", "I", &(self->min_depth)))
         return 1;
 
     self->max_depth = 127;
-    if (!render_mode_parse_option(options, "max_depth", "I", &(self->max_depth)))
+    if (!render_mode_parse_option(support, "max_depth", "I", &(self->max_depth)))
         return 1;
 
     self->height_fading = 0;
     /* XXX skip height fading */
-    /*if (!render_mode_parse_option(options, "height_fading", "i", &(self->height_fading)))
+    /*if (!render_mode_parse_option(support, "height_fading", "i", &(self->height_fading)))
       return 1;*/
     
     self->nether = 0;
-    if (!render_mode_parse_option(options, "nether", "i", &(self->nether)))
+    if (!render_mode_parse_option(support, "nether", "i", &(self->nether)))
         return 1;
     
     /*if (self->height_fading) {
@@ -95,8 +115,8 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
 }
 
 static void
-rendermode_normal_finish(void *data, RenderState *state) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
+base_finish(void *data, RenderState *state) {
+    PrimitiveBase *self = (PrimitiveBase *)data;
     
     Py_XDECREF(self->biome_data);
     Py_XDECREF(self->foliagecolor);
@@ -108,7 +128,7 @@ rendermode_normal_finish(void *data, RenderState *state) {
 }
 
 static int
-rendermode_normal_occluded(void *data, RenderState *state, int x, int y, int z) {
+base_occluded(void *data, RenderState *state, int x, int y, int z) {
     if ( (x != 0) && (y != 15) && (z != 127) &&
          !render_mode_hidden(state->rendermode, x-1, y, z) &&
          !render_mode_hidden(state->rendermode, x, y, z+1) &&
@@ -123,8 +143,8 @@ rendermode_normal_occluded(void *data, RenderState *state, int x, int y, int z) 
 }
 
 static int
-rendermode_normal_hidden(void *data, RenderState *state, int x, int y, int z) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
+base_hidden(void *data, RenderState *state, int x, int y, int z) {
+    PrimitiveBase *self = (PrimitiveBase *)data;
     
     if (z > self->max_depth || z < self->min_depth) {
         return 1;
@@ -154,8 +174,8 @@ rendermode_normal_hidden(void *data, RenderState *state, int x, int y, int z) {
 }
 
 static void
-rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
+base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+    PrimitiveBase *self = (PrimitiveBase *)data;
 
     /* draw the block! */
     alpha_over(state->img, src, mask, state->imgx, state->imgy, 0, 0);
@@ -360,24 +380,11 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
     }
 }
 
-const RenderModeOption rendermode_normal_options[] = {
-    {"edge_opacity", "darkness of the edge lines, from 0.0 to 1.0 (default: 0.15)"},
-    {"min_depth", "lowest level of blocks to render (default: 0)"},
-    {"max_depth", "highest level of blocks to render (default: 127)"},
-    {"height_fading", "darken or lighten blocks based on height (default: False)"},
-    {"nether", "if True, remove the roof of the map. Useful on nether maps. (default: False)"},
-    {NULL, NULL}
-};
-
-RenderModeInterface rendermode_normal = {
-    "normal", "Normal",
-    "nothing special, just render the blocks",
-    rendermode_normal_options,
-    NULL,
-    sizeof(RenderModeNormal),
-    rendermode_normal_start,
-    rendermode_normal_finish,
-    rendermode_normal_occluded,
-    rendermode_normal_hidden,
-    rendermode_normal_draw,
+RenderPrimitiveInterface primitive_base = {
+    "base", sizeof(PrimitiveBase),
+    base_start,
+    base_finish,
+    base_occluded,
+    base_hidden,
+    base_draw,
 };

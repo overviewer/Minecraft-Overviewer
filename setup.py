@@ -149,11 +149,12 @@ except Exception:
         
 
 # used to figure out what files to compile
-render_modes = ['normal', 'lighting', 'smooth-lighting', 'cave']
-render_modes += ['overlay', 'spawn', 'mineral']
+#render_modes = ['normal', 'lighting', 'smooth-lighting', 'cave']
+#render_modes += ['overlay', 'spawn', 'mineral']
+primitives = ['base',]
 
 c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
-c_overviewer_files += map(lambda mode: 'rendermode-%s.c' % (mode,), render_modes)
+c_overviewer_files += map(lambda mode: 'primitives/%s.c' % (mode,), primitives)
 c_overviewer_files += ['Draw.c']
 c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
 

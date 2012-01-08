@@ -79,9 +79,6 @@ typedef struct {
     /* the Texture object */
     PyObject *textures;
     
-    /* the rendermode support module (rendermodes.py) */
-    PyObject *support;
-    
     /* the block position and type, and the block array */
     int x, y, z;
     unsigned char block;

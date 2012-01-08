@@ -18,7 +18,6 @@
 #include "overviewer.h"
 
 static PyObject *textures = NULL;
-static PyObject *support = NULL;
 
 unsigned int max_blockid = 0;
 unsigned int max_data = 0;
@@ -44,11 +43,6 @@ PyObject *init_chunk_render(void) {
     textures = PyImport_ImportModule("overviewer_core.textures");
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
-        return NULL;
-    }
-    
-    support = PyImport_ImportModule("overviewer_core.rendermodes");
-    if (!support) {
         return NULL;
     }
     
@@ -388,7 +382,7 @@ chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
     PyObject *regionset;
     int chunkx, chunkz;
-    const char* rendermode_name = NULL;
+    PyObject *modeobj;
     PyObject *blockmap;
 
     int xoff, yoff;
@@ -406,14 +400,11 @@ chunk_render(PyObject *self, PyObject *args) {
 
     PyObject *t = NULL;
     
-    if (!PyArg_ParseTuple(args, "OiiOiisO",  &state.regionset, &state.chunkx, &state.chunkz, &state.img, &xoff, &yoff, &rendermode_name, &state.textures))
+    if (!PyArg_ParseTuple(args, "OiiOiiOO",  &state.regionset, &state.chunkx, &state.chunkz, &state.img, &xoff, &yoff, &modeobj, &state.textures))
         return NULL;
     
-    /* rendermode support */
-    state.support = support;
-    
     /* set up the render mode */
-    state.rendermode = rendermode = render_mode_create(rendermode_name, &state);
+    state.rendermode = rendermode = render_mode_create(modeobj, &state);
     if (rendermode == NULL) {
         return NULL; // note that render_mode_create will
                      // set PyErr.  No need to set it here
