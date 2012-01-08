@@ -29,7 +29,6 @@ from PIL import Image
 
 from .util import iterate_base4, convert_coords, unconvert_coords
 from .optimizeimages import optimize_image
-import c_overviewer
 
 """
 
@@ -118,32 +117,33 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 #       useful for changing texture packs or other options that effect
 #       the output.
 #
-# For 0 our caller has explicitly requested not to check mtimes on
-# disk, to speed things up. So the mode 0 chunk scan only looks at
-# chunk mtimes and the last render mtime, and has marked only the
-# render-tiles that need rendering. Mode 0 then iterates over all dirty
-# render-tiles and upper-tiles that depend on them. It does not check
-# mtimes of upper-tiles, so this is only a good option if the last
-# render was not interrupted.
+# For 0 our caller has explicitly requested not to check mtimes on disk to
+# speed things up. So the mode 0 chunk scan only looks at chunk mtimes and the
+# last render mtime, and has marked only the render-tiles that need rendering.
+# Mode 0 then iterates over all dirty render-tiles and upper-tiles that depend
+# on them. It does not check mtimes of upper-tiles, so this is only a good
+# option if the last render was not interrupted.
 
 # For mode 2, this is a forcerender, the caller has requested we render
-# everything. The mode 2 chunk scan marks every tile as needing
-# rendering, and disregards mtimes completely. Mode 2 then iterates
-# over all render-tiles and upper-tiles that depend on them, which is
-# every tile that should exist.
+# everything. The mode 2 chunk scan marks every tile as needing rendering, and
+# disregards mtimes completely. Mode 2 then iterates over all render-tiles and
+# upper-tiles that depend on them, which is every tile that should exist.
 
-# In both 0 and 2 the render iteration is the same: the dirtytile tree
-# built is authoritive on every tile that needs rendering.
+# In both 0 and 2 the render iteration is the same: the dirtytile tree built is
+# authoritive on every tile that needs rendering.
 
-# In mode 1, things are most complicated. The mode 2 chunk scan checks
-# every render tile's mtime for each chunk that touches it, so it can
-# determine accurately which tiles need rendering regardless of the
-# state on disk.
+# In mode 1, things are most complicated. Mode 1 chunk scan is identical to a
+# forcerender, or mode 2 scan: every render tile that should exist is marked in
+# the dirtytile tree. Then, a special recursive algorithm goes through and
+# checks every tile that should exist and determines whether it needs
+# rendering. This routine works in such a way so that every tile is stat()'d at
+# most once, so it shouldn't be too bad. This logic happens in the
+# iterate_work_items() method, and therefore in the master process, not the
+# worker processes.
 
-# The mode 1 render iteration falls back to the old layer-by-layer instead of a
-# post-traversal iteration order. This uses the phases feature of the worker
-# API. A post-traversal is theoretically possible, but the implementation was
-# significantly more complicated and I have decided it not to be worth it.
+# In all three rendercheck modes, the results out of iterate_work_items() is
+# authoritive on what needs rendering. The do_work() method does not need to do
+# any additional checks.
 
 __all__ = ["TileSet"]
 class TileSet(object):
@@ -335,10 +335,9 @@ class TileSet(object):
         # See note at the top of this file about the rendercheck modes for an
         # explanation of what this method does in different situations.
         #
-        # For modes 0 and 2, iterate over the tiles in self.dirtytree by using
-        # the posttraversal() method. Yield each item. Easy.
-        #
-        # For mode 1, invoke a more complex recursive routine
+        # For modes 0 and 2, self.dirtytree holds exactly the tiles we need to
+        # render. Iterate over the tiles in using the posttraversal() method.
+        # Yield each item. Easy.
         if self.options['renderchecks'] in (0,2):
             for tilepath in self.dirtytree.posttraversal():
                 dependencies = []
@@ -350,19 +349,15 @@ class TileSet(object):
                 yield tilepath, dependencies
 
         else:
-
-            # Return the tiles to be rendered for layer phase-self.treedepth
-            if phase == 0:
-                # Iterate over the render-tiles
-                for rendertile_path in self.dirtytree:
-                    yield rendertile_path, []
-
-            else:
-                # Iterate over all potential upper-tiles at this level and add
-                # them to the queue. The workers will decide whether they need
-                # rendering or not.
-                for path in iterate_base4(phase-self.treedepth):
-                    yield path
+            # For mode 1, self.dirtytree holds every tile that should exist,
+            # but invoke _iterate_and_check_tiles() to determine which tiles
+            # need rendering.
+            for tilepath, mtime, needs_rendering in self._iterate_and_check_tiles(()):
+                if needs_rendering:
+                    dependencies = []
+                    for i in range(4):
+                        dependencies.append( tilepath + (i,) )
+                    yield tilepath, dependencies
             
 
     def do_work(self, tilepath):
@@ -512,10 +507,7 @@ class TileSet(object):
         time of the map, and marks tiles as dirty if any chunk has a greater
         mtime than the last render time.
 
-        For rendercheck mode 1: compares chunk mtimes against the tile mtimes
-        on disk, doing a stat call for each tile.
-
-        For rendercheck mode 2: marks every tile in the tileset
+        For rendercheck modes 1 and 2: marks every tile in the tileset
         unconditionally, does not check any mtimes.
 
         As a side-effect, the scan sets self.max_chunk_mtime to the max of all
@@ -536,6 +528,8 @@ class TileSet(object):
         stime = time.time()
 
         rendercheck = self.options['renderchecks']
+        markall = rendercheck in (1,2)
+
         rerender_prob = self.options['rerenderprob']
 
         # XXX TODO:
@@ -543,26 +537,6 @@ class TileSet(object):
 
         max_chunk_mtime = 0
 
-        if rendercheck == 0:
-            def compare_times(chunkmtime, tileobj):
-                # Compare chunk mtime to last render time, don't look at tile
-                # mtime on disk
-                return chunkmtime > last_rendertime
-        elif rendercheck == 1:
-            def compare_times(chunkmtime, tileobj):
-                # Compare chunk mtime to tile mtime on disk
-                tile_path = tileobj.get_filepath(self.outputdir, self.imgextension)
-                try:
-                    tile_mtime = os.stat(tile_path)[stat.ST_MTIME]
-                except OSError, e:
-                    if e.errno != errno.ENOENT:
-                        raise
-                    # File doesn't exist. Render it.
-                    return True
-
-                # Render if chunks are newer than the tile
-                return chunkmtime > tile_mtime
-                
 
         # For each chunk, do this:
         #   For each tile that the chunk touches, do this:
@@ -620,10 +594,15 @@ class TileSet(object):
                     # Computes the path in the quadtree from the col,row coordinates
                     tile = RenderTile.compute_path(c, r, depth)
 
-                    if rendercheck == 2:
+                    if forcerender:
                         # forcerender mode: Skip all other checks, mark tiles
                         # as dirty unconditionally
                         dirty.add(tile.path)
+                        continue
+
+                    # Check if this tile has already been marked dirty. If so,
+                    # no need to do any of the below.
+                    if dirty.query_path(tile.path):
                         continue
 
                     # Stochastic check. Since we're scanning by chunks and not
@@ -637,13 +616,8 @@ class TileSet(object):
                         dirty.add(tile.path)
                         continue
 
-                    # Check if this tile has already been marked dirty. If so,
-                    # no need to do any of the below.
-                    if dirty.query_path(tile.path):
-                        continue
-
-                    # Check mtimes and conditionally add tile to dirty set
-                    if compare_times(chunkmtime, tile):
+                    # Check mtimes and conditionally add tile to the set
+                    if chunkmtime > last_rendertime:
                         dirty.add(tile.path)
 
         t = int(time.time()-stime)
@@ -685,12 +659,6 @@ class TileSet(object):
                     ((192,192),os.path.join(dest, name, "3." + imgformat)),
                     ]
 
-        # If renderchecks mode is 0 or 2, the tile exists and we DO need to
-        # render it; the mtime checks have already been done.
-        # For renderchecks mode 1, we must check if this tile needs to exist
-        # and check whether we should render it.
-        check_tile = self.options['renderchecks'] == 1
-
         # Check each of the 4 child tiles, getting their existance and mtime
         # infomation. Also keep track of the max mtime of all children
         max_mtime = 0
@@ -716,23 +684,9 @@ class TileSet(object):
                 # Ignore errors if it's "file doesn't exist"
                 if e.errno != errno.ENOENT:
                     raise
-            if not check_tile:
-                logging.warning("Tile %s was requested for render, but no children were found! This is probably a bug", imgpath)
+            logging.warning("Tile %s was requested for render, but no children were found! This is probably a bug", imgpath)
             return
 
-        # Check if we should actually be rendering this tile
-        if check_tile:
-            # stat the tile, we need to know its mtime
-            try:
-                tile_mtime =  os.stat(imgpath)[stat.ST_MTIME]
-            except OSError, e:
-                if e.errno != errno.ENOENT:
-                    raise
-                tile_mtime = 0
-            # Abort the render if the tile is newer than all its children
-            if tile_mtime >= max_mtime:
-                return
-            
         #logging.debug("writing out compositetile {0}".format(imgpath))
 
         # Create the actual image now
@@ -890,6 +844,113 @@ class TileSet(object):
             if mtime:
                 # The chunk exists
                 yield (col, row, chunkx, chunkz, mtime)
+
+    def _iterate_and_check_tiles(self, path):
+        """A generator function over all tiles that need rendering in the
+        subtree identified by path. This yields, in order, all tiles that need
+        rendering in a post-traversal order, including this node itself.
+
+        This method actually yields tuples in this form:
+            (path, mtime, needs_rendering)
+        path
+            is the path tuple of the tile that needs rendering
+        mtime
+            if the tile does not need rendering, the parent call determines if
+            it should render itself by comparing its own mtime to the child
+            mtimes. This should be set to the tile's mtime in the event that
+            the tile does not need rendering, or None otherwise.
+        needs_rendering
+            is a boolean indicating this tile does in fact need rendering.
+
+        (Since this is a recursive generator, tiles that don't need rendering
+        are not propagated all the way out of the recursive stack, but the
+        immediate parent call needs to know its mtime)
+
+        """
+        if len(path) == self.treedepth:
+            # Base case: a render-tile.
+            # Render this tile if any of its chunks are greater than its mtime
+            tileobj = RenderTile.from_path(path)
+            imgpath = tileobj.get_filepath(self.outputdir, self.imgextension)
+            try:
+                tile_mtime = os.stat(imgpath)[stat.ST_MTIME]
+            except OSError, e:
+                if e.errno != errno.ENOENT:
+                    raise
+                tile_mtime = 0
+            
+            max_chunk_mtime = max(c[4] for c in self._get_chunks_for_tile(tileobj))
+
+            if tile_mtime > 120 + max_chunk_mtime:
+                # If a tile has been modified more recently than any of its
+                # chunks, then this could indicate a potential issue with
+                # this or future renders.
+                logging.warning("I found a tile with a more recent modification time than any of its chunks. This can happen when a tile has been modified with an outside program, or by a copy utility that doesn't preserve mtimes. Overviewer uses the filesystem's mtimes to determine which tiles need rendering and which don't, so it's important to preserve the mtimes Overviewer sets. Please see our FAQ page on docs.overviewer.org or ask us in IRC for more information")
+                logging.warning("Tile was: %s", imgpath)
+
+            if max_chunk_mtime > tile_mtime:
+                # chunks have a more recent mtime than the tile. Render the tile
+                yield (path, None, True)
+            else:
+                # This doesn't need rendering. Return mtime to parent in case
+                # they do need to render
+                yield path, max_chunk_mtime, False
+        
+        else:
+            # A composite-tile.
+            # First, recurse to each of our children
+            render_me = False
+            max_child_mtime = 0
+            for childnum in xrange(4):
+                childpath = path + (childnum,)
+
+                # Check if this sub-tree should actually exist, so that we only
+                # end up checking tiles that actually exist
+                if not self.dirtytree.query_path(childpath):
+                    continue
+
+                for child_path, child_mtime, child_needs_rendering in \
+                        self._iterate_and_check_tiles(childpath):
+                    if len(child_path) == len(path)+1:
+                        # Do these checks for our immediate children
+                        if child_needs_rendering:
+                            render_me = True
+                        elif child_mtime > max_child_mtime:
+                            max_child_mtime = child_mtime
+
+                    # Pass this on up and out.
+                    # Optimization: if it does not need rendering, we don't
+                    # need to pass it any further. A tile that doesn't need
+                    # rendering is only relevant to its immediate parent, and
+                    # only for its mtime information.
+                    if child_needs_rendering:
+                        yield child_path, child_mtime, child_needs_rendering
+
+            # Now that we're done with our children and descendents, see if
+            # this tile needs rendering
+            if needs_rendering:
+                # yes. yes we do. This is set when one of our children needs
+                # rendering
+                yield path, None, True
+            else:
+                # Check this tile's mtime
+                imgpath = os.path.join(self.outputdir, *(str(x) for x in path))
+                imgpath += "." + self.imgextension
+                logging.debug("Testing mtime for composite-tile %s", imgpath)
+                try:
+                    tile_mtime = os.stat(imgpath)[stat.ST_MTIME]
+                except OSError, e:
+                    if e.errno != errno.ENOENT:
+                        raise
+                    tile_mtime = 0
+
+                if tile_mtime > max_child_mtime:
+                    # Needs rendering
+                    yield path, None, True
+                else:
+                    # Nope.
+                    yield path, max_child_mtime, False
+
 
 def get_dirdepth(outputdir):
     """Returns the current depth of the tree on disk
@@ -1177,7 +1238,8 @@ class RendertileSet(object):
 
 def post_traversal_complete_subtree_recursion_helper(depth):
     """Fakes the recursive calls for RendertileSet.posttraversal() for the case
-    that a subtree is collapsed.
+    that a subtree is collapsed, so that items are still yielded in the correct
+    order.
 
     """
     if depth == 1:
