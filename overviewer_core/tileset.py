@@ -29,6 +29,7 @@ from PIL import Image
 
 from .util import iterate_base4, convert_coords, unconvert_coords
 from .optimizeimages import optimize_image
+import c_overviewer
 
 """
 
