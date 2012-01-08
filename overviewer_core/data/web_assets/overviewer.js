@@ -4,6 +4,11 @@ var overviewer = {
      */
     'map': null,
     /**
+     * The index of the currently displayed tileset.  0 (zero) is the default
+     */
+    'currentTilesetId': 0,
+
+    /**
      * These are collections of data used in various places
      */
     'collections': {
@@ -169,10 +174,10 @@ var overviewer = {
                 overviewerConfig.map.center[0], 
                 overviewerConfig.map.center[1],
                 overviewerConfig.map.center[2],
-                overviewerConfig.tilesets[0].zoomLevels);
+                overviewerConfig.tilesets[overviewer.currentTilesetId].zoomLevels);
             var lat = defaultCenter.lat();
             var lng = defaultCenter.lng();
-            var zoom = overviewerConfig.tilesets[0].defaultZoom;
+            var zoom = overviewerConfig.tilesets[overviewer.currentTilesetId].defaultZoom;
             var mapcenter;
             var queryParams = overviewer.util.parseQueryString();
             if (queryParams.debug) {
@@ -186,23 +191,25 @@ var overviewer = {
             }
             if (queryParams.zoom) {
                 if (queryParams.zoom == 'max') {
-                    zoom = overviewerConfig.map.maxZoom;
+                    zoom = overviewerConfig.tilesets[overviewer.currentTilesetId].maxZoom;
                 } else if (queryParams.zoom == 'min') {
-                    zoom = overviewerConfig.map.minZoom;
+                    zoom = overviewerConfig.tilesets[overviewer.currentTilesetId].minZoom;
                 } else {
                     zoom = parseInt(queryParams.zoom);
-                    if (zoom < 0 && zoom + overviewerConfig.map.maxZoom >= 0) {
+                    if (zoom < 0 && zoom + overviewerConfig.tilesets[overviewer.currentTilesetId].maxZoom >= 0) {
                         //if zoom is negative, try to treat as "zoom out from max zoom"
-                        zoom += overviewerConfig.map.maxZoom;
+                        zoom += overviewerConfig.tilesets[overviewer.currentTilesetId].maxZoom;
                     } else {
                         //fall back to default zoom
-                        zoom = overviewerConfig.map.defaultZoom;
+                        zoom = overviewerConfig.tilesets[overviewer.currentTilesetId].defaultZoom;
                     }
                 }
             }
             if (queryParams.x && queryParams.y && queryParams.z) {
                 mapcenter = overviewer.util.fromWorldToLatLng(queryParams.x,
-                    queryParams.y, queryParams.z);
+                    queryParams.y, 
+                    queryParams.z,
+                    overviewerConfig.tilesets[overviewer.currentTilesetId].zoomLevels);
                 // Add a market indicating the user-supplied position
                 overviewer.collections.markerDatas.push([{
                     'msg':  'Coordinates ' + queryParams.x + ', ' +
@@ -228,7 +235,7 @@ var overviewer = {
                 streetViewControl:      false,
                 overviewMapControl:     true,
                 zoomControl:            overviewerConfig.map.controls.zoom,
-                backgroundColor:        overviewer.util.getMapTypeBackgroundColor(0)
+                backgroundColor:        overviewer.util.getMapTypeBackgroundColor(overviewer.currentTilesetId)
             };
             overviewer.map = new google.maps.Map(document.getElementById(
                 overviewerConfig.CONST.mapDivId), mapOptions);
@@ -275,6 +282,7 @@ var overviewer = {
             });
             
             // Make the link again whenever the map changes
+            /* TODO reimplement
             google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function() {
                 $('#'+overviewerConfig.CONST.mapDivId).css(
                     'background-color', overviewer.util.getMapTypeBackgroundColor(
@@ -282,6 +290,7 @@ var overviewer = {
                 //smuggled this one in here for maptypeid hash generation --CounterPillow
                 overviewer.util.updateHash();
             });
+            */
         },
         /**
          * Read through overviewer.collections.markerDatas and create Marker
@@ -679,12 +688,12 @@ var overviewer = {
             }
             
             // Update coords on mousemove
-            /* TODO reenable
             google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
-                var worldcoords = overviewer.util.fromLatLngToWorld(event.latLng.lat(), event.latLng.lng());
+                var worldcoords = overviewer.util.fromLatLngToWorld(event.latLng.lat(), 
+                    event.latLng.lng(),
+                    overviewerConfig.tilesets[overviewer.currentTilesetId].zoomLevels);
                 coordsDiv.innerHTML = "Coords: X " + Math.round(worldcoords.x) + ", Z " + Math.round(worldcoords.z);
             });
-            */
 
             // only need to create the control if there are items in the list.
             // as defined in config.js
@@ -780,7 +789,7 @@ var overviewer = {
             }
             
             // call out to create search box, as it's pretty complicated
-            overviewer.util.createSearchBox();
+            // TODO overviewer.util.createSearchBox();
         },
         /**
          * Reusable method for creating drop-down menus
@@ -976,7 +985,9 @@ var overviewer = {
                 overviewer.util.updateHash();
                 
                 // Add a marker indicating the user-supplied position
-                var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
+                var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), 
+                        overviewer.map.getCenter().lng(),
+                        overviewerConfig.tilesets[overviewer.currentTilesetId].zoomLevels);
                 overviewer.collections.markerDatas.push([{
                     'msg': 'Coordinates ' + Math.floor(coordinates.x) + ', ' + Math.floor(coordinates.y) + ', ' + Math.floor(coordinates.z),
                     'x': coordinates.x,
@@ -994,23 +1005,28 @@ var overviewer = {
             window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + maptype);
         },
         'updateHash': function() {
-            var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), overviewer.map.getCenter().lng());
+            var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), 
+                    overviewer.map.getCenter().lng(),
+                    overviewerConfig.tilesets[overviewer.currentTilesetId].zoomLevels);
             var zoom = overviewer.map.getZoom();
             var maptype = overviewer.map.getMapTypeId();
-            if (zoom == overviewerConfig.map.maxZoom) {
+            if (zoom == overviewerConfig.tilesets[overviewer.currentTilesetId].maxZoom) {
                 zoom = 'max';
-            } else if (zoom == overviewerConfig.map.minZoom) {
+            } else if (zoom == overviewerConfig.tilesets[overviewer.currentTilesetId].minZoom) {
                 zoom = 'min';
             } else {
                 // default to (map-update friendly) negative zooms
-                zoom -= overviewerConfig.map.maxZoom;
+                zoom -= overviewerConfig.tilesets[overviewer.currentTilesetId].maxZoom;
             }
             overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, maptype);
         },
         'goToHash': function() {
             // Note: the actual data begins at coords[1], coords[0] is empty.
             var coords = window.location.hash.split("/");
-            var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), parseInt(coords[2]), parseInt(coords[3]));
+            var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), 
+                    parseInt(coords[2]), 
+                    parseInt(coords[3]),
+                    overviewerConfig.tilesets[overviewer.currentTilesetId].zoomLevels);
             var zoom;
             var maptype = '';
             // The if-statements try to prevent unexpected behaviour when using incomplete hashes, e.g. older links
@@ -1022,17 +1038,17 @@ var overviewer = {
             }
             
             if (zoom == 'max') {
-                zoom = overviewerConfig.map.maxZoom;
+                zoom = overviewerConfig.tilesets[overviewer.currentTilesetId].maxZoom;
             } else if (zoom == 'min') {
-                zoom = overviewerConfig.map.minZoom;
+                zoom = overviewerConfig.tilesets[overviewer.currentTilesetId].minZoom;
             } else {
                 zoom = parseInt(zoom);
-                if (zoom < 0 && zoom + overviewerConfig.map.maxZoom >= 0) {
+                if (zoom < 0 && zoom + overviewerConfig.tilesets[overviewer.currentTilesetId].maxZoom >= 0) {
                     // if zoom is negative, treat it as a "zoom out from max"
-                    zoom += overviewerConfig.map.maxZoom;
+                    zoom += overviewerConfig.tilesets[overviewer.currentTilesetId].maxZoom;
                 } else {
                     // fall back to default zoom
-                    zoom = overviewerConfig.map.defaultZoom;
+                    zoom = overviewerConfig.tilesets[overviewer.currentTilesetId].defaultZoom;
                 }
             }
             // If the maptype isn't set, set the default one.
