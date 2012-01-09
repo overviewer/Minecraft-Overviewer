@@ -56,8 +56,11 @@ class Textures(object):
     def __getstate__(self):
         # we must get rid of the huge image lists, and other images
         attributes = self.__dict__.copy()
-        for attr in ['terrain_images', 'blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture']:
-            del attributes[attr]
+        for attr in ['terrain_images', 'blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture', 'lightcolor']:
+            try:
+                del attributes[attr]
+            except KeyError:
+                pass
         return attributes
     def __setstate__(self, attrs):
         # regenerate textures, if needed
@@ -245,6 +248,18 @@ class Textures(object):
             lavatexture = self.load_image("lava.png")
         self.lavatexture = lavatexture
         return lavatexture
+    
+    def load_light_color(self):
+        """Helper function to load the light color texture."""
+        if hasattr(self, "lightcolor"):
+            return self.lightcolor
+        try:
+            lightcolor = list(_load_image("light_normal.png").getdata())
+        except Exception:
+            logging.warning("Light color image could not be found.")
+            lightcolor = None
+        self.lightcolor = lightcolor
+        return lightcolor
 
     def _split_terrain(self, terrain):
         """Builds and returns a length 256 array of each 16x16 chunk
@@ -649,24 +664,6 @@ def getBiomeData(worlddir, chunkX, chunkY):
     currentBiomeFile = biomeFile
     currentBiomeData = data
     return data
-
-##
-## Color Light
-##
-
-lightcolor = None
-lightcolor_checked = False
-def loadLightColor():
-    global lightcolor, lightcolor_checked
-    
-    if not lightcolor_checked:
-        lightcolor_checked = True
-        try:
-            lightcolor = list(_load_image("light_normal.png").getdata())
-        except Exception:
-            logging.warning("Light color image could not be found.")
-            lightcolor = None
-    return lightcolor
 
 ##
 ## The other big one: @material and associated framework

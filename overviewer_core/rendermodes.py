@@ -93,34 +93,45 @@ class DepthTinting(RenderPrimitive):
         self._depth_colors = depth_colors
         return depth_colors
 
-# Render 3 blending masks for lighting
-# first is top (+Z), second is left (-X), third is right (+Y)
-def generate_facemasks():
-    white = Image.new("L", (24,24), 255)
+class Lighting(RenderPrimitive):
+    name = "lighting"
+    options = {
+        "strength": ("how dark to make the shadows, from 0.0 to 1.0", 1.0),
+        "night": ("whether to use nighttime skylight settings", False),
+        "color": ("whether to use colored light", False),
+    }
+
+    @property
+    def facemasks(self):
+        facemasks = getattr(self, "_facemasks", None)
+        if facemasks:
+            return facemasks
+        
+        white = Image.new("L", (24,24), 255)
+        
+        top = Image.new("L", (24,24), 0)
+        left = Image.new("L", (24,24), 0)
+        whole = Image.new("L", (24,24), 0)
+        
+        toppart = textures.Textures.transform_image_top(white)
+        leftpart = textures.Textures.transform_image_side(white)
+        
+        # using the real PIL paste here (not alpha_over) because there is
+        # no alpha channel (and it's mode "L")
+        top.paste(toppart, (0,0))
+        left.paste(leftpart, (0,6))
+        right = left.transpose(Image.FLIP_LEFT_RIGHT)
+        
+        # Manually touch up 6 pixels that leave a gap, like in
+        # textures._build_block()
+        for x,y in [(13,23), (17,21), (21,19)]:
+            right.putpixel((x,y), 255)
+        for x,y in [(3,4), (7,2), (11,0)]:
+            top.putpixel((x,y), 255)
     
-    top = Image.new("L", (24,24), 0)
-    left = Image.new("L", (24,24), 0)
-    whole = Image.new("L", (24,24), 0)
-    
-    toppart = textures.Textures.transform_image_top(white)
-    leftpart = textures.Textures.transform_image_side(white)
-    
-    # using the real PIL paste here (not alpha_over) because there is
-    # no alpha channel (and it's mode "L")
-    top.paste(toppart, (0,0))
-    left.paste(leftpart, (0,6))
-    right = left.transpose(Image.FLIP_LEFT_RIGHT)
-    
-    # Manually touch up 6 pixels that leave a gap, like in
-    # textures._build_block()
-    for x,y in [(13,23), (17,21), (21,19)]:
-        right.putpixel((x,y), 255)
-    for x,y in [(3,4), (7,2), (11,0)]:
-        top.putpixel((x,y), 255)
-    
-    # special fix for chunk boundary stipple
-    for x,y in [(13,11), (17,9), (21,7)]:
-        right.putpixel((x,y), 0)
-    
-    return (top, left, right)
-facemasks = generate_facemasks()
+        # special fix for chunk boundary stipple
+        for x,y in [(13,11), (17,9), (21,7)]:
+            right.putpixel((x,y), 0)
+        
+        self._facemasks = (top, left, right)
+        return self._facemasks

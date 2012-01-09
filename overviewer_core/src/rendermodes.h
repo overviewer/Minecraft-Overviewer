@@ -117,39 +117,6 @@ typedef struct {
 } RenderModeOverlay;
 extern RenderModeInterface rendermode_overlay;
 
-/* LIGHTING */
-typedef struct {
-    /* inherits from normal render mode */
-    RenderModeNormal parent;
-    
-    PyObject *facemasks_py;
-    PyObject *facemasks[3];
-    
-    /* extra data, loaded off the chunk class */
-    PyObject *skylight, *blocklight;
-    PyObject *left_skylight, *left_blocklight;
-    PyObject *right_skylight, *right_blocklight;
-    PyObject *up_left_skylight, *up_left_blocklight;
-    PyObject *up_right_skylight, *up_right_blocklight;
-    
-    /* light color image, loaded if color_light is True */
-    PyObject *lightcolor;
-    
-    /* can be overridden in derived rendermodes to control lighting
-       arguments are data, skylight, blocklight, return RGB */
-    void (*calculate_light_color)(void *, unsigned char, unsigned char, unsigned char *, unsigned char *, unsigned char *);
-    
-    /* can be set to 0 in derived modes to indicate that lighting the chunk
-     * sides is actually important. Right now, this is used in cave mode
-     */
-    int skip_sides;
-    
-    float shade_strength;
-    int color_light;
-    int night;
-} RenderModeLighting;
-extern RenderModeInterface rendermode_lighting;
-
 /* exposed so it can be used in other per-face occlusion checks */
 int rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z);
 
