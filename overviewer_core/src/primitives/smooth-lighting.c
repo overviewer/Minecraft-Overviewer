@@ -15,8 +15,14 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+#include "../overviewer.h"
+#include "lighting.h"
 #include <math.h>
+
+typedef struct {
+    /* inherits from lighting */
+    RenderPrimitiveLighting parent;
+} RenderPrimitiveSmoothLighting;
 
 /* structure representing one corner of a face (see below) */
 struct SmoothLightingCorner {
@@ -123,12 +129,12 @@ enum
 };
 
 static void
-do_shading_with_rule(RenderModeSmoothLighting *self, RenderState *state, struct SmoothLightingFace face) {
+do_shading_with_rule(RenderPrimitiveSmoothLighting *self, RenderState *state, struct SmoothLightingFace face) {
     int i;
-    RenderModeLighting *lighting = (RenderModeLighting *)self;
+    RenderPrimitiveLighting *lighting = (RenderPrimitiveLighting *)self;
     int x = state->imgx, y = state->imgy;
     struct SmoothLightingCorner *pts = face.corners;
-    float comp_shade_strength = 1.0 - lighting->shade_strength;
+    float comp_shade_strength = 1.0 - lighting->strength;
     unsigned char pts_r[4] = {0, 0, 0, 0};
     unsigned char pts_g[4] = {0, 0, 0, 0};
     unsigned char pts_b[4] = {0, 0, 0, 0};
@@ -137,7 +143,7 @@ do_shading_with_rule(RenderModeSmoothLighting *self, RenderState *state, struct 
     int cz = state->z + face.dz;
     
     /* first, check for occlusion if the block is in the local chunk */
-    if (rendermode_lighting_is_face_occluded(state, 0, cx, cy, cz))
+    if (lighting_is_face_occluded(state, 0, cx, cy, cz))
         return;
     
     /* calculate the lighting colors for each point */
@@ -189,54 +195,37 @@ do_shading_with_rule(RenderModeSmoothLighting *self, RenderState *state, struct 
 }
 
 static int
-rendermode_smooth_lighting_start(void *data, RenderState *state, PyObject *options) {
+smooth_lighting_start(void *data, RenderState *state, PyObject *support) {
     /* first, chain up */
-    int ret = rendermode_lighting.start(data, state, options);
+    int ret = primitive_lighting.start(data, state, support);
     if (ret != 0)
-        return ret;
-    
+        return ret;    
     return 0;
 }
 
 static void
-rendermode_smooth_lighting_finish(void *data, RenderState *state) {
+smooth_lighting_finish(void *data, RenderState *state) {
     /* nothing special to do */
-    rendermode_lighting.finish(data, state);
-}
-
-static int
-rendermode_smooth_lighting_occluded(void *data, RenderState *state, int x, int y, int z) {
-    /* no special occlusion here */
-    return rendermode_lighting.occluded(data, state, x, y, z);
-}
-
-static int
-rendermode_smooth_lighting_hidden(void *data, RenderState *state, int x, int y, int z) {
-    /* no special hiding here */
-    return rendermode_lighting.hidden(data, state, x, y, z);
+    primitive_lighting.finish(data, state);
 }
 
 static void
-rendermode_smooth_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+smooth_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     int light_top = 1;
     int light_left = 1;
     int light_right = 1;
-    RenderModeSmoothLighting *self = (RenderModeSmoothLighting *)data;
+    RenderPrimitiveSmoothLighting *self = (RenderPrimitiveSmoothLighting *)data;
     
     /* special case for leaves, water 8, water 9
        -- these are also smooth-lit! */
     if (state->block != 18 && state->block != 8 && state->block != 9 && is_transparent(state->block))
     {
         /* transparent blocks are rendered as usual, with flat lighting */
-        rendermode_lighting.draw(data, state, src, mask, mask_light);
+        primitive_lighting.draw(data, state, src, mask, mask_light);
         return;
     }
     
     /* non-transparent blocks get the special smooth treatment */
-    
-    /* nothing special to do, but we do want to avoid vanilla
-     * lighting mode draws */
-    rendermode_normal.draw(data, state, src, mask, mask_light);
     
     /* special code for water */
     if (state->block == 9)
@@ -257,15 +246,11 @@ rendermode_smooth_lighting_draw(void *data, RenderState *state, PyObject *src, P
         do_shading_with_rule(self, state, lighting_rules[FACE_RIGHT]);
 }
 
-RenderModeInterface rendermode_smooth_lighting = {
-    "smooth-lighting", "Smooth Lighting",
-    "like \"lighting\", except smooth",
+RenderPrimitiveInterface primitive_smooth_lighting = {
+    "smooth-lighting", sizeof(RenderPrimitiveSmoothLighting),
+    smooth_lighting_start,
+    smooth_lighting_finish,
     NULL,
-    &rendermode_lighting,
-    sizeof(RenderModeSmoothLighting),
-    rendermode_smooth_lighting_start,
-    rendermode_smooth_lighting_finish,
-    rendermode_smooth_lighting_occluded,
-    rendermode_smooth_lighting_hidden,
-    rendermode_smooth_lighting_draw,
+    NULL,
+    smooth_lighting_draw,
 };

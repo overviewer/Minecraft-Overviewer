@@ -135,3 +135,6 @@ class Lighting(RenderPrimitive):
         
         self._facemasks = (top, left, right)
         return self._facemasks
+
+class SmoothLighting(Lighting):
+    name = "smooth-lighting"

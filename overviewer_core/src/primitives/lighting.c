@@ -16,35 +16,8 @@
  */
 
 #include "../overviewer.h"
+#include "lighting.h"
 #include <math.h>
-
-typedef struct {
-    PyObject *facemasks_py;
-    PyObject *facemasks[3];
-    
-    /* extra data, loaded off the chunk class */
-    PyObject *skylight, *blocklight;
-    PyObject *left_skylight, *left_blocklight;
-    PyObject *right_skylight, *right_blocklight;
-    PyObject *up_left_skylight, *up_left_blocklight;
-    PyObject *up_right_skylight, *up_right_blocklight;
-    
-    /* light color image, loaded if color_light is True */
-    PyObject *lightcolor;
-    
-    /* can be overridden in derived rendermodes to control lighting
-       arguments are data, skylight, blocklight, return RGB */
-    void (*calculate_light_color)(void *, unsigned char, unsigned char, unsigned char *, unsigned char *, unsigned char *);
-    
-    /* can be set to 0 in derived modes to indicate that lighting the chunk
-     * sides is actually important. Right now, this is used in cave mode
-     */
-    int skip_sides;
-    
-    float strength;
-    int color;
-    int night;
-} RenderPrimitiveLighting;
 
 /* figures out the color from a given skylight and blocklight,
    used in lighting calculations */
