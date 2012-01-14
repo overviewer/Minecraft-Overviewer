@@ -91,3 +91,6 @@ def validateFloat(f, **kwargs):
 
 def validateInt(i, **kwargs):
     return int(i)
+
+def validateStr(s, **kwargs):
+    return str(s)

@@ -1,8 +1,237 @@
+
+// Set up some Models and Views
+
+/* WorldModel
+ * Primarily has a collection of TileSets
+ */
+var WorldModel = Backbone.Model.extend({
+initialize: function(attrs) {
+attrs.tileSets = new TileSetCollection();
+this.set(attrs);
+}
+        });
+var WorldCollection = Backbone.Collection.extend({
+model: WorldModel
+});
+var worlds = new WorldCollection();
+
+/* WorldView
+ * Holds presentation info for a World, such as
+ *  - ImageMapTypes - array of instances for each of the TileSets attached to this world
+ *  - mapTypeIds - array of ids for each of the ImageMapTypes 
+ */
+var WorldView = Backbone.View.extend({
+initialize: function(opts) {
+    console.log("WorldView::initialize()");
+    console.log(this.model.get("tileSets"));
+    this.options.mapTypes = [];
+    this.options.mapTypeIds = [];
+    this.model.get("tileSets").each(function(tset, index, list) {
+        console.log(" eaching");
+        console.log("  Working on tileset %s" , tset.get("name"));
+        var ops = {
+            getTileUrl: overviewer.gmap.getTileUrlGenerator(tset.get("path"), tset.get("base"), "png"),
+
+            'tileSize':     new google.maps.Size(
+                overviewerConfig.CONST.tileSize,
+                overviewerConfig.CONST.tileSize),
+            'maxZoom':      tset.get("maxZoom"),
+            'minZoom':      tset.get("minZoom"),
+            'isPng':        true
+
+        }
+        var newMapType = new google.maps.ImageMapType(ops);
+        newMapType.name = tset.get("name");
+        newMapType.shortname = tset.get("name");
+        newMapType.alt = "Minecraft " + tset.get("name") + " Map";
+        newMapType.projection = new overviewer.classes.MapProjection();
+    
+        this.options.mapTypes.push(newMapType);
+        this.options.mapTypeIds.push(overviewerConfig.CONST.mapDivId + this.model.get("name") + tset.get("name"));
+
+        }, this);
+},
+        });
+
+
+
+var TileSetModel = Backbone.Model.extend({
+defaults: {
+    markers: [] ,
+},
+initialize: function(attrs) {
+    // this implies that the Worlds collection must be
+    // initialized before any TIleSetModels are created
+    attrs.world = worlds.get(attrs.world);
+
+    this.set(attrs);
+},
+});
+
+var TileSetCollection = Backbone.Collection.extend({
+    model: TileSetModel
+});
+
+
+
+var GoogleMapModel = Backbone.Model.extend({
+initialize: function(attrs) {
+    attrs.currentWorldView = overviewer.collections.worldViews[0];
+    this.set(attrs);
+},
+});
+
+
+////////////////////////////////////////
+// Views
+////////////////////////////////////////
+
+var WorldSelectorView = Backbone.View.extend({
+initialize: function() {
+    // a div will have already been created for us, we just
+    // need to register it with the google maps control
+    var selectBox = document.createElement('select');
+    $.each(overviewer.collections.worldViews, function(index, elem) {
+        var o = document.createElement("option");
+        o.value = elem.model.get("name");
+        o.innerHTML = elem.model.get("name");
+        $(o).data("viewObj", elem);
+        selectBox.appendChild(o);
+
+        });
+
+    this.el.appendChild(selectBox);
+    overviewer.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.el);
+},
+events: {
+    "change select":  "changeWorld"
+},
+changeWorld: function() {
+    console.log("change world!");
+    var selectObj = this.$("select")[0];
+    var selectedOption = selectObj.options[selectObj.selectedIndex]; 
+
+    overviewer.mapModel.set({currentWorldView: $(selectedOption).data("viewObj")});
+    //
+             },
+render: function(t) {
+    console.log("WorldSelectorView::render() TODO implement this (low priority)");
+    
+}
+});
+
+var CompassView = Backbone.View.extend({
+initialize: function() {
+    this.el.index=0;
+    var compassImg = document.createElement('IMG');
+    compassImg.src = overviewerConfig.CONST.image.compass;
+    this.el.appendChild(compassImg);
+
+    overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.el);
+},
+render: function() {
+}
+        });
+
+/* GoogleMapView is responsible for dealing with the GoogleMaps API to create the 
+ */
+var GoogleMapView = Backbone.View.extend({
+initialize: function(opts) {
+    console.log(this);
+    this.options.map = null;
+    var curWorld = this.model.get("currentWorldView").model;
+    console.log("Current world:");
+    console.log(curWorld);
+
+    var curTset = curWorld.get("tileSets").at(0);
+
+    /*
+    var defaultCenter = overviewer.util.fromWorldToLatLng(
+        overviewerConfig.map.center[0], 
+        overviewerConfig.map.center[1],
+        overviewerConfig.map.center[2],
+        curTset.get("defaultZoom"));
+        */
+    var lat = 0.62939453125;// TODO defaultCenter.lat();
+    var lng = 0.38525390625; // TODO defaultCenter.lng();
+    var mapcenter = new google.maps.LatLng(lat, lng);
+
+    this.options.mapTypes=[];
+    this.options.mapTypeIds=[];
+    var opts = this.options;
+
+    var mapOptions = {};
+    // 
+    curWorld.get("tileSets").each(function(elem, index, list) {
+        console.log("Setting up map for:");
+        console.log(elem);
+        console.log("for %s generating url func with %s and %s", elem.get("name"), elem.get("path"), elem.get("base"));
+
+    });
+    // init the map with some default options.  use the first tileset in the first world
+    this.options.mapOptions = {
+zoom:                   curTset.get("defaultZoom"),
+center:                 mapcenter,
+panControl:             true,
+scaleControl:           false,
+mapTypeControl:         true,
+//mapTypeControlOptions: {
+    //mapTypeIds: this.options.mapTypeIds
+//},
+mapTypeId:              '',
+streetViewControl:      false,
+overviewMapControl:     true,
+zoomControl:            true,
+backgroundColor:        curTset.get("bgcolor")
+};
+
+    
+    overviewer.map = new google.maps.Map(this.el, this.options.mapOptions);
+
+    // register every ImageMapType with the map
+    $.each(overviewer.collections.worldViews, function( index, worldView) {
+        $.each(worldView.options.mapTypes, function(i_index, maptype) {
+            console.log("registered %s with the maptype registery", worldView.model.get("name") + maptype.shortname);
+            overviewer.map.mapTypes.set(overviewerConfig.CONST.mapDivId + 
+                worldView.model.get("name") + maptype.shortname , maptype);
+        });
+    });
+        
+
+},
+    /* GoogleMapView::render()
+     * Should be called when the current world has changed in GoogleMapModel
+     */
+render: function() {
+   console.log("GoogleMapView::render()"); 
+   var view = this.model.get("currentWorldView");
+   this.options.mapOptions.mapTypeControlOptions = {
+      mapTypeIds: view.options.mapTypeIds};
+   this.options.mapOptions.mapTypeId = view.options.mapTypeIds[0];
+   overviewer.map.setOptions(this.options.mapOptions);
+
+
+   return this;
+        }
+
+});
+
+
+
+////////////////////////////////////////
+// Create stuff
+//
+
+
+
+
+
 var overviewer = {
     /**
      * This holds the map, probably the most important var in this file
      */
     'map': null,
+    'mapView': null,
     /**
      * The index of the currently displayed tileset.  0 (zero) is the default
      */
@@ -48,7 +277,9 @@ var overviewer = {
          * This is the current infoWindow object, we keep track of it so that
          * there is only one open at a time.
          */
-        'infoWindow':   null
+        'infoWindow':   null,
+
+        'worldViews': []
     },
     'util': {
         /**
@@ -58,11 +289,49 @@ var overviewer = {
          */
         'initialize': function() {
             overviewer.util.initializeClassPrototypes();
+
+
+            $.each(overviewerConfig.worlds, function(index, el) {
+                var n = new WorldModel({name: el, id:el});
+                worlds.add(n);
+            });
+
+            $.each(overviewerConfig.tilesets, function(index, el) {
+                var newTset = new TileSetModel(el);
+                worlds.get(el.world).get("tileSets").add(newTset);
+            });
+
+            worlds.each(function(world, index, list) {
+                    var nv = new WorldView({model: world});
+                    overviewer.collections.worldViews.push(nv);
+                    });
+
+            overviewer.mapModel = new GoogleMapModel({});
+            overviewer.mapView = new GoogleMapView({el: document.getElementById(overviewerConfig.CONST.mapDivId), model:overviewer.mapModel});
+
+            // any controls must be created after the GoogleMapView is created
+            // controls should be added in the order they should appear on screen, 
+            // with controls on the outside of the page being added first
+
+            var compass = new CompassView({tagName: 'DIV'});
+            compass.render();
+
+            var worldSelector = new WorldSelectorView({tagName:'DIV'});
+            worlds.bind("add", worldSelector.render, worldSelector);
+
+            // hook up some events
+
+            overviewer.mapModel.bind("change:currentWorldView", overviewer.mapView.render, overviewer.mapView);
+
+            overviewer.mapView.render();
+
+            /*
             overviewer.util.initializeMapTypes();
             overviewer.util.initializeMap();
             overviewer.util.initializeMarkers();
             overviewer.util.initializeRegions();
             overviewer.util.createMapControls();
+            */
         },
         /**
          * This adds some methods to these classes because Javascript is stupid

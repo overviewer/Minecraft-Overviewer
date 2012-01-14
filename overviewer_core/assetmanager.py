@@ -96,7 +96,7 @@ directory.
 
         for tileset in tilesets:
             js_tileset = dict()
-            js_tileset['name'] = tileset.options.get('name')
+            js_tileset['name'] = tileset.options.get('title')
             js_tileset['zoomLevels'] = tileset.treedepth
             js_tileset['minZoom'] = 0
             js_tileset['defaultZoom'] = 1
@@ -104,6 +104,7 @@ directory.
             js_tileset['path'] = tileset.options.get('name')
             js_tileset['base'] = ''
             js_tileset['bgcolor'] = bgcolorformat(tileset.options.get('bgcolor'))
+            js_tileset['world'] = tileset.options.get('worldname_orig')
             dump['tilesets'].append(js_tileset)
 
             # write a blank image
