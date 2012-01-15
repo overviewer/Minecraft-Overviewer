@@ -63,13 +63,31 @@ def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
     return base36
 
 class World(object):
-    """Does world-level preprocessing to prepare for QuadtreeGen
+    """Encapsulates the concept of a Minecraft "world". A Minecraft world is a
+    level.dat file, a players directory with info about each player, a data
+    directory with info about that world's maps, and one or more "dimension"
+    directories containing a set of region files with the actual world data.
 
-    worlddir is the path to the minecraft world
+    This class deals with reading all the metadata about the world.  Reading
+    the actual world data for each dimension from the region files is handled
+    by a RegionSet object.
+
+    Note that vanilla Minecraft servers and single player games have a single
+    world with multiple dimensions: one for the overworld, the nether, etc.
+
+    On Bukkit enabled servers, to support "multiworld," the server creates
+    multiple Worlds, each with a single dimension.
+
+    In this file, the World objects act as an interface for RegionSet objects.
+    The RegionSet objects are what's really important and are used for reading
+    block data for rendering.  A RegionSet object will always correspond to a
+    set of region files, or what is colloquially referred to as a "world," or
+    more accurately as a dimension.
+
+    The only thing this class actually stores is a list of RegionSet objects
+    and the parsed level.dat data
 
     """
-
-    mincol = maxcol = minrow = maxrow = 0
 
     # see RegionSet.rotate.  These values are chosen so that they can be passed directly to rot90
     UPPER_LEFT  = 1 ## - Return the world such that north is down the -Z axis (no rotation)
@@ -80,12 +98,30 @@ class World(object):
     def __init__(self, worlddir):
         self.worlddir = worlddir
 
+        # This list, populated below, will hold RegionSet files that are in
+        # this world
         self.regionsets = []
        
-        # Scan worlddir to try to identify all region sets
+        # The level.dat file defines a minecraft world, so assert that this
+        # object corresponds to a world on disk
         if not os.path.exists(os.path.join(self.worlddir, "level.dat")):
-            raise Exception("level.dat not found in %s" % self.worlddir)
+            raise ValueError("level.dat not found in %s" % self.worlddir)
 
+        # figure out chunk format is in use if not mcregion, error out early
+        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
+        if not ('version' in data and data['version'] == 19132):
+            logging.critical("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
+            raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
+
+        # This isn't much data, around 15 keys and values for vanilla worlds.
+        self.leveldat = data
+
+
+        # Scan worlddir to try to identify all region sets. Since different
+        # server mods like to arrange regions differently and there does not
+        # seem to be any set standard on what dimensions are in each world,
+        # just scan the directory heirarchy to find a directory with .mcr
+        # files.
         for root, dirs, files in os.walk(self.worlddir):
             # any .mcr files in this directory?
             mcrs = filter(lambda x: x.endswith(".mcr"), files)
@@ -97,23 +133,13 @@ class World(object):
                 else:
                     self.regionsets.append(rset)
         
-        # TODO consider reordering self.regionsets so that the 'default' region is first
-
         # TODO move a lot of the following code into the RegionSet
 
 
-        # figure out chunk format is in use
-        # if not mcregion, error out early
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-        if not ('version' in data and data['version'] == 19132):
-            logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
-            sys.exit(1)
-
-        # TODO move levelname into the regionsets?
-        if 'LevelName' in data:
+        try:
             # level.dat should have the LevelName attribute so we'll use that
             self.name = data['LevelName']
-        else:
+        except KeyError:
             # but very old ones might not? so we'll just go with the world dir name if they don't
             self.name = os.path.basename(os.path.realpath(self.worlddir))
 
@@ -124,34 +150,36 @@ class World(object):
         if not self.useBiomeData:
             logging.info("Notice: Not using biome data for tinting")
 
-    def get_level_dat_data(self):
-        """Returns a dictionary representing the level.dat data for this World"""
-        return nbt.load(os.path.join(self.worlddir, "level.dat"))
- 
     def get_regionsets(self):
         return self.regionsets
     def get_regionset(self, index):
         return self.regionsets[index]
+
+    def get_level_dat_data(self):
+        # Return a copy
+        return dict(self.data)
       
-        
-        
-    def get_region_mtime(self,filename):                  
-        return (self.regions[filename][0],self.regions[filename][1])        
-    
     def find_true_spawn(self):
-        """Adds the true spawn location to self.POI.  The spawn Y coordinate
-        is almost always the default of 64.  Find the first air block above
-        that point for the true spawn location"""
+        """Returns the spawn point for this world. Since there is one spawn
+        point for a world across all dimensions (RegionSets), this method makes
+        sense as a member of the World class.
+        
+        Returns (x, y, z)
+        
+        """
+        # The spawn Y coordinate is almost always the default of 64.  Find the
+        # first air block above the stored spawn location for the true spawn
+        # location
 
         ## read spawn info from level.dat
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]
-        disp_spawnX = spawnX = data['Data']['SpawnX']
-        spawnY = data['Data']['SpawnY']
-        disp_spawnZ = spawnZ = data['Data']['SpawnZ']
+        data = self.data
+        disp_spawnX = spawnX = data['SpawnX']
+        spawnY = data['SpawnY']
+        disp_spawnZ = spawnZ = data['SpawnZ']
    
         ## The chunk that holds the spawn location 
-        chunkX = spawnX/16
-        chunkY = spawnZ/16
+        chunkX = spawnX//16
+        chunkZ = spawnZ//16
         
         ## clamp spawnY to a sane value, in-chunk value
         if spawnY < 0:
@@ -159,39 +187,35 @@ class World(object):
         if spawnY > 127:
             spawnY = 127
         
-        ## The filename of this chunk
-        chunkFile = self.get_region_path(chunkX, chunkY)
-        if chunkFile is not None:
-            data = nbt.load_from_region(chunkFile, chunkX, chunkY)
-            if data is not None:
-                level = data[1]['Level']
-                blockArray = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
+        # Open up the chunk that the spawn is in
+        regionset = self.get_regionset(0)
+        try:
+            chunk = regionset.get_chunk(chunkX, chunkZ)
+        except ChunkDoesntExist:
+            return (spawnX, spawnY, spawnZ)
 
-                ## The block for spawn *within* the chunk
-                inChunkX = spawnX - (chunkX*16)
-                inChunkZ = spawnZ - (chunkY*16)
+        blockArray = chunk['Blocks']
 
-                ## find the first air block
-                while (blockArray[inChunkX, inChunkZ, spawnY] != 0):
-                    spawnY += 1
-                    if spawnY == 128:
-                        break
-        self.POI.append( dict(x=disp_spawnX, y=spawnY, z=disp_spawnZ,
-                msg="Spawn", type="spawn", chunk=(chunkX, chunkY)))
-        self.spawn = (disp_spawnX, spawnY, disp_spawnZ)
+        ## The block for spawn *within* the chunk
+        inChunkX = spawnX - (chunkX*16)
+        inChunkZ = spawnZ - (chunkZ*16)
 
+        ## find the first air block
+        while (blockArray[inChunkX, inChunkZ, spawnY] != 0) and spawnY < 127:
+            spawnY += 1
 
-    def _get_north_rotations(self):
-        # default to lower-left for now
-        return 0
-
-
+        return spawnX, spawnY, spawnZ
 
 class RegionSet(object):
-    """\
-This object is the gateway to a set of regions (or dimension) from the world
-we're reading from. There is one of these per set of regions on the hard drive,
-but may be several per invocation of the Overviewer in the case of multi-world.
+    """This object is the gateway to a particular Minecraft dimension within a
+    world. It corresponds to a set of region files containing the actual
+    world data. This object has methods for parsing and returning data from the
+    chunks from its regions.
+
+    See the docs for the World object for more information on the difference
+    between Worlds and RegionSets.
+
+
     """
 
     def __init__(self, regiondir):
@@ -213,27 +237,32 @@ but may be several per invocation of the Overviewer in the case of multi-world.
     def __repr__(self):
         return "<RegionSet regiondir=%r>" % self.regiondir
 
-    def get_region_path(self, chunkX, chunkY):
-        """Returns the path to the region that contains chunk (chunkX, chunkY)
-        Coords can be either be global chunk coords, or local to a region
-        """
-        regionfile = self.regionfiles.get((chunkX//32, chunkY//32),None)
-        return regionfile
-            
     def get_chunk(self,x, z):
-        """Returns a dictionary representing the top-level NBT Compound for a chunk given
-        its x, z coordinates. The coordinates are chunk coordinates.
+        """Returns a dictionary object representing the "Level" NBT Compound
+        structure for a chunk given its x, z coordinates. The coordinates are
+        chunk coordinates. Raises ChunkDoesntExist exception if the given chunk
+        does not exist.
+
+        The returned dictionary corresponds to the “Level” structure in the
+        chunk file, with a few changes:
+        * The “Blocks” byte string is transformed into a 16x16x128 numpy array
+        * The “SkyLight” byte string is transformed into a 16x16x128 numpy
+          array
+        * The “BlockLight” byte string is transformed into a 16x16x128 numpy
+          array
+        * The “Data” byte string is transformed into a 16x16x128 numpy array
+
         """
 
-        regionfile = self.get_region_path(x, z)
+        regionfile = self._get_region_path(x, z)
         if regionfile is None:
-            return None
+            raise ChunkDoesntExist("Chunk %s,%s doesn't exist (and neither does its region)" % (x,z))
 
         region = nbt.load_region(regionfile)
         data = region.load_chunk(x, z)
         region.close()
         if data is None:
-            return None
+            raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         level = data[1]['Level']
         chunk_data = level
@@ -270,10 +299,10 @@ but may be several per invocation of the Overviewer in the case of multi-world.
         return RotatedRegionSet(self.worldobj, self.regiondir, north_direction)
     
     def iterate_chunks(self):
-        """Returns an iterator over all chunk metadata in this world. Iterates over tuples
-        of integers (x,z,mtime) for each chunk.  Other chunk data is not returned here.
+        """Returns an iterator over all chunk metadata in this world. Iterates
+        over tuples of integers (x,z,mtime) for each chunk.  Other chunk data
+        is not returned here.
         
-        Old name: world.iterate_chunk_metadata
         """
 
         for (regionx, regiony), regionfile in self.regionfiles.iteritems():
@@ -282,11 +311,13 @@ but may be several per invocation of the Overviewer in the case of multi-world.
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
     def get_chunk_mtime(self, x, z):
-        """Returns a chunk's mtime, or False if the chunk does not exist.
-        This is therefore a dual purpose method. It corrects for the given north
-        direction as described in the docs for get_chunk()"""
+        """Returns a chunk's mtime, or False if the chunk does not exist.  This
+        is therefore a dual purpose method. It corrects for the given north
+        direction as described in the docs for get_chunk()
+        
+        """
 
-        regionfile = self.get_region_path(x,z)
+        regionfile = self._get_region_path(x,z)
         if regionfile is None:
             return None
 
@@ -295,73 +326,56 @@ but may be several per invocation of the Overviewer in the case of multi-world.
             return data.get_chunk_timestamp(x,z)
         return None
 
+    def _get_region_path(self, chunkX, chunkY):
+        """Returns the path to the region that contains chunk (chunkX, chunkY)
+        Coords can be either be global chunk coords, or local to a region
 
-    def _iterate_regionfiles(self,regionlist=None):
+        """
+        regionfile = self.regionfiles.get((chunkX//32, chunkY//32),None)
+        return regionfile
+            
+    def _iterate_regionfiles(self):
         """Returns an iterator of all of the region files, along with their 
         coordinates
 
-        Note: the regionlist here will be used to determinte the size of the
-        world. 
-
         Returns (regionx, regiony, filename)"""
-        join = os.path.join
-        if regionlist is not None:
-            for path in regionlist:
-                path = path.strip()
-                f = os.path.basename(path)
-                if f.startswith("r.") and f.endswith(".mcr"):
-                    p = f.split(".")
-                    logging.debug("Using path %s from regionlist", f)
-                    x = int(p[1])
-                    y = int(p[2])
-                    if self.north_direction == 'upper-left':
-                        temp = x
-                        x = -y-1
-                        y = temp
-                    elif self.north_direction == 'upper-right':
-                        x = -x-1
-                        y = -y-1
-                    elif self.north_direction == 'lower-right':
-                        temp = x
-                        x = y
-                        y = -temp-1
-                    yield (x, y, join(self.worlddir, 'region', f))
-                else:
-                    logging.warning("Ignoring non region file '%s' in regionlist", f)
 
-        else:                    
-            print "regiondir is", self.regiondir
-            for path in glob(self.regiondir + "/r.*.*.mcr"):
-                dirpath, f = os.path.split(path)
-                p = f.split(".")
-                x = int(p[1])
-                y = int(p[2])
-                ##TODO if self.north_direction == 'upper-left':
-                ##TODO     temp = x
-                ##TODO     x = -y-1
-                ##TODO     y = temp
-                ##TODO elif self.north_direction == 'upper-right':
-                ##TODO     x = -x-1
-                ##TODO     y = -y-1
-                ##TODO elif self.north_direction == 'lower-right':
-                ##TODO     temp = x
-                ##TODO     x = y
-                ##TODO     y = -temp-1
-                yield (x, y, join(dirpath, f))
+        logging.debug("regiondir is %s", self.regiondir)
+
+        for path in glob(self.regiondir + "/r.*.*.mcr"):
+            dirpath, f = os.path.split(path)
+            p = f.split(".")
+            x = int(p[1])
+            y = int(p[2])
+            yield (x, y, path)
     
 
 class RotatedRegionSet(RegionSet):
     def __init__(self, worldobj, regiondir, north_dir):
         super(RotatedRegionSet, self).__init__(worldobj, regiondir)
         self.north_dir = north_dir
+
     def get_chunk(self, x, z):
+        raise NotImplementedError()
+        # TODO: Rotate given x,z coordinates
         chunk_data = super(RotatedRegionSet, self).get_chunk(x,z)
         chunk_data['Blocks'] = numpy.rot90(chunk_data['Blocks'], self.north_dir)
         chunk_data['Data'] = numpy.rot90(chunk_data['Data'], self.north_dir)
         chunk_data['SkyLight'] = numpy.rot90(chunk_data['SkyLight'], self.north_dir)
         chunk_data['BlockLight'] = numpy.rot90(chunk_data['BlockLight'], self.north_dir)
         return chunk_data
+
+    def iterate_chunks(self):
+        raise NotImplementedError()
+
+    def get_chunk_mtime(self, x, z):
+        raise NotImplementedError()
+
+    def rotate(self, north_dir):
+        raise NotImplementedError()
          
+class ChunkDoesntExist(Exception):
+    pass
 
 def get_save_dir():
     """Returns the path to the local saves directory
