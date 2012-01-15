@@ -44,6 +44,23 @@ directory.
         #  Each regionset's name is a key in this dictionary
         self.POI = dict()
 
+        # look for overviewerConfig in self.outputdir
+        if os.path.exists(os.path.join(self.outputdir, "overviewerConfig.js")):
+            with open(os.path.join(self.outputdir, "overviewerConfig.js")) as c:
+                overviewerConfig_str = "{" + "\n".join(c.readlines()[1:-1]) + "}"
+            self.overviewerConfig = json.loads(overviewerConfig_str)
+        else:
+            self.overviewerConfig = dict(tilesets=dict())
+
+    def get_tileset_config(self, name):
+        "Return the correct dictionary from the parsed overviewerConfig.js"
+        for conf in self.overviewerConfig['tilesets']:
+            if conf['path'] == name:
+                return conf
+        return dict()
+        
+
+
     def found_poi(self, regionset, poi_type, contents, chunkX, chunkY):
         if regionset.name not in self.POI.keys():
             POI[regionset.name] = []
@@ -59,7 +76,7 @@ directory.
         dump['CONST']['image'] = {
                 'defaultMarker':    'signpost.png',
                 'signMarker':       'signpost_icon.png',
-                'compass':          'compass_lower-left.png',
+                'compass':          'compass_upper-left.png',
                 'spawnMarker':      'http://google-maps-icons.googlecode.com/files/home.png',
                 'queryMarker':      'http://google-maps-icons.googlecode.com/files/regroup.png'
                 }
@@ -105,6 +122,8 @@ directory.
             js_tileset['base'] = ''
             js_tileset['bgcolor'] = bgcolorformat(tileset.options.get('bgcolor'))
             js_tileset['world'] = tileset.options.get('worldname_orig')
+            js_tileset['last_rendertime'] = tileset.this_rendertime
+            js_tileset['north_direction'] = 'upper-left'
             dump['tilesets'].append(js_tileset)
 
             # write a blank image

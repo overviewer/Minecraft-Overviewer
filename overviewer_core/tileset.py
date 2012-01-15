@@ -250,8 +250,8 @@ class TileSet(object):
         self.am = assetmanagerobj
         self.textures = texturesobj
 
-        # XXX TODO:
-        self.last_rendertime = 0 # TODO
+        self.last_rendertime = self.am.get_tileset_config(self.options.get("name")).get('last_rendertime', 0)
+        self.this_rendertime = time.time()
 
         # Throughout the class, self.outputdir is an absolute path to the
         # directory where we output tiles. It is assumed to exist.
