@@ -46,7 +46,7 @@ touches_light(unsigned int x, unsigned int y, unsigned int z,
     }
 
     if ((x == 15)) {
-        if  (up_right_light != Py_None) {
+        if  (up_right_light) {
             if (getArrayByte3D(up_right_light, 0, y, z) != 0) {
                 return 1;
             }
@@ -58,7 +58,7 @@ touches_light(unsigned int x, unsigned int y, unsigned int z,
     }
         
     if (x == 0) {
-        if  (left_light != Py_None) {
+        if  (left_light) {
             if (getArrayByte3D(left_light, 15, y, z) != 0) {
                 return 1;
             }
@@ -70,7 +70,7 @@ touches_light(unsigned int x, unsigned int y, unsigned int z,
     }
 
     if (y == 15) {
-        if  (right_light != Py_None) {
+        if  (right_light) {
             if (getArrayByte3D(right_light, 0, y, z) != 0) {
                 return 1;
             }
@@ -82,7 +82,7 @@ touches_light(unsigned int x, unsigned int y, unsigned int z,
     }
 
     if (y == 0) {
-        if  (up_left_light != Py_None) {
+        if  (up_left_light) {
             if (getArrayByte3D(up_left_light, 15, y, z) != 0) {
                 return 1;
             }
@@ -227,6 +227,8 @@ cave_start(void *data, RenderState *state, PyObject *support) {
         self->up_left_blocklight = get_chunk_data(state, UP_LEFT, BLOCKLIGHT);
         self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT);
     }
+    // Non-existant neighboring blocks is not an error
+    PyErr_Clear();
 
     return 0;
 }
@@ -237,17 +239,17 @@ cave_finish(void *data, RenderState *state) {
     self = (RenderPrimitiveCave *)data;
     
     Py_DECREF(self->skylight);
-    Py_DECREF(self->left_skylight);
-    Py_DECREF(self->right_skylight);
-    Py_DECREF(self->up_left_skylight);
-    Py_DECREF(self->up_right_skylight);
+    Py_XDECREF(self->left_skylight);
+    Py_XDECREF(self->right_skylight);
+    Py_XDECREF(self->up_left_skylight);
+    Py_XDECREF(self->up_right_skylight);
     
     if (self->only_lit) {
         Py_DECREF(self->blocklight);
-        Py_DECREF(self->left_blocklight);
-        Py_DECREF(self->right_blocklight);
-        Py_DECREF(self->up_left_blocklight);
-        Py_DECREF(self->up_right_blocklight);
+        Py_XDECREF(self->left_blocklight);
+        Py_XDECREF(self->right_blocklight);
+        Py_XDECREF(self->up_left_blocklight);
+        Py_XDECREF(self->up_right_blocklight);
     }
 }
 

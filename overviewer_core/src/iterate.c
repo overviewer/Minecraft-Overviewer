@@ -96,6 +96,10 @@ PyObject *init_chunk_render(void) {
     Py_RETURN_NONE;
 }
 
+/*
+ * Returns the requested chunk data from the requested chunk.
+ * Returns NULL with an exception set if the requested chunk doesn't exist.
+ */
 PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type) {
     int x = state->chunkx;
     int z = state->chunkz;
@@ -120,8 +124,11 @@ PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDa
     }
     
     chunk = PyObject_CallMethod(state->regionset, "get_chunk", "ii", x, z);
-    if (chunk == NULL || chunk == Py_None)
-        return chunk;
+    if (chunk == NULL) {
+        // An exception is already set. RegionSet.get_chunk sets
+        // ChunkDoesntExist
+        return NULL;
+    }
     
     switch (type) {
     case BLOCKS:
@@ -166,7 +173,7 @@ unsigned char
         unsigned char pdata=0;
         
         if (state->x == 15) { /* +x direction */
-            if (state->up_right_blocks != Py_None) { /* just in case we are in the end of the world */
+            if (state->up_right_blocks != NULL) { /* just in case we are in the end of the world */
                 if (getArrayByte3D(state->up_right_blocks, 0, y, z) == blockid) {
                     pdata = pdata|(1 << 3);
                 }
@@ -178,7 +185,7 @@ unsigned char
         }
         
         if (state->y == 15) { /* +y direction*/
-            if (state->right_blocks != Py_None) {
+            if (state->right_blocks != NULL) {
                 if (getArrayByte3D(state->right_blocks, x, 0, z) == blockid) {
                     pdata = pdata|(1 << 2);
                 }
@@ -190,7 +197,7 @@ unsigned char
         }
         
         if (state->x == 0) { /* -x direction*/
-            if (state->left_blocks != Py_None) {
+            if (state->left_blocks != NULL) {
                 if (getArrayByte3D(state->left_blocks, 15, y, z) == blockid) {
                     pdata = pdata|(1 << 1);
                 }
@@ -202,7 +209,7 @@ unsigned char
         }
         
         if (state->y == 0) { /* -y direction */
-            if (state->up_left_blocks != Py_None) {
+            if (state->up_left_blocks != NULL) {
                 if (getArrayByte3D(state->up_left_blocks, x, 15, z) == blockid) {
                     pdata = pdata|(1 << 0);
                 }
@@ -434,8 +441,7 @@ chunk_render(PyObject *self, PyObject *args) {
     /* get the block data directly from numpy: */
     blocks_py = get_chunk_data(&state, CURRENT, BLOCKS);
     state.blocks = blocks_py;
-    if (blocks_py == Py_None) {
-        PyErr_SetString(PyExc_RuntimeError, "chunk does not exist!");
+    if (blocks_py == NULL) {
         return NULL;
     }
     
@@ -452,6 +458,9 @@ chunk_render(PyObject *self, PyObject *args) {
 
     up_right_blocks_py = get_chunk_data(&state, UP_RIGHT, BLOCKS);
     state.up_right_blocks = up_right_blocks_py;
+
+    // Clear any error that was set by the above calls
+    PyErr_Clear();
     
     /* set up the random number generator again for each chunk
        so tallgrass is in the same place, no matter what mode is used */

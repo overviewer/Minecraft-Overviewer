@@ -234,9 +234,9 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
     }
 
     /* also, make sure we have enough info to correctly calculate lighting */
-    if (blocks == Py_None || blocks == NULL ||
-        skylight == Py_None || skylight == NULL ||
-        blocklight == Py_None || blocklight == NULL) {
+    if (!blocks   ||
+        !skylight ||
+        !blocklight) {
 
         self->calculate_light_color(self, 15, 0, r, g, b);
         return;
@@ -369,6 +369,9 @@ lighting_start(void *data, RenderState *state, PyObject *support) {
     self->up_left_blocklight = get_chunk_data(state, UP_LEFT, BLOCKLIGHT);
     self->up_right_skylight = get_chunk_data(state, UP_RIGHT, SKYLIGHT);
     self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT);
+
+    // Non-existant neighbor block is not an error
+    PyErr_Clear();
     
     if (self->night) {
         self->calculate_light_color = calculate_light_color_night;
@@ -404,14 +407,14 @@ lighting_finish(void *data, RenderState *state) {
     
     Py_DECREF(self->skylight);
     Py_DECREF(self->blocklight);
-    Py_DECREF(self->left_skylight);
-    Py_DECREF(self->left_blocklight);
-    Py_DECREF(self->right_skylight);
-    Py_DECREF(self->right_blocklight);
-    Py_DECREF(self->up_left_skylight);
-    Py_DECREF(self->up_left_blocklight);
-    Py_DECREF(self->up_right_skylight);
-    Py_DECREF(self->up_right_blocklight);
+    Py_XDECREF(self->left_skylight);
+    Py_XDECREF(self->left_blocklight);
+    Py_XDECREF(self->right_skylight);
+    Py_XDECREF(self->right_blocklight);
+    Py_XDECREF(self->up_left_skylight);
+    Py_XDECREF(self->up_left_blocklight);
+    Py_XDECREF(self->up_right_skylight);
+    Py_XDECREF(self->up_right_blocklight);
 }
 
 static void
