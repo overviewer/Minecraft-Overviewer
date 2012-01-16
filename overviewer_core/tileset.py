@@ -265,6 +265,13 @@ class TileSet(object):
         else:
             raise ValueError("imgformat must be one of: 'png' or 'jpeg'")
 
+    # Only pickle the initial state. Don't pickle anything resulting from the
+    # do_preprocessing step
+    def __getstate__(self):
+        return self.regionset, self.am, self.textures, self.options, self.outputdir
+    def __setstate__(self, state):
+        self.__init__(*state)
+
     def do_preprocessing(self):
         """For the preprocessing step of the Worker interface, this does the
         chunk scan and stores the resulting tree as a private instance
@@ -1261,6 +1268,12 @@ class RenderTile(object):
 
     def __ne__(self, other):
         return not self == other
+
+    # To support pickling
+    def __getstate__(self):
+        return self.col, self.row, self.path
+    def __setstate__(self, state):
+        self.__init__(*state)
 
     def get_filepath(self, tiledir, imgformat):
         """Returns the path to this file given the directory to the tiles

@@ -221,7 +221,6 @@ class RegionSet(object):
         in-memory.
 
         """
-        #self.world = worldobj
         self.regiondir = regiondir
 
         logging.info("Scanning regions")
