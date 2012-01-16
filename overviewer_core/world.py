@@ -17,20 +17,12 @@ import functools
 import os
 import os.path
 from glob import glob
-import multiprocessing
-import Queue
-import sys
 import logging
-import cPickle
 import collections
-import itertools
-import time
 
 import numpy
 
 import nbt
-import textures
-import util
 
 """
 This module has routines for extracting information about available worlds
@@ -218,7 +210,16 @@ class RegionSet(object):
 
     """
 
-    def __init__(self, regiondir):
+    def __init__(self, regiondir, cachesize=16):
+        """Initialize a new RegionSet to access the region files in the given
+        directory.
+
+        regiondir is a path to a directory containing region files.
+
+        cachesize, if specified, is the number of chunks to keep parsed and
+        in-memory.
+
+        """
         #self.world = worldobj
         self.regiondir = regiondir
 
@@ -233,6 +234,11 @@ class RegionSet(object):
 
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
+
+    # Re-initialize upon unpickling
+    def __getstate__(self):
+        return self.regiondir
+    __setstate__ = __init__
 
     def __repr__(self):
         return "<RegionSet regiondir=%r>" % self.regiondir
