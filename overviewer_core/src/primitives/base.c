@@ -15,39 +15,22 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+#include "../overviewer.h"
+
+typedef struct {
+    /* coordinates of the chunk, inside its region file */
+    int chunk_x, chunk_y;
+    /* biome data for the region */
+    PyObject *biome_data;
+    /* grasscolor and foliagecolor lookup tables */
+    PyObject *grasscolor, *foliagecolor, *watercolor;
+    /* biome-compatible grass/leaf textures */
+    PyObject *grass_texture;
+} PrimitiveBase;
 
 static int
-rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
-    
-    /* load up the given options, first */
-    
-    self->edge_opacity = 0.15;
-    if (!render_mode_parse_option(options, "edge_opacity", "f", &(self->edge_opacity)))
-        return 1;
-    
-    self->min_depth = 0;
-    if (!render_mode_parse_option(options, "min_depth", "I", &(self->min_depth)))
-        return 1;
-
-    self->max_depth = 127;
-    if (!render_mode_parse_option(options, "max_depth", "I", &(self->max_depth)))
-        return 1;
-
-    self->height_fading = 0;
-    /* XXX skip height fading */
-    /*if (!render_mode_parse_option(options, "height_fading", "i", &(self->height_fading)))
-      return 1;*/
-    
-    self->nether = 0;
-    if (!render_mode_parse_option(options, "nether", "i", &(self->nether)))
-        return 1;
-    
-    /*if (self->height_fading) {
-        self->black_color = PyObject_GetAttrString(state->chunk, "black_color");
-        self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
-        }*/
+base_start(void *data, RenderState *state, PyObject *support) {
+    PrimitiveBase *self = (PrimitiveBase *)data;
     
     /* biome-compliant grass mask (includes sides!) */
     self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
@@ -95,20 +78,18 @@ rendermode_normal_start(void *data, RenderState *state, PyObject *options) {
 }
 
 static void
-rendermode_normal_finish(void *data, RenderState *state) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
+base_finish(void *data, RenderState *state) {
+    PrimitiveBase *self = (PrimitiveBase *)data;
     
     Py_XDECREF(self->biome_data);
     Py_XDECREF(self->foliagecolor);
     Py_XDECREF(self->grasscolor);
     Py_XDECREF(self->watercolor);
     Py_XDECREF(self->grass_texture);
-    Py_XDECREF(self->black_color);
-    Py_XDECREF(self->white_color);
 }
 
 static int
-rendermode_normal_occluded(void *data, RenderState *state, int x, int y, int z) {
+base_occluded(void *data, RenderState *state, int x, int y, int z) {
     if ( (x != 0) && (y != 15) && (z != 127) &&
          !render_mode_hidden(state->rendermode, x-1, y, z) &&
          !render_mode_hidden(state->rendermode, x, y, z+1) &&
@@ -123,39 +104,15 @@ rendermode_normal_occluded(void *data, RenderState *state, int x, int y, int z) 
 }
 
 static int
-rendermode_normal_hidden(void *data, RenderState *state, int x, int y, int z) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
+base_hidden(void *data, RenderState *state, int x, int y, int z) {
+    PrimitiveBase *self = (PrimitiveBase *)data;
     
-    if (z > self->max_depth || z < self->min_depth) {
-        return 1;
-    }
-    
-    if (self->nether)
-    {
-        
-        /* hide all blocks above all air blocks */
-        int below_air = 0;
-        
-        while (z < 128)
-        {
-            if (getArrayByte3D(state->blocks, x, y, z) == 0)
-            {
-                below_air = 1;
-                break;
-            }
-            z++;
-        }
-        
-        if (!below_air)
-            return 1;
-    }
-
     return 0;
 }
 
 static void
-rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    RenderModeNormal *self = (RenderModeNormal *)data;
+base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+    PrimitiveBase *self = (PrimitiveBase *)data;
 
     /* draw the block! */
     alpha_over(state->img, src, mask, state->imgx, state->imgy, 0, 0);
@@ -299,85 +256,13 @@ rendermode_normal_draw(void *data, RenderState *state, PyObject *src, PyObject *
         if (facemask)
             tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
     }
-    
-    if (self->height_fading) {
-        /* do some height fading */
-        PyObject *height_color = self->white_color;
-        /* negative alpha => darkness, positive => light */
-        float alpha = (1.0 / (1 + expf((70 - state->z) / 11.0))) * 0.6 - 0.55;
-        
-        if (alpha < 0.0) {
-            alpha *= -1;
-            height_color = self->black_color;
-        }
-        
-        alpha_over_full(state->img, height_color, mask_light, alpha, state->imgx, state->imgy, 0, 0);
-    }
-    
-
-    /* Draw some edge lines! */
-    // draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
-    if (state->block == 44 || state->block == 78 || !is_transparent(state->block)) {
-        Imaging img_i = imaging_python_to_c(state->img);
-        unsigned char ink[] = {0, 0, 0, 255 * self->edge_opacity};
-
-        int increment=0;
-        if (state->block == 44)  // half-step
-            increment=6;
-        else if ((state->block == 78) || (state->block == 93) || (state->block == 94)) // snow, redstone repeaters (on and off)
-            increment=9;
-
-        if ((state->x == 15) && (state->up_right_blocks != Py_None)) {
-            unsigned char side_block = getArrayByte3D(state->up_right_blocks, 0, state->y, state->z);
-            if (side_block != state->block && is_transparent(side_block)) {
-                ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
-                ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
-            }
-        } else if (state->x != 15) {
-            unsigned char side_block = getArrayByte3D(state->blocks, state->x+1, state->y, state->z);
-            if (side_block != state->block && is_transparent(side_block)) {
-                ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
-                ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
-            }
-        }
-        // if y != 0 and blocks[x,y-1,z] == 0
-
-        // chunk boundries are annoying
-        if ((state->y == 0) && (state->up_left_blocks != Py_None)) {
-            unsigned char side_block = getArrayByte3D(state->up_left_blocks, state->x, 15, state->z);
-            if (side_block != state->block && is_transparent(side_block)) {
-                ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
-                ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
-            }
-        } else if (state->y != 0) {
-            unsigned char side_block = getArrayByte3D(state->blocks, state->x, state->y-1, state->z);
-            if (side_block != state->block && is_transparent(side_block)) {
-                // draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
-                ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
-                ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
-            }
-        }
-    }
 }
 
-const RenderModeOption rendermode_normal_options[] = {
-    {"edge_opacity", "darkness of the edge lines, from 0.0 to 1.0 (default: 0.15)"},
-    {"min_depth", "lowest level of blocks to render (default: 0)"},
-    {"max_depth", "highest level of blocks to render (default: 127)"},
-    {"height_fading", "darken or lighten blocks based on height (default: False)"},
-    {"nether", "if True, remove the roof of the map. Useful on nether maps. (default: False)"},
-    {NULL, NULL}
-};
-
-RenderModeInterface rendermode_normal = {
-    "normal", "Normal",
-    "nothing special, just render the blocks",
-    rendermode_normal_options,
-    NULL,
-    sizeof(RenderModeNormal),
-    rendermode_normal_start,
-    rendermode_normal_finish,
-    rendermode_normal_occluded,
-    rendermode_normal_hidden,
-    rendermode_normal_draw,
+RenderPrimitiveInterface primitive_base = {
+    "base", sizeof(PrimitiveBase),
+    base_start,
+    base_finish,
+    base_occluded,
+    base_hidden,
+    base_draw,
 };

@@ -15,14 +15,31 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+#include "../overviewer.h"
 #include <math.h>
+
+typedef struct {
+    /* data used to know where the surface is */
+    PyObject *skylight;
+    PyObject *left_skylight;
+    PyObject *right_skylight;
+    PyObject *up_left_skylight;
+    PyObject *up_right_skylight;
+
+    /* data used to know where the lit caves are */
+    PyObject *blocklight;
+    PyObject *left_blocklight;
+    PyObject *right_blocklight;
+    PyObject *up_left_blocklight;
+    PyObject *up_right_blocklight;
+    
+    int only_lit;
+} RenderPrimitiveCave;
 
 static inline int
 touches_light(unsigned int x, unsigned int y, unsigned int z,
               PyObject *light, PyObject *left_light, PyObject *right_light,
               PyObject *up_left_light, PyObject *up_right_light) {
-    
     
     if (getArrayByte3D(light, x, y, z+1) != 0) {
         return 1;
@@ -79,10 +96,11 @@ touches_light(unsigned int x, unsigned int y, unsigned int z,
     return 0;
 }
 
-static inline int
-rendermode_cave_adjacent_occluded(void *data, RenderState *state, int x, int y, int z) {
-    /* check for occlusion of edge blocks, using adjacent block data */
-    
+static int
+cave_occluded(void *data, RenderState *state, int x, int y, int z) { 
+    /* check for normal occlusion */
+    /* use ajacent chunks, if not you get blocks spreaded in chunk edges */
+
     if (z != 127) {
         if ( (x == 0) && (y != 15) ) {
             if (state->left_blocks != Py_None) {
@@ -133,26 +151,11 @@ rendermode_cave_adjacent_occluded(void *data, RenderState *state, int x, int y, 
 }
 
 static int
-rendermode_cave_occluded(void *data, RenderState *state, int x, int y, int z) { 
-    /* first, check to see if it's "normally" occluded */
-    if (rendermode_lighting.occluded(data, state, x, y, z))
-        return 1;
-
-    /* check for normal occlusion */
-    /* use ajacent chunks, if not you get blocks spreaded in chunk edges */
-    return rendermode_cave_adjacent_occluded(data, state, x, y, z);
-}
-
-static int
-rendermode_cave_hidden(void *data, RenderState *state, int x, int y, int z) {
-    RenderModeCave* self;
+cave_hidden(void *data, RenderState *state, int x, int y, int z) {
+    RenderPrimitiveCave* self;
     int dz = 0;
-    self = (RenderModeCave *)data;
+    self = (RenderPrimitiveCave *)data;
     
-    /* first, check to see if it's "normally" hidden */
-    if (rendermode_lighting.hidden(data, state, x, y, z))
-        return 1;
-
     /* check if the block is touching skylight */
     if (z != 127) { 
         
@@ -190,51 +193,25 @@ rendermode_cave_hidden(void *data, RenderState *state, int x, int y, int z) {
     /* unfortunate side-effect of lit cave mode: we need to count occluded
      * blocks as hidden for the lighting to look right, since technically our
      * hiding depends on occlusion as well
-     *
-     * We leave out this check otherwise because it's fairly expensive.
      */
-    if (self->lighting) {
-        if ( (x != 0) && (y != 15) && (z != 127) &&
-             !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
-             !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
-             !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
-            return 1;
-        }
-        
-        return rendermode_cave_adjacent_occluded(data, state, x, y, z);
+    if ( (x != 0) && (y != 15) && (z != 127) &&
+         !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
+         !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
+         !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
+        return 1;
     }
     
-    return 0;
+    return cave_occluded(data, state, x, y, z);
 }
 
 static int
-rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
-    RenderModeCave* self;
+cave_start(void *data, RenderState *state, PyObject *support) {
+    RenderPrimitiveCave* self;
     int ret;
-    self = (RenderModeCave *)data;
+    self = (RenderPrimitiveCave *)data;
 
-    /* first, chain up */
-    ret = rendermode_lighting.start(data, state, options);
-    if (ret != 0)
-        return ret;
-    
-    self->depth_tinting = 1;
-    if (!render_mode_parse_option(options, "depth_tinting", "i", &(self->depth_tinting)))
+    if (!render_mode_parse_option(support, "only_lit", "i", &(self->only_lit)))
         return 1;
-
-    self->only_lit = 0;
-    if (!render_mode_parse_option(options, "only_lit", "i", &(self->only_lit)))
-        return 1;
-    
-    self->lighting = 0;
-    if (!render_mode_parse_option(options, "lighting", "i", &(self->lighting)))
-        return 1;
-    
-    if (self->lighting)
-    {
-        /* we can't skip lighting the sides in cave mode, it looks too weird */
-        self->parent.skip_sides = 0;
-    }
     
     /* if there's skylight we are in the surface! */
     self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT);
@@ -251,16 +228,13 @@ rendermode_cave_start(void *data, RenderState *state, PyObject *options) {
         self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT);
     }
 
-    /* colors for tinting */
-    self->depth_colors = PyObject_GetAttrString(state->support, "depth_colors");
-
     return 0;
 }
 
 static void
-rendermode_cave_finish(void *data, RenderState *state) {
-    RenderModeCave* self;
-    self = (RenderModeCave *)data;
+cave_finish(void *data, RenderState *state) {
+    RenderPrimitiveCave* self;
+    self = (RenderPrimitiveCave *)data;
     
     Py_DECREF(self->skylight);
     Py_DECREF(self->left_skylight);
@@ -275,55 +249,13 @@ rendermode_cave_finish(void *data, RenderState *state) {
         Py_DECREF(self->up_left_blocklight);
         Py_DECREF(self->up_right_blocklight);
     }
-    
-    Py_DECREF(self->depth_colors);
-
-    rendermode_lighting.finish(data, state);
 }
 
-static void
-rendermode_cave_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    RenderModeCave* self;
-    int z, r, g, b;
-    self = (RenderModeCave *)data;
-
-    z = state->z;
-    r = 0, g = 0, b = 0;
-
-    /* draw the normal block */
-    if (self->lighting) {
-        rendermode_lighting.draw(data, state, src, mask, mask_light);
-    } else {
-        rendermode_normal.draw(data, state, src, mask, mask_light);
-    }
-
-    if (self->depth_tinting) {
-        /* get the colors and tint and tint */
-        r = PyInt_AsLong(PyList_GetItem(self->depth_colors, 0 + z*3));
-        g = PyInt_AsLong(PyList_GetItem(self->depth_colors, 1 + z*3));
-        b = PyInt_AsLong(PyList_GetItem(self->depth_colors, 2 + z*3));
-        
-        tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
-    }
-
-}
-
-const RenderModeOption rendermode_cave_options[] = {
-    {"depth_tinting", "tint caves based on how deep they are (default: True)"},
-    {"only_lit", "only render lit caves (default: False)"},
-    {"lighting", "render caves with lighting enabled (default: False)"},
-    {NULL, NULL}
-};
-
-RenderModeInterface rendermode_cave = {
-    "cave", "Cave",
-    "render only caves",
-    rendermode_cave_options,
-    &rendermode_lighting,
-    sizeof(RenderModeCave),
-    rendermode_cave_start,
-    rendermode_cave_finish,
-    rendermode_cave_occluded,
-    rendermode_cave_hidden,
-    rendermode_cave_draw,
+RenderPrimitiveInterface primitive_cave = {
+    "cave", sizeof(RenderPrimitiveCave),
+    cave_start,
+    cave_finish,
+    cave_occluded,
+    cave_hidden,
+    NULL,
 };
