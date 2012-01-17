@@ -133,6 +133,23 @@ render: function() {
 }
         });
 
+
+var CoordboxView = Backbone.View.extend({
+initialize: function() {
+            // Coords box
+this.el.id = 'coordsDiv';
+this.el.innerHTML = 'coords here';
+overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(this.el);
+},
+updateCoords: function(latLng) {
+var worldcoords = overviewer.util.fromLatLngToWorld(latLng.lat(), 
+    latLng.lng(),
+overviewer.mapModel.get("currentWorldView").model.get("tileSets").at(0).get("zoomLevels"));
+    this.el.innerHTML = "Coords: X " + Math.round(worldcoords.x) + ", Z " + Math.round(worldcoords.z);
+}
+}
+);
+
 /* GoogleMapView is responsible for dealing with the GoogleMaps API to create the 
  */
 var GoogleMapView = Backbone.View.extend({
@@ -315,6 +332,13 @@ var overviewer = {
 
             var compass = new CompassView({tagName: 'DIV'});
             compass.render();
+
+            var coordsdiv = new CoordboxView({tagName: 'DIV'});
+            coordsdiv.render();
+            // Update coords on mousemove
+            google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
+                coordsdiv.updateCoords(event.latLng);    
+            });
 
             var worldSelector = new WorldSelectorView({tagName:'DIV'});
             worlds.bind("add", worldSelector.render, worldSelector);
@@ -927,18 +951,6 @@ var overviewer = {
          * like the compass, current view link, etc.
          */
         'createMapControls': function() {
-            // compass rose, in the top right corner
-            var compassDiv = document.createElement('DIV');
-            compassDiv.style.padding = '5px';
-            var compassImg = document.createElement('IMG');
-            compassImg.src = overviewerConfig.CONST.image.compass;
-            compassDiv.appendChild(compassImg);
-            compassDiv.index = 0;
-            // add it to the map, top right.
-            if (overviewerConfig.map.controls.compass) {
-                overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(compassDiv);
-            }
-
             // Spawn button
             var homeControlDiv = document.createElement('DIV');
             var homeControl = new overviewer.classes.HomeControl(homeControlDiv);  
@@ -948,21 +960,7 @@ var overviewer = {
                 overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(homeControlDiv);
             }
 
-            // Coords box
-            var coordsDiv = document.createElement('DIV');
-            coordsDiv.id = 'coordsDiv';
-            coordsDiv.innerHTML = '';
-            if (overviewerConfig.map.controls.coordsBox) {
-                overviewer.map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(coordsDiv);
-            }
             
-            // Update coords on mousemove
-            google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
-                var worldcoords = overviewer.util.fromLatLngToWorld(event.latLng.lat(), 
-                    event.latLng.lng(),
-                    overviewerConfig.tilesets[overviewer.currentTilesetId].zoomLevels);
-                coordsDiv.innerHTML = "Coords: X " + Math.round(worldcoords.x) + ", Z " + Math.round(worldcoords.z);
-            });
 
             // only need to create the control if there are items in the list.
             // as defined in config.js
