@@ -265,6 +265,9 @@ class TileSet(object):
         else:
             raise ValueError("imgformat must be one of: 'png' or 'jpeg'")
 
+        # This sets self.treedepth, self.xradius, and self.yradius
+        self._set_map_size()
+
     # Only pickle the initial state. Don't pickle anything resulting from the
     # do_preprocessing step
     def __getstate__(self):
@@ -282,30 +285,10 @@ class TileSet(object):
         # THE do_work() METHOD (because this is only called in the main process
         # not the workers)
 
-        # Calculate the min and max column over all the chunks.
-        # This returns a Bounds namedtuple
-        bounds = self._find_chunk_range()
-
-        # Calculate the depth of the tree
-        for p in xrange(1,33): # max 32
-            # Will 2^p tiles wide and high suffice?
-
-            # X has twice as many chunks as tiles, then halved since this is a
-            # radius
-            xradius = 2**p
-            # Y has 4 times as many chunks as tiles, then halved since this is
-            # a radius
-            yradius = 2*2**p
-            if xradius >= bounds.maxcol and -xradius <= bounds.mincol and \
-                    yradius >= bounds.maxrow and -yradius <= bounds.minrow:
-                break
-
-        if p >= 15:
+        # This warning goes here so it's only shown once
+        if self.treedepth >= 15:
             logging.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
                     p)
-        self.treedepth = p
-        self.xradius = xradius
-        self.yradius = yradius
 
         # Do any tile re-arranging if necessary
         self._rearrange_tiles()
@@ -415,6 +398,35 @@ class TileSet(object):
             mincol = min(mincol, col)
             maxcol = max(maxcol, col)
         return Bounds(mincol, maxcol, minrow, maxrow)
+
+    def _set_map_size(self):
+        """Finds and sets the depth of the map's quadtree, as well as the
+        xradius and yradius of the resulting tiles.
+
+        Sets self.treedepth, self.xradius, self.yradius
+
+        """
+        # Calculate the min and max column over all the chunks.
+        # This returns a Bounds namedtuple
+        bounds = self._find_chunk_range()
+
+        # Calculate the depth of the tree
+        for p in xrange(1,33): # max 32
+            # Will 2^p tiles wide and high suffice?
+
+            # X has twice as many chunks as tiles, then halved since this is a
+            # radius
+            xradius = 2**p
+            # Y has 4 times as many chunks as tiles, then halved since this is
+            # a radius
+            yradius = 2*2**p
+            if xradius >= bounds.maxcol and -xradius <= bounds.mincol and \
+                    yradius >= bounds.maxrow and -yradius <= bounds.minrow:
+                break
+        self.treedepth = p
+        self.xradius = xradius
+        self.yradius = yradius
+
 
     def _rearrange_tiles(self):
         """If the target size of the tree is not the same as the existing size
