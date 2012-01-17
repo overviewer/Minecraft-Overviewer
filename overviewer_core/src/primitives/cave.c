@@ -103,7 +103,7 @@ cave_occluded(void *data, RenderState *state, int x, int y, int z) {
 
     if (z != 127) {
         if ( (x == 0) && (y != 15) ) {
-            if (state->left_blocks != Py_None) {
+            if (state->left_blocks != NULL) {
                 if (!is_transparent(getArrayByte3D(state->left_blocks, 15, y, z)) &&
                     !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
                     !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
@@ -115,7 +115,7 @@ cave_occluded(void *data, RenderState *state, int x, int y, int z) {
         }
     
         if ( (x != 0) && (y == 15) ) {
-            if (state->right_blocks != Py_None) {
+            if (state->right_blocks != NULL) {
                 if (!is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
                     !is_transparent(getArrayByte3D(state->right_blocks, x, 0, z)) &&
                     !is_transparent(getArrayByte3D(state->blocks, x, y, z+1))) {
@@ -127,8 +127,8 @@ cave_occluded(void *data, RenderState *state, int x, int y, int z) {
         }
     
         if ( (x == 0) && (y == 15) ) {
-            if ((state->left_blocks != Py_None) &&
-                (state->right_blocks != Py_None)) {
+            if ((state->left_blocks != NULL) &&
+                (state->right_blocks != NULL)) {
                 if (!is_transparent(getArrayByte3D(state->left_blocks, 15, y, z)) &&
                     !is_transparent(getArrayByte3D(state->right_blocks, x, 0, z)) &&
                     !is_transparent(getArrayByte3D(state->blocks, x, y, z+1))) {

@@ -133,8 +133,8 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
     }
 
     /* also, make sure we have enough info to correctly calculate lighting */
-    if (blocks == Py_None || blocks == NULL ||
-        blocklight == Py_None || blocklight == NULL) {
+    if (blocks == NULL ||
+        blocklight == NULL) {
         
         return 0;
     }
@@ -294,7 +294,7 @@ lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int 
             /* this face isn't visible, so don't draw anything */
             return 1;
         }
-    } else if (skip_sides && (x == -1) && (state->left_blocks != Py_None)) {
+    } else if (skip_sides && (x == -1) && (state->left_blocks != NULL)) {
         unsigned char block = getArrayByte3D(state->left_blocks, 15, state->y, state->z);
         if (!is_transparent(block)) {
             /* the same thing but for adjacent chunks, this solves an
@@ -303,7 +303,7 @@ lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int 
                tessellate-able */
                return 1;
            }
-    } else if (skip_sides && (y == 16) && (state->right_blocks != Py_None)) {
+    } else if (skip_sides && (y == 16) && (state->right_blocks != NULL)) {
         unsigned char block = getArrayByte3D(state->right_blocks, state->x, 0, state->z);
         if (!is_transparent(block)) {
             /* the same thing but for adjacent chunks, this solves an

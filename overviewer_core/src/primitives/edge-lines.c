@@ -45,7 +45,7 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
         else if ((state->block == 78) || (state->block == 93) || (state->block == 94)) // snow, redstone repeaters (on and off)
             increment=9;
 
-        if ((state->x == 15) && (state->up_right_blocks != Py_None)) {
+        if ((state->x == 15) && (state->up_right_blocks != NULL)) {
             unsigned char side_block = getArrayByte3D(state->up_right_blocks, 0, state->y, state->z);
             if (side_block != state->block && is_transparent(side_block)) {
                 ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
@@ -61,7 +61,7 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
         // if y != 0 and blocks[x,y-1,z] == 0
 
         // chunk boundries are annoying
-        if ((state->y == 0) && (state->up_left_blocks != Py_None)) {
+        if ((state->y == 0) && (state->up_left_blocks != NULL)) {
             unsigned char side_block = getArrayByte3D(state->up_left_blocks, state->x, 15, state->z);
             if (side_block != state->block && is_transparent(side_block)) {
                 ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
