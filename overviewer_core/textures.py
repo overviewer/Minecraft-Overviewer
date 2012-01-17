@@ -166,6 +166,18 @@ def _load_water():
         watertexture = _load_image("water.png")
     return watertexture
 
+def _load_portal():
+    """Special-case function for loading portal, handles
+    MCPatcher-compliant custom animated portal."""
+    try:
+        # try the MCPatcher case first
+        portaltexture = _load_image("custom_portal.png")
+        portaltexture = portaltexture.crop((0, 0, portaltexture.size[0], portaltexture.size[0]))
+    except IOError:
+        portaltexture = _load_image("portal.png")
+    return portaltexture
+
+
 def _load_lava():
     """Special-case function for loading lava, handles
     MCPatcher-compliant custom animated lava."""
@@ -2399,11 +2411,11 @@ block(blockid=89, top_index=105)
 # portal
 @material(blockid=90, data=[1, 2, 4, 8], transparent=True)
 def portal(blockid, data):
+    portaltex = _load_portal()
     # no north orientation uses pseudo data
-    portaltexture = _load_image("portal.png")
     img = Image.new("RGBA", (24,24), bgcolor)
 
-    side = transform_image_side(portaltexture)
+    side = transform_image_side(portaltex)
     otherside = side.transpose(Image.FLIP_TOP_BOTTOM)
 
     if data in (1,4):
