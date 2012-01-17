@@ -447,3 +447,14 @@ def mirror_dir(src, dst, entities=None):
                     pass
                 shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
                 # if this stills throws an error, let it propagate up
+
+
+def dict_subset(d, keys):
+    "Return a new dictionary that is built from copying select keys from d"
+    n = dict()
+    for key in keys:
+        if key in d:
+            n[key] = d[key]
+    return n
+
+    

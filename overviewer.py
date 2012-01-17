@@ -294,7 +294,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         print "tileset_dir: %r" % tileset_dir
         if not os.path.exists(tileset_dir):
             os.mkdir(tileset_dir)
-        tset = tileset.TileSet(rset, assetMrg, tex, render, tileset_dir)
+
+        # only pass to the TileSet the options it really cares about
+        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode"])
+        tset = tileset.TileSet(rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)
 
    
