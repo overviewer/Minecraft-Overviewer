@@ -67,7 +67,6 @@ directory.
         # TODO based on the type, so something
         POI[regionset.name].append
 
-
     def finalize(self, tilesets):
 
         # dictionary to hold the overviewerConfig.js settings that we will dumps
@@ -108,27 +107,13 @@ directory.
 
         dump['tilesets'] = []
 
-        def bgcolorformat(color):
-            return "#%02x%02x%02x" % color[0:3]
 
         for tileset in tilesets:
-            js_tileset = dict()
-            js_tileset['name'] = tileset.options.get('title')
-            js_tileset['zoomLevels'] = tileset.treedepth
-            js_tileset['minZoom'] = 0
-            js_tileset['defaultZoom'] = 1
-            js_tileset['maxZoom'] = tileset.treedepth
-            js_tileset['path'] = tileset.options.get('name')
-            js_tileset['base'] = ''
-            js_tileset['bgcolor'] = bgcolorformat(tileset.options.get('bgcolor'))
-            js_tileset['world'] = tileset.options.get('worldname_orig')
-            js_tileset['last_rendertime'] = tileset.this_rendertime
-            js_tileset['north_direction'] = 'upper-left'
-            dump['tilesets'].append(js_tileset)
+            dump['tilesets'].append(tileset.get_persistent_data())
 
             # write a blank image
             blank = Image.new("RGBA", (1,1), tileset.options.get('bgcolor'))
-            blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank."+tileset.options.get('imgformat')))
+            blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')))
 
 
         jsondump = json.dumps(dump, indent=4)

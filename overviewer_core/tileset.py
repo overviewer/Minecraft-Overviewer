@@ -380,7 +380,22 @@ class TileSet(object):
         TileSet. Typically this is called by AssetManager
 
         """
-        return None
+        def bgcolorformat(color):
+            return "#%02x%02x%02x" % color[0:3]
+        d = dict(name = self.options.get('title'),
+                zoomLevels = self.treedepth,
+                minZoom = 0,
+                defaultZoom = 1,
+                maxZoom = self.treedepth,
+                path = self.options.get('name'),
+                base = '',
+                bgcolor = bgcolorformat(self.options.get('bgcolor')),
+                world = self.options.get('worldname_orig'),
+                last_rendertime = self.this_rendertime,
+                north_direction = 'upper-left')
+        print "get_persistent_data: %r" % d
+        return d
+
 
     def _find_chunk_range(self):
         """Finds the chunk range in rows/columns and stores them in
@@ -1300,6 +1315,7 @@ class RenderTile(object):
         path = os.path.sep.join(pathcomponents)
         imgpath = ".".join((path, imgformat))
         return imgpath
+
 
     @classmethod
     def from_path(cls, path):

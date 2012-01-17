@@ -296,7 +296,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             os.mkdir(tileset_dir)
 
         # only pass to the TileSet the options it really cares about
-        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode"])
+        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title"])
         tset = tileset.TileSet(rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)
 
