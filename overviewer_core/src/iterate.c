@@ -99,8 +99,11 @@ PyObject *init_chunk_render(void) {
 /*
  * Returns the requested chunk data from the requested chunk.
  * Returns NULL with an exception set if the requested chunk doesn't exist.
+ * If clearexception is true, clears the exception before returning NULL (for
+ * soft failures)
  */
-PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type) {
+PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type,
+        unsigned char clearexception) {
     int x = state->chunkx;
     int z = state->chunkz;
     PyObject *chunk = NULL;
@@ -127,6 +130,9 @@ PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDa
     if (chunk == NULL) {
         // An exception is already set. RegionSet.get_chunk sets
         // ChunkDoesntExist
+        if (clearexception) {
+            PyErr_Clear();
+        }
         return NULL;
     }
     
@@ -439,28 +445,25 @@ chunk_render(PyObject *self, PyObject *args) {
     Py_DECREF(imgsize1_py);
 
     /* get the block data directly from numpy: */
-    blocks_py = get_chunk_data(&state, CURRENT, BLOCKS);
+    blocks_py = get_chunk_data(&state, CURRENT, BLOCKS, 0);
     state.blocks = blocks_py;
     if (blocks_py == NULL) {
         return NULL;
     }
     
-    state.blockdatas = get_chunk_data(&state, CURRENT, BLOCKDATA);
+    state.blockdatas = get_chunk_data(&state, CURRENT, BLOCKDATA, 1);
 
-    left_blocks_py = get_chunk_data(&state, DOWN_LEFT, BLOCKS);
+    left_blocks_py = get_chunk_data(&state, DOWN_LEFT, BLOCKS, 1);
     state.left_blocks = left_blocks_py;
 
-    right_blocks_py = get_chunk_data(&state, DOWN_RIGHT, BLOCKS);
+    right_blocks_py = get_chunk_data(&state, DOWN_RIGHT, BLOCKS, 1);
     state.right_blocks = right_blocks_py;
 
-    up_left_blocks_py = get_chunk_data(&state, UP_LEFT, BLOCKS);
+    up_left_blocks_py = get_chunk_data(&state, UP_LEFT, BLOCKS, 1);
     state.up_left_blocks = up_left_blocks_py;
 
-    up_right_blocks_py = get_chunk_data(&state, UP_RIGHT, BLOCKS);
+    up_right_blocks_py = get_chunk_data(&state, UP_RIGHT, BLOCKS, 1);
     state.up_right_blocks = up_right_blocks_py;
-
-    // Clear any error that was set by the above calls
-    PyErr_Clear();
     
     /* set up the random number generator again for each chunk
        so tallgrass is in the same place, no matter what mode is used */

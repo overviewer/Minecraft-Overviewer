@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 15
+#define OVERVIEWER_EXTENSION_VERSION 16
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -137,7 +137,8 @@ typedef enum
     UP_RIGHT,   /* +1,  0 */
     UP_LEFT,    /*  0, -1 */
 } ChunkNeighborName;
-PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type);
+PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type,
+        unsigned char clearexception);
 
 /* pull in the rendermode info */
 #include "rendermodes.h"

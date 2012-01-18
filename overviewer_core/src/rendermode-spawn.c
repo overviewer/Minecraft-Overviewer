@@ -69,8 +69,8 @@ rendermode_spawn_start(void *data, RenderState *state, PyObject *options) {
     
     /* now do custom initializations */
     self = (RenderModeSpawn *)data;
-    self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT);
-    self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT);
+    self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT, 1);
+    self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT, 1);
     
     /* setup custom color */
     self->parent.get_color = get_color;

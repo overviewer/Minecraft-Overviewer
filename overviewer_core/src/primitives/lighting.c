@@ -359,20 +359,17 @@ lighting_start(void *data, RenderState *state, PyObject *support) {
     self->facemasks[1] = PyTuple_GetItem(self->facemasks_py, 1);
     self->facemasks[2] = PyTuple_GetItem(self->facemasks_py, 2);
     
-    self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT);
-    self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT);
-    self->left_skylight = get_chunk_data(state, DOWN_LEFT, SKYLIGHT);
-    self->left_blocklight = get_chunk_data(state, DOWN_LEFT, BLOCKLIGHT);
-    self->right_skylight = get_chunk_data(state, DOWN_RIGHT, SKYLIGHT);
-    self->right_blocklight = get_chunk_data(state, DOWN_RIGHT, BLOCKLIGHT);
-    self->up_left_skylight = get_chunk_data(state, UP_LEFT, SKYLIGHT);
-    self->up_left_blocklight = get_chunk_data(state, UP_LEFT, BLOCKLIGHT);
-    self->up_right_skylight = get_chunk_data(state, UP_RIGHT, SKYLIGHT);
-    self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT);
+    self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT, 1);
+    self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT, 1);
+    self->left_skylight = get_chunk_data(state, DOWN_LEFT, SKYLIGHT, 1);
+    self->left_blocklight = get_chunk_data(state, DOWN_LEFT, BLOCKLIGHT, 1);
+    self->right_skylight = get_chunk_data(state, DOWN_RIGHT, SKYLIGHT, 1);
+    self->right_blocklight = get_chunk_data(state, DOWN_RIGHT, BLOCKLIGHT, 1);
+    self->up_left_skylight = get_chunk_data(state, UP_LEFT, SKYLIGHT, 1);
+    self->up_left_blocklight = get_chunk_data(state, UP_LEFT, BLOCKLIGHT, 1);
+    self->up_right_skylight = get_chunk_data(state, UP_RIGHT, SKYLIGHT, 1);
+    self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT, 1);
 
-    // Non-existant neighbor block is not an error
-    PyErr_Clear();
-    
     if (self->night) {
         self->calculate_light_color = calculate_light_color_night;
     } else {
