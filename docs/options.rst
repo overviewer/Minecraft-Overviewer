@@ -357,9 +357,16 @@ Less Useful Options
 
 .. cmdoption:: --stochastic-render <probability>
 
-    Provides a probability that a non-updated tile will be rerendered
-    anyway. Use this if there's a new rendering feature you want to
-    use, but you don't want to rerender the entire map at once.
+    Provides a probability that a non-updated tile will be re-rendered anyway.
+    Use this if there's a new rendering feature you want to use or if there's a
+    part of your map you need re-rendered, but you don't want to re-render the
+    entire map at once using :option:`--forcerender`.
+
+    In other words, setting this to e.g. ``0.7`` will force 70% of your map to
+    be re-rendered. The portion of your map that gets re-rendered is random. The
+    idea is that, after a few renders with this setting, most all of your map
+    will eventually get re-rendered. It spreads the work of a
+    :option:`--forcerender` out over several runs.
 
     **Settings file:**
         Option name: ``stochastic_render``
