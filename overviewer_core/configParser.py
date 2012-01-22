@@ -222,9 +222,15 @@ class MultiWorldParser(object):
 
     def parse(self):
         glob = dict(render=dict(), custom_rendermodes=dict(), world=dict())
+        import rendermodes
+        loc=dict()
+        for thing in dir(rendermodes):
+            thething = getattr(rendermodes, thing)
+            if isinstance(thething, type) and issubclass(thething, rendermodes.RenderPrimitive):
+                loc[thing] = thething
 
         try:
-            execfile(self.settings_file, glob, glob)    
+            execfile(self.settings_file, glob, loc)
             # delete the builtins, we don't need it
             del glob['__builtins__']
         
