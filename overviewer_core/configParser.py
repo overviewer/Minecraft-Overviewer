@@ -263,10 +263,6 @@ class MultiWorldParser(object):
 
     def validate(self):
 
-        # first validate the world dict
-        for worldname in self.world:
-            if not os.path.exists(self.world[worldname]):
-                raise Exception("%r does not exist for %s" % (self.world[worldname], worldname))
 
         origs = dict()
 

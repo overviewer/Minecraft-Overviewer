@@ -277,16 +277,22 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     if not os.path.exists(destdir):
         os.mkdir(destdir)
 
+    # saves us from creating the same World object over and over again
+    worldcache = {}
+
     for render_name in render_things:
         render = render_things[render_name]
         logging.debug("Found the following render thing: %r", render)
 
-        # XXX we now construct the regionset directly
-        #w = world.World(render['worldpath'])
+        if (render['worldname'] not in worldcache):
+            w = world.World(render['worldname'])
+            worldcache[render['worldname']] = w
+        else:
+            w = worldcache[render['worldname']]
 
-        # if no dimension has been specified, just use the first one
-        # TODO support the case where a different dimension is specified
-        rset = world.RegionSet(render['worldname'])
+
+        # TODO get the correct regionset based on render['dimension']
+        rset = w.get_regionset(0)
         logging.debug("Using RegionSet %r", rset) 
 
         # create our TileSet from this RegionSet

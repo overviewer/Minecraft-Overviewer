@@ -9,7 +9,10 @@ def validateWorldPath(name, **kwargs):
     world = kwargs.get('world', dict())
     if name not in world.keys():
         raise ValidationException("bad world name")
-    return os.path.abspath(world[name])
+    abs_path = os.path.abspath(world[name])
+    if not os.path.exists(os.path.join(abs_path, "level.dat")):
+        raise ValidationException("No level.dat file in %r.  Check the path for world %r" % (abs_path, name))
+    return abs_path
 
 
 def validateRenderMode(mode, **kwargs):
@@ -94,3 +97,9 @@ def validateInt(i, **kwargs):
 
 def validateStr(s, **kwargs):
     return str(s)
+
+def validateDimension(d, **kwargs):
+    if d in ["nether", "overworld", "end", "default"]:
+        return d
+    raise ValidationException("%r is not a valid dimension" % d)
+

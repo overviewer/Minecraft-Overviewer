@@ -138,7 +138,7 @@ class World(object):
             mcrs = filter(lambda x: x.endswith(".mcr"), files)
             if mcrs:
                 # construct a regionset object for this
-                rset = RegionSet(self, root)
+                rset = RegionSet(root)
                 if root == os.path.join(self.worlddir, "region"):
                     self.regionsets.insert(0, rset)
                 else:

@@ -18,6 +18,7 @@ from settingsValidators import *
 
 render = {
     "worldname": dict(required=True, validator=validateWorldPath, save_orig=True),
+    "dimension": dict(required=False, validator=validateDimension, default="default"),
     "title": dict(required=True, validator=validateStr),
     "rendermode": dict(required=False, validator=validateRenderMode),
     "northdirection": dict(required=False, validator=validateNorthDirection),
