@@ -73,6 +73,12 @@ def log_other_exceptions(func):
     return newfunc
 
 
+# see RegionSet.rotate.  These values are chosen so that they can be passed directly to rot90
+UPPER_LEFT  = 0 ## - Return the world such that north is down the -Z axis (no rotation)
+UPPER_RIGHT = 1 ## - Return the world such that north is down the +X axis (rotate 90 degrees clockwise)
+LOWER_RIGHT = 2 ## - Return the world such that north is down the +Z axis (rotate 180 degrees)
+LOWER_LEFT  = 3 ## - Return the world such that north is down the -X axis (rotate 90 degrees counterclockwise)
+
 class World(object):
     """Encapsulates the concept of a Minecraft "world". A Minecraft world is a
     level.dat file, a players directory with info about each player, a data
@@ -99,12 +105,6 @@ class World(object):
     and the parsed level.dat data
 
     """
-
-    # see RegionSet.rotate.  These values are chosen so that they can be passed directly to rot90
-    UPPER_LEFT  = 1 ## - Return the world such that north is down the -Z axis (no rotation)
-    UPPER_RIGHT = 2 ## - Return the world such that north is down the +X axis (rotate 90 degrees clockwise)
-    LOWER_RIGHT = 3 ## - Return the world such that north is down the +Z axis (rotate 180 degrees)
-    LOWER_LEFT  = 0 ## - Return the world such that north is down the -X axis (rotate 90 degrees counterclockwise)
     
     def __init__(self, worlddir):
         self.worlddir = worlddir
@@ -328,7 +328,7 @@ class RegionSet(object):
     
 
     def rotate(self, north_direction):
-        return RotatedRegionSet(self.worldobj, self.regiondir, north_direction)
+        return RotatedRegionSet(self.regiondir, north_direction)
     
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates
@@ -383,13 +383,18 @@ class RegionSet(object):
     
 
 class RotatedRegionSet(RegionSet):
-    def __init__(self, worldobj, regiondir, north_dir):
-        super(RotatedRegionSet, self).__init__(worldobj, regiondir)
+    def __init__(self, regiondir, north_dir):
         self.north_dir = north_dir
+        super(RotatedRegionSet, self).__init__(regiondir)
+    
+    # Re-initialize upon unpickling
+    def __getstate__(self):
+        return (self.regiondir, self.north_dir)
+    def __setstate__(self, args):
+        self.__init__(args[0], args[1])
 
     def get_chunk(self, x, z):
-        raise NotImplementedError()
-        # TODO: Rotate given x,z coordinates
+
         chunk_data = super(RotatedRegionSet, self).get_chunk(x,z)
         chunk_data['Blocks'] = numpy.rot90(chunk_data['Blocks'], self.north_dir)
         chunk_data['Data'] = numpy.rot90(chunk_data['Data'], self.north_dir)
@@ -397,11 +402,34 @@ class RotatedRegionSet(RegionSet):
         chunk_data['BlockLight'] = numpy.rot90(chunk_data['BlockLight'], self.north_dir)
         return chunk_data
 
-    def iterate_chunks(self):
-        raise NotImplementedError()
-
     def get_chunk_mtime(self, x, z):
-        raise NotImplementedError()
+        return super(RotatedRegionSet, self).get_chunk_mtime(x, z)
+
+    def _iterate_regionfiles(self):
+        """Returns an iterator of all of the region files, along with their 
+        coordinates
+
+        Returns (regionx, regiony, filename)"""
+
+        logging.debug("ROTATED regiondir is %s, northdir is %r", self.regiondir, self.north_dir)
+
+        for path in glob(self.regiondir + "/r.*.*.mcr"):
+            dirpath, f = os.path.split(path)
+            p = f.split(".")
+            x = int(p[1])
+            y = int(p[2])
+            if self.north_dir == UPPER_RIGHT:
+                temp = x
+                x = -y-1
+                y = temp
+            elif self.north_dir == -1:
+                x = -x-1
+                y = -y-1
+            elif self.north_dir == -2:
+                temp = x
+                x = y
+                y = -temp-1
+            yield (x, y, path)
 
     def rotate(self, north_dir):
         raise NotImplementedError()

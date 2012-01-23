@@ -293,6 +293,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # TODO get the correct regionset based on render['dimension']
         rset = w.get_regionset(0)
+        if (render['northdirection'] > 0):
+            rset = rset.rotate(render['northdirection'])
         logging.debug("Using RegionSet %r", rset) 
 
         # create our TileSet from this RegionSet

@@ -21,7 +21,7 @@ render = {
     "dimension": dict(required=False, validator=validateDimension, default="default"),
     "title": dict(required=True, validator=validateStr),
     "rendermode": dict(required=False, validator=validateRenderMode),
-    "northdirection": dict(required=False, validator=validateNorthDirection),
+    "northdirection": dict(required=False, validator=validateNorthDirection, default=0),
     "renderrange": dict(required=False, validator=validateRenderRange),
     "forcerender": dict(required=False, validator=validateBool),
     "stochasticrender": dict(required=False, validator=validateStochastic),
