@@ -142,7 +142,7 @@ Documentation Contents
    installing
    building
    running
-   options
+   config
    faq
    design/designdoc
 
