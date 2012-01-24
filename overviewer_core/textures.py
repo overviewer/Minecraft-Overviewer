@@ -1472,10 +1472,6 @@ def fire(blockid, data):
     side1 = transform_image_side(firetextures[0])
     side2 = transform_image_side(firetextures[1]).transpose(Image.FLIP_LEFT_RIGHT)
 
-#    firetexture = _load_image("fire.png")
-#    side1 = transform_image_side(firetexture)
-#    side2 = transform_image_side(firetexture).transpose(Image.FLIP_LEFT_RIGHT)
-    
     img = Image.new("RGBA", (24,24), bgcolor)
 
     composite.alpha_over(img, side1, (12,0), side1)
