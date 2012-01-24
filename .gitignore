@@ -6,11 +6,14 @@ Minecraft_Overviewer.egg-info
 terrain.png
 cachedir*
 
+#MCPatcher HD texture files
+custom_*.png
+
 # vim swap files
 .*.swp
 
-# user-provided settings file
-settings.py
+# user-provided settings file as well as any variations on that name
+settings*.py
 
 # header files that may be copied over, if missing
 ImPlatform.h
