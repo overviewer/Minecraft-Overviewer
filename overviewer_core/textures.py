@@ -189,6 +189,20 @@ def _load_lava():
         lavatexture = _load_image("lava.png")
     return lavatexture
 
+def _load_fire():
+    """Special-case function for loading fire, handles
+    MCPatcher-compliant custom animated fire."""
+    try:
+        # try the MCPatcher case first
+        firetextureNS = _load_image("custom_fire_n_s.png")
+        firetextureNS = firetextureNS.crop((0, 0, firetextureNS.size[0], firetextureNS.size[0]))
+        firetextureEW = _load_image("custom_fire_e_w.png")
+        firetextureEW = firetextureEW.crop((0, 0, firetextureEW.size[0], firetextureEW.size[0]))
+        return (firetextureNS,firetextureEW)
+    except IOError:
+        firetexture = _load_image("fire.png")
+        return (firetexture,firetexture)
+
 def _split_terrain(terrain):
     """Builds and returns a length 256 array of each 16x16 chunk of texture"""
     textures = []
@@ -1453,9 +1467,14 @@ def torches(blockid, data, north):
 # fire
 @material(blockid=51, data=range(16), transparent=True)
 def fire(blockid, data):
-    firetexture = _load_image("fire.png")
-    side1 = transform_image_side(firetexture)
-    side2 = transform_image_side(firetexture).transpose(Image.FLIP_LEFT_RIGHT)
+
+    firetextures = _load_fire()
+    side1 = transform_image_side(firetextures[0])
+    side2 = transform_image_side(firetextures[1]).transpose(Image.FLIP_LEFT_RIGHT)
+
+#    firetexture = _load_image("fire.png")
+#    side1 = transform_image_side(firetexture)
+#    side2 = transform_image_side(firetexture).transpose(Image.FLIP_LEFT_RIGHT)
     
     img = Image.new("RGBA", (24,24), bgcolor)
 
