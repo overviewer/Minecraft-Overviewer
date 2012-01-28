@@ -264,7 +264,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # look at our settings.py file
     mw_parser = configParser.MultiWorldParser("settings.py")
     mw_parser.parse()
-    mw_parser.validate()
+    try:
+        mw_parser.validate()
+    except Exception:
+        logging.error("Please investigate these errors in settings.py then try running Overviewer again")
+        return 1
+
 
     # create our asset manager... ASSMAN
     assetMrg = assetmanager.AssetManager(destdir)

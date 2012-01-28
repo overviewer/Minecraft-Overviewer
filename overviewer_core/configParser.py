@@ -289,7 +289,8 @@ class MultiWorldParser(object):
                         origs[key + "_orig"] = world[key]
                     world[key] = val
                 except Exception as e:
-                    print "Error validating %s: %r" % (key, e)
+                    logging.error("Error validating '%s' option in render definition for '%s':", key, worldname)
+                    logging.error(e)
                     raise e
             world['name'] = worldname
             world.update(origs)
