@@ -111,3 +111,5 @@ def validateDimension(d, **kwargs):
         return d
     raise ValidationException("%r is not a valid dimension" % d)
 
+def validateOutputDir(d, **kwargs):
+    return os.path.abs(d)

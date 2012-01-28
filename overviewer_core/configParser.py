@@ -221,7 +221,15 @@ class MultiWorldParser(object):
         self.settings_file = settings
 
     def parse(self):
-        glob = dict(render=dict(), custom_rendermodes=dict(), world=dict())
+        # settingsDefinition.py defines what types of things you can put in a configfile
+        # anything in settingsDefinitino that is a dict with a "type" key is a definiton
+        defDicts = [x for x in dir(settingsDefinition) if type(getattr(settingsDefinition,x)) == dict and getattr(settingsDefinition,x).has_key("type") and x != "__builtins__"]
+
+        glob = dict()
+        for name in defDicts:
+            d = getattr(settingsDefinition, name)
+            glob[name] = d['type']()
+
         import rendermodes
         loc=dict()
         for thing in dir(rendermodes):
@@ -247,21 +255,21 @@ class MultiWorldParser(object):
             logging.error("Error parsing %s.  Please check the trackback above" % self.settings_file)
             sys.exit(1)
 
-        self.render = glob['render']
-        self.custom_rendermodes = glob['custom_rendermodes']
-        self.world = glob['world']
 
-        # anything that's not 'render' or 'custom_rendermode' is a default
-        del glob['render']
-        del glob['custom_rendermodes']
-        del glob['world']
+        for name in defDicts:
+            setattr(self, name, glob[name])
+            del glob[name]
+
 
         # seed with the Overviewer defaults, then update with the user defaults
         self.defaults = dict()
-        for key in settingsDefinition.render:
-            option = settingsDefinition.render[key]
-            if option.has_key("default"):
-                self.defaults[key] = option["default"]
+        for name in defDicts:
+            d = getattr(settingsDefinition, name)
+            if d['type'] == dict and d['valuetype'] == dict:
+                for key in d['values']:
+                    option = d['values'][key]
+                    if option.has_key("default"):
+                        self.defaults[key] = option["default"]
 
             
         self.defaults.update(glob)
@@ -278,11 +286,11 @@ class MultiWorldParser(object):
             world.update(self.render[worldname])
         
             for key in world:
-                if key not in settingsDefinition.render:
-                    print "Warning: %r is not a known setting" % key
+                if key not in settingsDefinition.render['values']:
+                    logging.warning("%r is not a known setting", key)
                     continue
                
-                definition = settingsDefinition.render[key]
+                definition = settingsDefinition.render['values'][key]
                 try:
                     val = definition['validator'](world[key], world = self.world)
                     if definition.get('save_orig', False):
