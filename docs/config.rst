@@ -8,7 +8,7 @@ Using a configuration file is now the preferred way of running The Overviewer.
 You will need to create a blank file and specify it when running The Overviewer
 like this::
 
-    overviewer.py --configfile=path/to/my_configfile
+    overviewer.py --config=path/to/my_configfile
 
 
 The config file is formatted in Python syntax. If you aren't familiar with
@@ -274,7 +274,8 @@ Nether
     the ceiling.
 
 HeightFading
-    Fades out blocks according to their height.
+    Draws a colored overlay on the blocks that fades them out according to their
+    height.
 
 Depth
     Only renders blocks between the specified min and max heights.
@@ -339,11 +340,11 @@ list of rendermode primitive *objects* like so::
 
     my_rendermode = [Base(), EdgeLines(), SmoothLighting()]
 
-If you want to specify any options, they go as constructors to the rendermode
-primitive objects::
+If you want to specify any options, they go as parameters to the rendermode
+primitive object's constructor::
 
     my_rendermode = [Base(), EdgeLines(opacity=0.2),
-            SmoothLighting(strength=0.5, color=True)
+            SmoothLighting(strength=0.5, color=True)]
 
 Then you can use your new rendermode in your render definitions::
 
