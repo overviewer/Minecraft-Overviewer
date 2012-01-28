@@ -73,12 +73,6 @@ def log_other_exceptions(func):
     return newfunc
 
 
-# see RegionSet.rotate.  These values are chosen so that they can be passed directly to rot90
-UPPER_LEFT  = 0 ## - Return the world such that north is down the -Z axis (no rotation)
-UPPER_RIGHT = 1 ## - Return the world such that north is down the +X axis (rotate 90 degrees clockwise)
-LOWER_RIGHT = 2 ## - Return the world such that north is down the +Z axis (rotate 180 degrees)
-LOWER_LEFT  = 3 ## - Return the world such that north is down the -X axis (rotate 90 degrees counterclockwise)
-
 class World(object):
     """Encapsulates the concept of a Minecraft "world". A Minecraft world is a
     level.dat file, a players directory with info about each player, a data
@@ -290,9 +284,6 @@ class RegionSet(object):
         else:
             raise Exception("Woah, what kind of dimension is this! %r" % self.regiondir)
 
-
-
-
     @log_other_exceptions
     def get_chunk(self, x, z):
         """Returns a dictionary object representing the "Level" NBT Compound
@@ -409,11 +400,44 @@ class RegionSet(object):
             y = int(p[2])
             yield (x, y, path)
     
+# see RegionSet.rotate.  These values are chosen so that they can be passed directly to rot90
+UPPER_LEFT  = 0 ## - Return the world such that north is down the -Z axis (no rotation)
+LOWER_LEFT  = 1 ## - Return the world such that north is down the -X axis (rotate 90 degrees counterclockwise)
+LOWER_RIGHT = 2 ## - Return the world such that north is down the +Z axis (rotate 180 degrees)
+UPPER_RIGHT = 3 ## - Return the world such that north is down the +X axis (rotate 90 degrees clockwise)
+
+NO_ROTATION =               lambda x,z: (x,z)
+ROTATE_CLOCKWISE =          lambda x,z: (-z,x)
+ROTATE_COUNTERCLOCKWISE =   lambda x,z: (z,-x)
+ROTATE_180 =                lambda x,z: (-x,-z)
+
+# These take rotated coords and translate into un-rotated coords
+unrotation_funcs = {
+        UPPER_LEFT: NO_ROTATION,
+        UPPER_RIGHT: ROTATE_CLOCKWISE,
+        LOWER_LEFT: ROTATE_COUNTERCLOCKWISE,
+        LOWER_RIGHT: ROTATE_180,
+    }
+
+# These translate un-rotated coordinates into rotated coordinates
+rotation_funcs = {
+        UPPER_LEFT: NO_ROTATION,
+        UPPER_RIGHT: ROTATE_COUNTERCLOCKWISE,
+        LOWER_LEFT: ROTATE_CLOCKWISE,
+        LOWER_RIGHT: ROTATE_180,
+    }
 
 class RotatedRegionSet(RegionSet):
+    """A regionset, only rotated such that north points in the given direction
+
+    """
     def __init__(self, regiondir, north_dir):
         self.north_dir = north_dir
+        self.unrotate = unrotation_funcs[north_dir]
+        self.rotate = rotation_funcs[north_dir]
+
         super(RotatedRegionSet, self).__init__(regiondir)
+
     
     # Re-initialize upon unpickling
     def __getstate__(self):
@@ -422,7 +446,7 @@ class RotatedRegionSet(RegionSet):
         self.__init__(args[0], args[1])
 
     def get_chunk(self, x, z):
-
+        x,z = self.unrotate(x,z)
         chunk_data = super(RotatedRegionSet, self).get_chunk(x,z)
         chunk_data['Blocks'] = numpy.rot90(chunk_data['Blocks'], self.north_dir)
         chunk_data['Data'] = numpy.rot90(chunk_data['Data'], self.north_dir)
@@ -431,37 +455,14 @@ class RotatedRegionSet(RegionSet):
         return chunk_data
 
     def get_chunk_mtime(self, x, z):
+        x,z = self.unrotate(x,z)
         return super(RotatedRegionSet, self).get_chunk_mtime(x, z)
 
-    def _iterate_regionfiles(self):
-        """Returns an iterator of all of the region files, along with their 
-        coordinates
+    def iterate_chunks(self):
+        for x,z,mtime in super(RotatedRegionSet, self).iterate_chunks():
+            x,z = self.rotate(x,z)
+            yield x,z,mtime
 
-        Returns (regionx, regiony, filename)"""
-
-        logging.debug("ROTATED regiondir is %s, northdir is %r", self.regiondir, self.north_dir)
-
-        for path in glob(self.regiondir + "/r.*.*.mcr"):
-            dirpath, f = os.path.split(path)
-            p = f.split(".")
-            x = int(p[1])
-            y = int(p[2])
-            if self.north_dir == UPPER_RIGHT:
-                temp = x
-                x = -y-1
-                y = temp
-            elif self.north_dir == -1:
-                x = -x-1
-                y = -y-1
-            elif self.north_dir == -2:
-                temp = x
-                x = y
-                y = -temp-1
-            yield (x, y, path)
-
-    def rotate(self, north_dir):
-        raise NotImplementedError()
-         
 class ChunkDoesntExist(Exception):
     pass
 
