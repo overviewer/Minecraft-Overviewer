@@ -2,6 +2,8 @@
 import os
 import os.path
 
+import rendermodes
+
 class ValidationException(Exception):
     pass
 
@@ -16,8 +18,14 @@ def validateWorldPath(name, **kwargs):
 
 
 def validateRenderMode(mode, **kwargs):
-    # TODO get list of valid rendermodes
-    #raise NotImplementedError("validateRenderMode")
+    # make sure that mode is a list of things that are all rendermode primative
+    if type(mode) != list:
+        raise ValidationException("%r is not a valid list of rendermodes.  It should be a list"% mode)
+    for m in mode:
+        if not isinstance(m, rendermodes.RenderPrimitive):
+            raise ValidationException("%r is not a valid rendermode primitive." % m)
+
+
     return mode
 
 def validateNorthDirection(direction, **kwargs):
