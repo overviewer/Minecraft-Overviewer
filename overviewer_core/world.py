@@ -164,7 +164,18 @@ class World(object):
     def get_regionsets(self):
         return self.regionsets
     def get_regionset(self, index):
-        return self.regionsets[index]
+        if type(index) == int:
+            return self.regionsets[index]
+        else: # assume a string constant
+            if index == "default":
+                return self.regionsets[0]
+            else:
+                candids = [x for x in self.regionsets if x.get_type() == index]
+                if len(candids) > 0:
+                    return candids[0]
+                else: 
+                    return None
+
 
     def get_level_dat_data(self):
         # Return a copy
@@ -239,7 +250,7 @@ class RegionSet(object):
         in-memory.
 
         """
-        self.regiondir = regiondir
+        self.regiondir = os.path.normpath(regiondir)
 
         logging.info("Scanning regions")
         
@@ -264,6 +275,23 @@ class RegionSet(object):
 
     def __repr__(self):
         return "<RegionSet regiondir=%r>" % self.regiondir
+
+    def get_type(self):
+        """Attempts to return a string describing the dimension represented by
+        this regionset.  Either "nether", "end" or "overworld"
+        """
+        # path will be normalized in __init__
+        if self.regiondir.endswith("/DIM-1/region"): 
+            return "nether"
+        elif self.regiondir.endswith("/DIM1/region"):
+            return "end"
+        elif self.regiondir.endswith("/region"):
+            return "overworld"
+        else:
+            raise Exception("Woah, what kind of dimension is this! %r" % self.regiondir)
+
+
+
 
     @log_other_exceptions
     def get_chunk(self, x, z):

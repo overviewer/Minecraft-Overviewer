@@ -296,8 +296,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             w = worldcache[render['worldname']]
 
 
-        # TODO get the correct regionset based on render['dimension']
-        rset = w.get_regionset(0)
+        rset = w.get_regionset(render['dimension'])
+        if rset == None: # indicates no such dimension was found:
+            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
+            return 1
         if (render['northdirection'] > 0):
             rset = rset.rotate(render['northdirection'])
         logging.debug("Using RegionSet %r", rset) 
@@ -309,7 +311,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             os.mkdir(tileset_dir)
 
         # only pass to the TileSet the options it really cares about
-        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title"])
+        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension"])
         tset = tileset.TileSet(rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)
 

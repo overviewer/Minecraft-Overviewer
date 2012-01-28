@@ -85,8 +85,9 @@ directory.
         # based on the tilesets we have, group them by worlds
         worlds = []
         for tileset in tilesets:
-            if tileset.options.get('worldname_orig') not in worlds:
-                worlds.append(tileset.options.get('worldname_orig'))
+            full_name = tileset.get_persistent_data()['world']
+            if full_name not in worlds:
+                worlds.append(full_name)
 
         dump['worlds'] = worlds
         dump['map'] = dict()
