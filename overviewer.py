@@ -40,7 +40,8 @@ from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
 
 helptext = """
-%prog [OPTIONS] <World # / Name / Path to World> <tiles dest dir>"""
+%prog [--rendermodes=...] [options] <World> <Output Dir>
+%prog --config=<config file> [options]"""
 
 def configure_logger(loglevel=logging.INFO, verbose=False):
     """Configures the root logger to our liking
@@ -123,7 +124,6 @@ def main():
     #parser.add_option("--north-direction", dest="north_direction", action="store", help="Specifies which corner of the screen north will point to. Defaults to whatever the current map uses, or lower-left for new maps. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default="auto", choices=avail_north_dirs)
     #parser.add_option("--changelist", dest="changelist", action="store", help="Output list of changed tiles to file. If the file exists, its contents will be overwritten.",advanced=True)
     #parser.add_option("--changelist-format", dest="changelist_format", action="store", help="Output relative or absolute paths for --changelist. Only valid when --changelist is used", type="choice", default="auto", choices=["auto", "relative","absolute"],advanced=True)
-    parser.add_option("--display-config", dest="display_config", action="store_true", help="Display the configuration parameters, but don't render the map.  Requires all required options to be specified")
     #parser.add_option("--write-config", dest="write_config", action="store_true", help="Writes out a sample config file", commandLineOnly=True)
 
     options, args = parser.parse_args()
@@ -161,11 +161,6 @@ def main():
         logging.info("Hash of terrain.png file is: `%s`", h.hexdigest())
         return 0
 
-    if options.display_config:
-        # just display the config file and exit
-        parser.display_config()
-        return 0
-    
     # TODO remove advanced help?  needs discussion
     # TODO right now, we will not let users specify worlds to render on the command line.  
     # TODO in the future, we need to also let worlds be specified on the command line
