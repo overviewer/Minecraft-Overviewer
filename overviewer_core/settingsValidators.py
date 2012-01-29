@@ -93,6 +93,7 @@ def validateTexturePath(path, **kwargs):
     # Expand user dir in directories strings
     path = os.path.expanduser(path)
     # TODO assert this path exists?
+    return path
 
 
 def validateBool(b, **kwargs):
