@@ -247,15 +247,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
        
     
-    # make sure that the textures can be found
-    try:
-        #textures.generate(path=options.textures_path)
-        tex = textures.Textures()
-        tex.generate()
-    except IOError, e:
-        logging.error(str(e))
-        return 1
-
     # look at our settings.py file
     mw_parser = configParser.MultiWorldParser("settings.py")
     mw_parser.parse()
@@ -279,17 +270,29 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     # saves us from creating the same World object over and over again
     worldcache = {}
+    # same for textures
+    texcache = {}
 
     for render_name in render_things:
         render = render_things[render_name]
         logging.debug("Found the following render thing: %r", render)
 
+        # find or create the world object
         if (render['worldname'] not in worldcache):
             w = world.World(render['worldname'])
             worldcache[render['worldname']] = w
         else:
             w = worldcache[render['worldname']]
-
+        
+        # find or create the textures object
+        texopts = util.dict_subset(render, ["texturepath", "bgcolor", "northdirection"])
+        texopts_key = tuple(texopts.items())
+        if texopts_key not in texcache:
+            tex = textures.Textures(**texopts)
+            tex.generate()
+            texcache[texopts_key] = tex
+        else:
+            tex = texcache[texopts_key]
 
         rset = w.get_regionset(render['dimension'])
         if rset == None: # indicates no such dimension was found:
