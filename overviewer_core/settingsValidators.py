@@ -3,6 +3,7 @@ import os
 import os.path
 
 import rendermodes
+from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
 
 class ValidationException(Exception):
     pass
@@ -34,10 +35,10 @@ def validateNorthDirection(direction, **kwargs):
     if type(direction) == int:
         intdir = direction
     else:
-        if direction == "upper-left": intdir = 0
-        if direction == "upper-right": intdir = 1
-        if direction == "lower-right": intdir = 2
-        if direction == "lower-left": intdir = 3
+        if direction == "upper-left": intdir = UPPER_LEFT
+        if direction == "upper-right": intdir = UPPER_RIGHT
+        if direction == "lower-right": intdir = LOWER_RIGHT
+        if direction == "lower-left": intdir = LOWER_LEFT
     if intdir < 0 or intdir > 3:
         raise ValidationException("%r is not a valid north direction" % direction)
     return intdir

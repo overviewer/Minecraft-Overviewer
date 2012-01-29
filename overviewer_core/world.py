@@ -400,41 +400,45 @@ class RegionSet(object):
             y = int(p[2])
             yield (x, y, path)
     
-# see RegionSet.rotate.  These values are chosen so that they can be passed directly to rot90
+# see RegionSet.rotate.  These values are chosen so that they can be
+# passed directly to rot90; this means that they're the number of
+# times to rotate by 90 degrees CCW
 UPPER_LEFT  = 0 ## - Return the world such that north is down the -Z axis (no rotation)
-LOWER_LEFT  = 1 ## - Return the world such that north is down the -X axis (rotate 90 degrees counterclockwise)
+UPPER_RIGHT = 1 ## - Return the world such that north is down the +X axis (rotate 90 degrees counterclockwise)
 LOWER_RIGHT = 2 ## - Return the world such that north is down the +Z axis (rotate 180 degrees)
-UPPER_RIGHT = 3 ## - Return the world such that north is down the +X axis (rotate 90 degrees clockwise)
-
-NO_ROTATION =               lambda x,z: (x,z)
-ROTATE_CLOCKWISE =          lambda x,z: (-z,x)
-ROTATE_COUNTERCLOCKWISE =   lambda x,z: (z,-x)
-ROTATE_180 =                lambda x,z: (-x,-z)
-
-# These take rotated coords and translate into un-rotated coords
-unrotation_funcs = {
-        UPPER_LEFT: NO_ROTATION,
-        UPPER_RIGHT: ROTATE_CLOCKWISE,
-        LOWER_LEFT: ROTATE_COUNTERCLOCKWISE,
-        LOWER_RIGHT: ROTATE_180,
-    }
-
-# These translate un-rotated coordinates into rotated coordinates
-rotation_funcs = {
-        UPPER_LEFT: NO_ROTATION,
-        UPPER_RIGHT: ROTATE_COUNTERCLOCKWISE,
-        LOWER_LEFT: ROTATE_CLOCKWISE,
-        LOWER_RIGHT: ROTATE_180,
-    }
+LOWER_LEFT  = 3 ## - Return the world such that north is down the -X axis (rotate 90 degrees clockwise)
 
 class RotatedRegionSet(RegionSet):
     """A regionset, only rotated such that north points in the given direction
 
     """
+    
+    # some class-level rotation constants
+    _NO_ROTATION =               lambda x,z: (x,z)
+    _ROTATE_CLOCKWISE =          lambda x,z: (-z,x)
+    _ROTATE_COUNTERCLOCKWISE =   lambda x,z: (z,-x)
+    _ROTATE_180 =                lambda x,z: (-x,-z)
+    
+    # These take rotated coords and translate into un-rotated coords
+    _unrotation_funcs = {
+        0: _NO_ROTATION,
+        1: _ROTATE_COUNTERCLOCKWISE,
+        2: _ROTATE_180,
+        3: _ROTATE_CLOCKWISE,
+    }
+    
+    # These translate un-rotated coordinates into rotated coordinates
+    _rotation_funcs = {
+        0: _NO_ROTATION,
+        1: _ROTATE_CLOCKWISE,
+        2: _ROTATE_180,
+        3: _ROTATE_COUNTERCLOCKWISE,
+    }
+    
     def __init__(self, regiondir, north_dir):
         self.north_dir = north_dir
-        self.unrotate = unrotation_funcs[north_dir]
-        self.rotate = rotation_funcs[north_dir]
+        self.unrotate = self._unrotation_funcs[north_dir]
+        self.rotate = self._rotation_funcs[north_dir]
 
         super(RotatedRegionSet, self).__init__(regiondir)
 
