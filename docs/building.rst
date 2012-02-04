@@ -44,8 +44,8 @@ recommended way of building Overviewer on 64-bit Windows using free tools.  If y
 have bought a copy of Visual Studio, you can use it for 64-bit builds.
 
 
-Prerequisits
-~~~~~~~~~~~~
+Prerequisites
+~~~~~~~~~~~~~
 
 You will need a copy of the `PIL sources <http://www.pythonware.com/products/pil/>`_.
 
@@ -129,6 +129,17 @@ The following script (copied into your MCO source directory) should handle every
 
     # build MCO
     C_INCLUDE_PATH="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
+
+FreeBSD
+-------
+FreeBSD is similar to OSX and Linux, but ensure you're using Python 2.7. The port of Python 2.6 has bugs with threading under FreeBSD.
+Everything else you should need is ported, in particular math/py-numpy and graphics/py-imaging.
+
+You may need or want to add the line::
+
+    PYTHON_VERSION=2.7
+
+to the file /etc/make.conf, but read the ports documentation to be sure of what this might do to other Python applications on your system.
 
 .. _centos:
 
