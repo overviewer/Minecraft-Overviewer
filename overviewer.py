@@ -86,6 +86,44 @@ def configure_logger(loglevel=logging.INFO, verbose=False):
         logger.addHandler(logger.overviewerHandler)
         logger.setLevel(loglevel)
 
+def build_fake_settings(worldpath):
+    """Builds and returns a renders dict as if it was parsed from a settings
+    file and returned with get_render_things()
+
+    This is used for the simple command line usage with no config file
+
+    """
+    from overviewer_core import settingsDefinition, rendermodes
+    world = {}
+    # Seed this render with all the defaults
+    for defaultname, defaultinfo in settingsDefinition.render['values'].iteritems():
+        if 'default' in defaultinfo:
+            world[defaultname] = defaultinfo['default']
+    # Set required items for the render. If any new required items without
+    # defaults are added, this will need to be updated.
+    worlds = {'world': worldpath}
+    world['worldname'] = 'world'
+    world['title'] = "Overviewer Render"
+    world['rendermode'] = rendermodes.normal
+
+    renders = {worldpath: world}
+
+    # The following is mostly a copy/paste of the code in
+    # MultiWorldParser.validate(). Someone make MultiWorldParser more
+    # extensible to avoid this!
+    origs = dict()
+    for key in world:
+        definition = settingsDefinition.render['values'][key]
+        val = definition['validator'](world[key], world = worlds)
+        if definition.get('save_orig', False):
+            origs[key + "_orig"] = world[key]
+        world[key] = val
+
+    world['name'] = worldpath
+    world.update(origs)
+    renders[worldpath] = world
+    return renders
+
 def main():
     # bootstrap the logger with defaults
     configure_logger()
@@ -98,33 +136,29 @@ def main():
     #avail_rendermodes = c_overviewer.get_render_modes()
     avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right', 'auto']
    
-    # revert to a vanilla OptionParser for right now 
+    # Parse for basic options
     parser = OptionParser(usage=helptext)
-    parser.add_option("-V", "--version", dest="version", help="Displays version information and then exits", action="store_true")
-    parser.add_option("-p", "--processes", dest="procs", help="How many worker processes to start. Default %s" % cpus, default=cpus, action="store", type="int")
-    #parser.add_option("-z", "--zoom", dest="zoom", help="Sets the zoom level manually instead of calculating it. This can be useful if you have outlier chunks that make your world too big. This value will make the highest zoom level contain (2**ZOOM)^2 tiles", action="store", type="int", advanced=True)
-    #parser.add_option("--regionlist", dest="regionlist", help="A file containing, on each line, a path to a regionlist to update. Instead of scanning the world directory for regions, it will just use this list. Normal caching rules still apply.")
-    #parser.add_option("--forcerender", dest="forcerender", help="Force re-rendering the entire map (or the given regionlist). Useful for re-rendering without deleting it.", action="store_true")
-    #parser.add_option("--stochastic-render", dest="stochastic_render", help="Rerender a non-updated tile randomly, with the given probability (between 0 and 1). Useful for incrementally updating a map with a new mode.", type="float", advanced=True, default=0.0, metavar="PROBABILITY")
-    #parser.add_option("--rendermodes", dest="rendermode", help="Specifies the render types, separated by ',', ':', or '/'. Use --list-rendermodes to list them all.", type="choice", required=True, default=avail_rendermodes[0], listify=True)
-    #parser.add_option("--rendermode-options", dest="rendermode_options", default={}, advanced=True, help="Used to specify options for different rendermodes.  Only useful in a settings.py file")
-    #parser.add_option("--custom-rendermodes", dest="custom_rendermodes", default={}, advanced=True, help="Used to define custom rendermodes.  Only useful in a settings.py file")
-    #parser.add_option("--imgformat", dest="imgformat", help="The image output format to use. Currently supported: png(default), jpg.", advanced=True )
-    #parser.add_option("--imgquality", dest="imgquality", default=95, help="Specify the quality of image output when using imgformat=\"jpg\".", type="int", advanced=True)
-    #parser.add_option("--bg-color", dest="bg_color", help="Configures the background color for the GoogleMap output.  Specify in #RRGGBB format", advanced=True, type="string", default="#1A1A1A")
-    #parser.add_option("--optimize-img", dest="optimizeimg", help="If using png, perform image file size optimizations on the output. Specify 1 for pngcrush, 2 for pngcrush+advdef and 3 for pngcrush-advdef with more aggressive settings. This may double (or more) render times, but will produce up to 30% smaller images. NOTE: requires corresponding programs in $PATH or %PATH%", advanced=True)
-    #parser.add_option("--web-assets-hook", dest="web_assets_hook", help="If provided, run this function after the web assets have been copied, but before actual tile rendering begins. It should accept a MapGen object as its only argument.", action="store", metavar="FUNCTION", type="function", advanced=True)
-    #parser.add_option("--web-assets-path", dest="web_assets_path", help="Specifies a non-standard web_assets directory to use. Files here will overwrite the default web assets.", metavar="PATH", type="string", advanced=True)
-    #parser.add_option("--textures-path", dest="textures_path", help="Specifies a non-standard textures path, from which terrain.png and other textures are loaded.", metavar="PATH", type="string", advanced=True)
-    parser.add_option("--check-terrain", dest="check_terrain", help="Prints the location and hash of terrain.png, useful for debugging terrain.png problems", action="store_true")
-    parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0, help="Print less output. You can specify this option multiple times.")
-    parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0, help="Print more output. You can specify this option multiple times.")
-    #parser.add_option("--skip-js", dest="skipjs", action="store_true", help="Don't output marker.js")
-    #parser.add_option("--no-signs", dest="nosigns", action="store_true", help="Don't output signs to markers.js")
-    #parser.add_option("--north-direction", dest="north_direction", action="store", help="Specifies which corner of the screen north will point to. Defaults to whatever the current map uses, or lower-left for new maps. Valid options are: " + ", ".join(avail_north_dirs) + ".", type="choice", default="auto", choices=avail_north_dirs)
-    #parser.add_option("--changelist", dest="changelist", action="store", help="Output list of changed tiles to file. If the file exists, its contents will be overwritten.",advanced=True)
-    #parser.add_option("--changelist-format", dest="changelist_format", action="store", help="Output relative or absolute paths for --changelist. Only valid when --changelist is used", type="choice", default="auto", choices=["auto", "relative","absolute"],advanced=True)
-    #parser.add_option("--write-config", dest="write_config", action="store_true", help="Writes out a sample config file", commandLineOnly=True)
+    parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
+    
+    # Useful one-time render modifiers:
+    parser.add_option("--forcerender", dest="forcerender", action="store_true",
+            help="Force re-rendering the entire map.")
+    parser.add_option("--check-tiles", dest="checktiles", action="store_true",
+            help="Check each tile on disk and re-render old tiles")
+    parser.add_option("--no-tile-checks", dest="notilechecks", action="store_true",
+            help="Only render tiles that come from chunks that have changed since the last render (the default)")
+
+    # Useful one-time debugging options:
+    parser.add_option("--check-terrain", dest="check_terrain", action="store_true",
+            help="Prints the location and hash of terrain.png, useful for debugging terrain.png problems")
+    parser.add_option("-V", "--version", dest="version",
+            help="Displays version information and then exits", action="store_true")
+
+    # Log level options:
+    parser.add_option("-q", "--quiet", dest="quiet", action="count", default=0,
+            help="Print less output. You can specify this option multiple times.")
+    parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0,
+            help="Print more output. You can specify this option multiple times.")
 
     options, args = parser.parse_args()
 
@@ -132,6 +166,9 @@ def main():
     configure_logger(logging.INFO + 10*options.quiet - 10*options.verbose,
             options.verbose > 0)
 
+    ##########################################################################
+    # This section of main() runs in response to any one-time options we have,
+    # such as -V for version reporting
     if options.version:
         print "Minecraft Overviewer %s" % util.findGitVersion(),
         print "(%s)" % util.findGitHash()[:7]
@@ -161,12 +198,8 @@ def main():
         logging.info("Hash of terrain.png file is: `%s`", h.hexdigest())
         return 0
 
-    # TODO remove advanced help?  needs discussion
-    # TODO right now, we will not let users specify worlds to render on the command line.  
-    # TODO in the future, we need to also let worlds be specified on the command line
-
     # if no arguments are provided, print out a helpful message
-    if len(args) == 0:
+    if len(args) == 0 and not options.config:
         # first provide an appropriate error for bare-console users
         # that don't provide any options
         if util.is_bare_console():
@@ -176,22 +209,34 @@ def main():
             print "http://docs.overviewer.org/\n"
         else:
             # more helpful message for users who know what they're doing
-            logging.error("You need to give me your world number or directory")
+            logging.error("You must either specify --config or give me a world directory and output directory")
             parser.print_help()
             list_worlds()
         return 1
     
-    # for multiworld, we must specify the *outputdir* on the command line
-    elif len(args) == 1:
-        logging.debug("Using %r as the output_directory", args[0])
-        destdir = os.path.expanduser(args[0])
-    elif len(args) == 2: # TODO support this usecase
-        worlddir = os.path.expanduser(args[0])
-        destdir = os.path.expanduser(args[1])
-
-    if len(args) > 2:
-        # it's possible the user has a space in one of their paths but didn't properly escape it
-        # attempt to detect this case
+    ##########################################################################
+    # This section does some sanity checking on the command line options passed
+    # in. It checks to see if --config was given that no worldname/destdir were
+    # given, and vice versa
+    if options.config and args:
+        print
+        print "If you specify --config, you need to specify the world to render as well as"
+        print "the destination in the config file, not on the command line."
+        print "Put something like this in your config file:"
+        print "worlds['myworld'] = %r" % args[0]
+        print "outputdir = %r" % (args[1] if len(args) > 1 else "/path/to/output")
+        print
+        logging.error("Cannot specify both --config and worldname / output directory")
+        parser.print_help()
+        return 1
+    
+    if not options.config and len(args) < 2:
+        logging.error("You must specify both the world directory and an output directory")
+        parser.print_help()
+        return 1
+    if not options.config and len(args) > 2:
+        # it's possible the user has a space in one of their paths but didn't
+        # properly escape it attempt to detect this case
         for start in range(len(args)):
             if not os.path.exists(args[start]):
                 for end in range(start+1, len(args)+1):
@@ -199,82 +244,76 @@ def main():
                         logging.warning("It looks like you meant to specify \"%s\" as your world dir or your output\n\
 dir but you forgot to put quotes around the directory, since it contains spaces." % " ".join(args[start:end]))
                         return 1
+        logging.error("Too many command line arguments")
+        parser.print_help()
+        return 1
 
-    # TODO regionlists are per-world
-    #if options.regionlist:
-    #    regionlist = map(str.strip, open(options.regionlist, 'r'))
-    #else:
-    #    regionlist = None
+    #########################################################################
+    # These two blocks of code unify config-file mode and command-line mode.
+    # When the blocks have exited, they are expected to have set the following
+    # vars:
+    # destdir - the output directory
+    # renders - the dict heirarchy 
+    if not options.config:
+        # No config file mode.
+        worldpath, destdir = map(os.path.expanduser, args)
+        logging.debug("Using %r as the world directory", worldpath)
+        logging.debug("Using %r as the output directory", destdir)
+        
+        renders = build_fake_settings(worldpath)
 
-    # TODO imgformat is per-world
-    #if options.imgformat:
-    #    if options.imgformat not in ('jpg','png'):
-    #        parser.error("Unknown imgformat!")
-    #    else:
-    #        imgformat = options.imgformat
-    #else:
-    #    imgformat = 'png'
+    else:
+        # Parse the config file
+        mw_parser = configParser.MultiWorldParser(options.config)
+        mw_parser.parse()
+        try:
+            mw_parser.validate()
+        except Exception:
+            logging.exception("Please investigate these errors in settings.py then try running Overviewer again")
+            return 1
 
-    # TODO optimzeimg is per-world
-    #if options.optimizeimg:
-    #    optimizeimg = int(options.optimizeimg)
-    #    optimizeimages.check_programs(optimizeimg)
-    #else:
-    #    optimizeimg = None
+        try:
+            destdir = mw_parser.outputdir
+        except AttributeError:
+            # Will get caught by the error check just below
+            logging.debug("Attribute error while getting the outputdir from the config file. Will error in just a sec")
+            destdir = ""
+        else:
+            logging.debug("outputdir from parser: %r", destdir)
 
-    # TODO north_direction is per-world
-    #if options.north_direction:
-    #    north_direction = options.north_direction
-    #else:
-    #    north_direction = 'auto'
+        renders = mw_parser.get_render_things()
 
-    # TODO reimplement changelists
-    #if options.changelist:
-    #    try:
-    #        changefile = open(options.changelist,'w+')
-    #    except IOError as e:
-    #        logging.error("Unable to open file %s to use for changelist." % options.changelist)
-    #        logging.error("I/O Error: %s" % e.strerror)
-    #        return 1
+    ############################################################
+    # Final validation and creation of the destination directory
+    if not destdir:
+        logging.error("You must specify the output directory in your config file.")
+        logging.error("e.g. outputdir = '/path/to/outputdir'")
+        return 1
+    if not os.path.exists(destdir):
+        try:
+            os.mkdir(destdir)
+        except OSError:
+            logging.exception("Could not create the output directory.")
+            return 1
 
-    #if options.changelist_format != "auto" and not options.changelist:
-    #    logging.error("changelist_format specified without changelist.")
-    #    return 1
-    #if options.changelist_format == "auto":
-    #    options.changelist_format = "relative"
 
+    ########################################################################
+    # Now we start the actual processing, now that all the configuration has
+    # been gathered and validated
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
        
-    
-    # look at our settings.py file
-    mw_parser = configParser.MultiWorldParser("settings.py")
-    mw_parser.parse()
-    try:
-        mw_parser.validate()
-    except Exception:
-        logging.error("Please investigate these errors in settings.py then try running Overviewer again")
-        return 1
-
-
     # create our asset manager... ASSMAN
     assetMrg = assetmanager.AssetManager(destdir)
 
-    render_things = mw_parser.get_render_things()
     tilesets = []
-
-    # once we've made sure that everything validations, we can check to 
-    # make sure the destdir exists
-    if not os.path.exists(destdir):
-        os.mkdir(destdir)
 
     # saves us from creating the same World object over and over again
     worldcache = {}
     # same for textures
     texcache = {}
 
-    for render_name in render_things:
-        render = render_things[render_name]
+    for render_name, render in renders.iteritems():
         logging.debug("Found the following render thing: %r", render)
 
         # find or create the world object
