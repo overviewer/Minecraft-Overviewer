@@ -138,3 +138,14 @@ class Lighting(RenderPrimitive):
 
 class SmoothLighting(Lighting):
     name = "smooth-lighting"
+
+# Built-in rendermodes for your convenience!
+normal = [Base(), EdgeLines()]
+lighting = [Base(), EdgeLines(), Lighting()]
+smooth_lighting = [Base(), EdgeLines(), SmoothLighting()]
+night = [Base(), EdgeLines(), Lighting(night=True)]
+smooth_night = [Base(), EdgeLines(), SmoothLighting(night=True)]
+nether = [Base(), EdgeLines(), Nether()]
+nether_lighting = [Base(), EdgeLines(), Nether(), Lighting()]
+nether_smooth_lighting = [Base(), EdgeLines(), Nether(), SmoothLighting()]
+
