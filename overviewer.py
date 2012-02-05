@@ -86,44 +86,6 @@ def configure_logger(loglevel=logging.INFO, verbose=False):
         logger.addHandler(logger.overviewerHandler)
         logger.setLevel(loglevel)
 
-def build_fake_settings(worldpath):
-    """Builds and returns a renders dict as if it was parsed from a settings
-    file and returned with get_render_things()
-
-    This is used for the simple command line usage with no config file
-
-    """
-    from overviewer_core import settingsDefinition, rendermodes
-    world = {}
-    # Seed this render with all the defaults
-    for defaultname, defaultinfo in settingsDefinition.render['values'].iteritems():
-        if 'default' in defaultinfo:
-            world[defaultname] = defaultinfo['default']
-    # Set required items for the render. If any new required items without
-    # defaults are added, this will need to be updated.
-    worlds = {'world': worldpath}
-    world['worldname'] = 'world'
-    world['title'] = "Overviewer Render"
-    world['rendermode'] = rendermodes.normal
-
-    renders = {worldpath: world}
-
-    # The following is mostly a copy/paste of the code in
-    # MultiWorldParser.validate(). Someone make MultiWorldParser more
-    # extensible to avoid this!
-    origs = dict()
-    for key in world:
-        definition = settingsDefinition.render['values'][key]
-        val = definition['validator'](world[key], world = worlds)
-        if definition.get('save_orig', False):
-            origs[key + "_orig"] = world[key]
-        world[key] = val
-
-    world['name'] = worldpath
-    world.update(origs)
-    renders[worldpath] = world
-    return renders
-
 def main():
     # bootstrap the logger with defaults
     configure_logger()
@@ -249,42 +211,56 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         return 1
 
     #########################################################################
-    # These two blocks of code unify config-file mode and command-line mode.
-    # When the blocks have exited, they are expected to have set the following
-    # vars:
-    # destdir - the output directory
-    # renders - the dict heirarchy 
+    # These two halfs of this if statement unify config-file mode and
+    # command-line mode.
+    mw_parser = configParser.MultiWorldParser()
+
     if not options.config:
         # No config file mode.
         worldpath, destdir = map(os.path.expanduser, args)
         logging.debug("Using %r as the world directory", worldpath)
         logging.debug("Using %r as the output directory", destdir)
         
-        renders = build_fake_settings(worldpath)
+        mw_parser.set_config_item("world", {'world': worldpath})
+        mw_parser.set_config_item("outputdir", destdir)
+        # Now for some good defaults
+        mw_parser.set_config_item("render", {'world': {
+                'worldname': 'world',
+                'title': 'Overviewer Render',
+                'rendermode': 'normal',
+            }})
 
     else:
         # Parse the config file
-        mw_parser = configParser.MultiWorldParser(options.config)
-        mw_parser.parse()
-        try:
-            mw_parser.validate()
-        except Exception:
-            logging.exception("Please investigate these errors in settings.py then try running Overviewer again")
-            return 1
+        mw_parser = configParser.MultiWorldParser()
+        mw_parser.parse(options.config)
 
-        try:
-            destdir = mw_parser.outputdir
-        except AttributeError:
-            # Will get caught by the error check just below
-            logging.debug("Attribute error while getting the outputdir from the config file. Will error in just a sec")
-            destdir = ""
-        else:
-            logging.debug("outputdir from parser: %r", destdir)
+    try:
+        config = mw_parser.get_validated_config()
+    except Exception:
+        logging.exception("An error was encountered with your configuration. See the info below.")
+        return 1
 
-        renders = mw_parser.get_render_things()
 
     ############################################################
-    # Final validation and creation of the destination directory
+    # Final validation steps and creation of the destination directory
+    if not config['render']:
+        logging.error("You must specify at least one render in your config file. See the docs if you're having trouble")
+        return 1
+
+    for rname, render in config['render'].iteritems():
+        # Convert render['worldname'] to the world path, and store the original
+        # in render['worldname_orig']
+        try:
+            worldpath = config['world'][render['worldname']]
+        except KeyError:
+            logging.error("Render %s's world is '%s', but I could not find a corresponding entry in the worlds dictionary.",
+                    rname, render['worldname'])
+            return 1
+        render['worldname_orig'] = render['worldname']
+        render['worldname'] = worldpath
+
+    destdir = config['outputdir']
     if not destdir:
         logging.error("You must specify the output directory in your config file.")
         logging.error("e.g. outputdir = '/path/to/outputdir'")
@@ -313,6 +289,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # same for textures
     texcache = {}
 
+    renders = config['render']
     for render_name, render in renders.iteritems():
         logging.debug("Found the following render thing: %r", render)
 
@@ -348,6 +325,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             os.mkdir(tileset_dir)
 
         # only pass to the TileSet the options it really cares about
+        render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
         tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension"])
         tset = tileset.TileSet(rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)

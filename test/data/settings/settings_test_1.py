@@ -1,14 +1,17 @@
 world['test'] = "test/data/settings/test_world"
-worldname = 'test'
 
-rendermode = "normal"
-
-render["world"] = { 
-    "rendermode": "normal",
-    "northdirection": ["upper-left"],
+render["myworld"] = { 
+    "title": "myworld title",
+    "worldname": "test",
+    "rendermode": normal,
+    "northdirection": "upper-left",
 }
 
 render["otherworld"] = {
-    "rendermode": "foo",
+    "title": "otherworld title",
+    "worldname": "test",
+    "rendermode": normal,
     "bgcolor": "#ffffff"
 }
+
+outputdir = "/tmp/fictional/outputdir"
