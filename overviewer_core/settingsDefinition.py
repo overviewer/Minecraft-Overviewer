@@ -1,29 +1,47 @@
 # This file describes the format of the config file. Each item defined in this
-# module is expected to appear in the same format in a settings file. The only
-# difference is, instead of actual values for the settings, one is to use a
-# Setting object. Here is its signature:
+# module is expected to appear in the described format in a valid config file.
+# The only difference is, instead of actual values for the settings, values are
+# Setting objects which define how to validate a value as correct, and whether
+# the value is required or not.
 
+# Settings objects have this signature:
 # Setting(required, validator, default)
 
-# required is a boolean indicating the user is required to provide this
-# setting. In this case, default is unused and can be set to anything (None is
-# a good choice).
+# required
+#   a boolean indicating that this value is required. A required setting will
+#   always exist in a validated config. This option only has effect in the
+#   event that a user doesn't provide a value and the default is None. In this
+#   case, a required setting will raise an error. Otherwise, the situation will
+#   result in the setting being omitted from the config with no error.
 
-# validator is a callable that takes the provided value and returns a
-# cleaned/normalized value to use. It should raise an exception if there is a
-# problem parsing or validating the value given.
+#   (If it wasn't obvious: a required setting does NOT mean that the user is
+#   required to specify it, just that the setting is required to be set for the
+#   operation of the program, either by the user or by using the default)
 
-# default is used instead of the user-provided value in the event that required
-# is false. It is passed into the validator just the same. If default is None
-# and required is False, then that value is skipped entirely and will not
-# appear in the resulting parsed options.
+# validator
+#   a callable that takes the provided value and returns a cleaned/normalized
+#   value to replace it with. It should raise a ValidationException if there is
+#   a problem parsing or validating the value given.
 
-# The signature for validators is validator(value_given). Remember that the
-# default is passed in as value_given in the event that required is False and
-# default is not None.
+# default
+#   This is used in the event that the user does not provide a value.  In this
+#   case, the default value is passed into the validator just the same. If
+#   default is None, then depending on the value of required, it is either an
+#   error to omit this setting or the setting is skipped entirely and will not
+#   appear in the resulting parsed options.
+
+# The signature for validator callables is validator(value_given). Remember
+# that the default is passed in as value_given in the event that required is
+# False and default is not None.
 
 # This file doesn't specify the format or even the type of the setting values,
-# that is up to the validators used.
+# it is up to the validators to ensure the values passed in are the right type,
+# either by coercion or by raising an error.
+
+# Oh, one other thing: For top level values whose required attribute is True,
+# the default value is set initially, before the config file is parsed, and is
+# available during the execution of the config file. This way, container types
+# can be initialized and then appended/added to when the config file is parsed.
 
 from settingsValidators import *
 
@@ -32,42 +50,40 @@ from settingsValidators import *
 # if you add new items!
 __all__ = ['render', 'world', 'outputdir']
 
-# render is a dictionary mapping names to dicts describing the configuration
-# for that render. It is therefore set to a settings object with a dict
-# validator configured to validate keys as strings and values as...  values are
-# set to validate as a "configdict", which is a dict mapping a set of strings
-# to some value. the make_configdictvalidator function creates a validator to
-# use here configured with the given set of keys and Setting objects with their
-# respective validators.
+# render is a dictionary mapping strings to dicts. These dicts describe the
+# configuration for that render. Therefore, the validator for 'render' is set
+# to a dict validator configured to validate keys as strings and values as...
 
-# Perhaps unintuitively, this is set to required=False. Of course, if no
-# renders are specified, this is an error. However, this is caught later on in
-# the code, and it also lets an empty dict get defined beforehand for the
+# values are set to validate as a "configdict", which is a dict mapping a set
+# of strings to some value. the make_configdictvalidator() function creates a
+# validator to use here configured with the given set of keys and Setting
+# objects with their respective validators.
+
 # config file.
-render = Setting(required=False, default={},
+render = Setting(required=True, default={},
         validator=dictValidator(validateStr, make_configdictvalidator(
         {
             "worldname": Setting(required=True, validator=validateStr, default=None),
-            "dimension": Setting(required=False, validator=validateDimension, default="default"),
+            "dimension": Setting(required=True, validator=validateDimension, default="default"),
             "title": Setting(required=True, validator=validateStr, default=None),
-            "rendermode": Setting(required=False, validator=validateRenderMode, default=None),
-            "northdirection": Setting(required=False, validator=validateNorthDirection, default=0),
+            "rendermode": Setting(required=True, validator=validateRenderMode, default='normal'),
+            "northdirection": Setting(required=True, validator=validateNorthDirection, default=0),
             "renderrange": Setting(required=False, validator=validateRenderRange, default=None),
             "forcerender": Setting(required=False, validator=validateBool, default=None),
             "stochasticrender": Setting(required=False, validator=validateStochastic, default=None),
-            "imgformat": Setting(required=False, validator=validateImgFormat, default="png"),
+            "imgformat": Setting(required=True, validator=validateImgFormat, default="png"),
             "imgquality": Setting(required=False, validator=validateImgQuality, default=None),
-            "bgcolor": Setting(required=False, validator=validateBGColor, default="1a1a1a"),
-            "optimizeimg": Setting(required=False, validator=validateOptImg, default=0),
+            "bgcolor": Setting(required=True, validator=validateBGColor, default="1a1a1a"),
+            "optimizeimg": Setting(required=True, validator=validateOptImg, default=0),
             "nomarkers": Setting(required=False, validator=validateBool, default=None),
             "texturepath": Setting(required=False, validator=validateTexturePath, default=None),
-            "renderchecks": Setting(required=False, validator=validateInt, default=0),
-            "rerenderprob": Setting(required=False, validator=validateFloat, default=0),
+            "renderchecks": Setting(required=True, validator=validateInt, default=0),
+            "rerenderprob": Setting(required=True, validator=validateFloat, default=0),
         }
         )))
 
 # The world dict, mapping world names to world paths
-world = Setting(required=False, validator=dictValidator(validateStr, validateWorldPath), default={})
+world = Setting(required=True, validator=dictValidator(validateStr, validateWorldPath), default={})
 
 outputdir = Setting(required=True, validator=validateOutputDir, default=None)
 

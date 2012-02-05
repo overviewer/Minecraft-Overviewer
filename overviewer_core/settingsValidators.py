@@ -162,13 +162,13 @@ def make_configdictvalidator(config):
             if configkey in d:
                 # This key /was/ specified in the user's dict. Make sure it validates.
                 newdict[configkey] = configsetting.validator(d[configkey])
-            else:
-                # The user did not give us this key. If it's required, send up
-                # an error. Otherwise, just return the default.
-                if configsetting.required:
-                    raise ValidationException("Required key '%s' was not specified" % configkey)
-                elif configsetting.default is not None:
-                    newdict[configkey] = configsetting.validator(configsetting.default)
+            elif configsetting.default is not None:
+                # There is a default, use that instead
+                newdict[configkey] = configsetting.validator(configsetting.default)
+            elif configsetting.required:
+                # The user did not give us this key, there is no default, AND
+                # it's required. This is an error.
+                raise ValidationException("Required key '%s' was not specified. You must give a value for this setting" % configkey)
 
         # Now that all the defined keys have been accounted for, check to make
         # sure any unauthorized keys were not specified.

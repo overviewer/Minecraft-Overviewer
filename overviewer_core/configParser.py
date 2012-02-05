@@ -33,7 +33,7 @@ class MultiWorldParser(object):
 
             self._settings[settingname] = setting
             
-            if not setting.required:
+            if setting.required and setting.default is not None:
                 self._config_state[settingname] = setting.default
 
     def set_config_item(self, itemname, itemvalue):
