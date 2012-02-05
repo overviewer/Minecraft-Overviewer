@@ -31,8 +31,8 @@
 #   appear in the resulting parsed options.
 
 # The signature for validator callables is validator(value_given). Remember
-# that the default is passed in as value_given in the event that required is
-# False and default is not None.
+# that the default is passed in as value_given if the user did not provide a
+# value.
 
 # This file doesn't specify the format or even the type of the setting values,
 # it is up to the validators to ensure the values passed in are the right type,
@@ -61,7 +61,7 @@ __all__ = ['render', 'world', 'outputdir']
 
 # config file.
 render = Setting(required=True, default={},
-        validator=dictValidator(validateStr, make_configdictvalidator(
+        validator=make_dictValidator(validateStr, make_configDictValidator(
         {
             "worldname": Setting(required=True, validator=validateStr, default=None),
             "dimension": Setting(required=True, validator=validateDimension, default="default"),
@@ -83,7 +83,7 @@ render = Setting(required=True, default={},
         )))
 
 # The world dict, mapping world names to world paths
-world = Setting(required=True, validator=dictValidator(validateStr, validateWorldPath), default={})
+world = Setting(required=True, validator=make_dictValidator(validateStr, validateWorldPath), default={})
 
 outputdir = Setting(required=True, validator=validateOutputDir, default=None)
 

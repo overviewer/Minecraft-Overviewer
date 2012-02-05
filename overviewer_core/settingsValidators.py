@@ -133,9 +133,12 @@ def validateOutputDir(d):
         raise ValidationException("You must specify a valid output directory")
     return os.path.abspath(d)
 
-def dictValidator(keyvalidator, valuevalidator):
-    """Compose a dict validator by validating each key/value combination with
-    the given key validator and value validator
+def make_dictValidator(keyvalidator, valuevalidator):
+    """Compose and return a dict validator -- a validator that validates each
+    key and value in a dictionary.
+
+    The arguments are the validator function to use for the keys, and the
+    validator function to use for the values.
     
     """
     def v(d):
@@ -145,13 +148,15 @@ def dictValidator(keyvalidator, valuevalidator):
         return newd
     return v
 
-def make_configdictvalidator(config):
+def make_configDictValidator(config):
     """Okay, stay with me here, this may get confusing. This function returns a
     validator that validates a "configdict". This is a term I just made up to
-    refer to a dict where keys are strings and values are something. The
-    argument to /this/ function is a dictionary mapping those key names to
-    Setting objects. When the validator validates, it calls all the appropriate
-    validators to validate each item in the configdict.
+    refer to a dict that holds config information: keys are strings and values
+    are whatever that config value is. The argument to /this/ function is a
+    dictionary defining the valid keys for the configdict. It therefore maps
+    those key names to Setting objects. When the returned validator function
+    validates, it calls all the appropriate validators for each configdict
+    setting
 
     I hope that makes sense.
 
