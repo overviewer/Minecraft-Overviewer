@@ -56,7 +56,7 @@ class Textures(object):
     def __getstate__(self):
         # we must get rid of the huge image lists, and other images
         attributes = self.__dict__.copy()
-        for attr in ['terrain_images', 'blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture', 'lightcolor']:
+        for attr in ['terrain_images', 'blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture', 'firetexture', 'portaltexture', 'lightcolor']:
             try:
                 del attributes[attr]
             except KeyError:
@@ -248,6 +248,40 @@ class Textures(object):
             lavatexture = self.load_image("lava.png")
         self.lavatexture = lavatexture
         return lavatexture
+    
+    def load_fire(self):
+        """Special-case function for loading fire, handles
+        MCPatcher-compliant custom animated fire."""
+        firetexture = getattr(self, "firetexture", None)
+        if firetexture:
+            return firetexture
+        try:
+            # try the MCPatcher case first
+            firetextureNS = self.load_image("custom_fire_n_s.png")
+            firetextureNS = firetextureNS.crop((0, 0, firetextureNS.size[0], firetextureNS.size[0]))
+            firetextureEW = self.load_image("custom_fire_e_w.png")
+            firetextureEW = firetextureEW.crop((0, 0, firetextureEW.size[0], firetextureEW.size[0]))
+            firetexture = (firetextureNS,firetextureEW)
+        except IOError:
+            fire = self.load_image("fire.png")
+            firetexture = (fire, fire)
+        self.firetexture = firetexture
+        return firetexture
+    
+    def load_portal(self):
+        """Special-case function for loading portal, handles
+        MCPatcher-compliant custom animated portal."""
+        portaltexture = getattr(self, "portaltexture", None)
+        if portaltexture:
+            return portaltexture
+        try:
+            # try the MCPatcher case first
+            portaltexture = self.load_image("custom_portal.png")
+            portaltexture = portaltexture.crop((0, 0, portaltexture.size[0], portaltexture.size[1]))
+        except IOError:
+            portaltexture = self.load_image("portal.png")
+        self.portaltexture = portaltexture
+        return portaltexture
     
     def load_light_color(self):
         """Helper function to load the light color texture."""
@@ -681,11 +715,12 @@ transparent_blocks = set()
 solid_blocks = set()
 fluid_blocks = set()
 nospawn_blocks = set()
+nodata_blocks = set()
 
 # the material registration decorator
 def material(blockid=[], data=[0], **kwargs):
     # mapping from property name to the set to store them in
-    properties = {"transparent" : transparent_blocks, "solid" : solid_blocks, "fluid" : fluid_blocks, "nospawn" : nospawn_blocks}
+    properties = {"transparent" : transparent_blocks, "solid" : solid_blocks, "fluid" : fluid_blocks, "nospawn" : nospawn_blocks, "nodata" : nodata_blocks}
     
     # make sure blockid and data are iterable
     try:
@@ -730,9 +765,9 @@ def material(blockid=[], data=[0], **kwargs):
         return func_wrapper
     return inner_material
 
-# shortcut function for pure blocks, default to solid
+# shortcut function for pure blocks, default to solid, nodata
 def block(blockid=[], top_index=None, side_index=None, **kwargs):
-    new_kwargs = {'solid' : True}
+    new_kwargs = {'solid' : True, 'nodata' : True}
     new_kwargs.update(kwargs)
     
     if top_index is None:
@@ -746,9 +781,9 @@ def block(blockid=[], top_index=None, side_index=None, **kwargs):
         return self.build_block(self.terrain_images[top_index], self.terrain_images[side_index])
     return inner_block
 
-# shortcut function for sprite blocks, defaults to transparent
+# shortcut function for sprite blocks, defaults to transparent, nodata
 def sprite(blockid=[], index=None, **kwargs):
-    new_kwargs = {'transparent' : True}
+    new_kwargs = {'transparent' : True, 'nodata' : True}
     new_kwargs.update(kwargs)
     
     if index is None:
@@ -759,9 +794,9 @@ def sprite(blockid=[], index=None, **kwargs):
         return self.build_sprite(self.terrain_images[index])
     return inner_sprite
 
-# shortcut function for billboard blocks, defaults to transparent
+# shortcut function for billboard blocks, defaults to transparent, nodata
 def billboard(blockid=[], index=None, **kwargs):
-    new_kwargs = {'transparent' : True}
+    new_kwargs = {'transparent' : True, 'nodata' : True}
     new_kwargs.update(kwargs)
     
     if index is None:
@@ -1471,9 +1506,9 @@ def torches(self, blockid, data):
 # fire
 @material(blockid=51, data=range(16), transparent=True)
 def fire(self, blockid, data):
-    firetexture = self.load_image("fire.png")
-    side1 = self.transform_image_side(firetexture)
-    side2 = self.transform_image_side(firetexture).transpose(Image.FLIP_LEFT_RIGHT)
+    firetextures = self.load_fire()
+    side1 = self.transform_image_side(firetextures[0])
+    side2 = self.transform_image_side(firetextures[1]).transpose(Image.FLIP_LEFT_RIGHT)
     
     img = Image.new("RGBA", (24,24), self.bgcolor)
 
@@ -1716,7 +1751,7 @@ block(blockid=57, top_index=24)
 
 # crafting table
 # needs two different sides
-@material(blockid=58, solid=True)
+@material(blockid=58, solid=True, nodata=True)
 def crafting_table(self, blockid, data):
     top = self.terrain_images[43]
     side3 = self.terrain_images[43+16]
@@ -2218,7 +2253,7 @@ def buttons(self, blockid, data):
     return img
 
 # snow
-@material(blockid=78, data=range(8), transparent=True, solid=True)
+@material(blockid=78, data=range(16), transparent=True, solid=True)
 def snow(self, blockid, data):
     # still not rendered correctly: data other than 0
     
@@ -2350,7 +2385,7 @@ def fence(self, blockid, data):
     fence_small_side = ImageEnhance.Brightness(fence_small_side).enhance(0.9)
     fence_small_side.putalpha(sidealpha)
 
-   # Create img to compose the fence
+    # Create img to compose the fence
     img = Image.new("RGBA", (24,24), self.bgcolor)
 
     # Position of fence small sticks in img.
@@ -2430,7 +2465,7 @@ block(blockid=89, top_index=105)
 @material(blockid=90, data=[1, 2, 4, 8], transparent=True)
 def portal(self, blockid, data):
     # no rotations, uses pseudo data
-    portaltexture = self.load_image("portal.png")
+    portaltexture = self.load_portal()
     img = Image.new("RGBA", (24,24), self.bgcolor)
 
     side = self.transform_image_side(portaltexture)
@@ -3013,7 +3048,7 @@ def nether_wart(self, blockid, data):
 
 # enchantment table
 # TODO there's no book at the moment
-@material(blockid=116, transparent=True)
+@material(blockid=116, transparent=True, nodata=True)
 def enchantment_table(self, blockid, data):
     # no book at the moment
     top = self.terrain_images[166]
@@ -3058,7 +3093,7 @@ def cauldron(self, blockid, data):
     return img
 
 # end portal
-@material(blockid=119, transparent=True)
+@material(blockid=119, transparent=True, nodata=True)
 def end_portal(self, blockid, data):
     img = Image.new("RGBA", (24,24), self.bgcolor)
     # generate a black texure with white, blue and grey dots resembling stars

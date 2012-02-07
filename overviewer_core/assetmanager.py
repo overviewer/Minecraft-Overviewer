@@ -92,6 +92,7 @@ directory.
         dump['worlds'] = worlds
         dump['map'] = dict()
         dump['map']['debug'] = True
+        dump['map']['cacheTag'] = str(int(time()))
         dump['map']['north_direction'] = 'lower-left' # only temporary
         dump['map']['center'] = [-314, 67, 94]
         dump['map']['controls'] = {

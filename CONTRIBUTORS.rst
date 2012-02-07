@@ -52,6 +52,7 @@ feature.
  * Ryan Hitchman <hitchmanr@gmail.com>
  * Jenny <jennytoo@gmail.com>
  * Michael Jensen <emjay1988@gmail.com>
+ * Johan Kiviniemi <devel@johan.kiviniemi.name>
  * Thomas Lake <tswsl1989@sucs.org>
  * Maciej Malecki <maciej.malecki@hotmail.com>
  * Ryan McCue <ryanmccue@cubegames.net>
