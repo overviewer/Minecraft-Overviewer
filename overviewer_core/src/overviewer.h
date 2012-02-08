@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 18
+#define OVERVIEWER_EXTENSION_VERSION 19
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -35,7 +35,7 @@
 
 /* macro for getting a value out of various numpy arrays */
 #define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (x), (y), (z))))
-#define getArrayShort1D(array, x) (*(unsigned short *)(PyArray_GETPTR1((array), (x))))
+#define getArrayShort2D(array, x,y) (*(unsigned short *)(PyArray_GETPTR2((array), (x), (y))))
 
 /* generally useful MAX / MIN macros */
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

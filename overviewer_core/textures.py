@@ -56,7 +56,7 @@ class Textures(object):
     def __getstate__(self):
         # we must get rid of the huge image lists, and other images
         attributes = self.__dict__.copy()
-        for attr in ['terrain_images', 'blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture', 'firetexture', 'portaltexture', 'lightcolor']:
+        for attr in ['terrain_images', 'blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture', 'firetexture', 'portaltexture', 'lightcolor', 'grasscolor', 'foliagecolor', 'watercolor']:
             try:
                 del attributes[attr]
             except KeyError:
@@ -294,6 +294,24 @@ class Textures(object):
             lightcolor = None
         self.lightcolor = lightcolor
         return lightcolor
+    
+    def load_grass_color(self):
+        """Helper function to load the grass color texture."""
+        if not hasattr(self, "grasscolor"):
+            self.grasscolor = list(self.load_image("grasscolor.png").getdata())
+        return self.grasscolor
+
+    def load_foliage_color(self):
+        """Helper function to load the foliage color texture."""
+        if not hasattr(self, "foliagecolor"):
+            self.foliagecolor = list(self.load_image("foliagecolor.png").getdata())
+        return self.foliagecolor
+
+    def load_water_color(self):
+        """Helper function to load the water color texture."""
+        if not hasattr(self, "watercolor"):
+            self.watercolor = list(self.load_image("watercolor.png").getdata())
+        return self.watercolor
 
     def _split_terrain(self, terrain):
         """Builds and returns a length 256 array of each 16x16 chunk

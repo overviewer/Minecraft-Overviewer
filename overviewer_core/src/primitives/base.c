@@ -18,9 +18,7 @@
 #include "../overviewer.h"
 
 typedef struct {
-    /* coordinates of the chunk, inside its region file */
-    int chunk_x, chunk_y;
-    /* biome data for the region */
+    /* biome data for the chunk */
     PyObject *biome_data;
     /* grasscolor and foliagecolor lookup tables */
     PyObject *grasscolor, *foliagecolor, *watercolor;
@@ -35,44 +33,15 @@ base_start(void *data, RenderState *state, PyObject *support) {
     /* biome-compliant grass mask (includes sides!) */
     self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
 
-    /* careful now -- C's % operator works differently from python's
-       we can't just do x % 32 like we did before */
-    self->chunk_x = state->chunkx;
-    self->chunk_y = state->chunkz;
-    
-    while (self->chunk_x < 0)
-        self->chunk_x += 32;
-    while (self->chunk_y < 0)
-        self->chunk_y += 32;
-    
-    self->chunk_x %= 32;
-    self->chunk_y %= 32;
-    
-    /* XXX ignore biomes for now :( */
-    /*if (PyObject_IsTrue(use_biomes)) {
-        self->biome_data = PyObject_CallMethod(state->textures, "getBiomeData", "OOO",
-                                               worlddir, chunk_x_py, chunk_y_py);
-        if (self->biome_data == Py_None) {
-            Py_DECREF(self->biome_data);
-            self->biome_data = NULL;
-            self->foliagecolor = NULL;
-            self->grasscolor = NULL;
-        } else {
-            self->foliagecolor = PyObject_GetAttrString(state->textures, "foliagecolor");
-            self->grasscolor = PyObject_GetAttrString(state->textures, "grasscolor");
-            self->watercolor = PyObject_GetAttrString(state->textures, "watercolor");
-            if (self->watercolor == Py_None)
-            {
-                Py_DECREF(self->watercolor);
-                self->watercolor = NULL;
-            }
-        }
-        } else {*/
-        self->biome_data = NULL;
-        self->foliagecolor = NULL;
-        self->grasscolor = NULL;
-        self->watercolor = NULL;
-        /*}*/
+    self->biome_data = PyObject_CallMethod(state->regionset, "get_biome_data", "ii", state->chunkx, state->chunkz);
+    if (self->biome_data == NULL) {
+        /* error while loading biome info, or no biomes at all */
+        PyErr_Clear();
+    } else {
+        self->foliagecolor = PyObject_CallMethod(state->textures, "load_foliage_color", "");
+        self->grasscolor = PyObject_CallMethod(state->textures, "load_grass_color", "");
+        self->watercolor = PyObject_CallMethod(state->textures, "load_water_color", "");
+    }
     
     return 0;
 }
@@ -159,8 +128,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             unsigned int index;
             PyObject *color = NULL;
             
-            index = ((self->chunk_y * 16) + state->y) * 16 * 32 + (self->chunk_x * 16) + state->x;
-            index = big_endian_ushort(getArrayShort1D(self->biome_data, index));
+            index = big_endian_ushort(getArrayShort2D(self->biome_data, state->x, state->y));
             
             switch (state->block) {
             case 2:
@@ -211,7 +179,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                 color = PySequence_GetItem(self->grasscolor, index);
                 break;
             case 111:
-                /* lily padas */
+                /* lily pads */
                 color = PySequence_GetItem(self->grasscolor, index);
                 break;
             default:
