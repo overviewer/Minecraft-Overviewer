@@ -9,6 +9,9 @@ Documentation:
 Github code repository:
     http://github.com/overviewer/Minecraft-Overviewer
 
+Blog:
+    http://mcoverviewer.blogspot.com/
+
 
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
 maps of Minecraft worlds. It generates a set of static html and image files and
