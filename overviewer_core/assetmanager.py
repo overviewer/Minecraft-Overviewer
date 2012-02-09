@@ -129,6 +129,18 @@ directory.
         if not os.path.isdir(global_assets):
             global_assets = os.path.join(util.get_program_path(), "web_assets")
         util.mirror_dir(global_assets, self.outputdir)
+
+        # create overviewer.js from the source js files
+        js_src = os.path.join(util.get_program_path(), "overviewer_core", "data", "js_src")
+        with open(os.path.join(self.outputdir, "overviewer.js"), "w") as fout:
+            # first copy in js_src/overviewer.js
+            with open(os.path.join(js_src, "overviewer.js")) as f:
+                fout.write(f.read())
+            # now copy in the rest
+            for js in os.listdir(js_src):
+                if not js.endswith("overviewer.js"):
+                    with open(os.path.join(js_src,js)) as f:
+                        fout.write(f.read())
         
         # do the same with the local copy, if we have it
         # TODO 
