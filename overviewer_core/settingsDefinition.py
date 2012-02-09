@@ -45,11 +45,6 @@
 
 from settingsValidators import *
 
-# This is the export list for this module. It defines which items defined in
-# this module are recognized by the config parser. Don't forget to update this
-# if you add new items!
-__all__ = ['render', 'world', 'outputdir']
-
 # render is a dictionary mapping strings to dicts. These dicts describe the
 # configuration for that render. Therefore, the validator for 'render' is set
 # to a dict validator configured to validate keys as strings and values as...
@@ -87,3 +82,4 @@ world = Setting(required=True, validator=make_dictValidator(validateStr, validat
 
 outputdir = Setting(required=True, validator=validateOutputDir, default=None)
 
+processes = Setting(required=True, validator=int, default=-1)

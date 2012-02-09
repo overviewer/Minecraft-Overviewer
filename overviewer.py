@@ -101,6 +101,8 @@ def main():
     # Parse for basic options
     parser = OptionParser(usage=helptext)
     parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
+    parser.add_option("-p", "--processes", dest="procs", action="store", type="int",
+            help="The number of local worker processes to spawn. Defaults to the number of CPU cores your computer has")
     
     # Useful one-time render modifiers:
     parser.add_option("--forcerender", dest="forcerender", action="store_true",
@@ -235,6 +237,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         mw_parser = configParser.MultiWorldParser()
         mw_parser.parse(options.config)
 
+    # Add in the command options here, perhaps overriding values specified in
+    # the config
+    if options.procs:
+        mw_parser.set_config_item("processes", options.procs)
+
+    # Now parse and return the validated config
     try:
         config = mw_parser.get_validated_config()
     except Exception:
@@ -332,7 +340,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
    
     # multiprocessing dispatcher
-    dispatch = dispatcher.MultiprocessingDispatcher()
+    dispatch = dispatcher.MultiprocessingDispatcher(local_procs=config['processes'])
     def print_status(*args):
         logging.info("Status callback: %r", args)
     dispatch.render_all(tilesets, print_status)

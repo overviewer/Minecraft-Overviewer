@@ -27,9 +27,10 @@ class MultiWorldParser(object):
         # This maps setting names to their values as given in
         # settingsDefinition.py
         self._settings = {}
-        for settingname in settingsDefinition.__all__:
+        for settingname in dir(settingsDefinition):
             setting = getattr(settingsDefinition, settingname)
-            assert isinstance(setting, settingsValidators.Setting)
+            if not isinstance(setting, settingsValidators.Setting):
+                continue
 
             self._settings[settingname] = setting
             
