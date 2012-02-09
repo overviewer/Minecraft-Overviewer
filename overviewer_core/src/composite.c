@@ -239,25 +239,35 @@ PyObject *
 alpha_over_wrap(PyObject *self, PyObject *args)
 {
     /* raw input python variables */
-    PyObject *dest, *src, *pos, *mask;
+    PyObject *dest, *src, *pos = NULL, *mask = NULL;
     /* destination position and size */
     int dx, dy, xsize, ysize;
     /* return value: dest image on success */
     PyObject *ret;
 
-    if (!PyArg_ParseTuple(args, "OOOO", &dest, &src, &pos, &mask))
+    if (!PyArg_ParseTuple(args, "OO|OO", &dest, &src, &pos, &mask))
         return NULL;
-
+    
+    if (mask == NULL)
+        mask = src;
+    
     /* destination position read */
-    if (!PyArg_ParseTuple(pos, "iiii", &dx, &dy, &xsize, &ysize)) {
-        /* try again, but this time try to read a point */
-        PyErr_Clear();
+    if (pos == NULL) {
         xsize = 0;
         ysize = 0;
-        if (!PyArg_ParseTuple(pos, "ii", &dx, &dy)) {
-            PyErr_SetString(PyExc_TypeError,
-                            "given blend destination rect is not valid");
-            return NULL;
+        dx = 0;
+        dy = 0;
+    } else {
+        if (!PyArg_ParseTuple(pos, "iiii", &dx, &dy, &xsize, &ysize)) {
+            /* try again, but this time try to read a point */
+            PyErr_Clear();
+            xsize = 0;
+            ysize = 0;
+            if (!PyArg_ParseTuple(pos, "ii", &dx, &dy)) {
+                PyErr_SetString(PyExc_TypeError,
+                                "given blend destination rect is not valid");
+                return NULL;
+            }
         }
     }
 
