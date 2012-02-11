@@ -68,7 +68,7 @@ class MultiWorldParser(object):
         """Validate and return the configuration"""
         # Okay, this is okay, isn't it? We're going to create the validation
         # routine right here, right now. I hope this works!
-        validator = settingsValidators.make_configDictValidator(self._settings)
+        validator = settingsValidators.make_configDictValidator(self._settings, ignore_undefined=True)
         # Woah. What just happened? No. WAIT, WHAT ARE YOU...
         validated_config = validator(self._config_state)
         # WHAT HAVE YOU DONE?

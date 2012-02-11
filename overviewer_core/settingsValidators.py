@@ -148,7 +148,7 @@ def make_dictValidator(keyvalidator, valuevalidator):
         return newd
     return v
 
-def make_configDictValidator(config):
+def make_configDictValidator(config, ignore_undefined=False):
     """Okay, stay with me here, this may get confusing. This function returns a
     validator that validates a "configdict". This is a term I just made up to
     refer to a dict that holds config information: keys are strings and values
@@ -159,6 +159,10 @@ def make_configDictValidator(config):
     setting
 
     I hope that makes sense.
+
+    ignore_undefined, if True, will ignore any items in the dict to be
+    validated which don't have a corresponding definition in the config.
+    Otherwise, undefined entries will raise an error.
 
     """
     def configDictValidator(d):
@@ -177,9 +181,10 @@ def make_configDictValidator(config):
 
         # Now that all the defined keys have been accounted for, check to make
         # sure any unauthorized keys were not specified.
-        for key in d.iterkeys():
-            if key not in config:
-                raise ValidationException("'%s' is not a configuration item" % key)
+        if not ignore_undefined:
+            for key in d.iterkeys():
+                if key not in config:
+                    raise ValidationException("'%s' is not a configuration item" % key)
         return newdict
 
     return configDictValidator
