@@ -397,7 +397,6 @@ class TileSet(object):
         except AttributeError:
             d['north_direction'] = 0
 
-        print "get_persistent_data: %r" % d
         return d
 
 

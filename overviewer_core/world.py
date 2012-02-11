@@ -225,7 +225,7 @@ class RegionSet(object):
         """
         self.regiondir = os.path.normpath(regiondir)
 
-        logging.info("Scanning regions")
+        logging.debug("Scanning regions")
         
         # This is populated below. It is a mapping from (x,y) region coords to filename
         self.regionfiles = {}

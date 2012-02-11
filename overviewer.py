@@ -328,7 +328,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # create our TileSet from this RegionSet
         tileset_dir = os.path.abspath(os.path.join(destdir, render_name))
-        print "tileset_dir: %r" % tileset_dir
         if not os.path.exists(tileset_dir):
             os.mkdir(tileset_dir)
 
