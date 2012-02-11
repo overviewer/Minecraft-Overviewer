@@ -209,6 +209,9 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
             }
         }
 
+        // for this world, remember our current viewport (as worldcoords, not LatLng)
+        //
+
     }
 
 });
