@@ -340,8 +340,14 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
    
     # multiprocessing dispatcher
     dispatch = dispatcher.MultiprocessingDispatcher(local_procs=config['processes'])
-    def print_status(*args):
-        logging.info("Status callback: %r", args)
+    last_status_print = time.time()
+    def print_status(phase, completed, total):
+        # phase is ignored.  it's always zero?
+        if (total == 0):
+            percent = 100
+        else:
+            percent = int(100* completed/total)
+        logging.info("Rendered %d tiles out of %d.  %d%% complete", completed, total, percent)
     dispatch.render_all(tilesets, print_status)
     dispatch.close()
 
