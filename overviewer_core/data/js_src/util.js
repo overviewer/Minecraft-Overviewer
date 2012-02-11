@@ -32,7 +32,8 @@ overviewer.util = {
         // with controls on the outside of the page being added first
 
         var compass = new overviewer.views.CompassView({tagName: 'DIV', model:overviewer.mapModel});
-        compass.render();
+        // no need to render the compass now.  it's render event will get fired by
+        // the maptypeid_chagned event
 
         var coordsdiv = new overviewer.views.CoordboxView({tagName: 'DIV'});
         coordsdiv.render();
@@ -42,7 +43,10 @@ overviewer.util = {
         });
 
         google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function(event) {
-            //overviewer.map.getMapTypeId();
+            // it's handy to keep track of the currently visible tileset.  we let
+            // the GoogleMapView manage this
+            overviewer.mapView.updateCurrentTileset();
+
             compass.render();
 
         });
@@ -170,23 +174,28 @@ overviewer.util = {
      * @param int x
      * @param int z
      * @param int y
+     * @param TileSetModel model
      * 
      * @return google.maps.LatLng
      */
-    'fromWorldToLatLng': function(x, z, y, zoomLevels) {
+    'fromWorldToLatLng': function(x, z, y, model) {
+
+        var zoomLevels = model.get("zoomLevels");
+        var north_direction = model.get('north_direction');
+
         // the width and height of all the highest-zoom tiles combined,
         // inverted
         var perPixel = 1.0 / (overviewerConfig.CONST.tileSize *
                 Math.pow(2, zoomLevels));
 
-        if(overviewerConfig.map.north_direction == 'upper-left'){
+        if (north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = x;
             x = -y-1;
             y = temp;
-        } else if(overviewerConfig.map.north_direction == 'upper-right'){
+        } else if(north_direction == overviewerConfig.CONST.LOWERRIGHT){
             x = -x-1;
             y = -y-1;
-        } else if(overviewerConfig.map.north_direction == 'lower-right'){
+        } else if(north_direction == overviewerConfig.CONST.LOWERLEFT){
             temp = x;
             x = y;
             y = -temp-1;
@@ -232,7 +241,10 @@ overviewer.util = {
      * 
      * @return Array
      */
-    'fromLatLngToWorld': function(lat, lng, zoomLevels) {
+    'fromLatLngToWorld': function(lat, lng, model) {
+        var zoomLevels = model.get("zoomLevels");
+        var north_direction = model.get("north_direction");
+
         // Initialize world x/y/z object to be returned
         var point = Array();
         point.x = 0;
@@ -255,25 +267,25 @@ overviewer.util = {
         // A (lng) and B (lat).  But Wolfram Alpha did. :)  I'd welcome
         // suggestions for splitting this up into long form and documenting
         // it. -RF
-        point.x = (lng - 2 * lat) / (24 * perPixel)
-            point.z = (lng + 2 * lat) / (24 * perPixel)
+        point.x = (lng - 2 * lat) / (24 * perPixel);
+        point.z = (lng + 2 * lat) / (24 * perPixel);
 
-            // Adjust for the fact that we we can't figure out what Y is given
-            // only latitude and longitude, so assume Y=64.
-            point.x += 64;
+        // Adjust for the fact that we we can't figure out what Y is given
+        // only latitude and longitude, so assume Y=64.
+        point.x += 64;
         point.z -= 64;
 
-        if(overviewerConfig.map.north_direction == 'upper-left'){
+        if(north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = point.z;
-            point.z = -point.x;
+            point.z = -point.x+16;
             point.x = temp;
-        } else if(overviewerConfig.map.north_direction == 'upper-right'){
-            point.x = -point.x;
-            point.z = -point.z;
-        } else if(overviewerConfig.map.north_direction == 'lower-right'){
+        } else if(north_direction == overviewerConfig.CONST.LOWERRIGHT){
+            point.x = -point.x+16;
+            point.z = -point.z+16;
+        } else if(north_direction == overviewerConfig.CONST.LOWERLEFT){
             temp = point.z;
             point.z = point.x;
-            point.x = -temp;
+            point.x = -temp+16;
         }
 
         return point;

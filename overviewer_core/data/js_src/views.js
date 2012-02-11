@@ -82,22 +82,16 @@ overviewer.views.CompassView = Backbone.View.extend({
      * CompassView::render
      */
     render: function() {
-        var currentWorldView = this.model.get("currentWorldView");
-        var gmapCurrent = overviewer.map.getMapTypeId();
-        for (id in currentWorldView.options.mapTypeIds) {
-            if (currentWorldView.options.mapTypeIds[id] == gmapCurrent) {
-                var tsetModel = currentWorldView.model.get("tileSets").at(id);
-                var northdir = tsetModel.get("north_direction");
-                if (northdir == overviewerConfig.CONST.UPPERLEFT)
-                    this.$("IMG").attr("src","compass_upper-left.png");
-                if (northdir == overviewerConfig.CONST.UPPERRIGHT)
-                    this.$("IMG").attr("src", "compass_upper-right.png");
-                if (northdir == overviewerConfig.CONST.LOWERLEFT)
-                    this.$("IMG").attr("src", "compass_lower-left.png");
-                if (northdir == overviewerConfig.CONST.LOWERRIGHT)
-                    this.$("IMG").attr("src", "compass_lower-right.png");
-            }
-        }
+        var tsetModel = overviewer.mapView.options.currentTileSet;
+        var northdir = tsetModel.get("north_direction");
+        if (northdir == overviewerConfig.CONST.UPPERLEFT)
+            this.$("IMG").attr("src","compass_upper-left.png");
+        if (northdir == overviewerConfig.CONST.UPPERRIGHT)
+            this.$("IMG").attr("src", "compass_upper-right.png");
+        if (northdir == overviewerConfig.CONST.LOWERLEFT)
+            this.$("IMG").attr("src", "compass_lower-left.png");
+        if (northdir == overviewerConfig.CONST.LOWERRIGHT)
+            this.$("IMG").attr("src", "compass_lower-right.png");
     }
 });
 
@@ -112,7 +106,7 @@ overviewer.views.CoordboxView = Backbone.View.extend({
     updateCoords: function(latLng) {
         var worldcoords = overviewer.util.fromLatLngToWorld(latLng.lat(), 
         latLng.lng(),
-        overviewer.mapModel.get("currentWorldView").model.get("tileSets").at(0).get("zoomLevels"));
+        overviewer.mapView.options.currentTileSet);
         this.el.innerHTML = "Coords: X " + Math.round(worldcoords.x) + ", Z " + Math.round(worldcoords.z);
     }
 });
@@ -198,6 +192,23 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
 
 
         return this;
+    },
+    /**
+     * GoogleMapView::updateCurrentTileset()
+     * Keeps track of the currently visible tileset
+     */
+    updateCurrentTileset: function() {
+                              console.log("GoogleMapView::updateCurrentTileset()");
+        var currentWorldView = this.model.get("currentWorldView");
+        var gmapCurrent = overviewer.map.getMapTypeId();
+        for (id in currentWorldView.options.mapTypeIds) {
+            if (currentWorldView.options.mapTypeIds[id] == gmapCurrent) {
+                console.log("updating currenttileset");
+                this.options.currentTileSet = currentWorldView.model.get("tileSets").at(id);
+                console.log(this);
+            }
+        }
+
     }
 
 });
