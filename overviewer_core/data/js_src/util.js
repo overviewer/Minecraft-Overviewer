@@ -1,4 +1,24 @@
 overviewer.util = {
+    /* fuzz tester!
+     */
+    'testMaths': function(t) {
+        var initx = Math.floor(Math.random() * 400) - 200;
+        var inity = 64;
+        var initz = Math.floor(Math.random() * 400) - 200;
+        console.log("Initial point: %r,%r,%r", initx, inity, initz);
+
+        var latlng = overviewer.util.fromWorldToLatLng(initx, inity, initz, t);
+        console.log("LatLng: %r,%r", latlng.lat(), latlng.lng());
+
+        var p = overviewer.util.fromLatLngToWorld(latlng.lat(), latlng.lng(), t);
+        console.log("Result: %r,%r,%r", p.x, p.y, p.z);
+        if (p.x == initx && p.y == inity && p.z == initz) {
+            console.log("Pass");
+        }
+
+
+    },
+
     /**
      * General initialization function, called when the page is loaded.
      * Probably shouldn't need changing unless some very different kind of new
@@ -42,13 +62,7 @@ overviewer.util = {
         google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
             coordsdiv.updateCoords(event.latLng);    
         });
-        google.maps.event.addListener(overviewer.map, 'dragend', function (event) {
-            overviewer.util.updateHash();
-        });
-        google.maps.event.addListener(overviewer.map, 'zoom_changed', function (event) {
-            overviewer.util.updateHash();
-        });
-        google.maps.event.addListener(overviewer.map, 'dblclick', function (event) {
+        google.maps.event.addListener(overviewer.map, 'idle', function (event) {
             overviewer.util.updateHash();
         });
 
@@ -65,9 +79,27 @@ overviewer.util = {
                 var x = currentWorldView.options.lastViewport[0];
                 var y = currentWorldView.options.lastViewport[1];
                 var z = currentWorldView.options.lastViewport[2];
+                var zoom = currentWorldView.options.lastViewport[3];
+
                 var latlngcoords = overviewer.util.fromWorldToLatLng(x, y, z,
                     overviewer.mapView.options.currentTileSet);
                 overviewer.map.setCenter(latlngcoords);
+
+                if (zoom == 'max') {
+                    zoom = overviewer.mapView.options.currentTileSet.get('maxZoom');
+                } else if (zoom == 'min') {
+                    zoom = overviewer.mapView.options.currentTileSet.get('minZoom');
+                } else {
+                    zoom = parseInt(zoom);
+                    if (zoom < 0 && zoom + overviewer.mapView.options.currentTileSet.get('maxZoom') >= 0) {
+                        // if zoom is negative, treat it as a "zoom out from max"
+                        zoom += overviewer.mapView.options.currentTileSet.get('maxZoom');
+                    } else {
+                        // fall back to default zoom
+                        zoom = overviewer.mapView.options.currentTileSet.get('defaultZoom');
+                    }
+                }
+                overviewer.map.setZoom(zoom);
             }
 
         });
@@ -207,6 +239,7 @@ overviewer.util = {
 
         var zoomLevels = model.get("zoomLevels");
         var north_direction = model.get('north_direction');
+        console.log("fromWorldToLatLng: north_direction is %r", north_direction);
 
         // the width and height of all the highest-zoom tiles combined,
         // inverted
@@ -215,15 +248,15 @@ overviewer.util = {
 
         if (north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = x;
-            x = -y-1;
+            x = -y+16;
             y = temp;
         } else if(north_direction == overviewerConfig.CONST.LOWERRIGHT){
-            x = -x-1;
-            y = -y-1;
+            x = -x+16;
+            y = -y+16;
         } else if(north_direction == overviewerConfig.CONST.LOWERLEFT){
             temp = x;
             x = y;
-            y = -temp-1;
+            y = -temp+16;
         }
 
         // This information about where the center column is may change with
@@ -292,8 +325,8 @@ overviewer.util = {
         // A (lng) and B (lat).  But Wolfram Alpha did. :)  I'd welcome
         // suggestions for splitting this up into long form and documenting
         // it. -RF
-        point.x = (lng - 2 * lat) / (24 * perPixel);
-        point.z = (lng + 2 * lat) / (24 * perPixel);
+        point.x = Math.floor((lng - 2 * lat) / (24 * perPixel));
+        point.z = Math.floor((lng + 2 * lat) / (24 * perPixel));
 
         // Adjust for the fact that we we can't figure out what Y is given
         // only latitude and longitude, so assume Y=64.
@@ -371,6 +404,7 @@ overviewer.util = {
         // save this info is a nice easy to parse format
         var currentWorldView = overviewer.mapModel.get("currentWorldView");
         currentWorldView.options.lastViewport = [x,y,z,zoom];
+        console.log("Updated lastViewport: %r" , [x,y,z,zoom]);
         window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + w + "/" + maptype);
     },
     'updateHash': function() {
