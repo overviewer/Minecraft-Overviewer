@@ -391,8 +391,12 @@ class TileSet(object):
                 base = '',
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') + " - " + self.options.get('dimension'),
-                last_rendertime = self.this_rendertime,
-                north_direction = 'upper-left')
+                last_rendertime = self.this_rendertime)
+        try:
+            d['north_direction'] = self.regionset.north_dir
+        except AttributeError:
+            d['north_direction'] = 0
+
         print "get_persistent_data: %r" % d
         return d
 

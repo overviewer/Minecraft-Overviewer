@@ -20,6 +20,7 @@ import locale
 import time
 from PIL import Image
 
+import world
 import util
 import overviewer_version
 
@@ -81,6 +82,10 @@ directory.
                 }
         dump['CONST']['mapDivId'] = 'mcmap'
         dump['CONST']['regionStrokeWeight'] = 2
+        dump['CONST']['UPPERLEFT']  = world.UPPER_LEFT;
+        dump['CONST']['UPPERRIGHT'] = world.UPPER_RIGHT;
+        dump['CONST']['LOWERLEFT']  = world.LOWER_LEFT;
+        dump['CONST']['LOWERRIGHT'] = world.LOWER_RIGHT;
 
         # based on the tilesets we have, group them by worlds
         worlds = []

@@ -78,7 +78,26 @@ overviewer.views.CompassView = Backbone.View.extend({
 
         overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.el);
     },
+    /**
+     * CompassView::render
+     */
     render: function() {
+        var currentWorldView = this.model.get("currentWorldView");
+        var gmapCurrent = overviewer.map.getMapTypeId();
+        for (id in currentWorldView.options.mapTypeIds) {
+            if (currentWorldView.options.mapTypeIds[id] == gmapCurrent) {
+                var tsetModel = currentWorldView.model.get("tileSets").at(id);
+                var northdir = tsetModel.get("north_direction");
+                if (northdir == overviewerConfig.CONST.UPPERLEFT)
+                    this.$("IMG").attr("src","compass_upper-left.png");
+                if (northdir == overviewerConfig.CONST.UPPERRIGHT)
+                    this.$("IMG").attr("src", "compass_upper-right.png");
+                if (northdir == overviewerConfig.CONST.LOWERLEFT)
+                    this.$("IMG").attr("src", "compass_lower-left.png");
+                if (northdir == overviewerConfig.CONST.LOWERRIGHT)
+                    this.$("IMG").attr("src", "compass_lower-right.png");
+            }
+        }
     }
 });
 

@@ -31,15 +31,21 @@ overviewer.util = {
         // controls should be added in the order they should appear on screen, 
         // with controls on the outside of the page being added first
 
-        var compass = new overviewer.views.CompassView({tagName: 'DIV'});
+        var compass = new overviewer.views.CompassView({tagName: 'DIV', model:overviewer.mapModel});
         compass.render();
 
         var coordsdiv = new overviewer.views.CoordboxView({tagName: 'DIV'});
         coordsdiv.render();
         // Update coords on mousemove
         google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
-                coordsdiv.updateCoords(event.latLng);    
-                });
+            coordsdiv.updateCoords(event.latLng);    
+        });
+
+        google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function(event) {
+            //overviewer.map.getMapTypeId();
+            compass.render();
+
+        });
 
         var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
         overviewer.collections.worlds.bind("add", worldSelector.render, worldSelector);
