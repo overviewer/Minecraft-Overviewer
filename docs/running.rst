@@ -146,6 +146,14 @@ only have to use once-in-a-while.
     or :option:`--check-tiles` is in effect.  This option overrides
     :option:`--forcerender` and :option:`--check-tiles`.
 
+.. cmdoption:: -p <procs>, --processes <procs>
+
+    This specifies the number of worker processes to spawn on the local machine
+    to do work. It defaults to the number of CPU cores you have, if not
+    specified.
+
+    This option can also be specified in the config file as :ref:`processes <processes>`
+
 .. _installing-textures:
 
 Installing the Textures

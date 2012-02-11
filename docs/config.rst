@@ -233,6 +233,15 @@ These values are set directly in the config file. Example::
     This is a string indicating the path to the texture pack to use for
     rendering.
 
+.. _processes:
+
+``processes = num_procs``
+    This specifies the number of worker processes to spawn on the local machine
+    to do work. It defaults to the number of CPU cores you have, if not
+    specified.
+ 
+    This can also be specified with :option:`--processes <-p>`
+
 TODO: More to come here
 
 .. _customrendermodes:

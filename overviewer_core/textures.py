@@ -27,7 +27,7 @@ import logging
 import functools
 
 import util
-import composite
+from c_overviewer import alpha_over
 
 ##
 ## Textures object
@@ -455,7 +455,7 @@ class Textures(object):
         top = self.transform_image_top(top)
 
         if not side:
-            composite.alpha_over(img, top, (0,0), top)
+            alpha_over(img, top, (0,0), top)
             return img
 
         side = self.transform_image_side(side)
@@ -471,9 +471,9 @@ class Textures(object):
         otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
         otherside.putalpha(othersidealpha)
 
-        composite.alpha_over(img, top, (0,0), top)
-        composite.alpha_over(img, side, (0,6), side)
-        composite.alpha_over(img, otherside, (12,6), otherside)
+        alpha_over(img, top, (0,0), top)
+        alpha_over(img, side, (0,6), side)
+        alpha_over(img, otherside, (12,6), otherside)
 
         # Manually touch up 6 pixels that leave a gap because of how the
         # shearing works out. This makes the blocks perfectly tessellate-able
@@ -539,7 +539,7 @@ class Textures(object):
             side1 = ImageEnhance.Brightness(side1).enhance(0.9)
             side1.putalpha(sidealpha)        
 
-            composite.alpha_over(img, side1, (0,0), side1)
+            alpha_over(img, side1, (0,0), side1)
 
 
         if side2 != None :
@@ -550,11 +550,11 @@ class Textures(object):
             side2 = ImageEnhance.Brightness(side2).enhance(0.8)
             side2.putalpha(sidealpha2)
 
-            composite.alpha_over(img, side2, (12,0), side2)
+            alpha_over(img, side2, (12,0), side2)
 
         if bottom != None :
             bottom = self.transform_image_top(bottom)
-            composite.alpha_over(img, bottom, (0,12), bottom)
+            alpha_over(img, bottom, (0,12), bottom)
 
         # front sides
         if side3 != None :
@@ -565,7 +565,7 @@ class Textures(object):
             side3 = ImageEnhance.Brightness(side3).enhance(0.9)
             side3.putalpha(sidealpha)
 
-            composite.alpha_over(img, side3, (0,6), side3)
+            alpha_over(img, side3, (0,6), side3)
 
         if side4 != None :
             side4 = self.transform_image_side(side4)
@@ -576,11 +576,11 @@ class Textures(object):
             side4 = ImageEnhance.Brightness(side4).enhance(0.8)
             side4.putalpha(sidealpha)
 
-            composite.alpha_over(img, side4, (12,6), side4)
+            alpha_over(img, side4, (12,6), side4)
 
         if top != None :
             top = self.transform_image_top(top)
-            composite.alpha_over(img, top, (0, increment), top)
+            alpha_over(img, top, (0, increment), top)
 
         return img
 
@@ -592,8 +592,8 @@ class Textures(object):
         side = self.transform_image_side(side)
         otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
 
-        composite.alpha_over(img, side, (6,3), side)
-        composite.alpha_over(img, otherside, (6,3), otherside)
+        alpha_over(img, side, (6,3), side)
+        alpha_over(img, otherside, (6,3), otherside)
         return img
 
     def build_billboard(self, tex):
@@ -603,7 +603,7 @@ class Textures(object):
         img = Image.new("RGBA", (24,24), self.bgcolor)
 
         front = tex.resize((14, 11), Image.ANTIALIAS)
-        composite.alpha_over(img, front, (5,9))
+        alpha_over(img, front, (5,9))
         return img
 
     def generate_opaque_mask(self, img):
@@ -626,96 +626,6 @@ class Textures(object):
         if img is None:
             return None
         return (img, self.generate_opaque_mask(img))
-
-##
-## Biomes
-##
-
-currentBiomeFile = None
-currentBiomeData = None
-grasscolor = None
-foliagecolor = None
-watercolor = None
-_north = None
-
-def prepareBiomeData(worlddir):
-    global grasscolor, foliagecolor, watercolor
-    
-    # skip if the color files are already loaded
-    if grasscolor and foliagecolor:
-        return
-    
-    biomeDir = os.path.join(worlddir, "biomes")
-    if not os.path.exists(biomeDir):
-        raise Exception("biomes not found")
-
-    # try to find the biome color images.  If _find_file can't locate them
-    # then try looking in the EXTRACTEDBIOMES folder
-    try:
-        grasscolor = list(_load_image("grasscolor.png").getdata())
-        foliagecolor = list(_load_image("foliagecolor.png").getdata())
-        # don't force the water color just yet
-        # since the biome extractor doesn't know about it
-        try:
-            watercolor = list(_load_image("watercolor.png").getdata())
-        except IOError:
-            pass
-    except IOError:
-        try:
-            grasscolor = list(Image.open(os.path.join(biomeDir,"grasscolor.png")).getdata())
-            foliagecolor = list(Image.open(os.path.join(biomeDir,"foliagecolor.png")).getdata())
-        except Exception:
-            # clear anything that managed to get set
-            grasscolor = None
-            foliagecolor = None
-            watercolor = None
-
-def getBiomeData(worlddir, chunkX, chunkY):
-    '''Opens the worlddir and reads in the biome color information
-    from the .biome files.  See also:
-    http://www.minecraftforum.net/viewtopic.php?f=25&t=80902
-    '''
-
-    global currentBiomeFile, currentBiomeData
-    global _north
-    biomeX = chunkX // 32
-    biomeY = chunkY // 32
-    rots = 0
-    if _north == 1:
-        temp = biomeX
-        biomeX = biomeY
-        biomeY = -temp-1
-        rots = 3
-    elif _north == 2:
-        biomeX = -biomeX-1
-        biomeY = -biomeY-1
-        rots = 2
-    elif _north == 3:
-        temp = biomeX
-        biomeX = -biomeY-1
-        biomeY = temp
-        rots = 1
-
-    biomeFile = "b.%d.%d.biome" % (biomeX, biomeY)
-    if biomeFile == currentBiomeFile:
-        return currentBiomeData
-
-    try:
-        with open(os.path.join(worlddir, "biomes", biomeFile), "rb") as f:
-            rawdata = f.read()
-            # make sure the file size is correct
-            if not len(rawdata) == 512 * 512 * 2:
-                raise Exception("Biome file %s is not valid." % (biomeFile,))
-            data = numpy.reshape(numpy.rot90(numpy.reshape(
-                    numpy.frombuffer(rawdata, dtype=numpy.dtype(">u2")),
-                    (512,512)),rots), -1)
-    except IOError:
-        data = None
-        pass # no biome data   
-
-    currentBiomeFile = biomeFile
-    currentBiomeData = data
-    return data
 
 ##
 ## The other big one: @material and associated framework
@@ -840,7 +750,7 @@ def grass(self, blockid, data):
         side_img = self.terrain_images[68]
     img = self.build_block(self.terrain_images[0], side_img)
     if not data & 0x10:
-        composite.alpha_over(img, self.biome_grass_texture, (0, 0), self.biome_grass_texture)
+        alpha_over(img, self.biome_grass_texture, (0, 0), self.biome_grass_texture)
     return img
 
 # dirt
@@ -1124,29 +1034,29 @@ def rails(self, blockid, data):
     ## use transform_image to scale and shear
     if data == 0:
         track = self.transform_image_top(raw_straight)
-        composite.alpha_over(img, track, (0,12), track)
+        alpha_over(img, track, (0,12), track)
     elif data == 6:
         track = self.transform_image_top(raw_corner)
-        composite.alpha_over(img, track, (0,12), track)
+        alpha_over(img, track, (0,12), track)
     elif data == 7:
         track = self.transform_image_top(raw_corner.rotate(270))
-        composite.alpha_over(img, track, (0,12), track)
+        alpha_over(img, track, (0,12), track)
     elif data == 8:
         # flip
         track = self.transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90))
-        composite.alpha_over(img, track, (0,12), track)
+        alpha_over(img, track, (0,12), track)
     elif data == 9:
         track = self.transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM))
-        composite.alpha_over(img, track, (0,12), track)
+        alpha_over(img, track, (0,12), track)
     elif data == 1:
         track = self.transform_image_top(raw_straight.rotate(90))
-        composite.alpha_over(img, track, (0,12), track)
+        alpha_over(img, track, (0,12), track)
         
     #slopes
     elif data == 2: # slope going up in +x direction
         track = self.transform_image_slope(raw_straight)
         track = track.transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, track, (2,0), track)
+        alpha_over(img, track, (2,0), track)
         # the 2 pixels move is needed to fit with the adjacent tracks
         
     elif data == 3: # slope going up in -x direction
@@ -1157,7 +1067,7 @@ def rails(self, blockid, data):
         # the track doesn't start from image corners, be carefull drawing the line!
     elif data == 4: # slope going up in -y direction
         track = self.transform_image_slope(raw_straight)
-        composite.alpha_over(img, track, (0,0), track)
+        alpha_over(img, track, (0,0), track)
         
     elif data == 5: # slope going up in +y direction
         # same as "data == 3"
@@ -1214,12 +1124,12 @@ def piston(self, blockid, data):
             img = self.build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), None)
             temp = self.transform_image_side(interior_t)
             temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
-            composite.alpha_over(img, temp, (9,5), temp)
+            alpha_over(img, temp, (9,5), temp)
             
         elif data & 0x07 == 0x4: # north
             img = self.build_full_block(side_t.rotate(90) ,None ,None , None, side_t.rotate(270))
             temp = self.transform_image_side(interior_t)
-            composite.alpha_over(img, temp, (3,5), temp)
+            alpha_over(img, temp, (3,5), temp)
             
         elif data & 0x07 == 0x5: # south
             img = self.build_full_block(side_t.rotate(270) ,None , None ,back_t, side_t.rotate(90))
@@ -1276,9 +1186,9 @@ def piston_extension(self, blockid, data):
     # generate the horizontal piston extension stick
     h_stick = Image.new("RGBA", (24,24), self.bgcolor)
     temp = self.transform_image_side(side_t)
-    composite.alpha_over(h_stick, temp, (1,7), temp)
+    alpha_over(h_stick, temp, (1,7), temp)
     temp = self.transform_image_top(side_t.rotate(90))
-    composite.alpha_over(h_stick, temp, (1,1), temp)
+    alpha_over(h_stick, temp, (1,1), temp)
     # Darken it
     sidealpha = h_stick.split()[3]
     h_stick = ImageEnhance.Brightness(h_stick).enhance(0.85)
@@ -1287,9 +1197,9 @@ def piston_extension(self, blockid, data):
     # generate the vertical piston extension stick
     v_stick = Image.new("RGBA", (24,24), self.bgcolor)
     temp = self.transform_image_side(side_t.rotate(90))
-    composite.alpha_over(v_stick, temp, (12,6), temp)
+    alpha_over(v_stick, temp, (12,6), temp)
     temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
-    composite.alpha_over(v_stick, temp, (1,6), temp)
+    alpha_over(v_stick, temp, (1,6), temp)
     # Darken it
     sidealpha = v_stick.split()[3]
     v_stick = ImageEnhance.Brightness(v_stick).enhance(0.85)
@@ -1299,32 +1209,32 @@ def piston_extension(self, blockid, data):
     if data & 0x07 == 0x0: # down
         side_t = side_t.rotate(180)
         img = self.build_full_block((back_t, 12) ,None ,None ,side_t, side_t)
-        composite.alpha_over(img, v_stick, (0,-3), v_stick)
+        alpha_over(img, v_stick, (0,-3), v_stick)
     elif data & 0x07 == 0x1: # up
         img = Image.new("RGBA", (24,24), self.bgcolor)
         img2 = self.build_full_block(piston_t ,None ,None ,side_t, side_t)
-        composite.alpha_over(img, v_stick, (0,4), v_stick)
-        composite.alpha_over(img, img2, (0,0), img2)
+        alpha_over(img, v_stick, (0,4), v_stick)
+        alpha_over(img, img2, (0,0), img2)
     elif data & 0x07 == 0x2: # east 
         img = self.build_full_block(side_t ,None ,None ,side_t.rotate(90), None)
         temp = self.transform_image_side(back_t).transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, temp, (2,2), temp)
-        composite.alpha_over(img, h_stick, (6,3), h_stick)
+        alpha_over(img, temp, (2,2), temp)
+        alpha_over(img, h_stick, (6,3), h_stick)
     elif data & 0x07 == 0x3: # west
         img = Image.new("RGBA", (24,24), self.bgcolor)
         img2 = self.build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
-        composite.alpha_over(img, h_stick, (0,0), h_stick)
-        composite.alpha_over(img, img2, (0,0), img2)            
+        alpha_over(img, h_stick, (0,0), h_stick)
+        alpha_over(img, img2, (0,0), img2)            
     elif data & 0x07 == 0x4: # north
         img = self.build_full_block(side_t.rotate(90) ,None ,None , piston_t, side_t.rotate(270))
-        composite.alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (0,0), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
+        alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (0,0), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
     elif data & 0x07 == 0x5: # south
         img = Image.new("RGBA", (24,24), self.bgcolor)
         img2 = self.build_full_block(side_t.rotate(270) ,None ,None ,None, side_t.rotate(90))
         temp = self.transform_image_side(back_t)
-        composite.alpha_over(img2, temp, (10,2), temp)
-        composite.alpha_over(img, img2, (0,0), img2)
-        composite.alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (-3,2), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
+        alpha_over(img2, temp, (10,2), temp)
+        alpha_over(img, img2, (0,0), img2)
+        alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (-3,2), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
         
     return img
 
@@ -1419,7 +1329,7 @@ def slabs(self, blockid, data):
     # cut the side texture in half
     mask = side.crop((0,8,16,16))
     side = Image.new(side.mode, side.size, self.bgcolor)
-    composite.alpha_over(side, mask,(0,0,16,8), mask)
+    alpha_over(side, mask,(0,0,16,8), mask)
     
     # plain slab
     top = self.transform_image_top(top)
@@ -1434,9 +1344,9 @@ def slabs(self, blockid, data):
     otherside.putalpha(othersidealpha)
     
     img = Image.new("RGBA", (24,24), self.bgcolor)
-    composite.alpha_over(img, side, (0,12), side)
-    composite.alpha_over(img, otherside, (12,12), otherside)
-    composite.alpha_over(img, top, (0,6), top)
+    alpha_over(img, side, (0,12), side)
+    alpha_over(img, otherside, (12,12), otherside)
+    alpha_over(img, top, (0,6), top)
     
     return img
 
@@ -1482,9 +1392,9 @@ def torches(self, blockid, data):
     # compose a torch bigger than the normal
     # (better for doing transformations)
     torch = Image.new("RGBA", (16,16), self.bgcolor)
-    composite.alpha_over(torch,small,(-4,-3))
-    composite.alpha_over(torch,small,(-5,-2))
-    composite.alpha_over(torch,small,(-3,-2))
+    alpha_over(torch,small,(-4,-3))
+    alpha_over(torch,small,(-5,-2))
+    alpha_over(torch,small,(-3,-2))
     
     # angle of inclination of the texture
     rotation = 15
@@ -1514,10 +1424,10 @@ def torches(self, blockid, data):
         ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
         
-        composite.alpha_over(img, slice, (7,5))
-        composite.alpha_over(img, small_crop, (6,6))
-        composite.alpha_over(img, small_crop, (7,6))
-        composite.alpha_over(img, slice, (7,7))
+        alpha_over(img, slice, (7,5))
+        alpha_over(img, small_crop, (6,6))
+        alpha_over(img, small_crop, (7,6))
+        alpha_over(img, slice, (7,7))
         
     return img
 
@@ -1530,11 +1440,11 @@ def fire(self, blockid, data):
     
     img = Image.new("RGBA", (24,24), self.bgcolor)
 
-    composite.alpha_over(img, side1, (12,0), side1)
-    composite.alpha_over(img, side2, (0,0), side2)
+    alpha_over(img, side1, (12,0), side1)
+    alpha_over(img, side2, (0,0), side2)
 
-    composite.alpha_over(img, side1, (0,6), side1)
-    composite.alpha_over(img, side2, (12,6), side2)
+    alpha_over(img, side1, (0,6), side1)
+    alpha_over(img, side2, (12,6), side2)
     
     return img
 
@@ -1596,24 +1506,24 @@ def stairs(self, blockid, data):
         tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.8)
         tmp1.putalpha(sidealpha)
         
-        composite.alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
-        composite.alpha_over(img, tmp1, (6,3))
+        alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
+        alpha_over(img, tmp1, (6,3))
         tmp2 = self.transform_image_top(half_block_l)
-        composite.alpha_over(img, tmp2, (0,6))
+        alpha_over(img, tmp2, (0,6))
         
     elif data == 1: # ascending north
         img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
         tmp1 = self.transform_image_top(half_block_r)
-        composite.alpha_over(img, tmp1, (0,6))
+        alpha_over(img, tmp1, (0,6))
         tmp2 = self.build_full_block(half_block_l, None, None, texture, side)
-        composite.alpha_over(img, tmp2)
+        alpha_over(img, tmp2)
     
     elif data == 2: # ascending west
         img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
         tmp1 = self.transform_image_top(half_block_u)
-        composite.alpha_over(img, tmp1, (0,6))
+        alpha_over(img, tmp1, (0,6))
         tmp2 = self.build_full_block(half_block_d, None, None, side, texture)
-        composite.alpha_over(img, tmp2)
+        alpha_over(img, tmp2)
         
     elif data == 3: # ascending east
         img = self.build_full_block(half_block_u, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_d)
@@ -1625,10 +1535,10 @@ def stairs(self, blockid, data):
         tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.7)
         tmp1.putalpha(sidealpha)
         
-        composite.alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
-        composite.alpha_over(img, tmp1, (6,3))
+        alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
+        alpha_over(img, tmp1, (6,3))
         tmp2 = self.transform_image_top(half_block_d)
-        composite.alpha_over(img, tmp2, (0,6))
+        alpha_over(img, tmp2, (0,6))
         
         # touch up a (horrible) pixel
         img.putpixel((18,3),(0,0,0,0))
@@ -1736,16 +1646,16 @@ def wire(self, blockid, data):
     else:
         bottom = Image.new("RGBA", (16,16), self.bgcolor)
         if (data & 0b0001) == 1:
-            composite.alpha_over(bottom,branch_top_left)
+            alpha_over(bottom,branch_top_left)
             
         if (data & 0b1000) == 8:
-            composite.alpha_over(bottom,branch_top_right)
+            alpha_over(bottom,branch_top_right)
             
         if (data & 0b0010) == 2:
-            composite.alpha_over(bottom,branch_bottom_left)
+            alpha_over(bottom,branch_bottom_left)
             
         if (data & 0b0100) == 4:
-            composite.alpha_over(bottom,branch_bottom_right)
+            alpha_over(bottom,branch_bottom_right)
 
     # check for going up redstone wire
     if data & 0b100000 == 32:
@@ -1787,9 +1697,9 @@ def crops(self, blockid, data):
     crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
 
     img = Image.new("RGBA", (24,24), self.bgcolor)
-    composite.alpha_over(img, crop1, (0,12), crop1)
-    composite.alpha_over(img, crop2, (6,3), crop2)
-    composite.alpha_over(img, crop3, (6,3), crop3)
+    alpha_over(img, crop1, (0,12), crop1)
+    alpha_over(img, crop2, (6,3), crop2)
+    alpha_over(img, crop3, (6,3), crop3)
     return img
 
 # farmland
@@ -1843,12 +1753,12 @@ def signpost(self, blockid, data):
     elif data in (3,4,5,11,12,13):
         incrementx = +1
 
-    composite.alpha_over(img, texture_stick,(11, 8),texture_stick)
+    alpha_over(img, texture_stick,(11, 8),texture_stick)
     # post2 is a brighter signpost pasted with a small shift,
     # gives to the signpost some 3D effect.
     post2 = ImageEnhance.Brightness(post).enhance(1.2)
-    composite.alpha_over(img, post2,(incrementx, -3),post2)
-    composite.alpha_over(img, post, (0,-2), post)
+    alpha_over(img, post2,(incrementx, -3),post2)
+    alpha_over(img, post, (0,-2), post)
 
     return img
 
@@ -1890,36 +1800,36 @@ def door(self, blockid, data):
     if (data & 0x03) == 0: # northeast corner
         if not swung:
             tex = self.transform_image_side(raw_door)
-            composite.alpha_over(img, tex, (0,6), tex)
+            alpha_over(img, tex, (0,6), tex)
         else:
             # flip first to set the doornob on the correct side
             tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
             tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
-            composite.alpha_over(img, tex, (0,0), tex)
+            alpha_over(img, tex, (0,0), tex)
     
     if (data & 0x03) == 1: # southeast corner
         if not swung:
             tex = self.transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
-            composite.alpha_over(img, tex, (0,0), tex)
+            alpha_over(img, tex, (0,0), tex)
         else:
             tex = self.transform_image_side(raw_door)
-            composite.alpha_over(img, tex, (12,0), tex)
+            alpha_over(img, tex, (12,0), tex)
 
     if (data & 0x03) == 2: # southwest corner
         if not swung:
             tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-            composite.alpha_over(img, tex, (12,0), tex)
+            alpha_over(img, tex, (12,0), tex)
         else:
             tex = self.transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
-            composite.alpha_over(img, tex, (12,6), tex)
+            alpha_over(img, tex, (12,6), tex)
 
     if (data & 0x03) == 3: # northwest corner
         if not swung:
             tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
-            composite.alpha_over(img, tex, (12,6), tex)
+            alpha_over(img, tex, (12,6), tex)
         else:
             tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-            composite.alpha_over(img, tex, (0,6), tex)
+            alpha_over(img, tex, (0,6), tex)
     
     return img
 
@@ -1952,19 +1862,19 @@ def ladder(self, blockid, data):
         # but since ladders can apparently be placed on transparent blocks, we 
         # have to render this thing anyway.  same for data == 2
         tex = transform_image_side(raw_texture)
-        composite.alpha_over(img, tex, (0,6), tex)
+        alpha_over(img, tex, (0,6), tex)
         return generate_texture_tuple(img, blockID)
     if data == 2:
         tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, tex, (12,6), tex)
+        alpha_over(img, tex, (12,6), tex)
         return generate_texture_tuple(img, blockID)
     if data == 3:
         tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, tex, (0,0), tex)
+        alpha_over(img, tex, (0,0), tex)
         return generate_texture_tuple(img, blockID)
     if data == 4:
         tex = transform_image_side(raw_texture)
-        composite.alpha_over(img, tex, (12,0), tex)
+        alpha_over(img, tex, (12,0), tex)
         return generate_texture_tuple(img, blockID)
 
 
@@ -2020,8 +1930,8 @@ def wall_sign(self, blockid, data): # wall sign
         sign = self.build_full_block(None, None, None, texture, None)
 
     sign2 = ImageEnhance.Brightness(sign).enhance(1.2)
-    composite.alpha_over(img, sign2,(incrementx, 2),sign2)
-    composite.alpha_over(img, sign, (0,3), sign)
+    alpha_over(img, sign2,(incrementx, 2),sign2)
+    alpha_over(img, sign, (0,3), sign)
 
     return img
 
@@ -2071,8 +1981,8 @@ def levers(self, blockid, data):
     c_stick = Image.new("RGBA", (16,16), self.bgcolor)
     
     tmp = ImageEnhance.Brightness(stick).enhance(0.8)
-    composite.alpha_over(c_stick, tmp, (1,0), tmp)
-    composite.alpha_over(c_stick, stick, (0,0), stick)
+    alpha_over(c_stick, tmp, (1,0), tmp)
+    alpha_over(c_stick, stick, (0,0), stick)
     t_stick = self.transform_image_side(c_stick.rotate(45, Image.NEAREST))
 
     # where the lever will be composed
@@ -2088,33 +1998,33 @@ def levers(self, blockid, data):
         base = self.transform_image_side(t_base)
         
         # paste it twice with different brightness to make a fake 3D effect
-        composite.alpha_over(img, base, (12,-1), base)
+        alpha_over(img, base, (12,-1), base)
 
         alpha = base.split()[3]
         base = ImageEnhance.Brightness(base).enhance(0.9)
         base.putalpha(alpha)
         
-        composite.alpha_over(img, base, (11,0), base)
+        alpha_over(img, base, (11,0), base)
 
         # paste the lever stick
         pos = (7,-7)
         if powered:
             t_stick = t_stick.transpose(Image.FLIP_TOP_BOTTOM)
             pos = (7,6)
-        composite.alpha_over(img, t_stick, pos, t_stick)
+        alpha_over(img, t_stick, pos, t_stick)
 
     elif data == 3: # facing WEST
         base = self.transform_image_side(t_base)
         
         # paste it twice with different brightness to make a fake 3D effect
         base = base.transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, base, (0,-1), base)
+        alpha_over(img, base, (0,-1), base)
 
         alpha = base.split()[3]
         base = ImageEnhance.Brightness(base).enhance(0.9)
         base.putalpha(alpha)
         
-        composite.alpha_over(img, base, (1,0), base)
+        alpha_over(img, base, (1,0), base)
         
         # paste the lever stick
         t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
@@ -2122,7 +2032,7 @@ def levers(self, blockid, data):
         if powered:
             t_stick = t_stick.transpose(Image.FLIP_TOP_BOTTOM)
             pos = (6,6)
-        composite.alpha_over(img, t_stick, pos, t_stick)
+        alpha_over(img, t_stick, pos, t_stick)
 
     elif data == 4: # facing EAST
         # levers can't be placed in transparent blocks, so this
@@ -2138,15 +2048,15 @@ def levers(self, blockid, data):
         tmp = ImageEnhance.Brightness(base).enhance(0.8)
         tmp.putalpha(alpha)
         
-        composite.alpha_over(img, tmp, (0,12), tmp)
-        composite.alpha_over(img, base, (0,11), base)
+        alpha_over(img, tmp, (0,12), tmp)
+        alpha_over(img, base, (0,11), base)
 
         # lever stick
         pos = (3,2)
         if not powered:
             t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
             pos = (11,2)
-        composite.alpha_over(img, t_stick, pos, t_stick)
+        alpha_over(img, t_stick, pos, t_stick)
 
     elif data == 6: # pointing east when off
         # lever base, fake 3d again
@@ -2156,15 +2066,15 @@ def levers(self, blockid, data):
         tmp = ImageEnhance.Brightness(base).enhance(0.8)
         tmp.putalpha(alpha)
         
-        composite.alpha_over(img, tmp, (0,12), tmp)
-        composite.alpha_over(img, base, (0,11), base)
+        alpha_over(img, tmp, (0,12), tmp)
+        alpha_over(img, base, (0,11), base)
 
         # lever stick
         pos = (2,3)
         if not powered:
             t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
             pos = (10,2)
-        composite.alpha_over(img, t_stick, pos, t_stick)
+        alpha_over(img, t_stick, pos, t_stick)
 
     return img
 
@@ -2192,10 +2102,10 @@ def pressure_plate(self, blockid, data):
     
     #show it 3d or 2d if unpressed or pressed
     if data == 0:
-        composite.alpha_over(img,topd, (0,12),topd)
-        composite.alpha_over(img,top, (0,11),top)
+        alpha_over(img,topd, (0,12),topd)
+        alpha_over(img,top, (0,11),top)
     elif data == 1:
-        composite.alpha_over(img,top, (0,12),top)
+        alpha_over(img,top, (0,12),top)
     
     return img
 
@@ -2244,24 +2154,24 @@ def buttons(self, blockid, data):
 
     elif data == 2: # facing NORTH
         # paste it twice with different brightness to make a 3D effect
-        composite.alpha_over(img, button, (12,-1), button)
+        alpha_over(img, button, (12,-1), button)
 
         alpha = button.split()[3]
         button = ImageEnhance.Brightness(button).enhance(0.9)
         button.putalpha(alpha)
         
-        composite.alpha_over(img, button, (11,0), button)
+        alpha_over(img, button, (11,0), button)
 
     elif data == 3: # facing WEST
         # paste it twice with different brightness to make a 3D effect
         button = button.transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, button, (0,-1), button)
+        alpha_over(img, button, (0,-1), button)
 
         alpha = button.split()[3]
         button = ImageEnhance.Brightness(button).enhance(0.9)
         button.putalpha(alpha)
         
-        composite.alpha_over(img, button, (1,0), button)
+        alpha_over(img, button, (1,0), button)
 
     elif data == 4: # facing EAST
         # buttons can't be placed in transparent blocks, so this
@@ -2280,7 +2190,7 @@ def snow(self, blockid, data):
     # make the side image, top 3/4 transparent
     mask = tex.crop((0,12,16,16))
     sidetex = Image.new(tex.mode, tex.size, self.bgcolor)
-    composite.alpha_over(sidetex, mask, (0,12,16,16), mask)
+    alpha_over(sidetex, mask, (0,12,16,16), mask)
     
     img = Image.new("RGBA", (24,24), self.bgcolor)
     
@@ -2288,9 +2198,9 @@ def snow(self, blockid, data):
     side = self.transform_image_side(sidetex)
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
     
-    composite.alpha_over(img, side, (0,6), side)
-    composite.alpha_over(img, otherside, (12,6), otherside)
-    composite.alpha_over(img, top, (0,9), top)
+    alpha_over(img, side, (0,6), side)
+    alpha_over(img, otherside, (12,6), otherside)
+    alpha_over(img, top, (0,9), top)
     
     return img
 
@@ -2316,9 +2226,9 @@ def cactus(self, blockid, data):
     otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
     otherside.putalpha(othersidealpha)
 
-    composite.alpha_over(img, side, (1,6), side)
-    composite.alpha_over(img, otherside, (11,6), otherside)
-    composite.alpha_over(img, top, (0,0), top)
+    alpha_over(img, side, (1,6), side)
+    alpha_over(img, otherside, (11,6), otherside)
+    alpha_over(img, top, (0,0), top)
     
     return img
 
@@ -2377,9 +2287,9 @@ def fence(self, blockid, data):
 
     # Compose the fence big stick
     fence_big = Image.new("RGBA", (24,24), self.bgcolor)
-    composite.alpha_over(fence_big,fence_side, (5,4),fence_side)
-    composite.alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
-    composite.alpha_over(fence_big,fence_top, (0,0),fence_top)
+    alpha_over(fence_big,fence_side, (5,4),fence_side)
+    alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
+    alpha_over(fence_big,fence_top, (0,0),fence_top)
     
     # Now render the small sticks.
     # Create needed images
@@ -2420,16 +2330,16 @@ def fence(self, blockid, data):
     # then big stick and thecn small sticks in the front.
 
     if (data & 0b0001) == 1:
-        composite.alpha_over(img,fence_small_side, pos_top_left,fence_small_side)                # top left
+        alpha_over(img,fence_small_side, pos_top_left,fence_small_side)                # top left
     if (data & 0b1000) == 8:
-        composite.alpha_over(img,fence_small_other_side, pos_top_right,fence_small_other_side)    # top right
+        alpha_over(img,fence_small_other_side, pos_top_right,fence_small_other_side)    # top right
         
-    composite.alpha_over(img,fence_big,(0,0),fence_big)
+    alpha_over(img,fence_big,(0,0),fence_big)
         
     if (data & 0b0010) == 2:
-        composite.alpha_over(img,fence_small_other_side, pos_bottom_left,fence_small_other_side)      # bottom left    
+        alpha_over(img,fence_small_other_side, pos_bottom_left,fence_small_other_side)      # bottom left    
     if (data & 0b0100) == 4:
-        composite.alpha_over(img,fence_small_side, pos_bottom_right,fence_small_side)                  # bottom right
+        alpha_over(img,fence_small_side, pos_bottom_right,fence_small_side)                  # bottom right
     
     return img
 
@@ -2490,10 +2400,10 @@ def portal(self, blockid, data):
     otherside = side.transpose(Image.FLIP_TOP_BOTTOM)
 
     if data in (1,4):
-        composite.alpha_over(img, side, (5,4), side)
+        alpha_over(img, side, (5,4), side)
 
     if data in (2,8):
-        composite.alpha_over(img, otherside, (5,4), otherside)
+        alpha_over(img, otherside, (5,4), otherside)
 
     return img
 
@@ -2520,10 +2430,10 @@ def cake(self, blockid, data):
     img = Image.new("RGBA", (24,24), self.bgcolor)
     
     # composite the cake
-    composite.alpha_over(img, side, (1,6), side)
-    composite.alpha_over(img, otherside, (11,7), otherside) # workaround, fixes a hole
-    composite.alpha_over(img, otherside, (12,6), otherside)
-    composite.alpha_over(img, top, (0,6), top)
+    alpha_over(img, side, (1,6), side)
+    alpha_over(img, otherside, (11,7), otherside) # workaround, fixes a hole
+    alpha_over(img, otherside, (12,6), otherside)
+    alpha_over(img, top, (0,6), top)
 
     return img
 
@@ -2576,10 +2486,10 @@ def repeater(self, blockid, data):
     ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
     
-    composite.alpha_over(torch, slice, (6,4))
-    composite.alpha_over(torch, t_crop, (5,5))
-    composite.alpha_over(torch, t_crop, (6,5))
-    composite.alpha_over(torch, slice, (6,6))
+    alpha_over(torch, slice, (6,4))
+    alpha_over(torch, t_crop, (5,5))
+    alpha_over(torch, t_crop, (6,5))
+    alpha_over(torch, slice, (6,6))
     
     # paste redstone torches everywhere!
     # the torch is too tall for the repeater, crop the bottom.
@@ -2667,8 +2577,8 @@ def repeater(self, blockid, data):
     # this paste order it's ok for east and south orientation
     # but it's wrong for north and west orientations. But using the
     # default texture pack the torches are small enough to no overlap.
-    composite.alpha_over(img, torch, static_torch, torch) 
-    composite.alpha_over(img, torch, moving_torch, torch)
+    alpha_over(img, torch, static_torch, torch) 
+    alpha_over(img, torch, moving_torch, torch)
 
     return img
     
@@ -2849,13 +2759,13 @@ def panes(self, blockid, data):
     # then things in the front.
 
     if (data & 0b0001) == 1 or data == 0:
-        composite.alpha_over(img,up_left, (6,3),up_left)    # top left
+        alpha_over(img,up_left, (6,3),up_left)    # top left
     if (data & 0b1000) == 8 or data == 0:
-        composite.alpha_over(img,up_right, (6,3),up_right)  # top right
+        alpha_over(img,up_right, (6,3),up_right)  # top right
     if (data & 0b0010) == 2 or data == 0:
-        composite.alpha_over(img,dw_left, (6,3),dw_left)    # bottom left    
+        alpha_over(img,dw_left, (6,3),dw_left)    # bottom left    
     if (data & 0b0100) == 4 or data == 0:
-        composite.alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
+        alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
 
     return img
 
@@ -2875,7 +2785,7 @@ def stem(self, blockid, data):
     # straight up stem
     t = self.terrain_images[111].copy()
     img = Image.new("RGBA", (16,16), self.bgcolor)
-    composite.alpha_over(img, t, (0, int(16 - 16*((data + 1)/8.))), t)
+    alpha_over(img, t, (0, int(16 - 16*((data + 1)/8.))), t)
     img = self.build_sprite(t)
     if data & 7 == 7:
         # fully grown stem gets brown color!
@@ -2981,17 +2891,17 @@ def fence_gate(self, blockid, data):
         # opened
         data = data & 0x3
         if data == 0:
-            composite.alpha_over(img, gate_side, (2,8), gate_side)
-            composite.alpha_over(img, gate_side, (13,3), gate_side)
+            alpha_over(img, gate_side, (2,8), gate_side)
+            alpha_over(img, gate_side, (13,3), gate_side)
         elif data == 1:
-            composite.alpha_over(img, gate_other_side, (-1,3), gate_other_side)
-            composite.alpha_over(img, gate_other_side, (10,8), gate_other_side)
+            alpha_over(img, gate_other_side, (-1,3), gate_other_side)
+            alpha_over(img, gate_other_side, (10,8), gate_other_side)
         elif data == 2:
-            composite.alpha_over(img, mirror_gate_side, (-1,7), mirror_gate_side)
-            composite.alpha_over(img, mirror_gate_side, (10,2), mirror_gate_side)
+            alpha_over(img, mirror_gate_side, (-1,7), mirror_gate_side)
+            alpha_over(img, mirror_gate_side, (10,2), mirror_gate_side)
         elif data == 3:
-            composite.alpha_over(img, mirror_gate_other_side, (2,1), mirror_gate_other_side)
-            composite.alpha_over(img, mirror_gate_other_side, (13,7), mirror_gate_other_side)
+            alpha_over(img, mirror_gate_other_side, (2,1), mirror_gate_other_side)
+            alpha_over(img, mirror_gate_other_side, (13,7), mirror_gate_other_side)
     else:
         # closed
         
@@ -3002,11 +2912,11 @@ def fence_gate(self, blockid, data):
         pos_bottom_left = (2,7)
         
         if data == 0 or data == 2:
-            composite.alpha_over(img, gate_other_side, pos_top_right, gate_other_side)
-            composite.alpha_over(img, mirror_gate_other_side, pos_bottom_left, mirror_gate_other_side)
+            alpha_over(img, gate_other_side, pos_top_right, gate_other_side)
+            alpha_over(img, mirror_gate_other_side, pos_bottom_left, mirror_gate_other_side)
         elif data == 1 or data == 3:
-            composite.alpha_over(img, gate_side, pos_top_left, gate_side)
-            composite.alpha_over(img, mirror_gate_side, pos_bottom_right, mirror_gate_side)
+            alpha_over(img, gate_side, pos_top_left, gate_side)
+            alpha_over(img, mirror_gate_side, pos_bottom_right, mirror_gate_side)
     
     return img
 
@@ -3094,19 +3004,19 @@ def cauldron(self, blockid, data):
         img = self.build_full_block(top, side, side, side, side)
     if data == 1: # 1/3 filled
         img = self.build_full_block(None , side, side, None, None)
-        composite.alpha_over(img, water, (0,8), water)
+        alpha_over(img, water, (0,8), water)
         img2 = self.build_full_block(top , None, None, side, side)
-        composite.alpha_over(img, img2, (0,0), img2)
+        alpha_over(img, img2, (0,0), img2)
     if data == 2: # 2/3 filled
         img = self.build_full_block(None , side, side, None, None)
-        composite.alpha_over(img, water, (0,4), water)
+        alpha_over(img, water, (0,4), water)
         img2 = self.build_full_block(top , None, None, side, side)
-        composite.alpha_over(img, img2, (0,0), img2)
+        alpha_over(img, img2, (0,0), img2)
     if data == 3: # 3/3 filled
         img = self.build_full_block(None , side, side, None, None)
-        composite.alpha_over(img, water, (0,0), water)
+        alpha_over(img, water, (0,0), water)
         img2 = self.build_full_block(top , None, None, side, side)
-        composite.alpha_over(img, img2, (0,0), img2)
+        alpha_over(img, img2, (0,0), img2)
 
     return img
 
@@ -3123,7 +3033,7 @@ def end_portal(self, blockid, data):
             t.putpixel((x,y),color)
 
     t = self.transform_image_top(t)
-    composite.alpha_over(img, t, (0,0), t)
+    alpha_over(img, t, (0,0), t)
 
     return img
 
@@ -3147,9 +3057,9 @@ def end_portal_frame(self, blockid, data):
         eye = self.transform_image_top(eye_t)
         eye_s = self.transform_image_side(eye_t_s)
         eye_os = eye_s.transpose(Image.FLIP_LEFT_RIGHT)
-        composite.alpha_over(img, eye_s, (5,5), eye_s)
-        composite.alpha_over(img, eye_os, (9,5), eye_os)
-        composite.alpha_over(img, eye, (0,0), eye)
+        alpha_over(img, eye_s, (5,5), eye_s)
+        alpha_over(img, eye_os, (9,5), eye_os)
+        alpha_over(img, eye, (0,0), eye)
 
     return img
 

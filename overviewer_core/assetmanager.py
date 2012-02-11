@@ -18,6 +18,8 @@ import os
 import codecs
 import locale
 import time
+import logging
+
 from PIL import Image
 
 import world
@@ -46,11 +48,13 @@ directory.
         self.POI = dict()
 
         # look for overviewerConfig in self.outputdir
-        if os.path.exists(os.path.join(self.outputdir, "overviewerConfig.js")):
+        try:
             with open(os.path.join(self.outputdir, "overviewerConfig.js")) as c:
                 overviewerConfig_str = "{" + "\n".join(c.readlines()[1:-1]) + "}"
             self.overviewerConfig = json.loads(overviewerConfig_str)
-        else:
+        except Exception, e:
+            if os.path.exists(os.path.join(self.outputdir, "overviewerConfig.js")):
+                logging.warning("A previous overviewerConfig.js was found, but I couldn't read it for some reason. Continuing with a blank config")
             self.overviewerConfig = dict(tilesets=dict())
 
     def get_tileset_config(self, name):
