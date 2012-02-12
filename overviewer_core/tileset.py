@@ -818,7 +818,7 @@ class TileSet(object):
         
         # Save them
         if self.imgextension == 'jpg':
-            tileimg.save(imgpath, quality=self.imgquality, subsampling=0)
+            tileimg.save(imgpath, quality=self.options['imgquality'], subsampling=0)
         else: # png
             tileimg.save(imgpath)
 
