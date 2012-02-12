@@ -56,13 +56,9 @@ class MultiWorldParser(object):
         try:
             execfile(settings_file, rendermodes.__dict__, self._config_state)
         
-        except NameError, ex:
+        except (NameError, SyntaxError), ex:
             logging.exception("Error parsing %s.  Please check the trackback for more info" % settings_file)
             sys.exit(1)
-        except SyntaxError, ex:
-            logging.exception("Error parsing %s.  Please check the trackback for more info" % self.settings_file)
-            sys.exit(1)
-
 
     def get_validated_config(self):
         """Validate and return the configuration"""
