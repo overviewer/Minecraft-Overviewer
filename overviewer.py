@@ -97,12 +97,16 @@ def main():
     
     #avail_rendermodes = c_overviewer.get_render_modes()
     avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right', 'auto']
-   
+
     # Parse for basic options
     parser = OptionParser(usage=helptext)
     parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
     parser.add_option("-p", "--processes", dest="procs", action="store", type="int",
             help="The number of local worker processes to spawn. Defaults to the number of CPU cores your computer has")
+
+    # Options that only apply to the config-less render usage
+    parser.add_option("--rendermodes", dest="rendermodes", action="store",
+            help="If you're not using a config file, specify which rendermodes to render with this option. This is a comma-separated list.")
     
     # Useful one-time render modifiers:
     parser.add_option("--forcerender", dest="forcerender", action="store_true",
@@ -225,14 +229,27 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         
         mw_parser.set_config_item("world", {'world': worldpath})
         mw_parser.set_config_item("outputdir", destdir)
+
+        rendermodes = ['lighting']
+        if options.rendermodes:
+            rendermodes = options.rendermodes.replace("-","_").split(",")
+
         # Now for some good defaults
-        mw_parser.set_config_item("render", {'world': {
-                'worldname': 'world',
-                'title': 'Overviewer Render',
-                'rendermode': 'normal',
-            }})
+        renders = {}
+        for rm in rendermodes:
+            renders["world-" + rm] = {
+                    "worldname": "world",
+                    "title": "Overviewer Render (%s)" % rm,
+                    "rendermode": rm,
+                    }
+        mw_parser.set_config_item("render", renders)
 
     else:
+        if options.rendermodes:
+            logging.error("You cannot specify --rendermodes if you give a config file. Configure your rendermodes in the config file instead")
+            parser.print_help()
+            return 1
+
         # Parse the config file
         mw_parser = configParser.MultiWorldParser()
         mw_parser.parse(options.config)
