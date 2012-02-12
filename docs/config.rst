@@ -22,7 +22,7 @@ A Simple Example
     worlds["My world"] = "/home/username/server/world"
 
     render["normalrender"] = {
-        "world": "My world",
+        "worldname": "My world",
         "title": "Normal Render of My World",
     }
 
@@ -38,7 +38,7 @@ The ``worlds`` dictionary
     dictionary. If you want to render more than one world, you would put more
     lines like this one. Otherwise, one is sufficient.
 
-The ``render`` dictionary
+The ``renders`` dictionary
     Each item here declares a "render" which is a map of a world rendered with a
     set of options. If you have more than one, when viewing the maps, you will
     get a dropdown box to choose which map you want to look at.
@@ -59,37 +59,37 @@ A more complicated example
     worlds["survival"] = "/home/username/server/survivalworld"
     worlds["creative"] = "/home/username/server/creativeworld"
 
-    render["survivalday"] = {
-        "world": "survival",
+    renders["survivalday"] = {
+        "worldname": "survival",
         "title": "Survival Daytime",
         "rendermode": smooth_lighting,
         "dimension": "overworld",
     }
 
-    render["survivalnight"] = {
-        "world": "survival",
+    renders["survivalnight"] = {
+        "worldname": "survival",
         "title": "Survival Daytime",
         "rendermode": smooth_night,
         "dimension": "overworld",
     }
 
-    render["survivalnether"] = {
-        "world": "survival",
+    renders["survivalnether"] = {
+        "worldname": "survival",
         "title": "Survival Nether",
         "rendermode": nether_smooth_lighting,
         "dimension": "nether",
     }
 
-    render["survivalspawnoverlay"] = {
-        "world": "survival",
+    renders["survivalspawnoverlay"] = {
+        "worldname": "survival",
         "title": "Spawn Overlay",
         "rendermode": spawn_overlay,
         "dimension": "overworld",
         "overlay": ["survivalday", "survivalnight"],
     }
 
-    render["creative"] = {
-        "world": "creative",
+    renders["creative"] = {
+        "worldname": "creative",
         "title": "Creative",
         "rendermode": smooth_lighting,
         "dimension": "overworld",
@@ -123,7 +123,7 @@ This means you can put arbitrary logic in this file. The Overviewer gives the
 execution of the file a local dict with a few pre-defined items (everything in
 the overviewer_core.rendermodes module).
 
-After the config file is evaluated, the ``worlds`` and ``render`` dictionaries,
+After the config file is evaluated, the ``worlds`` and ``renders`` dictionaries,
 along with other global level configuration options, are used to configure The
 Overviewer's rendering.
 
@@ -131,12 +131,12 @@ Overviewer's rendering.
     This is pre-defined as an empty dictionary. The config file is expected to
     add at least one item to it.
 
-    Keys are arbitrary strings used to identify the worlds in the ``render``
+    Keys are arbitrary strings used to identify the worlds in the ``renders``
     dictionary.
 
     Values are paths to worlds (directories with a level.dat)
 
-``render``
+``renders``
     This is also pre-defined as an empty dictionary. The config file is expected
     to add at least one item to it.
 
@@ -152,7 +152,7 @@ Overviewer's rendering.
 Render Dictonary Keys
 ---------------------
 
-``world``
+``worldname``
     Specifies which world this render corresponds to. Its value should be a
     string from the appropriate key in the worlds dictionary.
 
@@ -172,9 +172,8 @@ Render Dictonary Keys
 
 ``title``
     This is the display name used in the user interface. Set this to whatever
-    you want to see under the dropdown box for map selection.
-
-    **Deafult: Worldname - Dimension**
+    you want to see displayed in the Map Type control (the buttons in the upper-
+    right).
 
 ``rendermode``
     This is which rendermode to use for this render. There are many rendermodes
@@ -241,6 +240,12 @@ These values are set directly in the config file. Example::
     specified.
  
     This can also be specified with :option:`--processes <-p>`
+
+.. _outputdir:
+
+``outputdir = "<output directory path>"``
+    This is the path to the output directory where the rendered tiles will
+    be saved.
 
 TODO: More to come here
 

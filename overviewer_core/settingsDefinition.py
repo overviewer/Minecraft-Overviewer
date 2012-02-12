@@ -45,8 +45,8 @@
 
 from settingsValidators import *
 
-# render is a dictionary mapping strings to dicts. These dicts describe the
-# configuration for that render. Therefore, the validator for 'render' is set
+# renders is a dictionary mapping strings to dicts. These dicts describe the
+# configuration for that render. Therefore, the validator for 'renders' is set
 # to a dict validator configured to validate keys as strings and values as...
 
 # values are set to validate as a "configdict", which is a dict mapping a set
@@ -55,7 +55,7 @@ from settingsValidators import *
 # objects with their respective validators.
 
 # config file.
-render = Setting(required=True, default={},
+renders = Setting(required=True, default={},
         validator=make_dictValidator(validateStr, make_configDictValidator(
         {
             "worldname": Setting(required=True, validator=validateStr, default=None),
@@ -77,8 +77,8 @@ render = Setting(required=True, default={},
         }
         )))
 
-# The world dict, mapping world names to world paths
-world = Setting(required=True, validator=make_dictValidator(validateStr, validateWorldPath), default={})
+# The worlds dict, mapping world names to world paths
+worlds = Setting(required=True, validator=make_dictValidator(validateStr, validateWorldPath), default={})
 
 outputdir = Setting(required=True, validator=validateOutputDir, default=None)
 
