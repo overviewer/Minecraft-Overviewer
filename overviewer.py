@@ -339,7 +339,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
    
     # multiprocessing dispatcher
-    dispatch = dispatcher.MultiprocessingDispatcher(local_procs=config['processes'])
+    if config['processes'] == 1:
+        dispatch = dispatcher.Dispatcher()
+    else:
+        dispatch = dispatcher.MultiprocessingDispatcher(local_procs=config['processes'])
     last_status_print = time.time()
     def print_status(phase, completed, total):
         # phase is ignored.  it's always zero?
