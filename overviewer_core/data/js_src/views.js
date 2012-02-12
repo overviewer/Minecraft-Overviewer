@@ -11,13 +11,13 @@ overviewer.views.WorldView = Backbone.View.extend({
             console.log(" eaching");
             console.log("  Working on tileset %s" , tset.get("name"));
             var ops = {
-                getTileUrl: overviewer.gmap.getTileUrlGenerator(tset.get("path"), tset.get("base"), "png"),
+                getTileUrl: overviewer.gmap.getTileUrlGenerator(tset.get("path"), tset.get("base"), tset.get("imgextension")),
                 'tileSize':     new google.maps.Size(
                                     overviewerConfig.CONST.tileSize,
                                     overviewerConfig.CONST.tileSize),
                 'maxZoom':      tset.get("maxZoom"),
                 'minZoom':      tset.get("minZoom"),
-                'isPng':        true
+                'isPng':        (tset.get("imgextension")=="png")
             };
             var newMapType = new google.maps.ImageMapType(ops);
             newMapType.name = tset.get("name");
