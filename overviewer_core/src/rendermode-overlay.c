@@ -30,13 +30,13 @@ rendermode_overlay_start(void *data, RenderState *state, PyObject *options) {
     PyObject *facemasks_py;
     RenderModeOverlay *self = (RenderModeOverlay *)data;
     
-    facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
+    facemasks_py = PyObject_GetAttrString(state->support, "facemasks");
     /* borrowed reference, needs to be incref'd if we keep it */
     self->facemask_top = PyTuple_GetItem(facemasks_py, 0);
     Py_INCREF(self->facemask_top);
     Py_DECREF(facemasks_py);
     
-    self->white_color = PyObject_GetAttrString(state->chunk, "white_color");
+    self->white_color = PyObject_GetAttrString(state->support, "white_color");
     self->get_color = get_color;
     
     return 0;

@@ -18,8 +18,6 @@
 #include "overviewer.h"
 
 static PyObject *textures = NULL;
-static PyObject *chunk_mod = NULL;
-static PyObject *blockmap = NULL;
 
 unsigned int max_blockid = 0;
 unsigned int max_data = 0;
@@ -32,14 +30,14 @@ static PyObject *fluid_blocks = NULL;
 static PyObject *nospawn_blocks = NULL;
 static PyObject *nodata_blocks = NULL;
 
-PyObject *init_chunk_render(PyObject *self, PyObject *args) {
+PyObject *init_chunk_render(void) {
    
     PyObject *tmp = NULL;
     unsigned int i;
     
     /* this function only needs to be called once, anything more should be
      * ignored */
-    if (blockmap) {
+    if (textures) {
         Py_RETURN_NONE;
     }
 
@@ -48,16 +46,6 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     if ((!textures)) {
         return NULL;
     }
-    
-    chunk_mod = PyImport_ImportModule("overviewer_core.chunk");
-    /* ensure none of these pointers are NULL */    
-    if ((!chunk_mod)) {
-        return NULL;
-    }
-    
-    blockmap = PyObject_GetAttrString(textures, "blockmap");
-    if (!blockmap)
-        return NULL;
     
     tmp = PyObject_GetAttrString(textures, "max_blockid");
     if (!tmp)
@@ -70,7 +58,7 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
         return NULL;
     max_data = PyInt_AsLong(tmp);
     Py_DECREF(tmp);
-    
+
     /* assemble the property table */
     known_blocks = PyObject_GetAttrString(textures, "known_blocks");
     if (!known_blocks)
@@ -114,6 +102,67 @@ PyObject *init_chunk_render(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+/*
+ * Returns the requested chunk data from the requested chunk.
+ * Returns NULL with an exception set if the requested chunk doesn't exist.
+ * If clearexception is true, clears the exception before returning NULL (for
+ * soft failures)
+ */
+PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type,
+        unsigned char clearexception) {
+    int x = state->chunkx;
+    int z = state->chunkz;
+    PyObject *chunk = NULL;
+    PyObject *data = NULL;
+    
+    switch (neighbor) {
+    case CURRENT:
+        break;
+    case DOWN_RIGHT:
+        z++;
+        break;
+    case DOWN_LEFT:
+        x--;
+        break;
+    case UP_RIGHT:
+        x++;
+        break;
+    case UP_LEFT:
+        z--;
+        break;
+    }
+    
+    chunk = PyObject_CallMethod(state->regionset, "get_chunk", "ii", x, z);
+    if (chunk == NULL) {
+        // An exception is already set. RegionSet.get_chunk sets
+        // ChunkDoesntExist
+        if (clearexception) {
+            PyErr_Clear();
+        }
+        return NULL;
+    }
+    
+    switch (type) {
+    case BLOCKS:
+        data = PyDict_GetItemString(chunk, "Blocks");
+        break;
+    case BLOCKDATA:
+        data = PyDict_GetItemString(chunk, "Data");
+        break;
+    case SKYLIGHT:
+        data = PyDict_GetItemString(chunk, "SkyLight");
+        break;
+    case BLOCKLIGHT:
+        data = PyDict_GetItemString(chunk, "BlockLight");
+        break;
+    }
+    
+    /* fix the borrowed reference */
+    Py_INCREF(data);
+    Py_DECREF(chunk);
+    return data;
+}
+
 unsigned char
     check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
         /*
@@ -136,7 +185,7 @@ unsigned char
         unsigned char pdata=0;
         
         if (state->x == 15) { /* +x direction */
-            if (state->up_right_blocks != Py_None) { /* just in case we are in the end of the world */
+            if (state->up_right_blocks != NULL) { /* just in case we are in the end of the world */
                 if (getArrayByte3D(state->up_right_blocks, 0, y, z) == blockid) {
                     pdata = pdata|(1 << 3);
                 }
@@ -148,7 +197,7 @@ unsigned char
         }
         
         if (state->y == 15) { /* +y direction*/
-            if (state->right_blocks != Py_None) {
+            if (state->right_blocks != NULL) {
                 if (getArrayByte3D(state->right_blocks, x, 0, z) == blockid) {
                     pdata = pdata|(1 << 2);
                 }
@@ -160,7 +209,7 @@ unsigned char
         }
         
         if (state->x == 0) { /* -x direction*/
-            if (state->left_blocks != Py_None) {
+            if (state->left_blocks != NULL) {
                 if (getArrayByte3D(state->left_blocks, 15, y, z) == blockid) {
                     pdata = pdata|(1 << 1);
                 }
@@ -172,7 +221,7 @@ unsigned char
         }
         
         if (state->y == 0) { /* -y direction */
-            if (state->up_left_blocks != Py_None) {
+            if (state->up_left_blocks != NULL) {
                 if (getArrayByte3D(state->up_left_blocks, x, 15, z) == blockid) {
                     pdata = pdata|(1 << 0);
                 }
@@ -350,7 +399,10 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
-    PyObject *rendermode_py;
+    PyObject *regionset;
+    int chunkx, chunkz;
+    PyObject *modeobj;
+    PyObject *blockmap;
 
     int xoff, yoff;
     
@@ -367,22 +419,25 @@ chunk_render(PyObject *self, PyObject *args) {
 
     PyObject *t = NULL;
     
-    if (!PyArg_ParseTuple(args, "OOiiO",  &state.self, &state.img, &xoff, &yoff, &state.blockdata_expanded))
+    if (!PyArg_ParseTuple(args, "OiiOiiOO",  &state.regionset, &state.chunkx, &state.chunkz, &state.img, &xoff, &yoff, &modeobj, &state.textures))
         return NULL;
     
-    /* fill in important modules */
-    state.textures = textures;
-    state.chunk = chunk_mod;
-    
     /* set up the render mode */
-    rendermode_py = PyObject_GetAttrString(state.self, "rendermode");
-    state.rendermode = rendermode = render_mode_create(PyString_AsString(rendermode_py), &state);
-    Py_DECREF(rendermode_py);
+    state.rendermode = rendermode = render_mode_create(modeobj, &state);
     if (rendermode == NULL) {
         return NULL; // note that render_mode_create will
                      // set PyErr.  No need to set it here
     }
 
+    /* get the blockmap from the textures object */
+    blockmap = PyObject_GetAttrString(state.textures, "blockmap");
+    if (blockmap == NULL)
+        return NULL;
+    if (blockmap == Py_None) {
+        PyErr_SetString(PyExc_RuntimeError, "you must call Textures.generate()");
+        return NULL;
+    }
+    
     /* get the image size */
     imgsize = PyObject_GetAttrString(state.img, "size");
 
@@ -395,21 +450,25 @@ chunk_render(PyObject *self, PyObject *args) {
     Py_DECREF(imgsize0_py);
     Py_DECREF(imgsize1_py);
 
-
     /* get the block data directly from numpy: */
-    blocks_py = PyObject_GetAttrString(state.self, "blocks");
+    blocks_py = get_chunk_data(&state, CURRENT, BLOCKS, 0);
     state.blocks = blocks_py;
+    if (blocks_py == NULL) {
+        return NULL;
+    }
+    
+    state.blockdatas = get_chunk_data(&state, CURRENT, BLOCKDATA, 1);
 
-    left_blocks_py = PyObject_GetAttrString(state.self, "left_blocks");
+    left_blocks_py = get_chunk_data(&state, DOWN_LEFT, BLOCKS, 1);
     state.left_blocks = left_blocks_py;
 
-    right_blocks_py = PyObject_GetAttrString(state.self, "right_blocks");
+    right_blocks_py = get_chunk_data(&state, DOWN_RIGHT, BLOCKS, 1);
     state.right_blocks = right_blocks_py;
 
-    up_left_blocks_py = PyObject_GetAttrString(state.self, "up_left_blocks");
+    up_left_blocks_py = get_chunk_data(&state, UP_LEFT, BLOCKS, 1);
     state.up_left_blocks = up_left_blocks_py;
 
-    up_right_blocks_py = PyObject_GetAttrString(state.self, "up_right_blocks");
+    up_right_blocks_py = get_chunk_data(&state, UP_RIGHT, BLOCKS, 1);
     state.up_right_blocks = up_right_blocks_py;
     
     /* set up the random number generator again for each chunk
@@ -457,13 +516,13 @@ chunk_render(PyObject *self, PyObject *args) {
                     state.block_pdata = 0;
                 } else {
                     /* block has associated data, use it */
-                    ancilData = getArrayByte3D(state.blockdata_expanded, state.x, state.y, state.z);
+                    ancilData = getArrayByte3D(state.blockdatas, state.x, state.y, state.z);
                     state.block_data = ancilData;
                     /* block that need pseudo ancildata:
                      * grass, water, glass, chest, restone wire,
                      * ice, fence, portal, iron bars, glass panes */
-                    if ((state.block ==  2) || (state.block ==  9) || 
-                        (state.block == 20) || (state.block == 54) || 
+                    if ((state.block ==  2) || (state.block ==  9) ||
+                        (state.block == 20) || (state.block == 54) ||
                         (state.block == 55) || (state.block == 79) ||
                         (state.block == 85) || (state.block == 90) ||
                         (state.block == 101) || (state.block == 102) ||
@@ -521,6 +580,7 @@ chunk_render(PyObject *self, PyObject *args) {
     render_mode_destroy(rendermode);
     
     Py_DECREF(blocks_py);
+    Py_DECREF(blockmap);
     Py_XDECREF(left_blocks_py);
     Py_XDECREF(right_blocks_py);
     Py_XDECREF(up_left_blocks_py);

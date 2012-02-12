@@ -117,6 +117,9 @@ bad)**, head to the :doc:`Building <building>` page.
 **For all other platforms** you will need to build it yourself.
 :doc:`building`.
 
+**After you have The Overviewer built/installed** see :doc:`running` and
+:doc:`config`.
+
 .. _help:
 
 Help
@@ -144,7 +147,7 @@ Documentation Contents
    installing
    building
    running
-   options
+   config
    faq
    design/designdoc
 

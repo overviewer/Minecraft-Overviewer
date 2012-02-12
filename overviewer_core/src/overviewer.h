@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 15
+#define OVERVIEWER_EXTENSION_VERSION 20
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -35,7 +35,7 @@
 
 /* macro for getting a value out of various numpy arrays */
 #define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (x), (y), (z))))
-#define getArrayShort1D(array, x) (*(unsigned short *)(PyArray_GETPTR1((array), (x))))
+#define getArrayShort2D(array, x,y) (*(unsigned short *)(PyArray_GETPTR2((array), (x), (y))))
 
 /* generally useful MAX / MIN macros */
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -65,35 +65,35 @@ typedef struct _RenderMode RenderMode;
 
 /* in iterate.c */
 typedef struct {
-    /* the ChunkRenderer object */
-    PyObject *self;
-    
-    /* important modules, for convenience */
-    PyObject *textures;
-    PyObject *chunk;
-    
-    /* the current render mode in use */
-    RenderMode *rendermode;
-    
-    /* the rest only make sense for occluded() and draw() !! */
+    /* the regionset object, and chunk coords */
+    PyObject *regionset;
+    int chunkx, chunkz;
     
     /* the tile image and destination */
     PyObject *img;
     int imgx, imgy;
+    
+    /* the current render mode in use */
+    RenderMode *rendermode;
+    
+    /* the Texture object */
+    PyObject *textures;
     
     /* the block position and type, and the block array */
     int x, y, z;
     unsigned char block;
     unsigned char block_data;
     unsigned char block_pdata;
-    PyObject *blockdata_expanded;
+
+    /* useful information about this, and neighboring, chunks */
+    PyObject *blockdatas;
     PyObject *blocks;
     PyObject *up_left_blocks;
     PyObject *up_right_blocks;
     PyObject *left_blocks;
     PyObject *right_blocks;
 } RenderState;
-PyObject *init_chunk_render(PyObject *self, PyObject *args);
+PyObject *init_chunk_render(void);
 PyObject *chunk_render(PyObject *self, PyObject *args);
 typedef enum
 {
@@ -121,6 +121,25 @@ block_has_property(unsigned char b, BlockProperty prop) {
     return block_properties[b] & (1 << prop);
 }
 #define is_transparent(b) block_has_property((b), TRANSPARENT)
+
+/* helper for getting chunk data arrays */
+typedef enum
+{
+    BLOCKS,
+    BLOCKDATA,
+    BLOCKLIGHT,
+    SKYLIGHT,
+} ChunkDataType;
+typedef enum
+{
+    CURRENT,
+    DOWN_RIGHT, /*  0, +1 */
+    DOWN_LEFT,  /* -1,  0 */
+    UP_RIGHT,   /* +1,  0 */
+    UP_LEFT,    /*  0, -1 */
+} ChunkNeighborName;
+PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type,
+        unsigned char clearexception);
 
 /* pull in the rendermode info */
 #include "rendermodes.h"

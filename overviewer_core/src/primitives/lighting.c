@@ -15,7 +15,8 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+#include "../overviewer.h"
+#include "lighting.h"
 #include <math.h>
 
 /* figures out the color from a given skylight and blocklight,
@@ -35,7 +36,7 @@ static void
 calculate_light_color_fancy(void *data,
                             unsigned char skylight, unsigned char blocklight,
                             unsigned char *r, unsigned char *g, unsigned char *b) {
-    RenderModeLighting *mode = (RenderModeLighting *)(data);
+    RenderPrimitiveLighting *mode = (RenderPrimitiveLighting *)(data);
     unsigned int index;
     PyObject *color;
     
@@ -70,7 +71,7 @@ static void
 calculate_light_color_fancy_night(void *data,
                                   unsigned char skylight, unsigned char blocklight,
                                   unsigned char *r, unsigned char *g, unsigned char *b) {
-    RenderModeLighting *mode = (RenderModeLighting *)(data);
+    RenderPrimitiveLighting *mode = (RenderPrimitiveLighting *)(data);
     unsigned int index;
     PyObject *color;
     
@@ -95,7 +96,7 @@ calculate_light_color_fancy_night(void *data,
  */
 
 inline unsigned char
-estimate_blocklevel(RenderModeLighting *self, RenderState *state,
+estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
                          int x, int y, int z, int *authoratative) {
 
     /* placeholders for later data arrays, coordinates */
@@ -132,8 +133,8 @@ estimate_blocklevel(RenderModeLighting *self, RenderState *state,
     }
 
     /* also, make sure we have enough info to correctly calculate lighting */
-    if (blocks == Py_None || blocks == NULL ||
-        blocklight == Py_None || blocklight == NULL) {
+    if (blocks == NULL ||
+        blocklight == NULL) {
         
         return 0;
     }
@@ -185,7 +186,7 @@ estimate_blocklevel(RenderModeLighting *self, RenderState *state,
 }
 
 inline void
-get_lighting_color(RenderModeLighting *self, RenderState *state,
+get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
                    int x, int y, int z,
                    unsigned char *r, unsigned char *g, unsigned char *b) {
 
@@ -233,9 +234,9 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     }
 
     /* also, make sure we have enough info to correctly calculate lighting */
-    if (blocks == Py_None || blocks == NULL ||
-        skylight == Py_None || skylight == NULL ||
-        blocklight == Py_None || blocklight == NULL) {
+    if (!blocks   ||
+        !skylight ||
+        !blocklight) {
 
         self->calculate_light_color(self, 15, 0, r, g, b);
         return;
@@ -245,7 +246,7 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
     blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
 
-    /* special half-step, stairs handling */
+    /* special half-step handling, stairs handling */
     if (block == 44 || block == 53 || block == 67 || block == 108 || block == 109 || block == 114) {
         unsigned int upper_block;
         
@@ -273,7 +274,10 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
     
     if (block == 10 || block == 11) {
         /* lava blocks should always be lit! */
-        return 0.0f;
+        *r = 255;
+        *g = 255;
+        *b = 255;
+        return;
     }
     
     self->calculate_light_color(self, MIN(skylevel, 15), MIN(blocklevel, 15), r, g, b);
@@ -281,7 +285,7 @@ get_lighting_color(RenderModeLighting *self, RenderState *state,
 
 /* does per-face occlusion checking for do_shading_with_mask */
 inline int
-rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z) {
+lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z) {
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
         unsigned char block = getArrayByte3D(state->blocks, x, y, z);
@@ -290,7 +294,7 @@ rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, 
             /* this face isn't visible, so don't draw anything */
             return 1;
         }
-    } else if (skip_sides && (x == -1) && (state->left_blocks != Py_None)) {
+    } else if (skip_sides && (x == -1) && (state->left_blocks != NULL)) {
         unsigned char block = getArrayByte3D(state->left_blocks, 15, state->y, state->z);
         if (!is_transparent(block)) {
             /* the same thing but for adjacent chunks, this solves an
@@ -299,7 +303,7 @@ rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, 
                tessellate-able */
                return 1;
            }
-    } else if (skip_sides && (y == 16) && (state->right_blocks != Py_None)) {
+    } else if (skip_sides && (y == 16) && (state->right_blocks != NULL)) {
         unsigned char block = getArrayByte3D(state->right_blocks, state->x, 0, state->z);
         if (!is_transparent(block)) {
             /* the same thing but for adjacent chunks, this solves an
@@ -315,80 +319,69 @@ rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, 
 /* shades the drawn block with the given facemask, based on the
    lighting results from (x, y, z) */
 static inline void
-do_shading_with_mask(RenderModeLighting *self, RenderState *state,
+do_shading_with_mask(RenderPrimitiveLighting *self, RenderState *state,
                      int x, int y, int z, PyObject *mask) {
     unsigned char r, g, b;
-    float comp_shade_strength;
+    float comp_strength;
     
     /* check occlusion */
-    if (rendermode_lighting_is_face_occluded(state, self->skip_sides, x, y, z))
+    if (lighting_is_face_occluded(state, self->skip_sides, x, y, z))
         return;
     
     get_lighting_color(self, state, x, y, z, &r, &g, &b);
-    comp_shade_strength = 1.0 - self->shade_strength;
+    comp_strength = 1.0 - self->strength;
     
-    r += (255 - r) * comp_shade_strength;
-    g += (255 - g) * comp_shade_strength;
-    b += (255 - b) * comp_shade_strength;
+    r += (255 - r) * comp_strength;
+    g += (255 - g) * comp_strength;
+    b += (255 - b) * comp_strength;
     
     tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
 }
 
 static int
-rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
-    RenderModeLighting* self;
-
-    /* first, chain up */
-    int ret = rendermode_normal.start(data, state, options);
-    if (ret != 0)
-        return ret;
+lighting_start(void *data, RenderState *state, PyObject *support) {
+    RenderPrimitiveLighting* self;
+    self = (RenderPrimitiveLighting *)data;
     
-    self = (RenderModeLighting *)data;
-    
-    /* skip sides by default */
-    self->skip_sides = 1;
+    /* don't skip sides by default */
+    self->skip_sides = 0;
 
-    self->shade_strength = 1.0;
-    if (!render_mode_parse_option(options, "shade_strength", "f", &(self->shade_strength)))
+    if (!render_mode_parse_option(support, "strength", "f", &(self->strength)))
         return 1;
-
-    self->night = 0;
-    if (!render_mode_parse_option(options, "night", "i", &(self->night)))
+    if (!render_mode_parse_option(support, "night", "i", &(self->night)))
         return 1;
-
-    self->color_light = 0;
-    if (!render_mode_parse_option(options, "color_light", "i", &(self->color_light)))
+    if (!render_mode_parse_option(support, "color", "i", &(self->color)))
         return 1;
     
-    self->facemasks_py = PyObject_GetAttrString(state->chunk, "facemasks");
+    self->facemasks_py = PyObject_GetAttrString(support, "facemasks");
     // borrowed references, don't need to be decref'd
     self->facemasks[0] = PyTuple_GetItem(self->facemasks_py, 0);
     self->facemasks[1] = PyTuple_GetItem(self->facemasks_py, 1);
     self->facemasks[2] = PyTuple_GetItem(self->facemasks_py, 2);
     
-    self->skylight = PyObject_GetAttrString(state->self, "skylight");
-    self->blocklight = PyObject_GetAttrString(state->self, "blocklight");
-    self->left_skylight = PyObject_GetAttrString(state->self, "left_skylight");
-    self->left_blocklight = PyObject_GetAttrString(state->self, "left_blocklight");
-    self->right_skylight = PyObject_GetAttrString(state->self, "right_skylight");
-    self->right_blocklight = PyObject_GetAttrString(state->self, "right_blocklight");
-    self->up_left_skylight = PyObject_GetAttrString(state->self, "up_left_skylight");
-    self->up_left_blocklight = PyObject_GetAttrString(state->self, "up_left_blocklight");
-    self->up_right_skylight = PyObject_GetAttrString(state->self, "up_right_skylight");
-    self->up_right_blocklight = PyObject_GetAttrString(state->self, "up_right_blocklight");
-    
+    self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT, 1);
+    self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT, 1);
+    self->left_skylight = get_chunk_data(state, DOWN_LEFT, SKYLIGHT, 1);
+    self->left_blocklight = get_chunk_data(state, DOWN_LEFT, BLOCKLIGHT, 1);
+    self->right_skylight = get_chunk_data(state, DOWN_RIGHT, SKYLIGHT, 1);
+    self->right_blocklight = get_chunk_data(state, DOWN_RIGHT, BLOCKLIGHT, 1);
+    self->up_left_skylight = get_chunk_data(state, UP_LEFT, SKYLIGHT, 1);
+    self->up_left_blocklight = get_chunk_data(state, UP_LEFT, BLOCKLIGHT, 1);
+    self->up_right_skylight = get_chunk_data(state, UP_RIGHT, SKYLIGHT, 1);
+    self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT, 1);
+
     if (self->night) {
         self->calculate_light_color = calculate_light_color_night;
     } else {
         self->calculate_light_color = calculate_light_color;
     }
     
-    if (self->color_light) {
-        self->lightcolor = PyObject_CallMethod(state->textures, "loadLightColor", "");
+    if (self->color) {
+        self->lightcolor = PyObject_CallMethod(state->textures, "load_light_color", "");
         if (self->lightcolor == Py_None) {
             Py_DECREF(self->lightcolor);
             self->lightcolor = NULL;
-            self->color_light = 0;
+            self->color = 0;
         } else {
             if (self->night) {
                 self->calculate_light_color = calculate_light_color_fancy_night;
@@ -404,47 +397,29 @@ rendermode_lighting_start(void *data, RenderState *state, PyObject *options) {
 }
 
 static void
-rendermode_lighting_finish(void *data, RenderState *state) {
-    RenderModeLighting *self = (RenderModeLighting *)data;
+lighting_finish(void *data, RenderState *state) {
+    RenderPrimitiveLighting *self = (RenderPrimitiveLighting *)data;
     
     Py_DECREF(self->facemasks_py);
     
     Py_DECREF(self->skylight);
     Py_DECREF(self->blocklight);
-    Py_DECREF(self->left_skylight);
-    Py_DECREF(self->left_blocklight);
-    Py_DECREF(self->right_skylight);
-    Py_DECREF(self->right_blocklight);
-    Py_DECREF(self->up_left_skylight);
-    Py_DECREF(self->up_left_blocklight);
-    Py_DECREF(self->up_right_skylight);
-    Py_DECREF(self->up_right_blocklight);
-    
-    /* now chain up */
-    rendermode_normal.finish(data, state);
-}
-
-static int
-rendermode_lighting_occluded(void *data, RenderState *state, int x, int y, int z) {
-    /* no special occlusion here */
-    return rendermode_normal.occluded(data, state, x, y, z);
-}
-
-static int
-rendermode_lighting_hidden(void *data, RenderState *state, int x, int y, int z) {
-    /* no special hiding here */
-    return rendermode_normal.hidden(data, state, x, y, z);
+    Py_XDECREF(self->left_skylight);
+    Py_XDECREF(self->left_blocklight);
+    Py_XDECREF(self->right_skylight);
+    Py_XDECREF(self->right_blocklight);
+    Py_XDECREF(self->up_left_skylight);
+    Py_XDECREF(self->up_left_blocklight);
+    Py_XDECREF(self->up_right_skylight);
+    Py_XDECREF(self->up_right_blocklight);
 }
 
 static void
-rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    RenderModeLighting* self;
+lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+    RenderPrimitiveLighting* self;
     int x, y, z;
 
-    /* first, chain up */
-    rendermode_normal.draw(data, state, src, mask, mask_light);
-    
-    self = (RenderModeLighting *)data;
+    self = (RenderPrimitiveLighting *)data;
     x = state->x, y = state->y, z = state->z;
     
     if ((state->block == 9) || (state->block == 79)) { /* special case for water and ice */
@@ -473,22 +448,11 @@ rendermode_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject
     }
 }
 
-const RenderModeOption rendermode_lighting_options[] = {
-    {"shade_strength", "how dark to make the shadows, from 0.0 to 1.0 (default: 1.0)"},
-    {"night", "whether to use nighttime skylight settings (default: False)"},
-    {"color_light", "whether to use colored light (default: False)"},
-    {NULL, NULL}
-};
-
-RenderModeInterface rendermode_lighting = {
-    "lighting", "Lighting",
-    "draw shadows from the lighting data",
-    rendermode_lighting_options,
-    &rendermode_normal,
-    sizeof(RenderModeLighting),
-    rendermode_lighting_start,
-    rendermode_lighting_finish,
-    rendermode_lighting_occluded,
-    rendermode_lighting_hidden,
-    rendermode_lighting_draw,
+RenderPrimitiveInterface primitive_lighting = {
+    "lighting", sizeof(RenderPrimitiveLighting),
+    lighting_start,
+    lighting_finish,
+    NULL,
+    NULL,
+    lighting_draw,
 };

@@ -63,8 +63,8 @@ special instructions at :ref:`centos`
 The background color of the map is black, and I don't like it!
 --------------------------------------------------------------
 
-You can change this by using the :option:`--bg-color` command line option, or
-``bg_color`` in settings.py. See the :doc:`options` page for more details.
+You can change the background color by specifying a new one in the configuration
+file. See the :doc:`config` page for more details.
 
 I downloaded the Windows version but when I double-click it, the window closes real fast.
 -----------------------------------------------------------------------------------------
