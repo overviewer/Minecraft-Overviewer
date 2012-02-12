@@ -365,9 +365,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         # phase is ignored.  it's always zero?
         if (total == 0):
             percent = 100
+            logging.info("Rendered %d of %d tiles.  %d%% complete", completed, total, percent)
+        elif total == None:
+            logging.info("Rendered %d tiles.", completed)
         else:
             percent = int(100* completed/total)
-        logging.info("Rendered %d tiles out of %d.  %d%% complete", completed, total, percent)
+            logging.info("Rendered %d of %d.  %d%% complete", completed, total, percent)
     dispatch.render_all(tilesets, print_status)
     dispatch.close()
 
