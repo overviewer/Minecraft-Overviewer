@@ -47,6 +47,7 @@ feature.
  * Alex Cline <cline@vivisimo.com>
  * Andrew Clunis <andrew@orospakr.ca>
  * CounterPillow <spam@tes-cheese.ch>
+ * Michael Fallows <michael@fallo.ws>
  * Stephen Fluin <stephen@mistuph.com>
  * Benjamin Herr <ben@0x539.de>
  * Ryan Hitchman <hitchmanr@gmail.com>
