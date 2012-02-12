@@ -227,7 +227,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.debug("Using %r as the world directory", worldpath)
         logging.debug("Using %r as the output directory", destdir)
         
-        mw_parser.set_config_item("world", {'world': worldpath})
+        mw_parser.set_config_item("worlds", {'world': worldpath})
         mw_parser.set_config_item("outputdir", destdir)
 
         rendermodes = ['lighting']
@@ -242,7 +242,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
                     "title": "Overviewer Render (%s)" % rm,
                     "rendermode": rm,
                     }
-        mw_parser.set_config_item("render", renders)
+        mw_parser.set_config_item("renders", renders)
 
     else:
         if options.rendermodes:
@@ -269,15 +269,15 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     ############################################################
     # Final validation steps and creation of the destination directory
-    if not config['render']:
+    if not config['renders']:
         logging.error("You must specify at least one render in your config file. See the docs if you're having trouble")
         return 1
 
-    for rname, render in config['render'].iteritems():
+    for rname, render in config['renders'].iteritems():
         # Convert render['worldname'] to the world path, and store the original
         # in render['worldname_orig']
         try:
-            worldpath = config['world'][render['worldname']]
+            worldpath = config['worlds'][render['worldname']]
         except KeyError:
             logging.error("Render %s's world is '%s', but I could not find a corresponding entry in the worlds dictionary.",
                     rname, render['worldname'])
@@ -314,7 +314,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # same for textures
     texcache = {}
 
-    renders = config['render']
+    renders = config['renders']
     for render_name, render in renders.iteritems():
         logging.debug("Found the following render thing: %r", render)
 
