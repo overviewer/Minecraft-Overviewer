@@ -260,10 +260,10 @@ class TileSet(object):
         # Set the image format according to the options
         if self.options['imgformat'] == 'png':
             self.imgextension = 'png'
-        elif self.options['imgformat'] == 'jpeg':
+        elif self.options['imgformat'] in ('jpeg', 'jpg'):
             self.imgextension = 'jpg'
         else:
-            raise ValueError("imgformat must be one of: 'png' or 'jpeg'")
+            raise ValueError("imgformat must be one of: 'png' or 'jpg'")
 
         # This sets self.treedepth, self.xradius, and self.yradius
         self._set_map_size()
