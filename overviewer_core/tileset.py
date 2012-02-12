@@ -391,7 +391,9 @@ class TileSet(object):
                 base = '',
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') + " - " + self.options.get('dimension'),
-                last_rendertime = self.this_rendertime)
+                last_rendertime = self.this_rendertime,
+                imgextension = self.imgextension,
+                )
         try:
             d['north_direction'] = self.regionset.north_dir
         except AttributeError:
