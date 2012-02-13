@@ -148,7 +148,7 @@ Documentation Contents
    building
    running
    options
-   windowsguide
+   win_tut/windowsguide
    faq
    design/designdoc
 
