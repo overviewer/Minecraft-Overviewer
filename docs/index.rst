@@ -112,7 +112,7 @@ packages and don't want to have to compile anything yourself**, head to the
 :doc:`installing` page.
 
 **Running Windows and not familiar with the command line?** Head to the
-:doc:`windowsguide` page.
+:doc:`win_tut/windowsguide` page.
 
 **If you would like to build the Overviewer from source yourself (it's not that
 bad)**, head to the :doc:`Building <building>` page.

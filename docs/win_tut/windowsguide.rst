@@ -134,6 +134,6 @@ Overviewer. Sorry there's no easy-to-use graphical interface right now. We want
 to make one, we really do, but we haven't had the time and the talent to do so
 yet.
 
-As a next step, head to the :ref:`options` page to see what else The Overviewer
+As a next step, head to the :doc:`../options` page to see what else The Overviewer
 can do. And as always, feel free to drop by in `IRC
 <http://overviewer.org/irc/>`_ if you have any questions! We're glad to help!
