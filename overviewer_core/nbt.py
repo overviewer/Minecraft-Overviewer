@@ -85,6 +85,7 @@ class NBTFileReader(object):
             8: self._read_tag_string,
             9: self._read_tag_list,
             10:self._read_tag_compound,
+            11:self._read_tag_int_array,
         }
 
     # These private methods read the payload only of the following types
@@ -120,6 +121,11 @@ class NBTFileReader(object):
         length = self._read_tag_int()
         bytes = self._file.read(length)
         return bytes
+
+    def _read_tag_int_array(self):
+        length = self._read_tag_int()
+        int_bytes = self._file.read(length*4)
+        return struct.unpack(">%ii" % length, int_bytes)
 
     def _read_tag_string(self):
         length = self._read_tag_short()

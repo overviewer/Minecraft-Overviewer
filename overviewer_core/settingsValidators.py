@@ -5,7 +5,6 @@ from collections import namedtuple
 
 import rendermodes
 from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
-import logging
 
 class ValidationException(Exception):
     pass
