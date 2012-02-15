@@ -12,5 +12,23 @@ from test_rendertileset import RendertileSetTest
 from test_settings import SettingsTest
 from test_tileset import TilesetTest
 
+# DISABLE THIS BLOCK TO GET LOG OUTPUT FROM TILESET FOR DEBUGGING
+if 0:
+    import logging
+    root = logging.getLogger()
+    class NullHandler(logging.Handler):
+        def handle(self, record):
+            pass
+        def emit(self, record):
+            pass
+        def createLock(self):
+            self.lock = None
+    root.addHandler(NullHandler())
+else:
+    import overviewer
+    import logging
+    overviewer.configure_logger(logging.DEBUG, True)
+
+
 if __name__ == "__main__":
     unittest.main()

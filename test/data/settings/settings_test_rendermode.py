@@ -1,7 +1,7 @@
-world['test'] = "test/data/settings/test_world"
+worlds['test'] = "test/data/settings/test_world"
 
-render["world"] = { 
-    "worldname": "test", 
+renders["world"] = { 
+    "world": "test", 
     "title": "myworld title",
     "rendermode": "bad_rendermode",
     "northdirection": "upper-left",

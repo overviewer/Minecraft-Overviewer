@@ -244,6 +244,13 @@ class TileSet(object):
             that a tile which is not marked for render by any mtime checks will
             be rendered anyways. 0 disables this option.
 
+        Other options that must be specified but aren't really documented
+        (oops. consider it a TODO):
+        * worldname_orig
+        * dimension
+        * title
+        * name
+
         """
         self.options = options
         self.regionset = regionsetobj

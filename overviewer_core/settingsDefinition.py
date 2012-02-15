@@ -58,7 +58,7 @@ from settingsValidators import *
 renders = Setting(required=True, default={},
         validator=make_dictValidator(validateStr, make_configDictValidator(
         {
-            "worldname": Setting(required=True, validator=validateStr, default=None),
+            "world": Setting(required=True, validator=validateStr, default=None),
             "dimension": Setting(required=True, validator=validateDimension, default="default"),
             "title": Setting(required=True, validator=validateStr, default=None),
             "rendermode": Setting(required=True, validator=validateRenderMode, default='normal'),
@@ -74,6 +74,10 @@ renders = Setting(required=True, default={},
             "texturepath": Setting(required=False, validator=validateTexturePath, default=None),
             "renderchecks": Setting(required=True, validator=validateInt, default=0),
             "rerenderprob": Setting(required=True, validator=validateFloat, default=0),
+            
+            # Remove this eventually (once people update their configs)
+            "worldname": Setting(required=False, default=None,
+                validator=error("The option 'worldname' is now called 'world'. Please update your config files")),
         }
         )))
 

@@ -188,3 +188,8 @@ def make_configDictValidator(config, ignore_undefined=False):
         return newdict
 
     return configDictValidator
+
+def error(errstr):
+    def validator(_):
+        raise ValidationException(errstr)
+    return validator

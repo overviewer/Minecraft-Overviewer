@@ -194,7 +194,7 @@ def main():
         print "worlds['myworld'] = %r" % args[0]
         print "outputdir = %r" % (args[1] if len(args) > 1 else "/path/to/output")
         print
-        logging.error("Cannot specify both --config and worldname / output directory")
+        logging.error("Cannot specify both --config AND a world + output directory on the command line.")
         parser.print_help()
         return 1
     
@@ -238,7 +238,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         renders = {}
         for rm in rendermodes:
             renders["world-" + rm] = {
-                    "worldname": "world",
+                    "world": "world",
                     "title": "Overviewer Render (%s)" % rm,
                     "rendermode": rm,
                     }
@@ -274,16 +274,16 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         return 1
 
     for rname, render in config['renders'].iteritems():
-        # Convert render['worldname'] to the world path, and store the original
+        # Convert render['world'] to the world path, and store the original
         # in render['worldname_orig']
         try:
-            worldpath = config['worlds'][render['worldname']]
+            worldpath = config['worlds'][render['world']]
         except KeyError:
             logging.error("Render %s's world is '%s', but I could not find a corresponding entry in the worlds dictionary.",
-                    rname, render['worldname'])
+                    rname, render['world'])
             return 1
-        render['worldname_orig'] = render['worldname']
-        render['worldname'] = worldpath
+        render['worldname_orig'] = render['world']
+        render['world'] = worldpath
 
     destdir = config['outputdir']
     if not destdir:
@@ -319,11 +319,11 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.debug("Found the following render thing: %r", render)
 
         # find or create the world object
-        if (render['worldname'] not in worldcache):
-            w = world.World(render['worldname'])
-            worldcache[render['worldname']] = w
+        if (render['world'] not in worldcache):
+            w = world.World(render['world'])
+            worldcache[render['world']] = w
         else:
-            w = worldcache[render['worldname']]
+            w = worldcache[render['world']]
         
         # find or create the textures object
         texopts = util.dict_subset(render, ["texturepath", "bgcolor", "northdirection"])

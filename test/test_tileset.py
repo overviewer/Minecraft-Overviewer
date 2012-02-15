@@ -8,23 +8,6 @@ import random
 
 from overviewer_core import tileset, util
 
-# DISABLE THIS BLOCK TO GET LOG OUTPUT FROM TILESET FOR DEBUGGING
-if 1:
-    import logging
-    root = logging.getLogger()
-    class NullHandler(logging.Handler):
-        def handle(self, record):
-            pass
-        def emit(self, record):
-            pass
-        def createLock(self):
-            self.lock = None
-    root.addHandler(NullHandler())
-else:
-    import overviewer
-    import logging
-    overviewer.configure_logger(logging.DEBUG, True)
-
 # Supporing data
 # chunks list: chunkx, chunkz mapping to chunkmtime
 # In comments: col, row
@@ -121,6 +104,13 @@ class FakeRegionset(object):
         except KeyError:
             return None
 
+class FakeAssetmanager(object):
+    def __init__(self, lastrendertime):
+        self.lrm = lastrendertime
+
+    def get_tileset_config(self, _):
+        return {'lastrendertime': self.lrm}
+
 def get_tile_set(chunks):
     """Given the dictionary mapping chunk coordinates their mtimes, returns a
     dict mapping the tiles that are to be rendered to their mtimes that are
@@ -201,7 +191,7 @@ class TilesetTest(unittest.TestCase):
                 'rerenderprob': 0
                 }
         defoptions.update(options)
-        ts = tileset.TileSet(self.rs, None, None, defoptions, outputdir)
+        ts = tileset.TileSet(self.rs, FakeAssetmanager(0), None, defoptions, outputdir)
         if preprocess:
             preprocess(ts)
         ts.do_preprocessing()

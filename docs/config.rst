@@ -22,7 +22,7 @@ A Simple Example
     worlds["My world"] = "/home/username/server/world"
 
     render["normalrender"] = {
-        "worldname": "My world",
+        "world": "My world",
         "title": "Normal Render of My World",
     }
 
@@ -60,28 +60,28 @@ A more complicated example
     worlds["creative"] = "/home/username/server/creativeworld"
 
     renders["survivalday"] = {
-        "worldname": "survival",
+        "world": "survival",
         "title": "Survival Daytime",
         "rendermode": smooth_lighting,
         "dimension": "overworld",
     }
 
     renders["survivalnight"] = {
-        "worldname": "survival",
+        "world": "survival",
         "title": "Survival Daytime",
         "rendermode": smooth_night,
         "dimension": "overworld",
     }
 
     renders["survivalnether"] = {
-        "worldname": "survival",
+        "world": "survival",
         "title": "Survival Nether",
         "rendermode": nether_smooth_lighting,
         "dimension": "nether",
     }
 
     renders["survivalspawnoverlay"] = {
-        "worldname": "survival",
+        "world": "survival",
         "title": "Spawn Overlay",
         "rendermode": spawn_overlay,
         "dimension": "overworld",
@@ -89,7 +89,7 @@ A more complicated example
     }
 
     renders["creative"] = {
-        "worldname": "creative",
+        "world": "creative",
         "title": "Creative",
         "rendermode": smooth_lighting,
         "dimension": "overworld",
@@ -152,7 +152,7 @@ Overviewer's rendering.
 Render Dictonary Keys
 ---------------------
 
-``worldname``
+``world``
     Specifies which world this render corresponds to. Its value should be a
     string from the appropriate key in the worlds dictionary.
 
@@ -363,7 +363,7 @@ primitive object's constructor::
 Then you can use your new rendermode in your render definitions::
 
     render["survivalday"] = {
-        "worldname": "survival",
+        "world": "survival",
         "title": "Survival Daytime",
         "rendermode": my_rendermode,
         "dimension": "overworld",
