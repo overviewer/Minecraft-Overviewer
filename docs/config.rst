@@ -220,6 +220,57 @@ Render Dictonary Keys
 
     **Default: normal**
 
+``northdirection``
+    This is direction that north will be rendered. This north direction will 
+    match the established north direction in the game where the sun rises in the 
+    east and sets in the west. The value can be either a string or an integer.
+
+    Here are the north directions and their integer representations:
+
+    upper-left
+        0
+
+    upper-right
+        1
+
+    lower-left
+        2
+
+    lower-right
+        3
+
+    **Default: upper-left**
+
+``rerenderprob``
+    This is the probability that a tile will be rerendered even though there may 
+    have been no changes to any blocks within that tile. Its value should be a 
+    floating point number between 0.0 and 1.0.
+
+    **Default: 0**
+
+``imgformat``
+    This is which image format to render the tiles into. Its value should be a 
+    string containing "png", "jpg", or "jpeg". 
+
+    **Default: png**
+
+``imgquality``
+    This is the image quality used when saving the tiles into the JPEG image 
+    format. Its value should be an integer between 0 and 100.
+
+    **Default: 95**
+
+``bgcolor``
+    This is the background color to be displayed behind the map. Its value 
+    should be either a string in the standard HTML color syntax or a 4-tuple in 
+    the format of (r,b,g,a). The alpha entry should be set to 0.
+
+    **Default: #1a1a1a**
+
+``texturepath``
+    This is a where a specific texture pack can be found to be used during this render.
+    It can be either a folder or a directory. Its value should be a string.
+
 Global Options
 --------------
 These values are set directly in the config file. Example::
@@ -230,7 +281,7 @@ These values are set directly in the config file. Example::
 
 ``texture_pack = "<texture pack path>"``
     This is a string indicating the path to the texture pack to use for
-    rendering.
+    rendering. This is not currently implemented.
 
 .. _processes:
 
