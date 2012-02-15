@@ -5,6 +5,7 @@ from collections import namedtuple
 
 import rendermodes
 from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
+import logging
 
 class ValidationException(Exception):
     pass
@@ -166,7 +167,32 @@ def make_configDictValidator(config, ignore_undefined=False):
 
     """
     def configDictValidator(d):
+
+        # values are config keys that the user specified that don't match any
+        # valid key
+        # keys are the correct configuration key
+        undefined_key_matches = {}
+
+        # Go through the keys the user gave us and make sure they're all valid.
+        for key in d.iterkeys():
+            if key not in config:
+                # Try to find a probable match
+                match = _get_closest_match(key, config.iterkeys())
+                if match and ignore_undefined:
+                    # Save this for later. It only matters if this is a typo of
+                    # some required key that wasn't specified. (If all required
+                    # keys are specified, then this should be ignored)
+                    undefined_key_matches[match] = key
+                elif match:
+                    raise ValidationException(
+                            "'%s' is not a configuration item. Did you mean '%s'?"
+                            % (key, match))
+                elif not ignore_undefined:
+                    raise ValidationException("'%s' is not a configuration item" % key)
+
         newdict = {}
+        # Iterate through the defined keys in the configuration (`config`),
+        # checking each one to see if the user specified it (in `d`)
         for configkey, configsetting in config.iteritems():
             if configkey in d:
                 # This key /was/ specified in the user's dict. Make sure it validates.
@@ -177,14 +203,15 @@ def make_configDictValidator(config, ignore_undefined=False):
             elif configsetting.required:
                 # The user did not give us this key, there is no default, AND
                 # it's required. This is an error.
-                raise ValidationException("Required key '%s' was not specified. You must give a value for this setting" % configkey)
+                if configkey in undefined_key_matches:
+                    raise ValidationException("Key '%s' is not a valid "
+                    "configuration item. Did you mean '%s'?"
+                            % (undefined_key_matches[configkey], configkey))
+                else:
+                    raise ValidationException("Required key '%s' was not "
+                    "specified. You must give a value for this setting"
+                    % configkey)
 
-        # Now that all the defined keys have been accounted for, check to make
-        # sure any unauthorized keys were not specified.
-        if not ignore_undefined:
-            for key in d.iterkeys():
-                if key not in config:
-                    raise ValidationException("'%s' is not a configuration item" % key)
         return newdict
 
     return configDictValidator
@@ -193,3 +220,41 @@ def error(errstr):
     def validator(_):
         raise ValidationException(errstr)
     return validator
+
+# Activestate recipe 576874
+def _levenshtein(s1, s2):
+  l1 = len(s1)
+  l2 = len(s2)
+
+  matrix = [range(l1 + 1)] * (l2 + 1)
+  for zz in range(l2 + 1):
+    matrix[zz] = range(zz,zz + l1 + 1)
+  for zz in range(0,l2):
+    for sz in range(0,l1):
+      if s1[sz] == s2[zz]:
+        matrix[zz+1][sz+1] = min(matrix[zz+1][sz] + 1, matrix[zz][sz+1] + 1, matrix[zz][sz])
+      else:
+        matrix[zz+1][sz+1] = min(matrix[zz+1][sz] + 1, matrix[zz][sz+1] + 1, matrix[zz][sz] + 1)
+  return matrix[l2][l1]
+
+def _get_closest_match(s, keys):
+    """Returns a probable match for the given key `s` out of the possible keys in
+    `keys`. Returns None if no matches are very close.
+
+    """
+    # Adjust this. 3 is probably a good number, it's probably not a typo if the
+    # distance is >3
+    threshold = 3
+
+    minmatch = None
+    mindist = threshold+1
+
+    for key in keys:
+        d = _levenshtein(s, key)
+        if d < mindist:
+            minmatch = key
+            mindist = d
+
+    if mindist <= threshold:
+        return minmatch
+    return None

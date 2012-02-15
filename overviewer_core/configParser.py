@@ -61,7 +61,12 @@ class MultiWorldParser(object):
             sys.exit(1)
 
     def get_validated_config(self):
-        """Validate and return the configuration"""
+        """Validate and return the configuration. Raises a ValidationException
+        if there was a problem validating the config.
+
+        Could also raise a ValueError
+        
+        """
         # Okay, this is okay, isn't it? We're going to create the validation
         # routine right here, right now. I hope this works!
         validator = settingsValidators.make_configDictValidator(self._settings, ignore_undefined=True)
