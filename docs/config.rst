@@ -209,6 +209,21 @@ Render Dictonary Keys
 The render dictionary is a dictionary mapping configuration key strings to
 values. The valid configuration keys are listed below.
 
+.. note::
+
+    Any of these items can be specified at the top level of the config file to
+    set the default for every render. For example, this line at the top of the
+    config file will set the world for every render to 'myworld' if no world is
+    specified::
+
+        world = 'myworld'
+
+    Then you don't need to specify a ``world`` key in the render dictionaries::
+
+        render['arender'] = {
+                'title': 'This render doesn't explicitly declare a world!',
+                }
+
 ``world``
     Specifies which world this render corresponds to. Its value should be a
     string from the appropriate key in the worlds dictionary.

@@ -15,6 +15,7 @@ class MultiWorldParser(object):
     set_config_item() method.
 
     get_validated_config() validates and returns the validated config
+
     """
 
     def __init__(self):
@@ -34,6 +35,9 @@ class MultiWorldParser(object):
 
             self._settings[settingname] = setting
             
+            # Set top level defaults. This is intended to be for container
+            # types, so they can initialize a config file with an empty
+            # container (like a dict)
             if setting.required and setting.default is not None:
                 self._config_state[settingname] = setting.default
 
@@ -44,6 +48,10 @@ class MultiWorldParser(object):
         """Reads in the named file and parses it, storing the results in an
         internal state awating to be validated and returned upon call to
         get_render_settings()
+
+        Attributes defined in the file that do not match any setting are then
+        matched against the renderdict setting, and if it does match, is used as
+        the default for that setting.
 
         """
         if not os.path.exists(settings_file) and not os.path.isfile(settings_file):
@@ -59,6 +67,16 @@ class MultiWorldParser(object):
         except (NameError, SyntaxError), ex:
             logging.exception("Error parsing %s.  Please check the trackback for more info" % settings_file)
             sys.exit(1)
+
+        # At this point, make a pass through the file to possibly set global
+        # render defaults
+        render_settings = self._settings['renders'].validator.valuevalidator.config
+        for key in self._config_state.iterkeys():
+            if key not in self._settings:
+                if key in render_settings:
+                    setting = render_settings[key]
+                    setting.default = self._config_state[key]
+
 
     def get_validated_config(self):
         """Validate and return the configuration. Raises a ValidationException

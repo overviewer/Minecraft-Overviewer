@@ -9,11 +9,12 @@ from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
 class ValidationException(Exception):
     pass
 
-Setting = namedtuple("Setting", [
-    'required',
-    'validator',
-    'default',
-    ])
+class Setting(object):
+    __slots__ = ['required', 'validator', 'default']
+    def __init__(self, required, validator, default):
+        self.required = required
+        self.validator = validator
+        self.default = default
 
 def validateWorldPath(worldpath):
     abs_path = os.path.abspath(worldpath)
@@ -147,6 +148,10 @@ def make_dictValidator(keyvalidator, valuevalidator):
         for key, value in d.iteritems():
             newd[keyvalidator(key)] = valuevalidator(value)
         return newd
+    # Put these objects as attributes of the function so they can be accessed
+    # externally later if need be
+    v.keyvalidator = keyvalidator
+    v.valuevalidator = valuevalidator
     return v
 
 def make_configDictValidator(config, ignore_undefined=False):
@@ -167,6 +172,7 @@ def make_configDictValidator(config, ignore_undefined=False):
 
     """
     def configDictValidator(d):
+        newdict = {}
 
         # values are config keys that the user specified that don't match any
         # valid key
@@ -183,16 +189,22 @@ def make_configDictValidator(config, ignore_undefined=False):
                     # some required key that wasn't specified. (If all required
                     # keys are specified, then this should be ignored)
                     undefined_key_matches[match] = key
+                    newdict[key] = d[key]
                 elif match:
                     raise ValidationException(
                             "'%s' is not a configuration item. Did you mean '%s'?"
                             % (key, match))
                 elif not ignore_undefined:
                     raise ValidationException("'%s' is not a configuration item" % key)
+                else:
+                    # the key is to be ignored. Copy it as-is to the `newdict`
+                    # to be returned. It shouldn't conflict, and may be used as
+                    # a default value for a render configdict later on.
+                    newdict[key] = d[key]
 
-        newdict = {}
         # Iterate through the defined keys in the configuration (`config`),
-        # checking each one to see if the user specified it (in `d`)
+        # checking each one to see if the user specified it (in `d`). Then
+        # validate it and copy the result to `newdict`
         for configkey, configsetting in config.iteritems():
             if configkey in d:
                 # This key /was/ specified in the user's dict. Make sure it validates.
@@ -213,7 +225,10 @@ def make_configDictValidator(config, ignore_undefined=False):
                     % configkey)
 
         return newdict
-
+    # Put these objects as attributes of the function so they can be accessed
+    # externally later if need be
+    configDictValidator.config = config
+    configDictValidator.ignore_undefined = ignore_undefined
     return configDictValidator
 
 def error(errstr):
