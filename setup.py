@@ -56,7 +56,7 @@ setup_kwargs['license'] = 'GNU General Public License v3'
 setup_kwargs['long_description'] = read('README.rst')
 
 # top-level files that should be included as documentation
-doc_files = ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample.settings.py']
+doc_files = ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample_config.py']
 
 # helper to create a 'data_files'-type sequence recursively for a given dir
 def recursive_data_files(src, dest=None):
