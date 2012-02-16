@@ -175,16 +175,6 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
     **Required**
 
-.. _option_texture_pack:
-
-``texture_pack = "<texture pack path>"``
-    This is a string indicating the path to the texture pack to use for
-    rendering.
-
-    .. note::
-
-        This is not currently implemented
-
 .. _processes:
 
 ``processes = num_procs``
@@ -337,6 +327,8 @@ values. The valid configuration keys are listed below.
     the format of (r,b,g,a). The alpha entry should be set to 0.
 
     **Default:** ``#1a1a1a``
+
+.. _option_texture_pack:
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
