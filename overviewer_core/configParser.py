@@ -44,6 +44,18 @@ class MultiWorldParser(object):
     def set_config_item(self, itemname, itemvalue):
         self._config_state[itemname] = itemvalue
 
+    def set_renders_default(self, settingname, newdefault):
+        """This method sets the default for one of the settings of the "renders"
+        dictionary. This is hard-coded to expect a "renders" setting in the
+        settings definition, and for its validator to be a dictValidator with
+        its valuevalidator to be a configDictValidator
+
+        """
+        # If the structure of settingsDefinitions changes, you'll need to change
+        # this to find the proper place to find the settings dictionary
+        render_settings = self._settings['renders'].validator.valuevalidator.config
+        render_settings[settingname].default = newdefault
+
     def parse(self, settings_file):
         """Reads in the named file and parses it, storing the results in an
         internal state awating to be validated and returned upon call to

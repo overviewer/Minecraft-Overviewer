@@ -19,7 +19,7 @@ class Setting(object):
 def validateWorldPath(worldpath):
     abs_path = os.path.abspath(worldpath)
     if not os.path.exists(os.path.join(abs_path, "level.dat")):
-        raise ValidationException("No level.dat file in %r. Are you sure you have the right path?" % (abs_path,))
+        raise ValidationException("No level.dat file in '%s'. Are you sure you have the right path?" % (abs_path,))
     return abs_path
 
 
@@ -53,9 +53,11 @@ def validateNorthDirection(direction):
     elif isinstance(direction, str):
         direction = direction.lower().replace("-","").replace("_","")
         if direction == "upperleft": intdir = UPPER_LEFT
-        if direction == "upperright": intdir = UPPER_RIGHT
-        if direction == "lowerright": intdir = LOWER_RIGHT
-        if direction == "lowerleft": intdir = LOWER_LEFT
+        elif direction == "upperright": intdir = UPPER_RIGHT
+        elif direction == "lowerright": intdir = LOWER_RIGHT
+        elif direction == "lowerleft": intdir = LOWER_LEFT
+        else:
+            raise ValidationException("'%s' is not a valid north direction" % direction)
     if intdir < 0 or intdir > 3:
         raise ValidationException("%r is not a valid north direction" % direction)
     return intdir

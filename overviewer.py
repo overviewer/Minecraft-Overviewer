@@ -269,6 +269,32 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     ############################################################
     # Final validation steps and creation of the destination directory
+
+    # Override some render configdict options depending on one-time command line
+    # modifiers
+    if (
+            bool(options.forcerender) +
+            bool(options.checktiles) +
+            bool(options.notilechecks)
+            ) > 1:
+        logging.error("You cannot specify more than one of --forcerender, "+
+        "--check-tiles, and --no-tile-checks. These options conflict.")
+        parser.print_help()
+        return 1
+    if options.forcerender:
+        logging.info("Forcerender mode activated. ALL tiles will be rendered")
+        for render in config['renders'].itervalues():
+            render['renderchecks'] = 2
+    elif options.checktiles:
+        logging.info("Checking all tiles for updates manually.")
+        for render in config['renders'].itervalues():
+            render['renderchecks'] = 1
+    elif options.notilechecks:
+        logging.info("Disabling all tile mtime checks. Only rendering tiles "+
+        "that need updating since last render")
+        for render in config['renders'].itervalues():
+            render['renderchecks'] = 0
+
     if not config['renders']:
         logging.error("You must specify at least one render in your config file. See the docs if you're having trouble")
         return 1
