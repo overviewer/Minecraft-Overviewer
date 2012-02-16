@@ -123,9 +123,9 @@ This means you can put arbitrary logic in this file. The Overviewer gives the
 execution of the file a local dict with a few pre-defined items (everything in
 the overviewer_core.rendermodes module).
 
-After the config file is evaluated, the ``worlds`` and ``renders`` dictionaries,
-along with other global level configuration options, are used to configure The
-Overviewer's rendering.
+If the above doesn't make sense, just know that items in the config file take
+the form ``key = value``. Two items take a different form:, ``worlds`` and
+``renders``, which are described below.
 
 ``worlds``
     This is pre-defined as an empty dictionary. The config file is expected to
@@ -136,25 +136,89 @@ Overviewer's rendering.
 
     Values are paths to worlds (directories with a level.dat)
 
+    e.g.::
+
+        worlds['myworld'] = "/path/to/myworld"
+
+    **You must specify at least one world**
+
 ``renders``
     This is also pre-defined as an empty dictionary. The config file is expected
     to add at least one item to it.
 
     Keys are strings that are used as the identifier for this render in the
-    javascript, and also as the directory name for the tiles. It thus is
-    recommended to make it a string with no spaces or special characters, only
-    alphanumeric characters.
+    javascript, and also as the directory name for the tiles, but it's
+    essentially up to you. It thus is recommended to make it a string with no
+    spaces or special characters, only alphanumeric characters.
 
     Values are dictionaries specifying the configuration for the render. Each of
     these render dictionaries maps strings naming configuration options to their
-    values. Valid keys and their values are listed below.
+    values. Valid keys and their values are listed in the :ref:`renderdict`
+    section.
+
+    e.g.::
+
+        renders['myrender'] = {
+                'world': 'myworld',
+                'title': 'Minecraft Server Title',
+                }
+
+    **You must specify at least one render**
+
+``outputdir = "<output directory path>"``
+    This is the path to the output directory where the rendered tiles will
+    be saved.
+
+    e.g.::
+
+        outputdir = "/path/to/output"
+
+    **Required**
+
+.. _option_texture_pack:
+
+``texture_pack = "<texture pack path>"``
+    This is a string indicating the path to the texture pack to use for
+    rendering.
+
+    .. note::
+
+        This is not currently implemented
+
+.. _processes:
+
+``processes = num_procs``
+    This specifies the number of worker processes to spawn on the local machine
+    to do work. It defaults to the number of CPU cores you have, if not
+    specified.
+ 
+    This can also be specified with :option:`--processes <-p>`
+
+    e.g.::
+
+        processes = 2
+
+.. _outputdir:
+
+
+.. _renderdict:
 
 Render Dictonary Keys
 ---------------------
 
+The render dictionary is a dictionary mapping configuration key strings to
+values. The valid configuration keys are listed below.
+
 ``world``
     Specifies which world this render corresponds to. Its value should be a
     string from the appropriate key in the worlds dictionary.
+
+    **Required**
+
+``title``
+    This is the display name used in the user interface. Set this to whatever
+    you want to see displayed in the Map Type control (the buttons in the upper-
+    right).
 
     **Required**
 
@@ -168,137 +232,100 @@ Render Dictonary Keys
     "nether", "end", or the directory name of the dimension within the world.
     e.g. "DIM-1"
 
-    **Default: "overworld"**
-
-``title``
-    This is the display name used in the user interface. Set this to whatever
-    you want to see displayed in the Map Type control (the buttons in the upper-
-    right).
+    **Default:** ``"overworld"``
 
 ``rendermode``
     This is which rendermode to use for this render. There are many rendermodes
     to choose from. This can either be a rendermode object, or a string, in
     which case the rendermode object by that name is used.
+    
+    e.g.::
+
+        "rendermode": "normal",
 
     Here are the rendermodes and what they do:
 
-    normal
+    ``"normal"``
         A normal render with no lighting. This is the fastest option.
 
-    lighting
+    ``"lighting"``
         A render with per-block lighting, which looks similar to Minecraft
         without smooth lighting turned on. This is slightly slower than the
         normal mode.
 
-    smooth_lighting
+    ``"smooth_lighting"``
         A render with smooth lighting, which looks similar to Minecraft with
         smooth lighting turned on.
 
         *This option looks the best* but is also the slowest.
 
-    night
+    ``"night"``
         A "nighttime" render with blocky lighting.
 
-    smooth_night
+    ``"smooth_night"``
         A "nighttime" render with smooth lighting
 
-    nether
+    ``"nether"``
         A normal lighting render of the nether. You can apply this to any
         render, not just nether dimensions. The only difference between this and
         normal is that the ceiling is stripped off, so you can actually see
         inside.
         
-    nether_lighting
+    ``"nether_lighting"``
         Similar to "nether" but with blocky lighting.
 
-    nether_smooth_lighting
+    ``"nether_smooth_lighting"``
         Similar to "nether" but with smooth lighting.
     
     Technical note: The actual object type for this option is a list of
     *rendermode primitive* objects. See :ref:`customrendermodes` for more
     information.
 
-    **Default: normal**
+    **Default:** ``"normal"``
 
 ``northdirection``
     This is direction that north will be rendered. This north direction will 
     match the established north direction in the game where the sun rises in the 
-    east and sets in the west. The value can be either a string or an integer.
+    east and sets in the west.
 
-    Here are the north directions and their integer representations:
+    Here are the valid north directions:
 
-    upper-left
-        0
+    * ``"upper-left"``
+    * ``"upper-right"``
+    * ``"lower-left"``
+    * ``"lower-right"``
 
-    upper-right
-        1
-
-    lower-left
-        2
-
-    lower-right
-        3
-
-    **Default: upper-left**
+    **Default:** ``"upper-left"``
 
 ``rerenderprob``
     This is the probability that a tile will be rerendered even though there may 
     have been no changes to any blocks within that tile. Its value should be a 
     floating point number between 0.0 and 1.0.
 
-    **Default: 0**
+    **Default:** ``0``
 
 ``imgformat``
     This is which image format to render the tiles into. Its value should be a 
     string containing "png", "jpg", or "jpeg". 
 
-    **Default: png**
+    **Default:** ``"png"``
 
 ``imgquality``
     This is the image quality used when saving the tiles into the JPEG image 
     format. Its value should be an integer between 0 and 100.
 
-    **Default: 95**
+    **Default:** ``95``
 
 ``bgcolor``
     This is the background color to be displayed behind the map. Its value 
     should be either a string in the standard HTML color syntax or a 4-tuple in 
     the format of (r,b,g,a). The alpha entry should be set to 0.
 
-    **Default: #1a1a1a**
+    **Default:** ``#1a1a1a``
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
     It can be either a folder or a directory. Its value should be a string.
-
-Global Options
---------------
-These values are set directly in the config file. Example::
-
-    texture_pack = "/home/username/minecraft/my_texture_pack.zip"
-
-.. _option_texture_pack:
-
-``texture_pack = "<texture pack path>"``
-    This is a string indicating the path to the texture pack to use for
-    rendering. This is not currently implemented.
-
-.. _processes:
-
-``processes = num_procs``
-    This specifies the number of worker processes to spawn on the local machine
-    to do work. It defaults to the number of CPU cores you have, if not
-    specified.
- 
-    This can also be specified with :option:`--processes <-p>`
-
-.. _outputdir:
-
-``outputdir = "<output directory path>"``
-    This is the path to the output directory where the rendered tiles will
-    be saved.
-
-TODO: More to come here
 
 .. _customrendermodes:
 

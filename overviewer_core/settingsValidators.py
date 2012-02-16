@@ -49,11 +49,12 @@ def validateNorthDirection(direction):
     intdir = 0 #default
     if type(direction) == int:
         intdir = direction
-    else:
-        if direction == "upper-left": intdir = UPPER_LEFT
-        if direction == "upper-right": intdir = UPPER_RIGHT
-        if direction == "lower-right": intdir = LOWER_RIGHT
-        if direction == "lower-left": intdir = LOWER_LEFT
+    elif isinstance(direction, str):
+        direction = direction.lower().replace("-","").replace("_","")
+        if direction == "upperleft": intdir = UPPER_LEFT
+        if direction == "upperright": intdir = UPPER_RIGHT
+        if direction == "lowerright": intdir = LOWER_RIGHT
+        if direction == "lowerleft": intdir = LOWER_LEFT
     if intdir < 0 or intdir > 3:
         raise ValidationException("%r is not a valid north direction" % direction)
     return intdir

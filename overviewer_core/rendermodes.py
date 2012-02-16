@@ -16,6 +16,13 @@
 from PIL import Image
 import textures
 
+"""The contents of this file are imported into the namespace of config files.
+It also defines the render primitive objects, which are used by the C code.
+Each render primitive has a corresponding section of C code, so both places
+must be changed simultaneously if you want to make any changes.
+
+"""
+
 class RenderPrimitive(object):
     options = {}
     name = None
