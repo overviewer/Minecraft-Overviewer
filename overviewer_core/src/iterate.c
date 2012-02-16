@@ -458,6 +458,9 @@ chunk_render(PyObject *self, PyObject *args) {
     }
     
     state.blockdatas = get_chunk_data(&state, CURRENT, BLOCKDATA, 1);
+    if (state.blockdatas == NULL) {
+        return NULL;
+    }
 
     left_blocks_py = get_chunk_data(&state, DOWN_LEFT, BLOCKS, 1);
     state.left_blocks = left_blocks_py;
@@ -581,6 +584,7 @@ chunk_render(PyObject *self, PyObject *args) {
     
     Py_DECREF(blocks_py);
     Py_DECREF(blockmap);
+    Py_DECREF(state.blockdatas);
     Py_XDECREF(left_blocks_py);
     Py_XDECREF(right_blocks_py);
     Py_XDECREF(up_left_blocks_py);
