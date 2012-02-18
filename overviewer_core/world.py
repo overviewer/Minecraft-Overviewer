@@ -95,10 +95,10 @@ class World(object):
         if not os.path.exists(os.path.join(self.worlddir, "level.dat")):
             raise ValueError("level.dat not found in %s" % self.worlddir)
 
-        # figure out chunk format is in use if not mcregion, error out early
+        # Hard-code this to only work with format version 19133, "Anvil"
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-        if not ('version' in data and data['version'] == 19132):
-            logging.critical("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
+        if not ('version' in data and data['version'] == 19133):
+            logging.critical("Sorry, This version of Minecraft-Overviewer only works with the 'Anvil' chunk format")
             raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
 
         # This isn't much data, around 15 keys and values for vanilla worlds.
@@ -108,12 +108,12 @@ class World(object):
         # Scan worlddir to try to identify all region sets. Since different
         # server mods like to arrange regions differently and there does not
         # seem to be any set standard on what dimensions are in each world,
-        # just scan the directory heirarchy to find a directory with .mcr
+        # just scan the directory heirarchy to find a directory with .mca
         # files.
         for root, dirs, files in os.walk(self.worlddir):
-            # any .mcr files in this directory?
-            mcrs = filter(lambda x: x.endswith(".mcr"), files)
-            if mcrs:
+            # any .mca files in this directory?
+            mcas = filter(lambda x: x.endswith(".mca"), files)
+            if mcas:
                 # construct a regionset object for this
                 rset = RegionSet(root)
                 if root == os.path.join(self.worlddir, "region"):
@@ -307,18 +307,25 @@ class RegionSet(object):
     @log_other_exceptions
     def get_chunk(self, x, z):
         """Returns a dictionary object representing the "Level" NBT Compound
-        structure for a chunk given its x, z coordinates. The coordinates are
-        chunk coordinates. Raises ChunkDoesntExist exception if the given chunk
-        does not exist.
+        structure for a chunk given its x, z coordinates. The coordinates given
+        are chunk coordinates. Raises ChunkDoesntExist exception if the given
+        chunk does not exist.
 
         The returned dictionary corresponds to the "Level" structure in the
         chunk file, with a few changes:
-        * The "Blocks" byte string is transformed into a 16x16x128 numpy array
-        * The "SkyLight" byte string is transformed into a 16x16x128 numpy
-          array
-        * The "BlockLight" byte string is transformed into a 16x16x128 numpy
-          array
-        * The "Data" byte string is transformed into a 16x16x128 numpy array
+
+        * The Biomes array is transformed into a 16x16 numpy array
+
+        * For each chunk section:
+
+          * The "Blocks" byte string is transformed into a 16x16x16 numpy array
+          * The AddBlocks array, if it exists, is bitshifted left 8 bits and
+            added into the Blocks array
+          * The "SkyLight" byte string is transformed into a 16x16x128 numpy
+            array
+          * The "BlockLight" byte string is transformed into a 16x16x128 numpy
+            array
+          * The "Data" byte string is transformed into a 16x16x128 numpy array
 
         Warning: the returned data may be cached and thus should not be
         modified, lest it affect the return values of future calls for the same
@@ -337,31 +344,62 @@ class RegionSet(object):
 
         level = data[1]['Level']
         chunk_data = level
-        chunk_data['Blocks'] = numpy.frombuffer(level['Blocks'], dtype=numpy.uint8).reshape((16,16,128))
 
-        skylight = numpy.frombuffer(level['SkyLight'], dtype=numpy.uint8).reshape((16,16,64))
+        # Turn the Biomes array into a 16x16 numpy array
+        biomes = numpy.frombuffer(section['Biomes'], dtype=numpy.uint8)
+        biomes = biomes.reshape((16,16))
+        section['Biomes'] = biomes
 
-        # this array is 2 blocks per byte, so expand it
-        skylight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
-        # Even elements get the lower 4 bits
-        skylight_expanded[:,:,::2] = skylight & 0x0F
-        # Odd elements get the upper 4 bits
-        skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
-        chunk_data['SkyLight'] = skylight_expanded
+        for section in chunk_data['Sections']:
 
-        # expand just like skylight
-        blocklight = numpy.frombuffer(level['BlockLight'], dtype=numpy.uint8).reshape((16,16,64))
-        blocklight_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
-        blocklight_expanded[:,:,::2] = blocklight & 0x0F
-        blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
-        chunk_data['BlockLight'] = blocklight_expanded
-        
-        # expand just like skylight
-        blockdata = numpy.frombuffer(level['Data'], dtype=numpy.uint8).reshape((16,16,64))
-        blockdata_expanded = numpy.empty((16,16,128), dtype=numpy.uint8)
-        blockdata_expanded[:,:,::2] = blockdata & 0x0F
-        blockdata_expanded[:,:,1::2] = (blockdata & 0xF0) >> 4
-        chunk_data['Data'] = blockdata_expanded
+            # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
+            # adding in the additional block array if included.
+            blocks = numpy.frombuffer(section['Blocks'], dtype=numpy.uint8)
+            # Cast up to uint16, blocks can have up to 12 bits of data
+            blocks = blocks.astype(numpy.uint16)
+            blocks.reshape((16,16,16))
+            if "AddBlocks" in section:
+                # This section has additional bits to tack on to the blocks
+                # array. AddBlocks is a packed array with 4 bits per slot, so
+                # it needs expanding
+                additional = numpy.frombuffer(section['AddBlocks'], dtype=numpy.uint8)
+                additional = additional.astype(numpy.uint16).reshape((16,16,8))
+                additional_expanded = numpy.empty((16,16,16), dtype=numpy.uint16)
+                additional_expanded[:,:,::2] = (additional & 0x0F) << 8
+                additional_expanded[:,:,1::2] = (additional & 0xF0) << 4
+                blocks += additional_expanded
+                del additional
+                del additional_expanded
+                del section['AddBlocks'] # Save some memory
+            section['Blocks'] = blocks
+
+            # Turn the skylight array into a 16x16x16 matrix. The array comes
+            # packed 2 elements per byte, so we need to expand it.
+            skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
+            skylight = skylight.reshape((16,16,8))
+            skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+            skylight_expanded[:,:,::2] = skylight & 0x0F
+            skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
+            del skylight
+            section['SkyLight'] = skylight_expanded
+
+            # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
+            blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
+            blocklight = blocklight.reshape((16,16,8))
+            blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+            blocklight_expanded[:,:,::2] = blocklight & 0x0F
+            blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
+            del blocklight
+            section['BlockLight'] = blocklight_expanded
+
+            # Turn the Data array into a 16x16x16 matrix, same as SkyLight
+            data = numpy.frombuffer(section['Data'], dtype=numpy.uint8)
+            data = data.reshape((16,16,8))
+            data_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+            data_expanded[:,:,::2] = data & 0x0F
+            data_expanded[:,:,1::2] = (data & 0xF0) >> 4
+            del data
+            section['Data'] = data_expanded
         
         return chunk_data      
     
@@ -413,7 +451,7 @@ class RegionSet(object):
 
         logging.debug("regiondir is %s", self.regiondir)
 
-        for path in glob(self.regiondir + "/r.*.*.mcr"):
+        for path in glob(self.regiondir + "/r.*.*.mca"):
             dirpath, f = os.path.split(path)
             p = f.split(".")
             x = int(p[1])
