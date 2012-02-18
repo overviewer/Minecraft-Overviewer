@@ -112,7 +112,7 @@ class World(object):
         # files.
         for root, dirs, files in os.walk(self.worlddir):
             # any .mcr files in this directory?
-            mcrs = filter(lambda x: x.endswith(".mcr"), files)
+            mcrs = [x for x in files if x.endswith(".mcr")]
             if mcrs:
                 # construct a regionset object for this
                 rset = RegionSet(root)
