@@ -23,42 +23,50 @@ So let's get started!
 
 Background Info
 ===============
-The Overviewer's task is to take Minecraft worlds and render them into a set of tiles that can be displayed with a Google Maps interface.
+
+The Overviewer's task is to take Minecraft worlds and render them into a set of
+tiles that can be displayed with a Google Maps interface. This section goes over
+how Minecraft worlds work and are stored.
 
 A Minecraft world extends indefinitely along the two horizontal axes, and are
-exactly 128 units high. Minecraft worlds are made of cubes, where each slot in
-the world's grid has a type that determines what it is (grass, stone, ...).
-This makes worlds relatively uncomplicated to render, the Overviewer simply
-determines what cubes to draw and where. Since everything in Minecraft is
-aligned to a strict grid, placement and rendering decisions are completely
-deterministic and can be performed in an iterative fashon.
+exactly 256 units high. Minecraft worlds are made of voxels (volumetric pixels),
+hereby called "blocks", where each block in the world's grid has a type that
+determines what it is (grass, stone, ...).  This makes worlds relatively
+uncomplicated to render, the Overviewer simply determines what blocks to draw
+and where. Since everything in Minecraft is aligned to a strict grid, placement
+and rendering decisions are completely deterministic and can be performed in an
+iteratively.
 
 The coordinate system for Minecraft has three axes. The X and Z axes are the
 horizontal axes. They extend indefinitely towards both positive and negative
 infinity. (There are practical limits, but no theoretical limits). The Y axis
-extends from 0 to 127, which corresponds with the world height limit. Each
+extends from 0 to 255, which corresponds with the world height limit. Each
 block in Minecraft has a coordinate address, e.g. the block at 15,78,-35 refers
 to 15 along the X axis, -35 along the Z axis, and 78 units up from bedrock.
 
-The world is divided up into *chunks*. A chunk is a 16 by 16 area of the world
-that extends from bedrock to sky. In other words, a 16,128,16 "chunk" of the
-world. Chunks also have an address, but in only 2 dimensions. To find the which
-chunk a block is in, simply divide its X and Z coordinates by 16 and take the
-floor.
+The world is organized in a three-layer hierarchy. At the finest level are the
+blocks (voxels). A 16x16x16 array of blocks is called a *chunk section*. A
+vertical column of 16 chunk sections makes a *chunk*. A chunk is therefore a 16
+by 16 area of the world that extends from bedrock to sky. In other words, a 16
+by 256 by 16 "chunk" of the world. A 32 by 32 area of chunks is called a
+*region*. Regions are stored on disk one per file.
+
+While blocks have a global coordinate (the ones you see in the debug output
+in-game), they also have a local coordinate within a chunk section and within a
+chunk. Also, chunks and regions have their own coordinates to identify
+themselves. To find which chunk a block is in, simply divide its coordinates by
+16 and take the floor. To find which region a chunk is in, divide the chunk
+coordinates by 32 and take the floor. To find which chunk section a block is in,
+take its Y coordinate and floor-divide by 16.
 
 Minecraft worlds are generated on-the-fly by the chunk. This means not all
-chunks will exist. There is no pattern to which chunks are generated, the game
-generates them as needed as players explore the area.
-
-Chunks are stored on-disk in region files. A Minecraft region is a "region" of
-32 by 32 chunks. Regions have their own address, and for a particular chunk one
-can find its region by dividing its coordinates by 32 and taking the floor. A
-region may contain all 1024 of its chunks, or only a subset of them, since not
-all chunks may exist. The absence of a region file indicates none of its chunks
+chunks will exist, and not all sections within a chunk will exist. There is no
+pattern to which chunks are generated, the game generates them as needed as
+players explore the area. A region file may not exist if none of its chunks
 exist.
 
-About the Rendering
-===================
+Overviewer at a High Level
+==========================
 
 Minecraft worlds are rendered in an approximated Isometric projection at an
 oblique angle. In the original design, the projection acts as if your eye is
@@ -69,43 +77,61 @@ directions).
 .. image:: screenshot.png
     :alt: A screenshot of Overviewer output
 
-In order to render a Minecraft world, there are a few steps that need to happen.
-These steps are explained in detail in the next few sections.
+The Overviewer is a sprite-based renderer. Each block corresponds to a
+pre-rendered sprite (a small image). The basic idea is to iterate over the
+blocks of the world and draw these sprites to the appropriate location on the
+map.
 
-1. Render each block
-2. Render the chunks from the blocks
-3. Render the tiles of the map from the chunks
-4. Shrink and combine the tiles for the other zoom levels
+These are the high-level tasks The Overviewer must preform in rendering a map:
+
+1. Render each block sprite from the textures
+2. Scan the chunks of the world and determine which tiles need rendering
+3. Render a single chunk from the blocks sprites
+4. Render a single tile of the map from chunk images
+5. Compose the lower-zoom tiles from the higher-zoom tiles
+
+The next sections will go over how these tasks work.
 
 Block Rendering
 ===============
 .. This section shows how each block is pre-rendered
 
-The first step is rendering the blocks from the textures. Each block is "built"
-from its textures into an image of a cube and cached in global variables of the
-:mod:`textures` module.
+The first step is rendering the block sprites from the textures. Each block is
+"built" from its textures into an image of a cube and cached in a
+:class:`Textures` object.
 
-Textures come in the size 16 by 16 (higher resolution textures are resized and
-the process remains the same). In order to render a cube out of this, an `affine
-transformation`_ is applied to the texture in order to transform it to the top,
-left, and right faces of the cube.
+Textures come from a terrain.png file in the form of 16 by 16 pixel images.
+(Higher resolution textures are resized and the process remains the same). In
+order to draw a cube out of the textuers, an `affine transformation`_ is applied to
+the images for the top and sides of the cube in order to transform it to the
+appropriate perspective.
+
+.. note::
+
+    This section goes over the simple case for a regular cube, which are most of
+    the blocks in Minecraft. There are lots of irregular blocks that aren't
+    cubes (fences, torches, doors) which require custom rendering. Irregular
+    blocks are not covered by this design document. Each type of block has its
+    own function in :mod:`overviewer_core.textures` that defines how to render
+    it.
 
 .. image:: blockrendering/texturecubing.png
     :alt: A texture gets rendered into a cube
 
 .. _affine transformation: http://en.wikipedia.org/wiki/Affine_transformation
 
-The result is an image of a cube that is 24 by 24 pixels in size. This
-particular size for the cubes was chosen for an important reason: 24 is
-divisible by 2 and by 4. This makes placement much easier. E.g. in order to draw
-two cubes that are next to each other in the world, one is drawn exactly 12
-pixels over and 6 pixels down from the other. All placements of the cubes happen
-on exact pixel boundaries and no further resolution is lost beyond the initial
-transformations.
+Every block sprite is exactly 24 by 24 pixels in size. This particular size for
+the cubes was chosen for an important reason: 24 is divisible by 2 and by 4.
+This makes placement much easier. E.g. in order to draw two cubes that are next
+to each other in the world, one is drawn exactly 12 pixels over and 6 pixels
+down from the other. All placements of the cubes happen on exact pixel
+boundaries and no further resolution is lost beyond the initial transformations.
+(This advantage will become clear in the :ref:`cubepositioning` section; all
+offsets are a nice even 6, 12, or 24 pixels)
 
-The transformation happens in two stages. First, the texture is transformed for
-the top of the cube. Then the texture is transformed for the left side of the
-cube, which is mirrored for the right side of the cube.
+A cube sprite is built in two stages. First, the texture is transformed for the
+top of the cube. Then the texture is transformed for the left side of the cube,
+which is mirrored for the right side of the cube.
 
 Top Transformation
 ------------------
@@ -116,13 +142,13 @@ transformations: a re-size, a rotation, and a scaling; but since multiple affine
 transformations can be chained together simply by multiplying the transformation
 matrices together, only one transformation is actually done.
 
-This can be seen in the function :func:`textures.transform_image`. It takes
-these steps:
+This can be seen in the function
+:func:`overviewer_core.textures.transform_image`. It preforms three steps:
 
 1. The texture is re-sized to 17 by 17 pixels. This is done because the diagonal
    of a square with sides 17 is approximately 24, which is the target size for
    the bounding box of the cube image. So when it's rotated, it will be the
-   correct width.
+   correct width. (Better to scale it now than after we rotate it)
 
 2. The image is rotated 45 degrees about its center.
 
@@ -171,7 +197,7 @@ right is scaled with no interpolation by a factor of 10 to show the pixels.
 An Entire Cube
 --------------
 These three images, the top and two sides, are pasted into a single 24 by 24
-pixel image to get the cube, as shown.
+pixel image to get the cube sprite, as shown.
 
 However, notice from the middle of the three images in the sequence below that
 the images as transformed don't fit together exactly. There is some overlap when
@@ -180,10 +206,9 @@ put in the 24 by 24 box in which they must fit.
 .. image:: blockrendering/cube_parts.png
     :alt: How the cube parts fit together
 
-There is one more complication. The cubes don't tessellate perfectly. This
-diagram illustrates when a cube is positioned next to another. The lower cubes
-are 18 pixels lower and 12 pixels to either side, which is half the width and
-3/4 the height respectively.
+There is one more complication. The cubes don't tessellate perfectly. A six
+pixel gap is left between the lower-right border and upper-left border of blocks
+in this arrangement:
 
 .. image:: blockrendering/tessellation.png
     :alt: Cubes don't tessellate perfectly
@@ -192,104 +217,101 @@ The solution is to manually touch up those 6 pixels. 3 pixels are added on the
 upper left of each cube, 3 on the lower right. Therefore, they all line up
 perfectly!
 
-This is done at the end of :func:`textures._build_block`
+This is done at the end of :meth:`Textures.build_block`
 
 .. image:: blockrendering/pixelfix.png
     :alt: The 6 pixels manually added to each cube.
 
-Other Cube Types
-----------------
-Many block types are not rendered as cubes. Fences, rails, doors, torches, and
-many other types of blocks have custom rendering routines.
-
 Chunk Rendering
 ===============
 
-So now that each type of cube is rendered and cached in global variables within
-the :mod:`textures` module, the next step is to use the data from a chunk of
-the world to arrange these cubes on an image, rendering an entire chunk.
+With these cube sprites, we can draw them together to start constructing the
+world. The renderer renders a single chunk section (a 16 by 16 by 16 group of
+blocks) at a time.
 
-How big is a chunk going to be? A chunk is 16 by 16 blocks across, 128 blocks
-high. The diagonal of a 16 by 16 grid is 16 squares. Observe.
+This section of the design doc goes over how to draw the cube sprites together
+to draw an entire chunk section.
 
-This is the top-down view of a single chunk. It is essentially a 16 by 16 grid,
-extending 128 units into the page.
+How big is a chunk section going to be? A chunk section is a cube of 16x16x16
+blocks.
 
-.. image:: cuberenderimgs/chunk_topdown.png
-    :alt: A 16x16 square grid
-
-Rendered at the appropriate perspective, we'll have something like this
-(continued down for 128 layers).
+Rendered at the appropriate perspective, we'll have a cube made up of 4096
+smaller cubes, like this:
 
 .. image:: cuberenderimgs/chunk_perspective.png
-    :alt: Perspective rendering of the two top layers of a chunk.
+    :alt: Perspective rendering of a chunk section.
 
-Each of those cubes shown is where one of the pre-rendered cubes gets pasted.
-This happens from back to front, bottom to top, so that the chunk gets drawn
-correctly. Obviously if a cube in the back is pasted on the image after the
-cubes in the front, it will be drawn on top of everything.
+Each of those cubes shown is where one of the pre-rendered block sprites gets
+pasted; the entire thing is a chunk section. The renderer iterates over a chunk
+layer-at-a-time from bottom to top, drawing the sprites. The order is important
+so that the it gets drawn correctly. Obviously if a sprite in the back is pasted
+on the image after the sprites in the front are drawn, it will be drawn on top
+of everything instead of behind.
 
-Cube Positioning
-----------------
-A single cube is drawn in a 24 by 24 square. Before we can construct a chunk out
-of individual cubes, we must figure out how to position neighboring cubes.
+.. _cubepositioning:
 
-First, to review, these are the measurements of a cube:
+Block Positioning
+-----------------
+
+A single block is a 24 by 24 pixel image. Before we can construct a chunk
+section out of individual blocks, we must figure out how to position neighboring
+blocks.
+
+First, to review, these are the measurements of a block sprite:
 
 .. image:: cubepositionimgs/cube_measurements.png
-    :alt: The measurements of a cube
+    :alt: The measurements of a block sprite
 
-* The cube is bounded by a 24 by 24 pixel square.
+* The image is bounded by a 24 by 24 pixel square.
 
 * The side vertical edges are 12 pixels high.
 
-* The top (and bottom) face of the cube takes 12 vertical pixels (and 24
+* The top (and bottom) face of the block takes 12 vertical pixels (and 24
   horizontal pixels).
 
-* The edges of the top and bottom of the cube take up 6 vertical pixels and 12
+* The edges of the top and bottom of the block take up 6 vertical pixels and 12
   horizontal pixels each.
 
-Two cubes that are neighbors after projection to the image (diagonally
+Two blocks that are neighbors after projection to the image (diagonally
 neighboring in the world) have a horizontal offset of 24 pixels from each other,
-as shown below on the left.  This is mostly trivial, since the images don't end
-up overlapping at all. Two cubes in the same configuration but rotated 90
-degrees have some overlap in the image, and are only vertically offset by 12
-pixels, as shown on the right.
+as shown below on the left.  This is mostly trivial, since the images don't
+overlap at all. Two blocks in the same configuration but rotated 90 degrees have
+some overlap as shown on the right, and are only vertically offset by 12 pixels.
 
 .. image:: cubepositionimgs/cube_horizontal_offset.png
-    :alt: Two cubes horizontally positioned are offset by 24 pixels on the X axis.
+    :alt: Two blocks horizontally positioned are offset by 24 pixels on the X axis.
 
-Now for something slightly less trivial: two cubes that are stacked on top of
+Now for something slightly less intuitive: two blocks that are stacked on top of
 each other in the world. One is rendered lower on the vertical axis of the
 image, but by how much?
 
 .. image:: cubepositionimgs/cube_stacking.png
-    :alt: Two cubes stacked are offset in the image by 12 pixels.
+    :alt: Two blocks stacked are offset in the image by 12 pixels.
 
 Interestingly enough, due to the projection, this is exactly the same offset as
-the situation above for diagonally neighboring cubes. The cube outlined in green
-is drawn 12 pixels below the other one. Only the order that the cubes are drawn
+the situation above for diagonally neighboring blocks. The block outlined in green
+is drawn 12 pixels below the other one. Only the order that the blocks are drawn
 is different.
 
-And finally, what about cubes that are next to each other in the world ---
+And finally, what about blocks that are next to each other in the world ---
 diagonally next to each other in the image?
 
 .. image:: cubepositionimgs/cube_neighbors.png
     :alt: Cubes that are neighbors are offset by 12 on the X and 6 on the Y
 
-The cube outlined in green is offset on the horizontal axis by half the cube
+The block outlined in green is offset on the horizontal axis by half the block
 width, or 12 pixels. It is offset on the vertical axis by half the height of the
-cube's top, or 6 pixels. For the other 3 directions this could go, the
+block's top, or 6 pixels. For the other 3 directions this could go, the
 directions of the offsets are changed, but the amounts are the same.
 
 The size of a chunk
 -------------------
-Now that we know how to place cubes relative to each other, we can begin to
-construct a chunk.
+Now that we know how to place blocks relative to each other, we can begin to
+construct a chunk section.
 
-Since the cube images are 24 by 24 pixels, and the diagonal of the 16 by 16 grid
-is 16 squares, the width of one rendered chunk will be 384 pixels. Just
-considering the top layer of the chunk:
+Since the block sprites are 24 by 24 pixels, and the diagonal of the 16 by 16
+grid is 16 squares, the width of one rendered chunk will be 384 pixels. Just
+considering the top layer of the blocks:
 
 .. image:: cuberenderimgs/chunk_width.png
     :alt: Illustrating the width of a single chunk
