@@ -111,8 +111,8 @@ class World(object):
         # just scan the directory heirarchy to find a directory with .mca
         # files.
         for root, dirs, files in os.walk(self.worlddir):
-            # any .mca files in this directory?
-            mcas = filter(lambda x: x.endswith(".mca"), files)
+            # any .mcr files in this directory?
+            mcas = [x for x in files if x.endswith(".mca")]
             if mcas:
                 # construct a regionset object for this
                 rset = RegionSet(root)
@@ -255,11 +255,11 @@ class RegionSet(object):
         this regionset.  Either "nether", "end" or "overworld"
         """
         # path will be normalized in __init__
-        if self.regiondir.endswith("/DIM-1/region"): 
+        if self.regiondir.endswith(os.path.normpath("/DIM-1/region")):
             return "nether"
-        elif self.regiondir.endswith("/DIM1/region"):
+        elif self.regiondir.endswith(os.path.normpath("/DIM1/region")):
             return "end"
-        elif self.regiondir.endswith("/region"):
+        elif self.regiondir.endswith(os.path.normpath("/region")):
             return "overworld"
         else:
             raise Exception("Woah, what kind of dimension is this! %r" % self.regiondir)
