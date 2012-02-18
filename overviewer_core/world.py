@@ -346,9 +346,9 @@ class RegionSet(object):
         chunk_data = level
 
         # Turn the Biomes array into a 16x16 numpy array
-        biomes = numpy.frombuffer(section['Biomes'], dtype=numpy.uint8)
+        biomes = numpy.frombuffer(chunk_data['Biomes'], dtype=numpy.uint8)
         biomes = biomes.reshape((16,16))
-        section['Biomes'] = biomes
+        chunk_data['Biomes'] = biomes
 
         for section in chunk_data['Sections']:
 
