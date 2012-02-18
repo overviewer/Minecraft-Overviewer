@@ -227,39 +227,39 @@ class MCRFileReader(object):
 
     def get_chunks(self):    
         """Return an iterator of all chunks contained in this region
-        file, as (x, y) coordinate tuples. To load these chunks,
+        file, as (x, z) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
         
         for x in xrange(32): 
-            for y in xrange(32): 
-                if self._locations[x + y * 32] >> 8 != 0:
-                    yield (x,y)
+            for z in xrange(32): 
+                if self._locations[x + z * 32] >> 8 != 0:
+                    yield (x,z)
         
-    def get_chunk_timestamp(self, x, y):
+    def get_chunk_timestamp(self, x, z):
         """Return the given chunk's modification time. If the given
         chunk doesn't exist, this number may be nonsense. Like
-        load_chunk(), this will wrap x and y into the range [0, 31].
+        load_chunk(), this will wrap x and z into the range [0, 31].
         """
         x = x % 32
-        y = y % 32        
-        return self._timestamps[x + y * 32]   
+        z = z % 32        
+        return self._timestamps[x + z * 32]   
     
-    def chunk_exists(self, x, y):
+    def chunk_exists(self, x, z):
         """Determines if a chunk exists."""
         x = x % 32
-        y = y % 32
-        return self._locations[x + y * 32] >> 8 != 0
+        z = z % 32
+        return self._locations[x + z * 32] >> 8 != 0
 
-    def load_chunk(self, x, y):
+    def load_chunk(self, x, z):
         """Return a (name, data) tuple for the given chunk, or
         None if the given chunk doesn't exist in this region file. If
-        you provide an x or y not between 0 and 31, it will be
+        you provide an x or z not between 0 and 31, it will be
         modulo'd into this range (x % 32, etc.) This is so you can
         provide chunk coordinates in global coordinates, and still
         have the chunks load out of regions properly."""
         x = x % 32
-        y = y % 32
-        location = self._locations[x + y * 32]
+        z = z % 32
+        location = self._locations[x + z * 32]
         offset = (location >> 8) * 4096;
         sectors = location & 0xff;
         
