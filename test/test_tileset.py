@@ -122,7 +122,7 @@ def get_tile_set(chunks):
 
         col, row = util.convert_coords(chunkx, chunkz)
 
-        for tilec, tiler in util.get_tiles_by_chunk(col, row):
+        for tilec, tiler in tileset.get_tiles_by_chunk(col, row):
             tile = tileset.RenderTile.compute_path(tilec, tiler, 3)
             tile_set[tile.path] = max(tile_set[tile.path], chunkmtime)
 

@@ -152,32 +152,6 @@ def unconvert_coords(col, row):
     # col - row = chunkx + chunkx => (col - row)/2 = chunkx
     return ((col - row) / 2, (col + row) / 2)
 
-def get_tiles_by_chunk(chunkcol, chunkrow):
-    """For the given chunk, returns an iterator over Render Tiles that this
-    chunk touches.  Iterates over (tilecol, tilerow)
-    
-    """
-    # find tile coordinates. Remember tiles are identified by the
-    # address of the chunk in their upper left corner.
-    tilecol = chunkcol - chunkcol % 2
-    tilerow = chunkrow - chunkrow % 4
-
-    # If this chunk is in an /even/ column, then it spans two tiles.
-    if chunkcol % 2 == 0:
-        colrange = (tilecol-2, tilecol)
-    else:
-        colrange = (tilecol,)
-
-    # If this chunk is in a row divisible by 4, then it touches the
-    # tile above it as well. Also touches the next 4 tiles down (16
-    # rows)
-    if chunkrow % 4 == 0:
-        rowrange = xrange(tilerow-4, tilerow+16+1, 4)
-    else:
-        rowrange = xrange(tilerow, tilerow+16+1, 4)
-
-    return product(colrange, rowrange)
-
 # Logging related classes are below
 
 # Some cool code for colored logging:

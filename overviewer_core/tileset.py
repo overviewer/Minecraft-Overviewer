@@ -24,10 +24,11 @@ import time
 import errno
 import stat
 from collections import namedtuple
+from itertools import product, izip
 
 from PIL import Image
 
-from .util import iterate_base4, convert_coords, unconvert_coords, get_tiles_by_chunk
+from .util import iterate_base4, convert_coords, unconvert_coords, roundrobin
 from .optimizeimages import optimize_image
 import c_overviewer
 
@@ -761,7 +762,7 @@ class TileSet(object):
 
         # Calculate which chunks are relevant to this tile
         # This is a list of (col, row, chunkx, chunkz, chunk_mtime)
-        chunks = list(self._get_chunks_for_tile(tile))
+        chunks = list(get_chunks_by_tile(tile, self.regionset))
 
         if not chunks:
             # No chunks were found in this tile
@@ -798,32 +799,33 @@ class TileSet(object):
         # col colstart will get drawn on the image starting at x coordinates -(384/2)
         # row rowstart will get drawn on the image starting at y coordinates -(192/2)
         max_chunk_mtime = 0
-        for col, row, chunkx, chunkz, chunk_mtime in chunks:
+        for col, row, chunkx, chunky, chunkz, chunk_mtime in chunks:
             xpos = -192 + (col-colstart)*192
-            ypos = -96 + (row-rowstart)*96
+            ypos = -96 + (row-rowstart)*96 + chunky*192
 
             if chunk_mtime > max_chunk_mtime:
                 max_chunk_mtime = chunk_mtime
 
             # draw the chunk!
-            c_overviewer.render_loop(self.regionset, chunkx, chunkz, tileimg,
-                    xpos, ypos, self.options['rendermode'], self.textures)
+            c_overviewer.render_loop(self.regionset, chunkx, chunky, chunkz,
+                    tileimg, xpos, ypos, self.options['rendermode'],
+                    self.textures)
 
-            if 0:
-                # Draw the outline of the top of the chunk
-                import ImageDraw
-                draw = ImageDraw.Draw(tileimg)
-                # Draw top outline
-                draw.line([(192,0), (384,96)], fill='red')
-                draw.line([(192,0), (0,96)], fill='red')
-                draw.line([(0,96), (192,192)], fill='red')
-                draw.line([(384,96), (192,192)], fill='red')
-                # Draw side outline
-                draw.line([(0,96),(0,96+1536)], fill='red')
-                draw.line([(384,96),(384,96+1536)], fill='red')
-                # Which chunk this is:
-                draw.text((96,48), "C: %s,%s" % (chunkx, chunkz), fill='red')
-                draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
+            ## Semi-handy routine for debugging the drawing routine
+            ## Draw the outline of the top of the chunk
+            #import ImageDraw
+            #draw = ImageDraw.Draw(tileimg)
+            ## Draw top outline
+            #draw.line([(192,0), (384,96)], fill='red')
+            #draw.line([(192,0), (0,96)], fill='red')
+            #draw.line([(0,96), (192,192)], fill='red')
+            #draw.line([(384,96), (192,192)], fill='red')
+            ## Draw side outline
+            #draw.line([(0,96),(0,96+192)], fill='red')
+            #draw.line([(384,96),(384,96+192)], fill='red')
+            ## Which chunk this is:
+            #draw.text((96,48), "C: %s,%s" % (chunkx, chunkz), fill='red')
+            #draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
         
         # Save them
         if self.imgextension == 'jpg':
@@ -835,40 +837,6 @@ class TileSet(object):
             optimize_image(imgpath, self.imgextension, self.options['optimizeimg'])
 
         os.utime(imgpath, (max_chunk_mtime, max_chunk_mtime))
-
-    def _get_chunks_for_tile(self, tile):
-        """Get chunks that are relevant to the given render-tile
-        
-        Returns an iterator over chunks tuples where each item is
-        (col, row, chunkx, chunkz, mtime)
-        """
-
-        chunklist = []
-
-        # Chunks that are relevant to this tile: the 8 chunks directly in this
-        # tile, and the chunks from the previous 16 rows
-        rowstart = tile.row
-        rowend = rowstart+4
-        colstart = tile.col
-        colend = colstart+2
-
-        # Start 16 rows up from the actual tile's row, since chunks are that tall.
-        # Also, every other tile doesn't exist due to how chunks are arranged. See
-        # http://docs.overviewer.org/en/latest/design/designdoc/#chunk-addressing
-        for row, col in itertools.product(
-                xrange(rowstart-16, rowend+1),
-                xrange(colstart, colend+1)
-                ):
-            if row % 2 != col % 2:
-                continue
-            
-            chunkx, chunkz = unconvert_coords(col, row)
-
-            # Query for info on the chunk at chunkx, chunkz
-            mtime = self.regionset.get_chunk_mtime(chunkx, chunkz)
-            if mtime:
-                # The chunk exists
-                yield (col, row, chunkx, chunkz, mtime)
 
     def _iterate_and_check_tiles(self, path):
         """A generator function over all tiles that need rendering in the
@@ -904,7 +872,7 @@ class TileSet(object):
                     raise
                 tile_mtime = 0
             
-            max_chunk_mtime = max(c[4] for c in self._get_chunks_for_tile(tileobj))
+            max_chunk_mtime = max(c[5] for c in get_chunks_by_tile(tileobj, self.regionset))
 
             if tile_mtime > 120 + max_chunk_mtime:
                 # If a tile has been modified more recently than any of its
@@ -1004,6 +972,93 @@ def get_dirdepth(outputdir):
         depth += 1
 
     return depth
+
+######################
+# The following two functions define the mapping from chunks to tiles and back.
+# The mapping from chunks to tiles (get_tiles_by_chunk()) is used during the
+# chunk scan to determine which tiles need updating, while the mapping from a
+# tile to chunks (get_chunks_by_tile()) is used by the tile rendering routines
+# to get which chunks are needed.
+def get_tiles_by_chunk(chunkcol, chunkrow):
+    """For the given chunk, returns an iterator over Render Tiles that this
+    chunk touches.  Iterates over (tilecol, tilerow)
+    
+    """
+    # find tile coordinates. Remember tiles are identified by the
+    # address of the chunk in their upper left corner.
+    tilecol = chunkcol - chunkcol % 2
+    tilerow = chunkrow - chunkrow % 4
+
+    # If this chunk is in an /even/ column, then it spans two tiles.
+    if chunkcol % 2 == 0:
+        colrange = (tilecol-2, tilecol)
+    else:
+        colrange = (tilecol,)
+
+    # If this chunk is in a row divisible by 4, then it touches the
+    # tile above it as well. Also touches the next 4 tiles down (16
+    # rows)
+    if chunkrow % 4 == 0:
+        rowrange = xrange(tilerow-4, tilerow+32+1, 4)
+    else:
+        rowrange = xrange(tilerow, tilerow+32+1, 4)
+
+    return product(colrange, rowrange)
+
+def get_chunks_by_tile(tile, regionset):
+    """Get chunk sections that are relevant to the given render-tile. Only
+    returns chunk sections that are in chunks that actually exist according to
+    the given regionset object. (Does not check to see if the chunk section
+    itself within the chunk exists)
+
+    This function is expected to return the chunk sections in the correct order
+    for rendering, i.e. back to front.
+    
+    Returns an iterator over chunks tuples where each item is
+    (col, row, chunkx, chunky, chunkz, mtime)
+    """
+
+    # This is not a documented usage of this function and is used only for
+    # debugging
+    if regionset is None:
+        get_mtime = lambda x,y: True
+    else:
+        get_mtime = regionset.get_chunk_mtime
+
+    # Each tile has two even columns and an odd column of chunks.
+
+    # First do the odd. For each chunk in the tile's odd column the tile
+    # "passes through" three chunk sections.
+    oddcol_sections = []
+    for i, y in enumerate(reversed(xrange(16))):
+        for row in xrange(tile.row + 3 - i*2, tile.row - 2 - i*2, -2):
+            oddcol_sections.append((tile.col+1, row, y))
+
+    evencol_sections = []
+    for i, y in enumerate(reversed(xrange(16))):
+        for row in xrange(tile.row + 4 - i*2, tile.row - 3 - i*2, -2):
+            evencol_sections.append((tile.col+2, row, y))
+            evencol_sections.append((tile.col, row, y))
+
+    eveniter = reversed(evencol_sections)
+    odditer = reversed(oddcol_sections)
+
+    # There are 4 rows of chunk sections per Y value on even columns, but 3
+    # rows on odd columns. This iteration order yields them in back-to-front
+    # order appropriate for rendering
+    for col, row, y in roundrobin((
+            eveniter,eveniter,
+            odditer,
+            eveniter,eveniter,
+            odditer,
+            eveniter,eveniter,
+            odditer,
+            eveniter,eveniter,
+            )):
+        chunkx, chunkz = unconvert_coords(col, row)
+        mtime = get_mtime(chunkx, chunkz)
+        if mtime:
+            yield (col, row, chunkx, y, chunkz, mtime)
 
 class RendertileSet(object):
     """This object holds a set of render-tiles using a quadtree data structure.
