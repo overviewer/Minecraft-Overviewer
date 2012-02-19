@@ -307,52 +307,40 @@ directions of the offsets are changed, but the amounts are the same.
 The size of a chunk
 -------------------
 Now that we know how to place blocks relative to each other, we can begin to
-construct a chunk section.
+construct an entire chunk section.
 
 Since the block sprites are 24 by 24 pixels, and the diagonal of the 16 by 16
-grid is 16 squares, the width of one rendered chunk will be 384 pixels. Just
-considering the top layer of the blocks:
+grid is 16 squares, the width of one rendered chunk section will be 384 pixels.
+Just considering the top layer of blocks within a section:
 
 .. image:: cuberenderimgs/chunk_width.png
     :alt: Illustrating the width of a single chunk
 
-Since cubes next to each other in the same "diagonal row" are offset by 24
+Since blocks next to each other in the same "diagonal row" are offset by 24
 pixels, this is trivially calculated.
 
 The height is a bit more tricky to calculate. Let's start by calculating the
-height of a single stack of 128 cubes.
+height of a single stack of 16 blocks.
 
-If the top of a stack of cubes is at Y value 0, the 128th cube down must be
-drawn (128-1)*12=1524 pixels below. However, that's not the end of the story.
-The bottom cube has a height of 24 pixels, so the height of a rendered stack of
-128 cube is 1548 pixels.
+The non-overlapping edge of each block sprite is 12 pixels high. Since there are
+16 blocks in this stack, that's 192 pixels high. There are also 6 additional
+pixels at the top and bottom of the stack as shown, giving a total height of 204
+pixels.
 
-.. image:: cuberenderimgs/cube_stack128.png
-    :alt: A stack of 128 cubes takes 1560 vertical pixels to draw.
+.. image:: cuberenderimgs/cube_stack16.png
+    :alt: A stack of 16 cubes takes 204 vertical pixels to draw.
 
-You can also calculate this by looking at the sides of the cubes, which don't
-overlap at all. They are 12 pixels each, times 128 cubes in the stack, gives
-1536 pixels. Add in the 6 pixels for the top cube and the 6 pixels for the
-bottom cube to get the total height of 1548 pixels.
-
-So what about the entire chunk? Let's take a look at the top and bottom few
-layers of a chunk.
+But that's just for one column of blocks. What about the entire chunk section?
+Take a look at this diagram:
 
 .. image:: cuberenderimgs/chunk_height.png
     :alt: The highest and lowest positioned cubes in a chunk
 
-Let's let the red cubes represent the stack from above. The one on the top we'll
-define as position 0, with our vertical axis running positively downward (as is
-the case in a lot of imaging library coordinate systems) Therefore, the bottom
-red cube is at vertical offset 1524 below.
+The green highlighted blocks are the stack we calculated just above and have a
+height of 204 pixels. The red highlighted blocks each take 12 pixels of vertical
+space on the image, and there are 15 of them. So 204 + 12*15 is 384 pixels.
 
-The green cube at the bottom most tip is the cube with the lowest vertical
-placement on the image, so its offset plus 24 pixels for its height will be the
-chunk height. Since the green cubes each have an offset of 12 pixels, add 15*12
-pixels to get the offset of the lowest green cube: 1704.
-
-So the total size of a chunk in pixels is 384 wide by 1728 tall. That's pretty
-tall!
+So the total size of a chunk section in pixels is 384 wide by 384 tall.
 
 Assembling a Chunk
 ------------------
