@@ -344,39 +344,24 @@ So the total size of a chunk section in pixels is 384 wide by 384 tall.
 
 Assembling a Chunk
 ------------------
-Now that we know how to place blocks, assembling the chunk is a relatively
-simple process. Frist, create an image 384 by 1728 pixels. Then, paste the
-blocks in order from back to front, bottom to top. This ensures that block
-visually closer to the viewer are drawn on top, while blocks that should be
-obstructed are drawn first and get hidden.
 
-From the data file on disk, block information in a chunk is a three-dimensional
-array of bytes, each representing a `block id
-<http://www.minecraftwiki.net/wiki/Data_values#Block_IDs_.28Minecraft_Beta.29>`_.
-The process of assembling a chunk is essentially reading these values, looking
-up the appropriate pre-rendered image representing that block type, and pasting
-it on the chunk image at the appropriate location.
-
-First, a bit about how blocks are addressed in a chunk. Consider this diagram of
-the *bottom* layer of a chunk: Y=0.
+Now that we know how to place blocks, here's how they are arranged to form an
+entire chunk section. The coordinate system is arranged as shown, with the
+origin being at the left corner.
 
 .. image:: cubepositionimgs/chunk_coords.png
     :alt: Illustrating how cubes are addressed in a chunk
 
-The 16x128x16 array of block is iterated over. The inner loop iterates over the
-Y axis from bottom to top, the middle loop iterates over the Z axis from 0 to
-15, and the outer loop iterates over the X axis from 15 down to 0.
+To ensure that block closer to the viewer are drawn on top while blocks that
+should be obstructed are drawn are hidden, the blocks are drawn one layer at a
+time from bottom to top (Y=0 to Y=15) and from back to front.
 
-.. note::
-
-    The iteration happens in ``iterate.c`` in the :c:func:`chunk_render`
-    function. In the code, the Y and Z axes are switched in name only. (oops)
-
-In other words, the column of blocks at X=15, Z=0 is drawn from bottom to top.
-Then the next column over on the Z axis (X=15, Z=1) is drawn, and so fourth
-until the entire plane of cubes at X=15 is drawn (the upper-right face). Then it
-starts with the next plane at X=14, and so fourth until the entire chunk is
-drawn.
+From the data file on disk, block information in a chunk is a three-dimensional
+array of bytes, each representing a `block id
+<http://www.minecraftwiki.net/wiki/Data_values#Block_IDs_.28Minecraft_Beta.29>`_.
+The process of assembling a chunk is simply a matter of iterating over this
+array, reading the blockid values, looking up the appropriate sprite, and
+pasting it on the chunk image at the appropriate location.
 
 Tile Rendering
 ==============
