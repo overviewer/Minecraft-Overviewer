@@ -10,7 +10,7 @@ Github code repository:
     http://github.com/overviewer/Minecraft-Overviewer
 
 Blog:
-    http://mcoverviewer.blogspot.com/
+    http://overviewer.org/blog/
 
 
 The Minecraft Overviewer is a command-line tool for rendering high-resolution

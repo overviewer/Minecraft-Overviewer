@@ -10,7 +10,7 @@ See also the `Github Homepage`_ and the `Updates Blog`_
 
 .. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
 
-.. _Updates Blog: http://mcoverviewer.blogspot.com/
+.. _Updates Blog: http://overviewer.org/blog/
 
 Introduction
 ============
