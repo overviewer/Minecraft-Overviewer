@@ -397,7 +397,8 @@ class TileSet(object):
                 path = self.options.get('name'),
                 base = '',
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
-                world = self.options.get('worldname_orig') + " - " + self.options.get('dimension'),
+                world = self.options.get('worldname_orig') + 
+                    (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
                 last_rendertime = self.this_rendertime,
                 imgextension = self.imgextension,
                 )
