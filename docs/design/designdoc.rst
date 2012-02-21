@@ -363,31 +363,41 @@ The process of assembling a chunk is simply a matter of iterating over this
 array, reading the blockid values, looking up the appropriate sprite, and
 pasting it on the chunk image at the appropriate location.
 
-Tile Rendering
-==============
+Chunk Placement
+===============
 .. Covers the placement of chunk images on a tile
 
-So now that we know how to draw a single chunk, we can move on to placing them
-on an image.
+Now that we know how to draw a single chunk, let's move on to how to place
+chunks relative to each other.
 
-For the diagrams in this section, we are positioning an entire chunk, but
-frequently, only the top face of the chunk is drawn (shown in green below).
+Before we get started, let's take a moment to remember that one chunk section is
+only 1/16th of a chunk:
+
+.. image:: tilerendering/entirechunk.png
+    :alt: An entire chunk
+
+A chunk is 16 chunk sections stacked together.
+
+Since this is pretty tall, the diagrams in this section are simplified to only
+show the *top face* of a chunk, as shown in green here:
 
 .. image:: tilerendering/topofchunk.png
     :alt: The top of a chunk is highlighted
 
-This makes it easier and less cumbersome to describe chunk positionings. Just
-remember that chunks extend down for 1536 more pixels.
+This makes it easier and less cumbersome to describe how to place chunks
+together on a tile. Just remember that chunks are actually very tall and extend
+down far beyond the drawn diamonds in these diagrams.
 
 Chunk Addressing
 ----------------
 
-Chunks in Minecraft have an X,Z address, starting at 0,0 and extending to
-positive and negative infinity on both axes. Since we're looking at things
-diagonally, however, we need a way of addressing these chunks in the final
-image. For that, we refer to them in rows and columns. Consider this grid
-showing the tops of a five by five region of chunks, labeled with their in-game
-addresses.
+Chunks in Minecraft have an X,Z address, with the origin at 0,0 and extending to
+positive and negative infinity on both axes (Recall from the introduction that
+chunk addresses are simply the block addresses divided by 16). Since we're going
+to render at a diagonal perspective, it is convenient to perform a change of
+coordinate system. For that, we translate X,Z coordinates into column,row
+coordinates. Consider this grid showing 25 chunks around the origin. They are
+labeled with their X,Z chunk addresses.
 
 .. image:: tilerendering/chunkgrid.png
     :alt: A grid of 5x5 chunks showing how chunks are addressed.
@@ -401,10 +411,12 @@ So the chunk at address 0,0 would be at col 0, row 0; while the chunk at address
 1,1 would be at col 2, row 0. The intersection of the red and green lines
 addresses the chunk in col,row format.
 
-Notice that as a consequence of this addressing scheme, there is no chunk at
-e.g. column 1 row 0. There are some col,row addresses that lie between chunks
-(as can be seen where the red/green lines intersect at a chunk boundary instead
-of the middle of a chunk). Something to keep in mind.
+.. note::
+
+    As a consequence of this addressing scheme, there is no chunk at e.g. column
+    1 row 0. There are some col,row addresses that lie between chunks, and
+    therefore do not correspond to a chunk. (as can be seen where the red/green
+    lines intersect at a chunk boundary instead of the middle of a chunk).
 
 So how does one translate between them? It turns out that a chunk's column
 address is simply the sum of the X and the Z coordinate, while the row is the
@@ -420,21 +432,34 @@ difference. Try it!
 
 Chunk Positioning
 -----------------
-Again just looking at the top of a chunk, we can work out how to position them
-relative to each other. This is similar to how to position blocks relative to
-each other, but this time, for chunks.
 
-A chunk's top face is 384 pixels wide by 192 pixels tall. Similar to the block,
-neighboring chunks have these relationships:
+This section will seem very familiar to the block positioning. In fact, it is
+exactly the same but with different numbers (because blocks and chunk sections
+have the exact same proportions), so let's speed through this.
+
+A chunk's top face is 384 pixels wide by 192 pixels tall. They therefore have
+these offsets from their neighbors:
 
 .. image:: tilerendering/chunkpositioning.png
     :alt: Chunk positioning diagram
 
-But that's all pretty trivial. With this knowledge, we could draw the chunks at
-the above offsets in one large image, but for large worlds, that would quickly
-become too much to handle. (Early versions of the Overviewer did this, but the
-large, unwieldy images quickly motivated the development of rendering to
-individual tiles)
+
+Tile Rendering
+==============
+
+Now that we know how to translate chunk coordinates to col/row coordinates, and
+know how to calculate the offset from the origin on the final image, we could
+easily draw the chunks in one large image. However, for large worlds, that would
+quickly become too much data to handle at once. (Early versions of the
+Overviewer did this, but the large, unwieldy images quickly motivated the
+development of rendering to individual tiles).
+
+Hence choosing a technology like Google Maps, which draws small tiles together
+to make it look like one large image, lets rendering even the largest worlds
+possible. The Overviewer can draw each tile separately and not have to load the
+entire map into memory at once. The next sections describe how to determine
+which chunks to render in which tiles, and how to reason about tile ↔ chunk
+mappings.
 
 Tile Layout
 -----------
@@ -444,12 +469,28 @@ Only a handful of chunks need to be rendered into each tile. The downside is
 that chunks must be rendered multiple times for each tile they appear in, but
 the upside is that arbitrarily sized maps can be viewed.
 
-The Overviewer uses a tile size of 384 by 384 pixels. This is the same as a
-width of a chunk and is no coincidence. Just considering the top face of a
-chunk, 8 chunks get rendered into a tile in this configuration:
+The Overviewer uses a tile size of 384 by 384 pixels. This is the same as the
+size of a chunk section and is no coincidence. Just considering the top face of
+a chunk, the 8 chunks directly below itget rendered into a tile in this
+configuration:
 
 .. image:: tilerendering/chunksintile.png
     :alt: The 8 chunks that get rendered into a tile
+
+.. note::
+
+    Don't forget that chunks are tall, so many more than 8 chunks get rendered
+    into this tile. If you think about it, chunks from the rows *above* the ones
+    in that diagram may have blocks that fall into this tile, since the diamonds
+    in the diagram correspond to the *tops* of the chunks, and chunks extend
+    *down*.
+
+.. note::
+
+    This is an important diagram and we'll be coming back to it. Make sure it makes
+    sense. As a side note, if anything in this document *doesn't* make sense, please
+    let us know in IRC or by filing an issue. I want these docs to be as clear as
+    possible!
 
 So the overall strategy is to convert all chunks into diagonal col,row
 coordinates, then for each tile decide which chunks belong in it, then render
@@ -467,14 +508,6 @@ positioned correctly with the above positioning rules, so any chunks that are
 out of the bounds get rendered off the tile and don't affect the final image.
 (There is therefore no penalty for rendering out-of-bounds chunks for a tile
 except increased processing)
-
-.. note::
-
-    Remember that chunks are actually very tall, so there are actually several
-    rows above 0 in the above diagram that are rendered into the tile. Since the
-    chunk outlines in the diagrams are only the top face of the chunk, they most
-    likely don't contribute to the image since chunks usually don't have
-    anything to render way up at the top near the sky.
 
 Since every other column of chunks is half-way in two tiles, they must be
 rendered twice. Each neighboring tile is therefore only 2 columns over, not 3 as
