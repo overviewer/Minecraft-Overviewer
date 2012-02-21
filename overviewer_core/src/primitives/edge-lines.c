@@ -34,46 +34,29 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
     PrimitiveEdgeLines *self = (PrimitiveEdgeLines *)data;
 
     /* Draw some edge lines! */
-    // draw.line(((imgx+12,imgy+increment), (imgx+22,imgy+5+increment)), fill=(0,0,0), width=1)
     if (state->block == 44 || state->block == 78 || !is_transparent(state->block)) {
         Imaging img_i = imaging_python_to_c(state->img);
         unsigned char ink[] = {0, 0, 0, 255 * self->opacity};
+        unsigned short side_block;
 
         int increment=0;
         if (state->block == 44)  // half-step
             increment=6;
         else if ((state->block == 78) || (state->block == 93) || (state->block == 94)) // snow, redstone repeaters (on and off)
             increment=9;
-
-        if ((state->x == 15) && (state->up_right_blocks != NULL)) {
-            unsigned char side_block = getArrayByte3D(state->up_right_blocks, 0, state->y, state->z);
-            if (side_block != state->block && is_transparent(side_block)) {
-                ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
-                ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
-            }
-        } else if (state->x != 15) {
-            unsigned char side_block = getArrayByte3D(state->blocks, state->x+1, state->y, state->z);
-            if (side_block != state->block && is_transparent(side_block)) {
-                ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
-                ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
-            }
+        
+        /* +X side */
+        side_block = get_data(state, BLOCKS, state->x+1, state->y, state->z);
+        if (side_block != state->block && is_transparent(side_block)) {
+            ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
+            ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
         }
-        // if y != 0 and blocks[x,y-1,z] == 0
-
-        // chunk boundries are annoying
-        if ((state->y == 0) && (state->up_left_blocks != NULL)) {
-            unsigned char side_block = getArrayByte3D(state->up_left_blocks, state->x, 15, state->z);
-            if (side_block != state->block && is_transparent(side_block)) {
-                ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
-                ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
-            }
-        } else if (state->y != 0) {
-            unsigned char side_block = getArrayByte3D(state->blocks, state->x, state->y-1, state->z);
-            if (side_block != state->block && is_transparent(side_block)) {
-                // draw.line(((imgx,imgy+6+increment), (imgx+12,imgy+increment)), fill=(0,0,0), width=1)
-                ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
-                ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
-            }
+        
+        /* -Z side */
+        side_block = get_data(state, BLOCKS, state->x, state->y, state->z-1);
+        if (side_block != state->block && is_transparent(side_block)) {
+            ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
+            ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
         }
     }
 }
