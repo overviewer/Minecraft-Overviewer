@@ -801,7 +801,7 @@ class TileSet(object):
         max_chunk_mtime = 0
         for col, row, chunkx, chunky, chunkz, chunk_mtime in chunks:
             xpos = -192 + (col-colstart)*192
-            ypos = -96 + (row-rowstart)*96 + chunky*192
+            ypos = -96 + (row-rowstart)*96 + (16-1 - chunky)*192
 
             if chunk_mtime > max_chunk_mtime:
                 max_chunk_mtime = chunk_mtime
