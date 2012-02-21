@@ -46,16 +46,19 @@ depth_tinting_finish(void *data, RenderState *state) {
 static void
 depth_tinting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderPrimitiveDepthTinting* self;
-    int z, r, g, b;
+    int y, r, g, b;
     self = (RenderPrimitiveDepthTinting *)data;
 
-    z = state->z;
+    y = state->chunky * 16 + state->y;
     r = 0, g = 0, b = 0;
+    
+    /* the colors array assumes y is between 0 and 127, so we scale it */
+    y = (y * 128) / (16 * SECTIONS_PER_CHUNK);
 
     /* get the colors and tint and tint */
-    r = PyInt_AsLong(PyList_GetItem(self->depth_colors, 0 + z*3));
-    g = PyInt_AsLong(PyList_GetItem(self->depth_colors, 1 + z*3));
-    b = PyInt_AsLong(PyList_GetItem(self->depth_colors, 2 + z*3));
+    r = PyInt_AsLong(PyList_GetItem(self->depth_colors, 0 + y*3));
+    g = PyInt_AsLong(PyList_GetItem(self->depth_colors, 1 + y*3));
+    b = PyInt_AsLong(PyList_GetItem(self->depth_colors, 2 + y*3));
     
     tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
 }

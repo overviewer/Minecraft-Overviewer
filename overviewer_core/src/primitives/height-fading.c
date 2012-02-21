@@ -43,12 +43,16 @@ height_fading_finish(void *data, RenderState *state) {
 static void
 height_fading_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     PrimitiveHeightFading *self = (PrimitiveHeightFading *)data;
+    int y = 16 * state->chunky + state->y;
 
     /* do some height fading */
     PyObject *height_color = self->white_color;
 
+    /* current formula requires y to be between 0 and 127, so scale it */
+    y = (y * 128) / (16 * SECTIONS_PER_CHUNK);
+    
     /* negative alpha => darkness, positive => light */
-    float alpha = (1.0 / (1 + expf((70 - state->z) / 11.0))) * 0.6 - 0.55;
+    float alpha = (1.0 / (1 + expf((70 - y) / 11.0))) * 0.6 - 0.55;
     
     if (alpha < 0.0) {
         alpha *= -1;

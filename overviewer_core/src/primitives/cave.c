@@ -82,7 +82,7 @@ cave_hidden(void *data, RenderState *state, int x, int y, int z) {
     if ((getArrayShort3D(state->blocks, x, y, z) == 9) ||
         (get_data(state, BLOCKS, x, y+1, z) == 9)) {
         
-        for (dy = y+1; dy < SECTIONS_PER_CHUNK * 16; dy++) {
+        for (dy = y+1; dy < (SECTIONS_PER_CHUNK - state->chunky) * 16; dy++) {
             /* go up and check for skylight */
             if (get_data(state, SKYLIGHT, x, dy, z) != 0) {
                 return 1;
