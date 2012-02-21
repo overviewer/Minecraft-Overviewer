@@ -16,7 +16,35 @@ class Setting(object):
         self.validator = validator
         self.default = default
 
+def checkBadEscape(s):
+    fixed = False
+    fixed_string = s
+    if "\a" in fixed_string:
+        fixed_string = s.replace("\a", r"\a")
+        fixed = True
+    if "\b" in fixed_string:
+        fixed_string = s.replace("\b", r"\b")
+        fixed = True
+    if "\t" in fixed_string:
+        fixed_string = s.replace("\t", r"\t")
+        fixed = True
+    if "\n" in fixed_string:
+        fixed_string = s.replace("\n", r"\n")
+        fixed = True
+    if "\v" in fixed_string:
+        fixed_string = s.replace("\v", r"\v")
+        fixed = True
+    if "\f" in fixed_string:
+        fixed_string = s.replace("\f", r"\f")
+        fixed = True
+    if "\r" in fixed_string:
+        fixed_string = s.replace("\r", r"\r")
+        fixed = True
+    return (fixed, fixed_string)
+
+
 def validateWorldPath(worldpath):
+    _, worldpath = checkBadEscape(worldpath)
     abs_path = os.path.abspath(worldpath)
     if not os.path.exists(os.path.join(abs_path, "level.dat")):
         raise ValidationException("No level.dat file in '%s'. Are you sure you have the right path?" % (abs_path,))
@@ -133,6 +161,7 @@ def validateDimension(d):
     raise ValidationException("%r is not a valid dimension" % d)
 
 def validateOutputDir(d):
+    _, d = checkBadEscape(d)
     if not d.strip():
         raise ValidationException("You must specify a valid output directory")
     return os.path.abspath(d)
