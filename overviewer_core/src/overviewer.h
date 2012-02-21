@@ -26,15 +26,18 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 20
+#define OVERVIEWER_EXTENSION_VERSION 21
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
 #include <Imaging.h>
 #include <numpy/arrayobject.h>
 
-/* macro for getting a value out of various numpy arrays */
-#define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (x), (y), (z))))
+/* macro for getting a value out of various numpy arrays the 3D arrays have
+   interesting, swizzled coordinates because minecraft (anvil) stores blocks
+   in y/z/x order */
+#define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (y), (z), (x))))
+#define getArrayShort3D(array, x,y,z) (*(unsigned short *)(PyArray_GETPTR3((array), (y), (z), (x))))
 #define getArrayShort2D(array, x,y) (*(unsigned short *)(PyArray_GETPTR2((array), (x), (y))))
 
 /* generally useful MAX / MIN macros */
@@ -67,7 +70,7 @@ typedef struct _RenderMode RenderMode;
 typedef struct {
     /* the regionset object, and chunk coords */
     PyObject *regionset;
-    int chunkx, chunkz;
+    int chunkx, chunky, chunkz;
     
     /* the tile image and destination */
     PyObject *img;
@@ -81,7 +84,7 @@ typedef struct {
     
     /* the block position and type, and the block array */
     int x, y, z;
-    unsigned char block;
+    unsigned short block;
     unsigned char block_data;
     unsigned char block_pdata;
 

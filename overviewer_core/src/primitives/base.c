@@ -59,7 +59,7 @@ base_finish(void *data, RenderState *state) {
 
 static int
 base_occluded(void *data, RenderState *state, int x, int y, int z) {
-    if ( (x != 0) && (y != 15) && (z != 127) &&
+    if ( (x != 0) && (y != 15) && (z != 15) &&
          !render_mode_hidden(state->rendermode, x-1, y, z) &&
          !render_mode_hidden(state->rendermode, x, y, z+1) &&
          !render_mode_hidden(state->rendermode, x, y+1, z) &&

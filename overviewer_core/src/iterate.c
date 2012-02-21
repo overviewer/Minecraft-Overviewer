@@ -108,11 +108,14 @@ PyObject *init_chunk_render(void) {
  * If clearexception is true, clears the exception before returning NULL (for
  * soft failures)
  */
-PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type,
-        unsigned char clearexception) {
+PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type, unsigned char clearexception) {
     int x = state->chunkx;
+    int y = state->chunky;
     int z = state->chunkz;
+    int i;
     PyObject *chunk = NULL;
+    PyObject *sections = NULL;
+    PyObject *section = NULL;
     PyObject *data = NULL;
     
     switch (neighbor) {
@@ -142,24 +145,57 @@ PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDa
         return NULL;
     }
     
+    /* now we grab the correct section of the chunk */
+    
+    sections = PyDict_GetItemString(chunk, "Sections");
+    if (sections) {
+        sections = PySequence_Fast(sections, "Sections tag was not a list!");
+    }
+    Py_DECREF(chunk);
+    if (sections == NULL) {
+        // exception set, again
+        if (clearexception) {
+            PyErr_Clear();
+        }
+        return NULL;
+    }
+    
+    for (i = 0; i < PySequence_Fast_GET_SIZE(sections); i++) {
+        PyObject *ycoord = NULL;
+        section = PySequence_Fast_GET_ITEM(sections, i);
+        ycoord = PyDict_GetItemString(section, "Y");
+        if (ycoord && PyInt_AsLong(ycoord) == y) {
+            Py_INCREF(section);
+            break;
+        }
+        section = NULL;
+    }    
+    Py_DECREF(sections);
+    if (section == NULL) {
+        // exception NOT set this time, but we don't set it because
+        // missing *sections* are normal operation
+        // (missing chunks, as above, are NOT.)
+        return NULL;
+    }
+    
     switch (type) {
     case BLOCKS:
-        data = PyDict_GetItemString(chunk, "Blocks");
+        data = PyDict_GetItemString(section, "Blocks");
         break;
     case BLOCKDATA:
-        data = PyDict_GetItemString(chunk, "Data");
+        data = PyDict_GetItemString(section, "Data");
         break;
     case SKYLIGHT:
-        data = PyDict_GetItemString(chunk, "SkyLight");
+        data = PyDict_GetItemString(section, "SkyLight");
         break;
     case BLOCKLIGHT:
-        data = PyDict_GetItemString(chunk, "BlockLight");
+        data = PyDict_GetItemString(section, "BlockLight");
         break;
     }
     
-    /* fix the borrowed reference */
+    /* fix the references */
     Py_INCREF(data);
-    Py_DECREF(chunk);
+    Py_DECREF(section);
     return data;
 }
 
@@ -400,7 +436,6 @@ PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
     PyObject *regionset;
-    int chunkx, chunkz;
     PyObject *modeobj;
     PyObject *blockmap;
 
@@ -419,7 +454,7 @@ chunk_render(PyObject *self, PyObject *args) {
 
     PyObject *t = NULL;
     
-    if (!PyArg_ParseTuple(args, "OiiOiiOO",  &state.regionset, &state.chunkx, &state.chunkz, &state.img, &xoff, &yoff, &modeobj, &state.textures))
+    if (!PyArg_ParseTuple(args, "OiiiOiiOO",  &state.regionset, &state.chunkx, &state.chunky, &state.chunkz, &state.img, &xoff, &yoff, &modeobj, &state.textures))
         return NULL;
     
     /* set up the render mode */
@@ -453,13 +488,15 @@ chunk_render(PyObject *self, PyObject *args) {
     /* get the block data directly from numpy: */
     blocks_py = get_chunk_data(&state, CURRENT, BLOCKS, 0);
     state.blocks = blocks_py;
-    if (blocks_py == NULL) {
-        return NULL;
-    }
-    
     state.blockdatas = get_chunk_data(&state, CURRENT, BLOCKDATA, 1);
-    if (state.blockdatas == NULL) {
-        return NULL;
+
+    if (state.blockdatas == NULL || state.blocks == NULL) {
+        /* only error out completely if there's an exception set this function
+           will return NULL with no exception IFF the requested section was
+           missing. */
+        if (PyErr_Occurred())
+            return NULL;
+        Py_RETURN_NONE;
     }
 
     left_blocks_py = get_chunk_data(&state, DOWN_LEFT, BLOCKS, 1);
@@ -479,20 +516,20 @@ chunk_render(PyObject *self, PyObject *args) {
     srand(1);
     
     for (state.x = 15; state.x > -1; state.x--) {
-        for (state.y = 0; state.y < 16; state.y++) {
+        for (state.z = 0; state.z < 16; state.z++) {
 
             /* set up the render coordinates */
-            state.imgx = xoff + state.x*12 + state.y*12;
-            /* 128*12 -- offset for z direction, 15*6 -- offset for x */
-            state.imgy = yoff - state.x*6 + state.y*6 + 128*12 + 15*6;
+            state.imgx = xoff + state.x*12 + state.z*12;
+            /* 16*12 -- offset for y direction, 15*6 -- offset for x */
+            state.imgy = yoff - state.x*6 + state.z*6 + 16*12 + 15*6;
             
-            for (state.z = 0; state.z < 128; state.z++) {
+            for (state.y = 0; state.y < 16; state.y++) {
                 unsigned char ancilData;
                 
                 state.imgy -= 12;
 		
                 /* get blockid */
-                state.block = getArrayByte3D(blocks_py, state.x, state.y, state.z);
+                state.block = getArrayShort3D(blocks_py, state.x, state.y, state.z);
                 if (state.block == 0 || render_mode_hidden(rendermode, state.x, state.y, state.z)) {
                     continue;
                 }
@@ -590,5 +627,5 @@ chunk_render(PyObject *self, PyObject *args) {
     Py_XDECREF(up_left_blocks_py);
     Py_XDECREF(up_right_blocks_py);
 
-    return Py_BuildValue("i",2);
+    Py_RETURN_NONE;
 }
