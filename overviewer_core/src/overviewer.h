@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 21
+#define OVERVIEWER_EXTENSION_VERSION 22
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -68,6 +68,15 @@ typedef struct _RenderMode RenderMode;
 
 /* in iterate.c */
 typedef struct {
+    /* whether this chunk is loaded: use load_chunk to load */
+    int loaded;
+    /* the 3 sections: below, current, above */
+    struct {
+        /* all there is to know about each section */
+        PyObject *blocks, *data, *skylight, *blocklight;
+    } sections[3];
+} ChunkData;
+typedef struct {
     /* the regionset object, and chunk coords */
     PyObject *regionset;
     int chunkx, chunky, chunkz;
@@ -91,12 +100,13 @@ typedef struct {
     /* useful information about this, and neighboring, chunks */
     PyObject *blockdatas;
     PyObject *blocks;
-    PyObject *up_left_blocks;
-    PyObject *up_right_blocks;
-    PyObject *left_blocks;
-    PyObject *right_blocks;
+    
+    /* 3x3 array of this and neighboring chunk columns */
+    ChunkData chunks[3][3];    
 } RenderState;
 PyObject *init_chunk_render(void);
+/* returns true on error, x,z relative */
+int load_chunk(RenderState* state, int x, int z, unsigned char required);
 PyObject *chunk_render(PyObject *self, PyObject *args);
 typedef enum
 {
@@ -125,24 +135,69 @@ block_has_property(unsigned char b, BlockProperty prop) {
 }
 #define is_transparent(b) block_has_property((b), TRANSPARENT)
 
-/* helper for getting chunk data arrays */
+/* helper for indexing section data possibly across section boundaries */
 typedef enum
 {
     BLOCKS,
-    BLOCKDATA,
+    DATA,
     BLOCKLIGHT,
     SKYLIGHT,
-} ChunkDataType;
-typedef enum
+} ChunkType;
+static inline unsigned int get_data(RenderState *state, ChunkType type, int x, int y, int z)
 {
-    CURRENT,
-    DOWN_RIGHT, /*  0, +1 */
-    DOWN_LEFT,  /* -1,  0 */
-    UP_RIGHT,   /* +1,  0 */
-    UP_LEFT,    /*  0, -1 */
-} ChunkNeighborName;
-PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type,
-        unsigned char clearexception);
+    int chunkx = 1, chunky = 1, chunkz = 1;
+    PyObject *data_array = NULL;
+    if (x >= 16) {
+        x -= 16;
+        chunkx++;
+    } else if (x < 0) {
+        x += 16;
+        chunkx--;
+    }
+    if (y >= 16) {
+        y -= 16;
+        chunky++;
+    } else if (y < 0) {
+        y += 16;
+        chunky--;
+    }
+    if (z >= 16) {
+        z -= 16;
+        chunkz++;
+    } else if (z < 0) {
+        z += 16;
+        chunkz--;
+    }
+    
+    if (!(state->chunks[chunkx][chunkz].loaded))
+    {
+        if (load_chunk(state, chunkx - 1, chunkz - 1, 0))
+            return 0;
+    }
+    
+    switch (type)
+    {
+    case BLOCKS:
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].blocks;
+        break;
+    case DATA:
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].data;
+        break;
+    case BLOCKLIGHT:
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].blocklight;
+        break;
+    case SKYLIGHT:
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].skylight;
+        break;
+    };
+    
+    if (data_array == NULL)
+        return 0;
+    
+    if (type == BLOCKS)
+        return getArrayShort3D(data_array, x, y, z);
+    return getArrayByte3D(data_array, x, y, z);
+}
 
 /* pull in the rendermode info */
 #include "rendermodes.h"

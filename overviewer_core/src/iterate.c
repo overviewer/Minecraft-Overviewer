@@ -102,51 +102,47 @@ PyObject *init_chunk_render(void) {
     Py_RETURN_NONE;
 }
 
-/*
- * Returns the requested chunk data from the requested chunk.
- * Returns NULL with an exception set if the requested chunk doesn't exist.
- * If clearexception is true, clears the exception before returning NULL (for
- * soft failures)
+/* helper for load_chunk, loads a section into a chunk */
+static inline void load_chunk_section(ChunkData *dest, int i, PyObject *section) {
+    dest->sections[i].blocks = PyDict_GetItemString(section, "Blocks");
+    dest->sections[i].data = PyDict_GetItemString(section, "Data");
+    dest->sections[i].skylight = PyDict_GetItemString(section, "SkyLight");
+    dest->sections[i].blocklight = PyDict_GetItemString(section, "BlockLight");
+    Py_INCREF(dest->sections[i].blocks);
+    Py_INCREF(dest->sections[i].data);
+    Py_INCREF(dest->sections[i].skylight);
+    Py_INCREF(dest->sections[i].blocklight);
+}
+
+/* loads the given chunk into the chunks[] array in the state
+ * returns true on error
+ *
+ * if required is true, failure to load the chunk will raise a python
+ * exception and return true.
  */
-PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDataType type, unsigned char clearexception) {
-    int x = state->chunkx;
+int load_chunk(RenderState* state, int x, int z, unsigned char required) {
+    ChunkData *dest = &(state->chunks[1 + x][1 + z]);
     int y = state->chunky;
-    int z = state->chunkz;
     int i;
     PyObject *chunk = NULL;
     PyObject *sections = NULL;
-    PyObject *section = NULL;
-    PyObject *data = NULL;
     
-    switch (neighbor) {
-    case CURRENT:
-        break;
-    case DOWN_RIGHT:
-        z++;
-        break;
-    case DOWN_LEFT:
-        x--;
-        break;
-    case UP_RIGHT:
-        x++;
-        break;
-    case UP_LEFT:
-        z--;
-        break;
-    }
+    if (dest->loaded)
+        return 0;
     
+    x += state->chunkx;
+    z += state->chunkz;
+
     chunk = PyObject_CallMethod(state->regionset, "get_chunk", "ii", x, z);
     if (chunk == NULL) {
         // An exception is already set. RegionSet.get_chunk sets
         // ChunkDoesntExist
-        if (clearexception) {
+        if (!required) {
             PyErr_Clear();
         }
-        return NULL;
+        return 1;
     }
-    
-    /* now we grab the correct section of the chunk */
-    
+
     sections = PyDict_GetItemString(chunk, "Sections");
     if (sections) {
         sections = PySequence_Fast(sections, "Sections tag was not a list!");
@@ -154,121 +150,75 @@ PyObject *get_chunk_data(RenderState *state, ChunkNeighborName neighbor, ChunkDa
     Py_DECREF(chunk);
     if (sections == NULL) {
         // exception set, again
-        if (clearexception) {
+        if (!required) {
             PyErr_Clear();
         }
-        return NULL;
+        return 1;
+    }
+    
+    /* set up reasonable defaults */
+    for (i = 0; i < 3; i++)
+    {
+        dest->sections[i].blocks = NULL;
+        dest->sections[i].data = NULL;
+        dest->sections[i].skylight = NULL;
+        dest->sections[i].blocklight = NULL;
     }
     
     for (i = 0; i < PySequence_Fast_GET_SIZE(sections); i++) {
         PyObject *ycoord = NULL;
-        section = PySequence_Fast_GET_ITEM(sections, i);
+        int rely = 0;
+        PyObject *section = PySequence_Fast_GET_ITEM(sections, i);
         ycoord = PyDict_GetItemString(section, "Y");
-        if (ycoord && PyInt_AsLong(ycoord) == y) {
-            Py_INCREF(section);
-            break;
+        if (!ycoord)
+            continue;
+        
+        rely = PyInt_AsLong(ycoord) + 1 - y;
+        if (rely >= 0 && rely < 3) {
+            load_chunk_section(dest, rely, section);
         }
-        section = NULL;
-    }    
+    }
     Py_DECREF(sections);
-    if (section == NULL) {
-        // exception NOT set this time, but we don't set it because
-        // missing *sections* are normal operation
-        // (missing chunks, as above, are NOT.)
-        return NULL;
-    }
     
-    switch (type) {
-    case BLOCKS:
-        data = PyDict_GetItemString(section, "Blocks");
-        break;
-    case BLOCKDATA:
-        data = PyDict_GetItemString(section, "Data");
-        break;
-    case SKYLIGHT:
-        data = PyDict_GetItemString(section, "SkyLight");
-        break;
-    case BLOCKLIGHT:
-        data = PyDict_GetItemString(section, "BlockLight");
-        break;
-    }
-    
-    /* fix the references */
-    Py_INCREF(data);
-    Py_DECREF(section);
-    return data;
+    dest->loaded = 1;
+    return 0;
 }
 
 unsigned char
-    check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
-        /*
-         * Generates a pseudo ancillary data for blocks that depend of 
-         * what are surrounded and don't have ancillary data. This 
-         * function is through generate_pseudo_data.
-         *
-         * This uses a binary number of 4 digits to encode the info. 
-         * The encode is:
-         *
-         * 0b1234:
-         * Bit:   1   2   3   4
-         * Side: +x  +y  -x  -y
-         * Values: bit = 0 -> The corresponding side block has different blockid
-         *         bit = 1 -> The corresponding side block has same blockid
-         * Example: if the bit1 is 1 that means that there is a block with 
-         * blockid in the side of the +x direction.
-         */
+check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
+    /*
+     * Generates a pseudo ancillary data for blocks that depend of 
+     * what are surrounded and don't have ancillary data. This 
+     * function is through generate_pseudo_data.
+     *
+     * This uses a binary number of 4 digits to encode the info. 
+     * The encode is:
+     *
+     * 0b1234:
+     * Bit:   1   2   3   4
+     * Side: +x  +z  -x  -z
+     * Values: bit = 0 -> The corresponding side block has different blockid
+     *         bit = 1 -> The corresponding side block has same blockid
+     * Example: if the bit1 is 1 that means that there is a block with 
+     * blockid in the side of the +x direction.
+     */
         
-        unsigned char pdata=0;
+    unsigned char pdata=0;
         
-        if (state->x == 15) { /* +x direction */
-            if (state->up_right_blocks != NULL) { /* just in case we are in the end of the world */
-                if (getArrayByte3D(state->up_right_blocks, 0, y, z) == blockid) {
-                    pdata = pdata|(1 << 3);
-                }
-            }
-        } else {
-            if (getArrayByte3D(state->blocks, x + 1, y, z) == blockid) {
-                pdata = pdata|(1 << 3);
-            }
-        }
-        
-        if (state->y == 15) { /* +y direction*/
-            if (state->right_blocks != NULL) {
-                if (getArrayByte3D(state->right_blocks, x, 0, z) == blockid) {
-                    pdata = pdata|(1 << 2);
-                }
-            }
-        } else {
-            if (getArrayByte3D(state->blocks, x, y + 1, z) == blockid) {
-                pdata = pdata|(1 << 2);
-            }
-        }
-        
-        if (state->x == 0) { /* -x direction*/
-            if (state->left_blocks != NULL) {
-                if (getArrayByte3D(state->left_blocks, 15, y, z) == blockid) {
-                    pdata = pdata|(1 << 1);
-                }
-            }
-        } else {
-            if (getArrayByte3D(state->blocks, x - 1, y, z) == blockid) {
-                pdata = pdata|(1 << 1);
-            }
-        }
-        
-        if (state->y == 0) { /* -y direction */
-            if (state->up_left_blocks != NULL) {
-                if (getArrayByte3D(state->up_left_blocks, x, 15, z) == blockid) {
-                    pdata = pdata|(1 << 0);
-                }
-            }
-        } else {
-            if (getArrayByte3D(state->blocks, x, y - 1, z) == blockid) {
-                pdata = pdata|(1 << 0);
-            }
-        }
-
-        return pdata;
+    if (get_data(state, BLOCKS, x + 1, y, z) == blockid) {
+        pdata = pdata|(1 << 3);
+    }        
+    if (get_data(state, BLOCKS, x, y, z + 1) == blockid) {
+        pdata = pdata|(1 << 2);
+    }
+    if (get_data(state, BLOCKS, x - 1, y, z) == blockid) {
+        pdata = pdata|(1 << 1);
+    }
+    if (get_data(state, BLOCKS, x, y, z - 1) == blockid) {
+        pdata = pdata|(1 << 0);
+    }
+    
+    return pdata;
 }
 
 
@@ -283,13 +233,13 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
     
     if (state->block == 2) { /* grass */
         /* return 0x10 if grass is covered in snow */
-        if (z < 127 && getArrayByte3D(state->blocks, x, y, z+1) == 78)
+        if (get_data(state, BLOCKS, x, y+1, z) == 78)
             return 0x10;
         return ancilData;
     } else if (state->block == 9) { /* water */
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
         if (ancilData == 0) { /* static water */
-            if ((z != 127) && (getArrayByte3D(state->blocks, x, y, z+1) == 9)) {
+            if (get_data(state, BLOCKS, x, y+1, z) == 9) {
                 data = 0;
             } else { 
                 data = 16;
@@ -304,7 +254,7 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         }
     } else if ((state->block == 20) || (state->block == 79)) { /* glass and ice */
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
-        if ((z != 127) && (getArrayByte3D(state->blocks, x, y, z+1) == 20)) {
+        if (get_data(state, BLOCKS, x, y+1, z) == 20) {
             data = 0;
         } else { 
             data = 16;
@@ -318,24 +268,22 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
     } else if (state->block == 55) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
          * another two for going-up redstone wire in the same block
-         * (connection with the level z+1) */
+         * (connection with the level y+1) */
         unsigned char above_level_data = 0, same_level_data = 0, below_level_data = 0, possibly_connected = 0, final_data = 0;
 
-        /* check for air in z+1, no air = no connection with upper level */        
-        if ((z != 127) && (getArrayByte3D(state->blocks, x, y, z + 1) == 0)) { 
-            above_level_data = check_adjacent_blocks(state, x, y, z + 1, state->block);
+        /* check for air in y+1, no air = no connection with upper level */        
+        if (get_data(state, BLOCKS, x, y+1, z) == 0) { 
+            above_level_data = check_adjacent_blocks(state, x, y+1, z, state->block);
         }   /* else above_level_data = 0 */
         
         /* check connection with same level */
         same_level_data = check_adjacent_blocks(state, x, y, z, 55);
         
-        /* check the posibility of connection with z-1 level, check for air */
+        /* check the posibility of connection with y-1 level, check for air */
         possibly_connected = check_adjacent_blocks(state, x, y, z, 0);
         
-        /* check connection with z-1 level */
-        if (z != 0) {
-            below_level_data = check_adjacent_blocks(state, x, y, z - 1, state->block);
-        } /* else below_level_data = 0 */
+        /* check connection with y-1 level */
+        below_level_data = check_adjacent_blocks(state, x, y-1, z, state->block);
         
         final_data = above_level_data | same_level_data | (below_level_data & possibly_connected);
         
@@ -451,6 +399,8 @@ chunk_render(PyObject *self, PyObject *args) {
     PyObject *up_right_blocks_py;
 
     RenderMode *rendermode;
+    
+    int i, j;
 
     PyObject *t = NULL;
     
@@ -466,9 +416,12 @@ chunk_render(PyObject *self, PyObject *args) {
 
     /* get the blockmap from the textures object */
     blockmap = PyObject_GetAttrString(state.textures, "blockmap");
-    if (blockmap == NULL)
+    if (blockmap == NULL) {
+        render_mode_destroy(rendermode);
         return NULL;
+    }
     if (blockmap == Py_None) {
+        render_mode_destroy(rendermode);
         PyErr_SetString(PyExc_RuntimeError, "you must call Textures.generate()");
         return NULL;
     }
@@ -484,33 +437,31 @@ chunk_render(PyObject *self, PyObject *args) {
     imgsize1 = PyInt_AsLong(imgsize1_py);
     Py_DECREF(imgsize0_py);
     Py_DECREF(imgsize1_py);
-
-    /* get the block data directly from numpy: */
-    blocks_py = get_chunk_data(&state, CURRENT, BLOCKS, 0);
-    state.blocks = blocks_py;
-    state.blockdatas = get_chunk_data(&state, CURRENT, BLOCKDATA, 1);
-
-    if (state.blockdatas == NULL || state.blocks == NULL) {
-        /* only error out completely if there's an exception set this function
-           will return NULL with no exception IFF the requested section was
-           missing. */
-        if (PyErr_Occurred())
-            return NULL;
+    
+    /* set all block data to unloaded */
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 3; j++) {
+            state.chunks[i][j].loaded = 0;
+        }
+    }
+    
+    /* get the block data for the center column, erroring out if needed */
+    if (load_chunk(&state, 0, 0, 1)) {
+        render_mode_destroy(rendermode);
+        Py_DECREF(blockmap);
+        return NULL;
+    }
+    if (state.chunks[1][1].sections[1].blocks == NULL) {
+        /* this section doesn't exist, let's skeddadle */
+        render_mode_destroy(rendermode);
+        Py_DECREF(blockmap);
         Py_RETURN_NONE;
     }
-
-    left_blocks_py = get_chunk_data(&state, DOWN_LEFT, BLOCKS, 1);
-    state.left_blocks = left_blocks_py;
-
-    right_blocks_py = get_chunk_data(&state, DOWN_RIGHT, BLOCKS, 1);
-    state.right_blocks = right_blocks_py;
-
-    up_left_blocks_py = get_chunk_data(&state, UP_LEFT, BLOCKS, 1);
-    state.up_left_blocks = up_left_blocks_py;
-
-    up_right_blocks_py = get_chunk_data(&state, UP_RIGHT, BLOCKS, 1);
-    state.up_right_blocks = up_right_blocks_py;
     
+    /* set blocks_py, state.blocks, and state.blockdatas as convenience */
+    blocks_py = state.blocks = state.chunks[1][1].sections[1].blocks;
+    state.blockdatas = state.chunks[1][1].sections[1].data;
+
     /* set up the random number generator again for each chunk
        so tallgrass is in the same place, no matter what mode is used */
     srand(1);
@@ -619,13 +570,21 @@ chunk_render(PyObject *self, PyObject *args) {
     /* free up the rendermode info */
     render_mode_destroy(rendermode);
     
-    Py_DECREF(blocks_py);
     Py_DECREF(blockmap);
-    Py_DECREF(state.blockdatas);
-    Py_XDECREF(left_blocks_py);
-    Py_XDECREF(right_blocks_py);
-    Py_XDECREF(up_left_blocks_py);
-    Py_XDECREF(up_right_blocks_py);
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 3; j++) {
+            if (state.chunks[i][j].loaded) {
+                int k;
+                for (k = 0; k < 3; k++) {
+                    Py_XDECREF(state.chunks[i][j].sections[k].blocks);
+                    Py_XDECREF(state.chunks[i][j].sections[k].data);
+                    Py_XDECREF(state.chunks[i][j].sections[k].skylight);
+                    Py_XDECREF(state.chunks[i][j].sections[k].blocklight);
+                }
+                state.chunks[i][j].loaded = 0;
+            }
+        }
+    }
 
     Py_RETURN_NONE;
 }
