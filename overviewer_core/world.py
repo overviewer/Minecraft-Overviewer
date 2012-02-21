@@ -357,7 +357,7 @@ class RegionSet(object):
             blocks = numpy.frombuffer(section['Blocks'], dtype=numpy.uint8)
             # Cast up to uint16, blocks can have up to 12 bits of data
             blocks = blocks.astype(numpy.uint16)
-            blocks.reshape((16,16,16))
+            blocks = blocks.reshape((16,16,16))
             if "AddBlocks" in section:
                 # This section has additional bits to tack on to the blocks
                 # array. AddBlocks is a packed array with 4 bits per slot, so
