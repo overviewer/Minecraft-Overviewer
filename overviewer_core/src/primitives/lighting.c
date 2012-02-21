@@ -100,9 +100,6 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
                          int x, int y, int z, int *authoratative) {
 
     /* placeholders for later data arrays, coordinates */
-    PyObject *blocks = NULL;
-    PyObject *blocklight = NULL;
-    int local_x = x, local_y = y, local_z = z;
     unsigned char block, blocklevel;
     unsigned int average_count = 0, average_gather = 0, coeff = 0;
 
@@ -110,36 +107,7 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
     if (authoratative)
         *authoratative = 0;
     
-    /* find out what chunk we're in, and translate accordingly */
-    if (x >= 0 && y < 16) {
-        blocks = state->blocks;
-        blocklight = self->blocklight;
-    } else if (x < 0) {
-        local_x += 16;        
-        blocks = state->left_blocks;
-        blocklight = self->left_blocklight;
-    } else if (y >= 16) {
-        local_y -= 16;
-        blocks = state->right_blocks;
-        blocklight = self->right_blocklight;
-    }
-    
-    /* make sure we have correctly-ranged coordinates */
-    if (!(local_x >= 0 && local_x < 16 &&
-          local_y >= 0 && local_y < 16 &&
-          local_z >= 0 && local_z < 128)) {
-        
-        return 0;
-    }
-
-    /* also, make sure we have enough info to correctly calculate lighting */
-    if (blocks == NULL ||
-        blocklight == NULL) {
-        
-        return 0;
-    }
-
-    block = getArrayByte3D(blocks, local_x, local_y, local_z);
+    block = get_data(state, BLOCKS, x, y, z);
     
     if (authoratative == NULL) {
         int auth;
@@ -149,16 +117,8 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
         for (dx = -1; dx <= 1; dx += 2) {
             for (dy = -1; dy <= 1; dy += 2) {
                 for (dz = -1; dz <= 1; dz += 2) {
-                    
-                    /* skip if block is out of range */
-                    if (x+dx < 0 || x+dx >= 16 ||
-                        y+dy < 0 || y+dy >= 16 ||
-                        z+dz < 0 || z+dz >= 128) {
-                        continue;
-                    }
-
                     coeff = estimate_blocklevel(self, state, x+dx, y+dy, z+dz, &auth);
-                    local_block = getArrayByte3D(blocks, x+dx, y+dy, z+dz);
+                    local_block = get_data(state, BLOCKS, x+dx, y+dy, z+dz);
                     /* only add if the block is transparent, this seems to look better than
                        using every block */
                     if (auth && is_transparent(local_block)) {
@@ -175,7 +135,7 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
         return average_gather / average_count;
     }
     
-    blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
+    blocklevel = get_data(state, BLOCKLIGHT, x, y, z);
     
     /* no longer a guess */
     if (!(block == 44 || block == 53 || block == 67 || block == 108 || block == 109) && authoratative) {
@@ -191,78 +151,26 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
                    unsigned char *r, unsigned char *g, unsigned char *b) {
 
     /* placeholders for later data arrays, coordinates */
-    PyObject *blocks = NULL;
-    PyObject *skylight = NULL;
-    PyObject *blocklight = NULL;
-    int local_x = x, local_y = y, local_z = z;
     unsigned char block, skylevel, blocklevel;
     
-    /* find out what chunk we're in, and translate accordingly */
-    if (x >= 0 && x < 16 && y >= 0 && y < 16) {
-        blocks = state->blocks;
-        skylight = self->skylight;
-        blocklight = self->blocklight;
-    } else if (x < 0) {
-        local_x += 16;        
-        blocks = state->left_blocks;
-        skylight = self->left_skylight;
-        blocklight = self->left_blocklight;
-    } else if (y >= 16) {
-        local_y -= 16;
-        blocks = state->right_blocks;
-        skylight = self->right_skylight;
-        blocklight = self->right_blocklight;
-    } else if (y < 0) {
-        local_y += 16;
-        blocks = state->up_left_blocks;
-        skylight = self->up_left_skylight;
-        blocklight = self->up_left_blocklight;
-    } else if (x >= 16) {
-        local_x -= 16;
-        blocks = state->up_right_blocks;
-        skylight = self->up_right_skylight;
-        blocklight = self->up_right_blocklight;
-    }
-
-    /* make sure we have correctly-ranged coordinates */
-    if (!(local_x >= 0 && local_x < 16 &&
-          local_y >= 0 && local_y < 16 &&
-          local_z >= 0 && local_z < 128)) {
-
-        self->calculate_light_color(self, 15, 0, r, g, b);
-        return;
-    }
-
-    /* also, make sure we have enough info to correctly calculate lighting */
-    if (!blocks   ||
-        !skylight ||
-        !blocklight) {
-
-        self->calculate_light_color(self, 15, 0, r, g, b);
-        return;
-    }
-    
-    block = getArrayByte3D(blocks, local_x, local_y, local_z);
-    skylevel = getArrayByte3D(skylight, local_x, local_y, local_z);
-    blocklevel = getArrayByte3D(blocklight, local_x, local_y, local_z);
+    block = get_data(state, BLOCKS, x, y, z);
+    skylevel = get_data(state, SKYLIGHT, x, y, z);
+    blocklevel = get_data(state, BLOCKLIGHT, x, y, z);
 
     /* special half-step handling, stairs handling */
     if (block == 44 || block == 53 || block == 67 || block == 108 || block == 109 || block == 114) {
         unsigned int upper_block;
         
         /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
-        if (local_z != 127) {
-            int upper_counter = 0;
-            /* but if the upper_block is one of these special half-steps, we need to look at *its* upper_block */
-            do {
-                upper_counter++; 
-                upper_block = getArrayByte3D(blocks, local_x, local_y, local_z + upper_counter);
-            } while ((upper_block == 44 || upper_block == 53 || upper_block == 67 || upper_block == 108 || upper_block == 109) && local_z < 127);
-            if (is_transparent(upper_block)) {
-                skylevel = getArrayByte3D(skylight, local_x, local_y, local_z + upper_counter);
-            }
+        int upper_counter = 0;
+        /* but if the upper_block is one of these special half-steps, we need to look at *its* upper_block */
+        do {
+            upper_counter++; 
+            upper_block = get_data(state, BLOCKS, x, y + upper_counter, z);
+        } while (upper_block == 44 || upper_block == 53 || upper_block == 67 || upper_block == 108 || upper_block == 109 || upper_block == 114);
+        if (is_transparent(upper_block)) {
+            skylevel = get_data(state, SKYLIGHT, x, y + upper_counter, z);
         } else {
-            upper_block = 0;
             skylevel = 15;
         }
         
@@ -287,31 +195,22 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
 inline int
 lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z) {
     /* first, check for occlusion if the block is in the local chunk */
-    if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 128) {
-        unsigned char block = getArrayByte3D(state->blocks, x, y, z);
+    if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16) {
+        unsigned short block = getArrayShort3D(state->blocks, x, y, z);
         
         if (!is_transparent(block) && !render_mode_hidden(state->rendermode, x, y, z)) {
             /* this face isn't visible, so don't draw anything */
             return 1;
         }
-    } else if (skip_sides && (x == -1) && (state->left_blocks != NULL)) {
-        unsigned char block = getArrayByte3D(state->left_blocks, 15, state->y, state->z);
+    } else if (skip_sides) {
+        unsigned short block = get_data(state, BLOCKS, x, y, z);
         if (!is_transparent(block)) {
             /* the same thing but for adjacent chunks, this solves an
                ugly black doted line between chunks in night rendermode.
                This wouldn't be necessary if the textures were truly
                tessellate-able */
                return 1;
-           }
-    } else if (skip_sides && (y == 16) && (state->right_blocks != NULL)) {
-        unsigned char block = getArrayByte3D(state->right_blocks, state->x, 0, state->z);
-        if (!is_transparent(block)) {
-            /* the same thing but for adjacent chunks, this solves an
-               ugly black doted line between chunks in night rendermode.
-               This wouldn't be necessary if the textures were truly
-               tessellate-able */
-               return 1;
-           }
+        }
     }
     return 0;
 }
@@ -343,8 +242,8 @@ lighting_start(void *data, RenderState *state, PyObject *support) {
     RenderPrimitiveLighting* self;
     self = (RenderPrimitiveLighting *)data;
     
-    /* don't skip sides by default */
-    self->skip_sides = 0;
+    /* skip sides by default */
+    self->skip_sides = 1;
 
     if (!render_mode_parse_option(support, "strength", "f", &(self->strength)))
         return 1;
@@ -359,17 +258,6 @@ lighting_start(void *data, RenderState *state, PyObject *support) {
     self->facemasks[1] = PyTuple_GetItem(self->facemasks_py, 1);
     self->facemasks[2] = PyTuple_GetItem(self->facemasks_py, 2);
     
-    self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT, 1);
-    self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT, 1);
-    self->left_skylight = get_chunk_data(state, DOWN_LEFT, SKYLIGHT, 1);
-    self->left_blocklight = get_chunk_data(state, DOWN_LEFT, BLOCKLIGHT, 1);
-    self->right_skylight = get_chunk_data(state, DOWN_RIGHT, SKYLIGHT, 1);
-    self->right_blocklight = get_chunk_data(state, DOWN_RIGHT, BLOCKLIGHT, 1);
-    self->up_left_skylight = get_chunk_data(state, UP_LEFT, SKYLIGHT, 1);
-    self->up_left_blocklight = get_chunk_data(state, UP_LEFT, BLOCKLIGHT, 1);
-    self->up_right_skylight = get_chunk_data(state, UP_RIGHT, SKYLIGHT, 1);
-    self->up_right_blocklight = get_chunk_data(state, UP_RIGHT, BLOCKLIGHT, 1);
-
     if (self->night) {
         self->calculate_light_color = calculate_light_color_night;
     } else {
@@ -401,17 +289,6 @@ lighting_finish(void *data, RenderState *state) {
     RenderPrimitiveLighting *self = (RenderPrimitiveLighting *)data;
     
     Py_DECREF(self->facemasks_py);
-    
-    Py_DECREF(self->skylight);
-    Py_DECREF(self->blocklight);
-    Py_XDECREF(self->left_skylight);
-    Py_XDECREF(self->left_blocklight);
-    Py_XDECREF(self->right_skylight);
-    Py_XDECREF(self->right_blocklight);
-    Py_XDECREF(self->up_left_skylight);
-    Py_XDECREF(self->up_left_blocklight);
-    Py_XDECREF(self->up_right_skylight);
-    Py_XDECREF(self->up_right_blocklight);
 }
 
 static void
@@ -427,13 +304,13 @@ lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyO
          * blocks that are transparent for occlusion calculations and
          * need per-face shading if the face is drawn. */
         if ((state->block_pdata & 16) == 16) {
-            do_shading_with_mask(self, state, x, y, z+1, self->facemasks[0]);
+            do_shading_with_mask(self, state, x, y+1, z, self->facemasks[0]);
         }
         if ((state->block_pdata & 2) == 2) { /* bottom left */
             do_shading_with_mask(self, state, x-1, y, z, self->facemasks[1]);
         }
         if ((state->block_pdata & 4) == 4) { /* bottom right */
-            do_shading_with_mask(self, state, x, y+1, z, self->facemasks[2]);
+            do_shading_with_mask(self, state, x, y, z+1, self->facemasks[2]);
         }
         /* leaves are transparent for occlusion calculations but they 
          * per face-shading to look as in game */
@@ -442,9 +319,9 @@ lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyO
         do_shading_with_mask(self, state, x, y, z, mask_light);
     } else {
         /* opaque: do per-face shading */
-        do_shading_with_mask(self, state, x, y, z+1, self->facemasks[0]);
+        do_shading_with_mask(self, state, x, y+1, z, self->facemasks[0]);
         do_shading_with_mask(self, state, x-1, y, z, self->facemasks[1]);
-        do_shading_with_mask(self, state, x, y+1, z, self->facemasks[2]);
+        do_shading_with_mask(self, state, x, y, z+1, self->facemasks[2]);
     }
 }
 

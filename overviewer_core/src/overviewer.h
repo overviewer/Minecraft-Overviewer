@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 23
+#define OVERVIEWER_EXTENSION_VERSION 24
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -148,6 +148,10 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
 {
     int chunkx = 1, chunky = state->chunky, chunkz = 1;
     PyObject *data_array = NULL;
+    unsigned int def = 0;
+    if (type == SKYLIGHT)
+        def = 15;
+    
     if (x >= 16) {
         x -= 16;
         chunkx++;
@@ -172,12 +176,12 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
         chunky--;
     }
     if (chunky < 0 || chunky >= SECTIONS_PER_CHUNK)
-        return 0;
+        return def;
     
     if (!(state->chunks[chunkx][chunkz].loaded))
     {
         if (load_chunk(state, chunkx - 1, chunkz - 1, 0))
-            return 0;
+            return def;
     }
     
     switch (type)
@@ -197,7 +201,7 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
     };
     
     if (data_array == NULL)
-        return 0;
+        return def;
     
     if (type == BLOCKS)
         return getArrayShort3D(data_array, x, y, z);
