@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 22
+#define OVERVIEWER_EXTENSION_VERSION 23
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -67,14 +67,15 @@ PyObject *draw_triangle(PyObject *dest, int inclusive,
 typedef struct _RenderMode RenderMode;
 
 /* in iterate.c */
+#define SECTIONS_PER_CHUNK 16
 typedef struct {
     /* whether this chunk is loaded: use load_chunk to load */
     int loaded;
-    /* the 3 sections: below, current, above */
+    /* all the sections in a given chunk */
     struct {
         /* all there is to know about each section */
         PyObject *blocks, *data, *skylight, *blocklight;
-    } sections[3];
+    } sections[SECTIONS_PER_CHUNK];
 } ChunkData;
 typedef struct {
     /* the regionset object, and chunk coords */
@@ -142,10 +143,10 @@ typedef enum
     DATA,
     BLOCKLIGHT,
     SKYLIGHT,
-} ChunkType;
-static inline unsigned int get_data(RenderState *state, ChunkType type, int x, int y, int z)
+} DataType;
+static inline unsigned int get_data(RenderState *state, DataType type, int x, int y, int z)
 {
-    int chunkx = 1, chunky = 1, chunkz = 1;
+    int chunkx = 1, chunky = state->chunky, chunkz = 1;
     PyObject *data_array = NULL;
     if (x >= 16) {
         x -= 16;
@@ -154,13 +155,6 @@ static inline unsigned int get_data(RenderState *state, ChunkType type, int x, i
         x += 16;
         chunkx--;
     }
-    if (y >= 16) {
-        y -= 16;
-        chunky++;
-    } else if (y < 0) {
-        y += 16;
-        chunky--;
-    }
     if (z >= 16) {
         z -= 16;
         chunkz++;
@@ -168,6 +162,17 @@ static inline unsigned int get_data(RenderState *state, ChunkType type, int x, i
         z += 16;
         chunkz--;
     }
+
+    while (y >= 16) {
+        y -= 16;
+        chunky++;
+    }
+    while (y < 0) {
+        y += 16;
+        chunky--;
+    }
+    if (chunky < 0 || chunky >= SECTIONS_PER_CHUNK)
+        return 0;
     
     if (!(state->chunks[chunkx][chunkz].loaded))
     {

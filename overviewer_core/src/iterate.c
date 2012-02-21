@@ -122,7 +122,6 @@ static inline void load_chunk_section(ChunkData *dest, int i, PyObject *section)
  */
 int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     ChunkData *dest = &(state->chunks[1 + x][1 + z]);
-    int y = state->chunky;
     int i;
     PyObject *chunk = NULL;
     PyObject *sections = NULL;
@@ -157,7 +156,7 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     }
     
     /* set up reasonable defaults */
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < SECTIONS_PER_CHUNK; i++)
     {
         dest->sections[i].blocks = NULL;
         dest->sections[i].data = NULL;
@@ -167,16 +166,15 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     
     for (i = 0; i < PySequence_Fast_GET_SIZE(sections); i++) {
         PyObject *ycoord = NULL;
-        int rely = 0;
+        int sectiony = 0;
         PyObject *section = PySequence_Fast_GET_ITEM(sections, i);
         ycoord = PyDict_GetItemString(section, "Y");
         if (!ycoord)
             continue;
         
-        rely = PyInt_AsLong(ycoord) + 1 - y;
-        if (rely >= 0 && rely < 3) {
-            load_chunk_section(dest, rely, section);
-        }
+        sectiony = PyInt_AsLong(ycoord);
+        if (sectiony >= 0 && sectiony < SECTIONS_PER_CHUNK)
+            load_chunk_section(dest, sectiony, section);
     }
     Py_DECREF(sections);
     
@@ -451,7 +449,7 @@ chunk_render(PyObject *self, PyObject *args) {
         Py_DECREF(blockmap);
         return NULL;
     }
-    if (state.chunks[1][1].sections[1].blocks == NULL) {
+    if (state.chunks[1][1].sections[state.chunky].blocks == NULL) {
         /* this section doesn't exist, let's skeddadle */
         render_mode_destroy(rendermode);
         Py_DECREF(blockmap);
@@ -459,8 +457,8 @@ chunk_render(PyObject *self, PyObject *args) {
     }
     
     /* set blocks_py, state.blocks, and state.blockdatas as convenience */
-    blocks_py = state.blocks = state.chunks[1][1].sections[1].blocks;
-    state.blockdatas = state.chunks[1][1].sections[1].data;
+    blocks_py = state.blocks = state.chunks[1][1].sections[state.chunky].blocks;
+    state.blockdatas = state.chunks[1][1].sections[state.chunky].data;
 
     /* set up the random number generator again for each chunk
        so tallgrass is in the same place, no matter what mode is used */
@@ -575,7 +573,7 @@ chunk_render(PyObject *self, PyObject *args) {
         for (j = 0; j < 3; j++) {
             if (state.chunks[i][j].loaded) {
                 int k;
-                for (k = 0; k < 3; k++) {
+                for (k = 0; k < SECTIONS_PER_CHUNK; k++) {
                     Py_XDECREF(state.chunks[i][j].sections[k].blocks);
                     Py_XDECREF(state.chunks[i][j].sections[k].data);
                     Py_XDECREF(state.chunks[i][j].sections[k].skylight);
