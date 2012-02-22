@@ -32,14 +32,11 @@ This module has routines for extracting information about available worlds
 class ChunkDoesntExist(Exception):
     pass
 
-class BiomeDataDoesntExist(Exception):
-    pass
-
 def log_other_exceptions(func):
     """A decorator that prints out any errors that are not
-    ChunkDoesntExist or BiomeDataDoesntExist errors. This decorates
-    get_chunk because the C code is likely to swallow exceptions, so
-    this will at least make them visible.
+    ChunkDoesntExist errors. This decorates get_chunk because the C
+    code is likely to swallow exceptions, so this will at least make
+    them visible.
 
     """
     functools.wraps(func)
@@ -47,8 +44,6 @@ def log_other_exceptions(func):
         try:
             return func(*args)
         except ChunkDoesntExist:
-            raise
-        except BiomeDataDoesntExist:
             raise
         except Exception, e:
             logging.exception("%s raised this exception", func.func_name)
@@ -239,7 +234,6 @@ class RegionSet(object):
 
         # Caching implementaiton: a simple LRU cache
         # Decorate the getter methods with the cache decorator
-        self._get_biome_data_for_region = cache.lru_cache(cachesize)(self._get_biome_data_for_region)
         self.get_chunk = cache.lru_cache(cachesize)(self.get_chunk)
 
     # Re-initialize upon unpickling
@@ -264,45 +258,6 @@ class RegionSet(object):
         else:
             raise Exception("Woah, what kind of dimension is this! %r" % self.regiondir)
     
-    # this is decorated with cache.lru_cache in __init__(). Be aware!
-    @log_other_exceptions
-    def _get_biome_data_for_region(self, regionx, regionz):
-        """Get the block of biome data for an entire region. Biome
-        data is in the format output by Minecraft Biome Extractor:
-        http://code.google.com/p/minecraft-biome-extractor/"""
-        
-        # biomes only make sense for the overworld, right now
-        if self.get_type() != "overworld":
-            raise BiomeDataDoesntExist("Biome data is not available for '%s'." % (self.get_type(),))
-        
-        # biomes are, unfortunately, in a different place than regiondir
-        biomefile = os.path.split(self.regiondir)[0]
-        biomefile = os.path.join(biomefile, 'biomes', 'b.%d.%d.biome' % (regionx, regionz))
-        
-        try:
-            with open(biomefile, 'rb') as f:
-                data = f.read()
-                if not len(data) == 512 * 512 * 2:
-                    raise BiomeDataDoesntExist("File `%s' does not have correct size." % (biomefile,))
-                data = numpy.frombuffer(data, dtype=numpy.dtype(">u2"))
-                # reshape and transpose to get [x, z] indices
-                return numpy.transpose(numpy.reshape(data, (512, 512)))
-        except IOError:
-            raise BiomeDataDoesntExist("File `%s' could not be read." % (biomefile,))
-    
-    @log_other_exceptions
-    def get_biome_data(self, x, z):
-        """Get the block of biome data for the given chunk. Biome data
-        is returned as a 16x16 numpy array of indices into the
-        corresponding biome color images."""
-        regionx = x // 32
-        regionz = z // 32
-        blockx = (x % 32) * 16
-        blockz = (z % 32) * 16
-        
-        region_biomes = self._get_biome_data_for_region(regionx, regionz)
-        return region_biomes[blockx:blockx+16,blockz:blockz+16]
-
     # this is decorated with cache.lru_cache in __init__(). Be aware!
     @log_other_exceptions
     def get_chunk(self, x, z):
@@ -506,11 +461,6 @@ class RotatedRegionSet(RegionSet):
         return (self.regiondir, self.north_dir)
     def __setstate__(self, args):
         self.__init__(args[0], args[1])
-    
-    def get_biome_data(self, x, z):
-        x,z = self.unrotate(x,z)
-        biome_data = super(RotatedRegionSet, self).get_biome_data(x,z)
-        return numpy.rot90(biome_data, self.north_dir)
     
     def get_chunk(self, x, z):
         x,z = self.unrotate(x,z)

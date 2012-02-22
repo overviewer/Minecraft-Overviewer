@@ -146,9 +146,9 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     if (sections) {
         sections = PySequence_Fast(sections, "Sections tag was not a list!");
     }
-    Py_DECREF(chunk);
     if (sections == NULL) {
         // exception set, again
+        Py_DECREF(chunk);
         if (!required) {
             PyErr_Clear();
         }
@@ -156,6 +156,7 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     }
     
     /* set up reasonable defaults */
+    dest->biomes = NULL;
     for (i = 0; i < SECTIONS_PER_CHUNK; i++)
     {
         dest->sections[i].blocks = NULL;
@@ -163,6 +164,9 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
         dest->sections[i].skylight = NULL;
         dest->sections[i].blocklight = NULL;
     }
+    
+    dest->biomes = PyDict_GetItemString(chunk, "Biomes");
+    Py_INCREF(dest->biomes);
     
     for (i = 0; i < PySequence_Fast_GET_SIZE(sections); i++) {
         PyObject *ycoord = NULL;
@@ -177,6 +181,7 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
             load_chunk_section(dest, sectiony, section);
     }
     Py_DECREF(sections);
+    Py_DECREF(chunk);
     
     dest->loaded = 1;
     return 0;
@@ -573,6 +578,7 @@ chunk_render(PyObject *self, PyObject *args) {
         for (j = 0; j < 3; j++) {
             if (state.chunks[i][j].loaded) {
                 int k;
+                Py_XDECREF(state.chunks[i][j].biomes);
                 for (k = 0; k < SECTIONS_PER_CHUNK; k++) {
                     Py_XDECREF(state.chunks[i][j].sections[k].blocks);
                     Py_XDECREF(state.chunks[i][j].sections[k].data);

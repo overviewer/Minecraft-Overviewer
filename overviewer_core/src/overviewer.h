@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 24
+#define OVERVIEWER_EXTENSION_VERSION 25
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -38,11 +38,13 @@
    in y/z/x order */
 #define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (y), (z), (x))))
 #define getArrayShort3D(array, x,y,z) (*(unsigned short *)(PyArray_GETPTR3((array), (y), (z), (x))))
+#define getArrayByte2D(array, x,y) (*(unsigned char *)(PyArray_GETPTR2((array), (x), (y))))
 #define getArrayShort2D(array, x,y) (*(unsigned short *)(PyArray_GETPTR2((array), (x), (y))))
 
 /* generally useful MAX / MIN macros */
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define CLAMP(x, a, b) (MIN(MAX(x, a), b))
 
 /* in composite.c */
 Imaging imaging_python_to_c(PyObject *obj);
@@ -71,6 +73,8 @@ typedef struct _RenderMode RenderMode;
 typedef struct {
     /* whether this chunk is loaded: use load_chunk to load */
     int loaded;
+    /* chunk biome array */
+    PyObject *biomes;
     /* all the sections in a given chunk */
     struct {
         /* all there is to know about each section */
@@ -143,6 +147,7 @@ typedef enum
     DATA,
     BLOCKLIGHT,
     SKYLIGHT,
+    BIOMES,
 } DataType;
 static inline unsigned int get_data(RenderState *state, DataType type, int x, int y, int z)
 {
@@ -198,6 +203,8 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
     case SKYLIGHT:
         data_array = state->chunks[chunkx][chunkz].sections[chunky].skylight;
         break;
+    case BIOMES:
+        data_array = state->chunks[chunkx][chunkz].biomes;
     };
     
     if (data_array == NULL)
@@ -205,6 +212,8 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
     
     if (type == BLOCKS)
         return getArrayShort3D(data_array, x, y, z);
+    if (type == BIOMES)
+        return getArrayByte2D(data_array, x, z);
     return getArrayByte3D(data_array, x, y, z);
 }
 

@@ -18,13 +18,56 @@
 #include "../overviewer.h"
 
 typedef struct {
-    /* biome data for the chunk */
-    PyObject *biome_data;
     /* grasscolor and foliagecolor lookup tables */
     PyObject *grasscolor, *foliagecolor, *watercolor;
     /* biome-compatible grass/leaf textures */
     PyObject *grass_texture;
 } PrimitiveBase;
+
+typedef struct {
+    const char* name;
+    float temperature;
+    float rainfall;
+} Biome;
+
+/* each entry in this table is yanked *directly* out of the minecraft source
+ * temp/rainfall are taken from what MCP calls setTemperatureRainfall
+ *
+ * keep in mind the x/y coordinate in the color tables is found *after*
+ * multiplying rainfall and temperature for the second coordinate, *and* the
+ * origin is in the lower-right. <3 biomes.
+ */
+static Biome biome_table[] = {
+    /* 0 */
+    {"Ocean", 0.5, 0.5},
+    {"Plains", 0.8, 0.4},
+    {"Desert", 2.0, 0.0},
+    {"Extreme Hills", 0.2, 0.3},
+    {"Forest", 0.7, 0.8},
+    /* 5 */
+    {"Taiga", 0.05, 0.8},
+    {"Swampland", 0.8, 0.9},
+    {"River", 0.5, 0.5},
+    {"Hell", 2.0, 0.0},
+    {"Sky", 0.5, 0.5},
+    /* 10 */
+    {"FrozenOcean", 0.0, 0.5},
+    {"FrozenRiver", 0.0, 0.5},
+    {"Ice Plains", 0.0, 0.5},
+    {"Ice Mountains", 0.0, 0.5},
+    {"MushroomIsland", 0.9, 1.0},
+    /* 15 */
+    {"MushroomIslandShore", 0.9, 1.0},
+    {"Beach", 0.8, 0.4},
+    {"DesertHills", 2.0, 0.0},
+    {"ForestHills", 0.7, 0.8},
+    {"TaigaHills", 0.05, 0.8},
+    /* 20 */
+    {"Extreme Hills Edge", 0.2, 0.3},
+    {"Jungle", 2.0, 0.45}, /* <-- GUESS, but a good one */
+};
+
+#define NUM_BIOMES (sizeof(biome_table) / sizeof(Biome))
 
 static int
 base_start(void *data, RenderState *state, PyObject *support) {
@@ -32,16 +75,11 @@ base_start(void *data, RenderState *state, PyObject *support) {
     
     /* biome-compliant grass mask (includes sides!) */
     self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
-
-    self->biome_data = PyObject_CallMethod(state->regionset, "get_biome_data", "ii", state->chunkx, state->chunkz);
-    if (self->biome_data == NULL) {
-        /* error while loading biome info, or no biomes at all */
-        PyErr_Clear();
-    } else {
-        self->foliagecolor = PyObject_CallMethod(state->textures, "load_foliage_color", "");
-        self->grasscolor = PyObject_CallMethod(state->textures, "load_grass_color", "");
-        self->watercolor = PyObject_CallMethod(state->textures, "load_water_color", "");
-    }
+    
+    /* color lookup tables */
+    self->foliagecolor = PyObject_CallMethod(state->textures, "load_foliage_color", "");
+    self->grasscolor = PyObject_CallMethod(state->textures, "load_grass_color", "");
+    self->watercolor = PyObject_CallMethod(state->textures, "load_water_color", "");
     
     return 0;
 }
@@ -50,11 +88,10 @@ static void
 base_finish(void *data, RenderState *state) {
     PrimitiveBase *self = (PrimitiveBase *)data;
     
-    Py_XDECREF(self->biome_data);
-    Py_XDECREF(self->foliagecolor);
-    Py_XDECREF(self->grasscolor);
-    Py_XDECREF(self->watercolor);
-    Py_XDECREF(self->grass_texture);
+    Py_DECREF(self->foliagecolor);
+    Py_DECREF(self->grasscolor);
+    Py_DECREF(self->watercolor);
+    Py_DECREF(self->grass_texture);
 }
 
 static int
@@ -72,13 +109,6 @@ base_occluded(void *data, RenderState *state, int x, int y, int z) {
     return 0;
 }
 
-static int
-base_hidden(void *data, RenderState *state, int x, int y, int z) {
-    PrimitiveBase *self = (PrimitiveBase *)data;
-    
-    return 0;
-}
-
 static void
 base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     PrimitiveBase *self = (PrimitiveBase *)data;
@@ -91,9 +121,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
      * NOTES for maintainers:
      *
      * To add a biome-compatible block, add an OR'd condition to this
-     * following if block, a case to the first switch statement to handle when
-     * biome info IS available, and another case to the second switch
-     * statement for when biome info ISN'T available.
+     * following if block, and a case to the switch statement to handle biome
+     * coloring.
      *
      * Make sure that in textures.py, the generated textures are the
      * biome-compliant ones! The tinting is now all done here.
@@ -116,113 +145,102 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
     {
         /* do the biome stuff! */
         PyObject *facemask = mask;
-        unsigned char r, g, b;
+        unsigned char r = 255, g = 255, b = 255;
+        PyObject *color_table = NULL;
+        unsigned char flip_xy = 0;
         
         if (state->block == 2) {
             /* grass needs a special facemask */
             facemask = self->grass_texture;
         }
-        
-        if (self->biome_data) {
-            /* we have data, so use it! */
-            unsigned int index;
+
+        switch (state->block) {
+        case 2:
+            /* grass */
+            color_table = self->grasscolor;
+            break;
+        case 8:
+        case 9:
+            /* water */
+            color_table = self->watercolor;
+            break;
+        case 18:
+            /* leaves */
+            color_table = self->foliagecolor;
+            if (state->block_data == 2)
+            {
+                /* birch!
+                   birch foliage color is flipped XY-ways */
+                flip_xy = 1;
+            }
+            break;
+        case 31:
+            /* tall grass */
+            color_table = self->grasscolor;
+            break;
+        case 104:
+            /* pumpkin stem */
+            color_table = self->grasscolor;
+            break;
+        case 105:
+            /* melon stem */
+            color_table = self->grasscolor;
+            break;
+        case 106:
+            /* vines */
+            color_table = self->grasscolor;
+            break;
+        case 111:
+            /* lily pads */
+            color_table = self->grasscolor;
+            break;
+        default:
+            break;
+        };
+            
+        if (color_table) {
+            int dx, dz;
+            unsigned char tablex, tabley;
+            float temp = 0.0, rain = 0.0;
             PyObject *color = NULL;
             
-            index = big_endian_ushort(getArrayShort2D(self->biome_data, state->x, state->y));
-            
-            switch (state->block) {
-            case 2:
-                /* grass */
-                color = PySequence_GetItem(self->grasscolor, index);
-                break;
-            case 8:
-            case 9:
-                /* water */
-                if (self->watercolor)
-                {
-                    color = PySequence_GetItem(self->watercolor, index);
-                } else {
-                    color = NULL;
-                    facemask = NULL;
-                }
-                break;
-            case 18:
-                /* leaves */
-                if (state->block_data != 2)
-                {
-                    /* not birch! */
-                    color = PySequence_GetItem(self->foliagecolor, index);
-                } else {
-                    /* birch!
-                       birch foliage color is flipped XY-ways */
-                    unsigned int index_x = 255 - (index % 256);
-                    unsigned int index_y = 255 - (index / 256);
-                    index = index_y * 256 + index_x;
+            /* average over all neighbors */
+            for (dx = -1; dx <= 1; dx++) {
+                for (dz = -1; dz <= 1; dz += (dx == 0 ? 2 : 1)) {
+                    unsigned char biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
+                    if (biome > NUM_BIOMES)
+                        biome = 0;
                     
-                    color = PySequence_GetItem(self->foliagecolor, index);
+                    temp += biome_table[biome].temperature;
+                    rain += biome_table[biome].rainfall;
                 }
-                break;
-            case 31:
-                /* tall grass */
-                color = PySequence_GetItem(self->grasscolor, index);
-                break;
-            case 104:
-                /* pumpkin stem */
-                color = PySequence_GetItem(self->grasscolor, index);
-                break;
-            case 105:
-                /* melon stem */
-                color = PySequence_GetItem(self->grasscolor, index);
-                break;
-            case 106:
-                /* vines */
-                color = PySequence_GetItem(self->grasscolor, index);
-                break;
-            case 111:
-                /* lily pads */
-                color = PySequence_GetItem(self->grasscolor, index);
-                break;
-            default:
-                break;
-            };
-            
-            if (color)
-            {
-                /* we've got work to do */
-                
-                r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
-                g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
-                b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
-                Py_DECREF(color);
             }
-        } else {
-            if (state->block == 2 || state->block == 31 ||
-                state->block == 104 || state->block == 105)
-                /* grass and pumpkin/melon stems */
-            {
-                r = 115;
-                g = 175;
-                b = 71;
+            temp /= 8.0;
+            rain /= 8.0;
+            
+            /* make sure they're sane */
+            temp = CLAMP(temp, 0.0, 1.0);
+            rain = CLAMP(rain, 0.0, 1.0);
+            
+            /* convert to x/y coordinates in color table */
+            tablex = 255 - (255 * temp);
+            tabley = 255 - (255 * temp * rain);
+            if (flip_xy) {
+                unsigned char tmp = 255 - tablex;
+                tablex = 255 - tabley;
+                tabley = tmp;
             }
             
-            if (state->block == 8 || state->block == 9)
-                /* water */
-            {
-                /* by default water is fine with nothing */
-                facemask = NULL;
-            }
-            
-            if (state->block == 18 || state->block == 106 || state->block == 111)
-                /* leaves, vines and lyli pads */
-            {
-                r = 37;
-                g = 118;
-                b = 25;
-            }
+            /* look up color! */
+            color = PySequence_GetItem(color_table, tabley * 256 + tablex);
+            r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
+            g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
+            b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+            Py_DECREF(color);
         }
         
-        if (facemask)
-            tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
+        /* final coloration */
+        tint_with_mask(state->img, r, g, b, 255, facemask, state->imgx, state->imgy, 0, 0);
     }
 }
 
@@ -231,6 +249,6 @@ RenderPrimitiveInterface primitive_base = {
     base_start,
     base_finish,
     base_occluded,
-    base_hidden,
+    NULL,
     base_draw,
 };
