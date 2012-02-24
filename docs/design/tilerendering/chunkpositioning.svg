@@ -14,7 +14,10 @@
    id="svg4984"
    version="1.1"
    inkscape:version="0.48.1 r9760"
-   sodipodi:docname="chunkpositioning.svg">
+   sodipodi:docname="chunkpositioning.svg"
+   inkscape:export-filename="/home/andrew/mc/overviewer/anvil/docs/design/tilerendering/chunkpositioning.png"
+   inkscape:export-xdpi="26.505878"
+   inkscape:export-ydpi="26.505878">
   <defs
      id="defs4986">
     <marker
@@ -80,7 +83,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>

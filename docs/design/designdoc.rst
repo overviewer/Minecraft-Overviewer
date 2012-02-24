@@ -77,7 +77,7 @@ directions).
 .. image:: screenshot.png
     :alt: A screenshot of Overviewer output
 
-The Overviewer is a sprite-based renderer. Each block corresponds to a
+The Overviewer is a sprite-based renderer. Each block type corresponds to a
 pre-rendered sprite (a small image). The basic idea is to iterate over the
 blocks of the world and draw these sprites to the appropriate location on the
 map.
@@ -86,8 +86,8 @@ These are the high-level tasks The Overviewer must preform in rendering a map:
 
 1. Render each block sprite from the textures
 2. Scan the chunks of the world and determine which tiles need rendering
-3. Render a single chunk from the blocks sprites
-4. Render a single tile of the map from chunk images
+3. Render a chunk by drawing the appropriate blocks sprites on an image
+4. Render a tile of the map from several chunk images
 5. Compose the lower-zoom tiles from the higher-zoom tiles
 
 The next sections will go over how these tasks work.
