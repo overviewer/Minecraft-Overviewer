@@ -3065,3 +3065,13 @@ def end_portal_frame(self, blockid, data):
 
 # end stone
 block(blockid=121, top_index=175)
+
+# dragon egg
+# NOTE: this isn't a block, but I think it's better than nothing
+block(blockid=122, top_index=37)
+
+# inactive redstone lamp
+block(blockid=123, top_index=211)
+
+# active redstone lamp
+block(blockid=124, top_index=212)
