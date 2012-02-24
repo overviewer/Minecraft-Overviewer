@@ -767,9 +767,10 @@ def saplings(self, blockid, data):
     
     if data & 0x3 == 1: # spruce sapling
         tex = self.terrain_images[63]
-    if data & 0x3 == 2: # birch sapling
+    elif data & 0x3 == 2: # birch sapling
         tex = self.terrain_images[79]
-    
+    elif data & 0x3 == 3: # jungle sapling
+        tex = self.terrain_images[30]
     return self.build_sprite(tex)
 
 # bedrock
@@ -848,6 +849,8 @@ def wood(self, blockid, data):
         return self.build_block(top, self.terrain_images[116])
     if data == 2: # pine
         return self.build_block(top, self.terrain_images[117])
+    if data == 3: # jungle wood
+        return self.build_block(top, self.terrain_images[153])
 
 @material(blockid=18, data=range(16), transparent=True, solid=True)
 def leaves(self, blockid, data):
@@ -855,6 +858,9 @@ def leaves(self, blockid, data):
     if data == 1:
         # pine!
         t = self.terrain_images[132]
+    elif data == 3:
+        # jungle tree
+        t = self.terrain_images[196]
     return self.build_block(t, t)
 
 # sponge
