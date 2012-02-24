@@ -10,7 +10,7 @@ See also the `Github Homepage`_ and the `Updates Blog`_
 
 .. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
 
-.. _Updates Blog: http://mcoverviewer.blogspot.com/
+.. _Updates Blog: http://overviewer.org/blog/
 
 Introduction
 ============
@@ -111,6 +111,9 @@ our `Github Homepage`_.
 packages and don't want to have to compile anything yourself**, head to the
 :doc:`installing` page.
 
+**Running Windows and not familiar with the command line?** Head to the
+:doc:`win_tut/windowsguide` page.
+
 **If you would like to build the Overviewer from source yourself (it's not that
 bad)**, head to the :doc:`Building <building>` page.
 
@@ -148,6 +151,7 @@ Documentation Contents
    building
    running
    config
+   win_tut/windowsguide
    faq
    design/designdoc
 
