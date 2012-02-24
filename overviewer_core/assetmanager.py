@@ -141,6 +141,8 @@ directory.
 
         # create overviewer.js from the source js files
         js_src = os.path.join(util.get_program_path(), "overviewer_core", "data", "js_src")
+        if not os.path.isdir(js_src):
+            js_src = os.path.join(util.get_program_path(), "js_src")
         with open(os.path.join(self.outputdir, "overviewer.js"), "w") as fout:
             # first copy in js_src/overviewer.js
             with open(os.path.join(js_src, "overviewer.js")) as f:

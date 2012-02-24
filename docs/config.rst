@@ -39,12 +39,14 @@ The ``worlds`` dictionary
     lines like this one. Otherwise, one is sufficient.
 
 The ``renders`` dictionary
-    Each item here declares a "render" which is a map of a world rendered with a
-    set of options. If you have more than one, when viewing the maps, you will
-    get a dropdown box to choose which map you want to look at.
+    Each item here declares a "render" which is a map of one dimension of one
+    world rendered with the given options. If you declare more than one render,
+    then you will get a dropdown box to choose which map you want to look at
+    when viewing the maps.
 
-    You can render the same world multiple times with different options, or
-    render multiple worlds.
+    You are free to declare as many renders as you want with whatever options
+    you want. For example, you are allowed to render multiple worlds, or even
+    render the same world multiple times with different options.
 
 .. note::
 
@@ -80,14 +82,6 @@ A more complicated example
         "dimension": "nether",
     }
 
-    renders["survivalspawnoverlay"] = {
-        "world": "survival",
-        "title": "Spawn Overlay",
-        "rendermode": spawn_overlay,
-        "dimension": "overworld",
-        "overlay": ["survivalday", "survivalnight"],
-    }
-
     renders["creative"] = {
         "world": "creative",
         "title": "Creative",
@@ -96,24 +90,30 @@ A more complicated example
     }
 
     outputdir = "/home/username/mcmap"
-    textures = "/home/username/my_texture_pack.zip"
+    texturepath = "/home/username/my_texture_pack.zip"
 
-This config defines four maps for render, and one overlay. Two of them are of
-the survival world's overworld, one is for the survival's nether, and one is for
-a creative world. The overlay is the "spawn_overlay" (which highlights areas
-that are dark enough for monsters to spawn) and it will be available when
-viewing the survivalday and survivalnight maps.
+This config defines four maps for render. Two of them are of the survival
+world's overworld, one is for the survival's nether, and one is for the creative
+world.
 
 Notice here we explicitly set the dimension property on each render. If
-dimension is not specified, the default or overworld dimension is used.
+dimension is not specified, the default or overworld dimension is used. It is
+necessary e.g. for the nether render.
 
 Also note here we specify some different rendermodes. A rendermode refers to how
 the map is rendered. The Overviewer can render a map in many different ways, and
 there are many preset rendermodes, and you can even create your own (more on
 that later).
 
-And finally, note the usage of the ``textures`` option. This specifies a texture
-pack to use for the rendering.
+And finally, note the usage of the ``texturepath`` option. This specifies a
+texture pack to use for the rendering. Also note that it is set at the top level
+of the config file, and therefore applies to every render. It could be set on
+individual renders to apply to just those renders.
+
+.. note::
+
+    See the ``sample_config.py`` file included in the repository for another
+    example.
 
 Config File Specifications
 ==========================
