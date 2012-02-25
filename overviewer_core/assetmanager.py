@@ -149,7 +149,7 @@ directory.
                 fout.write(f.read())
             # now copy in the rest
             for js in os.listdir(js_src):
-                if not js.endswith("overviewer.js"):
+                if not js.endswith("overviewer.js") and js.endswith(".js"):
                     with open(os.path.join(js_src,js)) as f:
                         fout.write(f.read())
         
