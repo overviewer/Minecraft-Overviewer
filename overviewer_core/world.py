@@ -468,9 +468,9 @@ class RotatedRegionSet(RegionSet):
         for section in chunk_data['Sections']:
             for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight']:
                 array = section[arrayname]
-                # New arrays are arranged with axes Y,Z,X
+                # Since the anvil change, arrays are arranged with axes Y,Z,X
                 # numpy.rot90 always rotates the first two axes, so for it to
-                # work, we need to temporarily more the X axis to the 0th axis.
+                # work, we need to temporarily move the X axis to the 0th axis.
                 array = numpy.swapaxes(array, 0,2)
                 array = numpy.rot90(array, self.north_dir)
                 array = numpy.swapaxes(array, 0,2)

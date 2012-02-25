@@ -235,7 +235,7 @@ overviewer.util = {
      * 
      * @return google.maps.LatLng
      */
-    'fromWorldToLatLng': function(x, z, y, model) {
+    'fromWorldToLatLng': function(x, y, z, model) {
 
         var zoomLevels = model.get("zoomLevels");
         var north_direction = model.get('north_direction');
@@ -248,15 +248,15 @@ overviewer.util = {
 
         if (north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = x;
-            x = -y+16;
-            y = temp;
+            x = -z+16;
+            z = temp;
         } else if(north_direction == overviewerConfig.CONST.LOWERRIGHT){
             x = -x+16;
-            y = -y+16;
+            z = -z+16;
         } else if(north_direction == overviewerConfig.CONST.LOWERLEFT){
             temp = x;
-            x = y;
-            y = -temp+16;
+            x = z;
+            z = -temp+16;
         }
 
         // This information about where the center column is may change with
@@ -278,11 +278,11 @@ overviewer.util = {
         lat -= 6 * x * perPixel;
 
         // each block on Y axis adds 12px to x and adds 6px to y
-        lng += 12 * y * perPixel;
-        lat += 6 * y * perPixel;
+        lng += 12 * z * perPixel;
+        lat += 6 * z * perPixel;
 
         // each block down along Z adds 12px to y
-        lat += 12 * (128 - z) * perPixel;
+        lat += 12 * (256 - y) * perPixel;
 
         // add on 12 px to the X coordinate to center our point
         lng += 12 * perPixel;
@@ -329,9 +329,11 @@ overviewer.util = {
         point.z = Math.floor((lng + 2 * lat) / (24 * perPixel));
 
         // Adjust for the fact that we we can't figure out what Y is given
-        // only latitude and longitude, so assume Y=64.
-        point.x += 64;
-        point.z -= 64;
+        // only latitude and longitude, so assume Y=64. Since this is lowering
+        // down from the height of a chunk, it depends on the chunk height as
+        // so:
+        point.x += 256-64;
+        point.z -= 256-64;
 
         if(north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = point.z;
