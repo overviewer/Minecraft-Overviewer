@@ -36,21 +36,23 @@ overviewer.views.WorldView = Backbone.View.extend({
 
 overviewer.views.WorldSelectorView = Backbone.View.extend({
     initialize: function() {
-        // a div will have already been created for us, we just
-        // need to register it with the google maps control
-        var selectBox = document.createElement('select');
-        $.each(overviewer.collections.worldViews, function(index, elem) {
-            var o = document.createElement("option");
-            o.value = elem.model.get("name");
-            o.innerHTML = elem.model.get("name");
-            $(o).data("viewObj", elem);
-            selectBox.appendChild(o);
+        if(overviewer.collections.worldViews.length > 1) {
+            // a div will have already been created for us, we just
+            // need to register it with the google maps control
+            var selectBox = document.createElement('select');
+            $.each(overviewer.collections.worldViews, function(index, elem) {
+                var o = document.createElement("option");
+                o.value = elem.model.get("name");
+                o.innerHTML = elem.model.get("name");
+                $(o).data("viewObj", elem);
+                selectBox.appendChild(o);
 
-        });
+            });
 
-        this.el.appendChild(selectBox);
-        overviewer.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.el);
-        },
+            this.el.appendChild(selectBox);
+            overviewer.map.controls[google.maps.ControlPosition.TOP_LEFT].push(this.el);
+        }
+    },
     events: {
         "change select":  "changeWorld"
     },
