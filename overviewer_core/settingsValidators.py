@@ -45,7 +45,7 @@ def checkBadEscape(s):
 
 def validateWorldPath(worldpath):
     _, worldpath = checkBadEscape(worldpath)
-    abs_path = os.path.abspath(worldpath)
+    abs_path = os.path.abspath(os.path.expanduser(worldpath))
     if not os.path.exists(os.path.join(abs_path, "level.dat")):
         raise ValidationException("No level.dat file in '%s'. Are you sure you have the right path?" % (abs_path,))
     return abs_path

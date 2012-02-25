@@ -465,10 +465,16 @@ class RotatedRegionSet(RegionSet):
     def get_chunk(self, x, z):
         x,z = self.unrotate(x,z)
         chunk_data = super(RotatedRegionSet, self).get_chunk(x,z)
-        chunk_data['Blocks'] = numpy.rot90(chunk_data['Blocks'], self.north_dir)
-        chunk_data['Data'] = numpy.rot90(chunk_data['Data'], self.north_dir)
-        chunk_data['SkyLight'] = numpy.rot90(chunk_data['SkyLight'], self.north_dir)
-        chunk_data['BlockLight'] = numpy.rot90(chunk_data['BlockLight'], self.north_dir)
+        for section in chunk_data['Sections']:
+            for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight']:
+                array = section[arrayname]
+                # New arrays are arranged with axes Y,Z,X
+                # numpy.rot90 always rotates the first two axes, so for it to
+                # work, we need to temporarily more the X axis to the 0th axis.
+                array = numpy.swapaxes(array, 0,2)
+                array = numpy.rot90(array, self.north_dir)
+                array = numpy.swapaxes(array, 0,2)
+                section[arrayname] = array
         return chunk_data
 
     def get_chunk_mtime(self, x, z):
