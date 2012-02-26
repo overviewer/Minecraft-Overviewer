@@ -777,7 +777,7 @@ class TileSet(object):
                 img.paste(quad, path[0])
             except Exception, e:
                 logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
-                logging.warning("I'm going to try and delete it. You will need to run the render again")
+                logging.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
                 try:
                     os.unlink(path[1])
                 except Exception, e:
