@@ -365,8 +365,11 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         if rset == None: # indicates no such dimension was found:
             logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
             return 1
+        
+        # If this is to be a rotated regionset, wrap it in a RotatedRegionSet
+        # object
         if (render['northdirection'] > 0):
-            rset = rset.rotate(render['northdirection'])
+            rset = world.RotatedRegionSet(rset, render['northdirection'])
         logging.debug("Using RegionSet %r", rset) 
 
         # create our TileSet from this RegionSet
