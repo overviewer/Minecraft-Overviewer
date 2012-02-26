@@ -72,7 +72,23 @@ directory.
         # TODO based on the type, so something
         POI[regionset.name].append
 
-    def finalize(self, tilesets):
+    def initialize(self, tilesets):
+        """Similar to finalize() but calls the tilesets' get_initial_data()
+        instead of get_persistent_data() to compile the generated javascript
+        config.
+
+        """
+        return self.finalize(tilesets, True)
+
+    def finalize(self, tilesets, initial=False):
+        """Called to output the generated javascript and all static files to
+        the output directory
+
+        """
+        if not initial:
+            get_data = lambda tileset: tileset.get_persistent_data()
+        else:
+            get_data = lambda tileset: tileset.get_initial_data()
 
         # dictionary to hold the overviewerConfig.js settings that we will dumps
         dump = dict()
@@ -94,7 +110,7 @@ directory.
         # based on the tilesets we have, group them by worlds
         worlds = []
         for tileset in tilesets:
-            full_name = tileset.get_persistent_data()['world']
+            full_name = get_data(tileset)['world']
             if full_name not in worlds:
                 worlds.append(full_name)
 
@@ -120,7 +136,7 @@ directory.
 
 
         for tileset in tilesets:
-            dump['tilesets'].append(tileset.get_persistent_data())
+            dump['tilesets'].append(get_data(tileset))
 
             # write a blank image
             blank = Image.new("RGBA", (1,1), tileset.options.get('bgcolor'))

@@ -382,6 +382,20 @@ class TileSet(object):
                 name = str(tilepath[-1])
             self._render_compositetile(dest, name)
 
+    def get_initial_data(self):
+        """This is called similarly to get_persistent_data, but is called after
+        do_preprocessing but before any work is acutally done.
+
+        """
+        d = self.get_persistent_data()
+        # This is basically the same as get_persistent_data() with the
+        # following exceptions:
+        # * last_rendertime is not changed
+        # * A key "render_in_progress" is set to True
+        d['last_rendertime'] = self.last_rendertime
+        d['render_in_progress'] = True
+        return d
+
     def get_persistent_data(self):
         """Returns a dictionary representing the persistent data of this
         TileSet. Typically this is called by AssetManager
