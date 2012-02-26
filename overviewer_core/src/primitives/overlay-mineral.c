@@ -144,7 +144,7 @@ RenderPrimitiveInterface primitive_overlay_mineral = {
     sizeof(RenderPrimitiveMineral),
     overlay_mineral_start,
     overlay_mineral_finish,
-    overlay_occluded,
+    NULL,
     NULL,
     overlay_draw,
 };

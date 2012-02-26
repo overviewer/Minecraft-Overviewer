@@ -29,4 +29,3 @@ typedef struct {
 extern RenderPrimitiveInterface primitive_overlay;
 
 void overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light);
-int overlay_occluded(void *data, RenderState *state, int x, int y, int z);

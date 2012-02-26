@@ -146,6 +146,9 @@ class Lighting(RenderPrimitive):
 class SmoothLighting(Lighting):
     name = "smooth-lighting"
 
+class ClearBase(RenderPrimitive):
+    name = "clear-base"
+
 class Overlay(RenderPrimitive):
     name = "overlay"
 

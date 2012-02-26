@@ -102,7 +102,7 @@ RenderPrimitiveInterface primitive_overlay_spawn = {
     sizeof(RenderPrimitiveSpawn),
     overlay_spawn_start,
     overlay_spawn_finish,
-    overlay_occluded,
+    NULL,
     NULL,
     overlay_draw,
 };

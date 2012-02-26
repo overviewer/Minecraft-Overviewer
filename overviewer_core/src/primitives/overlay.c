@@ -45,21 +45,6 @@ overlay_finish(void *data, RenderState *state) {
     Py_DECREF(self->white_color);
 }
 
-int
-overlay_occluded(void *data, RenderState *state, int x, int y, int z) {
-    if ( (x != 0) && (y != 15) && (z != 127) &&
-         !render_mode_hidden(state->rendermode, x-1, y, z) &&
-         !render_mode_hidden(state->rendermode, x, y, z+1) &&
-         !render_mode_hidden(state->rendermode, x, y+1, z) &&
-         !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
-         !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
-         !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
-        return 1;
-    }
-    
-    return 0;
-}
-
 void
 overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
@@ -72,9 +57,6 @@ overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyOb
     else if (state->block == 78) // snow
         increment=9;
     
-    /* clear the draw space -- set alpha to 0 within mask */
-    tint_with_mask(state->img, 255, 255, 255, 0, mask, state->imgx, state->imgy, 0, 0);
-
     /* skip rendering the overlay if we can't see it */
     if (state->z != 127) {
         unsigned char top_block = getArrayByte3D(state->blocks, state->x, state->y, state->z+1);
@@ -112,7 +94,7 @@ RenderPrimitiveInterface primitive_overlay = {
     sizeof(RenderPrimitiveOverlay),
     overlay_start,
     overlay_finish,
-    overlay_occluded,
+    NULL,
     NULL,
     overlay_draw,
 };
