@@ -263,7 +263,6 @@ class TileSet(object):
         self.config = config
 
         self.last_rendertime = config.get('last_rendertime', 0)
-        self.this_rendertime = time.time()
 
         if "renderchecks" not in self.options:
             if not config:
@@ -449,7 +448,7 @@ class TileSet(object):
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') + 
                     (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
-                last_rendertime = self.this_rendertime,
+                last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
                 )
         try:
