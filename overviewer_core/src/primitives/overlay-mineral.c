@@ -15,7 +15,14 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+#include "overlay.h"
+
+typedef struct {
+    /* inherits from overlay */
+    RenderPrimitiveOverlay parent;
+    
+    void *minerals;
+} RenderPrimitiveMineral;
 
 struct MineralColor {
     unsigned char blockid;
@@ -45,7 +52,7 @@ static void get_color(void *data, RenderState *state,
     
     int x = state->x, y = state->y, z_max = state->z + 1, z;
     int max_i = -1;
-    RenderModeMineral* self = (RenderModeMineral *)data;
+    RenderPrimitiveMineral* self = (RenderPrimitiveMineral *)data;
     struct MineralColor *minerals = (struct MineralColor *)(self->minerals);
     *a = 0;
     
@@ -70,20 +77,21 @@ static void get_color(void *data, RenderState *state,
 }
 
 static int
-rendermode_mineral_start(void *data, RenderState *state, PyObject *options) {
+overlay_mineral_start(void *data, RenderState *state, PyObject *support) {
     PyObject *opt;
-    RenderModeMineral* self;
+    RenderPrimitiveMineral* self;
 
     /* first, chain up */
-    int ret = rendermode_overlay.start(data, state, options);
+    int ret = primitive_overlay.start(data, state, support);
     if (ret != 0)
         return ret;
     
     /* now do custom initializations */
-    self = (RenderModeMineral *)data;
+    self = (RenderPrimitiveMineral *)data;
     
-    opt = PyDict_GetItemString(options, "minerals");
-    if (opt) {
+    if (!render_mode_parse_option(support, "minerals", "O", &(opt)))
+        return 1;
+    if (opt && opt != Py_None) {
         struct MineralColor *minerals = NULL;
         Py_ssize_t minerals_size = 0, i;
         /* create custom minerals */
@@ -110,6 +118,7 @@ rendermode_mineral_start(void *data, RenderState *state, PyObject *options) {
     } else {
         self->minerals = default_minerals;
     }
+    Py_XDECREF(opt);
     
     /* setup custom color */
     self->parent.get_color = get_color;
@@ -118,50 +127,24 @@ rendermode_mineral_start(void *data, RenderState *state, PyObject *options) {
 }
 
 static void
-rendermode_mineral_finish(void *data, RenderState *state) {
+overlay_mineral_finish(void *data, RenderState *state) {
     /* first free all *our* stuff */
-    RenderModeMineral* self = (RenderModeMineral *)data;
+    RenderPrimitiveMineral* self = (RenderPrimitiveMineral *)data;
     
     if (self->minerals && self->minerals != default_minerals) {
         free(self->minerals);
     }
     
     /* now, chain up */
-    rendermode_overlay.finish(data, state);
+    primitive_overlay.finish(data, state);
 }
 
-static int
-rendermode_mineral_occluded(void *data, RenderState *state, int x, int y, int z) {
-    /* no special occlusion here */
-    return rendermode_overlay.occluded(data, state, x, y, z);
-}
-
-static int
-rendermode_mineral_hidden(void *data, RenderState *state, int x, int y, int z) {
-    /* no special hiding here */
-    return rendermode_overlay.hidden(data, state, x, y, z);
-}
-
-static void
-rendermode_mineral_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    /* draw normally */
-    rendermode_overlay.draw(data, state, src, mask, mask_light);
-}
-
-const RenderModeOption rendermode_mineral_options[] = {
-    {"minerals", "a list of (blockid, (r, g, b)) tuples for coloring minerals"},
-    {NULL, NULL}
-};
-
-RenderModeInterface rendermode_mineral = {
-    "mineral", "Mineral",
-    "draws a colored overlay showing where ores are located",
-    rendermode_mineral_options,
-    &rendermode_overlay,
-    sizeof(RenderModeMineral),
-    rendermode_mineral_start,
-    rendermode_mineral_finish,
-    rendermode_mineral_occluded,
-    rendermode_mineral_hidden,
-    rendermode_mineral_draw,
+RenderPrimitiveInterface primitive_overlay_mineral = {
+    "overlay-mineral",
+    sizeof(RenderPrimitiveMineral),
+    overlay_mineral_start,
+    overlay_mineral_finish,
+    overlay_occluded,
+    NULL,
+    overlay_draw,
 };

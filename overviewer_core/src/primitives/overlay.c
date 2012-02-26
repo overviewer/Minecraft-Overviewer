@@ -15,7 +15,7 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+#include "overlay.h"
 
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
@@ -26,32 +26,27 @@ static void get_color(void *data, RenderState *state,
 }
 
 static int
-rendermode_overlay_start(void *data, RenderState *state, PyObject *options) {
+overlay_start(void *data, RenderState *state, PyObject *support) {
     PyObject *facemasks_py;
-    RenderModeOverlay *self = (RenderModeOverlay *)data;
+    RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
     
-    facemasks_py = PyObject_GetAttrString(state->support, "facemasks");
-    /* borrowed reference, needs to be incref'd if we keep it */
-    self->facemask_top = PyTuple_GetItem(facemasks_py, 0);
-    Py_INCREF(self->facemask_top);
-    Py_DECREF(facemasks_py);
-    
-    self->white_color = PyObject_GetAttrString(state->support, "white_color");
+    self->facemask_top = PyObject_GetAttrString(support, "facemask_top");
+    self->white_color = PyObject_GetAttrString(support, "whitecolor");
     self->get_color = get_color;
     
     return 0;
 }
 
 static void
-rendermode_overlay_finish(void *data, RenderState *state) {
-    RenderModeOverlay *self = (RenderModeOverlay *)data;
+overlay_finish(void *data, RenderState *state) {
+    RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
     
     Py_DECREF(self->facemask_top);
     Py_DECREF(self->white_color);
 }
 
-static int
-rendermode_overlay_occluded(void *data, RenderState *state, int x, int y, int z) {
+int
+overlay_occluded(void *data, RenderState *state, int x, int y, int z) {
     if ( (x != 0) && (y != 15) && (z != 127) &&
          !render_mode_hidden(state->rendermode, x-1, y, z) &&
          !render_mode_hidden(state->rendermode, x, y, z+1) &&
@@ -65,15 +60,9 @@ rendermode_overlay_occluded(void *data, RenderState *state, int x, int y, int z)
     return 0;
 }
 
-static int
-rendermode_overlay_hidden(void *data, RenderState *state, int x, int y, int z) {
-    /* overlays hide nothing by default */
-    return 0;
-}
-
-static void
-rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    RenderModeOverlay *self = (RenderModeOverlay *)data;
+void
+overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+    RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
     unsigned char r, g, b, a;
 
     // exactly analogous to edge-line code for these special blocks
@@ -118,15 +107,12 @@ rendermode_overlay_draw(void *data, RenderState *state, PyObject *src, PyObject 
     }
 }
 
-RenderModeInterface rendermode_overlay = {
-    "overlay", "Overlay",
-    "base rendermode for informational overlays",
+RenderPrimitiveInterface primitive_overlay = {
+    "overlay",
+    sizeof(RenderPrimitiveOverlay),
+    overlay_start,
+    overlay_finish,
+    overlay_occluded,
     NULL,
-    NULL,
-    sizeof(RenderModeOverlay),
-    rendermode_overlay_start,
-    rendermode_overlay_finish,
-    rendermode_overlay_occluded,
-    rendermode_overlay_hidden,
-    rendermode_overlay_draw,
+    overlay_draw,
 };

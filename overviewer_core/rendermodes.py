@@ -146,6 +146,42 @@ class Lighting(RenderPrimitive):
 class SmoothLighting(Lighting):
     name = "smooth-lighting"
 
+class Overlay(RenderPrimitive):
+    name = "overlay"
+
+    @property
+    def whitecolor(self):
+        whitecolor = getattr(self, "_whitecolor", None)
+        if whitecolor:
+            return whitecolor
+        white = Image.new("RGBA", (24,24), (255, 255, 255, 255))
+        self._whitecolor = white
+        return white
+    
+    @property
+    def facemask_top(self):
+        facemask_top = getattr(self, "_facemask_top", None)
+        if facemask_top:
+            return facemask_top
+        
+        white = Image.new("L", (24,24), 255)
+        top = Image.new("L", (24,24), 0)
+        toppart = textures.Textures.transform_image_top(white)
+        top.paste(toppart, (0,0))
+        for x,y in [(3,4), (7,2), (11,0)]:
+            top.putpixel((x,y), 255)
+        self._facemask_top = top
+        return top
+
+class SpawnOverlay(Overlay):
+    name = "overlay-spawn"
+
+class MineralOverlay(Overlay):
+    name = "overlay-mineral"
+    options = {
+        'minerals' : ('a list of (blockid, (r, g, b)) tuples for coloring minerals', None),
+    }
+
 # Built-in rendermodes for your convenience!
 normal = [Base(), EdgeLines()]
 lighting = [Base(), EdgeLines(), Lighting()]

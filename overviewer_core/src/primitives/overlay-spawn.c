@@ -15,13 +15,20 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overviewer.h"
+#include "overlay.h"
 #include <math.h>
+
+typedef struct {
+    /* inherits from overlay */
+    RenderPrimitiveOverlay parent;
+    
+    PyObject *skylight, *blocklight;
+} RenderPrimitiveSpawn;
 
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
     
-    RenderModeSpawn* self = (RenderModeSpawn *)data;
+    RenderPrimitiveSpawn* self = (RenderPrimitiveSpawn *)data;
     int x = state->x, y = state->y, z = state->z;
     int z_light = z + 1;
     unsigned char blocklight, skylight;
@@ -59,16 +66,16 @@ static void get_color(void *data, RenderState *state,
 }
 
 static int
-rendermode_spawn_start(void *data, RenderState *state, PyObject *options) {
-    RenderModeSpawn* self;
+overlay_spawn_start(void *data, RenderState *state, PyObject *support) {
+    RenderPrimitiveSpawn* self;
 
     /* first, chain up */
-    int ret = rendermode_overlay.start(data, state, options);
+    int ret = primitive_overlay.start(data, state, support);
     if (ret != 0)
         return ret;
     
     /* now do custom initializations */
-    self = (RenderModeSpawn *)data;
+    self = (RenderPrimitiveSpawn *)data;
     self->blocklight = get_chunk_data(state, CURRENT, BLOCKLIGHT, 1);
     self->skylight = get_chunk_data(state, CURRENT, SKYLIGHT, 1);
     
@@ -79,44 +86,23 @@ rendermode_spawn_start(void *data, RenderState *state, PyObject *options) {
 }
 
 static void
-rendermode_spawn_finish(void *data, RenderState *state) {
+overlay_spawn_finish(void *data, RenderState *state) {
     /* first free all *our* stuff */
-    RenderModeSpawn* self = (RenderModeSpawn *)data;
+    RenderPrimitiveSpawn* self = (RenderPrimitiveSpawn *)data;
     
     Py_DECREF(self->blocklight);
     Py_DECREF(self->skylight);
     
     /* now, chain up */
-    rendermode_overlay.finish(data, state);
+    primitive_overlay.finish(data, state);
 }
 
-static int
-rendermode_spawn_occluded(void *data, RenderState *state, int x, int y, int z) {
-    /* no special occlusion here */
-    return rendermode_overlay.occluded(data, state, x, y, z);
-}
-
-static int
-rendermode_spawn_hidden(void *data, RenderState *state, int x, int y, int z) {
-    /* no special hiding here */
-    return rendermode_overlay.hidden(data, state, x, y, z);
-}
-
-static void
-rendermode_spawn_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    /* draw normally */
-    rendermode_overlay.draw(data, state, src, mask, mask_light);
-}
-
-RenderModeInterface rendermode_spawn = {
-    "spawn", "Spawn",
-    "draws a red overlay where monsters can spawn at night",
+RenderPrimitiveInterface primitive_overlay_spawn = {
+    "overlay-spawn",
+    sizeof(RenderPrimitiveSpawn),
+    overlay_spawn_start,
+    overlay_spawn_finish,
+    overlay_occluded,
     NULL,
-    &rendermode_overlay,
-    sizeof(RenderModeSpawn),
-    rendermode_spawn_start,
-    rendermode_spawn_finish,
-    rendermode_spawn_occluded,
-    rendermode_spawn_hidden,
-    rendermode_spawn_draw,
+    overlay_draw,
 };
