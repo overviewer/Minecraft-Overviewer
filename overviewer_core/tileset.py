@@ -188,7 +188,9 @@ class TileSet(object):
 
         renderchecks
             An integer indicating how to determine which tiles need updating
-            and which don't. This is one of three levels:
+            and which don't. This key is optional; if not specified, an
+            appropriate mode is determined from the persistent config obtained
+            from the asset manager. This is one of three levels:
 
             0
                 Only render tiles that have chunks with a greater mtime than
@@ -257,8 +259,35 @@ class TileSet(object):
         self.am = assetmanagerobj
         self.textures = texturesobj
 
-        self.last_rendertime = self.am.get_tileset_config(self.options.get("name")).get('last_rendertime', 0)
+        config = self.am.get_tileset_config(self.options.get("name"))
+
+        self.last_rendertime = config.get('last_rendertime', 0)
         self.this_rendertime = time.time()
+
+        if "renderchecks" not in self.options:
+            if not config:
+                # No persistent config? This is a full render then.
+                self.options['renderchecks'] = 2
+                logging.debug("This is the first time rendering %s. Doing" +
+                        " a full-render",
+                        self.options['name'])
+            elif config.get("render_in_progress", False):
+                # The last render must have been interrupted. The default should be
+                # 1 then, not 0
+                logging.warning(
+                        "The last render for %s didn't finish. I'll be " +
+                        "scanning all the tiles to make sure everything's up "+
+                        "to date.",
+                        self.options['name'],
+                        )
+                self.options['renderchecks'] = 1
+            else:
+                logging.debug("No rendercheck mode specified for %s. "+
+                        "Rendering tile whose chunks have changed since %s",
+                        self.options['name'],
+                        time.strftime("%x %X", time.localtime(self.last_rendertime)),
+                        )
+                self.options['renderchecks'] = 0
 
         # Throughout the class, self.outputdir is an absolute path to the
         # directory where we output tiles. It is assumed to exist.

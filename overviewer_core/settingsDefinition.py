@@ -71,7 +71,7 @@ renders = Setting(required=True, default={},
             "optimizeimg": Setting(required=True, validator=validateOptImg, default=0),
             "nomarkers": Setting(required=False, validator=validateBool, default=None),
             "texturepath": Setting(required=False, validator=validateTexturePath, default=None),
-            "renderchecks": Setting(required=True, validator=validateInt, default=0),
+            "renderchecks": Setting(required=False, validator=validateInt, default=None),
             "rerenderprob": Setting(required=True, validator=validateFloat, default=0),
             
             # Remove this eventually (once people update their configs)
