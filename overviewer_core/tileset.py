@@ -260,6 +260,7 @@ class TileSet(object):
         self.textures = texturesobj
 
         config = self.am.get_tileset_config(self.options.get("name"))
+        self.config = config
 
         self.last_rendertime = config.get('last_rendertime', 0)
         self.this_rendertime = time.time()
@@ -280,6 +281,9 @@ class TileSet(object):
                         "to date.",
                         self.options['name'],
                         )
+                logging.warning("You won't get percentage progress for "+
+                        "this run only, because I don't know how many tiles "+
+                        "need rendering. I'll be checking them as I go")
                 self.options['renderchecks'] = 1
             else:
                 logging.debug("No rendercheck mode specified for %s. "+
@@ -326,8 +330,11 @@ class TileSet(object):
             logging.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
                     self.treedepth)
 
-        # Do any tile re-arranging if necessary
-        self._rearrange_tiles()
+        # Do any tile re-arranging if necessary. Skip if there was no config
+        # from the asset-manager, which typically indicates this is a new
+        # render
+        if self.config:
+            self._rearrange_tiles()
 
         # Do the chunk scan here
         self.dirtytree = self._chunk_scan()
@@ -505,16 +512,17 @@ class TileSet(object):
 
         """
         try:
-            curdepth = get_dirdepth(self.outputdir)
-        except Exception:
-            logging.critical("Could not determine existing tile tree depth. Does it exist?")
-            raise
+            curdepth = self.config['zoomLevels']
+        except KeyError:
+            return
         
         if curdepth == 1:
             # Skip a depth 1 tree. A depth 1 tree pretty much can't happen, so
             # when we detect this it usually means the tree is actually empty
             return
-        logging.debug("Current tree depth was detected to be %s. Target tree depth is %s", curdepth, self.treedepth)
+        logging.debug("Current tree depth for %s is reportedly %s. Target tree depth is %s",
+                self.options['name'],
+                curdepth, self.treedepth)
         if self.treedepth != curdepth:
             if self.treedepth > curdepth:
                 logging.warning("Your map seems to have expanded beyond its previous bounds.")
@@ -690,8 +698,8 @@ class TileSet(object):
                     dirty.add(tile.path)
 
         t = int(time.time()-stime)
-        logging.debug("%s finished chunk scan. %s chunks scanned in %s second%s", 
-                self, chunkcount, t,
+        logging.debug("Finished chunk scan for %s. %s chunks scanned in %s second%s", 
+                self.options['name'], chunkcount, t,
                 "s" if t != 1 else "")
 
         self.max_chunk_mtime = max_chunk_mtime
@@ -1020,34 +1028,6 @@ class TileSet(object):
                 else:
                     # Nope.
                     yield path, max_child_mtime, False
-
-
-def get_dirdepth(outputdir):
-    """Returns the current depth of the tree on disk
-
-    """
-    # Traverses down the first directory until it reaches one with no
-    # subdirectories. While all paths of the tree may not exist, all paths
-    # of the tree should and are assumed to be the same depth
-
-    # This function returns a list of all subdirectories of the given
-    # directory. It's slightly more complicated than you'd think it should be
-    # because one must turn directory names returned by os.listdir into
-    # relative/absolute paths before they can be passed to os.path.isdir()
-    getsubdirs = lambda directory: [
-            abssubdir
-            for abssubdir in
-                (os.path.join(directory,subdir) for subdir in os.listdir(directory))
-            if os.path.isdir(abssubdir)
-            ]
-
-    depth = 1
-    subdirs = getsubdirs(outputdir)
-    while subdirs:
-        subdirs = getsubdirs(subdirs[0])
-        depth += 1
-
-    return depth
 
 class RendertileSet(object):
     """This object holds a set of render-tiles using a quadtree data structure.
