@@ -28,6 +28,7 @@ from collections import namedtuple
 from PIL import Image
 
 from .util import iterate_base4, convert_coords, unconvert_coords, get_tiles_by_chunk
+from .util import FileReplacer
 from .optimizeimages import optimize_image
 import c_overviewer
 
@@ -784,15 +785,16 @@ class TileSet(object):
                     logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
 
         # Save it
-        if imgformat == 'jpg':
-            img.save(imgpath, quality=self.options['imgquality'], subsampling=0)
-        else: # png
-            img.save(imgpath)
-            
-        if self.options['optimizeimg']:
-            optimize_image(imgpath, imgformat, self.options['optimizeimg'])
+        with FileReplacer(imgpath) as tmppath:
+            if imgformat == 'jpg':
+                img.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
+            else: # png
+                img.save(tmppath, "png")
+                
+            if self.options['optimizeimg']:
+                optimize_image(tmppath, imgformat, self.options['optimizeimg'])
 
-        os.utime(imgpath, (max_mtime, max_mtime))
+            os.utime(tmppath, (max_mtime, max_mtime))
 
     def _render_rendertile(self, tile):
         """Renders the given render-tile.
@@ -877,15 +879,16 @@ class TileSet(object):
                 draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
         
         # Save them
-        if self.imgextension == 'jpg':
-            tileimg.save(imgpath, quality=self.options['imgquality'], subsampling=0)
-        else: # png
-            tileimg.save(imgpath)
+        with FileReplacer(imgpath) as tmppath:
+            if self.imgextension == 'jpg':
+                tileimg.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
+            else: # png
+                tileimg.save(tmppath, "png")
 
-        if self.options['optimizeimg']:
-            optimize_image(imgpath, self.imgextension, self.options['optimizeimg'])
+            if self.options['optimizeimg']:
+                optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])
 
-        os.utime(imgpath, (max_chunk_mtime, max_chunk_mtime))
+            os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))
 
     def _get_chunks_for_tile(self, tile):
         """Get chunks that are relevant to the given render-tile
