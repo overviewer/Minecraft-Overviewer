@@ -128,7 +128,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
      * biome-compliant ones! The tinting is now all done here.
      */
     if (/* grass, but not snowgrass */
-        (state->block == 2 && !(state->z < 127 && getArrayByte3D(state->blocks, state->x, state->y, state->z+1) == 78)) ||
+        (state->block == 2 && get_data(state, BLOCKS, state->x, state->y+1, state->z) != 78) ||
         /* water */
         state->block == 8 || state->block == 9 ||
         /* leaves */
