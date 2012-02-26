@@ -430,6 +430,26 @@ SmoothLighting
 
     (same as Lighting)
 
+ClearBase
+    Forces the background to be transparent. Use this in place of Base
+    for rendering pure overlays.
+
+SpawnOverlay
+    Color the map red in areas where monsters can spawn. Either use
+    this on top of other modes, or on top of ClearBase to create a
+    pure overlay.
+
+MineralOverlay
+    Color the map according to what minerals can be found
+    underneath. Either use this on top of other modes, or on top of
+    ClearBase to create a pure overlay.
+    
+    **Options**
+    
+    minerals
+        A list of (blockid, (r, g, b)) tuples to use as colors. If not
+        provided, a default list of common minerals is used.
+
 Defining Custom Rendermodes
 ---------------------------
 Each rendermode primitive listed above is a Python *class* that is automatically
