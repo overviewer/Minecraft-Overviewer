@@ -490,7 +490,7 @@ class TileSet(object):
         bounds = self._find_chunk_range()
 
         # Calculate the depth of the tree
-        for p in xrange(1,33): # max 32
+        for p in xrange(2,33): # max 32
             # Will 2^p tiles wide and high suffice?
 
             # X has twice as many chunks as tiles, then halved since this is a
@@ -499,8 +499,11 @@ class TileSet(object):
             # Y has 4 times as many chunks as tiles, then halved since this is
             # a radius
             yradius = 2*2**p
+            # The +32 on the y bounds is because chunks are very tall, and in
+            # rare cases when the bottom of the map is close to a border, it
+            # could get cut off
             if xradius >= bounds.maxcol and -xradius <= bounds.mincol and \
-                    yradius >= bounds.maxrow and -yradius <= bounds.minrow:
+                    yradius >= bounds.maxrow + 32 and -yradius <= bounds.minrow:
                 break
         self.treedepth = p
         self.xradius = xradius
