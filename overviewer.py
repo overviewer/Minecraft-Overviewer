@@ -365,6 +365,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         if rset == None: # indicates no such dimension was found:
             logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
             return 1
+
+        # If a crop is requested, wrap the regionset here
+        if "crop" in render:
+            rset = world.CroppedRegionSet(rset, *render['crop'])
         
         # If this is to be a rotated regionset, wrap it in a RotatedRegionSet
         # object

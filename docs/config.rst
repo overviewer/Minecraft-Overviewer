@@ -334,6 +334,22 @@ values. The valid configuration keys are listed below.
     This is a where a specific texture pack can be found to be used during this render.
     It can be either a folder or a directory. Its value should be a string.
 
+``crop``
+    You can use this to render a small subset of your map, instead of the entire
+    thing. The format is (min x, max x, min z, max z).
+
+    (The coordinates are block coordinates. The same you get with the debug menu
+    in-game)
+
+    Example that only renders a 1000 by 1000 square of land around the origin::
+
+        renders['myrender'] = {
+                'world': 'myworld',
+                'title': "Cropped Example",
+                'crop': (-500,500, -500,500),
+        }
+                    
+
 .. _customrendermodes:
 
 Custom Rendermodes and Rendermode Primitives

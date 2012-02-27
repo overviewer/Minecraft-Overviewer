@@ -516,6 +516,40 @@ class RotatedRegionSet(RegionSetWrapper):
             x,z = self.rotate(x,z)
             yield x,z,mtime
 
+class CroppedRegionSet(RegionSetWrapper):
+    def __init__(self, rsetobj, xmin, xmax, zmin, zmax):
+        super(CroppedRegionSet, self).__init__(rsetobj)
+        self.xmin = xmin//16
+        self.xmax = xmax//16
+        self.zmin = zmin//16
+        self.zmax = zmax//16
+
+    def get_chunk(self,x,z):
+        if (
+                self.xmin <= x <= self.xmax and
+                self.zmin <= z <= self.zmax
+                ):
+            return super(CroppedRegionSet, self).get_chunk(x,z)
+        else:
+            raise ChunkDoesntExist("This chunk is out of the requested bounds")
+
+    def iterate_chunks(self):
+        return ((x,z,mtime) for (x,z,mtime) in super(CroppedRegionSet,self).iterate_chunks()
+                if
+                    self.xmin <= x <= self.xmax and
+                    self.zmin <= z <= self.zmax
+                )
+    def get_chunk_mtime(self,x,z):
+        if (
+                self.xmin <= x <= self.xmax and
+                self.zmin <= z <= self.zmax
+                ):
+            return super(CroppedRegionSet, self).get_chunk_mtime(x,z)
+        else:
+            return None
+
+
+
 def get_save_dir():
     """Returns the path to the local saves directory
       * On Windows, at %APPDATA%/.minecraft/saves/

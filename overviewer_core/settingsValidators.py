@@ -166,6 +166,16 @@ def validateOutputDir(d):
         raise ValidationException("You must specify a valid output directory")
     return os.path.abspath(d)
 
+def validateCrop(value):
+    if len(value) != 4:
+        raise ValidationException("The value for the 'crop' setting must be a tuple of length 4")
+    value = tuple(int(x) for x in value)
+    if value[0] >= value[1]:
+        raise ValidationException("About your crop numbers, the xmax value must be greater than the xmin value")
+    if value[2] >= value[3]:
+        raise ValidationException("About your crop numbers, the zmax value must be greater than the zmin value")
+    return value
+
 def make_dictValidator(keyvalidator, valuevalidator):
     """Compose and return a dict validator -- a validator that validates each
     key and value in a dictionary.
