@@ -517,7 +517,7 @@ class RotatedRegionSet(RegionSetWrapper):
             yield x,z,mtime
 
 class CroppedRegionSet(RegionSetWrapper):
-    def __init__(self, rsetobj, xmin, xmax, zmin, zmax):
+    def __init__(self, rsetobj, xmin, zmin, xmax, zmax):
         super(CroppedRegionSet, self).__init__(rsetobj)
         self.xmin = xmin//16
         self.xmax = xmax//16

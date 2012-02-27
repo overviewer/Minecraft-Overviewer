@@ -336,19 +336,18 @@ values. The valid configuration keys are listed below.
 
 ``crop``
     You can use this to render a small subset of your map, instead of the entire
-    thing. The format is (min x, max x, min z, max z).
+    thing. The format is (min x, min z, max x, max z).
 
     (The coordinates are block coordinates. The same you get with the debug menu
     in-game)
 
-    Example that only renders a 1000 by 1000 square of land around the origin::
+    Example that only renders a 1000 by 1000 square of land about the origin::
 
         renders['myrender'] = {
                 'world': 'myworld',
                 'title': "Cropped Example",
-                'crop': (-500,500, -500,500),
+                'crop': (-500, -500, 500, 500),
         }
-                    
 
 .. _customrendermodes:
 
