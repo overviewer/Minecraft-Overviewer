@@ -102,38 +102,4 @@ void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject 
    works like PyArg_ParseTuple on a support object */
 int render_mode_parse_option(PyObject *support, const char *name, const char *format, ...);
 
-/* XXX individual rendermode interface declarations follow */
-#ifdef OLD_MODES
-
-/* OVERLAY */
-typedef struct {
-    /* top facemask and white color image, for drawing overlays */
-    PyObject *facemask_top, *white_color;
-    /* can be overridden in derived classes to control
-       overlay alpha and color
-       last four vars are r, g, b, a out */
-    void (*get_color)(void *, RenderState *,
-                      unsigned char *, unsigned char *, unsigned char *, unsigned char *);
-} RenderModeOverlay;
-extern RenderModeInterface rendermode_overlay;
-
-/* SPAWN */
-typedef struct {
-    /* inherits from overlay */
-    RenderModeOverlay parent;
-    
-    PyObject *skylight, *blocklight;
-} RenderModeSpawn;
-extern RenderModeInterface rendermode_spawn;
-
-/* MINERAL */
-typedef struct {
-    /* inherits from overlay */
-    RenderModeOverlay parent;
-    
-    void *minerals;
-} RenderModeMineral;
-extern RenderModeInterface rendermode_mineral;
-#endif /* OLD_MODES */
-
 #endif /* __RENDERMODES_H_INCLUDED__ */

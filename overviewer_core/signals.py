@@ -89,3 +89,12 @@ class Signal(object):
     # convenience
     def __call__(self, *args, **kwargs):
         self.emit(*args, **kwargs)
+    
+    # force pickled signals to redirect to existing signals
+    def __getstate__(self):
+        return self.fullname
+    def __setstate__(self, fullname):
+        for attr in dir(self.signals[fullname]):
+            if attr.startswith('_'):
+                continue
+            setattr(self, attr, getattr(self.signals[fullname], attr))

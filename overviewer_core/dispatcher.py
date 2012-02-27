@@ -49,13 +49,8 @@ class Dispatcher(object):
         """
         # TODO use status callback
         
-        # preprocessing
-        for tileset in tilesetlist:
-            tileset.do_preprocessing()
-        
         # setup tilesetlist
         self.setup_tilesets(tilesetlist)
-        
         
         # iterate through all possible phases
         num_phases = [tileset.get_num_phases() for tileset in tilesetlist]

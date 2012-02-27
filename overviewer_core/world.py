@@ -34,10 +34,10 @@ class ChunkDoesntExist(Exception):
 
 def log_other_exceptions(func):
     """A decorator that prints out any errors that are not
-    ChunkDoesntExist errors. This decorates get_chunk because the C
-    code is likely to swallow exceptions, so this will at least make
-    them visible.
-
+    ChunkDoesntExist errors. This should decorate any functions or
+    methods called by the C code, such as get_chunk(), because the C
+    code is likely to swallow exceptions. This will at least make them
+    visible.
     """
     functools.wraps(func)
     def newfunc(*args):
@@ -359,9 +359,6 @@ class RegionSet(object):
         return chunk_data      
     
 
-    def rotate(self, north_direction):
-        return RotatedRegionSet(self.regiondir, north_direction)
-    
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates
         over tuples of integers (x,z,mtime) for each chunk.  Other chunk data
@@ -412,6 +409,33 @@ class RegionSet(object):
             x = int(p[1])
             y = int(p[2])
             yield (x, y, path)
+
+class RegionSetWrapper(object):
+    """This is the base class for all "wrappers" of RegionSet objects. A
+    wrapper is an object that acts similarly to a subclass: some methods are
+    overridden and functionality is changed, others may not be. The difference
+    here is that these wrappers may wrap each other, forming chains.
+
+    In fact, subclasses of this object may act exactly as if they've subclassed
+    the original RegionSet object, except the first parameter of the
+    constructor is a regionset object, not a regiondir.
+
+    This class must implement the full public interface of RegionSet objects
+
+    """
+    def __init__(self, rsetobj):
+        self._r = rsetobj
+
+    def get_type(self):
+        return self._r.get_type()
+    def get_biome_data(self, x, z):
+        return self._r.get_biome_data(x,z)
+    def get_chunk(self, x, z):
+        return self._r.get_chunk(x,z)
+    def iterate_chunks(self):
+        return self._r.iterate_chunks()
+    def get_chunk_mtime(self, x, z):
+        return self._r.get_chunk_mtime(x,z)
     
 # see RegionSet.rotate.  These values are chosen so that they can be
 # passed directly to rot90; this means that they're the number of
@@ -421,7 +445,7 @@ UPPER_RIGHT = 1 ## - Return the world such that north is down the +X axis (rotat
 LOWER_RIGHT = 2 ## - Return the world such that north is down the +Z axis (rotate 180 degrees)
 LOWER_LEFT  = 3 ## - Return the world such that north is down the -X axis (rotate 90 degrees clockwise)
 
-class RotatedRegionSet(RegionSet):
+class RotatedRegionSet(RegionSetWrapper):
     """A regionset, only rotated such that north points in the given direction
 
     """
@@ -433,39 +457,41 @@ class RotatedRegionSet(RegionSet):
     _ROTATE_180 =                lambda x,z: (-x,-z)
     
     # These take rotated coords and translate into un-rotated coords
-    _unrotation_funcs = {
-        0: _NO_ROTATION,
-        1: _ROTATE_COUNTERCLOCKWISE,
-        2: _ROTATE_180,
-        3: _ROTATE_CLOCKWISE,
-    }
+    _unrotation_funcs = [
+        _NO_ROTATION,
+        _ROTATE_COUNTERCLOCKWISE,
+        _ROTATE_180,
+        _ROTATE_CLOCKWISE,
+    ]
     
     # These translate un-rotated coordinates into rotated coordinates
-    _rotation_funcs = {
-        0: _NO_ROTATION,
-        1: _ROTATE_CLOCKWISE,
-        2: _ROTATE_180,
-        3: _ROTATE_COUNTERCLOCKWISE,
-    }
+    _rotation_funcs = [
+        _NO_ROTATION,
+        _ROTATE_CLOCKWISE,
+        _ROTATE_180,
+        _ROTATE_COUNTERCLOCKWISE,
+    ]
     
-    def __init__(self, regiondir, north_dir):
+    def __init__(self, rsetobj, north_dir):
         self.north_dir = north_dir
         self.unrotate = self._unrotation_funcs[north_dir]
         self.rotate = self._rotation_funcs[north_dir]
 
-        super(RotatedRegionSet, self).__init__(regiondir)
+        super(RotatedRegionSet, self).__init__(rsetobj)
 
     
-    # Re-initialize upon unpickling
+    # Re-initialize upon unpickling. This is needed because we store a couple
+    # lambda functions as instance variables
     def __getstate__(self):
-        return (self.regiondir, self.north_dir)
+        return (self._r, self.north_dir)
     def __setstate__(self, args):
         self.__init__(args[0], args[1])
     
     def get_chunk(self, x, z):
         x,z = self.unrotate(x,z)
-        chunk_data = super(RotatedRegionSet, self).get_chunk(x,z)
+        chunk_data = dict(super(RotatedRegionSet, self).get_chunk(x,z))
         for section in chunk_data['Sections']:
+            section = dict(section)
             for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight']:
                 array = section[arrayname]
                 # Since the anvil change, arrays are arranged with axes Y,Z,X

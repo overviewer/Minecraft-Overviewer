@@ -152,6 +152,74 @@ def unconvert_coords(col, row):
     # col - row = chunkx + chunkx => (col - row)/2 = chunkx
     return ((col - row) / 2, (col + row) / 2)
 
+# Define a context manager to handle atomic renaming or "just forget it write
+# straight to the file" depending on whether os.rename provides atomic
+# overwrites.
+# Detect whether os.rename will overwrite files
+import tempfile
+with tempfile.NamedTemporaryFile() as f1:
+    with tempfile.NamedTemporaryFile() as f2:
+        try:
+            os.rename(f1.name,f2.name)
+        except OSError:
+            renameworks = False
+        else:
+            renameworks = True
+            # re-make this file so it can be deleted without error
+            open(f1.name, 'w').close()
+del tempfile,f1,f2
+doc = """This class acts as a context manager for files that are to be written
+out overwriting an existing file.
+
+The parameter is the destination filename. The value returned into the context
+is the filename that should be used. On systems that support an atomic
+os.rename(), the filename will actually be a temporary file, and it will be
+atomically replaced over the destination file on exit.
+
+On systems that don't support an atomic rename, the filename returned is the
+filename given.
+
+If an error is encountered, the file is attempted to be removed, and the error
+is propagated.
+
+Example:
+
+with FileReplacer("config") as configname:
+    with open(configout, 'w') as configout:
+        configout.write(newconfig)
+"""
+if renameworks:
+    class FileReplacer(object):
+        __doc__ = doc
+        def __init__(self, destname):
+            self.destname = destname
+            self.tmpname = destname + ".tmp"
+        def __enter__(self):
+            # rename works here. Return a temporary filename
+            return self.tmpname
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            if exc_type:
+                # error
+                try:
+                    os.remove(self.tmpname)
+                except Exception, e:
+                    logging.warning("An error was raised, so I was doing "
+                            "some cleanup first, but I couldn't remove "
+                            "'%s'!", self.tmpname)
+            else:
+                # atomic rename into place
+                os.rename(self.tmpname, self.destname)
+else:
+    class FileReplacer(object):
+        __doc__ = doc
+        def __init__(self, destname):
+            self.destname = destname
+        def __enter__(self):
+            return self.destname
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            return
+del renameworks
+
 # Logging related classes are below
 
 # Some cool code for colored logging:

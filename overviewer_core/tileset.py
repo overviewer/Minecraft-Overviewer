@@ -29,6 +29,7 @@ from itertools import product, izip
 from PIL import Image
 
 from .util import iterate_base4, convert_coords, unconvert_coords, roundrobin
+from .util import FileReplacer
 from .optimizeimages import optimize_image
 import c_overviewer
 
@@ -189,7 +190,9 @@ class TileSet(object):
 
         renderchecks
             An integer indicating how to determine which tiles need updating
-            and which don't. This is one of three levels:
+            and which don't. This key is optional; if not specified, an
+            appropriate mode is determined from the persistent config obtained
+            from the asset manager. This is one of three levels:
 
             0
                 Only render tiles that have chunks with a greater mtime than
@@ -258,8 +261,38 @@ class TileSet(object):
         self.am = assetmanagerobj
         self.textures = texturesobj
 
-        self.last_rendertime = self.am.get_tileset_config(self.options.get("name")).get('last_rendertime', 0)
-        self.this_rendertime = time.time()
+        config = self.am.get_tileset_config(self.options.get("name"))
+        self.config = config
+
+        self.last_rendertime = config.get('last_rendertime', 0)
+
+        if "renderchecks" not in self.options:
+            if not config:
+                # No persistent config? This is a full render then.
+                self.options['renderchecks'] = 2
+                logging.debug("This is the first time rendering %s. Doing" +
+                        " a full-render",
+                        self.options['name'])
+            elif config.get("render_in_progress", False):
+                # The last render must have been interrupted. The default should be
+                # 1 then, not 0
+                logging.warning(
+                        "The last render for %s didn't finish. I'll be " +
+                        "scanning all the tiles to make sure everything's up "+
+                        "to date.",
+                        self.options['name'],
+                        )
+                logging.warning("You won't get percentage progress for "+
+                        "this run only, because I don't know how many tiles "+
+                        "need rendering. I'll be checking them as I go")
+                self.options['renderchecks'] = 1
+            else:
+                logging.debug("No rendercheck mode specified for %s. "+
+                        "Rendering tile whose chunks have changed since %s",
+                        self.options['name'],
+                        time.strftime("%x %X", time.localtime(self.last_rendertime)),
+                        )
+                self.options['renderchecks'] = 0
 
         # Throughout the class, self.outputdir is an absolute path to the
         # directory where we output tiles. It is assumed to exist.
@@ -298,8 +331,11 @@ class TileSet(object):
             logging.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
                     self.treedepth)
 
-        # Do any tile re-arranging if necessary
-        self._rearrange_tiles()
+        # Do any tile re-arranging if necessary. Skip if there was no config
+        # from the asset-manager, which typically indicates this is a new
+        # render
+        if self.config:
+            self._rearrange_tiles()
 
         # Do the chunk scan here
         self.dirtytree = self._chunk_scan()
@@ -383,6 +419,20 @@ class TileSet(object):
                 name = str(tilepath[-1])
             self._render_compositetile(dest, name)
 
+    def get_initial_data(self):
+        """This is called similarly to get_persistent_data, but is called after
+        do_preprocessing but before any work is acutally done.
+
+        """
+        d = self.get_persistent_data()
+        # This is basically the same as get_persistent_data() with the
+        # following exceptions:
+        # * last_rendertime is not changed
+        # * A key "render_in_progress" is set to True
+        d['last_rendertime'] = self.last_rendertime
+        d['render_in_progress'] = True
+        return d
+
     def get_persistent_data(self):
         """Returns a dictionary representing the persistent data of this
         TileSet. Typically this is called by AssetManager
@@ -400,7 +450,7 @@ class TileSet(object):
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') + 
                     (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
-                last_rendertime = self.this_rendertime,
+                last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
                 )
         try:
@@ -463,16 +513,17 @@ class TileSet(object):
 
         """
         try:
-            curdepth = get_dirdepth(self.outputdir)
-        except Exception:
-            logging.critical("Could not determine existing tile tree depth. Does it exist?")
-            raise
+            curdepth = self.config['zoomLevels']
+        except KeyError:
+            return
         
         if curdepth == 1:
             # Skip a depth 1 tree. A depth 1 tree pretty much can't happen, so
             # when we detect this it usually means the tree is actually empty
             return
-        logging.debug("Current tree depth was detected to be %s. Target tree depth is %s", curdepth, self.treedepth)
+        logging.debug("Current tree depth for %s is reportedly %s. Target tree depth is %s",
+                self.options['name'],
+                curdepth, self.treedepth)
         if self.treedepth != curdepth:
             if self.treedepth > curdepth:
                 logging.warning("Your map seems to have expanded beyond its previous bounds.")
@@ -648,8 +699,8 @@ class TileSet(object):
                     dirty.add(tile.path)
 
         t = int(time.time()-stime)
-        logging.debug("%s finished chunk scan. %s chunks scanned in %s second%s", 
-                self, chunkcount, t,
+        logging.debug("Finished chunk scan for %s. %s chunks scanned in %s second%s", 
+                self.options['name'], chunkcount, t,
                 "s" if t != 1 else "")
 
         self.max_chunk_mtime = max_chunk_mtime
@@ -728,22 +779,23 @@ class TileSet(object):
                 img.paste(quad, path[0])
             except Exception, e:
                 logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
-                logging.warning("I'm going to try and delete it. You will need to run the render again")
+                logging.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
                 try:
                     os.unlink(path[1])
                 except Exception, e:
                     logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
 
         # Save it
-        if imgformat == 'jpg':
-            img.save(imgpath, quality=self.options['imgquality'], subsampling=0)
-        else: # png
-            img.save(imgpath)
-            
-        if self.options['optimizeimg']:
-            optimize_image(imgpath, imgformat, self.options['optimizeimg'])
+        with FileReplacer(imgpath) as tmppath:
+            if imgformat == 'jpg':
+                img.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
+            else: # png
+                img.save(tmppath, "png")
+                
+            if self.options['optimizeimg']:
+                optimize_image(tmppath, imgformat, self.options['optimizeimg'])
 
-        os.utime(imgpath, (max_mtime, max_mtime))
+            os.utime(tmppath, (max_mtime, max_mtime))
 
     def _render_rendertile(self, tile):
         """Renders the given render-tile.
@@ -829,15 +881,16 @@ class TileSet(object):
             #draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
         
         # Save them
-        if self.imgextension == 'jpg':
-            tileimg.save(imgpath, quality=self.options['imgquality'], subsampling=0)
-        else: # png
-            tileimg.save(imgpath)
+        with FileReplacer(imgpath) as tmppath:
+            if self.imgextension == 'jpg':
+                tileimg.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
+            else: # png
+                tileimg.save(tmppath, "png")
 
-        if self.options['optimizeimg']:
-            optimize_image(imgpath, self.imgextension, self.options['optimizeimg'])
+            if self.options['optimizeimg']:
+                optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])
 
-        os.utime(imgpath, (max_chunk_mtime, max_chunk_mtime))
+            os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))
 
     def _iterate_and_check_tiles(self, path):
         """A generator function over all tiles that need rendering in the
@@ -945,34 +998,6 @@ class TileSet(object):
                 else:
                     # Nope.
                     yield path, max_child_mtime, False
-
-
-def get_dirdepth(outputdir):
-    """Returns the current depth of the tree on disk
-
-    """
-    # Traverses down the first directory until it reaches one with no
-    # subdirectories. While all paths of the tree may not exist, all paths
-    # of the tree should and are assumed to be the same depth
-
-    # This function returns a list of all subdirectories of the given
-    # directory. It's slightly more complicated than you'd think it should be
-    # because one must turn directory names returned by os.listdir into
-    # relative/absolute paths before they can be passed to os.path.isdir()
-    getsubdirs = lambda directory: [
-            abssubdir
-            for abssubdir in
-                (os.path.join(directory,subdir) for subdir in os.listdir(directory))
-            if os.path.isdir(abssubdir)
-            ]
-
-    depth = 1
-    subdirs = getsubdirs(outputdir)
-    while subdirs:
-        subdirs = getsubdirs(subdirs[0])
-        depth += 1
-
-    return depth
 
 ######################
 # The following two functions define the mapping from chunks to tiles and back.
