@@ -14,7 +14,10 @@
    id="svg4984"
    version="1.1"
    inkscape:version="0.48.1 r9760"
-   sodipodi:docname="New document 20">
+   sodipodi:docname="chunkpositioning.svg"
+   inkscape:export-filename="/home/andrew/mc/overviewer/anvil/docs/design/tilerendering/chunkpositioning.png"
+   inkscape:export-xdpi="26.505878"
+   inkscape:export-ydpi="26.505878">
   <defs
      id="defs4986">
     <marker
@@ -53,16 +56,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="259.41101"
+     inkscape:cx="316.55387"
      inkscape:cy="428.05724"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      showborder="false"
      inkscape:window-width="1920"
-     inkscape:window-height="1003"
+     inkscape:window-height="1031"
      inkscape:window-x="0"
-     inkscape:window-y="25"
+     inkscape:window-y="0"
      inkscape:window-maximized="1">
     <inkscape:grid
        type="xygrid"
@@ -157,32 +160,6 @@
        style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m -430.5,442.36218 0,-60"
        id="path5082-1"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:3,3;stroke-dashoffset:0"
-       d="m -430.5,562.36218 0,270"
-       id="path5641"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:3,3;stroke-dashoffset:0"
-       d="m -50.5,562.36218 0,270"
-       id="path5643"
-       inkscape:connector-curvature="0" />
-    <text
-       xml:space="preserve"
-       style="font-size:36px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans;-inkscape-font-specification:Andale Mono"
-       x="-560.5"
-       y="762.36218"
-       id="text5645"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan5647"
-         x="-560.5"
-         y="762.36218">(1536)</tspan></text>
-    <path
-       style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;marker-mid:none;marker-end:url(#Arrow1Mend)"
-       d="m -500.5,782.36218 0,80"
-       id="path5649"
        inkscape:connector-curvature="0" />
     <rect
        style="fill:none;stroke:#000000;stroke-width:5.6126442;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"

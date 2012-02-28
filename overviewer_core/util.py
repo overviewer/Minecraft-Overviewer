@@ -21,12 +21,14 @@ import imp
 import os
 import os.path
 import sys
+import platform
 from subprocess import Popen, PIPE
 import logging
 from cStringIO import StringIO
 import ctypes
 import platform
-from itertools import cycle, islice
+from itertools import cycle, islice, product
+import shutil
 
 def get_program_path():
     if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
@@ -87,6 +89,33 @@ def findGitVersion():
         except Exception:
             return "unknown"
 
+def is_bare_console():
+    """Returns true if Overviewer is running in a bare console in
+    Windows, that is, if overviewer wasn't started in a cmd.exe
+    session.
+    """
+    if platform.system() == 'Windows':
+        try:
+            import ctypes
+            GetConsoleProcessList = ctypes.windll.kernel32.GetConsoleProcessList
+            num = GetConsoleProcessList(ctypes.byref(ctypes.c_int(0)), ctypes.c_int(1))
+            if (num == 1):
+                return True
+                
+        except Exception:
+            pass
+    return False
+
+def exit(ret=0):
+    """Drop-in replacement for sys.exit that will automatically detect
+    bare consoles and wait for user input before closing.
+    """
+    if ret and is_bare_console():
+        print
+        print "Press [Enter] to close this window."
+        raw_input()
+    sys.exit(ret)
+
 # http://docs.python.org/library/itertools.html
 def roundrobin(iterables):
     "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
@@ -101,6 +130,95 @@ def roundrobin(iterables):
             pending -= 1
             nexts = cycle(islice(nexts, pending))
 
+def iterate_base4(d):
+    """Iterates over a base 4 number with d digits"""
+    return product(xrange(4), repeat=d)
+   
+
+def convert_coords(chunkx, chunkz):
+    """Takes a coordinate (chunkx, chunkz) where chunkx and chunkz are
+    in the chunk coordinate system, and figures out the row and column
+    in the image each one should be. Returns (col, row)."""
+    
+    # columns are determined by the sum of the chunk coords, rows are the
+    # difference
+    # change this function, and you MUST change unconvert_coords
+    return (chunkx + chunkz, chunkz - chunkx)
+
+def unconvert_coords(col, row):
+    """Undoes what convert_coords does. Returns (chunkx, chunkz)."""
+    
+    # col + row = chunkz + chunkz => (col + row)/2 = chunkz
+    # col - row = chunkx + chunkx => (col - row)/2 = chunkx
+    return ((col - row) / 2, (col + row) / 2)
+
+# Define a context manager to handle atomic renaming or "just forget it write
+# straight to the file" depending on whether os.rename provides atomic
+# overwrites.
+# Detect whether os.rename will overwrite files
+import tempfile
+with tempfile.NamedTemporaryFile() as f1:
+    with tempfile.NamedTemporaryFile() as f2:
+        try:
+            os.rename(f1.name,f2.name)
+        except OSError:
+            renameworks = False
+        else:
+            renameworks = True
+            # re-make this file so it can be deleted without error
+            open(f1.name, 'w').close()
+del tempfile,f1,f2
+doc = """This class acts as a context manager for files that are to be written
+out overwriting an existing file.
+
+The parameter is the destination filename. The value returned into the context
+is the filename that should be used. On systems that support an atomic
+os.rename(), the filename will actually be a temporary file, and it will be
+atomically replaced over the destination file on exit.
+
+On systems that don't support an atomic rename, the filename returned is the
+filename given.
+
+If an error is encountered, the file is attempted to be removed, and the error
+is propagated.
+
+Example:
+
+with FileReplacer("config") as configname:
+    with open(configout, 'w') as configout:
+        configout.write(newconfig)
+"""
+if renameworks:
+    class FileReplacer(object):
+        __doc__ = doc
+        def __init__(self, destname):
+            self.destname = destname
+            self.tmpname = destname + ".tmp"
+        def __enter__(self):
+            # rename works here. Return a temporary filename
+            return self.tmpname
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            if exc_type:
+                # error
+                try:
+                    os.remove(self.tmpname)
+                except Exception, e:
+                    logging.warning("An error was raised, so I was doing "
+                            "some cleanup first, but I couldn't remove "
+                            "'%s'!", self.tmpname)
+            else:
+                # atomic rename into place
+                os.rename(self.tmpname, self.destname)
+else:
+    class FileReplacer(object):
+        __doc__ = doc
+        def __init__(self, destname):
+            self.destname = destname
+        def __enter__(self):
+            return self.destname
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            return
+del renameworks
 
 # Logging related classes are below
 
@@ -337,3 +455,48 @@ class ANSIColorFormatter(HighlightingFormatter):
         else:
             # No coloring if it's not to be highlighted or colored
             return logging.Formatter.format(self, record)
+
+
+def mirror_dir(src, dst, entities=None):
+    '''copies all of the entities from src to dst'''
+    if not os.path.exists(dst):
+        os.mkdir(dst)
+    if entities and type(entities) != list: raise Exception("Expected a list, got a %r instead" % type(entities))
+    
+    # files which are problematic and should not be copied
+    # usually, generated by the OS
+    skip_files = ['Thumbs.db', '.DS_Store']
+    
+    for entry in os.listdir(src):
+        if entry in skip_files:
+            continue
+        if entities and entry not in entities:
+            continue
+        
+        if os.path.isdir(os.path.join(src,entry)):
+            mirror_dir(os.path.join(src, entry), os.path.join(dst, entry))
+        elif os.path.isfile(os.path.join(src,entry)):
+            try:
+                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
+            except IOError as outer: 
+                try:
+                    # maybe permission problems?
+                    src_stat = os.stat(os.path.join(src, entry))
+                    os.chmod(os.path.join(src, entry), src_stat.st_mode | stat.S_IRUSR)
+                    dst_stat = os.stat(os.path.join(dst, entry))
+                    os.chmod(os.path.join(dst, entry), dst_stat.st_mode | stat.S_IWUSR)
+                except OSError: # we don't care if this fails
+                    pass
+                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
+                # if this stills throws an error, let it propagate up
+
+
+def dict_subset(d, keys):
+    "Return a new dictionary that is built from copying select keys from d"
+    n = dict()
+    for key in keys:
+        if key in d:
+            n[key] = d[key]
+    return n
+
+    

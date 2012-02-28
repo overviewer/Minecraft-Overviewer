@@ -25,8 +25,9 @@ overviewer_core/c_overviewer.pyd
 overviewer_core/c_overviewer_d.pyd
 overviewer_core/c_overviewer.dylib
 
-# generated version file
+# generated files
 overviewer_core/overviewer_version.py
+overviewer_core/src/primitives.h
 
 # Mac OS X noise
 .DS_Store

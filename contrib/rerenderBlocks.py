@@ -26,7 +26,7 @@ if not hasattr(sys, "frozen"):
 
 from overviewer_core import nbt
 from overviewer_core import world
-from overviewer_core.chunk import get_blockarray_fromfile, get_blockarray
+from overviewer_core.chunk import get_blockarray
 
 parser = OptionParser()
 parser.add_option("--ids", dest="ids", type="string")

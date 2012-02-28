@@ -26,20 +26,25 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 15
+#define OVERVIEWER_EXTENSION_VERSION 26
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
 #include <Imaging.h>
 #include <numpy/arrayobject.h>
 
-/* macro for getting a value out of various numpy arrays */
-#define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (x), (y), (z))))
-#define getArrayShort1D(array, x) (*(unsigned short *)(PyArray_GETPTR1((array), (x))))
+/* macro for getting a value out of various numpy arrays the 3D arrays have
+   interesting, swizzled coordinates because minecraft (anvil) stores blocks
+   in y/z/x order */
+#define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (y), (z), (x))))
+#define getArrayShort3D(array, x,y,z) (*(unsigned short *)(PyArray_GETPTR3((array), (y), (z), (x))))
+#define getArrayByte2D(array, x,y) (*(unsigned char *)(PyArray_GETPTR2((array), (x), (y))))
+#define getArrayShort2D(array, x,y) (*(unsigned short *)(PyArray_GETPTR2((array), (x), (y))))
 
 /* generally useful MAX / MIN macros */
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define CLAMP(x, a, b) (MIN(MAX(x, a), b))
 
 /* in composite.c */
 Imaging imaging_python_to_c(PyObject *obj);
@@ -64,36 +69,49 @@ PyObject *draw_triangle(PyObject *dest, int inclusive,
 typedef struct _RenderMode RenderMode;
 
 /* in iterate.c */
+#define SECTIONS_PER_CHUNK 16
 typedef struct {
-    /* the ChunkRenderer object */
-    PyObject *self;
-    
-    /* important modules, for convenience */
-    PyObject *textures;
-    PyObject *chunk;
-    
-    /* the current render mode in use */
-    RenderMode *rendermode;
-    
-    /* the rest only make sense for occluded() and draw() !! */
+    /* whether this chunk is loaded: use load_chunk to load */
+    int loaded;
+    /* chunk biome array */
+    PyObject *biomes;
+    /* all the sections in a given chunk */
+    struct {
+        /* all there is to know about each section */
+        PyObject *blocks, *data, *skylight, *blocklight;
+    } sections[SECTIONS_PER_CHUNK];
+} ChunkData;
+typedef struct {
+    /* the regionset object, and chunk coords */
+    PyObject *regionset;
+    int chunkx, chunky, chunkz;
     
     /* the tile image and destination */
     PyObject *img;
     int imgx, imgy;
     
+    /* the current render mode in use */
+    RenderMode *rendermode;
+    
+    /* the Texture object */
+    PyObject *textures;
+    
     /* the block position and type, and the block array */
     int x, y, z;
-    unsigned char block;
+    unsigned short block;
     unsigned char block_data;
     unsigned char block_pdata;
-    PyObject *blockdata_expanded;
+
+    /* useful information about this, and neighboring, chunks */
+    PyObject *blockdatas;
     PyObject *blocks;
-    PyObject *up_left_blocks;
-    PyObject *up_right_blocks;
-    PyObject *left_blocks;
-    PyObject *right_blocks;
+    
+    /* 3x3 array of this and neighboring chunk columns */
+    ChunkData chunks[3][3];    
 } RenderState;
-PyObject *init_chunk_render(PyObject *self, PyObject *args);
+PyObject *init_chunk_render(void);
+/* returns true on error, x,z relative */
+int load_chunk(RenderState* state, int x, int z, unsigned char required);
 PyObject *chunk_render(PyObject *self, PyObject *args);
 typedef enum
 {
@@ -121,6 +139,83 @@ block_has_property(unsigned char b, BlockProperty prop) {
     return block_properties[b] & (1 << prop);
 }
 #define is_transparent(b) block_has_property((b), TRANSPARENT)
+
+/* helper for indexing section data possibly across section boundaries */
+typedef enum
+{
+    BLOCKS,
+    DATA,
+    BLOCKLIGHT,
+    SKYLIGHT,
+    BIOMES,
+} DataType;
+static inline unsigned int get_data(RenderState *state, DataType type, int x, int y, int z)
+{
+    int chunkx = 1, chunky = state->chunky, chunkz = 1;
+    PyObject *data_array = NULL;
+    unsigned int def = 0;
+    if (type == SKYLIGHT)
+        def = 15;
+    
+    if (x >= 16) {
+        x -= 16;
+        chunkx++;
+    } else if (x < 0) {
+        x += 16;
+        chunkx--;
+    }
+    if (z >= 16) {
+        z -= 16;
+        chunkz++;
+    } else if (z < 0) {
+        z += 16;
+        chunkz--;
+    }
+
+    while (y >= 16) {
+        y -= 16;
+        chunky++;
+    }
+    while (y < 0) {
+        y += 16;
+        chunky--;
+    }
+    if (chunky < 0 || chunky >= SECTIONS_PER_CHUNK)
+        return def;
+    
+    if (!(state->chunks[chunkx][chunkz].loaded))
+    {
+        if (load_chunk(state, chunkx - 1, chunkz - 1, 0))
+            return def;
+    }
+    
+    switch (type)
+    {
+    case BLOCKS:
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].blocks;
+        break;
+    case DATA:
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].data;
+        break;
+    case BLOCKLIGHT:
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].blocklight;
+        break;
+    case SKYLIGHT:
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].skylight;
+        break;
+    case BIOMES:
+        data_array = state->chunks[chunkx][chunkz].biomes;
+    };
+    
+    if (data_array == NULL)
+        return def;
+    
+    if (type == BLOCKS)
+        return getArrayShort3D(data_array, x, y, z);
+    if (type == BIOMES)
+        return getArrayByte2D(data_array, x, z);
+    return getArrayByte3D(data_array, x, y, z);
+}
 
 /* pull in the rendermode info */
 #include "rendermodes.h"

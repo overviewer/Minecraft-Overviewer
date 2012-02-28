@@ -15,21 +15,27 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * To make a new render mode (the C part, at least):
+/* To make a new render primitive:
  *
- *     * add a data struct and extern'd interface declaration below
+ *  * add a new class to rendermodes.py
+ *        there are a ton of examples there, the syntax is pretty simple. If
+ *        you need any extra objects that are easy to create in python, this
+ *        is where you put them.
  *
- *     * fill in this interface struct in rendermode-(yourmode).c
- *         (see rendermodes-normal.c for an example: the "normal" mode)
+ *  * create a file in src/primitives with the same name
+ *        so, Nether (named "nether") goes in `nether.c`.
  *
- *     * if you want to derive from (say) the "normal" mode, put
- *       a RenderModeNormal entry at the top of your data struct, and
- *       be sure to call your parent's functions in your own!
- *         (see rendermode-night.c for a simple example derived from
- *          the "lighting" mode)
+ *  * declare a RenderPrimitiveInterface with the name primitive_name
+ *        if you have an underscore in the name, replace it with a
+ *        hyphen. height-fading uses primitive_height_fading.
  *
- *     * add your mode to the list in rendermodes.c
+ *  * fill in the entries of this struct
+ *        the name should match, and you should declare an 'instance' struct
+ *        to use as the self argument to each function. See nether.c and
+ *        height-fading.c for simple examples.
+ *
+ * setup.py will pick up your primitive, add it to the global list, and build
+ * it for you if you follow these conventions.
  */
 
 #ifndef __RENDERMODES_H_INCLUDED__
@@ -38,30 +44,14 @@
 #include <Python.h>
 #include "overviewer.h"
 
+/* render primitive interface */
 typedef struct {
-    const char *name;
-    const char *description;
-} RenderModeOption;
-
-/* rendermode interface */
-typedef struct _RenderModeInterface RenderModeInterface;
-struct _RenderModeInterface {
     /* the name of this mode */
-    const char *name;
-    /* the label to use in the map */
-    const char *label;
-    /* the short description of this render mode */
-    const char *description;
-    
-    /* a NULL-terminated list of render mode options, or NULL */
-    RenderModeOption *options;
-    
-    /* the rendermode this is derived from, or NULL */
-    RenderModeInterface *parent;
+    const char *name;    
     /* the size of the local storage for this rendermode */
     unsigned int data_size;
     
-    /* may return non-zero on error, last arg is options */
+    /* may return non-zero on error, last arg is the python support object */
     int (*start)(void *, RenderState *, PyObject *);
     void (*finish)(void *, RenderState *);
     /* returns non-zero to skip rendering this block because it's not visible */
@@ -71,7 +61,7 @@ struct _RenderModeInterface {
     int (*hidden)(void *, RenderState *, int, int, int);
     /* last two arguments are img and mask, from texture lookup */
     void (*draw)(void *, RenderState *, PyObject *, PyObject *, PyObject *);
-};
+} RenderPrimitiveInterface;
 
 /* A quick note about the difference between occluded and hidden:
  *
@@ -88,162 +78,28 @@ struct _RenderModeInterface {
  * example, in lighting mode it is called at most 4 times per block.
  */
 
+/* convenience wrapper for a single primitive + interface */
+typedef struct {
+    void *primitive;
+    RenderPrimitiveInterface *iface;
+} RenderPrimitive;
+
 /* wrapper for passing around rendermodes */
 struct _RenderMode {
-    void *mode;
-    RenderModeInterface *iface;
+    unsigned int num_primitives;
+    RenderPrimitive **primitives;
     RenderState *state;
 };
 
 /* functions for creating / using rendermodes */
-RenderMode *render_mode_create(const char *mode, RenderState *state);
+RenderMode *render_mode_create(PyObject *mode, RenderState *state);
 void render_mode_destroy(RenderMode *self);
 int render_mode_occluded(RenderMode *self, int x, int y, int z);
 int render_mode_hidden(RenderMode *self, int x, int y, int z);
 void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light);
 
 /* helper function for reading in rendermode options
-   works like PyArg_ParseTuple on a dictionary item */
-int render_mode_parse_option(PyObject *dict, const char *name, const char *format, ...);
-
-/* python metadata bindings */
-PyObject *get_render_modes(PyObject *self, PyObject *args);
-PyObject *get_render_mode_info(PyObject *self, PyObject *args);
-PyObject *get_render_mode_inheritance(PyObject *self, PyObject *args);
-PyObject *get_render_mode_children(PyObject *self, PyObject *args);
-
-/* python rendermode options bindings */
-PyObject *set_render_mode_options(PyObject *self, PyObject *args);
-PyObject *add_custom_render_mode(PyObject *self, PyObject *args);
-
-/* individual rendermode interface declarations follow */
-
-/* NORMAL */
-typedef struct {
-    /* coordinates of the chunk, inside its region file */
-    int chunk_x, chunk_y;
-    /* biome data for the region */
-    PyObject *biome_data;
-    /* grasscolor and foliagecolor lookup tables */
-    PyObject *grasscolor, *foliagecolor, *watercolor;
-    /* biome-compatible grass/leaf textures */
-    PyObject *grass_texture;
-    
-    /* black and white colors for height fading */
-    PyObject *black_color, *white_color;
-    
-    float edge_opacity;
-    unsigned int min_depth;
-    unsigned int max_depth;
-    int height_fading;
-    int nether;
-} RenderModeNormal;
-extern RenderModeInterface rendermode_normal;
-
-/* OVERLAY */
-typedef struct {
-    /* top facemask and white color image, for drawing overlays */
-    PyObject *facemask_top, *white_color;
-    /* can be overridden in derived classes to control
-       overlay alpha and color
-       last four vars are r, g, b, a out */
-    void (*get_color)(void *, RenderState *,
-                      unsigned char *, unsigned char *, unsigned char *, unsigned char *);
-} RenderModeOverlay;
-extern RenderModeInterface rendermode_overlay;
-
-/* LIGHTING */
-typedef struct {
-    /* inherits from normal render mode */
-    RenderModeNormal parent;
-    
-    PyObject *facemasks_py;
-    PyObject *facemasks[3];
-    
-    /* extra data, loaded off the chunk class */
-    PyObject *skylight, *blocklight;
-    PyObject *left_skylight, *left_blocklight;
-    PyObject *right_skylight, *right_blocklight;
-    PyObject *up_left_skylight, *up_left_blocklight;
-    PyObject *up_right_skylight, *up_right_blocklight;
-    
-    /* light color image, loaded if color_light is True */
-    PyObject *lightcolor;
-    
-    /* can be overridden in derived rendermodes to control lighting
-       arguments are data, skylight, blocklight, return RGB */
-    void (*calculate_light_color)(void *, unsigned char, unsigned char, unsigned char *, unsigned char *, unsigned char *);
-    
-    /* can be set to 0 in derived modes to indicate that lighting the chunk
-     * sides is actually important. Right now, this is used in cave mode
-     */
-    int skip_sides;
-    
-    float shade_strength;
-    int color_light;
-    int night;
-} RenderModeLighting;
-extern RenderModeInterface rendermode_lighting;
-
-/* exposed so it can be used in other per-face occlusion checks */
-int rendermode_lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z);
-
-/* exposed so sub-modes can look at colors directly */
-void get_lighting_color(RenderModeLighting *self, RenderState *state,
-                        int x, int y, int z,
-                        unsigned char *r, unsigned char *g, unsigned char *b);
-
-/* SMOOTH LIGHTING */
-typedef struct {
-    /* inherits from lighting */
-    RenderModeLighting parent;
-} RenderModeSmoothLighting;
-extern RenderModeInterface rendermode_smooth_lighting;
-
-/* SPAWN */
-typedef struct {
-    /* inherits from overlay */
-    RenderModeOverlay parent;
-    
-    PyObject *skylight, *blocklight;
-} RenderModeSpawn;
-extern RenderModeInterface rendermode_spawn;
-
-/* CAVE */
-typedef struct {
-    /* render blocks with lighting mode */
-    RenderModeLighting parent;
-
-    /* data used to know where the surface is */
-    PyObject *skylight;
-    PyObject *left_skylight;
-    PyObject *right_skylight;
-    PyObject *up_left_skylight;
-    PyObject *up_right_skylight;
-
-    /* data used to know where the surface is */
-    PyObject *blocklight;
-    PyObject *left_blocklight;
-    PyObject *right_blocklight;
-    PyObject *up_left_blocklight;
-    PyObject *up_right_blocklight;
-
-    /* colors used for tinting */
-    PyObject *depth_colors;
-    
-    int depth_tinting;
-    int only_lit;
-    int lighting;
-} RenderModeCave;
-extern RenderModeInterface rendermode_cave;
-
-/* MINERAL */
-typedef struct {
-    /* inherits from overlay */
-    RenderModeOverlay parent;
-    
-    void *minerals;
-} RenderModeMineral;
-extern RenderModeInterface rendermode_mineral;
+   works like PyArg_ParseTuple on a support object */
+int render_mode_parse_option(PyObject *support, const char *name, const char *format, ...);
 
 #endif /* __RENDERMODES_H_INCLUDED__ */

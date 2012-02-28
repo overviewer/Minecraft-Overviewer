@@ -15,6 +15,7 @@ import glob
 import platform
 import time
 import overviewer_core.util as util
+import numpy
 
 try:
     import py2exe
@@ -55,7 +56,7 @@ setup_kwargs['license'] = 'GNU General Public License v3'
 setup_kwargs['long_description'] = read('README.rst')
 
 # top-level files that should be included as documentation
-doc_files = ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample.settings.py']
+doc_files = ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample_config.py']
 
 # helper to create a 'data_files'-type sequence recursively for a given dir
 def recursive_data_files(src, dest=None):
@@ -99,6 +100,7 @@ if py2exe is not None:
     setup_kwargs['data_files'] = [('', doc_files)]
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/textures', 'textures')
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/web_assets', 'web_assets')
+    setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/js_src', 'js_src')
     setup_kwargs['data_files'] += recursive_data_files('contrib', 'contrib')
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
@@ -133,7 +135,6 @@ if py2exe is None:
 #
 
 # Third-party modules - we depend on numpy for everything
-import numpy
 # Obtain the numpy include directory.  This logic works across numpy versions.
 try:
     numpy_include = numpy.get_include()
@@ -149,10 +150,16 @@ except Exception:
         
 
 # used to figure out what files to compile
-render_modes = ['normal', 'overlay', 'lighting', 'smooth-lighting', 'spawn', 'cave', 'mineral']
+# auto-created from files in primitives/, but we need the raw names so
+# we can use them later.
+primitives = []
+for name in glob.glob("overviewer_core/src/primitives/*.c"):
+    name = os.path.split(name)[-1]
+    name = os.path.splitext(name)[0]
+    primitives.append(name)
 
 c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
-c_overviewer_files += map(lambda mode: 'rendermode-%s.c' % (mode,), render_modes)
+c_overviewer_files += map(lambda mode: 'primitives/%s.c' % (mode,), primitives)
 c_overviewer_files += ['Draw.c']
 c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
 
@@ -167,7 +174,7 @@ setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_o
 setup_kwargs['options']['build_ext'] = {'inplace' : 1}
 
 # custom clean command to remove in-place extension
-# and the version file
+# and the version file, primitives header
 class CustomClean(clean):
     def run(self):
         # do the normal cleanup
@@ -176,31 +183,24 @@ class CustomClean(clean):
         # try to remove '_composite.{so,pyd,...}' extension,
         # regardless of the current system's extension name convention
         build_ext = self.get_finalized_command('build_ext')
-        pretty_fname = build_ext.get_ext_filename('overviewer_core.c_overviewer')
-        fname = pretty_fname
-        if os.path.exists(fname):
-            try:
-                if not self.dry_run:
-                    os.remove(fname)
-                log.info("removing '%s'", pretty_fname)
-            except OSError:
-                log.warn("'%s' could not be cleaned -- permission denied",
-                         pretty_fname)
-        else:
-            log.debug("'%s' does not exist -- can't clean it",
-                      pretty_fname)
-        
+        ext_fname = build_ext.get_ext_filename('overviewer_core.c_overviewer')
         versionpath = os.path.join("overviewer_core", "overviewer_version.py")
-        if os.path.exists(versionpath):
-            try:
-                if not self.dry_run:
-                    os.remove(versionpath)
-                log.info("removing '%s'", versionpath)
-            except OSError:
-                log.warn("'%s' could not be cleaned -- permission denied", versionpath)
-        else:
-            log.debug("'%s' does not exist -- can't clean it", versionpath)
-
+        primspath = os.path.join("overviewer_core", "src", "primitives.h")
+        
+        for fname in [ext_fname, versionpath, primspath]:
+            if os.path.exists(fname):
+                try:
+                    log.info("removing '%s'", fname)
+                    if not self.dry_run:
+                        os.remove(fname)
+                        
+                except OSError:
+                    log.warn("'%s' could not be cleaned -- permission denied",
+                             fname)
+            else:
+                log.debug("'%s' does not exist -- can't clean it",
+                          fname)
+        
         # now try to purge all *.pyc files
         for root, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), ".")):
             for f in files:
@@ -224,16 +224,34 @@ def generate_version_py():
     except Exception:
         print "WARNING: failed to build overviewer_version file"
 
+def generate_primitives_h():
+    global primitives
+    prims = [p.lower().replace('-', '_') for p in primitives]
+    
+    outstr = "/* this file is auto-generated by setup.py */\n"
+    for p in prims:
+        outstr += "extern RenderPrimitiveInterface primitive_{0};\n".format(p)
+    outstr += "static RenderPrimitiveInterface *render_primitives[] = {\n"
+    for p in prims:
+        outstr += "    &primitive_{0},\n".format(p)
+    outstr += "    NULL\n"
+    outstr += "};\n"
+    
+    with open("overviewer_core/src/primitives.h", "w") as f:
+        f.write(outstr)
+
 class CustomSDist(sdist):
     def run(self):
         # generate the version file
         generate_version_py()
+        generate_primitives_h()
         sdist.run(self)
 
 class CustomBuild(build):
     def run(self):
         # generate the version file
         generate_version_py()
+        generate_primitives_h()
         build.run(self)
         print "\nBuild Complete"
 

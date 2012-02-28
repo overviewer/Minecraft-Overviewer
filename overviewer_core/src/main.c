@@ -17,10 +17,6 @@
 
 #include "overviewer.h"
 
-/* global variables from rendermodes.c -- both are dictionaries */
-extern PyObject *render_mode_options;
-extern PyObject *custom_render_modes;
-
 PyObject *get_extension_version(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("i", OVERVIEWER_EXTENSION_VERSION);
@@ -30,24 +26,8 @@ static PyMethodDef COverviewerMethods[] = {
     {"alpha_over", alpha_over_wrap, METH_VARARGS,
      "alpha over composite function"},
     
-    {"init_chunk_render", init_chunk_render, METH_VARARGS,
-     "Initializes the stuffs renderer."},
     {"render_loop", chunk_render, METH_VARARGS,
      "Renders stuffs"},
-    
-    {"get_render_modes", get_render_modes, METH_VARARGS,
-     "returns available render modes"},
-    {"get_render_mode_info", get_render_mode_info, METH_VARARGS,
-     "returns info for a particular render mode"},
-    {"get_render_mode_inheritance", get_render_mode_inheritance, METH_VARARGS,
-     "returns inheritance chain for a particular render mode"},
-    {"get_render_mode_children", get_render_mode_children, METH_VARARGS,
-     "returns (direct) children for a particular render mode"},
-    
-    {"set_render_mode_options", set_render_mode_options, METH_VARARGS,
-     "sets the default options for a given render mode"},
-    {"add_custom_render_mode", add_custom_render_mode, METH_VARARGS,
-     "add a new rendermode derived from an existing mode"},
     
     {"extension_version", get_extension_version, METH_VARARGS, 
         "Returns the extension version"},
@@ -63,18 +43,13 @@ initc_overviewer(void)
 
     /* for numpy */
     import_array();
-    
-    /* create the render mode data structures, and attatch them to the module
-     * so that the Python garbage collector doesn't freak out
-     */
-    
-    render_mode_options = PyDict_New();
-    PyObject_SetAttrString(mod, "_render_mode_options", render_mode_options);
-    Py_DECREF(render_mode_options);
-    
-    custom_render_modes = PyDict_New();
-    PyObject_SetAttrString(mod, "_custom_render_modes", custom_render_modes);
-    Py_DECREF(custom_render_modes);
+
+    /* initialize, and return if error is set */
+    if (!init_chunk_render()) {
+        PyErr_Print();
+        exit(1);
+        return;
+    }
     
     init_endian();
 }
