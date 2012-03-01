@@ -349,6 +349,20 @@ values. The valid configuration keys are listed below.
                 'crop': (-500, -500, 500, 500),
         }
 
+    .. warning::
+
+        If you decide to change the bounds on a render, you may find it produces
+        unexpected results.
+
+        For an expansion to the bounds, because chunks in the new bounds have
+        the same mtime as the old, tiles will not automatically be updated. You
+        may need to use :option:`--forcerender` to force those tiles to update.
+
+        For reductions to the bounds, because there is currently no mechanism to
+        detect tiles that shouldn't exist but do, old tiles may remain and will
+        not get deleted. The only fix for this currently is to delete that
+        render directory and render it again with :option:`--forcerender`. 
+
 .. _customrendermodes:
 
 Custom Rendermodes and Rendermode Primitives

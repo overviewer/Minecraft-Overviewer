@@ -78,13 +78,16 @@ directory.
         config.
 
         """
-        return self.finalize(tilesets, True)
+        self._output_assets(tilesets, True)
 
-    def finalize(self, tilesets, initial=False):
+    def finalize(self, tilesets):
         """Called to output the generated javascript and all static files to
         the output directory
 
         """
+        self._output_assets(tilesets, False)
+
+    def _output_assets(self, tilesets, initial):
         if not initial:
             get_data = lambda tileset: tileset.get_persistent_data()
         else:
