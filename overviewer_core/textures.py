@@ -1312,22 +1312,25 @@ block(blockid=41, top_index=23)
 block(blockid=42, top_index=22)
 
 # double slabs and slabs
-@material(blockid=[43, 44], data=range(6), transparent=(44,), solid=True)
+@material(blockid=[43, 44], data=range(16), transparent=(44,), solid=True)
 def slabs(self, blockid, data):
-    if data == 0: # stone slab
+    texture = data & 7
+    if texture== 0: # stone slab
         top = self.terrain_images[6]
         side = self.terrain_images[5]
-    elif data == 1: # stone slab
+    elif texture== 1: # stone slab
         top = self.terrain_images[176]
         side = self.terrain_images[192]
-    elif data == 2: # wooden slab
+    elif texture== 2: # wooden slab
         top = side = self.terrain_images[4]
-    elif data == 3: # cobblestone slab
+    elif texture== 3: # cobblestone slab
         top = side = self.terrain_images[16]
-    elif data == 4: # brick?
+    elif texture== 4: # brick
         top = side = self.terrain_images[7]
-    elif data == 5: # stone brick?
+    elif texture== 5: # stone brick
         top = side = self.terrain_images[54]
+    else:
+        return None
     
     if blockid == 43: # double slab
         return self.build_block(top, side)
@@ -1349,10 +1352,15 @@ def slabs(self, blockid, data):
     otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
     otherside.putalpha(othersidealpha)
     
+    # upside down slab
+    delta = 0
+    if data & 8 == 8:
+        delta = 6
+    
     img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, side, (0,12), side)
-    alpha_over(img, otherside, (12,12), otherside)
-    alpha_over(img, top, (0,6), top)
+    alpha_over(img, side, (0,12 - delta), side)
+    alpha_over(img, otherside, (12,12 - delta), otherside)
+    alpha_over(img, top, (0,6 - delta), top)
     
     return img
 

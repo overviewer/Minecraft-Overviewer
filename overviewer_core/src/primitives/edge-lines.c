@@ -40,7 +40,7 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
         unsigned short side_block;
 
         int increment=0;
-        if (state->block == 44)  // half-step
+        if (state->block == 44 && ((state->block_data & 0x8) == 0 ))  // half-step BUT no upsidown half-step
             increment=6;
         else if ((state->block == 78) || (state->block == 93) || (state->block == 94)) // snow, redstone repeaters (on and off)
             increment=9;
