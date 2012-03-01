@@ -65,6 +65,7 @@ static Biome biome_table[] = {
     /* 20 */
     {"Extreme Hills Edge", 0.2, 0.3},
     {"Jungle", 2.0, 0.45}, /* <-- GUESS, but a good one */
+    {"Jungle Mountains", 2.0, 0.45}, /* <-- also a guess */
 };
 
 #define NUM_BIOMES (sizeof(biome_table) / sizeof(Biome))
@@ -208,8 +209,12 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             for (dx = -1; dx <= 1; dx++) {
                 for (dz = -1; dz <= 1; dz += (dx == 0 ? 2 : 1)) {
                     unsigned char biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
-                    if (biome > NUM_BIOMES)
-                        biome = 0;
+                    if (biome >= NUM_BIOMES) {
+                        /* note -- biome 255 shows up on map borders.
+                           who knows what it is? certainly not I.
+                        */
+                        biome = 4; /* forest -- reasonable default */
+                    }
                     
                     temp += biome_table[biome].temperature;
                     rain += biome_table[biome].rainfall;
@@ -218,13 +223,17 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             temp /= 8.0;
             rain /= 8.0;
             
+            /* second coordinate is actually scaled to fit inside the triangle
+               so store it in rain */
+            rain *= temp;
+            
             /* make sure they're sane */
             temp = CLAMP(temp, 0.0, 1.0);
             rain = CLAMP(rain, 0.0, 1.0);
             
             /* convert to x/y coordinates in color table */
             tablex = 255 - (255 * temp);
-            tabley = 255 - (255 * temp * rain);
+            tabley = 255 - (255 * rain);
             if (flip_xy) {
                 unsigned char tmp = 255 - tablex;
                 tablex = 255 - tabley;
