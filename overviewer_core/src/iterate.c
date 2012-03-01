@@ -192,10 +192,9 @@ check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char block
     /*
      * Generates a pseudo ancillary data for blocks that depend of 
      * what are surrounded and don't have ancillary data. This 
-     * function is through generate_pseudo_data.
+     * function is used through generate_pseudo_data.
      *
-     * This uses a binary number of 4 digits to encode the info. 
-     * The encode is:
+     * This uses a binary number of 4 digits to encode the info:
      *
      * 0b1234:
      * Bit:   1   2   3   4
