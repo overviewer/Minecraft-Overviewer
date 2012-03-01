@@ -187,6 +187,26 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     return 0;
 }
 
+/* helper to unload all loaded chunks */
+static void
+unload_all_chunks(RenderState *state) {
+    unsigned int i, j, k;
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 3; j++) {
+            if (state->chunks[i][j].loaded) {
+                Py_XDECREF(state->chunks[i][j].biomes);
+                for (k = 0; k < SECTIONS_PER_CHUNK; k++) {
+                    Py_XDECREF(state->chunks[i][j].sections[k].blocks);
+                    Py_XDECREF(state->chunks[i][j].sections[k].data);
+                    Py_XDECREF(state->chunks[i][j].sections[k].skylight);
+                    Py_XDECREF(state->chunks[i][j].sections[k].blocklight);
+                }
+                state->chunks[i][j].loaded = 0;
+            }
+        }
+    }
+}
+
 unsigned char
 check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
     /*
@@ -484,6 +504,7 @@ chunk_render(PyObject *self, PyObject *args) {
         /* this section doesn't exist, let's skeddadle */
         render_mode_destroy(rendermode);
         Py_DECREF(blockmap);
+        unload_all_chunks(&state);
         Py_RETURN_NONE;
     }
     
@@ -601,21 +622,7 @@ chunk_render(PyObject *self, PyObject *args) {
     render_mode_destroy(rendermode);
     
     Py_DECREF(blockmap);
-    for (i = 0; i < 3; i++) {
-        for (j = 0; j < 3; j++) {
-            if (state.chunks[i][j].loaded) {
-                int k;
-                Py_XDECREF(state.chunks[i][j].biomes);
-                for (k = 0; k < SECTIONS_PER_CHUNK; k++) {
-                    Py_XDECREF(state.chunks[i][j].sections[k].blocks);
-                    Py_XDECREF(state.chunks[i][j].sections[k].data);
-                    Py_XDECREF(state.chunks[i][j].sections[k].skylight);
-                    Py_XDECREF(state.chunks[i][j].sections[k].blocklight);
-                }
-                state.chunks[i][j].loaded = 0;
-            }
-        }
-    }
+    unload_all_chunks(&state);
 
     Py_RETURN_NONE;
 }
