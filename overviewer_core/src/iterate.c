@@ -374,6 +374,33 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
     } else if ((state->block == 90) || (state->block == 113)) {
         /* portal and nether brick fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
+
+    } else if ((state->block == 64) || (state->block == 71)) {
+        /* use bottom block data format plus one bit for top/down
+         * block (0x8) and one bit for hinge position (0x10)
+         */
+        unsigned char data = 0;
+        if ((ancilData & 0x8) == 0x8) {
+            /* top door block */
+            unsigned char b_data = get_data(state, DATA, x, y-1, z);
+            if ((ancilData & 0x1) == 0x1) {
+                /* hinge on the left */
+                data = b_data | 0x8 | 0x10;
+            } else {
+                data = b_data | 0x8;
+            }
+        } else {
+            /* bottom door block */
+            unsigned char t_data = get_data(state, DATA, x, y+1, z);
+            if ((t_data & 0x1) == 0x1) {
+                /* hinge on the left */
+                data = ancilData | 0x10;
+            } else {
+                data = ancilData;
+            }
+        
+        }
+        return data;
     }
 
 
@@ -517,7 +544,8 @@ chunk_render(PyObject *self, PyObject *args) {
                      * ice, fence, portal, iron bars, glass panes */
                     if ((state.block ==  2) || (state.block ==  9) ||
                         (state.block == 20) || (state.block == 54) ||
-                        (state.block == 55) || (state.block == 79) ||
+                        (state.block == 55) || (state.block == 64) ||
+                        (state.block == 71) || (state.block == 79) ||
                         (state.block == 85) || (state.block == 90) ||
                         (state.block == 101) || (state.block == 102) ||
                         (state.block == 113)) {
