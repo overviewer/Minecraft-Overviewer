@@ -114,13 +114,15 @@ class Textures(object):
         * the textures_path given in the initializer
         this can be either a directory or a zip file (texture pack)
         * The program dir (same dir as overviewer.py)
-        * The overviewer_core/data/textures dir
         * On Darwin, in /Applications/Minecraft
         * Inside minecraft.jar, which is looked for at these locations
         
-        * On Windows, at %APPDATA%/.minecraft/bin/minecraft.jar
-        * On Darwin, at $HOME/Library/Application Support/minecraft/bin/minecraft.jar
-        * at $HOME/.minecraft/bin/minecraft.jar
+            * On Windows, at %APPDATA%/.minecraft/bin/minecraft.jar
+            * On Darwin, at
+                $HOME/Library/Application Support/minecraft/bin/minecraft.jar
+            * at $HOME/.minecraft/bin/minecraft.jar
+
+        * The overviewer_core/data/textures dir
         
         In all of these, files are searched for in '.', 'misc/', and
         'environment/'.
@@ -163,17 +165,6 @@ class Textures(object):
             if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
-        path = search_dir(os.path.join(programdir, "overviewer_core", "data", "textures"))
-        if path:
-            if verbose: logging.info("Found %s in '%s'", filename, path)
-            return open(path, mode)
-        elif hasattr(sys, "frozen") or imp.is_frozen("__main__"):
-            # windows special case, when the package dir doesn't exist
-            path = search_dir(os.path.join(programdir, "textures"))
-            if path:
-                if verbose: logging.info("Found %s in '%s'", filename, path)
-                return open(path, mode)
-
         if sys.platform == "darwin":
             path = search_dir("/Applications/Minecraft")
             if path:
@@ -210,6 +201,17 @@ class Textures(object):
                 if path:
                     if verbose: logging.info("Found %s in '%s'", filename, path)
                     return open(path, 'rb')
+        
+        path = search_dir(os.path.join(programdir, "overviewer_core", "data", "textures"))
+        if path:
+            if verbose: logging.info("Found %s in '%s'", filename, path)
+            return open(path, mode)
+        elif hasattr(sys, "frozen") or imp.is_frozen("__main__"):
+            # windows special case, when the package dir doesn't exist
+            path = search_dir(os.path.join(programdir, "textures"))
+            if path:
+                if verbose: logging.info("Found %s in '%s'", filename, path)
+                return open(path, mode)
 
         raise IOError("Could not find the file `{0}'. You can either place it in the same place as overviewer.py, use --textures-path, or install the Minecraft client.".format(filename))
 
