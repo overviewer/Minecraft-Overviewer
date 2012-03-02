@@ -57,7 +57,7 @@ class Depth(RenderPrimitive):
     name = "depth"
     options = {
         "min": ("lowest level of blocks to render", 0),
-        "max": ("highest level of blocks to render", 127),
+        "max": ("highest level of blocks to render", 255),
     }
 
 class EdgeLines(RenderPrimitive):

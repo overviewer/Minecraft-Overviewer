@@ -414,7 +414,7 @@ Depth
         lowest level of blocks to render. Default: 0
 
     max
-        highest level of blocks to render. Default: 127
+        highest level of blocks to render. Default: 255
 
 EdgeLines
     Draw edge lines on the back side of blocks, to help distinguish them from
