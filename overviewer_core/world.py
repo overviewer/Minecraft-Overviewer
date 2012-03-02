@@ -490,8 +490,10 @@ class RotatedRegionSet(RegionSetWrapper):
     def get_chunk(self, x, z):
         x,z = self.unrotate(x,z)
         chunk_data = dict(super(RotatedRegionSet, self).get_chunk(x,z))
+        newsections = []
         for section in chunk_data['Sections']:
             section = dict(section)
+            newsections.append(section)
             for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight']:
                 array = section[arrayname]
                 # Since the anvil change, arrays are arranged with axes Y,Z,X
@@ -501,6 +503,7 @@ class RotatedRegionSet(RegionSetWrapper):
                 array = numpy.rot90(array, self.north_dir)
                 array = numpy.swapaxes(array, 0,2)
                 section[arrayname] = array
+        chunk_data['Sections'] = newsections
         return chunk_data
 
     def get_chunk_mtime(self, x, z):
