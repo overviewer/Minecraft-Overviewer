@@ -80,6 +80,8 @@ class World(object):
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
         if not ('version' in data and data['version'] == 19132):
             logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
+            if ('version' in data and data['version'] == 19133):
+                logging.error("Support for Anvil is currently in development - see http://overviewer.org/blog/2012/03/01/anvil-support/")
             sys.exit(1)
         if 'LevelName' in data:
             # level.dat should have the LevelName attribute so we'll use that
