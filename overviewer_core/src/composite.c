@@ -62,7 +62,7 @@ imaging_python_to_c(PyObject *obj)
    in these composite functions -- even handles auto-sizing to src! */
 static inline void
 setup_source_destination(Imaging src, Imaging dest,
-                         int *sx, int *sy, int *dx, int *dy, int *xsize, int *ysize)
+                         int *sx, int *sy, int *dx, int *dy, unsigned int *xsize, unsigned int *ysize)
 {
    /* handle negative/zero sizes appropriately */
     if (*xsize <= 0 || *ysize <= 0) {
@@ -99,7 +99,7 @@ setup_source_destination(Imaging src, Imaging dest,
 
 /* convenience alpha_over with 1.0 as overall_alpha */
 inline PyObject* alpha_over(PyObject *dest, PyObject *src, PyObject *mask,
-                            int dx, int dy, int xsize, int ysize) {
+                            int dx, int dy, unsigned int xsize, unsigned int ysize) {
     return alpha_over_full(dest, src, mask, 1.0f, dx, dy, xsize, ysize);
 }
 
@@ -110,7 +110,7 @@ inline PyObject* alpha_over(PyObject *dest, PyObject *src, PyObject *mask,
  */
 inline PyObject *
 alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alpha,
-                int dx, int dy, int xsize, int ysize) {
+                int dx, int dy, unsigned int xsize, unsigned int ysize) {
     /* libImaging handles */
     Imaging imDest, imSrc, imMask;
     /* cached blend properties */
@@ -285,7 +285,7 @@ alpha_over_wrap(PyObject *self, PyObject *args)
 PyObject *
 tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
                unsigned char sb, unsigned char sa,
-               PyObject *mask, int dx, int dy, int xsize, int ysize) {
+               PyObject *mask, int dx, int dy, unsigned int xsize, unsigned int ysize) {
     /* libImaging handles */
     Imaging imDest, imMask;
     /* cached blend properties */

@@ -39,33 +39,33 @@ typedef struct {
  */
 static Biome biome_table[] = {
     /* 0 */
-    {"Ocean", 0.5, 0.5},
-    {"Plains", 0.8, 0.4},
-    {"Desert", 2.0, 0.0},
-    {"Extreme Hills", 0.2, 0.3},
-    {"Forest", 0.7, 0.8},
+    {"Ocean", 0.5f, 0.5f},
+    {"Plains", 0.8f, 0.4f},
+    {"Desert", 2.0f, 0.0f},
+    {"Extreme Hills", 0.2f, 0.3f},
+    {"Forest", 0.7f, 0.8f},
     /* 5 */
-    {"Taiga", 0.05, 0.8},
-    {"Swampland", 0.8, 0.9},
-    {"River", 0.5, 0.5},
-    {"Hell", 2.0, 0.0},
-    {"Sky", 0.5, 0.5},
+    {"Taiga", 0.05f, 0.8f},
+    {"Swampland", 0.8f, 0.9f},
+    {"River", 0.5f, 0.5f},
+    {"Hell", 2.0f, 0.0f},
+    {"Sky", 0.5f, 0.5f},
     /* 10 */
-    {"FrozenOcean", 0.0, 0.5},
-    {"FrozenRiver", 0.0, 0.5},
-    {"Ice Plains", 0.0, 0.5},
-    {"Ice Mountains", 0.0, 0.5},
-    {"MushroomIsland", 0.9, 1.0},
+    {"FrozenOcean", 0.0f, 0.5f},
+    {"FrozenRiver", 0.0f, 0.5f},
+    {"Ice Plains", 0.0f, 0.5f},
+    {"Ice Mountains", 0.0f, 0.5f},
+    {"MushroomIsland", 0.9f, 1.0f},
     /* 15 */
-    {"MushroomIslandShore", 0.9, 1.0},
-    {"Beach", 0.8, 0.4},
-    {"DesertHills", 2.0, 0.0},
-    {"ForestHills", 0.7, 0.8},
-    {"TaigaHills", 0.05, 0.8},
+    {"MushroomIslandShore", 0.9f, 1.0f},
+    {"Beach", 0.8f, 0.4f},
+    {"DesertHills", 2.0f, 0.0f},
+    {"ForestHills", 0.7f, 0.8f},
+    {"TaigaHills", 0.05f, 0.8f},
     /* 20 */
-    {"Extreme Hills Edge", 0.2, 0.3},
-    {"Jungle", 2.0, 0.45}, /* <-- GUESS, but a good one */
-    {"Jungle Mountains", 2.0, 0.45}, /* <-- also a guess */
+    {"Extreme Hills Edge", 0.2f, 0.3f},
+    {"Jungle", 2.0f, 0.45f}, /* <-- GUESS, but a good one */
+    {"Jungle Mountains", 2.0f, 0.45f}, /* <-- also a guess */
 };
 
 #define NUM_BIOMES (sizeof(biome_table) / sizeof(Biome))
