@@ -90,9 +90,6 @@ def validateNorthDirection(direction):
         raise ValidationException("%r is not a valid north direction" % direction)
     return intdir
 
-def validateRenderRange(r):
-    raise NotImplementedError("render range")
-
 def validateStochastic(s):
     val = float(s)
     if val < 0 or val > 1:
@@ -171,9 +168,9 @@ def validateCrop(value):
         raise ValidationException("The value for the 'crop' setting must be a tuple of length 4")
     value = tuple(int(x) for x in value)
     if value[0] >= value[2]:
-        raise ValidationException("About your crop numbers, the xmax value must be greater than the xmin value")
+        value[0],value[2] = value[2],value[0]
     if value[1] >= value[3]:
-        raise ValidationException("About your crop numbers, the zmax value must be greater than the zmin value")
+        value[1],value[3] = value[3],value[1]
     return value
 
 def make_dictValidator(keyvalidator, valuevalidator):
