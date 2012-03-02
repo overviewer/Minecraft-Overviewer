@@ -262,6 +262,12 @@ class CustomBuildExt(build_ext):
             # customize the build options for this compilier
             for e in self.extensions:
                 e.extra_link_args.append("/MANIFEST")
+        if c == "unix":
+            # customize the build options for this compilier
+            for e in self.extensions:
+                e.extra_compile_args.append("-Wdeclaration-after-statement")
+                e.extra_compile_args.append("-Werror=declaration-after-statement")
+
 
         # build in place, and in the build/ tree
         self.inplace = False
