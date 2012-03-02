@@ -27,7 +27,6 @@ static void get_color(void *data, RenderState *state,
 
 static int
 overlay_start(void *data, RenderState *state, PyObject *support) {
-    PyObject *facemasks_py;
     RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
     
     self->facemask_top = PyObject_GetAttrString(support, "facemask_top");

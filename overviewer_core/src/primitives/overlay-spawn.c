@@ -26,11 +26,9 @@ typedef struct {
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
     
-    RenderPrimitiveSpawn* self = (RenderPrimitiveSpawn *)data;
     int x = state->x, y = state->y, z = state->z;
     int y_light = y + 1;
     unsigned char blocklight, skylight;
-    PyObject *block_py;
     
     /* set a nice, pretty red color */
     *r = 229;
@@ -75,8 +73,6 @@ overlay_spawn_start(void *data, RenderState *state, PyObject *support) {
 
 static void
 overlay_spawn_finish(void *data, RenderState *state) {
-    RenderPrimitiveSpawn* self = (RenderPrimitiveSpawn *)data;
-    
     /* chain up */
     primitive_overlay.finish(data, state);
 }

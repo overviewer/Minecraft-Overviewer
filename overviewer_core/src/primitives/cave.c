@@ -105,7 +105,6 @@ cave_hidden(void *data, RenderState *state, int x, int y, int z) {
 static int
 cave_start(void *data, RenderState *state, PyObject *support) {
     RenderPrimitiveCave* self;
-    int ret;
     self = (RenderPrimitiveCave *)data;
 
     if (!render_mode_parse_option(support, "only_lit", "i", &(self->only_lit)))
