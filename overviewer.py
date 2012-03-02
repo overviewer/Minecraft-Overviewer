@@ -428,9 +428,9 @@ def list_worlds():
     # get max length of world name
     worldNameLen = max([len(str(x)) for x in worlds] + [len("World")])
 
-    formatString = "%-" + str(worldNameLen) + "s | %-8s | %-8s | %-16s "
-    print formatString % ("World", "Size", "Playtime", "Modified")
-    print formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16)
+    formatString = "%-" + str(worldNameLen) + "s | %-8s | %-8s | %-16s | %s "
+    print formatString % ("World", "Size", "Playtime", "Modified", "Path")
+    print formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16, '-'*4)
     for name, info in sorted(worlds.iteritems()):
         if isinstance(name, basestring) and name.startswith("World") and len(name) == 6:
             try:
@@ -445,7 +445,8 @@ def list_worlds():
         playtime = info['Time'] / 20
         playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
         size = "%.2fMB" % (info['SizeOnDisk'] / 1024. / 1024.)
-        print formatString % (name, size, playstamp, timestamp)
+        path = info['path']
+        print formatString % (name, size, playstamp, timestamp, path)
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()

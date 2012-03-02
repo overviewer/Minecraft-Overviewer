@@ -575,20 +575,26 @@ def get_worlds():
     save_dir = get_save_dir()
 
     # No dirs found - most likely not running from inside minecraft-dir
-    if save_dir is None:
-        return None
-
-    for dir in os.listdir(save_dir):
-        world_dat = os.path.join(save_dir, dir, "level.dat")
+    if not save_dir is None:
+        for dir in os.listdir(save_dir):
+            world_dat = os.path.join(save_dir, dir, "level.dat")
+            if not os.path.exists(world_dat): continue
+            info = nbt.load(world_dat)[1]
+            info['Data']['path'] = os.path.join(save_dir, dir)
+            if dir.startswith("World") and len(dir) == 6:
+                try:
+                    world_n = int(dir[-1])
+                    ret[world_n] = info['Data']
+                except ValueError:
+                    pass
+            if 'LevelName' in info['Data'].keys():
+                ret[info['Data']['LevelName']] = info['Data']
+    
+    for dir in os.listdir("."):
+        world_dat = os.path.join(dir, "level.dat")
         if not os.path.exists(world_dat): continue
         info = nbt.load(world_dat)[1]
-        info['Data']['path'] = os.path.join(save_dir, dir)
-        if dir.startswith("World") and len(dir) == 6:
-            try:
-                world_n = int(dir[-1])
-                ret[world_n] = info['Data']
-            except ValueError:
-                pass
+        info['Data']['path'] = os.path.join(".", dir)
         if 'LevelName' in info['Data'].keys():
             ret[info['Data']['LevelName']] = info['Data']
 
