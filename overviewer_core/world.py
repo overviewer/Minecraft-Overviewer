@@ -79,7 +79,7 @@ class World(object):
         # if not mcregion, error out early
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
         if not ('version' in data and data['version'] == 19132):
-            logging.error("Sorry, This version of Minecraft-Overviewer only works with the new McRegion chunk format")
+            logging.error("Sorry, This version of Minecraft-Overviewer only works with the old McRegion format. You will need to upgrade to render Minecraft 1.2 ('Anvil') worlds")
             sys.exit(1)
         if 'LevelName' in data:
             # level.dat should have the LevelName attribute so we'll use that
