@@ -487,6 +487,11 @@ ClearBase
     Forces the background to be transparent. Use this in place of Base
     for rendering pure overlays.
 
+    .. warning::
+
+        Overlays are currently not functional in this branch of code. We are
+        working on them. Please inquire in :ref:`IRC<help>` for more information.
+
 SpawnOverlay
     Color the map red in areas where monsters can spawn. Either use
     this on top of other modes, or on top of ClearBase to create a
