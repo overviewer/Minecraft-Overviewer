@@ -80,6 +80,7 @@ class MapGen(object):
         self.web_assets_path = configInfo.get('web_assets_path', None)
         self.bg_color = configInfo.get('bg_color')
         self.north_direction = configInfo.get('north_direction', 'lower-left')
+        self.default_zoom = configInfo.get('default_zoom', 0)
         
         if not len(quadtrees) > 0:
             raise ValueError("there must be at least one quadtree to work on")
@@ -90,6 +91,9 @@ class MapGen(object):
         for i in quadtrees:
             if i.destdir != self.destdir or i.world != self.world:
                 raise ValueError("all the given quadtrees must have the same destdir and world")
+        
+        if self.default_zoom > self.p:
+            raise ValueError("default zoom must be less than the number of levels rendered")
         
         self.quadtrees = quadtrees
     
@@ -118,6 +122,8 @@ class MapGen(object):
         
         # replace the config js stuff
         config = codecs.open(os.path.join(self.destdir, 'overviewerConfig.js'), 'r', encoding='UTF-8').read()
+        config = config.replace(
+                "{default_zoom}", str(self.default_zoom))
         config = config.replace(
                 "{minzoom}", str(0))
         config = config.replace(

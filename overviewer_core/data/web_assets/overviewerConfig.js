@@ -69,7 +69,7 @@ var overviewerConfig = {
         /**
          * The zoom level when the page is loaded without a specific zoom setting
          */
-        'defaultZoom':  0,
+        'defaultZoom':  {default_zoom},
         /**
          * This controls how far you can zoom out.
          */

@@ -233,6 +233,7 @@ def main():
     parser.add_option("--changelist", dest="changelist", action="store", helptext="Output list of changed tiles to file. If the file exists, its contents will be overwritten.",advanced=True)
     parser.add_option("--changelist-format", dest="changelist_format", action="store", helptext="Output relative or absolute paths for --changelist. Only valid when --changelist is used", type="choice", default="auto", choices=["auto", "relative","absolute"],advanced=True)
     parser.add_option("--display-config", dest="display_config", action="store_true", helptext="Display the configuration parameters, but don't render the map.  Requires all required options to be specified", commandLineOnly=True)
+    parser.add_option("--default-zoom", dest="default_zoom", helptext="Specifies the default zoom level that the outputted map uses.  Useful if you have a small map and you want it to start zoomed in more.", default=0, action="store", type="int", advanced=True)
     #parser.add_option("--write-config", dest="write_config", action="store_true", helptext="Writes out a sample config file", commandLineOnly=True)
 
     options, args = parser.parse_args()
@@ -399,6 +400,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         doExit(code=1, consoleMsg=False)
     if options.changelist_format == "auto":
         options.changelist_format = "relative"
+
+    if options.default_zoom < 0:
+        logging.error("default-zoom setting cannot be negative.")
+        sys.exit(1)
 
     logging.info("Welcome to Minecraft Overviewer!")
     logging.debug("Current log level: {0}".format(logging.getLogger().level))
