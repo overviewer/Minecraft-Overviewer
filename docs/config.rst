@@ -21,7 +21,7 @@ A Simple Example
 
     worlds["My world"] = "/home/username/server/world"
 
-    render["normalrender"] = {
+    renders["normalrender"] = {
         "world": "My world",
         "title": "Normal Render of My World",
     }
