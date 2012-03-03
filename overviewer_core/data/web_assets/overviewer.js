@@ -43,7 +43,12 @@ var overviewer = {
          * This is the current infoWindow object, we keep track of it so that
          * there is only one open at a time.
          */
-        'infoWindow':   null
+        'infoWindow':   null,
+        /**
+         * This stores when the map was last updated.
+         * This is used to refresh the end user map when it has been updated.
+         */
+        'lastUpdate' : overviewerConfig.map.cacheTag
     },
     'util': {
         /**
@@ -58,6 +63,7 @@ var overviewer = {
             overviewer.util.initializeMarkers();
             overviewer.util.initializeRegions();
             overviewer.util.createMapControls();
+            overviewer.util.startTimeUpdater();
         },
         /**
          * This adds some methods to these classes because Javascript is stupid
@@ -1051,6 +1057,18 @@ var overviewer = {
             
             overviewer.map.setCenter(latlngcoords);
             overviewer.map.setZoom(zoom);
+        },
+        'startTimeUpdater': function() {
+            if (document.URL.substr(0, 7) != "file://") { 
+                setInterval(function() {
+                    $.getJSON('time.json', function(data) {
+                        for (i in data) {
+                            var item = data[i];
+                            overviewer.collections.lastUpdate = item.renderTime;
+                        }
+                    });
+                }, 300000);
+            }
         }
     },
     /**
@@ -1142,7 +1160,7 @@ var overviewer = {
                 }
                 url = url + '.' + pathExt;
                 if(typeof overviewerConfig.map.cacheTag !== 'undefined') {
-                    url += '?c=' + overviewerConfig.map.cacheTag;
+                    url += '?c=' + overviewer.collections.lastUpdate;
                 }
                 return(urlBase + url);
             }

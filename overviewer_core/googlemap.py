@@ -153,6 +153,15 @@ class MapGen(object):
         
         with codecs.open(os.path.join(self.destdir, "overviewerConfig.js"), 'w', encoding='UTF-8') as output:
             output.write(config)
+            
+        # Render time output to JSON file    
+        rendertime = codecs.open(os.path.join(self.destdir, 'time.json'), 'r', encoding='UTF-8').read()
+        
+        rendertime = rendertime.replace("{render_time}", str(int(time())))
+        
+        with codecs.open(os.path.join(self.destdir, "time.json"), 'w', encoding='UTF-8') as output:
+            output.write(rendertime)
+        
 
         # Add time and version in index.html
         indexpath = os.path.join(self.destdir, "index.html")
