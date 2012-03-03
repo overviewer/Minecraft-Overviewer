@@ -297,6 +297,11 @@ values. The valid configuration keys are listed below.
 
     ``"nether_smooth_lighting"``
         Similar to "nether" but with smooth lighting.
+
+    ``"cave"``
+        A cave render with depth tinting (blocks are tinted with a color
+        dependent on their depth, so it's easier to tell overlapping caves
+        apart)
     
     **Default:** ``"normal"``
     
