@@ -392,13 +392,29 @@ values. The valid configuration keys are listed below.
     render will unconditionally re-render every tile regardless of whether it
     actually needs updating or not.
 
-    The :option:`--forcerender`` command line option acts similarly, but giving
-    that option sets forcerender mode on *ever* render. With this option in the
-    config file, you can set a forcerender on just one of the renders.
+    The :option:`--forcerender` command line option acts similarly, but with
+    one important difference. Say you have 3 renders defined in your
+    configuration file. If you use :option:`--forcerender`, then all 3 of those
+    renders get re-rendered completely. However, if you just need one of them
+    re-rendered, that's unnecessary extra work.
+    
+    If you set ``'forcerender': True,`` on just one of those renders, then just
+    that one gets re-rendered completely. The other two render normally (only
+    tiles that need updating are rendered).
 
     You probably don't want to leave this option in your config file, it is
     intended to be used temporarily, such as after a setting change, to
-    re-render the entire map with new settings.
+    re-render the entire map with new settings. If you leave it in, then
+    Overviewer will end up doing a lot of unnecessary work rendering parts of
+    your map that may not have changed.
+
+    Example::
+
+        renders['myrender'] = {
+                'world': 'myworld',
+                'title': "Forced Example",
+                'forcerender': True,
+        }
 
 .. _customrendermodes:
 
