@@ -299,6 +299,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.error("You must specify at least one render in your config file. See the docs if you're having trouble")
         return 1
 
+    #####################
+    # Do a few last minute things to each render dictionary here
     for rname, render in config['renders'].iteritems():
         # Convert render['world'] to the world path, and store the original
         # in render['worldname_orig']
@@ -310,6 +312,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             return 1
         render['worldname_orig'] = render['world']
         render['world'] = worldpath
+
+        # If 'forcerender' is set, change renderchecks to 2
+        if render.get('forcerender', False):
+            render['renderchecks'] = 2
 
     destdir = config['outputdir']
     if not destdir:

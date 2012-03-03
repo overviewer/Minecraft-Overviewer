@@ -387,6 +387,19 @@ values. The valid configuration keys are listed below.
         not get deleted. The only fix for this currently is to delete that
         render directory and render it again with :option:`--forcerender`. 
 
+``forcerender``
+    This is a boolean. If set to ``True`` (or any non-false value) then this
+    render will unconditionally re-render every tile regardless of whether it
+    actually needs updating or not.
+
+    The :option:`--forcerender`` command line option acts similarly, but giving
+    that option sets forcerender mode on *ever* render. With this option in the
+    config file, you can set a forcerender on just one of the renders.
+
+    You probably don't want to leave this option in your config file, it is
+    intended to be used temporarily, such as after a setting change, to
+    re-render the entire map with new settings.
+
 .. _customrendermodes:
 
 Custom Rendermodes and Rendermode Primitives
