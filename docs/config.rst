@@ -239,7 +239,15 @@ values. The valid configuration keys are listed below.
     "nether", "end", or the directory name of the dimension within the world.
     e.g. "DIM-1"
 
+    .. note::
+
+        If you choose to render your nether dimension, you must also use a
+        nether :ref:`rendermode<option_rendermode>`. Otherwise you'll
+        just end up rendering the nether's ceiling.
+
     **Default:** ``"overworld"``
+
+.. _option_rendermode:
 
 ``rendermode``
     This is which rendermode to use for this render. There are many rendermodes
@@ -278,8 +286,11 @@ values. The valid configuration keys are listed below.
         normal is that the ceiling is stripped off, so you can actually see
         inside.
 
-        *Note* Selecting this rendermode doesn't automatically render your 
-        nether dimention.  Be sure to also set the :ref:`dimension<option_dimension>` option.
+        .. note::
+
+            Selecting this rendermode doesn't automatically render your nether
+            dimention.  Be sure to also set the
+            :ref:`dimension<option_dimension>` option to 'nether'.
         
     ``"nether_lighting"``
         Similar to "nether" but with blocky lighting.
@@ -287,11 +298,14 @@ values. The valid configuration keys are listed below.
     ``"nether_smooth_lighting"``
         Similar to "nether" but with smooth lighting.
     
-    Technical note: The actual object type for this option is a list of
-    *rendermode primitive* objects. See :ref:`customrendermodes` for more
-    information.
-
     **Default:** ``"normal"``
+    
+    .. note::
+
+        The value for the 'rendermode' key can be either a *string* or
+        *rendermode object* (strings simply name one of the built-in rendermode
+        objects). The actual object type is a list of *rendermode primitive*
+        objects.  See :ref:`customrendermodes` for more information.
 
 ``northdirection``
     This is direction that north will be rendered. This north direction will 
@@ -508,6 +522,9 @@ Then you can use your new rendermode in your render definitions::
         "dimension": "overworld",
     }
 
+Note the lack of quotes around ``my_rendermode``. This is necessary since you
+are referencing the previously defined list, not one of the built-in
+rendermodes.
 
 Built-in Rendermodes
 --------------------
