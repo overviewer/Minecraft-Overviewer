@@ -1468,7 +1468,7 @@ def fire(self, blockid, data):
 block(blockid=52, top_index=34, transparent=True)
 
 # wooden, cobblestone, red brick, stone brick and netherbrick stairs.
-@material(blockid=[53,67,108,109,114], data=range(4), transparent=True, solid=True, nospawn=True)
+@material(blockid=[53,67,108,109,114], data=range(8), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
 
     # first, rotations
@@ -1512,49 +1512,70 @@ def stairs(self, blockid, data):
     ImageDraw.Draw(half_block_l).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(half_block_r).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
     
-    if data == 0: # ascending south
-        img = self.build_full_block(half_block_r, None, None, half_block_d, side.transpose(Image.FLIP_LEFT_RIGHT))
-        tmp1 = self.transform_image_side(half_block_u)
+    if data & 0x4 == 0x4: # upside doen stair
+        side = side.transpose(Image.FLIP_TOP_BOTTOM)
+        if data & 0x3 == 0: # ascending east
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp = self.transform_image_side(half_block_d)
+            alpha_over(img, tmp, (6,3))
+            alpha_over(img, self.build_full_block(texture, None, None, half_block_u, side.transpose(Image.FLIP_LEFT_RIGHT)))
+
+        elif data & 0x3 == 0x1: # ascending west
+            img = self.build_full_block(texture, None, None, texture, side)
         
-        # Darken the vertical part of the second step
-        sidealpha = tmp1.split()[3]
-        # darken it a bit more than usual, looks better
-        tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.8)
-        tmp1.putalpha(sidealpha)
+        elif data & 0x3 == 0x2: # ascending south
+            img = self.build_full_block(texture, None, None, side, texture)
+            
+        elif data & 0x3 == 0x3: # ascending north
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp = self.transform_image_side(half_block_d).transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, tmp, (6,3))
+            alpha_over(img, self.build_full_block(texture, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_u))
         
-        alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
-        alpha_over(img, tmp1, (6,3))
-        tmp2 = self.transform_image_top(half_block_l)
-        alpha_over(img, tmp2, (0,6))
+    else: # normal stair
+        if data == 0: # ascending east
+            img = self.build_full_block(half_block_r, None, None, half_block_d, side.transpose(Image.FLIP_LEFT_RIGHT))
+            tmp1 = self.transform_image_side(half_block_u)
+            
+            # Darken the vertical part of the second step
+            sidealpha = tmp1.split()[3]
+            # darken it a bit more than usual, looks better
+            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.8)
+            tmp1.putalpha(sidealpha)
+            
+            alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
+            alpha_over(img, tmp1, (6,3))
+            tmp2 = self.transform_image_top(half_block_l)
+            alpha_over(img, tmp2, (0,6))
+            
+        elif data == 1: # ascending west
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp1 = self.transform_image_top(half_block_r)
+            alpha_over(img, tmp1, (0,6))
+            tmp2 = self.build_full_block(half_block_l, None, None, texture, side)
+            alpha_over(img, tmp2)
         
-    elif data == 1: # ascending north
-        img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
-        tmp1 = self.transform_image_top(half_block_r)
-        alpha_over(img, tmp1, (0,6))
-        tmp2 = self.build_full_block(half_block_l, None, None, texture, side)
-        alpha_over(img, tmp2)
-    
-    elif data == 2: # ascending west
-        img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
-        tmp1 = self.transform_image_top(half_block_u)
-        alpha_over(img, tmp1, (0,6))
-        tmp2 = self.build_full_block(half_block_d, None, None, side, texture)
-        alpha_over(img, tmp2)
-        
-    elif data == 3: # ascending east
-        img = self.build_full_block(half_block_u, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_d)
-        tmp1 = self.transform_image_side(half_block_u).transpose(Image.FLIP_LEFT_RIGHT)
-        
-        # Darken the vertical part of the second step
-        sidealpha = tmp1.split()[3]
-        # darken it a bit more than usual, looks better
-        tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.7)
-        tmp1.putalpha(sidealpha)
-        
-        alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
-        alpha_over(img, tmp1, (6,3))
-        tmp2 = self.transform_image_top(half_block_d)
-        alpha_over(img, tmp2, (0,6))
+        elif data == 2: # ascending south
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp1 = self.transform_image_top(half_block_u)
+            alpha_over(img, tmp1, (0,6))
+            tmp2 = self.build_full_block(half_block_d, None, None, side, texture)
+            alpha_over(img, tmp2)
+            
+        elif data == 3: # ascending north
+            img = self.build_full_block(half_block_u, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_d)
+            tmp1 = self.transform_image_side(half_block_u).transpose(Image.FLIP_LEFT_RIGHT)
+            
+            # Darken the vertical part of the second step
+            sidealpha = tmp1.split()[3]
+            # darken it a bit more than usual, looks better
+            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.7)
+            tmp1.putalpha(sidealpha)
+            
+            alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
+            alpha_over(img, tmp1, (6,3))
+            tmp2 = self.transform_image_top(half_block_d)
+            alpha_over(img, tmp2, (0,6))
         
         # touch up a (horrible) pixel
         img.putpixel((18,3),(0,0,0,0))
