@@ -62,7 +62,7 @@ def findGitHash():
 
 def findGitVersion():
     try:
-        p = Popen(['git', 'describe', '--tags'], stdout=PIPE, stderr=PIPE, shell=True)
+        p = Popen('git describe --tags', stdout=PIPE, stderr=PIPE, shell=True)
         p.stderr.close()
         line = p.stdout.readlines()[0]
         if line.startswith('release-'):
