@@ -227,6 +227,8 @@ values. The valid configuration keys are listed below.
 
     **Required**
 
+.. _option_dimension:
+
 ``dimension``
     Specified which dimension of the world should be rendered. Each Minecraft
     world has by default 3 dimensions: The Overworld, The Nether, and The End.
@@ -275,6 +277,9 @@ values. The valid configuration keys are listed below.
         render, not just nether dimensions. The only difference between this and
         normal is that the ceiling is stripped off, so you can actually see
         inside.
+
+        *Note* Selecting this rendermode doesn't automatically render your 
+        nether dimention.  Be sure to also set the :ref:`dimension<option_dimension>` option.
         
     ``"nether_lighting"``
         Similar to "nether" but with blocky lighting.
