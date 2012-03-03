@@ -2691,7 +2691,7 @@ def trapdoor(self, blockid, data):
     return img
 
 # block with hidden silverfish (stone, cobblestone and stone brick)
-@material(blockid=97, data=range(4), solid=True)
+@material(blockid=97, data=range(3), solid=True)
 def hidden_silverfish(self, blockid, data):
     if data == 0: # stone
         t = self.terrain_images[1]
@@ -2699,22 +2699,22 @@ def hidden_silverfish(self, blockid, data):
         t = self.terrain_images[16]
     elif data == 2: # stone brick
         t = self.terrain_images[54]
-    elif data == 3: # "circle" stone brick
-        t = self.terrain_images[125]
     
     img = self.build_block(t, t)
     
     return img
 
 # stone brick
-@material(blockid=98, data=range(3), solid=True)
+@material(blockid=98, data=range(4), solid=True)
 def stone_brick(self, blockid, data):
     if data == 0: # normal
         t = self.terrain_images[54]
     elif data == 1: # mossy
         t = self.terrain_images[100]
-    else: # cracked
+    elif data == 2: # cracked
         t = self.terrain_images[101]
+    elif data == 3: # "circle" stone brick
+        t = self.terrain_images[213]
 
     img = self.build_full_block(t, None, None, t, t)
 
