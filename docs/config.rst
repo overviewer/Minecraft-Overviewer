@@ -539,3 +539,4 @@ primitives for your convenience. Here are their definitions::
     nether = [Base(), EdgeLines(), Nether()]
     nether_lighting = [Base(), EdgeLines(), Nether(), Lighting()]
     nether_smooth_lighting = [Base(), EdgeLines(), Nether(), SmoothLighting()]
+    cave = [Base(), EdgeLines(), Cave(), DepthTinting()]
