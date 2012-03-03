@@ -183,26 +183,8 @@ If you want or need to provide your own textures, you have several options:
 * Specify any terrain.png or texture pack you want with the
   :ref:`texture_pack<option_texture_pack>` option.
 
-Running on a Live Map
-=====================
-If you're running the Overviewer on a live server or a single player world
-that's running, read this section.
-
-Minecraft doesn't really like it when other programs go snooping around in a
-live world, so running Overviewer on a live world usually creates a few errors,
-usually "corrupt chunk" errors. You *can* do this, but it's not a supported way
-of running Overviewer.
-
-To get around this, you can copy your live world somewhere else, and render the
-copied world instead. If you're already making backups of your world, you can
-use the backups to make the render. Many people even use their backups to run
-Overviewer on a different machine than the one running the Minecraft server.
-
-There used to be a few things to be careful about, but right now there's only
-one important thing left.
-
-Preserving Modification Times
------------------------------
+If you copy your world before you render it
+-------------------------------------------
 
 The important thing to be careful about when copying world files to another
 location is file modification times, which Overviewer uses to figure out what
@@ -213,23 +195,3 @@ modification times intact, use ``cp -p``. For people who render from backups,
 GNU ``tar`` automatically handles modification times correctly. ``rsync -a
 --delete`` will handle this correctly as well. If you use some other tool,
 you'll have to figure out how to do this yourself.
-
-Biome Support
-=============
-
-Minecraft Overviewer has support for using the biome info from the `Minecraft
-Biome Extractor`_. If you run the biome extractor on your world, during the
-next run Overviewer will automatically recognize the biome info and use it to
-colorize your grass and leaves appropriately. This will only appear on updated
-chunks, though; to colorize the entire world you will need to re-render from
-scratch by using :option:`--forcerender`
-
-.. note::
-
-    as of Minecraft 1.8, you currently need to use a patched Biome Extractor
-    that can be found `here
-    <http://www.minecraftforum.net/topic/76063-minecraft-biome-extractor-add-biome-support-to-your-mapper/page__st__140__gopid__8431028#entry8431028>`_,
-    or `here on GitHub
-    <https://github.com/overviewer/minecraft-biome-extractor>`_.
-
-.. _Minecraft Biome Extractor: http://www.minecraftforum.net/viewtopic.php?f=25&t=80902
