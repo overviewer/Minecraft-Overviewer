@@ -124,7 +124,7 @@ if py2app is not None:
 
 setup_kwargs['packages'] = ['overviewer_core']
 setup_kwargs['scripts'] = ['overviewer.py']
-setup_kwargs['package_data'] = {'overviewer_core': recursive_package_data('data/textures') + recursive_package_data('data/web_assets')}
+setup_kwargs['package_data'] = {'overviewer_core': recursive_package_data('data/textures') + recursive_package_data('data/web_assets') + recursive_package_data('data/js_src')}
 
 if py2exe is None:
     setup_kwargs['data_files'] = [('share/doc/minecraft-overviewer', doc_files)]
@@ -187,7 +187,7 @@ class CustomClean(clean):
         versionpath = os.path.join("overviewer_core", "overviewer_version.py")
         primspath = os.path.join("overviewer_core", "src", "primitives.h")
         
-        for fname in [ext_fname, versionpath, primspath]:
+        for fname in [ext_fname, primspath]:
             if os.path.exists(fname):
                 try:
                     log.info("removing '%s'", fname)

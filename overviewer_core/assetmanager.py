@@ -146,11 +146,6 @@ directory.
             blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')))
 
 
-        jsondump = json.dumps(dump, indent=4)
-        with util.FileReplacer(os.path.join(self.outputdir, "overviewerConfig.js")) as tmpfile:
-            with codecs.open(tmpfile, 'w', encoding='UTF-8') as f:
-                f.write("var overviewerConfig = " + jsondump + ";\n")
-
         # copy web assets into destdir:
         global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
         if not os.path.isdir(global_assets):
@@ -171,14 +166,13 @@ directory.
                     if not js.endswith("overviewer.js") and js.endswith(".js"):
                         with open(os.path.join(js_src,js)) as f:
                             fout.write(f.read())
-        # helper function to get a label for the given rendermode
-        def get_render_mode_label(rendermode):
-            info = get_render_mode_info(rendermode)
-            if 'label' in info:
-                return info['label']
-            return rendermode.capitalize()
-
-
+        
+        # write out config
+        jsondump = json.dumps(dump, indent=4)
+        with util.FileReplacer(os.path.join(self.outputdir, "overviewerConfig.js")) as tmpfile:
+            with codecs.open(tmpfile, 'w', encoding='UTF-8') as f:
+                f.write("var overviewerConfig = " + jsondump + ";\n")
+        
         # Add time and version in index.html
         indexpath = os.path.join(self.outputdir, "index.html")
 
