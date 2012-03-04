@@ -438,9 +438,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     dispatch.close()
 
     assetMrg.finalize(tilesets)
-    logging.debug("Final cache stats:")
-    for c in caches:
-        logging.debug("\t%s: %s hits, %s misses", c.__class__.__name__, c.hits, c.misses)
+    if config['processes'] == 1:
+        logging.debug("Final cache stats:")
+        for c in caches:
+            logging.debug("\t%s: %s hits, %s misses", c.__class__.__name__, c.hits, c.misses)
     return 0
 
 def list_worlds():
