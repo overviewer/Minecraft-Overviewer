@@ -3015,37 +3015,14 @@ def fence_gate(self, blockid, data):
 block(blockid=110, top_index=78, side_index=77)
 
 # lilypad
-# TODO the data-block orientation relation is not clear
+# At the moment of writing this lilypads has no ancil data and their
+# orientation depends on their position on the map. Because lilypads had
+# ancildata, leave some data values just in case an old map have some
+# with ancil data.
 @material(blockid=111, data=range(4), transparent=True)
 def lilypad(self, blockid, data):
-    if self.rotation == 1:
-        if data == 0: data = 2
-        elif data == 1: data = 3
-        elif data == 2: data = 1
-        elif data == 3: data = 0
-    elif self.rotation == 2:
-        if data == 0: data = 1
-        elif data == 1: data = 0
-        elif data == 2: data = 3
-        elif data == 3: data = 2
-    elif self.rotation == 3:
-        if data == 0: data = 3
-        elif data == 1: data = 2
-        elif data == 2: data = 0
-        elif data == 3: data = 1
-
-    t = self.terrain_images[76] # NOTE: using same data as stairs, no 
-                                # info in minepedia at the moment.
-    if data == 0: # pointing south
-        img = self.build_full_block(None, None, None, None, None, t)
-    elif data == 1: # pointing north
-        img = self.build_full_block(None, None, None, None, None, t.rotate(180))
-    elif data == 2: # pointing west
-        img = self.build_full_block(None, None, None, None, None, t.rotate(270))
-    elif data == 3: # pointing east
-        img = self.build_full_block(None, None, None, None, None, t.rotate(90))
-    
-    return img
+    t = self.terrain_images[76]
+    return self.build_full_block(None, None, None, None, None, t)
 
 # nether brick
 block(blockid=112, top_index=224, side_index=224)
