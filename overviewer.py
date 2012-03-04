@@ -349,7 +349,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     # Set up the cache objects to use
     caches = []
-    caches.append(cache.LRUCache())
+    caches.append(cache.LRUCache(size=100))
     # TODO: optionally more caching layers here
 
     renders = config['renders']
@@ -434,14 +434,17 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         else:
             percent = int(100* completed/total)
             logging.info("Rendered %d of %d.  %d%% complete", completed, total, percent)
+
     dispatch.render_all(tilesets, print_status)
     dispatch.close()
 
     assetMrg.finalize(tilesets)
+
     if config['processes'] == 1:
         logging.debug("Final cache stats:")
         for c in caches:
             logging.debug("\t%s: %s hits, %s misses", c.__class__.__name__, c.hits, c.misses)
+
     return 0
 
 def list_worlds():
