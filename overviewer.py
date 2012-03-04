@@ -38,6 +38,7 @@ from overviewer_core import util
 from overviewer_core import textures
 from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
+from overviewer_core import cache
 
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
@@ -346,16 +347,21 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # same for textures
     texcache = {}
 
+    # Set up the cache objects to use
+    caches = []
+    caches.append(cache.LRUCache())
+    # TODO: optionally more caching layers here
+
     renders = config['renders']
     for render_name, render in renders.iteritems():
         logging.debug("Found the following render thing: %r", render)
 
         # find or create the world object
-        if (render['world'] not in worldcache):
+        try:
+            w = worldcache[render['world']]
+        except KeyError:
             w = world.World(render['world'])
             worldcache[render['world']] = w
-        else:
-            w = worldcache[render['world']]
         
         # find or create the textures object
         texopts = util.dict_subset(render, ["texturepath", "bgcolor", "northdirection"])
@@ -372,6 +378,15 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
             return 1
 
+        #################
+        # Apply any regionset transformations here
+
+        # Insert a layer of caching above the real regionset. Any world
+        # tranformations will pull from this cache, but their results will not
+        # be cached by this layer. This uses a common pool of caches; each
+        # regionset cache pulls from the same underlying cache object.
+        rset = world.CachedRegionSet(rset, caches)
+
         # If a crop is requested, wrap the regionset here
         if "crop" in render:
             rset = world.CroppedRegionSet(rset, *render['crop'])
@@ -381,6 +396,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         if (render['northdirection'] > 0):
             rset = world.RotatedRegionSet(rset, render['northdirection'])
         logging.debug("Using RegionSet %r", rset) 
+
+        ###############################
+        # Do the final prep and create the TileSet object
 
         # create our TileSet from this RegionSet
         tileset_dir = os.path.abspath(os.path.join(destdir, render_name))
@@ -420,6 +438,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     dispatch.close()
 
     assetMrg.finalize(tilesets)
+    logging.debug("Final cache stats:")
+    for c in caches:
+        logging.debug("\t%s: %s hits, %s misses", c.__class__.__name__, c.hits, c.misses)
     return 0
 
 def list_worlds():
