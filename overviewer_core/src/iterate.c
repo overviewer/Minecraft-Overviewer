@@ -129,6 +129,17 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     if (dest->loaded)
         return 0;
     
+    /* set up reasonable defaults */
+    dest->biomes = NULL;
+    for (i = 0; i < SECTIONS_PER_CHUNK; i++)
+    {
+        dest->sections[i].blocks = NULL;
+        dest->sections[i].data = NULL;
+        dest->sections[i].skylight = NULL;
+        dest->sections[i].blocklight = NULL;
+    }
+    dest->loaded = 1;
+    
     x += state->chunkx;
     z += state->chunkz;
 
@@ -155,16 +166,6 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
         return 1;
     }
     
-    /* set up reasonable defaults */
-    dest->biomes = NULL;
-    for (i = 0; i < SECTIONS_PER_CHUNK; i++)
-    {
-        dest->sections[i].blocks = NULL;
-        dest->sections[i].data = NULL;
-        dest->sections[i].skylight = NULL;
-        dest->sections[i].blocklight = NULL;
-    }
-    
     dest->biomes = PyDict_GetItemString(chunk, "Biomes");
     Py_INCREF(dest->biomes);
     
@@ -183,7 +184,6 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     Py_DECREF(sections);
     Py_DECREF(chunk);
     
-    dest->loaded = 1;
     return 0;
 }
 
