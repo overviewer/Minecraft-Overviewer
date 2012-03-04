@@ -15,48 +15,97 @@
 
 """This module has supporting functions for the caching logic used in world.py.
 
+Each cache class should implement the standard container type interface
+(__getitem__ and __setitem__, as well as provide a "hits" and "misses"
+attribute.
+
 """
 import functools
+import logging
 
-def lru_cache(max_size=100):
-    """A quick-and-dirty LRU implementation.
-    Uses a dict to store mappings, and a list to store orderings.
+class LRUCache(object):
+    """A simple in-memory LRU cache.
 
-    Only supports positional arguments
+    An ordered dict type would simplify this implementation a bit, but we want
+    Python 2.6 compatibility and the standard library ordereddict was added in
+    2.7. It's probably okay because this implementation can be tuned for
+    exactly what we need and nothing more.
+
+    This implementation keeps a linked-list of cache keys and values, ordered
+    in least-recently-used order. A dictionary maps keys to linked-list nodes.
+
+    On cache hit, the link is moved to the end of the list. On cache miss, the
+    first item of the list is evicted. All operations have constant time
+    complexity (dict lookups are worst case O(n) time)
 
     """
-    def lru_decorator(fun):
+    class _LinkNode(object):
+        __slots__ = ['left', 'right', 'key', 'value']
+        def __init__(self,l=None,r=None,k=None,v=None):
+            self.left = l
+            self.right = r
+            self.key = k
+            self.value = v
 
-        cache = {}
-        lru_ordering = []
-        
-        @functools.wraps(fun)
-        def new_fun(*args):
-            try:
-                result = cache[args]
-            except KeyError:
-                # cache miss =(
-                new_fun.miss += 1
-                result = fun(*args)
+    def __init__(self, size=100):
+        self.cache = {}
 
-                # Insert into cache
-                cache[args] = result
-                lru_ordering.append(args)
+        self.listhead = LRUCache._LinkNode()
+        self.listtail = LRUCache._LinkNode()
+        # Two sentinel nodes at the ends of the linked list simplify boundary
+        # conditions in the code below.
+        self.listhead.right = self.listtail
+        self.listtail.left = self.listhead
 
-                if len(cache) > max_size:
-                    # Evict an item
-                    del cache[ lru_ordering.pop(0) ]
+        self.hits = 0
+        self.misses = 0
 
-            else:
-                # Move the result item to the end of the list
-                new_fun.hits += 1
-                position = lru_ordering.index(args)
-                lru_ordering.append(lru_ordering.pop(position))
+        self.size = size
 
-            return result
+    # Initialize an empty cache of the same size for worker processes
+    def __getstate__(self):
+        return self.size
+    def __setstate__(self, size):
+        self.__init__(size)
 
-        new_fun.hits = 0
-        new_fun.miss = 0
-        return new_fun
+    def __getitem__(self, key):
+        try:
+            link = self.cache[key]
+        except KeyError:
+            self.misses += 1
+            raise
 
-    return lru_decorator
+        # Disconnect the link from where it is
+        link.left.right = link.right
+        link.right.left = link.left
+
+        # Insert the link at the end of the list
+        tail = self.listtail
+        link.left = tail.left
+        link.right = tail
+        tail.left.right = link
+        tail.left = link
+
+        self.hits += 1
+        return link.value
+
+    def __setitem__(self, key, value):
+        cache = self.cache
+        if key in cache:
+            raise KeyError("That key already exists in the cache!")
+        if len(cache) >= self.size:
+            # Evict a node
+            link = self.listhead.right
+            del cache[link.key]
+            link.left.right = link.right
+            link.right.left = link.left
+            del link
+
+        # The node doesn't exist already, and we have room for it. Let's do this.
+        tail = self.listtail
+        link = LRUCache._LinkNode(tail.left, tail,key,value)
+        tail.left.right = link
+        tail.left = link
+
+        cache[key] = link
+

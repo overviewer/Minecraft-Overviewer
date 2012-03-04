@@ -55,6 +55,7 @@ def validateRenderMode(mode):
     # make sure that mode is a list of things that are all rendermode primative
     if isinstance(mode, str):
         # Try and find an item named "mode" in the rendermodes module
+        mode = mode.lower().replace("-","_")
         try:
             mode = getattr(rendermodes, mode)
         except AttributeError:

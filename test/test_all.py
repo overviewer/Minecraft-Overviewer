@@ -11,6 +11,7 @@ from test_tileobj import TileTest
 from test_rendertileset import RendertileSetTest
 from test_settings import SettingsTest
 from test_tileset import TilesetTest
+from test_cache import TestLRU
 
 # DISABLE THIS BLOCK TO GET LOG OUTPUT FROM TILESET FOR DEBUGGING
 if 0:

@@ -208,7 +208,7 @@ class RegionSet(object):
 
     """
 
-    def __init__(self, regiondir, cachesize=16):
+    def __init__(self, regiondir):
         """Initialize a new RegionSet to access the region files in the given
         directory.
 
@@ -232,10 +232,6 @@ class RegionSet(object):
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
 
-        # Caching implementaiton: a simple LRU cache
-        # Decorate the getter methods with the cache decorator
-        self.get_chunk = cache.lru_cache(cachesize)(self.get_chunk)
-
     # Re-initialize upon unpickling
     def __getstate__(self):
         return self.regiondir
@@ -258,7 +254,6 @@ class RegionSet(object):
         else:
             raise Exception("Woah, what kind of dimension is this! %r" % self.regiondir)
     
-    # this is decorated with cache.lru_cache in __init__(). Be aware!
     @log_other_exceptions
     def get_chunk(self, x, z):
         """Returns a dictionary object representing the "Level" NBT Compound
@@ -547,7 +542,59 @@ class CroppedRegionSet(RegionSetWrapper):
         else:
             return None
 
+class CachedRegionSet(RegionSetWrapper):
+    """A regionset wrapper that implements caching of the results from
+    get_chunk()
 
+    """
+    def __init__(self, rsetobj, cacheobjects):
+        """Initialize this wrapper around the given regionset object and with
+        the given list of cache objects. The cache objects may be shared among
+        other CachedRegionSet objects.
+
+        """
+        super(CachedRegionSet, self).__init__(rsetobj)
+        self.caches = cacheobjects
+
+        # Construct a key from the sequence of transformations and the real
+        # RegionSet object, so that items we place in the cache don't conflict
+        # with other worlds/transformation combinations.
+        obj = self._r
+        s = ""
+        while isinstance(obj, RegionSetWrapper):
+            s += obj.__class__.__name__ + "."
+            obj = obj._r
+        # obj should now be the actual RegionSet object
+        s += obj.regiondir
+
+        logging.debug("Initializing a cache with key '%s'", s)
+        if len(s) > 32:
+            import hashlib
+            s = hashlib.md5(s).hexdigest()
+
+        self.key = s
+
+    def get_chunk(self, x, z):
+        key = (self.key, x, z)
+        for i, cache in enumerate(self.caches):
+            try:
+                retval = cache[key]
+                # This did have it, no need to re-add it to this cache, just
+                # the ones before it
+                i -= 1
+                break
+            except KeyError:
+                pass
+        else:
+            retval = super(CachedRegionSet, self).get_chunk(x,z)
+
+        # Now add retval to all the caches that didn't have it, all the caches
+        # up to and including index i
+        for cache in self.caches[:i+1]:
+            cache[key] = retval
+
+        return retval
+        
 
 def get_save_dir():
     """Returns the path to the local saves directory
