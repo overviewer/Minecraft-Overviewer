@@ -219,3 +219,159 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
 });
 
 
+
+
+/**
+ * SignControlView
+ */
+overviewer.views.SignControlView = Backbone.View.extend({
+    /** SignControlView::initialize
+     */
+    initialize: function(opts) {
+        $(this.el).addClass("customControl");
+        overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.el);
+
+    },
+    registerEvents: function(me) {
+        google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function(event) {
+            overviewer.mapView.updateCurrentTileset();
+            me.render();
+            // hide markers, if necessary
+            // for each markerSet, check:
+            //    if the markerSet isnot part of this tileset, hide all of the markers
+            var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
+            console.log("sign control things %r is the new current tileset", curMarkerSet);
+            var dataRoot = markers[curMarkerSet];
+            var groupsForThisTileSet = jQuery.map(dataRoot, function(elem, i) { return elem.groupName;})
+            for (markerSet in markersDB) {
+                console.log("checking to see if markerset %r should be hidden (is it not in %r)", markerSet, groupsForThisTileSet);
+                if (jQuery.inArray(markerSet, groupsForThisTileSet) == -1){
+                    // hide these
+                    console.log("nope, going to hide these");
+                    if (markersDB[markerSet].created) {
+                        jQuery.each(markersDB[markerSet].raw, function(i, elem) {
+                            //console.log("attempting to set %r to visible(%r)", elem.markerObj, checked);
+                            elem.markerObj.setVisible(false);
+                        });
+                    }
+                } else {
+                    //make sure the checkbox is checked
+                    //TODO fix this
+                    //console.log("trying to checkbox for " + markerSet);
+                    //console.log($("[_mc_groupname=" + markerSet + "]"));
+                }
+
+            }
+
+        });
+
+    },
+    /**
+     * SignControlView::render
+     */
+    render: function() {
+
+        var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
+        console.log(curMarkerSet);
+        //var dataRoot = overviewer.collections.markerInfo[curMarkerSet];
+        var dataRoot = markers[curMarkerSet];
+
+        console.log(dataRoot);
+
+        // before re-building this control, we need to hide all currently displayed signs
+        // TODO 
+
+        this.el.innerHTML=""
+
+        var controlText = document.createElement('DIV');
+        controlText.innerHTML = "Signs";
+
+        var controlBorder = document.createElement('DIV');
+        $(controlBorder).addClass('top');
+        this.el.appendChild(controlBorder);
+        controlBorder.appendChild(controlText);
+
+        var dropdownDiv = document.createElement('DIV');
+        $(dropdownDiv).addClass('dropDown');
+        this.el.appendChild(dropdownDiv);
+        dropdownDiv.innerHTML='';
+
+        // add the functionality to toggle visibility of the items
+        $(controlText).click(function() {
+                $(controlBorder).toggleClass('top-active');
+                $(dropdownDiv).toggle();
+        });
+
+
+        // add some menus
+        for (i in dataRoot) {
+            var group = dataRoot[i];
+            console.log(group);
+            this.addItem({label: group.displayName, groupName:group.groupName, action:function(this_item, checked) {
+                console.log("%r is %r", this_item, checked);
+                console.log("group name is %r", this_item.groupName);
+                jQuery.each(markersDB[this_item.groupName].raw, function(i, elem) {
+                    //console.log("attempting to set %r to visible(%r)", elem.markerObj, checked);
+                    elem.markerObj.setVisible(checked);
+                });
+            }});
+        }
+
+        iconURL = overviewerConfig.CONST.image.signMarker;
+        //dataRoot['markers'] = [];
+        //
+        for (i in dataRoot) {
+            var groupName = dataRoot[i].groupName;
+            if (!markersDB[groupName].created) {
+                for (j in markersDB[groupName].raw) {
+                    var entity = markersDB[groupName].raw[j];
+                    var marker = new google.maps.Marker({
+                            'position': overviewer.util.fromWorldToLatLng(entity.x,
+                                entity.y, entity.z, overviewer.mapView.options.currentTileSet),
+                            'map':      overviewer.map,
+                            'title':    jQuery.trim(entity.Text1 + "\n" + entity.Text2 + "\n" + entity.Text3 + "\n" + entity.Text4), 
+                            'icon':     iconURL,
+                            'visible':  false
+                    }); 
+                    if (entity['id'] == 'Sign') {
+                        overviewer.util.createMarkerInfoWindow(marker);
+                    }
+                    console.log("Added marker for %r", entity);
+                    jQuery.extend(entity, {markerObj: marker});
+                }
+                markersDB[groupName].created = true;
+            }
+        }
+
+
+    },
+    addItem: function(item) {
+        var itemDiv = document.createElement('div');
+        var itemInput = document.createElement('input');
+        itemInput.type='checkbox';
+
+        // give it a name
+        $(itemInput).data('label',item.label);
+        $(itemInput).attr("_mc_groupname", item.groupName);
+        jQuery(itemInput).click((function(local_item) {
+            return function(e) {
+                item.action(local_item, e.target.checked);
+            };
+        })(item));
+
+        this.$(".dropDown")[0].appendChild(itemDiv);
+        itemDiv.appendChild(itemInput);
+        var textNode = document.createElement('text');
+        if(item.icon) {
+            textNode.innerHTML = '<img width="15" height="15" src="' + 
+                item.icon + '">' + item.label + '<br/>';
+        } else {
+            textNode.innerHTML = item.label + '<br/>';
+        }
+
+        itemDiv.appendChild(textNode);
+
+
+    },
+});
+

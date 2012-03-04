@@ -58,6 +58,11 @@ overviewer.util = {
         var coordsdiv = new overviewer.views.CoordboxView({tagName: 'DIV'});
         coordsdiv.render();
 
+        if (overviewer.collections.haveSigns) {
+            var signs = new overviewer.views.SignControlView();
+            signs.registerEvents(signs);
+        }
+
         // Update coords on mousemove
         google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
             coordsdiv.updateCoords(event.latLng);    
@@ -102,6 +107,7 @@ overviewer.util = {
                 overviewer.map.setZoom(zoom);
             }
 
+
         });
 
         var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
@@ -116,15 +122,43 @@ overviewer.util = {
         // Jump to the hash if given
         overviewer.util.initHash();
 
+        overviewer.util.initializeMarkers();
 
         /*
            overviewer.util.initializeMapTypes();
            overviewer.util.initializeMap();
-           overviewer.util.initializeMarkers();
            overviewer.util.initializeRegions();
            overviewer.util.createMapControls();
            */
     },
+
+    'injectMarkerScript': function(url) {
+        var m = document.createElement('script'); m.type = 'text/javascript'; m.async = false;
+        m.src = url;
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.appendChild(m);
+    },
+
+    'initializeMarkers': function() {
+        return;
+
+    },
+
+    'createMarkerInfoWindow': function(marker) {
+            var windowContent = '<div class="infoWindow"><img src="' + marker.icon +
+                '"/><p>' + marker.title.replace(/\n/g,'<br/>') + '</p></div>';
+            var infowindow = new google.maps.InfoWindow({
+                'content': windowContent
+            });
+            google.maps.event.addListener(marker, 'click', function() {
+                if (overviewer.collections.infoWindow) {
+                    overviewer.collections.infoWindow.close();
+                }
+                infowindow.open(overviewer.map, marker);
+                overviewer.collections.infoWindow = infowindow;
+            });
+        },
+
+
     /**
      * This adds some methods to these classes because Javascript is stupid
      * and this seems like the best way to avoid re-creating the same methods
