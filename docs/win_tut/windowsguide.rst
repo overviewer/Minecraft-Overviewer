@@ -103,24 +103,29 @@ to run it. It's kind of long, I had to make my window larger to show it all.
 ::
 
     Usage:
-    overviewer.exe [OPTIONS] <World # / Name / Path to World> <tiles dest dir>
+    overviewer.exe [--rendermodes=...] [options] <World> <Output Dir>
 
 Command line tool usage convention says that items in [square brackets] are
 *optional*, while items in <angled brackets> are *required*.
 
 **Step 5** Render a map!
     Okay, so to render a map, you have to run ``overviewer.exe`` with two
-    *parameters*: the *world name* and a *destination directory*.
+    *parameters*: the *world path* and a *destination directory*.
 
     Let's say you have a world named "Singleplayer world" and you want to put
-    the tiles into a directory on your desktop. Try typing this into the command
-    prompt::
+    the tiles into a directory on your desktop. Singleplayer worlds are stored
+    on your hard drive at a location called ``%appdata%\.minecraft\saves``. Try
+    typing this into the command prompt::
 
-        overviewer.exe "Singleplayer world" c:\users\andrew\desktop\mymap
+        overviewer.exe "%appdata%\.minecraft\saves\Singleplayer World" c:\users\andrew\desktop\mymap
 
     .. note::
-        You can also use a path to your world instead of a world name if you
-        know where it's stored. World names only work for single-player worlds.
+        You must use quotation marks around a path that has spaces in it.
+
+    .. note::
+        ``%appdata%`` is a special windows "variable" that refers to the
+        location on your drive where applications can store their data. Typing
+        ``%appdata%`` instead of the full path is a convenient shortcut.
 
     If everything went according to plan, The Overviewer should now be churning
     away furiously on your world, rendering thousands of image files that
@@ -134,6 +139,8 @@ Overviewer. Sorry there's no easy-to-use graphical interface right now. We want
 to make one, we really do, but we haven't had the time and the talent to do so
 yet.
 
-As a next step, head to the :doc:`../options` page to see what else The Overviewer
-can do. And as always, feel free to drop by in `IRC
-<http://overviewer.org/irc/>`_ if you have any questions! We're glad to help!
+The preferred way to run The Overviewer is with a *configuration file*. Without
+one, you can only do the most basic of renders. Once you're ready, head to the
+:doc:`../config` page to see what else The Overviewer can do. And as always,
+feel free to drop by in `IRC <http://overviewer.org/irc/>`_ if you have any
+questions! We're glad to help!
