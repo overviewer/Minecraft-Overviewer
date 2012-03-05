@@ -221,7 +221,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             rendermodes = options.rendermodes.replace("-","_").split(",")
 
         # Now for some good defaults
-        renders = {}
+        renders = util.OrderedDict()
         for rm in rendermodes:
             renders["world-" + rm] = {
                     "world": "world",
