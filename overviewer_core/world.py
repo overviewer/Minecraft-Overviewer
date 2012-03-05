@@ -21,8 +21,8 @@ import logging
 
 import numpy
 
-import nbt
-import cache
+from . import nbt
+from . import cache
 
 """
 This module has routines for extracting information about available worlds
@@ -224,6 +224,9 @@ class RegionSet(object):
         
         # This is populated below. It is a mapping from (x,y) region coords to filename
         self.regionfiles = {}
+
+        # This holds up to 16 open regionfile objects
+        self.regioncache = cache.LRUCache(size=16, destructor=lambda regionobj: regionobj.close())
         
         for x, y, regionfile in self._iterate_regionfiles():
             # regionfile is a pathname
@@ -252,7 +255,15 @@ class RegionSet(object):
         elif self.regiondir.endswith(os.path.normpath("/region")):
             return "overworld"
         else:
-            raise Exception("Woah, what kind of dimension is this! %r" % self.regiondir)
+            raise Exception("Woah, what kind of dimension is this?! %r" % self.regiondir)
+
+    def _get_regionobj(self, regionfilename):
+        try:
+            return self.regioncache[regionfilename]
+        except KeyError:
+            region = nbt.load_region(regionfilename)
+            self.regioncache[regionfilename] = region
+            return region
     
     @log_other_exceptions
     def get_chunk(self, x, z):
@@ -281,14 +292,12 @@ class RegionSet(object):
         modified, lest it affect the return values of future calls for the same
         chunk.
         """
-
         regionfile = self._get_region_path(x, z)
         if regionfile is None:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist (and neither does its region)" % (x,z))
 
-        region = nbt.load_region(regionfile)
+        region = self._get_regionobj(regionfile)
         data = region.load_chunk(x, z)
-        region.close()
         if data is None:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
@@ -366,7 +375,7 @@ class RegionSet(object):
         """
 
         for (regionx, regiony), regionfile in self.regionfiles.iteritems():
-            mcr = nbt.load_region(regionfile)
+            mcr = self._get_regionobj(regionfile)
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
@@ -380,8 +389,7 @@ class RegionSet(object):
         regionfile = self._get_region_path(x,z)
         if regionfile is None:
             return None
-
-        data = nbt.load_region(regionfile)
+        data = self._get_regionobj(regionfile)
         if data.chunk_exists(x,z):
             return data.get_chunk_timestamp(x,z)
         return None

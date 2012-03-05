@@ -16,7 +16,7 @@
 """This module has supporting functions for the caching logic used in world.py.
 
 Each cache class should implement the standard container type interface
-(__getitem__ and __setitem__, as well as provide a "hits" and "misses"
+(__getitem__ and __setitem__), as well as provide a "hits" and "misses"
 attribute.
 
 """
@@ -24,7 +24,8 @@ import functools
 import logging
 
 class LRUCache(object):
-    """A simple in-memory LRU cache.
+    """A simple, generic, in-memory LRU cache that implements the standard
+    python container interface.
 
     An ordered dict type would simplify this implementation a bit, but we want
     Python 2.6 compatibility and the standard library ordereddict was added in
@@ -47,7 +48,14 @@ class LRUCache(object):
             self.key = k
             self.value = v
 
-    def __init__(self, size=100):
+    def __init__(self, size=100, destructor=None):
+        """Initialize a new LRU cache with the given size.
+
+        destructor, if given, is a callable that is called upon an item being
+        evicted from the cache. It takes one argument, the value stored in the
+        cache.
+
+        """
         self.cache = {}
 
         self.listhead = LRUCache._LinkNode()
@@ -61,6 +69,8 @@ class LRUCache(object):
         self.misses = 0
 
         self.size = size
+
+        self.destructor = destructor
 
     # Initialize an empty cache of the same size for worker processes
     def __getstate__(self):
@@ -92,13 +102,18 @@ class LRUCache(object):
     def __setitem__(self, key, value):
         cache = self.cache
         if key in cache:
-            raise KeyError("That key already exists in the cache!")
+            # Shortcut this case
+            cache[key].value = value
+            return
         if len(cache) >= self.size:
             # Evict a node
             link = self.listhead.right
             del cache[link.key]
             link.left.right = link.right
             link.right.left = link.left
+            d = self.destructor
+            if d:
+                d(link.value)
             del link
 
         # The node doesn't exist already, and we have room for it. Let's do this.

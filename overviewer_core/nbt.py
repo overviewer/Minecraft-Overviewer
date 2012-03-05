@@ -215,7 +215,7 @@ class MCRFileReader(object):
         # turn this data into a useful list
         self._locations = self._table_format.unpack(location_data)
         self._timestamps = self._table_format.unpack(timestamp_data)
-    
+
     def close(self):
         """Close the region file and free any resources associated
         with keeping it open. Using this object after closing it
