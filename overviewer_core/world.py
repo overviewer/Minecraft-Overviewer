@@ -18,6 +18,7 @@ import os
 import os.path
 from glob import glob
 import logging
+import hashlib
 
 import numpy
 
@@ -581,14 +582,13 @@ class CachedRegionSet(RegionSetWrapper):
         s += obj.regiondir
 
         logging.debug("Initializing a cache with key '%s'", s)
-        if len(s) > 32:
-            import hashlib
-            s = hashlib.md5(s).hexdigest()
+
+        s = hashlib.md5(s).hexdigest()
 
         self.key = s
 
     def get_chunk(self, x, z):
-        key = (self.key, x, z)
+        key = hashlib.md5(repr((self.key, x, z))).hexdigest()
         for i, cache in enumerate(self.caches):
             try:
                 retval = cache[key]
