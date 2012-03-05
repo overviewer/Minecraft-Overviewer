@@ -6,7 +6,7 @@ import os
 import os.path
 import random
 
-from overviewer_core import tileset, util
+from overviewer_core import tileset
 
 # Supporing data
 # chunks list: chunkx, chunkz mapping to chunkmtime
@@ -120,7 +120,7 @@ def get_tile_set(chunks):
     tile_set = defaultdict(int)
     for (chunkx, chunkz), chunkmtime in chunks.iteritems():
 
-        col, row = util.convert_coords(chunkx, chunkz)
+        col, row = tileset.convert_coords(chunkx, chunkz)
 
         for tilec, tiler in tileset.get_tiles_by_chunk(col, row):
             tile = tileset.RenderTile.compute_path(tilec, tiler, 3)

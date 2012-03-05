@@ -28,8 +28,8 @@ from itertools import product, izip
 
 from PIL import Image
 
-from .util import iterate_base4, convert_coords, unconvert_coords, roundrobin
-from .util import FileReplacer
+from .util import roundrobin
+from .files import FileReplacer
 from .optimizeimages import optimize_image
 import c_overviewer
 
@@ -83,6 +83,11 @@ do_work(workobj)
 
 
 """
+
+# small but useful
+def iterate_base4(d):
+    """Iterates over a base 4 number with d digits"""
+    return product(xrange(4), repeat=d)
 
 # A named tuple class storing the row and column bounds for the to-be-rendered
 # world
@@ -1001,6 +1006,27 @@ class TileSet(object):
                 else:
                     # Nope.
                     yield path, max_child_mtime, False
+
+##
+## Functions for converting (x, z) to (col, row) and back
+##
+
+def convert_coords(chunkx, chunkz):
+    """Takes a coordinate (chunkx, chunkz) where chunkx and chunkz are
+    in the chunk coordinate system, and figures out the row and column
+    in the image each one should be. Returns (col, row)."""
+    
+    # columns are determined by the sum of the chunk coords, rows are the
+    # difference
+    # change this function, and you MUST change unconvert_coords
+    return (chunkx + chunkz, chunkz - chunkx)
+
+def unconvert_coords(col, row):
+    """Undoes what convert_coords does. Returns (chunkx, chunkz)."""
+    
+    # col + row = chunkz + chunkz => (col + row)/2 = chunkz
+    # col - row = chunkx + chunkx => (col - row)/2 = chunkx
+    return ((col - row) / 2, (col + row) / 2)
 
 ######################
 # The following two functions define the mapping from chunks to tiles and back.

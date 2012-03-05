@@ -26,9 +26,8 @@ if 0:
             self.lock = None
     root.addHandler(NullHandler())
 else:
-    import overviewer
-    import logging
-    overviewer.configure_logger(logging.DEBUG, True)
+    from overviewer_core import logger
+    logger.configure(logging.DEBUG, True)
 
 
 if __name__ == "__main__":
