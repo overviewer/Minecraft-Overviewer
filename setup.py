@@ -28,6 +28,12 @@ try:
 except ImportError:
     py2app = None
 
+# make sure our current working directory is the same directory
+# setup.py is in
+curdir = os.path.split(sys.argv[0])[0]
+if curdir:
+    os.chdir(curdir)
+
 # now, setup the keyword arguments for setup
 # (because we don't know until runtime if py2exe/py2app is available)
 setup_kwargs = {}
@@ -44,7 +50,7 @@ setup_kwargs['options'] = {}
 # README file and 2) it's easier to type in the README file than to put a raw
 # string in below ...
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    return open(fname).read()
 
 setup_kwargs['name'] = 'Minecraft-Overviewer'
 setup_kwargs['version'] = util.findGitVersion()
