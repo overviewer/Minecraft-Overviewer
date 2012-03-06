@@ -67,7 +67,7 @@ class MultiWorldParser(object):
 
         """
         if not os.path.exists(settings_file) and not os.path.isfile(settings_file):
-            raise ValueError("bad settings file")
+            raise ValueError("The settings file you specified (%r) does not exist, or is not a file" % settings_file)
 
         # The global environment should be the rendermode module, so the config
         # file has access to those resources.
