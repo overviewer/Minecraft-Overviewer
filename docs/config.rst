@@ -362,8 +362,8 @@ values. The valid configuration keys are listed below.
     You can use this to render a small subset of your map, instead of the entire
     thing. The format is (min x, min z, max x, max z).
 
-    (The coordinates are block coordinates. The same you get with the debug menu
-    in-game)
+    The coordinates are block coordinates. The same you get with the debug menu
+    in-game and the coordinates shown when you view a map.
 
     Example that only renders a 1000 by 1000 square of land about the origin::
 
@@ -373,19 +373,29 @@ values. The valid configuration keys are listed below.
                 'crop': (-500, -500, 500, 500),
         }
 
+    This option performs a similar function to the old ``--regionlist`` option
+    (which no longer exists). It is useful for example if someone has wandered
+    really far off and made your map too large. You can set the crop for the
+    largest map you want to render (perhaps ``(-10000,-10000,10000,10000)``). It
+    could also be used to define a really small render showing off one
+    particular feature, perhaps from multiple angles.
+
     .. warning::
 
         If you decide to change the bounds on a render, you may find it produces
-        unexpected results.
+        unexpected results. It is recommended to not change the crop settings
+        once it has been rendered once.
 
         For an expansion to the bounds, because chunks in the new bounds have
         the same mtime as the old, tiles will not automatically be updated. You
         may need to use :option:`--forcerender` to force those tiles to update.
+        (You can define the ``forcerender`` option on just one render)
 
         For reductions to the bounds, because there is currently no mechanism to
         detect tiles that shouldn't exist but do, old tiles may remain and will
         not get deleted. The only fix for this currently is to delete that
-        render directory and render it again with :option:`--forcerender`. 
+        render directory entirely and render it again with
+        :option:`--forcerender`. 
 
 ``forcerender``
     This is a boolean. If set to ``True`` (or any non-false value) then this
