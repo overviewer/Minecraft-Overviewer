@@ -1,7 +1,6 @@
 import unittest
 
-from overviewer_core.tileset import RendertileSet
-from overviewer_core.util import iterate_base4
+from overviewer_core.tileset import iterate_base4, RendertileSet
 
 class RendertileSetTest(unittest.TestCase):
     # If you change this definition, you must also change the hard-coded

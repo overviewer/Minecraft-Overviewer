@@ -1,7 +1,6 @@
 import unittest
 
-from overviewer_core.util import iterate_base4
-from overviewer_core.tileset import RenderTile
+from overviewer_core.tileset import iterate_base4, RenderTile
 
 items = [
         ((-4,-8), (0,0)),

@@ -35,6 +35,7 @@ import logging
 from optparse import OptionParser
 
 from overviewer_core import util
+from overviewer_core import logger
 from overviewer_core import textures
 from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
@@ -44,52 +45,36 @@ helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
 %prog --config=<config file> [options]"""
 
-def configure_logger(loglevel=logging.INFO, verbose=False):
-    """Configures the root logger to our liking
-
-    For a non-standard loglevel, pass in the level with which to configure the handler.
-
-    For a more verbose options line, pass in verbose=True
-
-    This function may be called more than once.
-
+def is_bare_console():
+    """Returns true if Overviewer is running in a bare console in
+    Windows, that is, if overviewer wasn't started in a cmd.exe
+    session.
     """
-
-    logger = logging.getLogger()
-
-    outstream = sys.stderr
-
     if platform.system() == 'Windows':
-        # Our custom output stream processor knows how to deal with select ANSI
-        # color escape sequences
-        outstream = util.WindowsOutputStream()
-        formatter = util.ANSIColorFormatter(verbose)
+        try:
+            import ctypes
+            GetConsoleProcessList = ctypes.windll.kernel32.GetConsoleProcessList
+            num = GetConsoleProcessList(ctypes.byref(ctypes.c_int(0)), ctypes.c_int(1))
+            if (num == 1):
+                return True
+                
+        except Exception:
+            pass
+    return False
 
-    elif sys.stderr.isatty():
-        # terminal logging with ANSI color
-        formatter = util.ANSIColorFormatter(verbose)
-
-    else:
-        # Let's not assume anything. Just text.
-        formatter = util.DumbFormatter(verbose)
-
-    if hasattr(logger, 'overviewerHandler'):
-        # we have already set up logging so just replace the formatter
-        # this time with the new values
-        logger.overviewerHandler.setFormatter(formatter)
-        logger.setLevel(loglevel)
-
-    else:
-        # Save our handler here so we can tell which handler was ours if the
-        # function is called again
-        logger.overviewerHandler = logging.StreamHandler(outstream)
-        logger.overviewerHandler.setFormatter(formatter)
-        logger.addHandler(logger.overviewerHandler)
-        logger.setLevel(loglevel)
+def nice_exit(ret=0):
+    """Drop-in replacement for sys.exit that will automatically detect
+    bare consoles and wait for user input before closing.
+    """
+    if ret and is_bare_console():
+        print
+        print "Press [Enter] to close this window."
+        raw_input()
+    sys.exit(ret)
 
 def main():
     # bootstrap the logger with defaults
-    configure_logger()
+    logger.configure()
 
     try:
         cpus = multiprocessing.cpu_count()
@@ -132,8 +117,8 @@ def main():
     options, args = parser.parse_args()
 
     # re-configure the logger now that we've processed the command line options
-    configure_logger(logging.INFO + 10*options.quiet - 10*options.verbose,
-            options.verbose > 0)
+    logger.configure(logging.INFO + 10*options.quiet - 10*options.verbose,
+                     options.verbose > 0)
 
     ##########################################################################
     # This section of main() runs in response to any one-time options we have,
@@ -171,7 +156,7 @@ def main():
     if len(args) == 0 and not options.config:
         # first provide an appropriate error for bare-console users
         # that don't provide any options
-        if util.is_bare_console():
+        if is_bare_console():
             print "\n"
             print "The Overviewer is a console program.  Please open a Windows command prompt"
             print "first and run Overviewer from there.   Further documentation is available at"
@@ -236,7 +221,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             rendermodes = options.rendermodes.replace("-","_").split(",")
 
         # Now for some good defaults
-        renders = {}
+        renders = util.OrderedDict()
         for rm in rendermodes:
             renders["world-" + rm] = {
                     "world": "world",
@@ -350,6 +335,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # Set up the cache objects to use
     caches = []
     caches.append(cache.LRUCache(size=100))
+    if config.get("memcached_host", False):
+        caches.append(cache.Memcached(config['memcached_host']))
     # TODO: optionally more caching layers here
 
     renders = config['renders']
@@ -483,10 +470,10 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
     try:
         ret = main()
-        util.exit(ret)
+        nice_exit(ret)
     except Exception, e:
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
 
 This is the error that occurred:""")
-        util.exit(1)
+        nice_exit(1)
