@@ -12,6 +12,8 @@ See also the `Github Homepage`_ and the `Updates Blog`_
 
 .. _Updates Blog: http://overviewer.org/blog/
 
+**New! See** :ref:`new_features`
+
 Introduction
 ============
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
@@ -36,11 +38,13 @@ Features
 * Renders high resolution images of your world, let's you "deep zoom" and see
   details!
 
-* Gloriously awesome smooth lighting is here! (use
-  :option:`--rendermodes=smooth-lighting <--rendermodes>`)
+* Gloriously awesome smooth lighting is here!
+  (:ref:`rendermode<option_rendermode>` name is ``smooth_lighting``)
 
 * Customizable textures! Pulls textures straight from your installed texture
   pack!
+
+* Choose from four rendering angles.
 
 * Generates a Google Maps powered map!
 
@@ -61,6 +65,32 @@ Features
 * Run The Overviewer from a command line or on a cron schedule for constantly
   updated maps! Run it for your Minecraft server world to provide your users
   with a detailed map!
+
+.. _new_features:
+
+**New** features in version 0.9
+-------------------------------
+
+* Supports the new *Anvil* level format of Minecraft 1.2
+
+* Multi-world! Render all your worlds and dimensions with a single unified
+  interface and configuration file.
+
+* Per-render configuration options - render one world multiple ways, render all
+  your worlds one way, or some complex combination. It's up to you!
+
+* Supports Nether and The End dimensions.
+  
+* New :doc:`configuration file format<config>`. More flexibility and function!
+
+* Build your own rendermodes out of *rendermode primitives* (see
+  :ref:`customrendermodes`)
+
+* Fixed north directions
+
+* Built-in support for Biomes!
+
+* *Vastly* cleaned-up codebase.
 
 What The Overviewer is not
 --------------------------
