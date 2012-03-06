@@ -38,14 +38,6 @@ of the following:
   Map expansions double the width and height of the map, so you will eventually
   hit a map size that is unlikely to need another level.
 
-The full map doesn't display even when fully zoomed out!
---------------------------------------------------------
-
-Are you using the :option:`-z` or :option:`--zoom <-z>` option on your
-commandline or in settings.py? If so, try removing it, or increasing the value
-you set.  It's quite likely you don't need it at all. See the documentation for
-the :option:`zoom <-z>` option.
-
 You've added a few feature or changed textures, but it's not showing up on my map!
 ----------------------------------------------------------------------------------
 
@@ -96,8 +88,5 @@ fine.
 
 If you are seeing exorbitant memory usage, then it is likely either a bug or a
 subtly corrupted world. Please file an issue or come talk to us on IRC so we can
-take a look. See :ref:`help`.
+take a look! See :ref:`help`.
 
-We have had a few reports of The Overviewer eating all a system's RAM but we
-have been unable to figure out why or duplicate the issue. Any help or evidence
-you can provide us will help us figure this out!
