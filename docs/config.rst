@@ -289,7 +289,7 @@ values. The valid configuration keys are listed below.
         .. note::
 
             Selecting this rendermode doesn't automatically render your nether
-            dimention.  Be sure to also set the
+            dimension.  Be sure to also set the
             :ref:`dimension<option_dimension>` option to 'nether'.
         
     ``"nether_lighting"``
