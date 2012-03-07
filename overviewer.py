@@ -252,9 +252,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.exception("An error was encountered with your configuration. See the info below.")
         return 1
 
+       
 
     ############################################################
     # Final validation steps and creation of the destination directory
+    logging.info("Welcome to Minecraft Overviewer!")
+    logging.debug("Current log level: {0}".format(logging.getLogger().level))
 
     # Override some render configdict options depending on one-time command line
     # modifiers
@@ -315,13 +318,23 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             logging.exception("Could not create the output directory.")
             return 1
 
+    # The changelist support.
+    changelists = {}
+    for render in config['renders'].itervalues():
+        if 'changelist' in render:
+            path = render['changelist']
+            if path not in changelists:
+                out = open(path, "w")
+                logging.debug("Opening changelist %s (%s)", out, out.fileno())
+                changelists[path] = out
+            else:
+                out = changelists[path]
+            render['changelist'] = out.fileno()
+
 
     ########################################################################
     # Now we start the actual processing, now that all the configuration has
     # been gathered and validated
-    logging.info("Welcome to Minecraft Overviewer!")
-    logging.debug("Current log level: {0}".format(logging.getLogger().level))
-       
     # create our asset manager... ASSMAN
     assetMrg = assetmanager.AssetManager(destdir)
 
@@ -394,7 +407,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # only pass to the TileSet the options it really cares about
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
-        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension"])
+        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist"])
         tset = tileset.TileSet(rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)
 
@@ -426,6 +439,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     dispatch.close()
 
     assetMrg.finalize(tilesets)
+
+    for out in changelists.itervalues():
+        logging.debug("Closing %s (%s)", out, out.fileno())
+        out.close()
 
     if config['processes'] == 1:
         logging.debug("Final cache stats:")
