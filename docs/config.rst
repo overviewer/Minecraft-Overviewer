@@ -426,6 +426,23 @@ values. The valid configuration keys are listed below.
                 'forcerender': True,
         }
 
+``changelist``
+    This is a string. It names a file where it will write out, one per line, the
+    path to tiles that have been updated. You can specify the same file for
+    multiple (or all) renders and they will all be written to the same file. The
+    file is cleared when The Overviewer starts.
+
+    This option is useful in conjunction with a simple upload script, to upload
+    the files that have changed.
+
+    .. warning::
+
+        A solution like ``rsync -a --delete`` is much better because it also
+        watches for tiles that should be *deleted*, which is impossible to
+        convey with the changelist option. If your map ever shrinks or you've
+        removed some tiles, you may need to do some manual deletion on the
+        remote side.
+
 .. _customrendermodes:
 
 Custom Rendermodes and Rendermode Primitives

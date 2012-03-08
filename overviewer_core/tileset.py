@@ -97,57 +97,57 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 #
 # For reference, here's what the rendercheck modes are:
 #   0
-#       Only render tiles that have chunks with a greater mtime than
-#       the last render timestamp, and their ancestors.
+#       Only render tiles that have chunks with a greater mtime than the last
+#       render timestamp, and their ancestors.
 #       
-#       In other words, only renders parts of the map that have changed
-#       since last render, nothing more, nothing less.
+#       In other words, only renders parts of the map that have changed since
+#       last render, nothing more, nothing less.
 #       
-#       This is the fastest option, but will not detect tiles that have
-#       e.g. been deleted from the directory tree, or pick up where a
-#       partial interrupted render left off.
+#       This is the fastest option, but will not detect tiles that have e.g.
+#       been deleted from the directory tree, or pick up where a partial
+#       interrupted render left off.
 
 #   1
-#       For render-tiles, render all whose chunks have an mtime greater
-#       than the mtime of the tile on disk, and their upper-tile
-#       ancestors.
+#       For render-tiles, render all whose chunks have an mtime greater than
+#       the mtime of the tile on disk, and their composite-tile ancestors.
 #       
-#       Also check all other upper-tiles and render any that have
-#       children with more rencent mtimes than itself.
+#       Also check all other composite-tiles and render any that have children
+#       with more rencent mtimes than itself.
 #       
-#       This is slower due to stat calls to determine tile mtimes, but
-#       safe if the last render was interrupted.
+#       This is slower due to stat calls to determine tile mtimes, but safe if
+#       the last render was interrupted.
 
 #   2
-#       Render all tiles unconditionally. This is a "forcerender" and
-#       is the slowest, but SHOULD be specified if this is the first
-#       render because the scan will forgo tile stat calls. It's also
-#       useful for changing texture packs or other options that effect
-#       the output.
+#       Render all tiles unconditionally. This is a "forcerender" and is the
+#       slowest, but SHOULD be specified if this is the first render because
+#       the scan will forgo tile stat calls. It's also useful for changing
+#       texture packs or other options that effect the output.
 #
 # For 0 our caller has explicitly requested not to check mtimes on disk to
 # speed things up. So the mode 0 chunk scan only looks at chunk mtimes and the
-# last render mtime, and has marked only the render-tiles that need rendering.
-# Mode 0 then iterates over all dirty render-tiles and upper-tiles that depend
-# on them. It does not check mtimes of upper-tiles, so this is only a good
-# option if the last render was not interrupted.
+# last render mtime from the asset manager, and marks only the tiles that need
+# rendering based on that.  Mode 0 then iterates over all dirty render-tiles
+# and composite-tiles that depend on them. It does not check mtimes of any
+# tiles on disk, so this is only a good option if the last render was not
+# interrupted.
 
 # For mode 2, this is a forcerender, the caller has requested we render
 # everything. The mode 2 chunk scan marks every tile as needing rendering, and
 # disregards mtimes completely. Mode 2 then iterates over all render-tiles and
-# upper-tiles that depend on them, which is every tile that should exist.
+# composite-tiles that depend on them, which is every tile. It therefore
+# renders everything.
 
 # In both 0 and 2 the render iteration is the same: the dirtytile tree built is
 # authoritive on every tile that needs rendering.
 
 # In mode 1, things are most complicated. Mode 1 chunk scan is identical to a
 # forcerender, or mode 2 scan: every render tile that should exist is marked in
-# the dirtytile tree. Then, a special recursive algorithm goes through and
-# checks every tile that should exist and determines whether it needs
-# rendering. This routine works in such a way so that every tile is stat()'d at
-# most once, so it shouldn't be too bad. This logic happens in the
-# iterate_work_items() method, and therefore in the master process, not the
-# worker processes.
+# the dirtytile tree. But instead of iterating over that tree directly, a
+# special recursive algorithm goes through and checks every tile that should
+# exist and determines whether it needs rendering. This routine works in such a
+# way so that every tile is stat()'d at most once, so it shouldn't be too bad.
+# This logic happens in the iterate_work_items() method, and therefore in the
+# master process, not the worker processes.
 
 # In all three rendercheck modes, the results out of iterate_work_items() is
 # authoritive on what needs rendering. The do_work() method does not need to do
@@ -252,6 +252,11 @@ class TileSet(object):
             A floating point number between 0 and 1 indicating the probability
             that a tile which is not marked for render by any mtime checks will
             be rendered anyways. 0 disables this option.
+
+        changelist
+            Optional: A file descriptor which will be opened and used as the
+            changelist output: each tile written will get outputted to the
+            specified fd.
 
         Other options that must be specified but aren't really documented
         (oops. consider it a TODO):
@@ -370,6 +375,29 @@ class TileSet(object):
         This method returns an iterator over (obj, [dependencies, ...])
         """
 
+        fd = self.options.get("changelist", None)
+        if fd:
+            logging.debug("Changelist activated for %s (fileno %s)", self, fd)
+            # This re-implements some of the logic from do_work()
+            def write_out(tilepath):
+                if len(tilepath) == self.treedepth:
+                    rt = RenderTile.from_path(tilepath)
+                    imgpath = rt.get_filepath(self.outputdir, self.imgextension)
+                elif len(tilepath) == 0:
+                    imgpath = os.path.join(self.outputdir, "base."+self.imgextension)
+                else:
+                    dest = os.path.join(self.outputdir, *(str(x) for x in tilepath[:-1]))
+                    name = str(tilepath[-1])
+                    imgpath = os.path.join(dest, name) + "." + self.imgextension
+                # We use low-level file output because we don't want open file
+                # handles being passed to subprocesses. fd is just an integer.
+                # This method is only called from the master process anyways.
+                # We don't use os.fdopen() because this fd may be shared by
+                # many tileset objects, and as soon as this method exists the
+                # file object may be garbage collected, closing the file.
+                os.write(fd, imgpath + "\n")
+
+
         # See note at the top of this file about the rendercheck modes for an
         # explanation of what this method does in different situations.
         #
@@ -384,6 +412,8 @@ class TileSet(object):
                 # wait for the items that do exist and are in the queue.
                 for i in range(4):
                     dependencies.append( tilepath + (i,) )
+                if fd:
+                    write_out(tilepath)
                 yield tilepath, dependencies
 
         else:
@@ -395,8 +425,9 @@ class TileSet(object):
                     dependencies = []
                     for i in range(4):
                         dependencies.append( tilepath + (i,) )
+                    if fd:
+                        write_out(tilepath)
                     yield tilepath, dependencies
-            
 
     def do_work(self, tilepath):
         """Renders the given tile.
@@ -405,10 +436,6 @@ class TileSet(object):
         integers representing the path of the tile to render.
 
         """
-        # For rendercheck modes 0 and 2: unconditionally render the specified
-        # tile.
-        # For rendercheck mode 1, unconditionally render render-tiles, but
-        # check if the given upper-tile needs rendering
         if len(tilepath) == self.treedepth:
             # A render-tile
             self._render_rendertile(RenderTile.from_path(tilepath))
