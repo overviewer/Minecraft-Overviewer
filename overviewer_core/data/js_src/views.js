@@ -246,12 +246,10 @@ overviewer.views.SignControlView = Backbone.View.extend({
                             elem.markerObj.setVisible(false);
                         });
                     }
-                } else {
-                    //make sure the checkbox is checked
-                    //TODO fix this
-                    //console.log("trying to checkbox for " + markerSet);
-                    //console.log($("[_mc_groupname=" + markerSet + "]"));
+                    markersDB[markerSet].checked=false;
                 }
+                // make sure the checkboxes checked if necessary
+                $("[_mc_groupname=" + markerSet + "]").attr("checked", markersDB[markerSet].checked);
 
             }
 
@@ -297,6 +295,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
         for (i in dataRoot) {
             var group = dataRoot[i];
             this.addItem({label: group.displayName, groupName:group.groupName, action:function(this_item, checked) {
+                markersDB[this_item.groupName].checked = checked;
                 jQuery.each(markersDB[this_item.groupName].raw, function(i, elem) {
                     elem.markerObj.setVisible(checked);
                 });
