@@ -242,6 +242,18 @@ overviewer.views.SignControlView = Backbone.View.extend({
             var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
             console.log("sign control things %r is the new current tileset", curMarkerSet);
             var dataRoot = markers[curMarkerSet];
+            if (!dataRoot) { 
+                // this tileset has no signs, so hide all of them
+                for (markerSet in markersDB) {
+                    if (markersDB[markerSet].created) {
+                        jQuery.each(markersDB[markerSet].raw, function(i, elem) {
+                            elem.markerObj.setVisible(false);
+                        });
+                    }
+                }
+
+                return; 
+            }
             var groupsForThisTileSet = jQuery.map(dataRoot, function(elem, i) { return elem.groupName;})
             for (markerSet in markersDB) {
                 console.log("checking to see if markerset %r should be hidden (is it not in %r)", markerSet, groupsForThisTileSet);
@@ -278,10 +290,11 @@ overviewer.views.SignControlView = Backbone.View.extend({
 
         console.log(dataRoot);
 
-        // before re-building this control, we need to hide all currently displayed signs
-        // TODO 
-
         this.el.innerHTML=""
+        
+        // if we have no markerSets for this tileset, do nothing:
+        if (!dataRoot) { return; }
+
 
         var controlText = document.createElement('DIV');
         controlText.innerHTML = "Signs";
