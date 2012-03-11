@@ -19,6 +19,8 @@ import os.path
 from glob import glob
 import logging
 import hashlib
+import time
+import random
 
 import numpy
 
@@ -91,8 +93,21 @@ class World(object):
         if not os.path.exists(os.path.join(self.worlddir, "level.dat")):
             raise ValueError("level.dat not found in %s" % self.worlddir)
 
-        # Hard-code this to only work with format version 19133, "Anvil"
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
+        # it seems that reading a level.dat file is unstable, particularly with respect
+        # to the spawnX,Y,Z variables.  So we'll try a few times to get a good reading
+        # empirically, it seems that 0,50,0 is a "bad" reading
+        retrycount = 0
+        while (data['SpawnX'] == 0 and data['SpawnY'] == 50 and data['SpawnZ'] ==0 ):
+            logging.debug("bad level read, retrying")
+            time.sleep(random.random())
+            data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
+            retrycount += 1
+            if retrycount > 10:
+                raise Exception("Failed to correctly read level.dat")
+            
+
+        # Hard-code this to only work with format version 19133, "Anvil"
         if not ('version' in data and data['version'] == 19133):
             logging.critical("Sorry, This version of Minecraft-Overviewer only works with the 'Anvil' chunk format")
             raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
@@ -163,7 +178,7 @@ class World(object):
         # location
 
         ## read spawn info from level.dat
-        data = self.data
+        data = self.leveldat
         disp_spawnX = spawnX = data['SpawnX']
         spawnY = data['SpawnY']
         disp_spawnZ = spawnZ = data['SpawnZ']
@@ -175,24 +190,32 @@ class World(object):
         ## clamp spawnY to a sane value, in-chunk value
         if spawnY < 0:
             spawnY = 0
-        if spawnY > 127:
-            spawnY = 127
+        if spawnY > 255:
+            spawnY = 255
         
         # Open up the chunk that the spawn is in
-        regionset = self.get_regionset(0)
+        regionset = self.get_regionset("overworld")
         try:
             chunk = regionset.get_chunk(chunkX, chunkZ)
         except ChunkDoesntExist:
             return (spawnX, spawnY, spawnZ)
+    
+        def getBlock(y):
+            "This is stupid and slow but I don't care"
+            targetSection = spawnY//16
+            for section in chunk['Sections']:
+                if section['Y'] == targetSection:
+                    blockArray = section['Blocks']
+                    return blockArray[inChunkX, inChunkZ, y % 16]
 
-        blockArray = chunk['Blocks']
+
 
         ## The block for spawn *within* the chunk
         inChunkX = spawnX - (chunkX*16)
         inChunkZ = spawnZ - (chunkZ*16)
 
         ## find the first air block
-        while (blockArray[inChunkX, inChunkZ, spawnY] != 0) and spawnY < 127:
+        while (getBlock(spawnY) != 0) and spawnY < 256:
             spawnY += 1
 
         return spawnX, spawnY, spawnZ

@@ -359,3 +359,29 @@ overviewer.views.SignControlView = Backbone.View.extend({
     },
 });
 
+/**
+ * SpawnIconView
+ */
+overviewer.views.SpawnIconView = Backbone.View.extend({
+    render: function() {
+        // 
+        var curTileSet = overviewer.mapView.options.currentTileSet;
+        if (overviewer.collections.spawnMarker) {
+            overviewer.collections.spawnMarker.setMap(null);
+            overviewer.collections.spawnMarker = null;
+        }
+        var spawn = curTileSet.get("spawn");
+        if (spawn) {
+            overviewer.collections.spawnMarker = new google.maps.Marker({
+                'position': overviewer.util.fromWorldToLatLng(spawn[0],
+                    spawn[1], spawn[2], overviewer.mapView.options.currentTileSet),
+                'map':      overviewer.map,
+                'title':    'spawn',
+                'icon':     overviewerConfig.CONST.image.spawnMarker,
+                'visible':  false
+                }); 
+            overviewer.collections.spawnMarker.setVisible(true);
+        }
+    }
+});
+

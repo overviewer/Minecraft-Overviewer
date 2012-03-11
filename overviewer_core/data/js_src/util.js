@@ -63,6 +63,8 @@ overviewer.util = {
             signs.registerEvents(signs);
         }
 
+        var spawnmarker = new overviewer.views.SpawnIconView();
+
         // Update coords on mousemove
         google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
             coordsdiv.updateCoords(event.latLng);    
@@ -77,6 +79,7 @@ overviewer.util = {
             overviewer.mapView.updateCurrentTileset();
 
             compass.render();
+            spawnmarker.render();
 
             // re-center on the last viewport
             var currentWorldView = overviewer.mapModel.get("currentWorldView");

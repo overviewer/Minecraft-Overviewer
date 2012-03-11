@@ -36,7 +36,12 @@ overviewer.collections = {
         /**
          * Hold the raw marker data for each tilest
          */
-        'markerInfo': {}
+        'markerInfo': {},
+
+        /**
+         * holds a reference to the spawn marker. 
+         */
+        'spawnMarker': null,
     };
 
 overviewer.classes = {
