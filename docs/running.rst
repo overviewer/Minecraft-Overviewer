@@ -110,8 +110,9 @@ The first render can take a while, depending on the size of your world.
 Options
 -------
 
-These options change the way the render works, and are intended to be things you
-only have to use once-in-a-while.
+The following three options change the way the checks for tiles to update, and
+are intended to be things you only have to use in special situations. You should
+not normally have to specify these options, the default is typically correct.
 
 .. cmdoption:: --no-tile-checks
 
@@ -126,8 +127,9 @@ only have to use once-in-a-while.
 
     The caveat is that the *only* thing to trigger a tile update is if Minecraft
     updates a chunk. Any other reason a tile may have for needing re-rendering
-    is not detected. It could also cause problems if the system clock of the
-    machine running Minecraft is not stable.
+    is not detected. This means that changes in your render configuration will
+    not be reflected in your world except in updated chunks. It could also cause
+    problems if the system clock of the machine running Minecraft is not stable.
     
     **This option is the default** unless :option:`--forcerender` or
     :option:`--check-tiles` is in effect.  This option conflicts with
@@ -153,10 +155,10 @@ only have to use once-in-a-while.
     you delete sections of your map, e.g. with worldedit, to delete tiles that
     should no longer exist.**
 
-    The caveat with this option is that it compares the tile mtimes on disk with
-    the chunk mtimes reported by Minecraft. Thus, it will *not* detect tiles as
-    needing an update if the Minecraft world hasn't changed. This means you
-    cannot use this option in response to a change in configuration setting.
+    The caveats with this option are the same as for :option:`--no-tile-checks`
+    with the additional caveat that tile timestamps in the filesystem must be
+    preserved. If you copy tiles or make changes to them with an external tool
+    that modifies mtimes of tiles, it could cause problems with this option.
 
     This option is automatically activated when The Overviewer detects the last
     render was interrupted midway through. This option conflicts with
@@ -165,14 +167,17 @@ only have to use once-in-a-while.
 .. cmdoption:: --forcerender
 
     Forces The Overviewer to re-render every tile regardless of whether it
-    thinks it needs updating or not. It does no tile mtime checks, nor does it
-    check any last modification time of the world. It unconditionally renders
-    every tile that exists.
+    thinks it needs updating or not. It does no tile mtime checks, and therefore
+    ignores the last render time of the world and the last modification time of
+    each chunk. It unconditionally renders every tile that exists.
 
     The caveat with this option is that it does *no* checks, period. Meaning it
     will not detect tiles that do exist, but shouldn't (this can happen if your
     world shrinks for some reason. For that specific case,
-    :option:`--check-tiles` is actually more appropriate).
+    :option:`--check-tiles` is actually the appropriate mode).
+
+    This option is useful if you have changed a render setting and wish to
+    re-render every tile with the new settings.
 
     This option is automatically activated for first-time renders. This option
     conflicts with :option:`--check-tiles` and :option:`--no-tile-checks`
