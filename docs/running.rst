@@ -110,9 +110,10 @@ The first render can take a while, depending on the size of your world.
 Options
 -------
 
-The following three options change the way the checks for tiles to update, and
-are intended to be things you only have to use in special situations. You should
-not normally have to specify these options, the default is typically correct.
+The following three options change the way The Overviewer determines which tiles
+to update, and are intended to be things you only have to use in special
+situations. You should not normally have to specify these options; the default
+is typically correct.
 
 .. cmdoption:: --no-tile-checks
 
@@ -168,8 +169,9 @@ not normally have to specify these options, the default is typically correct.
 
     Forces The Overviewer to re-render every tile regardless of whether it
     thinks it needs updating or not. It does no tile mtime checks, and therefore
-    ignores the last render time of the world and the last modification time of
-    each chunk. It unconditionally renders every tile that exists.
+    ignores the last render time of the world, the last modification times of
+    each chunk, and the filesystem mtimes of each tile. It unconditionally
+    renders every tile that exists.
 
     The caveat with this option is that it does *no* checks, period. Meaning it
     will not detect tiles that do exist, but shouldn't (this can happen if your
