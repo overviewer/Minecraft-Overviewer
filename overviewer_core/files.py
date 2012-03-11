@@ -18,6 +18,7 @@ import os.path
 import tempfile
 import shutil
 import logging
+import stat
 
 ## useful recursive copy, that ignores common OS cruft
 def mirror_dir(src, dst, entities=None):
