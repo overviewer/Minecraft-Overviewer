@@ -216,6 +216,9 @@ overviewer.views.SignControlView = Backbone.View.extend({
     registerEvents: function(me) {
         google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function(event) {
             overviewer.mapView.updateCurrentTileset();
+
+            // workaround IE issue.  bah!
+            if (typeof markers=="undefined") { return; }
             me.render();
             // hide markers, if necessary
             // for each markerSet, check:
