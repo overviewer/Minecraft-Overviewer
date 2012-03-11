@@ -518,6 +518,8 @@ class TileSet(object):
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
                 )
+        if (self.regionset.get_type() == "overworld"):
+            d.update({"spawn": self.options.get("spawn")})
         try:
             d['north_direction'] = self.regionset.north_dir
         except AttributeError:

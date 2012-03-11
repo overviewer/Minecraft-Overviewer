@@ -29,7 +29,19 @@ overviewer.collections = {
          */
         'infoWindow':   null,
 
-        'worldViews': []
+        'worldViews': [],
+
+        'haveSigns': false,
+
+        /**
+         * Hold the raw marker data for each tilest
+         */
+        'markerInfo': {},
+
+        /**
+         * holds a reference to the spawn marker. 
+         */
+        'spawnMarker': null,
     };
 
 overviewer.classes = {

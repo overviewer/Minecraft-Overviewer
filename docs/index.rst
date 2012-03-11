@@ -181,6 +181,7 @@ Documentation Contents
    building
    running
    config
+   signs
    win_tut/windowsguide
    faq
    design/designdoc

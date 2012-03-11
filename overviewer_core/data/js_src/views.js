@@ -3,13 +3,9 @@ overviewer.views= {}
 
 overviewer.views.WorldView = Backbone.View.extend({
     initialize: function(opts) {
-        //console.log("WorldView::initialize()");
-        //console.log(this.model.get("tileSets"));
         this.options.mapTypes = [];
         this.options.mapTypeIds = [];
         this.model.get("tileSets").each(function(tset, index, list) {
-            //console.log(" eaching");
-            //console.log("  Working on tileset %s" , tset.get("name"));
             var ops = {
                 getTileUrl: overviewer.gmap.getTileUrlGenerator(tset.get("path"), tset.get("base"), tset.get("imgextension")),
                 'tileSize':     new google.maps.Size(
@@ -57,7 +53,6 @@ overviewer.views.WorldSelectorView = Backbone.View.extend({
         "change select":  "changeWorld"
     },
     changeWorld: function() {
-        //console.log("change world!");
         var selectObj = this.$("select")[0];
         var selectedOption = selectObj.options[selectObj.selectedIndex]; 
 
@@ -120,11 +115,8 @@ overviewer.views.CoordboxView = Backbone.View.extend({
 
 overviewer.views.GoogleMapView = Backbone.View.extend({
     initialize: function(opts) {
-        //console.log(this);
         this.options.map = null;
         var curWorld = this.model.get("currentWorldView").model;
-        //console.log("Current world:");
-        //console.log(curWorld);
 
         var curTset = curWorld.get("tileSets").at(0);
 
@@ -145,12 +137,6 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
 
         var mapOptions = {};
     // 
-        curWorld.get("tileSets").each(function(elem, index, list) {
-            //console.log("Setting up map for:");
-            //console.log(elem);
-            //console.log("for %s generating url func with %s and %s", elem.get("name"), elem.get("path"), elem.get("base"));
-
-        });
         // init the map with some default options.  use the first tileset in the first world
         this.options.mapOptions = {
             zoom:                   curTset.get("defaultZoom"),
@@ -174,7 +160,6 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
         // register every ImageMapType with the map
         $.each(overviewer.collections.worldViews, function( index, worldView) {
             $.each(worldView.options.mapTypes, function(i_index, maptype) {
-                //console.log("registered %s with the maptype registery", worldView.model.get("name") + maptype.shortname);
                 overviewer.map.mapTypes.set(overviewerConfig.CONST.mapDivId + 
                     worldView.model.get("name") + maptype.shortname , maptype);
             });
@@ -185,7 +170,6 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
      * Should be called when the current world has changed in GoogleMapModel
      */
     render: function() {
-        //console.log("GoogleMapView::render()"); 
         var view = this.model.get("currentWorldView");
         this.options.mapOptions.mapTypeControlOptions = {
             mapTypeIds: view.options.mapTypeIds};
@@ -200,14 +184,11 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
      * Keeps track of the currently visible tileset
      */
     updateCurrentTileset: function() {
-                              //console.log("GoogleMapView::updateCurrentTileset()");
         var currentWorldView = this.model.get("currentWorldView");
         var gmapCurrent = overviewer.map.getMapTypeId();
         for (id in currentWorldView.options.mapTypeIds) {
             if (currentWorldView.options.mapTypeIds[id] == gmapCurrent) {
-                //console.log("updating currenttileset");
                 this.options.currentTileSet = currentWorldView.model.get("tileSets").at(id);
-                //console.log(this);
             }
         }
 
@@ -218,4 +199,189 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
 
 });
 
+
+
+
+/**
+ * SignControlView
+ */
+overviewer.views.SignControlView = Backbone.View.extend({
+    /** SignControlView::initialize
+     */
+    initialize: function(opts) {
+        $(this.el).addClass("customControl");
+        overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.el);
+
+    },
+    registerEvents: function(me) {
+        google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function(event) {
+            overviewer.mapView.updateCurrentTileset();
+
+            // workaround IE issue.  bah!
+            if (typeof markers=="undefined") { return; }
+            me.render();
+            // hide markers, if necessary
+            // for each markerSet, check:
+            //    if the markerSet isnot part of this tileset, hide all of the markers
+            var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
+            var dataRoot = markers[curMarkerSet];
+            if (!dataRoot) { 
+                // this tileset has no signs, so hide all of them
+                for (markerSet in markersDB) {
+                    if (markersDB[markerSet].created) {
+                        jQuery.each(markersDB[markerSet].raw, function(i, elem) {
+                            elem.markerObj.setVisible(false);
+                        });
+                    }
+                }
+
+                return; 
+            }
+            var groupsForThisTileSet = jQuery.map(dataRoot, function(elem, i) { return elem.groupName;})
+            for (markerSet in markersDB) {
+                if (jQuery.inArray(markerSet, groupsForThisTileSet) == -1){
+                    // hide these
+                    if (markersDB[markerSet].created) {
+                        jQuery.each(markersDB[markerSet].raw, function(i, elem) {
+                            elem.markerObj.setVisible(false);
+                        });
+                    }
+                    markersDB[markerSet].checked=false;
+                }
+                // make sure the checkboxes checked if necessary
+                $("[_mc_groupname=" + markerSet + "]").attr("checked", markersDB[markerSet].checked);
+
+            }
+
+        });
+
+    },
+    /**
+     * SignControlView::render
+     */
+    render: function() {
+
+        var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
+        //var dataRoot = overviewer.collections.markerInfo[curMarkerSet];
+        var dataRoot = markers[curMarkerSet];
+
+        this.el.innerHTML=""
+        
+        // if we have no markerSets for this tileset, do nothing:
+        if (!dataRoot) { return; }
+
+
+        var controlText = document.createElement('DIV');
+        controlText.innerHTML = "Signs";
+
+        var controlBorder = document.createElement('DIV');
+        $(controlBorder).addClass('top');
+        this.el.appendChild(controlBorder);
+        controlBorder.appendChild(controlText);
+
+        var dropdownDiv = document.createElement('DIV');
+        $(dropdownDiv).addClass('dropDown');
+        this.el.appendChild(dropdownDiv);
+        dropdownDiv.innerHTML='';
+
+        // add the functionality to toggle visibility of the items
+        $(controlText).click(function() {
+                $(controlBorder).toggleClass('top-active');
+                $(dropdownDiv).toggle();
+        });
+
+
+        // add some menus
+        for (i in dataRoot) {
+            var group = dataRoot[i];
+            this.addItem({label: group.displayName, groupName:group.groupName, action:function(this_item, checked) {
+                markersDB[this_item.groupName].checked = checked;
+                jQuery.each(markersDB[this_item.groupName].raw, function(i, elem) {
+                    elem.markerObj.setVisible(checked);
+                });
+            }});
+        }
+
+        iconURL = overviewerConfig.CONST.image.signMarker;
+        //dataRoot['markers'] = [];
+        //
+        for (i in dataRoot) {
+            var groupName = dataRoot[i].groupName;
+            if (!markersDB[groupName].created) {
+                for (j in markersDB[groupName].raw) {
+                    var entity = markersDB[groupName].raw[j];
+                    var marker = new google.maps.Marker({
+                            'position': overviewer.util.fromWorldToLatLng(entity.x,
+                                entity.y, entity.z, overviewer.mapView.options.currentTileSet),
+                            'map':      overviewer.map,
+                            'title':    jQuery.trim(entity.Text1 + "\n" + entity.Text2 + "\n" + entity.Text3 + "\n" + entity.Text4), 
+                            'icon':     iconURL,
+                            'visible':  false
+                    }); 
+                    if (entity['id'] == 'Sign') {
+                        overviewer.util.createMarkerInfoWindow(marker);
+                    }
+                    jQuery.extend(entity, {markerObj: marker});
+                }
+                markersDB[groupName].created = true;
+            }
+        }
+
+
+    },
+    addItem: function(item) {
+        var itemDiv = document.createElement('div');
+        var itemInput = document.createElement('input');
+        itemInput.type='checkbox';
+
+        // give it a name
+        $(itemInput).data('label',item.label);
+        $(itemInput).attr("_mc_groupname", item.groupName);
+        jQuery(itemInput).click((function(local_item) {
+            return function(e) {
+                item.action(local_item, e.target.checked);
+            };
+        })(item));
+
+        this.$(".dropDown")[0].appendChild(itemDiv);
+        itemDiv.appendChild(itemInput);
+        var textNode = document.createElement('text');
+        if(item.icon) {
+            textNode.innerHTML = '<img width="15" height="15" src="' + 
+                item.icon + '">' + item.label + '<br/>';
+        } else {
+            textNode.innerHTML = item.label + '<br/>';
+        }
+
+        itemDiv.appendChild(textNode);
+
+
+    },
+});
+
+/**
+ * SpawnIconView
+ */
+overviewer.views.SpawnIconView = Backbone.View.extend({
+    render: function() {
+        // 
+        var curTileSet = overviewer.mapView.options.currentTileSet;
+        if (overviewer.collections.spawnMarker) {
+            overviewer.collections.spawnMarker.setMap(null);
+            overviewer.collections.spawnMarker = null;
+        }
+        var spawn = curTileSet.get("spawn");
+        if (spawn) {
+            overviewer.collections.spawnMarker = new google.maps.Marker({
+                'position': overviewer.util.fromWorldToLatLng(spawn[0],
+                    spawn[1], spawn[2], overviewer.mapView.options.currentTileSet),
+                'map':      overviewer.map,
+                'title':    'spawn',
+                'icon':     overviewerConfig.CONST.image.spawnMarker,
+                'visible':  false
+                }); 
+            overviewer.collections.spawnMarker.setVisible(true);
+        }
+    }
+});
 

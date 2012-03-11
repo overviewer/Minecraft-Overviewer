@@ -443,6 +443,21 @@ values. The valid configuration keys are listed below.
         removed some tiles, you may need to do some manual deletion on the
         remote side.
 
+.. _option_markers:
+
+``markers``
+    This controls the display of markers, signs, and other points of interest
+    in the output HTML.  It should be a list of filter functions.  
+
+    .. note::
+
+       Setting this configuration option alone does nothing.  In order to get
+       markers and signs on our map, you must also run the genPO script.  See
+       the :doc:`Signs and markers<signs>` section for more details and documenation.
+
+    
+    **Default:** ``[]`` (an empty list)
+
 .. _customrendermodes:
 
 Custom Rendermodes and Rendermode Primitives
