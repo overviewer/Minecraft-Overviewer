@@ -113,42 +113,6 @@ Options
 These options change the way the render works, and are intended to be things you
 only have to use once-in-a-while.
 
-.. cmdoption:: --forcerender
-
-    Forces The Overviewer to re-render every tile regardless of whether it
-    thinks it needs updating or not. It does no tile mtime checks, nor does it
-    check any last modification time of the world. It unconditionally renders
-    every tile that exists.
-
-    The caveat with this option is that it does *no* checks, period. Meaning it
-    will not detect tiles that do exist, but shouldn't (this can happen if your
-    world shrinks for some reason. For that specific case,
-    :option:`--check-tiles` is actually more appropriate).
-
-    This is the default mode for first-time renders. This option conflicts with
-    :option:`--check-tiles` and :option:`--no-tile-checks`
-
-.. cmdoption:: --check-tiles
-
-    Forces The Overviewer to check each tile on disk and check to make sure it
-    is up to date. This also checks for tiles that shouldn't exist and deletes
-    them.
-    
-    This is slightly slower than :option:`--no-tile-checks` due to the disk-io
-    involved in reading tile mtimes and reading the world's region file headers
-    for chunk mtimes, but can be useful if there are some tiles that somehow got
-    skipped.
-
-    The caveat with this option is that it compares the tile mtimes on disk with
-    the chunk mtimes reported by Minecraft. Thus, if the Minecraft world was not
-    updated since the last render, tiles will not be detected as needing
-    updates. This means you cannot use this option in response to a changed
-    configuration setting.
-
-    This option is the default when The Overviewer detects the last render was
-    interrupted midway through. This option conflicts with
-    :option:`--forcerender` and :option:`--no-tile-checks`
-
 .. cmdoption:: --no-tile-checks
 
     With this option, The Overviewer will determine which tiles to render by
@@ -161,13 +125,58 @@ only have to use once-in-a-while.
     disk IO.
 
     The caveat is that the *only* thing to trigger a tile update is if Minecraft
-    updates a chunk. Any other reason for needing to re-render a tile requires a
-    different mode to detect the needed update. It could also cause problems if
-    the system clock of the machine running Minecraft is not stable.
+    updates a chunk. Any other reason a tile may have for needing re-rendering
+    is not detected. It could also cause problems if the system clock of the
+    machine running Minecraft is not stable.
     
     **This option is the default** unless :option:`--forcerender` or
     :option:`--check-tiles` is in effect.  This option conflicts with
     :option:`--forcerender` and :option:`--check-tiles`.
+
+.. cmdoption:: --check-tiles
+
+    Forces The Overviewer to check each tile on disk and check to make sure it
+    is up to date. This also checks for tiles that shouldn't exist and deletes
+    them.
+
+    This is functionally equivalent to :option:`--no-tile-checks` with the
+    difference that each tile is individually checked. It is therefore useful if
+    the tiles are not consistent with the last-render timestamp that is
+    automatically stored. This option was designed to handle the case where the
+    last render was interrupted -- some tiles have been updated but others
+    haven't, so each one is checked before it is rendered.
+    
+    This is slightly slower than :option:`--no-tile-checks` due to the
+    additonaly disk-io involved in reading tile mtimes from the filesystem
+    
+    Since this option also checks for erroneous tiles, **It is also useful after
+    you delete sections of your map, e.g. with worldedit, to delete tiles that
+    should no longer exist.**
+
+    The caveat with this option is that it compares the tile mtimes on disk with
+    the chunk mtimes reported by Minecraft. Thus, it will *not* detect tiles as
+    needing an update if the Minecraft world hasn't changed. This means you
+    cannot use this option in response to a change in configuration setting.
+
+    This option is automatically activated when The Overviewer detects the last
+    render was interrupted midway through. This option conflicts with
+    :option:`--forcerender` and :option:`--no-tile-checks`
+
+.. cmdoption:: --forcerender
+
+    Forces The Overviewer to re-render every tile regardless of whether it
+    thinks it needs updating or not. It does no tile mtime checks, nor does it
+    check any last modification time of the world. It unconditionally renders
+    every tile that exists.
+
+    The caveat with this option is that it does *no* checks, period. Meaning it
+    will not detect tiles that do exist, but shouldn't (this can happen if your
+    world shrinks for some reason. For that specific case,
+    :option:`--check-tiles` is actually more appropriate).
+
+    This option is automatically activated for first-time renders. This option
+    conflicts with :option:`--check-tiles` and :option:`--no-tile-checks`
+
 
 .. cmdoption:: -p <procs>, --processes <procs>
 
