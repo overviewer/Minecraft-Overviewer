@@ -3,13 +3,9 @@ overviewer.views= {}
 
 overviewer.views.WorldView = Backbone.View.extend({
     initialize: function(opts) {
-        //console.log("WorldView::initialize()");
-        //console.log(this.model.get("tileSets"));
         this.options.mapTypes = [];
         this.options.mapTypeIds = [];
         this.model.get("tileSets").each(function(tset, index, list) {
-            //console.log(" eaching");
-            //console.log("  Working on tileset %s" , tset.get("name"));
             var ops = {
                 getTileUrl: overviewer.gmap.getTileUrlGenerator(tset.get("path"), tset.get("base"), tset.get("imgextension")),
                 'tileSize':     new google.maps.Size(
@@ -57,7 +53,6 @@ overviewer.views.WorldSelectorView = Backbone.View.extend({
         "change select":  "changeWorld"
     },
     changeWorld: function() {
-        //console.log("change world!");
         var selectObj = this.$("select")[0];
         var selectedOption = selectObj.options[selectObj.selectedIndex]; 
 
@@ -120,11 +115,8 @@ overviewer.views.CoordboxView = Backbone.View.extend({
 
 overviewer.views.GoogleMapView = Backbone.View.extend({
     initialize: function(opts) {
-        //console.log(this);
         this.options.map = null;
         var curWorld = this.model.get("currentWorldView").model;
-        //console.log("Current world:");
-        //console.log(curWorld);
 
         var curTset = curWorld.get("tileSets").at(0);
 
@@ -145,12 +137,6 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
 
         var mapOptions = {};
     // 
-        curWorld.get("tileSets").each(function(elem, index, list) {
-            //console.log("Setting up map for:");
-            //console.log(elem);
-            //console.log("for %s generating url func with %s and %s", elem.get("name"), elem.get("path"), elem.get("base"));
-
-        });
         // init the map with some default options.  use the first tileset in the first world
         this.options.mapOptions = {
             zoom:                   curTset.get("defaultZoom"),
@@ -174,7 +160,6 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
         // register every ImageMapType with the map
         $.each(overviewer.collections.worldViews, function( index, worldView) {
             $.each(worldView.options.mapTypes, function(i_index, maptype) {
-                //console.log("registered %s with the maptype registery", worldView.model.get("name") + maptype.shortname);
                 overviewer.map.mapTypes.set(overviewerConfig.CONST.mapDivId + 
                     worldView.model.get("name") + maptype.shortname , maptype);
             });
@@ -185,7 +170,6 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
      * Should be called when the current world has changed in GoogleMapModel
      */
     render: function() {
-        //console.log("GoogleMapView::render()"); 
         var view = this.model.get("currentWorldView");
         this.options.mapOptions.mapTypeControlOptions = {
             mapTypeIds: view.options.mapTypeIds};
@@ -200,14 +184,11 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
      * Keeps track of the currently visible tileset
      */
     updateCurrentTileset: function() {
-                              //console.log("GoogleMapView::updateCurrentTileset()");
         var currentWorldView = this.model.get("currentWorldView");
         var gmapCurrent = overviewer.map.getMapTypeId();
         for (id in currentWorldView.options.mapTypeIds) {
             if (currentWorldView.options.mapTypeIds[id] == gmapCurrent) {
-                //console.log("updating currenttileset");
                 this.options.currentTileSet = currentWorldView.model.get("tileSets").at(id);
-                //console.log(this);
             }
         }
 
@@ -240,7 +221,6 @@ overviewer.views.SignControlView = Backbone.View.extend({
             // for each markerSet, check:
             //    if the markerSet isnot part of this tileset, hide all of the markers
             var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
-            console.log("sign control things %r is the new current tileset", curMarkerSet);
             var dataRoot = markers[curMarkerSet];
             if (!dataRoot) { 
                 // this tileset has no signs, so hide all of them
@@ -256,13 +236,10 @@ overviewer.views.SignControlView = Backbone.View.extend({
             }
             var groupsForThisTileSet = jQuery.map(dataRoot, function(elem, i) { return elem.groupName;})
             for (markerSet in markersDB) {
-                console.log("checking to see if markerset %r should be hidden (is it not in %r)", markerSet, groupsForThisTileSet);
                 if (jQuery.inArray(markerSet, groupsForThisTileSet) == -1){
                     // hide these
-                    console.log("nope, going to hide these");
                     if (markersDB[markerSet].created) {
                         jQuery.each(markersDB[markerSet].raw, function(i, elem) {
-                            //console.log("attempting to set %r to visible(%r)", elem.markerObj, checked);
                             elem.markerObj.setVisible(false);
                         });
                     }
@@ -284,11 +261,8 @@ overviewer.views.SignControlView = Backbone.View.extend({
     render: function() {
 
         var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
-        console.log(curMarkerSet);
         //var dataRoot = overviewer.collections.markerInfo[curMarkerSet];
         var dataRoot = markers[curMarkerSet];
-
-        console.log(dataRoot);
 
         this.el.innerHTML=""
         
@@ -319,12 +293,8 @@ overviewer.views.SignControlView = Backbone.View.extend({
         // add some menus
         for (i in dataRoot) {
             var group = dataRoot[i];
-            console.log(group);
             this.addItem({label: group.displayName, groupName:group.groupName, action:function(this_item, checked) {
-                console.log("%r is %r", this_item, checked);
-                console.log("group name is %r", this_item.groupName);
                 jQuery.each(markersDB[this_item.groupName].raw, function(i, elem) {
-                    //console.log("attempting to set %r to visible(%r)", elem.markerObj, checked);
                     elem.markerObj.setVisible(checked);
                 });
             }});
@@ -349,7 +319,6 @@ overviewer.views.SignControlView = Backbone.View.extend({
                     if (entity['id'] == 'Sign') {
                         overviewer.util.createMarkerInfoWindow(marker);
                     }
-                    console.log("Added marker for %r", entity);
                     jQuery.extend(entity, {markerObj: marker});
                 }
                 markersDB[groupName].created = true;

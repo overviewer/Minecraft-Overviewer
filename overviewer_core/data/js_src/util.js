@@ -273,7 +273,6 @@ overviewer.util = {
 
         var zoomLevels = model.get("zoomLevels");
         var north_direction = model.get('north_direction');
-        //console.log("fromWorldToLatLng: north_direction is %r", north_direction);
 
         // the width and height of all the highest-zoom tiles combined,
         // inverted
@@ -440,7 +439,6 @@ overviewer.util = {
         // save this info is a nice easy to parse format
         var currentWorldView = overviewer.mapModel.get("currentWorldView");
         currentWorldView.options.lastViewport = [x,y,z,zoom];
-        //console.log("Updated lastViewport: %r" , [x,y,z,zoom]);
         window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + w + "/" + maptype);
     },
     'updateHash': function() {
