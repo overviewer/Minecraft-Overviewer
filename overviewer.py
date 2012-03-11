@@ -402,8 +402,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # create our TileSet from this RegionSet
         tileset_dir = os.path.abspath(os.path.join(destdir, render_name))
-        if not os.path.exists(tileset_dir):
-            os.mkdir(tileset_dir)
 
         # only pass to the TileSet the options it really cares about
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
