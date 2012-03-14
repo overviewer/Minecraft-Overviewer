@@ -108,8 +108,9 @@ if renameworks:
                             "some cleanup first, but I couldn't remove "
                             "'%s'!", self.tmpname)
             else:
-                # copy permission bits
-                shutil.copymode(self.tmpname, self.destname)
+                # copy permission bits, if needed
+                if os.path.exists(self.destname):
+                    shutil.copymode(self.destname, self.tmpname)
                 # atomic rename into place
                 os.rename(self.tmpname, self.destname)
 else:
