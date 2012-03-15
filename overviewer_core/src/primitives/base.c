@@ -214,7 +214,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             if (self->use_biomes) {
                 /* average over all neighbors */
                 for (dx = -1; dx <= 1; dx++) {
-                    for (dz = -1; dz <= 1; dz += (dx == 0 ? 2 : 1)) {
+                    for (dz = -1; dz <= 1; dz++) {
                         unsigned char biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
                         if (biome >= NUM_BIOMES) {
                             /* note -- biome 255 shows up on map borders.
@@ -227,8 +227,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                         rain += biome_table[biome].rainfall;
                     }
                 }
-                temp /= 8.0;
-                rain /= 8.0;
+                temp /= 9.0;
+                rain /= 9.0;
             } else {
                 /* don't use biomes, just use the default */
                 temp = biome_table[DEFAULT_BIOME].temperature;

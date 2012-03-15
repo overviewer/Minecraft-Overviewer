@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 29
+#define OVERVIEWER_EXTENSION_VERSION 30
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -35,11 +35,11 @@
 
 /* macro for getting a value out of various numpy arrays the 3D arrays have
    interesting, swizzled coordinates because minecraft (anvil) stores blocks
-   in y/z/x order */
+   in y/z/x order for 3D, z/x order for 2D */
 #define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (y), (z), (x))))
 #define getArrayShort3D(array, x,y,z) (*(unsigned short *)(PyArray_GETPTR3((array), (y), (z), (x))))
-#define getArrayByte2D(array, x,y) (*(unsigned char *)(PyArray_GETPTR2((array), (x), (y))))
-#define getArrayShort2D(array, x,y) (*(unsigned short *)(PyArray_GETPTR2((array), (x), (y))))
+#define getArrayByte2D(array, x,y) (*(unsigned char *)(PyArray_GETPTR2((array), (y), (x))))
+
 
 /* generally useful MAX / MIN macros */
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
