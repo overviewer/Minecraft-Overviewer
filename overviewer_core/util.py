@@ -20,6 +20,7 @@ Misc utility routines used by multiple files that don't belong anywhere else
 import imp
 import os.path
 import sys
+import platform
 from subprocess import Popen, PIPE
 from itertools import cycle, islice, product
 
