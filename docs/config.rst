@@ -387,15 +387,15 @@ values. The valid configuration keys are listed below.
         once it has been rendered once.
 
         For an expansion to the bounds, because chunks in the new bounds have
-        the same mtime as the old, tiles will not automatically be updated. You
-        may need to use :option:`--forcerender` to force those tiles to update.
-        (You can define the ``forcerender`` option on just one render)
+        the same mtime as the old, tiles will not automatically be updated,
+        leaving strange artifacts along the old border. You may need to use
+        :option:`--forcerender` to force those tiles to update.  (You can use
+        the ``forcerender`` option on just one render by adding ``'forcerender':
+        True`` to that render's configuration)
 
-        For reductions to the bounds, because there is currently no mechanism to
-        detect tiles that shouldn't exist but do, old tiles may remain and will
-        not get deleted. The only fix for this currently is to delete that
-        render directory entirely and render it again with
-        :option:`--forcerender`. 
+        For reductions to the bounds, you will need to render your map at least
+        once with the :option:`--check-tiles` mode activated so that tiles that
+        should no longer exist will be detected and deleted.
 
 ``forcerender``
     This is a boolean. If set to ``True`` (or any non-false value) then this
