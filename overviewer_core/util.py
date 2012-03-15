@@ -82,6 +82,33 @@ def findGitVersion():
         except Exception:
             return "unknown"
 
+def is_bare_console():
+    """Returns true if Overviewer is running in a bare console in
+    Windows, that is, if overviewer wasn't started in a cmd.exe
+    session.
+    """
+    if platform.system() == 'Windows':
+        try:
+            import ctypes
+            GetConsoleProcessList = ctypes.windll.kernel32.GetConsoleProcessList
+            num = GetConsoleProcessList(ctypes.byref(ctypes.c_int(0)), ctypes.c_int(1))
+            if (num == 1):
+                return True
+                
+        except Exception:
+            pass
+    return False
+
+def nice_exit(ret=0):
+    """Drop-in replacement for sys.exit that will automatically detect
+    bare consoles and wait for user input before closing.
+    """
+    if ret and is_bare_console():
+        print
+        print "Press [Enter] to close this window."
+        raw_input()
+    sys.exit(ret)
+
 # http://docs.python.org/library/itertools.html
 def roundrobin(iterables):
     "roundrobin('ABC', 'D', 'EF') --> A D E B F C"

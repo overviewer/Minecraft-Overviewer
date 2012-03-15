@@ -45,33 +45,6 @@ helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
 %prog --config=<config file> [options]"""
 
-def is_bare_console():
-    """Returns true if Overviewer is running in a bare console in
-    Windows, that is, if overviewer wasn't started in a cmd.exe
-    session.
-    """
-    if platform.system() == 'Windows':
-        try:
-            import ctypes
-            GetConsoleProcessList = ctypes.windll.kernel32.GetConsoleProcessList
-            num = GetConsoleProcessList(ctypes.byref(ctypes.c_int(0)), ctypes.c_int(1))
-            if (num == 1):
-                return True
-                
-        except Exception:
-            pass
-    return False
-
-def nice_exit(ret=0):
-    """Drop-in replacement for sys.exit that will automatically detect
-    bare consoles and wait for user input before closing.
-    """
-    if ret and is_bare_console():
-        print
-        print "Press [Enter] to close this window."
-        raw_input()
-    sys.exit(ret)
-
 def main():
     # bootstrap the logger with defaults
     logger.configure()
@@ -156,7 +129,7 @@ def main():
     if len(args) == 0 and not options.config:
         # first provide an appropriate error for bare-console users
         # that don't provide any options
-        if is_bare_console():
+        if util.is_bare_console():
             print "\n"
             print "The Overviewer is a console program.  Please open a Windows command prompt"
             print "first and run Overviewer from there.   Further documentation is available at"
@@ -487,10 +460,10 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
     try:
         ret = main()
-        nice_exit(ret)
+        util.nice_exit(ret)
     except Exception, e:
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
 
 This is the error that occurred:""")
-        nice_exit(1)
+        util.nice_exit(1)

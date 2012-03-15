@@ -68,4 +68,4 @@ def check_c_overviewer():
 if not sys.argv[0].endswith("setup.py"):
     ret = check_c_overviewer()
     if ret > 0:
-        util.exit(ret)
+        util.nice_exit(ret)
