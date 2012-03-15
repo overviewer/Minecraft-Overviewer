@@ -43,6 +43,9 @@ class RenderPrimitive(object):
 
 class Base(RenderPrimitive):
     name = "base"
+    options = {
+        "biomes": ("whether or not to use biomes", True),
+    }
 
 class Nether(RenderPrimitive):
     name = "nether"

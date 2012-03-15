@@ -17,7 +17,10 @@
 
 #include "../overviewer.h"
 
+#define DEFAULT_BIOME 4 /* forest, nice and green */
+
 typedef struct {
+    int use_biomes;
     /* grasscolor and foliagecolor lookup tables */
     PyObject *grasscolor, *foliagecolor, *watercolor;
     /* biome-compatible grass/leaf textures */
@@ -73,6 +76,9 @@ static Biome biome_table[] = {
 static int
 base_start(void *data, RenderState *state, PyObject *support) {
     PrimitiveBase *self = (PrimitiveBase *)data;
+    
+    if (!render_mode_parse_option(support, "biomes", "i", &(self->use_biomes)))
+        return 1;
     
     /* biome-compliant grass mask (includes sides!) */
     self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
@@ -205,23 +211,29 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             float temp = 0.0, rain = 0.0;
             PyObject *color = NULL;
             
-            /* average over all neighbors */
-            for (dx = -1; dx <= 1; dx++) {
-                for (dz = -1; dz <= 1; dz += (dx == 0 ? 2 : 1)) {
-                    unsigned char biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
-                    if (biome >= NUM_BIOMES) {
-                        /* note -- biome 255 shows up on map borders.
-                           who knows what it is? certainly not I.
-                        */
-                        biome = 4; /* forest -- reasonable default */
-                    }
+            if (self->use_biomes) {
+                /* average over all neighbors */
+                for (dx = -1; dx <= 1; dx++) {
+                    for (dz = -1; dz <= 1; dz += (dx == 0 ? 2 : 1)) {
+                        unsigned char biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
+                        if (biome >= NUM_BIOMES) {
+                            /* note -- biome 255 shows up on map borders.
+                               who knows what it is? certainly not I.
+                            */
+                            biome = DEFAULT_BIOME; /* forest -- reasonable default */
+                        }
                     
-                    temp += biome_table[biome].temperature;
-                    rain += biome_table[biome].rainfall;
+                        temp += biome_table[biome].temperature;
+                        rain += biome_table[biome].rainfall;
+                    }
                 }
+                temp /= 8.0;
+                rain /= 8.0;
+            } else {
+                /* don't use biomes, just use the default */
+                temp = biome_table[DEFAULT_BIOME].temperature;
+                rain = biome_table[DEFAULT_BIOME].rainfall;
             }
-            temp /= 8.0;
-            rain /= 8.0;
             
             /* second coordinate is actually scaled to fit inside the triangle
                so store it in rain */
