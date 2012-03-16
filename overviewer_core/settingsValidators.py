@@ -43,6 +43,13 @@ def checkBadEscape(s):
         fixed = True
     return (fixed, fixed_string)
 
+def validateMarkers(filterlist):
+    if type(filterlist) != list:
+        raise ValidationException("Markers must specify a list of filters")
+    for x in filterlist:
+        if not callable(x):
+            raise ValidationException("%r must be a function"% x)
+    return filterlist
 
 def validateWorldPath(worldpath):
     _, worldpath = checkBadEscape(worldpath)

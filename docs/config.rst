@@ -358,6 +358,8 @@ values. The valid configuration keys are listed below.
     This is a where a specific texture pack can be found to be used during this render.
     It can be either a folder or a directory. Its value should be a string.
 
+.. _crop:
+
 ``crop``
     You can use this to render a small subset of your map, instead of the entire
     thing. The format is (min x, min z, max x, max z).
@@ -387,15 +389,20 @@ values. The valid configuration keys are listed below.
         once it has been rendered once.
 
         For an expansion to the bounds, because chunks in the new bounds have
-        the same mtime as the old, tiles will not automatically be updated. You
-        may need to use :option:`--forcerender` to force those tiles to update.
-        (You can define the ``forcerender`` option on just one render)
+        the same mtime as the old, tiles will not automatically be updated,
+        leaving strange artifacts along the old border. You may need to use
+        :option:`--forcerender` to force those tiles to update.  (You can use
+        the ``forcerender`` option on just one render by adding ``'forcerender':
+        True`` to that render's configuration)
 
-        For reductions to the bounds, because there is currently no mechanism to
-        detect tiles that shouldn't exist but do, old tiles may remain and will
-        not get deleted. The only fix for this currently is to delete that
-        render directory entirely and render it again with
-        :option:`--forcerender`. 
+        For reductions to the bounds, you will need to render your map at least
+        once with the :option:`--check-tiles` mode activated, and then once with
+        the :option:`--forcerender` option. The first run will go and delete tiles that
+        should no longer exist, while the second will render the tiles around
+        the edge properly. Also see :ref:`this faq entry<cropping_faq>`.
+
+        Sorry there's no better way to handle these cases at the moment. It's a
+        tricky problem and nobody has devoted the effort to solve it yet.
 
 ``forcerender``
     This is a boolean. If set to ``True`` (or any non-false value) then this
@@ -442,6 +449,21 @@ values. The valid configuration keys are listed below.
         convey with the changelist option. If your map ever shrinks or you've
         removed some tiles, you may need to do some manual deletion on the
         remote side.
+
+.. _option_markers:
+
+``markers``
+    This controls the display of markers, signs, and other points of interest
+    in the output HTML.  It should be a list of filter functions.  
+
+    .. note::
+
+       Setting this configuration option alone does nothing.  In order to get
+       markers and signs on our map, you must also run the genPO script.  See
+       the :doc:`Signs and markers<signs>` section for more details and documenation.
+
+    
+    **Default:** ``[]`` (an empty list)
 
 .. _customrendermodes:
 

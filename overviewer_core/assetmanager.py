@@ -42,11 +42,6 @@ directory.
         self.outputdir = outputdir
         self.renders = dict()
 
-        #  stores Points Of Interest to be mapped with markers
-        #  This is a dictionary of lists of dictionaries
-        #  Each regionset's name is a key in this dictionary
-        self.POI = dict()
-
         # look for overviewerConfig in self.outputdir
         try:
             with open(os.path.join(self.outputdir, "overviewerConfig.js")) as c:
@@ -64,13 +59,6 @@ directory.
                 return conf
         return dict()
         
-
-
-    def found_poi(self, regionset, poi_type, contents, chunkX, chunkY):
-        if regionset.name not in self.POI.keys():
-            POI[regionset.name] = []
-        # TODO based on the type, so something
-        POI[regionset.name].append
 
     def initialize(self, tilesets):
         """Similar to finalize() but calls the tilesets' get_initial_data()
@@ -151,6 +139,12 @@ directory.
         if not os.path.isdir(global_assets):
             global_assets = os.path.join(util.get_program_path(), "web_assets")
         mirror_dir(global_assets, self.outputdir)
+
+		# write a dummy baseMarkers.js if none exists
+        if not os.path.exists(os.path.join(self.outputdir, "baseMarkers.js")):
+            with open(os.path.join(self.outputdir, "baseMarkers.js"), "w") as f:
+                f.write("// if you wants signs, please see genPOI.py\n");
+
 
         # create overviewer.js from the source js files
         js_src = os.path.join(util.get_program_path(), "overviewer_core", "data", "js_src")

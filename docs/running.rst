@@ -110,41 +110,80 @@ The first render can take a while, depending on the size of your world.
 Options
 -------
 
-These options change the way the render works, and are intended to be things you
-only have to use once-in-a-while.
+The following three options change the way The Overviewer determines which tiles
+to update, and are intended to be things you only have to use in special
+situations. You should not normally have to specify these options; the default
+is typically correct.
+
+.. cmdoption:: --no-tile-checks
+
+    With this option, The Overviewer will determine which tiles to render by
+    looking at the saved last-render timestamp and comparing it to the
+    last-modified time of the chunks of the world. It builds a tree of tiles
+    that need updating and renders only those tiles.
+
+    This option does not do *any* checking of tile mtimes on disk, and thus is
+    the cheapest option: only rendering what needs updating while minimising
+    disk IO.
+
+    The caveat is that the *only* thing to trigger a tile update is if Minecraft
+    updates a chunk. Any other reason a tile may have for needing re-rendering
+    is not detected. This means that changes in your render configuration will
+    not be reflected in your world except in updated chunks. It could also cause
+    problems if the system clock of the machine running Minecraft is not stable.
+    
+    **This option is the default** unless :option:`--forcerender` or
+    :option:`--check-tiles` is in effect.  This option conflicts with
+    :option:`--forcerender` and :option:`--check-tiles`.
+
+.. cmdoption:: --check-tiles
+
+    Forces The Overviewer to check each tile on disk and check to make sure it
+    is up to date. This also checks for tiles that shouldn't exist and deletes
+    them.
+
+    This is functionally equivalent to :option:`--no-tile-checks` with the
+    difference that each tile is individually checked. It is therefore useful if
+    the tiles are not consistent with the last-render timestamp that is
+    automatically stored. This option was designed to handle the case where the
+    last render was interrupted -- some tiles have been updated but others
+    haven't, so each one is checked before it is rendered.
+    
+    This is slightly slower than :option:`--no-tile-checks` due to the
+    additonaly disk-io involved in reading tile mtimes from the filesystem
+    
+    Since this option also checks for erroneous tiles, **It is also useful after
+    you delete sections of your map, e.g. with worldedit, to delete tiles that
+    should no longer exist.**
+
+    The caveats with this option are the same as for :option:`--no-tile-checks`
+    with the additional caveat that tile timestamps in the filesystem must be
+    preserved. If you copy tiles or make changes to them with an external tool
+    that modifies mtimes of tiles, it could cause problems with this option.
+
+    This option is automatically activated when The Overviewer detects the last
+    render was interrupted midway through. This option conflicts with
+    :option:`--forcerender` and :option:`--no-tile-checks`
 
 .. cmdoption:: --forcerender
 
     Forces The Overviewer to re-render every tile regardless of whether it
-    thinks it needs updating or not. This is similar to deleting your output
-    directory and rendering from scratch.
+    thinks it needs updating or not. It does no tile mtime checks, and therefore
+    ignores the last render time of the world, the last modification times of
+    each chunk, and the filesystem mtimes of each tile. It unconditionally
+    renders every tile that exists.
 
-    This is the default mode for first-time renders. This option overrides
-    :option:`--check-tiles` and :option:`--no-tile-checks`
+    The caveat with this option is that it does *no* checks, period. Meaning it
+    will not detect tiles that do exist, but shouldn't (this can happen if your
+    world shrinks for some reason. For that specific case,
+    :option:`--check-tiles` is actually the appropriate mode).
 
-.. cmdoption:: --check-tiles
+    This option is useful if you have changed a render setting and wish to
+    re-render every tile with the new settings.
 
-    Forces The Overviewer to check each tile on disk and compare its
-    modification time to the modification time of the part of the world that
-    tile renders. This is slightly slower than the default, but can be useful if
-    there are some tiles that somehow got skipped.
+    This option is automatically activated for first-time renders. This option
+    conflicts with :option:`--check-tiles` and :option:`--no-tile-checks`
 
-    This option is the default when The Overviewer detects the last render was
-    interrupted midway through. This option overrides :option:`--forcerender`
-    and :option:`--no-tile-checks`
-
-.. cmdoption:: --no-tile-checks
-
-    With this option, The Overviewer will not do any checking of tiles on disk
-    to determine what tiles need updating. Instead, it will look at the time
-    that the last render was performed, and render parts of the map that were
-    changed since then. This is the fastest option, but could cause problems if
-    the clocks of the Minecraft server and the machine running The Overviewer
-    are not in sync.
-
-    This option is the default unless the condition for :option:`--forcerender`
-    or :option:`--check-tiles` is in effect.  This option overrides
-    :option:`--forcerender` and :option:`--check-tiles`.
 
 .. cmdoption:: -p <procs>, --processes <procs>
 
@@ -153,6 +192,23 @@ only have to use once-in-a-while.
     specified.
 
     This option can also be specified in the config file as :ref:`processes <processes>`
+
+.. cmdoption:: -v, --verbose
+
+    Activate a more verbose logging format and turn on debugging output. This
+    can be quite noisy but also gives a lot more info on what The Overviewer is
+    doing.
+
+.. cmdoption:: -q, --quiet
+
+    Turns off one level of logging for quieter output. You can specify this more
+    than once. One ``-q`` will suppress all INFO lines. Two will suppress all
+    INFO and WARNING lines. And so on for ERROR and CRITICAL log messages.
+
+    If :option:`--verbose<-v>` is given, then the first ``-q`` will counteract
+    the DEBUG lines, but not the more verbose logging format. Thus, you can
+    specify ``-v -q`` to get only INFO logs and higher (no DEBUG) but with the
+    more verbose logging format.
 
 .. _installing-textures:
 
