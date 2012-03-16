@@ -358,6 +358,8 @@ values. The valid configuration keys are listed below.
     This is a where a specific texture pack can be found to be used during this render.
     It can be either a folder or a directory. Its value should be a string.
 
+.. _crop:
+
 ``crop``
     You can use this to render a small subset of your map, instead of the entire
     thing. The format is (min x, min z, max x, max z).
@@ -397,7 +399,7 @@ values. The valid configuration keys are listed below.
         once with the :option:`--check-tiles` mode activated, and then once with
         the :option:`--forcerender` option. The first run will go and delete tiles that
         should no longer exist, while the second will render the tiles around
-        the edge properly.
+        the edge properly. Also see :ref:`this faq entry<cropping_faq>`.
 
         Sorry there's no better way to handle these cases at the moment. It's a
         tricky problem and nobody has devoted the effort to solve it yet.

@@ -90,3 +90,61 @@ If you are seeing exorbitant memory usage, then it is likely either a bug or a
 subtly corrupted world. Please file an issue or come talk to us on IRC so we can
 take a look! See :ref:`help`.
 
+.. _cropping_faq:
+
+I've deleted some sections of my world but they still appear in the map
+-----------------------------------------------------------------------
+Okay, so making edits to your world in e.g. worldedit has some caveats,
+especially regarding deleting sections of your world.
+
+This faq also applies to using the :ref:`crop<crop>` option.
+
+Under normal operation with vanilla Minecraft and no external tools fiddling
+with the world, Overviewer performs correctly, rendering areas that have
+changed, and everything is good.
+
+Often with servers one user will travel reeeeally far out and cause a lot of
+extra work for the server and for The Overviewer, so you may be tempted to
+delete parts of your map. This can cause problems, so read on to learn what you
+can do about it.
+
+First some explanation: Until recently (Mid May 2012) The Overviewer did not
+have any facility for detecting parts of the map that should no longer exist.
+Remember that the map is split into small tiles. When Overviewer starts up, the
+first thing it does is calculate which tiles should exist and which should be
+updated. This means it does not check or even look at tiles that should not
+exist. This means that parts of your world which have been deleted will hang
+around on your map because Overviewer won't even look at those tiles and notice
+they shouldn't be there. You may even see strange artifacts around the border as
+tiles that should exist get updated.
+
+Now, with the :option:`--check-tiles` option, The Overviewer *will* look for and
+remove tiles that should no longer exist. So you can render your map once with
+that option and all those extra tiles will get removed automatically. However,
+this is only half of the solution. The other half is making sure the tiles along
+the border are re-rendered, or else it will look like your map is being cut off.
+
+Explanation: The tiles next to the ones that were removed are tiles that should
+continue to exist, but parts of them have chunks that no longer exist. Those
+tiles then should be re-rendered to show that. However, since tile updates are
+triggered by the chunk last-modified timestamp changing, and the chunks that
+still exist have *not* been updated, those tiles will not get re-rendered.
+
+The consequence of this is that your map will end up looking cut-off around the
+new borders that were created by the parts you deleted. You can fix this one of
+two ways.
+
+1. You can run a render with :option:`--forcerender`. This has the unfortunate
+   side-effect of re-rendering *everything* and doing much more work than is
+   necessary.
+
+2. Manually navigate the tile directory hierarchy and manually delete tiles
+   along the edge. Then run once again with :option:`--check-tiles` to re-render
+   the tiles you just deleted. This may not be as bad as it seems. Remember each
+   zoom level divides the world into 4 quadrants: 0, 1, 2, and 3 are the upper
+   left, upper right, lower left, and lower right. It shouldn't be too hard to
+   navigate it manually to find the parts of the map that need re-generating.
+
+3. The third non-option is to not worry about it. The problem will fix itself if
+   people explore near there, because that will force that part of the map to
+   update.
