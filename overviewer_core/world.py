@@ -97,14 +97,9 @@ class World(object):
         # it seems that reading a level.dat file is unstable, particularly with respect
         # to the spawnX,Y,Z variables.  So we'll try a few times to get a good reading
         # empirically, it seems that 0,50,0 is a "bad" reading
-        retrycount = 0
-        while (data['SpawnX'] == 0 and data['SpawnY'] == 50 and data['SpawnZ'] ==0 ):
-            logging.debug("bad level read, retrying")
-            time.sleep(random.random())
-            data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-            retrycount += 1
-            if retrycount > 10:
-                raise Exception("Failed to correctly read level.dat")
+        # update: 0,50,0 is the default spawn, and may be valid is some cases
+        # more info is needed
+        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
             
 
         # Hard-code this to only work with format version 19133, "Anvil"
