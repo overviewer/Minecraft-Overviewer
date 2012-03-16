@@ -394,8 +394,13 @@ values. The valid configuration keys are listed below.
         True`` to that render's configuration)
 
         For reductions to the bounds, you will need to render your map at least
-        once with the :option:`--check-tiles` mode activated so that tiles that
-        should no longer exist will be detected and deleted.
+        once with the :option:`--check-tiles` mode activated, and then once with
+        the :option:`--forcerender` option. The first run will go and delete tiles that
+        should no longer exist, while the second will render the tiles around
+        the edge properly.
+
+        Sorry there's no better way to handle these cases at the moment. It's a
+        tricky problem and nobody has devoted the effort to solve it yet.
 
 ``forcerender``
     This is a boolean. If set to ``True`` (or any non-false value) then this
