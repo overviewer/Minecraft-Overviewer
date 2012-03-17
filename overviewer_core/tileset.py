@@ -318,9 +318,9 @@ class TileSet(object):
                         "to date.",
                         self.options['name'],
                         )
-                logging.warning("You won't get percentage progress for "+
-                        "this run only, because I don't know how many tiles "+
-                        "need rendering. I'll be checking them as I go")
+                logging.warning("The total tile count will be (possibly "+
+                        "wildly) inaccurate, because I don't know how many "+
+                        "tiles need rendering. I'll be checking them as I go")
                 self.options['renderchecks'] = 1
             else:
                 logging.debug("No rendercheck mode specified for %s. "+

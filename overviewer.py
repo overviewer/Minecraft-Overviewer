@@ -40,7 +40,7 @@ from overviewer_core import textures
 from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
 from overviewer_core import cache
-from overviewer_core import progressbar
+from overviewer_core import observer
 
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
@@ -393,11 +393,15 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     # multiprocessing dispatcher
     if config['processes'] == 1:
-        dispatch = dispatcher.Dispatcher(observer=dispatcher.ProgressBarObserver)
+        dispatch = dispatcher.Dispatcher()
     else:
-        dispatch = dispatcher.MultiprocessingDispatcher(local_procs=config['processes'],
-            observer=dispatcher.ProgressBarObserver)
-    dispatch.render_all(tilesets)
+        dispatch = dispatcher.MultiprocessingDispatcher(
+            local_procs=config['processes'])
+    if platform.system() == 'Windows' or not sys.stderr.isatty():
+        obs = observer.LoggingObserver()
+    else:
+        obs = observer.ProgressBarObserver()
+    dispatch.render_all(tilesets, obs)
     dispatch.close()
 
     assetMrg.finalize(tilesets)
