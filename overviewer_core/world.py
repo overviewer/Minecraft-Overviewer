@@ -190,6 +190,8 @@ class World(object):
         
         # Open up the chunk that the spawn is in
         regionset = self.get_regionset("overworld")
+        if not regionset:
+            return None
         try:
             chunk = regionset.get_chunk(chunkX, chunkZ)
         except ChunkDoesntExist:
