@@ -393,32 +393,11 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     # multiprocessing dispatcher
     if config['processes'] == 1:
-        dispatch = dispatcher.Dispatcher()
+        dispatch = dispatcher.Dispatcher(observer=dispatcher.ProgressBarObserver)
     else:
-        dispatch = dispatcher.MultiprocessingDispatcher(local_procs=config['processes'])
-    last_status_print = time.time()
-    def print_status(phase, completed, total):
-        # phase is ignored.  it's always zero?
-        if (total == 0):
-            percent = 100
-            logging.info("Rendered %d of %d tiles.  %d%% complete", completed, total, percent)
-        elif total == None:
-            logging.info("Rendered %d tiles.", completed)
-        else:
-            percent = int(100* completed/total)
-            logging.info("Rendered %d of %d.  %d%% complete", completed, total, percent)
-
-    def update_pbar(phase, completed, total):
-        if total is None or total == 0:
-            print_status(phase, completed, total)
-        else:
-            pbar = progressbar.ProgressBar(
-                widgets=['Rendering: ', progressbar.FractionWidget(), ' (',
-                    progressbar.Percentage(), ') ',
-                    progressbar.Bar(left='[', right=']'), ' ', progressbar.ETA()],
-                maxval=total).start().update(completed)
-
-    dispatch.render_all(tilesets, update_pbar)
+        dispatch = dispatcher.MultiprocessingDispatcher(local_procs=config['processes'],
+            observer=dispatcher.ProgressBarObserver)
+    dispatch.render_all(tilesets)
     dispatch.close()
 
     assetMrg.finalize(tilesets)

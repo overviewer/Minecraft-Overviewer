@@ -99,10 +99,10 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 #   0
 #       Only render tiles that have chunks with a greater mtime than the last
 #       render timestamp, and their ancestors.
-#       
+#
 #       In other words, only renders parts of the map that have changed since
 #       last render, nothing more, nothing less.
-#       
+#
 #       This is the fastest option, but will not detect tiles that have e.g.
 #       been deleted from the directory tree, or pick up where a partial
 #       interrupted render left off.
@@ -110,10 +110,10 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 #   1
 #       For render-tiles, render all whose chunks have an mtime greater than
 #       the mtime of the tile on disk, and their composite-tile ancestors.
-#       
+#
 #       Also check all other composite-tiles and render any that have children
 #       with more rencent mtimes than itself.
-#       
+#
 #       This is slower due to stat calls to determine tile mtimes, but safe if
 #       the last render was interrupted.
 
@@ -179,7 +179,7 @@ class TileSet(object):
 
         outputdir is the absolute path to the tile output directory where the
         tiles are saved. It is created if it doesn't exist
-        
+
         Current valid options for the options dictionary are shown below. All
         the options must be specified unless they are not relevant. If the
         given options do not conform to the specifications, behavior is
@@ -199,10 +199,10 @@ class TileSet(object):
             0
                 Only render tiles that have chunks with a greater mtime than
                 the last render timestamp, and their ancestors.
-                
+
                 In other words, only renders parts of the map that have changed
                 since last render, nothing more, nothing less.
-                
+
                 This is the fastest option, but will not detect tiles that have
                 e.g. been deleted from the directory tree, or pick up where a
                 partial interrupted render left off.
@@ -211,13 +211,13 @@ class TileSet(object):
                 "check-tiles" mode. For render-tiles, render all whose chunks
                 have an mtime greater than the mtime of the tile on disk, and
                 their upper-tile ancestors.
-                
+
                 Also check all other upper-tiles and render any that have
                 children with more rencent mtimes than itself.
 
                 Also remove tiles and directory trees that do exist but
                 shouldn't.
-                
+
                 This is slower due to stat calls to determine tile mtimes, but
                 safe if the last render was interrupted.
 
@@ -246,7 +246,7 @@ class TileSet(object):
         rendermode
             Perhaps the most important/relevant option: a string indicating the
             render mode to render. This rendermode must have already been
-            registered with the C extension module. 
+            registered with the C extension module.
 
         rerenderprob
             A floating point number between 0 and 1 indicating the probability
@@ -388,7 +388,7 @@ class TileSet(object):
 
         """
         return 1
-    
+
     def get_phase_length(self, phase):
         """Returns the number of work items in a given phase, or None if there
         is no good estimate.
@@ -396,7 +396,8 @@ class TileSet(object):
         # Yeah functional programming!
         return {
                 0: lambda: self.dirtytree.count_all(),
-                1: lambda: None,
+                #there is no good way to guess this so just give total count
+                1: lambda: (4**(self.treedepth+1)-1)/3,
                 2: lambda: self.dirtytree.count_all(),
                 }[self.options['renderchecks']]()
 
@@ -513,7 +514,7 @@ class TileSet(object):
                 path = self.options.get('name'),
                 base = '',
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
-                world = self.options.get('worldname_orig') + 
+                world = self.options.get('worldname_orig') +
                     (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
@@ -585,7 +586,7 @@ class TileSet(object):
             curdepth = self.config['zoomLevels']
         except KeyError:
             return
-        
+
         if curdepth == 1:
             # Skip a depth 1 tree. A depth 1 tree pretty much can't happen, so
             # when we detect this it usually means the tree is actually empty
@@ -725,7 +726,7 @@ class TileSet(object):
 
             if chunkmtime > max_chunk_mtime:
                 max_chunk_mtime = chunkmtime
-            
+
             # Convert to diagonal coordinates
             chunkcol, chunkrow = convert_coords(chunkx, chunkz)
 
@@ -773,7 +774,7 @@ class TileSet(object):
                     dirty.add(tile.path)
 
         t = int(time.time()-stime)
-        logging.debug("Finished chunk scan for %s. %s chunks scanned in %s second%s", 
+        logging.debug("Finished chunk scan for %s. %s chunks scanned in %s second%s",
                 self.options['name'], chunkcount, t,
                 "s" if t != 1 else "")
 
@@ -843,10 +844,10 @@ class TileSet(object):
 
         # Create the actual image now
         img = Image.new("RGBA", (384, 384), self.options['bgcolor'])
-        
+
         # we'll use paste (NOT alpha_over) for quadtree generation because
         # this is just straight image stitching, not alpha blending
-        
+
         for path in quadPath_filtered:
             try:
                 quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
@@ -865,7 +866,7 @@ class TileSet(object):
                 img.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
             else: # png
                 img.save(tmppath, "png")
-                
+
             if self.options['optimizeimg']:
                 optimize_image(tmppath, imgformat, self.options['optimizeimg'])
 
@@ -953,7 +954,7 @@ class TileSet(object):
             ## Which chunk this is:
             #draw.text((96,48), "C: %s,%s" % (chunkx, chunkz), fill='red')
             #draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
-        
+
         # Save them
         with FileReplacer(imgpath) as tmppath:
             if self.imgextension == 'jpg':
@@ -1006,7 +1007,7 @@ class TileSet(object):
                 if e.errno != errno.ENOENT:
                     raise
                 tile_mtime = 0
-            
+
             max_chunk_mtime = max(c[5] for c in get_chunks_by_tile(tileobj, self.regionset))
 
             if tile_mtime > 120 + max_chunk_mtime:
@@ -1032,7 +1033,7 @@ class TileSet(object):
                 # This doesn't need rendering. Return mtime to parent in case
                 # its mtime is less, indicating the parent DOES need a render
                 yield path, max_chunk_mtime, False
-        
+
         else:
             # A composite-tile.
             render_me = False
@@ -1125,7 +1126,7 @@ def convert_coords(chunkx, chunkz):
     """Takes a coordinate (chunkx, chunkz) where chunkx and chunkz are
     in the chunk coordinate system, and figures out the row and column
     in the image each one should be. Returns (col, row)."""
-    
+
     # columns are determined by the sum of the chunk coords, rows are the
     # difference
     # change this function, and you MUST change unconvert_coords
@@ -1133,7 +1134,7 @@ def convert_coords(chunkx, chunkz):
 
 def unconvert_coords(col, row):
     """Undoes what convert_coords does. Returns (chunkx, chunkz)."""
-    
+
     # col + row = chunkz + chunkz => (col + row)/2 = chunkz
     # col - row = chunkx + chunkx => (col - row)/2 = chunkx
     return ((col - row) / 2, (col + row) / 2)
@@ -1147,7 +1148,7 @@ def unconvert_coords(col, row):
 def get_tiles_by_chunk(chunkcol, chunkrow):
     """For the given chunk, returns an iterator over Render Tiles that this
     chunk touches.  Iterates over (tilecol, tilerow)
-    
+
     """
     # find tile coordinates. Remember tiles are identified by the
     # address of the chunk in their upper left corner.
@@ -1178,7 +1179,7 @@ def get_chunks_by_tile(tile, regionset):
 
     This function is expected to return the chunk sections in the correct order
     for rendering, i.e. back to front.
-    
+
     Returns an iterator over chunks tuples where each item is
     (col, row, chunkx, chunky, chunkz, mtime)
     """
@@ -1229,7 +1230,7 @@ class RendertileSet(object):
     """This object holds a set of render-tiles using a quadtree data structure.
     It is typically used to hold tiles that need rendering. This implementation
     collapses subtrees that are completely in or out of the set to save memory.
-    
+
     Each instance of this class is a node in the tree, and therefore each
     instance is the root of a subtree.
 
@@ -1242,7 +1243,7 @@ class RendertileSet(object):
     level; level 1 nodes keep track of leaf image state. Level 2 nodes keep
     track of level 1 state, and so fourth.
 
-    
+
     """
     __slots__ = ("depth", "children")
     def __init__(self, depth):
@@ -1314,10 +1315,10 @@ class RendertileSet(object):
 
     def add(self, path):
         """Marks the requested leaf node as in this set
-        
+
         Path is an iterable of integers representing the path to the leaf node
         that is to be added to the set
-        
+
         """
         path = list(path)
         assert len(path) == self.depth
@@ -1582,7 +1583,7 @@ class RenderTile(object):
 
     @classmethod
     def compute_path(cls, col, row, depth):
-        """Constructor that takes a col,row of a tile and computes the path. 
+        """Constructor that takes a col,row of a tile and computes the path.
 
         """
         assert col % 2 == 0
