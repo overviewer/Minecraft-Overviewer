@@ -29,6 +29,8 @@ class Observer(object):
         self.end_time = None
 
     def start(self, max_value):
+        """Signals the start of whatever process. Must be called before update
+        """
         self._set_max_value(max_value)
         self.start_time = time.time()
         self.update(0)
@@ -38,6 +40,9 @@ class Observer(object):
         return self.start_time is not None
 
     def finish(self):
+        """Signals the end of the processes, should be called after the
+        process is done.
+        """
         self.end_time = time.time()
 
     def is_finished(self):
@@ -47,16 +52,22 @@ class Observer(object):
         return self.is_started() and not self.is_finished()
 
     def add(self, amount):
+        """Shortcut to update by increments instead of absolute values. Zero
+        amounts are ignored.
+        """
         if amount:
             self.update(self.get_current_value() + amount)
 
     def update(self, current_value):
-        """
+        """Set the progress value. Should be between 0 and max_value. Returns
+        whether this update is actually displayed.
         """
         self._current_value = current_value
         return False
 
     def get_percentage(self):
+        """Get the current progress percentage. Assumes 100% if max_value is 0
+        """
         if self.get_max_value() is 0:
             return 100.0
         else:
@@ -110,12 +121,13 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
     """Display progress through a progressbar.
     """
 
+    #the progress bar is only updated in increments of this for performance
     UPDATE_INTERVAL = 25
 
     def __init__(self, widgets=default_widgets, term_width=None, fd=sys.stderr):
         super(ProgressBarObserver, self).__init__(widgets=widgets,
             term_width=term_width, fd=fd)
-        self.last_update = -101
+        self.last_update = 0 - (self.UPDATE_INTERVAL + 1)
 
     def start(self, max_value):
         self._set_max_value(max_value)
