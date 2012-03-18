@@ -42,7 +42,17 @@ def load_region(fileobj):
     for accessing the chunks inside."""
     return MCRFileReader(fileobj)
 
-class CorruptNBTError(Exception):
+
+class CorruptionError(Exception):
+    pass
+class CorruptRegionError(CorruptionError):
+    """An exception raised when the MCRFileReader class encounters an
+    error during region file parsing.
+    """
+    pass
+class CorruptChunkError(CorruptionError):
+    pass
+class CorruptNBTError(CorruptionError):
     """An exception raised when the NBTFileReader class encounters
     something unexpected in an NBT file."""
     pass
@@ -180,16 +190,6 @@ class NBTFileReader(object):
         except (struct.error, ValueError), e:
             raise CorruptNBTError("could not parse nbt: %s" % (str(e),))
 
-class CorruptionError(Exception):
-    pass
-class CorruptRegionError(CorruptionError):
-    """An exception raised when the MCRFileReader class encounters an
-    error during region file parsing.
-    """
-    pass
-class CorruptChunkError(CorruptionError):
-    pass
-
 # For reference, the MCR format is outlined at
 # <http://www.minecraftwiki.net/wiki/Beta_Level_Format>
 class MCRFileReader(object):
@@ -215,7 +215,7 @@ class MCRFileReader(object):
         timestamp_data = self._file.read(4096)
         if not len(timestamp_data) == 4096:
             raise CorruptRegionError("invalid timestamp table")
-        
+
         # turn this data into a useful list
         self._locations = self._table_format.unpack(location_data)
         self._timestamps = self._table_format.unpack(timestamp_data)
@@ -289,7 +289,7 @@ class MCRFileReader(object):
             is_gzip = False
         else:
             # unsupported!
-            raise CorruptRegionError("unsupported chunk compression type: %i" % (compression))
+            raise CorruptRegionError("unsupported chunk compression type: %i (should be 1 or 2)" % (compression,))
         
         # turn the rest of the data into a StringIO object
         # (using data_length - 1, as we already read 1 byte for compression)
@@ -300,5 +300,7 @@ class MCRFileReader(object):
         
         try:
             return NBTFileReader(data, is_gzip=is_gzip).read_all()
+        except CorruptionError:
+            raise
         except Exception, e:
             raise CorruptChunkError("Misc error parsing chunk: " + str(e))

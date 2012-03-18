@@ -246,7 +246,7 @@ class RegionSet(object):
         # This is populated below. It is a mapping from (x,y) region coords to filename
         self.regionfiles = {}
 
-        # This holds up to 16 open regionfile objects
+        # This holds a cache of open regionfile objects
         self.regioncache = cache.LRUCache(size=16, destructor=lambda regionobj: regionobj.close())
         
         for x, y, regionfile in self._iterate_regionfiles():
@@ -319,8 +319,8 @@ class RegionSet(object):
         if regionfile is None:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist (and neither does its region)" % (x,z))
 
-        # Try 3 times to load and parse this chunk before giving up and raising
-        # an error
+        # Try a few times to load and parse this chunk before giving up and
+        # raising an error
         tries = 5
         while True:
             try:
@@ -337,8 +337,8 @@ class RegionSet(object):
                     time.sleep(0.5)
                     continue
                 else:
-                    logging.warning("Tried %d times to read chunk %d,%d but I got error %s",
-                            tries, x, z, e)
+                    logging.warning("Tried several times to read chunk %d,%d. Giving up.",
+                            x, z, e)
                     logging.debug("Full traceback:", exc_info=1)
                     # Let this exception propagate out through the C code into
                     # tileset.py, where it is caught and gracefully continues

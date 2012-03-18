@@ -127,7 +127,8 @@ class LRUCache(object):
 
     def __delitem__(self, key):
         # Used to flush the cache of this key
-        link = self.cache[key]
+        cache = self.cache
+        link = cache[key]
         del cache[key]
         link.left.right = link.right
         link.right.left = link.left
