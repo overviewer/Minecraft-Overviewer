@@ -180,10 +180,14 @@ class NBTFileReader(object):
         except (struct.error, ValueError), e:
             raise CorruptNBTError("could not parse nbt: %s" % (str(e),))
 
-class CorruptRegionError(Exception):
+class CorruptionError(Exception):
+    pass
+class CorruptRegionError(CorruptionError):
     """An exception raised when the MCRFileReader class encounters an
     error during region file parsing.
     """
+    pass
+class CorruptChunkError(CorruptionError):
     pass
 
 # For reference, the MCR format is outlined at
@@ -294,4 +298,7 @@ class MCRFileReader(object):
             raise CorruptRegionError("chunk length is invalid")
         data = StringIO.StringIO(data)
         
-        return NBTFileReader(data, is_gzip=is_gzip).read_all()
+        try:
+            return NBTFileReader(data, is_gzip=is_gzip).read_all()
+        except Exception, e:
+            raise CorruptChunkError("Misc error parsing chunk: " + str(e))

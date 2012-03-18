@@ -59,10 +59,10 @@ class LRUCache(object):
         """
         self.cache = {}
 
-        self.listhead = LRUCache._LinkNode()
-        self.listtail = LRUCache._LinkNode()
         # Two sentinel nodes at the ends of the linked list simplify boundary
         # conditions in the code below.
+        self.listhead = LRUCache._LinkNode()
+        self.listtail = LRUCache._LinkNode()
         self.listhead.right = self.listtail
         self.listtail.left = self.listhead
 
@@ -124,6 +124,18 @@ class LRUCache(object):
         tail.left = link
 
         cache[key] = link
+
+    def __delitem__(self, key):
+        # Used to flush the cache of this key
+        link = self.cache[key]
+        del cache[key]
+        link.left.right = link.right
+        link.right.left = link.left
+        
+        # Call the destructor
+        d = self.destructor
+        if d:
+            d(link.value)
 
 # memcached is an option, but unless your IO costs are really high, it just
 # ends up adding overhead and isn't worth it.

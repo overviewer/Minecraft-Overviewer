@@ -29,6 +29,7 @@ from itertools import product, izip
 from PIL import Image
 
 from .util import roundrobin
+from . import nbt
 from .files import FileReplacer
 from .optimizeimages import optimize_image
 import c_overviewer
@@ -934,9 +935,17 @@ class TileSet(object):
                 max_chunk_mtime = chunk_mtime
 
             # draw the chunk!
-            c_overviewer.render_loop(self.regionset, chunkx, chunky, chunkz,
-                    tileimg, xpos, ypos, self.options['rendermode'],
-                    self.textures)
+            try:
+                c_overviewer.render_loop(self.regionset, chunkx, chunky,
+                        chunkz, tileimg, xpos, ypos,
+                        self.options['rendermode'], self.textures)
+            except nbt.CorruptionError:
+                # A warning and traceback was already printed by world.py's
+                # get_chunk()
+                logging.debug("Skipping corrupt chunk at %s,%s", chunkx, chunkz)
+            except Exception, e:
+                logging.warning("Could not render chunk %s,%s for some reason. I'm going to ignore this and continue", chunkx, chunkz)
+                logging.debug("Full error was:", exc_info=1)
 
             ## Semi-handy routine for debugging the drawing routine
             ## Draw the outline of the top of the chunk
