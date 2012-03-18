@@ -42,7 +42,7 @@ A more advanced filter may also look at other entity fields, such as the sign te
     def goldFilter(poi):
         "Gold"
         return poi['id'] == 'Sign' and (\
-            'gold' in poi['Text1] or
+            'gold' in poi['Text1'] or
             'gold' in poi['Text2'])
            
 This looks for the word 'gold' in either the first or second line of the signtext.
