@@ -103,17 +103,35 @@ class ProgressBarWidgetHFill(object):
 
 class ETA(ProgressBarWidget):
     "Widget for the Estimated Time of Arrival"
+    def __init__(self, prefix='ETA: ', format='%H:%M:%S'):
+        self.format = format
+        self.prefix = prefix
+
     def format_time(self, seconds):
-        return time.strftime('%H:%M:%S', time.gmtime(seconds))
+        return time.strftime(self.format, time.gmtime(seconds))
+
     def update(self, pbar):
         if pbar.currval == 0:
-            return 'ETA:  --:--:--'
+            return self.prefix + '-' * len(self.format)
         elif pbar.finished:
             return 'Time: %s' % self.format_time(pbar.seconds_elapsed)
         else:
-            elapsed = pbar.seconds_elapsed
-            eta = elapsed * pbar.maxval / pbar.currval - elapsed
-            return 'ETA:  %s' % self.format_time(eta)
+            eta = pbar.seconds_elapsed * pbar.maxval / pbar.currval - pbar.seconds_elapsed
+            return self.prefix + self.format_time(eta)
+
+class GenericSpeed(ProgressBarWidget):
+    "Widget for showing the values/s"
+    def __init__(self, format='%6.2f ?/s'):
+        if callable(format):
+            self.format = format
+        else:
+            self.format = lambda speed: format % speed
+    def update(self, pbar):
+        if pbar.seconds_elapsed < 2e-6:
+            speed = 0.0
+        else:
+            speed = float(pbar.currval) / pbar.seconds_elapsed
+        return self.format(speed)
 
 class FileTransferSpeed(ProgressBarWidget):
     "Widget for showing the transfer speed (useful for file transfers)."
@@ -145,8 +163,16 @@ class RotatingMarker(ProgressBarWidget):
 
 class Percentage(ProgressBarWidget):
     "Just the percentage done."
+    def __init__(self, format='%3d%%'):
+        self.format = format
+
     def update(self, pbar):
-        return '%3d%%' % pbar.percentage()
+        return self.format % pbar.percentage()
+
+class CounterWidget(ProgressBarWidget):
+    "Simple display of (just) the current value"
+    def update(self, pbar):
+        return str(pbar.currval)
 
 class FractionWidget(ProgressBarWidget):
     def __init__(self, sep=' / '):

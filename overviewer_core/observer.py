@@ -114,9 +114,13 @@ class LoggingObserver(Observer):
         else:
             return cur_val - self.last_update > 100
 
-default_widgets = ['Rendering: ', progressbar.FractionWidget(), ' (',
-    progressbar.Percentage(), ') ', progressbar.Bar(left='[', right=']'),
-    ' ', progressbar.ETA()]
+default_widgets = [
+    progressbar.Percentage(), ' ',
+    progressbar.Bar(marker='=', left='[', right=']'), ' ',
+    progressbar.CounterWidget(), ' ',
+    progressbar.GenericSpeed(format='%.2ft/s'), ' ',
+    progressbar.ETA(prefix='eta ')
+]
 class ProgressBarObserver(progressbar.ProgressBar, Observer):
     """Display progress through a progressbar.
     """
@@ -131,6 +135,7 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
 
     def start(self, max_value):
         self._set_max_value(max_value)
+        logging.info("Rendering %d total tiles." % max_value)
         super(ProgressBarObserver, self).start()
 
     def is_started(self):
