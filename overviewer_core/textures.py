@@ -290,7 +290,7 @@ class Textures(object):
         if hasattr(self, "lightcolor"):
             return self.lightcolor
         try:
-            lightcolor = list(_load_image("light_normal.png").getdata())
+            lightcolor = list(self.load_image("light_normal.png").getdata())
         except Exception:
             logging.warning("Light color image could not be found.")
             lightcolor = None
