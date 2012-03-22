@@ -45,6 +45,7 @@
 
 from settingsValidators import *
 import util
+from observer import ProgressBarObserver, LoggingObserver
 
 # renders is a dictionary mapping strings to dicts. These dicts describe the
 # configuration for that render. Therefore, the validator for 'renders' is set
@@ -76,7 +77,7 @@ renders = Setting(required=True, default=util.OrderedDict(),
             "crop": Setting(required=False, validator=validateCrop, default=None),
             "changelist": Setting(required=False, validator=validateStr, default=None),
             "markers": Setting(required=False, validator=validateMarkers, default=[]),
-            
+
             # Remove this eventually (once people update their configs)
             "worldname": Setting(required=False, default=None,
                 validator=error("The option 'worldname' is now called 'world'. Please update your config files")),
@@ -93,3 +94,8 @@ processes = Setting(required=True, validator=int, default=-1)
 # memcached is an option, but unless your IO costs are really high, it just
 # ends up adding overhead and isn't worth it.
 memcached_host = Setting(required=False, validator=str, default=None)
+
+if platform.system() == 'Windows' or not sys.stderr.isatty():
+    observer = LoggingObserver()
+else:
+    observer = ProgressBarObserver()

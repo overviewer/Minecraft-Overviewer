@@ -397,11 +397,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     else:
         dispatch = dispatcher.MultiprocessingDispatcher(
             local_procs=config['processes'])
-    if platform.system() == 'Windows' or not sys.stderr.isatty():
-        obs = observer.LoggingObserver()
-    else:
-        obs = observer.ProgressBarObserver()
-    dispatch.render_all(tilesets, obs)
+    dispatch.render_all(tilesets, config['observer'])
     dispatch.close()
 
     assetMrg.finalize(tilesets)
