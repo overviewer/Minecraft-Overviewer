@@ -759,8 +759,18 @@ def grass(self, blockid, data):
 block(blockid=3, top_index=2)
 # cobblestone
 block(blockid=4, top_index=16)
-# wooden plank
-block(blockid=5, top_index=4)
+
+# wooden planks
+@material(blockid=5, data=range(4), solid=True)
+def wooden_planks(self, blockid, data):
+    if data == 0: # normal
+        return self.build_block(self.terrain_images[4],self.terrain_images[4])
+    if data == 1: # pine
+        return self.build_block(self.terrain_images[198],self.terrain_images[198])
+    if data == 2: # birch
+        return self.build_block(self.terrain_images[214],self.terrain_images[214])
+    if data == 3: # jungle wood
+        return self.build_block(self.terrain_images[199],self.terrain_images[199])
 
 @material(blockid=6, data=range(16), transparent=True)
 def saplings(self, blockid, data):
@@ -910,7 +920,16 @@ def furnaces(self, blockid, data):
         return self.build_full_block(top, None, None, side, side)
 
 # sandstone
-block(blockid=24, top_index=176, side_index=192)
+@material(blockid=24, data=range(3), solid=True)
+def wood(self, blockid, data):
+    top = self.terrain_images[176]
+    if data == 0: # normal
+        return self.build_block(top, self.terrain_images[192])
+    if data == 1: # hieroglyphic
+        return self.build_block(top, self.terrain_images[229])
+    if data == 2: # soft
+        return self.build_block(top, self.terrain_images[230])
+
 # note block
 block(blockid=25, top_index=74)
 
