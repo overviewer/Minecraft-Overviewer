@@ -1491,6 +1491,9 @@ block(blockid=52, top_index=34, transparent=True)
 def stairs(self, blockid, data):
 
     # first, rotations
+    # preserve the upside-down bit
+    upside_down = data & 0x4
+    data = data & 0x3
     if self.rotation == 1:
         if data == 0: data = 2
         elif data == 1: data = 3
@@ -1506,6 +1509,7 @@ def stairs(self, blockid, data):
         elif data == 1: data = 2
         elif data == 2: data = 0
         elif data == 3: data = 1
+    data = data | upside_down
 
     if blockid == 53: # wooden
         texture = self.terrain_images[4]
