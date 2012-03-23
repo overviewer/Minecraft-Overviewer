@@ -562,7 +562,11 @@ class RotatedRegionSet(RegionSetWrapper):
                 array = numpy.swapaxes(array, 0,2)
                 section[arrayname] = array
         chunk_data['Sections'] = newsections
-        chunk_data['Biomes'] = numpy.rot90(chunk_data['Biomes'], self.north_dir)
+        
+        # same as above, for biomes (Z/X indexed)
+        biomes = numpy.swapaxes(chunk_data['Biomes'], 0, 1)
+        biomes = numpy.rot90(biomes, self.north_dir)
+        chunk_data['Biomes'] = numpy.swapaxes(biomes, 0, 1)
         return chunk_data
 
     def get_chunk_mtime(self, x, z):
