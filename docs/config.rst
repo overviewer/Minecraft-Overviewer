@@ -499,6 +499,15 @@ Base
     according to its defined texture, and applies basic occluding to hidden
     blocks.
 
+    **Options**
+
+    biomes
+        Whether to render biome coloring or not. Default: True.
+
+        Set to False to disable biomes::
+
+            nobiome_smooth_lighting = [Base(biomes=False), EdgeLines(), SmoothLighting()]
+
 Nether
     This doesn't affect the drawing, but occludes blocks that are connected to
     the ceiling.
