@@ -42,7 +42,7 @@ A more advanced filter may also look at other entity fields, such as the sign te
     def goldFilter(poi):
         "Gold"
         return poi['id'] == 'Sign' and (\
-            'gold' in poi['Text1] or
+            'gold' in poi['Text1'] or
             'gold' in poi['Text2'])
            
 This looks for the word 'gold' in either the first or second line of the signtext.
@@ -64,6 +64,32 @@ rendered map.  For example::
             'markers': [allFilter, anotherFilter],
     }
 
+
+
+
+Generating the POI Markers
+==========================
+
+genPOI.py
+---------
+
+In order to actually generate the markers and add them to your map, the script 
+genPOI.py must be run. For example::
+
+    genpoi.py --config=/path/to/your/config.file
+
+.. note::
+    Markers will not be updated or added during a regular overviewer.py 
+    map render!
+
+This will generate the necessary JavaScript files needed in your config file's
+outputdir.
+
+Options
+-------
+
+genPOI.py has a single option:: --config. You should use the same configfile as 
+used for your normal renders.
 
 
 .. _predefined_filter_functions:
