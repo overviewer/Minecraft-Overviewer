@@ -46,6 +46,8 @@
 from settingsValidators import *
 import util
 from observer import ProgressBarObserver, LoggingObserver
+import platform
+import sys
 
 # renders is a dictionary mapping strings to dicts. These dicts describe the
 # configuration for that render. Therefore, the validator for 'renders' is set
@@ -96,6 +98,8 @@ processes = Setting(required=True, validator=int, default=-1)
 memcached_host = Setting(required=False, validator=str, default=None)
 
 if platform.system() == 'Windows' or not sys.stderr.isatty():
-    observer = LoggingObserver()
+    obs = LoggingObserver()
 else:
-    observer = ProgressBarObserver()
+    obs = ProgressBarObserver()
+
+observer = Setting(required=True, validator=validateObserver, default=obs)
