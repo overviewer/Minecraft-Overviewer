@@ -281,6 +281,7 @@ class RegionSet(object):
     def _get_regionobj(self, regionfilename):
         # Check the cache first. If it's not there, create the
         # nbt.MCRFileReader object, cache it, and return it
+        # May raise an nbt.CorruptRegionError
         try:
             return self.regioncache[regionfilename]
         except KeyError:
@@ -426,7 +427,11 @@ class RegionSet(object):
         """
 
         for (regionx, regiony), regionfile in self.regionfiles.iteritems():
-            mcr = self._get_regionobj(regionfile)
+            try:
+                mcr = self._get_regionobj(regionfile)
+            except nbt.CorruptRegionError:
+                logging.warning("Found a corrupt region file at %s,%s. Skipping it.", regionx, regiony)
+                continue
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
@@ -440,7 +445,12 @@ class RegionSet(object):
         regionfile = self._get_region_path(x,z)
         if regionfile is None:
             return None
-        data = self._get_regionobj(regionfile)
+        try:
+            data = self._get_regionobj(regionfile)
+        except nbt.CorruptRegionError:
+            logging.warning("Ignoring request for chunk %s,%s; region %s,%s seems to be corrupt",
+                    x,z, x//32,z//32)
+            return None
         if data.chunk_exists(x,z):
             return data.get_chunk_timestamp(x,z)
         return None
