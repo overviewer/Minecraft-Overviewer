@@ -48,11 +48,15 @@ def main():
 
     parser = OptionParser(usage=helptext)
     parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
+    parser.add_option("--quiet", dest="quiet", action="count", help="Reduce logging output")
 
     options, args = parser.parse_args()
     if not options.config:
         parser.print_help()
         return
+
+    if options.quiet > 0:
+        logger.configure(logging.WARN, False)
 
     # Parse the config file
     mw_parser = configParser.MultiWorldParser()
