@@ -921,7 +921,7 @@ def furnaces(self, blockid, data):
 
 # sandstone
 @material(blockid=24, data=range(3), solid=True)
-def wood(self, blockid, data):
+def sandstone(self, blockid, data):
     top = self.terrain_images[176]
     if data == 0: # normal
         return self.build_block(top, self.terrain_images[192])
