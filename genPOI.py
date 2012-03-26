@@ -39,6 +39,34 @@ def handleSigns(rset, outputdir, render, rname):
         rset._pois['TileEntities'] += data['TileEntities']
         rset._pois['Entities']     += data['Entities']
 
+def handlePlayers(rset, render, worldpath):
+    if not hasattr(rset, "_pois"):
+        rset._pois = dict(TileEntities=[], Entities=[])
+    dimension = {'overworld': 0,
+                 'nether': -1,
+                 'end': 1,
+                 'default': 0}[render['dimension']]
+    playerdir = os.path.join(worldpath, "players")
+    rset._pois['Players'] = []
+    for playerfile in os.listdir(playerdir):
+        data = nbt.load(os.path.join(playerdir, playerfile))[1]
+        playername = playerfile.split(".")[0]
+        if data['Dimension'] == dimension:
+            # Position at last logout
+            data['id'] = "Player"
+            data['EntityId'] = playername
+            data['x'] = int(data['Pos'][0])
+            data['y'] = int(data['Pos'][1])
+            data['z'] = int(data['Pos'][2])
+            rset._pois['Players'].append(data)
+        if "SpawnX" in data and dimension == 0:
+            # Spawn position (bed or main spawn)
+            spawn = {"id": "PlayerSpawn",
+                     "EntityId": playername,
+                     "x": data['SpawnX'],
+                     "y": data['SpawnY'],
+                     "z": data['SpawnZ']}
+            rset._pois['Players'].append(spawn)
 
 def main():
     helptext = """genPOI
@@ -102,6 +130,7 @@ def main():
                 markers[rname] = [dict(groupName=name, displayName=f.__doc__),]
 
         handleSigns(rset, os.path.join(destdir, rname), render, rname)
+        handlePlayers(rset, render, worldpath)
 
     logging.info("Done scanning regions")
     logging.info("Writing out javascript files")
@@ -111,6 +140,9 @@ def main():
         name = flter.__name__ + hex(hash(flter))[-4:] + "_" + hex(hash(rset))[-4:]
         markerSetDict[name] = dict(created=False, raw=[])
         for poi in rset._pois['TileEntities']:
+            if flter(poi):
+                markerSetDict[name]['raw'].append(poi)
+        for poi in rset._pois['Players']:
             if flter(poi):
                 markerSetDict[name]['raw'].append(poi)
     #print markerSetDict
