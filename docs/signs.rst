@@ -87,10 +87,9 @@ POI markers. For example::
 genPOI.py
 ---------
 
-The genPOI.py script is also provided, and can be used directly. For example:8 
-genPOI.py must be run. For example::
-
-    genpoi.py --config=/path/to/your/config.file
+The genPOI.py script is also provided, and can be used directly. For example:: 
+    
+    /path/to/overviewer/genpoi.py --config=/path/to/your/config.file
 
 
 
