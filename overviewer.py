@@ -32,7 +32,7 @@ import subprocess
 import multiprocessing
 import time
 import logging
-from optparse import OptionParser
+from optparse import OptionParser, OptionGroup
 
 from overviewer_core import util
 from overviewer_core import logger
@@ -58,7 +58,9 @@ def main():
     avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right', 'auto']
 
     # Parse for basic options
-    parser = OptionParser(usage=helptext)
+    parser = OptionParser(usage=helptext, add_help_option=False)
+    parser.add_option("-h", "--help", dest="help", action="store_true",
+            help="show this help message and exit")
     parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
     parser.add_option("-p", "--processes", dest="procs", action="store", type="int",
             help="The number of local worker processes to spawn. Defaults to the number of CPU cores your computer has")
@@ -87,7 +89,27 @@ def main():
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0,
             help="Print more output. You can specify this option multiple times.")
 
+    # create a group for "plugin exes" (the concept of a plugin exe is only loosly defined at this point)
+    exegroup = OptionGroup(parser, "Other Scripts",
+            "These scripts may accept different arguments than the ones listed above")
+    exegroup.add_option("--genpoi", dest="genpoi", action="store_true",
+            help="Runs the genPOI script")
+
+    parser.add_option_group(exegroup)
+
     options, args = parser.parse_args()
+
+    # first thing to do is check for stuff in the exegroup:
+    if options.genpoi:
+        # remove the "--genpoi" option from sys.argv before running genPI
+        sys.argv.remove("--genpoi")
+        sys.path.append(".")
+        g = __import__("genPOI", {}, {})
+        g.main()
+        return 0
+    if options.help:
+        parser.print_help()
+        return 0
 
     # re-configure the logger now that we've processed the command line options
     logger.configure(logging.INFO + 10*options.quiet - 10*options.verbose,
