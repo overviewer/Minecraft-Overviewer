@@ -108,6 +108,7 @@ if py2exe is not None:
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/web_assets', 'web_assets')
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/js_src', 'js_src')
     setup_kwargs['data_files'] += recursive_data_files('contrib', 'contrib')
+    setup_kwargs['data_files'] += [('', ['genPOI.py'])]
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
