@@ -184,6 +184,15 @@ is typically correct.
     This option is automatically activated for first-time renders. This option
     conflicts with :option:`--check-tiles` and :option:`--no-tile-checks`
 
+.. cmdoption:: --genpoi
+    
+    .. note::
+        Don't use this flag without first reading :ref:`signsmarkers`!
+
+    Generates the POI markers for your map. This option does not do any tile/map 
+    generation, and ONLY generates markers. See :ref:`signsmarkers` on how to 
+    configure POI options.
+
 
 .. cmdoption:: -p <procs>, --processes <procs>
 

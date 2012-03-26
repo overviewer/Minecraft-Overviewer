@@ -70,17 +70,28 @@ rendered map.  For example::
 Generating the POI Markers
 ==========================
 
+.. note::
+    Markers will not be updated or added during a regular overviewer.py map render!
+    You must use one of the following options to generate your markers.
+
+The --genpoi option
+-------------------
+Running overviewer.py with the :option:`--genpoi` option flag will generate your 
+POI markers. For example::
+
+     /path/to/overviewer.py --config /path/to/your/config/file.conf --genpoi
+
+.. note::
+    A --genpoi run will NOT generate a map render, it will only generate markers.
+
 genPOI.py
 ---------
 
-In order to actually generate the markers and add them to your map, the script 
-genPOI.py must be run. For example::
+The genPOI.py script is also provided, and can be used directly. For example:: 
+    
+    /path/to/overviewer/genpoi.py --config=/path/to/your/config.file
 
-    genpoi.py --config=/path/to/your/config.file
 
-.. note::
-    Markers will not be updated or added during a regular overviewer.py 
-    map render!
 
 This will generate the necessary JavaScript files needed in your config file's
 outputdir.
@@ -88,7 +99,7 @@ outputdir.
 Options
 -------
 
-genPOI.py has a single option:: --config. You should use the same configfile as 
+genPOI.py has a single option :option:`--config`. You should use the same configfile as 
 used for your normal renders.
 
 
