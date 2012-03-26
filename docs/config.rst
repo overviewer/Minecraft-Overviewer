@@ -181,12 +181,27 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
     This specifies the number of worker processes to spawn on the local machine
     to do work. It defaults to the number of CPU cores you have, if not
     specified.
- 
+
     This can also be specified with :option:`--processes <-p>`
 
     e.g.::
 
         processes = 2
+
+.. _observer:
+
+``observer = <observer object>``
+    This lets you configure how the progress of the render is reported. The
+    default is to display a progress bar, unless run on Windows or with stderr
+    redirected to a file. The default value will probably be fine for most
+    people, but advanced users may want to make their own progress reporter (for
+    a web service or something like that) or you may want to force a particular
+    observer to be used. The observer object is expected to have at least ``start``,
+    ``add``, ``update``, and ``finish`` methods.
+
+    e.g.::
+
+        observer = ProgressBarObserver()
 
 .. _outputdir:
 
@@ -253,7 +268,7 @@ values. The valid configuration keys are listed below.
     This is which rendermode to use for this render. There are many rendermodes
     to choose from. This can either be a rendermode object, or a string, in
     which case the rendermode object by that name is used.
-    
+
     e.g.::
 
         "rendermode": "normal",
@@ -291,7 +306,7 @@ values. The valid configuration keys are listed below.
             Selecting this rendermode doesn't automatically render your nether
             dimension.  Be sure to also set the
             :ref:`dimension<option_dimension>` option to 'nether'.
-        
+
     ``"nether_lighting"``
         Similar to "nether" but with blocky lighting.
 
@@ -302,9 +317,9 @@ values. The valid configuration keys are listed below.
         A cave render with depth tinting (blocks are tinted with a color
         dependent on their depth, so it's easier to tell overlapping caves
         apart)
-    
+
     **Default:** ``"normal"``
-    
+
     .. note::
 
         The value for the 'rendermode' key can be either a *string* or
@@ -313,8 +328,8 @@ values. The valid configuration keys are listed below.
         objects.  See :ref:`customrendermodes` for more information.
 
 ``northdirection``
-    This is direction that north will be rendered. This north direction will 
-    match the established north direction in the game where the sun rises in the 
+    This is direction that north will be rendered. This north direction will
+    match the established north direction in the game where the sun rises in the
     east and sets in the west.
 
     Here are the valid north directions:
@@ -327,27 +342,27 @@ values. The valid configuration keys are listed below.
     **Default:** ``"upper-left"``
 
 ``rerenderprob``
-    This is the probability that a tile will be rerendered even though there may 
-    have been no changes to any blocks within that tile. Its value should be a 
+    This is the probability that a tile will be rerendered even though there may
+    have been no changes to any blocks within that tile. Its value should be a
     floating point number between 0.0 and 1.0.
 
     **Default:** ``0``
 
 ``imgformat``
-    This is which image format to render the tiles into. Its value should be a 
-    string containing "png", "jpg", or "jpeg". 
+    This is which image format to render the tiles into. Its value should be a
+    string containing "png", "jpg", or "jpeg".
 
     **Default:** ``"png"``
 
 ``imgquality``
-    This is the image quality used when saving the tiles into the JPEG image 
+    This is the image quality used when saving the tiles into the JPEG image
     format. Its value should be an integer between 0 and 100.
 
     **Default:** ``95``
 
 ``bgcolor``
-    This is the background color to be displayed behind the map. Its value 
-    should be either a string in the standard HTML color syntax or a 4-tuple in 
+    This is the background color to be displayed behind the map. Its value
+    should be either a string in the standard HTML color syntax or a 4-tuple in
     the format of (r,b,g,a). The alpha entry should be set to 0.
 
     **Default:** ``#1a1a1a``
@@ -414,7 +429,7 @@ values. The valid configuration keys are listed below.
     configuration file. If you use :option:`--forcerender`, then all 3 of those
     renders get re-rendered completely. However, if you just need one of them
     re-rendered, that's unnecessary extra work.
-    
+
     If you set ``'forcerender': True,`` on just one of those renders, then just
     that one gets re-rendered completely. The other two render normally (only
     tiles that need updating are rendered).
@@ -454,7 +469,7 @@ values. The valid configuration keys are listed below.
 
 ``markers``
     This controls the display of markers, signs, and other points of interest
-    in the output HTML.  It should be a list of filter functions.  
+    in the output HTML.  It should be a list of filter functions.
 
     .. note::
 
@@ -462,7 +477,7 @@ values. The valid configuration keys are listed below.
        markers and signs on our map, you must also run the genPO script.  See
        the :doc:`Signs and markers<signs>` section for more details and documenation.
 
-    
+
     **Default:** ``[]`` (an empty list)
 
 .. _customrendermodes:
@@ -532,7 +547,7 @@ EdgeLines
     the background.
 
     **Options**
-    
+
     opacity
         The darkness of the edge lines, from 0.0 to 1.0. Default: 0.15
 
@@ -588,9 +603,9 @@ MineralOverlay
     Color the map according to what minerals can be found
     underneath. Either use this on top of other modes, or on top of
     ClearBase to create a pure overlay.
-    
+
     **Options**
-    
+
     minerals
         A list of (blockid, (r, g, b)) tuples to use as colors. If not
         provided, a default list of common minerals is used.
