@@ -124,14 +124,14 @@ class Textures(object):
 
         * The overviewer_core/data/textures dir
         
-        In all of these, files are searched for in '.', 'misc/', and
+        In all of these, files are searched for in '.', 'anim', 'misc/', and
         'environment/'.
         
         """
 
         # a list of subdirectories to search for a given file,
         # after the obvious '.'
-        search_dirs = ['misc', 'environment']
+        search_dirs = ['anim', 'misc', 'environment']
         search_zip_paths = [filename,] + [d + '/' + filename for d in search_dirs]
         def search_dir(base):
             """Search the given base dir for filename, in search_dirs."""
