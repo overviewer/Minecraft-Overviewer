@@ -312,6 +312,8 @@ overviewer.views.SignControlView = Backbone.View.extend({
                     if (entity['id'] == 'Player') {
                         iconURL = "http://overviewer.org/avatar/"
                             + entity['EntityId'];
+                    } else if (entity['id'] == 'PlayerSpawn') {
+                        iconURL = overviewerConfig.CONST.image.bedMarker;
                     } else if (entity['id'] == 'Sign') {
                         iconURL = overviewerConfig.CONST.image.signMarker;
                     } else {
