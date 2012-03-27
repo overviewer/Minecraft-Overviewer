@@ -144,6 +144,8 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
     def finish(self):
         self._end_time = time.time()
         super(ProgressBarObserver, self).finish()
+        self.fd.write('\n')
+        logging.info("Rendering complete!")
 
     def update(self, current_value):
         if super(ProgressBarObserver, self).update(current_value):
