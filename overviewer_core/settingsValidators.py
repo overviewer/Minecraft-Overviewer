@@ -71,7 +71,7 @@ def validateRenderMode(mode):
 
     if isinstance(mode, rendermodes.RenderPrimitive):
         mode = [mode]
-    
+
     if not isinstance(mode, list):
         raise ValidationException("%r is not a valid list of rendermodes.  It should be a list"% mode)
 
@@ -119,7 +119,7 @@ def validateImgQuality(qual):
 
 def validateBGColor(color):
     """BG color must be an HTML color, with an option leading # (hash symbol)
-    returns an (r,b,g) 3-tuple  
+    returns an (r,b,g) 3-tuple
     """
     if type(color) == str:
         if color[0] != "#":
@@ -182,13 +182,19 @@ def validateCrop(value):
         value[1],value[3] = value[3],value[1]
     return value
 
+def validateObserver(observer):
+    if all(map(lambda m: hasattr(observer, m), ['start', 'add', 'update', 'finish'])):
+        return observer
+    else:
+        raise ValidationException("%r does not look like an observer" % repr(observer))
+
 def make_dictValidator(keyvalidator, valuevalidator):
     """Compose and return a dict validator -- a validator that validates each
     key and value in a dictionary.
 
     The arguments are the validator function to use for the keys, and the
     validator function to use for the values.
-    
+
     """
     def v(d):
         newd = util.OrderedDict()

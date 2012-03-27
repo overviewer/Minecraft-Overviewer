@@ -40,6 +40,7 @@ from overviewer_core import textures
 from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
 from overviewer_core import cache
+from overviewer_core import observer
 
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
@@ -53,7 +54,7 @@ def main():
         cpus = multiprocessing.cpu_count()
     except NotImplementedError:
         cpus = 1
-    
+
     #avail_rendermodes = c_overviewer.get_render_modes()
     avail_north_dirs = ['lower-left', 'upper-left', 'upper-right', 'lower-right', 'auto']
 
@@ -68,7 +69,7 @@ def main():
     # Options that only apply to the config-less render usage
     parser.add_option("--rendermodes", dest="rendermodes", action="store",
             help="If you're not using a config file, specify which rendermodes to render with this option. This is a comma-separated list.")
-    
+
     # Useful one-time render modifiers:
     parser.add_option("--forcerender", dest="forcerender", action="store_true",
             help="Force re-rendering the entire map.")
@@ -162,7 +163,7 @@ def main():
             parser.print_help()
             list_worlds()
         return 1
-    
+
     ##########################################################################
     # This section does some sanity checking on the command line options passed
     # in. It checks to see if --config was given that no worldname/destdir were
@@ -178,7 +179,7 @@ def main():
         logging.error("Cannot specify both --config AND a world + output directory on the command line.")
         parser.print_help()
         return 1
-    
+
     if not options.config and len(args) < 2:
         logging.error("You must specify both the world directory and an output directory")
         parser.print_help()
@@ -207,7 +208,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         worldpath, destdir = map(os.path.expanduser, args)
         logging.debug("Using %r as the world directory", worldpath)
         logging.debug("Using %r as the output directory", destdir)
-        
+
         mw_parser.set_config_item("worlds", {'world': worldpath})
         mw_parser.set_config_item("outputdir", destdir)
 
@@ -247,7 +248,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.exception("An error was encountered with your configuration. See the info below.")
         return 1
 
-       
+
 
     ############################################################
     # Final validation steps and creation of the destination directory
@@ -357,7 +358,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         except KeyError:
             w = world.World(render['world'])
             worldcache[render['world']] = w
-        
+
         # find or create the textures object
         texopts = util.dict_subset(render, ["texturepath", "bgcolor", "northdirection"])
         texopts_key = tuple(texopts.items())
@@ -385,12 +386,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         # If a crop is requested, wrap the regionset here
         if "crop" in render:
             rset = world.CroppedRegionSet(rset, *render['crop'])
-        
+
         # If this is to be a rotated regionset, wrap it in a RotatedRegionSet
         # object
         if (render['northdirection'] > 0):
             rset = world.RotatedRegionSet(rset, render['northdirection'])
-        logging.debug("Using RegionSet %r", rset) 
+        logging.debug("Using RegionSet %r", rset)
 
         ###############################
         # Do the final prep and create the TileSet object
@@ -411,25 +412,14 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     # Output initial static data and configuration
     assetMrg.initialize(tilesets)
-   
+
     # multiprocessing dispatcher
     if config['processes'] == 1:
         dispatch = dispatcher.Dispatcher()
     else:
-        dispatch = dispatcher.MultiprocessingDispatcher(local_procs=config['processes'])
-    last_status_print = time.time()
-    def print_status(phase, completed, total):
-        # phase is ignored.  it's always zero?
-        if (total == 0):
-            percent = 100
-            logging.info("Rendered %d of %d tiles.  %d%% complete", completed, total, percent)
-        elif total == None:
-            logging.info("Rendered %d tiles.", completed)
-        else:
-            percent = int(100* completed/total)
-            logging.info("Rendered %d of %d.  %d%% complete", completed, total, percent)
-
-    dispatch.render_all(tilesets, print_status)
+        dispatch = dispatcher.MultiprocessingDispatcher(
+            local_procs=config['processes'])
+    dispatch.render_all(tilesets, config['observer'])
     dispatch.close()
 
     assetMrg.finalize(tilesets)
@@ -447,7 +437,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
 def list_worlds():
     "Prints out a brief summary of saves found in the default directory"
-    print 
+    print
     worlds = world.get_worlds()
     if not worlds:
         print 'No world saves found in the usual place'

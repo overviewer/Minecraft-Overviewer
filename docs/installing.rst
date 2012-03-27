@@ -34,3 +34,22 @@ a ``python2.6`` package. To do this, add the following line to your
 
 Then run ``apt-get update`` and ``apt-get install minecraft-overviewer`` and
 you're all set! See you at the :doc:`running` page!
+
+CentOS / RHEL / Fedora
+======================
+We also provide a RPM repository with pre-built packages for users on RPM-based
+distros. Note that on CentOS 5, the `EPEL <http://fedoraproject.org/wiki/EPEL>`_
+repository is required to get Python 2.6 . To add the Overviewer repository to
+YUM, just run
+
+::
+
+    wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms/overviewer.repo
+
+Then to install Overviewer run
+
+::
+
+    yum install Minecraft-Overviewer
+
+After that head to the :doc:`running` page!
