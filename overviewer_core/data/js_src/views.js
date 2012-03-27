@@ -302,7 +302,6 @@ overviewer.views.SignControlView = Backbone.View.extend({
             }});
         }
 
-        iconURL = overviewerConfig.CONST.image.signMarker;
         //dataRoot['markers'] = [];
         //
         for (i in dataRoot) {
@@ -310,6 +309,14 @@ overviewer.views.SignControlView = Backbone.View.extend({
             if (!markersDB[groupName].created) {
                 for (j in markersDB[groupName].raw) {
                     var entity = markersDB[groupName].raw[j];
+                    if (entity['id'] == 'Player') {
+                        iconURL = "http://overviewer.org/avatar/"
+                            + entity['EntityId'];
+                    } else if (entity['id'] == 'Sign') {
+                        iconURL = overviewerConfig.CONST.image.signMarker;
+                    } else {
+                        iconURL = overviewerConfig.CONST.image.defaultMarker;
+                    }
                     var marker = new google.maps.Marker({
                             'position': overviewer.util.fromWorldToLatLng(entity.x,
                                 entity.y, entity.z, overviewer.mapView.options.currentTileSet),
@@ -318,9 +325,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
                             'icon':     iconURL,
                             'visible':  false
                     }); 
-                    if (entity['id'] == 'Sign') {
-                        overviewer.util.createMarkerInfoWindow(marker);
-                    }
+                    overviewer.util.createMarkerInfoWindow(marker);
                     jQuery.extend(entity, {markerObj: marker});
                 }
                 markersDB[groupName].created = true;
