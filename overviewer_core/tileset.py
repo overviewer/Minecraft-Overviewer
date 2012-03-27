@@ -943,7 +943,7 @@ class TileSet(object):
             except nbt.CorruptionError:
                 # A warning and traceback was already printed by world.py's
                 # get_chunk()
-                logging.debug("Skipping corrupt chunk at %s,%s", chunkx, chunkz)
+                logging.debug("Skipping the render of corrupt chunk at %s,%s and moving on.", chunkx, chunkz)
             except Exception, e:
                 logging.warning("Could not render chunk %s,%s for some reason. I'm going to ignore this and continue", chunkx, chunkz)
                 logging.debug("Full error was:", exc_info=1)

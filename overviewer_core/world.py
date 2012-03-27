@@ -289,7 +289,7 @@ class RegionSet(object):
             self.regioncache[regionfilename] = region
             return region
     
-    @log_other_exceptions
+    #@log_other_exceptions
     def get_chunk(self, x, z):
         """Returns a dictionary object representing the "Level" NBT Compound
         structure for a chunk given its x, z coordinates. The coordinates given
@@ -333,13 +333,20 @@ class RegionSet(object):
                     # Flush the region cache to possibly read a new region file
                     # header
                     logging.debug("Encountered a corrupt chunk at %s,%s. Flushing cache and retrying", x, z)
-                    logging.debug("Error was:", exc_info=1)
+                    #logging.debug("Error was:", exc_info=1)
                     del self.regioncache[regionfile]
                     time.sleep(0.5)
                     continue
                 else:
-                    logging.warning("Tried several times to read chunk %d,%d. Giving up.",
-                            x, z, e)
+                    if isinstance(e, nbt.CorruptRegionError):
+                        logging.warning("Tried several times to read chunk %d,%d. Its region (%d,%d) may be corrupt. Giving up.",
+                                x, z,x//32,z//32)
+                    elif isinstance(e, nbt.CorruptChunkError):
+                        logging.warning("Tried several times to read chunk %d,%d. It may be corrupt. Giving up.",
+                                x, z)
+                    else:
+                        logging.warning("Tried several times to read chunk %d,%d. Unknown error. Giving up.",
+                                x, z)
                     logging.debug("Full traceback:", exc_info=1)
                     # Let this exception propagate out through the C code into
                     # tileset.py, where it is caught and gracefully continues
