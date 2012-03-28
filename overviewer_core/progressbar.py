@@ -103,21 +103,23 @@ class ProgressBarWidgetHFill(object):
 
 class ETA(ProgressBarWidget):
     "Widget for the Estimated Time of Arrival"
-    def __init__(self, prefix='ETA: ', format='%H:%M:%S'):
-        self.format = format
+    def __init__(self, prefix='ETA: ', format=None):
         self.prefix = prefix
-
-    def format_time(self, seconds):
-        return time.strftime(self.format, time.gmtime(seconds))
+        if format:
+            self.format = format
+        else:
+            self.format = lambda seconds: '%02ih %02im %02is' % \
+                (seconds // 3600, (seconds % 3600) // 60, seconds % 60)
 
     def update(self, pbar):
-        if pbar.currval == 0:
-            return self.prefix + '-' * len(self.format)
-        elif pbar.finished:
-            return 'Time: %s' % self.format_time(pbar.seconds_elapsed)
+        if pbar.finished:
+            return 'Time: ' + self.format(pbar.seconds_elapsed)
         else:
-            eta = pbar.seconds_elapsed * pbar.maxval / pbar.currval - pbar.seconds_elapsed
-            return self.prefix + self.format_time(eta)
+            if pbar.currval:
+                eta = pbar.seconds_elapsed * pbar.maxval / pbar.currval - pbar.seconds_elapsed
+                return self.prefix + self.format(eta)
+            else:
+                return self.prefix + '-' * 6
 
 class GenericSpeed(ProgressBarWidget):
     "Widget for showing the values/s"
