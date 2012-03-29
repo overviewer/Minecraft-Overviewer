@@ -866,6 +866,9 @@ def wood(self, blockid, data):
 
 @material(blockid=18, data=range(16), transparent=True, solid=True)
 def leaves(self, blockid, data):
+    # mask out the bits 4 and 8
+    # they are used for player placed and check-for-decay blocks
+    data = data & 0x3
     t = self.terrain_images[52]
     if data == 1:
         # pine!
