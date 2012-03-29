@@ -1946,7 +1946,7 @@ def door(self, blockid, data):
     return img
 
 # ladder
-@material(blockd=65, data=[2, 3, 4, 5], transparent=True)
+@material(blockid=65, data=[2, 3, 4, 5], transparent=True)
 def ladder(self, blockid, data):
 
     # first rotations
@@ -1966,28 +1966,28 @@ def ladder(self, blockid, data):
         elif data == 4: data = 3
         elif data == 5: data = 2
 
-    img = Image.new("RGBA", (24,24), bgcolor)
-    raw_texture = terrain_images[83]
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    raw_texture = self.terrain_images[83]
 
     if data == 5:
         # normally this ladder would be obsured by the block it's attached to
         # but since ladders can apparently be placed on transparent blocks, we 
         # have to render this thing anyway.  same for data == 2
-        tex = transform_image_side(raw_texture)
+        tex = self.transform_image_side(raw_texture)
         alpha_over(img, tex, (0,6), tex)
-        return generate_texture_tuple(img, blockID)
+        return img
     if data == 2:
-        tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+        tex = self.transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
         alpha_over(img, tex, (12,6), tex)
-        return generate_texture_tuple(img, blockID)
+        return img
     if data == 3:
-        tex = transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+        tex = self.transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
         alpha_over(img, tex, (0,0), tex)
-        return generate_texture_tuple(img, blockID)
+        return img
     if data == 4:
-        tex = transform_image_side(raw_texture)
+        tex = self.transform_image_side(raw_texture)
         alpha_over(img, tex, (12,0), tex)
-        return generate_texture_tuple(img, blockID)
+        return img
 
 
 # wall signs
