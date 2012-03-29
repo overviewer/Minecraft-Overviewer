@@ -852,7 +852,7 @@ block(blockid=15, top_index=33)
 # coal ore
 block(blockid=16, top_index=34)
 
-@material(blockid=17, data=range(3), solid=True)
+@material(blockid=17, data=range(4), solid=True)
 def wood(self, blockid, data):
     top = self.terrain_images[21]
     if data == 0: # normal
