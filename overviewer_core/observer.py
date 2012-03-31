@@ -258,3 +258,57 @@ class JSObserver(Observer):
         else:
             return cur_val - self.last_update > 100
 
+class MultiplexingObserver(Observer):
+    """Combine multiple observers into one.
+    """
+    def __init__(self, *components):
+        self.components = components
+        super(MultiplexingObserver, self).__init__()
+
+    def start(self, max_value):
+        for o in self.components:
+            o.start(max_value)
+        super(MultiplexingObserver, self).start(max_value)
+
+    def finish(self):
+        for o in self.components:
+            o.finish()
+        super(MultiplexingObserver, self).finish()
+
+    def update(self, current_value):
+        for o in self.components:
+            o.update(current_value)
+        super(MultiplexingObserver, self).update(max_value)
+
+class ServerAnnounceObserver(Observer):
+    """Send the output to a Minecraft server via FIFO or stdin"""
+    def __init__(self, target='/dev/null', pct_interval=10):
+        self.pct_interval = pct_interval
+        self.target_handle = open(target, 'w')
+        self.last_update = 0
+        super(ServerAnnounceObserver, self).__init__()
+
+    def start(self, max_value):
+        self._send_output('Starting render of %d total tiles' % max_value)
+        super(ServerAnnounceObserver, self).start(max_value)
+
+    def finish(self):
+        self._send_output('Render complete!')
+        super(ServerAnnounceObserver, self).finish()
+        self.target_handle.close()
+
+    def update(self, current_value):
+        super(ServerAnnounceObserver, self).update(current_value)
+        if self._need_update(current_value):
+            self._send_output('Rendered %d of %d tiles, %d%% complete' %
+                (self.get_current_value(), self.get_max_value(),
+                    self.get_percentage()))
+
+    def _need_update(self):
+        return self.get_percentage() - \
+            (self.last_update * 100.0 / self.get_max_value()) >= self.pct_interval
+
+    def _send_output(self, output):
+        self.target_handle.write('say %s\n' % output)
+        self.target_handle.flush()
+
