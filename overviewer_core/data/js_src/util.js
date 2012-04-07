@@ -63,6 +63,10 @@ overviewer.util = {
             signs.registerEvents(signs);
         }
 
+        var overlayControl = new overviewer.views.OverlayControlView();
+        overlayControl.registerEvents(overlayControl);
+        overlayControl.render();
+
         var spawnmarker = new overviewer.views.SpawnIconView();
 
         // Update coords on mousemove
@@ -115,6 +119,8 @@ overviewer.util = {
 
         var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
         overviewer.collections.worlds.bind("add", worldSelector.render, worldSelector);
+
+        
 
         // hook up some events
 

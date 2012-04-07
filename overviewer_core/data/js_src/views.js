@@ -4,8 +4,11 @@ overviewer.views= {}
 overviewer.views.WorldView = Backbone.View.extend({
     initialize: function(opts) {
         this.options.mapTypes = [];
+        this.options.overlayMapTypes = [];
         this.options.mapTypeIds = [];
+        this.options.overlayMapTypeIds = [];
         this.model.get("tileSets").each(function(tset, index, list) {
+            // ignore overlays:
             var ops = {
                 getTileUrl: overviewer.gmap.getTileUrlGenerator(tset.get("path"), tset.get("base"), tset.get("imgextension")),
                 'tileSize':     new google.maps.Size(
@@ -21,10 +24,21 @@ overviewer.views.WorldView = Backbone.View.extend({
             newMapType.alt = "Minecraft " + tset.get("name") + " Map";
             newMapType.projection = new overviewer.classes.MapProjection();
     
-            this.options.mapTypes.push(newMapType);
-            this.options.mapTypeIds.push(overviewerConfig.CONST.mapDivId + this.model.get("name") + tset.get("name"));
+            if (tset.get("isOverlay")) {
+                this.options.overlayMapTypes.push(newMapType);
+                this.options.overlayMapTypeIds.push(overviewerConfig.CONST.mapDivId + this.model.get("name") + tset.get("name"));
+            } else {
+                this.options.mapTypes.push(newMapType);
+                this.options.mapTypeIds.push(overviewerConfig.CONST.mapDivId + this.model.get("name") + tset.get("name"));
+            }
 
         }, this);
+
+        this.model.get("tileSets").each(function(tset, index, list) {
+            // ignore non-overlays:
+            if (!tset.get("isOverlay")) { return; };
+
+        });
     },
 });
 
@@ -200,6 +214,112 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
 });
 
 
+/**
+ * OverlayControlView
+ */
+overviewer.views.OverlayControlView = Backbone.View.extend({
+    /** OverlayControlVIew::initialize
+     */
+    initialize: function(opts) {
+        $(this.el).addClass("customControl");
+        overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.el); 
+    },
+    registerEvents: function(me) {
+        overviewer.mapModel.bind("change:currentWorldView", me.render, me);
+        
+    },
+
+    /**
+     * OverlayControlView::render
+     */
+    render: function() {
+        this.el.innerHTML="";
+        
+        // hide all visible overlays:
+        overviewer.map.overlayMapTypes.clear()
+
+        // if this world has no overlays, don't create this control
+        var mapTypes = overviewer.mapModel.get('currentWorldView').options.overlayMapTypes;
+        if (mapTypes.length == 0) { return; }
+        
+        
+        var controlText = document.createElement('DIV');
+        controlText.innerHTML = "Overlays";
+        
+        var controlBorder = document.createElement('DIV');
+        $(controlBorder).addClass('top');
+        this.el.appendChild(controlBorder);
+        controlBorder.appendChild(controlText);
+        
+        var dropdownDiv = document.createElement('DIV');
+        $(dropdownDiv).addClass('dropDown');
+        this.el.appendChild(dropdownDiv);
+        dropdownDiv.innerHTML='';
+        
+        $(controlText).click(function() {
+                $(controlBorder).toggleClass('top-active');
+                $(dropdownDiv).toggle();
+        });
+        
+
+        for (i in mapTypes) {
+            var mt = mapTypes[i];
+            this.addItem({label: mt.name,
+                    name: mt.name,
+                    mt: mt,
+
+                    action: function(this_item, checked) {
+                        //console.log(this_item);
+                        if (checked) {
+                            overviewer.map.overlayMapTypes.push(this_item.mt);
+                        } else {
+                            var idx_to_delete = -1;
+                            overviewer.map.overlayMapTypes.forEach(function(e, j) {
+                                if (e == this_item.mt) {
+                                    idx_to_delete = j;
+                                }
+                            });
+                            if (idx_to_delete >= 0) {
+                                overviewer.map.overlayMapTypes.removeAt(idx_to_delete);
+                            }
+                        }
+
+                    }
+                    })
+        }
+
+
+    },
+
+    addItem: function(item) {
+        var itemDiv = document.createElement('div');
+        var itemInput = document.createElement('input');
+        itemInput.type='checkbox';
+
+        // if this overlay is already visible, set the checkbox
+        // to checked
+        overviewer.map.overlayMapTypes.forEach(function(e, j) {
+            if (e == item.mt) {
+                itemInput.checked=true;
+            }
+        });
+        
+        // give it a name
+        $(itemInput).attr("_mc_overlayname", item.name);
+        jQuery(itemInput).click((function(local_item) {
+            return function(e) {
+                item.action(local_item, e.target.checked);
+            };
+        })(item));
+
+        this.$(".dropDown")[0].appendChild(itemDiv);
+        itemDiv.appendChild(itemInput);
+        var textNode = document.createElement('text');
+        textNode.innerHTML = item.label + '<br/>';
+
+        itemDiv.appendChild(textNode);
+    }
+});
 
 
 /**
@@ -265,7 +385,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
         //var dataRoot = overviewer.collections.markerInfo[curMarkerSet];
         var dataRoot = markers[curMarkerSet];
 
-        this.el.innerHTML=""
+        this.el.innerHTML="";
         
         // if we have no markerSets for this tileset, do nothing:
         if (!dataRoot) { return; }

@@ -32,6 +32,7 @@ from .util import roundrobin
 from . import nbt
 from .files import FileReplacer
 from .optimizeimages import optimize_image
+import rendermodes
 import c_overviewer
 
 """
@@ -507,6 +508,8 @@ class TileSet(object):
         """
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
+        isOverlay = True in [True for x in self.options.get("rendermode") if isinstance(x, rendermodes.Overlay)]
+        
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
                 minZoom = 0,
@@ -519,6 +522,7 @@ class TileSet(object):
                     (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
+                isOverlay = isOverlay
                 )
         if (self.regionset.get_type() == "overworld"):
             d.update({"spawn": self.options.get("spawn")})
