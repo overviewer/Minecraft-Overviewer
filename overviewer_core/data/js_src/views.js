@@ -54,6 +54,9 @@ overviewer.views.WorldSelectorView = Backbone.View.extend({
                 var o = document.createElement("option");
                 o.value = elem.model.get("name");
                 o.innerHTML = elem.model.get("name");
+                if (elem.model == overviewer.mapModel.get("currentWorldView").model) {
+                    o.selected=true;
+                }
                 $(o).data("viewObj", elem);
                 selectBox.appendChild(o);
 

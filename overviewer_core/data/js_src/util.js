@@ -117,10 +117,6 @@ overviewer.util = {
 
         });
 
-        var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
-        overviewer.collections.worlds.bind("add", worldSelector.render, worldSelector);
-
-        
 
         // hook up some events
 
@@ -131,6 +127,11 @@ overviewer.util = {
         // Jump to the hash if given
         overviewer.util.initHash();
 
+        // create this control after initHash so it can correctly select the current world
+        var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
+        overviewer.collections.worlds.bind("add", worldSelector.render, worldSelector);
+
+        
         overviewer.util.initializeMarkers();
 
         /*
