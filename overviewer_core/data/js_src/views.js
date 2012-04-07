@@ -47,6 +47,8 @@ overviewer.views.WorldView = Backbone.View.extend({
 overviewer.views.WorldSelectorView = Backbone.View.extend({
     initialize: function() {
         if(overviewer.collections.worldViews.length > 1) {
+            $(this.el).addClass("customControl");
+            
             // a div will have already been created for us, we just
             // need to register it with the google maps control
             var selectBox = document.createElement('select');
