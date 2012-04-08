@@ -187,7 +187,7 @@ class JSObserver(Observer):
 
     def start(self, max_value):
         f = open(self.logfile, "w", 0)
-	f.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh)
+	f.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh))
         self.start_time=time.time()
 	self._set_max_value(max_value)
 
