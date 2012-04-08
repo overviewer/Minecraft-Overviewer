@@ -267,15 +267,15 @@ def configure(loglevel=logging.INFO, verbose=False):
 
     logger = logging.getLogger()
 
-    outstream = sys.stderr
+    outstream = sys.stdout
 
     if platform.system() == 'Windows':
         # Our custom output stream processor knows how to deal with select ANSI
         # color escape sequences
-        outstream = WindowsOutputStream()
+        outstream = WindowsOutputStream(outstream)
         formatter = ANSIColorFormatter(verbose)
 
-    elif sys.stderr.isatty():
+    elif outstream.isatty():
         # terminal logging with ANSI color
         formatter = ANSIColorFormatter(verbose)
 
