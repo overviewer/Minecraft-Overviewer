@@ -114,6 +114,7 @@ overviewer.views.ProgressView = Backbone.View.extend({
         this.el.innerHTML = 'Current Render Progress';
         overviewer.map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(this.el);
         this.hidden = true;
+        $.ajaxSetup({cache: false});
     },
     updateProgress: function() {
         e = this;

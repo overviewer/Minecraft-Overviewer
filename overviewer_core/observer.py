@@ -181,10 +181,6 @@ class JSObserver(Observer):
 	self.minrefresh = 1000*minrefresh
         self.logfile = os.path.join(outputdir, "progress.js") 
 
-	f = open(self.logfile, "w", 0) 
-	f.write('{"message": "Render in progress", "update": %d}' % self.minrefresh)
-        f.close()
-
     def start(self, max_value):
         f = open(self.logfile, "w", 0)
 	f.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh))
@@ -251,8 +247,6 @@ class JSObserver(Observer):
 
     def _need_update(self):
         cur_val = self.get_current_value()
-        if (time.time() - self.last_update_time) <= self.minrefresh//1000:
-            return False
         if cur_val < 100:
             return cur_val - self.last_update > 10
         elif cur_val < 500:
