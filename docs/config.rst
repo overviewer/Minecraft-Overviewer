@@ -480,6 +480,10 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``[]`` (an empty list)
 
+``showspawn``
+    This is a boolean, and defaults to ``True``. If set to ``False``, then the spawn
+    icon will not be displayed on the rendered map.
+
 .. _customrendermodes:
 
 Custom Rendermodes and Rendermode Primitives

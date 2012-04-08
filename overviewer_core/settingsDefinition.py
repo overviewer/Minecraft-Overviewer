@@ -79,6 +79,7 @@ renders = Setting(required=True, default=util.OrderedDict(),
             "crop": Setting(required=False, validator=validateCrop, default=None),
             "changelist": Setting(required=False, validator=validateStr, default=None),
             "markers": Setting(required=False, validator=validateMarkers, default=[]),
+            "showspawn": Setting(required=False, validator=validateBool, default=True),
 
             # Remove this eventually (once people update their configs)
             "worldname": Setting(required=False, default=None,
