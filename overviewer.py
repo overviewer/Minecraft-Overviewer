@@ -236,7 +236,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             return 1
 
         # Parse the config file
-        mw_parser = configParser.MultiWorldParser()
         mw_parser.parse(options.config)
 
     # Add in the command options here, perhaps overriding values specified in
