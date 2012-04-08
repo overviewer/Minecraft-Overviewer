@@ -97,7 +97,8 @@ processes = Setting(required=True, validator=int, default=-1)
 # ends up adding overhead and isn't worth it.
 memcached_host = Setting(required=False, validator=str, default=None)
 
-if platform.system() == 'Windows' or not sys.stdout.isatty():
+# TODO clean up this ugly in sys.argv hack
+if platform.system() == 'Windows' or not sys.stdout.isatty() or "--simple" in sys.argv:
     obs = LoggingObserver()
 else:
     obs = ProgressBarObserver(fd=sys.stdout)

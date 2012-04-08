@@ -89,6 +89,8 @@ def main():
             help="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0,
             help="Print more output. You can specify this option multiple times.")
+    parser.add_option("--simple-output", dest="simple", action="store_true", default=False,
+            help="Use a simple output format, with no colors or progress bars")
 
     # create a group for "plugin exes" (the concept of a plugin exe is only loosly defined at this point)
     exegroup = OptionGroup(parser, "Other Scripts",
@@ -114,7 +116,8 @@ def main():
 
     # re-configure the logger now that we've processed the command line options
     logger.configure(logging.INFO + 10*options.quiet - 10*options.verbose,
-                     options.verbose > 0)
+                     verbose=options.verbose > 0,
+                     simple=options.simple)
 
     ##########################################################################
     # This section of main() runs in response to any one-time options we have,
