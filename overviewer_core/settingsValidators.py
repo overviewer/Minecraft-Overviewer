@@ -55,7 +55,8 @@ def validateOverlays(renderlist):
     if type(renderlist) != list:
         raise ValidationException("Overlay must specify a list of renders")
     for x in renderlist:
-        print x
+        if validateStr(x) == '':
+            raise ValidationException("%r must be a string"% x)
     return renderlist
 
 def validateWorldPath(worldpath):

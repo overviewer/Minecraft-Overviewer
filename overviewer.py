@@ -304,6 +304,21 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         if render.get('forcerender', False):
             render['renderchecks'] = 2
 
+        # check if overlays are set, if so, make sure that those renders exist
+        if render.get('overlay', []) != []:
+            for x in render.get('overlay'):
+                if x != rname:
+                    try:
+                        renderLink = config['renders'][x]
+                    except KeyError:
+                        logging.error("Render %s's overlay is '%s', but I could not find a corresponding entry in the renders dictionary.",
+                                rname, x)
+                        return 1
+                    # TODO: Link the overlay rendering to the render modes it is used for so that the JS can properly fill in the dropdown
+                else:
+                    logging.error("Render %s's overlay contains itself.", rname)
+                    return 1
+
     destdir = config['outputdir']
     if not destdir:
         logging.error("You must specify the output directory in your config file.")
