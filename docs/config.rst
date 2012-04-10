@@ -124,35 +124,39 @@ directory, it is not convenient to edit the config file each time to fit the
 new directory name.
 
 Using environment variables, you can easily retrieve a parameter which has
-been set by, for instance, your map backup script. In this example, Overviewer is
-called from a *bash* script, but it can be done from other shell scripts and
-languages.
+been set by, for instance, your map backup script. In this example, Overviewer
+is called from a *bash* script, but it can be done from other shell scripts
+and languages.
 
 ::
 
-    ## The bash script
+    #!/bin/bash
     
-    # Setting up an environment variable that child processes will inherit
-    MYWORLD_DIR=/path/to/map/backup/$yourtimestamp/YourWorld
+    ## Add these lines to your bash script
+    
+    # Setting up an environment variable that child processes will inherit.
+    # In this example, the map's path is not static and depends on the
+    # previously set $timestamp var.
+    MYWORLD_DIR=/path/to/map/backup/$timestamp/YourWorld
     export MYWORLD_DIR
     
-    # Running the Overviwer
+    # Running the Overviewer
     overviewer.py --config=/path/to/yourConfig.py
 
 .. note::
 
     The environment variable will only be local to the process and its child
-    processes. In this example, the Overviewer will be able to access the 
-    variable since it becomes a child process.
+    processes. The Overviewer, when run by the script, will be able to access
+    the variable since it becomes a child process.
 
 ::
 
-    ## The config file
+    ## A config file example
     
     # Importing the os python module
     import os
     
-    # Retrieving the environment variable
+    # Retrieving the environment variable set up by the bash script
     worlds["My world"] = os.environ['MYWORLD_DIR']
 
     renders["normalrender"] = {
