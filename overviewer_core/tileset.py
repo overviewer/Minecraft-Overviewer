@@ -869,6 +869,7 @@ class TileSet(object):
             if imgformat == 'jpg':
                 img.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
             else: # png
+                img = img.convert('RGB').convert('P', palette=Image.ADAPTIVE)
                 img.save(tmppath, "png")
 
             if self.options['optimizeimg']:
