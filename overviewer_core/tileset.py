@@ -508,7 +508,7 @@ class TileSet(object):
         """
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
-        isOverlay = True in [True for x in self.options.get("rendermode") if isinstance(x, rendermodes.Overlay)]
+        isOverlay = not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode"))
         
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
