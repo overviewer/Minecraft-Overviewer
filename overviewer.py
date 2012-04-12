@@ -304,6 +304,20 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         if render.get('forcerender', False):
             render['renderchecks'] = 2
 
+        # check if overlays are set, if so, make sure that those renders exist
+        if render.get('overlay', []) != []:
+            for x in render.get('overlay'):
+                if x != rname:
+                    try:
+                        renderLink = config['renders'][x]
+                    except KeyError:
+                        logging.error("Render %s's overlay is '%s', but I could not find a corresponding entry in the renders dictionary.",
+                                rname, x)
+                        return 1
+                else:
+                    logging.error("Render %s's overlay contains itself.", rname)
+                    return 1
+
     destdir = config['outputdir']
     if not destdir:
         logging.error("You must specify the output directory in your config file.")
@@ -403,7 +417,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # only pass to the TileSet the options it really cares about
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
-        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist"])
+        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist", "overlay"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
         tset = tileset.TileSet(rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)

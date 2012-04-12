@@ -51,6 +51,14 @@ def validateMarkers(filterlist):
             raise ValidationException("%r must be a function"% x)
     return filterlist
 
+def validateOverlays(renderlist):
+    if type(renderlist) != list:
+        raise ValidationException("Overlay must specify a list of renders")
+    for x in renderlist:
+        if validateStr(x) == '':
+            raise ValidationException("%r must be a string"% x)
+    return renderlist
+
 def validateWorldPath(worldpath):
     _, worldpath = checkBadEscape(worldpath)
     abs_path = os.path.abspath(os.path.expanduser(worldpath))

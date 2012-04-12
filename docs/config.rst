@@ -480,6 +480,18 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``[]`` (an empty list)
 
+.. _option_overlay:
+
+``overlay``
+    This specifies which renders that this render will be displayed on top of. 
+    It should be a list of renders.
+
+    .. warning::
+
+       At this time, this feature is not fully implemented.
+
+    **Default:** ``[]`` (an empty list)
+
 .. _customrendermodes:
 
 Custom Rendermodes and Rendermode Primitives
