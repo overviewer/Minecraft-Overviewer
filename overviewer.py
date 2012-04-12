@@ -314,7 +314,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
                         logging.error("Render %s's overlay is '%s', but I could not find a corresponding entry in the renders dictionary.",
                                 rname, x)
                         return 1
-                    # TODO: Link the overlay rendering to the render modes it is used for so that the JS can properly fill in the dropdown
                 else:
                     logging.error("Render %s's overlay contains itself.", rname)
                     return 1
