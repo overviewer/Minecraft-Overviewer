@@ -560,6 +560,15 @@ Cave
     only_lit
         Only render lit caves. Default: False
 
+Hide
+    Hide blocks based on blockid. Blocks hidden in this way will be
+    treated exactly the same as air.
+
+    **Options**
+
+    minerals
+        A list of block ids, or (blockid, data) tuples to hide.
+
 DepthTinting
     Tint blocks a color according to their depth (height) from bedrock. Useful
     mainly for cave renders.
