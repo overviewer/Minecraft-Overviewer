@@ -84,15 +84,21 @@ static int
 hide_hidden(void *data, RenderState *state, int x, int y, int z) {
     RenderPrimitiveHide *self = (RenderPrimitiveHide *)data;
     unsigned int i;
+    unsigned short block;
     
     if (self->rules == NULL)
         return 0;
     
+    block = get_data(state, BLOCKS, x, y, z);
     for (i = 0; self->rules[i].blockid != 0; i++) {
-        if (state->block == self->rules[i].blockid) {
+        if (block == self->rules[i].blockid) {
+            unsigned char data;
+            
             if (!(self->rules[i].has_data))
                 return 1;
-            if (state->block_data == self->rules[i].data)
+            
+            data = get_data(state, DATA, x, y, z);
+            if (data == self->rules[i].data)
                 return 1;
         }
     }
