@@ -41,6 +41,9 @@ def checkBadEscape(s):
     if "\r" in fixed_string:
         fixed_string = s.replace("\r", r"\r")
         fixed = True
+    if "\ " in fixed_string:
+        fixed_string = s.replace("\ ", " ")
+        fixed = True
     return (fixed, fixed_string)
 
 def validateMarkers(filterlist):
