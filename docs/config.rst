@@ -115,6 +115,57 @@ individual renders to apply to just those renders.
     See the ``sample_config.py`` file included in the repository for another
     example.
 
+A dynamic config file
+=====================
+
+It might be handy to dynamically retrieve parameters. For instance, if you
+periodically render your last map backup which is located in a timestamped
+directory, it is not convenient to edit the config file each time to fit the
+new directory name.
+
+Using environment variables, you can easily retrieve a parameter which has
+been set by, for instance, your map backup script. In this example, Overviewer
+is called from a *bash* script, but it can be done from other shell scripts
+and languages.
+
+::
+
+    #!/bin/bash
+    
+    ## Add these lines to your bash script
+    
+    # Setting up an environment variable that child processes will inherit.
+    # In this example, the map's path is not static and depends on the
+    # previously set $timestamp var.
+    MYWORLD_DIR=/path/to/map/backup/$timestamp/YourWorld
+    export MYWORLD_DIR
+    
+    # Running the Overviewer
+    overviewer.py --config=/path/to/yourConfig.py
+
+.. note::
+
+    The environment variable will only be local to the process and its child
+    processes. The Overviewer, when run by the script, will be able to access
+    the variable since it becomes a child process.
+
+::
+
+    ## A config file example
+    
+    # Importing the os python module
+    import os
+    
+    # Retrieving the environment variable set up by the bash script
+    worlds["My world"] = os.environ['MYWORLD_DIR']
+
+    renders["normalrender"] = {
+        "world": "My world",
+        "title": "Normal Render of My World",
+    }
+
+    outputdir = "/home/username/mcmap"
+
 Config File Specifications
 ==========================
 
