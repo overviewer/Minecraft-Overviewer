@@ -657,7 +657,7 @@ are referencing the previously defined list, not one of the built-in
 rendermodes.
 
 Built-in Rendermodes
---------------------
+====================
 The built-in rendermodes are nothing but pre-defined lists of rendermode
 primitives for your convenience. Here are their definitions::
 
