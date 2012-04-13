@@ -360,6 +360,20 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``95``
 
+``optimizeimg``
+    This option specifies which additional tools overviewer should use to
+    optimize the filesize of png tiles.
+    The tools used must be placed somewhere, where overviewer can find them, for
+    example the "PATH" environment variable or a directory like /usr/bin.
+    This should be an integer between 0 and 3.
+    * ``1 - Use pngcrush``
+    * ``2 - Use advdef``
+    * ``3 - Use pngcrush and advdef (Not recommended)``
+    Using this option may significantly increase render time, but will make
+    the resulting tiles smaller, with lossless image quality.
+
+    **Default:** ``0``
+
 ``bgcolor``
     This is the background color to be displayed behind the map. Its value
     should be either a string in the standard HTML color syntax or a 4-tuple in
