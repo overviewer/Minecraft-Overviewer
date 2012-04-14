@@ -269,29 +269,31 @@ overviewer.views.OverlayControlView = Backbone.View.extend({
         
         for (i in mapTypes) {
             var mt = mapTypes[i];
-            if (mt.tiles.indexOf(currentTileSetPath)!=-1) {
-                this.addItem({label: mt.name,
-                        name: mt.name,
-                        mt: mt,
-
-                        action: function(this_item, checked) {
-                            if (checked) {
-                                overviewer.map.overlayMapTypes.push(this_item.mt);
-                            } else {
-                                var idx_to_delete = -1;
-                                overviewer.map.overlayMapTypes.forEach(function(e, j) {
-                                    if (e == this_item.mt) {
-                                        idx_to_delete = j;
-                                    }
-                                });
-                                if (idx_to_delete >= 0) {
-                                    overviewer.map.overlayMapTypes.removeAt(idx_to_delete);
-                                }
-                            }
-
-                        }
-                        })
+            // if this overlay specifies a list of valid tilesets, then skip over any invalid tilesets 
+            if ((mt.tiles.length > 0) && (mt.tiles.indexOf(currentTileSetPath) ==-1)) {
+                continue;
             }
+            this.addItem({label: mt.name,
+                    name: mt.name,
+                    mt: mt,
+
+                    action: function(this_item, checked) {
+                        if (checked) {
+                            overviewer.map.overlayMapTypes.push(this_item.mt);
+                        } else {
+                            var idx_to_delete = -1;
+                            overviewer.map.overlayMapTypes.forEach(function(e, j) {
+                                if (e == this_item.mt) {
+                                    idx_to_delete = j;
+                                }
+                            });
+                            if (idx_to_delete >= 0) {
+                                overviewer.map.overlayMapTypes.removeAt(idx_to_delete);
+                            }
+                        }
+
+                    }
+            });
         }
 
 
