@@ -64,8 +64,6 @@ overviewer.util = {
         }
 
         var overlayControl = new overviewer.views.OverlayControlView();
-        overlayControl.registerEvents(overlayControl);
-        overlayControl.render();
 
         var spawnmarker = new overviewer.views.SpawnIconView();
 
@@ -84,6 +82,9 @@ overviewer.util = {
 
             compass.render();
             spawnmarker.render();
+
+            // update list of spawn overlays
+            overlayControl.render();
 
             // re-center on the last viewport
             var currentWorldView = overviewer.mapModel.get("currentWorldView");

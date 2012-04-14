@@ -524,6 +524,9 @@ class TileSet(object):
                 imgextension = self.imgextension,
                 isOverlay = isOverlay
                 )
+        if isOverlay:
+            d.update({"tilesets": self.options.get("overlay")})
+
         if (self.regionset.get_type() == "overworld"):
             d.update({"spawn": self.options.get("spawn")})
         try:

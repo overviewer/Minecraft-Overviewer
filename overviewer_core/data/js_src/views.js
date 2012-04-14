@@ -23,8 +23,9 @@ overviewer.views.WorldView = Backbone.View.extend({
             newMapType.shortname = tset.get("name");
             newMapType.alt = "Minecraft " + tset.get("name") + " Map";
             newMapType.projection = new overviewer.classes.MapProjection();
-    
+
             if (tset.get("isOverlay")) {
+                newMapType.tiles = tset.get("tilesets");
                 this.options.overlayMapTypes.push(newMapType);
                 this.options.overlayMapTypeIds.push(overviewerConfig.CONST.mapDivId + this.model.get("name") + tset.get("name"));
             } else {
@@ -231,7 +232,6 @@ overviewer.views.OverlayControlView = Backbone.View.extend({
     },
     registerEvents: function(me) {
         overviewer.mapModel.bind("change:currentWorldView", me.render, me);
-        
     },
 
     /**
@@ -246,8 +246,7 @@ overviewer.views.OverlayControlView = Backbone.View.extend({
         // if this world has no overlays, don't create this control
         var mapTypes = overviewer.mapModel.get('currentWorldView').options.overlayMapTypes;
         if (mapTypes.length == 0) { return; }
-        
-        
+
         var controlText = document.createElement('DIV');
         controlText.innerHTML = "Overlays";
         
@@ -265,32 +264,34 @@ overviewer.views.OverlayControlView = Backbone.View.extend({
                 $(controlBorder).toggleClass('top-active');
                 $(dropdownDiv).toggle();
         });
-        
 
+        var currentTileSetPath = overviewer.mapView.options.currentTileSet.get('path');
+        
         for (i in mapTypes) {
             var mt = mapTypes[i];
-            this.addItem({label: mt.name,
-                    name: mt.name,
-                    mt: mt,
+            if (mt.tiles.indexOf(currentTileSetPath)!=-1) {
+                this.addItem({label: mt.name,
+                        name: mt.name,
+                        mt: mt,
 
-                    action: function(this_item, checked) {
-                        //console.log(this_item);
-                        if (checked) {
-                            overviewer.map.overlayMapTypes.push(this_item.mt);
-                        } else {
-                            var idx_to_delete = -1;
-                            overviewer.map.overlayMapTypes.forEach(function(e, j) {
-                                if (e == this_item.mt) {
-                                    idx_to_delete = j;
+                        action: function(this_item, checked) {
+                            if (checked) {
+                                overviewer.map.overlayMapTypes.push(this_item.mt);
+                            } else {
+                                var idx_to_delete = -1;
+                                overviewer.map.overlayMapTypes.forEach(function(e, j) {
+                                    if (e == this_item.mt) {
+                                        idx_to_delete = j;
+                                    }
+                                });
+                                if (idx_to_delete >= 0) {
+                                    overviewer.map.overlayMapTypes.removeAt(idx_to_delete);
                                 }
-                            });
-                            if (idx_to_delete >= 0) {
-                                overviewer.map.overlayMapTypes.removeAt(idx_to_delete);
                             }
-                        }
 
-                    }
-                    })
+                        }
+                        })
+            }
         }
 
 
