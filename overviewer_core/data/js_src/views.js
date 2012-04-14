@@ -230,7 +230,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
                 for (markerSet in markersDB) {
                     if (markersDB[markerSet].created) {
                         jQuery.each(markersDB[markerSet].raw, function(i, elem) {
-                            elem.markerObj.setVisible(false);
+                            if(elem.markerCreated){ elem.markerObj.setVisible(false); }
                         });
                     }
                 }
@@ -243,7 +243,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
                     // hide these
                     if (markersDB[markerSet].created) {
                         jQuery.each(markersDB[markerSet].raw, function(i, elem) {
-                            elem.markerObj.setVisible(false);
+                            if(elem.markerCreated){ elem.markerObj.setVisible(false); }
                         });
                     }
                     markersDB[markerSet].checked=false;
@@ -297,12 +297,13 @@ overviewer.views.SignControlView = Backbone.View.extend({
             this.addItem({label: group.displayName, groupName:group.groupName, action:function(this_item, checked) {
                 markersDB[this_item.groupName].checked = checked;
                 jQuery.each(markersDB[this_item.groupName].raw, function(i, elem) {
-                    elem.markerObj.setVisible(checked);
+                    if(elem.markerCreated){ elem.markerObj.setVisible(checked); }
                 });
             }});
         }
 
-        iconURL = overviewerConfig.CONST.image.signMarker;
+        var ShowEntity= {"Sign":true};
+        var IconEntity= {"Sign": overviewerConfig.CONST.image.signMarker};
         //dataRoot['markers'] = [];
         //
         for (i in dataRoot) {
@@ -310,18 +311,22 @@ overviewer.views.SignControlView = Backbone.View.extend({
             if (!markersDB[groupName].created) {
                 for (j in markersDB[groupName].raw) {
                     var entity = markersDB[groupName].raw[j];
-                    var marker = new google.maps.Marker({
-                            'position': overviewer.util.fromWorldToLatLng(entity.x,
-                                entity.y, entity.z, overviewer.mapView.options.currentTileSet),
-                            'map':      overviewer.map,
-                            'title':    jQuery.trim(entity.Text1 + "\n" + entity.Text2 + "\n" + entity.Text3 + "\n" + entity.Text4), 
-                            'icon':     iconURL,
-                            'visible':  false
-                    }); 
-                    if (entity['id'] == 'Sign') {
-                        overviewer.util.createMarkerInfoWindow(marker);
+                    if(ShowEntity[entity['id']]){
+                        var marker = new google.maps.Marker({
+                                'position': overviewer.util.fromWorldToLatLng(entity.x,
+                                    entity.y, entity.z, overviewer.mapView.options.currentTileSet),
+                                'map':      overviewer.map,
+                                'title':    jQuery.trim(entity.Text1 + "\n" + entity.Text2 + "\n" + entity.Text3 + "\n" + entity.Text4), 
+                                'icon':     IconEntity[entity['id']],
+                                'visible':  false
+                        }); 
+                        if (entity['id'] == 'Sign') {
+                            overviewer.util.createMarkerInfoWindow(marker);
+                        }
+                        jQuery.extend(entity, {markerObj: marker,markerCreated: true});
+                    }else{
+                        jQuery.extend(entity, {markerCreated: false});
                     }
-                    jQuery.extend(entity, {markerObj: marker});
                 }
                 markersDB[groupName].created = true;
             }
