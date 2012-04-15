@@ -168,11 +168,17 @@ def main():
         for poi in rset._pois['TileEntities']:
             result = filter_function(poi)
             if result:
-                markerSetDict[name]['raw'].append(dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True))
+                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True)
+                if "icon" in poi:
+                    d.update({"icon": poi['icon']})
+                markerSetDict[name]['raw'].append(d)
         for poi in rset._pois['Players']:
             result = filter_function(poi)
             if result:
-                markerSetDict[name]['raw'].append(dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True))
+                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True)
+                if "icon" in poi:
+                    d.update({"icon": poi['icon']})
+                markerSetDict[name]['raw'].append(d)
     #print markerSetDict
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:

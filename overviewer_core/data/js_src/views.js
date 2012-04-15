@@ -437,22 +437,17 @@ overviewer.views.SignControlView = Backbone.View.extend({
             if (!markersDB[groupName].created) {
                 for (j in markersDB[groupName].raw) {
                     var entity = markersDB[groupName].raw[j];
-                    if (entity['id'] == 'Player') {
-                        iconURL = "http://overviewer.org/avatar/"
-                            + entity['EntityId'];
-                    } else if (entity['id'] == 'PlayerSpawn') {
-                        iconURL = overviewerConfig.CONST.image.bedMarker;
-                    } else if (entity['id'] == 'Sign') {
-                        iconURL = overviewerConfig.CONST.image.signMarker;
+                    if (entity['icon']) {
+                        iconURL = entity['icon'];
                     } else {
-                        iconURL = overviewerConfig.CONST.image.defaultMarker;
+                        iconURL = dataRoot[i].icon;
                     }
                     var marker = new google.maps.Marker({
                             'position': overviewer.util.fromWorldToLatLng(entity.x,
                                 entity.y, entity.z, overviewer.mapView.options.currentTileSet),
                             'map':      overviewer.map,
                             'title':    jQuery.trim(entity.text), 
-                            'icon':     dataRoot[i].icon,
+                            'icon':     iconURL,
                             'visible':  false
                     }); 
                     if (entity.createInfoWindow) {
