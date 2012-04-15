@@ -57,10 +57,10 @@ def handlePlayers(rset, render, worldpath):
     playerdir = os.path.join(worldpath, "players")
     if os.path.isdir(playerdir):
         playerfiles = os.listdir(playerdir)
-	isSinglePlayer = False
+        isSinglePlayer = False
     else:
         playerfiles = [os.path.join(worldpath, "level.dat")]
-	isSinglePlayer = True
+        isSinglePlayer = True
 
     rset._pois['Players'] = []
     for playerfile in playerfiles:
@@ -72,7 +72,7 @@ def handlePlayers(rset, render, worldpath):
             logging.warning("Skipping bad player dat file %r", playerfile)
             continue
         playername = playerfile.split(".")[0]
-	if isSinglePlayer:
+        if isSinglePlayer:
             playername = 'Player'
         if data['Dimension'] == dimension:
             # Position at last logout
