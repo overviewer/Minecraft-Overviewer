@@ -25,7 +25,8 @@ from overviewer_core import configParser, world
 
 
 def handleSigns(rset, outputdir, render, rname):
-    	
+
+    # if we're already handled the POIs for this region regionset, do nothing
     if hasattr(rset, "_pois"):
         return
 
@@ -39,6 +40,7 @@ def handleSigns(rset, outputdir, render, rname):
         rset._pois['TileEntities'] += data['TileEntities']
         rset._pois['Entities']     += data['Entities']
 
+    print "Done."
 
 def main():
     helptext = """genPOI
@@ -97,13 +99,15 @@ def main():
             return 1
       
         for f in render['markers']:
-            markersets.add((f, rset))
-            name = f.__name__ + hex(hash(f))[-4:] + "_" + hex(hash(rset))[-4:]
+            d = dict(icon="signpost_icon.png")
+            d.update(f)
+            markersets.add(((d['name'], d['filterFunction']), rset))
+            name = f['name']+ hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
             try:
                 l = markers[rname]
-                l.append(dict(groupName=name, displayName = f.__doc__))
+                l.append(dict(groupName=name, displayName = f['name'], icon=d['icon']))
             except KeyError:
-                markers[rname] = [dict(groupName=name, displayName=f.__doc__),]
+                markers[rname] = [dict(groupName=name, displayName=f['name'], icon=d['icon']),]
 
         handleSigns(rset, os.path.join(destdir, rname), render, rname)
 
@@ -112,11 +116,15 @@ def main():
     markerSetDict = dict()
     for (flter, rset) in markersets:
         # generate a unique name for this markerset.  it will not be user visible
-        name = flter.__name__ + hex(hash(flter))[-4:] + "_" + hex(hash(rset))[-4:]
-        markerSetDict[name] = dict(created=False, raw=[])
+        filter_name =     flter[0]
+        filter_function = flter[1]
+
+        name = filter_name + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
+        markerSetDict[name] = dict(created=False, raw=[], name=filter_name)
         for poi in rset._pois['TileEntities']:
-            if flter(poi):
-                markerSetDict[name]['raw'].append(poi)
+            result = filter_function(poi)
+            if result:
+                markerSetDict[name]['raw'].append(dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True))
     #print markerSetDict
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:

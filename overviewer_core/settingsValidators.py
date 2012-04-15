@@ -47,8 +47,12 @@ def validateMarkers(filterlist):
     if type(filterlist) != list:
         raise ValidationException("Markers must specify a list of filters")
     for x in filterlist:
-        if not callable(x):
-            raise ValidationException("%r must be a function"% x)
+        if "name" not in x:
+            raise ValidationException("Must define a name")
+        if "filterFunction" not in x:
+            raise ValidationException("Must define a filter function")
+        if not callable(x['filterFunction']):
+            raise ValidationException("%r must be a function"% x['filterFunction'])
     return filterlist
 
 def validateOverlays(renderlist):

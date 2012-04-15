@@ -430,7 +430,6 @@ overviewer.views.SignControlView = Backbone.View.extend({
             }});
         }
 
-        iconURL = overviewerConfig.CONST.image.signMarker;
         //dataRoot['markers'] = [];
         //
         for (i in dataRoot) {
@@ -442,11 +441,11 @@ overviewer.views.SignControlView = Backbone.View.extend({
                             'position': overviewer.util.fromWorldToLatLng(entity.x,
                                 entity.y, entity.z, overviewer.mapView.options.currentTileSet),
                             'map':      overviewer.map,
-                            'title':    jQuery.trim(entity.Text1 + "\n" + entity.Text2 + "\n" + entity.Text3 + "\n" + entity.Text4), 
-                            'icon':     iconURL,
+                            'title':    jQuery.trim(entity.text), 
+                            'icon':     dataRoot[i].icon,
                             'visible':  false
                     }); 
-                    if (entity['id'] == 'Sign') {
+                    if (entity.createInfoWindow) {
                         overviewer.util.createMarkerInfoWindow(marker);
                     }
                     jQuery.extend(entity, {markerObj: marker});
