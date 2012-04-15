@@ -41,7 +41,7 @@ def handleSigns(rset, outputdir, render, rname):
         rset._pois['TileEntities'] += data['TileEntities']
         rset._pois['Entities']     += data['Entities']
 
-    print "Done."
+    logging.info("Done.")
 
 def handlePlayers(rset, render, worldpath):
     if not hasattr(rset, "_pois"):
@@ -55,14 +55,25 @@ def handlePlayers(rset, render, worldpath):
                  'end': 1,
                  'default': 0}[render['dimension']]
     playerdir = os.path.join(worldpath, "players")
+    if os.path.isdir(playerdir):
+        playerfiles = os.listdir(playerdir)
+	isSinglePlayer = False
+    else:
+        playerfiles = [os.path.join(worldpath, "level.dat")]
+	isSinglePlayer = True
+
     rset._pois['Players'] = []
-    for playerfile in os.listdir(playerdir):
+    for playerfile in playerfiles:
         try:
             data = nbt.load(os.path.join(playerdir, playerfile))[1]
+            if isSinglePlayer:
+                data = data['Data']['Player']
         except IOError:
             logging.warning("Skipping bad player dat file %r", playerfile)
             continue
         playername = playerfile.split(".")[0]
+	if isSinglePlayer:
+            playername = 'Player'
         if data['Dimension'] == dimension:
             # Position at last logout
             data['id'] = "Player"
