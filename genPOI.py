@@ -45,6 +45,10 @@ def handleSigns(rset, outputdir, render, rname):
 def handlePlayers(rset, render, worldpath):
     if not hasattr(rset, "_pois"):
         rset._pois = dict(TileEntities=[], Entities=[])
+
+    # only handle this region set once
+    if 'Players' in rset._pois:
+        return
     dimension = {'overworld': 0,
                  'nether': -1,
                  'end': 1,
@@ -52,7 +56,11 @@ def handlePlayers(rset, render, worldpath):
     playerdir = os.path.join(worldpath, "players")
     rset._pois['Players'] = []
     for playerfile in os.listdir(playerdir):
-        data = nbt.load(os.path.join(playerdir, playerfile))[1]
+        try:
+            data = nbt.load(os.path.join(playerdir, playerfile))[1]
+        except IOError:
+            logging.warning("Skipping bad player dat file %r", playerfile)
+            continue
         playername = playerfile.split(".")[0]
         if data['Dimension'] == dimension:
             # Position at last logout
@@ -158,7 +166,7 @@ def main():
         for poi in rset._pois['Players']:
             result = filter_function(poi)
             if result:
-                markerSetDict[name]['raw'].append(poi)
+                markerSetDict[name]['raw'].append(dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True))
     #print markerSetDict
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
