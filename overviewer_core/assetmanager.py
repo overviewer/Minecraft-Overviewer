@@ -87,6 +87,7 @@ directory.
         dump['CONST']['image'] = {
                 'defaultMarker':    'signpost.png',
                 'signMarker':       'signpost_icon.png',
+                'bedMarker':        'bed.png',
                 'compass':          'compass_upper-left.png',
                 'spawnMarker':      'http://google-maps-icons.googlecode.com/files/home.png',
                 'queryMarker':      'http://google-maps-icons.googlecode.com/files/regroup.png'
