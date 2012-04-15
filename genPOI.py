@@ -145,7 +145,7 @@ def main():
             d = dict(icon="signpost_icon.png")
             d.update(f)
             markersets.add(((d['name'], d['filterFunction']), rset))
-            name = f['name']+ hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
+            name = f['name'].replace(" ","_") + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
             try:
                 l = markers[rname]
                 l.append(dict(groupName=name, displayName = f['name'], icon=d['icon']))
@@ -163,7 +163,7 @@ def main():
         filter_name =     flter[0]
         filter_function = flter[1]
 
-        name = filter_name + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
+        name = filter_name.replace(" ","_") + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
         markerSetDict[name] = dict(created=False, raw=[], name=filter_name)
         for poi in rset._pois['TileEntities']:
             result = filter_function(poi)
