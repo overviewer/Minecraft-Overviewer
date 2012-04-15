@@ -17,6 +17,7 @@ markers.js holds a list of which markerSets are attached to each tileSet
 import os
 import logging
 import json
+import sys
 from optparse import OptionParser
 
 from overviewer_core import logger
@@ -80,8 +81,13 @@ def handlePlayers(rset, render, worldpath):
             rset._pois['Players'].append(spawn)
 
 def main():
-    helptext = """genPOI
-    %prog --config=<config file>"""
+
+    if os.path.basename(sys.argv[0]) == """genPOI.py""":
+        helptext = """genPOI.py
+            %prog --config=<config file> [--quiet]"""
+    else:
+        helptext = """genPOI
+            %prog --genpoi --config=<config file> [--quiet]"""
 
     logger.configure()
 
