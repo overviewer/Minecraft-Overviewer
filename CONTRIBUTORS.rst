@@ -58,6 +58,7 @@ feature.
  * Maciej Malecki <maciej.malecki@hotmail.com>
  * Ryan McCue <ryanmccue@cubegames.net>
  * Morlok8k <otis.spankmeyer@gmail.com>
+ * Richard Pastrick <rpastric@contre.us>
  * Ryan Rector <rmrector@gmail.com>
  * Jason Scheirer <jason.scheirer@gmail.com>
  * Gregory Short <gshort2@gmail.com>
