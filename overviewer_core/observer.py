@@ -17,6 +17,7 @@ import time
 import logging
 import progressbar
 import sys
+import os
 
 class Observer(object):
     """Base class that defines the observer interface.
@@ -164,3 +165,96 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
 
     def _need_update(self):
         return self.get_current_value() - self.last_update > self.UPDATE_INTERVAL
+
+class JSObserver(Observer):
+    """Display progress on index.html using JavaScript
+    """
+
+    def __init__(self, outputdir, minrefresh=5):
+        """Initialise observer
+        outputdir must be set to the map output directory path
+        minrefresh specifies the minimum gap between requests, in seconds
+        """
+        self.last_update = -11
+        self.last_update_time = -1 
+        self._current_value = -1
+        self.minrefresh = 1000*minrefresh
+        self.logfile = open(os.path.join(outputdir, "progress.js"), "w+", 0)
+
+    def start(self, max_value):
+        self.logfile.seek(0)
+        self.logfile.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh))
+        self.logfile.truncate()
+        self.logfile.flush()
+        self.start_time=time.time()
+        self._set_max_value(max_value)
+
+    def is_started(self):
+        return self.start_time is not None
+
+    def finish(self):
+        """Signals the end of the processes, should be called after the
+        process is done.
+        """
+        self.end_time = time.time()
+        duration = self.end_time - self.start_time
+        self.logfile.seek(0)
+        self.logfile.write('{"message": "Render completed in %dm %ds", "update": "false"}' % (duration//60, duration - duration//60))
+        self.logfile.truncate()
+        self.logfile.close()
+
+    def is_finished(self):
+        return self.end_time is not None
+
+    def is_running(self):
+        return self.is_started() and not self.is_finished()
+
+    def add(self, amount):
+        """Shortcut to update by increments instead of absolute values. Zero
+        amounts are ignored.
+        """
+        if amount:
+            self.update(self.get_current_value() + amount)
+
+    def update(self, current_value):
+        """Set the progress value. Should be between 0 and max_value. Returns
+        whether this update is actually displayed.
+        """
+        self._current_value = current_value
+        if self._need_update():
+            refresh = max(1500*(time.time() - self.last_update_time), self.minrefresh)
+            self.logfile.seek(0)
+            self.logfile.write('{"message": "Rendered %d of %d tiles (%d%%)", "update": %d }' % (self.get_current_value(), self.get_max_value(), self.get_percentage(), refresh))
+            self.logfile.truncate()
+            self.logfile.flush()
+            self.last_update_time = time.time()
+            self.last_update = current_value
+            return True
+        return False
+
+    def get_percentage(self):
+        """Get the current progress percentage. Assumes 100% if max_value is 0
+        """
+        if self.get_max_value() is 0:
+            return 100.0
+        else:
+            return self.get_current_value() * 100.0 / self.get_max_value()
+
+    def get_current_value(self):
+        return self._current_value
+
+    def get_max_value(self):
+        return self._max_value
+
+    def _set_max_value(self, max_value):
+        self._max_value = max_value 
+
+    def _need_update(self):
+        cur_val = self.get_current_value()
+        if cur_val < 100:
+            return cur_val - self.last_update > 10
+        elif cur_val < 500:
+            return cur_val - self.last_update > 50
+        else:
+            return cur_val - self.last_update > 100
+
