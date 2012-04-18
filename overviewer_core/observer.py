@@ -172,20 +172,20 @@ class JSObserver(Observer):
 
     def __init__(self, outputdir, minrefresh=5):
         """Initialise observer
-	outputdir must be set to the map output directory path
-	minrefresh specifies the minimum gap between requests, in seconds
-	"""
-	self.last_update = -11
-	self.last_update_time = -1 
-	self._current_value = -1
-	self.minrefresh = 1000*minrefresh
+        outputdir must be set to the map output directory path
+        minrefresh specifies the minimum gap between requests, in seconds
+        """
+        self.last_update = -11
+        self.last_update_time = -1 
+        self._current_value = -1
+        self.minrefresh = 1000*minrefresh
         self.logfile = os.path.join(outputdir, "progress.js") 
 
     def start(self, max_value):
         f = open(self.logfile, "w", 0)
-	f.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh))
+        f.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh))
         self.start_time=time.time()
-	self._set_max_value(max_value)
+        self._set_max_value(max_value)
 
     def is_started(self):
         return self.start_time is not None
@@ -195,9 +195,9 @@ class JSObserver(Observer):
         process is done.
         """
         self.end_time = time.time()
-	duration = self.end_time - self.start_time
+        duration = self.end_time - self.start_time
         f = open(self.logfile, "w", 0)
-	f.write('{"message": "Render completed in %dm %ds", "update": "false"}' % (duration//60, duration - duration//60))
+        f.write('{"message": "Render completed in %dm %ds", "update": "false"}' % (duration//60, duration - duration//60))
         f.close()
 
     def is_finished(self):
@@ -221,11 +221,11 @@ class JSObserver(Observer):
         if self._need_update():
             refresh = max(1500*(time.time() - self.last_update_time), self.minrefresh)
             f = open(self.logfile, "w", 0)
-	    f.write('{"message": "Rendered %d of %d tiles (%d%%)", "update": %d }' % (self.get_current_value(), self.get_max_value(), self.get_percentage(), refresh))
+            f.write('{"message": "Rendered %d of %d tiles (%d%%)", "update": %d }' % (self.get_current_value(), self.get_max_value(), self.get_percentage(), refresh))
             f.close()
             self.last_update_time = time.time()
-	    self.last_update = current_value
-	    return True
+            self.last_update = current_value
+            return True
         return False
 
     def get_percentage(self):
