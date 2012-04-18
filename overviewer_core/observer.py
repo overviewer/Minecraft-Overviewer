@@ -179,11 +179,13 @@ class JSObserver(Observer):
         self.last_update_time = -1 
         self._current_value = -1
         self.minrefresh = 1000*minrefresh
-        self.logfile = os.path.join(outputdir, "progress.js") 
+        self.logfile = open(os.path.join(outputdir, "progress.js"), "w+", 0)
 
     def start(self, max_value):
-        f = open(self.logfile, "w", 0)
-        f.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh))
+        self.logfile.seek(0)
+        self.logfile.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh))
+        self.logfile.truncate()
+        self.logfile.flush()
         self.start_time=time.time()
         self._set_max_value(max_value)
 
@@ -196,9 +198,10 @@ class JSObserver(Observer):
         """
         self.end_time = time.time()
         duration = self.end_time - self.start_time
-        f = open(self.logfile, "w", 0)
-        f.write('{"message": "Render completed in %dm %ds", "update": "false"}' % (duration//60, duration - duration//60))
-        f.close()
+        self.logfile.seek(0)
+        self.logfile.write('{"message": "Render completed in %dm %ds", "update": "false"}' % (duration//60, duration - duration//60))
+        self.logfile.truncate()
+        self.logfile.close()
 
     def is_finished(self):
         return self.end_time is not None
@@ -220,9 +223,10 @@ class JSObserver(Observer):
         self._current_value = current_value
         if self._need_update():
             refresh = max(1500*(time.time() - self.last_update_time), self.minrefresh)
-            f = open(self.logfile, "w", 0)
-            f.write('{"message": "Rendered %d of %d tiles (%d%%)", "update": %d }' % (self.get_current_value(), self.get_max_value(), self.get_percentage(), refresh))
-            f.close()
+            self.logfile.seek(0)
+            self.logfile.write('{"message": "Rendered %d of %d tiles (%d%%)", "update": %d }' % (self.get_current_value(), self.get_max_value(), self.get_percentage(), refresh))
+            self.logfile.truncate()
+            self.logfile.flush()
             self.last_update_time = time.time()
             self.last_update = current_value
             return True
