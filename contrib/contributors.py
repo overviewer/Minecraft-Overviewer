@@ -17,7 +17,7 @@ def format_contributor(contributor):
 
 def main():
     # generate list of contributors
-    contributors=[]
+    contributors = []
     p_git = Popen(["git", "shortlog", "-se"], stdout=PIPE)
     for line in p_git.stdout:
         contributors.append({
@@ -27,7 +27,7 @@ def main():
             })
 
     # cache listed contributors
-    old_contributors=[]
+    old_contributors = []
     with open("CONTRIBUTORS.rst", "r") as contrib_file:
         for line in contrib_file:
             if "@" in line:
@@ -35,24 +35,52 @@ def main():
                     'name': line.split()[1:-1],
                     'email': line.split()[-1]
                     })
-    # We don't access the name of old/listed contributors at all
-    # but that might change.
-    # So we parse it anyways and strip it off again.
+
+    old = map(lambda x: (x['name'], x['email']), old_contributors)
     old_emails = map(lambda x: x['email'], old_contributors)
+    old_names = map(lambda x: x['name'], old_contributors)
 
     # check which contributors are new
-    new_contributors=[]
+    new_contributors = []
+    update_mailmap = False
     for contributor in contributors:
-        if contributor["email"] not in old_emails:
+        if (contributor['name'], contributor['email']) in old:
+            # this exact combination already in the list
+            pass
+        elif (contributor['email'] not in old_emails
+                and contributor['name'] not in old_names):
+            # name AND email are not in the list
             new_contributors.append(contributor)
+        elif contributor['email'] in old_emails:
+            # email is listed, but with another name
+            old_name = filter(lambda x: x['email'] == contributor['email'],
+                    old_contributors)[0]['name']
+            print "new alias %s for %s %s ?" % (
+                    " ".join(contributor['name']),
+                    " ".join(old_name),
+                    contributor['email'])
+            update_mailmap = True
+        elif contributor['name'] in old_names:
+            # probably a new email for a previous contributor
+            other_mail = filter(lambda x: x['name'] == contributor['name'],
+                old_contributors)[0]['email']
+            print "new email %s for %s %s ?" % (
+                contributor['email'],
+                " ".join(contributor['name']),
+                other_mail)
+            update_mailmap = True
+    if update_mailmap:
+        print "Please update .mailmap"
 
     # sort on the last word of the name
     new_contributors = sorted(new_contributors,
             key=lambda x: x['name'][-1].lower())
 
     # show new contributors to be merged to the list
-    for contributor in new_contributors:
-        print format_contributor(contributor)
+    if new_contributors:
+        print "inserting:"
+        for contributor in new_contributors:
+            print format_contributor(contributor)
 
     # merge with contributor list
     i = 0
