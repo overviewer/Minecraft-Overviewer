@@ -82,7 +82,7 @@ def main():
         for contributor in new_contributors:
             print format_contributor(contributor)
 
-    # merge with contributor list
+    # merge with alphabetical (by last part of name) contributor list
     i = 0
     short_term_found = False
     for line in fileinput.input("CONTRIBUTORS.rst", inplace=1):
@@ -94,10 +94,16 @@ def main():
             if i >= len(new_contributors) or "@" not in line:
                 print line,
             else:
+                listed_name = line.split()[-2].lower()
                 contributor = new_contributors[i]
-                if line.split()[-2] > contributor["name"][-1]:
+                # insert all new contributors that fit here
+                while listed_name > contributor["name"][-1].lower():
                     print format_contributor(contributor)
                     i += 1
+                    if i < len(new_contributors):
+                        contributor = new_contributors[i]
+                    else:
+                        break
                 print line,
     # append remaining contributors
     with open("CONTRIBUTORS.rst", "a") as contrib_file:
