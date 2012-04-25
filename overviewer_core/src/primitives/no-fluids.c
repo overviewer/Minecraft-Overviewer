@@ -17,25 +17,18 @@
 
 #include "../overviewer.h"
 
-typedef struct {
-} PrimitiveNoFluids;
-
 static int
 no_fluids_start(void *data, RenderState *state, PyObject *support) {
-    PrimitiveNoFluids *self = (PrimitiveNoFluids *)data;
-        
     return 0;
 }
 
 static int
 no_fluids_hidden(void *data, RenderState *state, int x, int y, int z) {
-    PrimitiveNoFluids *self = (PrimitiveNoFluids *)data;
-    
-    return !block_has_property(state->block, FLUID);
+    return block_has_property(state->block, FLUID);
 }
 
 RenderPrimitiveInterface primitive_no_fluids = {
-    "no-fluids", sizeof(PrimitiveNoFluids),
+    "no-fluids", 0,
     no_fluids_start,
     NULL,
     NULL,
