@@ -39,7 +39,10 @@ exposed_hidden(void *data, RenderState *state, int x, int y, int z) {
      * be due to not having data there.
      */
     int validMinusX = 1;
+    int validPlusX = 1;
+    int validMinusY = 1;
     int validPlusY = 1;
+    int validMinusZ = 1;
     int validPlusZ = 1;
 
     /* special handling for section boundaries */
@@ -50,10 +53,25 @@ exposed_hidden(void *data, RenderState *state, int x, int y, int z) {
         /* No data in -x direction */
         validMinusX = 0;
     }
+    
+    if (x == 15 && (!(state->chunks[2][1].loaded) || state->chunks[2][1].sections[state->chunky].blocks == NULL)) {
+        /* No data in +x direction */
+        validPlusX = 0;
+    }
+    
+    if (y == 0 && (state->chunky - 1 < 0 || state->chunks[1][1].sections[state->chunky - 1].blocks == NULL)) {
+        /* No data in -y direction */
+        validMinusY = 0;
+    }
         
     if (y == 15 && (state->chunky + 1 >= SECTIONS_PER_CHUNK || state->chunks[1][1].sections[state->chunky + 1].blocks == NULL)) {
         /* No data in +y direction */
         validPlusY = 0;
+    }
+    
+    if (z == 0 && (!(state->chunks[1][0].loaded) || state->chunks[1][0].sections[state->chunky].blocks == NULL)) {
+        /* No data in -z direction */
+        validMinusZ = 0;
     }
     
     if (z == 15 && (!(state->chunks[1][2].loaded) || state->chunks[1][2].sections[state->chunky].blocks == NULL)) {
@@ -63,10 +81,10 @@ exposed_hidden(void *data, RenderState *state, int x, int y, int z) {
     
     /* If any of the 6 blocks adjacent to us are transparent, we're exposed */
     if( (validMinusX && is_transparent(get_data(state, BLOCKS, x-1, y, z))) ||
-        is_transparent(get_data(state, BLOCKS, x+1, y, z)) ||
-        is_transparent(get_data(state, BLOCKS, x, y-1, z)) ||
-        (validPlusY && is_transparent(get_data(state, BLOCKS, x, y+1, z))) ||
-        is_transparent(get_data(state, BLOCKS, x, y, z-1)) ||
+        (validPlusX && is_transparent(get_data(state, BLOCKS, x+1, y, z)))  ||
+        (validMinusY && is_transparent(get_data(state, BLOCKS, x, y-1, z))) ||
+        (validPlusY && is_transparent(get_data(state, BLOCKS, x, y+1, z)))  ||
+        (validMinusZ && is_transparent(get_data(state, BLOCKS, x, y, z-1))) ||
         (validPlusZ && is_transparent(get_data(state, BLOCKS, x, y, z+1 ))) ) {
     
         /* Block is exposed */
