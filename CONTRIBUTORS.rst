@@ -69,8 +69,8 @@ feature.
  * Ryan McCue <ryanmccue@cubegames.net>
  * Zach McCullough <nosrepa@gmail.com>
  * Mike <mike@snowcrash.ca>
- * Adam Novak <interfect@gmail.com>
  * Morlok8k <otis.spankmeyer@gmail.com>
+ * Adam Novak <interfect@gmail.com>
  * Richard Pastrick <rpastric@contre.us>
  * Ryan Rector <rmrector@gmail.com>
  * Jason Scheirer <jason.scheirer@gmail.com>
