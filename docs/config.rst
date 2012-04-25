@@ -611,6 +611,14 @@ Depth
     max
         highest level of blocks to render. Default: 255
 
+Exposed
+    Only renders blocks that are exposed (adjacent to a transparent block).
+    
+    **Options**
+    
+    mode
+        when set to 1, inverts the render mode, only drawing unexposed blocks. Default: 0
+
 EdgeLines
     Draw edge lines on the back side of blocks, to help distinguish them from
     the background.
