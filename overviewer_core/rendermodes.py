@@ -68,6 +68,9 @@ class Exposed(RenderPrimitive):
     options = {
         "mode": ("0 = exposed blocks only, 1 = unexposed blocks only", 0),
     }
+    
+class NoFluids(RenderPrimitive):
+    name = "no-fluids"
 
 class EdgeLines(RenderPrimitive):
     name = "edge-lines"

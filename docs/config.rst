@@ -618,6 +618,9 @@ Exposed
     
     mode
         when set to 1, inverts the render mode, only drawing unexposed blocks. Default: 0
+        
+NoFluids
+    Don't render fluid blocks (water, lava).
 
 EdgeLines
     Draw edge lines on the back side of blocks, to help distinguish them from
