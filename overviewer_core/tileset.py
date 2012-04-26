@@ -513,7 +513,7 @@ class TileSet(object):
                 defaultZoom = 1,
                 maxZoom = self.treedepth,
                 path = self.options.get('name'),
-                base = '',
+                base = self.options.get('base'),
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') +
                     (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
