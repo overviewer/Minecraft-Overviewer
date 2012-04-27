@@ -10,7 +10,7 @@ overviewer.views.WorldView = Backbone.View.extend({
 
         var curTileSet = this.model.get("tileSets").at(0);
         var spawn = curTileSet.get("spawn");
-        if (spawn=="false") {
+        if (spawn == "false") {
             var spawn = [0,64,0];
         }
         this.options.lastViewport = [spawn[0],spawn[1],spawn[2],curTileSet.get("defaultZoom")];
@@ -148,7 +148,7 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
 
         var curTset = curWorld.get("tileSets").at(0);
         var spawn = curTset.get("spawn");
-        if (spawn==false) {
+        if (spawn == "false") {
             var spawn = [0,64,0];
         }
         var mapcenter = overviewer.util.fromWorldToLatLng(
