@@ -7,6 +7,14 @@ overviewer.views.WorldView = Backbone.View.extend({
         this.options.overlayMapTypes = [];
         this.options.mapTypeIds = [];
         this.options.overlayMapTypeIds = [];
+
+        var curTileSet = this.model.get("tileSets").at(0);
+        var spawn = curTileSet.get("spawn");
+        if (spawn=="false") {
+            var spawn = [0,64,0];
+        }
+        this.options.lastViewport = [spawn[0],spawn[1],spawn[2],curTileSet.get("defaultZoom")];
+
         this.model.get("tileSets").each(function(tset, index, list) {
             // ignore overlays:
             var ops = {
@@ -139,17 +147,16 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
         var curWorld = this.model.get("currentWorldView").model;
 
         var curTset = curWorld.get("tileSets").at(0);
+        var spawn = curTset.get("spawn");
+        if (spawn==false) {
+            var spawn = [0,64,0];
+        }
+        var mapcenter = overviewer.util.fromWorldToLatLng(
+           spawn[0],
+           spawn[1],
+           spawn[2],
+           curTset);
 
-        /*
-           var defaultCenter = overviewer.util.fromWorldToLatLng(
-           overviewerConfig.map.center[0], 
-           overviewerConfig.map.center[1],
-           overviewerConfig.map.center[2],
-           curTset.get("defaultZoom"));
-           */
-        var lat = 0.62939453125;// TODO defaultCenter.lat();
-        var lng = 0.38525390625; // TODO defaultCenter.lng();
-        var mapcenter = new google.maps.LatLng(lat, lng);
 
         this.options.mapTypes=[];
         this.options.mapTypeIds=[];
