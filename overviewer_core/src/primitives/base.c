@@ -206,6 +206,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         };
             
         if (color_table) {
+            unsigned char biome;
             int dx, dz;
             unsigned char tablex, tabley;
             float temp = 0.0, rain = 0.0;
@@ -215,7 +216,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                 /* average over all neighbors */
                 for (dx = -1; dx <= 1; dx++) {
                     for (dz = -1; dz <= 1; dz++) {
-                        unsigned char biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
+                        biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
                         if (biome >= NUM_BIOMES) {
                             /* note -- biome 255 shows up on map borders.
                                who knows what it is? certainly not I.
@@ -257,6 +258,18 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
             g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
             b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+            
+            /* swamp hack
+               All values are guessed. They are probably somewhat odd or
+               completely wrong, but this looks okay for me, and I'm male,
+               so I can only distinct about 10 different colors anyways.
+               Blame my Y-Chromosone. */
+            if(biome == 6) {
+                r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0)) * 0.8;
+                g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1)) / 2.0;
+                b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2)) * 1.0;
+            }
+            
             Py_DECREF(color);
         }
         
