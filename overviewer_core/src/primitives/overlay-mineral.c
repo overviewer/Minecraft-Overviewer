@@ -90,6 +90,7 @@ overlay_mineral_start(void *data, RenderState *state, PyObject *support) {
     /* now do custom initializations */
     self = (RenderPrimitiveMineral *)data;
     
+    // opt is a borrowed reference.  do not deref 
     if (!render_mode_parse_option(support, "minerals", "O", &(opt)))
         return 1;
     if (opt && opt != Py_None) {
@@ -119,7 +120,6 @@ overlay_mineral_start(void *data, RenderState *state, PyObject *support) {
     } else {
         self->minerals = default_minerals;
     }
-    Py_XDECREF(opt);
     
     /* setup custom color */
     self->parent.get_color = get_color;

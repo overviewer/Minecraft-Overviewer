@@ -17,6 +17,7 @@ markers.js holds a list of which markerSets are attached to each tileSet
 import os
 import logging
 import json
+import sys
 from optparse import OptionParser
 
 from overviewer_core import logger
@@ -25,7 +26,8 @@ from overviewer_core import configParser, world
 
 
 def handleSigns(rset, outputdir, render, rname):
-    	
+
+    # if we're already handled the POIs for this region regionset, do nothing
     if hasattr(rset, "_pois"):
         return
 
@@ -39,10 +41,64 @@ def handleSigns(rset, outputdir, render, rname):
         rset._pois['TileEntities'] += data['TileEntities']
         rset._pois['Entities']     += data['Entities']
 
+    logging.info("Done.")
+
+def handlePlayers(rset, render, worldpath):
+    if not hasattr(rset, "_pois"):
+        rset._pois = dict(TileEntities=[], Entities=[])
+
+    # only handle this region set once
+    if 'Players' in rset._pois:
+        return
+    dimension = {'overworld': 0,
+                 'nether': -1,
+                 'end': 1,
+                 'default': 0}[render['dimension']]
+    playerdir = os.path.join(worldpath, "players")
+    if os.path.isdir(playerdir):
+        playerfiles = os.listdir(playerdir)
+        isSinglePlayer = False
+    else:
+        playerfiles = [os.path.join(worldpath, "level.dat")]
+        isSinglePlayer = True
+
+    rset._pois['Players'] = []
+    for playerfile in playerfiles:
+        try:
+            data = nbt.load(os.path.join(playerdir, playerfile))[1]
+            if isSinglePlayer:
+                data = data['Data']['Player']
+        except IOError:
+            logging.warning("Skipping bad player dat file %r", playerfile)
+            continue
+        playername = playerfile.split(".")[0]
+        if isSinglePlayer:
+            playername = 'Player'
+        if data['Dimension'] == dimension:
+            # Position at last logout
+            data['id'] = "Player"
+            data['EntityId'] = playername
+            data['x'] = int(data['Pos'][0])
+            data['y'] = int(data['Pos'][1])
+            data['z'] = int(data['Pos'][2])
+            rset._pois['Players'].append(data)
+        if "SpawnX" in data and dimension == 0:
+            # Spawn position (bed or main spawn)
+            spawn = {"id": "PlayerSpawn",
+                     "EntityId": playername,
+                     "x": data['SpawnX'],
+                     "y": data['SpawnY'],
+                     "z": data['SpawnZ']}
+            rset._pois['Players'].append(spawn)
 
 def main():
-    helptext = """genPOI
-    %prog --config=<config file>"""
+
+    if os.path.basename(sys.argv[0]) == """genPOI.py""":
+        helptext = """genPOI.py
+            %prog --config=<config file> [--quiet]"""
+    else:
+        helptext = """genPOI
+            %prog --genpoi --config=<config file> [--quiet]"""
 
     logger.configure()
 
@@ -97,26 +153,43 @@ def main():
             return 1
       
         for f in render['markers']:
-            markersets.add((f, rset))
-            name = f.__name__ + hex(hash(f))[-4:] + "_" + hex(hash(rset))[-4:]
+            d = dict(icon="signpost_icon.png")
+            d.update(f)
+            markersets.add(((d['name'], d['filterFunction']), rset))
+            name = f['name'].replace(" ","_") + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
             try:
                 l = markers[rname]
-                l.append(dict(groupName=name, displayName = f.__doc__))
+                l.append(dict(groupName=name, displayName = f['name'], icon=d['icon']))
             except KeyError:
-                markers[rname] = [dict(groupName=name, displayName=f.__doc__),]
+                markers[rname] = [dict(groupName=name, displayName=f['name'], icon=d['icon']),]
 
         handleSigns(rset, os.path.join(destdir, rname), render, rname)
+        handlePlayers(rset, render, worldpath)
 
     logging.info("Done scanning regions")
     logging.info("Writing out javascript files")
     markerSetDict = dict()
     for (flter, rset) in markersets:
         # generate a unique name for this markerset.  it will not be user visible
-        name = flter.__name__ + hex(hash(flter))[-4:] + "_" + hex(hash(rset))[-4:]
-        markerSetDict[name] = dict(created=False, raw=[])
+        filter_name =     flter[0]
+        filter_function = flter[1]
+
+        name = filter_name.replace(" ","_") + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
+        markerSetDict[name] = dict(created=False, raw=[], name=filter_name)
         for poi in rset._pois['TileEntities']:
-            if flter(poi):
-                markerSetDict[name]['raw'].append(poi)
+            result = filter_function(poi)
+            if result:
+                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True)
+                if "icon" in poi:
+                    d.update({"icon": poi['icon']})
+                markerSetDict[name]['raw'].append(d)
+        for poi in rset._pois['Players']:
+            result = filter_function(poi)
+            if result:
+                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True)
+                if "icon" in poi:
+                    d.update({"icon": poi['icon']})
+                markerSetDict[name]['raw'].append(d)
     #print markerSetDict
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:

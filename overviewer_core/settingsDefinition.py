@@ -79,6 +79,7 @@ renders = Setting(required=True, default=util.OrderedDict(),
             "crop": Setting(required=False, validator=validateCrop, default=None),
             "changelist": Setting(required=False, validator=validateStr, default=None),
             "markers": Setting(required=False, validator=validateMarkers, default=[]),
+            "overlay": Setting(required=False, validator=validateOverlays, default=[]),
             "showspawn": Setting(required=False, validator=validateBool, default=True),
             "base": Setting(required=False, validator=validateStr, default=None),
 
@@ -99,9 +100,10 @@ processes = Setting(required=True, validator=int, default=-1)
 # ends up adding overhead and isn't worth it.
 memcached_host = Setting(required=False, validator=str, default=None)
 
-if platform.system() == 'Windows' or not sys.stderr.isatty():
+# TODO clean up this ugly in sys.argv hack
+if platform.system() == 'Windows' or not sys.stdout.isatty() or "--simple" in sys.argv:
     obs = LoggingObserver()
 else:
-    obs = ProgressBarObserver()
+    obs = ProgressBarObserver(fd=sys.stdout)
 
 observer = Setting(required=True, validator=validateObserver, default=obs)
