@@ -38,6 +38,7 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
         Imaging img_i = imaging_python_to_c(state->img);
         unsigned char ink[] = {0, 0, 0, 255 * self->opacity};
         unsigned short side_block;
+        int x = state->x, y = state->y, z = state->z;
 
         int increment=0;
         if (state->block == 44 && ((state->block_data & 0x8) == 0 ))  // half-step BUT no upsidown half-step
@@ -46,15 +47,15 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
             increment=9;
         
         /* +X side */
-        side_block = get_data(state, BLOCKS, state->x+1, state->y, state->z);
-        if (side_block != state->block && is_transparent(side_block)) {
+        side_block = get_data(state, BLOCKS, x+1, y, z);
+        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x+1, y, z))) {
             ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
             ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
         }
         
         /* -Z side */
-        side_block = get_data(state, BLOCKS, state->x, state->y, state->z-1);
-        if (side_block != state->block && is_transparent(side_block)) {
+        side_block = get_data(state, BLOCKS, x, y, z-1);
+        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x, y, z-1))) {
             ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
             ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
         }

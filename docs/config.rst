@@ -545,6 +545,18 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``[]`` (an empty list)
 
+.. _option_overlay:
+
+``overlay``
+    This specifies which renders that this render will be displayed on top of. 
+    It should be a list of renders.
+
+    .. warning::
+
+       At this time, this feature is not fully implemented.
+
+    **Default:** ``[]`` (an empty list)
+
 ``showspawn``
     This is a boolean, and defaults to ``True``. If set to ``False``, then the spawn
     icon will not be displayed on the rendered map.
@@ -628,6 +640,15 @@ Cave
 
     only_lit
         Only render lit caves. Default: False
+
+Hide
+    Hide blocks based on blockid. Blocks hidden in this way will be
+    treated exactly the same as air.
+
+    **Options**
+
+    minerals
+        A list of block ids, or (blockid, data) tuples to hide.
 
 DepthTinting
     Tint blocks a color according to their depth (height) from bedrock. Useful
