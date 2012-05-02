@@ -45,7 +45,7 @@ def checkBadEscape(s):
 
 def validateMarkers(filterlist):
     if type(filterlist) != list:
-        raise ValidationException("Markers must specify a list of filters")
+        raise ValidationException("Markers must specify a list of filters.  This has recently changed, so check the docs.")
     for x in filterlist:
         if "name" not in x:
             raise ValidationException("Must define a name")
