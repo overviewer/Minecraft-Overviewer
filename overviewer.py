@@ -246,8 +246,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # Now parse and return the validated config
     try:
         config = mw_parser.get_validated_config()
-    except Exception:
-        logging.exception("An error was encountered with your configuration. See the info below.")
+    except Exception as ex:
+        if options.verbose:
+            logging.exception("An error was encountered with your configuration. See the info below.")
+        else: # no need to print scary traceback! just
+            logging.error("An error was encountered with your configuration.")
+            logging.error(str(ex))
         return 1
 
 
