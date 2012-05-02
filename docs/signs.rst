@@ -32,7 +32,10 @@ If a POI doesn't match, the filter can return None (which is the default if a py
 functions runs off the end without an explicit 'return').
 
 The single argument will either a TileEntity, or an Entity taken directly from 
-the chunk file.  In this example, this function returns all 4 lines from the sign
+the chunk file.  It could also be a special entity representing a player's location
+or a player's spawn.  See below for more details.
+
+In this example, this function returns all 4 lines from the sign
 if the entity is a sign.
 For more information of TileEntities and Entities, see
 the `Chunk Format <http://www.minecraftwiki.net/wiki/Chunk_format>`_ page on
@@ -48,6 +51,35 @@ A more complicated filter function can construct a more customized display text:
 Since writing these filters can be a little tedious, a set of predefined filters
 functions are provided.  See the :ref:`predefined_filter_functions` section for
 details.
+
+
+Special POIs
+------------
+
+There are currently two special types of POIs.  They each have a special id:
+
+PlayerSpawn
+  Used to indicate the spawn location of a player.  The player's name is set
+  in the ``EntityId`` key, and the location is in the x,y,z keys
+
+Player
+  Used to indicate the last known location of a player.  The player's name is set
+  in the ``EntityId`` key, and the location is in the x,y,z keys.
+
+.. note::
+  The player location is taken from level.dat (in the case of a single-player world) 
+  or the player.dat files (in the case of a multi-player server).  The locations are 
+  only written to these files when the world is saved, so this won't give you real-time
+  player location information. 
+
+Here's an example that displays icons for each player::
+
+    def playerIcons(poi):
+        if poi['id'] == 'Player':
+            poi['icon'] = "http://overviewer.org/avatar/%s" % poi['EntityId']
+            return "Last known location for %s" % poi['EntityId']
+
+Note how each POI can get a different icon by setting ``poi['icon']``
 
 Render Dictionary Key
 ---------------------
@@ -76,7 +108,9 @@ The following keys are accepted in the marker dictionary:
 
 ``icon``
     Optional.  Specifies the icon to use for POIs in this group.  If omitted, it defaults
-    to a signpost icon.
+    to a signpost icon.  Note that each POI can have different icon by setting the key 'icon'
+    on the POI itself (this can be done by modifying the POI in the filter function.  See the
+    example above)
 
 
 Generating the POI Markers
