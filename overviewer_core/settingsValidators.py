@@ -111,10 +111,10 @@ def validateNorthDirection(direction):
         raise ValidationException("%r is not a valid north direction" % direction)
     return intdir
 
-def validateStochastic(s):
+def validateRerenderprob(s):
     val = float(s)
-    if val < 0 or val > 1:
-        raise ValidationException("%r is not a valid stochastic value.  Should be between 0.0 and 1.0" % s)
+    if val =< 0 or val >= 1:
+        raise ValidationException("%r is not a valid rerender probability value.  Should be between 0.0 and 1.0." % s)
     return val
 
 def validateImgFormat(fmt):
