@@ -113,7 +113,7 @@ def validateNorthDirection(direction):
 
 def validateRerenderprob(s):
     val = float(s)
-    if val <= 0 or val >= 1:
+    if val < 0 or val >= 1:
         raise ValidationException("%r is not a valid rerender probability value.  Should be between 0.0 and 1.0." % s)
     return val
 
