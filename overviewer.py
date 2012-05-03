@@ -106,9 +106,9 @@ def main():
     if options.genpoi:
         # remove the "--genpoi" option from sys.argv before running genPI
         sys.argv.remove("--genpoi")
-        sys.path.append(".")
-        g = __import__("genPOI", {}, {})
-        g.main()
+        #sys.path.append(".")
+        g = __import__("overviewer_core.aux_files", {}, {}, ["genPOI"])
+        g.genPOI.main()
         return 0
     if options.help:
         parser.print_help()
