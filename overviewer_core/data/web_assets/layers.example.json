@@ -1,0 +1,61 @@
+{
+    "POI":{
+        "name":"Points of Interest",
+        "geo":{
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "id": 9875,
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [330, 206]
+                        },
+                        "properties": {
+                            "condition": "Excellent",
+                            "has_garage": true,
+                            "number_of_bedrooms": 4
+                        }
+                    }
+                ]
+        }
+    },
+    "mines":{
+        "name":"My Mines",
+        "geo":{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [511,319]
+                    }
+                },{
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [230,421]
+                    }
+                },{
+                    "type": "Feature",
+                    "geometry":{
+                        "type": "LineString",
+                        "coordinates": [
+                            [238,287],
+                            [366, 284],
+                            [572, 284]
+                        ]
+                    }
+                }
+            ]
+        },
+        "options":{
+                "strokeColor": "#FF7800",
+                "strokeOpacity": 1,
+                "strokeWeight": 2,
+                "fillColor": "#46461F",
+                "fillOpacity": 0.25
+        }
+    }
+}

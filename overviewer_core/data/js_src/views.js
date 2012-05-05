@@ -524,3 +524,111 @@ overviewer.views.SpawnIconView = Backbone.View.extend({
     }
 });
 
+/* GeoJSON overlay view */
+overviewer.views.GeoOverlayView = Backbone.View.extend({
+    initialize: function(opts) {
+        $(this.el).addClass("customControl");
+        overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.el);
+        
+        function coordinateTransformer(x, y){
+            /* Transformation function for the modified GeoJSON class */
+            return overviewer.util.fromWorldToLatLng(x, 64, y, overviewer.mapView.options.currentTileSet);
+        }
+        
+        var geoOverlayView = this;
+        $.getJSON("layers.json", function(data){
+            geoOverlayView.render();
+            $.each(data, function(key, val){
+                if(!("options" in val)){
+                    val["options"] = {}
+                }
+                val["options"]["transformer"] = coordinateTransformer;
+                val["checked"] = false;
+                var geoObj = new GeoJSON(val["geo"], val["options"]);
+                if(geoObj.error){
+                    console.log("Error loading GeoJSON layer ", key, geoObj.error);
+                } else {
+                    jQuery.each(geoObj, function(i, elem){
+                        elem.setMap(overviewer.map);
+                        elem.setVisible(false);
+                    });
+                    val["geoObj"] = geoObj;
+                    overviewer.collections.geoLayers[key] = val;
+                    
+                    geoOverlayView.addItem({
+                        label:val.name,
+                        groupName:key,
+                        action:function(this_item, checked){
+                            overviewer.collections.geoLayers[this_item.groupName].checked = checked;
+                            jQuery.each(overviewer.collections.geoLayers[this_item.groupName].geoObj, function(i, elem){
+                                elem.setVisible(checked);
+                            });
+                        }
+                    });
+                }
+            });
+            
+        }).error(function(req, type, exception) {
+            console.log("Error fetching the layers file.", type, exception);
+        });
+    },
+    render: function(){
+        this.el.innerHTML="";
+        
+         var controlText = document.createElement('DIV');
+        controlText.innerHTML = "Layers";
+
+        var controlBorder = document.createElement('DIV');
+        $(controlBorder).addClass('top');
+        this.el.appendChild(controlBorder);
+        controlBorder.appendChild(controlText);
+
+        var dropdownDiv = document.createElement('DIV');
+        $(dropdownDiv).addClass('dropDown');
+        this.el.appendChild(dropdownDiv);
+        dropdownDiv.innerHTML='';
+
+        // add the functionality to toggle visibility of the items
+        $(controlText).click(function() {
+                $(controlBorder).toggleClass('top-active');
+                $(dropdownDiv).toggle();
+        });
+        
+        
+    },
+    
+    addItem: function(item) {
+        var itemDiv = document.createElement('div');
+        var itemInput = document.createElement('input');
+        itemInput.type='checkbox';
+
+        // give it a name
+        $(itemInput).data('label',item.label);
+        $(itemInput).attr("_mc_layername", item.groupName);
+        jQuery(itemInput).click((function(local_item) {
+            return function(e) {
+                item.action(local_item, e.target.checked);
+            };
+        })(item));
+
+        this.$(".dropDown")[0].appendChild(itemDiv);
+        itemDiv.appendChild(itemInput);
+        var textNode = document.createElement('text');
+        if(item.icon) {
+            textNode.innerHTML = '<img width="15" height="15" src="' + 
+                item.icon + '">' + item.label + '<br/>';
+        } else {
+            textNode.innerHTML = item.label + '<br/>';
+        }
+
+        itemDiv.appendChild(textNode);
+
+
+    },
+});
+
+overviewer.bind("overviewer:init_views", function(){
+    overviewer.collections.geoLayers = {};
+    var overlayview = new overviewer.views.GeoOverlayView();    
+});
+
