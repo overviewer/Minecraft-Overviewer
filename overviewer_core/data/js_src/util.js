@@ -134,7 +134,7 @@ overviewer.util = {
 
         
         overviewer.util.initializeMarkers();
-
+        overviewer.trigger("overviewer:init_views");
         /*
            overviewer.util.initializeMapTypes();
            overviewer.util.initializeMap();
