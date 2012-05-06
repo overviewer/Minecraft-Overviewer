@@ -432,6 +432,13 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``#1a1a1a``
 
+``base``
+    Allows you to specify a remote location for the tile folder, useful if you
+    rsync your map's images to a remote server. Leave a trailing slash and point
+    to the location that contains the tile folders for each render, not the
+    tiles folder itself. For example, if the tile images start at
+    http://domain.com/map/world_day/ you want to set this to http://domain.com/map/
+
 .. _option_texture_pack:
 
 ``texturepath``
