@@ -182,6 +182,8 @@ def main():
                 d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True)
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
+                if "createInfoWindow" in poi:
+                    d.update({"createInfoWindow": poi['createInfoWindow']})
                 markerSetDict[name]['raw'].append(d)
         for poi in rset._pois['Players']:
             result = filter_function(poi)
@@ -189,6 +191,8 @@ def main():
                 d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True)
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
+                if "createInfoWindow" in poi:
+                    d.update({"createInfoWindow": poi['createInfoWindow']})
                 markerSetDict[name]['raw'].append(d)
     #print markerSetDict
 
