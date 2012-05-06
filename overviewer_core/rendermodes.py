@@ -62,6 +62,15 @@ class Depth(RenderPrimitive):
         "min": ("lowest level of blocks to render", 0),
         "max": ("highest level of blocks to render", 255),
     }
+    
+class Exposed(RenderPrimitive):
+    name = "exposed"
+    options = {
+        "mode": ("0 = exposed blocks only, 1 = unexposed blocks only", 0),
+    }
+    
+class NoFluids(RenderPrimitive):
+    name = "no-fluids"
 
 class EdgeLines(RenderPrimitive):
     name = "edge-lines"
