@@ -457,15 +457,15 @@ overviewer.views.SignControlView = Backbone.View.extend({
                             'icon':     iconURL,
                             'visible':  false
                     }); 
-    				if(entity['createInfoWindow']) {
-						if (entity.createInfoWindow) {
-							overviewer.util.createMarkerInfoWindow(marker);
-						} 
-					} else {
-						if(dataRoot[i].createInfoWindow) {
-							overviewer.util.createMarkerInfoWindow(marker);
-						}
-					}
+                    if(entity['createInfoWindow']) {
+		        if (entity.createInfoWindow) {
+                            overviewer.util.createMarkerInfoWindow(marker);
+                        } 
+                    } else {
+                        if(dataRoot[i].createInfoWindow) {
+                            overviewer.util.createMarkerInfoWindow(marker);
+                        }
+                    }
                     jQuery.extend(entity, {markerObj: marker});
                 }
                 markersDB[groupName].created = true;
