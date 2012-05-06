@@ -61,7 +61,7 @@ of dictionaries.  For example::
             'world': 'myworld',
             'title': "Example",
             'markers': [dict(name="All signs", filterFunction=signFilter),
-                        dict(name="Chests", filterFunction=chestFilter, icon="chest.png", createInfoWindow=false)]
+                        dict(name="Chests", filterFunction=chestFilter, icon="chest.png", createInfoWindow=False)]
     }
 
 
