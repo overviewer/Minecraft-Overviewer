@@ -246,7 +246,7 @@ If you want or need to provide your own textures, you have several options:
   overviewer.exe.
 
 * Specify any terrain.png or texture pack you want with the
-  :ref:`texture_pack<option_texture_pack>` option.
+  :ref:`texturepath<option_texturepath>` option.
 
 If you copy your world before you render it
 -------------------------------------------
