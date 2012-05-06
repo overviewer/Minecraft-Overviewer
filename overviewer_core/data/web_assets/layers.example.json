@@ -11,11 +11,6 @@
                             "type": "Point",
                             "coordinates": [330, 206]
                         },
-                        "properties": {
-                            "condition": "Excellent",
-                            "has_garage": true,
-                            "number_of_bedrooms": 4
-                        }
                     }
                 ]
         }
@@ -29,7 +24,7 @@
                     "type": "Feature",
                     "geometry": {
                         "type": "Point",
-                        "coordinates": [511,319]
+                        "coordinates": [511,319, 74]
                     }
                 },{
                     "type": "Feature",

@@ -530,9 +530,12 @@ overviewer.views.GeoOverlayView = Backbone.View.extend({
         $(this.el).addClass("customControl");
         overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.el);
         
-        function coordinateTransformer(x, y){
+        function coordinateTransformer(x, y, z){
             /* Transformation function for the modified GeoJSON class */
-            return overviewer.util.fromWorldToLatLng(x, 64, y, overviewer.mapView.options.currentTileSet);
+            if(z == null){
+                z = 64;
+            }
+            return overviewer.util.fromWorldToLatLng(x, y, z, overviewer.mapView.options.currentTileSet);
         }
         
         var geoOverlayView = this;
