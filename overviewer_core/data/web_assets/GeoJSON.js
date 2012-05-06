@@ -12,7 +12,7 @@ var GeoJSON = function( geojson, options ){
 		switch ( geojsonGeometry.type ){
 			case "Point":
 			    if("transformer" in options){
-			        var transformed = options.transformer(geojsonGeometry.coordinates[0], geojsonGeometry.coordinates[1]);
+			        var transformed = options.transformer(geojsonGeometry.coordinates[0], geojsonGeometry.coordinates[1], geojsonGeometry.coordinates[2]);
 			        opts.position = transformed;
 			    } else {
 			        opts.position = new google.maps.LatLng(geojsonGeometry.coordinates[1], geojsonGeometry.coordinates[0]);
@@ -27,7 +27,7 @@ var GeoJSON = function( geojson, options ){
 				googleObj = [];
 				for (var i = 0; i < geojsonGeometry.coordinates.length; i++){
 				    if("transformer" in options){
-    			        var transformed = options.transformer(geojsonGeometry.coordinates[i][0], geojsonGeometry.coordinates[i][1]);
+    			        var transformed = options.transformer(geojsonGeometry.coordinates[i][0], geojsonGeometry.coordinates[i][1], geojsonGeometry.coordinates[i][2]);
     			        opts.position = transformed;
     			    } else {
     			        opts.position = new google.maps.LatLng(geojsonGeometry.coordinates[i][1], geojsonGeometry.coordinates[i][0]);
@@ -46,7 +46,7 @@ var GeoJSON = function( geojson, options ){
 				var path = [];
 				for (var i = 0; i < geojsonGeometry.coordinates.length; i++){
 				    if("transformer" in options){
-    			        var transformed = options.transformer(geojsonGeometry.coordinates[i][0], geojsonGeometry.coordinates[i][1]);
+    			        var transformed = options.transformer(geojsonGeometry.coordinates[i][0], geojsonGeometry.coordinates[i][1], geojsonGeometry.coordinates[i][2]);
     			        path.push(transformed);
     			    } else {
     			        var coord = geojsonGeometry.coordinates[i];
@@ -68,7 +68,7 @@ var GeoJSON = function( geojson, options ){
 					var path = [];
 					for (var j = 0; j < geojsonGeometry.coordinates[i].length; j++){
 					    if("transformer" in options){
-        			        var transformed = options.transformer(geojsonGeometry.coordinates[i][j][0], geojsonGeometry.coordinates[i][j][1]);
+        			        var transformed = options.transformer(geojsonGeometry.coordinates[i][j][0], geojsonGeometry.coordinates[i][j][1], geojsonGeometry.coordinates[i][j][2]);
         			        path.push(transformed);
         			    } else {
         			        var coord = geojsonGeometry.coordinates[i][j];
@@ -98,7 +98,7 @@ var GeoJSON = function( geojson, options ){
 					for (var j = 0; j < geojsonGeometry.coordinates[i].length; j++){
 					    var ll = null;
 					    if("transformer" in options){
-					        var transformed = options.transformer(geojsonGeometry.coordinates[i][j][0], geojsonGeometry.coordinates[i][j][1]);
+					        var transformed = options.transformer(geojsonGeometry.coordinates[i][j][0], geojsonGeometry.coordinates[i][j][1], geojsonGeometry.coordinates[i][j][2]);
 					        ll = transformed;
 					    } else {
 					        var ll = new google.maps.LatLng(geojsonGeometry.coordinates[i][j][1], geojsonGeometry.coordinates[i][j][0]);
@@ -142,7 +142,7 @@ var GeoJSON = function( geojson, options ){
 						for (var k = 0; k < geojsonGeometry.coordinates[i][j].length; k++){
 						    var ll = null;
 						    if("transformer" in options){
-    					        var transformed = options.transformer(geojsonGeometry.coordinates[i][j][0], geojsonGeometry.coordinates[i][j][1]);
+    					        var transformed = options.transformer(geojsonGeometry.coordinates[i][j][0], geojsonGeometry.coordinates[i][j][1], geojsonGeometry.coordinates[i][j][2]);
     					        ll = transformed;
     					    } else {
     					        ll = new google.maps.LatLng(geojsonGeometry.coordinates[i][j][1], geojsonGeometry.coordinates[i][j][0]);

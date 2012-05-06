@@ -533,7 +533,8 @@ overviewer.views.GeoOverlayView = Backbone.View.extend({
         function coordinateTransformer(x, y, z){
             /* Transformation function for the modified GeoJSON class */
             if(z == null){
-                z = 64;
+                z = y;
+                y = 64;
             }
             return overviewer.util.fromWorldToLatLng(x, y, z, overviewer.mapView.options.currentTileSet);
         }

@@ -24,7 +24,7 @@
                     "type": "Feature",
                     "geometry": {
                         "type": "Point",
-                        "coordinates": [511,319, 74]
+                        "coordinates": [511,74, 319]
                     }
                 },{
                     "type": "Feature",
