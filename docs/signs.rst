@@ -61,7 +61,7 @@ of dictionaries.  For example::
             'world': 'myworld',
             'title': "Example",
             'markers': [dict(name="All signs", filterFunction=signFilter),
-                        dict(name="Chests", filterFunction=chestFilter, icon="chest.png")]
+                        dict(name="Chests", filterFunction=chestFilter, icon="chest.png", createInfoWindow=false)]
     }
 
 
@@ -77,6 +77,9 @@ The following keys are accepted in the marker dictionary:
 ``icon``
     Optional.  Specifies the icon to use for POIs in this group.  If omitted, it defaults
     to a signpost icon.
+
+``createInfoWindow``
+    Optional. Specifies wether or not the icon displays a spezial info window on click. Defaults to true
 
 
 Generating the POI Markers
