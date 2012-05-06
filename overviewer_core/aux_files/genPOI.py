@@ -153,15 +153,15 @@ def main():
             return 1
       
         for f in render['markers']:
-            d = dict(icon="signpost_icon.png")
+            d = dict(icon="signpost_icon.png", createInfoWindow=True)
             d.update(f)
             markersets.add(((d['name'], d['filterFunction']), rset))
             name = f['name'].replace(" ","_") + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
             try:
                 l = markers[rname]
-                l.append(dict(groupName=name, displayName = f['name'], icon=d['icon']))
+                l.append(dict(groupName=name, displayName = f['name'], icon=d['icon'], createInfoWindow=d['createInfoWindow']))
             except KeyError:
-                markers[rname] = [dict(groupName=name, displayName=f['name'], icon=d['icon']),]
+                markers[rname] = [dict(groupName=name, displayName=f['name'], icon=d['icon'], createInfoWindow=d['createInfoWindow']),]
 
         handleSigns(rset, os.path.join(destdir, rname), render, rname)
         handlePlayers(rset, render, worldpath)
@@ -179,16 +179,20 @@ def main():
         for poi in rset._pois['TileEntities']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True)
+                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
+                if "createInfoWindow" in poi:
+                    d.update({"createInfoWindow": poi['createInfoWindow']})
                 markerSetDict[name]['raw'].append(d)
         for poi in rset._pois['Players']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, createInfoWindow=True)
+                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
+                if "createInfoWindow" in poi:
+                    d.update({"createInfoWindow": poi['createInfoWindow']})
                 markerSetDict[name]['raw'].append(d)
     #print markerSetDict
 
