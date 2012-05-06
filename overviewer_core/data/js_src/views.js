@@ -31,6 +31,7 @@ overviewer.views.WorldView = Backbone.View.extend({
             newMapType.shortname = tset.get("name");
             newMapType.alt = "Minecraft " + tset.get("name") + " Map";
             newMapType.projection = new overviewer.classes.MapProjection();
+            newMapType._ov_tileSet = tset;
 
             if (tset.get("isOverlay")) {
                 newMapType.tiles = tset.get("tilesets");
@@ -215,7 +216,7 @@ overviewer.views.GoogleMapView = Backbone.View.extend({
         var gmapCurrent = overviewer.map.getMapTypeId();
         for (id in currentWorldView.options.mapTypeIds) {
             if (currentWorldView.options.mapTypeIds[id] == gmapCurrent) {
-                this.options.currentTileSet = currentWorldView.model.get("tileSets").at(id);
+                this.options.currentTileSet = currentWorldView.options.mapTypes[id]._ov_tileSet;
             }
         }
 
