@@ -304,3 +304,7 @@ class MCRFileReader(object):
             raise
         except Exception, e:
             raise CorruptChunkError("Misc error parsing chunk: " + str(e))
+
+# aaaaaand replace all that work with the libredstone version
+# TODO make this configurable?
+from rsnbt import *
