@@ -113,7 +113,8 @@ if py2exe is not None:
         b = 3
     else:
         b = 1
-    setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter', 'includes':['fileinput', 'overviewer_core.items']}
+    setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter', 'includes':
+        ['fileinput', 'overviewer_core.items', 'overviewer_core.aux_files.genPOI']}
 
 #
 # py2app options
