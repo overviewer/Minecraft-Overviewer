@@ -204,6 +204,7 @@ class World(object):
                 if section['Y'] == targetSection:
                     blockArray = section['Blocks']
                     return blockArray[inChunkX, inChunkZ, y % 16]
+            return 0
 
 
 
