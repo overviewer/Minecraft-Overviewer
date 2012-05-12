@@ -49,7 +49,7 @@ typedef struct {
  */
 static Biome biome_table[] = {
     /* 0 */
-    {"Ocean", 0.5, 0.5, 255, 255},
+    {"Ocean", 0.5, 0.5, 255, 255, 255},
     {"Plains", 0.8, 0.4, 255, 255, 255},
     {"Desert", 2.0, 0.0, 255, 255, 255},
     {"Extreme Hills", 0.2, 0.3, 255, 255, 255},
