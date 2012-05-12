@@ -587,7 +587,6 @@ class TileSet(object):
         self.xradius = xradius
         self.yradius = yradius
 
-
     def _rearrange_tiles(self):
         """If the target size of the tree is not the same as the existing size
         on disk, do some re-arranging
