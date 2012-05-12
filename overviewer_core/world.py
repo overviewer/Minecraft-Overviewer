@@ -484,7 +484,7 @@ class RegionSet(object):
             p = f.split(".")
             x = int(p[1])
             y = int(p[2])
-            if x > 10000 or y > 10000:
+            if abs(x) > 500000 or abs(y) > 500000:
                 logging.warning("Holy shit what is up with region file %s !?" % f)
             yield (x, y, path)
 
