@@ -47,6 +47,8 @@ def validateMarkers(filterlist):
     if type(filterlist) != list:
         raise ValidationException("Markers must specify a list of filters.  This has recently changed, so check the docs.")
     for x in filterlist:
+        if type(x) != dict:
+            raise ValidationException("Markers must specify a list of dictionaries.  This has recently changed, so check the docs.")
         if "name" not in x:
             raise ValidationException("Must define a name")
         if "filterFunction" not in x:
