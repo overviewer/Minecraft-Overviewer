@@ -70,7 +70,7 @@ A more complicated example
 
     renders["survivalnight"] = {
         "world": "survival",
-        "title": "Survival Daytime",
+        "title": "Survival Nighttime",
         "rendermode": smooth_night,
         "dimension": "overworld",
     }
