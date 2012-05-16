@@ -250,6 +250,9 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                 /* don't use biomes, just use the default */
                 temp = biome_table[DEFAULT_BIOME].temperature;
                 rain = biome_table[DEFAULT_BIOME].rainfall;
+                multr = biome_table[DEFAULT_BIOME].r;
+                multg = biome_table[DEFAULT_BIOME].g;
+                multb = biome_table[DEFAULT_BIOME].b;
             }
             
             /* second coordinate is actually scaled to fit inside the triangle
