@@ -196,14 +196,18 @@ def main():
                 markerSetDict[name]['raw'].append(d)
     #print markerSetDict
 
+    poiDropdownTitle = config.get('poiDropdownTitle', 'Signs')
+
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
         output.write("var markersDB=")
         json.dump(markerSetDict, output, indent=2)
         output.write(";\n");
+	output.write("var poiDropdownTitle = '%s';\n" % poiDropdownTitle)
     with open(os.path.join(destdir, "markers.js"), "w") as output:
         output.write("var markers=")
         json.dump(markers, output, indent=2)
         output.write(";\n");
+	output.write("var poiDropdownTitle = '%s';\n" % poiDropdownTitle)
     with open(os.path.join(destdir, "baseMarkers.js"), "w") as output:
         output.write("overviewer.util.injectMarkerScript('markersDB.js');\n")
         output.write("overviewer.util.injectMarkerScript('markers.js');\n")
