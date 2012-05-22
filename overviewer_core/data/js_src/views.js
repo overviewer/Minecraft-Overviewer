@@ -408,7 +408,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
 
 
         var controlText = document.createElement('DIV');
-        controlText.innerHTML = "Signs";
+        controlText.innerHTML = poiDropdownTitle;
 
         var controlBorder = document.createElement('DIV');
         $(controlBorder).addClass('top');
@@ -488,13 +488,13 @@ overviewer.views.SignControlView = Backbone.View.extend({
         var textNode = document.createElement('text');
         if(item.icon) {
             textNode.innerHTML = '<img width="15" height="15" src="' + 
-                item.icon + '">' + item.label + '<br/>';
+                item.icon + '">' + item.label + '&nbsp;<br/>';
         } else {
-            textNode.innerHTML = item.label + '<br/>';
+            textNode.innerHTML = item.label + '&nbsp;<br/>';
         }
 
         itemDiv.appendChild(textNode);
-
+        itemDiv.style.whiteSpace = "nowrap";
 
     },
 });
