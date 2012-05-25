@@ -269,16 +269,39 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
         This is used by default when the output is a terminal. Displays a text based
         progress bar and some statistics.
 
-    ``JSObserver``
+    ``JSObserver(outputdir[, minrefresh][, messages])``
         This will display render progress on the output map in the bottom right
-        corner of the screen. ``JSObserver`` must be invoked with two parameters.
+        corner of the screen. ``JSObserver``.
 
-        The first is output directory. For simplicity, specify this as ``outputdir``
-        and place this line after setting ``outputdir = "<output directory path>"``.
+        * ``outputdir="<output directory path"``
+            Path to overviewer output directory. For simplicity, specify this 
+            as ``outputdir=outputdir`` and place this line after setting
+            ``outputdir = "<output directory path>"``.
+            **Required**
         
-        The second parameter is the  minimum interval between progress updates in 
-        seconds. Progress information won't be written to file or requested by 
-        your web browser more frequently than this interval. 
+        * ``minrefresh=<seconds>``
+            Progress information won't be written to file or requested by your
+            web browser more frequently than this interval. 
+
+        * ``messages=dict(totalTiles=<string>, renderCompleted=<string>, renderProgress=<string>)``
+            Customises messages displayed in browser. All three messages must be
+            defined as follows:
+
+            * ``totalTiles="Rendering %d tiles"``
+              The ``%d`` format string will be replaced with the total number of
+              tiles to be rendered.
+
+            * ``renderCompleted="Render completed in %02d:%02d:%02d"``
+              The three format strings  will be replaced with the number of hours.
+              minutes and seconds taken to complete this render.
+
+            * ``renderProgress="Rendered %d of %d tiles (%d%%)"``
+              The three format strings will be replaced with the number of tiles
+              completed, the total number of tiles and the percentage complete
+
+            Format strings are explained here: http://docs.python.org/library/stdtypes.html#string-formatting
+            All format strings must be present in your custom messages.
+
         ::
 
                 from observer import JSObserver
