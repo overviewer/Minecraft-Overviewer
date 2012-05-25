@@ -108,13 +108,13 @@ if py2exe is not None:
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/web_assets', 'web_assets')
     setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/js_src', 'js_src')
     setup_kwargs['data_files'] += recursive_data_files('contrib', 'contrib')
-    setup_kwargs['data_files'] += [('', ['genPOI.py'])]
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
         b = 3
     else:
         b = 1
-    setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter', 'includes':['fileinput', 'overviewer_core.items']}
+    setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter', 'includes':
+        ['fileinput', 'overviewer_core.items', 'overviewer_core.aux_files.genPOI']}
 
 #
 # py2app options
@@ -129,7 +129,7 @@ if py2app is not None:
 # script, package, and data
 #
 
-setup_kwargs['packages'] = ['overviewer_core']
+setup_kwargs['packages'] = ['overviewer_core', 'overviewer_core/aux_files']
 setup_kwargs['scripts'] = ['overviewer.py']
 setup_kwargs['package_data'] = {'overviewer_core': recursive_package_data('data/textures') + recursive_package_data('data/web_assets') + recursive_package_data('data/js_src')}
 

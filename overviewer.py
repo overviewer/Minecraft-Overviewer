@@ -89,6 +89,8 @@ def main():
             help="Print less output. You can specify this option multiple times.")
     parser.add_option("-v", "--verbose", dest="verbose", action="count", default=0,
             help="Print more output. You can specify this option multiple times.")
+    parser.add_option("--simple-output", dest="simple", action="store_true", default=False,
+            help="Use a simple output format, with no colors or progress bars")
 
     # create a group for "plugin exes" (the concept of a plugin exe is only loosly defined at this point)
     exegroup = OptionGroup(parser, "Other Scripts",
@@ -104,9 +106,9 @@ def main():
     if options.genpoi:
         # remove the "--genpoi" option from sys.argv before running genPI
         sys.argv.remove("--genpoi")
-        sys.path.append(".")
-        g = __import__("genPOI", {}, {})
-        g.main()
+        #sys.path.append(".")
+        g = __import__("overviewer_core.aux_files", {}, {}, ["genPOI"])
+        g.genPOI.main()
         return 0
     if options.help:
         parser.print_help()
@@ -114,7 +116,8 @@ def main():
 
     # re-configure the logger now that we've processed the command line options
     logger.configure(logging.INFO + 10*options.quiet - 10*options.verbose,
-                     options.verbose > 0)
+                     verbose=options.verbose > 0,
+                     simple=options.simple)
 
     ##########################################################################
     # This section of main() runs in response to any one-time options we have,
@@ -233,7 +236,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             return 1
 
         # Parse the config file
-        mw_parser = configParser.MultiWorldParser()
         mw_parser.parse(options.config)
 
     # Add in the command options here, perhaps overriding values specified in
@@ -244,8 +246,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # Now parse and return the validated config
     try:
         config = mw_parser.get_validated_config()
-    except Exception:
-        logging.exception("An error was encountered with your configuration. See the info below.")
+    except Exception as ex:
+        if options.verbose:
+            logging.exception("An error was encountered with your configuration. See the info below.")
+        else: # no need to print scary traceback! just
+            logging.error("An error was encountered with your configuration.")
+            logging.error(str(ex))
         return 1
 
 
@@ -301,6 +307,20 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         # If 'forcerender' is set, change renderchecks to 2
         if render.get('forcerender', False):
             render['renderchecks'] = 2
+
+        # check if overlays are set, if so, make sure that those renders exist
+        if render.get('overlay', []) != []:
+            for x in render.get('overlay'):
+                if x != rname:
+                    try:
+                        renderLink = config['renders'][x]
+                    except KeyError:
+                        logging.error("Render %s's overlay is '%s', but I could not find a corresponding entry in the renders dictionary.",
+                                rname, x)
+                        return 1
+                else:
+                    logging.error("Render %s's overlay contains itself.", rname)
+                    return 1
 
     destdir = config['outputdir']
     if not destdir:
@@ -401,7 +421,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # only pass to the TileSet the options it really cares about
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
-        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist","showspawn"])
+        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist","showspawn", "overlay"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
         tset = tileset.TileSet(rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)

@@ -32,6 +32,7 @@ from .util import roundrobin
 from . import nbt
 from .files import FileReplacer
 from .optimizeimages import optimize_image
+import rendermodes
 import c_overviewer
 
 """
@@ -507,6 +508,8 @@ class TileSet(object):
         """
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
+        isOverlay = not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode"))
+        
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
                 minZoom = 0,
@@ -519,7 +522,11 @@ class TileSet(object):
                     (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
+                isOverlay = isOverlay
                 )
+        if isOverlay:
+            d.update({"tilesets": self.options.get("overlay")})
+
         if (self.regionset.get_type() == "overworld" and self.options.get("showspawn", True)):
             d.update({"spawn": self.options.get("spawn")})
         else:
@@ -579,7 +586,6 @@ class TileSet(object):
         self.treedepth = p
         self.xradius = xradius
         self.yradius = yradius
-
 
     def _rearrange_tiles(self):
         """If the target size of the tree is not the same as the existing size

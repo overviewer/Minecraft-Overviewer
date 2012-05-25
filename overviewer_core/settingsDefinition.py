@@ -75,10 +75,11 @@ renders = Setting(required=True, default=util.OrderedDict(),
             "nomarkers": Setting(required=False, validator=validateBool, default=None),
             "texturepath": Setting(required=False, validator=validateTexturePath, default=None),
             "renderchecks": Setting(required=False, validator=validateInt, default=None),
-            "rerenderprob": Setting(required=True, validator=validateFloat, default=0),
+            "rerenderprob": Setting(required=True, validator=validateRerenderprob, default=0),
             "crop": Setting(required=False, validator=validateCrop, default=None),
             "changelist": Setting(required=False, validator=validateStr, default=None),
             "markers": Setting(required=False, validator=validateMarkers, default=[]),
+            "overlay": Setting(required=False, validator=validateOverlays, default=[]),
             "showspawn": Setting(required=False, validator=validateBool, default=True),
 
             # Remove this eventually (once people update their configs)
@@ -98,9 +99,10 @@ processes = Setting(required=True, validator=int, default=-1)
 # ends up adding overhead and isn't worth it.
 memcached_host = Setting(required=False, validator=str, default=None)
 
-if platform.system() == 'Windows' or not sys.stderr.isatty():
+# TODO clean up this ugly in sys.argv hack
+if platform.system() == 'Windows' or not sys.stdout.isatty() or "--simple" in sys.argv:
     obs = LoggingObserver()
 else:
-    obs = ProgressBarObserver()
+    obs = ProgressBarObserver(fd=sys.stdout)
 
 observer = Setting(required=True, validator=validateObserver, default=obs)

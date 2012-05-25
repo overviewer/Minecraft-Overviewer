@@ -188,6 +188,12 @@ class MineralOverlay(Overlay):
         'minerals' : ('a list of (blockid, (r, g, b)) tuples for coloring minerals', None),
     }
 
+class Hide(RenderPrimitive):
+    name = "hide"
+    options = {
+        'blocks' : ('a list of blockids or (blockid, data) tuples of blocks to hide', []),
+    }
+
 # Built-in rendermodes for your convenience!
 normal = [Base(), EdgeLines()]
 lighting = [Base(), EdgeLines(), Lighting()]

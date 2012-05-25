@@ -204,6 +204,7 @@ class World(object):
                 if section['Y'] == targetSection:
                     blockArray = section['Blocks']
                     return blockArray[inChunkX, inChunkZ, y % 16]
+            return 0
 
 
 
@@ -483,6 +484,8 @@ class RegionSet(object):
             p = f.split(".")
             x = int(p[1])
             y = int(p[2])
+            if abs(x) > 500000 or abs(y) > 500000:
+                logging.warning("Holy shit what is up with region file %s !?" % f)
             yield (x, y, path)
 
 class RegionSetWrapper(object):

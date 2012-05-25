@@ -70,7 +70,7 @@ A more complicated example
 
     renders["survivalnight"] = {
         "world": "survival",
-        "title": "Survival Daytime",
+        "title": "Survival Nighttime",
         "rendermode": smooth_night,
         "dimension": "overworld",
     }
@@ -114,6 +114,57 @@ individual renders to apply to just those renders.
 
     See the ``sample_config.py`` file included in the repository for another
     example.
+
+A dynamic config file
+=====================
+
+It might be handy to dynamically retrieve parameters. For instance, if you
+periodically render your last map backup which is located in a timestamped
+directory, it is not convenient to edit the config file each time to fit the
+new directory name.
+
+Using environment variables, you can easily retrieve a parameter which has
+been set by, for instance, your map backup script. In this example, Overviewer
+is called from a *bash* script, but it can be done from other shell scripts
+and languages.
+
+::
+
+    #!/bin/bash
+    
+    ## Add these lines to your bash script
+    
+    # Setting up an environment variable that child processes will inherit.
+    # In this example, the map's path is not static and depends on the
+    # previously set $timestamp var.
+    MYWORLD_DIR=/path/to/map/backup/$timestamp/YourWorld
+    export MYWORLD_DIR
+    
+    # Running the Overviewer
+    overviewer.py --config=/path/to/yourConfig.py
+
+.. note::
+
+    The environment variable will only be local to the process and its child
+    processes. The Overviewer, when run by the script, will be able to access
+    the variable since it becomes a child process.
+
+::
+
+    ## A config file example
+    
+    # Importing the os python module
+    import os
+    
+    # Retrieving the environment variable set up by the bash script
+    worlds["My world"] = os.environ['MYWORLD_DIR']
+
+    renders["normalrender"] = {
+        "world": "My world",
+        "title": "Normal Render of My World",
+    }
+
+    outputdir = "/home/username/mcmap"
 
 Config File Specifications
 ==========================
@@ -389,6 +440,20 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``95``
 
+``optimizeimg``
+    This option specifies which additional tools overviewer should use to
+    optimize the filesize of png tiles.
+    The tools used must be placed somewhere, where overviewer can find them, for
+    example the "PATH" environment variable or a directory like /usr/bin.
+    This should be an integer between 0 and 3.
+    * ``1 - Use pngcrush``
+    * ``2 - Use advdef``
+    * ``3 - Use pngcrush and advdef (Not recommended)``
+    Using this option may significantly increase render time, but will make
+    the resulting tiles smaller, with lossless image quality.
+
+    **Default:** ``0``
+
 ``bgcolor``
     This is the background color to be displayed behind the map. Its value
     should be either a string in the standard HTML color syntax or a 4-tuple in
@@ -396,11 +461,12 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``#1a1a1a``
 
-.. _option_texture_pack:
+.. _option_texturepath:
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
-    It can be either a folder or a directory. Its value should be a string.
+    It can be either a folder or a zip file containing the texture pack.
+    Its value should be a string.
 
 .. _crop:
 
@@ -509,6 +575,18 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``[]`` (an empty list)
 
+.. _option_overlay:
+
+``overlay``
+    This specifies which renders that this render will be displayed on top of. 
+    It should be a list of renders.
+
+    .. warning::
+
+       At this time, this feature is not fully implemented.
+
+    **Default:** ``[]`` (an empty list)
+
 ``showspawn``
     This is a boolean, and defaults to ``True``. If set to ``False``, then the spawn
     icon will not be displayed on the rendered map.
@@ -593,6 +671,15 @@ Cave
     only_lit
         Only render lit caves. Default: False
 
+Hide
+    Hide blocks based on blockid. Blocks hidden in this way will be
+    treated exactly the same as air.
+
+    **Options**
+
+    minerals
+        A list of block ids, or (blockid, data) tuples to hide.
+
 DepthTinting
     Tint blocks a color according to their depth (height) from bedrock. Useful
     mainly for cave renders.
@@ -672,7 +759,7 @@ are referencing the previously defined list, not one of the built-in
 rendermodes.
 
 Built-in Rendermodes
---------------------
+====================
 The built-in rendermodes are nothing but pre-defined lists of rendermode
 primitives for your convenience. Here are their definitions::
 

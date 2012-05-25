@@ -39,28 +39,45 @@ Short-term Contributions
 These contributors have made specific changes for a particular bug fix or
 feature.
 
+ * Albireo <kappa7194@hotmail.it>
  * arrai <array.of.intellect@gmail.com>
+ * asmodai <asmodai@in-nomine.org>
+ * Mark Barnes <mark.e.barnes@gmail.com>
  * Kyle Brantley <kyle@averageurl.com>
  * but2002 <barryt_9@hotmail.com>
  * Eric Carr <eric@carr.no>
  * cbarber <CraigBarber@taryx.com>
+ * Carter Charbonneau <zcarterc@gmail.com>
  * Alex Cline <cline@vivisimo.com>
  * Andrew Clunis <andrew@orospakr.ca>
  * CounterPillow <spam@tes-cheese.ch>
+ * Johannes Dewender <github@JonnyJD.net>
  * Michael Fallows <michael@fallo.ws>
+ * Ryan Finnie <ryan@feh.colobox.com>
  * Stephen Fluin <stephen@mistuph.com>
+ * Pierre Guinoiseau <pierre@guinoiseau.eu>
+ * Lucas Hereld <duckman@piratehook.com>
  * Benjamin Herr <ben@0x539.de>
  * Ryan Hitchman <hitchmanr@gmail.com>
  * Jenny <jennytoo@gmail.com>
  * Michael Jensen <emjay1988@gmail.com>
+ * Sean Kilgore <krystalogik@gmail.com>
  * Johan Kiviniemi <devel@johan.kiviniemi.name>
+ * Philip Kovac <pkovac@cs.uml.edu>
  * Thomas Lake <tswsl1989@sucs.org>
  * Maciej Malecki <maciej.malecki@hotmail.com>
  * Ryan McCue <ryanmccue@cubegames.net>
+ * Zach McCullough <nosrepa@gmail.com>
+ * Mike <mike@snowcrash.ca>
  * Morlok8k <otis.spankmeyer@gmail.com>
+ * Richard Pastrick <rpastric@contre.us>
  * Ryan Rector <rmrector@gmail.com>
  * Jason Scheirer <jason.scheirer@gmail.com>
  * Gregory Short <gshort2@gmail.com>
  * Sam Steele <sam@sigbox.c99.org>
+ * stoneLeaf <owi.stoneleaf@gmail.com>
  * timwolla <timwolla@mail.develfusion.com>
+ * TJ09 <TJ09@localhost>
+ * untergrundbiber <untergrundbiber@github>
+ * Philippe Villiers <kissifrot@gmail.com>
  * Jeffrey Warren <warren@mit.edu>
