@@ -187,7 +187,7 @@ class JSObserver(Observer):
         if (messages == False):
             self.messages=dict(totalTiles="Rendering %d tiles", renderCompleted="Render completed in %02d:%02d:%02d", renderProgress="Rendered %d of %d tiles (%d%%)")
         elif (isinstance(messages, dict)):
-            if (totalTiles in messages and renderCompleted in messages and renderProgress in messages):
+            if ('totalTiles' in messages and 'renderCompleted' in messages and 'renderProgress' in messages):
                 self.messages = messages
             else:
                 raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
