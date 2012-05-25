@@ -17,6 +17,12 @@ class Setting(object):
         self.validator = validator
         self.default = default
 
+def expand_path(p):
+    p = os.path.expanduser(p)
+    p = os.path.expandvars(p)
+    p = os.path.abspath(p)
+    return p
+
 def checkBadEscape(s):
     fixed = False
     fixed_string = s
@@ -67,7 +73,7 @@ def validateOverlays(renderlist):
 
 def validateWorldPath(worldpath):
     _, worldpath = checkBadEscape(worldpath)
-    abs_path = os.path.abspath(os.path.expanduser(worldpath))
+    abs_path = expand_path(worldpath)
     if not os.path.exists(os.path.join(abs_path, "level.dat")):
         raise ValidationException("No level.dat file in '%s'. Are you sure you have the right path?" % (abs_path,))
     return abs_path
@@ -158,7 +164,7 @@ def validateOptImg(opt):
 
 def validateTexturePath(path):
     # Expand user dir in directories strings
-    path = os.path.expanduser(path)
+    path = expand_path(path)
     # TODO assert this path exists?
     return path
 
@@ -184,7 +190,7 @@ def validateOutputDir(d):
     _, d = checkBadEscape(d)
     if not d.strip():
         raise ValidationException("You must specify a valid output directory")
-    return os.path.abspath(d)
+    return expand_path(d)
 
 def validateCrop(value):
     if len(value) != 4:
