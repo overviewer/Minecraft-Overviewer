@@ -181,7 +181,6 @@ class JSObserver(Observer):
         self.last_update_time = -1 
         self._current_value = -1
         self.minrefresh = 1000*minrefresh
-        self.logfile = open(os.path.join(outputdir, "progress.json"), "w+", 0)
         self.json = dict()
 
         if (messages == False):
@@ -193,7 +192,10 @@ class JSObserver(Observer):
                 raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
         else:
             raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
+        if not os.path.exists(outputdir):
+            raise Exception("JSObserver: Output directory specified (%s) doesn't appear to exist. This should be the same as the Overviewer output directory")
 
+        self.logfile = open(os.path.join(outputdir, "progress.json"), "w+", 0)
         self.json["message"]=""
         self.json["update"]=self.minrefresh
         self.json["messageTime"]=time.time()
