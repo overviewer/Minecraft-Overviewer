@@ -148,7 +148,6 @@ overviewer.views.ProgressView = Backbone.View.extend({
     updateProgress: function() {
         e = this;
         $.getJSON('progress.json', null, function(d){
-            console.log(d);
             if (!(d == null||d=='')) {
                 e.el.hidden = false;
                 e.el.innerHTML = d['message'];
