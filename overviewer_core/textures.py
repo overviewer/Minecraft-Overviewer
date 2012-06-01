@@ -3232,8 +3232,11 @@ def enchantment_table(self, blockid, data):
 # TODO this is a place holder, is a 2d image pasted
 @material(blockid=117, data=range(5), transparent=True)
 def brewing_stand(self, blockid, data):
+    base = self.terrain_images[156]
+    img = self.build_full_block(None, None, None, None, None, base)
     t = self.terrain_images[157]
-    img = self.build_billboard(t)
+    stand = self.build_billboard(t)
+    alpha_over(img,stand,(0,-2))
     return img
 
 # cauldron
@@ -3370,3 +3373,6 @@ def slabs(self, blockid, data):
 
 # emerald ore
 block(blockid=130, top_index=171)
+
+# emerald block
+block(blockid=133, top_index=25)
