@@ -143,7 +143,7 @@ do_shading_with_rule(RenderPrimitiveSmoothLighting *self, RenderState *state, st
     int cz = state->z + face.dz;
     
     /* first, check for occlusion if the block is in the local chunk */
-    if (lighting_is_face_occluded(state, 0, cx, cy, cz))
+    if (lighting_is_face_occluded(state, 1, cx, cy, cz))
         return;
     
     /* calculate the lighting colors for each point */
