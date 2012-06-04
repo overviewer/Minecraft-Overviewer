@@ -113,7 +113,7 @@ The following keys are accepted in the marker dictionary:
     example above)
 
 ``createInfoWindow``
-    Optional. Specifies wether or not the icon displays a spezial info window on click. Defaults to true
+    Optional. Specifies whether or not the icon displays an info window on click. Defaults to True
 
 
 Generating the POI Markers

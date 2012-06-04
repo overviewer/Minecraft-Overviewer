@@ -458,12 +458,10 @@ overviewer.views.SignControlView = Backbone.View.extend({
                             'icon':     iconURL,
                             'visible':  false
                     }); 
-                    if(entity['createInfoWindow']) {
-		        if (entity.createInfoWindow) {
-                            overviewer.util.createMarkerInfoWindow(marker);
-                        } 
+                    if(entity['createInfoWindow'] == true) {
+                        overviewer.util.createMarkerInfoWindow(marker);
                     } else {
-                        if(dataRoot[i].createInfoWindow) {
+                        if(dataRoot[i].createInfoWindow == true) {
                             overviewer.util.createMarkerInfoWindow(marker);
                         }
                     }
