@@ -432,7 +432,14 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``#1a1a1a``
 
-.. _option_texturepath:
+``base``
+    Allows you to specify a remote location for the tile folder, useful if you
+    rsync your map's images to a remote server. Leave a trailing slash and point
+    to the location that contains the tile folders for each render, not the
+    tiles folder itself. For example, if the tile images start at
+    http://domain.com/map/world_day/ you want to set this to http://domain.com/map/
+
+.. _option_texture_pack:
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
@@ -623,6 +630,17 @@ Depth
 
     max
         highest level of blocks to render. Default: 255
+
+Exposed
+    Only renders blocks that are exposed (adjacent to a transparent block).
+    
+    **Options**
+    
+    mode
+        when set to 1, inverts the render mode, only drawing unexposed blocks. Default: 0
+        
+NoFluids
+    Don't render fluid blocks (water, lava).
 
 EdgeLines
     Draw edge lines on the back side of blocks, to help distinguish them from
