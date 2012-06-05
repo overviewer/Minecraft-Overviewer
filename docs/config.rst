@@ -619,6 +619,13 @@ Nether
 HeightFading
     Draws a colored overlay on the blocks that fades them out according to their
     height.
+    
+    **Options**
+    
+    sealevel
+        sealevel of the word you're rendering. Note that the default,
+        128, is usually *incorrect* for most worlds. You should
+        probably set this to 64. Default: 128
 
 Depth
     Only renders blocks between the specified min and max heights.

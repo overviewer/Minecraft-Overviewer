@@ -52,6 +52,10 @@ class Nether(RenderPrimitive):
 
 class HeightFading(RenderPrimitive):
     name = "height-fading"
+    options = {
+        # 128 is *WRONG*, it should be 64. but we're grandfathered in for now
+        "sealevel": ("target sea level", 128),
+    }
     
     black_color = Image.new("RGB", (24,24), (0,0,0))
     white_color = Image.new("RGB", (24,24), (255,255,255))
