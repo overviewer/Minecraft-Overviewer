@@ -131,7 +131,7 @@ class Textures(object):
 
         # a list of subdirectories to search for a given file,
         # after the obvious '.'
-        search_dirs = ['anim', 'misc', 'environment', 'item']
+        search_dirs = ['anim', 'misc', 'environment']
         search_zip_paths = [filename,] + [d + '/' + filename for d in search_dirs]
         def search_dir(base):
             """Search the given base dir for filename, in search_dirs."""
@@ -1610,195 +1610,50 @@ def stairs(self, blockid, data):
         
     return img
 
-# normal, locked (used in april's fool day) and ender chests chests
-@material(blockid=[54,95,130], data=range(30), transparent = True)
+# normal and locked chest (locked was the one used in april fools' day)
+# uses pseudo-ancildata found in iterate.c
+@material(blockid=[54,95], data=range(12), solid=True)
 def chests(self, blockid, data):
-    # the first 3 bits are the orientation as stored in minecraft, 
-    # bits 0x8 and 0x10 indicate which half of the double chest is it.
+    # First two bits of the pseudo data store if it's a single chest
+    # or it's a double chest, first half or second half (left to right).
+    # The last two bits store the orientation.
     
-    # first, do the rotation if needed
-    orientation_data = data & 7
-    if self.rotation == 1:
-        if orientation_data == 2: data = 5 | (data & 24)
-        elif orientation_data == 3: data = 4 | (data & 24)
-        elif orientation_data == 4: data = 2 | (data & 24)
-        elif orientation_data == 5: data = 3 | (data & 24)
-    elif self.rotation == 2:
-        if orientation_data == 2: data = 3 | (data & 24)
-        elif orientation_data == 3: data = 2 | (data & 24)
-        elif orientation_data == 4: data = 5 | (data & 24)
-        elif orientation_data == 5: data = 4 | (data & 24)
-    elif self.rotation == 3:
-        if orientation_data == 2: data = 4 | (data & 24)
-        elif orientation_data == 3: data = 5 | (data & 24)
-        elif orientation_data == 4: data = 3 | (data & 24)
-        elif orientation_data == 5: data = 2 | (data & 24)
-    
-    if blockid in (95,130) and not data in [2,3,4,5]: return None
-        # iterate.c will only return the ancil data (without pseudo 
-        # ancil data) for locked and ender chests, so only 
-        # ancilData = 2,3,4,5 are used for this blockids
-    
-    if data & 24 == 0:
-        if blockid == 130: t = self.load_image("enderchest.png")
-        else: t = self.load_image("chest.png")
-        t.save("textura.png")
-        # the textures is no longer in terrain.png, get it from 
-        # item/chest.png and get by cropping all the needed stuff
-        if t.size != (64,64): t = t.resize((64,64), Image.ANTIALIAS)
-        # top
-        top = t.crop((14,0,28,14))
-        top.load() # every crop need a load, crop is a lazy operation
-                   # see PIL manual
-        img = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(img,top,(1,1))
-        top = img
-        # front
-        front_top = t.crop((14,14,28,19))
-        front_top.load()
-        front_bottom = t.crop((14,34,28,43))
-        front_bottom.load()
-        front_lock = t.crop((1,0,3,4))
-        front_lock.load()
-        front = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(front,front_top, (1,1))
-        alpha_over(front,front_bottom, (1,6))
-        alpha_over(front,front_lock, (7,3))
-        # left side
-        # left side, right side, and back are esentially the same for
-        # the default texture, we take it anyway just in case other
-        # textures make use of it.
-        side_l_top = t.crop((0,14,14,19))
-        side_l_top.load()
-        side_l_bottom = t.crop((0,34,14,43))
-        side_l_bottom.load()
-        side_l = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(side_l,side_l_top, (1,1))
-        alpha_over(side_l,side_l_bottom, (1,6))
-        # right side
-        side_r_top = t.crop((28,14,43,20))
-        side_r_top.load()
-        side_r_bottom = t.crop((28,33,42,43))
-        side_r_bottom.load()
-        side_r = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(side_r,side_l_top, (1,1))
-        alpha_over(side_r,side_l_bottom, (1,6))
-        # back
-        back_top = t.crop((42,14,56,18))
-        back_top.load()
-        back_bottom = t.crop((42,33,56,43))
-        back_bottom.load()
-        back = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(back,side_l_top, (1,1))
-        alpha_over(back,side_l_bottom, (1,6))
+    # No need for rotation stuff, uses pseudo data and rotates with the map
 
-    else:
-        # large chest
-        # the textures is no longer in terrain.png, get it from 
-        # item/chest.png and get all the needed stuff
-        t = self.load_image("largechest.png")
-        if t.size != (128,64): t = t.resize((128,64), Image.ANTIALIAS)
-        # top
-        top = t.crop((14,0,44,14))
-        top.load()
-        img = Image.new("RGBA", (32,16), self.bgcolor)
-        alpha_over(img,top,(1,1))
-        top = img
-        # front
-        front_top = t.crop((14,14,44,18))
-        front_top.load()
-        front_bottom = t.crop((14,33,44,43))
-        front_bottom.load()
-        front_lock = t.crop((1,0,3,5))
-        front_lock.load()
-        front = Image.new("RGBA", (32,16), self.bgcolor)
-        alpha_over(front,front_top,(1,1))
-        alpha_over(front,front_bottom,(1,5))
-        alpha_over(front,front_lock,(15,3))
-        # left side
-        side_l_top = t.crop((0,14,14,18))
-        side_l_top.load()
-        side_l_bottom = t.crop((0,33,14,43))
-        side_l_bottom.load()
-        side_l = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(side_l,side_l_top, (1,1))
-        alpha_over(side_l,side_l_bottom,(1,5))
-        # right side
-        side_r_top = t.crop((44,14,58,18))
-        side_r_top.load()
-        side_r_bottom = t.crop((44,33,58,43))
-        side_r_bottom.load()
-        side_r = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(side_r,side_r_top, (1,1))
-        alpha_over(side_r,side_r_bottom,(1,5))
-        # back
-        back_top = t.crop((58,14,88,18))
-        back_top.load()
-        back_bottom = t.crop((58,33,88,43))
-        back_bottom.load()
-        back = Image.new("RGBA", (32,16), self.bgcolor)
-        alpha_over(back,back_top,(1,1))
-        alpha_over(back,back_bottom,(1,5))
-        
+    top = self.terrain_images[25]
+    side = self.terrain_images[26]
 
-        if data & 24 == 8: # double chest, first half
-            top = top.crop((0,0,16,16))
-            top.load()
-            front = front.crop((0,0,16,16))
-            front.load()
-            back = back.crop((0,0,16,16))
-            back.load()
-            #~ side = side_l
+    if data & 12 == 0: # single chest
+        front = self.terrain_images[27]
+        back = self.terrain_images[26]
 
-        elif data & 24 == 16: # double, second half
-            top = top.crop((16,0,32,16))
-            top.load()
-            front = front.crop((16,0,32,16))
-            front.load()
-            back = back.crop((16,0,32,16))
-            back.load()
-            #~ side = side_r
+    elif data & 12 == 4: # double, first half
+        front = self.terrain_images[41]
+        back = self.terrain_images[57]
 
-        else: # just in case
-            return None
+    elif data & 12 == 8: # double, second half
+        front = self.terrain_images[42]
+        back = self.terrain_images[58]
 
-    # compose the final block
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    if data & 7 == 2: # north
-        side = self.transform_image_side(side_r)
-        alpha_over(img, side, (1,7))
-        back = self.transform_image_side(back)
-        alpha_over(img, back.transpose(Image.FLIP_LEFT_RIGHT), (11,7))
-        front = self.transform_image_side(front)
-        top = self.transform_image_top(top.rotate(180))
-        alpha_over(img, top, (0,2))
-
-    elif data & 7 == 3: # south
-        side = self.transform_image_side(side_l)
-        alpha_over(img, side, (1,7))
-        front = self.transform_image_side(front).transpose(Image.FLIP_LEFT_RIGHT)
-        top = self.transform_image_top(top.rotate(180))
-        alpha_over(img, top, (0,2))
-        alpha_over(img, front,(11,7))
-
-    elif data & 7 == 4: # west
-        side = self.transform_image_side(side_r)
-        alpha_over(img, side.transpose(Image.FLIP_LEFT_RIGHT), (11,7))
-        front = self.transform_image_side(front)
-        alpha_over(img, front,(1,7))
-        top = self.transform_image_top(top.rotate(270))
-        alpha_over(img, top, (0,2))
-
-    elif data & 7 == 5: # east
-        back = self.transform_image_side(back)
-        side = self.transform_image_side(side_l).transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(img, side, (11,7))
-        alpha_over(img, back, (1,7))
-        top = self.transform_image_top(top.rotate(270))
-        alpha_over(img, top, (0,2))
-        
     else: # just in case
-        img = None
+        front = self.terrain_images[25]
+        side = self.terrain_images[25]
+        back = self.terrain_images[25]
+
+    if data & 3 == 0: # facing west
+        img = self.build_full_block(top, None, None, side, front)
+
+    elif data & 3 == 1: # north
+        img = self.build_full_block(top, None, None, front, side)
+
+    elif data & 3 == 2: # east
+        img = self.build_full_block(top, None, None, side, back)
+
+    elif data & 3 == 3: # south
+        img = self.build_full_block(top, None, None, back, side)
+        
+    else:
+        img = self.build_full_block(top, None, None, back, side)
 
     return img
 
