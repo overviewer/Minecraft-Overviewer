@@ -1491,8 +1491,8 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_index=34, transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick and sandstone stairs.
-@material(blockid=[53,67,108,109,114,128], data=range(8), transparent=True, solid=True, nospawn=True)
+# wooden, cobblestone, red brick, stone brick and netherbrick stairs.
+@material(blockid=[53,67,108,109,114], data=range(8), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
 
     # first, rotations
@@ -1526,9 +1526,7 @@ def stairs(self, blockid, data):
         texture = self.terrain_images[54]
     elif blockid == 114: # netherbrick stairs
         texture = self.terrain_images[224]
-    elif blockid ==128: #sandstone stairs
-        texture = self.terrain_images[192]
-
+    
     side = texture.copy()
     half_block_u = texture.copy() # up, down, left, right
     half_block_d = texture.copy()
@@ -3367,6 +3365,3 @@ def slabs(self, blockid, data):
     alpha_over(img, top, (0,6 - delta), top)
     
     return img
-
-# emerald ore
-block(blockid=130, top_index=171)
