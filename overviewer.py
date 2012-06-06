@@ -423,7 +423,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
         tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist","showspawn", "overlay","base"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
-        tset = tileset.TileSet(rset, assetMrg, tex, tileSetOpts, tileset_dir)
+        tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)
 
     # Do tileset preprocessing here, before we start dispatching jobs

@@ -195,6 +195,9 @@ class Overlay(RenderPrimitive):
 class SpawnOverlay(Overlay):
     name = "overlay-spawn"
 
+class SlimeOverlay(Overlay):
+    name = "overlay-slime"
+
 class MineralOverlay(Overlay):
     name = "overlay-mineral"
     options = {

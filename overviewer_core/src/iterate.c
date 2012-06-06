@@ -432,7 +432,6 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 PyObject*
 chunk_render(PyObject *self, PyObject *args) {
     RenderState state;
-    PyObject *regionset;
     PyObject *modeobj;
     PyObject *blockmap;
 
@@ -453,7 +452,7 @@ chunk_render(PyObject *self, PyObject *args) {
 
     PyObject *t = NULL;
     
-    if (!PyArg_ParseTuple(args, "OiiiOiiOO",  &state.regionset, &state.chunkx, &state.chunky, &state.chunkz, &state.img, &xoff, &yoff, &modeobj, &state.textures))
+    if (!PyArg_ParseTuple(args, "OOiiiOiiOO",  &state.world, &state.regionset, &state.chunkx, &state.chunky, &state.chunkz, &state.img, &xoff, &yoff, &modeobj, &state.textures))
         return NULL;
     
     /* set up the render mode */

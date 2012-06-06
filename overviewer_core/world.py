@@ -136,7 +136,12 @@ class World(object):
         except KeyError:
             # but very old ones might not? so we'll just go with the world dir name if they don't
             self.name = os.path.basename(os.path.realpath(self.worlddir))
-
+        
+        try:
+            # level.dat also has a RandomSeed attribute
+            self.seed = data['RandomSeed']
+        except KeyError:
+            self.seed = 0 # oh well
        
         # TODO figure out where to handle regionlists
 

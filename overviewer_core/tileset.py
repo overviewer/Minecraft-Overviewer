@@ -164,12 +164,14 @@ class TileSet(object):
 
     """
 
-    def __init__(self, regionsetobj, assetmanagerobj, texturesobj, options, outputdir):
+    def __init__(self, worldobj, regionsetobj, assetmanagerobj, texturesobj, options, outputdir):
         """Construct a new TileSet object with the given configuration options
         dictionary.
 
         options is a dictionary of configuration parameters (strings mapping to
         values) that are interpreted by the rendering engine.
+        
+        worldobj is the World object that regionsetobj is from.
 
         regionsetobj is the RegionSet object that is used to render the tiles.
 
@@ -269,6 +271,7 @@ class TileSet(object):
 
         """
         self.options = options
+        self.world = worldobj
         self.regionset = regionsetobj
         self.am = assetmanagerobj
         self.textures = texturesobj
@@ -356,7 +359,7 @@ class TileSet(object):
     # Only pickle the initial state. Don't pickle anything resulting from the
     # do_preprocessing step
     def __getstate__(self):
-        return self.regionset, self.am, self.textures, self.options, self.outputdir
+        return self.world, self.regionset, self.am, self.textures, self.options, self.outputdir
     def __setstate__(self, state):
         self.__init__(*state)
 
@@ -946,7 +949,7 @@ class TileSet(object):
 
             # draw the chunk!
             try:
-                c_overviewer.render_loop(self.regionset, chunkx, chunky,
+                c_overviewer.render_loop(self.world, self.regionset, chunkx, chunky,
                         chunkz, tileimg, xpos, ypos,
                         self.options['rendermode'], self.textures)
             except nbt.CorruptionError:

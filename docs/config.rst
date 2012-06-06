@@ -715,6 +715,11 @@ SpawnOverlay
     this on top of other modes, or on top of ClearBase to create a
     pure overlay.
 
+SlimeOverlay
+    Color the map green in chunks where slimes can spawn. Either use
+    this on top of other modes, or on top of ClearBase to create a
+    pure overlay.
+
 MineralOverlay
     Color the map according to what minerals can be found
     underneath. Either use this on top of other modes, or on top of
