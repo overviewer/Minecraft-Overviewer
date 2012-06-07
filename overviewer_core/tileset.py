@@ -17,6 +17,7 @@ import itertools
 import logging
 import os
 import os.path
+import sys
 import shutil
 import random
 import functools
@@ -957,8 +958,9 @@ class TileSet(object):
                 # get_chunk()
                 logging.debug("Skipping the render of corrupt chunk at %s,%s and moving on.", chunkx, chunkz)
             except Exception, e:
-                logging.warning("Could not render chunk %s,%s for some reason. I'm going to ignore this and continue", chunkx, chunkz)
-                logging.debug("Full error was:", exc_info=1)
+                logging.error("Could not render chunk %s,%s for some reason. This is likely a render primitive option error.", chunkx, chunkz)
+                logging.error("Full error was:", exc_info=1)
+                sys.exit(1)
 
             ## Semi-handy routine for debugging the drawing routine
             ## Draw the outline of the top of the chunk
