@@ -17,8 +17,6 @@
 
 #include "overlay.h"
 
-static OverlayColor default_color[] = { 200, 200, 255, 155 };
-
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
     RenderPrimitiveOverlay* self = (RenderPrimitiveOverlay *)data;
@@ -44,22 +42,26 @@ overlay_start(void *data, RenderState *state, PyObject *support) {
     if (color == NULL) {
         return 1;
     }
-
+    
+    self->default_color.r = 200;
+    self->default_color.g = 200;
+    self->default_color.b = 255;
+    self->default_color.a = 155;
+    
     if(!render_mode_parse_option(support, "overlay_color", "bbbb", &(color->r), &(color->g), &(color->b), &(color->a))) {
-	if(PyErr_Occurred())
+        if(PyErr_Occurred())
             PyErr_Clear();
         free(color);
-        self->color = default_color;
+        self->color = &self->default_color;
         // Check if it is None, if it is, continue and use the default, if it isn't, return an error
         if(render_mode_parse_option(support, "overlay_color", "O", &(opt))) {
             // If it is an object, check to see if it is None, if it is, use the default.
             if(opt && opt != Py_None) {
                 return 1;
             }
-        } else {
-            return 1;
         }
     }
+
     return 0;
 }
 
@@ -67,7 +69,7 @@ static void
 overlay_finish(void *data, RenderState *state) {
     RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
 
-    if (self->color && self->color != default_color) {
+    if (self->color && self->color != &self->default_color) {
         free(self->color);
     }
     

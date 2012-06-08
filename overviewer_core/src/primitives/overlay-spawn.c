@@ -23,8 +23,6 @@ typedef struct {
     RenderPrimitiveOverlay parent;
 } RenderPrimitiveSpawn;
 
-static OverlayColor default_color[] = { 229, 36, 38, 0 };
-
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
     RenderPrimitiveSpawn* self = (RenderPrimitiveSpawn *)data;
@@ -69,6 +67,11 @@ overlay_spawn_start(void *data, RenderState *state, PyObject *support) {
     /* now do custom initializations */
     self = (RenderPrimitiveSpawn *)data;
     self->parent.get_color = get_color;
+    
+    self->parent.default_color.r = 229;
+    self->parent.default_color.g = 36;
+    self->parent.default_color.b = 38;
+    self->parent.default_color.a = 0;
     
     return 0;
 }

@@ -66,8 +66,6 @@ static int is_slime(long map_seed, long chunkx, long chunkz) {
     return (random_next_int(&seed, 10) == 0);
 }
 
-static OverlayColor default_color[] = { 40, 230, 40, 240 };
-
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
     RenderPrimitiveSlime *self = (RenderPrimitiveSlime *)data;
@@ -76,7 +74,7 @@ static void get_color(void *data, RenderState *state,
     *r = self->parent.color->r;
     *g = self->parent.color->g;
     *b = self->parent.color->b;
-    
+
     /* default to no overlay, until told otherwise */
     *a = 0;
     
@@ -99,6 +97,11 @@ overlay_slime_start(void *data, RenderState *state, PyObject *support) {
     /* now do custom initializations */
     self = (RenderPrimitiveSlime *)data;
     self->parent.get_color = get_color;
+    
+    self->parent.default_color.r = 40;
+    self->parent.default_color.g = 230;
+    self->parent.default_color.b = 40;
+    self->parent.default_color.a = 240;
     
     pyseed = PyObject_GetAttrString(state->world, "seed");
     if (!pyseed)
