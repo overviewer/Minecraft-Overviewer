@@ -557,11 +557,7 @@ values. The valid configuration keys are listed below.
 
 ``overlay``
     This specifies which renders that this render will be displayed on top of. 
-    It should be a list of renders.
-
-    .. warning::
-
-       At this time, this feature is not fully implemented.
+    It should be a list of other renders.
 
     **Default:** ``[]`` (an empty list)
 
@@ -704,11 +700,6 @@ SmoothLighting
 ClearBase
     Forces the background to be transparent. Use this in place of Base
     for rendering pure overlays.
-
-    .. warning::
-
-        Overlays are currently not functional in this branch of code. We are
-        working on them. Please inquire in :ref:`IRC<help>` for more information.
 
 SpawnOverlay
     Color the map red in areas where monsters can spawn. Either use
