@@ -82,8 +82,8 @@ overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyOb
     
     /* do the overlay */
     if (a > 0) {
-        alpha_over(state->img, self->white_color, self->facemask_top, state->imgx, state->imgy + increment, 0, 0);
-        tint_with_mask(state->img, r, g, b, a, self->facemask_top, state->imgx, state->imgy + increment, 0, 0);
+        alpha_over_full(state->img, self->white_color, self->facemask_top, a/255.f, state->imgx, state->imgy + increment, 0, 0);
+        tint_with_mask(state->img, r, g, b, 255, self->facemask_top, state->imgx, state->imgy + increment, 0, 0);
     }
 }
 
