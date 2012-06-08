@@ -66,21 +66,23 @@ static int is_slime(long map_seed, long chunkx, long chunkz) {
     return (random_next_int(&seed, 10) == 0);
 }
 
+static OverlayColor default_color[] = { 40, 230, 40, 240 };
+
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
     RenderPrimitiveSlime *self = (RenderPrimitiveSlime *)data;
         
     /* set a nice, pretty green color */
-    *r = 40;
-    *g = 230;
-    *b = 40;
+    *r = self->parent.color->r;
+    *g = self->parent.color->g;
+    *b = self->parent.color->b;
     
     /* default to no overlay, until told otherwise */
     *a = 0;
     
     if (is_slime(self->seed, state->chunkx, state->chunkz)) {
         /* slimes can spawn! */
-        *a = 240;
+        *a = self->parent.color->a;
     }
 }
 

@@ -23,17 +23,19 @@ typedef struct {
     RenderPrimitiveOverlay parent;
 } RenderPrimitiveSpawn;
 
+static OverlayColor default_color[] = { 229, 36, 38, 0 };
+
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
-    
+    RenderPrimitiveSpawn* self = (RenderPrimitiveSpawn *)data;
     int x = state->x, y = state->y, z = state->z;
     int y_light = y + 1;
     unsigned char blocklight, skylight;
     
     /* set a nice, pretty red color */
-    *r = 229;
-    *g = 36;
-    *b = 38;
+    *r = self->parent.color->r;
+    *g = self->parent.color->g;
+    *b = self->parent.color->b;
     
     /* default to no overlay, until told otherwise */
     *a = 0;
