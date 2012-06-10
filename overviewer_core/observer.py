@@ -18,6 +18,7 @@ import logging
 import progressbar
 import sys
 import os
+import json
 
 class Observer(object):
     """Base class that defines the observer interface.
@@ -170,21 +171,44 @@ class JSObserver(Observer):
     """Display progress on index.html using JavaScript
     """
 
-    def __init__(self, outputdir, minrefresh=5):
+    def __init__(self, outputdir, minrefresh=5, messages=False):
         """Initialise observer
         outputdir must be set to the map output directory path
-        minrefresh specifies the minimum gap between requests, in seconds
+        minrefresh specifies the minimum gap between requests, in seconds [optional]
+        messages is a dictionary which allows the displayed messages to be customised [optional]
         """
         self.last_update = -11
         self.last_update_time = -1 
         self._current_value = -1
         self.minrefresh = 1000*minrefresh
-        self.logfile = open(os.path.join(outputdir, "progress.js"), "w+", 0)
+        self.json = dict()
+
+        if (messages == False):
+            self.messages=dict(totalTiles="Rendering %d tiles", renderCompleted="Render completed in %02d:%02d:%02d", renderProgress="Rendered %d of %d tiles (%d%%)")
+        elif (isinstance(messages, dict)):
+            if ('totalTiles' in messages and 'renderCompleted' in messages and 'renderProgress' in messages):
+                self.messages = messages
+            else:
+                raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
+        else:
+            raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
+        if not os.path.exists(outputdir):
+            raise Exception("JSObserver: Output directory specified (%s) doesn't appear to exist. This should be the same as the Overviewer output directory")
+
+        self.logfile = open(os.path.join(outputdir, "progress.json"), "w+", 0)
+        self.json["message"]=""
+        self.json["update"]=self.minrefresh
+        self.json["messageTime"]=time.time()
+        json.dump(self.json, self.logfile)
+        self.logfile.flush()
 
     def start(self, max_value):
         self.logfile.seek(0)
-        self.logfile.write('{"message": "Rendering %d tiles", "update": %s}' % (max_value, self.minrefresh))
         self.logfile.truncate()
+        self.json["message"] = self.messages["totalTiles"] % (max_value)
+        self.json["update"] = self.minrefresh
+        self.json["messageTime"] = time.time()
+        json.dump(self.json, self.logfile)
         self.logfile.flush()
         self.start_time=time.time()
         self._set_max_value(max_value)
@@ -199,8 +223,15 @@ class JSObserver(Observer):
         self.end_time = time.time()
         duration = self.end_time - self.start_time
         self.logfile.seek(0)
-        self.logfile.write('{"message": "Render completed in %dm %ds", "update": "false"}' % (duration//60, duration - duration//60))
         self.logfile.truncate()
+        hours = duration // 3600
+        duration = duration % 3600
+        minutes = duration // 60
+        seconds = duration % 60
+        self.json["message"] = self.messages["renderCompleted"] % (hours, minutes, seconds)
+        self.json["update"] = -1 # Initially this was set to False, but that runs into some JS strangeness. -1 is less nice, but works
+        self.json["messageTime"] = time.time()
+        json.dump(self.json, self.logfile)
         self.logfile.close()
 
     def is_finished(self):
@@ -222,10 +253,13 @@ class JSObserver(Observer):
         """
         self._current_value = current_value
         if self._need_update():
-            refresh = max(1500*(time.time() - self.last_update_time), self.minrefresh)
+            refresh = max(1500*(time.time() - self.last_update_time), self.minrefresh) // 1
             self.logfile.seek(0)
-            self.logfile.write('{"message": "Rendered %d of %d tiles (%d%%)", "update": %d }' % (self.get_current_value(), self.get_max_value(), self.get_percentage(), refresh))
             self.logfile.truncate()
+            self.json["message"] = self.messages["renderProgress"] % (self.get_current_value(), self.get_max_value(), self.get_percentage())
+            self.json["update"] = refresh
+            self.json["messageTime"] = time.time()
+            json.dump(self.json, self.logfile)
             self.logfile.flush()
             self.last_update_time = time.time()
             self.last_update = current_value
