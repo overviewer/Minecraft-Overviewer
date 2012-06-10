@@ -17,7 +17,7 @@ So let's get started!
 
 .. note::
 
-    This page is still under construction
+    This page is continually under construction
 
 .. contents::
 
@@ -82,7 +82,7 @@ pre-rendered sprite (a small image). The basic idea is to iterate over the
 blocks of the world and draw these sprites to the appropriate location on the
 map.
 
-These are the high-level tasks The Overviewer must preform in rendering a map:
+These are the high-level tasks The Overviewer must perform in rendering a map:
 
 1. Render each block sprite from the textures
 2. Scan the chunks of the world and determine which tiles need rendering
@@ -143,7 +143,7 @@ transformations can be chained together simply by multiplying the transformation
 matrices together, only one transformation is actually done.
 
 This can be seen in the function
-:func:`overviewer_core.textures.transform_image`. It preforms three steps:
+:func:`overviewer_core.textures.transform_image`. It performs three steps:
 
 1. The texture is re-sized to 17 by 17 pixels. This is done because the diagonal
    of a square with sides 17 is approximately 24, which is the target size for

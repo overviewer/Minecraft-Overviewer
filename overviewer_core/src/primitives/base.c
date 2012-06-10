@@ -29,12 +29,19 @@ typedef struct {
 
 typedef struct {
     const char* name;
+    
     float temperature;
     float rainfall;
+    
+    unsigned int r, g, b;
 } Biome;
 
 /* each entry in this table is yanked *directly* out of the minecraft source
  * temp/rainfall are taken from what MCP calls setTemperatureRainfall
+ *
+ * Some biomes, like Swamp, do a bit of post-processing by multiplying on a
+ * hard-coded color. The RGB tuple used follows the temp/rainfall.
+ * 255, 255, 255 is white, which means do nothing
  *
  * keep in mind the x/y coordinate in the color tables is found *after*
  * multiplying rainfall and temperature for the second coordinate, *and* the
@@ -42,33 +49,33 @@ typedef struct {
  */
 static Biome biome_table[] = {
     /* 0 */
-    {"Ocean", 0.5, 0.5},
-    {"Plains", 0.8, 0.4},
-    {"Desert", 2.0, 0.0},
-    {"Extreme Hills", 0.2, 0.3},
-    {"Forest", 0.7, 0.8},
+    {"Ocean", 0.5, 0.5, 255, 255, 255},
+    {"Plains", 0.8, 0.4, 255, 255, 255},
+    {"Desert", 2.0, 0.0, 255, 255, 255},
+    {"Extreme Hills", 0.2, 0.3, 255, 255, 255},
+    {"Forest", 0.7, 0.8, 255, 255, 255},
     /* 5 */
-    {"Taiga", 0.05, 0.8},
-    {"Swampland", 0.8, 0.9},
-    {"River", 0.5, 0.5},
-    {"Hell", 2.0, 0.0},
-    {"Sky", 0.5, 0.5},
+    {"Taiga", 0.05, 0.8, 255, 255, 255},
+    {"Swampland", 0.8, 0.9, 205, 128, 255},
+    {"River", 0.5, 0.5, 255, 255, 255},
+    {"Hell", 2.0, 0.0, 255, 255, 255},
+    {"Sky", 0.5, 0.5, 255, 255, 255},
     /* 10 */
-    {"FrozenOcean", 0.0, 0.5},
-    {"FrozenRiver", 0.0, 0.5},
-    {"Ice Plains", 0.0, 0.5},
-    {"Ice Mountains", 0.0, 0.5},
-    {"MushroomIsland", 0.9, 1.0},
+    {"FrozenOcean", 0.0, 0.5, 255, 255, 255},
+    {"FrozenRiver", 0.0, 0.5, 255, 255, 255},
+    {"Ice Plains", 0.0, 0.5, 255, 255, 255},
+    {"Ice Mountains", 0.0, 0.5, 255, 255, 255},
+    {"MushroomIsland", 0.9, 1.0, 255, 255, 255},
     /* 15 */
-    {"MushroomIslandShore", 0.9, 1.0},
-    {"Beach", 0.8, 0.4},
-    {"DesertHills", 2.0, 0.0},
-    {"ForestHills", 0.7, 0.8},
-    {"TaigaHills", 0.05, 0.8},
+    {"MushroomIslandShore", 0.9, 1.0, 255, 255, 255},
+    {"Beach", 0.8, 0.4, 255, 255, 255},
+    {"DesertHills", 2.0, 0.0, 255, 255, 255},
+    {"ForestHills", 0.7, 0.8, 255, 255, 255},
+    {"TaigaHills", 0.05, 0.8, 255, 255, 255},
     /* 20 */
-    {"Extreme Hills Edge", 0.2, 0.3},
-    {"Jungle", 2.0, 0.45}, /* <-- GUESS, but a good one */
-    {"Jungle Mountains", 2.0, 0.45}, /* <-- also a guess */
+    {"Extreme Hills Edge", 0.2, 0.3, 255, 255, 255},
+    {"Jungle", 2.0, 0.45, 255, 255, 255}, /* <-- GUESS, but a good one */
+    {"Jungle Mountains", 2.0, 0.45, 255, 255, 255}, /* <-- also a guess */
 };
 
 #define NUM_BIOMES (sizeof(biome_table) / sizeof(Biome))
@@ -206,16 +213,19 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         };
             
         if (color_table) {
+            unsigned char biome;
             int dx, dz;
             unsigned char tablex, tabley;
             float temp = 0.0, rain = 0.0;
+            unsigned int multr = 0, multg = 0, multb = 0;
+            int tmp;
             PyObject *color = NULL;
             
             if (self->use_biomes) {
                 /* average over all neighbors */
                 for (dx = -1; dx <= 1; dx++) {
                     for (dz = -1; dz <= 1; dz++) {
-                        unsigned char biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
+                        biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
                         if (biome >= NUM_BIOMES) {
                             /* note -- biome 255 shows up on map borders.
                                who knows what it is? certainly not I.
@@ -225,14 +235,24 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                     
                         temp += biome_table[biome].temperature;
                         rain += biome_table[biome].rainfall;
+                        multr += biome_table[biome].r;
+                        multg += biome_table[biome].g;
+                        multb += biome_table[biome].b;
                     }
                 }
+                
                 temp /= 9.0;
                 rain /= 9.0;
+                multr /= 9;
+                multg /= 9;
+                multb /= 9;
             } else {
                 /* don't use biomes, just use the default */
                 temp = biome_table[DEFAULT_BIOME].temperature;
                 rain = biome_table[DEFAULT_BIOME].rainfall;
+                multr = biome_table[DEFAULT_BIOME].r;
+                multg = biome_table[DEFAULT_BIOME].g;
+                multb = biome_table[DEFAULT_BIOME].b;
             }
             
             /* second coordinate is actually scaled to fit inside the triangle
@@ -258,6 +278,11 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
             b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
             Py_DECREF(color);
+            
+            /* do the after-coloration */
+            r = MULDIV255(r, multr, tmp);
+            g = MULDIV255(g, multg, tmp);
+            b = MULDIV255(b, multb, tmp);
         }
         
         /* final coloration */

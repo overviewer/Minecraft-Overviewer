@@ -24,11 +24,6 @@
 
 #include "overviewer.h"
 
-/* like (a * b + 127) / 255), but much faster on most platforms
-   from PIL's _imaging.c */
-#define MULDIV255(a, b, tmp)								\
-	(tmp = (a) * (b) + 128, ((((tmp) >> 8) + (tmp)) >> 8))
-
 typedef struct {
     PyObject_HEAD
     Imaging image;

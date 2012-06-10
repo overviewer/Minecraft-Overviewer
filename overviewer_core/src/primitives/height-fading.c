@@ -20,11 +20,15 @@
 typedef struct {
     PyObject *black_color;
     PyObject *white_color;
+    unsigned int sealevel;
 } PrimitiveHeightFading;
 
 static int
 height_fading_start(void *data, RenderState *state, PyObject *support) {
     PrimitiveHeightFading *self = (PrimitiveHeightFading *)data;
+    
+    if (!render_mode_parse_option(support, "sealevel", "I", &(self->sealevel)))
+        return 1;
     
     self->black_color = PyObject_GetAttrString(support, "black_color");
     self->white_color = PyObject_GetAttrString(support, "white_color");
@@ -50,7 +54,7 @@ height_fading_draw(void *data, RenderState *state, PyObject *src, PyObject *mask
     PyObject *height_color = self->white_color;
 
     /* current formula requires y to be between 0 and 127, so scale it */
-    y = (y * 128) / (16 * SECTIONS_PER_CHUNK);
+    y = (y * 128) / (2 * self->sealevel);
     
     /* negative alpha => darkness, positive => light */
     alpha = (1.0 / (1 + expf((70 - y) / 11.0))) * 0.6 - 0.55;

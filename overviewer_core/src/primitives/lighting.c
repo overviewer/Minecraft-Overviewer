@@ -202,7 +202,7 @@ lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int 
             /* this face isn't visible, so don't draw anything */
             return 1;
         }
-    } else if (skip_sides) {
+    } else if (!skip_sides) {
         unsigned short block = get_data(state, BLOCKS, x, y, z);
         if (!is_transparent(block)) {
             /* the same thing but for adjacent chunks, this solves an
@@ -242,8 +242,8 @@ lighting_start(void *data, RenderState *state, PyObject *support) {
     RenderPrimitiveLighting* self;
     self = (RenderPrimitiveLighting *)data;
     
-    /* skip sides by default */
-    self->skip_sides = 1;
+    /* don't skip sides by default */
+    self->skip_sides = 0;
 
     if (!render_mode_parse_option(support, "strength", "f", &(self->strength)))
         return 1;

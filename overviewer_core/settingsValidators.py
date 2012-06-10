@@ -17,6 +17,12 @@ class Setting(object):
         self.validator = validator
         self.default = default
 
+def expand_path(p):
+    p = os.path.expanduser(p)
+    p = os.path.expandvars(p)
+    p = os.path.abspath(p)
+    return p
+
 def checkBadEscape(s):
     fixed = False
     fixed_string = s
@@ -45,15 +51,29 @@ def checkBadEscape(s):
 
 def validateMarkers(filterlist):
     if type(filterlist) != list:
-        raise ValidationException("Markers must specify a list of filters")
+        raise ValidationException("Markers must specify a list of filters.  This has recently changed, so check the docs.")
     for x in filterlist:
-        if not callable(x):
-            raise ValidationException("%r must be a function"% x)
+        if type(x) != dict:
+            raise ValidationException("Markers must specify a list of dictionaries.  This has recently changed, so check the docs.")
+        if "name" not in x:
+            raise ValidationException("Must define a name")
+        if "filterFunction" not in x:
+            raise ValidationException("Must define a filter function")
+        if not callable(x['filterFunction']):
+            raise ValidationException("%r must be a function"% x['filterFunction'])
     return filterlist
+
+def validateOverlays(renderlist):
+    if type(renderlist) != list:
+        raise ValidationException("Overlay must specify a list of renders")
+    for x in renderlist:
+        if validateStr(x) == '':
+            raise ValidationException("%r must be a string"% x)
+    return renderlist
 
 def validateWorldPath(worldpath):
     _, worldpath = checkBadEscape(worldpath)
-    abs_path = os.path.abspath(os.path.expanduser(worldpath))
+    abs_path = expand_path(worldpath)
     if not os.path.exists(os.path.join(abs_path, "level.dat")):
         raise ValidationException("No level.dat file in '%s'. Are you sure you have the right path?" % (abs_path,))
     return abs_path
@@ -99,10 +119,10 @@ def validateNorthDirection(direction):
         raise ValidationException("%r is not a valid north direction" % direction)
     return intdir
 
-def validateStochastic(s):
+def validateRerenderprob(s):
     val = float(s)
-    if val < 0 or val > 1:
-        raise ValidationException("%r is not a valid stochastic value.  Should be between 0.0 and 1.0" % s)
+    if val < 0 or val >= 1:
+        raise ValidationException("%r is not a valid rerender probability value.  Should be between 0.0 and 1.0." % s)
     return val
 
 def validateImgFormat(fmt):
@@ -144,7 +164,7 @@ def validateOptImg(opt):
 
 def validateTexturePath(path):
     # Expand user dir in directories strings
-    path = os.path.expanduser(path)
+    path = expand_path(path)
     # TODO assert this path exists?
     return path
 
@@ -170,7 +190,7 @@ def validateOutputDir(d):
     _, d = checkBadEscape(d)
     if not d.strip():
         raise ValidationException("You must specify a valid output directory")
-    return os.path.abspath(d)
+    return expand_path(d)
 
 def validateCrop(value):
     if len(value) != 4:
