@@ -18,8 +18,17 @@
 #include "../overviewer.h"
 
 typedef struct {
+    unsigned char r, g, b, a;
+} OverlayColor;
+
+typedef struct {
     /* top facemask and white color image, for drawing overlays */
     PyObject *facemask_top, *white_color;
+    /* color will be a pointer to either the default_color object below or
+       to a specially allocated color object that is instantiated from the
+       settings file */
+    OverlayColor *color;
+    OverlayColor default_color;
     /* can be overridden in derived classes to control
        overlay alpha and color
        last four vars are r, g, b, a out */

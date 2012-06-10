@@ -168,6 +168,10 @@ class ClearBase(RenderPrimitive):
 class Overlay(RenderPrimitive):
     name = "overlay"
 
+    options = {
+        'overlay_color' : ('a tuple of (r, g, b, a) for coloring the overlay', None),
+    }
+
     @property
     def whitecolor(self):
         whitecolor = getattr(self, "_whitecolor", None)

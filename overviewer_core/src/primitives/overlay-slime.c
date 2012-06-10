@@ -71,16 +71,16 @@ static void get_color(void *data, RenderState *state,
     RenderPrimitiveSlime *self = (RenderPrimitiveSlime *)data;
         
     /* set a nice, pretty green color */
-    *r = 40;
-    *g = 230;
-    *b = 40;
-    
+    *r = self->parent.color->r;
+    *g = self->parent.color->g;
+    *b = self->parent.color->b;
+
     /* default to no overlay, until told otherwise */
     *a = 0;
     
     if (is_slime(self->seed, state->chunkx, state->chunkz)) {
         /* slimes can spawn! */
-        *a = 240;
+        *a = self->parent.color->a;
     }
 }
 
@@ -97,6 +97,11 @@ overlay_slime_start(void *data, RenderState *state, PyObject *support) {
     /* now do custom initializations */
     self = (RenderPrimitiveSlime *)data;
     self->parent.get_color = get_color;
+    
+    self->parent.default_color.r = 40;
+    self->parent.default_color.g = 230;
+    self->parent.default_color.b = 40;
+    self->parent.default_color.a = 240;
     
     pyseed = PyObject_GetAttrString(state->world, "seed");
     if (!pyseed)
