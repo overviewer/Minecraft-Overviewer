@@ -312,7 +312,7 @@ class MultiplexingObserver(Observer):
     def update(self, current_value):
         for o in self.components:
             o.update(current_value)
-        super(MultiplexingObserver, self).update(max_value)
+        super(MultiplexingObserver, self).update(current_value)
 
 class ServerAnnounceObserver(Observer):
     """Send the output to a Minecraft server via FIFO or stdin"""
