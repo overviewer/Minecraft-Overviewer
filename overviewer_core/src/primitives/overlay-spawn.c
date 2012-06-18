@@ -25,15 +25,15 @@ typedef struct {
 
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
-    
+    RenderPrimitiveSpawn* self = (RenderPrimitiveSpawn *)data;
     int x = state->x, y = state->y, z = state->z;
     int y_light = y + 1;
     unsigned char blocklight, skylight;
     
     /* set a nice, pretty red color */
-    *r = 229;
-    *g = 36;
-    *b = 38;
+    *r = self->parent.color->r;
+    *g = self->parent.color->g;
+    *b = self->parent.color->b;
     
     /* default to no overlay, until told otherwise */
     *a = 0;
@@ -67,6 +67,11 @@ overlay_spawn_start(void *data, RenderState *state, PyObject *support) {
     /* now do custom initializations */
     self = (RenderPrimitiveSpawn *)data;
     self->parent.get_color = get_color;
+    
+    self->parent.default_color.r = 229;
+    self->parent.default_color.g = 36;
+    self->parent.default_color.b = 38;
+    self->parent.default_color.a = 0;
     
     return 0;
 }
