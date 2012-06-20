@@ -31,7 +31,7 @@ the next step is to download the latest Overviewer.
     bit.
     
     .. note::
-        You do *not* want to click the 'Download at zip' button at the top
+        You do *not* want to click the 'Download as zip' button at the top
         of the page.  Instead, download one of the files listed in the section
         below that button.  The filename will be called something
         like 'overviewer-0.9.219-win64.zip'
