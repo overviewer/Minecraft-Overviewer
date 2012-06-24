@@ -29,6 +29,12 @@ the next step is to download the latest Overviewer.
     <https://github.com/overviewer/Minecraft-Overviewer/downloads>`_ and
     download the *latest* version for your architecture, either 32 bit or 64
     bit.
+    
+    .. note::
+        You do *not* want to click the 'Download as zip' button at the top
+        of the page.  Instead, download one of the files listed in the section
+        below that button.  The filename will be called something
+        like 'overviewer-0.9.219-win64.zip'
 
     *This is important. If you don't know which to choose, 32 or 64,* then you
     can find out by clicking on the start menu, *right clicking* on the

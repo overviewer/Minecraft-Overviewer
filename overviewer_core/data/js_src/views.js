@@ -485,8 +485,12 @@ overviewer.views.SignControlView = Backbone.View.extend({
                             'icon':     iconURL,
                             'visible':  false
                     }); 
-                    if (entity.createInfoWindow) {
+                    if(entity['createInfoWindow'] == true) {
                         overviewer.util.createMarkerInfoWindow(marker);
+                    } else {
+                        if(dataRoot[i].createInfoWindow == true) {
+                            overviewer.util.createMarkerInfoWindow(marker);
+                        }
                     }
                     jQuery.extend(entity, {markerObj: marker});
                 }
@@ -515,13 +519,13 @@ overviewer.views.SignControlView = Backbone.View.extend({
         var textNode = document.createElement('text');
         if(item.icon) {
             textNode.innerHTML = '<img width="15" height="15" src="' + 
-                item.icon + '">' + item.label + '<br/>';
+                item.icon + '">' + item.label + '&nbsp;<br/>';
         } else {
-            textNode.innerHTML = item.label + '<br/>';
+            textNode.innerHTML = item.label + '&nbsp;<br/>';
         }
 
         itemDiv.appendChild(textNode);
-
+        itemDiv.style.whiteSpace = "nowrap";
 
     },
 });

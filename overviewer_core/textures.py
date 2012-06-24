@@ -1336,6 +1336,8 @@ block(blockid=41, top_index=23)
 block(blockid=42, top_index=22)
 
 # double slabs and slabs
+# these wooden slabs are unobtainable without cheating, they are still
+# here because lots of pre-1.3 worlds use this blocks
 @material(blockid=[43, 44], data=range(16), transparent=(44,), solid=True)
 def slabs(self, blockid, data):
     texture = data & 7
@@ -3169,3 +3171,52 @@ block(blockid=123, top_index=211)
 
 # active redstone lamp
 block(blockid=124, top_index=212)
+
+# wooden double and normal slabs
+# these are the new wooden slabs, blockids 43 44 still have wooden
+# slabs, but those are unobtainable without cheating
+@material(blockid=[125, 126], data=range(16), transparent=(44,), solid=True)
+def slabs(self, blockid, data):
+    texture = data & 7
+    if texture== 0: # oak 
+        top = side = self.terrain_images[4]
+    elif texture== 1: # spruce
+        top = side = self.terrain_images[198]
+    elif texture== 2: # birch
+        top = side = self.terrain_images[214]
+    elif texture== 3: # jungle
+        top = side = self.terrain_images[199]
+    else:
+        return None
+    
+    if blockid == 125: # double slab
+        return self.build_block(top, side)
+    
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask,(0,0,16,8), mask)
+    
+    # plain slab
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+    
+    # upside down slab
+    delta = 0
+    if data & 8 == 8:
+        delta = 6
+    
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12 - delta), side)
+    alpha_over(img, otherside, (12,12 - delta), otherside)
+    alpha_over(img, top, (0,6 - delta), top)
+    
+    return img

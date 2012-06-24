@@ -484,7 +484,14 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``#1a1a1a``
 
-.. _option_texturepath:
+``base``
+    Allows you to specify a remote location for the tile folder, useful if you
+    rsync your map's images to a remote server. Leave a trailing slash and point
+    to the location that contains the tile folders for each render, not the
+    tiles folder itself. For example, if the tile images start at
+    http://domain.com/map/world_day/ you want to set this to http://domain.com/map/
+
+.. _option_texture_pack:
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
@@ -602,11 +609,7 @@ values. The valid configuration keys are listed below.
 
 ``overlay``
     This specifies which renders that this render will be displayed on top of. 
-    It should be a list of renders.
-
-    .. warning::
-
-       At this time, this feature is not fully implemented.
+    It should be a list of other renders.
 
     **Default:** ``[]`` (an empty list)
 
@@ -664,6 +667,13 @@ Nether
 HeightFading
     Draws a colored overlay on the blocks that fades them out according to their
     height.
+    
+    **Options**
+    
+    sealevel
+        sealevel of the word you're rendering. Note that the default,
+        128, is usually *incorrect* for most worlds. You should
+        probably set this to 64. Default: 128
 
 Depth
     Only renders blocks between the specified min and max heights.
@@ -675,6 +685,17 @@ Depth
 
     max
         highest level of blocks to render. Default: 255
+
+Exposed
+    Only renders blocks that are exposed (adjacent to a transparent block).
+    
+    **Options**
+    
+    mode
+        when set to 1, inverts the render mode, only drawing unexposed blocks. Default: 0
+        
+NoFluids
+    Don't render fluid blocks (water, lava).
 
 EdgeLines
     Draw edge lines on the back side of blocks, to help distinguish them from
@@ -732,15 +753,27 @@ ClearBase
     Forces the background to be transparent. Use this in place of Base
     for rendering pure overlays.
 
-    .. warning::
-
-        Overlays are currently not functional in this branch of code. We are
-        working on them. Please inquire in :ref:`IRC<help>` for more information.
-
 SpawnOverlay
     Color the map red in areas where monsters can spawn. Either use
     this on top of other modes, or on top of ClearBase to create a
     pure overlay.
+
+    **Options**
+
+    overlay_color
+        custom color for the overlay in the format (r,g,b,a). If not
+        defined a red color is used.
+
+SlimeOverlay
+    Color the map green in chunks where slimes can spawn. Either use
+    this on top of other modes, or on top of ClearBase to create a
+    pure overlay.
+
+    **Options**
+
+    overlay_color
+        custom color for the overlay in the format (r,g,b,a). If not
+        defined a green color is used.
 
 MineralOverlay
     Color the map according to what minerals can be found

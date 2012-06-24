@@ -17,6 +17,7 @@ import itertools
 import logging
 import os
 import os.path
+import sys
 import shutil
 import random
 import functools
@@ -164,12 +165,14 @@ class TileSet(object):
 
     """
 
-    def __init__(self, regionsetobj, assetmanagerobj, texturesobj, options, outputdir):
+    def __init__(self, worldobj, regionsetobj, assetmanagerobj, texturesobj, options, outputdir):
         """Construct a new TileSet object with the given configuration options
         dictionary.
 
         options is a dictionary of configuration parameters (strings mapping to
         values) that are interpreted by the rendering engine.
+        
+        worldobj is the World object that regionsetobj is from.
 
         regionsetobj is the RegionSet object that is used to render the tiles.
 
@@ -269,6 +272,7 @@ class TileSet(object):
 
         """
         self.options = options
+        self.world = worldobj
         self.regionset = regionsetobj
         self.am = assetmanagerobj
         self.textures = texturesobj
@@ -356,7 +360,7 @@ class TileSet(object):
     # Only pickle the initial state. Don't pickle anything resulting from the
     # do_preprocessing step
     def __getstate__(self):
-        return self.regionset, self.am, self.textures, self.options, self.outputdir
+        return self.world, self.regionset, self.am, self.textures, self.options, self.outputdir
     def __setstate__(self, state):
         self.__init__(*state)
 
@@ -516,7 +520,7 @@ class TileSet(object):
                 defaultZoom = 1,
                 maxZoom = self.treedepth,
                 path = self.options.get('name'),
-                base = '',
+                base = self.options.get('base'),
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') +
                     (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
@@ -946,7 +950,7 @@ class TileSet(object):
 
             # draw the chunk!
             try:
-                c_overviewer.render_loop(self.regionset, chunkx, chunky,
+                c_overviewer.render_loop(self.world, self.regionset, chunkx, chunky,
                         chunkz, tileimg, xpos, ypos,
                         self.options['rendermode'], self.textures)
             except nbt.CorruptionError:
@@ -954,8 +958,9 @@ class TileSet(object):
                 # get_chunk()
                 logging.debug("Skipping the render of corrupt chunk at %s,%s and moving on.", chunkx, chunkz)
             except Exception, e:
-                logging.warning("Could not render chunk %s,%s for some reason. I'm going to ignore this and continue", chunkx, chunkz)
-                logging.debug("Full error was:", exc_info=1)
+                logging.error("Could not render chunk %s,%s for some reason. This is likely a render primitive option error.", chunkx, chunkz)
+                logging.error("Full error was:", exc_info=1)
+                sys.exit(1)
 
             ## Semi-handy routine for debugging the drawing routine
             ## Draw the outline of the top of the chunk

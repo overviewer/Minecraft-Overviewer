@@ -81,6 +81,7 @@ renders = Setting(required=True, default=util.OrderedDict(),
             "markers": Setting(required=False, validator=validateMarkers, default=[]),
             "overlay": Setting(required=False, validator=validateOverlays, default=[]),
             "showspawn": Setting(required=False, validator=validateBool, default=True),
+            "base": Setting(required=False, validator=validateStr, default=""),
 
             # Remove this eventually (once people update their configs)
             "worldname": Setting(required=False, default=None,

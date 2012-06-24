@@ -136,7 +136,12 @@ class World(object):
         except KeyError:
             # but very old ones might not? so we'll just go with the world dir name if they don't
             self.name = os.path.basename(os.path.realpath(self.worlddir))
-
+        
+        try:
+            # level.dat also has a RandomSeed attribute
+            self.seed = data['RandomSeed']
+        except KeyError:
+            self.seed = 0 # oh well
        
         # TODO figure out where to handle regionlists
 
@@ -305,7 +310,7 @@ class RegionSet(object):
         * For each chunk section:
 
           * The "Blocks" byte string is transformed into a 16x16x16 numpy array
-          * The AddBlocks array, if it exists, is bitshifted left 8 bits and
+          * The Add array, if it exists, is bitshifted left 8 bits and
             added into the Blocks array
           * The "SkyLight" byte string is transformed into a 16x16x128 numpy
             array
@@ -381,11 +386,11 @@ class RegionSet(object):
             # Cast up to uint16, blocks can have up to 12 bits of data
             blocks = blocks.astype(numpy.uint16)
             blocks = blocks.reshape((16,16,16))
-            if "AddBlocks" in section:
+            if "Add" in section:
                 # This section has additional bits to tack on to the blocks
-                # array. AddBlocks is a packed array with 4 bits per slot, so
+                # array. Add is a packed array with 4 bits per slot, so
                 # it needs expanding
-                additional = numpy.frombuffer(section['AddBlocks'], dtype=numpy.uint8)
+                additional = numpy.frombuffer(section['Add'], dtype=numpy.uint8)
                 additional = additional.astype(numpy.uint16).reshape((16,16,8))
                 additional_expanded = numpy.empty((16,16,16), dtype=numpy.uint16)
                 additional_expanded[:,:,::2] = (additional & 0x0F) << 8
@@ -393,7 +398,7 @@ class RegionSet(object):
                 blocks += additional_expanded
                 del additional
                 del additional_expanded
-                del section['AddBlocks'] # Save some memory
+                del section['Add'] # Save some memory
             section['Blocks'] = blocks
 
             # Turn the skylight array into a 16x16x16 matrix. The array comes
