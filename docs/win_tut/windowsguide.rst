@@ -150,3 +150,28 @@ one, you can only do the most basic of renders. Once you're ready, head to the
 :doc:`../config` page to see what else The Overviewer can do. And as always,
 feel free to drop by in `IRC <http://overviewer.org/irc/>`_ if you have any
 questions! We're glad to help!
+
+Common Pitfalls
+---------------
+
+     - Wrong working directory::
+
+            "overviewer.exe" is not recognised as an internal or external
+            command, operable program, or batch file.
+
+        This is a common mistake to make, especially for people unfamiliar
+        with the command line. This happens if your current working directory
+        does not contain overviewer.exe. This is likely because you've forgot
+        to change the working directory to the directory you have unzipped
+        overviewer into. Re-read Step 4 for instructions on how to do that.
+
+     - Overviewer is on a different drive than C:\
+        You may have Overviewer located on a different partition than C:,
+        and for some odd reason the windows command line does not accept
+        "cd D:\" as a way to switch partitions. To do this, you have to just
+        type the drive letter followed by a colon::
+
+            D:
+
+        This should switch your current working directory to D:\
+
