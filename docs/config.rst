@@ -432,6 +432,12 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``#1a1a1a``
 
+``defaultzoom``
+    This value specifies the default zoom level that the map will be opened
+    with. It has to be greater than 0.
+
+    **Default:** ``1``
+
 ``base``
     Allows you to specify a remote location for the tile folder, useful if you
     rsync your map's images to a remote server. Leave a trailing slash and point
