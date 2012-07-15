@@ -208,6 +208,12 @@ def validateObserver(observer):
     else:
         raise ValidationException("%r does not look like an observer" % repr(observer))
 
+def validateDefaultZoom(z):
+    if z > 0:
+        return int(z)
+    else:
+        raise ValidationException("The default zoom is set below 1")
+
 def make_dictValidator(keyvalidator, valuevalidator):
     """Compose and return a dict validator -- a validator that validates each
     key and value in a dictionary.
