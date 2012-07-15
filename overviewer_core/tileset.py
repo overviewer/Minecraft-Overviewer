@@ -517,7 +517,7 @@ class TileSet(object):
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
                 minZoom = 0,
-                defaultZoom = 1,
+                defaultZoom = self.options.get('defaultzoom'),
                 maxZoom = self.treedepth,
                 path = self.options.get('name'),
                 base = self.options.get('base'),
@@ -528,6 +528,7 @@ class TileSet(object):
                 imgextension = self.imgextension,
                 isOverlay = isOverlay
                 )
+
         if isOverlay:
             d.update({"tilesets": self.options.get("overlay")})
 
