@@ -216,6 +216,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
     **You must specify at least one render**
 
+.. _outputdir:
+
 ``outputdir = "<output directory path>"``
     This is the path to the output directory where the rendered tiles will
     be saved.
@@ -250,11 +252,61 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
     observer to be used. The observer object is expected to have at least ``start``,
     ``add``, ``update``, and ``finish`` methods.
 
-    e.g.::
+    If you want to specify an observer manually, try something like:
+    ::
 
+        from observer import ProgressBarObserver()
         observer = ProgressBarObserver()
 
-.. _outputdir:
+    There are currently three observers available: ``LoggingObserver``, 
+    ``ProgressBarObserver`` and ``JSObserver``. 
+
+    ``LoggingObserver``
+         This gives the normal/older style output and is the default when output
+         is redirected to a file or when running on Windows
+
+    ``ProgressBarObserver``
+        This is used by default when the output is a terminal. Displays a text based
+        progress bar and some statistics.
+
+    ``JSObserver(outputdir[, minrefresh][, messages])``
+        This will display render progress on the output map in the bottom right
+        corner of the screen. ``JSObserver``.
+
+        * ``outputdir="<output directory path"``
+            Path to overviewer output directory. For simplicity, specify this 
+            as ``outputdir=outputdir`` and place this line after setting
+            ``outputdir = "<output directory path>"``.
+            **Required**
+        
+        * ``minrefresh=<seconds>``
+            Progress information won't be written to file or requested by your
+            web browser more frequently than this interval. 
+
+        * ``messages=dict(totalTiles=<string>, renderCompleted=<string>, renderProgress=<string>)``
+            Customises messages displayed in browser. All three messages must be
+            defined as follows:
+
+            * ``totalTiles="Rendering %d tiles"``
+              The ``%d`` format string will be replaced with the total number of
+              tiles to be rendered.
+
+            * ``renderCompleted="Render completed in %02d:%02d:%02d"``
+              The three format strings  will be replaced with the number of hours.
+              minutes and seconds taken to complete this render.
+
+            * ``renderProgress="Rendered %d of %d tiles (%d%%)"``
+              The three format strings will be replaced with the number of tiles
+              completed, the total number of tiles and the percentage complete
+
+            Format strings are explained here: http://docs.python.org/library/stdtypes.html#string-formatting
+            All format strings must be present in your custom messages.
+
+        ::
+
+                from observer import JSObserver
+                observer = JSObserver(outputdir, 10)
+
 
 
 .. _renderdict:
