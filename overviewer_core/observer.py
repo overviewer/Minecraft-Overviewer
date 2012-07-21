@@ -17,6 +17,8 @@ import time
 import logging
 import progressbar
 import sys
+import os
+import json
 
 class Observer(object):
     """Base class that defines the observer interface.
@@ -164,3 +166,183 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
 
     def _need_update(self):
         return self.get_current_value() - self.last_update > self.UPDATE_INTERVAL
+
+class JSObserver(Observer):
+    """Display progress on index.html using JavaScript
+    """
+
+    def __init__(self, outputdir, minrefresh=5, messages=False):
+        """Initialise observer
+        outputdir must be set to the map output directory path
+        minrefresh specifies the minimum gap between requests, in seconds [optional]
+        messages is a dictionary which allows the displayed messages to be customised [optional]
+        """
+        self.last_update = -11
+        self.last_update_time = -1 
+        self._current_value = -1
+        self.minrefresh = 1000*minrefresh
+        self.json = dict()
+
+        if (messages == False):
+            self.messages=dict(totalTiles="Rendering %d tiles", renderCompleted="Render completed in %02d:%02d:%02d", renderProgress="Rendered %d of %d tiles (%d%%)")
+        elif (isinstance(messages, dict)):
+            if ('totalTiles' in messages and 'renderCompleted' in messages and 'renderProgress' in messages):
+                self.messages = messages
+            else:
+                raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
+        else:
+            raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
+        if not os.path.exists(outputdir):
+            raise Exception("JSObserver: Output directory specified (%s) doesn't appear to exist. This should be the same as the Overviewer output directory")
+
+        self.logfile = open(os.path.join(outputdir, "progress.json"), "w+", 0)
+        self.json["message"]=""
+        self.json["update"]=self.minrefresh
+        self.json["messageTime"]=time.time()
+        json.dump(self.json, self.logfile)
+        self.logfile.flush()
+
+    def start(self, max_value):
+        self.logfile.seek(0)
+        self.logfile.truncate()
+        self.json["message"] = self.messages["totalTiles"] % (max_value)
+        self.json["update"] = self.minrefresh
+        self.json["messageTime"] = time.time()
+        json.dump(self.json, self.logfile)
+        self.logfile.flush()
+        self.start_time=time.time()
+        self._set_max_value(max_value)
+
+    def is_started(self):
+        return self.start_time is not None
+
+    def finish(self):
+        """Signals the end of the processes, should be called after the
+        process is done.
+        """
+        self.end_time = time.time()
+        duration = self.end_time - self.start_time
+        self.logfile.seek(0)
+        self.logfile.truncate()
+        hours = duration // 3600
+        duration = duration % 3600
+        minutes = duration // 60
+        seconds = duration % 60
+        self.json["message"] = self.messages["renderCompleted"] % (hours, minutes, seconds)
+        self.json["update"] = -1 # Initially this was set to False, but that runs into some JS strangeness. -1 is less nice, but works
+        self.json["messageTime"] = time.time()
+        json.dump(self.json, self.logfile)
+        self.logfile.close()
+
+    def is_finished(self):
+        return self.end_time is not None
+
+    def is_running(self):
+        return self.is_started() and not self.is_finished()
+
+    def add(self, amount):
+        """Shortcut to update by increments instead of absolute values. Zero
+        amounts are ignored.
+        """
+        if amount:
+            self.update(self.get_current_value() + amount)
+
+    def update(self, current_value):
+        """Set the progress value. Should be between 0 and max_value. Returns
+        whether this update is actually displayed.
+        """
+        self._current_value = current_value
+        if self._need_update():
+            refresh = max(1500*(time.time() - self.last_update_time), self.minrefresh) // 1
+            self.logfile.seek(0)
+            self.logfile.truncate()
+            self.json["message"] = self.messages["renderProgress"] % (self.get_current_value(), self.get_max_value(), self.get_percentage())
+            self.json["update"] = refresh
+            self.json["messageTime"] = time.time()
+            json.dump(self.json, self.logfile)
+            self.logfile.flush()
+            self.last_update_time = time.time()
+            self.last_update = current_value
+            return True
+        return False
+
+    def get_percentage(self):
+        """Get the current progress percentage. Assumes 100% if max_value is 0
+        """
+        if self.get_max_value() is 0:
+            return 100.0
+        else:
+            return self.get_current_value() * 100.0 / self.get_max_value()
+
+    def get_current_value(self):
+        return self._current_value
+
+    def get_max_value(self):
+        return self._max_value
+
+    def _set_max_value(self, max_value):
+        self._max_value = max_value 
+
+    def _need_update(self):
+        cur_val = self.get_current_value()
+        if cur_val < 100:
+            return cur_val - self.last_update > 10
+        elif cur_val < 500:
+            return cur_val - self.last_update > 50
+        else:
+            return cur_val - self.last_update > 100
+
+class MultiplexingObserver(Observer):
+    """Combine multiple observers into one.
+    """
+    def __init__(self, *components):
+        self.components = components
+        super(MultiplexingObserver, self).__init__()
+
+    def start(self, max_value):
+        for o in self.components:
+            o.start(max_value)
+        super(MultiplexingObserver, self).start(max_value)
+
+    def finish(self):
+        for o in self.components:
+            o.finish()
+        super(MultiplexingObserver, self).finish()
+
+    def update(self, current_value):
+        for o in self.components:
+            o.update(current_value)
+        super(MultiplexingObserver, self).update(current_value)
+
+class ServerAnnounceObserver(Observer):
+    """Send the output to a Minecraft server via FIFO or stdin"""
+    def __init__(self, target='/dev/null', pct_interval=10):
+        self.pct_interval = pct_interval
+        self.target_handle = open(target, 'w')
+        self.last_update = 0
+        super(ServerAnnounceObserver, self).__init__()
+
+    def start(self, max_value):
+        self._send_output('Starting render of %d total tiles' % max_value)
+        super(ServerAnnounceObserver, self).start(max_value)
+
+    def finish(self):
+        self._send_output('Render complete!')
+        super(ServerAnnounceObserver, self).finish()
+        self.target_handle.close()
+
+    def update(self, current_value):
+        super(ServerAnnounceObserver, self).update(current_value)
+        if self._need_update(current_value):
+            self._send_output('Rendered %d of %d tiles, %d%% complete' %
+                (self.get_current_value(), self.get_max_value(),
+                    self.get_percentage()))
+
+    def _need_update(self):
+        return self.get_percentage() - \
+            (self.last_update * 100.0 / self.get_max_value()) >= self.pct_interval
+
+    def _send_output(self, output):
+        self.target_handle.write('say %s\n' % output)
+        self.target_handle.flush()
+

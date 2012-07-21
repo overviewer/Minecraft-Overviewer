@@ -45,7 +45,7 @@
 
 from settingsValidators import *
 import util
-from observer import ProgressBarObserver, LoggingObserver
+from observer import ProgressBarObserver, LoggingObserver, JSObserver
 import platform
 import sys
 

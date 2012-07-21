@@ -137,7 +137,34 @@ overviewer.views.CoordboxView = Backbone.View.extend({
     }
 });
 
-
+overviewer.views.ProgressView = Backbone.View.extend({	
+    initialize: function() {
+        this.el.id = 'progressDiv';
+        this.el.innerHTML = 'Current Render Progress';
+        overviewer.map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(this.el);
+        this.el.hidden = true;
+        $.ajaxSetup({cache: false});
+    },
+    updateProgress: function() {
+        e = this;
+        $.getJSON('progress.json', null, function(d){
+            if (!(d == null||d=='')) {
+                e.el.hidden = false;
+                e.el.innerHTML = d['message'];
+                if (d.update > 0) {
+                    setTimeout("e.updateProgress()", d.update);
+                } else {
+                    setTimeout("e.updateProgress()", 60000);
+                    e.el.innerHTML="Hidden - d.update < 0";
+                    e.el.hidden = true;
+                }
+            } else {
+                e.el.innerHTML="Hidden - !!d==false";
+                e.el.hidden = true;
+            }
+        });
+    }
+});
 
 /* GoogleMapView is responsible for dealing with the GoogleMaps API to create the 
  */
