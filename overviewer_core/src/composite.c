@@ -489,3 +489,154 @@ draw_triangle(PyObject *dest, int inclusive,
     
     return dest;
 }
+
+/* scales the image to half size
+ */
+inline PyObject *
+resize_half(PyObject *dest, PyObject *src) {
+    /* libImaging handles */
+    Imaging imDest, imSrc;
+    /* alpha properties */
+    int src_has_alpha, dest_has_alpha;
+    /* iteration variables */
+    unsigned int x, y;
+    /* temp color variables */
+    unsigned int r, g, b, a;    
+    /* size values for source and destination */
+    int src_width, src_height, dest_width, dest_height;
+    
+    imDest = imaging_python_to_c(dest);
+    imSrc = imaging_python_to_c(src);
+    
+    if (!imDest || !imSrc)
+        return NULL;
+    
+    /* check the various image modes, make sure they make sense */
+    if (strcmp(imDest->mode, "RGBA") != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "given destination image does not have mode \"RGBA\"");
+        return NULL;
+    }
+    
+    if (strcmp(imSrc->mode, "RGBA") != 0 && strcmp(imSrc->mode, "RGB") != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "given source image does not have mode \"RGBA\" or \"RGB\"");
+        return NULL;
+    }
+    
+    src_width = imSrc->xsize;
+    src_height = imSrc->ysize;
+    dest_width = imDest->xsize;
+    dest_height = imDest->ysize;
+    
+    /* make sure destination size is 1/2 src size */
+    if (src_width / 2 != dest_width || src_height / 2 != dest_height) {
+        PyErr_SetString(PyExc_ValueError,
+                        "destination image size is not one-half source image size");
+        return NULL;
+    }
+    
+    /* set up flags for the src/mask type */
+    src_has_alpha = (imSrc->pixelsize == 4 ? 1 : 0);
+    dest_has_alpha = (imDest->pixelsize == 4 ? 1 : 0);
+    
+    /* check that there remains anything to resize */
+    if (dest_width <= 0 || dest_height <= 0) {
+        /* nothing to do, return */
+        return dest;
+    }
+    
+    /* set to fully opaque if source has no alpha channel */
+    if(!src_has_alpha)
+        a = 0xFF << 2;
+    
+    for (y = 0; y < dest_height; y++) {
+        
+        UINT8 *out = (UINT8 *)imDest->image[y];
+        UINT8 *in_row1 = (UINT8 *)imSrc->image[y * 2];
+        UINT8 *in_row2 = (UINT8 *)imSrc->image[y * 2 + 1];
+        
+        for (x = 0; x < dest_width; x++) {
+            
+            // read first column
+            r = *in_row1;    
+            r += *in_row2;
+            in_row1++;
+            in_row2++;
+            g = *in_row1;        
+            g += *in_row2;
+            in_row1++;
+            in_row2++;
+            b = *in_row1;        
+            b += *in_row2;
+            in_row1++;
+            in_row2++;            
+            
+            if (src_has_alpha)
+            {
+                a = *in_row1;        
+                a += *in_row2;
+                in_row1++;
+                in_row2++;
+            }
+            
+            // read second column 
+            r += *in_row1;        
+            r += *in_row2;
+            in_row1++;
+            in_row2++;
+            g += *in_row1;        
+            g += *in_row2;
+            in_row1++;
+            in_row2++;
+            b += *in_row1;        
+            b += *in_row2;
+            in_row1++;
+            in_row2++;
+            
+            if (src_has_alpha)
+            {
+                a += *in_row1;        
+                a += *in_row2;
+                in_row1++;
+                in_row2++;
+            }
+            
+            // write blended color            
+            *out = (UINT8)(r >> 2);
+            out++;
+            *out = (UINT8)(g >> 2);
+            out++;
+            *out = (UINT8)(b >> 2);
+            out++;
+            
+            if (dest_has_alpha)
+            {
+                *out = (UINT8)(a >> 2);
+                out++;
+            }
+        }
+    }
+    
+    return dest;
+}
+
+/* wraps resize_half so it can be called directly from python */
+PyObject *
+resize_half_wrap(PyObject *self, PyObject *args)
+{
+    /* raw input python variables */
+    PyObject *dest, *src;
+    /* return value: dest image on success */
+    PyObject *ret;
+    
+    if (!PyArg_ParseTuple(args, "OO", &dest, &src))
+        return NULL;
+    
+    ret = resize_half(dest, src);
+    if (ret == dest) {
+        /* Python needs us to own our return value */
+        Py_INCREF(dest);
+    }
+    return ret;
+}

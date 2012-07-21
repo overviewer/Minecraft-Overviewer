@@ -35,6 +35,7 @@ from .files import FileReplacer
 from .optimizeimages import optimize_image
 import rendermodes
 import c_overviewer
+from c_overviewer import resize_half
 
 """
 
@@ -859,13 +860,17 @@ class TileSet(object):
 
         # Create the actual image now
         img = Image.new("RGBA", (384, 384), self.options['bgcolor'])
-
+		
         # we'll use paste (NOT alpha_over) for quadtree generation because
         # this is just straight image stitching, not alpha blending
 
         for path in quadPath_filtered:
             try:
-                quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
+                #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
+                src = Image.open(path[1])
+                src.load()
+                quad = Image.new("RGBA", (192, 192), self.options['bgcolor'])
+                resize_half(quad, src)
                 img.paste(quad, path[0])
             except Exception, e:
                 logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)

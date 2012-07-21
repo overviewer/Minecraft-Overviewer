@@ -26,6 +26,9 @@ static PyMethodDef COverviewerMethods[] = {
     {"alpha_over", alpha_over_wrap, METH_VARARGS,
      "alpha over composite function"},
     
+    {"resize_half", resize_half_wrap, METH_VARARGS,
+     "downscale image to half size"},
+    
     {"render_loop", chunk_render, METH_VARARGS,
      "Renders stuffs"},
     
