@@ -110,18 +110,18 @@ base_finish(void *data, RenderState *state) {
 
 static int
 base_occluded(void *data, RenderState *state, int x, int y, int z) {
-    if ( (x != 0) && (y != 15) && (z != 15) &&
-         !render_mode_hidden(state->rendermode, x-1, y, z) &&
+    if ( !render_mode_hidden(state->rendermode, x-1, y, z) &&
          !render_mode_hidden(state->rendermode, x, y, z+1) &&
          !render_mode_hidden(state->rendermode, x, y+1, z) &&
-         !is_transparent(getArrayByte3D(state->blocks, x-1, y, z)) &&
-         !is_transparent(getArrayByte3D(state->blocks, x, y, z+1)) &&
-         !is_transparent(getArrayByte3D(state->blocks, x, y+1, z))) {
+         !is_transparent(get_data(state, BLOCKS, x-1, y, z)) &&
+         !is_transparent(get_data(state, BLOCKS, x, y, z+1)) &&
+         !is_transparent(get_data(state, BLOCKS, x, y+1, z))) {
         return 1;
     }
 
     return 0;
 }
+
 
 static void
 base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
