@@ -1344,7 +1344,7 @@ def slabs(self, blockid, data):
     if texture== 0: # stone slab
         top = self.terrain_images[6]
         side = self.terrain_images[5]
-    elif texture== 1: # stone slab
+    elif texture== 1: # sandstone slab
         top = self.terrain_images[176]
         side = self.terrain_images[192]
     elif texture== 2: # wooden slab
@@ -1492,7 +1492,7 @@ def fire(self, blockid, data):
 block(blockid=52, top_index=34, transparent=True)
 
 # wooden, cobblestone, red brick, stone brick and netherbrick stairs.
-@material(blockid=[53,67,108,109,114], data=range(8), transparent=True, solid=True, nospawn=True)
+@material(blockid=[53,67,108,109,114,128], data=range(8), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
 
     # first, rotations
@@ -1526,12 +1526,18 @@ def stairs(self, blockid, data):
         texture = self.terrain_images[54]
     elif blockid == 114: # netherbrick stairs
         texture = self.terrain_images[224]
+    elif blockid == 128: # sandstone stairs
+        texture = self.terrain_images[192]
     
     side = texture.copy()
     half_block_u = texture.copy() # up, down, left, right
     half_block_d = texture.copy()
     half_block_l = texture.copy()
     half_block_r = texture.copy()
+    
+    if blockid == 128: # sandstone stairs have a distinct top texture
+        half_block_u = self.terrain_images[176].copy()
+        half_block_d = self.terrain_images[176].copy()
 
     # generate needed geometries
     ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
