@@ -1491,8 +1491,8 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_index=34, transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick and sandstone stairs.
-@material(blockid=[53,67,108,109,114,128], data=range(8), transparent=True, solid=True, nospawn=True)
+# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch and jungle stairs.
+@material(blockid=[53,67,108,109,114,128,134,135,136], data=range(8), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
 
     # first, rotations
@@ -1526,14 +1526,26 @@ def stairs(self, blockid, data):
         texture = self.terrain_images[54]
     elif blockid == 114: # netherbrick stairs
         texture = self.terrain_images[224]
-    elif blockid ==128: #sandstone stairs
+    elif blockid == 128: # sandstone stairs
         texture = self.terrain_images[192]
+    elif blockid == 134: # spruce wood stairs
+        texture = self.terrain_images[198]
+    elif blockid == 135: # birch wood  stairs
+        texture = self.terrain_images[214]
+    elif blockid == 136: # jungle good stairs
+        texture = self.terrain_images[199]
+
 
     side = texture.copy()
     half_block_u = texture.copy() # up, down, left, right
     half_block_d = texture.copy()
     half_block_l = texture.copy()
     half_block_r = texture.copy()
+
+    # sandstone stairs have spcial top texture
+    if blockid == 128:
+        half_block_u = self.terrain_images[176].copy()
+        half_block_d = self.terrain_images[176].copy()
 
     # generate needed geometries
     ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
