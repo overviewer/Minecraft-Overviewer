@@ -852,17 +852,36 @@ block(blockid=15, top_index=33)
 # coal ore
 block(blockid=16, top_index=34)
 
-@material(blockid=17, data=range(4), solid=True)
+@material(blockid=17, data=range(12), solid=True)
 def wood(self, blockid, data):
+    # extract orientation and wood type frorm data bits
+    wood_type = data & 3
+    wood_orientation = data & 12
+    if self.rotation == 1:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    elif self.rotation == 2: 
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+
+    # choose textures
     top = self.terrain_images[21]
-    if data == 0: # normal
-        return self.build_block(top, self.terrain_images[20])
-    if data == 1: # birch
-        return self.build_block(top, self.terrain_images[116])
-    if data == 2: # pine
-        return self.build_block(top, self.terrain_images[117])
-    if data == 3: # jungle wood
-        return self.build_block(top, self.terrain_images[153])
+    if wood_type == 0: # normal
+        side = self.terrain_images[20]
+    if wood_type == 1: # birch
+        side = self.terrain_images[116]
+    if wood_type == 2: # pine
+        side = self.terrain_images[117]
+    if wood_type == 3: # jungle wood
+        side = self.terrain_images[153]
+
+    # choose orientation and paste textures
+    if wood_orientation == 0:
+        return self.build_block(top, side)
+    elif wood_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif wood_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
 
 @material(blockid=18, data=range(16), transparent=True, solid=True)
 def leaves(self, blockid, data):
