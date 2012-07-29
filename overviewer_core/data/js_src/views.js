@@ -388,7 +388,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
             // hide markers that are part of other tilesets than this
             // for each markerSet, check:
             //    if the markerSet isnot part of this tileset, hide all of the markers
-            var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
+            var curMarkerSet = overviewer.mapView.options.currentTileSet.get("path");
             var dataRoot = markers[curMarkerSet];
 
             jQuery.each(markers, function(key, markerSet) {
@@ -429,7 +429,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
      */
     render: function() {
 
-        var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
+        var curMarkerSet = overviewer.mapView.options.currentTileSet.get("path");
         //var dataRoot = overviewer.collections.markerInfo[curMarkerSet];
         var dataRoot = markers[curMarkerSet];
 

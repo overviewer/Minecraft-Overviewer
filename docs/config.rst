@@ -600,7 +600,7 @@ values. The valid configuration keys are listed below.
 
 ``markers``
     This controls the display of markers, signs, and other points of interest
-    in the output HTML.  It should be a list of filter functions.
+    in the output HTML.  It should be a list of dictionaries.  
 
     .. note::
 
