@@ -21,7 +21,7 @@
 typedef struct {
     /* inherits from overlay */
     RenderPrimitiveOverlay parent;
-    long seed;
+    long long seed; // needs to be at least 64-bits
 } RenderPrimitiveSlime;
 
 /*
@@ -30,16 +30,16 @@ typedef struct {
  * http://docs.oracle.com/javase/1.4.2/docs/api/java/util/Random.html
  */
 
-static void random_set_seed(long *seed, long new_seed) {
-    *seed = (new_seed ^ 0x5deece66dL) & ((1L << 48) - 1);
+static void random_set_seed(long long *seed, long long new_seed) {
+    *seed = (new_seed ^ 0x5deece66dLL) & ((1LL << 48) - 1);
 }
 
-static int random_next(long *seed, int bits) {
-    *seed = (*seed * 0x5deece66dL + 0xbL) & ((1L << 48) - 1);
+static int random_next(long long *seed, int bits) {
+    *seed = (*seed * 0x5deece66dLL + 0xbL) & ((1LL << 48) - 1);
     return (int)(*seed >> (48 - bits));
 }
 
-static int random_next_int(long *seed, int n) {
+static int random_next_int(long long *seed, int n) {
     int bits, val;
     
     if (n <= 0) {
@@ -49,7 +49,7 @@ static int random_next_int(long *seed, int n) {
     
     if ((n & -n) == n) {
         /* n is a power of two */
-        return (int)((n * (long)random_next(seed, 31)) >> 31);
+        return (int)((n * (long long)random_next(seed, 31)) >> 31);
     }
     
     do {
@@ -59,10 +59,10 @@ static int random_next_int(long *seed, int n) {
     return val;
 }
 
-static int is_slime(long map_seed, long chunkx, long chunkz) {
+static int is_slime(long long map_seed, long chunkx, long chunkz) {
     /* lots of magic numbers, but they're all correct! I swear! */
-    long seed;
-    random_set_seed(&seed, map_seed + (chunkx * chunkx * 0x4c1906L) + (chunkx * 0x5ac0dbL) + (chunkz * chunkz * 0x4307a7L) + (chunkz * 0x5f24fL) ^ 0x3ad8025fL);
+    long long seed;
+    random_set_seed(&seed, map_seed + (chunkx * chunkx * 0x4c1906LL) + (chunkx * 0x5ac0dbLL) + (chunkz * chunkz * 0x4307a7LL) + (chunkz * 0x5f24fLL) ^ 0x3ad8025fLL);
     return (random_next_int(&seed, 10) == 0);
 }
 
@@ -106,7 +106,7 @@ overlay_slime_start(void *data, RenderState *state, PyObject *support) {
     pyseed = PyObject_GetAttrString(state->world, "seed");
     if (!pyseed)
         return 1;
-    self->seed = PyInt_AsLong(pyseed);
+    self->seed = PyLong_AsLongLong(pyseed);
     Py_DECREF(pyseed);
     if (PyErr_Occurred())
         return 1;
