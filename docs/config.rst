@@ -611,6 +611,12 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``[]`` (an empty list)
 
+
+``poititle``
+    This controls the display name of the POI/marker dropdown control.
+
+    **Default:** "Signs"
+
 .. _option_overlay:
 
 ``overlay``

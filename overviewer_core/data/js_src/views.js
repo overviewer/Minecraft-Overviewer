@@ -440,7 +440,7 @@ overviewer.views.SignControlView = Backbone.View.extend({
 
 
         var controlText = document.createElement('DIV');
-        controlText.innerHTML = poiDropdownTitle;
+        controlText.innerHTML = overviewer.mapView.options.currentTileSet.get("poititle");
 
         var controlBorder = document.createElement('DIV');
         $(controlBorder).addClass('top');

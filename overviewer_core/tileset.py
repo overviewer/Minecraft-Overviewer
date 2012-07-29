@@ -527,7 +527,8 @@ class TileSet(object):
                     (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
-                isOverlay = isOverlay
+                isOverlay = isOverlay,
+                poititle = self.options.get("poititle")
                 )
 
         if isOverlay:
