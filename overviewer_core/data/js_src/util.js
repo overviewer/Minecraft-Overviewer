@@ -281,15 +281,15 @@ overviewer.util = {
 
         if (north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = x;
-            x = -z+16;
+            x = -z+15;
             z = temp;
         } else if(north_direction == overviewerConfig.CONST.LOWERRIGHT){
-            x = -x+16;
-            z = -z+16;
+            x = -x+15;
+            z = -z+15;
         } else if(north_direction == overviewerConfig.CONST.LOWERLEFT){
             temp = x;
             x = z;
-            z = -temp+16;
+            z = -temp+15;
         }
 
         // This information about where the center column is may change with
@@ -370,15 +370,15 @@ overviewer.util = {
 
         if(north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = point.z;
-            point.z = -point.x+16;
+            point.z = -point.x+15;
             point.x = temp;
         } else if(north_direction == overviewerConfig.CONST.LOWERRIGHT){
-            point.x = -point.x+16;
-            point.z = -point.z+16;
+            point.x = -point.x+15;
+            point.z = -point.z+15;
         } else if(north_direction == overviewerConfig.CONST.LOWERLEFT){
             temp = point.z;
             point.z = point.x;
-            point.x = -temp+16;
+            point.x = -temp+15;
         }
 
         return point;
