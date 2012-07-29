@@ -383,23 +383,28 @@ overviewer.views.SignControlView = Backbone.View.extend({
             // workaround IE issue.  bah!
             if (typeof markers=="undefined") { return; }
             me.render();
-            // hide markers, if necessary
+
+
+            // hide markers that are part of other tilesets than this
             // for each markerSet, check:
             //    if the markerSet isnot part of this tileset, hide all of the markers
             var curMarkerSet = overviewer.mapView.options.currentTileSet.attributes.path;
             var dataRoot = markers[curMarkerSet];
-            if (!dataRoot) { 
-                // this tileset has no signs, so hide all of them
-                for (markerSet in markersDB) {
-                    if (markersDB[markerSet].created) {
-                        jQuery.each(markersDB[markerSet].raw, function(i, elem) {
-                            elem.markerObj.setVisible(false);
-                        });
-                    }
-                }
 
-                return; 
-            }
+            jQuery.each(markers, function(key, markerSet) {
+                if (key != curMarkerSet) {
+                    jQuery.each(markerSet, function(i, markerGroup) {
+                        if (typeof markerGroup.markerObjs != "undefined") {
+                            jQuery.each(markerGroup.markerObjs, function(j, markerObj) {
+                                markerObj.setVisible(false);
+                            });
+                        }
+                    });
+                }
+            });
+
+            return;
+
             var groupsForThisTileSet = jQuery.map(dataRoot, function(elem, i) { return elem.groupName;})
             for (markerSet in markersDB) {
                 if (jQuery.inArray(markerSet, groupsForThisTileSet) == -1){
@@ -457,19 +462,25 @@ overviewer.views.SignControlView = Backbone.View.extend({
         // add some menus
         for (i in dataRoot) {
             var group = dataRoot[i];
-            this.addItem({label: group.displayName, groupName:group.groupName, action:function(this_item, checked) {
-                markersDB[this_item.groupName].checked = checked;
-                jQuery.each(markersDB[this_item.groupName].raw, function(i, elem) {
-                    elem.markerObj.setVisible(checked);
+            this.addItem({group: group, action:function(this_item, checked) {
+                this_item.group.checked = checked;
+                jQuery.each(this_item.group.markerObjs, function(i, markerObj) {
+                    markerObj.setVisible(checked);
                 });
             }});
+            if (group.checked) {
+                jQuery.each(group.markerObjs, function(i, markerObj) {
+                    markerObj.setVisible(true);
+                });
+            }
         }
 
         //dataRoot['markers'] = [];
         //
         for (i in dataRoot) {
             var groupName = dataRoot[i].groupName;
-            if (!markersDB[groupName].created) {
+            if (!dataRoot[i].created) {
+                dataRoot[i].markerObjs = [];
                 for (j in markersDB[groupName].raw) {
                     var entity = markersDB[groupName].raw[j];
                     if (entity['icon']) {
@@ -492,9 +503,9 @@ overviewer.views.SignControlView = Backbone.View.extend({
                             overviewer.util.createMarkerInfoWindow(marker);
                         }
                     }
-                    jQuery.extend(entity, {markerObj: marker});
+                    dataRoot[i].markerObjs.push(marker);
                 }
-                markersDB[groupName].created = true;
+                dataRoot[i].created = true;
             }
         }
 
@@ -505,9 +516,13 @@ overviewer.views.SignControlView = Backbone.View.extend({
         var itemInput = document.createElement('input');
         itemInput.type='checkbox';
 
+        if (item.group.checked) {
+            itemInput.checked="true";
+        }
+
         // give it a name
-        $(itemInput).data('label',item.label);
-        $(itemInput).attr("_mc_groupname", item.groupName);
+        $(itemInput).data('label',item.group.displayName);
+        $(itemInput).attr("_mc_groupname", item.group.gropuName);
         jQuery(itemInput).click((function(local_item) {
             return function(e) {
                 item.action(local_item, e.target.checked);
@@ -519,9 +534,9 @@ overviewer.views.SignControlView = Backbone.View.extend({
         var textNode = document.createElement('text');
         if(item.icon) {
             textNode.innerHTML = '<img width="15" height="15" src="' + 
-                item.icon + '">' + item.label + '&nbsp;<br/>';
+                item.icon + '">' + item.group.displayName + '&nbsp;<br/>';
         } else {
-            textNode.innerHTML = item.label + '&nbsp;<br/>';
+            textNode.innerHTML = item.group.displayName + '&nbsp;<br/>';
         }
 
         itemDiv.appendChild(textNode);

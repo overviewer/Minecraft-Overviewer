@@ -158,21 +158,6 @@ overviewer.util = {
 
     },
 
-    'createMarkerInfoWindow': function(marker) {
-            var windowContent = '<div class="infoWindow"><img src="' + marker.icon +
-                '"/><p>' + marker.title.replace(/\n/g,'<br/>') + '</p></div>';
-            var infowindow = new google.maps.InfoWindow({
-                'content': windowContent
-            });
-            google.maps.event.addListener(marker, 'click', function() {
-                if (overviewer.collections.infoWindow) {
-                    overviewer.collections.infoWindow.close();
-                }
-                infowindow.open(overviewer.map, marker);
-                overviewer.collections.infoWindow = infowindow;
-            });
-        },
-
 
     /**
      * This adds some methods to these classes because Javascript is stupid
@@ -432,15 +417,15 @@ overviewer.util = {
         var windowContent = '<div class="infoWindow"><img src="' + marker.icon +
             '"/><p>' + marker.title.replace(/\n/g,'<br/>') + '</p></div>';
         var infowindow = new google.maps.InfoWindow({
-                'content': windowContent
-                });
+            'content': windowContent
+        });
         google.maps.event.addListener(marker, 'click', function() {
-                if (overviewer.collections.infoWindow) {
+            if (overviewer.collections.infoWindow) {
                 overviewer.collections.infoWindow.close();
-                }
-                infowindow.open(overviewer.map, marker);
-                overviewer.collections.infoWindow = infowindow;
-                });
+            }
+            infowindow.open(overviewer.map, marker);
+            overviewer.collections.infoWindow = infowindow;
+        });
     },
     'initHash': function() {
         if(window.location.hash.split("/").length > 1) {
