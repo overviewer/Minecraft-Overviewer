@@ -1,4 +1,9 @@
 overviewer.util = {
+	
+    // vars for callback
+    readyQueue: [],
+    isReady: false,
+	
     /* fuzz tester!
      */
     'testMaths': function(t) {
