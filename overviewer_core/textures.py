@@ -3407,3 +3407,84 @@ block(blockid=130, top_index=171)
 
 # emerald block
 block(blockid=133, top_index=25)
+
+# cocoa plant
+@material(blockid=127, data=range(12), transparent=True)
+def cocoa_plant(self, blockid, data):
+    orientation = data & 3
+    # rotation
+    if self.rotation == 1:
+        if orientation == 0: orientation = 1
+        elif orientation == 1: orientation = 2
+        elif orientation == 2: orientation = 3
+        elif orientation == 3: orientation = 0
+    elif self.rotation == 2:
+        if orientation == 0: orientation = 2
+        elif orientation == 1: orientation = 3
+        elif orientation == 2: orientation = 0
+        elif orientation == 3: orientation = 1
+    elif self.rotation == 3:
+        if orientation == 0: orientation = 3
+        elif orientation == 1: orientation = 0
+        elif orientation == 2: orientation = 1
+        elif orientation == 3: orientation = 2
+
+    size = data & 12
+    if size == 8: # big
+        t = self.terrain_images[168]
+        c_left = (0,3)
+        c_right = (8,3)
+        c_top = (5,2)
+    elif size == 4: # normal
+        t = self.terrain_images[169]
+        c_left = (-2,2)
+        c_right = (8,2)
+        c_top = (5,2)
+    elif size == 0: # small
+        t = self.terrain_images[170]
+        c_left = (-3,2)
+        c_right = (6,2)
+        c_top = (5,2)
+
+    # let's get every texture piece necessary to do this
+    stalk = t.copy()
+    ImageDraw.Draw(stalk).rectangle((0,0,11,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(stalk).rectangle((12,4,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    
+    top = t.copy() # warning! changes with plant size
+    ImageDraw.Draw(top).rectangle((0,7,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(top).rectangle((7,0,16,6),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    side = t.copy() # warning! changes with plant size
+    ImageDraw.Draw(side).rectangle((0,0,6,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(side).rectangle((0,0,16,3),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(side).rectangle((0,14,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    
+    # first compose the block of the cocoa plant
+    block = Image.new("RGBA", (24,24), self.bgcolor)
+    tmp = self.transform_image_side(side).transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over (block, tmp, c_right,tmp) # right side
+    tmp = tmp.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over (block, tmp, c_left,tmp) # left side
+    tmp = self.transform_image_top(top)
+    alpha_over(block, tmp, c_top,tmp)
+    if size == 0:
+        # fix a pixel hole
+        block.putpixel((6,9), block.getpixel((6,10)))
+
+    # compose the cocoa plant
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    if orientation in (2,3): # south and west
+        tmp = self.transform_image_side(stalk).transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, block,(-1,-2), block)
+        alpha_over(img, tmp, (4,-2), tmp)
+        if orientation == 3:
+            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation in (0,1): # north and east
+        tmp = self.transform_image_side(stalk.transpose(Image.FLIP_LEFT_RIGHT))
+        alpha_over(img, block,(-1,5), block)
+        alpha_over(img, tmp, (2,12), tmp)
+        if orientation == 0:
+            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+
+    return img
