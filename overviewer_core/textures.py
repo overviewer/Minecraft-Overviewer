@@ -1675,7 +1675,7 @@ def chests(self, blockid, data):
     if data & 24 == 0:
         if blockid == 130: t = self.load_image("enderchest.png")
         else: t = self.load_image("chest.png")
-        t.save("textura.png")
+
         # the textures is no longer in terrain.png, get it from 
         # item/chest.png and get by cropping all the needed stuff
         if t.size != (64,64): t = t.resize((64,64), Image.ANTIALIAS)
