@@ -41,7 +41,7 @@ overviewer.collections = {
         /**
          * holds a reference to the spawn marker. 
          */
-        'spawnMarker': null,
+        'spawnMarker': null
     };
 
 overviewer.classes = {
@@ -86,7 +86,7 @@ overviewer.gmap = {
                 if(tile.x < 0 || tile.x >= Math.pow(2, zoom) ||
                    tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
                     url += '/blank';
-                } else if(zoom == 0) {
+                } else if(zoom === 0) {
                     url += '/base';
                 } else {
                     for(var z = zoom - 1; z >= 0; --z) {
@@ -100,6 +100,6 @@ overviewer.gmap = {
                     url += '?c=' + overviewerConfig.map.cacheTag;
                 }
                 return(urlBase + url);
-            }
+            };
         }
 };
