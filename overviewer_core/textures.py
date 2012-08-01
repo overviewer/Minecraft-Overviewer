@@ -3403,7 +3403,7 @@ def slabs(self, blockid, data):
     return img
 
 # emerald ore
-block(blockid=130, top_index=171)
+block(blockid=129, top_index=171)
 
 # emerald block
 block(blockid=133, top_index=25)
