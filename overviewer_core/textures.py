@@ -2703,32 +2703,126 @@ def portal(self, blockid, data):
     return img
 
 # cake!
-# TODO is rendered un-bitten
 @material(blockid=92, data=range(6), transparent=True, nospawn=True)
 def cake(self, blockid, data):
-
-    # choose textures for cake
-    top = self.terrain_images[121]
-    side = self.terrain_images[122]
-    top = self.transform_image_top(top)
-    side = self.transform_image_side(side)
-    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
     
-    # darken sides slightly
-    sidealpha = side.split()[3]
-    side = ImageEnhance.Brightness(side).enhance(0.9)
-    side.putalpha(sidealpha)
-    othersidealpha = otherside.split()[3]
-    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
-    otherside.putalpha(othersidealpha)
+    # cake textures
+    top = self.terrain_images[121].copy()
+    side = self.terrain_images[122].copy()
+    fullside = side.copy()
+    inside = self.terrain_images[123]
     
     img = Image.new("RGBA", (24,24), self.bgcolor)
+    if data == 0: # unbitten cake
+        top = self.transform_image_top(top)
+        side = self.transform_image_side(side)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        
+        # darken sides slightly
+        sidealpha = side.split()[3]
+        side = ImageEnhance.Brightness(side).enhance(0.9)
+        side.putalpha(sidealpha)
+        othersidealpha = otherside.split()[3]
+        otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+        otherside.putalpha(othersidealpha)
+        
+        # composite the cake
+        alpha_over(img, side, (1,6), side)
+        alpha_over(img, otherside, (11,7), otherside) # workaround, fixes a hole
+        alpha_over(img, otherside, (12,6), otherside)
+        alpha_over(img, top, (0,6), top)
     
-    # composite the cake
-    alpha_over(img, side, (1,6), side)
-    alpha_over(img, otherside, (11,7), otherside) # workaround, fixes a hole
-    alpha_over(img, otherside, (12,6), otherside)
-    alpha_over(img, top, (0,6), top)
+    else:
+        # cut the textures for a bitten cake
+        coord = int(16./6.*data)
+        ImageDraw.Draw(side).rectangle((16 - coord,0,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(top).rectangle((0,0,coord,16),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # the bitten part of the cake always points to the west
+        # composite the cake for every north orientation
+        if self.rotation == 0: # north top-left
+            # create right side
+            rs = self.transform_image_side(side).transpose(Image.FLIP_LEFT_RIGHT)
+            # create bitten side and its coords
+            deltax = 2*data
+            deltay = -1*data
+            if data == 3: deltax += 1 # special case fixing pixel holes
+            ls = self.transform_image_side(inside)
+            # create top side
+            t = self.transform_image_top(top)
+            # darken sides slightly
+            sidealpha = ls.split()[3]
+            ls = ImageEnhance.Brightness(ls).enhance(0.9)
+            ls.putalpha(sidealpha)
+            othersidealpha = rs.split()[3]
+            rs = ImageEnhance.Brightness(rs).enhance(0.8)
+            rs.putalpha(othersidealpha)
+            # compose the cake
+            alpha_over(img, rs, (12,6), rs)
+            alpha_over(img, ls, (1 + deltax,6 + deltay), ls)
+            alpha_over(img, t, (0,6), t)
+
+        elif self.rotation == 1: # north top-right
+            # bitten side not shown
+            # create left side
+            ls = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT))
+            # create top
+            t = self.transform_image_top(top.rotate(-90))
+            # create right side
+            rs = self.transform_image_side(fullside).transpose(Image.FLIP_LEFT_RIGHT)
+            # darken sides slightly
+            sidealpha = ls.split()[3]
+            ls = ImageEnhance.Brightness(ls).enhance(0.9)
+            ls.putalpha(sidealpha)
+            othersidealpha = rs.split()[3]
+            rs = ImageEnhance.Brightness(rs).enhance(0.8)
+            rs.putalpha(othersidealpha)
+            # compose the cake
+            alpha_over(img, ls, (2,6), ls)
+            alpha_over(img, t, (0,6), t)
+            alpha_over(img, rs, (12,6), rs)
+
+        elif self.rotation == 2: # north bottom-right
+            # bitten side not shown
+            # left side
+            ls = self.transform_image_side(fullside)
+            # top
+            t = self.transform_image_top(top.rotate(180))
+            # right side
+            rs = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
+            # darken sides slightly
+            sidealpha = ls.split()[3]
+            ls = ImageEnhance.Brightness(ls).enhance(0.9)
+            ls.putalpha(sidealpha)
+            othersidealpha = rs.split()[3]
+            rs = ImageEnhance.Brightness(rs).enhance(0.8)
+            rs.putalpha(othersidealpha)
+            # compose the cake
+            alpha_over(img, ls, (2,6), ls)
+            alpha_over(img, t, (1,6), t)
+            alpha_over(img, rs, (12,6), rs)
+
+        elif self.rotation == 3: # north bottom-left
+            # create left side
+            ls = self.transform_image_side(side)
+            # create top
+            t = self.transform_image_top(top.rotate(90))
+            # create right side and its coords
+            deltax = 12-2*data
+            deltay = -1*data
+            if data == 3: deltax += -1 # special case fixing pixel holes
+            rs = self.transform_image_side(inside).transpose(Image.FLIP_LEFT_RIGHT)
+            # darken sides slightly
+            sidealpha = ls.split()[3]
+            ls = ImageEnhance.Brightness(ls).enhance(0.9)
+            ls.putalpha(sidealpha)
+            othersidealpha = rs.split()[3]
+            rs = ImageEnhance.Brightness(rs).enhance(0.8)
+            rs.putalpha(othersidealpha)
+            # compose the cake
+            alpha_over(img, ls, (2,6), ls)
+            alpha_over(img, t, (1,6), t)
+            alpha_over(img, rs, (1 + deltax,6 + deltay), rs)
 
     return img
 
