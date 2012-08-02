@@ -1,4 +1,9 @@
 overviewer.util = {
+	
+    // vars for callback
+    readyQueue: [],
+    isReady: false,
+	
     /* fuzz tester!
      */
     'testMaths': function(t) {
@@ -145,6 +150,13 @@ overviewer.util = {
            overviewer.util.initializeRegions();
            overviewer.util.createMapControls();
            */
+           
+        // run ready callbacks now
+        google.maps.event.addListenerOnce(overviewer.map, 'idle', function(){
+            // ok now..
+            overviewer.util.runReadyQueue();
+            overviewer.util.isReady = true;
+        });
     },
 
     'injectMarkerScript': function(url) {
@@ -195,6 +207,27 @@ overviewer.util = {
             div.style.borderColor = '#AAAAAA';
             return div;
         };
+    },
+    /**
+     * onready function for other scripts that rely on overviewer
+     * usage: overviewer.util.ready(function(){ // do stuff });
+     *
+     *
+     */
+    'ready': function(callback){
+        if (!callback || !_.isFunction(callback)) return;
+        if (overviewer.util.isReady){ // run instantly if overviewer already is ready
+            overviewer.util.readyQueue.push(callback);
+            overviewer.util.runReadyQueue();
+        } else {
+            overviewer.util.readyQueue.push(callback); // wait until initialize is finished
+        }
+    },       
+    'runReadyQueue': function(){
+        _.each(overviewer.util.readyQueue, function(callback){
+            callback();
+        });
+        overviewer.util.readyQueue.length = 0;
     },
     /**
      * Quote an arbitrary string for use in a regex matcher.
