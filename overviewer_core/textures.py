@@ -1565,6 +1565,7 @@ def stairs(self, blockid, data):
     if blockid == 128:
         half_block_u = self.terrain_images[176].copy()
         half_block_d = self.terrain_images[176].copy()
+        texture = self.terrain_images[176].copy()
 
     # generate needed geometries
     ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -3451,7 +3452,7 @@ block(blockid=124, top_index=212)
 # these are the new wooden slabs, blockids 43 44 still have wooden
 # slabs, but those are unobtainable without cheating
 @material(blockid=[125, 126], data=range(16), transparent=(44,), solid=True)
-def slabs(self, blockid, data):
+def wooden_slabs(self, blockid, data):
     texture = data & 7
     if texture== 0: # oak 
         top = side = self.terrain_images[4]
