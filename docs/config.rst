@@ -733,7 +733,7 @@ Hide
 
     **Options**
 
-    minerals
+    blocks
         A list of block ids, or (blockid, data) tuples to hide.
 
 DepthTinting
