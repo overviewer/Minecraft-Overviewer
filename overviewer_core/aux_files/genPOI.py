@@ -153,15 +153,18 @@ def main():
             return 1
       
         for f in render['markers']:
-            d = dict(icon="signpost_icon.png", createInfoWindow=True)
-            d.update(f)
-            markersets.add(((d['name'], d['filterFunction']), rset))
+            markersets.add(((f['name'], f['filterFunction']), rset))
             name = f['name'].replace(" ","_") + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
+            to_append = dict(groupName=name, 
+                    displayName = f['name'], 
+                    icon=f.get('icon', 'signpost_icon.png'), 
+                    createInfoWindow=f.get('createInfoWindow',True),
+                    checked = f.get('checked', False))
             try:
                 l = markers[rname]
-                l.append(dict(groupName=name, displayName = f['name'], icon=d['icon'], createInfoWindow=d['createInfoWindow']))
+                l.append(to_append)
             except KeyError:
-                markers[rname] = [dict(groupName=name, displayName=f['name'], icon=d['icon'], createInfoWindow=d['createInfoWindow']),]
+                markers[rname] = [to_append]
 
         handleSigns(rset, os.path.join(destdir, rname), render, rname)
         handlePlayers(rset, render, worldpath)

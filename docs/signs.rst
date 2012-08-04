@@ -115,6 +115,9 @@ The following keys are accepted in the marker dictionary:
 ``createInfoWindow``
     Optional. Specifies whether or not the icon displays an info window on click. Defaults to True
 
+``checked``
+    Optional.  Specifies whether or not this marker group will be checked(visible) by default when
+    the map loads.  Defaults to False
 
 Generating the POI Markers
 ==========================

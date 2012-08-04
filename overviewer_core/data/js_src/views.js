@@ -405,22 +405,6 @@ overviewer.views.SignControlView = Backbone.View.extend({
 
             return;
 
-            var groupsForThisTileSet = jQuery.map(dataRoot, function(elem, i) { return elem.groupName;})
-            for (markerSet in markersDB) {
-                if (jQuery.inArray(markerSet, groupsForThisTileSet) == -1){
-                    // hide these
-                    if (markersDB[markerSet].created) {
-                        jQuery.each(markersDB[markerSet].raw, function(i, elem) {
-                            elem.markerObj.setVisible(false);
-                        });
-                    }
-                    markersDB[markerSet].checked=false;
-                }
-                // make sure the checkboxes checked if necessary
-                $("[_mc_groupname=" + markerSet + "]").attr("checked", markersDB[markerSet].checked);
-
-            }
-
         });
 
     },
@@ -459,21 +443,6 @@ overviewer.views.SignControlView = Backbone.View.extend({
         });
 
 
-        // add some menus
-        for (i in dataRoot) {
-            var group = dataRoot[i];
-            this.addItem({group: group, action:function(this_item, checked) {
-                this_item.group.checked = checked;
-                jQuery.each(this_item.group.markerObjs, function(i, markerObj) {
-                    markerObj.setVisible(checked);
-                });
-            }});
-            if (group.checked) {
-                jQuery.each(group.markerObjs, function(i, markerObj) {
-                    markerObj.setVisible(true);
-                });
-            }
-        }
 
         //dataRoot['markers'] = [];
         //
@@ -506,6 +475,22 @@ overviewer.views.SignControlView = Backbone.View.extend({
                     dataRoot[i].markerObjs.push(marker);
                 }
                 dataRoot[i].created = true;
+            }
+        }
+        
+        // add some menus
+        for (i in dataRoot) {
+            var group = dataRoot[i];
+            this.addItem({group: group, action:function(this_item, checked) {
+                this_item.group.checked = checked;
+                jQuery.each(this_item.group.markerObjs, function(i, markerObj) {
+                    markerObj.setVisible(checked);
+                });
+            }});
+            if (group.checked) {
+                jQuery.each(group.markerObjs, function(i, markerObj) {
+                    markerObj.setVisible(true);
+                });
             }
         }
 
