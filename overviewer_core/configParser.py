@@ -2,6 +2,7 @@ import optparse
 import sys
 import os.path
 import logging
+import traceback
 
 import settingsDefinition
 import settingsValidators
@@ -76,8 +77,27 @@ class MultiWorldParser(object):
         try:
             execfile(settings_file, rendermodes.__dict__, self._config_state)
         
-        except (NameError, SyntaxError), ex:
-            logging.exception("Error parsing %s.  Please check the trackback for more info" % settings_file)
+        except Exception, ex:
+            if isinstance(ex, SyntaxError):
+                logging.error("Syntax error parsing %s" %  settings_file)
+                logging.error("The traceback below will tell you which line triggered the syntax error\n")
+            elif isinstance(ex, NameError):
+                logging.error("NameError parsing %s" %  settings_file)
+                logging.error("The traceback below will tell you which line referenced the non-existent variable\n")
+            else:
+                logging.error("Error parsing %s" %  settings_file)
+                logging.error("The traceback below will tell you which line triggered the error\n")
+
+            # skip the execfile part of the traceback
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            formatted_lines = traceback.format_exc().splitlines()
+            print_rest = False
+            lines = []
+            for l in formatted_lines:
+                if print_rest: lines.append(l)
+                else:
+                    if "execfile" in l: print_rest = True
+            logging.error("Partial traceback:\n" + "\n".join(lines))
             sys.exit(1)
 
         # At this point, make a pass through the file to possibly set global
