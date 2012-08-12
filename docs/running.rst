@@ -219,6 +219,11 @@ is typically correct.
     specify ``-v -q`` to get only INFO logs and higher (no DEBUG) but with the
     more verbose logging format.
 
+.. cmdoption:: --update-web-assets
+
+    Update web assets, including custom assets, without starting a render.
+    This won't update overviewerConfig.js, but will recreate overviewer.js
+
 .. _installing-textures:
 
 Installing the Textures
