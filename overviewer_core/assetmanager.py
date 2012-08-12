@@ -135,6 +135,17 @@ directory.
             blank = Image.new("RGBA", (1,1), tileset.options.get('bgcolor'))
             blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')))
 
+        # write out config
+        jsondump = json.dumps(dump, indent=4)
+        with FileReplacer(os.path.join(self.outputdir, "overviewerConfig.js")) as tmpfile:
+            with codecs.open(tmpfile, 'w', encoding='UTF-8') as f:
+                f.write("var overviewerConfig = " + jsondump + ";\n")
+
+        #Copy assets, modify index.html
+        self.output_noconfig()        
+
+
+    def output_noconfig(self):
 
         # copy web assets into destdir:
         global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
@@ -167,12 +178,6 @@ directory.
                     if not js.endswith("overviewer.js") and js.endswith(".js"):
                         with open(os.path.join(js_src,js)) as f:
                             fout.write(f.read())
-        
-        # write out config
-        jsondump = json.dumps(dump, indent=4)
-        with FileReplacer(os.path.join(self.outputdir, "overviewerConfig.js")) as tmpfile:
-            with codecs.open(tmpfile, 'w', encoding='UTF-8') as f:
-                f.write("var overviewerConfig = " + jsondump + ";\n")
         
         # Add time and version in index.html
         indexpath = os.path.join(self.outputdir, "index.html")
