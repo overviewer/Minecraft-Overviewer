@@ -308,6 +308,25 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
                 observer = JSObserver(outputdir, 10)
 
 
+.. _customwebassets:
+
+``customwebassets = "<path to custom web assets>"``
+    This option allows you to speciy a directory containing custom web assets
+    to be copied to the output directory. Any files in the custom web assets 
+    directory overwrite the default files.
+
+    If you are providing a custom index.html, the following strings will be replaced:
+
+    * ``{title}``
+      Will be replaced by 'Minecraft Overviewer'
+
+    * ``{time}``
+      Will be replaced by the current date and time when the world is rendered
+      e.g. 'Sun, 12 Aug 2012 15:25:40 BST'
+
+    * ``{version}``
+      Will be replaced by the version of Overviewer used
+      e.g. '0.9.276 (5ff9c50)' 
 
 .. _renderdict:
 
