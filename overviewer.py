@@ -352,7 +352,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # Now we start the actual processing, now that all the configuration has
     # been gathered and validated
     # create our asset manager... ASSMAN
-    assetMrg = assetmanager.AssetManager(destdir)
+    assetMrg = assetmanager.AssetManager(destdir, config.get('customwebassets', None))
 
     tilesets = []
 

@@ -84,7 +84,7 @@ renders = Setting(required=True, default=util.OrderedDict(),
             "showspawn": Setting(required=False, validator=validateBool, default=True),
             "base": Setting(required=False, validator=validateStr, default=""),
             "poititle": Setting(required=False, validator=validateStr, default="Signs"),
-
+            "customwebassets": Setting(required=False, validator=validateWebAssetsPath, default=None),
             # Remove this eventually (once people update their configs)
             "worldname": Setting(required=False, default=None,
                 validator=error("The option 'worldname' is now called 'world'. Please update your config files")),

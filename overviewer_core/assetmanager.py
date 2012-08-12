@@ -33,13 +33,14 @@ same time, controls the generated javascript files in the output directory.
 There should only be one instances of these per execution.
     """
 
-    def __init__(self, outputdir):
+    def __init__(self, outputdir, custom_assets_dir=None):
         """\
 Initializes the AssetManager with the top-level output directory.  
 It can read/parse and write/dump the overviewerConfig.js file into this top-level
 directory. 
         """
         self.outputdir = outputdir
+        self.custom_assets_dir = custom_assets_dir
         self.renders = dict()
 
         # look for overviewerConfig in self.outputdir
@@ -141,7 +142,12 @@ directory.
             global_assets = os.path.join(util.get_program_path(), "web_assets")
         mirror_dir(global_assets, self.outputdir)
 
-		# write a dummy baseMarkers.js if none exists
+        if self.custom_assets_dir:
+            # Could have done something fancy here rather than just overwriting
+            # the global files, but apparently this what we used to do pre-rewrite.
+            mirror_dir(self.custom_assets_dir, self.outputdir)
+
+	# write a dummy baseMarkers.js if none exists
         if not os.path.exists(os.path.join(self.outputdir, "baseMarkers.js")):
             with open(os.path.join(self.outputdir, "baseMarkers.js"), "w") as f:
                 f.write("// if you wants signs, please see genPOI.py\n");

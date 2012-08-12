@@ -214,6 +214,18 @@ def validateDefaultZoom(z):
     else:
         raise ValidationException("The default zoom is set below 1")
 
+def validateWebAssetsPath(p):
+    try:
+        validatePath(p)
+    except ValidationException as e:
+        raise ValidationException("Bad custom web assets path: %s" % e.message)
+
+def validatePath(p):
+    _, path = checkBadEscape(p)
+    abs_path = expand_path(path)
+    if not os.path.exists(abs_path):
+        raise ValidationException("'%s' does not exist. Path initially given as '%s'" % (abs_path,p))
+
 def make_dictValidator(keyvalidator, valuevalidator):
     """Compose and return a dict validator -- a validator that validates each
     key and value in a dictionary.
