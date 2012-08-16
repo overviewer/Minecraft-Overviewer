@@ -798,6 +798,12 @@ MineralOverlay
         A list of (blockid, (r, g, b)) tuples to use as colors. If not
         provided, a default list of common minerals is used.
 
+        Example::
+
+            MineralOverlay(minerals=[(64,(255,255,0)), (13,(127,0,127))])
+
+
+
 Defining Custom Rendermodes
 ---------------------------
 Each rendermode primitive listed above is a Python *class* that is automatically
