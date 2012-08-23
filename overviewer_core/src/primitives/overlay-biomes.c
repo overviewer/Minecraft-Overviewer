@@ -84,6 +84,7 @@ static void get_color(void *data, RenderState *state,
 
         for (i = 0; (max_i == -1 || i < max_i) && biomes[i].biome != 255; i++) {
             if (biomes[i].biome == biome) {
+		//printf("(%d, %d, %d), %d, %s\n", x, y, z, biomes[i].biome, biome_table[biomes[i].biome].name);
                 *r = biomes[i].r;
                 *g = biomes[i].g;
                 *b = biomes[i].b;
@@ -132,12 +133,27 @@ overlay_biomes_start(void *data, RenderState *state, PyObject *support) {
         
         for (i = 0; i < biomes_size; i++) {
             PyObject *biome = PyList_GET_ITEM(opt, i);
-            if (!PyArg_ParseTuple(biome, "b(bbb)", &(biomes[i].biome), &(biomes[i].r), &(biomes[i].g), &(biomes[i].b))) {
+	    char *tmpname = NULL;
+            int j = 0;
+
+            if (!PyArg_ParseTuple(biome, "s(bbb)", &tmpname, &(biomes[i].r), &(biomes[i].g), &(biomes[i].b))) {
                 free(biomes);
                 self->biomes = NULL;
                 return 1;
             }
+
+            //printf("%s, (%d, %d, %d) ->", tmpname, biomes[i].r, biomes[i].g, biomes[i].b);
+            for (j = 0; j < NUM_BIOMES; j++) {
+                if (strncmp(biome_table[j].name, tmpname, strlen(tmpname))==0) {
+                    //printf("biome_table index=%d", j);
+                    biomes[i].biome = j;
+                    break;
+                }
+            }
+	    //printf("\n");
         }
+	biomes[biomes_size].biome = 255; //Because 0 is a valid biome, have to use 255 as the end of list marker instead. Fragile!
+
     } else {
         self->biomes = default_biomes;
     }
