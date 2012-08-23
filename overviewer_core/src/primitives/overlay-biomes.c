@@ -31,34 +31,29 @@ struct BiomeColor {
 };
 
 static struct BiomeColor default_biomes[] = {
-    /* 0 */
-    {0, 135, 206, 250}, /* Ocean */
-    {1, 198, 238, 140}, /* Plains */
-    {2, 227, 207, 87}, /* Desert */
-    {3, 155, 155, 155}, /* Extreme Hills */
-    {4, 184, 239, 134}, /* Forest */
-    /* 5 */
-    {5, 148, 228, 220}, /* Taiga */
-    {6, 0, 100, 90}, /* Swampland */
-    {7, 70, 130, 180}, /* River */
-    {8, 176, 23, 31}, /* Hell */
+    {0, 135, 106, 150}, /* Ocean */
+    {1, 98, 238, 240}, /* Plains */
+    {2, 227, 107, 0}, /* Desert */
+    {3, 255, 55, 55}, /* Extreme Hills */
+    {4, 10, 200, 200}, /* Forest */
+    {5, 10, 100, 240}, /* Taiga */
+    {6, 200, 100, 100}, /* Swampland */
+    {7, 70, 170, 0}, /* River */
+    {8, 255, 0, 0}, /* Hell */
     {9, 255, 255, 255}, /* Sky */
-    /* 10 */
     {10, 155, 55, 255}, /* FrozenOcean */
     {11, 255, 55, 255}, /* FrozenRiver */
     {12, 155, 255, 255}, /* Ice Plains */
     {13, 205, 205, 255}, /* Ice Mountains */
-    {14, 55, 55, 55}, /* MushroomIsland */
-    /* 15 */
-    {15, 75, 75, 75}, /* MushroomIslandShore */
-    {16, 255, 215, 80}, /* Beach */
-    {17, 140, 155, 255}, /* DesertHills */
-    {18, 105, 255, 155}, /* ForestHills */
-    {19, 75, 125, 75}, /* TaigaHills */
-    /* 20 */
+    {14, 255, 0, 155}, /* MushroomIsland */
+    {15, 255, 75, 175}, /* MushroomIslandShore */
+    {16, 255, 255, 0}, /* Beach */
+    {17, 240, 155, 0}, /* DesertHills */
+    {18, 100, 200, 200}, /* ForestHills */
+    {19, 100, 100, 240}, /* TaigaHills */
     {20, 255, 25, 15}, /* Extreme Hills Edge */
-    {21, 0, 255, 55}, /* Jungle */
-    {22, 75, 255, 255}, /* Jungle Mountains */
+    {21, 155, 155, 55}, /* Jungle */
+    {22, 175, 255, 55}, /* Jungle Mountains */
     /* end of list marker */
     {255, 0, 0, 0}
 };
