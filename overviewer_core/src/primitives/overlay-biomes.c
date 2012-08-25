@@ -84,9 +84,8 @@ static void get_color(void *data, RenderState *state,
                 *g = biomes[i].g;
                 *b = biomes[i].b;
                 
-                tmp = (128 - y_max + y) * 2 - 40;
-                *a = MIN(MAX(0, tmp), 255);
-                
+                *a = self->parent.color->a;
+
                 max_i = i;
                 break;
             }
@@ -98,6 +97,7 @@ static int
 overlay_biomes_start(void *data, RenderState *state, PyObject *support) {
     PyObject *opt;
     RenderPrimitiveBiomes* self;
+    unsigned char alpha_tmp=0;
 
     /* first, chain up */
     int ret = primitive_overlay.start(data, state, support);
@@ -153,6 +153,14 @@ overlay_biomes_start(void *data, RenderState *state, PyObject *support) {
         self->biomes = default_biomes;
     }
     
+    if (!render_mode_parse_option(support, "alpha", "b", &(alpha_tmp))) {
+        if (PyErr_Occurred()) {
+            PyErr_Clear();
+	    alpha_tmp = 240;
+        }
+
+	self->parent.color->a = alpha_tmp;
+    }
     /* setup custom color */
     self->parent.get_color = get_color;
     
