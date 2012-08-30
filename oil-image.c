@@ -61,9 +61,13 @@ OILImage *oil_image_load(const char *path) {
     file.write = oil_image_write;
     file.flush = oil_image_flush;
     
-    ret = oil_formats[0]->load(&file);
+    ret = oil_image_load_ex(&file);
     fclose(fp);
     return ret;
+}
+
+OILImage *oil_image_load_ex(OILFile *file) {
+    return oil_formats[0]->load(file);
 }
 
 int oil_image_save(OILImage *im, const char *path) {
@@ -82,9 +86,13 @@ int oil_image_save(OILImage *im, const char *path) {
     file.write = oil_image_write;
     file.flush = oil_image_flush;
     
-    ret = oil_formats[0]->save(im, &file);
+    ret = oil_image_save_ex(im, &file);
     fclose(fp);
     return ret;
+}
+
+int oil_image_save_ex(OILImage *im, OILFile *file) {
+    return oil_formats[0]->save(im, file);
 }
 
 void oil_image_get_size(OILImage *im, unsigned int *width, unsigned int *height) {
