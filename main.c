@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     
-    OILFormatOptions opt = {1, 128};
+    OILFormatOptions opt = {1, 32};
     oil_image_save(im, "palette.png", &opt);
     oil_image_free(im);
     

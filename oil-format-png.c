@@ -33,6 +33,7 @@ inline int oil_format_png_save_default(png_structp png, png_infop info, unsigned
 
 inline int oil_format_png_save_indexed(png_structp png, png_infop info, unsigned int width, unsigned int height, const OILPixel *data, OILImage *im, OILFormatOptions *opts) {
     OILPalette *palette;
+    png_byte palette_bits;
     png_colorp png_palette;
     png_bytep png_alpha_palette;
     png_bytep palettized;
@@ -42,6 +43,11 @@ inline int oil_format_png_save_indexed(png_structp png, png_infop info, unsigned
     palette = oil_palette_median_cut(im, opts->palette_size);
     if (!palette)
         return 0;
+    
+    /* determine how many bits to use */
+    palette_bits = 1;
+    while (palette->size > (2 << palette_bits) && palette_bits < 8)
+        palette_bits *= 2;
     
     /* turn the palette into something png can use */
     png_palette = malloc(sizeof(png_color) * palette->size);
@@ -72,10 +78,14 @@ inline int oil_format_png_save_indexed(png_structp png, png_infop info, unsigned
     }
     
     /* write out png info! */
-    png_set_IHDR(png, info, width, height, 8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+    png_set_IHDR(png, info, width, height, palette_bits, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_set_PLTE(png, info, png_palette, palette->size);
     png_set_tRNS(png, info, png_alpha_palette, palette->size, NULL);
     png_write_info(png, info);
+    
+    /* set up packing */
+    if (palette_bits != 8)
+        png_set_packing(png);
     
     /* write out data! */
     for (y = 0; y < height; y++) {
