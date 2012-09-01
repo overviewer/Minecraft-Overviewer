@@ -46,7 +46,7 @@ inline int oil_format_png_save_indexed(png_structp png, png_infop info, unsigned
     
     /* determine how many bits to use */
     palette_bits = 1;
-    while (palette->size > (2 << palette_bits) && palette_bits < 8)
+    while (palette->size > (1 << palette_bits) && palette_bits < 8)
         palette_bits *= 2;
     
     /* turn the palette into something png can use */
