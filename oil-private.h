@@ -23,4 +23,6 @@ typedef struct {
 OILPalette *oil_palette_median_cut(OILImage *im, unsigned int size);
 void oil_palette_free(OILPalette *p);
 
+unsigned char *oil_dither_nearest(OILImage *im, OILPalette *pal);
+
 #endif /* __OIL_PRIVATE_H_INCLUDED__ */

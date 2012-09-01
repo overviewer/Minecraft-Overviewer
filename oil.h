@@ -17,7 +17,12 @@ typedef struct {
 } OILFile;
 
 typedef struct {
-    int (*save)(OILImage *im, OILFile *file);
+    int indexed;
+    unsigned int palette_size;
+} OILFormatOptions;
+
+typedef struct {
+    int (*save)(OILImage *im, OILFile *file, OILFormatOptions *opts);
     OILImage *(*load)(OILFile *file);
 } OILFormat;
 
@@ -25,8 +30,8 @@ OILImage *oil_image_new(unsigned int width, unsigned int height);
 void oil_image_free(OILImage *im);
 OILImage *oil_image_load(const char *path);
 OILImage *oil_image_load_ex(OILFile *file);
-int oil_image_save(OILImage *im, const char *path);
-int oil_image_save_ex(OILImage *im, OILFile *file);
+int oil_image_save(OILImage *im, const char *path, OILFormatOptions *opts);
+int oil_image_save_ex(OILImage *im, OILFile *file, OILFormatOptions *opts);
 void oil_image_get_size(OILImage *im, unsigned int *width, unsigned int *height);
 const OILPixel *oil_image_get_data(OILImage *im);
 OILPixel *oil_image_lock(OILImage *im);
