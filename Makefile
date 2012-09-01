@@ -1,7 +1,7 @@
 .PHONY : all clean
 
-LIB_OBJECTS=oil-image.o oil-format.o oil-format-png.o
-CFLAGS=`libpng-config --cflags`
+LIB_OBJECTS=oil-image.o oil-format.o oil-format-png.o oil-palette.o
+CFLAGS=`libpng-config --cflags` -O2
 LDFLAGS=`libpng-config --ldflags`
 
 all : test

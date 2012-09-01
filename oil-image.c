@@ -28,6 +28,7 @@ OILImage *oil_image_new(unsigned int width, unsigned int height) {
     if (im) {
         im->width = width;
         im->height = height;
+        im->locked = 0;
         im->data = malloc(sizeof(OILPixel) * width * height);
         if (im->data == NULL) {
             free(im);
