@@ -69,7 +69,7 @@ inline int oil_format_png_save_indexed(png_structp png, png_infop info, unsigned
     }
     
     /* now, turn the image into a palettized version */
-    palettized = oil_dither_nearest(im, palette);
+    palettized = oil_dither_floyd_steinberg(im, palette);
     if (!palettized) {
         oil_palette_free(palette);
         free(png_palette);
