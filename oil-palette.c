@@ -1,5 +1,7 @@
 #include "oil-private.h"
 
+#include <string.h>
+
 /* represent a 4d bounding box.
    for instance, all r such that lr <= r < ur
    and associated metadata for median-cut */
@@ -115,6 +117,8 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
     unsigned int nur = lr, nug = lg, nub = lb, nua = la;
     /* the length of the box sides */
     unsigned int sr, sg, sb, sa;
+    /* temprorary histograms for all 4 axes */
+    unsigned int *histr, *histg, *histb, *hista;
     /* accumulators for average color */
     unsigned long ar = 0, ag = 0, ab = 0, aa = 0;
     /* iteration variables */
@@ -122,20 +126,61 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
     
     MedianCutBox *box = malloc(sizeof(MedianCutBox));
     
-    /* first, we must calculate n[lu][rgba]
-       while we're at it, count pixels */
+    /* temporary box sizes for the temporary histograms */
+    sr = ur - lr;
+    sg = ug - lg;
+    sb = ub - lb;
+    sa = ua - la;
+    
+    /* and the histograms proper */
+    histr = malloc(sizeof(*histr) * sr);
+    histg = malloc(sizeof(*histg) * sg);
+    histb = malloc(sizeof(*histb) * sb);
+    hista = malloc(sizeof(*hista) * sa);
+    
+    /* bail now if we have no memory */
+    if (!box || !histr || !histg || !histb || !hista) {
+        if (box)
+            free(box);
+        if (histr)
+            free(histr);
+        if (histg)
+            free(histg);
+        if (histb)
+            free(histb);
+        if (hista)
+            free(hista);
+        return NULL;
+    }
+    
+    /* first, we must calculate n[lu][rgba], and the 4 histograms
+       while we're at it, count pixels and do averages */
     box->pixels = 0;
     for (x = 0; x < width; x++) {
         for (y = 0; y < height; y++) {
             OILPixel p = data[y * width + x];
-            /* check for basic membership */
+            /* check for membership! */
             if (p.r >= lr && p.r < ur &&
                 p.g >= lg && p.g < ug &&
                 p.b >= lb && p.b < ub &&
                 p.a >= la && p.a < ua) {
                 
+                /* averages */
+                ar += p.r;
+                ag += p.g;
+                ab += p.b;
+                aa += p.a;
+                
+                /* pixel count */
                 box->pixels++;
                 
+                /* histograms */
+                histr[p.r - lr]++;
+                histg[p.g - lg]++;
+                histb[p.b - lb]++;
+                hista[p.a - la]++;
+
+                /* shrinkwrap! */
                 if (p.r < nlr)
                     nlr = p.r;
                 if (p.r >= nur)
@@ -161,25 +206,29 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
     
     /* refuse to create an empty box */
     if (box->pixels == 0) {
+        free(histr);
+        free(histg);
+        free(histb);
+        free(hista);
         free(box);
         return NULL;
     }
     
     /* basic copying */
-    box->lr = lr = nlr;
-    box->lg = lg = nlg;
-    box->lb = lb = nlb;
-    box->la = la = nla;
-    box->ur = ur = nur;
-    box->ug = ug = nug;
-    box->ub = ub = nub;
-    box->ua = ua = nua;
+    box->lr = nlr;
+    box->lg = nlg;
+    box->lb = nlb;
+    box->la = nla;
+    box->ur = nur;
+    box->ug = nug;
+    box->ub = nub;
+    box->ua = nua;
     
-    /* find the side lengths */
-    sr = ur - lr;
-    sg = ug - lg;
-    sb = ub - lb;
-    sa = ua - la;
+    /* find the side lengths, for real this time */
+    sr = nur - nlr;
+    sg = nug - nlg;
+    sb = nub - nlb;
+    sa = nua - nla;
     
     /* now, set the volume */
     box->volume = sr * sg * sb * sa;
@@ -189,54 +238,25 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
         box->longest_side = 0;
         box->longest_side_length = sr;
         box->histogram = calloc(sizeof(*(box->histogram)) * sr, 1);
+        memcpy(box->histogram, &(histr[nlr - lr]), sizeof(*histr) * sr);
     } else if (sg >= OIL_MAX(sa, OIL_MAX(sr, sb))) {
         /* green longest */
         box->longest_side = 1;
         box->longest_side_length = sg;
         box->histogram = calloc(sizeof(*(box->histogram)) * sg, 1);
+        memcpy(box->histogram, &(histg[nlg - lg]), sizeof(*histg) * sg);
     } else if (sb >= OIL_MAX(sa, OIL_MAX(sr, sg))) {
         /* blue longest */
         box->longest_side = 2;
         box->longest_side_length = sb;
         box->histogram = calloc(sizeof(*(box->histogram)) * sb, 1);
+        memcpy(box->histogram, &(histb[nlb - lb]), sizeof(*histb) * sb);
     } else {
         /* alpha longest */
         box->longest_side = 3;
         box->longest_side_length = sa;
         box->histogram = calloc(sizeof(*(box->histogram)) * sa, 1);
-    }
-    
-    /* now iterate through the entire image to set up histogram / averages */
-    for (x = 0; x < width; x++) {
-        for (y = 0; y < height; y++) {
-            OILPixel p = data[y * width + x];
-            /* check for membership! */
-            if (p.r >= lr && p.r < ur &&
-                p.g >= lg && p.g < ug &&
-                p.b >= lb && p.b < ub &&
-                p.a >= la && p.a < ua) {
-                
-                ar += p.r;
-                ag += p.g;
-                ab += p.b;
-                aa += p.a;
-                
-                switch (box->longest_side) {
-                case 0:
-                    box->histogram[p.r - lr]++;
-                    break;
-                case 1:
-                    box->histogram[p.g - lg]++;
-                    break;
-                case 2:
-                    box->histogram[p.b - lb]++;
-                    break;
-                case 3:
-                    box->histogram[p.a - la]++;
-                    break;
-                };
-            }
-        }
+        memcpy(box->histogram, &(hista[nla - la]), sizeof(*hista) * sa);
     }
     
     /* set the average */
@@ -244,6 +264,12 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
     box->average.g = ag / box->pixels;
     box->average.b = ab / box->pixels;
     box->average.a = aa / box->pixels;
+    
+    /* free our temporary histograms */
+    free(histr);
+    free(histg);
+    free(histb);
+    free(hista);
     
     return box;
 }
