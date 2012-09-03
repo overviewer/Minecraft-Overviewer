@@ -156,7 +156,7 @@ OILImage *oil_format_png_load(OILFile *file) {
     int passes;
     png_structp png;
     png_infop info;
-    char header[8];
+    png_byte header[8];
     unsigned int y;
     
     if (!file)

@@ -314,7 +314,6 @@ OILPalette *oil_palette_median_cut(OILImage *im, unsigned int size) {
     while (queue.length < size) {
         MedianCutBox *box;
         MedianCutBox *a, *b;
-        MedianCutBoxList *cell;
         unsigned int i, accum;
 
         /* choose a box to operate on */
