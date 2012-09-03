@@ -16,7 +16,9 @@ typedef struct {
     /* volume of this box */
     unsigned int volume;
     /* number of pixels in this box */
-    unsigned int pixels;
+    unsigned long num_pixels;
+    /* all the pixels in this box */
+    OILPixel *pixels;
     /* histogram of pixels along longest axis */
     unsigned int *histogram;
     /* average color inside the box */
@@ -110,7 +112,7 @@ static inline void oil_box_queue_remove(BoxQueue *q, MedianCutBox *box) {
 }
 
 /* helper for creating and populating a box */
-static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned int height, const OILPixel *data, unsigned int lr, unsigned int lg, unsigned int lb, unsigned int la, unsigned int ur, unsigned int ug, unsigned int ub, unsigned int ua) {
+static inline MedianCutBox *oil_median_cut_box_new(unsigned long length, const OILPixel *data, unsigned int lr, unsigned int lg, unsigned int lb, unsigned int la, unsigned int ur, unsigned int ug, unsigned int ub, unsigned int ua) {
     /* new, calculated values for lg, ug, etc.
        the initializers are swapped on purpose! see below! */
     unsigned int nlr = ur, nlg = ug, nlb = ub, nla = ua;
@@ -122,7 +124,7 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
     /* accumulators for average color */
     unsigned long ar = 0, ag = 0, ab = 0, aa = 0;
     /* iteration variables */
-    unsigned int x, y;
+    unsigned int i;
     
     MedianCutBox *box = malloc(sizeof(MedianCutBox));
     
@@ -153,63 +155,74 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
         return NULL;
     }
     
-    /* first, we must calculate n[lu][rgba], and the 4 histograms
-       while we're at it, count pixels and do averages */
-    box->pixels = 0;
-    for (x = 0; x < width; x++) {
-        for (y = 0; y < height; y++) {
-            OILPixel p = data[y * width + x];
-            /* check for membership! */
-            if (p.r >= lr && p.r < ur &&
-                p.g >= lg && p.g < ug &&
-                p.b >= lb && p.b < ub &&
-                p.a >= la && p.a < ua) {
-                
-                /* averages */
-                ar += p.r;
-                ag += p.g;
-                ab += p.b;
-                aa += p.a;
-                
-                /* pixel count */
-                box->pixels++;
-                
-                /* histograms */
-                histr[p.r - lr]++;
-                histg[p.g - lg]++;
-                histb[p.b - lb]++;
-                hista[p.a - la]++;
-
-                /* shrinkwrap! */
-                if (p.r < nlr)
-                    nlr = p.r;
-                if (p.r >= nur)
-                    nur = p.r + 1;
-                
-                if (p.g < nlg)
-                    nlg = p.g;
-                if (p.g >= nug)
-                    nug = p.g + 1;
-                
-                if (p.b < nlb)
-                    nlb = p.b;
-                if (p.b >= nub)
-                    nub = p.b + 1;
-                
-                if (p.a < nla)
-                    nla = p.a;
-                if (p.a >= nua)
-                    nua = p.a + 1;
-            }
-        }
-    }
-    
-    /* refuse to create an empty box */
-    if (box->pixels == 0) {
+    /* we don't know how many pixels we'll have, but it's less than this */
+    box->pixels = malloc(sizeof(OILPixel) * length);
+    if (box->pixels == NULL) {
         free(histr);
         free(histg);
         free(histb);
         free(hista);
+        free(box);
+        return NULL;
+    }
+    
+    /* first, we must calculate n[lu][rgba], and the 4 histograms
+       while we're at it, count pixels and do averages */
+    box->num_pixels = 0;
+    for (i = 0; i < length; i++) {
+        OILPixel p = data[i];
+        /* check for membership! */
+        if (p.r >= lr && p.r < ur &&
+            p.g >= lg && p.g < ug &&
+            p.b >= lb && p.b < ub &&
+            p.a >= la && p.a < ua) {
+                
+            /* averages */
+            ar += p.r;
+            ag += p.g;
+            ab += p.b;
+            aa += p.a;
+                
+            /* pixel count */
+            box->pixels[box->num_pixels] = p;
+            box->num_pixels++;
+            
+            /* histograms */
+            histr[p.r - lr]++;
+            histg[p.g - lg]++;
+            histb[p.b - lb]++;
+            hista[p.a - la]++;
+
+            /* shrinkwrap! */
+            if (p.r < nlr)
+                nlr = p.r;
+            if (p.r >= nur)
+                nur = p.r + 1;
+                
+            if (p.g < nlg)
+                nlg = p.g;
+            if (p.g >= nug)
+                nug = p.g + 1;
+                
+            if (p.b < nlb)
+                nlb = p.b;
+            if (p.b >= nub)
+                nub = p.b + 1;
+                
+            if (p.a < nla)
+                nla = p.a;
+            if (p.a >= nua)
+                nua = p.a + 1;
+        }
+    }
+    
+    /* refuse to create an empty box */
+    if (box->num_pixels == 0) {
+        free(histr);
+        free(histg);
+        free(histb);
+        free(hista);
+        free(box->pixels);
         free(box);
         return NULL;
     }
@@ -260,10 +273,10 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
     }
     
     /* set the average */
-    box->average.r = ar / box->pixels;
-    box->average.g = ag / box->pixels;
-    box->average.b = ab / box->pixels;
-    box->average.a = aa / box->pixels;
+    box->average.r = ar / box->num_pixels;
+    box->average.g = ag / box->num_pixels;
+    box->average.b = ab / box->num_pixels;
+    box->average.a = aa / box->num_pixels;
     
     /* free our temporary histograms */
     free(histr);
@@ -277,6 +290,7 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
 /* helper for freeing a box */
 static inline void oil_median_cut_box_free(MedianCutBox *box) {
     free(box->histogram);
+    free(box->pixels);
     free(box);
 }
 
@@ -293,7 +307,9 @@ OILPalette *oil_palette_median_cut(OILImage *im, unsigned int size) {
     data = oil_image_get_data(im);
     
     /* start out with a box covering all colors */
-    oil_box_queue_push(&queue, oil_median_cut_box_new(width, height, data, 0, 0, 0, 0, 256, 256, 256, 256));
+    oil_box_queue_push(&queue, oil_median_cut_box_new(width * height, data,
+                                                      0, 0, 0, 0,
+                                                      256, 256, 256, 256));
     
     while (queue.length < size) {
         MedianCutBox *box;
@@ -315,10 +331,10 @@ OILPalette *oil_palette_median_cut(OILImage *im, unsigned int size) {
         accum = 0;
         for (i = 0; i < box->longest_side_length; i++) {
             accum += box->histogram[i];
-            if (accum >= box->pixels / 2) {
+            if (accum >= box->num_pixels / 2) {
                 /* if the left side has less pixels than the right,
                    give the current bin to the left */
-                if (accum - box->histogram[i] < box->pixels - accum)
+                if (accum - box->histogram[i] < box->num_pixels - accum)
                     i++;
                 break;
             }
@@ -328,34 +344,34 @@ OILPalette *oil_palette_median_cut(OILImage *im, unsigned int size) {
            so split! */
         switch (box->longest_side) {
         case 0:
-            a = oil_median_cut_box_new(width, height, data,
+            a = oil_median_cut_box_new(box->num_pixels, box->pixels,
                                        box->lr, box->lg, box->lb, box->la,
                                        box->lr + i, box->ug, box->ub, box->ua);
-            b = oil_median_cut_box_new(width, height, data,
+            b = oil_median_cut_box_new(box->num_pixels, box->pixels,
                                        box->lr + i, box->lg, box->lb, box->la,
                                        box->ur, box->ug, box->ub, box->ua);
             break;
         case 1:
-            a = oil_median_cut_box_new(width, height, data,
+            a = oil_median_cut_box_new(box->num_pixels, box->pixels,
                                        box->lr, box->lg, box->lb, box->la,
                                        box->ur, box->lg + i, box->ub, box->ua);
-            b = oil_median_cut_box_new(width, height, data,
+            b = oil_median_cut_box_new(box->num_pixels, box->pixels,
                                        box->lr, box->lg + i, box->lb, box->la,
                                        box->ur, box->ug, box->ub, box->ua);
             break;
         case 2:
-            a = oil_median_cut_box_new(width, height, data,
+            a = oil_median_cut_box_new(box->num_pixels, box->pixels,
                                        box->lr, box->lg, box->lb, box->la,
                                        box->ur, box->ug, box->lb + i, box->ua);
-            b = oil_median_cut_box_new(width, height, data,
+            b = oil_median_cut_box_new(box->num_pixels, box->pixels,
                                        box->lr, box->lg, box->lb + i, box->la,
                                        box->ur, box->ug, box->ub, box->ua);
             break;
         case 3:
-            a = oil_median_cut_box_new(width, height, data,
+            a = oil_median_cut_box_new(box->num_pixels, box->pixels,
                                        box->lr, box->lg, box->lb, box->la,
                                        box->ur, box->ug, box->ub, box->la + i);
-            b = oil_median_cut_box_new(width, height, data,
+            b = oil_median_cut_box_new(box->num_pixels, box->pixels,
                                        box->lr, box->lg, box->lb, box->la + i,
                                        box->ur, box->ug, box->ub, box->ua);
             break;
