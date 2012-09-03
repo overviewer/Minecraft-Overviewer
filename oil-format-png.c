@@ -105,6 +105,7 @@ int oil_format_png_save(OILImage *im, OILFile *file, OILFormatOptions *opts) {
     png_infop info;
     unsigned int width, height;
     const OILPixel *data;
+    int ret = 1;
     
     if (!im || !file)
         return 0;
@@ -130,7 +131,6 @@ int oil_format_png_save(OILImage *im, OILFile *file, OILFormatOptions *opts) {
     
     png_set_write_fn(png, file, oil_format_png_write, oil_format_png_flush);
     
-    int ret = 1;
     if (opts && opts->indexed) {
         ret = oil_format_png_save_indexed(png, info, width, height, data, im, opts);
     } else {

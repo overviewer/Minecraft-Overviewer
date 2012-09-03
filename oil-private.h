@@ -7,6 +7,10 @@
 #define OIL_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define OIL_CLAMP(a, min, max) OIL_MIN((max), OIL_MAX((min), (a)))
 
+#ifdef _MSC_VER
+#  define inline __inline
+#endif
+
 struct _OILImage {
     unsigned int width;
     unsigned int height;
