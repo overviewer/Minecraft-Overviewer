@@ -143,8 +143,15 @@ to the file /etc/make.conf, but read the ports documentation to be sure of what 
 
 .. _centos:
 
-CentOS
-------
+CentOS 5
+--------
+
+.. note::
+
+    If you are using CentOS 6, you do not need to install the epel repo.
+    CentOS 6 should come with the right python version, you can check
+    your version running *python --version*.
+
 Since CentOS has an older version of Python (2.4), there are some difficulties
 in getting the Overviewer to work. Follow these steps which have been reported
 to work.
