@@ -133,10 +133,10 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned int width, unsigned 
     sa = ua - la;
     
     /* and the histograms proper */
-    histr = malloc(sizeof(*histr) * sr);
-    histg = malloc(sizeof(*histg) * sg);
-    histb = malloc(sizeof(*histb) * sb);
-    hista = malloc(sizeof(*hista) * sa);
+    histr = calloc(sizeof(*histr) * sr, 1);
+    histg = calloc(sizeof(*histg) * sg, 1);
+    histb = calloc(sizeof(*histb) * sb, 1);
+    hista = calloc(sizeof(*hista) * sa, 1);
     
     /* bail now if we have no memory */
     if (!box || !histr || !histg || !histb || !hista) {
