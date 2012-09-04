@@ -374,14 +374,18 @@ OILPalette *oil_palette_median_cut(OILImage *im, unsigned int size) {
                                        box->lr, box->lg, box->lb, box->la + i,
                                        box->ur, box->ug, box->ub, box->ua);
             break;
+        default:
+            a = b = NULL;
         }
         
         /* we're done with the box, so free it */
         oil_median_cut_box_free(box);
         
         /* now we add a and b */
-        oil_box_queue_push(&queue, a);
-        oil_box_queue_push(&queue, b);
+        if (a)
+            oil_box_queue_push(&queue, a);
+        if (b)
+            oil_box_queue_push(&queue, b);
     }
     
     /* ooookay, we have all our boxes present,

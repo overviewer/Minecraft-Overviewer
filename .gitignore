@@ -1,2 +1,2 @@
-*.o
-/test
+/build
+OIL.so
