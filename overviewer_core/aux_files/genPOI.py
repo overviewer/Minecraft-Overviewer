@@ -56,8 +56,13 @@ def handlePlayers(rset, render, worldpath):
                  'default': 0}[render['dimension']]
     playerdir = os.path.join(worldpath, "players")
     if os.path.isdir(playerdir):
+        def ignoreTmp(filename):
+            return filename.endswith(".dat")
+
         playerfiles = os.listdir(playerdir)
+        playerfiles = filter(ignoreTmp, playerfiles)
         isSinglePlayer = False
+
     else:
         playerfiles = [os.path.join(worldpath, "level.dat")]
         isSinglePlayer = True
