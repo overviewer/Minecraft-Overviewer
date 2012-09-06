@@ -240,7 +240,6 @@ PyMODINIT_FUNC initOIL(void) {
     if (PyType_Ready(&PyOILImageType) < 0)
         return;
     
-    Py_INCREF(&PyOILImageType);
     PyModule_AddObject(mod, "Image", (PyObject *)&PyOILImageType);
 }
 

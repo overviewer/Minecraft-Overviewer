@@ -18,7 +18,7 @@ static void oil_format_png_flush(png_structp png) {
     file->flush(file->file);
 }
 
-inline int oil_format_png_save_default(png_structp png, png_infop info, unsigned int width, unsigned int height, const OILPixel *data, OILImage *im, OILFormatOptions *opts) {
+static inline int oil_format_png_save_default(png_structp png, png_infop info, unsigned int width, unsigned int height, const OILPixel *data, OILImage *im, OILFormatOptions *opts) {
     unsigned int y;
     
     png_set_IHDR(png, info, width, height, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
@@ -31,7 +31,7 @@ inline int oil_format_png_save_default(png_structp png, png_infop info, unsigned
     return 1;
 }
 
-inline int oil_format_png_save_indexed(png_structp png, png_infop info, unsigned int width, unsigned int height, const OILPixel *data, OILImage *im, OILFormatOptions *opts) {
+static inline int oil_format_png_save_indexed(png_structp png, png_infop info, unsigned int width, unsigned int height, const OILPixel *data, OILImage *im, OILFormatOptions *opts) {
     OILPalette *palette;
     png_byte palette_bits;
     png_colorp png_palette;
@@ -100,7 +100,7 @@ inline int oil_format_png_save_indexed(png_structp png, png_infop info, unsigned
     return 1;
 }
 
-int oil_format_png_save(OILImage *im, OILFile *file, OILFormatOptions *opts) {
+static int oil_format_png_save(OILImage *im, OILFile *file, OILFormatOptions *opts) {
     png_structp png;
     png_infop info;
     unsigned int width, height;
@@ -148,7 +148,7 @@ int oil_format_png_save(OILImage *im, OILFile *file, OILFormatOptions *opts) {
     return 1;
 }
 
-OILImage *oil_format_png_load(OILFile *file) {
+static OILImage *oil_format_png_load(OILFile *file) {
     OILImage *im = NULL;
     OILPixel *data;
     unsigned int width, height;
