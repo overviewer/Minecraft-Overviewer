@@ -2,6 +2,47 @@
 
 #include "oil-private.h"
 
+/*
+ * file IO implementation for python file-like objects
+ */
+
+static size_t oil_python_read(void *file, void *data, size_t length) {
+    void *buffer = NULL;
+    Py_ssize_t buflength = 0;
+    PyObject *result = PyObject_CallMethod(file, "read", "i", length);
+    
+    if (!result)
+        return 0;
+    if (!PyString_Check(result)) {
+        Py_DECREF(result);
+        return 0;
+    }
+    
+    PyString_AsStringAndSize(result, (char **)&buffer, &buflength);
+    if (!buffer || !buflength || buflength > length) {
+        Py_DECREF(result);
+        return 0;
+    }
+    
+    memcpy(data, buffer, buflength);
+    Py_DECREF(result);
+    return buflength;
+}
+
+static size_t oil_python_write(void *file, void *data, size_t length) {
+    PyObject *result = PyObject_CallMethod(file, "write", "s#", data, length);
+    if (!result)
+        return 0;
+    Py_DECREF(result);
+    return length;
+}
+
+static void oil_python_flush(void *file) {
+    PyObject *result = PyObject_CallMethod(file, "flush", "");
+    if (result)
+        Py_DECREF(result);
+}
+
 /* the Image type instance */
 typedef struct {
     PyObject_HEAD
@@ -48,20 +89,37 @@ static void PyOILImage_dealloc(PyOILImage *self) {
 /* methods for Image type */
 
 static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
+    PyObject *dest = NULL;
     const char *path = NULL;
     PyOILImage *self;
     
-    if (!PyArg_ParseTuple(args, "s", &path)) {
+    if (!PyArg_ParseTuple(args, "O", &dest)) {
         return NULL;
+    }
+    
+    if (PyString_Check(dest)) {
+        path = PyString_AsString(dest);
     }
 
     self = (PyOILImage *)(type->tp_alloc(type, 0));
     if (!self)
         return NULL;
     
-    self->im = oil_image_load(path);
+    if (path) {
+        self->im = oil_image_load(path);
+    } else {
+        OILFile file;
+        file.file = dest;
+        file.read = oil_python_read;
+        file.write = oil_python_write;
+        file.flush = oil_python_flush;
+    
+        self->im = oil_image_load_ex(&file);
+    }
+    
     if (self->im == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "cannot load image");
+        if (!PyErr_Occurred())
+            PyErr_SetString(PyExc_RuntimeError, "cannot load image");
         Py_DECREF(self);
         return NULL;
     }
@@ -70,14 +128,33 @@ static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
 }
 
 static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args) {
+    PyObject *src = NULL;
     const char *path = NULL;
+    int save_success = 0;
     
-    if (!PyArg_ParseTuple(args, "s", &path)) {
+    if (!PyArg_ParseTuple(args, "O", &src)) {
         return NULL;
     }
     
-    if (!oil_image_save(self->im, path, NULL)) {
-        PyErr_SetString(PyExc_RuntimeError, "cannot save image");
+    if (PyString_Check(src)) {
+        path = PyString_AsString(src);
+    }
+    
+    if (path) {
+        save_success = oil_image_save(self->im, path, NULL);
+    } else {
+        OILFile file;
+        file.file = src;
+        file.read = oil_python_read;
+        file.write = oil_python_write;
+        file.flush = oil_python_flush;
+        
+        save_success = oil_image_save_ex(self->im, &file, NULL);
+    }
+    
+    if (!save_success) {
+        if (!PyErr_Occurred())
+            PyErr_SetString(PyExc_RuntimeError, "cannot save image");
         return NULL;
     }
     
