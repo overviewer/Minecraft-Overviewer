@@ -89,16 +89,16 @@ static void PyOILImage_dealloc(PyOILImage *self) {
 /* methods for Image type */
 
 static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
-    PyObject *dest = NULL;
+    PyObject *src = NULL;
     const char *path = NULL;
     PyOILImage *self;
     
-    if (!PyArg_ParseTuple(args, "O", &dest)) {
+    if (!PyArg_ParseTuple(args, "O", &src)) {
         return NULL;
     }
     
-    if (PyString_Check(dest)) {
-        path = PyString_AsString(dest);
+    if (PyString_Check(src)) {
+        path = PyString_AsString(src);
     }
 
     self = (PyOILImage *)(type->tp_alloc(type, 0));
@@ -109,7 +109,7 @@ static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
         self->im = oil_image_load(path);
     } else {
         OILFile file;
-        file.file = dest;
+        file.file = src;
         file.read = oil_python_read;
         file.write = oil_python_write;
         file.flush = oil_python_flush;
@@ -127,29 +127,32 @@ static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
     return (PyObject *)self;
 }
 
-static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args) {
-    PyObject *src = NULL;
+static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args, PyObject *kwargs) {
+    OILFormatOptions opts = {0, 0};
+    static char *argnames[] = {"dest", "indexed", "palette_size", NULL};
+    PyObject *dest = NULL;
     const char *path = NULL;
     int save_success = 0;
     
-    if (!PyArg_ParseTuple(args, "O", &src)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|iI", argnames,
+                                     &dest, &opts.indexed, &opts.palette_size)) {
         return NULL;
     }
     
-    if (PyString_Check(src)) {
-        path = PyString_AsString(src);
+    if (PyString_Check(dest)) {
+        path = PyString_AsString(dest);
     }
     
     if (path) {
-        save_success = oil_image_save(self->im, path, NULL);
+        save_success = oil_image_save(self->im, path, &opts);
     } else {
         OILFile file;
-        file.file = src;
+        file.file = dest;
         file.read = oil_python_read;
         file.write = oil_python_write;
         file.flush = oil_python_flush;
         
-        save_success = oil_image_save_ex(self->im, &file, NULL);
+        save_success = oil_image_save_ex(self->im, &file, &opts);
     }
     
     if (!save_success) {
@@ -171,7 +174,7 @@ static PyObject *PyOILImage_get_size(PyOILImage *self, PyObject *args) {
 static PyMethodDef PyOILImage_methods[] = {
     {"load", (PyCFunction)PyOILImage_load, METH_VARARGS | METH_CLASS,
      "Load the given path name into an Image object."},
-    {"save", (PyCFunction)PyOILImage_save, METH_VARARGS,
+    {"save", (PyCFunction)PyOILImage_save, METH_KEYWORDS,
      "Save the Image object to a file."},
     {"get_size", (PyCFunction)PyOILImage_get_size, METH_VARARGS,
      "Return a (width, height) tuple."},
