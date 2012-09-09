@@ -39,8 +39,9 @@ static size_t oil_python_write(void *file, void *data, size_t length) {
 
 static void oil_python_flush(void *file) {
     PyObject *result = PyObject_CallMethod(file, "flush", "");
-    if (result)
+    if (result) {
         Py_DECREF(result);
+    }
 }
 
 /* the Image type instance */

@@ -29,7 +29,7 @@ tests = [
     ]),
 
     ("Saving (Palette)", [
-            ("PIL", lambda: pilim.convert('P', palette=PIL.Image.ADAPTIVE, colors=256).save("pilpalette.png")),
+            ("PIL", lambda: pilim.convert('RGB').convert('P', palette=PIL.Image.ADAPTIVE, colors=256).save("pilpalette.png")),
             ("OIL", lambda: oilim.save("oilpalette.png", indexed=True, palette_size=256)),
     ]),
 ]
