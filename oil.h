@@ -13,6 +13,13 @@
 #  endif /* inline */
 #endif /* _MSC_VER */
 
+typedef enum {
+    OIL_BACKEND_CPU,
+    OIL_BACKEND_DEBUG,
+} OILBackendName;
+
+void oil_backend_set(OILBackendName backend);
+
 typedef struct {
     unsigned char r, g, b, a;
 } OILPixel;

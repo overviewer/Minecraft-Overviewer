@@ -36,12 +36,18 @@ OILImage *oil_image_new(unsigned int width, unsigned int height) {
             free(im);
             return NULL;
         }
+        
+        im->backend = oil_backend;
     }
+    
+    im->backend->new(im);
     return im;
 }
 
 void oil_image_free(OILImage *im) {
     if (im) {
+        im->backend->free(im);
+        
         if (im->data)
             free(im->data);
         free(im);
@@ -114,6 +120,7 @@ void oil_image_get_size(OILImage *im, unsigned int *width, unsigned int *height)
 
 const OILPixel *oil_image_get_data(OILImage *im) {
     if (im) {
+        im->backend->load(im);
         return im->data;
     }
     return NULL;
@@ -123,7 +130,9 @@ OILPixel *oil_image_lock(OILImage *im) {
     if (im) {
         if (im->locked)
             return NULL;
+        
         im->locked = 1;
+        im->backend->load(im);
         return im->data;
     }
     return NULL;
@@ -132,5 +141,6 @@ OILPixel *oil_image_lock(OILImage *im) {
 void oil_image_unlock(OILImage *im) {
     if (im) {
         im->locked = 0;
+        im->backend->save(im);
     }
 }
