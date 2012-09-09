@@ -1,4 +1,5 @@
-#include "oil-private.h"
+#include "oil.h"
+#include "oil-dither-private.h"
 
 #include <math.h>
 

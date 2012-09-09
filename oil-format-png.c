@@ -1,4 +1,7 @@
-#include "oil-private.h"
+#include "oil.h"
+#include "oil-format-private.h"
+#include "oil-palette-private.h"
+#include "oil-dither-private.h"
 
 #include <stdlib.h>
 #include <png.h>

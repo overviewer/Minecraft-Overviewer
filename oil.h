@@ -3,6 +3,16 @@
 
 #include <stdlib.h>
 
+#define OIL_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define OIL_MIN(a, b) ((a) < (b) ? (a) : (b))
+#define OIL_CLAMP(a, min, max) OIL_MIN((max), OIL_MAX((min), (a)))
+
+#ifdef _MSC_VER
+#  ifndef inline
+#    define inline __inline
+#  endif /* inline */
+#endif /* _MSC_VER */
+
 typedef struct {
     unsigned char r, g, b, a;
 } OILPixel;
@@ -20,11 +30,6 @@ typedef struct {
     int indexed;
     unsigned int palette_size;
 } OILFormatOptions;
-
-typedef struct {
-    int (*save)(OILImage *im, OILFile *file, OILFormatOptions *opts);
-    OILImage *(*load)(OILFile *file);
-} OILFormat;
 
 OILImage *oil_image_new(unsigned int width, unsigned int height);
 void oil_image_free(OILImage *im);

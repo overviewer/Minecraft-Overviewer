@@ -1,6 +1,6 @@
 #include <Python.h>
 
-#include "oil-private.h"
+#include "oil.h"
 
 /*
  * file IO implementation for python file-like objects

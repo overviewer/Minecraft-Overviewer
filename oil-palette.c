@@ -1,4 +1,5 @@
-#include "oil-private.h"
+#include "oil.h"
+#include "oil-palette-private.h"
 
 #include <string.h>
 

@@ -1,4 +1,5 @@
-#include "oil-private.h"
+#include "oil.h"
+#include "oil-format-private.h"
 
 #include <stdlib.h>
 
