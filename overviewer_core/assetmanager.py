@@ -19,6 +19,7 @@ import codecs
 import locale
 import time
 import logging
+import traceback
 
 from PIL import Image
 
@@ -51,6 +52,7 @@ directory.
         except Exception, e:
             if os.path.exists(os.path.join(self.outputdir, "overviewerConfig.js")):
                 logging.warning("A previous overviewerConfig.js was found, but I couldn't read it for some reason. Continuing with a blank config")
+            logging.debug(traceback.format_exc())
             self.overviewerConfig = dict(tilesets=dict())
 
     def get_tileset_config(self, name):
