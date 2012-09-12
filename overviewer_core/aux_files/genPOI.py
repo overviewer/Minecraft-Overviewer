@@ -57,7 +57,9 @@ def handlePlayers(rset, render, worldpath):
     playerdir = os.path.join(worldpath, "players")
     if os.path.isdir(playerdir):
         playerfiles = os.listdir(playerdir)
+        playerfiles = [x for x in playerfiles if x.endswith(".dat")]
         isSinglePlayer = False
+
     else:
         playerfiles = [os.path.join(worldpath, "level.dat")]
         isSinglePlayer = True
