@@ -860,7 +860,7 @@ def wood(self, blockid, data):
     if self.rotation == 1:
         if wood_orientation == 4: wood_orientation = 8
         elif wood_orientation == 8: wood_orientation = 4
-    elif self.rotation == 2: 
+    elif self.rotation == 3:
         if wood_orientation == 4: wood_orientation = 8
         elif wood_orientation == 8: wood_orientation = 4
 
