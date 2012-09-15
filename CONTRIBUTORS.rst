@@ -29,6 +29,8 @@ for many different parts of the code.
  * Aaron Griffith <aargri@gmail.com>
  * Alex Headley <aheadley@waysaboutstuff.com>
  * Alex Jurkiewicz <alex@bluebottle.net.au>
+ * Thomas Lake <tswsl1989@sucs.org>
+ * Richard Pastrick <rpastric@contre.us>
  * Michael Writhe <michael@writhem.com>
  * Xon <Xon@localhost>
 
@@ -64,18 +66,18 @@ feature.
  * Sean Kilgore <krystalogik@gmail.com>
  * Johan Kiviniemi <devel@johan.kiviniemi.name>
  * Philip Kovac <pkovac@cs.uml.edu>
- * Thomas Lake <tswsl1989@sucs.org>
  * Maciej Malecki <maciej.malecki@hotmail.com>
  * Ryan McCue <ryanmccue@cubegames.net>
  * Zach McCullough <nosrepa@gmail.com>
  * Mike <mike@snowcrash.ca>
  * Morlok8k <otis.spankmeyer@gmail.com>
  * Adam Novak <interfect@gmail.com>
- * Richard Pastrick <rpastric@contre.us>
  * rakama <ramsesakama@gmail.com>
  * Ryan Rector <rmrector@gmail.com>
+ * Matti Ruohonen <matti.j.ruohonen@gmail.com>
  * Jason Scheirer <jason.scheirer@gmail.com>
  * Gregory Short <gshort2@gmail.com>
+ * Socolin <beber-le-scaraber@hotmail.fr>
  * Sam Steele <sam@sigbox.c99.org>
  * stoneLeaf <owi.stoneleaf@gmail.com>
  * timwolla <timwolla@mail.develfusion.com>
