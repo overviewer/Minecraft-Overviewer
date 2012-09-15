@@ -208,6 +208,13 @@ class MineralOverlay(Overlay):
         'minerals' : ('a list of (blockid, (r, g, b)) tuples for coloring minerals', None),
     }
 
+class BiomeOverlay(Overlay):
+    name = "overlay-biomes"
+    options = {
+        'biomes' : ('a list of (biome, (r, g, b)) tuples for coloring biomes', None),
+        'alpha'  : ('an integer value between 0 (transparent) and 255 (opaque)', None),
+    }
+
 class Hide(RenderPrimitive):
     name = "hide"
     options = {

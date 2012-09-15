@@ -821,7 +821,20 @@ MineralOverlay
 
             MineralOverlay(minerals=[(64,(255,255,0)), (13,(127,0,127))])
 
+BiomeOverlay
+    Color the map according to the biome at that point. Either use on
+    top of other modes or on top of ClearBase to create a pure overlay.
 
+    **Options**
+
+    biomes
+        A list of ("biome name", (r, g, b)) tuples to use as colors. Any
+        biome not specified won't be highlighted. If not provided then 
+        a default list of biomes and colors is used.
+
+        Example::
+
+            BiomeOverlay(biomes=[("Forest", (0, 255, 0)), ("Desert", (255, 0, 0))])
 
 Defining Custom Rendermodes
 ---------------------------
