@@ -25,7 +25,7 @@ body {
 .infoWindow>img {
     width:80px;
     float: left;
-
+    image-rendering: -moz-crisp-edges;
 }
 
 .infoWindow>p {
