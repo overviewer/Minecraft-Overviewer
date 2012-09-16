@@ -226,7 +226,24 @@ static PyTypeObject PyOILImageType = {
     (newfunc)PyOILImage_new,   /* tp_new */
 };
 
+static PyObject *OIL_backend_set(PyObject *self, PyObject *args) {
+    unsigned int backend = OIL_BACKEND_CPU;
+    if (!PyArg_ParseTuple(args, "I", &backend)) {
+        return NULL;
+    }
+    
+    if (backend >= OIL_BACKEND_MAX) {
+        PyErr_SetString(PyExc_ValueError, "invalid backend");
+        return NULL;
+    }
+    
+    oil_backend_set(backend);
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef OIL_methods[] = {
+    {"backend_set", OIL_backend_set, METH_VARARGS,
+     "Set the OIL backend to use"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -242,5 +259,9 @@ PyMODINIT_FUNC initOIL(void) {
         return;
     
     PyModule_AddObject(mod, "Image", (PyObject *)&PyOILImageType);
+    
+    /* add in the backend enums */
+    PyModule_AddIntConstant(mod, "BACKEND_CPU", OIL_BACKEND_CPU);
+    PyModule_AddIntConstant(mod, "BACKEND_DEBUG", OIL_BACKEND_DEBUG);
 }
 

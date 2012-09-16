@@ -14,5 +14,8 @@ void oil_backend_set(OILBackendName backend) {
     case OIL_BACKEND_DEBUG:
         oil_backend = &oil_backend_debug;
         break;
+    default:
+        /* invalid backend, use cpu as default */
+        oil_backend = &oil_backend_cpu;
     };
 }
