@@ -168,6 +168,13 @@ static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args, PyObject *kwa
 static PyObject *PyOILImage_get_size(PyOILImage *self, PyObject *args) {
     unsigned int width = 0, height = 0;
     
+    /* args == NULL means we're called as an attribute-getter */
+    if (args != NULL) {
+        if (!PyArg_ParseTuple(args, "")) {
+            return NULL;
+        }
+    }
+    
     oil_image_get_size(self->im, &width, &height);
     return Py_BuildValue("II", width, height);
 }
@@ -179,6 +186,12 @@ static PyMethodDef PyOILImage_methods[] = {
      "Save the Image object to a file."},
     {"get_size", (PyCFunction)PyOILImage_get_size, METH_VARARGS,
      "Return a (width, height) tuple."},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyGetSetDef PyOILImage_getset[] = {
+    {"size", (getter)PyOILImage_get_size, NULL,
+     "Return a (width, height) tuple.", NULL},
     {NULL, NULL, 0, NULL}
 };
 
@@ -215,7 +228,7 @@ static PyTypeObject PyOILImageType = {
     0,                         /* tp_iternext */
     PyOILImage_methods,        /* tp_methods */
     NULL,                      /* tp_members */
-    0,                         /* tp_getset */
+    PyOILImage_getset,         /* tp_getset */
     0,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
