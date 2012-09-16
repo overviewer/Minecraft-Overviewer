@@ -52,5 +52,6 @@ const OILPixel *oil_image_get_data(OILImage *im);
 OILPixel *oil_image_lock(OILImage *im);
 void oil_image_unlock(OILImage *im);
 
+int oil_image_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize);
 
 #endif /* __OIL_H_INCLUDED__ */

@@ -144,3 +144,65 @@ void oil_image_unlock(OILImage *im) {
         im->backend->save(im);
     }
 }
+
+int oil_image_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize) {
+    /* duh, this is bad */
+    if (im == NULL || src == NULL)
+        return 0;
+    
+    /* firstly, are these images from the same backend? */
+    if (im->backend != src->backend)
+        return 0;
+    
+    /* if alpha == 0, there's nothing to do */
+    if (alpha == 0)
+        return 1;
+    
+    /* if dx, dy are out of bounds, we're already done */
+    if (dx >= im->width || dy >= im->height)
+        return 1;
+    
+    /* same for sx, sy */
+    if (sx >= src->width || sy >= src->height)
+        return 1;
+    
+    /* okay, now set up the 0 size == use as much as possible */
+    if (xsize == 0)
+        xsize = src->width - sx;
+    if (ysize == 0)
+        ysize = src->height - sy;
+    
+    /* handle negative dx, dy */
+    if (dx < 0) {
+        sx -= dx;
+        xsize += dx;
+        dx = 0;
+    }
+    if (dy < 0) {
+        sy -= dy;
+        ysize += dy;
+        dy = 0;
+    }
+    
+    /* clip the source rect to fit inside dest, if needed */
+    if (dx + xsize > im->width)
+        xsize = im->width - dx;
+    if (dy + ysize > im->height)
+        ysize = im->height - dy;
+    
+    /* clip the source rect to fit inside src, if needed */
+    if (sx + xsize > src->width)
+        xsize = src->width - sx;
+    if (sy + ysize > src->height)
+        ysize = src->height - sy;
+    
+    /* now, sx, sy, dx, dy, and xsize, ysize are all inside their respective
+       bounds, and data can be copied freely */
+    
+    /* return now if there is nothing to copy */
+    if (xsize == 0 || ysize == 0)
+        return 1;
+    
+    /* and finally, call back into the backend if there is work to do */
+    return im->backend->composite(im, src, alpha, dx, dy, sx, sy, xsize, ysize);
+}

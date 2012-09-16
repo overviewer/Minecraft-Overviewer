@@ -14,6 +14,9 @@ typedef struct {
     /* save data from im into backend
        called during (for example) unlock() */
     void (*save)(OILImage *im);
+    
+    /* do a composite. */
+    int (*composite)(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize);
 } OILBackend;
 
 extern OILBackend *oil_backend;

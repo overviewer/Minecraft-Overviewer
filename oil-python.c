@@ -50,6 +50,9 @@ typedef struct {
     OILImage *im;
 } PyOILImage;
 
+/* forward delcaration for image type object */
+static PyTypeObject PyOILImageType;
+
 /* init and dealloc for the Image type */
 
 static PyOILImage *PyOILImage_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs) {
@@ -179,6 +182,24 @@ static PyObject *PyOILImage_get_size(PyOILImage *self, PyObject *args) {
     return Py_BuildValue("II", width, height);
 }
 
+static PyObject *PyOILImage_composite(PyOILImage *self, PyObject *args) {
+    PyOILImage *src;
+    unsigned char alpha = 255;
+    int dx = 0, dy = 0;
+    unsigned int sx = 0, sy = 0, xsize = 0, ysize = 0;
+
+    if (!PyArg_ParseTuple(args, "O!biiIIII", &PyOILImageType, &src, &alpha, &dx, &dy, &sx, &sy, &xsize, &ysize)) {
+        return NULL;
+    }
+    
+    if (!oil_image_composite(self->im, src->im, alpha, dx, dy, sx, sy, xsize, ysize)) {
+        PyErr_SetString(PyExc_RuntimeError, "cannot composite image");
+        return NULL;
+    }
+    
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef PyOILImage_methods[] = {
     {"load", (PyCFunction)PyOILImage_load, METH_VARARGS | METH_CLASS,
      "Load the given path name into an Image object."},
@@ -186,6 +207,8 @@ static PyMethodDef PyOILImage_methods[] = {
      "Save the Image object to a file."},
     {"get_size", (PyCFunction)PyOILImage_get_size, METH_VARARGS,
      "Return a (width, height) tuple."},
+    {"composite", (PyCFunction)PyOILImage_composite, METH_VARARGS,
+     "Composite another image on top of this one."},
     {NULL, NULL, 0, NULL}
 };
 
