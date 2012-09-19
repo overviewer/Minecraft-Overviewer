@@ -42,10 +42,16 @@ static PyMethodDef COverviewerMethods[] = {
 PyMODINIT_FUNC
 initc_overviewer(void)
 {
-    PyObject *mod = Py_InitModule("c_overviewer", COverviewerMethods);
+    PyObject *mod, *numpy;
+    mod = Py_InitModule("c_overviewer", COverviewerMethods);
 
-    /* for numpy */
-    import_array();
+    /* for numpy
+       normally you should use import_array(), but that will break across
+       numpy versions. This doesn't, and we don't use enough of numpy to worry
+       about the API changing too much, so this is fine.
+    */
+    numpy = PyImport_ImportModule("numpy.core.multiarray");
+    Py_XDECREF(numpy);
 
     /* initialize, and return if error is set */
     if (!init_chunk_render()) {
@@ -53,6 +59,6 @@ initc_overviewer(void)
         exit(1);
         return;
     }
-    
+
     init_endian();
 }
