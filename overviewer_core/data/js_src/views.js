@@ -99,7 +99,7 @@ overviewer.views.CompassView = Backbone.View.extend({
     initialize: function() {
         this.el.index=0;
         var compassImg = document.createElement('IMG');
-        compassImg.src = overviewerConfig.CONST.image.compass;
+        compassImg.src = '';  // this will be set properly in the render function (below)
         this.el.appendChild(compassImg);
 
         overviewer.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.el);
