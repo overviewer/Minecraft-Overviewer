@@ -640,7 +640,11 @@ values. The valid configuration keys are listed below.
 
 ``overlay``
     This specifies which renders that this render will be displayed on top of. 
-    It should be a list of other renders.
+    It should be a list of other renders.  If this option is confusing, think
+    of this option's name as "overlay_on_to".
+
+    If you leave this as an empty list, this overlay will be displayed on top
+    of all renders for the same world/dimension as this one.
 
     **Default:** ``[]`` (an empty list)
 
