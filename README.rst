@@ -1,5 +1,5 @@
 ====================
-Minecraft Overviewer
+Minecraft Overvieweraeou
 ====================
 By Andrew Brown and contributors (see CONTRIBUTORS.rst).
 
