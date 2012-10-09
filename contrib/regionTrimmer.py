@@ -9,11 +9,6 @@ import glob
 
 import networkx
 
-# incantation to be able to import overviewer_core
-#if not hasattr(sys, "frozen"):
-#    sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '..')))
-#import overviewer_core
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -71,7 +66,7 @@ def main(*args, **options):
         graph, subgraphs = generate_subgraphs(nodes)
         assert len(graph.nodes()) == sum(len(sg.nodes()) for sg in subgraphs)
         if len(subgraphs) == 1:
-            logger.warn('All regions are contiguous, no work needs doing!')
+            logger.warn('All regions are contiguous, the needful is done!')
             return
         logger.info('Found %d discrete region sections', len(subgraphs))
         subgraphs = sorted(subgraphs, key=lambda sg: len(sg), reverse=True)
