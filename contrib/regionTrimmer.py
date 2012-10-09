@@ -90,10 +90,11 @@ def main(*args, **options):
             if options['trim_disconnected']:
                 logger.info('Trimming regions: %s', ', '.join(
                     get_region_file_from_node(path, n) for n in ss.nodes()))
-                for region_file in (get_region_file_from_node(path, n) \
-                    for n in ss.get_nodes()):
+                for n, region_file in ((n, get_region_file_from_node(path, n)) \
+                    for n in ss.nodes()):
+                        ss.remove_node(n)
                         if not options['dry_run']:
-                            os.unlink(region_file)
+                            unlink_file(region_file)
             if options['trim_outside_main']:
                 if center[0] <= main_section_bounds[0] and center[0] >= main_section_bounds[1] and \
                         center[1] <= main_section_bounds[2] and center[1] >= main_section_bounds[3]:
@@ -102,10 +103,11 @@ def main(*args, **options):
                     logger.info('Section is outside main section bounds')
                     logger.info('Trimming regions: %s', ', '.join(
                         get_region_file_from_node(path, n) for n in ss.nodes()))
-                    for region_file in (get_region_file_from_node(path, n) \
+                    for n, region_file in ((n, get_region_file_from_node(path, n)) \
                         for n in ss.nodes()):
+                            ss.remove_node(n)
                             if not options['dry_run']:
-                                os.unlink(region_file)
+                                unlink_file(region_file)
             if options['trim_outside_bounds']:
                 x = map(int, options['trim_outside_bounds'].split(','))
                 if len(x) == 4:
@@ -126,13 +128,23 @@ def main(*args, **options):
                         region_file = get_region_file_from_node(path, node)
                         logger.info('Region falls outside specified bounds, trimming: %s',
                             region_file)
+                        ss.remove_node(node)
                         if not options['dry_run']:
-                            os.unlink(region_file)
+                            unlink_file(region_file)
+
+def unlink_file(path):
+    try:
+        os.unlink(path)
+    except OSError as err:
+        logger.warn('Unable to delete file: %s', path)
+        logger.warn('Error recieved was: %s', err)
+
 
 if __name__ == '__main__':
     import optparse
     logging.basicConfig()
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(
+        usage='Usage: %prog [options] <path/to/region/directory>')
     parser.add_option('-D', '--trim-disconnected', action='store_true', default=False,
         help='Trim all disconnected regions')
     parser.add_option('-M', '--trim-outside-main', action='store_true', default=False,
@@ -142,6 +154,5 @@ if __name__ == '__main__':
         help='Trim outside given bounds (given as [center_X,center_Y,]bound_X,bound_Y)')
     parser.add_option('-n', '--dry-run', action='store_true', default=False,
         help='Don\'t actually delete anything')
-    #parser.add_option('-b', )
     opts, args = parser.parse_args()
     main(*args, **vars(opts))
