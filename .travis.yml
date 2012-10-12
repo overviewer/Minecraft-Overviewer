@@ -2,6 +2,7 @@ language: python
 python:
   - "2.6"
   - "2.7"
+  - "3.2"
 before_install:
   - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/Imaging.h
   - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/ImPlatform.h
@@ -15,12 +16,7 @@ before_script:
 script:
   - python overviewer.py ~/mcoa/exmaple ~/test-output --rendermodes=smooth-lighting
 notifications:
-  irc:
-    channels: "irc.freenode.org#overviewer"
-    on_success: always
-    on_failure: always
   email: false
-branches:
-  only:
-    - master
-    - travis
+matrix:
+  allow_failures:
+    - python: "3.2"
