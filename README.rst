@@ -1,5 +1,5 @@
 ====================
-Minecraft Overviewer  [![Build Status](https://secure.travis-ci.org/overviewer/Minecraft-Overviewer.png)](http://travis-ci.org/overviewer/Minecraft-Overviewer)
+Minecraft Overviewer  |Build Status|
 ====================
 By Andrew Brown and contributors (see CONTRIBUTORS.rst).
 
@@ -82,3 +82,4 @@ https://github.com/overviewer/Minecraft-Overviewer/issues
 Feel free to comment on issues, report new issues, and vote on issues that are
 important to you.
 
+.. |Build Status| image:: https://secure.travis-ci.org/overviewer/Minecraft-Overviewer.png
