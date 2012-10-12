@@ -14,12 +14,4 @@ before_script:
 script:
   - python overviewer.py ~/mca/exmaple ~/test-output --rendermodes=smooth-lighting
 notifications:
-  irc:
-    channels: "irc.freenode.org#overviewer"
-    on_success: always
-    on_failure: always
   email: false
-branches:
-  only:
-    - master
-    - travis
