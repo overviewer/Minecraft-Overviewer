@@ -1,17 +1,26 @@
 language: python
 python:
-  # we will add support for this in future. currently 2.6 via travis is unsupported.
-  #- "2.6" 
+  - "2.6"
   - "2.7"
+before_install:
+  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/Imaging.h
+  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/ImPlatform.h
 install:
-  - sudo apt-get install -qq python-imaging python-dev python-numpy python-numpy-dev
   - pip install -q pillow
   - pip install -q numpy
   - python setup.py build
 before_script:
-  - git clone git://github.com/overviewer/Minecraft-Overviewer-Addons.git ~/mca/
+  - git clone git://github.com/overviewer/Minecraft-Overviewer-Addons.git ~/mcoa/
   - wget -N http://s3.amazonaws.com/MinecraftDownload/minecraft.jar -P ~/.minecraft/bin/
 script:
-  - python overviewer.py ~/mca/exmaple ~/test-output --rendermodes=smooth-lighting
+  - python overviewer.py ~/mcoa/exmaple ~/test-output --rendermodes=smooth-lighting
 notifications:
+  irc:
+    channels: "irc.freenode.org#overviewer"
+    on_success: always
+    on_failure: always
   email: false
+branches:
+  only:
+    - master
+    - travis
