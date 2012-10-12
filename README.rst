@@ -8,7 +8,10 @@ Documentation:
 
 Github code repository:
     http://github.com/overviewer/Minecraft-Overviewer
-
+	
+Travis-CI:
+    http://travis-ci.org/overviewer/Minecraft-Overviewer
+	
 Blog:
     http://overviewer.org/blog/
 
