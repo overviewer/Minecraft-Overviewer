@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Deletes outlying unconnected regions"""
+"""Deletes outlying and unconnected regions"""
 
 import logging
 import os
