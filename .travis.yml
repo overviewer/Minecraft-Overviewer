@@ -1,0 +1,17 @@
+language: python
+python:
+  # we will add support for this in future. currently 2.6 via travis is unsupported.
+  #- "2.6" 
+  - "2.7"
+install:
+  - sudo apt-get install -qq python-imaging python-dev python-numpy python-numpy-dev
+  - pip install -q pillow
+  - pip install -q numpy
+  - python setup.py build
+before_script:
+  - git clone git://github.com/overviewer/Minecraft-Overviewer-Addons.git ~/mca/
+  - wget -N http://s3.amazonaws.com/MinecraftDownload/minecraft.jar -P ~/.minecraft/bin/
+script:
+  - python overviewer.py ~/mca/exmaple ~/test-output --rendermodes=smooth-lighting
+notifications:
+  email: false
