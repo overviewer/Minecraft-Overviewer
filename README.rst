@@ -1,5 +1,5 @@
 ====================
-Minecraft Overviewer
+Minecraft Overviewer  [![Build Status](https://secure.travis-ci.org/overviewer/Minecraft-Overviewer.png)](http://travis-ci.org/overviewer/Minecraft-Overviewer)
 ====================
 By Andrew Brown and contributors (see CONTRIBUTORS.rst).
 
