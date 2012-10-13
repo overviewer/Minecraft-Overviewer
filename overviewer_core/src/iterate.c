@@ -208,7 +208,7 @@ unload_all_chunks(RenderState *state) {
 }
 
 unsigned char
-check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
+check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned short blockid) {
     /*
      * Generates a pseudo ancillary data for blocks that depend of 
      * what are surrounded and don't have ancillary data. This 
