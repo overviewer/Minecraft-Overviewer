@@ -162,6 +162,10 @@ def main():
             print "The Overviewer is a console program.  Please open a Windows command prompt"
             print "first and run Overviewer from there.   Further documentation is available at"
             print "http://docs.overviewer.org/\n"
+            print "\n"
+            print "For a quick-start guide on Windows, visit the following URL:\n"
+            print "http://docs.overviewer.org/en/latest/win_tut/windowsguide/\n"
+
         else:
             # more helpful message for users who know what they're doing
             logging.error("You must either specify --config or give me a world directory and output directory")
