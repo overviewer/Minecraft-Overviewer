@@ -179,14 +179,3 @@ regular user.
 
   1. ``$ ./overviewer.py path/to/world/ path/to/output/`` or ``$ python26 path/to/overviewer.py path/to/world/ path/to/output/``
   2. Proceed to the :doc:`Running <running>` instructions for more info.
-
-
-Installing the Compiled Code
-----------------------------
-
-You can run the ``overviewer.py`` script from the build directory just fine;
-installation is unnecessary. If you'd like to install, run
-
-::
-
-    python setup.py install
