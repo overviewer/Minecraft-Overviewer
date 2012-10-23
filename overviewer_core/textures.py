@@ -2978,7 +2978,7 @@ def repeater(self, blockid, data):
     
 # trapdoor
 # TODO the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=96, data=range(8), transparent=True, nospawn=True)
+@material(blockid=96, data=range(16), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
     # rotation
@@ -3012,7 +3012,12 @@ def trapdoor(self, blockid, data):
             img = self.build_full_block(None, None, None, texture, None)
         
     elif data & 0x4 == 0: # closed trapdoor
-        img = self.build_full_block((texture, 12), None, None, texture, texture)
+        if data & 0x8 == 0x8: # is a top trapdoor
+            img = Image.new("RGBA", (24,24), self.bgcolor)
+            t = self.build_full_block((texture, 12), None, None, texture, texture)
+            alpha_over(img, t, (0,-9),t)
+        else: # is a bottom trapdoor
+            img = self.build_full_block((texture, 12), None, None, texture, texture)
     
     return img
 
