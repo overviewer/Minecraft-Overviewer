@@ -3715,3 +3715,23 @@ def cobblestone_wall(self, blockid, data):
     
     return img
 
+# carrots and potatoes
+@material(blockid=[141,142], data=range(8), transparent=True, nospawn=True)
+def crops(self, blockid, data):
+    if data != 7: # when growing they look the same
+        # data = 7 -> fully grown, everything else is growing
+        # this seems to work, but still not sure
+        raw_crop = self.terrain_images[200 + (data % 3)]
+    elif blockid == 141: # carrots
+        raw_crop = self.terrain_images[203]
+    else: # potatoes
+        raw_crop = self.terrain_images[204]
+    crop1 = self.transform_image_top(raw_crop)
+    crop2 = self.transform_image_side(raw_crop)
+    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, crop1, (0,12), crop1)
+    alpha_over(img, crop2, (6,3), crop2)
+    alpha_over(img, crop3, (6,3), crop3)
+    return img
