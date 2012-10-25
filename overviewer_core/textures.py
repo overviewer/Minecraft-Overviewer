@@ -2408,7 +2408,8 @@ def pressure_plate(self, blockid, data):
 # normal and glowing redstone ore
 block(blockid=[73, 74], top_index=51)
 
-@material(blockid=77, data=range(16), transparent=True)
+# stone a wood buttons
+@material(blockid=(77,143), data=range(16), transparent=True)
 def buttons(self, blockid, data):
 
     # 0x8 is set if the button is pressed mask this info and render
@@ -2431,7 +2432,10 @@ def buttons(self, blockid, data):
         elif data == 3: data = 1
         elif data == 4: data = 2
 
-    t = self.terrain_images[1].copy()
+    if blockid == 77:
+        t = self.terrain_images[1].copy()
+    else:
+        t = self.terrain_images[4].copy()
 
     # generate the texture for the button
     ImageDraw.Draw(t).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -2974,7 +2978,7 @@ def repeater(self, blockid, data):
     
 # trapdoor
 # TODO the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=96, data=range(8), transparent=True, nospawn=True)
+@material(blockid=96, data=range(16), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
     # rotation
@@ -3008,7 +3012,12 @@ def trapdoor(self, blockid, data):
             img = self.build_full_block(None, None, None, texture, None)
         
     elif data & 0x4 == 0: # closed trapdoor
-        img = self.build_full_block((texture, 12), None, None, texture, texture)
+        if data & 0x8 == 0x8: # is a top trapdoor
+            img = Image.new("RGBA", (24,24), self.bgcolor)
+            t = self.build_full_block((texture, 12), None, None, texture, texture)
+            alpha_over(img, t, (0,-9),t)
+        else: # is a bottom trapdoor
+            img = self.build_full_block((texture, 12), None, None, texture, texture)
     
     return img
 
@@ -3582,4 +3591,147 @@ def cocoa_plant(self, blockid, data):
         if orientation == 0:
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
 
+    return img
+
+# command block
+block(blockid=137, top_index=136)
+
+# beacon block
+# at the moment of writing this, it seems the beacon block doens't use
+# the data values
+@material(blockid=138, transparent=True, nodata = True)
+def beacon(self, blockid, data):
+    # generate the three pieces of the block
+    t = self.terrain_images[49]
+    glass = self.build_block(t,t)
+    t = self.terrain_images[37]
+    obsidian = self.build_full_block((t,12),None, None, t, t)
+    obsidian = obsidian.resize((20,20), Image.ANTIALIAS)
+    t = self.terrain_images[41]
+    crystal = self.build_block(t,t)
+    crystal = crystal.resize((16,16),Image.ANTIALIAS)
+    
+    # compose the block
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, obsidian, (2, 4), obsidian)
+    alpha_over(img, crystal, (4,3), crystal)
+    alpha_over(img, glass, (0,0), glass)
+    
+    return img
+
+# cobbleston and mossy cobblestone walls
+# one additional bit of data value added for mossy and cobblestone
+@material(blockid=139, data=range(32), transparent=True, nospawn=True)
+def cobblestone_wall(self, blockid, data):
+    # no rotation, uses pseudo data
+    if data & 0b10000 == 0:
+        # cobblestone
+        t = self.terrain_images[16].copy()
+        wall_top = t.copy()
+        wall_side = t.copy()
+        wall_small_side = t.copy()
+    else:
+        # mossy cobblestone
+        t = self.terrain_images[36].copy()
+        wall_top = t.copy()
+        wall_side = t.copy()
+        wall_small_side = t.copy()
+
+    # generate the textures of the wall
+    ImageDraw.Draw(wall_top).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_top).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_top).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_top).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    ImageDraw.Draw(wall_side).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_side).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    # Create the sides and the top of the big stick
+    wall_side = self.transform_image_side(wall_side)
+    fence_other_side = wall_side.transpose(Image.FLIP_LEFT_RIGHT)
+    wall_top = self.transform_image_top(wall_top)
+
+    # Darken the sides slightly. These methods also affect the alpha layer,
+    # so save them first (we don't want to "darken" the alpha layer making
+    # the block transparent)
+    sidealpha = wall_side.split()[3]
+    wall_side = ImageEnhance.Brightness(wall_side).enhance(0.9)
+    wall_side.putalpha(sidealpha)
+    othersidealpha = fence_other_side.split()[3]
+    fence_other_side = ImageEnhance.Brightness(fence_other_side).enhance(0.8)
+    fence_other_side.putalpha(othersidealpha)
+
+    # Compose the wall big stick
+    fence_big = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(fence_big,wall_side, (5,4),wall_side)
+    alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
+    alpha_over(fence_big,wall_top, (0,0),wall_top)
+    
+    # Now render the wall.
+    # Create needed images
+    ImageDraw.Draw(wall_small_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_small_side).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_small_side).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    # Create the sides of the wall
+    wall_small_side = self.transform_image_side(wall_small_side)
+    fence_small_other_side = wall_small_side.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    # Darken the sides slightly. These methods also affect the alpha layer,
+    # so save them first (we don't want to "darken" the alpha layer making
+    # the block transparent)
+    sidealpha = fence_small_other_side.split()[3]
+    fence_small_other_side = ImageEnhance.Brightness(fence_small_other_side).enhance(0.9)
+    fence_small_other_side.putalpha(sidealpha)
+    sidealpha = wall_small_side.split()[3]
+    wall_small_side = ImageEnhance.Brightness(wall_small_side).enhance(0.9)
+    wall_small_side.putalpha(sidealpha)
+
+    # Create img to compose the wall
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+
+    # Position wall imgs around the wall bit stick
+    pos_top_left = (2,3)
+    pos_top_right = (10,3)
+    pos_bottom_right = (10,7)
+    pos_bottom_left = (2,7)
+    
+    # +x axis points top right direction
+    # +y axis points bottom right direction
+    # First compose the walls in the back of the image, 
+    # then big stick and then the walls in the front.
+
+    if (data & 0b0001) == 1:
+        alpha_over(img,wall_small_side, pos_top_left,wall_small_side)                # top left
+    if (data & 0b1000) == 8:
+        alpha_over(img,fence_small_other_side, pos_top_right,fence_small_other_side)    # top right
+        
+    alpha_over(img,fence_big,(0,0),fence_big)
+        
+    if (data & 0b0010) == 2:
+        alpha_over(img,fence_small_other_side, pos_bottom_left,fence_small_other_side)      # bottom left    
+    if (data & 0b0100) == 4:
+        alpha_over(img,wall_small_side, pos_bottom_right,wall_small_side)                  # bottom right
+    
+    return img
+
+# carrots and potatoes
+@material(blockid=[141,142], data=range(8), transparent=True, nospawn=True)
+def crops(self, blockid, data):
+    if data != 7: # when growing they look the same
+        # data = 7 -> fully grown, everything else is growing
+        # this seems to work, but still not sure
+        raw_crop = self.terrain_images[200 + (data % 3)]
+    elif blockid == 141: # carrots
+        raw_crop = self.terrain_images[203]
+    else: # potatoes
+        raw_crop = self.terrain_images[204]
+    crop1 = self.transform_image_top(raw_crop)
+    crop2 = self.transform_image_side(raw_crop)
+    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, crop1, (0,12), crop1)
+    alpha_over(img, crop2, (6,3), crop2)
+    alpha_over(img, crop3, (6,3), crop3)
     return img
