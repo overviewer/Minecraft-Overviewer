@@ -3594,7 +3594,7 @@ def cocoa_plant(self, blockid, data):
     return img
 
 # command block
-block(blockid=137, top_index=136)
+block(blockid=137, top_index=184)
 
 # beacon block
 # at the moment of writing this, it seems the beacon block doens't use
