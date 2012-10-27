@@ -3675,14 +3675,14 @@ def cobblestone_wall(self, blockid, data):
 
     # Create the sides of the wall
     wall_small_side = self.transform_image_side(wall_small_side)
-    fence_small_other_side = wall_small_side.transpose(Image.FLIP_LEFT_RIGHT)
+    wall_small_other_side = wall_small_side.transpose(Image.FLIP_LEFT_RIGHT)
     
     # Darken the sides slightly. These methods also affect the alpha layer,
     # so save them first (we don't want to "darken" the alpha layer making
     # the block transparent)
-    sidealpha = fence_small_other_side.split()[3]
-    fence_small_other_side = ImageEnhance.Brightness(fence_small_other_side).enhance(0.9)
-    fence_small_other_side.putalpha(sidealpha)
+    sidealpha = wall_small_other_side.split()[3]
+    wall_small_other_side = ImageEnhance.Brightness(wall_small_other_side).enhance(0.9)
+    wall_small_other_side.putalpha(sidealpha)
     sidealpha = wall_small_side.split()[3]
     wall_small_side = ImageEnhance.Brightness(wall_small_side).enhance(0.9)
     wall_small_side.putalpha(sidealpha)
@@ -3704,12 +3704,18 @@ def cobblestone_wall(self, blockid, data):
     if (data & 0b0001) == 1:
         alpha_over(img,wall_small_side, pos_top_left,wall_small_side)                # top left
     if (data & 0b1000) == 8:
-        alpha_over(img,fence_small_other_side, pos_top_right,fence_small_other_side)    # top right
-        
-    alpha_over(img,fence_big,(0,0),fence_big)
+        alpha_over(img,wall_small_other_side, pos_top_right,wall_small_other_side)    # top right
+    
+    # don't draw the big stick unless there's a corner
+    if (data == 0b1010) or (data == 0b11010):
+        alpha_over(img, wall_small_other_side, (10-4,3+2), wall_small_other_side)
+    elif (data == 0b0101) or (data == 0b10101):
+        alpha_over(img, wall_small_side, (2+4,3+2), wall_small_side)
+    else:
+        alpha_over(img,fence_big,(0,0),fence_big)
         
     if (data & 0b0010) == 2:
-        alpha_over(img,fence_small_other_side, pos_bottom_left,fence_small_other_side)      # bottom left    
+        alpha_over(img,wall_small_other_side, pos_bottom_left,wall_small_other_side)      # bottom left    
     if (data & 0b0100) == 4:
         alpha_over(img,wall_small_side, pos_bottom_right,wall_small_side)                  # bottom right
     
