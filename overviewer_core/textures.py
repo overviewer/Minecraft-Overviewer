@@ -3745,6 +3745,15 @@ def crops(self, blockid, data):
 # anvils
 @material(blockid=145, data=range(12), transparent=True)
 def anvil(self, blockid, data):
+    
+    # anvils only have two orientations, invert it for rotations 1 and 3
+    orientation = data & 0x1
+    if self.rotation in (1,3):
+        if orientation == 1:
+            orientation = 0
+        else:
+            orientation = 1
+
     # get the correct textures
     # the bits 0x4 and 0x8 determine how damaged is the anvil
     if (data & 0xc) == 0: # non damaged anvil
@@ -3772,13 +3781,13 @@ def anvil(self, blockid, data):
     ImageDraw.Draw(small_base).rectangle((3,3,12,12),outline=(0,0,0,0))
     
     # check orientation and compose the anvil
-    if data & 0x1 == 1: # west-east
+    if orientation == 1: # bottom-left top-right
         top = top.rotate(90)
         left_side = small_side
         left_pos = (1,7)
         right_side = big_side
         right_pos = (10,5)
-    else: # north-south
+    else: # top-left bottom-right
         right_side = small_side
         right_pos = (12,7)
         left_side = big_side
