@@ -3627,97 +3627,124 @@ def cobblestone_wall(self, blockid, data):
     if data & 0b10000 == 0:
         # cobblestone
         t = self.terrain_images[16].copy()
-        wall_top = t.copy()
-        wall_side = t.copy()
-        wall_small_side = t.copy()
     else:
         # mossy cobblestone
         t = self.terrain_images[36].copy()
-        wall_top = t.copy()
-        wall_side = t.copy()
-        wall_small_side = t.copy()
+
+    wall_pole_top = t.copy()
+    wall_pole_side = t.copy()
+    wall_side_top = t.copy()
+    wall_side = t.copy()
+    # _full is used for walls without pole
+    wall_side_top_full = t.copy()
+    wall_side_full = t.copy()
 
     # generate the textures of the wall
-    ImageDraw.Draw(wall_top).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_top).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_top).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_top).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_pole_top).rectangle((0,0,3,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_pole_top).rectangle((12,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_pole_top).rectangle((0,0,15,3),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_pole_top).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
-    ImageDraw.Draw(wall_side).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_pole_side).rectangle((0,0,3,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_pole_side).rectangle((12,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
-    # Create the sides and the top of the big stick
+    # Create the sides and the top of the pole
+    wall_pole_side = self.transform_image_side(wall_pole_side)
+    wall_pole_other_side = wall_pole_side.transpose(Image.FLIP_LEFT_RIGHT)
+    wall_pole_top = self.transform_image_top(wall_pole_top)
+
+    # Darken the sides slightly. These methods also affect the alpha layer,
+    # so save them first (we don't want to "darken" the alpha layer making
+    # the block transparent)
+    sidealpha = wall_pole_side.split()[3]
+    wall_pole_side = ImageEnhance.Brightness(wall_pole_side).enhance(0.8)
+    wall_pole_side.putalpha(sidealpha)
+    othersidealpha = wall_pole_other_side.split()[3]
+    wall_pole_other_side = ImageEnhance.Brightness(wall_pole_other_side).enhance(0.7)
+    wall_pole_other_side.putalpha(othersidealpha)
+
+    # Compose the wall pole
+    wall_pole = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(wall_pole,wall_pole_side, (3,4),wall_pole_side)
+    alpha_over(wall_pole,wall_pole_other_side, (9,4),wall_pole_other_side)
+    alpha_over(wall_pole,wall_pole_top, (0,0),wall_pole_top)
+    
+    # create the sides and the top of a wall attached to a pole
+    ImageDraw.Draw(wall_side).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_side).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_side_top).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_side_top).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_side_top).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    # full version, without pole
+    ImageDraw.Draw(wall_side_full).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_side_top_full).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(wall_side_top_full).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    # compose the sides of a wall atached to a pole
+    tmp = Image.new("RGBA", (24,24), self.bgcolor)
     wall_side = self.transform_image_side(wall_side)
-    fence_other_side = wall_side.transpose(Image.FLIP_LEFT_RIGHT)
-    wall_top = self.transform_image_top(wall_top)
+    wall_side_top = self.transform_image_top(wall_side_top)
 
     # Darken the sides slightly. These methods also affect the alpha layer,
     # so save them first (we don't want to "darken" the alpha layer making
     # the block transparent)
     sidealpha = wall_side.split()[3]
-    wall_side = ImageEnhance.Brightness(wall_side).enhance(0.9)
+    wall_side = ImageEnhance.Brightness(wall_side).enhance(0.7)
     wall_side.putalpha(sidealpha)
-    othersidealpha = fence_other_side.split()[3]
-    fence_other_side = ImageEnhance.Brightness(fence_other_side).enhance(0.8)
-    fence_other_side.putalpha(othersidealpha)
 
-    # Compose the wall big stick
-    fence_big = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(fence_big,wall_side, (5,4),wall_side)
-    alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
-    alpha_over(fence_big,wall_top, (0,0),wall_top)
-    
-    # Now render the wall.
-    # Create needed images
-    ImageDraw.Draw(wall_small_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_small_side).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_small_side).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    alpha_over(tmp,wall_side, (0,0),wall_side)
+    alpha_over(tmp,wall_side_top, (-5,3),wall_side_top)
+    wall_side = tmp
+    wall_other_side = wall_side.transpose(Image.FLIP_LEFT_RIGHT)
 
-    # Create the sides of the wall
-    wall_small_side = self.transform_image_side(wall_small_side)
-    wall_small_other_side = wall_small_side.transpose(Image.FLIP_LEFT_RIGHT)
-    
+    # compose the sides of the full wall
+    tmp = Image.new("RGBA", (24,24), self.bgcolor)
+    wall_side_full = self.transform_image_side(wall_side_full)
+    wall_side_top_full = self.transform_image_top(wall_side_top_full.rotate(90))
+
     # Darken the sides slightly. These methods also affect the alpha layer,
     # so save them first (we don't want to "darken" the alpha layer making
     # the block transparent)
-    sidealpha = wall_small_other_side.split()[3]
-    wall_small_other_side = ImageEnhance.Brightness(wall_small_other_side).enhance(0.9)
-    wall_small_other_side.putalpha(sidealpha)
-    sidealpha = wall_small_side.split()[3]
-    wall_small_side = ImageEnhance.Brightness(wall_small_side).enhance(0.9)
-    wall_small_side.putalpha(sidealpha)
+    sidealpha = wall_side_full.split()[3]
+    wall_side_full = ImageEnhance.Brightness(wall_side_full).enhance(0.7)
+    wall_side_full.putalpha(sidealpha)
+
+    alpha_over(tmp,wall_side_full, (4,0),wall_side_full)
+    alpha_over(tmp,wall_side_top_full, (3,-4),wall_side_top_full)
+    wall_side_full = tmp
+    wall_other_side_full = wall_side_full.transpose(Image.FLIP_LEFT_RIGHT)
 
     # Create img to compose the wall
     img = Image.new("RGBA", (24,24), self.bgcolor)
 
     # Position wall imgs around the wall bit stick
-    pos_top_left = (2,3)
-    pos_top_right = (10,3)
-    pos_bottom_right = (10,7)
-    pos_bottom_left = (2,7)
+    pos_top_left = (-5,-2)
+    pos_bottom_left = (-8,4)
+    pos_top_right = (5,-3)
+    pos_bottom_right = (7,4)
     
     # +x axis points top right direction
     # +y axis points bottom right direction
+    # There are two special cases for wall without pole.
+    # Normal case: 
     # First compose the walls in the back of the image, 
-    # then big stick and then the walls in the front.
-
-    if (data & 0b0001) == 1:
-        alpha_over(img,wall_small_side, pos_top_left,wall_small_side)                # top left
-    if (data & 0b1000) == 8:
-        alpha_over(img,wall_small_other_side, pos_top_right,wall_small_other_side)    # top right
-    
-    # don't draw the big stick unless there's a corner
+    # then the pole and then the walls in the front.
     if (data == 0b1010) or (data == 0b11010):
-        alpha_over(img, wall_small_other_side, (10-4,3+2), wall_small_other_side)
+        alpha_over(img, wall_other_side_full,(0,2), wall_other_side_full)
     elif (data == 0b0101) or (data == 0b10101):
-        alpha_over(img, wall_small_side, (2+4,3+2), wall_small_side)
+        alpha_over(img, wall_side_full,(0,2), wall_side_full)
     else:
-        alpha_over(img,fence_big,(0,0),fence_big)
-        
-    if (data & 0b0010) == 2:
-        alpha_over(img,wall_small_other_side, pos_bottom_left,wall_small_other_side)      # bottom left    
-    if (data & 0b0100) == 4:
-        alpha_over(img,wall_small_side, pos_bottom_right,wall_small_side)                  # bottom right
+        if (data & 0b0001) == 1:
+            alpha_over(img,wall_side, pos_top_left,wall_side)                # top left
+        if (data & 0b1000) == 8:
+            alpha_over(img,wall_other_side, pos_top_right,wall_other_side)    # top right
+
+        alpha_over(img,wall_pole,(0,0),wall_pole)
+            
+        if (data & 0b0010) == 2:
+            alpha_over(img,wall_other_side, pos_bottom_left,wall_other_side)      # bottom left    
+        if (data & 0b0100) == 4:
+            alpha_over(img,wall_side, pos_bottom_right,wall_side)                  # bottom right
     
     return img
 
