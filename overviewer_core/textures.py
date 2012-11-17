@@ -1508,7 +1508,7 @@ def fire(self, blockid, data):
     return img
 
 # monster spawner
-block(blockid=52, top_index=34, transparent=True)
+block(blockid=52, top_index=65, transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch and jungle stairs.
 @material(blockid=[53,67,108,109,114,128,134,135,136], data=range(8), transparent=True, solid=True, nospawn=True)
