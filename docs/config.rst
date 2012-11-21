@@ -509,6 +509,15 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``1``
 
+``maxzoom``
+    This specifies the maximum zoom allowed by the zoom control on the web page.
+
+    **Note:** This does not change the number of zoom levels rendered, but allows
+    you to neglect uploading the larger and more detailed zoom levels if bandwidth
+    usage is an issue.
+
+    **Default:** Automatically set to most detailed zoom level
+
 ``base``
     Allows you to specify a remote location for the tile folder, useful if you
     rsync your map's images to a remote server. Leave a trailing slash and point
@@ -516,7 +525,7 @@ values. The valid configuration keys are listed below.
     tiles folder itself. For example, if the tile images start at
     http://domain.com/map/world_day/ you want to set this to http://domain.com/map/
 
-.. _option_texture_pack:
+.. _option_texturepath:
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
