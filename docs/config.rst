@@ -512,9 +512,11 @@ values. The valid configuration keys are listed below.
 ``maxzoom``
     This specifies the maximum zoom allowed by the zoom control on the web page.
 
-    **Note:** This does not change the number of zoom levels rendered, but allows
-    you to neglect uploading the larger and more detailed zoom levels if bandwidth
-    usage is an issue.
+    .. note::
+
+            This does not change the number of zoom levels rendered, but allows
+            you to neglect uploading the larger and more detailed zoom levels if bandwidth
+            usage is an issue.
 
     **Default:** Automatically set to most detailed zoom level
 
