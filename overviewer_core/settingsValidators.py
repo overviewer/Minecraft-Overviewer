@@ -195,8 +195,8 @@ def validateOutputDir(d):
 def validateCrop(value):
     if len(value) != 4:
         raise ValidationException("The value for the 'crop' setting must be a tuple of length 4")
-    value = tuple(int(x) for x in value)
-    a, b, c, d = value
+    a, b, c, d = tuple(int(x) for x in value)
+
     if a >= c:
         a, c = c, a
     if b >= d:
