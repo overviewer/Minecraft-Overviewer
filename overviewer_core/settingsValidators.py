@@ -195,12 +195,13 @@ def validateOutputDir(d):
 def validateCrop(value):
     if len(value) != 4:
         raise ValidationException("The value for the 'crop' setting must be a tuple of length 4")
-    value = tuple(int(x) for x in value)
-    if value[0] >= value[2]:
-        value[0],value[2] = value[2],value[0]
-    if value[1] >= value[3]:
-        value[1],value[3] = value[3],value[1]
-    return value
+    a, b, c, d = tuple(int(x) for x in value)
+
+    if a >= c:
+        a, c = c, a
+    if b >= d:
+        b, d = d, b
+    return (a, b, c, d)
 
 def validateObserver(observer):
     if all(map(lambda m: hasattr(observer, m), ['start', 'add', 'update', 'finish'])):
