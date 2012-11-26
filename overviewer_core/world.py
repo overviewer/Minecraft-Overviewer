@@ -122,6 +122,7 @@ class World(object):
             if mcas:
                 # construct a regionset object for this
                 rset = RegionSet(root)
+                if not rset.is_valid(): continue
                 if root == os.path.join(self.worlddir, "region"):
                     self.regionsets.insert(0, rset)
                 else:
@@ -269,6 +270,15 @@ class RegionSet(object):
 
     def __repr__(self):
         return "<RegionSet regiondir=%r>" % self.regiondir
+
+    def is_valid(self):
+        """If this region set isn't one of the three known regions, then
+        return False"""
+        try:
+            self.get_type()
+            return True
+        except Exception:
+            return False
 
     def get_type(self):
         """Attempts to return a string describing the dimension represented by
