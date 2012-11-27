@@ -107,7 +107,7 @@ OSX
 
     You will need to have XCode and the XCode Command Line Tools installed (the
     Command Line Tools can be installed by going to the Downloads tab under the
-    Xcode Preferences dialog
+    Xcode Preferences dialog).
 
 1. Download the source code for PIL from http://www.pythonware.com/products/pil/
 2. Compile the PIL code (``python ./setup.py build``)
