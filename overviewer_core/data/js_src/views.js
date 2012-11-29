@@ -567,8 +567,8 @@ overviewer.views.LocationIconView = Backbone.View.extend({
         'position': overviewer.map.getCenter(), 
         'map':      overviewer.map,
         'title':    'location',
-        'visible':  false,
-        'animation': google.maps.Animation.DROP
+        'icon':     overviewerConfig.CONST.image.queryMarker,
+        'visible':  false
     }); 
     overviewer.collections.locationMarker.setVisible(true);
 
