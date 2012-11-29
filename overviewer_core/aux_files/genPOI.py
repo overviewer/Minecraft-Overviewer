@@ -32,7 +32,7 @@ def replaceBads(s):
         x = x.replace(bad,"_")
     return x
 
-def handleSigns(rset, outputdir, render, rname):
+def handleEntities(rset, outputdir, render, rname):
 
     # if we're already handled the POIs for this region regionset, do nothing
     if hasattr(rset, "_pois"):
@@ -175,7 +175,7 @@ def main():
             except KeyError:
                 markers[rname] = [to_append]
 
-        handleSigns(rset, os.path.join(destdir, rname), render, rname)
+        handleEntities(rset, os.path.join(destdir, rname), render, rname)
         handlePlayers(rset, render, worldpath)
 
     logging.info("Done scanning regions")
@@ -188,6 +188,15 @@ def main():
 
         name = replaceBads(filter_name) + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
         markerSetDict[name] = dict(created=False, raw=[], name=filter_name)
+        for poi in rset._pois['Entities']:
+            result = filter_function(poi)
+            if result:
+                d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result)
+                if "icon" in poi:
+                    d.update({"icon": poi['icon']})
+                if "createInfoWindow" in poi:
+                    d.update({"createInfoWindow": poi['createInfoWindow']})
+                markerSetDict[name]['raw'].append(d)
         for poi in rset._pois['TileEntities']:
             result = filter_function(poi)
             if result:
