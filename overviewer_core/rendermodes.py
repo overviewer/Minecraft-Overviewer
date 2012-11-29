@@ -50,6 +50,9 @@ class Base(RenderPrimitive):
 class Nether(RenderPrimitive):
     name = "nether"
 
+class NetherAlt(RenderPrimitive):
+    name = "nether2"
+
 class HeightFading(RenderPrimitive):
     name = "height-fading"
     options = {
@@ -230,4 +233,7 @@ smooth_night = [Base(), EdgeLines(), SmoothLighting(night=True)]
 nether = [Base(), EdgeLines(), Nether()]
 nether_lighting = [Base(), EdgeLines(), Nether(), Lighting()]
 nether_smooth_lighting = [Base(), EdgeLines(), Nether(), SmoothLighting()]
+netheralt = [Base(), EdgeLines(), NetherAlt()]
+netheralt_lighting = [Base(), EdgeLines(), NetherAlt(), Lighting()]
+netheralt_smooth_lighting = [Base(), EdgeLines(), NetherAlt(), SmoothLighting()]
 cave = [Base(), EdgeLines(), Cave(), DepthTinting()]
