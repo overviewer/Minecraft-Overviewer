@@ -27,4 +27,4 @@ typedef struct {
 
     int remove_block[WIDTH][HEIGHT][DEPTH];
     
-} RenderPrimitiveNether2;
+} RenderPrimitiveNether;

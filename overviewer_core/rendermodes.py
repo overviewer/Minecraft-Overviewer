@@ -47,11 +47,11 @@ class Base(RenderPrimitive):
         "biomes": ("whether or not to use biomes", True),
     }
 
+class NetherOld(RenderPrimitive):
+    name = "netherold"
+
 class Nether(RenderPrimitive):
     name = "nether"
-
-class NetherAlt(RenderPrimitive):
-    name = "nether2"
 
 class HeightFading(RenderPrimitive):
     name = "height-fading"
@@ -230,10 +230,10 @@ lighting = [Base(), EdgeLines(), Lighting()]
 smooth_lighting = [Base(), EdgeLines(), SmoothLighting()]
 night = [Base(), EdgeLines(), Lighting(night=True)]
 smooth_night = [Base(), EdgeLines(), SmoothLighting(night=True)]
+netherold = [Base(), EdgeLines(), NetherOld()]
+netherold_lighting = [Base(), EdgeLines(), NetherOld(), Lighting()]
+netherold_smooth_lighting = [Base(), EdgeLines(), NetherOld(), SmoothLighting()]
 nether = [Base(), EdgeLines(), Nether()]
 nether_lighting = [Base(), EdgeLines(), Nether(), Lighting()]
 nether_smooth_lighting = [Base(), EdgeLines(), Nether(), SmoothLighting()]
-netheralt = [Base(), EdgeLines(), NetherAlt()]
-netheralt_lighting = [Base(), EdgeLines(), NetherAlt(), Lighting()]
-netheralt_smooth_lighting = [Base(), EdgeLines(), NetherAlt(), SmoothLighting()]
 cave = [Base(), EdgeLines(), Cave(), DepthTinting()]
