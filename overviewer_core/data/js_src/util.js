@@ -1,9 +1,9 @@
 overviewer.util = {
-	
+    
     // vars for callback
     readyQueue: [],
     isReady: false,
-	
+    
     /* fuzz tester!
      */
     'testMaths': function(t) {
@@ -91,6 +91,10 @@ overviewer.util = {
 
             compass.render();
             spawnmarker.render();
+            if (overviewer.collections.locationMarker) {
+                overviewer.collections.locationMarker.setMap(null);
+                overviewer.collections.locationMarker = null;
+            }
 
             // update list of spawn overlays
             overlayControl.render();
@@ -555,5 +559,7 @@ overviewer.util = {
 
         overviewer.map.setCenter(latlngcoords);
         overviewer.map.setZoom(zoom);
+        var locationmarker = new overviewer.views.LocationIconView();
+        locationmarker.render();
     }
 };
