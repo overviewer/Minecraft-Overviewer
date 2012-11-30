@@ -97,7 +97,9 @@ class MultiWorldParser(object):
                 if print_rest: lines.append(l)
                 else:
                     if "execfile" in l: print_rest = True
-            logging.error("Partial traceback:\n" + "\n".join(lines))
+            # on windows, our traceback as no 'execfile'.  in this case, print everything
+            if print_rest: logging.error("Partial traceback:\n" + "\n".join(lines))
+            else: logging.error("Partial traceback:\n" + "\n".join(formatted_lines))
             sys.exit(1)
 
         # At this point, make a pass through the file to possibly set global
