@@ -64,6 +64,7 @@ oil_headers = [
 
 oil_sources = [
     "oil-python.c",
+    "oil-matrix.c",
     "oil-image.c",
     "oil-format.c",
     "oil-format-png.c",

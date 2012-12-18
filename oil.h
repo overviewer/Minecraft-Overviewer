@@ -24,6 +24,19 @@ typedef enum {
 void oil_backend_set(OILBackendName backend);
 
 typedef struct {
+    float data[4][4];
+} OILMatrix;
+
+void oil_matrix_init_identity(OILMatrix *matrix);
+/* row-major */
+void oil_matrix_init_from_array(OILMatrix *matrix, const float *data);
+const float *oil_matrix_get_array(const OILMatrix *matrix);
+/* result == a is allowed, result == b is not */
+void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
+/* matrix == inverse is allowed, returns 0 on failure */
+int oil_matrix_get_inverse(const OILMatrix* matrix, OILMatrix* inverse);
+
+typedef struct {
     unsigned char r, g, b, a;
 } OILPixel;
 
