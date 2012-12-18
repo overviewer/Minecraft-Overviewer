@@ -93,6 +93,8 @@ void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix 
     }
 }
 
+/* matrix == result allowed */
+
 void oil_matrix_negate(OILMatrix *result, const OILMatrix *matrix)
 {
     int i;
@@ -104,8 +106,8 @@ void oil_matrix_negate(OILMatrix *result, const OILMatrix *matrix)
     }
 }
 
-/* matrix == inverse is allowed, returns 0 on failure */
-int oil_matrix_get_inverse(const OILMatrix* matrix, OILMatrix* inverse) {
+/* returns 0 on failure */
+int oil_matrix_invert(OILMatrix* result, const OILMatrix *matrix) {
     float wtmp[4][8];
     float m0, m1, m2, m3, s;
     float *r0, *r1, *r2, *r3;
@@ -284,10 +286,10 @@ int oil_matrix_get_inverse(const OILMatrix* matrix, OILMatrix* inverse) {
     r0[7] = s * (r0[7] - r1[7] * m0);
     
     /* copy to output */
-    memcpy(inverse->data[0], &(r0[4]), sizeof(float) * 4);
-    memcpy(inverse->data[1], &(r1[4]), sizeof(float) * 4);
-    memcpy(inverse->data[2], &(r2[4]), sizeof(float) * 4);
-    memcpy(inverse->data[3], &(r3[4]), sizeof(float) * 4);
+    memcpy(result->data[0], &(r0[4]), sizeof(float) * 4);
+    memcpy(result->data[1], &(r1[4]), sizeof(float) * 4);
+    memcpy(result->data[2], &(r2[4]), sizeof(float) * 4);
+    memcpy(result->data[3], &(r3[4]), sizeof(float) * 4);
     
     return 1;
 }

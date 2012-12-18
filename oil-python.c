@@ -264,7 +264,7 @@ static PyObject *PyOILMatrix_get_inverse(PyOILMatrix *self, PyObject *args) {
     if (!other)
         return NULL;
 
-    if (!oil_matrix_get_inverse(&(self->matrix), &(other->matrix))) {
+    if (!oil_matrix_invert(&(other->matrix), &(self->matrix))) {
         Py_DECREF(other);
         PyErr_SetString(PyExc_ValueError, "cannot invert matrix");
         return NULL;
@@ -277,7 +277,7 @@ static PyObject *PyOILMatrix_invert(PyOILMatrix *self, PyObject *args) {
         return NULL;
     }
     
-    if (!oil_matrix_get_inverse(&(self->matrix), &(self->matrix))) {
+    if (!oil_matrix_invert(&(self->matrix), &(self->matrix))) {
         PyErr_SetString(PyExc_ValueError, "cannot invert matrix");
         return NULL;
     }

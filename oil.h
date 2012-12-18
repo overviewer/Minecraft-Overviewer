@@ -36,9 +36,10 @@ int oil_matrix_is_zero(const OILMatrix *matrix);
 void oil_matrix_add(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
 void oil_matrix_subtract(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
 void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
+/* matrix == result allowed */
 void oil_matrix_negate(OILMatrix *result, const OILMatrix *matrix);
-/* matrix == inverse is allowed, returns 0 on failure */
-int oil_matrix_get_inverse(const OILMatrix* matrix, OILMatrix* inverse);
+/* returns 0 on failure */
+int oil_matrix_invert(OILMatrix *result, const OILMatrix* matrix);
 
 typedef struct {
     unsigned char r, g, b, a;
