@@ -17,13 +17,13 @@ static float identity[4][4] = {{1.0f, 0.0f, 0.0f, 0.0f},
                                {0.0f, 0.0f, 1.0f, 0.0f},
                                {0.0f, 0.0f, 0.0f, 1.0f}};
 
-void oil_matrix_init_identity(OILMatrix *matrix) {
+void oil_matrix_set_identity(OILMatrix *matrix) {
     memcpy(matrix->data, identity, sizeof(float) * 16);
 }
 
 /* row-major order: if the first row is (1, 2, ...) the memory will
    start out as 1.0f 2.0f ... */
-void oil_matrix_init_from_data(OILMatrix *matrix, const float *data) {
+void oil_matrix_set_data(OILMatrix *matrix, const float *data) {
     memcpy(matrix->data, data, sizeof(float) * 16);
 }
 

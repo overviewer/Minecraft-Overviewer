@@ -76,7 +76,7 @@ static PyOILMatrix *PyOILMatrix_new(PyTypeObject *subtype, PyObject *args, PyObj
             return NULL;
         }
     } else {
-        oil_matrix_init_identity(&(self->matrix));
+        oil_matrix_set_identity(&(self->matrix));
     }
     
     return self;
@@ -166,7 +166,7 @@ static int PyOILMatrix_set_data(PyOILMatrix *self, PyObject *arg, void *unused) 
     }
     
     Py_DECREF(argfast);
-    oil_matrix_init_from_data(&(self->matrix), (float *)data);
+    oil_matrix_set_data(&(self->matrix), (float *)data);
     return 0;
 }
 
