@@ -293,3 +293,135 @@ int oil_matrix_invert(OILMatrix* result, const OILMatrix *matrix) {
     
     return 1;
 }
+
+void oil_matrix_translate(OILMatrix *matrix, float x, float y, float z)
+{
+    matrix->data[0][3] = matrix->data[0][0] * x + matrix->data[0][1] * y + matrix->data[0][2] * z + matrix->data[0][3];
+    matrix->data[1][3] = matrix->data[1][0] * x + matrix->data[1][1] * y + matrix->data[1][2] * z + matrix->data[1][3];
+    matrix->data[2][3] = matrix->data[2][0] * x + matrix->data[2][1] * y + matrix->data[2][2] * z + matrix->data[2][3];
+    matrix->data[3][3] = matrix->data[3][0] * x + matrix->data[3][1] * y + matrix->data[3][2] * z + matrix->data[3][3];
+}
+
+void oil_matrix_scale(OILMatrix *matrix, float x, float y, float z)
+{
+    matrix->data[0][0] *= x;
+    matrix->data[1][0] *= x;
+    matrix->data[2][0] *= x;
+    matrix->data[3][0] *= x;
+
+    matrix->data[0][1] *= y;
+    matrix->data[1][1] *= y;
+    matrix->data[2][1] *= y;
+    matrix->data[3][1] *= y;
+
+    matrix->data[0][2] *= z;
+    matrix->data[1][2] *= z;
+    matrix->data[2][2] *= z;
+    matrix->data[3][2] *= z;
+}
+
+void oil_matrix_rotate(OILMatrix *matrix, float x, float y, float z) {
+    OILMatrix tmp;
+    int optimized = 0;
+    float c, s;
+    
+    oil_matrix_set_identity(&tmp);
+        
+    if (x == 0.0f) {
+        if (y == 0.0f) {
+            if (z == 0.0f) {
+                /* no rotation, we're already done */
+                return;
+            } else {
+                optimized = 1;
+                
+                /* rotate only around z-axis */
+                c = cosf(z);
+                s = sinf(z);
+                
+                tmp.data[0][0] = c;
+                tmp.data[1][1] = c;
+                tmp.data[0][1] = -s;
+                tmp.data[1][0] = s;
+            }
+        } else if (z == 0.0f) {
+            optimized = 1;
+            
+            /* rotate only around y axis */
+            c = cosf(y);
+            s = sinf(y);
+            
+            tmp.data[0][0] = c;
+            tmp.data[2][2] = c;
+            tmp.data[0][2] = s;
+            tmp.data[2][0] = -s;
+        }
+    } else if (y == 0.0f && z == 0.0f) {
+        optimized = 1;
+        
+        /* rotate only around x axis */
+        c = cosf(x);
+        s = sinf(x);
+        
+        tmp.data[1][1] = c;
+        tmp.data[2][2] = c;
+        tmp.data[1][2] = -s;
+        tmp.data[2][1] = s;
+    }
+    
+    if (!optimized) {
+        float xx, yy, zz;
+        float xy, yz, zx;
+        float xs, ys, zs;
+        float one_c;
+        
+        const float mag = sqrtf(x * x + y * y + z * z);
+        x /= mag;
+        y /= mag;
+        z /= mag;
+        
+        c = cosf(mag);
+        s = sinf(mag);
+        
+        xx = x * x;
+        yy = y * y;
+        zz = z * z;
+        xy = x * y;
+        yz = y * z;
+        zx = z * x;
+        xs = x * s;
+        ys = y * s;
+        zs = z * s;
+        one_c = 1.0f - c;
+        
+        tmp.data[0][0] = (one_c * xx) + c;
+        tmp.data[0][1] = (one_c * xy) - zs;
+        tmp.data[0][2] = (one_c * zx) + ys;
+        
+        tmp.data[1][0] = (one_c * xy) + zs;
+        tmp.data[1][1] = (one_c * yy) + c;
+        tmp.data[1][2] = (one_c * yz) - xs;
+        
+        tmp.data[2][0] = (one_c * zx) - ys;
+        tmp.data[2][1] = (one_c * yz) + xs;
+        tmp.data[2][2] = (one_c * zz) + c;
+    }
+    
+    oil_matrix_multiply(matrix, matrix, &tmp);
+}
+
+void oil_matrix_orthographic(OILMatrix *matrix, float x1, float x2, float y1, float y2, float z1, float z2) {
+    OILMatrix tmp;
+    oil_matrix_set_identity(&tmp);
+    
+    tmp.data[0][0] = 2.0f / (x2 - x1);
+    tmp.data[0][3] = -(x2 + x1) / (x2 - x1);
+    
+    tmp.data[1][1] = 2.0f / (y2 - y1);
+    tmp.data[1][3] = -(y2 + y1) / (y2 - y1);
+    
+    tmp.data[2][2] = 2.0f / (z2 - z1);
+    tmp.data[2][3] = -(z2 + z1) / (z2 - z1);
+    
+    oil_matrix_multiply(matrix, matrix, &tmp);
+}

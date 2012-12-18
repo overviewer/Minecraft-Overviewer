@@ -284,6 +284,46 @@ static PyObject *PyOILMatrix_invert(PyOILMatrix *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+static PyObject *PyOILMatrix_translate(PyOILMatrix *self, PyObject *args) {
+    float x, y, z;
+    if (!PyArg_ParseTuple(args, "fff", &x, &y, &z))
+        return NULL;
+    
+    oil_matrix_translate(&(self->matrix), x, y, z);
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+static PyObject *PyOILMatrix_scale(PyOILMatrix *self, PyObject *args) {
+    float x, y, z;
+    if (!PyArg_ParseTuple(args, "fff", &x, &y, &z))
+        return NULL;
+    
+    oil_matrix_scale(&(self->matrix), x, y, z);
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+static PyObject *PyOILMatrix_rotate(PyOILMatrix *self, PyObject *args) {
+    float x, y, z;
+    if (!PyArg_ParseTuple(args, "fff", &x, &y, &z))
+        return NULL;
+    
+    oil_matrix_rotate(&(self->matrix), x, y, z);
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+static PyObject *PyOILMatrix_orthographic(PyOILMatrix *self, PyObject *args) {
+    float x1, x2, y1, y2, z1, z2;
+    if (!PyArg_ParseTuple(args, "ffffff", &x1, &x2, &y1, &y2, &z1, &z2))
+        return NULL;
+    
+    oil_matrix_orthographic(&(self->matrix), x1, x2, y1, y2, z1, z2);
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
 static PyMethodDef PyOILMatrix_methods[] = {
     {"get_data", (PyCFunction)PyOILMatrix_get_data, METH_VARARGS,
      "Returns a nested tuple of the matrix data."},
@@ -291,6 +331,14 @@ static PyMethodDef PyOILMatrix_methods[] = {
      "Returns the inverse of the matrix."},
     {"invert", (PyCFunction)PyOILMatrix_invert, METH_VARARGS,
      "Invert the matrix in-place."},
+    {"translate", (PyCFunction)PyOILMatrix_translate, METH_VARARGS,
+     "Multiply on a translation matrix."},
+    {"scale", (PyCFunction)PyOILMatrix_scale, METH_VARARGS,
+     "Multiply on a scaling matrix."},
+    {"rotate", (PyCFunction)PyOILMatrix_rotate, METH_VARARGS,
+     "Multiply on a rotation matrix."},
+    {"orthographic", (PyCFunction)PyOILMatrix_orthographic, METH_VARARGS,
+     "Multiply on an orthographic matrix."},
     {NULL, NULL, 0, NULL}
 };
 

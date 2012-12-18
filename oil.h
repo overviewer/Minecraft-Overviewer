@@ -40,6 +40,12 @@ void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix 
 void oil_matrix_negate(OILMatrix *result, const OILMatrix *matrix);
 /* returns 0 on failure */
 int oil_matrix_invert(OILMatrix *result, const OILMatrix* matrix);
+/* all the following construct a type of matrix and multiply it on the right */
+void oil_matrix_translate(OILMatrix *matrix, float x, float y, float z);
+void oil_matrix_scale(OILMatrix *matrix, float x, float y, float z);
+/* rotate around axis given, by magnitude of axis (as radians) */
+void oil_matrix_rotate(OILMatrix *matrix, float x, float y, float z);
+void oil_matrix_orthographic(OILMatrix *matrix, float x1, float x2, float y1, float y2, float z1, float z2);
 
 typedef struct {
     unsigned char r, g, b, a;
