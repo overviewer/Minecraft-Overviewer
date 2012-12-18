@@ -30,8 +30,13 @@ typedef struct {
 void oil_matrix_set_identity(OILMatrix *matrix);
 /* row-major */
 void oil_matrix_set_data(OILMatrix *matrix, const float *data);
+int oil_matrix_is_identity(const OILMatrix *matrix);
+int oil_matrix_is_zero(const OILMatrix *matrix);
 /* result == a is allowed, result == b is not */
+void oil_matrix_add(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
+void oil_matrix_subtract(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
 void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
+void oil_matrix_negate(OILMatrix *result, const OILMatrix *matrix);
 /* matrix == inverse is allowed, returns 0 on failure */
 int oil_matrix_get_inverse(const OILMatrix* matrix, OILMatrix* inverse);
 

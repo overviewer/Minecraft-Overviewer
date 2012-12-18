@@ -186,32 +186,68 @@ static PyObject *PyOILMatrix_repr(PyOILMatrix *self) {
     return full_repr;
 }
 
-static PyObject *PyOILMatrix_multiply(PyOILMatrix *a, PyOILMatrix *b) {
-    PyOILMatrix *result;
-
+static inline PyObject *PyOILMatrix_binop(PyOILMatrix *a, PyOILMatrix *b, void (*op)(OILMatrix *, const OILMatrix *, const OILMatrix *), int inplace) {
     if (!PyObject_TypeCheck((PyObject *)a, &PyOILMatrixType) ||
         !PyObject_TypeCheck((PyObject *)b, &PyOILMatrixType)) {
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
+    
+    if (!inplace) {
+        PyOILMatrix *result;
+        result = (PyOILMatrix *)(PyOILMatrixType.tp_alloc(&PyOILMatrixType, 0));
+        if (!result)
+            return NULL;
+        
+        op(&(result->matrix), &(a->matrix), &(b->matrix));
+        return (PyObject *)result;
+    }
+    
+    op(&(a->matrix), &(a->matrix), &(b->matrix));
+    Py_INCREF(a);
+    return (PyObject *)a;
+}
 
-    result = (PyOILMatrix *)(PyOILMatrixType.tp_alloc(&PyOILMatrixType, 0));
-    if (!result)
-        return NULL;
-    oil_matrix_multiply(&(result->matrix), &(a->matrix), &(b->matrix));
-    return (PyObject *)result;
+static PyObject *PyOILMatrix_add(PyOILMatrix *a, PyOILMatrix *b) {
+    return PyOILMatrix_binop(a, b, oil_matrix_add, 0);
+}
+
+static PyObject *PyOILMatrix_inplace_add(PyOILMatrix *a, PyOILMatrix *b) {
+    return PyOILMatrix_binop(a, b, oil_matrix_add, 1);
+}
+
+static PyObject *PyOILMatrix_subtract(PyOILMatrix *a, PyOILMatrix *b) {
+    return PyOILMatrix_binop(a, b, oil_matrix_subtract, 0);
+}
+
+static PyObject *PyOILMatrix_inplace_subtract(PyOILMatrix *a, PyOILMatrix *b) {
+    return PyOILMatrix_binop(a, b, oil_matrix_subtract, 1);
+}
+
+static PyObject *PyOILMatrix_multiply(PyOILMatrix *a, PyOILMatrix *b) {
+    return PyOILMatrix_binop(a, b, oil_matrix_multiply, 0);
 }
 
 static PyObject *PyOILMatrix_inplace_multiply(PyOILMatrix *a, PyOILMatrix *b) {
-    if (!PyObject_TypeCheck((PyObject *)a, &PyOILMatrixType) ||
-        !PyObject_TypeCheck((PyObject *)b, &PyOILMatrixType)) {
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    }
+    return PyOILMatrix_binop(a, b, oil_matrix_multiply, 1);
+}
 
-    oil_matrix_multiply(&(a->matrix), &(a->matrix), &(b->matrix));
-    Py_INCREF(a);
-    return (PyObject *)a;
+static PyObject *PyOILMatrix_negative(PyOILMatrix *mat) {
+    PyOILMatrix *result;
+    result = (PyOILMatrix *)(PyOILMatrixType.tp_alloc(&PyOILMatrixType, 0));
+    if (!result)
+        return NULL;
+    oil_matrix_negate(&(result->matrix), &(mat->matrix));
+    return (PyObject *)result;
+}
+
+static PyObject *PyOILMatrix_positive(PyOILMatrix *mat) {
+    Py_INCREF(mat);
+    return (PyObject *)mat;
+}
+
+static int PyOILMatrix_nonzero(PyOILMatrix *mat) {
+    return !oil_matrix_is_zero(&(mat->matrix));
 }
 
 static PyObject *PyOILMatrix_get_inverse(PyOILMatrix *self, PyObject *args) {
@@ -268,17 +304,17 @@ static PyGetSetDef PyOILMatrix_getset[] = {
 
 /* the Matrix math ops */
 static PyNumberMethods PyOILMatrixNumberMethods = {
-    NULL,                      /* nb_add */
-    NULL,                      /* nb_subtract */
+    (binaryfunc)PyOILMatrix_add, /* nb_add */
+    (binaryfunc)PyOILMatrix_subtract, /* nb_subtract */
     (binaryfunc)PyOILMatrix_multiply, /* nb_multiply */
     NULL,                      /* nb_divide */
     NULL,                      /* nb_remainder */
     NULL,                      /* nb_divmod */
     NULL,                      /* nb_power */
-    NULL,                      /* nb_negative */
-    NULL,                      /* nb_positive */
+    (unaryfunc)PyOILMatrix_negative, /* nb_negative */
+    (unaryfunc)PyOILMatrix_positive, /* nb_positive */
     NULL,                      /* nb_absolute */
-    NULL,                      /* nb_nonzero */
+    (inquiry)PyOILMatrix_nonzero, /* nb_nonzero */
     NULL,                      /* nb_invert */
     NULL,                      /* nb_lshift */
     NULL,                      /* nb_rshift */
@@ -292,8 +328,8 @@ static PyNumberMethods PyOILMatrixNumberMethods = {
     NULL,                      /* nb_oct */
     NULL,                      /* nb_hex */
 
-    NULL,                      /* nb_inplace_add */
-    NULL,                      /* nb_inplace_subtract */
+    (binaryfunc)PyOILMatrix_inplace_add, /* nb_inplace_add */
+    (binaryfunc)PyOILMatrix_inplace_subtract, /* nb_inplace_subtract */
     (binaryfunc)PyOILMatrix_inplace_multiply, /* nb_inplace_multiply */
     NULL,                      /* nb_inplace_divide */
     NULL,                      /* nb_inplace_remainder */

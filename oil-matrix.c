@@ -27,9 +27,58 @@ void oil_matrix_set_data(OILMatrix *matrix, const float *data) {
     memcpy(matrix->data, data, sizeof(float) * 16);
 }
 
+int oil_matrix_is_identity(const OILMatrix *matrix)
+{
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (matrix->data[i][0] - identity[i][0] != 0.0f ||
+            matrix->data[i][1] - identity[i][1] != 0.0f ||
+            matrix->data[i][2] - identity[i][2] != 0.0f ||
+            matrix->data[i][3] - identity[i][3] != 0.0f)
+            
+            return 0;
+    }
+    return 1;
+}
+
+int oil_matrix_is_zero(const OILMatrix *matrix)
+{
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (matrix->data[i][0] != 0.0f ||
+            matrix->data[i][1] != 0.0f ||
+            matrix->data[i][2] != 0.0f ||
+            matrix->data[i][3] != 0.0f)
+            
+            return 0;
+    }
+    return 1;
+}
+
 /* result == a is allowed, result == b is not */
+
+void oil_matrix_add(OILMatrix *result, const OILMatrix *a, const OILMatrix *b) {
+    int i;
+    for (i = 0; i < 4; i++) {
+        result->data[i][0] = a->data[i][0] + b->data[i][0];
+        result->data[i][1] = a->data[i][1] + b->data[i][1];
+        result->data[i][2] = a->data[i][2] + b->data[i][2];
+        result->data[i][3] = a->data[i][3] + b->data[i][3];
+    }
+}
+
+void oil_matrix_subtract(OILMatrix *result, const OILMatrix *a, const OILMatrix *b) {
+    int i;
+    for (i = 0; i < 4; i++) {
+        result->data[i][0] = a->data[i][0] - b->data[i][0];
+        result->data[i][1] = a->data[i][1] - b->data[i][1];
+        result->data[i][2] = a->data[i][2] - b->data[i][2];
+        result->data[i][3] = a->data[i][3] - b->data[i][3];
+    }
+}
+
 void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix *b) {
-    int i;    
+    int i;
     for (i = 0; i < 4; i++) {
         const float a0 = a->data[i][0], a1 = a->data[i][1];
         const float a2 = a->data[i][2], a3 = a->data[i][3];
@@ -41,6 +90,17 @@ void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix 
             a2 * b->data[2][2] + a3 * b->data[3][2];
         result->data[i][3] = a0 * b->data[0][3] + a1 * b->data[1][3] +
             a2 * b->data[2][3] + a3 * b->data[3][3];
+    }
+}
+
+void oil_matrix_negate(OILMatrix *result, const OILMatrix *matrix)
+{
+    int i;
+    for (i = 0; i < 4; i++) {
+        result->data[i][0] = -(matrix->data[i][0]);
+        result->data[i][1] = -(matrix->data[i][1]);
+        result->data[i][2] = -(matrix->data[i][2]);
+        result->data[i][3] = -(matrix->data[i][3]);
     }
 }
 
