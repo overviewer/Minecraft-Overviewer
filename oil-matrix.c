@@ -23,17 +23,13 @@ void oil_matrix_init_identity(OILMatrix *matrix) {
 
 /* row-major order: if the first row is (1, 2, ...) the memory will
    start out as 1.0f 2.0f ... */
-void oil_matrix_init_from_array(OILMatrix *matrix, const float *data) {
+void oil_matrix_init_from_data(OILMatrix *matrix, const float *data) {
     memcpy(matrix->data, data, sizeof(float) * 16);
-}
-
-const float *oil_matrix_get_array(const OILMatrix *matrix) {
-    return (float *)(matrix->data);
 }
 
 /* result == a is allowed, result == b is not */
 void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix *b) {
-    int i;
+    int i;    
     for (i = 0; i < 4; i++) {
         const float a0 = a->data[i][0], a1 = a->data[i][1];
         const float a2 = a->data[i][2], a3 = a->data[i][3];

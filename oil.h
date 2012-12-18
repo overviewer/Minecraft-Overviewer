@@ -29,8 +29,7 @@ typedef struct {
 
 void oil_matrix_init_identity(OILMatrix *matrix);
 /* row-major */
-void oil_matrix_init_from_array(OILMatrix *matrix, const float *data);
-const float *oil_matrix_get_array(const OILMatrix *matrix);
+void oil_matrix_init_from_data(OILMatrix *matrix, const float *data);
 /* result == a is allowed, result == b is not */
 void oil_matrix_multiply(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
 /* matrix == inverse is allowed, returns 0 on failure */

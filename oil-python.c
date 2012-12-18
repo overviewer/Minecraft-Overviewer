@@ -44,6 +44,311 @@ static void oil_python_flush(void *file) {
     }
 }
 
+/* the Matrix type instance */
+typedef struct {
+    PyObject_HEAD
+    OILMatrix matrix;
+} PyOILMatrix;
+
+/* forward declaration for matrix type object */
+static PyTypeObject PyOILMatrixType;
+
+/* init and dealloc for the Matrix type */
+
+static int PyOILMatrix_set_data(PyOILMatrix *self, PyObject *arg, void *unused);
+
+static PyOILMatrix *PyOILMatrix_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs) {
+    PyObject *data = NULL;
+    PyOILMatrix *self;
+    
+    /* for now, do not allow initialization */
+    if (!PyArg_ParseTuple(args, "|O", &data)) {
+        return NULL;
+    }
+    
+    self = (PyOILMatrix *)(subtype->tp_alloc(subtype, 0));
+    if (!self)
+        return NULL;
+    
+    if (data) {
+        if (PyOILMatrix_set_data(self, data, NULL)) {
+            Py_DECREF(self);
+            return NULL;
+        }
+    } else {
+        oil_matrix_init_identity(&(self->matrix));
+    }
+    
+    return self;
+}
+
+static void PyOILMatrix_dealloc(PyOILMatrix *self) {
+    self->ob_type->tp_free((PyObject *)self);
+}
+
+/* methods for Matrix type */
+
+static PyObject *PyOILMatrix_get_data(PyOILMatrix *self, PyObject *args) {
+    int i;
+    PyObject *tuples[4];
+    PyObject *full_tuple;
+    
+    /* args == NULL means we're called as an attribute-getter */
+    if (args != NULL) {
+        if (!PyArg_ParseTuple(args, "")) {
+            return NULL;
+        }
+    }
+
+    for (i = 0; i < 4; i++) {
+        PyObject *t0 = PyFloat_FromDouble(self->matrix.data[i][0]);
+        PyObject *t1 = PyFloat_FromDouble(self->matrix.data[i][1]);
+        PyObject *t2 = PyFloat_FromDouble(self->matrix.data[i][2]);
+        PyObject *t3 = PyFloat_FromDouble(self->matrix.data[i][3]);
+        tuples[i] = PyTuple_Pack(4, t0, t1, t2, t3);
+        Py_DECREF(t0);
+        Py_DECREF(t1);
+        Py_DECREF(t2);
+        Py_DECREF(t3);
+    }
+    
+    full_tuple = PyTuple_Pack(4, tuples[0], tuples[1], tuples[2], tuples[3]);
+    Py_DECREF(tuples[0]);
+    Py_DECREF(tuples[1]);
+    Py_DECREF(tuples[2]);
+    Py_DECREF(tuples[3]);
+    return full_tuple;
+}
+
+static int PyOILMatrix_set_data(PyOILMatrix *self, PyObject *arg, void *unused) {
+    int i;
+    float data[4][4];
+    PyObject *argfast = PySequence_Fast(arg, "matrix data is not a 4x4 sequence of sequences");
+    if (!argfast)
+        return 1;
+    
+    if (PySequence_Fast_GET_SIZE(argfast) != 4) {
+        Py_DECREF(argfast);
+        PyErr_SetString(PyExc_ValueError, "matrix data is not a 4x4 sequence of sequences");
+        return 1;
+    }
+    
+    for (i = 0; i < 4; i++) {
+        int j;
+        PyObject *argi = PySequence_Fast_GET_ITEM(argfast, i);
+        PyObject *argifast = PySequence_Fast(argi, "matrix data is not a 4x4 sequence of sequences");
+        if (!argifast) {
+            Py_DECREF(argfast);
+            return 1;
+        }
+        
+        if (PySequence_Fast_GET_SIZE(argifast) != 4) {
+            Py_DECREF(argfast);
+            Py_DECREF(argifast);
+            PyErr_SetString(PyExc_ValueError, "matrix data is not a 4x4 sequence of sequences");
+            return 1;
+        }
+        
+        for (j = 0; j < 4; j++) {
+            PyObject *val = PySequence_Fast_GET_ITEM(argifast, j);
+            PyObject *fval = PyNumber_Float(val);
+            if (!fval) {
+                Py_DECREF(argfast);
+                Py_DECREF(argifast);
+                PyErr_SetString(PyExc_ValueError, "matrix data is not composed of float-compatible numbers");
+                return 1;
+            }
+            
+            data[i][j] = PyFloat_AsDouble(fval);
+        }
+        
+        Py_DECREF(argifast);
+    }
+    
+    Py_DECREF(argfast);
+    oil_matrix_init_from_data(&(self->matrix), (float *)data);
+    return 0;
+}
+
+static PyObject *PyOILMatrix_str(PyOILMatrix *self) {
+    PyObject *full_tuple = PyOILMatrix_get_data(self, NULL);
+    PyObject *repr;
+    
+    repr = PyObject_Repr(full_tuple);
+    Py_DECREF(full_tuple);
+    return repr;
+}
+
+static PyObject *PyOILMatrix_repr(PyOILMatrix *self) {
+    PyObject *repr = PyOILMatrix_str(self);
+    PyObject *full_repr = PyString_FromFormat("OIL.Matrix(%s)", PyString_AsString(repr));
+    Py_DECREF(repr);
+    return full_repr;
+}
+
+static PyObject *PyOILMatrix_multiply(PyOILMatrix *a, PyOILMatrix *b) {
+    PyOILMatrix *result;
+
+    if (!PyObject_TypeCheck((PyObject *)a, &PyOILMatrixType) ||
+        !PyObject_TypeCheck((PyObject *)b, &PyOILMatrixType)) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+
+    result = (PyOILMatrix *)(PyOILMatrixType.tp_alloc(&PyOILMatrixType, 0));
+    if (!result)
+        return NULL;
+    oil_matrix_multiply(&(result->matrix), &(a->matrix), &(b->matrix));
+    return (PyObject *)result;
+}
+
+static PyObject *PyOILMatrix_inplace_multiply(PyOILMatrix *a, PyOILMatrix *b) {
+    if (!PyObject_TypeCheck((PyObject *)a, &PyOILMatrixType) ||
+        !PyObject_TypeCheck((PyObject *)b, &PyOILMatrixType)) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+
+    oil_matrix_multiply(&(a->matrix), &(a->matrix), &(b->matrix));
+    Py_INCREF(a);
+    return (PyObject *)a;
+}
+
+static PyObject *PyOILMatrix_get_inverse(PyOILMatrix *self, PyObject *args) {
+    PyOILMatrix *other;
+    
+    /* args == NULL means we're called as an attribute-getter */
+    if (args != NULL) {
+        if (!PyArg_ParseTuple(args, "")) {
+            return NULL;
+        }
+    }
+    
+    other = (PyOILMatrix *)(PyOILMatrixType.tp_alloc(&PyOILMatrixType, 0));
+    if (!other)
+        return NULL;
+
+    if (!oil_matrix_get_inverse(&(self->matrix), &(other->matrix))) {
+        Py_DECREF(other);
+        PyErr_SetString(PyExc_ValueError, "cannot invert matrix");
+        return NULL;
+    }
+    return (PyObject *)other;
+}
+
+static PyObject *PyOILMatrix_invert(PyOILMatrix *self, PyObject *args) {
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
+    
+    if (!oil_matrix_get_inverse(&(self->matrix), &(self->matrix))) {
+        PyErr_SetString(PyExc_ValueError, "cannot invert matrix");
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+static PyMethodDef PyOILMatrix_methods[] = {
+    {"get_data", (PyCFunction)PyOILMatrix_get_data, METH_VARARGS,
+     "Returns a nested tuple of the matrix data."},
+    {"get_inverse", (PyCFunction)PyOILMatrix_get_inverse, METH_VARARGS,
+     "Returns the inverse of the matrix."},
+    {"invert", (PyCFunction)PyOILMatrix_invert, METH_VARARGS,
+     "Invert the matrix in-place."},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyGetSetDef PyOILMatrix_getset[] = {
+    {"data", (getter)PyOILMatrix_get_data, (setter)PyOILMatrix_set_data,
+     "A nested tuple of matrix data.", NULL},
+    {"inverse", (getter)PyOILMatrix_get_inverse, NULL,
+     "Return the inverse of this matrix.", NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+/* the Matrix math ops */
+static PyNumberMethods PyOILMatrixNumberMethods = {
+    NULL,                      /* nb_add */
+    NULL,                      /* nb_subtract */
+    (binaryfunc)PyOILMatrix_multiply, /* nb_multiply */
+    NULL,                      /* nb_divide */
+    NULL,                      /* nb_remainder */
+    NULL,                      /* nb_divmod */
+    NULL,                      /* nb_power */
+    NULL,                      /* nb_negative */
+    NULL,                      /* nb_positive */
+    NULL,                      /* nb_absolute */
+    NULL,                      /* nb_nonzero */
+    NULL,                      /* nb_invert */
+    NULL,                      /* nb_lshift */
+    NULL,                      /* nb_rshift */
+    NULL,                      /* nb_and */
+    NULL,                      /* nb_xor */
+    NULL,                      /* nb_or */
+    NULL,                      /* nb_coerce */
+    NULL,                      /* nb_int */
+    NULL,                      /* nb_long */
+    NULL,                      /* nb_float */
+    NULL,                      /* nb_oct */
+    NULL,                      /* nb_hex */
+
+    NULL,                      /* nb_inplace_add */
+    NULL,                      /* nb_inplace_subtract */
+    (binaryfunc)PyOILMatrix_inplace_multiply, /* nb_inplace_multiply */
+    NULL,                      /* nb_inplace_divide */
+    NULL,                      /* nb_inplace_remainder */
+    NULL,                      /* nb_inplace_power */
+    NULL,                      /* nb_inplace_lshift */
+    NULL,                      /* nb_inplace_rshift */
+    NULL,                      /* nb_inplace_and */
+    NULL,                      /* nb_inplace_xor */
+    NULL,                      /* nb_inplace_or */
+};    
+
+/* the Matrix type */
+static PyTypeObject PyOILMatrixType = {
+    PyObject_HEAD_INIT(NULL)
+    0,                         /* ob_size */
+    "Matrix",                  /* tp_name */
+    sizeof(PyOILMatrix),       /* tp_basicsize */
+    0,                         /* tp_itemsize */
+    (destructor)PyOILMatrix_dealloc, /* tp_dealloc */
+    0,                         /* tp_print */
+    0,                         /* tp_getattr */
+    0,                         /* tp_setattr */
+    0,                         /* tp_compare */
+    (reprfunc)PyOILMatrix_repr, /* tp_repr */
+    &(PyOILMatrixNumberMethods), /* tp_as_number */
+    0,                         /* tp_as_sequence */
+    0,                         /* tp_as_mapping */
+    0,                         /* tp_hash */
+    0,                         /* tp_call */
+    (reprfunc)PyOILMatrix_str, /* tp_str */
+    0,                         /* tp_getattro */
+    0,                         /* tp_setattro */
+    0,                         /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
+                               /* tp_doc */
+    "Encapsulates matrix data and operations.",
+    0,                         /* tp_traverse */
+    0,                         /* tp_clear */
+    0,                         /* tp_richcompare */
+    0,                         /* tp_weaklistoffset */
+    0,                         /* tp_iter */
+    0,                         /* tp_iternext */
+    PyOILMatrix_methods,       /* tp_methods */
+    NULL,                      /* tp_members */
+    PyOILMatrix_getset,        /* tp_getset */
+    0,                         /* tp_base */
+    0,                         /* tp_dict */
+    0,                         /* tp_descr_get */
+    0,                         /* tp_descr_set */
+    0,                         /* tp_dictoffset */
+    0,                         /* tp_init */
+    0,                         /* tp_alloc */
+    (newfunc)PyOILMatrix_new,  /* tp_new */
+};
+
 /* the Image type instance */
 typedef struct {
     PyObject_HEAD
@@ -283,6 +588,13 @@ static PyMethodDef OIL_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+/* helper to add a type to the module */
+#define ADD_TYPE(type) do {                                         \
+        if (PyType_Ready(&type) < 0)                                \
+            return;                                                 \
+        PyModule_AddObject(mod, type.tp_name, (PyObject *)&type);   \
+    } while (0)
+
 PyMODINIT_FUNC initOIL(void) {
     PyObject *mod;
     
@@ -291,10 +603,8 @@ PyMODINIT_FUNC initOIL(void) {
     if (mod == NULL)
         return;
     
-    if (PyType_Ready(&PyOILImageType) < 0)
-        return;
-    
-    PyModule_AddObject(mod, "Image", (PyObject *)&PyOILImageType);
+    ADD_TYPE(PyOILMatrixType);
+    ADD_TYPE(PyOILImageType);
     
     /* add in the backend enums */
     PyModule_AddIntConstant(mod, "BACKEND_CPU", OIL_BACKEND_CPU);
