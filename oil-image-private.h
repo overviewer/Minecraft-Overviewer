@@ -11,6 +11,7 @@ struct _OILImage {
     int locked;
     
     OILBackend *backend;
+    void *backend_data;
 };
 
 #endif /* __OIL_IMAGE_PRIVATE_H_INCLUDED__ */

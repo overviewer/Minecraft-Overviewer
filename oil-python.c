@@ -577,7 +577,7 @@ static PyObject *PyOILImage_composite(PyOILImage *self, PyObject *args) {
     int dx = 0, dy = 0;
     unsigned int sx = 0, sy = 0, xsize = 0, ysize = 0;
 
-    if (!PyArg_ParseTuple(args, "O!biiIIII", &PyOILImageType, &src, &alpha, &dx, &dy, &sx, &sy, &xsize, &ysize)) {
+    if (!PyArg_ParseTuple(args, "O!|biiIIII", &PyOILImageType, &src, &alpha, &dx, &dy, &sx, &sy, &xsize, &ysize)) {
         return NULL;
     }
     
@@ -586,6 +586,83 @@ static PyObject *PyOILImage_composite(PyOILImage *self, PyObject *args) {
         return NULL;
     }
     
+    Py_RETURN_NONE;
+}
+
+static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
+    unsigned int i;
+    PyOILMatrix *matrix = NULL;
+    PyObject *pyvertices = NULL;
+    PyObject *pyindices = NULL;
+    OILVertex *vertices = NULL;
+    unsigned int vertices_length = 0;
+    unsigned int *indices = NULL;
+    unsigned int indices_length = 0;
+    
+    if (!PyArg_ParseTuple(args, "O!OO", &PyOILMatrixType, &matrix, &pyvertices, &pyindices)) {
+        return NULL;
+    }
+    
+    pyvertices = PySequence_Fast(pyvertices, "vertices are not a sequence");
+    if (pyvertices)
+        pyindices = PySequence_Fast(pyindices, "indices are not a sequence");
+    if (!pyvertices || !pyindices) {
+        Py_XDECREF(pyvertices);
+        Py_XDECREF(pyindices);
+        return NULL;
+    }
+    
+    vertices_length = PySequence_Fast_GET_SIZE(pyvertices);
+    vertices = malloc(sizeof(OILVertex) * vertices_length);
+    indices_length = PySequence_Fast_GET_SIZE(pyindices);
+    indices = malloc(sizeof(unsigned int) * indices_length);
+    if (!vertices || !indices) {
+        if (vertices)
+            free(vertices);
+        if (indices)
+            free(indices);
+        Py_DECREF(pyvertices);
+        Py_DECREF(pyindices);
+        PyErr_SetString(PyExc_RuntimeError, "out of memory");
+        return NULL;
+    }
+    
+    for (i = 0; i < vertices_length; i++) {
+        PyObject *vert = PySequence_Fast_GET_ITEM(pyvertices, i);
+        if (!PyArg_ParseTuple(vert, "fff(bbbb)", &(vertices[i].x), &(vertices[i].y), &(vertices[i].z), &(vertices[i].color.r), &(vertices[i].color.g), &(vertices[i].color.b), &(vertices[i].color.a))) {
+            free(vertices);
+            free(indices);
+            Py_DECREF(pyvertices);
+            Py_DECREF(pyindices);
+            PyErr_SetString(PyExc_ValueError, "vertex has invalid form");
+            return NULL;
+        }
+    }
+    
+    for (i = 0; i < indices_length; i++) {
+        PyObject *pyindex = PySequence_Fast_GET_ITEM(pyindices, i);
+        pyindex = PyNumber_Index(pyindex);
+        if (!pyindex) {
+            free(vertices);
+            free(indices);
+            Py_DECREF(pyvertices);
+            Py_DECREF(pyindices);
+            PyErr_SetString(PyExc_ValueError, "index is not valid");
+            return NULL;
+        }
+        
+        indices[i] = PyInt_AsLong(pyindex);
+        Py_DECREF(pyindex);
+    }
+    
+    Py_DECREF(pyvertices);
+    Py_DECREF(pyindices);
+    
+    /* FIXME flags! */
+    oil_image_draw_triangles(self->im, &(matrix->matrix), vertices, indices, indices_length, OIL_DEPTH_TEST);
+    
+    free(vertices);
+    free(indices);
     Py_RETURN_NONE;
 }
 
@@ -598,6 +675,8 @@ static PyMethodDef PyOILImage_methods[] = {
      "Return a (width, height) tuple."},
     {"composite", (PyCFunction)PyOILImage_composite, METH_VARARGS,
      "Composite another image on top of this one."},
+    {"draw_triangles", (PyCFunction)PyOILImage_draw_triangles, METH_VARARGS,
+     "Draw 3D triangles on top of the image."},
     {NULL, NULL, 0, NULL}
 };
 

@@ -32,6 +32,7 @@ void oil_matrix_set_identity(OILMatrix *matrix);
 void oil_matrix_set_data(OILMatrix *matrix, const float *data);
 int oil_matrix_is_identity(const OILMatrix *matrix);
 int oil_matrix_is_zero(const OILMatrix *matrix);
+void oil_matrix_transform(const OILMatrix *matrix, float *x, float *y, float *z);
 /* result == a is allowed, result == b is not */
 void oil_matrix_add(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
 void oil_matrix_subtract(OILMatrix *result, const OILMatrix *a, const OILMatrix *b);
@@ -65,6 +66,15 @@ typedef struct {
     unsigned int palette_size;
 } OILFormatOptions;
 
+typedef struct {
+    float x, y, z;
+    OILPixel color;
+} OILVertex;
+
+typedef enum {
+    OIL_DEPTH_TEST = 0x1,
+} OILTriangleFlags;
+
 OILImage *oil_image_new(unsigned int width, unsigned int height);
 void oil_image_free(OILImage *im);
 OILImage *oil_image_load(const char *path);
@@ -77,5 +87,6 @@ OILPixel *oil_image_lock(OILImage *im);
 void oil_image_unlock(OILImage *im);
 
 int oil_image_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize);
+void oil_image_draw_triangles(OILImage *im, OILMatrix *matrix, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags);
 
 #endif /* __OIL_H_INCLUDED__ */

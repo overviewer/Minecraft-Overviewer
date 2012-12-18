@@ -55,6 +55,16 @@ int oil_matrix_is_zero(const OILMatrix *matrix)
     return 1;
 }
 
+void oil_matrix_transform(const OILMatrix *matrix, float *x, float *y, float *z) {
+    float ox, oy, oz;
+    ox = matrix->data[0][0] * (*x) + matrix->data[0][1] * (*y) + matrix->data[0][2] * (*z) + matrix->data[0][3];
+    oy = matrix->data[1][0] * (*x) + matrix->data[1][1] * (*y) + matrix->data[1][2] * (*z) + matrix->data[1][3];
+    oz = matrix->data[2][0] * (*x) + matrix->data[2][1] * (*y) + matrix->data[2][2] * (*z) + matrix->data[2][3];
+    *x = ox;
+    *y = oy;
+    *z = oz;
+}
+
 /* result == a is allowed, result == b is not */
 
 void oil_matrix_add(OILMatrix *result, const OILMatrix *a, const OILMatrix *b) {
