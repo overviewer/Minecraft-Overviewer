@@ -595,12 +595,13 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     PyOILImage *tex = NULL;
     PyObject *pyvertices = NULL;
     PyObject *pyindices = NULL;
+    unsigned int flags = 0;
     OILVertex *vertices = NULL;
     unsigned int vertices_length = 0;
     unsigned int *indices = NULL;
     unsigned int indices_length = 0;
     
-    if (!PyArg_ParseTuple(args, "O!O!OO", &PyOILMatrixType, &matrix, &PyOILImageType, &tex, &pyvertices, &pyindices)) {
+    if (!PyArg_ParseTuple(args, "O!O!OO|I", &PyOILMatrixType, &matrix, &PyOILImageType, &tex, &pyvertices, &pyindices, &flags)) {
         return NULL;
     }
     
@@ -659,8 +660,7 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     Py_DECREF(pyvertices);
     Py_DECREF(pyindices);
     
-    /* FIXME flags! */
-    oil_image_draw_triangles(self->im, &(matrix->matrix), tex->im, vertices, indices, indices_length, OIL_DEPTH_TEST);
+    oil_image_draw_triangles(self->im, &(matrix->matrix), tex->im, vertices, indices, indices_length, flags);
     
     free(vertices);
     free(indices);
@@ -769,6 +769,9 @@ PyMODINIT_FUNC initOIL(void) {
     
     ADD_TYPE(PyOILMatrixType);
     ADD_TYPE(PyOILImageType);
+    
+    /* add in the flag enums */
+    PyModule_AddIntConstant(mod, "DEPTH_TEST", OIL_DEPTH_TEST);
     
     /* add in the backend enums */
     PyModule_AddIntConstant(mod, "BACKEND_CPU", OIL_BACKEND_CPU);
