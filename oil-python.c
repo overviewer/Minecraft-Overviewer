@@ -592,6 +592,7 @@ static PyObject *PyOILImage_composite(PyOILImage *self, PyObject *args) {
 static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     unsigned int i;
     PyOILMatrix *matrix = NULL;
+    PyOILImage *tex = NULL;
     PyObject *pyvertices = NULL;
     PyObject *pyindices = NULL;
     OILVertex *vertices = NULL;
@@ -599,7 +600,7 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     unsigned int *indices = NULL;
     unsigned int indices_length = 0;
     
-    if (!PyArg_ParseTuple(args, "O!OO", &PyOILMatrixType, &matrix, &pyvertices, &pyindices)) {
+    if (!PyArg_ParseTuple(args, "O!O!OO", &PyOILMatrixType, &matrix, &PyOILImageType, &tex, &pyvertices, &pyindices)) {
         return NULL;
     }
     
@@ -629,7 +630,7 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     
     for (i = 0; i < vertices_length; i++) {
         PyObject *vert = PySequence_Fast_GET_ITEM(pyvertices, i);
-        if (!PyArg_ParseTuple(vert, "fff(bbbb)", &(vertices[i].x), &(vertices[i].y), &(vertices[i].z), &(vertices[i].color.r), &(vertices[i].color.g), &(vertices[i].color.b), &(vertices[i].color.a))) {
+        if (!PyArg_ParseTuple(vert, "(fff)(ff)(bbbb)", &(vertices[i].x), &(vertices[i].y), &(vertices[i].z), &(vertices[i].s), &(vertices[i].t), &(vertices[i].color.r), &(vertices[i].color.g), &(vertices[i].color.b), &(vertices[i].color.a))) {
             free(vertices);
             free(indices);
             Py_DECREF(pyvertices);
@@ -659,7 +660,7 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     Py_DECREF(pyindices);
     
     /* FIXME flags! */
-    oil_image_draw_triangles(self->im, &(matrix->matrix), vertices, indices, indices_length, OIL_DEPTH_TEST);
+    oil_image_draw_triangles(self->im, &(matrix->matrix), tex->im, vertices, indices, indices_length, OIL_DEPTH_TEST);
     
     free(vertices);
     free(indices);

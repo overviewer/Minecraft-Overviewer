@@ -94,7 +94,7 @@ static int oil_backend_cpu_composite(OILImage *im, OILImage *src, unsigned char 
  *  http://www.gidforums.com/t-20838.html )
  */
 
-static inline void draw_triangle(OILImage *im, int inclusive, OILVertex v0, OILVertex v1, OILVertex v2, OILTriangleFlags flags) {
+static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OILVertex v0, OILVertex v1, OILVertex v2, OILTriangleFlags flags) {
     CPUPriv *priv = im->backend_data;
     /* ranges of pixels that are affected */
     int xmin, xmax, ymin, ymax;
@@ -105,7 +105,7 @@ static inline void draw_triangle(OILImage *im, int inclusive, OILVertex v0, OILV
     /* constant normalizers for alpha, beta, gamma */
     float alpha_norm, beta_norm, gamma_norm;
     /* temporary variables */
-    /*int tmp;*/
+    int tmp;
     /* iteration variables */
     int x, y;
     
@@ -141,6 +141,9 @@ static inline void draw_triangle(OILImage *im, int inclusive, OILVertex v0, OILV
         
         for (x = xmin; x < xmax; x++) {
             float alpha, beta, gamma;
+            float s, t;
+            int si, ti;
+            OILPixel p;
             alpha = alpha_norm * ((a12 * x) + (b12 * y) + c12);
             beta  = beta_norm  * ((a20 * x) + (b20 * y) + c20);
             gamma = gamma_norm * ((a01 * x) + (b01 * y) + c01);
@@ -159,10 +162,32 @@ static inline void draw_triangle(OILImage *im, int inclusive, OILVertex v0, OILV
                         continue;
                     }
                 }
-                out->r = alpha * v0.color.r + beta * v1.color.r + gamma * v2.color.r;
-                out->g = alpha * v0.color.g + beta * v1.color.g + gamma * v2.color.g;
-                out->b = alpha * v0.color.b + beta * v1.color.b + gamma * v2.color.b;
-                out->a = 255; /* FIXME */
+                
+                s = alpha * v0.s + beta * v1.s + gamma * v2.s;
+                t = alpha * v0.t + beta * v1.t + gamma * v2.t;
+                si = tex->width * s;
+                ti = tex->height * -t;
+                
+                /* because C's % is wonky with negative numbers... */
+                while (si < 0)
+                    si += tex->width;
+                while (si >= tex->width)
+                    si -= tex->width;
+                while (ti < 0)
+                    ti += tex->height;
+                while (ti >= tex->height)
+                    ti -= tex->height;
+                
+                p = tex->data[ti * tex->width + si];
+                
+                p.r = MULDIV255(p.r, alpha * v0.color.r + beta * v1.color.r + gamma * v2.color.r, tmp);
+                p.g = MULDIV255(p.g, alpha * v0.color.g + beta * v1.color.g + gamma * v2.color.g, tmp);
+                p.b = MULDIV255(p.b, alpha * v0.color.b + beta * v1.color.b + gamma * v2.color.b, tmp);
+                p.a = MULDIV255(p.a, alpha * v0.color.a + beta * v1.color.a + gamma * v2.color.a, tmp);
+                
+                /* FIXME do blending */
+                *out = p;
+                out->a = 255;
             }
             
             out++;
@@ -170,7 +195,7 @@ static inline void draw_triangle(OILImage *im, int inclusive, OILVertex v0, OILV
     }
 }
 
-static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
+static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
     OILMatrix realmat;
     unsigned int i;
     
@@ -194,7 +219,7 @@ static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILV
         oil_matrix_transform(&realmat, &(v1.x), &(v1.y), &(v1.z));
         oil_matrix_transform(&realmat, &(v2.x), &(v2.y), &(v2.z));
                 
-        draw_triangle(im, 1, v0, v1, v2, flags);
+        draw_triangle(im, tex, 1, v0, v1, v2, flags);
     }
 }
 
