@@ -166,7 +166,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OIL
                 s = alpha * v0.s + beta * v1.s + gamma * v2.s;
                 t = alpha * v0.t + beta * v1.t + gamma * v2.t;
                 si = tex->width * s;
-                ti = tex->height * -t;
+                ti = tex->height * -t - 1;
                 
                 /* because C's % is wonky with negative numbers... */
                 while (si < 0)
