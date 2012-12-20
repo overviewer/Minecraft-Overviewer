@@ -99,9 +99,9 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OIL
     /* ranges of pixels that are affected */
     int xmin, xmax, ymin, ymax;
     /* constant coefficients for alpha, beta, gamma */
-    int a12, a20, a01;
-    int b12, b20, b01;
-    int c12, c20, c01;
+    float a12, a20, a01;
+    float b12, b20, b01;
+    float c12, c20, c01;
     /* constant normalizers for alpha, beta, gamma */
     float alpha_norm, beta_norm, gamma_norm;
     /* temporary variables */
@@ -115,25 +115,25 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OIL
     }
     
     /* set up draw ranges */
-    xmin = OIL_MIN((int)(v0.x), OIL_MIN((int)(v1.x), (int)(v2.x)));
-    ymin = OIL_MIN((int)(v0.y), OIL_MIN((int)(v1.y), (int)(v2.y)));
-    xmax = OIL_MAX((int)(v0.x), OIL_MAX((int)(v1.x), (int)(v2.x))) + 1;
-    ymax = OIL_MAX((int)(v0.y), OIL_MAX((int)(v1.y), (int)(v2.y))) + 1;
+    xmin = (int)(OIL_MIN(v0.x, OIL_MIN(v1.x, v2.x)));
+    ymin = (int)(OIL_MIN(v0.y, OIL_MIN(v1.y, v2.y)));
+    xmax = (int)(OIL_MAX(v0.x, OIL_MAX(v1.x, v2.x))) + 1;
+    ymax = (int)(OIL_MAX(v0.y, OIL_MAX(v1.y, v2.y))) + 1;
     
-    xmin = OIL_MAX(xmin, 0);
-    ymin = OIL_MAX(ymin, 0);
-    xmax = OIL_MIN(xmax, im->width);
-    ymax = OIL_MIN(ymax, im->height);
+    xmin = OIL_CLAMP(xmin, 0, im->width);
+    ymin = OIL_CLAMP(ymin, 0, im->height);
+    xmax = OIL_CLAMP(xmax, 0, im->width);
+    ymax = OIL_CLAMP(ymax, 0, im->height);
     
     /* setup coefficients */
-    a12 = (int)(v1.y) - (int)(v2.y); b12 = (int)(v2.x) - (int)(v1.x); c12 = ((int)(v1.x) * (int)(v2.y)) - ((int)(v2.x) * (int)(v1.y));
-    a20 = (int)(v2.y) - (int)(v0.y); b20 = (int)(v0.x) - (int)(v2.x); c20 = ((int)(v2.x) * (int)(v0.y)) - ((int)(v0.x) * (int)(v2.y));
-    a01 = (int)(v0.y) - (int)(v1.y); b01 = (int)(v1.x) - (int)(v0.x); c01 = ((int)(v0.x) * (int)(v1.y)) - ((int)(v1.x) * (int)(v0.y));
+    a12 = v1.y - v2.y; b12 = v2.x - v1.x; c12 = (v1.x * v2.y) - (v2.x * v1.y);
+    a20 = v2.y - v0.y; b20 = v0.x - v2.x; c20 = (v2.x * v0.y) - (v0.x * v2.y);
+    a01 = v0.y - v1.y; b01 = v1.x - v0.x; c01 = (v0.x * v1.y) - (v1.x * v0.y);
     
     /* setup normalizers */
-    alpha_norm = 1.0f / ((a12 * (int)(v0.x)) + (b12 * (int)(v0.y)) + c12);
-    beta_norm  = 1.0f / ((a20 * (int)(v1.x)) + (b20 * (int)(v1.y)) + c20);
-    gamma_norm = 1.0f / ((a01 * (int)(v2.x)) + (b01 * (int)(v2.y)) + c01);
+    alpha_norm = 1.0f / ((a12 * v0.x) + (b12 * v0.y) + c12);
+    beta_norm  = 1.0f / ((a20 * v1.x) + (b20 * v1.y) + c20);
+    gamma_norm = 1.0f / ((a01 * v2.x) + (b01 * v2.y) + c01);
     
     /* iterate over the destination rect */
     for (y = ymin; y < ymax; y++) {
