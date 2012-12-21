@@ -209,9 +209,9 @@ int oil_image_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx
 
 void oil_image_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
     /* all of these are unhandleable */
-    if (!im || !tex || !vertices || !matrix || !indices || indices_length % 3 != 0)
+    if (!im || !vertices || !matrix || !indices || indices_length % 3 != 0)
         return;
-    if (im->backend != tex->backend)
+    if (tex && (im->backend != tex->backend))
         return;
     
     /* ok now that that's out of the way, throw it to the backend */

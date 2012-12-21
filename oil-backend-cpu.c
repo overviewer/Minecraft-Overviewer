@@ -163,22 +163,29 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OIL
                     }
                 }
                 
-                s = alpha * v0.s + beta * v1.s + gamma * v2.s;
-                t = alpha * v0.t + beta * v1.t + gamma * v2.t;
-                si = tex->width * s;
-                ti = tex->height * -t - 1;
+                if (tex) {
+                    s = alpha * v0.s + beta * v1.s + gamma * v2.s;
+                    t = alpha * v0.t + beta * v1.t + gamma * v2.t;
+                    si = tex->width * s;
+                    ti = tex->height * -t - 1;
                 
-                /* because C's % is wonky with negative numbers... */
-                while (si < 0)
-                    si += tex->width;
-                while (si >= tex->width)
-                    si -= tex->width;
-                while (ti < 0)
-                    ti += tex->height;
-                while (ti >= tex->height)
-                    ti -= tex->height;
+                    /* because C's % is wonky with negative numbers... */
+                    while (si < 0)
+                        si += tex->width;
+                    while (si >= tex->width)
+                        si -= tex->width;
+                    while (ti < 0)
+                        ti += tex->height;
+                    while (ti >= tex->height)
+                        ti -= tex->height;
                 
-                p = tex->data[ti * tex->width + si];
+                    p = tex->data[ti * tex->width + si];
+                } else {
+                    p.r = 255;
+                    p.g = 255;
+                    p.b = 255;
+                    p.a = 255;
+                }
                 
                 p.r = MULDIV255(p.r, alpha * v0.color.r + beta * v1.color.r + gamma * v2.color.r, tmp);
                 p.g = MULDIV255(p.g, alpha * v0.color.g + beta * v1.color.g + gamma * v2.color.g, tmp);
