@@ -1,6 +1,4 @@
-#include <Python.h>
-
-#include "oil.h"
+#include "oil-python.h"
 
 /*
  * file IO implementation for python file-like objects
@@ -43,15 +41,6 @@ static void oil_python_flush(void *file) {
         Py_DECREF(result);
     }
 }
-
-/* the Matrix type instance */
-typedef struct {
-    PyObject_HEAD
-    OILMatrix matrix;
-} PyOILMatrix;
-
-/* forward declaration for matrix type object */
-static PyTypeObject PyOILMatrixType;
 
 /* init and dealloc for the Matrix type */
 
@@ -403,7 +392,7 @@ static PyNumberMethods PyOILMatrixNumberMethods = {
 };    
 
 /* the Matrix type */
-static PyTypeObject PyOILMatrixType = {
+PyTypeObject PyOILMatrixType = {
     PyObject_HEAD_INIT(NULL)
     0,                         /* ob_size */
     "Matrix",                  /* tp_name */
@@ -445,15 +434,6 @@ static PyTypeObject PyOILMatrixType = {
     0,                         /* tp_alloc */
     (newfunc)PyOILMatrix_new,  /* tp_new */
 };
-
-/* the Image type instance */
-typedef struct {
-    PyObject_HEAD
-    OILImage *im;
-} PyOILImage;
-
-/* forward delcaration for image type object */
-static PyTypeObject PyOILImageType;
 
 /* init and dealloc for the Image type */
 
@@ -701,7 +681,7 @@ static PyGetSetDef PyOILImage_getset[] = {
 };
 
 /* the Image type */
-static PyTypeObject PyOILImageType = {
+PyTypeObject PyOILImageType = {
     PyObject_HEAD_INIT(NULL)
     0,                         /* ob_size */
     "Image",                   /* tp_name */

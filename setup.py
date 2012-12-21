@@ -55,6 +55,7 @@ class CustomClean(clean):
 
 oil_headers = [
     "oil.h",
+    "oil-python.h",
     "oil-dither-private.h",
     "oil-format-private.h",
     "oil-image-private.h",
