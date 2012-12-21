@@ -27,6 +27,11 @@ void oil_matrix_set_data(OILMatrix *matrix, const float *data) {
     memcpy(matrix->data, data, sizeof(float) * 16);
 }
 
+void oil_matrix_copy(OILMatrix *dest, const OILMatrix *src)
+{
+    memcpy(dest->data, src->data, sizeof(float) * 16);
+}
+
 int oil_matrix_is_identity(const OILMatrix *matrix)
 {
     int i;

@@ -30,6 +30,7 @@ typedef struct {
 void oil_matrix_set_identity(OILMatrix *matrix);
 /* row-major */
 void oil_matrix_set_data(OILMatrix *matrix, const float *data);
+void oil_matrix_copy(OILMatrix *dest, const OILMatrix *src);
 int oil_matrix_is_identity(const OILMatrix *matrix);
 int oil_matrix_is_zero(const OILMatrix *matrix);
 void oil_matrix_transform(const OILMatrix *matrix, float *x, float *y, float *z);
