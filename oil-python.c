@@ -120,6 +120,17 @@ static PyObject *PyOILMatrix_get_data(PyOILMatrix *self, PyObject *args) {
     return full_tuple;
 }
 
+static PyObject *PyOILMatrix_transform(PyOILMatrix *self, PyObject *args) {
+    float x, y, z;
+    
+    if (!PyArg_ParseTuple(args, "fff", &x, &y, &z)) {
+        return NULL;
+    }
+    
+    oil_matrix_transform(&(self->matrix), &x, &y, &z);
+    return Py_BuildValue("fff", x, y, z);
+}
+
 static int PyOILMatrix_set_data(PyOILMatrix *self, PyObject *arg, void *unused) {
     int i;
     float data[4][4];
@@ -327,6 +338,8 @@ static PyObject *PyOILMatrix_orthographic(PyOILMatrix *self, PyObject *args) {
 static PyMethodDef PyOILMatrix_methods[] = {
     {"get_data", (PyCFunction)PyOILMatrix_get_data, METH_VARARGS,
      "Returns a nested tuple of the matrix data."},
+    {"transform", (PyCFunction)PyOILMatrix_transform, METH_VARARGS,
+     "Transform 3 coordinates."},
     {"get_inverse", (PyCFunction)PyOILMatrix_get_inverse, METH_VARARGS,
      "Returns the inverse of the matrix."},
     {"invert", (PyCFunction)PyOILMatrix_invert, METH_VARARGS,
@@ -512,7 +525,7 @@ static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
     
     if (self->im == NULL) {
         if (!PyErr_Occurred())
-            PyErr_SetString(PyExc_RuntimeError, "cannot load image");
+            PyErr_SetString(PyExc_IOError, "cannot load image");
         Py_DECREF(self);
         return NULL;
     }
@@ -550,7 +563,7 @@ static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args, PyObject *kwa
     
     if (!save_success) {
         if (!PyErr_Occurred())
-            PyErr_SetString(PyExc_RuntimeError, "cannot save image");
+            PyErr_SetString(PyExc_IOError, "cannot save image");
         return NULL;
     }
     
