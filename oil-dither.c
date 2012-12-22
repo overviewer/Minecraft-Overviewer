@@ -81,7 +81,6 @@ static inline unsigned char oil_color_search_find(ColorSearchTable *table, const
         /* we have to initialize this before we use it
            first, find the color closest to the center of this bin */
         unsigned int i;
-        unsigned int shortest = 0;
         unsigned long shortest_dist = 256 * 256 * 4;
         double disttmp;
         OILPixel center;
@@ -104,7 +103,6 @@ static inline unsigned char oil_color_search_find(ColorSearchTable *table, const
             
             if (dist < shortest_dist) {
                 shortest_dist = dist;
-                shortest = i;
                 if (dist == 0)
                     break;
             }
