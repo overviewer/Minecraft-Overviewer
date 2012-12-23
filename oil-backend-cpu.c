@@ -94,10 +94,12 @@ static int oil_backend_cpu_composite(OILImage *im, OILImage *src, unsigned char 
  *  http://www.gidforums.com/t-20838.html )
  */
 
-static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OILVertex v0, OILVertex v1, OILVertex v2, OILTriangleFlags flags) {
+static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILVertex v1, OILVertex v2, OILTriangleFlags flags) {
     CPUPriv *priv = im->backend_data;
     /* ranges of pixels that are affected */
     int xmin, xmax, ymin, ymax;
+    /* the (signed) area of the triangle in normalized 2d space */
+    float area;
     /* constant coefficients for alpha, beta, gamma */
     float a12, a20, a01;
     float b12, b20, b01;
@@ -125,6 +127,16 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OIL
     xmax = OIL_CLAMP(xmax, 0, im->width);
     ymax = OIL_CLAMP(ymax, 0, im->height);
     
+    /* bail early if the triangle is completely outside */
+    if (ymin >= ymax || xmin >= xmax)
+        return;
+    
+    /* figure out the triangle's area */
+    area = 0.5 * ((v1.x - v0.x) * (v0.y - v2.y) - (v1.y - v0.y) * (v0.x - v2.x));
+    /* back-face culling */
+    if (area <= 0.0)
+        return;
+    
     /* setup coefficients */
     a12 = v1.y - v2.y; b12 = v2.x - v1.x; c12 = (v1.x * v2.y) - (v2.x * v1.y);
     a20 = v2.y - v0.y; b20 = v0.x - v2.x; c20 = (v2.x * v0.y) - (v0.x * v2.y);
@@ -148,8 +160,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OIL
             beta  = beta_norm  * ((a20 * x) + (b20 * y) + c20);
             gamma = gamma_norm * ((a01 * x) + (b01 * y) + c01);
             
-            if (alpha >= 0 && beta >= 0 && gamma >= 0 &&
-                (inclusive || (alpha * beta * gamma > 0))) {
+            if (alpha >= 0 && beta >= 0 && gamma >= 0) {
                 if (flags & OIL_DEPTH_TEST) {
                     int depth = alpha * v0.z + beta * v1.z + gamma * v2.z;
                     unsigned short *dbuffer = &(priv->depth_buffer[y * im->width + x]);
@@ -169,7 +180,8 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, int inclusive, OIL
                     si = tex->width * s;
                     ti = tex->height * -t - 1;
                 
-                    /* because C's % is wonky with negative numbers... */
+                    /* using % is too slow for the common case where
+                       these are already inside the image */
                     while (si < 0)
                         si += tex->width;
                     while (si >= tex->width)
@@ -226,7 +238,7 @@ static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILI
         oil_matrix_transform(&realmat, &(v1.x), &(v1.y), &(v1.z));
         oil_matrix_transform(&realmat, &(v2.x), &(v2.y), &(v2.z));
                 
-        draw_triangle(im, tex, 1, v0, v1, v2, flags);
+        draw_triangle(im, tex, v0, v1, v2, flags);
     }
 }
 
