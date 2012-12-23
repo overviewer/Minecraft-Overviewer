@@ -112,7 +112,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
     int x, y;
     
     /* if we need to, initialize the depth buffer */
-    if (flags & OIL_DEPTH_TEST && priv->depth_buffer == NULL) {
+    if (OIL_EXPECT(flags & OIL_DEPTH_TEST, OIL_DEPTH_TEST) && OIL_UNLIKELY(priv->depth_buffer == NULL)) {
         priv->depth_buffer = calloc(im->width * im->height, sizeof(unsigned short));
     }
     
@@ -128,7 +128,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
     ymax = OIL_CLAMP(ymax, 0, im->height);
     
     /* bail early if the triangle is completely outside */
-    if (ymin >= ymax || xmin >= xmax)
+    if (OIL_LIKELY(ymin >= ymax || xmin >= xmax))
         return;
     
     /* figure out the triangle's area */
@@ -166,7 +166,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
             gamma = (a01 * x) + (b01 * y) + c01;
             
             if (alpha >= 0 && beta >= 0 && gamma >= 0) {
-                if (flags & OIL_DEPTH_TEST) {
+                if (OIL_EXPECT(flags & OIL_DEPTH_TEST, OIL_DEPTH_TEST)) {
                     int depth = alpha * v0.z + beta * v1.z + gamma * v2.z;
                     unsigned short *dbuffer = &(priv->depth_buffer[y * im->width + x]);
                     if (depth >= *dbuffer) {
@@ -179,7 +179,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
                     }
                 }
                 
-                if (tex) {
+                if (OIL_LIKELY(tex != NULL)) {
                     s = alpha * v0.s + beta * v1.s + gamma * v2.s;
                     t = alpha * v0.t + beta * v1.t + gamma * v2.t;
                     si = tex->width * s;
@@ -187,13 +187,13 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
                 
                     /* using % is too slow for the common case where
                        these are already inside the image */
-                    while (si < 0)
+                    while (OIL_UNLIKELY(si < 0))
                         si += tex->width;
-                    while (si >= tex->width)
+                    while (OIL_UNLIKELY(si >= tex->width))
                         si -= tex->width;
-                    while (ti < 0)
+                    while (ti < 0) /* this space intentionally ambiguous */
                         ti += tex->height;
-                    while (ti >= tex->height)
+                    while (OIL_UNLIKELY(ti >= tex->height))
                         ti -= tex->height;
                 
                     p = tex->data[ti * tex->width + si];
