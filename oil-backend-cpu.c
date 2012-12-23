@@ -147,6 +147,11 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
     beta_norm  = 1.0f / ((a20 * v1.x) + (b20 * v1.y) + c20);
     gamma_norm = 1.0f / ((a01 * v2.x) + (b01 * v2.y) + c01);
     
+    /* apply normalizers */
+    a12 *= alpha_norm; b12 *= alpha_norm; c12 *= alpha_norm;
+    a20 *= beta_norm; b20 *= beta_norm; c20 *= beta_norm;
+    a01 *= gamma_norm; b01 *= gamma_norm; c01 *= gamma_norm;
+    
     /* iterate over the destination rect */
     for (y = ymin; y < ymax; y++) {
         OILPixel *out = &(im->data[y * im->width + xmin]);
@@ -156,9 +161,9 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
             float s, t;
             int si, ti;
             OILPixel p;
-            alpha = alpha_norm * ((a12 * x) + (b12 * y) + c12);
-            beta  = beta_norm  * ((a20 * x) + (b20 * y) + c20);
-            gamma = gamma_norm * ((a01 * x) + (b01 * y) + c01);
+            alpha = (a12 * x) + (b12 * y) + c12;
+            beta  = (a20 * x) + (b20 * y) + c20;
+            gamma = (a01 * x) + (b01 * y) + c01;
             
             if (alpha >= 0 && beta >= 0 && gamma >= 0) {
                 if (flags & OIL_DEPTH_TEST) {
