@@ -178,6 +178,10 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
             gamma = (a01 * fx) + (b01 * fy) + c01;
             
             if (alpha >= -SMALLFLOAT && beta >= -SMALLFLOAT && gamma >= -SMALLFLOAT) {
+                alpha = OIL_CLAMP(alpha, 0.0, 1.0);
+                beta = OIL_CLAMP(beta, 0.0, 1.0);
+                gamma = OIL_CLAMP(gamma, 0.0, 1.0);
+                
                 if (OIL_EXPECT(flags & OIL_DEPTH_TEST, OIL_DEPTH_TEST)) {
                     int depth = alpha * v0.z + beta * v1.z + gamma * v2.z;
                     unsigned short *dbuffer = &(priv->depth_buffer[y * im->width + x]);
