@@ -41,9 +41,35 @@ static void oil_backend_cpu_save(OILImage *im) {
     /* nothing to do */
 }
 
+static inline void composite(OILPixel *out, OILPixel *in) {
+    int tmp1, tmp2, tmp3;
+    
+    /* special cases */
+    if (in->a == 255 || (out->a == 0 && in->a > 0)) {
+        /* straight-up copy */
+        *out = *in;
+    } else if (in->a == 0) {
+        /* source is fully transparent, do nothing */
+    } else {
+        /* general case */
+        int comp_alpha = in->a + MULDIV255(out->a, 255 - in->a, tmp1);
+                
+        out->r = MULDIV255(in->r, in->a, tmp1) + MULDIV255(MULDIV255(out->r, out->a, tmp2), 255 - in->a, tmp3);
+        out->r = (out->r * 255) / comp_alpha;
+                
+        out->g = MULDIV255(in->g, in->a, tmp1) + MULDIV255(MULDIV255(out->g, out->a, tmp2), 255 - in->a, tmp3);
+        out->g = (out->g * 255) / comp_alpha;
+                
+        out->b = MULDIV255(in->b, in->a, tmp1) + MULDIV255(MULDIV255(out->b, out->a, tmp2), 255 - in->a, tmp3);
+        out->b = (out->b * 255) / comp_alpha;
+                
+        out->a = comp_alpha;
+    }
+}
+
 static int oil_backend_cpu_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize) {
     /* used by MULDIV255 */
-    int tmp1, tmp2, tmp3;
+    int tmp;
     unsigned int x, y;
     
     for (y = 0; y < ysize; y++) {
@@ -51,37 +77,12 @@ static int oil_backend_cpu_composite(OILImage *im, OILImage *src, unsigned char 
         OILPixel *in = &(src->data[sx + (sy + y) * src->width]);
         
         for (x = 0; x < xsize; x++) {
-            unsigned char in_alpha;
-            
             /* apply overall alpha */
             if (alpha != 255 && in->a != 0) {
-                in_alpha = MULDIV255(in->a, alpha, tmp1);
-            } else {
-                in_alpha = in->a;
+                in->a = MULDIV255(in->a, alpha, tmp);
             }
             
-            /* special cases */
-            if (in_alpha == 255 || (out->a == 0 && in_alpha > 0)) {
-                /* straight-up copy */
-                *out = *in;
-                out->a = in_alpha;
-            } else if (in_alpha == 0) {
-                /* source is fully transparent, do nothing */
-            } else {
-                /* general case */
-                int comp_alpha = in_alpha + MULDIV255(out->a, 255 - in_alpha, tmp1);
-                
-                out->r = MULDIV255(in->r, in_alpha, tmp1) + MULDIV255(MULDIV255(out->r, out->a, tmp2), 255 - in_alpha, tmp3);
-                out->r = (out->r * 255) / comp_alpha;
-                
-                out->g = MULDIV255(in->g, in_alpha, tmp1) + MULDIV255(MULDIV255(out->g, out->a, tmp2), 255 - in_alpha, tmp3);
-                out->g = (out->g * 255) / comp_alpha;
-                
-                out->b = MULDIV255(in->b, in_alpha, tmp1) + MULDIV255(MULDIV255(out->b, out->a, tmp2), 255 - in_alpha, tmp3);
-                out->b = (out->b * 255) / comp_alpha;
-                
-                out->a = comp_alpha;
-            }
+            composite(out, in);
             
             /* move forward */
             out++;
@@ -181,20 +182,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
                 alpha = OIL_CLAMP(alpha, 0.0, 1.0);
                 beta = OIL_CLAMP(beta, 0.0, 1.0);
                 gamma = OIL_CLAMP(gamma, 0.0, 1.0);
-                
-                if (OIL_EXPECT(flags & OIL_DEPTH_TEST, OIL_DEPTH_TEST)) {
-                    int depth = alpha * v0.z + beta * v1.z + gamma * v2.z;
-                    unsigned short *dbuffer = &(priv->depth_buffer[y * im->width + x]);
-                    if (depth >= *dbuffer) {
-                        /* write to our buffer */
-                        *dbuffer = depth;
-                    } else {
-                        /* skip this, it's behind something */
-                        out++;
-                        continue;
-                    }
-                }
-                
+
                 if (OIL_LIKELY(tex != NULL)) {
                     /* have to be more careful with texture coords, to
                        prevent bleeding */
@@ -224,14 +212,31 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
                     p.a = 255;
                 }
                 
+                if (p.a == 0) {
+                    /* skip this if we have nothing to write */
+                    out++;
+                    continue;
+                }
+                
+                if (OIL_EXPECT(flags & OIL_DEPTH_TEST, OIL_DEPTH_TEST)) {
+                    int depth = alpha * v0.z + beta * v1.z + gamma * v2.z;
+                    unsigned short *dbuffer = &(priv->depth_buffer[y * im->width + x]);
+                    if (depth >= *dbuffer) {
+                        /* write to our buffer */
+                        *dbuffer = depth;
+                    } else {
+                        /* skip this, it's behind something */
+                        out++;
+                        continue;
+                    }
+                }
+                                
                 p.r = MULDIV255(p.r, alpha * v0.color.r + beta * v1.color.r + gamma * v2.color.r, tmp);
                 p.g = MULDIV255(p.g, alpha * v0.color.g + beta * v1.color.g + gamma * v2.color.g, tmp);
                 p.b = MULDIV255(p.b, alpha * v0.color.b + beta * v1.color.b + gamma * v2.color.b, tmp);
                 p.a = MULDIV255(p.a, alpha * v0.color.a + beta * v1.color.a + gamma * v2.color.a, tmp);
                 
-                /* FIXME do blending */
-                *out = p;
-                out->a = 255;
+                composite(out, &p);
             }
             
             out++;
