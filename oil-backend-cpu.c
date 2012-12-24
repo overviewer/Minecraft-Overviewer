@@ -182,7 +182,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
                 alpha = OIL_CLAMP(alpha, 0.0, 1.0);
                 beta = OIL_CLAMP(beta, 0.0, 1.0);
                 gamma = OIL_CLAMP(gamma, 0.0, 1.0);
-
+                
                 if (OIL_LIKELY(tex != NULL)) {
                     /* have to be more careful with texture coords, to
                        prevent bleeding */
@@ -205,17 +205,17 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
                         ti -= tex->height;
                 
                     p = tex->data[ti * tex->width + si];
+                    if (OIL_UNLIKELY(p.a == 0)) {
+                        /* skip this, nothing to draw
+                           we want to bail before the depth test */
+                        out++;
+                        continue;
+                    }
                 } else {
                     p.r = 255;
                     p.g = 255;
                     p.b = 255;
                     p.a = 255;
-                }
-                
-                if (p.a == 0) {
-                    /* skip this if we have nothing to write */
-                    out++;
-                    continue;
                 }
                 
                 if (OIL_EXPECT(flags & OIL_DEPTH_TEST, OIL_DEPTH_TEST)) {
@@ -230,11 +230,15 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
                         continue;
                     }
                 }
-                                
-                p.r = MULDIV255(p.r, alpha * v0.color.r + beta * v1.color.r + gamma * v2.color.r, tmp);
-                p.g = MULDIV255(p.g, alpha * v0.color.g + beta * v1.color.g + gamma * v2.color.g, tmp);
-                p.b = MULDIV255(p.b, alpha * v0.color.b + beta * v1.color.b + gamma * v2.color.b, tmp);
-                p.a = MULDIV255(p.a, alpha * v0.color.a + beta * v1.color.a + gamma * v2.color.a, tmp);
+                
+                if (v0.color.r != 255 || v1.color.r != 255 || v2.color.r != 255)
+                    p.r = MULDIV255(p.r, alpha * v0.color.r + beta * v1.color.r + gamma * v2.color.r, tmp);
+                if (v0.color.g != 255 || v1.color.g != 255 || v2.color.g != 255)
+                    p.g = MULDIV255(p.g, alpha * v0.color.g + beta * v1.color.g + gamma * v2.color.g, tmp);
+                if (v0.color.b != 255 || v1.color.b != 255 || v2.color.b != 255)
+                    p.b = MULDIV255(p.b, alpha * v0.color.b + beta * v1.color.b + gamma * v2.color.b, tmp);
+                if (v0.color.a != 255 || v1.color.a != 255 || v2.color.a != 255)
+                    p.a = MULDIV255(p.a, alpha * v0.color.a + beta * v1.color.a + gamma * v2.color.a, tmp);
                 
                 composite(out, &p);
             }
