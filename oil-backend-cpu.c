@@ -2,6 +2,8 @@
 #include "oil-image-private.h"
 #include "oil-backend-private.h"
 
+#include <float.h>
+
 typedef struct {
     unsigned short *depth_buffer;
 } CPUPriv;
@@ -9,6 +11,12 @@ typedef struct {
 /* like (a * b + 127) / 255), but fast */
 #define MULDIV255(a, b, tmp)                                \
 	(tmp = (a) * (b) + 128, ((((tmp) >> 8) + (tmp)) >> 8))
+
+/* used to compare floats
+   determined by making the multiplier smaller and smaller until the holes
+   between triangles went away. YMMV.
+*/
+#define SMALLFLOAT (20 * FLT_EPSILON)
 
 static void oil_backend_cpu_new(OILImage *im) {
     /* add our data struct. FIXME fail if any of these are NULL */
@@ -117,10 +125,10 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
     }
     
     /* set up draw ranges */
-    xmin = (int)(OIL_MIN(v0.x, OIL_MIN(v1.x, v2.x)));
-    ymin = (int)(OIL_MIN(v0.y, OIL_MIN(v1.y, v2.y)));
-    xmax = (int)(OIL_MAX(v0.x, OIL_MAX(v1.x, v2.x))) + 1;
-    ymax = (int)(OIL_MAX(v0.y, OIL_MAX(v1.y, v2.y))) + 1;
+    xmin = (int)(OIL_MIN(v0.x, OIL_MIN(v1.x, v2.x)) - 0.5);
+    ymin = (int)(OIL_MIN(v0.y, OIL_MIN(v1.y, v2.y)) - 0.5);
+    xmax = (int)(OIL_MAX(v0.x, OIL_MAX(v1.x, v2.x)) - 0.5) + 1;
+    ymax = (int)(OIL_MAX(v0.y, OIL_MAX(v1.y, v2.y)) - 0.5) + 1;
     
     xmin = OIL_CLAMP(xmin, 0, im->width);
     ymin = OIL_CLAMP(ymin, 0, im->height);
@@ -133,8 +141,9 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
     
     /* figure out the triangle's area */
     area = 0.5 * ((v1.x - v0.x) * (v0.y - v2.y) - (v1.y - v0.y) * (v0.x - v2.x));
-    /* back-face culling */
-    if (area <= 0.0)
+    /* back-face culling, and don't draw anything
+       with area less than half a pixel */
+    if (area < 0.5)
         return;
     
     /* setup coefficients */
@@ -157,15 +166,18 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
         OILPixel *out = &(im->data[y * im->width + xmin]);
         
         for (x = xmin; x < xmax; x++) {
+            float fx, fy;
             float alpha, beta, gamma;
             float s, t;
             int si, ti;
             OILPixel p;
-            alpha = (a12 * x) + (b12 * y) + c12;
-            beta  = (a20 * x) + (b20 * y) + c20;
-            gamma = (a01 * x) + (b01 * y) + c01;
+            fx = x + 0.5;
+            fy = y + 0.5;
+            alpha = (a12 * fx) + (b12 * fy) + c12;
+            beta  = (a20 * fx) + (b20 * fy) + c20;
+            gamma = (a01 * fx) + (b01 * fy) + c01;
             
-            if (alpha >= 0 && beta >= 0 && gamma >= 0) {
+            if (alpha >= -SMALLFLOAT && beta >= -SMALLFLOAT && gamma >= -SMALLFLOAT) {
                 if (OIL_EXPECT(flags & OIL_DEPTH_TEST, OIL_DEPTH_TEST)) {
                     int depth = alpha * v0.z + beta * v1.z + gamma * v2.z;
                     unsigned short *dbuffer = &(priv->depth_buffer[y * im->width + x]);
@@ -180,11 +192,15 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
                 }
                 
                 if (OIL_LIKELY(tex != NULL)) {
-                    s = alpha * v0.s + beta * v1.s + gamma * v2.s;
-                    t = alpha * v0.t + beta * v1.t + gamma * v2.t;
+                    /* have to be more careful with texture coords, to
+                       prevent bleeding */
+                    float renorm = 1.0 / (alpha + beta + gamma);
+                    s = renorm * (alpha * v0.s + beta * v1.s + gamma * v2.s);
+                    t = renorm * (alpha * v0.t + beta * v1.t + gamma * v2.t);
+                    
                     si = tex->width * s;
                     ti = tex->height * -t - 1;
-                
+                    
                     /* using % is too slow for the common case where
                        these are already inside the image */
                     while (OIL_UNLIKELY(si < 0))
