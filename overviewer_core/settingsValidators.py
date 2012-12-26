@@ -227,6 +227,18 @@ def validatePath(p):
     if not os.path.exists(abs_path):
         raise ValidationException("'%s' does not exist. Path initially given as '%s'" % (abs_path,p))
 
+def validateCustomblocks(p):
+    cb = []
+    for i in p:
+        ocb_path = os.path.join(util.get_program_path(), "customblocks", "%s.py" % i)
+        if os.path.isfile(ocb_path):
+            cb.append(ocb_path)
+        elif os.path.isfile(expand_path(i)):
+            cb.append(expand_path(i))
+        else:
+            raise ValidationException("Unable to find block definition file '%s'" % i)
+    return cb
+
 def make_dictValidator(keyvalidator, valuevalidator):
     """Compose and return a dict validator -- a validator that validates each
     key and value in a dictionary.
