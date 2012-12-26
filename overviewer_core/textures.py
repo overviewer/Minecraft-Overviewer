@@ -37,11 +37,12 @@ class Textures(object):
     rendering. It accepts a background color, north direction, and
     local textures path.
     """
-    def __init__(self, texturepath=None, bgcolor=(26, 26, 26, 0), northdirection=0):
+    def __init__(self, texturepath=None, bgcolor=(26, 26, 26, 0), northdirection=0, customblocks=None):
         self.bgcolor = bgcolor
         self.rotation = northdirection
         self.find_file_local_path = texturepath
-        
+        self.customblocks = customblocks
+
         # not yet configurable
         self.texture_size = 24
         self.texture_dimensions = (self.texture_size, self.texture_size)
@@ -100,7 +101,11 @@ class Textures(object):
                 block = tex[0]
                 scaled_block = block.resize(self.texture_dimensions, Image.ANTIALIAS)
                 blockmap[i] = self.generate_texture_tuple(scaled_block)
-        
+
+        if not self.customblocks is None:
+            for i in self.customblocks:
+                execfile(i)
+
         self.generated = True
     
     ##
@@ -1303,43 +1308,6 @@ def tall_grass(self, blockid, data):
 
 # dead bush
 billboard(blockid=32, index=55)
-
-@material(blockid=35, data=range(16), solid=True)
-def wool(self, blockid, data):
-    if data == 0: # white
-        texture = self.terrain_images[64]
-    elif data == 1: # orange
-        texture = self.terrain_images[210]
-    elif data == 2: # magenta
-        texture = self.terrain_images[194]
-    elif data == 3: # light blue
-        texture = self.terrain_images[178]
-    elif data == 4: # yellow
-        texture = self.terrain_images[162]
-    elif data == 5: # light green
-        texture = self.terrain_images[146]
-    elif data == 6: # pink
-        texture = self.terrain_images[130]
-    elif data == 7: # grey
-        texture = self.terrain_images[114]
-    elif data == 8: # light grey
-        texture = self.terrain_images[225]
-    elif data == 9: # cyan
-        texture = self.terrain_images[209]
-    elif data == 10: # purple
-        texture = self.terrain_images[193]
-    elif data == 11: # blue
-        texture = self.terrain_images[177]
-    elif data == 12: # brown
-        texture = self.terrain_images[161]
-    elif data == 13: # dark green
-        texture = self.terrain_images[145]
-    elif data == 14: # red
-        texture = self.terrain_images[129]
-    elif data == 15: # black
-        texture = self.terrain_images[113]
-    
-    return self.build_block(texture, texture)
 
 # dandelion
 sprite(blockid=37, index=13)

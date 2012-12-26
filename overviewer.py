@@ -391,8 +391,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             worldcache[render['world']] = w
 
         # find or create the textures object
-        texopts = util.dict_subset(render, ["texturepath", "bgcolor", "northdirection"])
-        texopts_key = tuple(texopts.items())
+        texopts = util.dict_subset(render, ["texturepath", "bgcolor", "northdirection", "customblocks"])
+        texopts_red = util.dict_subset(texopts, ["texturepath", "bgcolor", "northdirection"])
+        texopts_red["customblocks"] = " ".join(texopts.get("customblocks", None))
+        texopts_key = tuple(texopts_red.items())
         if texopts_key not in texcache:
             tex = textures.Textures(**texopts)
             tex.generate()
