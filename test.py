@@ -5,6 +5,7 @@ import PIL.Image
 import OIL
 import StringIO
 import random
+import math
 
 def time_test(func, arg, timelimit=10.0):
     times = []
@@ -28,6 +29,7 @@ image_paths = {
 images = {}
 
 NUM_COMPOSITES = 40
+NUM_QUADS = 90
 
 def pil_composite(out):
     dest = PIL.Image.new("RGBA", (512, 512))
@@ -43,6 +45,24 @@ def oil_composite(out):
         dx = random.randint(0, 511)
         dy = random.randint(0, 511)
         dest.composite(images['dice'], 255, dx, dy, 0, 0, 0, 0)
+    dest.save(out)
+
+def oil_triangles(out):
+    dest = OIL.Image(512, 512)
+    matrix = OIL.Matrix().scale(0.8, 0.8, 0.8)
+    vertices = [
+        ((-1, -1, 0), (0, 0), (255, 255, 255, 255)),
+        ((1, -1, 0), (1, 0), (255, 255, 255, 255)),
+        ((1, 1, 0), (1, 1), (255, 255, 255, 255)),
+        ((-1, 1, 0), (0, 1), (255, 255, 255, 255)),
+    ]
+    indices = [
+        0, 1, 2,
+        0, 2, 3,
+    ]
+    for i in range(NUM_QUADS):
+        matrix.rotate(0, 0, 2 * math.pi / NUM_QUADS)
+        dest.draw_triangles(matrix, images['dice'], vertices, indices)
     dest.save(out)
 
 tests = [
@@ -64,6 +84,10 @@ tests = [
     ("Composite", [
             ("PIL", None, pil_composite),
             ("OIL", "CPU", oil_composite),
+    ]),
+    
+    ("Triangles", [
+            ("OIL", "CPU", oil_triangles),
     ]),
 ]
 
@@ -107,7 +131,12 @@ def draw_bar(offset, length, bound_low, bound_high, start, end, seq):
                 file.write("-")
     file.write("\n")
 
+searches = sys.argv[1:]
+
 for name, testlist in tests:
+    if searches:
+        if not any([s.lower() in name.lower() for s in searches]):
+            continue
     print name + ":"
     print
     table = Table(4, 5, 17, 19, 5, 10, 5)
