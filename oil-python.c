@@ -735,7 +735,11 @@ static PyObject *OIL_backend_set(PyObject *self, PyObject *args) {
         return NULL;
     }
     
-    oil_backend_set(backend);
+    if (!oil_backend_set(backend)) {
+        PyErr_SetString(PyExc_RuntimeError, "could not set backend");
+        return NULL;
+    }
+    
     Py_RETURN_NONE;
 }
 

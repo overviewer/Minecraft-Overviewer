@@ -4,6 +4,9 @@
 #include "oil.h"
 
 typedef struct {
+    /* called when starting up this backend, return 0 on failure */
+    int (*initialize)();
+    
     /* called when creating an image */
     void (*new)(OILImage *im);
     /* called when destroying an image */

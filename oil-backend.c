@@ -6,16 +6,28 @@ extern OILBackend oil_backend_debug;
 
 OILBackend *oil_backend = &oil_backend_cpu;
 
-void oil_backend_set(OILBackendName backend) {
+int oil_backend_set(OILBackendName backend) {
+    OILBackend *new_backend;
+    
     switch (backend) {
     case OIL_BACKEND_CPU:
-        oil_backend = &oil_backend_cpu;
+        new_backend = &oil_backend_cpu;
         break;
     case OIL_BACKEND_DEBUG:
-        oil_backend = &oil_backend_debug;
+        new_backend = &oil_backend_debug;
         break;
     default:
-        /* invalid backend, use cpu as default */
-        oil_backend = &oil_backend_cpu;
+        /* invalid backend */
+        return 0;
     };
+    
+    /* try to initialize new backend */
+    if (!(new_backend->initialize())) {
+        /* initialization failed! keep the old backend */
+        return 0;
+    }
+    
+    /* new backend online! */
+    oil_backend = new_backend;
+    return 1;
 }

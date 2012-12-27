@@ -25,7 +25,7 @@ typedef enum {
     OIL_BACKEND_MAX
 } OILBackendName;
 
-void oil_backend_set(OILBackendName backend);
+int oil_backend_set(OILBackendName backend);
 
 typedef struct {
     float data[4][4];

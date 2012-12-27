@@ -18,6 +18,11 @@ typedef struct {
 */
 #define SMALLFLOAT (20 * FLT_EPSILON)
 
+static int oil_backend_cpu_initialize() {
+    /* nothing to do */
+    return 1;
+}
+
 static void oil_backend_cpu_new(OILImage *im) {
     /* add our data struct. FIXME fail if any of these are NULL */
     CPUPriv *priv;
@@ -277,6 +282,7 @@ static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILI
 }
 
 OILBackend oil_backend_cpu = {
+    oil_backend_cpu_initialize,
     oil_backend_cpu_new,
     oil_backend_cpu_free,
     oil_backend_cpu_load,

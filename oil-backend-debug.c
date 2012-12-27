@@ -5,6 +5,11 @@
 
 extern OILBackend oil_backend_cpu;
 
+static int oil_backend_debug_initialize() {
+    printf("initialize\n");
+    return oil_backend_cpu.initialize();
+}
+
 static void oil_backend_debug_new(OILImage *im) {
     printf("new(%p)\n", im);
     oil_backend_cpu.new(im);
@@ -36,6 +41,7 @@ static void oil_backend_debug_draw_triangles(OILImage *im, OILMatrix *matrix, OI
 }
 
 OILBackend oil_backend_debug = {
+    oil_backend_debug_initialize,
     oil_backend_debug_new,
     oil_backend_debug_free,
     oil_backend_debug_load,
