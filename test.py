@@ -7,7 +7,7 @@ import StringIO
 import random
 import math
 
-def time_test(func, arg, timelimit=10.0):
+def time_test(func, arg, timelimit=1.0):
     times = []
     last_time = start_time = time.time()
     while last_time - start_time < timelimit:
@@ -84,10 +84,12 @@ tests = [
     ("Composite", [
             ("PIL", None, pil_composite),
             ("OIL", "CPU", oil_composite),
+            ("OIL", "CPU_SSE", oil_composite),
     ]),
     
     ("Triangles", [
             ("OIL", "CPU", oil_triangles),
+            ("OIL", "CPU_SSE", oil_triangles),
     ]),
 ]
 
@@ -139,7 +141,7 @@ for name, testlist in tests:
             continue
     print name + ":"
     print
-    table = Table(4, 5, 17, 19, 5, 10, 5)
+    table = Table(4, 10, 17, 19, 5, 10, 5)
     table.column("", "name", "seconds per call", "standard deviation", "(%)", "file size", "(%)")
     table.column("", "----", "----------------", "------------------", "---", "---------", "---")
     bars = []
@@ -151,13 +153,12 @@ for name, testlist in tests:
             OIL.backend_set(backend_id)
             for key, path in image_paths.items():
                 images[key] = OIL.Image.load(path)
+            case = backend
         else:
             for key, path in image_paths.items():
                 images[key] = PIL.Image.open(path)
-        
+
         fname = "./test/" + case
-        if backend:
-            fname += " (" + backend + ")"
         fname += " " + name
         fname += ".png"
         

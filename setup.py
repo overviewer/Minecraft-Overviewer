@@ -61,6 +61,7 @@ oil_headers = [
     "oil-image-private.h",
     "oil-palette-private.h",
     "oil-backend-private.h",
+    "oil-backend-cpu.def",
 ]
 
 oil_sources = [
@@ -74,6 +75,7 @@ oil_sources = [
     "oil-backend.c",
     "oil-backend-cpu.c",
     "oil-backend-debug.c",
+    "oil-backend-cpu-sse.c",
 ]
 
 setup(name='OIL',

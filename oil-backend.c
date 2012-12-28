@@ -3,6 +3,7 @@
 
 extern OILBackend oil_backend_cpu;
 extern OILBackend oil_backend_debug;
+extern OILBackend oil_backend_cpu_sse;
 
 OILBackend *oil_backend = &oil_backend_cpu;
 
@@ -15,6 +16,9 @@ int oil_backend_set(OILBackendName backend) {
         break;
     case OIL_BACKEND_DEBUG:
         new_backend = &oil_backend_debug;
+        break;
+    case OIL_BACKEND_CPU_SSE:
+        new_backend = &oil_backend_cpu_sse;
         break;
     default:
         /* invalid backend */

@@ -773,5 +773,6 @@ PyMODINIT_FUNC initOIL(void) {
     /* add in the backend enums */
     PyModule_AddIntConstant(mod, "BACKEND_CPU", OIL_BACKEND_CPU);
     PyModule_AddIntConstant(mod, "BACKEND_DEBUG", OIL_BACKEND_DEBUG);
+    PyModule_AddIntConstant(mod, "BACKEND_CPU_SSE", OIL_BACKEND_CPU_SSE);
 }
 
