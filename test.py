@@ -69,11 +69,13 @@ tests = [
     ("Load", [
             ("PIL", None, lambda o: PIL.Image.open(image_paths['input']).load()),
             ("OIL", "CPU", lambda o: OIL.Image.load(image_paths['input'])),
+            ("OIL", "OPENGL", lambda o: OIL.Image.load(image_paths['input'])),
     ]),
     
     ("Save", [
             ("PIL", None, lambda o: images['input'].save(o)),
             ("OIL", "CPU", lambda o: images['input'].save(o)),
+            ("OIL", "OPENGL", lambda o: images['input'].save(o)),
     ]),
 
     ("SaveDither", [
@@ -85,11 +87,13 @@ tests = [
             ("PIL", None, pil_composite),
             ("OIL", "CPU", oil_composite),
             ("OIL", "CPU_SSE", oil_composite),
+            ("OIL", "OPENGL", oil_composite),
     ]),
     
     ("Triangles", [
             ("OIL", "CPU", oil_triangles),
             ("OIL", "CPU_SSE", oil_triangles),
+            ("OIL", "OPENGL", oil_triangles),
     ]),
 ]
 
