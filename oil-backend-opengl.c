@@ -58,6 +58,18 @@ static int oil_backend_opengl_initialize() {
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
+    
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.0f);
+    
+    /* set up the texture matrix to handle our flipped images */
+    glMatrixMode(GL_TEXTURE);
+    glScalef(1.0, -1.0, 1.0);
+    glTranslatef(0.0, 1.0, 0.0);
+    glMatrixMode(GL_MODELVIEW);
     
     /* printf("vendor: %s\n", (const char*)glGetString(GL_VENDOR)); */
     
@@ -77,6 +89,7 @@ static void oil_backend_opengl_new(OILImage *im) {
     /* set up the color buffer */
     glBindTexture(GL_TEXTURE_2D, priv->colorbuffer);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im->width, im->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -133,14 +146,14 @@ static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, O
 
 static int oil_backend_opengl_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize) {
     OILVertex vertices[] = {
-        {0.0, 0.0, 0.0, ((float)sx) / src->width, ((float)sy) / src->height, {255, 255, 255, 255}},
-        {1.0, 0.0, 0.0, ((float)sx + xsize) / src->width, ((float)sy) / src->height, {255, 255, 255, 255}},
-        {1.0, 1.0, 0.0, ((float)sx + xsize) / src->width, ((float)sy + ysize) / src->height, {255, 255, 255, 255}},
-        {0.0, 1.0, 0.0, ((float)sx) / src->width, ((float)sy + ysize) / src->height, {255, 255, 255, 255}},
+        {0.0, 0.0, 0.0, ((float)sx) / src->width, ((float)src->height - sy) / src->height, {255, 255, 255, 255}},
+        {1.0, 0.0, 0.0, ((float)sx + xsize) / src->width, ((float)src->height - sy) / src->height, {255, 255, 255, 255}},
+        {1.0, 1.0, 0.0, ((float)sx + xsize) / src->width, ((float)src->height - sy - ysize) / src->height, {255, 255, 255, 255}},
+        {0.0, 1.0, 0.0, ((float)sx) / src->width, ((float)src->height - sy - ysize) / src->height, {255, 255, 255, 255}},
     };
     unsigned int indices[] = {
-        0, 1, 2,
-        0, 2, 3,
+        0, 2, 1,
+        0, 3, 2,
     };
     OILMatrix mat;
     oil_matrix_set_identity(&mat);
@@ -158,20 +171,18 @@ static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, O
     OpenGLPriv *priv = im->backend_data;
     OILMatrix fullmat;
     oil_matrix_set_identity(&fullmat);
-    oil_matrix_scale(&fullmat, 1.0f, -1.0f, 1.0f);
+    oil_matrix_scale(&fullmat, 1.0f, -1.0f, -1.0f);
     oil_matrix_multiply(&fullmat, &fullmat, matrix);
     glLoadTransposeMatrixf((GLfloat *)fullmat.data);
     
     if (tex) {
         OpenGLPriv *texpriv = tex->backend_data;
         glBindTexture(GL_TEXTURE_2D, texpriv->colorbuffer);
-        if (glGetError())
-            printf("couln't bind: 0x%x\n", glGetError());
         glEnable(GL_TEXTURE_2D);
     }
     
     if (flags & OIL_DEPTH_TEST) {
-        glEnable(OIL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);
     }
     
     glBindFramebuffer(GL_FRAMEBUFFER, priv->framebuffer);
@@ -183,20 +194,20 @@ static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, O
         OILVertex v1 = vertices[indices[i + 1]];
         OILVertex v2 = vertices[indices[i + 2]];
         
-        glColor4f(v0.color.r, v0.color.g, v0.color.b, v0.color.a);
+        glColor4f(v0.color.r / 255.0, v0.color.g / 255.0, v0.color.b / 255.0, v0.color.a / 255.0);
         glTexCoord2f(v0.s, v0.t);
         glVertex3f(v0.x, v0.y, v0.z);
-        glColor4f(v1.color.r, v1.color.g, v1.color.b, v1.color.a);
+        glColor4f(v1.color.r / 255.0, v1.color.g / 255.0, v1.color.b / 255.0, v1.color.a / 255.0);
         glTexCoord2f(v1.s, v1.t);
         glVertex3f(v1.x, v1.y, v1.z);
-        glColor4f(v2.color.r, v2.color.g, v2.color.b, v2.color.a);
+        glColor4f(v2.color.r / 255.0, v2.color.g / 255.0, v2.color.b / 255.0, v2.color.a / 255.0);
         glTexCoord2f(v2.s, v2.t);
         glVertex3f(v2.x, v2.y, v2.z);
     }
     glEnd();
 
     if (flags & OIL_DEPTH_TEST) {
-        glDisable(OIL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST);
     }
     
     if (tex) {
