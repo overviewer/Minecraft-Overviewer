@@ -1,3 +1,5 @@
+#ifdef ENABLE_OPENGL_BACKEND
+
 #include "oil.h"
 #include "oil-image-private.h"
 #include "oil-backend-private.h"
@@ -80,3 +82,5 @@ OILBackend oil_backend_opengl = {
     oil_backend_opengl_composite,
     oil_backend_opengl_draw_triangles,
 };
+
+#endif /* ENABLE_OPENGL_BACKEND */

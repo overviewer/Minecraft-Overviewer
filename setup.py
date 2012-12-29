@@ -8,6 +8,16 @@ from distutils import log
 import os.path
 
 class CustomBuildExt(build_ext):
+    user_options = build_ext.user_options + [
+        ('with-sse', None, "build with SSE CPU backend"),
+        ('with-opengl', None, "build with OpenGL GPU backend"),
+    ]
+    
+    def initialize_options(self):
+        self.with_sse = False
+        self.with_opengl = False
+        build_ext.initialize_options(self)
+    
     def build_extensions(self):
         c = self.compiler.compiler_type
         if c == "msvc":
@@ -23,8 +33,12 @@ class CustomBuildExt(build_ext):
                 e.extra_compile_args.append("-Werror")
         
         for e in self.extensions:
-            e.libraries.append("X11")
-            e.libraries.append("GL")
+            if self.with_sse:
+                e.define_macros.append(("ENABLE_CPU_SSE_BACKEND", None))
+            if self.with_opengl:
+                e.define_macros.append(("ENABLE_OPENGL_BACKEND", None))
+                e.libraries.append("X11")
+                e.libraries.append("GL")
         
         # build in place, and in the build/ tree
         self.inplace = False

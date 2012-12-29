@@ -149,7 +149,11 @@ for name, testlist in tests:
     reference_size = None
     for case, backend, func in testlist:
         if backend:
-            backend_id = getattr(OIL, "BACKEND_" + backend)
+            try:
+                backend_id = getattr(OIL, "BACKEND_" + backend)
+            except AttributeError:
+                table.column("", backend, "(not enabled)")
+                continue
             OIL.backend_set(backend_id)
             for key, path in image_paths.items():
                 images[key] = OIL.Image.load(path)
