@@ -18,8 +18,6 @@ typedef struct {
     GLuint colorbuffer;
 } OpenGLPriv;
 
-static int unset_modelviewmatrix = 1;
-static int modelviewmatrix = 0.0;
 static GLuint framebuffer = 0;
 static GLuint colorbuffer = 0;
 
@@ -150,20 +148,10 @@ static void oil_backend_opengl_free(OILImage *im) {
 
 static inline void load_matrix(OILMatrix *matrix) {
     OILMatrix fullmat;
-    int i;
-    int *data = (int *)(matrix->data);
-    int key = data[0];
-    for (i = 1; i < (sizeof(float) * 16) / sizeof(int); i++) {
-        key ^= data[i];
-    }
-    if (modelviewmatrix != key || unset_modelviewmatrix) {
-        oil_matrix_set_identity(&fullmat);
-        oil_matrix_scale(&fullmat, 1.0f, -1.0f, -1.0f);
-        oil_matrix_multiply(&fullmat, &fullmat, matrix);
-        glLoadTransposeMatrixf((GLfloat *)fullmat.data);
-        modelviewmatrix = key;
-        unset_modelviewmatrix = 0;
-    }
+    oil_matrix_set_identity(&fullmat);
+    oil_matrix_scale(&fullmat, 1.0f, -1.0f, -1.0f);
+    oil_matrix_multiply(&fullmat, &fullmat, matrix);
+    glLoadTransposeMatrixf((GLfloat *)fullmat.data);
 }
 
 static inline void bind_framebuffer(OILImage *im) {
