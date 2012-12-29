@@ -129,7 +129,27 @@ static void oil_backend_opengl_save(OILImage *im) {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags);
+
 static int oil_backend_opengl_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize) {
+    OILVertex vertices[] = {
+        {0.0, 0.0, 0.0, ((float)sx) / src->width, ((float)sy) / src->height, {255, 255, 255, 255}},
+        {1.0, 0.0, 0.0, ((float)sx + xsize) / src->width, ((float)sy) / src->height, {255, 255, 255, 255}},
+        {1.0, 1.0, 0.0, ((float)sx + xsize) / src->width, ((float)sy + ysize) / src->height, {255, 255, 255, 255}},
+        {0.0, 1.0, 0.0, ((float)sx) / src->width, ((float)sy + ysize) / src->height, {255, 255, 255, 255}},
+    };
+    unsigned int indices[] = {
+        0, 1, 2,
+        0, 2, 3,
+    };
+    OILMatrix mat;
+    oil_matrix_set_identity(&mat);
+    oil_matrix_orthographic(&mat, 0, im->width, im->height, 0, -1.0, 1.0);
+    oil_matrix_translate(&mat, dx, dy, 0.0);
+    oil_matrix_scale(&mat, xsize, ysize, 1.0);
+    
+    oil_backend_opengl_draw_triangles(im, &mat, src, vertices, indices, 6, 0);
+    
     return 1;
 }
 
@@ -140,7 +160,7 @@ static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, O
     oil_matrix_set_identity(&fullmat);
     oil_matrix_scale(&fullmat, 1.0f, -1.0f, 1.0f);
     oil_matrix_multiply(&fullmat, &fullmat, matrix);
-    glLoadMatrixf((GLfloat *)fullmat.data);
+    glLoadTransposeMatrixf((GLfloat *)fullmat.data);
     
     if (tex) {
         OpenGLPriv *texpriv = tex->backend_data;
