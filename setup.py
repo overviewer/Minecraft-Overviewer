@@ -22,6 +22,10 @@ class CustomBuildExt(build_ext):
                 e.extra_compile_args.append("-Wall")
                 e.extra_compile_args.append("-Werror")
         
+        for e in self.extensions:
+            e.libraries.append("X11")
+            e.libraries.append("GL")
+        
         # build in place, and in the build/ tree
         self.inplace = False
         build_ext.build_extensions(self)
@@ -77,6 +81,7 @@ oil_sources = [
     "oil-backend-cpu.c",
     "oil-backend-debug.c",
     "oil-backend-cpu-sse.c",
+    "oil-backend-opengl.c",
 ]
 
 setup(name='OIL',

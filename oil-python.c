@@ -774,5 +774,6 @@ PyMODINIT_FUNC initOIL(void) {
     PyModule_AddIntConstant(mod, "BACKEND_CPU", OIL_BACKEND_CPU);
     PyModule_AddIntConstant(mod, "BACKEND_DEBUG", OIL_BACKEND_DEBUG);
     PyModule_AddIntConstant(mod, "BACKEND_CPU_SSE", OIL_BACKEND_CPU_SSE);
+    PyModule_AddIntConstant(mod, "BACKEND_OPENGL", OIL_BACKEND_OPENGL);
 }
 

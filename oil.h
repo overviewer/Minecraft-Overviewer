@@ -21,6 +21,7 @@ typedef enum {
     OIL_BACKEND_CPU,
     OIL_BACKEND_DEBUG,
     OIL_BACKEND_CPU_SSE,
+    OIL_BACKEND_OPENGL,
     
     /* used to detect invalid backends */
     OIL_BACKEND_MAX
