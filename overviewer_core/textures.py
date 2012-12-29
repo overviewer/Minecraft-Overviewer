@@ -1374,6 +1374,8 @@ def slabs(self, blockid, data):
         top = side = self.terrain_images[7]
     elif texture== 5: # stone brick
         top = side = self.terrain_images[54]
+    elif texture== 6: # nether brick slab
+        top = side = self.terrain_images[224]
     else:
         return None
     
