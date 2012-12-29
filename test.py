@@ -28,7 +28,7 @@ image_paths = {
 
 images = {}
 
-NUM_COMPOSITES = 40
+NUM_COMPOSITES = 200
 NUM_QUADS = 90
 
 def pil_composite(out):

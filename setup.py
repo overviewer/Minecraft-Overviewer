@@ -39,6 +39,7 @@ class CustomBuildExt(build_ext):
                 e.define_macros.append(("ENABLE_OPENGL_BACKEND", None))
                 e.libraries.append("X11")
                 e.libraries.append("GL")
+                e.libraries.append("GLEW")
         
         # build in place, and in the build/ tree
         self.inplace = False
