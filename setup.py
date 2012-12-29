@@ -17,6 +17,7 @@ class CustomBuildExt(build_ext):
         if c == "unix":
             # customize the build options for this compilier
             for e in self.extensions:
+                e.extra_compile_args.append("-ffast-math")
                 e.extra_compile_args.append("-Wdeclaration-after-statement")
                 e.extra_compile_args.append("-Wall")
                 e.extra_compile_args.append("-Werror")
