@@ -18,6 +18,11 @@ typedef struct {
     GLuint colorbuffer;
 } OpenGLPriv;
 
+static int unset_modelviewmatrix = 1;
+static int modelviewmatrix = 0.0;
+static GLuint framebuffer = 0;
+static GLuint colorbuffer = 0;
+
 static int oil_backend_opengl_initialize() {
     static int initialized = 0;
     static int initialization_result = 0;
@@ -65,6 +70,9 @@ static int oil_backend_opengl_initialize() {
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0.0f);
     
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    
     /* set up the texture matrix to handle our flipped images */
     glMatrixMode(GL_TEXTURE);
     glScalef(1.0, -1.0, 1.0);
@@ -88,13 +96,13 @@ static void oil_backend_opengl_new(OILImage *im) {
     
     /* set up the color buffer */
     glBindTexture(GL_TEXTURE_2D, priv->colorbuffer);
+    colorbuffer = priv->colorbuffer;
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im->width, im->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, 0);
     
     /* set up our depth buffer */
     glBindRenderbuffer(GL_RENDERBUFFER, priv->depthbuffer);
@@ -103,6 +111,7 @@ static void oil_backend_opengl_new(OILImage *im) {
     
     /* bind everything to our framebuffer */
     glBindFramebuffer(GL_FRAMEBUFFER, priv->framebuffer);
+    framebuffer = priv->framebuffer;
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, priv->colorbuffer, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, priv->depthbuffer);
     
@@ -115,11 +124,22 @@ static void oil_backend_opengl_new(OILImage *im) {
     /* clear the default data */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    framebuffer = 0;
 }
 
 static void oil_backend_opengl_free(OILImage *im) {
     /* free our data struct */
     OpenGLPriv *priv = im->backend_data;
+    
+    if (colorbuffer == priv->colorbuffer) {
+        glBindTexture(GL_TEXTURE_2D, 0);
+        colorbuffer = 0;
+    }
+    
+    if (framebuffer == priv->framebuffer) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        framebuffer = 0;
+    }
     
     glDeleteFramebuffers(1, &(priv->framebuffer));
     glDeleteRenderbuffers(1, &(priv->depthbuffer));
@@ -128,18 +148,63 @@ static void oil_backend_opengl_free(OILImage *im) {
     free(priv);
 }
 
+static inline void load_matrix(OILMatrix *matrix) {
+    OILMatrix fullmat;
+    int i;
+    int *data = (int *)(matrix->data);
+    int key = data[0];
+    for (i = 1; i < (sizeof(float) * 16) / sizeof(int); i++) {
+        key ^= data[i];
+    }
+    if (modelviewmatrix != key || unset_modelviewmatrix) {
+        oil_matrix_set_identity(&fullmat);
+        oil_matrix_scale(&fullmat, 1.0f, -1.0f, -1.0f);
+        oil_matrix_multiply(&fullmat, &fullmat, matrix);
+        glLoadTransposeMatrixf((GLfloat *)fullmat.data);
+        modelviewmatrix = key;
+        unset_modelviewmatrix = 0;
+    }
+}
+
+static inline void bind_framebuffer(OILImage *im) {
+    if (im) {
+        OpenGLPriv *priv = im->backend_data;
+        if (framebuffer != priv->framebuffer) {
+            glBindFramebuffer(GL_FRAMEBUFFER, priv->framebuffer);
+            glViewport(0, 0, im->width, im->height);
+            framebuffer = priv->framebuffer;
+        }
+    } else {
+        if (framebuffer != 0) {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            framebuffer = 0;
+        }
+    }
+}
+
+static inline void bind_colorbuffer(OILImage *im) {
+    if (im) {
+        OpenGLPriv *priv = im->backend_data;
+        if (colorbuffer != priv->colorbuffer) {
+            glBindTexture(GL_TEXTURE_2D, priv->colorbuffer);
+            colorbuffer = priv->colorbuffer;
+        }
+    } else {
+        if (colorbuffer != 0) {
+            glBindTexture(GL_TEXTURE_2D, 0);
+            colorbuffer = 0;
+        }
+    }
+}
+
 static void oil_backend_opengl_load(OILImage *im) {
-    OpenGLPriv *priv = im->backend_data;
-    glBindFramebuffer(GL_FRAMEBUFFER, priv->framebuffer);
+    bind_framebuffer(im);
     glReadPixels(0, 0, im->width, im->height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, im->data);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 static void oil_backend_opengl_save(OILImage *im) {
-    OpenGLPriv *priv = im->backend_data;
-    glBindTexture(GL_TEXTURE_2D, priv->colorbuffer);
+    bind_colorbuffer(im);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, im->width, im->height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, im->data);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags);
@@ -168,25 +233,14 @@ static int oil_backend_opengl_composite(OILImage *im, OILImage *src, unsigned ch
 
 static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
     unsigned int i;
-    OpenGLPriv *priv = im->backend_data;
-    OILMatrix fullmat;
-    oil_matrix_set_identity(&fullmat);
-    oil_matrix_scale(&fullmat, 1.0f, -1.0f, -1.0f);
-    oil_matrix_multiply(&fullmat, &fullmat, matrix);
-    glLoadTransposeMatrixf((GLfloat *)fullmat.data);
     
-    if (tex) {
-        OpenGLPriv *texpriv = tex->backend_data;
-        glBindTexture(GL_TEXTURE_2D, texpriv->colorbuffer);
-        glEnable(GL_TEXTURE_2D);
+    load_matrix(matrix);
+    bind_framebuffer(im);
+    bind_colorbuffer(tex);
+    
+    if (!(flags & OIL_DEPTH_TEST)) {
+        glDisable(GL_DEPTH_TEST);
     }
-    
-    if (flags & OIL_DEPTH_TEST) {
-        glEnable(GL_DEPTH_TEST);
-    }
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, priv->framebuffer);
-    glViewport(0, 0, im->width, im->height);
     
     glBegin(GL_TRIANGLES);
     for (i = 0; i < indices_length; i += 3) {
@@ -206,16 +260,9 @@ static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, O
     }
     glEnd();
 
-    if (flags & OIL_DEPTH_TEST) {
-        glDisable(GL_DEPTH_TEST);
-    }
-    
-    if (tex) {
-        glDisable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (!(flags & OIL_DEPTH_TEST)) {
+        glEnable(GL_DEPTH_TEST);
+    }    
 }
 
 OILBackend oil_backend_opengl = {
