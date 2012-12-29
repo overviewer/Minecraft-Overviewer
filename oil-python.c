@@ -771,9 +771,8 @@ PyMODINIT_FUNC initOIL(void) {
     PyModule_AddIntConstant(mod, "DEPTH_TEST", OIL_DEPTH_TEST);
     
     /* add in the backend enums */
-    PyModule_AddIntConstant(mod, "BACKEND_CPU", OIL_BACKEND_CPU);
-    PyModule_AddIntConstant(mod, "BACKEND_DEBUG", OIL_BACKEND_DEBUG);
-    PyModule_AddIntConstant(mod, "BACKEND_CPU_SSE", OIL_BACKEND_CPU_SSE);
-    PyModule_AddIntConstant(mod, "BACKEND_OPENGL", OIL_BACKEND_OPENGL);
+#define BACKEND(name, symbol) PyModule_AddIntConstant(mod, "BACKEND_" #name, OIL_BACKEND_##name);
+#include "oil-backends.def"
+#undef BACKEND
 }
 

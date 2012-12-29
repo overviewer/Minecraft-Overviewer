@@ -18,10 +18,9 @@
 #endif /* _MSC_VER */
 
 typedef enum {
-    OIL_BACKEND_CPU,
-    OIL_BACKEND_DEBUG,
-    OIL_BACKEND_CPU_SSE,
-    OIL_BACKEND_OPENGL,
+#define BACKEND(name, symbol) OIL_BACKEND_##name,
+#include "oil-backends.def"
+#undef BACKEND
     
     /* used to detect invalid backends */
     OIL_BACKEND_MAX
