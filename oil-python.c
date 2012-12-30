@@ -660,6 +660,13 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+static PyObject *PyOILImage_clear(PyOILImage *self, PyObject *args) {
+    if (!PyArg_ParseTuple(args, ""))
+        return NULL;
+    oil_image_clear(self->im);
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef PyOILImage_methods[] = {
     {"load", (PyCFunction)PyOILImage_load, METH_VARARGS | METH_CLASS,
      "Load the given path name into an Image object."},
@@ -671,6 +678,8 @@ static PyMethodDef PyOILImage_methods[] = {
      "Composite another image on top of this one."},
     {"draw_triangles", (PyCFunction)PyOILImage_draw_triangles, METH_VARARGS,
      "Draw 3D triangles on top of the image."},
+    {"clear", (PyCFunction)PyOILImage_clear, METH_VARARGS,
+     "Clear the image."},
     {NULL, NULL, 0, NULL}
 };
 

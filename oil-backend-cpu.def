@@ -3,6 +3,7 @@
 #include "oil-backend-private.h"
 
 #include <float.h>
+#include <string.h>
 
 /* this file is designed to be included (once!) in C files in order to create
    a CPU backend. This is because most backends share a lot of code, and
@@ -297,6 +298,10 @@ static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILI
     }
 }
 
+static void oil_backend_cpu_clear(OILImage *im) {
+	memset(im->data, 0, im->width * im->height * sizeof(OILPixel));
+}
+
 OILBackend CPU_BACKEND_NAME = {
     oil_backend_cpu_initialize,
     oil_backend_cpu_new,
@@ -305,4 +310,5 @@ OILBackend CPU_BACKEND_NAME = {
     oil_backend_cpu_save,
     oil_backend_cpu_composite,
     oil_backend_cpu_draw_triangles,
+	oil_backend_cpu_clear,
 };

@@ -321,6 +321,11 @@ static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, O
     }    
 }
 
+static void oil_backend_opengl_clear(OILImage *im) {
+    bind_framebuffer(im);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
 OILBackend oil_backend_opengl = {
     oil_backend_opengl_initialize,
     oil_backend_opengl_new,
@@ -329,6 +334,7 @@ OILBackend oil_backend_opengl = {
     oil_backend_opengl_save,
     oil_backend_opengl_composite,
     oil_backend_opengl_draw_triangles,
+    oil_backend_opengl_clear,
 };
 
 #endif /* ENABLE_OPENGL_BACKEND */

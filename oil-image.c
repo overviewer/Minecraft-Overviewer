@@ -221,3 +221,10 @@ void oil_image_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OI
     /* ok now that that's out of the way, throw it to the backend */
     im->backend->draw_triangles(im, matrix, tex, vertices, vertices_length, indices, indices_length, flags);
 }
+
+void oil_image_clear(OILImage *im) {
+    if (!im)
+        return;
+    
+    im->backend->clear(im);
+}
