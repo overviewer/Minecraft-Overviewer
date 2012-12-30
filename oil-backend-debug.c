@@ -35,9 +35,9 @@ static int oil_backend_debug_composite(OILImage *im, OILImage *src, unsigned cha
     return oil_backend_cpu.composite(im, src, alpha, dx, dy, sx, sy, xsize, ysize);
 }
 
-static void oil_backend_debug_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
-    printf("draw_triangles(%p, %p, %p, %p, %p, %i, %i)\n", im, matrix, tex, vertices, indices, indices_length, flags);
-    oil_backend_cpu.draw_triangles(im, matrix, tex, vertices, indices, indices_length, flags);
+static void oil_backend_debug_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int vertices_length, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
+    printf("draw_triangles(%p, %p, %p, %p, %i, %p, %i, %i)\n", im, matrix, tex, vertices, vertices_length, indices, indices_length, flags);
+    oil_backend_cpu.draw_triangles(im, matrix, tex, vertices, vertices_length, indices, indices_length, flags);
 }
 
 OILBackend oil_backend_debug = {

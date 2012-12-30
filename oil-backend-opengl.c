@@ -6,11 +6,29 @@
 
 #include <stdio.h>
 
+#include <stddef.h>
+#include <string.h>
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+
+static const char *vshadersrc = " \
+void main() { \
+    gl_Position = gl_ModelViewMatrix * gl_Vertex; \
+    gl_FrontColor = gl_Color; \
+    gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0; \
+} \
+";
+
+static const char *fshadersrc = " \
+uniform sampler2D tex; \
+void main() { \
+    gl_FragColor = gl_Color * texture2D(tex, gl_TexCoord[0]); \
+} \
+";
 
 typedef struct {
     GLuint framebuffer;
@@ -29,6 +47,10 @@ static int oil_backend_opengl_initialize() {
     GLint attr[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
     XVisualInfo *vi;
     GLXContext glc;
+    int tmp;
+    GLuint vshader, fshader;
+    GLuint shader;
+    char infolog[1024];
     
     /* only run this once, ever */
     if (initialized)
@@ -70,13 +92,51 @@ static int oil_backend_opengl_initialize() {
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
-    
+        
     /* set up the texture matrix to handle our flipped images */
     glMatrixMode(GL_TEXTURE);
     glScalef(1.0, -1.0, 1.0);
     glTranslatef(0.0, 1.0, 0.0);
     glMatrixMode(GL_MODELVIEW);
     
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    tmp = strlen(vshadersrc);
+    glShaderSource(vshader, 1, &vshadersrc, &tmp);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &tmp);
+    if (tmp == GL_FALSE) {
+        glGetShaderInfoLog(vshader, 1024, &tmp, infolog);
+        infolog[tmp] = 0;
+        printf("%s", infolog);
+        return 0;
+    }
+    
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+    tmp = strlen(fshadersrc);
+    glShaderSource(fshader, 1, &fshadersrc, &tmp);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &tmp);
+    if (tmp == GL_FALSE) {
+        glGetShaderInfoLog(fshader, 1024, &tmp, infolog);
+        infolog[tmp] = 0;
+        printf("%s", infolog);
+        return 0;
+    }
+    
+    shader = glCreateProgram();
+    glAttachShader(shader, vshader);
+    glAttachShader(shader, fshader);
+    glLinkProgram(shader);
+    glGetProgramiv(shader, GL_LINK_STATUS, &tmp);
+    if (tmp == GL_FALSE) {
+        glGetProgramInfoLog(shader, 1024, &tmp, infolog);
+        infolog[tmp] = 0;
+        printf("%s", infolog);
+        return 0;
+    }
+    
+    glUseProgram(shader);
+
     /* printf("vendor: %s\n", (const char*)glGetString(GL_VENDOR)); */
     
     initialization_result = 1;
@@ -195,7 +255,7 @@ static void oil_backend_opengl_save(OILImage *im) {
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, im->width, im->height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, im->data);
 }
 
-static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags);
+static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int vertices_length, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags);
 
 static int oil_backend_opengl_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize) {
     OILVertex vertices[] = {
@@ -214,40 +274,44 @@ static int oil_backend_opengl_composite(OILImage *im, OILImage *src, unsigned ch
     oil_matrix_translate(&mat, dx, dy, 0.0);
     oil_matrix_scale(&mat, xsize, ysize, 1.0);
     
-    oil_backend_opengl_draw_triangles(im, &mat, src, vertices, indices, 6, 0);
+    oil_backend_opengl_draw_triangles(im, &mat, src, vertices, 4, indices, 6, 0);
     
     return 1;
 }
 
-static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
+static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int vertices_length, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
     unsigned int i;
     
     load_matrix(matrix);
     bind_framebuffer(im);
     bind_colorbuffer(tex);
     
+    /* set up any drawing flags */
     if (!(flags & OIL_DEPTH_TEST)) {
         glDisable(GL_DEPTH_TEST);
     }
-    
+
     glBegin(GL_TRIANGLES);
     for (i = 0; i < indices_length; i += 3) {
         OILVertex v0 = vertices[indices[i]];
         OILVertex v1 = vertices[indices[i + 1]];
         OILVertex v2 = vertices[indices[i + 2]];
         
-        glColor4f(v0.color.r / 255.0, v0.color.g / 255.0, v0.color.b / 255.0, v0.color.a / 255.0);
         glTexCoord2f(v0.s, v0.t);
+        glColor4f(v0.color.r / 255.0, v0.color.g / 255.0, v0.color.b / 255.0, v0.color.a / 255.0);
         glVertex3f(v0.x, v0.y, v0.z);
-        glColor4f(v1.color.r / 255.0, v1.color.g / 255.0, v1.color.b / 255.0, v1.color.a / 255.0);
+
         glTexCoord2f(v1.s, v1.t);
+        glColor4f(v1.color.r / 255.0, v1.color.g / 255.0, v1.color.b / 255.0, v1.color.a / 255.0);
         glVertex3f(v1.x, v1.y, v1.z);
-        glColor4f(v2.color.r / 255.0, v2.color.g / 255.0, v2.color.b / 255.0, v2.color.a / 255.0);
+
         glTexCoord2f(v2.s, v2.t);
+        glColor4f(v2.color.r / 255.0, v2.color.g / 255.0, v2.color.b / 255.0, v2.color.a / 255.0);
         glVertex3f(v2.x, v2.y, v2.z);
     }
     glEnd();
-
+    
+    /* undo our drawing flags */
     if (!(flags & OIL_DEPTH_TEST)) {
         glEnable(GL_DEPTH_TEST);
     }    

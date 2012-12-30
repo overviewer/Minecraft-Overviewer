@@ -269,7 +269,7 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
     }
 }
 
-static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
+static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int vertices_length, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags) {
     OILMatrix realmat;
     unsigned int i;
     

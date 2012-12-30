@@ -653,7 +653,7 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     Py_DECREF(pyvertices);
     Py_DECREF(pyindices);
     
-    oil_image_draw_triangles(self->im, &(matrix->matrix), tex->im, vertices, indices, indices_length, flags);
+    oil_image_draw_triangles(self->im, &(matrix->matrix), tex->im, vertices, vertices_length, indices, indices_length, flags);
     
     free(vertices);
     free(indices);
