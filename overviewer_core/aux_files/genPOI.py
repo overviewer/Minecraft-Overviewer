@@ -100,12 +100,14 @@ def handlePlayers(rset, render, worldpath):
                      "z": data['SpawnZ']}
             rset._pois['Players'].append(spawn)
 
-def handleManual(rset, render, manualpois):
+def handleManual(rset, manualpois):
     if not hasattr(rset, "_pois"):
         rset._pois = dict(TileEntities=[], Entities=[])
     
+    rset._pois['Manual'] = []
+
     if manualpois:
-        rset._pois['Manual'] = manualpois
+        rset._pois['Manual'].extend(manualpois)
 
 def main():
 
@@ -184,7 +186,7 @@ def main():
 
         handleEntities(rset, os.path.join(destdir, rname), render, rname)
         handlePlayers(rset, render, worldpath)
-        handleManual(rset, render, config['manualpois'])
+        handleManual(rset, render['manualpois'])
 
     logging.info("Done scanning regions")
     logging.info("Writing out javascript files")
