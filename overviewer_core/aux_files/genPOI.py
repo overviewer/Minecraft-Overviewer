@@ -100,6 +100,15 @@ def handlePlayers(rset, render, worldpath):
                      "z": data['SpawnZ']}
             rset._pois['Players'].append(spawn)
 
+def handleManual(rset, manualpois):
+    if not hasattr(rset, "_pois"):
+        rset._pois = dict(TileEntities=[], Entities=[])
+    
+    rset._pois['Manual'] = []
+
+    if manualpois:
+        rset._pois['Manual'].extend(manualpois)
+
 def main():
 
     if os.path.basename(sys.argv[0]) == """genPOI.py""":
@@ -177,6 +186,7 @@ def main():
 
         handleEntities(rset, os.path.join(destdir, rname), render, rname)
         handlePlayers(rset, render, worldpath)
+        handleManual(rset, render['manualpois'])
 
     logging.info("Done scanning regions")
     logging.info("Writing out javascript files")
@@ -207,6 +217,15 @@ def main():
                     d.update({"createInfoWindow": poi['createInfoWindow']})
                 markerSetDict[name]['raw'].append(d)
         for poi in rset._pois['Players']:
+            result = filter_function(poi)
+            if result:
+                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if "icon" in poi:
+                    d.update({"icon": poi['icon']})
+                if "createInfoWindow" in poi:
+                    d.update({"createInfoWindow": poi['createInfoWindow']})
+                markerSetDict[name]['raw'].append(d)
+        for poi in rset._pois['Manual']:
             result = filter_function(poi)
             if result:
                 d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
