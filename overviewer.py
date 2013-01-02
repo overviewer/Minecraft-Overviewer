@@ -503,6 +503,10 @@ if __name__ == "__main__":
     try:
         ret = main()
         util.nice_exit(ret)
+    except textures.TextureException, e:
+        # this isn't a "bug", so don't print scary traceback
+        logging.error(str(e))
+        util.nice_exit(1)
     except Exception, e:
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
