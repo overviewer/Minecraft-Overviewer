@@ -229,8 +229,8 @@ def validatePath(p):
 
 def validateManualPOIs(d):
     for poi in d:
-        if not poi['x'] or not poi['y'] or not poi['z'] or not poi['id']:
-            raise ValidationException("Not all POIs have x/y/z coordinates or an id.")
+        if not 'x' in poi or not 'y' in poi or not 'z' in poi or not 'id' in poi:
+            raise ValidationException("Not all POIs have x/y/z coordinates or an id: %r" % poi)
     return d
 
 def make_dictValidator(keyvalidator, valuevalidator):
