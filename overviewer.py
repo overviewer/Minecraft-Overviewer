@@ -432,7 +432,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # only pass to the TileSet the options it really cares about
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
-        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist","showspawn", "overlay","base", "poititle"])
+        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
         tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
         tilesets.append(tset)
@@ -503,6 +503,10 @@ if __name__ == "__main__":
     try:
         ret = main()
         util.nice_exit(ret)
+    except textures.TextureException, e:
+        # this isn't a "bug", so don't print scary traceback
+        logging.error(str(e))
+        util.nice_exit(1)
     except Exception, e:
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help

@@ -16,40 +16,51 @@
  */
 
 #include "../overviewer.h"
+#include "nether.h"
+
+static void
+walk_chunk(RenderState *state, RenderPrimitiveNether *data) {
+    int x, y, z;
+    int id;
+
+    for (x = 0; x < WIDTH; x++) {
+        for (z = 0; z < DEPTH; z++) {
+            id = get_data(state, BLOCKS, x, NETHER_ROOF - (state->chunky * 16), z);
+            if (id == 7) {
+                data->remove_block[x][NETHER_ROOF][z] = 1;
+                id = get_data(state, BLOCKS, x, (NETHER_ROOF + 1) - (state->chunky * 16), z);
+                if (id == 39 || id == 40)
+                    data->remove_block[x][NETHER_ROOF + 1][z] = 1;
+            }
+
+            for (y = NETHER_ROOF-1; y>=0; y--) {
+                id = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
+                if (id == 7 || id == 87)
+                    data->remove_block[x][y][z] = 1;
+                else
+                    break;
+            }
+        }
+    }
+    data->walked_chunk = 1;
+}
 
 static int
 nether_hidden(void *data, RenderState *state, int x, int y, int z) {
-    /* hide all blocks above all air blocks
-       
-       due to how the nether is currently generated, this will also count
-       empty sections as 'solid'
-    */
-    unsigned char missing_section = 0;
-    while (y < (SECTIONS_PER_CHUNK - state->chunky) * 16)
-    {
-        if (state->chunks[1][1].sections[state->chunky + (y / 16)].blocks == NULL) {
-            missing_section = 1;
-            y += 16;
-            continue;
-        } else {
-            /* if we passed through a missing section, but now are back in,
-               that counts as air */
-            if (missing_section)
-                return 0;
-            missing_section = 0;
-        }
-        
-        if (!missing_section && get_data(state, BLOCKS, x, y, z) == 0)
-        {
-                return 0;
-        } 
-        y++;
-    }
-    return 1;
+    RenderPrimitiveNether* self;
+    int real_y;
+
+    self = (RenderPrimitiveNether *)data;
+
+    if (!(self->walked_chunk))
+        walk_chunk(state, self);
+
+    real_y = y + (state->chunky * 16);
+    return self->remove_block[x][real_y][z];
 }
 
 RenderPrimitiveInterface primitive_nether = {
-    "nether", 0,
+    "nether", sizeof(RenderPrimitiveNether),
     NULL,
     NULL,
     NULL,

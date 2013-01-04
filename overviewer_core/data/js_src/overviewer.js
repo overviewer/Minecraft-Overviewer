@@ -41,7 +41,12 @@ overviewer.collections = {
         /**
          * holds a reference to the spawn marker. 
          */
-        'spawnMarker': null
+        'spawnMarker': null,
+	
+	/**
+	 * if a user visits a specific URL, this marker will point to the coordinates in the hash
+	 */
+        'locationMarker': null
     };
 
 overviewer.classes = {

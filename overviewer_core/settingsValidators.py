@@ -195,12 +195,13 @@ def validateOutputDir(d):
 def validateCrop(value):
     if len(value) != 4:
         raise ValidationException("The value for the 'crop' setting must be a tuple of length 4")
-    value = tuple(int(x) for x in value)
-    if value[0] >= value[2]:
-        value[0],value[2] = value[2],value[0]
-    if value[1] >= value[3]:
-        value[1],value[3] = value[3],value[1]
-    return value
+    a, b, c, d = tuple(int(x) for x in value)
+
+    if a >= c:
+        a, c = c, a
+    if b >= d:
+        b, d = d, b
+    return (a, b, c, d)
 
 def validateObserver(observer):
     if all(map(lambda m: hasattr(observer, m), ['start', 'add', 'update', 'finish'])):
@@ -225,6 +226,12 @@ def validatePath(p):
     abs_path = expand_path(path)
     if not os.path.exists(abs_path):
         raise ValidationException("'%s' does not exist. Path initially given as '%s'" % (abs_path,p))
+
+def validateManualPOIs(d):
+    for poi in d:
+        if not 'x' in poi or not 'y' in poi or not 'z' in poi or not 'id' in poi:
+            raise ValidationException("Not all POIs have x/y/z coordinates or an id: %r" % poi)
+    return d
 
 def make_dictValidator(keyvalidator, valuevalidator):
     """Compose and return a dict validator -- a validator that validates each

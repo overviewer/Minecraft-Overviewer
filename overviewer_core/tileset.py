@@ -519,7 +519,7 @@ class TileSet(object):
                 zoomLevels = self.treedepth,
                 minZoom = 0,
                 defaultZoom = self.options.get('defaultzoom'),
-                maxZoom = self.treedepth,
+                maxZoom = self.options.get('maxzoom', self.treedepth),
                 path = self.options.get('name'),
                 base = self.options.get('base'),
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),

@@ -85,6 +85,8 @@ renders = Setting(required=True, default=util.OrderedDict(),
             "base": Setting(required=False, validator=validateStr, default=""),
             "poititle": Setting(required=False, validator=validateStr, default="Signs"),
             "customwebassets": Setting(required=False, validator=validateWebAssetsPath, default=None),
+            "maxzoom": Setting(required=False, validator=validateInt, default=None),
+            "manualpois": Setting(required=False, validator=validateManualPOIs, default=[]),
             # Remove this eventually (once people update their configs)
             "worldname": Setting(required=False, default=None,
                 validator=error("The option 'worldname' is now called 'world'. Please update your config files")),

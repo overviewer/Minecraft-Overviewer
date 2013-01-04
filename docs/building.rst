@@ -103,13 +103,19 @@ Then to build::
 OSX
 ---
 
+.. note::
+
+    You will need to have XCode and the XCode Command Line Tools installed (the
+    Command Line Tools can be installed by going to the Downloads tab under the
+    Xcode Preferences dialog).
+
 1. Download the source code for PIL from http://www.pythonware.com/products/pil/
 2. Compile the PIL code (``python ./setup.py build``)
 3. Install PIL (``sudo python ./setup.py install``)
-4. Find the path to libImaging in the PIL source tree
-5. Build Minecraft Overviewer with the path from step 3 as the value for C_INCLUDE_PATH::
+4. Find the path to the ``libImaging`` directory in the PIL source tree.
+5. Build Minecraft Overviewer with the path from step 4 as the value for PIL_INCLUDE_DIR::
 
-    C_INCLUDE_PATH="path from step 3" python ./setup.py build
+    PIL_INCLUDE_DIR="path from step 4" python ./setup.py build
 
 The following script (copied into your MCO source directory) should handle everything for you:
 
@@ -128,7 +134,7 @@ The following script (copied into your MCO source directory) should handle every
     fi
 
     # build MCO
-    C_INCLUDE_PATH="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
+    PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
 
 FreeBSD
 -------

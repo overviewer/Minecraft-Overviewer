@@ -53,6 +53,7 @@ feature.
  * Alex Cline <cline@vivisimo.com>
  * Andrew Clunis <andrew@orospakr.ca>
  * CounterPillow <spam@tes-cheese.ch>
+ * Mark Crichton <crichton@gmail.com>
  * Johannes Dewender <github@JonnyJD.net>
  * Michael Fallows <michael@fallo.ws>
  * Ryan Finnie <ryan@feh.colobox.com>
