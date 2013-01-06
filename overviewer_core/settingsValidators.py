@@ -182,6 +182,8 @@ def validateStr(s):
     return str(s)
 
 def validateDimension(d):
+    # returns (original, argument to get_type)
+    
     # these are provided as arguments to RegionSet.get_type()
     pretty_names = {
         "nether": "DIM-1",
@@ -191,12 +193,9 @@ def validateDimension(d):
     }
     
     try:
-        return pretty_names[d]
+        return (d, pretty_names[d])
     except KeyError:
-        if d.startswith("DIM"):
-            return d
-    
-    raise ValidationException("%r is not a valid dimension" % d)
+        return (d, d)
 
 def validateOutputDir(d):
     _, d = checkBadEscape(d)

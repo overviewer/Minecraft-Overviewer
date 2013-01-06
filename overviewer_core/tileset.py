@@ -524,7 +524,7 @@ class TileSet(object):
                 base = self.options.get('base'),
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') +
-                    (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
+                    (" - " + self.options.get('dimension')[0] if self.options.get('dimension')[1] != 0 else ''),
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
                 isOverlay = isOverlay,

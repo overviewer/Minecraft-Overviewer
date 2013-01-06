@@ -400,9 +400,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         else:
             tex = texcache[texopts_key]
 
-        rset = w.get_regionset(render['dimension'])
+        rset = w.get_regionset(render['dimension'][1])
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
+            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
             return 1
 
         #################
