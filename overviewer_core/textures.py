@@ -3519,6 +3519,12 @@ block(blockid=129, top_index=171)
 # emerald block
 block(blockid=133, top_index=25)
 
+# nether quartz ore
+block(blockid=153, top_index=191)
+
+# block of redstone
+block(blockid=152, top_index=26)
+
 # cocoa plant
 @material(blockid=127, data=range(12), transparent=True)
 def cocoa_plant(self, blockid, data):
