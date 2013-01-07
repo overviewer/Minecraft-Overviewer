@@ -2982,6 +2982,70 @@ def repeater(self, blockid, data):
     alpha_over(img, torch, moving_torch, torch)
 
     return img
+
+# redstone comparator (149 is inactive, 150 is active)
+@material(blockid=[149,150], data=range(16), transparent=True, nospawn=True)
+def comparator(self, blockid, data):
+
+    # rotation
+    # add self.rotation to the lower 2 bits,  mod 4
+    data = data & 0b1100 | (((data & 0b11) + self.rotation) % 4)
+
+
+    top = self.terrain_images[187] if blockid == 149 else self.terrain_images[188]
+    side = self.terrain_images[5]
+    increment = 13
+
+    if (data & 0x3) == 0: # pointing north
+        pass
+        static_torch = (-3,-1)
+        torch = ((0,2),(6,-1))
+    
+    if (data & 0x3) == 1: # pointing east
+        top = top.rotate(270)
+        static_torch = (5,-1)
+        torch = ((-4,-1),(0,2))
+
+    if (data & 0x3) == 2: # pointing south
+        top = top.rotate(180)
+        static_torch = (5,3)
+        torch = ((0,-4),(-4,-1))
+
+    if (data & 0x3) == 3: # pointing west
+        top = top.rotate(90)
+        static_torch = (-3,3)
+        torch = ((1,-4),(6,-1))
+
+
+    def build_torch(active):
+        # compose a "3d" redstone torch
+        t = self.terrain_images[115].copy() if not active else self.terrain_images[99].copy()
+        torch = Image.new("RGBA", (24,24), self.bgcolor)
+        
+        t_crop = t.crop((2,2,14,14))
+        slice = t_crop.copy()
+        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        
+        alpha_over(torch, slice, (6,4))
+        alpha_over(torch, t_crop, (5,5))
+        alpha_over(torch, t_crop, (6,5))
+        alpha_over(torch, slice, (6,6))
+
+        return torch
+    
+    active_torch = build_torch(True)
+    inactive_torch = build_torch(False)
+    back_torch = active_torch if blockid == 150 else inactive_torch
+    static_torch_img = active_torch if (data & 0b100 == 0b100) else inactive_torch 
+
+    img = self.build_full_block( (top, increment), None, None, side, side)
+
+    alpha_over(img, static_torch_img, static_torch, static_torch_img) 
+    alpha_over(img, back_torch, torch[0], back_torch) 
+    alpha_over(img, back_torch, torch[1], back_torch) 
+    return img
+    
     
 # trapdoor
 # TODO the trapdoor is looks like a sprite when opened, that's not good
