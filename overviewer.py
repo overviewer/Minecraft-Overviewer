@@ -62,7 +62,7 @@ def main():
     parser = OptionParser(usage=helptext, add_help_option=False)
     parser.add_option("-h", "--help", dest="help", action="store_true",
             help="show this help message and exit")
-    parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
+    parser.add_option("-c", "--config", dest="config", action="store", help="Specify the config file to use.")
     parser.add_option("-p", "--processes", dest="procs", action="store", type="int",
             help="The number of local worker processes to spawn. Defaults to the number of CPU cores your computer has")
 
