@@ -54,7 +54,7 @@ class Textures(object):
         # this is set in in generate()
         self.generated = False
 
-        # see load_image()
+        # see load_image_texture()
         self.texture_cache = {}
     
     ##
@@ -85,7 +85,7 @@ class Textures(object):
     def generate(self):
         
         # generate biome grass mask
-        self.biome_grass_texture = self.build_block(self.load_image("textures/blocks/grass_top.png"), self.load_image("textures/blocks/grass_side_overlay.png"))
+        self.biome_grass_texture = self.build_block(self.load_image_texture("textures/blocks/grass_top.png"), self.load_image_texture("textures/blocks/grass_side_overlay.png"))
         
         # generate the blocks
         global blockmap_generators
@@ -222,16 +222,30 @@ class Textures(object):
 
         raise TextureException("Could not find the file `{0}'. Try specifying the 'texturepath' option in your config file. Set it to the directory where I can find {0}. Also see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>".format(filename))
 
+    def load_image_texture(self, filename):
+        # Textures may be animated or in a different resolution than 16x16.  
+        # This method will always return a 16x16 image
+        if filename in self.texture_cache:
+            return self.texture_cache[filename]
+
+        img = self.load_image(filename)
+
+        w,h = img.size
+        if w != h:
+            img = img.crop((0,0,w,w))
+        if w != 16:
+            img = img.resize((16, 16), Image.ANTIALIAS)
+
+        self.texture_cache[filename] = img
+        return img
+
     def load_image(self, filename):
         """Returns an image object"""
         
-        if filename in self.texture_cache:
-            return self.texture_cache[filename]
 
         fileobj = self.find_file(filename)
         buffer = StringIO(fileobj.read())
         img = Image.open(buffer).convert("RGBA")
-        self.texture_cache[filename] = img
         return img
 
 
@@ -723,7 +737,7 @@ def block(blockid=[], top_image=None, side_image=None, **kwargs):
     
     @material(blockid=blockid, **new_kwargs)
     def inner_block(self, unused_id, unused_data):
-        return self.build_block(self.load_image(top_image), self.load_image(side_image))
+        return self.build_block(self.load_image_texture(top_image), self.load_image_texture(side_image))
     return inner_block
 
 # shortcut function for sprite blocks, defaults to transparent, nodata
@@ -736,7 +750,7 @@ def sprite(blockid=[], imagename=None, **kwargs):
     
     @material(blockid=blockid, **new_kwargs)
     def inner_sprite(self, unused_id, unused_data):
-        return self.build_sprite(self.load_image(imagename))
+        return self.build_sprite(self.load_image_texture(imagename))
     return inner_sprite
 
 # shortcut function for billboard blocks, defaults to transparent, nodata
@@ -749,7 +763,7 @@ def billboard(blockid=[], imagename=None, **kwargs):
     
     @material(blockid=blockid, **new_kwargs)
     def inner_billboard(self, unused_id, unused_data):
-        return self.build_billboard(self.load_image(imagename))
+        return self.build_billboard(self.load_image_texture(imagename))
     return inner_billboard
 
 ##
@@ -762,10 +776,10 @@ block(blockid=1, top_image="textures/blocks/stone.png")
 @material(blockid=2, data=range(11)+[0x10,], solid=True)
 def grass(self, blockid, data):
     # 0x10 bit means SNOW
-    side_img = self.load_image("textures/blocks/grass_side.png")
+    side_img = self.load_image_texture("textures/blocks/grass_side.png")
     if data & 0x10:
-        side_img = self.load_image("textures/blocks/snow_side.png")
-    img = self.build_block(self.load_image("textures/blocks/grass_top.png"), side_img)
+        side_img = self.load_image_texture("textures/blocks/snow_side.png")
+    img = self.build_block(self.load_image_texture("textures/blocks/grass_top.png"), side_img)
     if not data & 0x10:
         alpha_over(img, self.biome_grass_texture, (0, 0), self.biome_grass_texture)
     return img
@@ -779,25 +793,25 @@ block(blockid=4, top_image="textures/blocks/stonebrick.png")
 @material(blockid=5, data=range(4), solid=True)
 def wooden_planks(self, blockid, data):
     if data == 0: # normal
-        return self.build_block(self.load_image("textures/blocks/wood.png"), self.load_image("textures/blocks/wood.png"))
+        return self.build_block(self.load_image_texture("textures/blocks/wood.png"), self.load_image_texture("textures/blocks/wood.png"))
     if data == 1: # pine
-        return self.build_block(self.load_image("textures/blocks/wood_spruce.png"),self.load_image("textures/blocks/wood_spruce.png"))
+        return self.build_block(self.load_image_texture("textures/blocks/wood_spruce.png"),self.load_image_texture("textures/blocks/wood_spruce.png"))
     if data == 2: # birch
-        return self.build_block(self.load_image("textures/blocks/wood_birch.png"),self.load_image("textures/blocks/wood_birch.png"))
+        return self.build_block(self.load_image_texture("textures/blocks/wood_birch.png"),self.load_image_texture("textures/blocks/wood_birch.png"))
     if data == 3: # jungle wood
-        return self.build_block(self.load_image("textures/blocks/wood_jungle.png"),self.load_image("textures/blocks/wood_jungle.png"))
+        return self.build_block(self.load_image_texture("textures/blocks/wood_jungle.png"),self.load_image_texture("textures/blocks/wood_jungle.png"))
 
 @material(blockid=6, data=range(16), transparent=True)
 def saplings(self, blockid, data):
     # usual saplings
-    tex = self.load_image("textures/blocks/sapling.png")
+    tex = self.load_image_texture("textures/blocks/sapling.png")
     
     if data & 0x3 == 1: # spruce sapling
-        tex = self.load_image("textures/blocks/sapling_spruce.png")
+        tex = self.load_image_texture("textures/blocks/sapling_spruce.png")
     elif data & 0x3 == 2: # birch sapling
-        tex = self.load_image("textures/blocks/sapling_birch.png")
+        tex = self.load_image_texture("textures/blocks/sapling_birch.png")
     elif data & 0x3 == 3: # jungle sapling
-        tex = self.load_image("textures/blocks/sapling_jungle.png")
+        tex = self.load_image_texture("textures/blocks/sapling_jungle.png")
     return self.build_sprite(tex)
 
 # bedrock
@@ -815,9 +829,9 @@ def no_inner_surfaces(self, blockid, data):
     if blockid == 9:
         texture = self.load_water()
     elif blockid == 20:
-        texture = self.load_image("textures/blocks/glass.png")
+        texture = self.load_image_texture("textures/blocks/glass.png")
     else:
-        texture = self.load_image("textures/blocks/ice.png")
+        texture = self.load_image_texture("textures/blocks/ice.png")
         
     if (data & 0b10000) == 16:
         top = texture
@@ -880,15 +894,15 @@ def wood(self, blockid, data):
         elif wood_orientation == 8: wood_orientation = 4
 
     # choose textures
-    top = self.load_image("textures/blocks/tree_top.png")
+    top = self.load_image_texture("textures/blocks/tree_top.png")
     if wood_type == 0: # normal
-        side = self.load_image("textures/blocks/tree_side.png")
+        side = self.load_image_texture("textures/blocks/tree_side.png")
     if wood_type == 1: # spruce
-        side = self.load_image("textures/blocks/tree_spruce.png")
+        side = self.load_image_texture("textures/blocks/tree_spruce.png")
     if wood_type == 2: # birch
-        side = self.load_image("textures/blocks/tree_birch.png")
+        side = self.load_image_texture("textures/blocks/tree_birch.png")
     if wood_type == 3: # jungle wood
-        side = self.load_image("textures/blocks/tree_jungle.png")
+        side = self.load_image_texture("textures/blocks/tree_jungle.png")
 
     # choose orientation and paste textures
     if wood_orientation == 0:
@@ -903,13 +917,13 @@ def leaves(self, blockid, data):
     # mask out the bits 4 and 8
     # they are used for player placed and check-for-decay blocks
     data = data & 0x3
-    t = self.load_image("textures/blocks/leaves.png")
+    t = self.load_image_texture("textures/blocks/leaves.png")
     if data == 1:
         # pine!
-        t = self.load_image("textures/blocks/leaves_spruce.png")
+        t = self.load_image_texture("textures/blocks/leaves_spruce.png")
     elif data == 3:
         # jungle tree
-        t = self.load_image("textures/blocks/leaves_jungle.png")
+        t = self.load_image_texture("textures/blocks/leaves_jungle.png")
     return self.build_block(t, t)
 
 # sponge
@@ -939,15 +953,15 @@ def furnaces(self, blockid, data):
         elif data == 4: data = 3
         elif data == 5: data = 2
     
-    top = self.load_image("textures/blocks/furnace_top.png")
-    side = self.load_image("textures/blocks/furnace_side.png")
+    top = self.load_image_texture("textures/blocks/furnace_top.png")
+    side = self.load_image_texture("textures/blocks/furnace_side.png")
     
     if blockid == 61:
-        front = self.load_image("textures/blocks/furnace_front.png")
+        front = self.load_image_texture("textures/blocks/furnace_front.png")
     elif blockid == 62:
-        front = self.load_image("textures/blocks/furnace_front_lit.png")
+        front = self.load_image_texture("textures/blocks/furnace_front_lit.png")
     elif blockid == 23:
-        front = self.load_image("textures/blocks/dispenser_front.png")
+        front = self.load_image_texture("textures/blocks/dispenser_front.png")
     
     if data == 3: # pointing west
         return self.build_full_block(top, None, None, side, front)
@@ -959,13 +973,13 @@ def furnaces(self, blockid, data):
 # sandstone
 @material(blockid=24, data=range(3), solid=True)
 def sandstone(self, blockid, data):
-    top = self.load_image("textures/blocks/sandstone_top.png")
+    top = self.load_image_texture("textures/blocks/sandstone_top.png")
     if data == 0: # normal
-        return self.build_block(top, self.load_image("textures/blocks/sandstone_side.png"))
+        return self.build_block(top, self.load_image_texture("textures/blocks/sandstone_side.png"))
     if data == 1: # hieroglyphic
-        return self.build_block(top, self.load_image("textures/blocks/sandstone_carved.png"))
+        return self.build_block(top, self.load_image_texture("textures/blocks/sandstone_carved.png"))
     if data == 2: # soft
-        return self.build_block(top, self.load_image("textures/blocks/sandstone_smooth.png"))
+        return self.build_block(top, self.load_image_texture("textures/blocks/sandstone_smooth.png"))
 
 # note block
 block(blockid=25, top_image="textures/blocks/musicBlock.png")
@@ -994,40 +1008,40 @@ def bed(self, blockid, data):
     left_face = None
     right_face = None
     if data & 0x8 == 0x8: # head of the bed
-        top = self.load_image("textures/blocks/bed_head_top.png")
+        top = self.load_image_texture("textures/blocks/bed_head_top.png")
         if data & 0x00 == 0x00: # head pointing to West
             top = top.copy().rotate(270)
-            left_face = self.load_image("textures/blocks/bed_head_side.png")
-            right_face = self.load_image("textures/blocks/bed_head_end.png")
+            left_face = self.load_image_texture("textures/blocks/bed_head_side.png")
+            right_face = self.load_image_texture("textures/blocks/bed_head_end.png")
         if data & 0x01 == 0x01: # ... North
             top = top.rotate(270)
-            left_face = self.load_image("textures/blocks/bed_head_end.png")
-            right_face = self.load_image("textures/blocks/bed_head_side.png")
+            left_face = self.load_image_texture("textures/blocks/bed_head_end.png")
+            right_face = self.load_image_texture("textures/blocks/bed_head_side.png")
         if data & 0x02 == 0x02: # East
             top = top.rotate(180)
-            left_face = self.load_image("textures/blocks/bed_head_side.png").transpose(Image.FLIP_LEFT_RIGHT)
+            left_face = self.load_image_texture("textures/blocks/bed_head_side.png").transpose(Image.FLIP_LEFT_RIGHT)
             right_face = None
         if data & 0x03 == 0x03: # South
             right_face = None
-            right_face = self.load_image("textures/blocks/bed_head_side.png").transpose(Image.FLIP_LEFT_RIGHT)
+            right_face = self.load_image_texture("textures/blocks/bed_head_side.png").transpose(Image.FLIP_LEFT_RIGHT)
     
     else: # foot of the bed
-        top = self.load_image("textures/blocks/bed_feet_top.png")
+        top = self.load_image_texture("textures/blocks/bed_feet_top.png")
         if data & 0x00 == 0x00: # head pointing to West
             top = top.rotate(270)
-            left_face = self.load_image("textures/blocks/bed_feet_side.png")
+            left_face = self.load_image_texture("textures/blocks/bed_feet_side.png")
             right_face = None
         if data & 0x01 == 0x01: # ... North
             top = top.rotate(270)
             left_face = None
-            right_face = self.load_image("textures/blocks/bed_feet_side.png")
+            right_face = self.load_image_texture("textures/blocks/bed_feet_side.png")
         if data & 0x02 == 0x02: # East
             top = top.rotate(180)
-            left_face = self.load_image("textures/blocks/bed_feet_side.png").transpose(Image.FLIP_LEFT_RIGHT)
-            right_face = self.load_image("textures/blocks/bed_feet_end.png").transpose(Image.FLIP_LEFT_RIGHT)
+            left_face = self.load_image_texture("textures/blocks/bed_feet_side.png").transpose(Image.FLIP_LEFT_RIGHT)
+            right_face = self.load_image_texture("textures/blocks/bed_feet_end.png").transpose(Image.FLIP_LEFT_RIGHT)
         if data & 0x03 == 0x03: # South
-            left_face = self.load_image("textures/blocks/bed_feet_end.png")
-            right_face = self.load_image("textures/blocks/bed_feet_side.png").transpose(Image.FLIP_LEFT_RIGHT)
+            left_face = self.load_image_texture("textures/blocks/bed_feet_end.png")
+            right_face = self.load_image_texture("textures/blocks/bed_feet_side.png").transpose(Image.FLIP_LEFT_RIGHT)
     
     top = (top, increment)
     return self.build_full_block(top, None, None, left_face, right_face)
@@ -1078,22 +1092,22 @@ def rails(self, blockid, data):
     
     if blockid == 27: # powered rail
         if data & 0x8 == 0: # unpowered
-            raw_straight = self.load_image("textures/blocks/goldenRail.png")
-            raw_corner = self.load_image("textures/blocks/rail_turn.png")    # they don't exist but make the code
+            raw_straight = self.load_image_texture("textures/blocks/goldenRail.png")
+            raw_corner = self.load_image_texture("textures/blocks/rail_turn.png")    # they don't exist but make the code
                                                 # much simplier
         elif data & 0x8 == 0x8: # powered
-            raw_straight = self.load_image("textures/blocks/goldenRail_powered.png")
-            raw_corner = self.load_image("textures/blocks/rail_turn.png")    # leave corners for code simplicity
+            raw_straight = self.load_image_texture("textures/blocks/goldenRail_powered.png")
+            raw_corner = self.load_image_texture("textures/blocks/rail_turn.png")    # leave corners for code simplicity
         # filter the 'powered' bit
         data = data & 0x7
             
     elif blockid == 28: # detector rail
-        raw_straight = self.load_image("textures/blocks/detectorRail.png")
-        raw_corner = self.load_image("textures/blocks/rail_turn.png")    # leave corners for code simplicity
+        raw_straight = self.load_image_texture("textures/blocks/detectorRail.png")
+        raw_corner = self.load_image_texture("textures/blocks/rail_turn.png")    # leave corners for code simplicity
         
     elif blockid == 66: # normal rail
-        raw_straight = self.load_image("textures/blocks/rail.png")
-        raw_corner = self.load_image("textures/blocks/rail_turn.png")
+        raw_straight = self.load_image_texture("textures/blocks/rail.png")
+        raw_corner = self.load_image_texture("textures/blocks/rail_turn.png")
         
     ## use transform_image to scale and shear
     if data == 0:
@@ -1161,14 +1175,14 @@ def piston(self, blockid, data):
         elif (data & 0b0111) == 5: data = data & 0b1000 | 2
     
     if blockid == 29: # sticky
-        piston_t = self.load_image("textures/blocks/piston_top_sticky.png").copy()
+        piston_t = self.load_image_texture("textures/blocks/piston_top_sticky.png").copy()
     else: # normal
-        piston_t = self.load_image("textures/blocks/piston_top.png").copy()
+        piston_t = self.load_image_texture("textures/blocks/piston_top.png").copy()
         
     # other textures
-    side_t = self.load_image("textures/blocks/piston_side.png").copy()
-    back_t = self.load_image("textures/blocks/piston_bottom.png").copy()
-    interior_t = self.load_image("textures/blocks/piston_inner_top.png").copy()
+    side_t = self.load_image_texture("textures/blocks/piston_side.png").copy()
+    back_t = self.load_image_texture("textures/blocks/piston_bottom.png").copy()
+    interior_t = self.load_image_texture("textures/blocks/piston_inner_top.png").copy()
     
     if data & 0x08 == 0x08: # pushed out, non full blocks, tricky stuff
         # remove piston texture from piston body
@@ -1237,13 +1251,13 @@ def piston_extension(self, blockid, data):
         elif (data & 0b0111) == 5: data = data & 0b1000 | 2
     
     if (data & 0x8) == 0x8: # sticky
-        piston_t = self.load_image("textures/blocks/piston_top_sticky.png").copy()
+        piston_t = self.load_image_texture("textures/blocks/piston_top_sticky.png").copy()
     else: # normal
-        piston_t = self.load_image("textures/blocks/piston_top.png").copy()
+        piston_t = self.load_image_texture("textures/blocks/piston_top.png").copy()
     
     # other textures
-    side_t = self.load_image("textures/blocks/piston_side.png").copy()
-    back_t = self.load_image("textures/blocks/piston_top.png").copy()
+    side_t = self.load_image_texture("textures/blocks/piston_side.png").copy()
+    back_t = self.load_image_texture("textures/blocks/piston_top.png").copy()
     # crop piston body
     ImageDraw.Draw(side_t).rectangle((0, 4,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
     
@@ -1308,11 +1322,11 @@ sprite(blockid=30, imagename="textures/blocks/web.png", nospawn=True)
 @material(blockid=31, data=range(3), transparent=True)
 def tall_grass(self, blockid, data):
     if data == 0: # dead shrub
-        texture = self.load_image("textures/blocks/deadbush.png")
+        texture = self.load_image_texture("textures/blocks/deadbush.png")
     elif data == 1: # tall grass
-        texture = self.load_image("textures/blocks/tallgrass.png")
+        texture = self.load_image_texture("textures/blocks/tallgrass.png")
     elif data == 2: # fern
-        texture = self.load_image("textures/blocks/fern.png")
+        texture = self.load_image_texture("textures/blocks/fern.png")
     
     return self.build_billboard(texture)
 
@@ -1321,7 +1335,7 @@ billboard(blockid=32, imagename="textures/blocks/deadbush.png")
 
 @material(blockid=35, data=range(16), solid=True)
 def wool(self, blockid, data):
-    texture = self.load_image("textures/blocks/cloth_%d.png" % data)
+    texture = self.load_image_texture("textures/blocks/cloth_%d.png" % data)
     
     return self.build_block(texture, texture)
 
@@ -1345,21 +1359,21 @@ block(blockid=42, top_image="textures/blocks/blockIron.png")
 def slabs(self, blockid, data):
     texture = data & 7
     if texture== 0: # stone slab
-        top = self.load_image("textures/blocks/stoneslab_top.png")
-        side = self.load_image("textures/blocks/stoneslab_side.png")
+        top = self.load_image_texture("textures/blocks/stoneslab_top.png")
+        side = self.load_image_texture("textures/blocks/stoneslab_side.png")
     elif texture== 1: # smooth stone
-        top = self.load_image("textures/blocks/sandstone_top.png")
-        side = self.load_image("textures/blocks/sandstone_side.png")
+        top = self.load_image_texture("textures/blocks/sandstone_top.png")
+        side = self.load_image_texture("textures/blocks/sandstone_side.png")
     elif texture== 2: # wooden slab
-        top = side = self.load_image("textures/blocks/wood.png")
+        top = side = self.load_image_texture("textures/blocks/wood.png")
     elif texture== 3: # cobblestone slab
-        top = side = self.load_image("textures/blocks/stonebrick.png")
+        top = side = self.load_image_texture("textures/blocks/stonebrick.png")
     elif texture== 4: # brick
-        top = side = self.load_image("textures/blocks/brick.png")
+        top = side = self.load_image_texture("textures/blocks/brick.png")
     elif texture== 5: # stone brick
-        top = side = self.load_image("textures/blocks/stonebricksmooth.png")
+        top = side = self.load_image_texture("textures/blocks/stonebricksmooth.png")
     elif texture== 6: # nether brick slab
-        top = side = self.load_image("textures/blocks/netherBrick.png")
+        top = side = self.load_image_texture("textures/blocks/netherBrick.png")
     else:
         return None
     
@@ -1428,11 +1442,11 @@ def torches(self, blockid, data):
     
     # choose the proper texture
     if blockid == 50: # torch
-        small = self.load_image("textures/blocks/torch.png")
+        small = self.load_image_texture("textures/blocks/torch.png")
     elif blockid == 75: # off redstone torch
-        small = self.load_image("textures/blocks/redtorch.png")
+        small = self.load_image_texture("textures/blocks/redtorch.png")
     else: # on redstone torch
-        small = self.load_image("textures/blocks/redtorch_lit.png")
+        small = self.load_image_texture("textures/blocks/redtorch_lit.png")
         
     # compose a torch bigger than the normal
     # (better for doing transformations)
@@ -1522,23 +1536,23 @@ def stairs(self, blockid, data):
     data = data | upside_down
 
     if blockid == 53: # wooden
-        texture = self.load_image("textures/blocks/wood.png")
+        texture = self.load_image_texture("textures/blocks/wood.png")
     elif blockid == 67: # cobblestone
-        texture = self.load_image("textures/blocks/stonebrick.png")
+        texture = self.load_image_texture("textures/blocks/stonebrick.png")
     elif blockid == 108: # red brick stairs
-        texture = self.load_image("textures/blocks/brick.png")
+        texture = self.load_image_texture("textures/blocks/brick.png")
     elif blockid == 109: # stone brick stairs
-        texture = self.load_image("textures/blocks/stonebricksmooth.png")
+        texture = self.load_image_texture("textures/blocks/stonebricksmooth.png")
     elif blockid == 114: # netherbrick stairs
-        texture = self.load_image("textures/blocks/netherBrick.png")
+        texture = self.load_image_texture("textures/blocks/netherBrick.png")
     elif blockid == 128: # sandstone stairs
-        texture = self.load_image("textures/blocks/sandstone_side.png")
+        texture = self.load_image_texture("textures/blocks/sandstone_side.png")
     elif blockid == 134: # spruce wood stairs
-        texture = self.load_image("textures/blocks/wood_spruce.png")
+        texture = self.load_image_texture("textures/blocks/wood_spruce.png")
     elif blockid == 135: # birch wood  stairs
-        texture = self.load_image("textures/blocks/wood_birch.png")
+        texture = self.load_image_texture("textures/blocks/wood_birch.png")
     elif blockid == 136: # jungle good stairs
-        texture = self.load_image("textures/blocks/wood_jungle.png")
+        texture = self.load_image_texture("textures/blocks/wood_jungle.png")
 
 
     side = texture.copy()
@@ -1549,9 +1563,9 @@ def stairs(self, blockid, data):
 
     # sandstone stairs have spcial top texture
     if blockid == 128:
-        half_block_u = self.load_image("textures/blocks/sandstone_top.png").copy()
-        half_block_d = self.load_image("textures/blocks/sandstone_top.png").copy()
-        texture = self.load_image("textures/blocks/sandstone_top.png").copy()
+        half_block_u = self.load_image_texture("textures/blocks/sandstone_top.png").copy()
+        half_block_d = self.load_image_texture("textures/blocks/sandstone_top.png").copy()
+        texture = self.load_image_texture("textures/blocks/sandstone_top.png").copy()
 
     # generate needed geometries
     ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -1828,18 +1842,18 @@ def chests(self, blockid, data):
 def wire(self, blockid, data):
 
     if data & 0b1000000 == 64: # powered redstone wire
-        redstone_wire_t = self.load_image("textures/blocks/redstoneDust_line.png")
+        redstone_wire_t = self.load_image_texture("textures/blocks/redstoneDust_line.png")
         redstone_wire_t = self.tint_texture(redstone_wire_t,(255,0,0))
 
-        redstone_cross_t = self.load_image("textures/blocks/redstoneDust_cross.png")
+        redstone_cross_t = self.load_image_texture("textures/blocks/redstoneDust_cross.png")
         redstone_cross_t = self.tint_texture(redstone_cross_t,(255,0,0))
 
         
     else: # unpowered redstone wire
-        redstone_wire_t = self.load_image("textures/blocks/redstoneDust_line.png")
+        redstone_wire_t = self.load_image_texture("textures/blocks/redstoneDust_line.png")
         redstone_wire_t = self.tint_texture(redstone_wire_t,(48,0,0))
         
-        redstone_cross_t = self.load_image("textures/blocks/redstoneDust_cross.png")
+        redstone_cross_t = self.load_image_texture("textures/blocks/redstoneDust_cross.png")
         redstone_cross_t = self.tint_texture(redstone_cross_t,(48,0,0))
 
     # generate an image per redstone direction
@@ -1911,9 +1925,9 @@ block(blockid=57, top_image="textures/blocks/blockDiamond.png")
 # needs two different sides
 @material(blockid=58, solid=True, nodata=True)
 def crafting_table(self, blockid, data):
-    top = self.load_image("textures/blocks/workbench_top.png")
-    side3 = self.load_image("textures/blocks/workbench_side.png")
-    side4 = self.load_image("textures/blocks/workbench_front.png")
+    top = self.load_image_texture("textures/blocks/workbench_top.png")
+    side3 = self.load_image_texture("textures/blocks/workbench_side.png")
+    side4 = self.load_image_texture("textures/blocks/workbench_front.png")
     
     img = self.build_full_block(top, None, None, side3, side4, None)
     return img
@@ -1921,7 +1935,7 @@ def crafting_table(self, blockid, data):
 # crops
 @material(blockid=59, data=range(8), transparent=True, nospawn=True)
 def crops(self, blockid, data):
-    raw_crop = self.load_image("textures/blocks/crops_%d.png" % data)
+    raw_crop = self.load_image_texture("textures/blocks/crops_%d.png" % data)
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
     crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
@@ -1935,10 +1949,10 @@ def crops(self, blockid, data):
 # farmland
 @material(blockid=60, data=range(9), solid=True)
 def farmland(self, blockid, data):
-    top = self.load_image("textures/blocks/farmland_wet.png")
+    top = self.load_image_texture("textures/blocks/farmland_wet.png")
     if data == 0:
-        top = self.load_image("textures/blocks/farmland_dry.png")
-    return self.build_block(top, self.load_image("textures/blocks/dirt.png"))
+        top = self.load_image_texture("textures/blocks/farmland_dry.png")
+    return self.build_block(top, self.load_image_texture("textures/blocks/dirt.png"))
 
 # signposts
 @material(blockid=63, data=range(16), transparent=True)
@@ -1952,7 +1966,7 @@ def signpost(self, blockid, data):
     elif self.rotation == 3:
         data = (data + 12) % 16
 
-    texture = self.load_image("textures/blocks/wood.png").copy()
+    texture = self.load_image_texture("textures/blocks/wood.png").copy()
     # cut the planks to the size of a signpost
     ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
@@ -1965,7 +1979,7 @@ def signpost(self, blockid, data):
             texture.putpixel((x,y),(0,0,0,255))
 
     # Minecraft uses wood texture for the signpost stick
-    texture_stick = self.load_image("textures/blocks/tree_side.png")
+    texture_stick = self.load_image_texture("textures/blocks/tree_side.png")
     texture_stick = texture_stick.resize((12,12), Image.ANTIALIAS)
     ImageDraw.Draw(texture_stick).rectangle((2,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
 
@@ -2015,9 +2029,9 @@ def door(self, blockid, data):
         elif (data & 0b00011) == 3: data = data & 0b11100 | 2
 
     if data & 0x8 == 0x8: # top of the door
-        raw_door = self.load_image("textures/blocks/%s.png" % ("doorWood_upper" if blockid == 64 else "doorIron_upper"))
+        raw_door = self.load_image_texture("textures/blocks/%s.png" % ("doorWood_upper" if blockid == 64 else "doorIron_upper"))
     else: # bottom of the door
-        raw_door = self.load_image("textures/blocks/%s.png" % ("doorWood_lower" if blockid == 64 else "doorIron_lower"))
+        raw_door = self.load_image_texture("textures/blocks/%s.png" % ("doorWood_lower" if blockid == 64 else "doorIron_lower"))
     
     # if you want to render all doors as closed, then force
     # force closed to be True
@@ -2137,7 +2151,7 @@ def ladder(self, blockid, data):
         elif data == 5: data = 2
 
     img = Image.new("RGBA", (24,24), self.bgcolor)
-    raw_texture = self.load_image("textures/blocks/ladder.png")
+    raw_texture = self.load_image_texture("textures/blocks/ladder.png")
 
     if data == 5:
         # normally this ladder would be obsured by the block it's attached to
@@ -2181,7 +2195,7 @@ def wall_sign(self, blockid, data): # wall sign
         elif data == 4: data = 3
         elif data == 5: data = 2
 
-    texture = self.load_image("textures/blocks/wood.png").copy()
+    texture = self.load_image_texture("textures/blocks/wood.png").copy()
     # cut the planks to the size of a signpost
     ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
@@ -2251,7 +2265,7 @@ def levers(self, blockid, data):
         elif data == 6: data = 5
 
     # generate the texture for the base of the lever
-    t_base = self.load_image("textures/blocks/stonebrick.png").copy()
+    t_base = self.load_image_texture("textures/blocks/stonebrick.png").copy()
 
     ImageDraw.Draw(t_base).rectangle((0,0,15,3),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(t_base).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -2259,7 +2273,7 @@ def levers(self, blockid, data):
     ImageDraw.Draw(t_base).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
     # generate the texture for the stick
-    stick = self.load_image("textures/blocks/lever.png").copy()
+    stick = self.load_image_texture("textures/blocks/lever.png").copy()
     c_stick = Image.new("RGBA", (16,16), self.bgcolor)
     
     tmp = ImageEnhance.Brightness(stick).enhance(0.8)
@@ -2364,9 +2378,9 @@ def levers(self, blockid, data):
 @material(blockid=[70, 72], data=[0,1], transparent=True)
 def pressure_plate(self, blockid, data):
     if blockid == 70: # stone
-        t = self.load_image("textures/blocks/stone.png").copy()
+        t = self.load_image_texture("textures/blocks/stone.png").copy()
     else: # wooden
-        t = self.load_image("textures/blocks/wood.png").copy()
+        t = self.load_image_texture("textures/blocks/wood.png").copy()
     
     # cut out the outside border, pressure plates are smaller
     # than a normal block
@@ -2419,9 +2433,9 @@ def buttons(self, blockid, data):
         elif data == 4: data = 2
 
     if blockid == 77:
-        t = self.load_image("textures/blocks/stone.png").copy()
+        t = self.load_image_texture("textures/blocks/stone.png").copy()
     else:
-        t = self.load_image("textures/blocks/wood.png").copy()
+        t = self.load_image_texture("textures/blocks/wood.png").copy()
 
     # generate the texture for the button
     ImageDraw.Draw(t).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -2471,7 +2485,7 @@ def buttons(self, blockid, data):
 def snow(self, blockid, data):
     # still not rendered correctly: data other than 0
     
-    tex = self.load_image("textures/blocks/snow.png")
+    tex = self.load_image_texture("textures/blocks/snow.png")
     
     # make the side image, top 3/4 transparent
     mask = tex.crop((0,12,16,16))
@@ -2496,8 +2510,8 @@ block(blockid=80, top_image="textures/blocks/snow.png")
 # cactus
 @material(blockid=81, data=range(15), transparent=True, solid=True, nospawn=True)
 def cactus(self, blockid, data):
-    top = self.load_image("textures/blocks/cactus_top.png")
-    side = self.load_image("textures/blocks/cactus_side.png")
+    top = self.load_image_texture("textures/blocks/cactus_top.png")
+    side = self.load_image_texture("textures/blocks/cactus_side.png")
 
     img = Image.new("RGBA", (24,24), self.bgcolor)
     
@@ -2524,13 +2538,13 @@ block(blockid=82, top_image="textures/blocks/clay.png")
 # sugar cane
 @material(blockid=83, data=range(16), transparent=True)
 def sugar_cane(self, blockid, data):
-    tex = self.load_image("textures/blocks/reeds.png")
+    tex = self.load_image_texture("textures/blocks/reeds.png")
     return self.build_sprite(tex)
 
 # jukebox
 @material(blockid=84, data=range(16), solid=True)
 def jukebox(self, blockid, data):
-    return self.build_block(self.load_image("textures/blocks/jukebox_top.png"), self.load_image("textures/blocks/musicBlock.png"))
+    return self.build_block(self.load_image_texture("textures/blocks/jukebox_top.png"), self.load_image_texture("textures/blocks/musicBlock.png"))
 
 # nether and normal fences
 # uses pseudo-ancildata found in iterate.c
@@ -2539,13 +2553,13 @@ def fence(self, blockid, data):
     # no need for rotations, it uses pseudo data.
     # create needed images for Big stick fence
     if blockid == 85: # normal fence
-        fence_top = self.load_image("textures/blocks/wood.png").copy()
-        fence_side = self.load_image("textures/blocks/wood.png").copy()
-        fence_small_side = self.load_image("textures/blocks/wood.png").copy()
+        fence_top = self.load_image_texture("textures/blocks/wood.png").copy()
+        fence_side = self.load_image_texture("textures/blocks/wood.png").copy()
+        fence_small_side = self.load_image_texture("textures/blocks/wood.png").copy()
     else: # netherbrick fence
-        fence_top = self.load_image("textures/blocks/netherBrick.png").copy()
-        fence_side = self.load_image("textures/blocks/netherBrick.png").copy()
-        fence_small_side = self.load_image("textures/blocks/netherBrick.png").copy()
+        fence_top = self.load_image_texture("textures/blocks/netherBrick.png").copy()
+        fence_side = self.load_image_texture("textures/blocks/netherBrick.png").copy()
+        fence_small_side = self.load_image_texture("textures/blocks/netherBrick.png").copy()
 
     # generate the textures of the fence
     ImageDraw.Draw(fence_top).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -2650,10 +2664,10 @@ def pumpkin(self, blockid, data): # pumpkins, jack-o-lantern
         elif data == 3: data = 2
     
     # texture generation
-    top = self.load_image("textures/blocks/pumpkin_top.png")
+    top = self.load_image_texture("textures/blocks/pumpkin_top.png")
     frontName = "textures/blocks/pumpkin_face.png" if blockid == 86 else "textures/blocks/pumpkin_jack.png"
-    front = self.load_image(frontName)
-    side = self.load_image("textures/blocks/pumpkin_side.png")
+    front = self.load_image_texture(frontName)
+    side = self.load_image_texture("textures/blocks/pumpkin_side.png")
 
     if data == 0: # pointing west
         img = self.build_full_block(top, None, None, side, front)
@@ -2698,10 +2712,10 @@ def portal(self, blockid, data):
 def cake(self, blockid, data):
     
     # cake textures
-    top = self.load_image("textures/blocks/cake_top.png").copy()
-    side = self.load_image("textures/blocks/cake_side.png").copy()
+    top = self.load_image_texture("textures/blocks/cake_top.png").copy()
+    side = self.load_image_texture("textures/blocks/cake_side.png").copy()
     fullside = side.copy()
-    inside = self.load_image("textures/blocks/cake_inner.png")
+    inside = self.load_image_texture("textures/blocks/cake_inner.png")
     
     img = Image.new("RGBA", (24,24), self.bgcolor)
     if data == 0: # unbitten cake
@@ -2839,8 +2853,8 @@ def repeater(self, blockid, data):
         elif (data & 0b0011) == 3: data = data & 0b1100 | 2
     
     # generate the diode
-    top = self.load_image("textures/blocks/repeater.png") if blockid == 93 else self.load_image("textures/blocks/repeater_lit.png")
-    side = self.load_image("textures/blocks/stoneslab_side.png")
+    top = self.load_image_texture("textures/blocks/repeater.png") if blockid == 93 else self.load_image_texture("textures/blocks/repeater_lit.png")
+    side = self.load_image_texture("textures/blocks/stoneslab_side.png")
     increment = 13
     
     if (data & 0x3) == 0: # pointing east
@@ -2858,7 +2872,7 @@ def repeater(self, blockid, data):
     img = self.build_full_block( (top, increment), None, None, side, side)
 
     # compose a "3d" redstone torch
-    t = self.load_image("textures/blocks/redtorch.png").copy() if blockid == 93 else self.load_image("textures/blocks/redtorch_lit.png").copy()
+    t = self.load_image_texture("textures/blocks/redtorch.png").copy() if blockid == 93 else self.load_image_texture("textures/blocks/redtorch_lit.png").copy()
     torch = Image.new("RGBA", (24,24), self.bgcolor)
     
     t_crop = t.crop((2,2,14,14))
@@ -2971,8 +2985,8 @@ def comparator(self, blockid, data):
     data = data & 0b1100 | (((data & 0b11) + self.rotation) % 4)
 
 
-    top = self.load_image("textures/blocks/comparator.png") if blockid == 149 else self.load_image("textures/blocks/comparator_lit.png")
-    side = self.load_image("textures/blocks/stoneslab_side.png")
+    top = self.load_image_texture("textures/blocks/comparator.png") if blockid == 149 else self.load_image_texture("textures/blocks/comparator_lit.png")
+    side = self.load_image_texture("textures/blocks/stoneslab_side.png")
     increment = 13
 
     if (data & 0x3) == 0: # pointing north
@@ -2998,7 +3012,7 @@ def comparator(self, blockid, data):
 
     def build_torch(active):
         # compose a "3d" redstone torch
-        t = self.load_image("textures/blocks/redtorch.png").copy() if not active else self.load_image("textures/blocks/redtorch_lit.png").copy()
+        t = self.load_image_texture("textures/blocks/redtorch.png").copy() if not active else self.load_image_texture("textures/blocks/redtorch_lit.png").copy()
         torch = Image.new("RGBA", (24,24), self.bgcolor)
         
         t_crop = t.crop((2,2,14,14))
@@ -3050,7 +3064,7 @@ def trapdoor(self, blockid, data):
         elif (data & 0b0011) == 3: data = data & 0b1100 | 0
 
     # texture generation
-    texture = self.load_image("textures/blocks/trapdoor.png")
+    texture = self.load_image_texture("textures/blocks/trapdoor.png")
     if data & 0x4 == 0x4: # opened trapdoor
         if data & 0x3 == 0: # west
             img = self.build_full_block(None, None, None, None, texture)
@@ -3075,11 +3089,11 @@ def trapdoor(self, blockid, data):
 @material(blockid=97, data=range(3), solid=True)
 def hidden_silverfish(self, blockid, data):
     if data == 0: # stone
-        t = self.load_image("textures/blocks/stone.png")
+        t = self.load_image_texture("textures/blocks/stone.png")
     elif data == 1: # cobblestone
-        t = self.load_image("textures/blocks/stonebrick.png")
+        t = self.load_image_texture("textures/blocks/stonebrick.png")
     elif data == 2: # stone brick
-        t = self.load_image("textures/blocks/stonebricksmooth.png")
+        t = self.load_image_texture("textures/blocks/stonebricksmooth.png")
     
     img = self.build_block(t, t)
     
@@ -3089,13 +3103,13 @@ def hidden_silverfish(self, blockid, data):
 @material(blockid=98, data=range(4), solid=True)
 def stone_brick(self, blockid, data):
     if data == 0: # normal
-        t = self.load_image("textures/blocks/stonebricksmooth.png")
+        t = self.load_image_texture("textures/blocks/stonebricksmooth.png")
     elif data == 1: # mossy
-        t = self.load_image("textures/blocks/stonebricksmooth_mossy.png")
+        t = self.load_image_texture("textures/blocks/stonebricksmooth_mossy.png")
     elif data == 2: # cracked
-        t = self.load_image("textures/blocks/stonebricksmooth_cracked.png")
+        t = self.load_image_texture("textures/blocks/stonebricksmooth_cracked.png")
     elif data == 3: # "circle" stone brick
-        t = self.load_image("textures/blocks/stonebricksmooth_carved.png")
+        t = self.load_image_texture("textures/blocks/stonebricksmooth_carved.png")
 
     img = self.build_full_block(t, None, None, t, t)
 
@@ -3135,12 +3149,12 @@ def huge_mushroom(self, blockid, data):
 
     # texture generation
     if blockid == 99: # brown
-        cap = self.load_image("textures/blocks/mushroom_skin_brown.png")
+        cap = self.load_image_texture("textures/blocks/mushroom_skin_brown.png")
     else: # red
-        cap = self.load_image("textures/blocks/mushroom_skin_red.png")
+        cap = self.load_image_texture("textures/blocks/mushroom_skin_red.png")
 
-    stem = self.load_image("textures/blocks/mushroom_skin_stem.png")
-    porous = self.load_image("textures/blocks/mushroom_inside.png")
+    stem = self.load_image_texture("textures/blocks/mushroom_skin_stem.png")
+    porous = self.load_image_texture("textures/blocks/mushroom_inside.png")
     
     if data == 0: # fleshy piece
         img = self.build_full_block(porous, None, None, porous, porous)
@@ -3185,10 +3199,10 @@ def panes(self, blockid, data):
     # no rotation, uses pseudo data
     if blockid == 101:
         # iron bars
-        t = self.load_image("textures/blocks/fenceIron.png")
+        t = self.load_image_texture("textures/blocks/fenceIron.png")
     else:
         # glass panes
-        t = self.load_image("textures/blocks/glass.png")
+        t = self.load_image_texture("textures/blocks/glass.png")
     left = t.copy()
     right = t.copy()
 
@@ -3234,7 +3248,7 @@ def stem(self, blockid, data):
 
     # not fully grown stem or no pumpkin/melon touching it,
     # straight up stem
-    t = self.load_image("textures/blocks/stem_straight.png").copy()
+    t = self.load_image_texture("textures/blocks/stem_straight.png").copy()
     img = Image.new("RGBA", (16,16), self.bgcolor)
     alpha_over(img, t, (0, int(16 - 16*((data + 1)/8.))), t)
     img = self.build_sprite(t)
@@ -3270,7 +3284,7 @@ def vines(self, blockid, data):
             data = (data - 16) | 1
 
     # decode data and prepare textures
-    raw_texture = self.load_image("textures/blocks/vine.png")
+    raw_texture = self.load_image_texture("textures/blocks/vine.png")
     s = w = n = e = None
 
     if data & 1: # south
@@ -3315,7 +3329,7 @@ def fence_gate(self, blockid, data):
         data = data | 0x4
 
     # create the closed gate side
-    gate_side = self.load_image("textures/blocks/wood.png").copy()
+    gate_side = self.load_image_texture("textures/blocks/wood.png").copy()
     gate_side_draw = ImageDraw.Draw(gate_side)
     gate_side_draw.rectangle((7,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
     gate_side_draw.rectangle((7,4,9,6),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -3381,7 +3395,7 @@ block(blockid=110, top_image="textures/blocks/mycel_top.png", side_image="textur
 # with ancil data.
 @material(blockid=111, data=range(4), transparent=True)
 def lilypad(self, blockid, data):
-    t = self.load_image("textures/blocks/waterlily.png")
+    t = self.load_image_texture("textures/blocks/waterlily.png")
     return self.build_full_block(None, None, None, None, None, t)
 
 # nether brick
@@ -3391,11 +3405,11 @@ block(blockid=112, top_image="textures/blocks/netherBrick.png")
 @material(blockid=115, data=range(4), transparent=True)
 def nether_wart(self, blockid, data):
     if data == 0: # just come up
-        t = self.load_image("textures/blocks/netherStalk_0.png")
+        t = self.load_image_texture("textures/blocks/netherStalk_0.png")
     elif data in (1, 2):
-        t = self.load_image("textures/blocks/netherStalk_1.png")
+        t = self.load_image_texture("textures/blocks/netherStalk_1.png")
     else: # fully grown
-        t = self.load_image("textures/blocks/netherStalk_2.png")
+        t = self.load_image_texture("textures/blocks/netherStalk_2.png")
     
     # use the same technic as tall grass
     img = self.build_billboard(t)
@@ -3407,8 +3421,8 @@ def nether_wart(self, blockid, data):
 @material(blockid=116, transparent=True, nodata=True)
 def enchantment_table(self, blockid, data):
     # no book at the moment
-    top = self.load_image("textures/blocks/enchantment_top.png")
-    side = self.load_image("textures/blocks/enchantment_side.png")
+    top = self.load_image_texture("textures/blocks/enchantment_top.png")
+    side = self.load_image_texture("textures/blocks/enchantment_side.png")
     img = self.build_full_block((top, 4), None, None, side, side)
 
     return img
@@ -3417,9 +3431,9 @@ def enchantment_table(self, blockid, data):
 # TODO this is a place holder, is a 2d image pasted
 @material(blockid=117, data=range(5), transparent=True)
 def brewing_stand(self, blockid, data):
-    base = self.load_image("textures/blocks/brewingStand_base.png")
+    base = self.load_image_texture("textures/blocks/brewingStand_base.png")
     img = self.build_full_block(None, None, None, None, None, base)
-    t = self.load_image("textures/blocks/brewingStand.png")
+    t = self.load_image_texture("textures/blocks/brewingStand.png")
     stand = self.build_billboard(t)
     alpha_over(img,stand,(0,-2))
     return img
@@ -3427,9 +3441,9 @@ def brewing_stand(self, blockid, data):
 # cauldron
 @material(blockid=118, data=range(4), transparent=True)
 def cauldron(self, blockid, data):
-    side = self.load_image("textures/blocks/cauldron_side.png")
-    top = self.load_image("textures/blocks/cauldron_top.png")
-    bottom = self.load_image("textures/blocks/cauldron_inner.png")
+    side = self.load_image_texture("textures/blocks/cauldron_side.png")
+    top = self.load_image_texture("textures/blocks/cauldron_top.png")
+    bottom = self.load_image_texture("textures/blocks/cauldron_inner.png")
     water = self.transform_image_top(self.load_water())
     if data == 0: # empty
         img = self.build_full_block(top, side, side, side, side)
@@ -3473,14 +3487,14 @@ def end_portal(self, blockid, data):
 def end_portal_frame(self, blockid, data):
     # The bottom 2 bits are oritation info but seems there is no
     # graphical difference between orientations
-    top = self.load_image("textures/blocks/endframe_top.png")
-    eye_t = self.load_image("textures/blocks/endframe_eye.png")
-    side = self.load_image("textures/blocks/endframe_side.png")
+    top = self.load_image_texture("textures/blocks/endframe_top.png")
+    eye_t = self.load_image_texture("textures/blocks/endframe_eye.png")
+    side = self.load_image_texture("textures/blocks/endframe_side.png")
     img = self.build_full_block((top, 4), None, None, side, side)
     if data & 0x4 == 0x4: # ender eye on it
         # generate the eye
-        eye_t = self.load_image("textures/blocks/endframe_eye.png").copy()
-        eye_t_s = self.load_image("textures/blocks/endframe_eye.png").copy()
+        eye_t = self.load_image_texture("textures/blocks/endframe_eye.png").copy()
+        eye_t_s = self.load_image_texture("textures/blocks/endframe_eye.png").copy()
         # cut out from the texture the side and the top of the eye
         ImageDraw.Draw(eye_t).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
         ImageDraw.Draw(eye_t_s).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -3514,13 +3528,13 @@ block(blockid=124, top_image="textures/blocks/redstoneLight_lit.png")
 def wooden_slabs(self, blockid, data):
     texture = data & 7
     if texture== 0: # oak 
-        top = side = self.load_image("textures/blocks/wood.png")
+        top = side = self.load_image_texture("textures/blocks/wood.png")
     elif texture== 1: # spruce
-        top = side = self.load_image("textures/blocks/wood_spruce.png")
+        top = side = self.load_image_texture("textures/blocks/wood_spruce.png")
     elif texture== 2: # birch
-        top = side = self.load_image("textures/blocks/wood_birch.png")
+        top = side = self.load_image_texture("textures/blocks/wood_birch.png")
     elif texture== 3: # jungle
-        top = side = self.load_image("textures/blocks/wood_jungle.png")
+        top = side = self.load_image_texture("textures/blocks/wood_jungle.png")
     else:
         return None
     
@@ -3591,17 +3605,17 @@ def cocoa_plant(self, blockid, data):
 
     size = data & 12
     if size == 8: # big
-        t = self.load_image("textures/blocks/cocoa_2.png")
+        t = self.load_image_texture("textures/blocks/cocoa_2.png")
         c_left = (0,3)
         c_right = (8,3)
         c_top = (5,2)
     elif size == 4: # normal
-        t = self.load_image("textures/blocks/cocoa_1.png")
+        t = self.load_image_texture("textures/blocks/cocoa_1.png")
         c_left = (-2,2)
         c_right = (8,2)
         c_top = (5,2)
     elif size == 0: # small
-        t = self.load_image("textures/blocks/cocoa_0.png")
+        t = self.load_image_texture("textures/blocks/cocoa_0.png")
         c_left = (-3,2)
         c_right = (6,2)
         c_top = (5,2)
@@ -3658,12 +3672,12 @@ block(blockid=137, top_image="textures/blocks/commandBlock.png")
 @material(blockid=138, transparent=True, nodata = True)
 def beacon(self, blockid, data):
     # generate the three pieces of the block
-    t = self.load_image("textures/blocks/glass.png")
+    t = self.load_image_texture("textures/blocks/glass.png")
     glass = self.build_block(t,t)
-    t = self.load_image("textures/blocks/obsidian.png")
+    t = self.load_image_texture("textures/blocks/obsidian.png")
     obsidian = self.build_full_block((t,12),None, None, t, t)
     obsidian = obsidian.resize((20,20), Image.ANTIALIAS)
-    t = self.load_image("textures/blocks/beacon.png")
+    t = self.load_image_texture("textures/blocks/beacon.png")
     crystal = self.build_block(t,t)
     crystal = crystal.resize((16,16),Image.ANTIALIAS)
     
@@ -3682,10 +3696,10 @@ def cobblestone_wall(self, blockid, data):
     # no rotation, uses pseudo data
     if data & 0b10000 == 0:
         # cobblestone
-        t = self.load_image("textures/blocks/stonebrick.png").copy()
+        t = self.load_image_texture("textures/blocks/stonebrick.png").copy()
     else:
         # mossy cobblestone
-        t = self.load_image("textures/blocks/stoneMoss.png").copy()
+        t = self.load_image_texture("textures/blocks/stoneMoss.png").copy()
 
     wall_pole_top = t.copy()
     wall_pole_side = t.copy()
@@ -3810,11 +3824,11 @@ def crops(self, blockid, data):
     if data != 7: # when growing they look the same
         # data = 7 -> fully grown, everything else is growing
         # this seems to work, but still not sure
-        raw_crop = self.load_image("textures/blocks/potatoes_%d.png" % (data % 3))
+        raw_crop = self.load_image_texture("textures/blocks/potatoes_%d.png" % (data % 3))
     elif blockid == 141: # carrots
-        raw_crop = self.load_image("textures/blocks/carrots_3.png")
+        raw_crop = self.load_image_texture("textures/blocks/carrots_3.png")
     else: # potatoes
-        raw_crop = self.load_image("textures/blocks/potatoes_3.png")
+        raw_crop = self.load_image_texture("textures/blocks/potatoes_3.png")
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
     crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
@@ -3840,16 +3854,16 @@ def anvil(self, blockid, data):
     # get the correct textures
     # the bits 0x4 and 0x8 determine how damaged is the anvil
     if (data & 0xc) == 0: # non damaged anvil
-        top = self.load_image("textures/blocks/anvil_top.png")
+        top = self.load_image_texture("textures/blocks/anvil_top.png")
     elif (data & 0xc) == 0x4: # slightly damaged
-        top = self.load_image("textures/blocks/anvil_top_damaged_1.png")
+        top = self.load_image_texture("textures/blocks/anvil_top_damaged_1.png")
     elif (data & 0xc) == 0x8: # very damaged
-        top = self.load_image("textures/blocks/anvil_top_damaged_2.png")
+        top = self.load_image_texture("textures/blocks/anvil_top_damaged_2.png")
     # everything else use this texture
-    big_side = self.load_image("textures/blocks/anvil_base.png").copy()
-    small_side = self.load_image("textures/blocks/anvil_base.png").copy()
-    base = self.load_image("textures/blocks/anvil_base.png").copy()
-    small_base = self.load_image("textures/blocks/anvil_base.png").copy()
+    big_side = self.load_image_texture("textures/blocks/anvil_base.png").copy()
+    small_side = self.load_image_texture("textures/blocks/anvil_base.png").copy()
+    base = self.load_image_texture("textures/blocks/anvil_base.png").copy()
+    small_base = self.load_image_texture("textures/blocks/anvil_base.png").copy()
     
     # cut needed patterns
     ImageDraw.Draw(big_side).rectangle((0,8,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
