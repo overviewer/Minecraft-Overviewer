@@ -2374,13 +2374,17 @@ def levers(self, blockid, data):
 
     return img
 
-# wooden and stone pressure plates
-@material(blockid=[70, 72], data=[0,1], transparent=True)
+# wooden and stone pressure plates, and weighted pressure plates
+@material(blockid=[70, 72,147,148], data=[0,1], transparent=True)
 def pressure_plate(self, blockid, data):
     if blockid == 70: # stone
         t = self.load_image_texture("textures/blocks/stone.png").copy()
-    else: # wooden
+    elif blockid == 72: # wooden
         t = self.load_image_texture("textures/blocks/wood.png").copy()
+    elif blockid == 147: # light golden
+        t = self.load_image_texture("textures/blocks/blockGold.png").copy()
+    else: # blockid == 148: # heavy iron
+        t = self.load_image_texture("textures/blocks/blockIron.png").copy()
     
     # cut out the outside border, pressure plates are smaller
     # than a normal block
