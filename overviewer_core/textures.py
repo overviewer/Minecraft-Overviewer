@@ -3525,6 +3525,37 @@ block(blockid=123, top_image="textures/blocks/redstoneLight.png")
 # active redstone lamp
 block(blockid=124, top_image="textures/blocks/redstoneLight_lit.png")
 
+# daylight sensor.  
+@material(blockid=151, transparent=True)
+def daylight_sensor(self, blockid, data):
+    top = self.load_image_texture("textures/blocks/daylightDetector_top.png")
+    side = self.load_image_texture("textures/blocks/daylightDetector_side.png")
+
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask,(0,0,16,8), mask)
+
+    # plain slab
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+    
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12), side)
+    alpha_over(img, otherside, (12,12), otherside)
+    alpha_over(img, top, (0,6), top)
+    
+    return img
+
+
 # wooden double and normal slabs
 # these are the new wooden slabs, blockids 43 44 still have wooden
 # slabs, but those are unobtainable without cheating
