@@ -64,7 +64,8 @@ I downloaded the Windows version but when I double-click it, the window closes r
 The Overviewer is a command line program and must be run from a command line. It
 is necessary to become at least a little familiar with a command line to run The
 Overviewer (if you have no interest in this, perhaps this isn't the mapping
-program for you).
+program for you). A brief guide is provided on the
+:doc:`win_tut/windowsguide` page.
 
 Unfortunately, A full tutorial of the Windows command line is out of scope for this
 documentation; consult the almighty Google for tutorials and information on
