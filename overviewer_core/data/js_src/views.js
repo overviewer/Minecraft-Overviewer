@@ -461,7 +461,8 @@ overviewer.views.SignControlView = Backbone.View.extend({
                             'position': overviewer.util.fromWorldToLatLng(entity.x,
                                 entity.y, entity.z, overviewer.mapView.options.currentTileSet),
                             'map':      overviewer.map,
-                            'title':    jQuery.trim(entity.text), 
+                            'title':    jQuery.trim(entity.hovertext), 
+                            'content':  jQuery.trim(entity.text),
                             'icon':     iconURL,
                             'visible':  false
                     }); 

@@ -201,7 +201,10 @@ def main():
         for poi in rset._pois['Entities']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result)
+                if type(result) == str:
+                    d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result[1], hovertext=result[0])
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:
@@ -210,7 +213,10 @@ def main():
         for poi in rset._pois['TileEntities']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if type(result) == str:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:
@@ -219,7 +225,10 @@ def main():
         for poi in rset._pois['Players']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if type(result) == str:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:
@@ -228,7 +237,10 @@ def main():
         for poi in rset._pois['Manual']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if type(result) == str:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:
