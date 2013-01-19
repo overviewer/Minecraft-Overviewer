@@ -19,64 +19,104 @@ import multiprocessing.managers
 import cPickle as pickle
 import Queue
 import time
-from signals import Signal
+
+class Worker(object):
+    """This class provides jobs that can be dispatched by a
+    Dispatcher. It provides default implementations for most methods,
+    and you can derive from this to get started with making a
+    Worker."""
+    
+    def get_num_phases(self):
+        """This method returns an integer indicating how many phases
+        of work this worker has to perform. Each phase of work is
+        completed serially with the other phases; all work done by one
+        phase is done before the next phase is started."""
+        return 1
+    
+    def get_phase_length(self, phase):
+        """This method returns an integer indicating how many work
+        items there are in this phase. This number is used for purely
+        informanional purposes. It can be exact, or an estimate. If
+        there is no useful information on the size of a phase, return
+        None."""
+        return None
+    
+    def iterate_work_items(self, phase):
+        """Takes a phase number (a non-negative integer). This method
+        should return an iterator over work items and a list of
+        dependencies i.e. (work_item, [d1, d2, ...]). The work items
+        and dependencies can be any pickleable object; they are
+        treated as opaque by the Dispatcher. The work item objects are
+        passed back in to the do_work() method (perhaps in a
+        different, identically configured instance).
+        
+        The dependency items are other work items that are compared
+        for equality with work items that are already in the
+        queue. The dispatcher guarantees that dependent items which
+        are currently in the queue or in progress finish before the
+        corresponding work item is started. Note that dependencies
+        must have already been yielded as work items before they can
+        be used as dependencies; the dispatcher requires this ordering
+        or it cannot guarantee the dependencies are met."""
+        raise NotImplementedError("Worker.iterate_work_items")
+    
+    def do_work(self, workobj):
+        """Does the work for a given work object. This method is not
+        expected to return anything, so the results of its work should
+        be reflected by its side-effects."""
+        raise NotImplementedError("Worker.do_work")
 
 class Dispatcher(object):
-    """This class coordinates the work of all the TileSet objects
+    """This class coordinates the work of a list of Worker objects
     among one worker process. By subclassing this class and
-    implementing setup_tilesets(), dispatch(), and close(), it is
+    implementing setup_workers(), dispatch(), and close(), it is
     possible to create a Dispatcher that distributes this work to many
     worker processes.
     """
     def __init__(self):
         super(Dispatcher, self).__init__()
 
-        # list of (tileset, workitem) tuples
+        # list of (worker, workitem) tuples
         # keeps track of dispatched but unfinished jobs
         self._running_jobs = []
-        # list of (tileset, workitem, dependencies) tuples
+        # list of (worker, workitem, dependencies) tuples
         # keeps track of jobs waiting to run after dependencies finish
         self._pending_jobs = []
 
-    def render_all(self, tilesetlist, observer):
-        """Render all of the tilesets in the given
-        tilesetlist. status_callback is called periodically to update
-        status. The callback should take the following arguments:
-        (phase, items_completed, total_items), where total_items may
-        be none if there is no useful estimate.
-        """
-        # TODO use status callback
-
-        # setup tilesetlist
-        self.setup_tilesets(tilesetlist)
+    def dispatch_all(self, workerlist, observer=None):
+        """Do all of the jobs provided by the given
+        workerlist. observer should be an Observer object, or None, in
+        which case it is ignored."""
+        # setup workerlist
+        self.setup_workers(workerlist)
 
         # iterate through all possible phases
-        num_phases = [tileset.get_num_phases() for tileset in tilesetlist]
+        num_phases = [worker.get_num_phases() for worker in workerlist]
         for phase in xrange(max(num_phases)):
             # construct a list of iterators to use for this phase
             work_iterators = []
-            for i, tileset in enumerate(tilesetlist):
+            for i, worker in enumerate(workerlist):
                 if phase < num_phases[i]:
-                    def make_work_iterator(tset, p):
-                        return ((tset, workitem) for workitem in tset.iterate_work_items(p))
-                    work_iterators.append(make_work_iterator(tileset, phase))
+                    def make_work_iterator(wker, p):
+                        return ((wker, workitem) for workitem in wker.iterate_work_items(p))
+                    work_iterators.append(make_work_iterator(worker, phase))
 
             # keep track of total jobs, and how many jobs are done
             total_jobs = 0
-            for tileset, phases in zip(tilesetlist, num_phases):
+            for worker, phases in zip(workerlist, num_phases):
                 if phase < phases:
-                    jobs_for_tileset = tileset.get_phase_length(phase)
+                    jobs_for_worker = worker.get_phase_length(phase)
                     # if one is unknown, the total is unknown
-                    if jobs_for_tileset is None:
+                    if jobs_for_worker is None:
                         total_jobs = None
                         break
                     else:
-                        total_jobs += jobs_for_tileset
+                        total_jobs += jobs_for_worker
 
             observer.start(total_jobs)
             # go through these iterators round-robin style
-            for tileset, (workitem, deps) in util.roundrobin(work_iterators):
-                self._pending_jobs.append((tileset, workitem, deps))
+            for worker, (workitem, deps) in util.roundrobin(work_iterators):
+                self._pending_jobs.append((worker, workitem, deps))
                 observer.add(self._dispatch_jobs())
 
             # after each phase, wait for the work to finish
@@ -94,17 +134,17 @@ class Dispatcher(object):
         pending_jobs_nodeps = [(j[0], j[1]) for j in self._pending_jobs]
 
         for pending_job in self._pending_jobs:
-            tileset, workitem, deps = pending_job
+            worker, workitem, deps = pending_job
 
             # see if any of the deps are in _running_jobs or _pending_jobs
             for dep in deps:
-                if (tileset, dep) in self._running_jobs or (tileset, dep) in pending_jobs_nodeps:
+                if (worker, dep) in self._running_jobs or (worker, dep) in pending_jobs_nodeps:
                     # it is! don't dispatch this item yet
                     break
             else:
                 # it isn't! all dependencies are finished
-                finished_jobs += self.dispatch(tileset, workitem)
-                self._running_jobs.append((tileset, workitem))
+                finished_jobs += self.dispatch(worker, workitem)
+                self._running_jobs.append((worker, workitem))
                 dispatched_jobs.append(pending_job)
 
         # make sure to at least get finished jobs, even if we don't
@@ -127,51 +167,47 @@ class Dispatcher(object):
         """
         pass
 
-    def setup_tilesets(self, tilesetlist):
-        """Called whenever a new list of tilesets are being used. This
+    def setup_workers(self, workerlist):
+        """Called whenever a new list of workers are being used. This
         lets subclasses distribute the whole list at once, instead of
         for each work item."""
         pass
 
-    def dispatch(self, tileset, workitem):
+    def dispatch(self, worker, workitem):
         """Dispatch the given work item. The end result of this call
-        should be running tileset.do_work(workitem) somewhere. This
-        function should return a list of (tileset, workitem) tuples
-        that have completed since the last call. If tileset is None,
+        should be running worker.do_work(workitem) somewhere. This
+        function should return a list of (worker, workitem) tuples
+        that have completed since the last call. If worker is None,
         then returning completed jobs is all this function should do.
         """
-        if not tileset is None:
-            tileset.do_work(workitem)
-            return [(tileset, workitem),]
+        if not worker is None:
+            worker.do_work(workitem)
+            return [(worker, workitem),]
         return []
 
 class MultiprocessingDispatcherManager(multiprocessing.managers.BaseManager):
     """This multiprocessing manager is responsible for giving worker
     processes access to the communication Queues, and also gives
-    workers access to the current tileset list.
+    workers access to the current worker list.
     """
     def _get_job_queue(self):
         return self.job_queue
     def _get_results_queue(self):
         return self.result_queue
-    def _get_signal_queue(self):
-        return self.signal_queue
-    def _get_tileset_data(self):
-        return self.tileset_data
+    def _get_worker_data(self):
+        return self.worker_data
 
     def __init__(self, address=None, authkey=None):
         self.job_queue = multiprocessing.Queue()
         self.result_queue = multiprocessing.Queue()
-        self.signal_queue = multiprocessing.Queue()
 
-        self.tilesets = []
-        self.tileset_version = 0
-        self.tileset_data = [[], 0]
+        self.workers = []
+        self.worker_version = 0
+        self.worker_data = [[], 0]
 
         self.register("get_job_queue", callable=self._get_job_queue)
         self.register("get_result_queue", callable=self._get_results_queue)
-        self.register("get_signal_queue", callable=self._get_signal_queue)
-        self.register("get_tileset_data", callable=self._get_tileset_data, proxytype=multiprocessing.managers.ListProxy)
+        self.register("get_worker_data", callable=self._get_worker_data, proxytype=multiprocessing.managers.ListProxy)
 
         super(MultiprocessingDispatcherManager, self).__init__(address=address, authkey=authkey)
 
@@ -181,18 +217,18 @@ class MultiprocessingDispatcherManager(multiprocessing.managers.BaseManager):
         c = cls(address=address, authkey=authkey)
         return c
 
-    def set_tilesets(self, tilesets):
-        """This is used in MultiprocessingDispatcher.setup_tilesets to
-        update the tilesets each worker has access to. It also
-        increments a `tileset_version` which is an easy way for
-        workers to see if their tileset list is out-of-date without
+    def set_workers(self, workers):
+        """This is used in MultiprocessingDispatcher.setup_workers to
+        update the workers each worker has access to. It also
+        increments a `worker_version` which is an easy way for
+        workers to see if their worker list is out-of-date without
         pickling and copying over the entire list.
         """
-        self.tilesets = tilesets
-        self.tileset_version += 1
-        data = self.get_tileset_data()
-        data[0] = self.tilesets
-        data[1] = self.tileset_version
+        self.workers = workers
+        self.worker_version += 1
+        data = self.get_worker_data()
+        data[0] = self.workers
+        data[1] = self.worker_version
 
 
 class MultiprocessingDispatcherProcess(multiprocessing.Process):
@@ -209,35 +245,26 @@ class MultiprocessingDispatcherProcess(multiprocessing.Process):
         super(MultiprocessingDispatcherProcess, self).__init__()
         self.job_queue = manager.get_job_queue()
         self.result_queue = manager.get_result_queue()
-        self.signal_queue = manager.get_signal_queue()
-        self.tileset_proxy = manager.get_tileset_data()
+        self.worker_proxy = manager.get_worker_data()
 
-    def update_tilesets(self):
-        """A convenience function to update our local tilesets to the
+    def update_workers(self):
+        """A convenience function to update our local workers to the
         current version in use by the MultiprocessingDispatcher.
         """
-        self.tilesets, self.tileset_version = self.tileset_proxy._getvalue()
+        self.workers, self.worker_version = self.worker_proxy._getvalue()
 
     def run(self):
         """The main work loop. Jobs are pulled from the job queue and
         executed, then the result is pushed onto the result
-        queue. Updates to the tilesetlist are recognized and handled
+        queue. Updates to the workerlist are recognized and handled
         automatically. This is the method that actually runs in the
         new worker process.
         """
         # per-process job get() timeout
         timeout = 1.0
 
-        # update our tilesets
-        self.update_tilesets()
-
-        # register for all available signals
-        def register_signal(name, sig):
-            def handler(*args, **kwargs):
-                self.signal_queue.put((name, args, kwargs), False)
-            sig.set_interceptor(handler)
-        for name, sig in Signal.signals.iteritems():
-            register_signal(name, sig)
+        # update our workers
+        self.update_workers()
 
         # notify that we're starting up
         self.result_queue.put(None, False)
@@ -249,16 +276,16 @@ class MultiprocessingDispatcherProcess(multiprocessing.Process):
                     return
 
                 # unpack job
-                tv, ti, workitem = job
+                wv, wi, workitem = job
 
-                if tv != self.tileset_version:
-                    # our tilesets changed!
-                    self.update_tilesets()
-                    assert tv == self.tileset_version
+                if wv != self.worker_version:
+                    # our workers changed!
+                    self.update_workers()
+                    assert wv == self.worker_version
 
                 # do job
-                ret = self.tilesets[ti].do_work(workitem)
-                result = (ti, workitem, ret,)
+                ret = self.workers[wi].do_work(workitem)
+                result = (wi, workitem, ret,)
                 self.result_queue.put(result, False)
             except Queue.Empty:
                 pass
@@ -285,7 +312,6 @@ class MultiprocessingDispatcher(Dispatcher):
         self.manager.start()
         self.job_queue = self.manager.get_job_queue()
         self.result_queue = self.manager.get_result_queue()
-        self.signal_queue = self.manager.get_signal_queue()
 
         # create and fill the pool
         self.pool = []
@@ -312,17 +338,17 @@ class MultiprocessingDispatcher(Dispatcher):
         self.manager = None
         self.pool = None
 
-    def setup_tilesets(self, tilesets):
-        self.manager.set_tilesets(tilesets)
+    def setup_workers(self, workers):
+        self.manager.set_workers(workers)
 
-    def dispatch(self, tileset, workitem):
+    def dispatch(self, worker, workitem):
         # handle the no-new-work case
-        if tileset is None:
+        if worker is None:
             return self._handle_messages()
 
         # create and submit the job
-        tileset_index = self.manager.tilesets.index(tileset)
-        self.job_queue.put((self.manager.tileset_version, tileset_index, workitem), False)
+        worker_index = self.manager.workers.index(worker)
+        self.job_queue.put((self.manager.worker_version, worker_index, workitem), False)
         self.outstanding_jobs += 1
 
         # make sure the queue doesn't fill up too much
@@ -337,35 +363,19 @@ class MultiprocessingDispatcher(Dispatcher):
         finished_jobs = []
 
         result_empty = False
-        signal_empty = False
-        while not (result_empty and signal_empty):
-            if not result_empty:
-                try:
-                    result = self.result_queue.get(False)
-
-                    if result != None:
-                        # completed job
-                        ti, workitem, ret = result
-                        finished_jobs.append((self.manager.tilesets[ti], workitem))
-                        self.outstanding_jobs -= 1
-                    else:
-                        # new worker
-                        self.num_workers += 1
-                except Queue.Empty:
-                    result_empty = True
-            if not signal_empty:
-                try:
-                    if timeout > 0.0:
-                        name, args, kwargs = self.signal_queue.get(True, timeout)
-                    else:
-                        name, args, kwargs = self.signal_queue.get(False)
-                    # timeout should only apply once
-                    timeout = 0.0
-
-                    sig = Signal.signals[name]
-                    sig.emit_intercepted(*args, **kwargs)
-                except Queue.Empty:
-                    signal_empty = True
+        while True:
+            try:
+                result = self.result_queue.get(False)
+                if result != None:
+                    # completed job
+                    wi, workitem, ret = result
+                    finished_jobs.append((self.manager.workers[wi], workitem))
+                    self.outstanding_jobs -= 1
+                else:
+                    # new worker
+                    self.num_workers += 1
+            except Queue.Empty:
+                break
 
         return finished_jobs
 

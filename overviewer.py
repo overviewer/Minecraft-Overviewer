@@ -450,7 +450,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     else:
         dispatch = dispatcher.MultiprocessingDispatcher(
             local_procs=config['processes'])
-    dispatch.render_all(tilesets, config['observer'])
+    dispatch.dispatch_all(tilesets, config['observer'])
     dispatch.close()
 
     assetMrg.finalize(tilesets)

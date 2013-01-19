@@ -30,6 +30,7 @@ from itertools import product, izip
 from PIL import Image
 
 from .util import roundrobin
+from .dispatcher import Worker
 from . import nbt
 from .files import FileReplacer
 from .optimizeimages import optimize_image
@@ -44,47 +45,13 @@ set of output tiles corresponding to a requested rendermode for a world. In
 general, there will be one TileSet object per world per rendermode requested by
 the user.
 
-The TileSet class implements the Worker interface. This interface has the
-following methods:
+The TileSet class implements the Worker interface, as well as the following
+methods:
 
 do_preprocessing()
     This method is called before iterate_work_items(). It should do any work
     that needs to be done prior to iterate_work_items(). It is not called for
     instances that will not have iterate_work_items() called.
-
-get_num_phases()
-    This method returns an integer indicating how many phases of work this
-    worker has to perform. Each phase of work is completed serially with the
-    other phases... all work done by one phase is done before the next phase is
-    started.
-
-get_phase_length(phase)
-    This method returns an integer indicating how many work items there are in
-    this phase. This number is used for purely informational purposes. It can
-    be exact, or an estimate. If there is no useful information on the size of
-    a phase, return None.
-
-iterate_work_items(phase)
-    Takes a phase number (a non-negative integer). This method should return an
-    iterator over work items and a list of dependencies i.e. (work_item, [d1,
-    d2, ...]). The work items and dependencies can be any pickelable object;
-    they are treated as opaque by the Dispatcher. The work item objects are
-    passed back in to the do_work() method (perhaps in a different, identically
-    configured instance).
-
-    The dependency items are other work items that are compared for equality
-    with work items that are already in the queue. The dispatcher guarantees
-    that dependent items which are currently in the queue or in progress finish
-    before the corresponding work item is started. Note that dependencies must
-    have already been yielded as work items before they can be used as
-    dependencies; the dispatcher requires this ordering or it cannot guarantee
-    the dependencies are met.
-
-do_work(workobj)
-    Does the work for a given work object. This method is not expected to
-    return anything, so the results of its work should be reflected on the
-    filesystem or by sending signals.
-
 
 """
 
@@ -158,7 +125,7 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 # any additional checks.
 
 __all__ = ["TileSet"]
-class TileSet(object):
+class TileSet(Worker):
     """The TileSet object manages the work required to produce a set of tiles
     on disk. It calculates the work that needs to be done and tells the
     dipatcher (through the Worker interface) this information. The Dispatcher
