@@ -57,10 +57,9 @@ def handlePlayers(rset, render, worldpath):
     # only handle this region set once
     if 'Players' in rset._pois:
         return
-    dimension = {'overworld': 0,
-                 'nether': -1,
-                 'end': 1,
-                 'default': 0}[render['dimension']]
+    dimension = {None: 0,
+                 'DIM-1': -1,
+                 'DIM1': 1}[rset.get_type()]
     playerdir = os.path.join(worldpath, "players")
     if os.path.isdir(playerdir):
         playerfiles = os.listdir(playerdir)
@@ -165,9 +164,9 @@ def main():
         else:
             w = worldcache[render['world']]
         
-        rset = w.get_regionset(render['dimension'])
+        rset = w.get_regionset(render['dimension'][1])
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
+            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
             return 1
       
         for f in render['markers']:
