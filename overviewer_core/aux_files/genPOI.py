@@ -201,7 +201,7 @@ def main():
         for poi in rset._pois['Entities']:
             result = filter_function(poi)
             if result:
-                if type(result) == str:
+                if isinstance(result, basestring):
                     d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result, hovertext=result)
                 elif type(result) == tuple:
                     d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result[1], hovertext=result[0])
@@ -213,7 +213,7 @@ def main():
         for poi in rset._pois['TileEntities']:
             result = filter_function(poi)
             if result:
-                if type(result) == str:
+                if isinstance(result, basestring):
                     d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
                 elif type(result) == tuple:
                     d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
@@ -225,7 +225,7 @@ def main():
         for poi in rset._pois['Players']:
             result = filter_function(poi)
             if result:
-                if type(result) == str:
+                if isinstance(result, basestring):
                     d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
                 elif type(result) == tuple:
                     d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
@@ -237,7 +237,7 @@ def main():
         for poi in rset._pois['Manual']:
             result = filter_function(poi)
             if result:
-                if type(result) == str:
+                if isinstance(result, basestring):
                     d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
                 elif type(result) == tuple:
                     d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
