@@ -42,6 +42,10 @@ static void oil_python_flush(void *file) {
     }
 }
 
+/* forward declaration of Matrix type */
+
+static PyTypeObject PyOILMatrixType;
+
 /* init and dealloc for the Matrix type */
 
 static int PyOILMatrix_set_data(PyOILMatrix *self, PyObject *arg, void *unused);
@@ -392,7 +396,7 @@ static PyNumberMethods PyOILMatrixNumberMethods = {
 };    
 
 /* the Matrix type */
-PyTypeObject PyOILMatrixType = {
+static PyTypeObject PyOILMatrixType = {
     PyObject_HEAD_INIT(NULL)
     0,                         /* ob_size */
     "Matrix",                  /* tp_name */
@@ -434,6 +438,10 @@ PyTypeObject PyOILMatrixType = {
     0,                         /* tp_alloc */
     (newfunc)PyOILMatrix_new,  /* tp_new */
 };
+
+/* forward declaration for the Image type */
+
+static PyTypeObject PyOILImageType;
 
 /* init and dealloc for the Image type */
 
@@ -690,7 +698,7 @@ static PyGetSetDef PyOILImage_getset[] = {
 };
 
 /* the Image type */
-PyTypeObject PyOILImageType = {
+static PyTypeObject PyOILImageType = {
     PyObject_HEAD_INIT(NULL)
     0,                         /* ob_size */
     "Image",                   /* tp_name */
@@ -773,8 +781,13 @@ PyMODINIT_FUNC initOIL(void) {
     if (mod == NULL)
         return;
     
+    /* the sizeof(...) bits are to prevent compiler warnings about unused
+       helper functions in oil-python.h */
+    
     ADD_TYPE(PyOILMatrixType);
+    (void)sizeof(py_oil_get_matrix_type);
     ADD_TYPE(PyOILImageType);
+    (void)sizeof(py_oil_get_image_type);
     
     /* add in the flag enums */
     PyModule_AddIntConstant(mod, "DEPTH_TEST", OIL_DEPTH_TEST);
