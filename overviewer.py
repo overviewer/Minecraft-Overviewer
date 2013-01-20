@@ -39,6 +39,7 @@ from overviewer_core import logger
 from overviewer_core import textures
 from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
+from overviewer_core import isometricrenderer
 from overviewer_core import cache
 from overviewer_core import observer
 
@@ -425,16 +426,17 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.debug("Using RegionSet %r", rset)
 
         ###############################
-        # Do the final prep and create the TileSet object
+        # Do the final prep and create the Canvas / Renderer object
 
         # create our TileSet from this RegionSet
         tileset_dir = os.path.abspath(os.path.join(destdir, render_name))
 
         # only pass to the TileSet the options it really cares about
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
-        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom"])
+        tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom", "imgquality", "optimizeimg", "worldname_orig", "title", "rendermode", "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
-        tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
+        renderer = isometricrenderer.IsometricRenderer(w, rset, tex, render['rendermode'])
+        tset = tileset.TileSet(w, rset, assetMrg, tileSetOpts, renderer, tileset_dir)
         tilesets.append(tset)
 
     # Do tileset preprocessing here, before we start dispatching jobs

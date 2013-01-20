@@ -30,22 +30,21 @@ from itertools import product, izip
 from PIL import Image
 
 from .util import roundrobin
-from .dispatcher import Worker
+from .canvas import Canvas
 from . import nbt
 from .files import FileReplacer
 from .optimizeimages import optimize_image
-import rendermodes
-import c_overviewer
-from c_overviewer import resize_half
+from . import rendermodes
+from .c_overviewer import resize_half, render_loop
 
 """
 
 tileset.py contains the TileSet class, and in general, routines that manage a
-set of output tiles corresponding to a requested rendermode for a world. In
+set of output tiles corresponding to a requested Renderer for a world. In
 general, there will be one TileSet object per world per rendermode requested by
 the user.
 
-The TileSet class implements the Worker interface, as well as the following
+The TileSet class implements the Canvas interface, as well as the following
 methods:
 
 do_preprocessing()
@@ -125,15 +124,18 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 # any additional checks.
 
 __all__ = ["TileSet"]
-class TileSet(Worker):
+class TileSet(Canvas):
     """The TileSet object manages the work required to produce a set of tiles
     on disk. It calculates the work that needs to be done and tells the
     dipatcher (through the Worker interface) this information. The Dispatcher
     then tells this object when and where to do the work of rendering the tiles.
 
     """
+    
+    # free parameters
+    tile_size = 384
 
-    def __init__(self, worldobj, regionsetobj, assetmanagerobj, texturesobj, options, outputdir):
+    def __init__(self, worldobj, regionsetobj, assetmanagerobj, options, rendererobj, outputdir):
         """Construct a new TileSet object with the given configuration options
         dictionary.
 
@@ -146,9 +148,9 @@ class TileSet(Worker):
 
         assetmanagerobj is the AssetManager object that represents the
         destination directory where we'll put our tiles.
-
-        texturesobj is the Textures object to pass into the rendering routine.
-        This class does nothing with it except pass it through.
+        
+        rendererobj is the Renderer object that this TileSet should
+        use to render with.
 
         outputdir is the absolute path to the tile output directory where the
         tiles are saved. It is created if it doesn't exist
@@ -215,11 +217,9 @@ class TileSet(Worker):
             1 indicates pngcrush is run on all output images
             2 indicates pngcrush and advdef are run on all output images with advdef -z2
             3 indicates pngcrush and advdef are run on all output images with advdef -z4
-
+        
         rendermode
-            Perhaps the most important/relevant option: a string indicating the
-            render mode to render. This rendermode must have already been
-            registered with the C extension module.
+            used to decide if this is an overlay or not.
 
         rerenderprob
             A floating point number between 0 and 1 indicating the probability
@@ -243,7 +243,7 @@ class TileSet(Worker):
         self.world = worldobj
         self.regionset = regionsetobj
         self.am = assetmanagerobj
-        self.textures = texturesobj
+        self.renderer = rendererobj
         self.outputdir = os.path.abspath(outputdir)
 
         config = self.am.get_tileset_config(self.options.get("name"))
@@ -322,13 +322,13 @@ class TileSet(Worker):
         else:
             raise ValueError("imgformat must be one of: 'png' or 'jpg'")
 
-        # This sets self.treedepth, self.xradius, and self.yradius
+        # This sets self.treedepth
         self._set_map_size()
 
     # Only pickle the initial state. Don't pickle anything resulting from the
     # do_preprocessing step
     def __getstate__(self):
-        return self.world, self.regionset, self.am, self.textures, self.options, self.outputdir
+        return self.world, self.regionset, self.am, self.options, self.renderer, self.outputdir
     def __setstate__(self, state):
         self.__init__(*state)
 
@@ -389,7 +389,7 @@ class TileSet(Worker):
             # This re-implements some of the logic from do_work()
             def write_out(tilepath):
                 if len(tilepath) == self.treedepth:
-                    rt = RenderTile.from_path(tilepath)
+                    rt = RenderTile.from_path(tilepath, self.tile_size)
                     imgpath = rt.get_filepath(self.outputdir, self.imgextension)
                 elif len(tilepath) == 0:
                     imgpath = os.path.join(self.outputdir, "base."+self.imgextension)
@@ -446,7 +446,7 @@ class TileSet(Worker):
         """
         if len(tilepath) == self.treedepth:
             # A render-tile
-            self._render_rendertile(RenderTile.from_path(tilepath))
+            self._render_rendertile(RenderTile.from_path(tilepath, self.tile_size))
         else:
             # A composite-tile
             if len(tilepath) == 0:
@@ -513,53 +513,22 @@ class TileSet(Worker):
 
         return d
 
-    def _find_chunk_range(self):
-        """Finds the chunk range in rows/columns and stores them in
-        self.minrow, self.maxrow, self.mincol, self.maxcol
-
-        """
-        minrow = mincol = maxrow = maxcol = 0
-
-        for c_x, c_z, _ in self.regionset.iterate_chunks():
-            # Convert these coordinates to row/col
-            col, row = convert_coords(c_x, c_z)
-
-            minrow = min(minrow, row)
-            maxrow = max(maxrow, row)
-            mincol = min(mincol, col)
-            maxcol = max(maxcol, col)
-        return Bounds(mincol, maxcol, minrow, maxrow)
-
     def _set_map_size(self):
-        """Finds and sets the depth of the map's quadtree, as well as the
-        xradius and yradius of the resulting tiles.
-
-        Sets self.treedepth, self.xradius, self.yradius
-
-        """
-        # Calculate the min and max column over all the chunks.
-        # This returns a Bounds namedtuple
-        bounds = self._find_chunk_range()
+        """Finds and sets the depth of the map's quadtree. Sets
+        self.treedepth."""
+        # get the virtual canvas size
+        rect = self.renderer.get_full_rect()
 
         # Calculate the depth of the tree
         for p in xrange(2,33): # max 32
             # Will 2^p tiles wide and high suffice?
-
-            # X has twice as many chunks as tiles, then halved since this is a
-            # radius
-            xradius = 2**p
-            # Y has 4 times as many chunks as tiles, then halved since this is
-            # a radius
-            yradius = 2*2**p
-            # The +32 on the y bounds is because chunks are very tall, and in
-            # rare cases when the bottom of the map is close to a border, it
-            # could get cut off
-            if xradius >= bounds.maxcol and -xradius <= bounds.mincol and \
-                    yradius >= bounds.maxrow + 32 and -yradius <= bounds.minrow:
+            # this are halved because it is a radius
+            radius = (2 ** (p - 1)) * self.tile_size
+            
+            if -radius <= rect[0] and -radius <= rect[1] and \
+                    radius >= rect[2] and radius >= rect[3]:
                 break
         self.treedepth = p
-        self.xradius = xradius
-        self.yradius = yradius
 
     def _rearrange_tiles(self):
         """If the target size of the tree is not the same as the existing size
@@ -681,8 +650,7 @@ class TileSet(Worker):
 
         # Local vars for slightly faster lookups
         depth = self.treedepth
-        xradius = self.xradius
-        yradius = self.yradius
+        tile_size = self.tile_size
 
         dirty = RendertileSet(depth)
 
@@ -704,33 +672,16 @@ class TileSet(Worker):
         #       Compare the last modified time of the chunk and tile. If the
         #       tile is older, mark it in a RendertileSet object as dirty.
 
-        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks():
+        for source in self.renderer.get_render_sources():
+            chunkmtime = self.renderer.get_render_source_mtime(source)
+            chunkrect = self.renderer.get_rect_for_render_source(source)
 
             chunkcount += 1
 
             if chunkmtime > max_chunk_mtime:
                 max_chunk_mtime = chunkmtime
-
-            # Convert to diagonal coordinates
-            chunkcol, chunkrow = convert_coords(chunkx, chunkz)
-
-            for c, r in get_tiles_by_chunk(chunkcol, chunkrow):
-
-                # Make sure the tile is in the boundary we're rendering.
-                # This can happen when rendering at lower treedepth than
-                # can contain the entire map, but shouldn't happen if the
-                # treedepth is correctly calculated.
-                if (
-                        c < -xradius or
-                        c >= xradius or
-                        r < -yradius or
-                        r >= yradius
-                        ):
-                    continue
-
-                # Computes the path in the quadtree from the col,row coordinates
-                tile = RenderTile.compute_path(c, r, depth)
-
+            
+            for tile in RenderTile.from_rect(chunkrect, depth, tile_size):
                 if markall:
                     # markall mode: Skip all other checks, mark tiles
                     # as dirty unconditionally
@@ -742,16 +693,15 @@ class TileSet(Worker):
                 if dirty.query_path(tile.path):
                     continue
 
-                # Stochastic check. Since we're scanning by chunks and not
-                # by tiles, and the tiles get checked multiple times for
-                # each chunk, this is only an approximation. The given
-                # probability is for a particular tile that needs
-                # rendering, but since a tile gets touched up to 32 times
-                # (once for each chunk in it), divide the probability by
-                # 32.
-                if rerender_prob and rerender_prob/32 > random.random():
-                    dirty.add(tile.path)
-                    continue
+                # Stochastic check.
+                if rerender_prob:
+                    num_chunks = len(self.renderer.get_render_sources_in_rect(chunkrect))
+                    # yes this is correct. yes it's not obvious.
+                    # think about having all of these checks fail
+                    prob = 1.0 - ((1.0 - rerender_prob) ** (1.0 / num_chunks))
+                    if prob > random.random():
+                        dirty.add(tile.path)
+                        continue
 
                 # Check mtimes and conditionally add tile to the set
                 if chunkmtime > last_rendertime:
@@ -827,7 +777,7 @@ class TileSet(Worker):
         #logging.debug("writing out compositetile {0}".format(imgpath))
 
         # Create the actual image now
-        img = Image.new("RGBA", (384, 384), self.options['bgcolor'])
+        img = Image.new("RGBA", (self.tile_size, self.tile_size), self.options['bgcolor'])
 		
         # we'll use paste (NOT alpha_over) for quadtree generation because
         # this is just straight image stitching, not alpha blending
@@ -875,23 +825,7 @@ class TileSet(Worker):
         """
 
         imgpath = tile.get_filepath(self.outputdir, self.imgextension)
-
-        # Calculate which chunks are relevant to this tile
-        # This is a list of (col, row, chunkx, chunkz, chunk_mtime)
-        chunks = list(get_chunks_by_tile(tile, self.regionset))
-
-        if not chunks:
-            # No chunks were found in this tile
-            logging.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
-            try:
-                os.unlink(imgpath)
-            except OSError, e:
-                # ignore only if the error was "file not found"
-                if e.errno != errno.ENOENT:
-                    raise
-            else:
-                logging.debug("%s deleted", tile)
-            return
+        origin = tile.rect[:2]
 
         # Create the directory if not exists
         dirdest = os.path.dirname(imgpath)
@@ -906,51 +840,14 @@ class TileSet(Worker):
                     raise
 
         #logging.debug("writing out worldtile {0}".format(imgpath))
-
+        
+        # get the max mtime for utime later
+        sources = self.renderer.get_render_sources_in_rect(tile.rect)
+        max_chunk_mtime = max(self.renderer.get_render_source_mtime(src) for src in sources)
+        
         # Compile this image
-        tileimg = Image.new("RGBA", (384, 384), self.options['bgcolor'])
-
-        colstart = tile.col
-        rowstart = tile.row
-        # col colstart will get drawn on the image starting at x coordinates -(384/2)
-        # row rowstart will get drawn on the image starting at y coordinates -(192/2)
-        max_chunk_mtime = 0
-        for col, row, chunkx, chunky, chunkz, chunk_mtime in chunks:
-            xpos = -192 + (col-colstart)*192
-            ypos = -96 + (row-rowstart)*96 + (16-1 - chunky)*192
-
-            if chunk_mtime > max_chunk_mtime:
-                max_chunk_mtime = chunk_mtime
-
-            # draw the chunk!
-            try:
-                c_overviewer.render_loop(self.world, self.regionset, chunkx, chunky,
-                        chunkz, tileimg, xpos, ypos,
-                        self.options['rendermode'], self.textures)
-            except nbt.CorruptionError:
-                # A warning and traceback was already printed by world.py's
-                # get_chunk()
-                logging.debug("Skipping the render of corrupt chunk at %s,%s and moving on.", chunkx, chunkz)
-            except Exception, e:
-                logging.error("Could not render chunk %s,%s for some reason. This is likely a render primitive option error.", chunkx, chunkz)
-                logging.error("Full error was:", exc_info=1)
-                sys.exit(1)
-
-            ## Semi-handy routine for debugging the drawing routine
-            ## Draw the outline of the top of the chunk
-            #import ImageDraw
-            #draw = ImageDraw.Draw(tileimg)
-            ## Draw top outline
-            #draw.line([(192,0), (384,96)], fill='red')
-            #draw.line([(192,0), (0,96)], fill='red')
-            #draw.line([(0,96), (192,192)], fill='red')
-            #draw.line([(384,96), (192,192)], fill='red')
-            ## Draw side outline
-            #draw.line([(0,96),(0,96+192)], fill='red')
-            #draw.line([(384,96),(384,96+192)], fill='red')
-            ## Which chunk this is:
-            #draw.text((96,48), "C: %s,%s" % (chunkx, chunkz), fill='red')
-            #draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
+        tileimg = Image.new("RGBA", (self.tile_size, self.tile_size), self.options['bgcolor'])
+        self.renderer.render(origin, tileimg)
 
         # Save them
         with FileReplacer(imgpath) as tmppath:
@@ -996,7 +893,7 @@ class TileSet(Worker):
         if len(path) == self.treedepth:
             # Base case: a render-tile.
             # Render this tile if any of its chunks are greater than its mtime
-            tileobj = RenderTile.from_path(path)
+            tileobj = RenderTile.from_path(path, self.tile_size)
             imgpath = tileobj.get_filepath(self.outputdir, self.imgextension)
             try:
                 tile_mtime = os.stat(imgpath)[stat.ST_MTIME]
@@ -1005,7 +902,8 @@ class TileSet(Worker):
                     raise
                 tile_mtime = 0
 
-            max_chunk_mtime = max(c[5] for c in get_chunks_by_tile(tileobj, self.regionset))
+            sources = self.renderer.get_render_sources_in_rect(tileobj.rect)
+            max_chunk_mtime = max(self.renderer.get_render_source_mtime(src) for src in sources)
 
             if tile_mtime > 120 + max_chunk_mtime:
                 # If a tile has been modified more recently than any of its
@@ -1097,7 +995,7 @@ class TileSet(Worker):
         """
         if len(path) == self.treedepth:
             # path referrs to a single tile
-            tileobj = RenderTile.from_path(path)
+            tileobj = RenderTile.from_path(path, self.tile_size)
             imgpath = tileobj.get_filepath(self.outputdir, self.imgextension)
             if os.path.exists(imgpath):
                 # No need to catch ENOENT since this is only called from the
@@ -1114,114 +1012,6 @@ class TileSet(Worker):
             if os.path.exists(dirpath):
                 logging.debug("Found a subtree that shouldn't exist. Deleting it: %s", dirpath)
                 shutil.rmtree(dirpath)
-
-##
-## Functions for converting (x, z) to (col, row) and back
-##
-
-def convert_coords(chunkx, chunkz):
-    """Takes a coordinate (chunkx, chunkz) where chunkx and chunkz are
-    in the chunk coordinate system, and figures out the row and column
-    in the image each one should be. Returns (col, row)."""
-
-    # columns are determined by the sum of the chunk coords, rows are the
-    # difference
-    # change this function, and you MUST change unconvert_coords
-    return (chunkx + chunkz, chunkz - chunkx)
-
-def unconvert_coords(col, row):
-    """Undoes what convert_coords does. Returns (chunkx, chunkz)."""
-
-    # col + row = chunkz + chunkz => (col + row)/2 = chunkz
-    # col - row = chunkx + chunkx => (col - row)/2 = chunkx
-    return ((col - row) / 2, (col + row) / 2)
-
-######################
-# The following two functions define the mapping from chunks to tiles and back.
-# The mapping from chunks to tiles (get_tiles_by_chunk()) is used during the
-# chunk scan to determine which tiles need updating, while the mapping from a
-# tile to chunks (get_chunks_by_tile()) is used by the tile rendering routines
-# to get which chunks are needed.
-def get_tiles_by_chunk(chunkcol, chunkrow):
-    """For the given chunk, returns an iterator over Render Tiles that this
-    chunk touches.  Iterates over (tilecol, tilerow)
-
-    """
-    # find tile coordinates. Remember tiles are identified by the
-    # address of the chunk in their upper left corner.
-    tilecol = chunkcol - chunkcol % 2
-    tilerow = chunkrow - chunkrow % 4
-
-    # If this chunk is in an /even/ column, then it spans two tiles.
-    if chunkcol % 2 == 0:
-        colrange = (tilecol-2, tilecol)
-    else:
-        colrange = (tilecol,)
-
-    # If this chunk is in a row divisible by 4, then it touches the
-    # tile above it as well. Also touches the next 4 tiles down (16
-    # rows)
-    if chunkrow % 4 == 0:
-        rowrange = xrange(tilerow-4, tilerow+32+1, 4)
-    else:
-        rowrange = xrange(tilerow, tilerow+32+1, 4)
-
-    return product(colrange, rowrange)
-
-def get_chunks_by_tile(tile, regionset):
-    """Get chunk sections that are relevant to the given render-tile. Only
-    returns chunk sections that are in chunks that actually exist according to
-    the given regionset object. (Does not check to see if the chunk section
-    itself within the chunk exists)
-
-    This function is expected to return the chunk sections in the correct order
-    for rendering, i.e. back to front.
-
-    Returns an iterator over chunks tuples where each item is
-    (col, row, chunkx, chunky, chunkz, mtime)
-    """
-
-    # This is not a documented usage of this function and is used only for
-    # debugging
-    if regionset is None:
-        get_mtime = lambda x,y: True
-    else:
-        get_mtime = regionset.get_chunk_mtime
-
-    # Each tile has two even columns and an odd column of chunks.
-
-    # First do the odd. For each chunk in the tile's odd column the tile
-    # "passes through" three chunk sections.
-    oddcol_sections = []
-    for i, y in enumerate(reversed(xrange(16))):
-        for row in xrange(tile.row + 3 - i*2, tile.row - 2 - i*2, -2):
-            oddcol_sections.append((tile.col+1, row, y))
-
-    evencol_sections = []
-    for i, y in enumerate(reversed(xrange(16))):
-        for row in xrange(tile.row + 4 - i*2, tile.row - 3 - i*2, -2):
-            evencol_sections.append((tile.col+2, row, y))
-            evencol_sections.append((tile.col, row, y))
-
-    eveniter = reversed(evencol_sections)
-    odditer = reversed(oddcol_sections)
-
-    # There are 4 rows of chunk sections per Y value on even columns, but 3
-    # rows on odd columns. This iteration order yields them in back-to-front
-    # order appropriate for rendering
-    for col, row, y in roundrobin((
-            eveniter,eveniter,
-            odditer,
-            eveniter,eveniter,
-            odditer,
-            eveniter,eveniter,
-            odditer,
-            eveniter,eveniter,
-            )):
-        chunkx, chunkz = unconvert_coords(col, row)
-        mtime = get_mtime(chunkx, chunkz)
-        if mtime:
-            yield (col, row, chunkx, y, chunkz, mtime)
 
 class RendertileSet(object):
     """This object holds a set of render-tiles using a quadtree data structure.
@@ -1507,28 +1297,27 @@ class RenderTile(object):
     tiles (composite-tile).
 
     """
-    __slots__ = ("col", "row", "path")
-    def __init__(self, col, row, path):
+    __slots__ = ("rect", "path")
+    def __init__(self, rect, path):
         """Initialize the tile obj with the given parameters. It's probably
         better to use one of the other constructors though
 
         """
-        self.col = col
-        self.row = row
+        self.rect = rect
         self.path = tuple(path)
 
     def __repr__(self):
-        return "%s(%r,%r,%r)" % (self.__class__.__name__, self.col, self.row, self.path)
+        return "%s(%r,%r)" % (self.__class__.__name__, self.rect, self.path)
 
     def __eq__(self,other):
-        return self.col == other.col and self.row == other.row and tuple(self.path) == tuple(other.path)
+        return tuple(self.path) == tuple(other.path)
 
     def __ne__(self, other):
         return not self == other
 
     # To support pickling
     def __getstate__(self):
-        return self.col, self.row, self.path
+        return self.rect, self.path
     def __setstate__(self, state):
         self.__init__(*state)
 
@@ -1548,77 +1337,73 @@ class RenderTile(object):
 
 
     @classmethod
-    def from_path(cls, path):
-        """Constructor that takes a path and computes the col,row address of
-        the tile and constructs a new tile object.
-
-        """
+    def from_path(cls, path, tile_size):
+        """Constructor that takes a path and creates a new tile object."""
         path = tuple(path)
-
         depth = len(path)
+        radius = tile_size * (2 ** (depth - 1))
 
-        # Radius of the world in chunk cols/rows
-        # (Diameter in X is 2**depth, divided by 2 for a radius, multiplied by
-        # 2 for 2 chunks per tile. Similarly for Y)
-        xradius = 2**depth
-        yradius = 2*2**depth
-
-        col = -xradius
-        row = -yradius
-        xsize = xradius
-        ysize = yradius
+        x = -radius
+        y = -radius
+        xsize = radius
+        ysize = radius
 
         for p in path:
             if p in (1,3):
-                col += xsize
+                x += xsize
             if p in (2,3):
-                row += ysize
+                y += ysize
             xsize //= 2
             ysize //= 2
-
-        return cls(col, row, path)
-
+        
+        return cls((x, y, x + tile_size, y + tile_size), path)
+    
+    @staticmethod
+    def _rect_intersects_rect(rect1, rect2):
+        # helper to see if two rects intersect
+        xoverlap = (rect1[0] >= rect2[0] and rect1[0] < rect2[2]) or (rect2[0] >= rect1[0] and rect2[0] < rect1[2])
+        yoverlap = (rect1[1] >= rect2[1] and rect1[1] < rect2[3]) or (rect2[1] >= rect1[1] and rect2[1] < rect1[3])
+        return xoverlap and yoverlap
+    
     @classmethod
-    def compute_path(cls, col, row, depth):
-        """Constructor that takes a col,row of a tile and computes the path.
-
-        """
-        assert col % 2 == 0
-        assert row % 4 == 0
-
-        xradius = 2**depth
-        yradius = 2*2**depth
-
-        colbounds = [-xradius, xradius]
-        rowbounds = [-yradius, yradius]
-
-        path = []
-
-        for level in xrange(depth):
-            # Strategy: Find the midpoint of this level, and determine which
-            # quadrant this row/col is in. Then set the bounds to that level
-            # and repeat
-
-            xmid = (colbounds[1] + colbounds[0]) // 2
-            ymid = (rowbounds[1] + rowbounds[0]) // 2
-
-            if col < xmid:
-                if row < ymid:
-                    path.append(0)
-                    colbounds[1] = xmid
-                    rowbounds[1] = ymid
+    def _from_rect_helper(cls, dompath, domrect, rect, depth):
+        # helper to yield all tiles inside (domrect, dompath) that intersect
+        # rect. uses recursion.
+        x = domrect[0]
+        y = domrect[1]
+        xsize = (domrect[2] - x) / 2
+        ysize = (domrect[3] - y) / 2
+        
+        # all subtile rects, in order
+        subtiles = [
+            (x, y, x + xsize, y + ysize),
+            (x + xsize, y, x + 2 * xsize, y + ysize),
+            (x, y + ysize, x + xsize, y + 2 * ysize),
+            (x + xsize, y + ysize, x + 2 * xsize, y + 2 * ysize),
+        ]
+        
+        for p, subrect in enumerate(subtiles):
+            if cls._rect_intersects_rect(subrect, rect):
+                subpath = dompath + (p,)
+                if len(subpath) == depth:
+                    # this is a render tile
+                    yield cls(subrect, subpath)
                 else:
-                    path.append(2)
-                    colbounds[1] = xmid
-                    rowbounds[0] = ymid
-            else:
-                if row < ymid:
-                    path.append(1)
-                    colbounds[0] = xmid
-                    rowbounds[1] = ymid
-                else:
-                    path.append(3)
-                    colbounds[0] = xmid
-                    rowbounds[0] = ymid
-
-        return cls(col, row, path)
+                    # this is a composite tile
+                    for subtile in cls._from_rect_helper(subpath, subrect, rect, depth):
+                        yield subtile
+    
+    @classmethod
+    def from_rect(cls, rect, depth, tile_size):
+        """Constructor that takes a virtual canvas rect and returns an
+        iterator of tiles intersecting that rect."""
+        
+        radius = tile_size * (2 ** (depth - 1))
+        
+        x = -radius
+        y = -radius
+        xsize = 2 * radius
+        ysize = 2 * radius
+        
+        for tile in cls._from_rect_helper((), (x, y, x + xsize, y + ysize), rect, depth):
+            yield tile
