@@ -50,13 +50,13 @@ def clean_render(overviewerargs, quiet):
         
     try:
         # check_call raises CalledProcessError when overviewer.py exits badly
-        check_call(['python', 'setup.py', 'clean', 'build'], quiet=quiet)
+        check_call([sys.executable, 'setup.py', 'clean', 'build'], quiet=quiet)
         try:
-            check_call([overviewer_script, '-d'] + overviewerargs, quiet=quiet)
+            check_call([sys.executable, overviewer_script, '-d'] + overviewerargs, quiet=quiet)
         except CalledProcessError:
             pass
         starttime = time.time()
-        check_call([overviewer_script,] + overviewerargs + [tempdir,], quiet=quiet)
+        check_call([sys.executable, overviewer_script,] + overviewerargs + [tempdir,], quiet=quiet)
         endtime = time.time()
         
         return endtime - starttime
