@@ -259,6 +259,8 @@ class IsometricRenderer(Renderer):
     def _get_tile_chunks(self, origin, im):
         rect = (origin[0], origin[1], origin[0] + im.size[0], origin[1] + im.size[1])
         chunks_out = list(self._get_chunks_in_rect(rect))
+        if not chunks_out:
+            return (0, 0, [])
         chunks_out.sort(key=itemgetter(1))
         
         zs = map(itemgetter(2), chunks_out)
@@ -269,6 +271,8 @@ class IsometricRenderer(Renderer):
 
     def render(self, origin, im):
         minz, maxz, chunks = self._get_tile_chunks(origin, im)
+        if not chunks:
+            return
         
         im_matrix = OIL.Matrix().orthographic(origin[0], origin[0] + im.size[0], origin[1] + im.size[1], origin[1], minz, maxz)
         im_matrix *= self.matrix
