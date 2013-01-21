@@ -60,10 +60,6 @@ def iterate_base4(d):
     """Iterates over a base 4 number with d digits"""
     return product(xrange(4), repeat=d)
 
-# A named tuple class storing the row and column bounds for the to-be-rendered
-# world
-Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
-
 # A note about the implementation of the different rendercheck modes:
 #
 # For reference, here's what the rendercheck modes are:
@@ -843,7 +839,10 @@ class TileSet(Canvas):
         
         # get the max mtime for utime later
         sources = self.renderer.get_render_sources_in_rect(tile.rect)
-        max_chunk_mtime = max(self.renderer.get_render_source_mtime(src) for src in sources)
+        try:
+            max_chunk_mtime = max(self.renderer.get_render_source_mtime(src) for src in sources)
+        except ValueError:
+            max_chunk_mtime = 0
         
         # Compile this image
         tileimg = OILImage(self.tile_size, self.tile_size)
@@ -903,7 +902,10 @@ class TileSet(Canvas):
                 tile_mtime = 0
 
             sources = self.renderer.get_render_sources_in_rect(tileobj.rect)
-            max_chunk_mtime = max(self.renderer.get_render_source_mtime(src) for src in sources)
+            try:
+                max_chunk_mtime = max(self.renderer.get_render_source_mtime(src) for src in sources)
+            except ValueError:
+                max_chunk_mtime = 0
 
             if tile_mtime > 120 + max_chunk_mtime:
                 # If a tile has been modified more recently than any of its
