@@ -28,6 +28,7 @@ from collections import namedtuple
 from itertools import product, izip
 
 from PIL import Image
+from OIL import Image as OILImage
 
 from .util import roundrobin
 from .canvas import Canvas
@@ -734,16 +735,16 @@ class TileSet(Canvas):
             # directory instead of in a sub-directory
             quadPath = [
                     ((0,0),os.path.join(dest, "0." + imgformat)),
-                    ((192,0),os.path.join(dest, "1." + imgformat)),
-                    ((0, 192),os.path.join(dest, "2." + imgformat)),
-                    ((192,192),os.path.join(dest, "3." + imgformat)),
+                    ((self.tile_size / 2,0),os.path.join(dest, "1." + imgformat)),
+                    ((0, self.tile_size / 2),os.path.join(dest, "2." + imgformat)),
+                    ((self.tile_size / 2,self.tile_size / 2),os.path.join(dest, "3." + imgformat)),
                     ]
         else:
             quadPath = [
                     ((0,0),os.path.join(dest, name, "0." + imgformat)),
-                    ((192,0),os.path.join(dest, name, "1." + imgformat)),
-                    ((0, 192),os.path.join(dest, name, "2." + imgformat)),
-                    ((192,192),os.path.join(dest, name, "3." + imgformat)),
+                    ((self.tile_size / 2,0),os.path.join(dest, name, "1." + imgformat)),
+                    ((0, self.tile_size / 2),os.path.join(dest, name, "2." + imgformat)),
+                    ((self.tile_size / 2,self.tile_size / 2),os.path.join(dest, name, "3." + imgformat)),
                     ]
 
         # Check each of the 4 child tiles, getting their existance and mtime
@@ -784,10 +785,9 @@ class TileSet(Canvas):
 
         for path in quadPath_filtered:
             try:
-                #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
                 src = Image.open(path[1])
                 src.load()
-                quad = Image.new("RGBA", (192, 192), self.options['bgcolor'])
+                quad = Image.new("RGBA", (self.tile_size / 2, self.tile_size / 2), self.options['bgcolor'])
                 resize_half(quad, src)
                 img.paste(quad, path[0])
             except Exception, e:
@@ -846,7 +846,7 @@ class TileSet(Canvas):
         max_chunk_mtime = max(self.renderer.get_render_source_mtime(src) for src in sources)
         
         # Compile this image
-        tileimg = Image.new("RGBA", (self.tile_size, self.tile_size), self.options['bgcolor'])
+        tileimg = OILImage(self.tile_size, self.tile_size)
         self.renderer.render(origin, tileimg)
 
         # Save them
@@ -854,7 +854,7 @@ class TileSet(Canvas):
             if self.imgextension == 'jpg':
                 tileimg.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
             else: # png
-                tileimg.save(tmppath, "png")
+                tileimg.save(tmppath)
 
             if self.options['optimizeimg']:
                 optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])

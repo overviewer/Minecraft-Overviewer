@@ -7,6 +7,7 @@ include sample_config.py
 recursive-include overviewer_core/ *.py
 recursive-include overviewer_core/src/ *.c *.h
 recursive-include overviewer_core/src/primitives/ *.c *.h
+recursive-include overviewer_core/chunkrenderer/ *.c *.h
 recursive-include overviewer_core/data/ *
 recursive-include contrib/ *.py
 recursive-include docs/ *

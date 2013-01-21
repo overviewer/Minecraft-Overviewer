@@ -24,6 +24,10 @@ overviewer_core/c_overviewer.so
 overviewer_core/c_overviewer.pyd
 overviewer_core/c_overviewer_d.pyd
 overviewer_core/c_overviewer.dylib
+overviewer_core/chunkrenderer.so
+overviewer_core/chunkrenderer.pyd
+overviewer_core/chunkrenderer_d.pyd
+overviewer_core/chunkrenderer.dylib
 
 # generated files
 overviewer_core/overviewer_version.py

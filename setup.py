@@ -175,6 +175,16 @@ c_overviewer_includes = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_inc
 
 setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
 
+# chunkrenderer extension
+chunkrenderer_files = ['chunkrenderer.c']
+chunkrenderer_includes = []
+
+chunkrenderer_files = ['overviewer_core/chunkrenderer/' + s for s in chunkrenderer_files]
+chunkrenderer_includes = ['overviewer_core/chunkrenderer/' + s for s in chunkrenderer_includes]
+
+import OIL
+setup_kwargs['ext_modules'].append(Extension('overviewer_core.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include] + pil_include, depends=chunkrenderer_includes, extra_objects=[OIL.__file__]))
+
 
 # tell build_ext to build the extension in-place
 # (NOT in build/)
@@ -191,10 +201,11 @@ class CustomClean(clean):
         # regardless of the current system's extension name convention
         build_ext = self.get_finalized_command('build_ext')
         ext_fname = build_ext.get_ext_filename('overviewer_core.c_overviewer')
+        next_fname = build_ext.get_ext_filename('overviewer_core.chunkrenderer')
         versionpath = os.path.join("overviewer_core", "overviewer_version.py")
         primspath = os.path.join("overviewer_core", "src", "primitives.h")
 
-        for fname in [ext_fname, primspath]:
+        for fname in [ext_fname, next_fname, primspath]:
             if os.path.exists(fname):
                 try:
                     log.info("removing '%s'", fname)
