@@ -5,7 +5,7 @@
 
 extern OILBackend oil_backend_cpu;
 
-static int oil_backend_debug_initialize() {
+static int oil_backend_debug_initialize(void) {
     printf("initialize\n");
     return oil_backend_cpu.initialize();
 }

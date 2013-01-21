@@ -35,7 +35,7 @@ typedef struct {
 */
 #define SMALLFLOAT (20 * FLT_EPSILON)
 
-static int oil_backend_cpu_initialize() {
+static int oil_backend_cpu_initialize(void) {
     /* nothing to do */
     return 1;
 }

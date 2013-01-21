@@ -5,7 +5,7 @@
 
 typedef struct {
     /* called when starting up this backend, return 0 on failure */
-    int (*initialize)();
+    int (*initialize)(void);
     
     /* called when creating an image */
     void (*new)(OILImage *im);

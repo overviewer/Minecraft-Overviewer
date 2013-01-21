@@ -40,7 +40,7 @@ static OILMatrix modelview = {{{1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0,
 static GLuint framebuffer = 0;
 static GLuint colorbuffer = 0;
 
-static int oil_backend_opengl_initialize() {
+static int oil_backend_opengl_initialize(void) {
     static int initialized = 0;
     static int initialization_result = 0;
     Display *dpy;
