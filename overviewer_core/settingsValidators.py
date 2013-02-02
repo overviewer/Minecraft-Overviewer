@@ -165,7 +165,8 @@ def validateOptImg(opt):
 def validateTexturePath(path):
     # Expand user dir in directories strings
     path = expand_path(path)
-    # TODO assert this path exists?
+    if not os.path.exists(path):
+        raise ValidationException("%r does not exist" % path)
     return path
 
 
