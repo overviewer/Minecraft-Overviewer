@@ -192,7 +192,7 @@ class World(object):
             spawnY = 255
         
         # Open up the chunk that the spawn is in
-        regionset = self.get_regionset("overworld")
+        regionset = self.get_regionset(None)
         if not regionset:
             return None
         try:

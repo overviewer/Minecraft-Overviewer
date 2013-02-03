@@ -534,7 +534,8 @@ class TileSet(object):
         if isOverlay:
             d.update({"tilesets": self.options.get("overlay")})
 
-        if (self.regionset.get_type() == "overworld" and self.options.get("showspawn", True)):
+        # None means overworld
+        if (self.regionset.get_type() == None and self.options.get("showspawn", True)):
             d.update({"spawn": self.options.get("spawn")})
         else:
             d.update({"spawn": "false"});
