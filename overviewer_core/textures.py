@@ -933,8 +933,8 @@ block(blockid=21, top_image="textures/blocks/oreLapis.png")
 # lapis lazuli block
 block(blockid=22, top_image="textures/blocks/blockLapis.png")
 
-# dispensers, furnaces, and burning furnaces
-@material(blockid=[23, 61, 62], data=range(6), solid=True)
+# dispensers, dropper, furnaces, and burning furnaces
+@material(blockid=[23, 61, 62, 158], data=range(6), solid=True)
 def furnaces(self, blockid, data):
     # first, do the rotation if needed
     if self.rotation == 1:
@@ -962,6 +962,8 @@ def furnaces(self, blockid, data):
         front = self.load_image_texture("textures/blocks/furnace_front_lit.png")
     elif blockid == 23:
         front = self.load_image_texture("textures/blocks/dispenser_front.png")
+    elif blockid == 158:
+        front = self.load_image_texture("textures/blocks/dropper_front.png")
     
     if data == 3: # pointing west
         return self.build_full_block(top, None, None, side, front)
@@ -1046,8 +1048,8 @@ def bed(self, blockid, data):
     top = (top, increment)
     return self.build_full_block(top, None, None, left_face, right_face)
 
-# powered, detector, and normal rails
-@material(blockid=[27, 28, 66], data=range(14), transparent=True)
+# powered, detector, activator and normal rails
+@material(blockid=[27, 28, 66, 157], data=range(14), transparent=True)
 def rails(self, blockid, data):
     # first, do rotation
     # Masked to not clobber powered rail on/off info
@@ -1108,6 +1110,17 @@ def rails(self, blockid, data):
     elif blockid == 66: # normal rail
         raw_straight = self.load_image_texture("textures/blocks/rail.png")
         raw_corner = self.load_image_texture("textures/blocks/rail_turn.png")
+
+    elif blockid == 157: # activator rail
+        if data & 0x8 == 0: # unpowered
+            raw_straight = self.load_image_texture("textures/blocks/activatorRail.png")
+            raw_corner = self.load_image_texture("textures/blocks/rail_turn.png")    # they don't exist but make the code
+                                                # much simplier
+        elif data & 0x8 == 0x8: # powered
+            raw_straight = self.load_image_texture("textures/blocks/activatorRail_powered.png")
+            raw_corner = self.load_image_texture("textures/blocks/rail_turn.png")    # leave corners for code simplicity
+        # filter the 'powered' bit
+        data = data & 0x7
         
     ## use transform_image to scale and shear
     if data == 0:
@@ -1510,8 +1523,8 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_image="textures/blocks/mobSpawner.png", transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch and jungle stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136], data=range(8), transparent=True, solid=True, nospawn=True)
+# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle and quartz stairs.
+@material(blockid=[53,67,108,109,114,128,134,135,136,156], data=range(8), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
 
     # first, rotations
@@ -1553,6 +1566,8 @@ def stairs(self, blockid, data):
         texture = self.load_image_texture("textures/blocks/wood_birch.png")
     elif blockid == 136: # jungle good stairs
         texture = self.load_image_texture("textures/blocks/wood_jungle.png")
+    elif blockid == 156: # quartz block stairs
+        texture = self.load_image_texture("textures/blocks/quartzblock_side.png")
 
 
     side = texture.copy()
@@ -1566,6 +1581,10 @@ def stairs(self, blockid, data):
         half_block_u = self.load_image_texture("textures/blocks/sandstone_top.png").copy()
         half_block_d = self.load_image_texture("textures/blocks/sandstone_top.png").copy()
         texture = self.load_image_texture("textures/blocks/sandstone_top.png").copy()
+    elif blockid == 156: # also quartz stairs
+        half_block_u = self.load_image_texture("textures/blocks/quartzblock_top.png").copy()
+        half_block_d = self.load_image_texture("textures/blocks/quartzblock_top.png").copy()
+        texture = self.load_image_texture("textures/blocks/quartzblock_top.png").copy()
 
     # generate needed geometries
     ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -1644,8 +1663,8 @@ def stairs(self, blockid, data):
         
     return img
 
-# normal, locked (used in april's fool day) and ender chests chests
-@material(blockid=[54,95,130], data=range(30), transparent = True)
+# normal, locked (used in april's fool day), ender and trapped chest
+@material(blockid=[54,95,130,146], data=range(30), transparent = True)
 def chests(self, blockid, data):
     # the first 3 bits are the orientation as stored in minecraft, 
     # bits 0x8 and 0x10 indicate which half of the double chest is it.
@@ -3611,12 +3630,6 @@ block(blockid=129, top_image="textures/blocks/oreEmerald.png")
 # emerald block
 block(blockid=133, top_image="textures/blocks/blockEmerald.png")
 
-# nether quartz ore
-block(blockid=153, top_image="textures/blocks/netherquartz.png")
-
-# block of redstone
-block(blockid=152, top_image="textures/blocks/blockRedstone.png")
-
 # cocoa plant
 @material(blockid=127, data=range(12), transparent=True)
 def cocoa_plant(self, blockid, data):
@@ -3958,3 +3971,38 @@ def anvil(self, blockid, data):
     alpha_over(img, right_side, right_pos, right_side)
     
     return img
+
+
+# block of redstone
+block(blockid=152, top_image="textures/blocks/blockRedstone.png")
+
+# nether quartz ore
+block(blockid=153, top_image="textures/blocks/netherquartz.png")
+
+# block of quartz
+@material(blockid=155, data=range(5), solid=True)
+def quartz_block(self, blockid, data):
+    
+    if data in (0,1): # normal and chiseled quartz block
+        if data == 0:
+            top = self.load_image_texture("textures/blocks/quartzblock_top.png")
+            side = self.load_image_texture("textures/blocks/quartzblock_side.png")
+        else:
+            top = self.load_image_texture("textures/blocks/quartzblock_chiseled_top.png")
+            side = self.load_image_texture("textures/blocks/quartzblock_chiseled.png")    
+        return self.build_block(top, side)
+    
+    # pillar quartz block with orientation
+    top = self.load_image_texture("textures/blocks/quartzblock_lines_top.png")
+    side = self.load_image_texture("textures/blocks/quartzblock_lines.png").copy()
+    if data == 2: # vertical
+        return self.build_block(top, side)
+    elif data == 3: # north-south oriented
+        if self.rotation in (0,2):
+            return self.build_full_block(side, None, None, top, side.rotate(90))
+        return self.build_full_block(side.rotate(90), None, None, side.rotate(90), top)
+        
+    elif data == 4: # east-west oriented
+        if self.rotation in (0,2):
+            return self.build_full_block(side.rotate(90), None, None, side.rotate(90), top)
+        return self.build_full_block(side, None, None, top, side.rotate(90))
