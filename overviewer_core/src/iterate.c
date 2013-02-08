@@ -298,8 +298,8 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
             above_level_data = check_adjacent_blocks(state, x, y+1, z, state->block);
         }   /* else above_level_data = 0 */
         
-        /* check connection with same level */
-        same_level_data = check_adjacent_blocks(state, x, y, z, 55);
+        /* check connection with same level (other redstone and trapped chests */
+        same_level_data = check_adjacent_blocks(state, x, y, z, 55) | check_adjacent_blocks(state, x, y, z, 146);
         
         /* check the posibility of connection with y-1 level, check for air */
         possibly_connected = check_adjacent_blocks(state, x, y, z, 0);
