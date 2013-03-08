@@ -1387,6 +1387,8 @@ def slabs(self, blockid, data):
         top = side = self.load_image_texture("textures/blocks/stonebricksmooth.png")
     elif texture== 6: # nether brick slab
         top = side = self.load_image_texture("textures/blocks/netherBrick.png")
+    elif texture== 7: #quartz        
+        top = side = self.load_image_texture("textures/blocks/quartzblock_side.png")
     else:
         return None
     
@@ -3052,7 +3054,7 @@ def comparator(self, blockid, data):
     
     active_torch = build_torch(True)
     inactive_torch = build_torch(False)
-    back_torch = active_torch if blockid == 150 else inactive_torch
+    back_torch = active_torch if (blockid == 150 or data & 0b1000 == 0b1000) else inactive_torch
     static_torch_img = active_torch if (data & 0b100 == 0b100) else inactive_torch 
 
     img = self.build_full_block( (top, increment), None, None, side, side)
@@ -3505,8 +3507,8 @@ def end_portal(self, blockid, data):
 
     return img
 
-# end portal frame
-@material(blockid=120, data=range(5), transparent=True)
+# end portal frame (data range 8 to get all orientations of filled)
+@material(blockid=120, data=range(8), transparent=True)
 def end_portal_frame(self, blockid, data):
     # The bottom 2 bits are oritation info but seems there is no
     # graphical difference between orientations
