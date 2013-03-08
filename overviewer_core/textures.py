@@ -4008,3 +4008,27 @@ def quartz_block(self, blockid, data):
         if self.rotation in (0,2):
             return self.build_full_block(side.rotate(90), None, None, side.rotate(90), top)
         return self.build_full_block(side, None, None, top, side.rotate(90))
+    
+# hopper
+@material(blockid=154, data=range(4), transparent=True)
+def hopper(self, blockid, data):
+    #build the top
+    side = self.load_image_texture("textures/blocks/hopper.png")
+    top = self.load_image_texture("textures/blocks/hopper_top.png")
+    bottom = self.load_image_texture("textures/blocks/hopper_inside.png")
+    hop_top = self.build_full_block((top,10), side, side, side, side, side)
+
+    #build a solid block for mid/top
+    hop_mid = self.build_full_block((top,5), side, side, side, side, side)
+    hop_bot = self.build_block(side,side)
+
+    hop_mid = hop_mid.resize((17,17),Image.ANTIALIAS)
+    hop_bot = hop_bot.resize((10,10),Image.ANTIALIAS)
+    
+    #compose the final block
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, hop_bot, (7,14), hop_bot)
+    alpha_over(img, hop_mid, (3,3), hop_mid)
+    alpha_over(img, hop_top, (0,-6), hop_top)
+
+    return img
