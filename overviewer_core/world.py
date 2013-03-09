@@ -21,6 +21,7 @@ import logging
 import hashlib
 import time
 import random
+import re
 
 import numpy
 
@@ -491,8 +492,13 @@ class RegionSet(object):
         Returns (regionx, regiony, filename)"""
 
         logging.debug("regiondir is %s", self.regiondir)
+        glob_pattern = self.regiondir + "/r.*.*.mca"
 
-        for path in glob(self.regiondir + "/r.*.*.mca"):
+        # Workaround for python being a pleb-tier language
+        glob_pattern = re.sub(r'(\[|\])', r'[\1]', glob_pattern)
+        logging.debug("glob_pattern is %s", glob_pattern)
+
+        for path in glob(glob_pattern):
             dirpath, f = os.path.split(path)
             p = f.split(".")
             x = int(p[1])
