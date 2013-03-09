@@ -21,6 +21,7 @@ import logging
 import hashlib
 import time
 import random
+import re
 
 import numpy
 
@@ -492,14 +493,14 @@ class RegionSet(object):
 
         logging.debug("regiondir is %s", self.regiondir)
 
-        for path in glob(self.regiondir + "/r.*.*.mca"):
-            dirpath, f = os.path.split(path)
-            p = f.split(".")
-            x = int(p[1])
-            y = int(p[2])
-            if abs(x) > 500000 or abs(y) > 500000:
-                logging.warning("Holy shit what is up with region file %s !?" % f)
-            yield (x, y, path)
+        for f in os.listdir(self.regiondir):
+            if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
+                p = f.split(".")
+                x = int(p[1])
+                y = int(p[2])
+                if abs(x) > 500000 or abs(y) > 500000:
+                    logging.warning("Holy shit what is up with region file %s !?" % f)
+                yield (x, y, os.path.join(self.regiondir, f))
 
 class RegionSetWrapper(object):
     """This is the base class for all "wrappers" of RegionSet objects. A
