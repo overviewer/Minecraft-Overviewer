@@ -116,7 +116,7 @@ class World(object):
         # seem to be any set standard on what dimensions are in each world,
         # just scan the directory heirarchy to find a directory with .mca
         # files.
-        for root, dirs, files in os.walk(self.worlddir):
+        for root, dirs, files in os.walk(self.worlddir, followlinks=True):
             # any .mcr files in this directory?
             mcas = [x for x in files if x.endswith(".mca")]
             if mcas:
