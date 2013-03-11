@@ -1387,6 +1387,8 @@ def slabs(self, blockid, data):
         top = side = self.load_image_texture("textures/blocks/stonebricksmooth.png")
     elif texture== 6: # nether brick slab
         top = side = self.load_image_texture("textures/blocks/netherBrick.png")
+    elif texture== 7: #quartz        
+        top = side = self.load_image_texture("textures/blocks/quartzblock_side.png")
     else:
         return None
     
@@ -3052,7 +3054,7 @@ def comparator(self, blockid, data):
     
     active_torch = build_torch(True)
     inactive_torch = build_torch(False)
-    back_torch = active_torch if blockid == 150 else inactive_torch
+    back_torch = active_torch if (blockid == 150 or data & 0b1000 == 0b1000) else inactive_torch
     static_torch_img = active_torch if (data & 0b100 == 0b100) else inactive_torch 
 
     img = self.build_full_block( (top, increment), None, None, side, side)
@@ -3505,8 +3507,8 @@ def end_portal(self, blockid, data):
 
     return img
 
-# end portal frame
-@material(blockid=120, data=range(5), transparent=True)
+# end portal frame (data range 8 to get all orientations of filled)
+@material(blockid=120, data=range(8), transparent=True)
 def end_portal_frame(self, blockid, data):
     # The bottom 2 bits are oritation info but seems there is no
     # graphical difference between orientations
@@ -4006,3 +4008,27 @@ def quartz_block(self, blockid, data):
         if self.rotation in (0,2):
             return self.build_full_block(side.rotate(90), None, None, side.rotate(90), top)
         return self.build_full_block(side, None, None, top, side.rotate(90))
+    
+# hopper
+@material(blockid=154, data=range(4), transparent=True)
+def hopper(self, blockid, data):
+    #build the top
+    side = self.load_image_texture("textures/blocks/hopper.png")
+    top = self.load_image_texture("textures/blocks/hopper_top.png")
+    bottom = self.load_image_texture("textures/blocks/hopper_inside.png")
+    hop_top = self.build_full_block((top,10), side, side, side, side, side)
+
+    #build a solid block for mid/top
+    hop_mid = self.build_full_block((top,5), side, side, side, side, side)
+    hop_bot = self.build_block(side,side)
+
+    hop_mid = hop_mid.resize((17,17),Image.ANTIALIAS)
+    hop_bot = hop_bot.resize((10,10),Image.ANTIALIAS)
+    
+    #compose the final block
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, hop_bot, (7,14), hop_bot)
+    alpha_over(img, hop_mid, (3,3), hop_mid)
+    alpha_over(img, hop_top, (0,-6), hop_top)
+
+    return img
