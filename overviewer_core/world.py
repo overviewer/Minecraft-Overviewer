@@ -21,6 +21,7 @@ import logging
 import hashlib
 import time
 import random
+import re
 
 import numpy
 
@@ -493,7 +494,7 @@ class RegionSet(object):
         logging.debug("regiondir is %s", self.regiondir)
 
         for f in os.listdir(self.regiondir):
-            if f.endswith(".mca"):
+            if re.match(r"^r.(-)*(\d+).(-)*(\d+).mca$", f):
                 p = f.split(".")
                 x = int(p[1])
                 y = int(p[2])
