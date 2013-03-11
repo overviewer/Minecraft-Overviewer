@@ -255,7 +255,7 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
     If you want to specify an observer manually, try something like:
     ::
 
-        from observer import ProgressBarObserver()
+        from observer import ProgressBarObserver
         observer = ProgressBarObserver()
 
     There are currently three observers available: ``LoggingObserver``, 
