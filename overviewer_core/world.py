@@ -494,7 +494,7 @@ class RegionSet(object):
         logging.debug("regiondir is %s", self.regiondir)
 
         for f in os.listdir(self.regiondir):
-            if re.match(r"^r.(-)*(\d+).(-)*(\d+).mca$", f):
+            if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
                 p = f.split(".")
                 x = int(p[1])
                 y = int(p[2])
