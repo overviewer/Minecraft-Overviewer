@@ -14,7 +14,7 @@ before_script:
   - git clone git://github.com/overviewer/Minecraft-Overviewer-Addons.git ~/mcoa/
   - wget -N http://s3.amazonaws.com/MinecraftDownload/minecraft.jar -P ~/.minecraft/bin/
 script:
-  - python overviewer.py ~/mcoa/exmaple ~/test-output --rendermodes=smooth-lighting
+  - python overviewer.py ~/mcoa/exmaple ~/test-output --rendermodes=smooth-lighting -p1
 notifications:
   email: false
 # matrix:
