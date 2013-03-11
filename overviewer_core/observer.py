@@ -374,18 +374,18 @@ class BrownanObserver(Observer):
                 subprocess.check_call(["wget", "http://fratti.ch/tehbrownz/" + v, "-Pbrownanvoice"])
 
     def start(self, max_value):
-        subprocess.call(["mplayer", "brownanvoice/start.ogg", "--really-quiet"])
+        subprocess.Popen(["mplayer", "brownanvoice/start.ogg", "--really-quiet"])
         super(BrownanObserver, self).start(max_value)
 
     def finish(self):
-        subprocess.call(["mplayer", "brownanvoice/end.ogg", "--really-quiet"])
+        subprocess.Popen(["mplayer", "brownanvoice/end.ogg", "--really-quiet"])
         super(BrownanObserver, self).finish()
 
     def update(self, current_value):
         super(BrownanObserver, self).update(current_value)
         for p in self.progress:
             if self.lastvalue < p and self.get_percentage() > p:
-                subprocess.call(["mplayer", "brownanvoice/" + str(p) + ".ogg", "--really-quiet"])
+                subprocess.Popen(["mplayer", "brownanvoice/" + str(p) + ".ogg", "--really-quiet"])
                 break
             
         self.lastvalue = self.get_percentage()
