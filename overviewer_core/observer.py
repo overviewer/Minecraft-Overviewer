@@ -19,6 +19,7 @@ import progressbar
 import sys
 import os
 import json
+import subprocess
 
 class Observer(object):
     """Base class that defines the observer interface.
@@ -355,3 +356,36 @@ class ServerAnnounceObserver(Observer):
         self.target_handle.write('say %s\n' % output)
         self.target_handle.flush()
 
+class BrownanObserver(Observer):
+    """Listen to brownan's deep sultry voice while rendering"""
+    lastvalue = 0
+    progress = [90, 75, 50, 25]
+
+    def __init__(self):
+        super(BrownanObserver, self).__init__()
+        # Download files if they don't exist
+        if not os.path.isdir("brownanvoice"):
+            os.mkdir("brownanvoice")
+
+        voicefiles = ["start.ogg", "end.ogg", "25.ogg", "50.ogg", "75.ogg", "90.ogg"]
+        
+        for v in voicefiles:
+            if not os.path.isfile("brownanvoice/" + v):
+                subprocess.check_call(["wget", "http://fratti.ch/tehbrownz/" + v, "-Pbrownanvoice"])
+
+    def start(self, max_value):
+        subprocess.call(["mplayer", "brownanvoice/start.ogg", "--really-quiet"])
+        super(BrownanObserver, self).start(max_value)
+
+    def finish(self):
+        subprocess.call(["mplayer", "brownanvoice/end.ogg", "--really-quiet"])
+        super(BrownanObserver, self).finish()
+
+    def update(self, current_value):
+        super(BrownanObserver, self).update(current_value)
+        for p in self.progress:
+            if self.lastvalue < p and self.get_percentage() > p:
+                subprocess.call(["mplayer", "brownanvoice/" + str(p) + ".ogg", "--really-quiet"])
+                break
+            
+        self.lastvalue = self.get_percentage()
