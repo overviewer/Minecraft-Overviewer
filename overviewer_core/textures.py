@@ -962,8 +962,18 @@ def furnaces(self, blockid, data):
         front = self.load_image_texture("textures/blocks/furnace_front_lit.png")
     elif blockid == 23:
         front = self.load_image_texture("textures/blocks/dispenser_front.png")
+        if data == 0: # dispenser pointing down
+            return self.build_block(top, top)
+        elif data == 1: # dispenser pointing up
+            dispenser_top = self.load_image_texture("textures/blocks/dispenser_front_vertical.png")
+            return self.build_block(dispenser_top, top)
     elif blockid == 158:
         front = self.load_image_texture("textures/blocks/dropper_front.png")
+        if data == 0: # dropper pointing down
+            return self.build_block(top, top)
+        elif data == 1: # dispenser pointing up
+            dropper_top = self.load_image_texture("textures/blocks/dropper_front_vertical.png")
+            return self.build_block(dropper_top, top)
     
     if data == 3: # pointing west
         return self.build_full_block(top, None, None, side, front)
@@ -1370,7 +1380,10 @@ block(blockid=42, top_image="textures/blocks/blockIron.png")
 # here because lots of pre-1.3 worlds use this blocks
 @material(blockid=[43, 44], data=range(16), transparent=(44,), solid=True)
 def slabs(self, blockid, data):
-    texture = data & 7
+    if blockid == 44: 
+        texture = data & 7
+    else: # data > 8 are special double slabs
+        texture = data
     if texture== 0: # stone slab
         top = self.load_image_texture("textures/blocks/stoneslab_top.png")
         side = self.load_image_texture("textures/blocks/stoneslab_side.png")
@@ -1379,7 +1392,7 @@ def slabs(self, blockid, data):
         side = self.load_image_texture("textures/blocks/sandstone_side.png")
     elif texture== 2: # wooden slab
         top = side = self.load_image_texture("textures/blocks/wood.png")
-    elif texture== 3: # cobblestone slab
+    elif texture== 3: # c43obblestone slab
         top = side = self.load_image_texture("textures/blocks/stonebrick.png")
     elif texture== 4: # brick
         top = side = self.load_image_texture("textures/blocks/brick.png")
@@ -1389,6 +1402,10 @@ def slabs(self, blockid, data):
         top = side = self.load_image_texture("textures/blocks/netherBrick.png")
     elif texture== 7: #quartz        
         top = side = self.load_image_texture("textures/blocks/quartzblock_side.png")
+    elif texture== 8: # special stone double slab with top texture only
+        top = side = self.load_image_texture("textures/blocks/stoneslab_top.png")
+    elif texture== 9: # special sandstone double slab with top texture only
+        top = side = self.load_image_texture("textures/blocks/sandstone_top.png")
     else:
         return None
     
