@@ -158,8 +158,9 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
     blocklevel = get_data(state, BLOCKLIGHT, x, y, z);
 
     /* special half-step handling, stairs handling */
+    /* Anvil also needs to be here, blockid 145 */
     if (block == 44 || block == 53 || block == 67 || block == 108 || block == 109 || block == 114 ||
-        block == 128 || block == 134 || block == 135 || block == 136) {
+        block == 128 || block == 134 || block == 135 || block == 136 || block == 145 || block == 156) {
         unsigned int upper_block;
         
         /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
@@ -170,7 +171,7 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
             upper_block = get_data(state, BLOCKS, x, y + upper_counter, z);
         } while (upper_block == 44 || upper_block == 53 || upper_block == 67 || upper_block == 108 ||
                  upper_block == 109 || upper_block == 114 || upper_block == 128 || upper_block == 134 ||
-                 upper_block == 135 || upper_block == 136);
+                 upper_block == 135 || upper_block == 136 || upper_block == 156 );
         if (is_transparent(upper_block)) {
             skylevel = get_data(state, SKYLIGHT, x, y + upper_counter, z);
         } else {
