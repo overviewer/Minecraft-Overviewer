@@ -21,7 +21,7 @@ import time
 import logging
 import traceback
 
-from PIL import Image
+from OIL import Image
 
 import world
 import util
@@ -133,7 +133,7 @@ directory.
             dump['tilesets'].append(get_data(tileset))
 
             # write a blank image
-            blank = Image.new("RGBA", (1,1), tileset.options.get('bgcolor'))
+            blank = Image(1, 1)
             blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')))
 
         # write out config

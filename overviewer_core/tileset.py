@@ -27,8 +27,7 @@ import stat
 from collections import namedtuple
 from itertools import product, izip
 
-from PIL import Image
-from OIL import Image as OILImage
+from OIL import Image
 
 from .util import roundrobin
 from .canvas import Canvas
@@ -36,7 +35,6 @@ from . import nbt
 from .files import FileReplacer
 from .optimizeimages import optimize_image
 from . import rendermodes
-from .c_overviewer import resize_half, render_loop
 
 """
 
@@ -774,18 +772,14 @@ class TileSet(Canvas):
         #logging.debug("writing out compositetile {0}".format(imgpath))
 
         # Create the actual image now
-        img = Image.new("RGBA", (self.tile_size, self.tile_size), self.options['bgcolor'])
+        img = Image(self.tile_size, self.tile_size)
 		
-        # we'll use paste (NOT alpha_over) for quadtree generation because
-        # this is just straight image stitching, not alpha blending
-
         for path in quadPath_filtered:
             try:
-                src = Image.open(path[1])
-                src.load()
-                quad = Image.new("RGBA", (self.tile_size / 2, self.tile_size / 2), self.options['bgcolor'])
-                resize_half(quad, src)
-                img.paste(quad, path[0])
+                src = Image.load(path[1])
+                quad = Image(self.tile_size / 2, self.tile_size / 2)
+                quad.resize_half(src)
+                img.composite(quad, 255, *path[0])
             except Exception, e:
                 logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
                 logging.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
@@ -797,9 +791,9 @@ class TileSet(Canvas):
         # Save it
         with FileReplacer(imgpath) as tmppath:
             if imgformat == 'jpg':
-                img.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
+                assert False # FIXME jpg not supported yet by OIL
             else: # png
-                img.save(tmppath, "png")
+                img.save(tmppath)
 
             if self.options['optimizeimg']:
                 optimize_image(tmppath, imgformat, self.options['optimizeimg'])
@@ -845,13 +839,13 @@ class TileSet(Canvas):
             max_chunk_mtime = 0
         
         # Compile this image
-        tileimg = OILImage(self.tile_size, self.tile_size)
+        tileimg = Image(self.tile_size, self.tile_size)
         self.renderer.render(origin, tileimg)
 
         # Save them
         with FileReplacer(imgpath) as tmppath:
             if self.imgextension == 'jpg':
-                tileimg.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
+                assert False # FIXME OIL does not support jpg yet
             else: # png
                 tileimg.save(tmppath)
 
