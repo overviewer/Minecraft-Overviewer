@@ -321,6 +321,24 @@ static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, O
     }    
 }
 
+static int oil_backend_opengl_resize_half(OILImage *im, OILImage *src) {
+    OILVertex vertices[] = {
+        {0.0, 0.0, 0.0, 0.0, 1.0, {255, 255, 255, 255}},
+        {1.0, 0.0, 0.0, 1.0, 1.0, {255, 255, 255, 255}},
+        {1.0, 1.0, 0.0, 1.0, 0.0, {255, 255, 255, 255}},
+        {0.0, 1.0, 0.0, 0.0, 0.0, {255, 255, 255, 255}},
+    };
+    unsigned int indices[] = {
+        0, 2, 1,
+        0, 3, 2,
+    };
+    OILMatrix mat;
+    oil_matrix_set_identity(&mat);
+    oil_matrix_orthographic(&mat, 0.0, 1.0, 1.0, 0.0, -1.0, 1.0);
+    oil_backend_opengl_draw_triangles(im, &mat, src, vertices, 4, indices, 6, 0);
+    return 1;
+}
+
 static void oil_backend_opengl_clear(OILImage *im) {
     bind_framebuffer(im);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -334,6 +352,7 @@ OILBackend oil_backend_opengl = {
     oil_backend_opengl_save,
     oil_backend_opengl_composite,
     oil_backend_opengl_draw_triangles,
+    oil_backend_opengl_resize_half,
     oil_backend_opengl_clear,
 };
 

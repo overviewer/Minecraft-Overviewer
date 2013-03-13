@@ -23,6 +23,9 @@ typedef struct {
     /* draw triangles */
     void (*draw_triangles)(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int vertices_length, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags);
     
+    /* cut src in half, write to im */
+    int (*resize_half)(OILImage *im, OILImage *src);
+    
     /* clear the image */
     void (*clear)(OILImage *im);
 } OILBackend;

@@ -95,6 +95,7 @@ void oil_image_unlock(OILImage *im);
 
 int oil_image_composite(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize);
 void oil_image_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int vertices_length, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags);
+int oil_image_resize_half(OILImage *im, OILImage *src);
 void oil_image_clear(OILImage *im);
 
 #endif /* __OIL_H_INCLUDED__ */

@@ -668,6 +668,18 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+static PyObject *PyOILImage_resize_half(PyOILImage *self, PyObject *args) {
+    PyOILImage *src = NULL;
+    if (!PyArg_ParseTuple(args, "O!", &PyOILImageType, &src)) {
+        return NULL;
+    }
+    if (!oil_image_resize_half(self->im, src->im)) {
+        PyErr_SetString(PyExc_RuntimeError, "cannot resize image in half (likely a size mismatch)");
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 static PyObject *PyOILImage_clear(PyOILImage *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, ""))
         return NULL;
@@ -686,6 +698,8 @@ static PyMethodDef PyOILImage_methods[] = {
      "Composite another image on top of this one."},
     {"draw_triangles", (PyCFunction)PyOILImage_draw_triangles, METH_VARARGS,
      "Draw 3D triangles on top of the image."},
+    {"resize_half", (PyCFunction)PyOILImage_resize_half, METH_VARARGS,
+     "Shrink the given image by half and copy onto self."},
     {"clear", (PyCFunction)PyOILImage_clear, METH_VARARGS,
      "Clear the image."},
     {NULL, NULL, 0, NULL}

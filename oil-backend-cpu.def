@@ -298,6 +298,46 @@ static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILI
     }
 }
 
+static int oil_backend_resize_half(OILImage *im, OILImage *src) {
+    unsigned int x, y;
+	unsigned int r, g, b, a;
+    
+    for (y = 0; y < im->height; y++) {
+        OILPixel *out = &(im->data[y * im->width]);
+        OILPixel *in1 = &(src->data[(y * 2) * src->width]);
+        OILPixel *in2 = &(src->data[(y * 2 + 1) * src->width]);
+        
+        for (x = 0; x < im->width; x++) {
+			r = g = b = a = 0;
+			
+			/* read first column */
+			r += in1->r + in2->r;
+			g += in1->g + in2->g;
+			b += in1->b + in2->b;
+			a += in1->a + in2->a;
+			in1++;
+			in2++;
+			
+			/* read second column */
+			r += in1->r + in2->r;
+			g += in1->g + in2->g;
+			b += in1->b + in2->b;
+			a += in1->a + in2->a;
+			in1++;
+			in2++;
+			
+			/* write out average */
+			out->r = (r >> 2);
+			out->g = (g >> 2);
+			out->b = (b >> 2);
+			out->a = (a >> 2);
+			out++;
+        }
+    }
+    
+    return 1;
+}
+
 static void oil_backend_cpu_clear(OILImage *im) {
 	memset(im->data, 0, im->width * im->height * sizeof(OILPixel));
 }
@@ -310,5 +350,6 @@ OILBackend CPU_BACKEND_NAME = {
     oil_backend_cpu_save,
     oil_backend_cpu_composite,
     oil_backend_cpu_draw_triangles,
+	oil_backend_resize_half,
 	oil_backend_cpu_clear,
 };

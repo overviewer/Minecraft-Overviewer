@@ -40,6 +40,11 @@ static void oil_backend_debug_draw_triangles(OILImage *im, OILMatrix *matrix, OI
     oil_backend_cpu.draw_triangles(im, matrix, tex, vertices, vertices_length, indices, indices_length, flags);
 }
 
+static int oil_backend_debug_resize_half(OILImage *im, OILImage *src) {
+    printf("resize_half(%p, %p\n)", im, src);
+    return oil_backend_cpu.resize_half(im, src);
+}
+
 static void oil_backend_debug_clear(OILImage *im) {
     printf("clear(%p)\n", im);
     oil_backend_cpu.clear(im);
@@ -53,5 +58,6 @@ OILBackend oil_backend_debug = {
     oil_backend_debug_save,
     oil_backend_debug_composite,
     oil_backend_debug_draw_triangles,
+    oil_backend_debug_resize_half,
     oil_backend_debug_clear,
 };

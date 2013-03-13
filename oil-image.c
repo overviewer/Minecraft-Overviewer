@@ -222,6 +222,17 @@ void oil_image_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OI
     im->backend->draw_triangles(im, matrix, tex, vertices, vertices_length, indices, indices_length, flags);
 }
 
+int oil_image_resize_half(OILImage *im, OILImage *src) {
+    if (!im || !src)
+        return 0;
+    if (im->backend != src->backend)
+        return 0;
+    if (im->height * 2 != src->height || im->width * 2 != src->width)
+        return 0;
+    
+    return im->backend->resize_half(im, src);
+}
+
 void oil_image_clear(OILImage *im) {
     if (!im)
         return;

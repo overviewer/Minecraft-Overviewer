@@ -30,6 +30,7 @@ images = {}
 
 NUM_COMPOSITES = 200
 NUM_QUADS = 90
+NUM_RESIZES = 10
 
 def pil_composite(out):
     dest = PIL.Image.new("RGBA", (512, 512))
@@ -65,6 +66,19 @@ def oil_triangles(out):
         dest.draw_triangles(matrix, images['dice'], vertices, indices)
     dest.save(out)
 
+def pil_resize_half(out):
+    im = images['input']
+    for _ in range(NUM_RESIZES):
+        dest = im.resize((im.size[0] / 2, im.size[1] / 2), PIL.Image.ANTIALIAS)
+    dest.save(out)
+
+def oil_resize_half(out):
+    src = images['input']
+    for _ in range(NUM_RESIZES):
+        dest = OIL.Image(src.size[0] / 2, src.size[1] / 2)
+        dest.resize_half(src)
+    dest.save(out)
+
 tests = [
     ("Load", [
             ("PIL", None, lambda o: PIL.Image.open(image_paths['input']).load()),
@@ -94,6 +108,13 @@ tests = [
             ("OIL", "CPU", oil_triangles),
             ("OIL", "CPU_SSE", oil_triangles),
             ("OIL", "OPENGL", oil_triangles),
+    ]),
+    
+    ("Resize Half", [
+            ("PIL", None, pil_resize_half),
+            ("OIL", "CPU", oil_resize_half),
+            ("OIL", "CPU_SSE", oil_resize_half),
+            ("OIL", "OPENGL", oil_resize_half),
     ]),
 ]
 
