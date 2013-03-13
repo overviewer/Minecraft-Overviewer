@@ -34,6 +34,7 @@ typedef struct {
     GLuint framebuffer;
     GLuint depthbuffer;
     GLuint colorbuffer;
+    int dirty_mipmaps;
 } OpenGLPriv;
 
 static OILMatrix modelview = {{{1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0}}};
@@ -152,16 +153,17 @@ static void oil_backend_opengl_new(OILImage *im) {
     glGenFramebuffers(1, &(priv->framebuffer));
     glGenRenderbuffers(1, &(priv->depthbuffer));
     glGenTextures(1, &(priv->colorbuffer));
+    priv->dirty_mipmaps = 1;
     
     /* set up the color buffer */
     glBindTexture(GL_TEXTURE_2D, priv->colorbuffer);
     colorbuffer = priv->colorbuffer;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im->width, im->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im->width, im->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
     
     /* set up our depth buffer */
     glBindRenderbuffer(GL_RENDERBUFFER, priv->depthbuffer);
@@ -249,6 +251,13 @@ static inline void bind_colorbuffer(OILImage *im) {
     }
 }
 
+static inline void mark_dirty(OILImage *im) {
+    if (im) {
+        OpenGLPriv *priv = im->backend_data;
+        priv->dirty_mipmaps = 1;
+    }
+}
+
 static void oil_backend_opengl_load(OILImage *im) {
     bind_framebuffer(im);
     glReadPixels(0, 0, im->width, im->height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, im->data);
@@ -256,6 +265,7 @@ static void oil_backend_opengl_load(OILImage *im) {
 
 static void oil_backend_opengl_save(OILImage *im) {
     bind_colorbuffer(im);
+    mark_dirty(im);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, im->width, im->height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, im->data);
 }
 
@@ -289,6 +299,17 @@ static void oil_backend_opengl_draw_triangles(OILImage *im, OILMatrix *matrix, O
     load_matrix(matrix);
     bind_framebuffer(im);
     bind_colorbuffer(tex);
+    mark_dirty(im);
+
+    /* if we need to, re-generate the tex mipmaps */
+    if (tex) {
+        OpenGLPriv *tex_priv = tex->backend_data;
+        if (tex_priv->dirty_mipmaps) {
+            /* tex colorbuffer is already bound */
+            glGenerateMipmap(GL_TEXTURE_2D);
+            tex_priv->dirty_mipmaps = 0;
+        }
+    }
     
     /* set up any drawing flags */
     if (!(flags & OIL_DEPTH_TEST)) {
