@@ -41,7 +41,7 @@ static void oil_backend_debug_draw_triangles(OILImage *im, OILMatrix *matrix, OI
 }
 
 static int oil_backend_debug_resize_half(OILImage *im, OILImage *src) {
-    printf("resize_half(%p, %p\n)", im, src);
+    printf("resize_half(%p, %p)\n", im, src);
     return oil_backend_cpu.resize_half(im, src);
 }
 
