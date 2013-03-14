@@ -491,7 +491,7 @@ class RegionSet(object):
 
         Returns (regionx, regiony, filename)"""
 
-        logging.debug("regiondir is %s", self.regiondir)
+        logging.debug("regiondir is %s, has type %r", self.regiondir, self.type)
 
         for f in os.listdir(self.regiondir):
             if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
