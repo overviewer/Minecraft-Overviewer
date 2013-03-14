@@ -66,6 +66,8 @@ def check_c_overviewer():
 
 # only check the module if we're not setup.py
 if not sys.argv[0].endswith("setup.py"):
-    ret = check_c_overviewer()
-    if ret > 0:
-        util.nice_exit(ret)
+    # REMOVED since c_overviewer depends on textures, which has been re-vamped
+    #ret = check_c_overviewer()
+    #if ret > 0:
+    #    util.nice_exit(ret)
+    pass

@@ -34,9 +34,10 @@ renderer.
 
 class IsometricRenderer(Renderer):
     sections_per_chunk = 16
-    def __init__(self, world, regionset, blockdefs, matrix):
+    def __init__(self, world, regionset, textures, blockdefs, matrix):
         self.world = world
         self.regionset = regionset
+        self.textures = textures
         self.blockdefs = blockdefs
         self.matrix = OIL.Matrix().scale(1, -1, 1) * matrix
         self.inverse = self.matrix.inverse
@@ -53,6 +54,9 @@ class IsometricRenderer(Renderer):
         self.sectionvec = self._transformrel(0, 16, 0)
         self.viewvec = self._transformrel(0, 0, -1, inverse=True)
         assert self.viewvec[1] != 0
+        
+        # campile the block definitions
+        self.compiled_blockdefs = chunkrenderer.compile_block_definitions(self.textures, self.blockdefs)
     
     def _transformrel(self, x, y, z, inverse=False):
         mat = self.matrix
@@ -171,4 +175,4 @@ class IsometricRenderer(Renderer):
                     continue
                 
                 local_matrix = im_matrix * OIL.Matrix().translate(chunkx * 16, chunky * 16, chunkz * 16)
-                chunkrenderer.render(self.world, self.regionset, chunkx, chunky, chunkz, im, local_matrix, self.blockdefs)
+                chunkrenderer.render(self.world, self.regionset, chunkx, chunky, chunkz, im, local_matrix, self.compiled_blockdefs)

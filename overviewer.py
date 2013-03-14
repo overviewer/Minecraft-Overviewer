@@ -393,11 +393,13 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             worldcache[render['world']] = w
 
         # find or create the textures object
-        texopts = util.dict_subset(render, ["texturepath", "bgcolor", "northdirection"])
+        texopts = util.dict_subset(render, ["texturepath"])
         texopts_key = tuple(texopts.items())
         if texopts_key not in texcache:
-            tex = textures.Textures(**texopts)
-            tex.generate()
+            if texopts:
+                tex = textures.Textures(texopts["texturepath"])
+            else:
+                tex = textures.get_default()
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
@@ -438,9 +440,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
         
         bdefs = blockdefinitions.get_default()
-        bdefs.compile()
         matrix = OIL.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
-        renderer = isometricrenderer.IsometricRenderer(w, rset, bdefs, matrix)
+        renderer = isometricrenderer.IsometricRenderer(w, rset, tex, bdefs, matrix)
         tset = tileset.TileSet(w, rset, assetMrg, tileSetOpts, renderer, tileset_dir)
         tilesets.append(tset)
 

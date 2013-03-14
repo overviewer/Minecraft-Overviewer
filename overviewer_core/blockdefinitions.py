@@ -15,15 +15,13 @@
 
 from itertools import tee, izip
 
-import OIL
 from . import chunkrenderer
 
 """
 
 blockdefinitions.py contains the BlockDefinitions class, which acts as
 a method of registering BlockDefinition objects to be used by the C
-chunk renderer. BlockDefinitions objects must be compile()'d before
-they can be used by the C renderer.
+chunk renderer.
 
 It also provides a default BlockDefinitions object pre-loaded with
 vanilla Minecraft blocks.
@@ -42,7 +40,8 @@ class BlockDefinition(object):
        indexes into the vertices list, and type is one of the
        chunkrenderer.FACE_TYPE_*
      
-     * tex: an OIL.Image to use as the block texture.
+     * tex: a texture path (as a string, uses textures.Textures
+       eventually)
      
      * transparent, solid, fluid, nospawn, and nodata: boolean values
     
@@ -91,14 +90,7 @@ class BlockDefinitions(object):
         self.blocks = {}
         self.max_blockid = 0
         self.max_data = 0
-        self.dirty = True
 
-    def compile(self):
-        if not self.dirty:
-            return
-        chunkrenderer.compile_block_definitions(self)
-        self.dirty = False
-    
     def add(self, blockdef, blockid, data=0):
         try:
             blockid = iter(blockid)
@@ -167,7 +159,7 @@ def make_simple(terrain, tx, ty, **kwargs):
     return make_box(terrain, nx=t, px=t, ny=t, py=t, nz=t, pz=t, **kwargs)
 
 def get_default():
-    terrain = OIL.Image.load("terrain.png")
+    terrain = "textures/blocks/dirt.png"
     bd = BlockDefinitions()
     
     # stone

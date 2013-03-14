@@ -370,14 +370,7 @@ static PyObject *render(PyObject *self, PyObject *args) {
         return NULL;
     }
     
-    pyblockdefs = PyObject_GetAttrString(pyblockdefs, "compiled");
-    if (!pyblockdefs || !PyCObject_Check(pyblockdefs)) {
-        PyErr_SetString(PyExc_ValueError, "block definitions have not been compiled");
-        Py_XDECREF(pyblockdefs);
-        return NULL;
-    }
     state.blockdefs = PyCObject_AsVoidPtr(pyblockdefs);
-    Py_DECREF(pyblockdefs);
     
     state.im = im->im;
     state.matrix = &(mat->matrix);
@@ -486,13 +479,14 @@ static void free_block_definitions(void *obj) {
 }
 
 /* helper for compile_block_definitions */
-inline static int compile_block_definition(BlockDef *def, PyObject *pydef) {
+inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef) {
     unsigned int i;
     PyObject *pyvertices = PyObject_GetAttrString(pydef, "vertices");
     unsigned int vertices_length;
     PyObject *pytriangles = PyObject_GetAttrString(pydef, "triangles");
     unsigned int triangles_length;
     PyObject *pytex = PyObject_GetAttrString(pydef, "tex");
+    PyObject *pyteximg;
     PyObject *pyvertfast;
     PyObject *pytrifast;
     PyObject *prop;
@@ -504,13 +498,19 @@ inline static int compile_block_definition(BlockDef *def, PyObject *pydef) {
         return 0;
     }
     
-    if (!PyObject_TypeCheck(pytex, PyOILImageType)) {
-        PyErr_SetString(PyExc_TypeError, "block definition texture is not an OIL Image");
+    pyteximg = PyObject_CallMethod(pytextures, "load", "O", pytex);
+    if (!pyteximg || !PyObject_TypeCheck(pyteximg, PyOILImageType)) {
+        if (pyteximg) {
+            PyErr_SetString(PyExc_TypeError, "Textures.load() did not return an OIL Image");
+            Py_DECREF(pyteximg);
+        }
         Py_DECREF(pyvertices);
         Py_DECREF(pytriangles);
         Py_DECREF(pytex);
         return 0;
     }
+    Py_DECREF(pytex);
+    pytex = pyteximg;
     
     prop = PyObject_GetAttrString(pydef, "transparent");
     if (prop) {
@@ -628,6 +628,7 @@ inline static int compile_block_definition(BlockDef *def, PyObject *pydef) {
 }
 
 static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
+    PyObject *pytextures;
     PyObject *pyblockdefs;
     PyObject *pymaxblockid;
     PyObject *pymaxdata;
@@ -636,7 +637,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     BlockDefs *defs;
     unsigned int blockid, data;
     
-    if (!PyArg_ParseTuple(args, "O", &pyblockdefs)) {
+    if (!PyArg_ParseTuple(args, "OO", &pytextures, &pyblockdefs)) {
         return NULL;
     }
     
@@ -695,7 +696,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         
             val = PyDict_GetItem(pyblocks, key);
             if (val) {
-                if (!compile_block_definition(&(defs->defs[blockid * defs->max_data + data]), val)) {
+                if (!compile_block_definition(pytextures, &(defs->defs[blockid * defs->max_data + data]), val)) {
                     free_block_definitions(defs);
                     Py_DECREF(pyblocks);
                     return NULL;
@@ -714,16 +715,14 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         return NULL;
     }
     
-    PyObject_SetAttrString(pyblockdefs, "compiled", compiled);
-    Py_DECREF(compiled);
-    Py_RETURN_NONE;
+    return compiled;
 }
 
 static PyMethodDef chunkrenderer_methods[] = {
     {"render", render, METH_VARARGS,
      "Render a chunk to an image."},
     {"compile_block_definitions", compile_block_definitions, METH_VARARGS,
-     "Compiles a BlockDefinitions object into a form usable by the render method."},
+     "Compiles a Textures object and a BlockDefinitions object into a form usable by the render method."},
     {NULL, NULL, 0, NULL}
 };
 
