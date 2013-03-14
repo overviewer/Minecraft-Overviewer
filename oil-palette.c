@@ -1,7 +1,16 @@
 #include "oil.h"
 #include "oil-palette-private.h"
 
+#include <stdio.h>
 #include <string.h>
+
+/* volume and num_pixels can get so big we need a guaranteed >32-bit type */
+#ifdef _MSC_VER
+typedef unsigned __int64 oil_uint64;
+#else /* _MSC_VER */
+#include <stdint.h>
+typedef uint64_t oil_uint64;
+#endif /* _MSC_VER */
 
 /* represent a 4d bounding box.
    for instance, all r such that lr <= r < ur
@@ -15,9 +24,9 @@ typedef struct {
     /* length of that side */
     unsigned int longest_side_length;
     /* volume of this box */
-    unsigned int volume;
+    oil_uint64 volume;
     /* number of pixels in this box */
-    unsigned long num_pixels;
+    oil_uint64 num_pixels;
     /* all the pixels in this box */
     OILPixel *pixels;
     /* histogram of pixels along longest axis */
@@ -73,7 +82,7 @@ static inline void oil_box_queue_push(BoxQueue *q, MedianCutBox *box) {
 /* find the box most fit to be split */
 static inline MedianCutBox *oil_box_queue_find_best(BoxQueue *q) {
     MedianCutBox *box = NULL;
-    unsigned int box_score = 0;
+    oil_uint64 box_score = 0;
     MedianCutBoxList *cell;
     
     for (cell = q->first; cell != NULL; cell = cell->next) {
@@ -244,8 +253,8 @@ static inline MedianCutBox *oil_median_cut_box_new(unsigned long length, const O
     sb = nub - nlb;
     sa = nua - nla;
     
-    /* now, set the volume */
-    box->volume = sr * sg * sb * sa;
+    /* now, set the volume (cast is to prevent overflow on 32-bit ints) */
+    box->volume = (oil_uint64)sr * sg * sb * sa;
     
     if (sr >= OIL_MAX(sa, OIL_MAX(sg, sb))) {
         /* red longest */
