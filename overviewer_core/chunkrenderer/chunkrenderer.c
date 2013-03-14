@@ -60,6 +60,7 @@ typedef struct {
 typedef struct {
     BlockDef *defs;
     unsigned int max_blockid;
+    unsigned int max_data;
 } BlockDefs;
 
 typedef struct {
@@ -70,6 +71,8 @@ typedef struct {
     
     OILImage *im;
     OILMatrix *matrix;
+    
+    BlockDefs *blockdefs;
 } RenderState;
 
 /* Buffer objects are conveniences for realloc'd dynamic arrays */
@@ -281,12 +284,15 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
 }
 
 /* helper to get a block property */
-static inline int block_has_property(BlockDefs *defs, unsigned short b, BlockProperty prop) {
+static inline int block_has_property(RenderState *state, unsigned short b, BlockProperty prop) {
     int def = (prop == TRANSPARENT ? 1 : 0);
     BlockDef bd;
-    if (b >= defs->max_blockid)
+    if (b >= state->blockdefs->max_blockid)
         return def;
-    bd = defs->defs[b];
+    
+    /* assume blocks have uniform properties across all data
+       (otherwise to do this right we'd need to calculate pseudo-data) */
+    bd = state->blockdefs->defs[b * state->blockdefs->max_data];
     if (!bd.known)
         return def;
     
@@ -294,6 +300,20 @@ static inline int block_has_property(BlockDefs *defs, unsigned short b, BlockPro
         return (b == 18);
     else if (prop == KNOWN)
         return 1;
+    return def;
+}
+
+/* helper to get a block definition */
+static inline BlockDef *get_block_definition(RenderState *state, int x, int y, int z, unsigned int blockid, unsigned int data) {
+    BlockDef *def;
+    if (blockid >= state->blockdefs->max_blockid || data >= state->blockdefs->max_data)
+        return NULL;
+    
+    def = &(state->blockdefs->defs[blockid * state->blockdefs->max_data + data]);
+    if (!(def->known))
+        return NULL;
+    
+    // still todo: pseudo-data
     return def;
 }
 
@@ -307,13 +327,12 @@ static PyObject *render(PyObject *self, PyObject *args) {
     PyOILImage *im;
     PyOILMatrix *mat;
     PyObject *pyblockdefs;
-    BlockDefs *blockdefs;
     Buffer blockvertices;
     Buffer blockindices;
 
     int i, j;
     int x, y, z;
-    PyObject *blocks;
+    PyObject *blocks, *datas;
     
     if (!PyArg_ParseTuple(args, "OOiiiO!O!O", &(state.world), &(state.regionset), &(state.chunkx), &(state.chunky), &(state.chunkz), PyOILImageType, &im, PyOILMatrixType, &mat, &pyblockdefs)) {
         return NULL;
@@ -325,7 +344,7 @@ static PyObject *render(PyObject *self, PyObject *args) {
         Py_XDECREF(pyblockdefs);
         return NULL;
     }
-    blockdefs = PyCObject_AsVoidPtr(pyblockdefs);
+    state.blockdefs = PyCObject_AsVoidPtr(pyblockdefs);
     Py_DECREF(pyblockdefs);
     
     state.im = im->im;
@@ -353,6 +372,7 @@ static PyObject *render(PyObject *self, PyObject *args) {
     
     /* convenience */
     blocks = state.chunks[1][1].sections[state.chunky].blocks;
+    datas = state.chunks[1][1].sections[state.chunky].data;
     
     /* set up the random number generator in a known state per chunk */
     srand(1);
@@ -360,20 +380,14 @@ static PyObject *render(PyObject *self, PyObject *args) {
     for (x = 0; x < 16; x++) {
         for (z = 0; z < 16; z++) {
             for (y = 15; y >= 0; y--) {
-                unsigned short block;
-                BlockDef bd;
-                block = get_array_short_3d(blocks, x, y, z);
-                if (block == 0 || block >= blockdefs->max_blockid) {
+                unsigned short block = get_array_short_3d(blocks, x, y, z);
+                unsigned short data = get_array_byte_3d(datas, x, y, z);
+                BlockDef *bd = get_block_definition(&state, x, y, z, block, data);
+                if (!bd)
                     continue;
-                }
-                
-                bd = blockdefs->defs[block];
-                if (!bd.known) {
-                    continue;
-                }
                 
                 blockvertices.length = 0;
-                buffer_append(&blockvertices, bd.vertices.data, bd.vertices.length);
+                buffer_append(&blockvertices, bd->vertices.data, bd->vertices.length);
                 for (i = 0; i < blockvertices.length; i++) {
                     OILVertex *v = &((OILVertex *)(blockvertices.data))[i];
                     v->x += x;
@@ -405,13 +419,13 @@ static PyObject *render(PyObject *self, PyObject *args) {
                         break;
                     };
                     
-                    if (block_has_property(blockdefs, testblock, TRANSPARENT)) {
-                        buffer_append(&blockindices, bd.indices[j].data, bd.indices[j].length);
+                    if (block_has_property(&state, testblock, TRANSPARENT)) {
+                        buffer_append(&blockindices, bd->indices[j].data, bd->indices[j].length);
                     }
                 }
                 
                 if (blockvertices.length && blockindices.length)
-                    emit_mesh(&state, bd.tex, &(blockvertices), &(blockindices));
+                    emit_mesh(&state, bd->tex, &(blockvertices), &(blockindices));
             }
         }
     }
@@ -428,7 +442,9 @@ static void free_block_definitions(void *obj) {
     unsigned int i, j;
     BlockDefs *defs = (BlockDefs *)obj;
     
-    for (i = 0; i < defs->max_blockid; i++) {
+    for (i = 0; i < defs->max_blockid * defs->max_data; i++) {
+        if (!(defs->defs[i].known))
+            continue;
         buffer_free(&(defs->defs[i].vertices));
         for (j = 0; j < FACE_TYPE_COUNT; j++) {
             buffer_free(&(defs->defs[i].indices[j]));
@@ -522,10 +538,11 @@ inline static int compile_block_definition(BlockDef *def, PyObject *pydef) {
 static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     PyObject *pyblockdefs;
     PyObject *pymaxblockid;
+    PyObject *pymaxdata;
     PyObject *pyblocks;
     PyObject *compiled;
     BlockDefs *defs;
-    unsigned int i;
+    unsigned int blockid, data;
     
     if (!PyArg_ParseTuple(args, "O", &pyblockdefs)) {
         return NULL;
@@ -545,6 +562,14 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     defs->max_blockid = PyInt_AsLong(pymaxblockid);
     Py_DECREF(pymaxblockid);
     
+    pymaxdata = PyObject_GetAttrString(pyblockdefs, "max_data");
+    if (!pymaxdata) {
+        free(defs);
+        return NULL;
+    }
+    defs->max_data = PyInt_AsLong(pymaxdata);
+    Py_DECREF(pymaxdata);
+    
     pyblocks = PyObject_GetAttrString(pyblockdefs, "blocks");
     if (!pyblocks) {
         free(defs);
@@ -557,7 +582,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    defs->defs = calloc(defs->max_blockid, sizeof(BlockDef));
+    defs->defs = calloc(defs->max_blockid * defs->max_data, sizeof(BlockDef));
     if (!(defs->defs)) {
         PyErr_SetString(PyExc_RuntimeError, "out of memory");
         free(defs);
@@ -565,26 +590,28 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         return NULL;
     }
     
-    for (i = 0; i < defs->max_blockid; i++) {
-        PyObject *key = PyInt_FromLong(i);
-        PyObject *val;
+    for (blockid = 0; blockid < defs->max_blockid; blockid++) {
+        for (data = 0; data < defs->max_data; data++) {
+            PyObject *key = Py_BuildValue("II", blockid, data);
+            PyObject *val;
         
-        if (!key) {
-            free_block_definitions(defs);
-            Py_DECREF(pyblocks);
-            return NULL;
-        }
-        
-        val = PyDict_GetItem(pyblocks, key);
-        if (val) {
-            if (!compile_block_definition(&(defs->defs[i]), val)) {
+            if (!key) {
                 free_block_definitions(defs);
                 Py_DECREF(pyblocks);
                 return NULL;
             }
-        }
+        
+            val = PyDict_GetItem(pyblocks, key);
+            if (val) {
+                if (!compile_block_definition(&(defs->defs[blockid * defs->max_data + data]), val)) {
+                    free_block_definitions(defs);
+                    Py_DECREF(pyblocks);
+                    return NULL;
+                }
+            }
                         
-        Py_DECREF(key);
+            Py_DECREF(key);   
+        }
     }
     
     Py_DECREF(pyblocks);

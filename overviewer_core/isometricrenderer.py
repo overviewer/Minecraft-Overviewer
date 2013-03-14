@@ -92,6 +92,7 @@ class BlockDefinitions(object):
     def __init__(self):
         self.blocks = {}
         self.max_blockid = 0
+        self.max_data = 0
         
         self.terrain = OIL.Image.load("terrain.png")
         
@@ -146,9 +147,10 @@ class BlockDefinitions(object):
         t = (tx, ty)
         self.add(blockid, BlockDefinition(self.terrain, nx=t, px=t, ny=t, py=t, nz=t, pz=t, **kwargs))
     
-    def add(self, blockid, blockdef):
-        self.blocks[blockid] = blockdef
+    def add(self, blockid, blockdef, data=0):
+        self.blocks[(blockid, data)] = blockdef
         self.max_blockid = max(self.max_blockid, blockid + 1)
+        self.max_data = max(self.max_data, data + 1)
 
 class IsometricRenderer(Renderer):
     sections_per_chunk = 16
