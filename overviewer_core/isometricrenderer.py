@@ -14,7 +14,7 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 from math import ceil
-from itertools import product, tee, izip
+from itertools import product
 from operator import itemgetter
 
 import OIL
@@ -31,126 +31,6 @@ It uses the chunkrenderer module, a generalized (and C-based) 3D chunk
 renderer.
 
 """
-
-class BlockDefinition(object):
-    def __init__(self, tex, nx=(0, 0), px=(0, 0), ny=(0, 0), py=(0, 0), nz=(0, 0), pz=(0, 0), color=(255, 255, 255, 255), topcolor=None):
-        if topcolor is None:
-            topcolor = color
-        xcolor = tuple(int(c * 0.8) for c in color[:3]) + (color[3],)
-        zcolor = tuple(int(c * 0.9) for c in color[:3]) + (color[3],)
-        self.vertices = [
-            ((0, 0, 0), (0.000000 + nx[0] / 16.0, 0.000000 + (15 - nx[1]) / 16.0), xcolor),
-            ((0, 0, 1), (0.062500 + nx[0] / 16.0, 0.000000 + (15 - nx[1]) / 16.0), xcolor),
-            ((0, 1, 1), (0.062500 + nx[0] / 16.0, 0.062500 + (15 - nx[1]) / 16.0), xcolor),
-            ((0, 1, 0), (0.000000 + nx[0] / 16.0, 0.062500 + (15 - nx[1]) / 16.0), xcolor),
-            
-            ((0, 1, 0), (0.062500 + nz[0] / 16.0, 0.062500 + (15 - nz[1]) / 16.0), zcolor),
-            ((1, 1, 0), (0.000000 + nz[0] / 16.0, 0.062500 + (15 - nz[1]) / 16.0), zcolor),
-            ((1, 0, 0), (0.000000 + nz[0] / 16.0, 0.000000 + (15 - nz[1]) / 16.0), zcolor),
-            ((0, 0, 0), (0.062500 + nz[0] / 16.0, 0.000000 + (15 - nz[1]) / 16.0), zcolor),
-            
-            ((1, 1, 0), (0.062500 + px[0] / 16.0, 0.062500 + (15 - px[1]) / 16.0), xcolor),
-            ((1, 1, 1), (0.000000 + px[0] / 16.0, 0.062500 + (15 - px[1]) / 16.0), xcolor),
-            ((1, 0, 1), (0.000000 + px[0] / 16.0, 0.000000 + (15 - px[1]) / 16.0), xcolor),
-            ((1, 0, 0), (0.062500 + px[0] / 16.0, 0.000000 + (15 - px[1]) / 16.0), xcolor),
-            
-            ((0, 0, 1), (0.000000 + pz[0] / 16.0, 0.000000 + (15 - pz[1]) / 16.0), zcolor),
-            ((1, 0, 1), (0.062500 + pz[0] / 16.0, 0.000000 + (15 - pz[1]) / 16.0), zcolor),
-            ((1, 1, 1), (0.062500 + pz[0] / 16.0, 0.062500 + (15 - pz[1]) / 16.0), zcolor),
-            ((0, 1, 1), (0.000000 + pz[0] / 16.0, 0.062500 + (15 - pz[1]) / 16.0), zcolor),
-            
-            ((0, 0, 1), (0.000000 + ny[0] / 16.0, 0.062500 + (15 - ny[1]) / 16.0), color),
-            ((0, 0, 0), (0.000000 + ny[0] / 16.0, 0.000000 + (15 - ny[1]) / 16.0), color),
-            ((1, 0, 0), (0.062500 + ny[0] / 16.0, 0.000000 + (15 - ny[1]) / 16.0), color),
-            ((1, 0, 1), (0.062500 + ny[0] / 16.0, 0.062500 + (15 - ny[1]) / 16.0), color),
-            
-            ((1, 1, 1), (0.062500 + py[0] / 16.0, 0.000000 + (15 - py[1]) / 16.0), topcolor),
-            ((1, 1, 0), (0.062500 + py[0] / 16.0, 0.062500 + (15 - py[1]) / 16.0), topcolor),
-            ((0, 1, 0), (0.000000 + py[0] / 16.0, 0.062500 + (15 - py[1]) / 16.0), topcolor),
-            ((0, 1, 1), (0.000000 + py[0] / 16.0, 0.000000 + (15 - py[1]) / 16.0), topcolor),
-        ]
-        self.faces = [
-            ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX),
-            ([4, 5, 6, 7], chunkrenderer.FACE_TYPE_NZ),
-            ([8, 9, 10, 11], chunkrenderer.FACE_TYPE_PX),
-            ([12, 13, 14, 15], chunkrenderer.FACE_TYPE_PZ),
-            ([16, 17, 18, 19], chunkrenderer.FACE_TYPE_NY),
-            ([20, 21, 22, 23], chunkrenderer.FACE_TYPE_PY),
-        ]
-        self.tex = tex
-
-    @property
-    def triangles(self):
-        for indices, facetype in self.faces:
-            first = indices[0]
-            a, b = tee(indices[1:])
-            b.next()
-            for i, j in izip(a, b):
-                yield ((first, i, j), facetype)
-
-class BlockDefinitions(object):
-    def __init__(self):
-        self.blocks = {}
-        self.max_blockid = 0
-        self.max_data = 0
-        
-        self.terrain = OIL.Image.load("terrain.png")
-        
-        # stone
-        self.add_simple(1, 1, 0)
-        
-        # grass
-        sides = (3, 0)
-        top = (0, 0)
-        bottom = (2, 0)
-        self.add(2, BlockDefinition(self.terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides, topcolor=(150, 255, 150, 255)))
-        
-        # dirt
-        self.add_simple(3, 2, 0)
-        
-        # cobblestone
-        self.add_simple(4, 0, 1)
-        
-        # wood planks
-        self.add_simple(5, 4, 0)
-        
-        # bedrock
-        self.add_simple(7, 1, 1)
-        
-        # sand
-        self.add_simple(12, 2, 1)
-        
-        # gravel
-        self.add_simple(13, 3, 1)
-        
-        # gold ore
-        self.add_simple(14, 0, 2)
-        
-        # copper ore
-        self.add_simple(15, 1, 2)
-        
-        # coal
-        self.add_simple(16, 2, 2)
-        
-        # logs
-        sides = (4, 1)
-        top = (5, 1)
-        bottom = (5, 1)
-        self.add(17, BlockDefinition(self.terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides))
-        
-        # leaves
-        self.add_simple(18, 4, 3, color=(0, 150, 0, 255))
-        
-        chunkrenderer.compile_block_definitions(self)
-    
-    def add_simple(self, blockid, tx, ty, **kwargs):
-        t = (tx, ty)
-        self.add(blockid, BlockDefinition(self.terrain, nx=t, px=t, ny=t, py=t, nz=t, pz=t, **kwargs))
-    
-    def add(self, blockid, blockdef, data=0):
-        self.blocks[(blockid, data)] = blockdef
-        self.max_blockid = max(self.max_blockid, blockid + 1)
-        self.max_data = max(self.max_data, data + 1)
 
 class IsometricRenderer(Renderer):
     sections_per_chunk = 16

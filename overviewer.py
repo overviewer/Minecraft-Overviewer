@@ -39,7 +39,7 @@ from overviewer_core import logger
 from overviewer_core import textures
 from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
-from overviewer_core import isometricrenderer
+from overviewer_core import isometricrenderer, blockdefinitions
 from overviewer_core import cache
 from overviewer_core import observer
 import OIL
@@ -437,7 +437,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom", "imgquality", "optimizeimg", "worldname_orig", "title", "rendermode", "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
         
-        bdefs = isometricrenderer.BlockDefinitions()
+        bdefs = blockdefinitions.get_default()
+        bdefs.compile()
         matrix = OIL.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
         renderer = isometricrenderer.IsometricRenderer(w, rset, bdefs, matrix)
         tset = tileset.TileSet(w, rset, assetMrg, tileSetOpts, renderer, tileset_dir)

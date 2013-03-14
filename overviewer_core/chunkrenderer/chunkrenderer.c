@@ -48,6 +48,10 @@ typedef enum {
 typedef enum {
     KNOWN,
     TRANSPARENT,
+    SOLID,
+    FLUID,
+    NOSPAWN,
+    NODATA,
 } BlockProperty;
 
 typedef struct {
@@ -55,6 +59,12 @@ typedef struct {
     Buffer vertices;
     Buffer indices[FACE_TYPE_COUNT];
     OILImage *tex;
+    
+    int transparent;
+    int solid;
+    int fluid;
+    int nospawn;
+    int nodata;
 } BlockDef;
 
 typedef struct {
@@ -296,19 +306,41 @@ static inline int block_has_property(RenderState *state, unsigned short b, Block
     if (!bd.known)
         return def;
     
-    if (prop == TRANSPARENT)
-        return (b == 18);
-    else if (prop == KNOWN)
+    switch (prop) {
+    case KNOWN:
         return 1;
+    case TRANSPARENT:
+        return bd.transparent;
+    case SOLID:
+        return bd.solid;
+    case FLUID:
+        return bd.fluid;
+    case NOSPAWN:
+        return bd.nospawn;
+    case NODATA:
+        return bd.nodata;
+    }
+    
     return def;
 }
 
 /* helper to get a block definition */
 static inline BlockDef *get_block_definition(RenderState *state, int x, int y, int z, unsigned int blockid, unsigned int data) {
     BlockDef *def;
-    if (blockid >= state->blockdefs->max_blockid || data >= state->blockdefs->max_data)
+    if (blockid >= state->blockdefs->max_blockid)
         return NULL;
     
+    // first, check for nodata set on data == 0
+    def = &(state->blockdefs->defs[blockid * state->blockdefs->max_data]);
+    if (!(def->known))
+        return NULL;
+    if (def->nodata)
+        return def;
+    
+    if (data >= state->blockdefs->max_data)
+        return NULL;
+    
+    // data is used, so use it
     def = &(state->blockdefs->defs[blockid * state->blockdefs->max_data + data]);
     if (!(def->known))
         return NULL;
@@ -443,8 +475,6 @@ static void free_block_definitions(void *obj) {
     BlockDefs *defs = (BlockDefs *)obj;
     
     for (i = 0; i < defs->max_blockid * defs->max_data; i++) {
-        if (!(defs->defs[i].known))
-            continue;
         buffer_free(&(defs->defs[i].vertices));
         for (j = 0; j < FACE_TYPE_COUNT; j++) {
             buffer_free(&(defs->defs[i].indices[j]));
@@ -465,6 +495,8 @@ inline static int compile_block_definition(BlockDef *def, PyObject *pydef) {
     PyObject *pytex = PyObject_GetAttrString(pydef, "tex");
     PyObject *pyvertfast;
     PyObject *pytrifast;
+    PyObject *prop;
+    int prop_istrue = 0;
     if (!pyvertices || !pytriangles || !pytex) {
         Py_XDECREF(pyvertices);
         Py_XDECREF(pytriangles);
@@ -477,6 +509,66 @@ inline static int compile_block_definition(BlockDef *def, PyObject *pydef) {
         Py_DECREF(pyvertices);
         Py_DECREF(pytriangles);
         Py_DECREF(pytex);
+        return 0;
+    }
+    
+    prop = PyObject_GetAttrString(pydef, "transparent");
+    if (prop) {
+        def->transparent = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        Py_XDECREF(pyvertices);
+        Py_XDECREF(pytriangles);
+        Py_XDECREF(pytex);
+        return 0;
+    }
+
+    prop = PyObject_GetAttrString(pydef, "solid");
+    if (prop) {
+        def->solid = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        Py_XDECREF(pyvertices);
+        Py_XDECREF(pytriangles);
+        Py_XDECREF(pytex);
+        return 0;
+    }
+
+    prop = PyObject_GetAttrString(pydef, "fluid");
+    if (prop) {
+        def->fluid = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        Py_XDECREF(pyvertices);
+        Py_XDECREF(pytriangles);
+        Py_XDECREF(pytex);
+        return 0;
+    }
+
+    prop = PyObject_GetAttrString(pydef, "nospawn");
+    if (prop) {
+        def->nospawn = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        Py_XDECREF(pyvertices);
+        Py_XDECREF(pytriangles);
+        Py_XDECREF(pytex);
+        return 0;
+    }
+
+    prop = PyObject_GetAttrString(pydef, "nodata");
+    if (prop) {
+        def->nodata = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        Py_XDECREF(pyvertices);
+        Py_XDECREF(pytriangles);
+        Py_XDECREF(pytex);
         return 0;
     }
     
