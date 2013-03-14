@@ -39,6 +39,7 @@ class IsometricRenderer(Renderer):
         self.regionset = regionset
         self.textures = textures
         self.blockdefs = blockdefs
+        self.origmatrix = matrix
         self.matrix = OIL.Matrix().scale(1, -1, 1) * matrix
         self.inverse = self.matrix.inverse
         
@@ -57,6 +58,18 @@ class IsometricRenderer(Renderer):
         
         # campile the block definitions
         self.compiled_blockdefs = chunkrenderer.compile_block_definitions(self.textures, self.blockdefs)
+    
+    def __getstate__(self):
+        # a lot of our internal structure is not pickleable
+        # so just send the args for __init__
+        return (self.world, self.regionset, self.textures, self.blockdefs, self.origmatrix.data)
+    
+    def __setstate__(self, args):
+        # turn the matrix back into an OIL Matrix
+        mat = args[-1]
+        mat = OIL.Matrix(mat)
+        args = args[:-1] + (mat,)
+        self.__init__(*args)
     
     def _transformrel(self, x, y, z, inverse=False):
         mat = self.matrix

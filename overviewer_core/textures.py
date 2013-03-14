@@ -51,6 +51,13 @@ class Textures(object):
         
         self.cache = {}
     
+    def __getstate__(self):
+        # Images don't pickle, so, just use the path
+        return self.path
+    
+    def __setstate__(self, path):
+        self.__init__(path)
+    
     def _find_file(self, filename):
         if self.zip:
             try:
