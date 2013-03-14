@@ -34,8 +34,7 @@ renderer.
 
 class IsometricRenderer(Renderer):
     sections_per_chunk = 16
-    def __init__(self, world, regionset, textures, blockdefs, matrix):
-        self.world = world
+    def __init__(self, regionset, textures, blockdefs, matrix):
         self.regionset = regionset
         self.textures = textures
         self.blockdefs = blockdefs
@@ -62,7 +61,7 @@ class IsometricRenderer(Renderer):
     def __getstate__(self):
         # a lot of our internal structure is not pickleable
         # so just send the args for __init__
-        return (self.world, self.regionset, self.textures, self.blockdefs, self.origmatrix.data)
+        return (self.regionset, self.textures, self.blockdefs, self.origmatrix.data)
     
     def __setstate__(self, args):
         # turn the matrix back into an OIL Matrix
@@ -188,4 +187,4 @@ class IsometricRenderer(Renderer):
                     continue
                 
                 local_matrix = im_matrix * OIL.Matrix().translate(chunkx * 16, chunky * 16, chunkz * 16)
-                chunkrenderer.render(self.world, self.regionset, chunkx, chunky, chunkz, im, local_matrix, self.compiled_blockdefs)
+                chunkrenderer.render(self.regionset, chunkx, chunky, chunkz, im, local_matrix, self.compiled_blockdefs)

@@ -441,7 +441,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         
         bdefs = blockdefinitions.get_default()
         matrix = OIL.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
-        renderer = isometricrenderer.IsometricRenderer(w, rset, tex, bdefs, matrix)
+        renderer = isometricrenderer.IsometricRenderer(rset, tex, bdefs, matrix)
         tset = tileset.TileSet(w, rset, assetMrg, tileSetOpts, renderer, tileset_dir)
         tilesets.append(tset)
 

@@ -74,7 +74,6 @@ typedef struct {
 } BlockDefs;
 
 typedef struct {
-    PyObject *world;
     PyObject *regionset;
     int chunkx, chunky, chunkz;
     ChunkData chunks[3][3];
@@ -366,7 +365,7 @@ static PyObject *render(PyObject *self, PyObject *args) {
     int x, y, z;
     PyObject *blocks, *datas;
     
-    if (!PyArg_ParseTuple(args, "OOiiiO!O!O", &(state.world), &(state.regionset), &(state.chunkx), &(state.chunky), &(state.chunkz), PyOILImageType, &im, PyOILMatrixType, &mat, &pyblockdefs)) {
+    if (!PyArg_ParseTuple(args, "OiiiO!O!O", &(state.regionset), &(state.chunkx), &(state.chunky), &(state.chunkz), PyOILImageType, &im, PyOILMatrixType, &mat, &pyblockdefs)) {
         return NULL;
     }
     
