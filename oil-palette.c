@@ -1,7 +1,6 @@
 #include "oil.h"
 #include "oil-palette-private.h"
 
-#include <stdio.h>
 #include <string.h>
 
 /* volume and num_pixels can get so big we need a guaranteed >32-bit type */
