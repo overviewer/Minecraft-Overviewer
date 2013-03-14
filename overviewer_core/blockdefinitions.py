@@ -106,42 +106,42 @@ class BlockDefinitions(object):
                 self.max_blockid = max(self.max_blockid, b + 1)
                 self.max_data = max(self.max_data, d + 1)
 
-def make_box(tex, nx=(0, 0), px=(0, 0), ny=(0, 0), py=(0, 0), nz=(0, 0), pz=(0, 0), color=(255, 255, 255, 255), topcolor=None):
+def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1, 1), nz=(0, 0, 1, 1), pz=(0, 0, 1, 1), color=(255, 255, 255, 255), topcolor=None):
     if topcolor is None:
         topcolor = color
     xcolor = tuple(int(c * 0.8) for c in color[:3]) + (color[3],)
     zcolor = tuple(int(c * 0.9) for c in color[:3]) + (color[3],)
     bd = BlockDefinition()
     bd.vertices = [
-        ((0, 0, 0), (0.000000 + nx[0] / 16.0, 0.000000 + (15 - nx[1]) / 16.0), xcolor),
-        ((0, 0, 1), (0.062500 + nx[0] / 16.0, 0.000000 + (15 - nx[1]) / 16.0), xcolor),
-        ((0, 1, 1), (0.062500 + nx[0] / 16.0, 0.062500 + (15 - nx[1]) / 16.0), xcolor),
-        ((0, 1, 0), (0.000000 + nx[0] / 16.0, 0.062500 + (15 - nx[1]) / 16.0), xcolor),
+        ((0, 0, 0), (nx[0], nx[1]), xcolor),
+        ((0, 0, 1), (nx[2], nx[1]), xcolor),
+        ((0, 1, 1), (nx[2], nx[3]), xcolor),
+        ((0, 1, 0), (nx[0], nx[3]), xcolor),
         
-        ((0, 1, 0), (0.062500 + nz[0] / 16.0, 0.062500 + (15 - nz[1]) / 16.0), zcolor),
-        ((1, 1, 0), (0.000000 + nz[0] / 16.0, 0.062500 + (15 - nz[1]) / 16.0), zcolor),
-        ((1, 0, 0), (0.000000 + nz[0] / 16.0, 0.000000 + (15 - nz[1]) / 16.0), zcolor),
-        ((0, 0, 0), (0.062500 + nz[0] / 16.0, 0.000000 + (15 - nz[1]) / 16.0), zcolor),
+        ((0, 1, 0), (nz[0], nz[1]), zcolor),
+        ((1, 1, 0), (nz[2], nz[1]), zcolor),
+        ((1, 0, 0), (nz[2], nz[3]), zcolor),
+        ((0, 0, 0), (nz[0], nz[3]), zcolor),
         
-        ((1, 1, 0), (0.062500 + px[0] / 16.0, 0.062500 + (15 - px[1]) / 16.0), xcolor),
-        ((1, 1, 1), (0.000000 + px[0] / 16.0, 0.062500 + (15 - px[1]) / 16.0), xcolor),
-        ((1, 0, 1), (0.000000 + px[0] / 16.0, 0.000000 + (15 - px[1]) / 16.0), xcolor),
-        ((1, 0, 0), (0.062500 + px[0] / 16.0, 0.000000 + (15 - px[1]) / 16.0), xcolor),
+        ((1, 1, 0), (px[0], px[1]), xcolor),
+        ((1, 1, 1), (px[2], px[1]), xcolor),
+        ((1, 0, 1), (px[2], px[3]), xcolor),
+        ((1, 0, 0), (px[0], px[3]), xcolor),
         
-        ((0, 0, 1), (0.000000 + pz[0] / 16.0, 0.000000 + (15 - pz[1]) / 16.0), zcolor),
-        ((1, 0, 1), (0.062500 + pz[0] / 16.0, 0.000000 + (15 - pz[1]) / 16.0), zcolor),
-        ((1, 1, 1), (0.062500 + pz[0] / 16.0, 0.062500 + (15 - pz[1]) / 16.0), zcolor),
-        ((0, 1, 1), (0.000000 + pz[0] / 16.0, 0.062500 + (15 - pz[1]) / 16.0), zcolor),
+        ((0, 0, 1), (pz[0], pz[1]), zcolor),
+        ((1, 0, 1), (pz[2], pz[1]), zcolor),
+        ((1, 1, 1), (pz[2], pz[3]), zcolor),
+        ((0, 1, 1), (pz[0], pz[3]), zcolor),
         
-        ((0, 0, 1), (0.000000 + ny[0] / 16.0, 0.062500 + (15 - ny[1]) / 16.0), color),
-        ((0, 0, 0), (0.000000 + ny[0] / 16.0, 0.000000 + (15 - ny[1]) / 16.0), color),
-        ((1, 0, 0), (0.062500 + ny[0] / 16.0, 0.000000 + (15 - ny[1]) / 16.0), color),
-        ((1, 0, 1), (0.062500 + ny[0] / 16.0, 0.062500 + (15 - ny[1]) / 16.0), color),
+        ((0, 0, 1), (ny[0], ny[1]), color),
+        ((0, 0, 0), (ny[2], ny[1]), color),
+        ((1, 0, 0), (ny[2], ny[3]), color),
+        ((1, 0, 1), (ny[0], ny[3]), color),
         
-        ((1, 1, 1), (0.062500 + py[0] / 16.0, 0.000000 + (15 - py[1]) / 16.0), topcolor),
-        ((1, 1, 0), (0.062500 + py[0] / 16.0, 0.062500 + (15 - py[1]) / 16.0), topcolor),
-        ((0, 1, 0), (0.000000 + py[0] / 16.0, 0.062500 + (15 - py[1]) / 16.0), topcolor),
-        ((0, 1, 1), (0.000000 + py[0] / 16.0, 0.000000 + (15 - py[1]) / 16.0), topcolor),
+        ((1, 1, 1), (py[0], py[1]), topcolor),
+        ((1, 1, 0), (py[2], py[1]), topcolor),
+        ((0, 1, 0), (py[2], py[3]), topcolor),
+        ((0, 1, 1), (py[0], py[3]), topcolor),
     ]
     bd.faces = [
         ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX),
@@ -154,50 +154,49 @@ def make_box(tex, nx=(0, 0), px=(0, 0), ny=(0, 0), py=(0, 0), nz=(0, 0), pz=(0, 
     bd.tex = tex
     return bd
 
-def make_simple(terrain, tx, ty, **kwargs):
-    t = (tx, ty)
+def make_simple(terrain, **kwargs):
+    t = (0, 0, 1, 1)
     return make_box(terrain, nx=t, px=t, ny=t, py=t, nz=t, pz=t, **kwargs)
 
 def get_default():
-    terrain = "textures/blocks/dirt.png"
     bd = BlockDefinitions()
     
     # stone
-    bd.add(make_simple(terrain, 1, 0), 1)
+    bd.add(make_simple("textures/blocks/stone.png"), 1)
     
     # grass
-    sides = (3, 0)
-    top = (0, 0)
-    bottom = (2, 0)
-    bd.add(make_box(terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides, topcolor=(150, 255, 150, 255)), 2)
+    #sides = (3, 0)
+    #top = (0, 0)
+    #bottom = (2, 0)
+    #bd.add(make_box(terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides, topcolor=(150, 255, 150, 255)), 2)
     
     # dirt
-    bd.add(make_simple(terrain, 2, 0), 3)
+    bd.add(make_simple("textures/blocks/dirt.png"), 3)
     # cobblestone
-    bd.add(make_simple(terrain, 0, 1), 4)
+    bd.add(make_simple("textures/blocks/stonebrick.png"), 4)
     # wood planks
-    bd.add(make_simple(terrain, 4, 0), 5)
+    bd.add(make_simple("textures/blocks/wood.png"), 5)
     # bedrock
-    bd.add(make_simple(terrain, 1, 1), 7)
+    bd.add(make_simple("textures/blocks/bedrock.png"), 7)
     # sand
-    bd.add(make_simple(terrain, 2, 1), 12)
+    bd.add(make_simple("textures/blocks/sand.png"), 12)
     # gravel
-    bd.add(make_simple(terrain, 3, 1), 13)
+    bd.add(make_simple("textures/blocks/gravel.png"), 13)
     # gold ore
-    bd.add(make_simple(terrain, 0, 2), 14)
-    # copper ore
-    bd.add(make_simple(terrain, 1, 2), 15)
+    bd.add(make_simple("textures/blocks/oreGold.png"), 14)
+    # iron ore
+    bd.add(make_simple("textures/blocks/oreIron.png"), 15)
     # coal
-    bd.add(make_simple(terrain, 2, 2), 16)
+    bd.add(make_simple("textures/blocks/oreCoal.png"), 16)
     
     # logs
-    sides = (4, 1)
-    top = (5, 1)
-    bottom = (5, 1)
-    bd.add(make_box(terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides), 17)
+    #sides = (4, 1)
+    #top = (5, 1)
+    #bottom = (5, 1)
+    #bd.add(make_box(terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides), 17)
     
     # leaves
-    defn = make_simple(terrain, 4, 3, color=(0, 150, 0, 255))
+    defn = make_simple("textures/blocks/leaves.png", color=(0, 150, 0, 255))
     defn.transparent = True
     bd.add(defn, 18)
     
