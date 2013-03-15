@@ -27,6 +27,9 @@ def main():
     parser.add_option('--center', '-e', help = 'Mark what will be the center of the image, two percentage values comma separated',\
         metavar = '<center>', type = str, dest = 'center', default = None)
 
+    parser.add_option('--autocrop', '-a', help = 'Calculates the center and crop vales automatically to show all the tiles in the minimun image size.Unless you want a very specific image this options is very recommendedable.',\
+         action = 'store_true', dest = 'autocrop', default = False)
+
     parser.add_option('--output', '-o', help = 'Path for the resulting PNG. It will save it as PNG, no matter what extension do you use.',\
         metavar = '<output>', type = str, dest = 'output', default = "output.png")
 
@@ -43,6 +46,9 @@ def main():
     if not options.zoom_level:
         parser.error("Error! The option zoom-level is mandatory.")
     
+    if options.autocrop and (options.center or options.crop):
+        parser.error("Error! You can't mix --autocrop with --center or --crop.")
+    
     # check for the output
     folder, filename = split(options.output)
     if folder != '' and not exists(folder):
@@ -54,32 +60,6 @@ def main():
     tile_size = (384,384)
     px_size = 4 # bytes
 
-    # the vector that joins the center tile with the new center tile in
-    # tile coords (tile coords is how many tile are on the left, x, and 
-    # how many above, y. The top-left tile has coords (0,0)
-    if options.center:
-        center_x, center_y = options.center.split(",")
-        center_x = int(center_x)
-        center_y = int(center_y)
-        center_tile_x = int(2**n*(center_x/100.))
-        center_tile_y = int(2**n*(center_y/100.))
-        center_vector = (int(center_tile_x - length_in_tiles/2.), int(center_tile_y - length_in_tiles/2.))
-    else:
-        center_vector = (0,0)
-
-    tiles_to_crop = int(2**n*(options.crop/100.))
-    crop = (tiles_to_crop, tiles_to_crop)
-
-    final_img_size = (tile_size[0]*length_in_tiles,tile_size[1]*length_in_tiles)
-    final_cropped_img_size = (final_img_size[0] - 2*crop[0]*tile_size[0],final_img_size[1] - 2*crop[1]*tile_size[1])
-
-    mem = final_cropped_img_size[0]*final_cropped_img_size[1]*px_size # bytes!
-    print "The image size will be {0}x{1}".format(final_cropped_img_size[0],final_cropped_img_size[1])
-    print "A total of {0} MB of memory will be used.".format(mem/1024**2)
-    if mem/1024.**2. > options.memory_limit:
-        print "Warning! The expected RAM usage exceeds the spicifyed limit. Exiting."
-        sys.exit(1)
-    
     # create a list with all the images in the zoom level
     path = tileset
     for i in range(options.zoom_level):
@@ -89,6 +69,64 @@ def main():
     all_images = glob(path)
     if not all_images:
         "Error! No images found in this zoom leve. Is this really an overviewer tile set directory?"
+        sys.exit(1)
+
+    # autocrop will calculate the center and crop values automagically
+    if options.autocrop:
+        min_x = min_y = length_in_tiles
+        max_x = max_y = 0
+        counter = 0
+        total = len(all_images)
+        print "Checking tiles for autocrop calculations:"
+        # get the maximun and minimun tiles coordinates of the map
+        for path in all_images:
+            t = get_tuple_coords(options, path)
+            c = get_tile_coords_from_tuple(options, t)
+            min_x = min(min_x, c[0])
+            min_y = min(min_y, c[1])
+            max_x = max(max_x, c[0])
+            max_y = max(max_y, c[1])
+            counter += 1
+            if (counter % 100 == 0 or counter == total or counter == 1): print "Checked {0} of {1}".format(counter, total)
+        
+        # the center of the map will be in the middle of the occupied zone
+        center = (int((min_x + max_x)/2.), int((min_y + max_y)/2.))
+        # see the next next comment to know what's center_vector
+        center_vector = (int(center[0] - (length_in_tiles/2. - 1)), int(center[1] - (length_in_tiles/2. - 1)))
+        # I'm not completely sure why, but the - 1 factor in  ^  makes everything nicer.
+        
+        # min_x - center_vector[0] will be the unused amount of tiles in
+        # the left and the right of the map (and this is true because we
+        # are in the actual center of the map)
+        crop = (min_x - center_vector[0], min_y - center_vector[1])
+        
+    else:
+        # center_vector is the vector that joins the center tile with
+        # the new center tile in tile coords
+        #(tile coords are how many tile are on the left, x, and 
+        # how many above, y. The top-left tile has coords (0,0)
+        if options.center:
+            center_x, center_y = options.center.split(",")
+            center_x = int(center_x)
+            center_y = int(center_y)
+            center_tile_x = int(2**n*(center_x/100.))
+            center_tile_y = int(2**n*(center_y/100.))
+            center_vector = (int(center_tile_x - length_in_tiles/2.), int(center_tile_y - length_in_tiles/2.))
+        else:
+            center_vector = (0,0)
+
+        # crop if needed
+        tiles_to_crop = int(2**n*(options.crop/100.))
+        crop = (tiles_to_crop, tiles_to_crop)
+
+    final_img_size = (tile_size[0]*length_in_tiles,tile_size[1]*length_in_tiles)
+    final_cropped_img_size = (final_img_size[0] - 2*crop[0]*tile_size[0],final_img_size[1] - 2*crop[1]*tile_size[1])
+
+    mem = final_cropped_img_size[0]*final_cropped_img_size[1]*px_size # bytes!
+    print "The image size will be {0}x{1}".format(final_cropped_img_size[0],final_cropped_img_size[1])
+    print "A total of {0} MB of memory will be used.".format(mem/1024**2)
+    if mem/1024.**2. > options.memory_limit:
+        print "Warning! The expected RAM usage exceeds the spicifyed limit. Exiting."
         sys.exit(1)
 
     # Create a new huge image

@@ -21,6 +21,7 @@ import logging
 import hashlib
 import time
 import random
+import re
 
 import numpy
 
@@ -116,7 +117,7 @@ class World(object):
         # seem to be any set standard on what dimensions are in each world,
         # just scan the directory heirarchy to find a directory with .mca
         # files.
-        for root, dirs, files in os.walk(self.worlddir):
+        for root, dirs, files in os.walk(self.worlddir, followlinks=True):
             # any .mcr files in this directory?
             mcas = [x for x in files if x.endswith(".mca")]
             if mcas:
@@ -490,16 +491,16 @@ class RegionSet(object):
 
         Returns (regionx, regiony, filename)"""
 
-        logging.debug("regiondir is %s", self.regiondir)
+        logging.debug("regiondir is %s, has type %r", self.regiondir, self.type)
 
-        for path in glob(self.regiondir + "/r.*.*.mca"):
-            dirpath, f = os.path.split(path)
-            p = f.split(".")
-            x = int(p[1])
-            y = int(p[2])
-            if abs(x) > 500000 or abs(y) > 500000:
-                logging.warning("Holy shit what is up with region file %s !?" % f)
-            yield (x, y, path)
+        for f in os.listdir(self.regiondir):
+            if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
+                p = f.split(".")
+                x = int(p[1])
+                y = int(p[2])
+                if abs(x) > 500000 or abs(y) > 500000:
+                    logging.warning("Holy shit what is up with region file %s !?" % f)
+                yield (x, y, os.path.join(self.regiondir, f))
 
 class RegionSetWrapper(object):
     """This is the base class for all "wrappers" of RegionSet objects. A

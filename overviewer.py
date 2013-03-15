@@ -20,9 +20,9 @@ import sys
 
 # quick version check
 if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
-    print "Sorry, the Overviewer requires at least Python 2.6 to run"
+    print("Sorry, the Overviewer requires at least Python 2.6 to run")
     if sys.version_info[0] >= 3:
-        print "and will not run on Python 3.0 or later"
+        print("and will not run on Python 3.0 or later")
     sys.exit(1)
 
 import os
@@ -125,15 +125,15 @@ def main():
     # This section of main() runs in response to any one-time options we have,
     # such as -V for version reporting
     if options.version:
-        print "Minecraft Overviewer %s" % util.findGitVersion(),
-        print "(%s)" % util.findGitHash()[:7]
+        print("Minecraft Overviewer %s" % util.findGitVersion()),
+        print("(%s)" % util.findGitHash()[:7])
         try:
             import overviewer_core.overviewer_version as overviewer_version
-            print "built on %s" % overviewer_version.BUILD_DATE
+            print("built on %s" % overviewer_version.BUILD_DATE)
             if options.verbose > 0:
-                print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
+                print("Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS))
         except ImportError:
-            print "(build info not found)"
+            print("(build info not found)")
         return 0
 
     if options.check_terrain:
@@ -158,13 +158,13 @@ def main():
         # first provide an appropriate error for bare-console users
         # that don't provide any options
         if util.is_bare_console():
-            print "\n"
-            print "The Overviewer is a console program.  Please open a Windows command prompt"
-            print "first and run Overviewer from there.   Further documentation is available at"
-            print "http://docs.overviewer.org/\n"
-            print "\n"
-            print "For a quick-start guide on Windows, visit the following URL:\n"
-            print "http://docs.overviewer.org/en/latest/win_tut/windowsguide/\n"
+            print("\n")
+            print("The Overviewer is a console program.  Please open a Windows command prompt")
+            print("first and run Overviewer from there.   Further documentation is available at")
+            print("http://docs.overviewer.org/\n")
+            print("\n")
+            print("For a quick-start guide on Windows, visit the following URL:\n")
+            print("http://docs.overviewer.org/en/latest/win_tut/windowsguide/\n")
 
         else:
             # more helpful message for users who know what they're doing
@@ -178,13 +178,13 @@ def main():
     # in. It checks to see if --config was given that no worldname/destdir were
     # given, and vice versa
     if options.config and args:
-        print
-        print "If you specify --config, you need to specify the world to render as well as"
-        print "the destination in the config file, not on the command line."
-        print "Put something like this in your config file:"
-        print "worlds['myworld'] = %r" % args[0]
-        print "outputdir = %r" % (args[1] if len(args) > 1 else "/path/to/output")
-        print
+        print()
+        print("If you specify --config, you need to specify the world to render as well as")
+        print("the destination in the config file, not on the command line.")
+        print("Put something like this in your config file:")
+        print("worlds['myworld'] = %r" % args[0])
+        print("outputdir = %r" % (args[1] if len(args) > 1 else "/path/to/output"))
+        print()
         logging.error("Cannot specify both --config AND a world + output directory on the command line.")
         parser.print_help()
         return 1
@@ -471,16 +471,16 @@ def list_worlds():
     print
     worlds = world.get_worlds()
     if not worlds:
-        print 'No world saves found in the usual place'
+        print('No world saves found in the usual place')
         return
-    print "Detected saves:"
+    print("Detected saves:")
 
     # get max length of world name
     worldNameLen = max([len(str(x)) for x in worlds] + [len("World")])
 
     formatString = "%-" + str(worldNameLen) + "s | %-8s | %-8s | %-16s | %s "
-    print formatString % ("World", "Size", "Playtime", "Modified", "Path")
-    print formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16, '-'*4)
+    print(formatString % ("World", "Size", "Playtime", "Modified", "Path"))
+    print(formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16, '-'*4))
     for name, info in sorted(worlds.iteritems()):
         if isinstance(name, basestring) and name.startswith("World") and len(name) == 6:
             try:
@@ -496,18 +496,18 @@ def list_worlds():
         playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
         size = "%.2fMB" % (info['SizeOnDisk'] / 1024. / 1024.)
         path = info['path']
-        print formatString % (name, size, playstamp, timestamp, path)
+        print(formatString % (name, size, playstamp, timestamp, path))
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     try:
         ret = main()
         util.nice_exit(ret)
-    except textures.TextureException, e:
+    except textures.TextureException as e:
         # this isn't a "bug", so don't print scary traceback
         logging.error(str(e))
         util.nice_exit(1)
-    except Exception, e:
+    except Exception as e:
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
 
