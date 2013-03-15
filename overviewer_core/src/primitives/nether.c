@@ -35,7 +35,7 @@ walk_chunk(RenderState *state, RenderPrimitiveNether *data) {
 
             for (y = NETHER_ROOF-1; y>=0; y--) {
                 id = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
-                if (id == 7 || id == 87)
+                if (id == 7 || id == 87 || id == 153 || id == 11)
                     data->remove_block[x+1][y][z+1] = 1;
                 else
                     break;
