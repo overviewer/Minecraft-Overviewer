@@ -404,8 +404,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
-
-        rset = w.get_regionset(render['dimension'][1])
+    
+        try:
+            rset = w.get_regionset(render['dimension'][1])
+        except IndexError:
+            logging.error("Sorry, I can't find anything to render!  Are you sure there are .mca files in the world directory?")
+            return 1
         if rset == None: # indicates no such dimension was found:
             logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
             return 1
