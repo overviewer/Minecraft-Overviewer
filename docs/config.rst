@@ -666,6 +666,35 @@ values. The valid configuration keys are listed below.
     If you leave this as an empty list, this overlay will be displayed on top
     of all renders for the same world/dimension as this one.
 
+    As an example, let's assume you have two renders, one called "day" and one 
+    called "night".  You want to create a Biome Overlay to be displayed on top
+    of the "day" render.  Your config file might look like this:
+
+    ::
+
+        outputdir = "output_dir"
+
+
+        worlds["exmaple"] = "exmaple"
+
+        renders['day'] = {
+            'world': 'exmaple',
+            'rendermode': 'smooth_lighting',
+            'title': "Daytime Render",
+        }
+        renders['night'] = {
+            'world': 'exmaple',
+            'rendermode': 'night',
+            'title': "Night Render",
+        }
+
+        renders['biomeover'] = {
+            'world': 'exmaple',
+            'rendermode': [ClearBase(), BiomeOverlay()],
+            'title': "Biome Coloring Overlay",
+            'overlay': ['day']
+        }
+
     **Default:** ``[]`` (an empty list)
 
 ``showspawn``
