@@ -242,7 +242,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             return 1
 
         # Parse the config file
-        mw_parser.parse(options.config)
+        try:
+            mw_parser.parse(options.config)
+        except configParser.MissingConfigException as e:
+            # this isn't a "bug", so don't print scary traceback
+            logging.error(str(e))
+            util.nice_exit(1)
 
     # Add in the command options here, perhaps overriding values specified in
     # the config
