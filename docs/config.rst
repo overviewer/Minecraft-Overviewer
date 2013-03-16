@@ -10,9 +10,14 @@ like this::
 
     overviewer.py --config=path/to/my_configfile
 
-
 The config file is formatted in Python syntax. If you aren't familiar with
 Python, don't worry, it's pretty simple. Just follow the examples.
+
+.. note::
+
+    You should *always* use forward slashes ("/"), even on
+    Windows.  This is required because the backslash ("\\") has special meaning
+    in Python.  
 
 A Simple Example
 ================
@@ -193,6 +198,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
     **You must specify at least one world**
 
+    *Reminder*: Always use forward slashes ("/"), even on Windows.
+
 ``renders``
     This is also pre-defined as an empty dictionary. The config file is expected
     to add at least one item to it.
@@ -225,6 +232,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
     e.g.::
 
         outputdir = "/path/to/output"
+
+    *Reminder*: Always use forward slashes ("/"), even on Windows.
 
     **Required**
 

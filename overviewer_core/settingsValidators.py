@@ -24,30 +24,26 @@ def expand_path(p):
     return p
 
 def checkBadEscape(s):
-    fixed = False
-    fixed_string = s
-    if "\a" in fixed_string:
-        fixed_string = s.replace("\a", r"\a")
-        fixed = True
-    if "\b" in fixed_string:
-        fixed_string = s.replace("\b", r"\b")
-        fixed = True
-    if "\t" in fixed_string:
-        fixed_string = s.replace("\t", r"\t")
-        fixed = True
-    if "\n" in fixed_string:
-        fixed_string = s.replace("\n", r"\n")
-        fixed = True
-    if "\v" in fixed_string:
-        fixed_string = s.replace("\v", r"\v")
-        fixed = True
-    if "\f" in fixed_string:
-        fixed_string = s.replace("\f", r"\f")
-        fixed = True
-    if "\r" in fixed_string:
-        fixed_string = s.replace("\r", r"\r")
-        fixed = True
-    return (fixed, fixed_string)
+    #If any of these weird characters are in the path, raise an exception instead of fixing
+    #this should help us educate our users about pathslashes
+    if "\a" in s:
+        raise ValueError("Invalid character '\\a' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
+    if "\b" in s:
+        raise ValueError("Invalid character '\\b' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
+    if "\t" in s:
+        raise ValueError("Invalid character '\\t' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
+    if "\n" in s:
+        raise ValueError("Invalid character '\\n' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
+    if "\v" in s:
+        raise ValueError("Invalid character '\\v' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
+    if "\f" in s:
+        raise ValueError("Invalid character '\\f' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
+    if "\r" in s:
+        raise ValueError("Invalid character '\\r' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
+    for c in range(10):
+        if chr(c) in s:
+            raise ValueError("Invalid character '\\%s' in path.  Please use forward slashes ('/').  Please see our docs for more info." % c)
+    return s
 
 def validateMarkers(filterlist):
     if type(filterlist) != list:
@@ -72,7 +68,7 @@ def validateOverlays(renderlist):
     return renderlist
 
 def validateWorldPath(worldpath):
-    _, worldpath = checkBadEscape(worldpath)
+    checkBadEscape(worldpath)
     abs_path = expand_path(worldpath)
     if not os.path.exists(os.path.join(abs_path, "level.dat")):
         raise ValidationException("No level.dat file in '%s'. Are you sure you have the right path?" % (abs_path,))
@@ -199,7 +195,7 @@ def validateDimension(d):
         return (d, d)
 
 def validateOutputDir(d):
-    _, d = checkBadEscape(d)
+    checkBadEscape(d)
     if not d.strip():
         raise ValidationException("You must specify a valid output directory")
     return expand_path(d)
@@ -234,8 +230,8 @@ def validateWebAssetsPath(p):
         raise ValidationException("Bad custom web assets path: %s" % e.message)
 
 def validatePath(p):
-    _, path = checkBadEscape(p)
-    abs_path = expand_path(path)
+    checkBadEscape(p)
+    abs_path = expand_path(p)
     if not os.path.exists(abs_path):
         raise ValidationException("'%s' does not exist. Path initially given as '%s'" % (abs_path,p))
 
