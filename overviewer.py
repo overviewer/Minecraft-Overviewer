@@ -243,7 +243,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
         # Parse the config file
         try:
-            mw_parser.parse(options.config)
+            mw_parser.parse(os.path.expanduser(options.config))
         except configParser.MissingConfigException as e:
             # this isn't a "bug", so don't print scary traceback
             logging.error(str(e))
