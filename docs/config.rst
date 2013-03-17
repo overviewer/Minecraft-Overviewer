@@ -540,7 +540,9 @@ values. The valid configuration keys are listed below.
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
-    It can be either a folder or a zip file containing the texture pack.
+    It can be either a folder or a zip file containing the texture pack.  If specifying
+    a folder, this option should point to a directory that *contains* the textures/ folder
+    (it should not point to the textures folder directly).
     Its value should be a string.
 
 .. _crop:

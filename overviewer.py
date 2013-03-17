@@ -136,21 +136,24 @@ def main():
             print("(build info not found)")
         return 0
 
-    if options.check_terrain:
+    # if --check-terrain was specified, but we have NO config file, then we cannot
+    # operate on a custom texture path.  we do terrain checking with a custom texture
+    # pack later on, after we've parsed the config file
+    if options.check_terrain and not options.config:
         import hashlib
         from overviewer_core.textures import Textures
-        # TODO custom textures path?
         tex = Textures()
 
+        logging.info("Looking for a few common texture files...")
         try:
-            f = tex.find_file("terrain.png", verbose=True)
+            f = tex.find_file("textures/blocks/stone.png", verbose=True)
+            f = tex.find_file("textures/blocks/tallgrass.png", verbose=True)
+            f = tex.find_file("textures/blocks/oreDiamond.png", verbose=True)
+            f = tex.find_file("textures/blocks/wood.png", verbose=True)
         except IOError:
-            logging.error("Could not find the file terrain.png")
+            logging.error("Could not find the file stone.png")
             return 1
 
-        h = hashlib.sha1()
-        h.update(f.read())
-        logging.info("Hash of terrain.png file is: `%s`", h.hexdigest())
         return 0
 
     # if no arguments are provided, print out a helpful message
@@ -265,7 +268,20 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             logging.error(str(ex))
         return 1
 
+    if options.check_terrain: # we are already in the "if configfile" branch
+        logging.info("Looking for a few common texture files...")
+        for render_name, render in config['renders'].iteritems():
+            logging.info("Looking at render %r", render_name)
 
+            # find or create the textures object
+            texopts = util.dict_subset(render, ["texturepath"])
+
+            tex = textures.Textures(**texopts)
+            f = tex.find_file("textures/blocks/stone.png", verbose=True)
+            f = tex.find_file("textures/blocks/tallgrass.png", verbose=True)
+            f = tex.find_file("textures/blocks/oreDiamond.png", verbose=True)
+            f = tex.find_file("textures/blocks/wood.png", verbose=True)
+        return 0
 
     ############################################################
     # Final validation steps and creation of the destination directory

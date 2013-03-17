@@ -159,7 +159,7 @@ class Textures(object):
                     for packfilename in search_zip_paths:
                         try:
                             pack.getinfo(packfilename)
-                            if verbose: logging.info("Found %s in '%s'", packfilename, nery.find_file_local_path)
+                            if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
                             return pack.open(packfilename)
                         except (KeyError, IOError):
                             pass
@@ -220,7 +220,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the file `{0}'. Try specifying the 'texturepath' option in your config file. Set it to the directory where I can find {0}. Also see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>".format(filename))
+        raise TextureException("Could not find the file `{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the directory where I can find {0}.\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
