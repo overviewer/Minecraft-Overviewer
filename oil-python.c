@@ -799,9 +799,9 @@ PyMODINIT_FUNC initOIL(void) {
        helper functions in oil-python.h */
     
     ADD_TYPE(PyOILMatrixType);
-    (void)sizeof(py_oil_get_matrix_type);
+    (void)sizeof(py_oil_get_matrix_type());
     ADD_TYPE(PyOILImageType);
-    (void)sizeof(py_oil_get_image_type);
+    (void)sizeof(py_oil_get_image_type());
     
     /* add in the flag enums */
     PyModule_AddIntConstant(mod, "DEPTH_TEST", OIL_DEPTH_TEST);

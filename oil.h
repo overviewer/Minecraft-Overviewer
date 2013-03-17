@@ -7,7 +7,11 @@
 #define OIL_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define OIL_CLAMP(a, min, max) OIL_MIN((max), OIL_MAX((min), (a)))
 
-#define OIL_EXPECT(v, e) __builtin_expect(v, e)
+#ifdef _MSC_VER
+#  define OIL_EXPECT(v, e) v
+#else
+#  define OIL_EXPECT(v, e) __builtin_expect(v, e)
+#endif
 #define OIL_LIKELY(v) OIL_EXPECT(v, 1)
 #define OIL_UNLIKELY(v) OIL_EXPECT(v, 0)
 
