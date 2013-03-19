@@ -99,6 +99,8 @@ def main():
             "These scripts may accept different arguments than the ones listed above")
     exegroup.add_option("--genpoi", dest="genpoi", action="store_true",
             help="Runs the genPOI script")
+    exegroup.add_option("--skip-scan", dest="skipscan", action="store_true",
+            help="When running GenPOI, don't scan for entities")
 
     parser.add_option_group(exegroup)
 
