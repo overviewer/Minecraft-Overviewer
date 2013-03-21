@@ -261,7 +261,7 @@ class Textures(object):
             watertexture = self.load_image("custom_water_still.png")
             watertexture = watertexture.crop((0, 0, watertexture.size[0], watertexture.size[0]))
         except TextureException:
-            watertexture = self.load_image("water.png")
+            watertexture = self.load_image_texture("textures/blocks/water.png")
         self.watertexture = watertexture
         return watertexture
 
@@ -276,7 +276,7 @@ class Textures(object):
             lavatexture = self.load_image("custom_lava_still.png")
             lavatexture = lavatexture.crop((0, 0, lavatexture.size[0], lavatexture.size[0]))
         except TextureException:
-            lavatexture = self.load_image("lava.png")
+            lavatexture = self.load_image_texture("textures/blocks/lava.png")
         self.lavatexture = lavatexture
         return lavatexture
     
@@ -294,8 +294,9 @@ class Textures(object):
             firetextureEW = firetextureEW.crop((0, 0, firetextureEW.size[0], firetextureEW.size[0]))
             firetexture = (firetextureNS,firetextureEW)
         except TextureException:
-            fire = self.load_image("fire.png")
-            firetexture = (fire, fire)
+            fireNS = self.load_image_texture("textures/blocks/fire_0.png")
+            fireEW = self.load_image_texture("textures/blocks/fire_1.png")
+            firetexture = (fireNS, fireEW)
         self.firetexture = firetexture
         return firetexture
     
@@ -310,7 +311,7 @@ class Textures(object):
             portaltexture = self.load_image("custom_portal.png")
             portaltexture = portaltexture.crop((0, 0, portaltexture.size[0], portaltexture.size[1]))
         except TextureException:
-            portaltexture = self.load_image("portal.png")
+            portaltexture = self.load_image_texture("textures/blocks/portal.png")
         self.portaltexture = portaltexture
         return portaltexture
     
