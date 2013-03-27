@@ -154,6 +154,7 @@ class World(object):
             return self.regionsets[index]
         else: # assume a get_type() value
             candids = [x for x in self.regionsets if x.get_type() == index]
+            logging.debug("You asked for %r, and I found the following candids: %r", index, candids)
             if len(candids) > 0:
                 return candids[0]
             else: 
@@ -249,6 +250,8 @@ class RegionSet(object):
         """
         self.regiondir = os.path.normpath(regiondir)
         self.rel = os.path.normpath(rel)
+        logging.debug("regiondir is %r" % self.regiondir)
+        logging.debug("rel is %r" % self.rel)
         
         # we want to get rid of /regions, if it exists
         if self.rel.endswith(os.path.normpath("/region")):
@@ -260,7 +263,7 @@ class RegionSet(object):
             logging.warning("Unkown region type in %r", regiondir)
             self.type = "__unknown"
 
-        logging.debug("Scanning regions")
+        logging.debug("Scanning regions.  Type is %r" % self.type)
         
         # This is populated below. It is a mapping from (x,y) region coords to filename
         self.regionfiles = {}

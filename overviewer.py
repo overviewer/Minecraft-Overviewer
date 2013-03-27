@@ -424,6 +424,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             tex = texcache[texopts_key]
     
         try:
+            logging.debug("Asking for regionset %r" % render['dimension'][1])
             rset = w.get_regionset(render['dimension'][1])
         except IndexError:
             logging.error("Sorry, I can't find anything to render!  Are you sure there are .mca files in the world directory?")
