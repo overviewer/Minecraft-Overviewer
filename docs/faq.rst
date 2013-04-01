@@ -164,3 +164,31 @@ two ways.
 3. The third non-option is to not worry about it. The problem will fix itself if
    people explore near there, because that will force that part of the map to
    update.
+
+My map is zoomed out so far that it looks (almost) blank
+--------------------------------------------------------
+
+We see this quite a bit, and seems to stem from a bug in the Minecraft terrain
+generation.
+
+Explanation: Minecraft generates chunks of your world as it needs them. When
+Overviewer goes to render your map, it looks at how big the world is, and
+calculates how big the maps needs to be in order to fit it all in.
+Occasionally, we see that Minecraft has generated a few chunks of the world
+extremely far away from the main part of the world. These erroneous chunks have
+most likely not been explored [*]_ and should not exist.
+
+There are two solutions. The preferred is to delete the offending chunks. Open
+up your region folder of your world and look at the region file names. They are
+numbered ``r.##.##.mcr`` where ``##`` is a number. The two numbers indicate the
+coordinates of that region file. Look for region files with coordinates much
+larger in magnitude than any others. Most likely you will find around 1–3
+region files with coordinates much larger than any others. Delete or otherwise
+remove those files, and re-render your map.
+
+The other option is to use the :ref:`crop<crop>` option to tell Overviewer not
+to render all of your map, but instead to only render the specified region.
+
+As always, if you need assistance, come chat with us on :ref:`irc<help>`.
+
+.. [*] They could also have been triggered by an accidential teleport where the coordinates were typed in manually.
