@@ -3433,12 +3433,20 @@ block(blockid=110, top_image="textures/blocks/mycel_top.png", side_image="textur
 
 # lilypad
 # At the moment of writing this lilypads has no ancil data and their
-# orientation depends on their position on the map. Because lilypads had
-# ancildata, leave some data values just in case an old map have some
-# with ancil data.
+# orientation depends on their position on the map. So it uses pseudo
+# ancildata.
 @material(blockid=111, data=range(4), transparent=True)
 def lilypad(self, blockid, data):
-    t = self.load_image_texture("textures/blocks/waterlily.png")
+    t = self.load_image_texture("textures/blocks/waterlily.png").copy()
+    if data == 0:
+        t = t.rotate(180)
+    elif data == 1:
+        t = t.rotate(270)
+    elif data == 2:
+        t = t
+    elif data == 3:
+        t = t.rotate(90)
+
     return self.build_full_block(None, None, None, None, None, t)
 
 # nether brick
