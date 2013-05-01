@@ -7,6 +7,10 @@ import traceback
 import settingsDefinition
 import settingsValidators
 
+class MissingConfigException(Exception):
+    "To be thrown when the config file can't be found"
+    pass
+
 class MultiWorldParser(object):
     """A class that is used to parse a settings.py file.
     
@@ -68,7 +72,7 @@ class MultiWorldParser(object):
 
         """
         if not os.path.exists(settings_file) and not os.path.isfile(settings_file):
-            raise ValueError("The settings file you specified (%r) does not exist, or is not a file" % settings_file)
+            raise MissingConfigException("The settings file you specified (%r) does not exist, or is not a file" % settings_file)
 
         # The global environment should be the rendermode module, so the config
         # file has access to those resources.

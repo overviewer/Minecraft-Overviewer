@@ -20,9 +20,9 @@ import sys
 
 # quick version check
 if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
-    print "Sorry, the Overviewer requires at least Python 2.6 to run"
+    print("Sorry, the Overviewer requires at least Python 2.6 to run")
     if sys.version_info[0] >= 3:
-        print "and will not run on Python 3.0 or later"
+        print("and will not run on Python 3.0 or later")
     sys.exit(1)
 
 import os
@@ -62,7 +62,7 @@ def main():
     parser = OptionParser(usage=helptext, add_help_option=False)
     parser.add_option("-h", "--help", dest="help", action="store_true",
             help="show this help message and exit")
-    parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
+    parser.add_option("-c", "--config", dest="config", action="store", help="Specify the config file to use.")
     parser.add_option("-p", "--processes", dest="procs", action="store", type="int",
             help="The number of local worker processes to spawn. Defaults to the number of CPU cores your computer has")
 
@@ -99,6 +99,8 @@ def main():
             "These scripts may accept different arguments than the ones listed above")
     exegroup.add_option("--genpoi", dest="genpoi", action="store_true",
             help="Runs the genPOI script")
+    exegroup.add_option("--skip-scan", dest="skipscan", action="store_true",
+            help="When running GenPOI, don't scan for entities")
 
     parser.add_option_group(exegroup)
 
@@ -125,32 +127,35 @@ def main():
     # This section of main() runs in response to any one-time options we have,
     # such as -V for version reporting
     if options.version:
-        print "Minecraft Overviewer %s" % util.findGitVersion(),
-        print "(%s)" % util.findGitHash()[:7]
+        print("Minecraft Overviewer %s" % util.findGitVersion()),
+        print("(%s)" % util.findGitHash()[:7])
         try:
             import overviewer_core.overviewer_version as overviewer_version
-            print "built on %s" % overviewer_version.BUILD_DATE
+            print("built on %s" % overviewer_version.BUILD_DATE)
             if options.verbose > 0:
-                print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
+                print("Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS))
         except ImportError:
-            print "(build info not found)"
+            print("(build info not found)")
         return 0
 
-    if options.check_terrain:
+    # if --check-terrain was specified, but we have NO config file, then we cannot
+    # operate on a custom texture path.  we do terrain checking with a custom texture
+    # pack later on, after we've parsed the config file
+    if options.check_terrain and not options.config:
         import hashlib
         from overviewer_core.textures import Textures
-        # TODO custom textures path?
         tex = Textures()
 
+        logging.info("Looking for a few common texture files...")
         try:
-            f = tex.find_file("terrain.png", verbose=True)
+            f = tex.find_file("textures/blocks/stone.png", verbose=True)
+            f = tex.find_file("textures/blocks/tallgrass.png", verbose=True)
+            f = tex.find_file("textures/blocks/oreDiamond.png", verbose=True)
+            f = tex.find_file("textures/blocks/wood.png", verbose=True)
         except IOError:
-            logging.error("Could not find the file terrain.png")
+            logging.error("Could not find the file stone.png")
             return 1
 
-        h = hashlib.sha1()
-        h.update(f.read())
-        logging.info("Hash of terrain.png file is: `%s`", h.hexdigest())
         return 0
 
     # if no arguments are provided, print out a helpful message
@@ -158,13 +163,13 @@ def main():
         # first provide an appropriate error for bare-console users
         # that don't provide any options
         if util.is_bare_console():
-            print "\n"
-            print "The Overviewer is a console program.  Please open a Windows command prompt"
-            print "first and run Overviewer from there.   Further documentation is available at"
-            print "http://docs.overviewer.org/\n"
-            print "\n"
-            print "For a quick-start guide on Windows, visit the following URL:\n"
-            print "http://docs.overviewer.org/en/latest/win_tut/windowsguide/\n"
+            print("\n")
+            print("The Overviewer is a console program.  Please open a Windows command prompt")
+            print("first and run Overviewer from there.   Further documentation is available at")
+            print("http://docs.overviewer.org/\n")
+            print("\n")
+            print("For a quick-start guide on Windows, visit the following URL:\n")
+            print("http://docs.overviewer.org/en/latest/win_tut/windowsguide/\n")
 
         else:
             # more helpful message for users who know what they're doing
@@ -178,13 +183,13 @@ def main():
     # in. It checks to see if --config was given that no worldname/destdir were
     # given, and vice versa
     if options.config and args:
-        print
-        print "If you specify --config, you need to specify the world to render as well as"
-        print "the destination in the config file, not on the command line."
-        print "Put something like this in your config file:"
-        print "worlds['myworld'] = %r" % args[0]
-        print "outputdir = %r" % (args[1] if len(args) > 1 else "/path/to/output")
-        print
+        print()
+        print("If you specify --config, you need to specify the world to render as well as")
+        print("the destination in the config file, not on the command line.")
+        print("Put something like this in your config file:")
+        print("worlds['myworld'] = %r" % args[0])
+        print("outputdir = %r" % (args[1] if len(args) > 1 else "/path/to/output"))
+        print()
         logging.error("Cannot specify both --config AND a world + output directory on the command line.")
         parser.print_help()
         return 1
@@ -242,7 +247,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             return 1
 
         # Parse the config file
-        mw_parser.parse(options.config)
+        try:
+            mw_parser.parse(os.path.expanduser(options.config))
+        except configParser.MissingConfigException as e:
+            # this isn't a "bug", so don't print scary traceback
+            logging.error(str(e))
+            util.nice_exit(1)
 
     # Add in the command options here, perhaps overriding values specified in
     # the config
@@ -260,7 +270,20 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             logging.error(str(ex))
         return 1
 
+    if options.check_terrain: # we are already in the "if configfile" branch
+        logging.info("Looking for a few common texture files...")
+        for render_name, render in config['renders'].iteritems():
+            logging.info("Looking at render %r", render_name)
 
+            # find or create the textures object
+            texopts = util.dict_subset(render, ["texturepath"])
+
+            tex = textures.Textures(**texopts)
+            f = tex.find_file("textures/blocks/stone.png", verbose=True)
+            f = tex.find_file("textures/blocks/tallgrass.png", verbose=True)
+            f = tex.find_file("textures/blocks/oreDiamond.png", verbose=True)
+            f = tex.find_file("textures/blocks/wood.png", verbose=True)
+        return 0
 
     ############################################################
     # Final validation steps and creation of the destination directory
@@ -399,10 +422,15 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
-
-        rset = w.get_regionset(render['dimension'])
+    
+        try:
+            logging.debug("Asking for regionset %r" % render['dimension'][1])
+            rset = w.get_regionset(render['dimension'][1])
+        except IndexError:
+            logging.error("Sorry, I can't find anything to render!  Are you sure there are .mca files in the world directory?")
+            return 1
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
+            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
             return 1
 
         #################
@@ -471,16 +499,16 @@ def list_worlds():
     print
     worlds = world.get_worlds()
     if not worlds:
-        print 'No world saves found in the usual place'
+        print('No world saves found in the usual place')
         return
-    print "Detected saves:"
+    print("Detected saves:")
 
     # get max length of world name
     worldNameLen = max([len(str(x)) for x in worlds] + [len("World")])
 
     formatString = "%-" + str(worldNameLen) + "s | %-8s | %-8s | %-16s | %s "
-    print formatString % ("World", "Size", "Playtime", "Modified", "Path")
-    print formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16, '-'*4)
+    print(formatString % ("World", "Size", "Playtime", "Modified", "Path"))
+    print(formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16, '-'*4))
     for name, info in sorted(worlds.iteritems()):
         if isinstance(name, basestring) and name.startswith("World") and len(name) == 6:
             try:
@@ -496,18 +524,18 @@ def list_worlds():
         playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
         size = "%.2fMB" % (info['SizeOnDisk'] / 1024. / 1024.)
         path = info['path']
-        print formatString % (name, size, playstamp, timestamp, path)
+        print(formatString % (name, size, playstamp, timestamp, path))
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     try:
         ret = main()
         util.nice_exit(ret)
-    except textures.TextureException, e:
+    except textures.TextureException as e:
         # this isn't a "bug", so don't print scary traceback
         logging.error(str(e))
         util.nice_exit(1)
-    except Exception, e:
+    except Exception as e:
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
 

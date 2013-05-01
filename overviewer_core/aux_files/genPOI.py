@@ -57,10 +57,9 @@ def handlePlayers(rset, render, worldpath):
     # only handle this region set once
     if 'Players' in rset._pois:
         return
-    dimension = {'overworld': 0,
-                 'nether': -1,
-                 'end': 1,
-                 'default': 0}[render['dimension']]
+    dimension = {None: 0,
+                 'DIM-1': -1,
+                 'DIM1': 1}[rset.get_type()]
     playerdir = os.path.join(worldpath, "players")
     if os.path.isdir(playerdir):
         playerfiles = os.listdir(playerdir)
@@ -123,6 +122,7 @@ def main():
     parser = OptionParser(usage=helptext)
     parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
     parser.add_option("--quiet", dest="quiet", action="count", help="Reduce logging output")
+    parser.add_option("--skip-scan", dest="skipscan", action="store_true", help="Skip scanning for entities when using GenPOI")
 
     options, args = parser.parse_args()
     if not options.config:
@@ -165,9 +165,9 @@ def main():
         else:
             w = worldcache[render['world']]
         
-        rset = w.get_regionset(render['dimension'])
+        rset = w.get_regionset(render['dimension'][1])
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
+            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
             return 1
       
         for f in render['markers']:
@@ -183,12 +183,14 @@ def main():
                 l.append(to_append)
             except KeyError:
                 markers[rname] = [to_append]
+        
+        if not options.skipscan:
+            handleEntities(rset, os.path.join(destdir, rname), render, rname)
 
-        handleEntities(rset, os.path.join(destdir, rname), render, rname)
         handlePlayers(rset, render, worldpath)
         handleManual(rset, render['manualpois'])
 
-    logging.info("Done scanning regions")
+    logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
     markerSetDict = dict()
     for (flter, rset) in markersets:
@@ -201,7 +203,10 @@ def main():
         for poi in rset._pois['Entities']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result)
+                if isinstance(result, basestring):
+                    d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result[1], hovertext=result[0])
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:
@@ -210,7 +215,10 @@ def main():
         for poi in rset._pois['TileEntities']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if isinstance(result, basestring):
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:
@@ -219,7 +227,10 @@ def main():
         for poi in rset._pois['Players']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if isinstance(result, basestring):
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:
@@ -228,7 +239,10 @@ def main():
         for poi in rset._pois['Manual']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if isinstance(result, basestring):
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:

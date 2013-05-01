@@ -12,8 +12,6 @@ See also the `Github Homepage`_ and the `Updates Blog`_
 
 .. _Updates Blog: http://overviewer.org/blog/
 
-**New! See** :ref:`new_features`
-
 Introduction
 ============
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
@@ -68,8 +66,8 @@ Features
 
 .. _new_features:
 
-**New** features in version 0.9
--------------------------------
+Features in version 0.9
+-----------------------
 
 * Supports the new *Anvil* level format of Minecraft 1.2
 
@@ -124,7 +122,7 @@ Windows, Mac, and Linux as long as you have these software packages installed:
 
 * Numpy
 
-* Either a Minecraft Client installed or a terrain.png for the textures.
+* Either a Minecraft Client installed or a textures/ folder for the textures (possibly from a texturepack)
 
 The first three are included in the Windows download. Also, there are additional
 requirements for compiling it (like a compiler). More details are available in

@@ -10,9 +10,14 @@ like this::
 
     overviewer.py --config=path/to/my_configfile
 
-
 The config file is formatted in Python syntax. If you aren't familiar with
 Python, don't worry, it's pretty simple. Just follow the examples.
+
+.. note::
+
+    You should *always* use forward slashes ("/"), even on
+    Windows.  This is required because the backslash ("\\") has special meaning
+    in Python.  
 
 A Simple Example
 ================
@@ -193,6 +198,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
     **You must specify at least one world**
 
+    *Reminder*: Always use forward slashes ("/"), even on Windows.
+
 ``renders``
     This is also pre-defined as an empty dictionary. The config file is expected
     to add at least one item to it.
@@ -226,6 +233,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
         outputdir = "/path/to/output"
 
+    *Reminder*: Always use forward slashes ("/"), even on Windows.
+
     **Required**
 
 .. _processes:
@@ -255,7 +264,7 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
     If you want to specify an observer manually, try something like:
     ::
 
-        from observer import ProgressBarObserver()
+        from observer import ProgressBarObserver
         observer = ProgressBarObserver()
 
     There are currently three observers available: ``LoggingObserver``, 
@@ -531,7 +540,9 @@ values. The valid configuration keys are listed below.
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
-    It can be either a folder or a zip file containing the texture pack.
+    It can be either a folder or a zip file containing the texture pack.  If specifying
+    a folder, this option should point to a directory that *contains* the textures/ folder
+    (it should not point to the textures folder directly).
     Its value should be a string.
 
 .. _crop:
@@ -656,6 +667,35 @@ values. The valid configuration keys are listed below.
 
     If you leave this as an empty list, this overlay will be displayed on top
     of all renders for the same world/dimension as this one.
+
+    As an example, let's assume you have two renders, one called "day" and one 
+    called "night".  You want to create a Biome Overlay to be displayed on top
+    of the "day" render.  Your config file might look like this:
+
+    ::
+
+        outputdir = "output_dir"
+
+
+        worlds["exmaple"] = "exmaple"
+
+        renders['day'] = {
+            'world': 'exmaple',
+            'rendermode': 'smooth_lighting',
+            'title': "Daytime Render",
+        }
+        renders['night'] = {
+            'world': 'exmaple',
+            'rendermode': 'night',
+            'title': "Night Render",
+        }
+
+        renders['biomeover'] = {
+            'world': 'exmaple',
+            'rendermode': [ClearBase(), BiomeOverlay()],
+            'title': "Biome Coloring Overlay",
+            'overlay': ['day']
+        }
 
     **Default:** ``[]`` (an empty list)
 

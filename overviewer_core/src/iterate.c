@@ -298,8 +298,8 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
             above_level_data = check_adjacent_blocks(state, x, y+1, z, state->block);
         }   /* else above_level_data = 0 */
         
-        /* check connection with same level */
-        same_level_data = check_adjacent_blocks(state, x, y, z, 55);
+        /* check connection with same level (other redstone and trapped chests */
+        same_level_data = check_adjacent_blocks(state, x, y, z, 55) | check_adjacent_blocks(state, x, y, z, 146);
         
         /* check the posibility of connection with y-1 level, check for air */
         possibly_connected = check_adjacent_blocks(state, x, y, z, 0);
@@ -402,6 +402,20 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         } else {
             return check_adjacent_blocks(state, x, y, z, state->block);
         }
+    } else if (state->block == 111) { /* lilypads */
+        int wx,wz,wy,rotation;
+        long pr;
+        /* calculate the global block coordinates of this position */
+        wx = (state->chunkx * 16) + x;
+        wz = (state->chunkz * 16) + z;
+        wy = (state->chunky * 16) + y;
+        /* lilypads orientation is obtained with these magic numbers */
+        /* magic numbers obtained from: */
+        /* http://llbit.se/?p=1537 */
+        pr = (wx * 3129871) ^ (wz * 116129781) ^ (wy);
+        pr = pr * pr * 42317861 + pr * 11;
+        rotation = 3 & (pr >> 16);
+        return rotation;
     }
 
 
@@ -549,7 +563,8 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 71) || (state.block == 79) ||
                         (state.block == 85) || (state.block == 90) ||
                         (state.block == 101) || (state.block == 102) ||
-                        (state.block == 113) || (state.block == 139)) {
+                        (state.block == 111) || (state.block == 113) ||
+                        (state.block == 139)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
                     } else {

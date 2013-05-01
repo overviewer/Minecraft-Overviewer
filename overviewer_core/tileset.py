@@ -524,7 +524,7 @@ class TileSet(object):
                 base = self.options.get('base'),
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') +
-                    (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
+                    (" - " + self.options.get('dimension')[0] if self.options.get('dimension')[1] != 0 else ''),
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
                 isOverlay = isOverlay,
@@ -534,7 +534,8 @@ class TileSet(object):
         if isOverlay:
             d.update({"tilesets": self.options.get("overlay")})
 
-        if (self.regionset.get_type() == "overworld" and self.options.get("showspawn", True)):
+        # None means overworld
+        if (self.regionset.get_type() == None and self.options.get("showspawn", True)):
             d.update({"spawn": self.options.get("spawn")})
         else:
             d.update({"spawn": "false"});

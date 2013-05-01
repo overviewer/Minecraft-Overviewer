@@ -21,6 +21,7 @@ import logging
 import hashlib
 import time
 import random
+import re
 
 import numpy
 
@@ -116,13 +117,13 @@ class World(object):
         # seem to be any set standard on what dimensions are in each world,
         # just scan the directory heirarchy to find a directory with .mca
         # files.
-        for root, dirs, files in os.walk(self.worlddir):
+        for root, dirs, files in os.walk(self.worlddir, followlinks=True):
             # any .mcr files in this directory?
             mcas = [x for x in files if x.endswith(".mca")]
             if mcas:
                 # construct a regionset object for this
-                rset = RegionSet(root)
-                if not rset.is_valid(): continue
+                rel = os.path.relpath(root, self.worlddir)
+                rset = RegionSet(root, rel)
                 if root == os.path.join(self.worlddir, "region"):
                     self.regionsets.insert(0, rset)
                 else:
@@ -151,15 +152,13 @@ class World(object):
     def get_regionset(self, index):
         if type(index) == int:
             return self.regionsets[index]
-        else: # assume a string constant
-            if index == "default":
-                return self.regionsets[0]
-            else:
-                candids = [x for x in self.regionsets if x.get_type() == index]
-                if len(candids) > 0:
-                    return candids[0]
-                else: 
-                    return None
+        else: # assume a get_type() value
+            candids = [x for x in self.regionsets if x.get_type() == index]
+            logging.debug("You asked for %r, and I found the following candids: %r", index, candids)
+            if len(candids) > 0:
+                return candids[0]
+            else: 
+                return None
 
 
     def get_level_dat_data(self):
@@ -195,7 +194,7 @@ class World(object):
             spawnY = 255
         
         # Open up the chunk that the spawn is in
-        regionset = self.get_regionset("overworld")
+        regionset = self.get_regionset(None)
         if not regionset:
             return None
         try:
@@ -236,19 +235,35 @@ class RegionSet(object):
 
     """
 
-    def __init__(self, regiondir):
+    def __init__(self, regiondir, rel):
         """Initialize a new RegionSet to access the region files in the given
         directory.
 
         regiondir is a path to a directory containing region files.
+        
+        rel is the relative path of this directory, with respect to the
+        world directory.
 
         cachesize, if specified, is the number of chunks to keep parsed and
         in-memory.
 
         """
         self.regiondir = os.path.normpath(regiondir)
+        self.rel = os.path.normpath(rel)
+        logging.debug("regiondir is %r" % self.regiondir)
+        logging.debug("rel is %r" % self.rel)
+        
+        # we want to get rid of /regions, if it exists
+        if self.rel.endswith(os.path.normpath("/region")):
+            self.type = self.rel[0:-len(os.path.normpath("/region"))]
+        elif self.rel == "region":
+            # this is the main world
+            self.type = None
+        else:
+            logging.warning("Unkown region type in %r", regiondir)
+            self.type = "__unknown"
 
-        logging.debug("Scanning regions")
+        logging.debug("Scanning regions.  Type is %r" % self.type)
         
         # This is populated below. It is a mapping from (x,y) region coords to filename
         self.regionfiles = {}
@@ -265,34 +280,21 @@ class RegionSet(object):
 
     # Re-initialize upon unpickling
     def __getstate__(self):
-        return self.regiondir
-    __setstate__ = __init__
+        return (self.regiondir, self.rel)
+    def __setstate__(self, state):
+        return self.__init__(*state)
 
     def __repr__(self):
         return "<RegionSet regiondir=%r>" % self.regiondir
 
-    def is_valid(self):
-        """If this region set isn't one of the three known regions, then
-        return False"""
-        try:
-            self.get_type()
-            return True
-        except Exception:
-            return False
-
     def get_type(self):
-        """Attempts to return a string describing the dimension represented by
-        this regionset.  Either "nether", "end" or "overworld"
+        """Attempts to return a string describing the dimension
+        represented by this regionset.  Usually this is the relative
+        path of the regionset within the world, minus the suffix
+        /region, but for the main world it's None.
         """
         # path will be normalized in __init__
-        if self.regiondir.endswith(os.path.normpath("/DIM-1/region")):
-            return "nether"
-        elif self.regiondir.endswith(os.path.normpath("/DIM1/region")):
-            return "end"
-        elif self.regiondir.endswith(os.path.normpath("/region")):
-            return "overworld"
-        else:
-            raise Exception("Woah, what kind of dimension is this?! %r" % self.regiondir)
+        return self.type
 
     def _get_regionobj(self, regionfilename):
         # Check the cache first. If it's not there, create the
@@ -492,16 +494,16 @@ class RegionSet(object):
 
         Returns (regionx, regiony, filename)"""
 
-        logging.debug("regiondir is %s", self.regiondir)
+        logging.debug("regiondir is %s, has type %r", self.regiondir, self.type)
 
-        for path in glob(self.regiondir + "/r.*.*.mca"):
-            dirpath, f = os.path.split(path)
-            p = f.split(".")
-            x = int(p[1])
-            y = int(p[2])
-            if abs(x) > 500000 or abs(y) > 500000:
-                logging.warning("Holy shit what is up with region file %s !?" % f)
-            yield (x, y, path)
+        for f in os.listdir(self.regiondir):
+            if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
+                p = f.split(".")
+                x = int(p[1])
+                y = int(p[2])
+                if abs(x) > 500000 or abs(y) > 500000:
+                    logging.warning("Holy shit what is up with region file %s !?" % f)
+                yield (x, y, os.path.join(self.regiondir, f))
 
 class RegionSetWrapper(object):
     """This is the base class for all "wrappers" of RegionSet objects. A

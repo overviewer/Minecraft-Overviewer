@@ -245,12 +245,12 @@ If you want or need to provide your own textures, you have several options:
 
       wget -N http://s3.amazonaws.com/MinecraftDownload/minecraft.jar -P ~/.minecraft/bin/
 
-* You can manually extract the terrain.png from minecraft.jar or your favorite
+* You can manually extract the textures folder from minecraft.jar or your favorite
   texture pack. If you've built the Overviewer from source or are using the
-  windows exe, place the file in the same directory as overviewer.py or
+  windows exe, place the folder in the same directory as overviewer.py or
   overviewer.exe.
 
-* Specify any terrain.png or texture pack you want with the
+* Specify any texture pack you want with the
   :ref:`texturepath<option_texturepath>` option.
 
 If you copy your world before you render it
