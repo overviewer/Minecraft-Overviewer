@@ -138,8 +138,9 @@ overviewer.util = {
 
         overviewer.mapView.render();
          
-        // Jump to the hash if given
+        // Jump to the hash if given (and do so for any further hash changes)
         overviewer.util.initHash();
+        $(window).on('hashchange', function() { overviewer.util.initHash(); });
 
         // create this control after initHash so it can correctly select the current world
         var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
