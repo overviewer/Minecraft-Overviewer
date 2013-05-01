@@ -4058,3 +4058,23 @@ def hopper(self, blockid, data):
     alpha_over(img, hop_top, (0,-6), hop_top)
 
     return img
+
+# hay block
+@material(blockid=170, solid=True)
+def hayblock(self, blockid, data):
+    top = self.load_image_texture("textures/blocks/hayBlock_top.png")
+    side = self.load_image_texture("textures/blocks/hayBlock.png")
+    return self.build_block(top, side)
+
+# carpet - wool block that's small?
+@material(blockid=171, data=range(16), transparent=True)
+def carpet(self, blockid, data):
+    texture = self.load_image_texture("textures/blocks/cloth_%d.png" % data)
+
+    return self.build_full_block((texture,15),texture,texture,texture,texture)
+
+# clay block
+@material(blockid=172, solid=True)
+def clayblock(self, blockid, data):
+    t = self.load_image_texture("textures/blocks/clayHardened.png")
+    return self.build_block(t,t)
