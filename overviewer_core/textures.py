@@ -4073,8 +4073,8 @@ def carpet(self, blockid, data):
 
     return self.build_full_block((texture,15),texture,texture,texture,texture)
 
-# clay block
-@material(blockid=172, solid=True)
-def clayblock(self, blockid, data):
-    t = self.load_image_texture("textures/blocks/clayHardened.png")
-    return self.build_block(t,t)
+#clay block
+block(blockid=172, top_image="textures/blocks/clayHardened.png")
+
+#coal block
+block(blockid=173, top_image="textures/blocks/blockCoal.png")
