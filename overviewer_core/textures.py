@@ -4076,5 +4076,12 @@ def carpet(self, blockid, data):
 #clay block
 block(blockid=172, top_image="textures/blocks/clayHardened.png")
 
+#stained hardened clay
+@material(blockid=159, data=range(16), solid=True)
+def carpet(self, blockid, data):
+    texture = self.load_image_texture("textures/blocks/clayHardenedStained_%d.png" % data)
+
+    return self.build_block(texture,texture)
+
 #coal block
 block(blockid=173, top_image="textures/blocks/blockCoal.png")
