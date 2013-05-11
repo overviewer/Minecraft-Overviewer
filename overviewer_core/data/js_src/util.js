@@ -3,7 +3,9 @@ overviewer.util = {
     // vars for callback
     readyQueue: [],
     isReady: false,
-    
+
+    lastHash: null,
+
     /* fuzz tester!
      */
     'testMaths': function(t) {
@@ -466,18 +468,23 @@ overviewer.util = {
         });
     },
     'initHash': function() {
-        if(window.location.hash.split("/").length > 1) {
-            overviewer.util.goToHash();
-            // Clean up the hash.
-            overviewer.util.updateHash();
-
+        var newHash = window.location.hash;
+        if (overviewer.util.lastHash !== newHash) {
+            overviewer.util.lastHash = newHash;
+            if(newHash.split("/").length > 1) {
+                overviewer.util.goToHash();
+                // Clean up the hash.
+                overviewer.util.updateHash();
+            }
         }
     },
     'setHash': function(x, y, z, zoom, w, maptype)    {
         // save this info is a nice easy to parse format
         var currentWorldView = overviewer.mapModel.get("currentWorldView");
         currentWorldView.options.lastViewport = [x,y,z,zoom];
-        window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + w + "/" + maptype);
+        var newHash = "#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + w + "/" + maptype;
+        overviewer.util.lastHash = newHash; // this should not trigger initHash
+        window.location.replace(newHash);
     },
     'updateHash': function() {
         var currTileset = overviewer.mapView.options.currentTileSet;
