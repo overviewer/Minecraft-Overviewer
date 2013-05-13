@@ -528,7 +528,8 @@ class TileSet(object):
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
                 isOverlay = isOverlay,
-                poititle = self.options.get("poititle")
+                poititle = self.options.get("poititle"),
+                showlocationmarker = self.options.get("showlocationmarker")
                 )
 
         if isOverlay:

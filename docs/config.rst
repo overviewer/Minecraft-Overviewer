@@ -529,6 +529,12 @@ values. The valid configuration keys are listed below.
 
     **Default:** Automatically set to most detailed zoom level
 
+``showlocationmarker``
+    Allows you to specify whether to show the location marker when accessing a URL
+    with coordinates specified.
+
+    **Default:** ``True``
+
 ``base``
     Allows you to specify a remote location for the tile folder, useful if you
     rsync your map's images to a remote server. Leave a trailing slash and point

@@ -95,7 +95,7 @@ directory.
                 'queryMarker':      'http://google-maps-icons.googlecode.com/files/regroup.png'
                 }
         dump['CONST']['mapDivId'] = 'mcmap'
-        dump['CONST']['regionStrokeWeight'] = 2
+        dump['CONST']['regionStrokeWeight'] = 2 # Obselete
         dump['CONST']['UPPERLEFT']  = world.UPPER_LEFT;
         dump['CONST']['UPPERRIGHT'] = world.UPPER_RIGHT;
         dump['CONST']['LOWERLEFT']  = world.LOWER_LEFT;
@@ -122,7 +122,7 @@ directory.
             'mapType': True,
             'overlays': True,
             'coordsBox': True,
-            'searchBox': True
+            'searchBox': True   # Lolwat. Obselete
             }
 
 
