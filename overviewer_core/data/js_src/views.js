@@ -571,7 +571,7 @@ overviewer.views.LocationIconView = Backbone.View.extend({
         'icon':     overviewerConfig.CONST.image.queryMarker,
         'visible':  false
     }); 
-    overviewer.collections.locationMarker.setVisible(true);
+    overviewer.collections.locationMarker.setVisible(overviewer.mapView.options.currentTileSet.get("showlocationmarker"));
 
     }
 });
