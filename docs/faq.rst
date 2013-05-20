@@ -192,3 +192,40 @@ to render all of your map, but instead to only render the specified region.
 As always, if you need assistance, come chat with us on :ref:`irc<help>`.
 
 .. [*] They could also have been triggered by an accidential teleport where the coordinates were typed in manually.
+
+I want to put manual POI definitions or other parts of my config into a seperate file
+-------------------------------------------------------------------------------------
+
+This can be achieved by creating a module and then importing it in your config.
+First, create a file containing your markers definitions. We'll call it ``manualmarkers.py``.
+
+::
+
+    mymarkers = [{'id':'town', 'x':200, 'y':64, 'z':-400, 'name':'Pillowcastle'},
+                 {'id':'town', 'x':500, 'y':70, 'z': 100, 'name':'brownotopia' }]
+
+
+Then, add another file in the same directory as ``manualmarkers.py``, called ``__init__.py``.
+Just leave it empty.
+
+The final step is to import the very basic module you've just created into your config.
+In your config, do the following
+
+::
+
+    import sys
+    sys.path.append("/wherever/your/manualmarkers/is/") # Replace this with your path to manualmarkers.py,
+                                                        # so python can find it
+    
+    from manualmarkers import *                         # import our markers
+    
+    # all the usual config stuff goes here
+    
+    render["myrender"] = {
+        "title" : "foo",
+        "world" : "someworld",
+        "manualpois" : mymarkers,                         # IMPORTANT! Variable name from manualmarkers.py
+        # and here goes the list of the filters, etc.
+    }
+
+Now you should be all set.
