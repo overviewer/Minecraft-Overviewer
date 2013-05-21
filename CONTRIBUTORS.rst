@@ -58,6 +58,7 @@ feature.
  * Michael Fallows <michael@fallo.ws>
  * Ryan Finnie <ryan@feh.colobox.com>
  * Stephen Fluin <stephen@mistuph.com>
+ * Freakus Geekus <freakus@gmail.com>
  * Pierre Guinoiseau <pierre@guinoiseau.eu>
  * Lucas Hereld <duckman@piratehook.com>
  * Benjamin Herr <ben@0x539.de>
@@ -77,6 +78,7 @@ feature.
  * Ryan Rector <rmrector@gmail.com>
  * Matti Ruohonen <matti.j.ruohonen@gmail.com>
  * Jason Scheirer <jason.scheirer@gmail.com>
+ * Kang Seonghoon <public+git@mearie.org>
  * Gregory Short <gshort2@gmail.com>
  * Socolin <beber-le-scaraber@hotmail.fr>
  * Sam Steele <sam@sigbox.c99.org>
