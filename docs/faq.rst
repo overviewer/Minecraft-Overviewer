@@ -196,8 +196,9 @@ As always, if you need assistance, come chat with us on :ref:`irc<help>`.
 I want to put manual POI definitions or other parts of my config into a seperate file
 -------------------------------------------------------------------------------------
 
-This can be achieved by creating a module and then importing it in your config.
-First, create a file containing your markers definitions. We'll call it ``manualmarkers.py``.
+This can be achieved by creating a module and then importing it in
+your config.  First, create a file containing your markers
+definitions. We'll call it ``manualmarkers.py``.
 
 ::
 
@@ -205,11 +206,8 @@ First, create a file containing your markers definitions. We'll call it ``manual
                  {'id':'town', 'x':500, 'y':70, 'z': 100, 'name':'brownotopia' }]
 
 
-Then, add another file in the same directory as ``manualmarkers.py``, called ``__init__.py``.
-Just leave it empty.
-
-The final step is to import the very basic module you've just created into your config.
-In your config, do the following
+The final step is to import the very basic module you've just created
+into your config.  In your config, do the following
 
 ::
 
