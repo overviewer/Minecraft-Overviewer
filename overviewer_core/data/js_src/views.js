@@ -474,6 +474,22 @@ overviewer.views.SignControlView = Backbone.View.extend({
                         }
                     }
                     dataRoot[i].markerObjs.push(marker);
+                    // Polyline stuff added by FreakusGeekus. Probably needs work.
+                    if (typeof entity['polyline'] != 'undefined') {
+						var polypath = new Array();
+                        for (point in entity.polyline) {
+                            polypath.push(overviewer.util.fromWorldToLatLng(entity.polyline[point].x, entity.polyline[point].y, entity.polyline[point].z, overviewer.mapView.options.currentTileSet));
+                        }
+                        
+                        var polyline = new google.maps.Polyline({
+								'path': polypath,
+                                'clickable': false,
+                                'map': overviewer.map,
+                                'visible': false,
+								'strokeColor': entity['strokeColor']
+                        });
+						dataRoot[i].markerObjs.push(polyline);
+                    }
                 }
                 dataRoot[i].created = true;
             }
@@ -571,7 +587,7 @@ overviewer.views.LocationIconView = Backbone.View.extend({
         'icon':     overviewerConfig.CONST.image.queryMarker,
         'visible':  false
     }); 
-    overviewer.collections.locationMarker.setVisible(true);
+    overviewer.collections.locationMarker.setVisible(overviewer.mapView.options.currentTileSet.get("showlocationmarker"));
 
     }
 });

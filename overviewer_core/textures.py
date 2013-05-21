@@ -3159,7 +3159,7 @@ def stone_brick(self, blockid, data):
     return img
 
 # huge brown and red mushroom
-@material(blockid=[99,100], data=range(11), solid=True)
+@material(blockid=[99,100], data= range(11) + [14,15], solid=True)
 def huge_mushroom(self, blockid, data):
     # rotation
     if self.rotation == 1:
@@ -3231,6 +3231,12 @@ def huge_mushroom(self, blockid, data):
 
     if data == 10: # stem
         img = self.build_full_block(porous, None, None, stem, stem)
+
+    if data == 14: # all cap
+        img = self.build_block(cap,cap)
+
+    if data == 15: # all stem
+        img = self.build_block(stem,stem)
 
     return img
 

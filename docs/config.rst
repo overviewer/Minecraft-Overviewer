@@ -294,7 +294,7 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
         * ``messages=dict(totalTiles=<string>, renderCompleted=<string>, renderProgress=<string>)``
             Customises messages displayed in browser. All three messages must be
-            defined as follows:
+            defined similar to the following:
 
             * ``totalTiles="Rendering %d tiles"``
               The ``%d`` format string will be replaced with the total number of
@@ -304,9 +304,9 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
               The three format strings  will be replaced with the number of hours.
               minutes and seconds taken to complete this render.
 
-            * ``renderProgress="Rendered %d of %d tiles (%d%%)"``
-              The three format strings will be replaced with the number of tiles
-              completed, the total number of tiles and the percentage complete
+            * ``renderProgress="Rendered %d of %d tiles (%d%% ETA:%s)""``
+              The four format strings will be replaced with the number of tiles
+              completed, the total number of tiles, the percentage complete, and the ETA.
 
             Format strings are explained here: http://docs.python.org/library/stdtypes.html#string-formatting
             All format strings must be present in your custom messages.
@@ -528,6 +528,12 @@ values. The valid configuration keys are listed below.
             usage is an issue.
 
     **Default:** Automatically set to most detailed zoom level
+
+``showlocationmarker``
+    Allows you to specify whether to show the location marker when accessing a URL
+    with coordinates specified.
+
+    **Default:** ``True``
 
 ``base``
     Allows you to specify a remote location for the tile folder, useful if you
