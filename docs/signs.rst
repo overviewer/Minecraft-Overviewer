@@ -86,7 +86,9 @@ Here's an example that displays icons for each player::
             poi['icon'] = "http://overviewer.org/avatar/%s" % poi['EntityId']
             return "Last known location for %s" % poi['EntityId']
 
-Note how each POI can get a different icon by setting ``poi['icon']``
+Note how each POI can get a different icon by setting ``poi['icon']``. These icons must exist in either
+the output folder, or in your custom web assets folder. If the icon file does not exist in the correct 
+location, your markers will be shown without an icon - making them invisible!
 
 Manual POIs
 -----------
@@ -117,7 +119,7 @@ An example which adds two POIs with the id "town", and then uses a filter functi
                         'y':85,
                         'z':-234,
                         'name':'Bar'}],
-        'markers': [dict(name="Towns", filterFunction=townFilter, icon="town.png")],
+        'markers': [dict(name="Towns", filterFunction=townFilter)],
     }
 
 Here is a more complex example where not every marker of a certain id has a certain key::
@@ -146,6 +148,9 @@ Here is a more complex example where not every marker of a certain id has a cert
                         'z':-234,
                         'name':'Bar'}],
         'markers': [dict(name="Towns", filterFunction=townFilter, icon="town.png")],
+        ### Note: The 'icon' parameter allows you to specify a custom icon, as per
+        ###       standard markers. This icon must exist in the same folder as your
+        ###       custom webassets or in the same folder as the generated index.html
     }
     
 
