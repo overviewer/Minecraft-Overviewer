@@ -472,6 +472,8 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``"upper-left"``
 
+.. _rerenderprob:
+
 ``rerenderprob``
     This is the probability that a tile will be rerendered even though there may
     have been no changes to any blocks within that tile. Its value should be a
