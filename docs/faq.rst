@@ -44,7 +44,7 @@ You've added a new feature or changed textures, but it's not showing up on my ma
 Some new features will only show up in newly-rendered areas. Use the
 :option:`--forcerender` option to update the entire map. If you have a really
 large map and don't want to re-render everything, take a look at
-the :option:`--stochastic-render` option.
+the :ref:`rerenderprob` configuration option.
 
 How do I use this on CentOS 5?
 ------------------------------
