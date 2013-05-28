@@ -4060,11 +4060,26 @@ def hopper(self, blockid, data):
     return img
 
 # hay block
-@material(blockid=170, solid=True)
+@material(blockid=170, data=range(9), solid=True)
 def hayblock(self, blockid, data):
     top = self.load_image_texture("textures/blocks/hayBlock_top.png")
     side = self.load_image_texture("textures/blocks/hayBlock.png")
-    return self.build_block(top, side)
+
+    if self.rotation == 1:
+        if data == 4: data = 8
+        elif data == 8: data = 4
+    elif self.rotation == 3:
+        if data == 4: data = 8
+        elif data == 8: data = 4
+
+    # choose orientation and paste textures
+    if data == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif data == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(90), top)
+    else:
+        return self.build_block(top, side)
+
 
 # carpet - wool block that's small?
 @material(blockid=171, data=range(16), transparent=True)
@@ -4078,7 +4093,7 @@ block(blockid=172, top_image="textures/blocks/clayHardened.png")
 
 #stained hardened clay
 @material(blockid=159, data=range(16), solid=True)
-def carpet(self, blockid, data):
+def stained_clay(self, blockid, data):
     texture = self.load_image_texture("textures/blocks/clayHardenedStained_%d.png" % data)
 
     return self.build_block(texture,texture)
