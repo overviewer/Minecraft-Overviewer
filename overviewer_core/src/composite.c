@@ -612,8 +612,6 @@ inline PyObject *
 sharpen(PyObject *src, double sharpness) {
     /* libImaging handles */
     Imaging imSrc;
-    /* alpha properties */
-    int has_alpha;
     /* iteration variables */
     int x, y, i;
     /* temp color variables */
@@ -646,9 +644,6 @@ sharpen(PyObject *src, double sharpness) {
     width = imSrc->xsize;
     height = imSrc->ysize;
         
-    /* set up flags for the src/mask type */
-    has_alpha = (imSrc->pixelsize == 4 ? 1 : 0);
-    
     /* check that there exists anything to sharpen */
     if (width <= 2 || height <= 2) {
         /* nothing to do, return */
@@ -672,7 +667,8 @@ sharpen(PyObject *src, double sharpness) {
             0xFF, 0xFF, 0xFF, 
             0xFF, 0xFF, 0xFF
         };
-
+        
+        const int has_alpha = (imSrc->pixelsize == 4 ? 1 : 0);    
         const int pixel_size = imSrc->pixelsize;
         const int row_width = pixel_size * width;
         const int temp_width = row_width + pixel_size * 2;
@@ -711,7 +707,8 @@ sharpen(PyObject *src, double sharpness) {
                 int sum = 0xFF * 9;
                 
                 if (has_alpha) {
-
+                                 
+                    row[ax] = temp_middle[ax];
                     sum = 0;
 
                     /* pre-multiply alpha */
@@ -783,10 +780,6 @@ sharpen(PyObject *src, double sharpness) {
                 row[rx] = r;
                 row[gx] = g;
                 row[bx] = b;
-                
-                if (has_alpha) {                               
-                    row[ax] = temp_middle[ax];
-                }
             }
             
             temp = temp_above;
