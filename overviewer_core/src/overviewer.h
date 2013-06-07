@@ -70,6 +70,7 @@ PyObject *draw_triangle(PyObject *dest, int inclusive,
                         unsigned char r2, unsigned char g2, unsigned char b2,
                         int tux, int tuy, int *touchups, unsigned int num_touchups);
 PyObject *resize_half(PyObject *dest, PyObject *src);
+PyObject *sharpen(PyObject *src, double sharpness);
 PyObject *resize_half_wrap(PyObject *self, PyObject *args);
 
 /* forward declaration of RenderMode object */

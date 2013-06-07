@@ -869,11 +869,10 @@ class TileSet(object):
 
         for path in quadPath_filtered:
             try:
-                #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
                 src = Image.open(path[1])
                 src.load()
                 quad = Image.new("RGBA", (192, 192), self.options['bgcolor'])
-                resize_half(quad, src)
+                resize_half(quad, src, 0.45)
                 img.paste(quad, path[0])
             except Exception, e:
                 logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
