@@ -100,9 +100,10 @@ The first step is rendering the block sprites from the textures. Each block is
 "built" from its textures into an image of a cube and cached in a
 :class:`Textures` object.
 
-Textures come from a terrain.png file in the form of 16 by 16 pixel images.
-(Higher resolution textures are resized and the process remains the same). In
-order to draw a cube out of the textuers, an `affine transformation`_ is applied to
+Textures come from files inside of a "textures" folder.  If the file is square (has equal width
+and height dimensions), it is scaled down to 16 x 16 pixels.  Non-square images are used with animated
+textures.  In this case, the first frame of the animated texture is used, and also scaled to a 16 by 16 image.
+In order to draw a cube out of the textuers, an `affine transformation`_ is applied to
 the images for the top and sides of the cube in order to transform it to the
 appropriate perspective.
 

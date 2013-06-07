@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 39
+#define OVERVIEWER_EXTENSION_VERSION 42
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -136,7 +136,7 @@ extern unsigned int max_blockid;
 extern unsigned int max_data;
 extern unsigned char *block_properties;
 static inline int
-block_has_property(unsigned char b, BlockProperty prop) {
+block_has_property(unsigned short b, BlockProperty prop) {
     if (b >= max_blockid || !(block_properties[b] & (1 << KNOWN))) {
         /* block is unknown, return defaults */
         if (prop == TRANSPARENT)

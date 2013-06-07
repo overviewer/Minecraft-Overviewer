@@ -21,6 +21,7 @@ import imp
 import os.path
 import sys
 import platform
+from string import hexdigits
 from subprocess import Popen, PIPE
 from itertools import cycle, islice, product
 
@@ -35,21 +36,14 @@ def get_program_path():
         except NameError:
             return os.path.dirname(sys.argv[0])
 
-
-# does not require git, very likely to work everywhere
 def findGitHash():
-    this_dir = get_program_path()
-    if os.path.exists(os.path.join(this_dir,".git")):
-        with open(os.path.join(this_dir,".git","HEAD")) as f:
-            data = f.read().strip()
-        if data.startswith("ref: "):
-            if not os.path.exists(os.path.join(this_dir, ".git", data[5:])):
-                return data
-            with open(os.path.join(this_dir, ".git", data[5:])) as g:
-                return g.read().strip()
-        else:
-            return data
-    else:
+    try:
+        p = Popen('git rev-parse HEAD', stdout=PIPE, stderr=PIPE, shell=True)
+        p.stderr.close()
+        line = p.stdout.readlines()[0].strip()
+        if line and len(line) == 40 and all(c in hexdigits for c in line):
+            return line
+    except Exception:
         try:
             import overviewer_version
             return overviewer_version.HASH

@@ -513,27 +513,30 @@ class TileSet(object):
         """
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
-        isOverlay = not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode"))
+        isOverlay = self.options.get("overlay") or (not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode")))
         
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
                 minZoom = 0,
                 defaultZoom = self.options.get('defaultzoom'),
-                maxZoom = self.treedepth,
+                maxZoom = self.options.get('maxzoom', self.treedepth),
                 path = self.options.get('name'),
                 base = self.options.get('base'),
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') +
-                    (" - " + self.options.get('dimension') if self.options.get('dimension') != 'default' else ''),
+                    (" - " + self.options.get('dimension')[0] if self.options.get('dimension')[1] != 0 else ''),
                 last_rendertime = self.max_chunk_mtime,
                 imgextension = self.imgextension,
-                isOverlay = isOverlay
+                isOverlay = isOverlay,
+                poititle = self.options.get("poititle"),
+                showlocationmarker = self.options.get("showlocationmarker")
                 )
 
         if isOverlay:
             d.update({"tilesets": self.options.get("overlay")})
 
-        if (self.regionset.get_type() == "overworld" and self.options.get("showspawn", True)):
+        # None means overworld
+        if (self.regionset.get_type() == None and self.options.get("showspawn", True)):
             d.update({"spawn": self.options.get("spawn")})
         else:
             d.update({"spawn": "false"});

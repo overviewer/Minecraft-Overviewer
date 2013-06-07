@@ -103,13 +103,19 @@ Then to build::
 OSX
 ---
 
+.. note::
+
+    You will need to have XCode and the XCode Command Line Tools installed (the
+    Command Line Tools can be installed by going to the Downloads tab under the
+    Xcode Preferences dialog).
+
 1. Download the source code for PIL from http://www.pythonware.com/products/pil/
 2. Compile the PIL code (``python ./setup.py build``)
 3. Install PIL (``sudo python ./setup.py install``)
-4. Find the path to libImaging in the PIL source tree
-5. Build Minecraft Overviewer with the path from step 3 as the value for C_INCLUDE_PATH::
+4. Find the path to the ``libImaging`` directory in the PIL source tree.
+5. Build Minecraft Overviewer with the path from step 4 as the value for PIL_INCLUDE_DIR::
 
-    C_INCLUDE_PATH="path from step 3" python ./setup.py build
+    PIL_INCLUDE_DIR="path from step 4" python ./setup.py build
 
 The following script (copied into your MCO source directory) should handle everything for you:
 
@@ -128,7 +134,7 @@ The following script (copied into your MCO source directory) should handle every
     fi
 
     # build MCO
-    C_INCLUDE_PATH="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
+    PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
 
 FreeBSD
 -------
@@ -143,8 +149,15 @@ to the file /etc/make.conf, but read the ports documentation to be sure of what 
 
 .. _centos:
 
-CentOS
-------
+CentOS 5
+--------
+
+.. note::
+
+    If you are using CentOS 6, you do not need to install the epel repo.
+    CentOS 6 should come with the right python version, you can check
+    your version running *python --version*.
+
 Since CentOS has an older version of Python (2.4), there are some difficulties
 in getting the Overviewer to work. Follow these steps which have been reported
 to work.
@@ -172,14 +185,3 @@ regular user.
 
   1. ``$ ./overviewer.py path/to/world/ path/to/output/`` or ``$ python26 path/to/overviewer.py path/to/world/ path/to/output/``
   2. Proceed to the :doc:`Running <running>` instructions for more info.
-
-
-Installing the Compiled Code
-----------------------------
-
-You can run the ``overviewer.py`` script from the build directory just fine;
-installation is unnecessary. If you'd like to install, run
-
-::
-
-    python setup.py install

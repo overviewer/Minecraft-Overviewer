@@ -208,7 +208,7 @@ unload_all_chunks(RenderState *state) {
 }
 
 unsigned char
-check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned char blockid) {
+check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned short blockid) {
     /*
      * Generates a pseudo ancillary data for blocks that depend of 
      * what are surrounded and don't have ancillary data. This 
@@ -298,8 +298,8 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
             above_level_data = check_adjacent_blocks(state, x, y+1, z, state->block);
         }   /* else above_level_data = 0 */
         
-        /* check connection with same level */
-        same_level_data = check_adjacent_blocks(state, x, y, z, 55);
+        /* check connection with same level (other redstone and trapped chests */
+        same_level_data = check_adjacent_blocks(state, x, y, z, 55) | check_adjacent_blocks(state, x, y, z, 146);
         
         /* check the posibility of connection with y-1 level, check for air */
         possibly_connected = check_adjacent_blocks(state, x, y, z, 0);
@@ -321,71 +321,46 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         }
         return final_data;
 
-    } else if (state-> block == 54) { /* chests */
-        /* the top 2 bits are used to store the type of chest
-         * (single or double), the 2 bottom bits are used for 
-         * orientation, look textures.py for more information. */
+    } else if (state->block == 54) { /* normal chests */
+        /* Orientation is given by ancilData, pseudo data needed to 
+         * choose from single or double chest and the correct half of
+         * the chest. */
+         
+         /* Add two bits to ancilData to store single or double chest 
+          * and which half of the chest it is: bit 0x10 = second half
+          *                                    bit 0x8 = first half */
 
-        /* if placed alone chests always face west, return 0 to make a 
-         * chest facing west */
-        unsigned char chest_data = 0, air_data = 0, final_data = 0;
+        unsigned char chest_data = 0, final_data = 0;
 
         /* search for chests */
         chest_data = check_adjacent_blocks(state, x, y, z, 54);
 
-        /* search for air */
-        air_data = check_adjacent_blocks(state, x, y, z, 0);
+        if (chest_data == 1) { /* another chest in the upper-left */
+            final_data = final_data | 0x10 | ancilData;
 
-        if (chest_data == 1) { /* another chest in the east */
-            final_data = final_data | 0x8; /* only can face to north or south */
-            if ( (air_data & 0x2) == 2 ) {
-                final_data = final_data | 0x1; /* facing north */
-            } else {
-                final_data = final_data | 0x3; /* facing south */
-            }
+        } else if (chest_data == 2) { /* in the bottom-left */
+            final_data = final_data | 0x8 | ancilData;
 
-        } else if (chest_data == 2) { /* in the north */
-            final_data = final_data | 0x4; /* only can face to east or west */
-            if ( !((air_data & 0x4) == 4) ) { /* 0 = west */
-                final_data = final_data | 0x2; /* facing east */
-            }
+        } else if (chest_data == 4) { /*in the bottom-right */
+            final_data = final_data | 0x8 | ancilData;
 
-        } else if (chest_data == 4) { /*in the west */
-            final_data = final_data | 0x4;
-            if ( (air_data & 0x2) == 2 ) {
-                final_data = final_data | 0x1; /* facing north */
-            } else {
-                final_data = final_data | 0x3; /* facing south */
-            }
-
-        } else if (chest_data == 8) { /*in the south */
-            final_data = final_data | 0x8;
-            if ( !((air_data & 0x4) == 4) ) {
-                final_data = final_data | 0x2; /* facing east */
-            }
+        } else if (chest_data == 8) { /*in the upper-right */
+            final_data = final_data | 0x10 | ancilData;
 
         } else if (chest_data == 0) {
             /* Single chest, determine the orientation */
-            if ( ((air_data & 0x8) == 0) && ((air_data & 0x2) == 2)  ) { /* block in +x and no block in -x */
-                final_data = final_data | 0x1; /* facing north */
-
-            } else if ( ((air_data & 0x2) == 0) && ((air_data & 0x8) == 8)) {
-                final_data = final_data | 0x3;
-
-            } else if ( ((air_data & 0x4) == 0) && ((air_data & 0x1) == 1)) {
-                final_data = final_data | 0x2;
-            } /* else, facing west, value = 0 */
+            final_data = ancilData;
 
         } else {
-            /* more than one adjacent chests! render as normal chest */
+            /* more than one adjacent chests! That shouldn't be 
+             * possible! render as normal chest */
             return 0;
         }
-
         return final_data;
 
     } else if ((state->block == 101) || (state->block == 102)) {
         /* iron bars and glass panes:
-         * they seem to stick to almost everything but air, but
+         * they seem to stick to almost everything but air,
          * not sure yet! Still a TODO! */
         /* return check adjacent blocks with air, bit inverted */
         return check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f;
@@ -420,6 +395,27 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         
         }
         return data;
+    } else if (state->block == 139) { /* cobblestone and mossy cobbleston wall  */
+        /* check for walls and add one bit with the type of wall (mossy or cobblestone)*/
+        if (ancilData == 0x1) {
+            return check_adjacent_blocks(state, x, y, z, state->block) | 0x10;
+        } else {
+            return check_adjacent_blocks(state, x, y, z, state->block);
+        }
+    } else if (state->block == 111) { /* lilypads */
+        int wx,wz,wy,rotation;
+        long pr;
+        /* calculate the global block coordinates of this position */
+        wx = (state->chunkx * 16) + x;
+        wz = (state->chunkz * 16) + z;
+        wy = (state->chunky * 16) + y;
+        /* lilypads orientation is obtained with these magic numbers */
+        /* magic numbers obtained from: */
+        /* http://llbit.se/?p=1537 */
+        pr = (wx * 3129871) ^ (wz * 116129781) ^ (wy);
+        pr = pr * pr * 42317861 + pr * 11;
+        rotation = 3 & (pr >> 16);
+        return rotation;
     }
 
 
@@ -567,7 +563,8 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 71) || (state.block == 79) ||
                         (state.block == 85) || (state.block == 90) ||
                         (state.block == 101) || (state.block == 102) ||
-                        (state.block == 113)) {
+                        (state.block == 111) || (state.block == 113) ||
+                        (state.block == 139)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
                     } else {

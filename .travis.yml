@@ -1,0 +1,22 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+  # - "3.2"
+before_install:
+  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/Imaging.h
+  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/ImPlatform.h
+install:
+  - pip install -q pillow
+  - pip install -q numpy
+  - python setup.py build
+before_script:
+  - git clone git://github.com/overviewer/Minecraft-Overviewer-Addons.git ~/mcoa/
+  - wget -N http://s3.amazonaws.com/MinecraftDownload/minecraft.jar -P ~/.minecraft/bin/
+script:
+  - python overviewer.py ~/mcoa/exmaple ~/test-output --rendermodes=smooth-lighting -p1
+notifications:
+  email: false
+# matrix:
+  # allow_failures:
+    # - python: "3.2"

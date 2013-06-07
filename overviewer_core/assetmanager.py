@@ -19,6 +19,7 @@ import codecs
 import locale
 import time
 import logging
+import traceback
 
 from PIL import Image
 
@@ -33,13 +34,14 @@ same time, controls the generated javascript files in the output directory.
 There should only be one instances of these per execution.
     """
 
-    def __init__(self, outputdir):
+    def __init__(self, outputdir, custom_assets_dir=None):
         """\
 Initializes the AssetManager with the top-level output directory.  
 It can read/parse and write/dump the overviewerConfig.js file into this top-level
 directory. 
         """
         self.outputdir = outputdir
+        self.custom_assets_dir = custom_assets_dir
         self.renders = dict()
 
         # look for overviewerConfig in self.outputdir
@@ -50,6 +52,7 @@ directory.
         except Exception, e:
             if os.path.exists(os.path.join(self.outputdir, "overviewerConfig.js")):
                 logging.warning("A previous overviewerConfig.js was found, but I couldn't read it for some reason. Continuing with a blank config")
+            logging.debug(traceback.format_exc())
             self.overviewerConfig = dict(tilesets=dict())
 
     def get_tileset_config(self, name):
@@ -88,12 +91,11 @@ directory.
                 'defaultMarker':    'signpost.png',
                 'signMarker':       'signpost_icon.png',
                 'bedMarker':        'bed.png',
-                'compass':          'compass_upper-left.png',
                 'spawnMarker':      'http://google-maps-icons.googlecode.com/files/home.png',
                 'queryMarker':      'http://google-maps-icons.googlecode.com/files/regroup.png'
                 }
         dump['CONST']['mapDivId'] = 'mcmap'
-        dump['CONST']['regionStrokeWeight'] = 2
+        dump['CONST']['regionStrokeWeight'] = 2 # Obselete
         dump['CONST']['UPPERLEFT']  = world.UPPER_LEFT;
         dump['CONST']['UPPERRIGHT'] = world.UPPER_RIGHT;
         dump['CONST']['LOWERLEFT']  = world.LOWER_LEFT;
@@ -120,7 +122,7 @@ directory.
             'mapType': True,
             'overlays': True,
             'coordsBox': True,
-            'searchBox': True
+            'searchBox': True   # Lolwat. Obselete
             }
 
 
@@ -134,6 +136,17 @@ directory.
             blank = Image.new("RGBA", (1,1), tileset.options.get('bgcolor'))
             blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')))
 
+        # write out config
+        jsondump = json.dumps(dump, indent=4)
+        with FileReplacer(os.path.join(self.outputdir, "overviewerConfig.js")) as tmpfile:
+            with codecs.open(tmpfile, 'w', encoding='UTF-8') as f:
+                f.write("var overviewerConfig = " + jsondump + ";\n")
+
+        #Copy assets, modify index.html
+        self.output_noconfig()        
+
+
+    def output_noconfig(self):
 
         # copy web assets into destdir:
         global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
@@ -141,7 +154,12 @@ directory.
             global_assets = os.path.join(util.get_program_path(), "web_assets")
         mirror_dir(global_assets, self.outputdir)
 
-		# write a dummy baseMarkers.js if none exists
+        if self.custom_assets_dir:
+            # Could have done something fancy here rather than just overwriting
+            # the global files, but apparently this what we used to do pre-rewrite.
+            mirror_dir(self.custom_assets_dir, self.outputdir)
+
+	# write a dummy baseMarkers.js if none exists
         if not os.path.exists(os.path.join(self.outputdir, "baseMarkers.js")):
             with open(os.path.join(self.outputdir, "baseMarkers.js"), "w") as f:
                 f.write("// if you wants signs, please see genPOI.py\n");
@@ -161,12 +179,6 @@ directory.
                     if not js.endswith("overviewer.js") and js.endswith(".js"):
                         with open(os.path.join(js_src,js)) as f:
                             fout.write(f.read())
-        
-        # write out config
-        jsondump = json.dumps(dump, indent=4)
-        with FileReplacer(os.path.join(self.outputdir, "overviewerConfig.js")) as tmpfile:
-            with codecs.open(tmpfile, 'w', encoding='UTF-8') as f:
-                f.write("var overviewerConfig = " + jsondump + ";\n")
         
         # Add time and version in index.html
         indexpath = os.path.join(self.outputdir, "index.html")

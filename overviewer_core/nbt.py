@@ -199,7 +199,8 @@ class MCRFileReader(object):
     listing chunks contained in the file.
     """
     
-    _table_format = struct.Struct(">1024I")
+    _location_table_format = struct.Struct(">1024I")
+    _timestamp_table_format = struct.Struct(">1024i")
     _chunk_header_format = struct.Struct(">I B")
     
     def __init__(self, fileobj):
@@ -217,8 +218,8 @@ class MCRFileReader(object):
             raise CorruptRegionError("invalid timestamp table")
 
         # turn this data into a useful list
-        self._locations = self._table_format.unpack(location_data)
-        self._timestamps = self._table_format.unpack(timestamp_data)
+        self._locations = self._location_table_format.unpack(location_data)
+        self._timestamps = self._timestamp_table_format.unpack(timestamp_data)
 
     def close(self):
         """Close the region file and free any resources associated

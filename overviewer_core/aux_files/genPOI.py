@@ -24,8 +24,15 @@ from overviewer_core import logger
 from overviewer_core import nbt
 from overviewer_core import configParser, world
 
+def replaceBads(s):
+    "Replaces bad characters with good characters!"
+    bads = [" ", "(", ")"]
+    x=s
+    for bad in bads:
+        x = x.replace(bad,"_")
+    return x
 
-def handleSigns(rset, outputdir, render, rname):
+def handleEntities(rset, outputdir, render, rname):
 
     # if we're already handled the POIs for this region regionset, do nothing
     if hasattr(rset, "_pois"):
@@ -50,14 +57,15 @@ def handlePlayers(rset, render, worldpath):
     # only handle this region set once
     if 'Players' in rset._pois:
         return
-    dimension = {'overworld': 0,
-                 'nether': -1,
-                 'end': 1,
-                 'default': 0}[render['dimension']]
+    dimension = {None: 0,
+                 'DIM-1': -1,
+                 'DIM1': 1}[rset.get_type()]
     playerdir = os.path.join(worldpath, "players")
     if os.path.isdir(playerdir):
         playerfiles = os.listdir(playerdir)
+        playerfiles = [x for x in playerfiles if x.endswith(".dat")]
         isSinglePlayer = False
+
     else:
         playerfiles = [os.path.join(worldpath, "level.dat")]
         isSinglePlayer = True
@@ -91,6 +99,15 @@ def handlePlayers(rset, render, worldpath):
                      "z": data['SpawnZ']}
             rset._pois['Players'].append(spawn)
 
+def handleManual(rset, manualpois):
+    if not hasattr(rset, "_pois"):
+        rset._pois = dict(TileEntities=[], Entities=[])
+    
+    rset._pois['Manual'] = []
+
+    if manualpois:
+        rset._pois['Manual'].extend(manualpois)
+
 def main():
 
     if os.path.basename(sys.argv[0]) == """genPOI.py""":
@@ -105,6 +122,7 @@ def main():
     parser = OptionParser(usage=helptext)
     parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
     parser.add_option("--quiet", dest="quiet", action="count", help="Reduce logging output")
+    parser.add_option("--skip-scan", dest="skipscan", action="store_true", help="Skip scanning for entities when using GenPOI")
 
     options, args = parser.parse_args()
     if not options.config:
@@ -147,26 +165,32 @@ def main():
         else:
             w = worldcache[render['world']]
         
-        rset = w.get_regionset(render['dimension'])
+        rset = w.get_regionset(render['dimension'][1])
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'], render_name)
+            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
             return 1
       
         for f in render['markers']:
-            d = dict(icon="signpost_icon.png", createInfoWindow=True)
-            d.update(f)
-            markersets.add(((d['name'], d['filterFunction']), rset))
-            name = f['name'].replace(" ","_") + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
+            markersets.add(((f['name'], f['filterFunction']), rset))
+            name = replaceBads(f['name']) + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
+            to_append = dict(groupName=name, 
+                    displayName = f['name'], 
+                    icon=f.get('icon', 'signpost_icon.png'), 
+                    createInfoWindow=f.get('createInfoWindow',True),
+                    checked = f.get('checked', False))
             try:
                 l = markers[rname]
-                l.append(dict(groupName=name, displayName = f['name'], icon=d['icon'], createInfoWindow=d['createInfoWindow']))
+                l.append(to_append)
             except KeyError:
-                markers[rname] = [dict(groupName=name, displayName=f['name'], icon=d['icon'], createInfoWindow=d['createInfoWindow']),]
+                markers[rname] = [to_append]
+        
+        if not options.skipscan:
+            handleEntities(rset, os.path.join(destdir, rname), render, rname)
 
-        handleSigns(rset, os.path.join(destdir, rname), render, rname)
         handlePlayers(rset, render, worldpath)
+        handleManual(rset, render['manualpois'])
 
-    logging.info("Done scanning regions")
+    logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
     markerSetDict = dict()
     for (flter, rset) in markersets:
@@ -174,12 +198,43 @@ def main():
         filter_name =     flter[0]
         filter_function = flter[1]
 
-        name = filter_name.replace(" ","_") + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
+        name = replaceBads(filter_name) + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
         markerSetDict[name] = dict(created=False, raw=[], name=filter_name)
+        for poi in rset._pois['Entities']:
+            result = filter_function(poi)
+            if result:
+                if isinstance(result, basestring):
+                    d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['Pos'][0], y=poi['Pos'][1], z=poi['Pos'][2], text=result[1], hovertext=result[0])
+                if "icon" in poi:
+                    d.update({"icon": poi['icon']})
+                if "createInfoWindow" in poi:
+                    d.update({"createInfoWindow": poi['createInfoWindow']})
+                markerSetDict[name]['raw'].append(d)
         for poi in rset._pois['TileEntities']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if isinstance(result, basestring):
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
+                # Dict support to allow more flexible things in the future as well as polylines on the map.
+                elif type(result) == dict:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result['text'])
+                    # Use custom hovertext if provided...
+                    if 'hovertext' in result and isinstance(result['hovertext'], basestring):
+                        d['hovertext'] = result['hovertext']
+                    else: # ...otherwise default to display text.
+                        d['hovertext'] = result['text']
+                    if 'polyline' in result and type(result['polyline']) == tuple:  #if type(result.get('polyline', '')) == tuple:
+                        d['polyline'] = []
+                        for point in result['polyline']:
+                            # This poor man's validation code almost definately needs improving.
+                            if type(point) == dict:
+                                d['polyline'].append(dict(x=point['x'],y=point['y'],z=point['z']))
+                        if isinstance(result['color'], basestring):
+                            d['strokeColor'] = result['color']
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:
@@ -188,7 +243,54 @@ def main():
         for poi in rset._pois['Players']:
             result = filter_function(poi)
             if result:
-                d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result)
+                if isinstance(result, basestring):
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
+                # Dict support to allow more flexible things in the future as well as polylines on the map.
+                elif type(result) == dict:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result['text'])
+                    # Use custom hovertext if provided...
+                    if 'hovertext' in result and isinstance(result['hovertext'], basestring):
+                        d['hovertext'] = result['hovertext']
+                    else: # ...otherwise default to display text.
+                        d['hovertext'] = result['text']
+                    if 'polyline' in result and type(result['polyline']) == tuple:  #if type(result.get('polyline', '')) == tuple:
+                        d['polyline'] = []
+                        for point in result['polyline']:
+                            # This poor man's validation code almost definately needs improving.
+                            if type(point) == dict:
+                                d['polyline'].append(dict(x=point['x'],y=point['y'],z=point['z']))
+                        if isinstance(result['color'], basestring):
+                            d['strokeColor'] = result['color']
+                if "icon" in poi:
+                    d.update({"icon": poi['icon']})
+                if "createInfoWindow" in poi:
+                    d.update({"createInfoWindow": poi['createInfoWindow']})
+                markerSetDict[name]['raw'].append(d)
+        for poi in rset._pois['Manual']:
+            result = filter_function(poi)
+            if result:
+                if isinstance(result, basestring):
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result, hovertext=result)
+                elif type(result) == tuple:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result[1], hovertext=result[0])
+                # Dict support to allow more flexible things in the future as well as polylines on the map.
+                elif type(result) == dict:
+                    d = dict(x=poi['x'], y=poi['y'], z=poi['z'], text=result['text'])
+                    # Use custom hovertext if provided...
+                    if 'hovertext' in result and isinstance(result['hovertext'], basestring):
+                        d['hovertext'] = result['hovertext']
+                    else: # ...otherwise default to display text.
+                        d['hovertext'] = result['text']
+                    if 'polyline' in result and type(result['polyline']) == tuple:  #if type(result.get('polyline', '')) == tuple:
+                        d['polyline'] = []
+                        for point in result['polyline']:
+                            # This poor man's validation code almost definately needs improving.
+                            if type(point) == dict:
+                                d['polyline'].append(dict(x=point['x'],y=point['y'],z=point['z']))
+                        if isinstance(result['color'], basestring):
+                            d['strokeColor'] = result['color']
                 if "icon" in poi:
                     d.update({"icon": poi['icon']})
                 if "createInfoWindow" in poi:

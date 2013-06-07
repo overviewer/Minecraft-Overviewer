@@ -48,14 +48,24 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
         
         /* +X side */
         side_block = get_data(state, BLOCKS, x+1, y, z);
-        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x+1, y, z))) {
+        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x+1, y, z)) && 
+            /* WARNING: ugly special case approaching */
+            /* if the block is a slab and the side block is a stair don't draw anything, it can give very ugly results */
+            !((state->block == 44 || state->block == 126) && ((side_block == 53) || (side_block == 67) || (side_block == 108) ||
+            (side_block == 109) || (side_block == 114) || (side_block == 128) || (side_block == 134) || (side_block == 135) ||
+            (side_block == 136)))) {
             ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
             ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
         }
         
         /* -Z side */
         side_block = get_data(state, BLOCKS, x, y, z-1);
-        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x, y, z-1))) {
+        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x, y, z-1)) &&
+            /* WARNING: ugly special case approaching */
+            /* if the block is a slab and the side block is a stair don't draw anything, it can give very ugly results */
+            !((state->block == 44 || state->block == 126) && ((side_block == 53) || (side_block == 67) || (side_block == 108) ||
+            (side_block == 109) || (side_block == 114) || (side_block == 128) || (side_block == 134) || (side_block == 135) ||
+            (side_block == 136)))) {
             ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
             ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
         }

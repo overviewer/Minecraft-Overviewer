@@ -29,6 +29,8 @@ for many different parts of the code.
  * Aaron Griffith <aargri@gmail.com>
  * Alex Headley <aheadley@waysaboutstuff.com>
  * Alex Jurkiewicz <alex@bluebottle.net.au>
+ * Thomas Lake <tswsl1989@sucs.org>
+ * Richard Pastrick <rpastric@contre.us>
  * Michael Writhe <michael@writhem.com>
  * Xon <Xon@localhost>
 
@@ -51,10 +53,12 @@ feature.
  * Alex Cline <cline@vivisimo.com>
  * Andrew Clunis <andrew@orospakr.ca>
  * CounterPillow <spam@tes-cheese.ch>
+ * Mark Crichton <crichton@gmail.com>
  * Johannes Dewender <github@JonnyJD.net>
  * Michael Fallows <michael@fallo.ws>
  * Ryan Finnie <ryan@feh.colobox.com>
  * Stephen Fluin <stephen@mistuph.com>
+ * Freakus Geekus <freakus@gmail.com>
  * Pierre Guinoiseau <pierre@guinoiseau.eu>
  * Lucas Hereld <duckman@piratehook.com>
  * Benjamin Herr <ben@0x539.de>
@@ -64,18 +68,19 @@ feature.
  * Sean Kilgore <krystalogik@gmail.com>
  * Johan Kiviniemi <devel@johan.kiviniemi.name>
  * Philip Kovac <pkovac@cs.uml.edu>
- * Thomas Lake <tswsl1989@sucs.org>
  * Maciej Malecki <maciej.malecki@hotmail.com>
  * Ryan McCue <ryanmccue@cubegames.net>
  * Zach McCullough <nosrepa@gmail.com>
  * Mike <mike@snowcrash.ca>
  * Morlok8k <otis.spankmeyer@gmail.com>
  * Adam Novak <interfect@gmail.com>
- * Richard Pastrick <rpastric@contre.us>
  * rakama <ramsesakama@gmail.com>
  * Ryan Rector <rmrector@gmail.com>
+ * Matti Ruohonen <matti.j.ruohonen@gmail.com>
  * Jason Scheirer <jason.scheirer@gmail.com>
+ * Kang Seonghoon <public+git@mearie.org>
  * Gregory Short <gshort2@gmail.com>
+ * Socolin <beber-le-scaraber@hotmail.fr>
  * Sam Steele <sam@sigbox.c99.org>
  * stoneLeaf <owi.stoneleaf@gmail.com>
  * timwolla <timwolla@mail.develfusion.com>

@@ -10,9 +10,14 @@ like this::
 
     overviewer.py --config=path/to/my_configfile
 
-
 The config file is formatted in Python syntax. If you aren't familiar with
 Python, don't worry, it's pretty simple. Just follow the examples.
+
+.. note::
+
+    You should *always* use forward slashes ("/"), even on
+    Windows.  This is required because the backslash ("\\") has special meaning
+    in Python.  
 
 A Simple Example
 ================
@@ -193,6 +198,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
     **You must specify at least one world**
 
+    *Reminder*: Always use forward slashes ("/"), even on Windows.
+
 ``renders``
     This is also pre-defined as an empty dictionary. The config file is expected
     to add at least one item to it.
@@ -226,6 +233,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
         outputdir = "/path/to/output"
 
+    *Reminder*: Always use forward slashes ("/"), even on Windows.
+
     **Required**
 
 .. _processes:
@@ -255,7 +264,7 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
     If you want to specify an observer manually, try something like:
     ::
 
-        from observer import ProgressBarObserver()
+        from observer import ProgressBarObserver
         observer = ProgressBarObserver()
 
     There are currently three observers available: ``LoggingObserver``, 
@@ -285,7 +294,7 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
 
         * ``messages=dict(totalTiles=<string>, renderCompleted=<string>, renderProgress=<string>)``
             Customises messages displayed in browser. All three messages must be
-            defined as follows:
+            defined similar to the following:
 
             * ``totalTiles="Rendering %d tiles"``
               The ``%d`` format string will be replaced with the total number of
@@ -295,9 +304,9 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
               The three format strings  will be replaced with the number of hours.
               minutes and seconds taken to complete this render.
 
-            * ``renderProgress="Rendered %d of %d tiles (%d%%)"``
-              The three format strings will be replaced with the number of tiles
-              completed, the total number of tiles and the percentage complete
+            * ``renderProgress="Rendered %d of %d tiles (%d%% ETA:%s)""``
+              The four format strings will be replaced with the number of tiles
+              completed, the total number of tiles, the percentage complete, and the ETA.
 
             Format strings are explained here: http://docs.python.org/library/stdtypes.html#string-formatting
             All format strings must be present in your custom messages.
@@ -308,6 +317,25 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
                 observer = JSObserver(outputdir, 10)
 
 
+.. _customwebassets:
+
+``customwebassets = "<path to custom web assets>"``
+    This option allows you to speciy a directory containing custom web assets
+    to be copied to the output directory. Any files in the custom web assets 
+    directory overwrite the default files.
+
+    If you are providing a custom index.html, the following strings will be replaced:
+
+    * ``{title}``
+      Will be replaced by 'Minecraft Overviewer'
+
+    * ``{time}``
+      Will be replaced by the current date and time when the world is rendered
+      e.g. 'Sun, 12 Aug 2012 15:25:40 BST'
+
+    * ``{version}``
+      Will be replaced by the version of Overviewer used
+      e.g. '0.9.276 (5ff9c50)' 
 
 .. _renderdict:
 
@@ -444,6 +472,8 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``"upper-left"``
 
+.. _rerenderprob:
+
 ``rerenderprob``
     This is the probability that a tile will be rerendered even though there may
     have been no changes to any blocks within that tile. Its value should be a
@@ -490,6 +520,23 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``1``
 
+``maxzoom``
+    This specifies the maximum zoom allowed by the zoom control on the web page.
+
+    .. note::
+
+            This does not change the number of zoom levels rendered, but allows
+            you to neglect uploading the larger and more detailed zoom levels if bandwidth
+            usage is an issue.
+
+    **Default:** Automatically set to most detailed zoom level
+
+``showlocationmarker``
+    Allows you to specify whether to show the location marker when accessing a URL
+    with coordinates specified.
+
+    **Default:** ``True``
+
 ``base``
     Allows you to specify a remote location for the tile folder, useful if you
     rsync your map's images to a remote server. Leave a trailing slash and point
@@ -497,11 +544,13 @@ values. The valid configuration keys are listed below.
     tiles folder itself. For example, if the tile images start at
     http://domain.com/map/world_day/ you want to set this to http://domain.com/map/
 
-.. _option_texture_pack:
+.. _option_texturepath:
 
 ``texturepath``
     This is a where a specific texture pack can be found to be used during this render.
-    It can be either a folder or a zip file containing the texture pack.
+    It can be either a folder or a zip file containing the texture pack.  If specifying
+    a folder, this option should point to a directory that *contains* the textures/ folder
+    (it should not point to the textures folder directly).
     Its value should be a string.
 
 .. _crop:
@@ -600,7 +649,7 @@ values. The valid configuration keys are listed below.
 
 ``markers``
     This controls the display of markers, signs, and other points of interest
-    in the output HTML.  It should be a list of filter functions.
+    in the output HTML.  It should be a list of dictionaries.  
 
     .. note::
 
@@ -611,11 +660,50 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``[]`` (an empty list)
 
+
+``poititle``
+    This controls the display name of the POI/marker dropdown control.
+
+    **Default:** "Signs"
+
 .. _option_overlay:
 
 ``overlay``
     This specifies which renders that this render will be displayed on top of. 
-    It should be a list of other renders.
+    It should be a list of other renders.  If this option is confusing, think
+    of this option's name as "overlay_on_to".
+
+    If you leave this as an empty list, this overlay will be displayed on top
+    of all renders for the same world/dimension as this one.
+
+    As an example, let's assume you have two renders, one called "day" and one 
+    called "night".  You want to create a Biome Overlay to be displayed on top
+    of the "day" render.  Your config file might look like this:
+
+    ::
+
+        outputdir = "output_dir"
+
+
+        worlds["exmaple"] = "exmaple"
+
+        renders['day'] = {
+            'world': 'exmaple',
+            'rendermode': 'smooth_lighting',
+            'title': "Daytime Render",
+        }
+        renders['night'] = {
+            'world': 'exmaple',
+            'rendermode': 'night',
+            'title': "Night Render",
+        }
+
+        renders['biomeover'] = {
+            'world': 'exmaple',
+            'rendermode': [ClearBase(), BiomeOverlay()],
+            'title': "Biome Coloring Overlay",
+            'overlay': ['day']
+        }
 
     **Default:** ``[]`` (an empty list)
 
@@ -727,7 +815,7 @@ Hide
 
     **Options**
 
-    minerals
+    blocks
         A list of block ids, or (blockid, data) tuples to hide.
 
 DepthTinting
@@ -791,6 +879,25 @@ MineralOverlay
     minerals
         A list of (blockid, (r, g, b)) tuples to use as colors. If not
         provided, a default list of common minerals is used.
+
+        Example::
+
+            MineralOverlay(minerals=[(64,(255,255,0)), (13,(127,0,127))])
+
+BiomeOverlay
+    Color the map according to the biome at that point. Either use on
+    top of other modes or on top of ClearBase to create a pure overlay.
+
+    **Options**
+
+    biomes
+        A list of ("biome name", (r, g, b)) tuples to use as colors. Any
+        biome not specified won't be highlighted. If not provided then 
+        a default list of biomes and colors is used.
+
+        Example::
+
+            BiomeOverlay(biomes=[("Forest", (0, 255, 0)), ("Desert", (255, 0, 0))])
 
 Defining Custom Rendermodes
 ---------------------------

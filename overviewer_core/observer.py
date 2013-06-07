@@ -182,9 +182,13 @@ class JSObserver(Observer):
         self._current_value = -1
         self.minrefresh = 1000*minrefresh
         self.json = dict()
+        
+        # function to print formatted eta
+        self.format = lambda seconds: '%02ih %02im %02is' % \
+            (seconds // 3600, (seconds % 3600) // 60, seconds % 60)
 
         if (messages == False):
-            self.messages=dict(totalTiles="Rendering %d tiles", renderCompleted="Render completed in %02d:%02d:%02d", renderProgress="Rendered %d of %d tiles (%d%%)")
+            self.messages=dict(totalTiles="Rendering %d tiles", renderCompleted="Render completed in %02d:%02d:%02d", renderProgress="Rendered %d of %d tiles (%d%% ETA:%s)")
         elif (isinstance(messages, dict)):
             if ('totalTiles' in messages and 'renderCompleted' in messages and 'renderProgress' in messages):
                 self.messages = messages
@@ -196,7 +200,7 @@ class JSObserver(Observer):
             raise Exception("JSObserver: Output directory specified (%s) doesn't appear to exist. This should be the same as the Overviewer output directory")
 
         self.logfile = open(os.path.join(outputdir, "progress.json"), "w+", 0)
-        self.json["message"]=""
+        self.json["message"]="Render starting..."
         self.json["update"]=self.minrefresh
         self.json["messageTime"]=time.time()
         json.dump(self.json, self.logfile)
@@ -229,7 +233,7 @@ class JSObserver(Observer):
         minutes = duration // 60
         seconds = duration % 60
         self.json["message"] = self.messages["renderCompleted"] % (hours, minutes, seconds)
-        self.json["update"] = -1 # Initially this was set to False, but that runs into some JS strangeness. -1 is less nice, but works
+        self.json["update"] = 60000 # The 'renderCompleted' message will always be visible (until the next render)
         self.json["messageTime"] = time.time()
         json.dump(self.json, self.logfile)
         self.logfile.close()
@@ -256,7 +260,12 @@ class JSObserver(Observer):
             refresh = max(1500*(time.time() - self.last_update_time), self.minrefresh) // 1
             self.logfile.seek(0)
             self.logfile.truncate()
-            self.json["message"] = self.messages["renderProgress"] % (self.get_current_value(), self.get_max_value(), self.get_percentage())
+            if self.get_current_value():
+                duration = time.time() - self.start_time
+                eta = self.format(duration * self.get_max_value() / self.get_current_value() - duration)
+            else:
+                eta = "?"
+            self.json["message"] = self.messages["renderProgress"] % (self.get_current_value(), self.get_max_value(), self.get_percentage(), str(eta))
             self.json["update"] = refresh
             self.json["messageTime"] = time.time()
             json.dump(self.json, self.logfile)

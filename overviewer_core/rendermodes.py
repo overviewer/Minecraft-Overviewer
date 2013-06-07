@@ -47,6 +47,9 @@ class Base(RenderPrimitive):
         "biomes": ("whether or not to use biomes", True),
     }
 
+class NetherOld(RenderPrimitive):
+    name = "netherold"
+
 class Nether(RenderPrimitive):
     name = "nether"
 
@@ -208,6 +211,13 @@ class MineralOverlay(Overlay):
         'minerals' : ('a list of (blockid, (r, g, b)) tuples for coloring minerals', None),
     }
 
+class BiomeOverlay(Overlay):
+    name = "overlay-biomes"
+    options = {
+        'biomes' : ('a list of (biome, (r, g, b)) tuples for coloring biomes', None),
+        'alpha'  : ('an integer value between 0 (transparent) and 255 (opaque)', None),
+    }
+
 class Hide(RenderPrimitive):
     name = "hide"
     options = {
@@ -220,6 +230,9 @@ lighting = [Base(), EdgeLines(), Lighting()]
 smooth_lighting = [Base(), EdgeLines(), SmoothLighting()]
 night = [Base(), EdgeLines(), Lighting(night=True)]
 smooth_night = [Base(), EdgeLines(), SmoothLighting(night=True)]
+netherold = [Base(), EdgeLines(), NetherOld()]
+netherold_lighting = [Base(), EdgeLines(), NetherOld(), Lighting()]
+netherold_smooth_lighting = [Base(), EdgeLines(), NetherOld(), SmoothLighting()]
 nether = [Base(), EdgeLines(), Nether()]
 nether_lighting = [Base(), EdgeLines(), Nether(), Lighting()]
 nether_smooth_lighting = [Base(), EdgeLines(), Nether(), SmoothLighting()]

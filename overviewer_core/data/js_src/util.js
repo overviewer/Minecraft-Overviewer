@@ -1,4 +1,11 @@
 overviewer.util = {
+    
+    // vars for callback
+    readyQueue: [],
+    isReady: false,
+
+    lastHash: null,
+
     /* fuzz tester!
      */
     'testMaths': function(t) {
@@ -86,6 +93,10 @@ overviewer.util = {
 
             compass.render();
             spawnmarker.render();
+            if (overviewer.collections.locationMarker) {
+                overviewer.collections.locationMarker.setMap(null);
+                overviewer.collections.locationMarker = null;
+            }
 
             // update list of spawn overlays
             overlayControl.render();
@@ -129,8 +140,9 @@ overviewer.util = {
 
         overviewer.mapView.render();
          
-        // Jump to the hash if given
+        // Jump to the hash if given (and do so for any further hash changes)
         overviewer.util.initHash();
+        $(window).on('hashchange', function() { overviewer.util.initHash(); });
 
         // create this control after initHash so it can correctly select the current world
         var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
@@ -145,6 +157,13 @@ overviewer.util = {
            overviewer.util.initializeRegions();
            overviewer.util.createMapControls();
            */
+           
+        // run ready callbacks now
+        google.maps.event.addListenerOnce(overviewer.map, 'idle', function(){
+            // ok now..
+            overviewer.util.runReadyQueue();
+            overviewer.util.isReady = true;
+        });
     },
 
     'injectMarkerScript': function(url) {
@@ -157,21 +176,6 @@ overviewer.util = {
         return;
 
     },
-
-    'createMarkerInfoWindow': function(marker) {
-            var windowContent = '<div class="infoWindow"><img src="' + marker.icon +
-                '"/><p>' + marker.title.replace(/\n/g,'<br/>') + '</p></div>';
-            var infowindow = new google.maps.InfoWindow({
-                'content': windowContent
-            });
-            google.maps.event.addListener(marker, 'click', function() {
-                if (overviewer.collections.infoWindow) {
-                    overviewer.collections.infoWindow.close();
-                }
-                infowindow.open(overviewer.map, marker);
-                overviewer.collections.infoWindow = infowindow;
-            });
-        },
 
 
     /**
@@ -210,6 +214,27 @@ overviewer.util = {
             div.style.borderColor = '#AAAAAA';
             return div;
         };
+    },
+    /**
+     * onready function for other scripts that rely on overviewer
+     * usage: overviewer.util.ready(function(){ // do stuff });
+     *
+     *
+     */
+    'ready': function(callback){
+        if (!callback || !_.isFunction(callback)) return;
+        if (overviewer.util.isReady){ // run instantly if overviewer already is ready
+            overviewer.util.readyQueue.push(callback);
+            overviewer.util.runReadyQueue();
+        } else {
+            overviewer.util.readyQueue.push(callback); // wait until initialize is finished
+        }
+    },       
+    'runReadyQueue': function(){
+        _.each(overviewer.util.readyQueue, function(callback){
+            callback();
+        });
+        overviewer.util.readyQueue.length = 0;
     },
     /**
      * Quote an arbitrary string for use in a regex matcher.
@@ -296,15 +321,15 @@ overviewer.util = {
 
         if (north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = x;
-            x = -z+16;
+            x = -z+15;
             z = temp;
         } else if(north_direction == overviewerConfig.CONST.LOWERRIGHT){
-            x = -x+16;
-            z = -z+16;
+            x = -x+15;
+            z = -z+15;
         } else if(north_direction == overviewerConfig.CONST.LOWERLEFT){
             temp = x;
             x = z;
-            z = -temp+16;
+            z = -temp+15;
         }
 
         // This information about where the center column is may change with
@@ -385,15 +410,15 @@ overviewer.util = {
 
         if(north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = point.z;
-            point.z = -point.x+16;
+            point.z = -point.x+15;
             point.x = temp;
         } else if(north_direction == overviewerConfig.CONST.LOWERRIGHT){
-            point.x = -point.x+16;
-            point.z = -point.z+16;
+            point.x = -point.x+15;
+            point.z = -point.z+15;
         } else if(north_direction == overviewerConfig.CONST.LOWERLEFT){
             temp = point.z;
             point.z = point.x;
-            point.x = -temp+16;
+            point.x = -temp+15;
         }
 
         return point;
@@ -430,31 +455,36 @@ overviewer.util = {
      */
     'createMarkerInfoWindow': function(marker) {
         var windowContent = '<div class="infoWindow"><img src="' + marker.icon +
-            '"/><p>' + marker.title.replace(/\n/g,'<br/>') + '</p></div>';
+            '"/><p>' + marker.content.replace(/\n/g,'<br/>') + '</p></div>';
         var infowindow = new google.maps.InfoWindow({
-                'content': windowContent
-                });
+            'content': windowContent
+        });
         google.maps.event.addListener(marker, 'click', function() {
-                if (overviewer.collections.infoWindow) {
+            if (overviewer.collections.infoWindow) {
                 overviewer.collections.infoWindow.close();
-                }
-                infowindow.open(overviewer.map, marker);
-                overviewer.collections.infoWindow = infowindow;
-                });
+            }
+            infowindow.open(overviewer.map, marker);
+            overviewer.collections.infoWindow = infowindow;
+        });
     },
     'initHash': function() {
-        if(window.location.hash.split("/").length > 1) {
-            overviewer.util.goToHash();
-            // Clean up the hash.
-            overviewer.util.updateHash();
-
+        var newHash = window.location.hash;
+        if (overviewer.util.lastHash !== newHash) {
+            overviewer.util.lastHash = newHash;
+            if(newHash.split("/").length > 1) {
+                overviewer.util.goToHash();
+                // Clean up the hash.
+                overviewer.util.updateHash();
+            }
         }
     },
     'setHash': function(x, y, z, zoom, w, maptype)    {
         // save this info is a nice easy to parse format
         var currentWorldView = overviewer.mapModel.get("currentWorldView");
         currentWorldView.options.lastViewport = [x,y,z,zoom];
-        window.location.replace("#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + w + "/" + maptype);
+        var newHash = "#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + w + "/" + maptype;
+        overviewer.util.lastHash = newHash; // this should not trigger initHash
+        window.location.replace(newHash);
     },
     'updateHash': function() {
         var currTileset = overviewer.mapView.options.currentTileSet;
@@ -537,5 +567,7 @@ overviewer.util = {
 
         overviewer.map.setCenter(latlngcoords);
         overviewer.map.setZoom(zoom);
+        var locationmarker = new overviewer.views.LocationIconView();
+        locationmarker.render();
     }
 };
