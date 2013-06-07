@@ -4064,3 +4064,45 @@ def hopper(self, blockid, data):
     alpha_over(img, hop_top, (0,-6), hop_top)
 
     return img
+
+# hay block
+@material(blockid=170, data=range(9), solid=True)
+def hayblock(self, blockid, data):
+    top = self.load_image_texture("textures/blocks/hayBlock_top.png")
+    side = self.load_image_texture("textures/blocks/hayBlock.png")
+
+    if self.rotation == 1:
+        if data == 4: data = 8
+        elif data == 8: data = 4
+    elif self.rotation == 3:
+        if data == 4: data = 8
+        elif data == 8: data = 4
+
+    # choose orientation and paste textures
+    if data == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif data == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(90), top)
+    else:
+        return self.build_block(top, side)
+
+
+# carpet - wool block that's small?
+@material(blockid=171, data=range(16), transparent=True)
+def carpet(self, blockid, data):
+    texture = self.load_image_texture("textures/blocks/cloth_%d.png" % data)
+
+    return self.build_full_block((texture,15),texture,texture,texture,texture)
+
+#clay block
+block(blockid=172, top_image="textures/blocks/clayHardened.png")
+
+#stained hardened clay
+@material(blockid=159, data=range(16), solid=True)
+def stained_clay(self, blockid, data):
+    texture = self.load_image_texture("textures/blocks/clayHardenedStained_%d.png" % data)
+
+    return self.build_block(texture,texture)
+
+#coal block
+block(blockid=173, top_image="textures/blocks/blockCoal.png")
