@@ -344,7 +344,7 @@ class TileSet(object):
                 "explicitly not to do a --fullrender (which is the default for "
                 "this situation). I'm overriding your decision and setting "
                 "--fullrender for just this run")
-                self.options['rednerchecks'] = 2
+                self.options['renderchecks'] = 2
             os.mkdir(self.outputdir)
 
         # Set the image format according to the options
