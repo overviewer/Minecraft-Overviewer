@@ -662,11 +662,8 @@ sharpen(PyObject *src, double sharpness) {
             k_crn, k_edg, k_crn
         };
         
-        int alpha_kernel[9] = {
-            0xFF, 0xFF, 0xFF, 
-            0xFF, 0xFF, 0xFF, 
-            0xFF, 0xFF, 0xFF
-        };
+        int alpha_kernel[9];
+        int sum;
         
         const int has_alpha = (imSrc->pixelsize == 4 ? 1 : 0);    
         const int pixel_size = imSrc->pixelsize;
@@ -682,6 +679,10 @@ sharpen(PyObject *src, double sharpness) {
         UINT8 *temp_below = temp3 + pixel_size;
         UINT8 *temp;
         
+        memcpy(alpha_kernel, kernel, 9);
+        for (i = 0; i < 9; i++)
+            sum += alpha_kernel[i];
+
         memcpy(temp_above, (UINT8 *)imSrc->image[0], row_width);
         memcpy(temp_middle, (UINT8 *)imSrc->image[0], row_width);
         memcpy(temp_below, (UINT8 *)imSrc->image[1], row_width);
@@ -704,7 +705,6 @@ sharpen(PyObject *src, double sharpness) {
                 int gx = x + 1;
                 int bx = x + 2;
                 int ax = x + 3;
-                int sum = 0xFF * 9;
                 
                 if (has_alpha) {
                                  
