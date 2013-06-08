@@ -663,7 +663,7 @@ sharpen(PyObject *src, double sharpness) {
         };
         
         int alpha_kernel[9];
-        int sum;
+        int sum = 0;
         
         const int has_alpha = (imSrc->pixelsize == 4 ? 1 : 0);    
         const int pixel_size = imSrc->pixelsize;
