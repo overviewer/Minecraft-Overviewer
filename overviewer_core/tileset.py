@@ -492,9 +492,9 @@ class TileSet(object):
                 dest = os.path.join(self.outputdir, *(str(x) for x in tilepath[:-1]))
                 name = str(tilepath[-1])
                 
-            # Intensity of sharpness filter when zoomed out one level, range [0, 1]
+            # Intensity of the sharpness filter when zoomed all the way in, range = [0, 1]
             initial_sharpness = 0.4
-            # Reduction of sharpness intensity for each additional zoom level, range (0, 1]
+            # Reduction in the filter's intensity for each level zoomed out, range = [0, 1]
             decay_rate = 0.5
 			            
             sharpness = initial_sharpness * math.pow(decay_rate, self.treedepth - len(tilepath) - 1)
