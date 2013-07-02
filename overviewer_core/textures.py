@@ -25,6 +25,7 @@ import numpy
 from PIL import Image, ImageEnhance, ImageOps, ImageDraw
 import logging
 import functools
+import glob
 
 import util
 from c_overviewer import alpha_over
@@ -184,9 +185,16 @@ class Textures(object):
         # Find minecraft.jar.
         jarpaths = []
         if "APPDATA" in os.environ:
+            jarpaths += sorted(glob.glob(os.path.join(os.environ['APPDATA'], ".minecraft", "versions", "*.*", "*.jar")),
+                    reverse=True)
             jarpaths.append( os.path.join(os.environ['APPDATA'], ".minecraft",
                 "bin", "minecraft.jar"))
         if "HOME" in os.environ:
+            jarpaths += sorted(glob.glob(os.path.join(os.environ['HOME'], ".minecraft", "versions", "*.*", "*.jar")),
+                    reverse=True)
+            jarpaths += sorted(glob.glob(os.path.join(os.environ['HOME'], "Library", "Application Support", "minecraft",
+                "versions", "*.*", "*.jar")),
+                reverse=True)
             jarpaths.append(os.path.join(os.environ['HOME'], "Library",
                     "Application Support", "minecraft","bin","minecraft.jar"))
             jarpaths.append(os.path.join(os.environ['HOME'], ".minecraft", "bin",

@@ -148,12 +148,12 @@ def main():
 
         logging.info("Looking for a few common texture files...")
         try:
-            f = tex.find_file("textures/blocks/stone.png", verbose=True)
-            f = tex.find_file("textures/blocks/tallgrass.png", verbose=True)
-            f = tex.find_file("textures/blocks/oreDiamond.png", verbose=True)
-            f = tex.find_file("textures/blocks/wood.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/sandstone_top.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/grass_top.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/diamond_ore.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/planks_oak.png", verbose=True)
         except IOError:
-            logging.error("Could not find the file stone.png")
+            logging.error("Could not find any texture files.")
             return 1
 
         return 0
