@@ -139,6 +139,7 @@ class Textures(object):
         'environment/'.
         
         """
+        if verbose: logging.info("Starting search for {0}".format(filename))
 
         # a list of subdirectories to search for a given file,
         # after the obvious '.'
@@ -151,6 +152,8 @@ class Textures(object):
                     return path
             return None
 
+        # A texture path was given on the command line. Search this location
+        # for the file first.
         if self.find_file_local_path:
             if os.path.isdir(self.find_file_local_path):
                 path = search_dir(self.find_file_local_path)
@@ -158,10 +161,14 @@ class Textures(object):
                     if verbose: logging.info("Found %s in '%s'", filename, path)
                     return open(path, mode)
             elif os.path.isfile(self.find_file_local_path):
+                # Must be a resource pack. Look for the requested file within
+                # it.
                 try:
                     pack = zipfile.ZipFile(self.find_file_local_path)
                     for packfilename in search_zip_paths:
                         try:
+                            # pack.getinfo() will raise KeyError if the file is
+                            # not found.
                             pack.getinfo(packfilename)
                             if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
                             return pack.open(packfilename)
@@ -170,6 +177,12 @@ class Textures(object):
                 except (zipfile.BadZipfile, IOError):
                     pass
 
+        # If we haven't returned at this point, then the requested file was NOT
+        # found in the user-specified texture path or resource pack.
+        if verbose: logging.info("Did not find the file in specified texture path")
+
+
+        # Look in the location of the overviewer executable for the given path
         programdir = util.get_program_path()
         path = search_dir(programdir)
         if path:
@@ -182,29 +195,58 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        # Find minecraft.jar.
-        jarpaths = []
-        if "APPDATA" in os.environ:
-            jarpaths += sorted(glob.glob(os.path.join(os.environ['APPDATA'], ".minecraft", "versions", "*.*", "*.jar")),
-                    reverse=True)
-            jarpaths.append( os.path.join(os.environ['APPDATA'], ".minecraft",
-                "bin", "minecraft.jar"))
-        if "HOME" in os.environ:
-            jarpaths += sorted(glob.glob(os.path.join(os.environ['HOME'], ".minecraft", "versions", "*.*", "*.jar")),
-                    reverse=True)
-            jarpaths += sorted(glob.glob(os.path.join(os.environ['HOME'], "Library", "Application Support", "minecraft",
-                "versions", "*.*", "*.jar")),
-                reverse=True)
-            jarpaths.append(os.path.join(os.environ['HOME'], "Library",
-                    "Application Support", "minecraft","bin","minecraft.jar"))
-            jarpaths.append(os.path.join(os.environ['HOME'], ".minecraft", "bin",
-                    "minecraft.jar"))
-        jarpaths.append(os.path.join(programdir,"minecraft.jar"))
-        jarpaths.append(os.path.join(os.getcwd(), "minecraft.jar"))
-        if self.find_file_local_path:
-            jarpaths.append(os.path.join(self.find_file_local_path, "minecraft.jar"))
+        if verbose: logging.info("Did not find the file in overviewer executable directory")
+        if verbose: logging.info("Looking for installed minecraft jar files...")
 
-        for jarpath in jarpaths:
+        # Find an installed minecraft jar file and look in it for the texture
+        # file we need.
+        versiondir = None
+        if "APPDATA" in os.environ:
+            versiondir = os.path.join(os.enviorn['APPDATA'], ".minecraft", "versions")
+        if "HOME" in os.environ:
+            # For linux:
+            versiondir = os.path.join(os.environ['HOME'], ".minecraft", "versions")
+            if not os.path.exists(versiondir):
+                # For Mac:
+                versiondir = os.path.join(os.environ['HOME'], "Library",
+                    "Application Support", "minecraft", "versions")
+
+        try:
+            versions = os.listdir(versiondir)
+            if verbose: logging.info("Found these versions: {0}".format(versions))
+        except OSError:
+            # Directory doesn't exist? Ignore it. It will find no versions and
+            # fall through the checks below to the error at the bottom of the
+            # method.
+            versions = []
+
+        most_recent_version = [0,0,0]
+        for version in versions:
+            # Look for the latest non-snapshot that is at least 1.6. This
+            # version is only compatible with >=1.6, and we cannot in general
+            # tell if a snapshot is more or less recent than a release.
+
+            # Allow two component names such as "1.6" and three component names
+            # such as "1.6.1"
+            if version.count(".") not in (1,2):
+                continue
+            try:
+                versionparts = [int(x) for x in version.split(".")]
+            except ValueError:
+                continue
+
+            if versionparts < [1,6]:
+                continue
+
+            if versionparts > most_recent_version:
+                most_recent_version = versionparts
+
+        if most_recent_version != [0,0,0]:
+            if verbose: logging.info("Most recent version >=1.6.0: {0}. Searching it for the file...".format(most_recent_version))
+
+            jarname = ".".join(str(x) for x in most_recent_version)
+            jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
+
             if os.path.isfile(jarpath):
                 jar = zipfile.ZipFile(jarpath)
                 for jarfilename in search_zip_paths:
@@ -214,12 +256,18 @@ class Textures(object):
                         return jar.open(jarfilename)
                     except (KeyError, IOError), e:
                         pass
-            elif os.path.isdir(jarpath):
-                path = search_dir(jarpath)
-                if path:
-                    if verbose: logging.info("Found %s in '%s'", filename, path)
-                    return open(path, 'rb')
-        
+
+            if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
+        else:
+            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.6.0")
+            
+        # Last ditch effort: look for the file is stored in with the overviewer
+        # installation. We include a few files that aren't included with Minecraft
+        # textures. This used to be for things such as water and lava, since
+        # they were generated by the game and not stored as images. Nowdays I
+        # believe that's not true, but we still have a few files distributed
+        # with overviewer.
+        if verbose: logging.info("Looking for texture in overviewer_core/data/textures")
         path = search_dir(os.path.join(programdir, "overviewer_core", "data", "textures"))
         if path:
             if verbose: logging.info("Found %s in '%s'", filename, path)
@@ -231,7 +279,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the file `{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the directory where I can find {0}.\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>".format(filename))
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.6-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  

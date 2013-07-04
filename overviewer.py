@@ -80,7 +80,7 @@ def main():
 
     # Useful one-time debugging options:
     parser.add_option("--check-terrain", dest="check_terrain", action="store_true",
-            help="Prints the location and hash of terrain.png, useful for debugging terrain.png problems")
+            help="Tries to locate the texture files. Useful for debugging texture problems.")
     parser.add_option("-V", "--version", dest="version",
             help="Displays version information and then exits", action="store_true")
     parser.add_option("--update-web-assets", dest='update_web_assets', action="store_true",

@@ -16,7 +16,6 @@
 import functools
 import os
 import os.path
-from glob import glob
 import logging
 import hashlib
 import time
