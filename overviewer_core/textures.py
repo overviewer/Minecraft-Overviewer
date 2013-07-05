@@ -202,7 +202,7 @@ class Textures(object):
         # file we need.
         versiondir = None
         if "APPDATA" in os.environ:
-            versiondir = os.path.join(os.enviorn['APPDATA'], ".minecraft", "versions")
+            versiondir = os.path.join(os.environ['APPDATA'], ".minecraft", "versions")
         if "HOME" in os.environ:
             # For linux:
             versiondir = os.path.join(os.environ['HOME'], ".minecraft", "versions")
