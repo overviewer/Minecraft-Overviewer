@@ -25,7 +25,6 @@ import numpy
 from PIL import Image, ImageEnhance, ImageOps, ImageDraw
 import logging
 import functools
-import glob
 
 import util
 from c_overviewer import alpha_over
@@ -122,16 +121,19 @@ class Textures(object):
         """Searches for the given file and returns an open handle to it.
         This searches the following locations in this order:
         
-        * the textures_path given in the initializer
-        this can be either a directory or a zip file (texture pack)
-        * The program dir (same dir as overviewer.py)
-        * On Darwin, in /Applications/Minecraft
-        * Inside minecraft.jar, which is looked for at these locations
+        * In the directory textures_path given in the initializer
+        * In the resource pack given by textures_path
+        * The program dir (same dir as overviewer.py) for extracted textures
+        * On Darwin, in /Applications/Minecraft for extracted textures
+        * Inside a minecraft client jar. Client jars are searched for in the
+          following location depending on platform:
         
-            * On Windows, at %APPDATA%/.minecraft/bin/minecraft.jar
+            * On Windows, at %APPDATA%/.minecraft/versions/
             * On Darwin, at
-                $HOME/Library/Application Support/minecraft/bin/minecraft.jar
-            * at $HOME/.minecraft/bin/minecraft.jar
+                $HOME/Library/Application Support/minecraft/versions
+            * at $HOME/.minecraft/versions/
+
+          Only the latest non-snapshot version >1.6 is used
 
         * The overviewer_core/data/textures dir
         
@@ -198,7 +200,7 @@ class Textures(object):
         if verbose: logging.info("Did not find the file in overviewer executable directory")
         if verbose: logging.info("Looking for installed minecraft jar files...")
 
-        # Find an installed minecraft jar file and look in it for the texture
+        # Find an installed minecraft client jar and look in it for the texture
         # file we need.
         versiondir = None
         if "APPDATA" in os.environ:

@@ -229,6 +229,9 @@ is typically correct.
 Installing the Textures
 =======================
 
+.. note::
+    This procedure has changed with Minecraft 1.6's Resource Pack update.
+
 If Overviewer is running on a machine with the Minecraft client installed, it
 will automatically use the default textures from Minecraft.
 
@@ -238,20 +241,34 @@ manually. This is common for servers.
 
 If you want or need to provide your own textures, you have several options:
 
-* If you're running the Overviewer on a server, you can still put the
-  minecraft.jar file (not the launcher) into the correct location and the
-  Overviewer will find and use it, thinking the client is installed, even if the
-  rest of the client files are missing. On Linux, try a command like this::
+* If you're running the Overviewer on a server without the client, you can run
+  the launcher to install the client, and Overviewer will use the textures from
+  that.
+  
+* You can put the client jar in the correct place manually, from a computer that
+  does have the client, to your server. The correct places are:
+  
+  * For Linux: ``~/.minecraft/versions/<version>/<version>.jar``
 
-      wget -N http://s3.amazonaws.com/MinecraftDownload/minecraft.jar -P ~/.minecraft/bin/
+  * For Mac: ``~/Library/Application Support/minecraft/versions/<version>/<version>.jar``
+    
+  * For Windows: ``%APPDATA%/.minecraft/versions/<version>/<version>.jar``
 
-* You can manually extract the textures folder from minecraft.jar or your favorite
-  texture pack. If you've built the Overviewer from source or are using the
-  windows exe, place the folder in the same directory as overviewer.py or
-  overviewer.exe.
+* You can take the client jar from a computer that has the client installed, or
+  take a resource pack from a third party that contains textures, and specify it
+  with the :ref:`texturepath<option_texturepath>` option.
+    
+.. note::
+    Unfortunately we no longer have an easy wget command to run that will
+    download the official minecraft textures. The launcher is the only way to
+    download the official textures until we can figure out where they're coming
+    from.
 
-* Specify any texture pack you want with the
-  :ref:`texturepath<option_texturepath>` option.
+.. note::
+    Overviewer will only search for installed client *release* versions, not
+    snapshots. If you want to use a snapshot client jar for the textures,
+    you must specify it manually with the :ref:`texturepath<option_texturepath>`
+    option.
 
 If you copy your world before you render it
 -------------------------------------------
