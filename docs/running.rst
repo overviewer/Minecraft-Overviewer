@@ -231,8 +231,8 @@ Installing the Textures
 
 .. note::
     This procedure has changed with Minecraft 1.6's Resource Pack update. The
-    latest versions of Overviewer are not compatible with Minecraft 1.5 clients
-    and below.
+    latest versions of Overviewer are not compatible with Minecraft 1.5 client
+    resources.
 
 If Overviewer is running on a machine with the Minecraft client installed, it
 will automatically use the default textures from Minecraft.

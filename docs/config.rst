@@ -111,9 +111,10 @@ there are many preset rendermodes, and you can even create your own (more on
 that later).
 
 And finally, note the usage of the ``texturepath`` option. This specifies a
-texture pack to use for the rendering. Also note that it is set at the top level
-of the config file, and therefore applies to every render. It could be set on
-individual renders to apply to just those renders.
+texture pack (also called a resource pack) to use for the rendering. Also note
+that it is set at the top level of the config file, and therefore applies to
+every render. It could be set on individual renders to apply to just those
+renders.
 
 .. note::
 
@@ -547,11 +548,14 @@ values. The valid configuration keys are listed below.
 .. _option_texturepath:
 
 ``texturepath``
-    This is a where a specific texture pack can be found to be used during this render.
-    It can be either a folder or a zip file containing the texture pack.  If specifying
-    a folder, this option should point to a directory that *contains* the textures/ folder
-    (it should not point to the textures folder directly).
-    Its value should be a string.
+    This is a where a specific texture or resource pack can be found to use
+    during this render. It can be a path to either a folder or a zip/jar file
+    containing the texture resources. If specifying a folder, this option should
+    point to a directory that *contains* the assets/ directory (it should not
+    point to the assets directory directly or any one particular texture image).
+
+    Its value should be a string: the path on the filesystem to the resource
+    pack.
 
 .. _crop:
 
