@@ -259,7 +259,6 @@ If you want or need to provide your own textures, you have several options:
   ::
 
     VERSION=1.6.1
-    mkdir -p ~/.minecraft/versions/$VERSION/
     wget https://s3.amazonaws.com/Minecraft.Download/versions/$VERSION/${VERSION}.jar -P ~/.minecraft/versions/$VERSION/
 
 * You can also just run the launcher to install the client.
