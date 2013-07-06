@@ -191,7 +191,7 @@ class Textures(object):
             if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
-        if sys.platform == "darwin":
+        if sys.platform.startswith("darwin"):
             path = search_dir("/Applications/Minecraft")
             if path:
                 if verbose: logging.info("Found %s in '%s'", filename, path)
@@ -203,12 +203,12 @@ class Textures(object):
         # Find an installed minecraft client jar and look in it for the texture
         # file we need.
         versiondir = None
-        if "APPDATA" in os.environ:
+        if "APPDATA" in os.environ and sys.platform.startswith("win"):
             versiondir = os.path.join(os.environ['APPDATA'], ".minecraft", "versions")
         if "HOME" in os.environ:
             # For linux:
             versiondir = os.path.join(os.environ['HOME'], ".minecraft", "versions")
-            if not os.path.exists(versiondir):
+            if not os.path.exists(versiondir) and sys.platform.startswith("darwin"):
                 # For Mac:
                 versiondir = os.path.join(os.environ['HOME'], "Library",
                     "Application Support", "minecraft", "versions")
