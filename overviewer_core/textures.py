@@ -849,7 +849,7 @@ def grass(self, blockid, data):
 # dirt
 block(blockid=3, top_image="assets/minecraft/textures/blocks/dirt.png")
 # cobblestone
-block(blockid=4, top_image="assets/minecraft/textures/blocks/stonebrick.png")
+block(blockid=4, top_image="assets/minecraft/textures/blocks/cobblestone.png")
 
 # wooden planks
 @material(blockid=5, data=range(4), solid=True)
