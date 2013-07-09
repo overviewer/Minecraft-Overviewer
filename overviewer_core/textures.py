@@ -1454,8 +1454,8 @@ def slabs(self, blockid, data):
         side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_normal.png")
     elif texture== 2: # wooden slab
         top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
-    elif texture== 3: # c43obblestone slab
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
+    elif texture== 3: # cobblestone slab
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png")
     elif texture== 4: # brick
         top = side = self.load_image_texture("assets/minecraft/textures/blocks/brick.png")
     elif texture== 5: # stone brick
@@ -1632,7 +1632,7 @@ def stairs(self, blockid, data):
     if blockid == 53: # wooden
         texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
     elif blockid == 67: # cobblestone
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png")
     elif blockid == 108: # red brick stairs
         texture = self.load_image_texture("assets/minecraft/textures/blocks/brick.png")
     elif blockid == 109: # stone brick stairs
@@ -2365,7 +2365,7 @@ def levers(self, blockid, data):
         elif data == 6: data = 5
 
     # generate the texture for the base of the lever
-    t_base = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png").copy()
+    t_base = self.load_image_texture("assets/minecraft/textures/blocks/stone.png").copy()
 
     ImageDraw.Draw(t_base).rectangle((0,0,15,3),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(t_base).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -3195,7 +3195,7 @@ def hidden_silverfish(self, blockid, data):
     if data == 0: # stone
         t = self.load_image_texture("assets/minecraft/textures/blocks/stone.png")
     elif data == 1: # cobblestone
-        t = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
+        t = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png")
     elif data == 2: # stone brick
         t = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
     
@@ -3839,7 +3839,7 @@ def cobblestone_wall(self, blockid, data):
     # no rotation, uses pseudo data
     if data & 0b10000 == 0:
         # cobblestone
-        t = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png").copy()
+        t = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png").copy()
     else:
         # mossy cobblestone
         t = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone_mossy.png").copy()
