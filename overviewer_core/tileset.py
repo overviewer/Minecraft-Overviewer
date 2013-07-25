@@ -1039,8 +1039,13 @@ class TileSet(object):
                 if e.errno != errno.ENOENT:
                     raise
                 tile_mtime = 0
-
-            max_chunk_mtime = max(c[5] for c in get_chunks_by_tile(tileobj, self.regionset))
+            
+            try:
+                max_chunk_mtime = max(c[5] for c in get_chunks_by_tile(tileobj, self.regionset))
+            except ValueError:
+                # max got an empty sequence! something went horribly wrong
+                logging.warning("tile %s expected contains no chunks! this may be a bug", path)
+                max_chunk_mtime = 0
 
             if tile_mtime > 120 + max_chunk_mtime:
                 # If a tile has been modified more recently than any of its
