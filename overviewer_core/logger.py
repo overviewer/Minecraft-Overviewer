@@ -52,6 +52,17 @@ HIGHLIGHT = {
 
 
 class InverseLevelFilter(object):
+    """
+    This filter removes all messages *above* a certain threshold
+    (``max_level``). By default, setting a logger level will log all messages
+    *above* that level and ignore all messages *below* it. This filter
+    inverses this logic and only logs messages *below* the given level.
+
+    Note that the given level in ``max_level`` is *excluded* as well. This
+    means that ``InverseLevelFilter(logging.WARN)`` (the default) will log
+    messages with the level ``DEBUG`` and ``INFO`` (and everything in
+    between), but *not* ``WARN`` and above!.
+    """
 
     def __init__(self, max_level=logging.WARN):
         self.max_level = max_level
