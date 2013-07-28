@@ -51,6 +51,15 @@ HIGHLIGHT = {
 }
 
 
+class InverseLevelFilter(object):
+
+    def __init__(self, max_level=logging.WARN):
+        self.max_level = max_level
+
+    def filter(self, record):
+        return record.levelno < self.max_level
+
+
 class WindowsOutputStream(object):
     """A file-like object that proxies sys.stderr and interprets simple ANSI
     escape codes for color, translating them to the appropriate Windows calls.
@@ -265,36 +274,33 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
 
     """
 
-    logger = logging.getLogger()
+    logger = logging.getLogger('overviewer')
+    logger.setLevel(loglevel)
 
-    outstream = sys.stdout
-    if simple:
-        formatter = DumbFormatter(verbose)
+    if not logger.handlers:
+        # No handlers have been configure yet... (probably the first call of
+        # logger.configure)
+        is_windows = platform.system() == 'Windows'
+        outstream = sys.stdout
+        errstream = sys.stderr
+        errformatter = DumbFormatter(verbose)
+        outformatter = DumbFormatter(verbose)
 
-    elif platform.system() == 'Windows':
-        # Our custom output stream processor knows how to deal with select ANSI
-        # color escape sequences
-        outstream = WindowsOutputStream(outstream)
-        formatter = ANSIColorFormatter(verbose)
+        if is_windows:
+            outstream = WindowsOutputStream(outstream)
+            errstream = WindowsOutputStream(errstream)
 
-    elif outstream.isatty():
-        # terminal logging with ANSI color
-        formatter = ANSIColorFormatter(verbose)
+        if (is_windows or outstream.isatty()) and not simple:
+            # Our custom output stream processor knows how to deal with select
+            # ANSI color escape sequences
+            errformatter = ANSIColorFormatter(verbose)
+            outformatter = ANSIColorFormatter(verbose)
 
-    else:
-        # Let's not assume anything. Just text.
-        formatter = DumbFormatter(verbose)
-
-    if hasattr(logger, 'overviewerHandler'):
-        # we have already set up logging so just replace the formatter
-        # this time with the new values
-        logger.overviewerHandler.setFormatter(formatter)
-        logger.setLevel(loglevel)
-
-    else:
-        # Save our handler here so we can tell which handler was ours if the
-        # function is called again
-        logger.overviewerHandler = logging.StreamHandler(outstream)
-        logger.overviewerHandler.setFormatter(formatter)
-        logger.addHandler(logger.overviewerHandler)
-        logger.setLevel(loglevel)
+        out_handler = logging.StreamHandler(outstream)
+        out_handler.setFormatter(outformatter)
+        out_handler.addFilter(InverseLevelFilter(max_level=logging.WARN))
+        err_handler = logging.StreamHandler(errstream)
+        err_handler.setLevel(logging.WARN)
+        err_handler.setFormatter(errformatter)
+        logger.addHandler(out_handler)
+        logger.addHandler(err_handler)
