@@ -20,8 +20,8 @@ import platform
 import ctypes
 from cStringIO import StringIO
 
-# Some cool code for colored logging:
-# For background, add 40. For foreground, add 30
+# Some cool code for colored logging: For background, add 40. For foreground,
+# add 30
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
 RESET_SEQ = "\033[0m"
@@ -277,6 +277,12 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
     logger = logging.getLogger('overviewer')
     logger.setLevel(loglevel)
 
+    # because overviewer_core does not live in the same namespace as
+    # overviewer.py, we need a second logger. This allows us to use the
+    # standard ``logger.getLogger(__name__)`` where needed.
+    core_logger = logging.getLogger('overviewer_core')
+    core_logger.setLevel(loglevel)
+
     if not logger.handlers:
         # No handlers have been configure yet... (probably the first call of
         # logger.configure)
@@ -304,3 +310,5 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
         err_handler.setFormatter(errformatter)
         logger.addHandler(out_handler)
         logger.addHandler(err_handler)
+        core_logger.addHandler(out_handler)
+        core_logger.addHandler(err_handler)

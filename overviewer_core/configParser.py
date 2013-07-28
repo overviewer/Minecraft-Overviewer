@@ -7,6 +7,9 @@ import traceback
 import settingsDefinition
 import settingsValidators
 
+LOG = logging.getLogger(__name__)
+
+
 class MissingConfigException(Exception):
     "To be thrown when the config file can't be found"
     pass
@@ -83,14 +86,14 @@ class MultiWorldParser(object):
         
         except Exception, ex:
             if isinstance(ex, SyntaxError):
-                logging.error("Syntax error parsing %s" %  settings_file)
-                logging.error("The traceback below will tell you which line triggered the syntax error\n")
+                LOG.error("Syntax error parsing %s" %  settings_file)
+                LOG.error("The traceback below will tell you which line triggered the syntax error\n")
             elif isinstance(ex, NameError):
-                logging.error("NameError parsing %s" %  settings_file)
-                logging.error("The traceback below will tell you which line referenced the non-existent variable\n")
+                LOG.error("NameError parsing %s" %  settings_file)
+                LOG.error("The traceback below will tell you which line referenced the non-existent variable\n")
             else:
-                logging.error("Error parsing %s" %  settings_file)
-                logging.error("The traceback below will tell you which line triggered the error\n")
+                LOG.error("Error parsing %s" %  settings_file)
+                LOG.error("The traceback below will tell you which line triggered the error\n")
 
             # skip the execfile part of the traceback
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -102,8 +105,8 @@ class MultiWorldParser(object):
                 else:
                     if "execfile" in l: print_rest = True
             # on windows, our traceback as no 'execfile'.  in this case, print everything
-            if print_rest: logging.error("Partial traceback:\n" + "\n".join(lines))
-            else: logging.error("Partial traceback:\n" + "\n".join(formatted_lines))
+            if print_rest: LOG.error("Partial traceback:\n" + "\n".join(lines))
+            else: LOG.error("Partial traceback:\n" + "\n".join(formatted_lines))
             sys.exit(1)
 
         # At this point, make a pass through the file to possibly set global
