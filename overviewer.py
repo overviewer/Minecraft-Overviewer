@@ -42,7 +42,7 @@ from overviewer_core import configParser, tileset, assetmanager, dispatcher
 from overviewer_core import cache
 from overviewer_core import observer
 
-LOG = logging.getLogger('overviewer')
+LOG = logging.getLogger('overviewer_core')
 
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>

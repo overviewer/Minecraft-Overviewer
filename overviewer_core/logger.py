@@ -285,14 +285,8 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
 
     """
 
-    logger = logging.getLogger('overviewer')
+    logger = logging.getLogger('overviewer_core')
     logger.setLevel(loglevel)
-
-    # because overviewer_core does not live in the same namespace as
-    # overviewer.py, we need a second logger. This allows us to use the
-    # standard ``logger.getLogger(__name__)`` where needed.
-    core_logger = logging.getLogger('overviewer_core')
-    core_logger.setLevel(loglevel)
 
     if not logger.handlers:
         # No handlers have been configure yet... (probably the first call of
@@ -321,5 +315,3 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
         err_handler.setFormatter(errformatter)
         logger.addHandler(out_handler)
         logger.addHandler(err_handler)
-        core_logger.addHandler(out_handler)
-        core_logger.addHandler(err_handler)
