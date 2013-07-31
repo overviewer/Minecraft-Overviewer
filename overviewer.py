@@ -42,6 +42,8 @@ from overviewer_core import configParser, tileset, assetmanager, dispatcher
 from overviewer_core import cache
 from overviewer_core import observer
 
+LOG = logging.getLogger('overviewer_core')
+
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
 %prog --config=<config file> [options]"""
@@ -146,14 +148,14 @@ def main():
         from overviewer_core.textures import Textures
         tex = Textures()
 
-        logging.info("Looking for a few common texture files...")
+        LOG.info("Looking for a few common texture files...")
         try:
             f = tex.find_file("assets/minecraft/textures/blocks/sandstone_top.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/blocks/grass_top.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/blocks/diamond_ore.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/blocks/planks_oak.png", verbose=True)
         except IOError:
-            logging.error("Could not find any texture files.")
+            LOG.error("Could not find any texture files.")
             return 1
 
         return 0
@@ -173,7 +175,7 @@ def main():
 
         else:
             # more helpful message for users who know what they're doing
-            logging.error("You must either specify --config or give me a world directory and output directory")
+            LOG.error("You must either specify --config or give me a world directory and output directory")
             parser.print_help()
             list_worlds()
         return 1
@@ -190,12 +192,12 @@ def main():
         print("worlds['myworld'] = %r" % args[0])
         print("outputdir = %r" % (args[1] if len(args) > 1 else "/path/to/output"))
         print()
-        logging.error("Cannot specify both --config AND a world + output directory on the command line.")
+        LOG.error("Cannot specify both --config AND a world + output directory on the command line.")
         parser.print_help()
         return 1
 
     if not options.config and len(args) < 2:
-        logging.error("You must specify both the world directory and an output directory")
+        LOG.error("You must specify both the world directory and an output directory")
         parser.print_help()
         return 1
     if not options.config and len(args) > 2:
@@ -205,10 +207,10 @@ def main():
             if not os.path.exists(args[start]):
                 for end in range(start+1, len(args)+1):
                     if os.path.exists(" ".join(args[start:end])):
-                        logging.warning("It looks like you meant to specify \"%s\" as your world dir or your output\n\
+                        LOG.warning("It looks like you meant to specify \"%s\" as your world dir or your output\n\
 dir but you forgot to put quotes around the directory, since it contains spaces." % " ".join(args[start:end]))
                         return 1
-        logging.error("Too many command line arguments")
+        LOG.error("Too many command line arguments")
         parser.print_help()
         return 1
 
@@ -220,8 +222,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     if not options.config:
         # No config file mode.
         worldpath, destdir = map(os.path.expanduser, args)
-        logging.debug("Using %r as the world directory", worldpath)
-        logging.debug("Using %r as the output directory", destdir)
+        LOG.debug("Using %r as the world directory", worldpath)
+        LOG.debug("Using %r as the output directory", destdir)
 
         mw_parser.set_config_item("worlds", {'world': worldpath})
         mw_parser.set_config_item("outputdir", destdir)
@@ -242,7 +244,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     else:
         if options.rendermodes:
-            logging.error("You cannot specify --rendermodes if you give a config file. Configure your rendermodes in the config file instead")
+            LOG.error("You cannot specify --rendermodes if you give a config file. Configure your rendermodes in the config file instead")
             parser.print_help()
             return 1
 
@@ -251,7 +253,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             mw_parser.parse(os.path.expanduser(options.config))
         except configParser.MissingConfigException as e:
             # this isn't a "bug", so don't print scary traceback
-            logging.error(str(e))
+            LOG.error(str(e))
             util.nice_exit(1)
 
     # Add in the command options here, perhaps overriding values specified in
@@ -264,16 +266,16 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         config = mw_parser.get_validated_config()
     except Exception as ex:
         if options.verbose:
-            logging.exception("An error was encountered with your configuration. See the info below.")
+            LOG.exception("An error was encountered with your configuration. See the info below.")
         else: # no need to print scary traceback! just
-            logging.error("An error was encountered with your configuration.")
-            logging.error(str(ex))
+            LOG.error("An error was encountered with your configuration.")
+            LOG.error(str(ex))
         return 1
 
     if options.check_terrain: # we are already in the "if configfile" branch
-        logging.info("Looking for a few common texture files...")
+        LOG.info("Looking for a few common texture files...")
         for render_name, render in config['renders'].iteritems():
-            logging.info("Looking at render %r", render_name)
+            LOG.info("Looking at render %r", render_name)
 
             # find or create the textures object
             texopts = util.dict_subset(render, ["texturepath"])
@@ -287,8 +289,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     ############################################################
     # Final validation steps and creation of the destination directory
-    logging.info("Welcome to Minecraft Overviewer!")
-    logging.debug("Current log level: {0}".format(logging.getLogger().level))
+    LOG.info("Welcome to Minecraft Overviewer!")
+    LOG.debug("Current log level: {0}".format(LOG.level))
 
     # Override some render configdict options depending on one-time command line
     # modifiers
@@ -297,26 +299,26 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             bool(options.checktiles) +
             bool(options.notilechecks)
             ) > 1:
-        logging.error("You cannot specify more than one of --forcerender, "+
+        LOG.error("You cannot specify more than one of --forcerender, "+
         "--check-tiles, and --no-tile-checks. These options conflict.")
         parser.print_help()
         return 1
     if options.forcerender:
-        logging.info("Forcerender mode activated. ALL tiles will be rendered")
+        LOG.info("Forcerender mode activated. ALL tiles will be rendered")
         for render in config['renders'].itervalues():
             render['renderchecks'] = 2
     elif options.checktiles:
-        logging.info("Checking all tiles for updates manually.")
+        LOG.info("Checking all tiles for updates manually.")
         for render in config['renders'].itervalues():
             render['renderchecks'] = 1
     elif options.notilechecks:
-        logging.info("Disabling all tile mtime checks. Only rendering tiles "+
+        LOG.info("Disabling all tile mtime checks. Only rendering tiles "+
         "that need updating since last render")
         for render in config['renders'].itervalues():
             render['renderchecks'] = 0
 
     if not config['renders']:
-        logging.error("You must specify at least one render in your config file. See the docs if you're having trouble")
+        LOG.error("You must specify at least one render in your config file. See the docs if you're having trouble")
         return 1
 
     #####################
@@ -327,7 +329,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         try:
             worldpath = config['worlds'][render['world']]
         except KeyError:
-            logging.error("Render %s's world is '%s', but I could not find a corresponding entry in the worlds dictionary.",
+            LOG.error("Render %s's world is '%s', but I could not find a corresponding entry in the worlds dictionary.",
                     rname, render['world'])
             return 1
         render['worldname_orig'] = render['world']
@@ -344,23 +346,23 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
                     try:
                         renderLink = config['renders'][x]
                     except KeyError:
-                        logging.error("Render %s's overlay is '%s', but I could not find a corresponding entry in the renders dictionary.",
+                        LOG.error("Render %s's overlay is '%s', but I could not find a corresponding entry in the renders dictionary.",
                                 rname, x)
                         return 1
                 else:
-                    logging.error("Render %s's overlay contains itself.", rname)
+                    LOG.error("Render %s's overlay contains itself.", rname)
                     return 1
 
     destdir = config['outputdir']
     if not destdir:
-        logging.error("You must specify the output directory in your config file.")
-        logging.error("e.g. outputdir = '/path/to/outputdir'")
+        LOG.error("You must specify the output directory in your config file.")
+        LOG.error("e.g. outputdir = '/path/to/outputdir'")
         return 1
     if not os.path.exists(destdir):
         try:
             os.mkdir(destdir)
         except OSError:
-            logging.exception("Could not create the output directory.")
+            LOG.exception("Could not create the output directory.")
             return 1
 
     ########################################################################
@@ -372,7 +374,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # If we've been asked to update web assets, do that and then exit 
     if options.update_web_assets:
         assetMrg.output_noconfig()
-        logging.info("Web assets have been updated")
+        LOG.info("Web assets have been updated")
         return 0
 
     # The changelist support.
@@ -382,7 +384,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             path = render['changelist']
             if path not in changelists:
                 out = open(path, "w")
-                logging.debug("Opening changelist %s (%s)", out, out.fileno())
+                LOG.debug("Opening changelist %s (%s)", out, out.fileno())
                 changelists[path] = out
             else:
                 out = changelists[path]
@@ -404,7 +406,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     renders = config['renders']
     for render_name, render in renders.iteritems():
-        logging.debug("Found the following render thing: %r", render)
+        LOG.debug("Found the following render thing: %r", render)
 
         # find or create the world object
         try:
@@ -424,13 +426,13 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             tex = texcache[texopts_key]
     
         try:
-            logging.debug("Asking for regionset %r" % render['dimension'][1])
+            LOG.debug("Asking for regionset %r" % render['dimension'][1])
             rset = w.get_regionset(render['dimension'][1])
         except IndexError:
-            logging.error("Sorry, I can't find anything to render!  Are you sure there are .mca files in the world directory?")
+            LOG.error("Sorry, I can't find anything to render!  Are you sure there are .mca files in the world directory?")
             return 1
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
+            LOG.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
             return 1
 
         #################
@@ -450,7 +452,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         # object
         if (render['northdirection'] > 0):
             rset = world.RotatedRegionSet(rset, render['northdirection'])
-        logging.debug("Using RegionSet %r", rset)
+        LOG.debug("Using RegionSet %r", rset)
 
         ###############################
         # Do the final prep and create the TileSet object
@@ -484,13 +486,13 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     assetMrg.finalize(tilesets)
 
     for out in changelists.itervalues():
-        logging.debug("Closing %s (%s)", out, out.fileno())
+        LOG.debug("Closing %s (%s)", out, out.fileno())
         out.close()
 
     if config['processes'] == 1:
-        logging.debug("Final cache stats:")
+        LOG.debug("Final cache stats:")
         for c in caches:
-            logging.debug("\t%s: %s hits, %s misses", c.__class__.__name__, c.hits, c.misses)
+            LOG.debug("\t%s: %s hits, %s misses", c.__class__.__name__, c.hits, c.misses)
 
     return 0
 
@@ -533,10 +535,10 @@ if __name__ == "__main__":
         util.nice_exit(ret)
     except textures.TextureException as e:
         # this isn't a "bug", so don't print scary traceback
-        logging.error(str(e))
+        LOG.error(str(e))
         util.nice_exit(1)
     except Exception as e:
-        logging.exception("""An error has occurred. This may be a bug. Please let us know!
+        LOG.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
 
 This is the error that occurred:""")
