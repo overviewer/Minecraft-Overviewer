@@ -59,6 +59,10 @@ class Textures(object):
 
         # see load_image_texture()
         self.texture_cache = {}
+
+        # once we find a jarfile that contains a texture, we cache the ZipFile object here
+        self.jar = None
+        self.jarpath = ""
     
     ##
     ## pickle support
@@ -153,6 +157,17 @@ class Textures(object):
                 if os.path.isfile(path):
                     return path
             return None
+
+        # we've sucessfully loaded something from here before, so let's quickly try
+        # this before searching again
+        if self.jar is not None:
+            for jarfilename in search_zip_paths:
+                try:
+                    self.jar.getinfo(jarfilename)
+                    if verbose: logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
+                    return self.jar.open(jarfilename)
+                except (KeyError, IOError), e:
+                    pass
 
         # A texture path was given on the command line. Search this location
         # for the file first.
@@ -255,6 +270,7 @@ class Textures(object):
                     try:
                         jar.getinfo(jarfilename)
                         if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
+                        self.jar, self.jarpath = jar, jarpath
                         return jar.open(jarfilename)
                     except (KeyError, IOError), e:
                         pass
@@ -286,8 +302,6 @@ class Textures(object):
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
         # This method will always return a 16x16 image
-        if filename in self.texture_cache:
-            return self.texture_cache[filename]
 
         img = self.load_image(filename)
 
@@ -302,11 +316,14 @@ class Textures(object):
 
     def load_image(self, filename):
         """Returns an image object"""
-        
 
+        if filename in self.texture_cache:
+            return self.texture_cache[filename]
+        
         fileobj = self.find_file(filename)
         buffer = StringIO(fileobj.read())
         img = Image.open(buffer).convert("RGBA")
+        self.texture_cache[filename] = img
         return img
 
 
