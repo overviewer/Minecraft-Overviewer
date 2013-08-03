@@ -50,6 +50,8 @@ HIGHLIGHT = {
     'WARNING': YELLOW,
 }
 
+LOG = logging.getLogger(__name__)
+
 
 class InverseLevelFilter(object):
     """
@@ -287,13 +289,20 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
 
     logger = logging.getLogger('overviewer_core')
     logger.setLevel(loglevel)
+    is_windows = platform.system() == 'Windows'
+    outstream = sys.stdout
+    errstream = sys.stderr
+
+    if (is_windows or outstream.isatty()) and not simple:
+        # Our custom output stream processor knows how to deal with select
+        # ANSI color escape sequences
+        errformatter = ANSIColorFormatter(verbose)
+        outformatter = ANSIColorFormatter(verbose)
+
 
     if not logger.handlers:
         # No handlers have been configure yet... (probably the first call of
         # logger.configure)
-        is_windows = platform.system() == 'Windows'
-        outstream = sys.stdout
-        errstream = sys.stderr
         errformatter = DumbFormatter(verbose)
         outformatter = DumbFormatter(verbose)
 
@@ -301,17 +310,21 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
             outstream = WindowsOutputStream(outstream)
             errstream = WindowsOutputStream(errstream)
 
-        if (is_windows or outstream.isatty()) and not simple:
-            # Our custom output stream processor knows how to deal with select
-            # ANSI color escape sequences
-            errformatter = ANSIColorFormatter(verbose)
-            outformatter = ANSIColorFormatter(verbose)
-
         out_handler = logging.StreamHandler(outstream)
-        out_handler.setFormatter(outformatter)
         out_handler.addFilter(InverseLevelFilter(max_level=logging.WARN))
+        out_handler.set_name('overviewer_stdout_handler')
         err_handler = logging.StreamHandler(errstream)
+        err_handler.set_name('overviewer_stderr_handler')
         err_handler.setLevel(logging.WARN)
-        err_handler.setFormatter(errformatter)
         logger.addHandler(out_handler)
         logger.addHandler(err_handler)
+
+    try:
+        out_handler = logging._handlers['overviewer_stdout_handler']
+        err_handler = logging._handlers['overviewer_stderr_handler']
+        out_handler.setFormatter(outformatter)
+        err_handler.setFormatter(errformatter)
+        out_handler.setLevel(loglevel)
+    except KeyError as exc:
+        LOG.warn('Unable to change log handler format '
+                 '(KeyError for {0})'.format(exc))
