@@ -55,6 +55,16 @@ directory.
             logging.debug(traceback.format_exc())
             self.overviewerConfig = dict(tilesets=dict())
 
+        # Make sure python knows the preferred encoding. If it does not, set it
+        # to utf-8"
+        self.preferredencoding = locale.getpreferredencoding()
+        try:
+            # We don't care what is returned, just that we can get a codec.
+            codecs.lookup(self.preferredencoding)
+        except LookupError:
+            self.preferredencoding = "utf_8"
+        logging.debug("Preferred enoding set to: %s", self.preferredencoding)
+
     def get_tileset_config(self, name):
         "Return the correct dictionary from the parsed overviewerConfig.js"
         for conf in self.overviewerConfig['tilesets']:
@@ -185,7 +195,7 @@ directory.
 
         index = codecs.open(indexpath, 'r', encoding='UTF-8').read()
         index = index.replace("{title}", "Minecraft Overviewer")
-        index = index.replace("{time}", time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime()).decode(locale.getpreferredencoding()))
+        index = index.replace("{time}", time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime()).decode(self.preferredencoding))
         versionstr = "%s (%s)" % (util.findGitVersion(), util.findGitHash()[:7])
         index = index.replace("{version}", versionstr)
 
