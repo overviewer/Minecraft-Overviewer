@@ -292,6 +292,8 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
     is_windows = platform.system() == 'Windows'
     outstream = sys.stdout
     errstream = sys.stderr
+    errformatter = DumbFormatter(verbose)
+    outformatter = DumbFormatter(verbose)
 
     if (is_windows or outstream.isatty()) and not simple:
         # Our custom output stream processor knows how to deal with select
@@ -303,8 +305,6 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
     if not logger.handlers:
         # No handlers have been configure yet... (probably the first call of
         # logger.configure)
-        errformatter = DumbFormatter(verbose)
-        outformatter = DumbFormatter(verbose)
 
         if is_windows:
             outstream = WindowsOutputStream(outstream)
