@@ -3,7 +3,6 @@ import os
 import os.path
 from collections import namedtuple
 
-import rendermodes
 import util
 from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
 
@@ -80,26 +79,7 @@ def validateWorldPath(worldpath):
 
 
 def validateRenderMode(mode):
-    # make sure that mode is a list of things that are all rendermode primative
-    if isinstance(mode, str):
-        # Try and find an item named "mode" in the rendermodes module
-        mode = mode.lower().replace("-","_")
-        try:
-            mode = getattr(rendermodes, mode)
-        except AttributeError:
-            raise ValidationException("You must specify a valid rendermode, not '%s'. See the docs for valid rendermodes." % mode)
-
-    if isinstance(mode, rendermodes.RenderPrimitive):
-        mode = [mode]
-
-    if not isinstance(mode, list):
-        raise ValidationException("%r is not a valid list of rendermodes.  It should be a list"% mode)
-
-    for m in mode:
-        if not isinstance(m, rendermodes.RenderPrimitive):
-            raise ValidationException("%r is not a valid rendermode primitive." % m)
-
-
+    # FIXME: for OIL
     return mode
 
 def validateNorthDirection(direction):

@@ -37,7 +37,7 @@ from optparse import OptionParser, OptionGroup
 from overviewer_core import util
 from overviewer_core import logger
 from overviewer_core import textures
-from overviewer_core import optimizeimages, world
+from overviewer_core import world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
 from overviewer_core import isometricrenderer, blockdefinitions
 from overviewer_core import cache

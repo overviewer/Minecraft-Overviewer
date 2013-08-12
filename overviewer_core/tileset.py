@@ -32,8 +32,6 @@ from .util import roundrobin
 from .canvas import Canvas
 from . import nbt
 from .files import FileReplacer
-from .optimizeimages import optimize_image
-from . import rendermodes
 
 """
 
@@ -205,13 +203,6 @@ class TileSet(Canvas):
             An integer 1-100 indicating the quality of the jpeg output. Only
             relevant in jpeg mode.
 
-        optimizeimg
-            an integer indiating optimizations to perform on png outputs. 0
-            indicates no optimizations. Only relevant in png mode.
-            1 indicates pngcrush is run on all output images
-            2 indicates pngcrush and advdef are run on all output images with advdef -z2
-            3 indicates pngcrush and advdef are run on all output images with advdef -z4
-        
         rendermode
             used to decide if this is an overlay or not.
 
@@ -474,7 +465,8 @@ class TileSet(Canvas):
         """
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
-        isOverlay = self.options.get("overlay") or (not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode")))
+        # FIXME for OIL
+        isOverlay = self.options.get("overlay", False)
         
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
@@ -794,9 +786,6 @@ class TileSet(Canvas):
             else: # png
                 img.save(tmppath)
 
-            if self.options['optimizeimg']:
-                optimize_image(tmppath, imgformat, self.options['optimizeimg'])
-
             os.utime(tmppath, (max_mtime, max_mtime))
 
     def _render_rendertile(self, tile):
@@ -847,9 +836,6 @@ class TileSet(Canvas):
                 assert False # FIXME OIL does not support jpg yet
             else: # png
                 tileimg.save(tmppath)
-
-            if self.options['optimizeimg']:
-                optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])
 
             os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))
 
