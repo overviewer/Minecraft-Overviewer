@@ -28,6 +28,10 @@ overviewer_core/chunkrenderer.so
 overviewer_core/chunkrenderer.pyd
 overviewer_core/chunkrenderer_d.pyd
 overviewer_core/chunkrenderer.dylib
+overviewer_core/oil.so
+overviewer_core/oil.pyd
+overviewer_core/oil.pyd
+overviewer_core/oil.dylib
 
 # generated files
 overviewer_core/overviewer_version.py
