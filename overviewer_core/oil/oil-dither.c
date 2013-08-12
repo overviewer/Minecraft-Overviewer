@@ -57,8 +57,12 @@ static inline void oil_color_search_free(ColorSearchTable *table) {
         for (g = 0; g < COLOR_SEARCH_BINS; g++) {
             for (b = 0; b < COLOR_SEARCH_BINS; b++) {
                 for (a = 0; a < COLOR_SEARCH_BINS; a++) {
-                    if (table->subpalettes[r][g][b][a].colors)
-                        free(table->subpalettes[r][g][b][a].colors);
+                    PixelList *colors = table->subpalettes[r][g][b][a].colors;
+                    while (colors) {
+                        PixelList *next = colors->next;
+                        free(colors);
+                        colors = next;
+                    }
                 }
             }
         }
