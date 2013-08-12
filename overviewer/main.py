@@ -34,15 +34,15 @@ import time
 import logging
 from optparse import OptionParser, OptionGroup
 
-from overviewer_core import util
-from overviewer_core import logger
-from overviewer_core import textures
-from overviewer_core import world
-from overviewer_core import configParser, tileset, assetmanager, dispatcher
-from overviewer_core import isometricrenderer, blockdefinitions
-from overviewer_core import cache
-from overviewer_core import observer
-from overviewer_core.oil import Matrix
+from overviewer import util
+from overviewer import logger
+from overviewer import textures
+from overviewer import world
+from overviewer import configParser, tileset, assetmanager, dispatcher
+from overviewer import isometricrenderer, blockdefinitions
+from overviewer import cache
+from overviewer import observer
+from overviewer.oil import Matrix
 
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
@@ -111,7 +111,7 @@ def main():
         # remove the "--genpoi" option from sys.argv before running genPI
         sys.argv.remove("--genpoi")
         #sys.path.append(".")
-        g = __import__("overviewer_core.aux_files", {}, {}, ["genPOI"])
+        g = __import__("overviewer.aux_files", {}, {}, ["genPOI"])
         g.genPOI.main()
         return 0
     if options.help:
@@ -130,7 +130,7 @@ def main():
         print "Minecraft Overviewer %s" % util.findGitVersion(),
         print "(%s)" % util.findGitHash()[:7]
         try:
-            import overviewer_core.overviewer_version as overviewer_version
+            import overviewer.overviewer_version as overviewer_version
             print "built on %s" % overviewer_version.BUILD_DATE
             if options.verbose > 0:
                 print "Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS)
@@ -140,7 +140,7 @@ def main():
 
     if options.check_terrain:
         import hashlib
-        from overviewer_core.textures import Textures
+        from overviewer.textures import Textures
         # TODO custom textures path?
         tex = Textures()
 

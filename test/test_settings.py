@@ -1,10 +1,10 @@
 import unittest
 
-from overviewer_core import configParser
-from overviewer_core.settingsValidators import ValidationException
+from overviewer import configParser
+from overviewer.settingsValidators import ValidationException
 
-from overviewer_core import world
-from overviewer_core import rendermodes
+from overviewer import world
+from overviewer import rendermodes
 
 class SettingsTest(unittest.TestCase):
     

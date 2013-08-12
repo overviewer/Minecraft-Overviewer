@@ -7,11 +7,11 @@ import sys
 import os.path
 import ast
 
-# incantation to be able to import overviewer_core
+# incantation to be able to import overviewer
 if not hasattr(sys, "frozen"):
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '.')))
 
-from overviewer_core import nbt
+from overviewer import nbt
 
 scripts=dict( # keys are names, values are scripts
         clearOldCache   = "clearOldCache.py",

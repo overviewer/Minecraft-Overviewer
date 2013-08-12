@@ -172,7 +172,7 @@ Config File Specifications
 The config file is a python file and is parsed with python's execfile() builtin.
 This means you can put arbitrary logic in this file. The Overviewer gives the
 execution of the file a local dict with a few pre-defined items (everything in
-the overviewer_core.rendermodes module).
+the overviewer.rendermodes module).
 
 If the above doesn't make sense, just know that items in the config file take
 the form ``key = value``. Two items take a different form:, ``worlds`` and
@@ -675,7 +675,7 @@ primitives have options you can change. You are free to create your own
 rendermodes by defining a list of rendermode primitives.
 
 There are 9 rendermode primitives. Each has a helper class defined in
-overviewer_core.rendermodes, and a section of C code in the C extension.
+overviewer.rendermodes, and a section of C code in the C extension.
 
 A list of rendermode primitives defines a rendermode. During rendering, each
 rendermode primitive is applied in sequence. For example, the lighting
@@ -855,7 +855,7 @@ Defining Custom Rendermodes
 ---------------------------
 Each rendermode primitive listed above is a Python *class* that is automatically
 imported in the context of the config file (They come from
-overviewer_core.rendermodes). To define your own rendermode, simply define a
+overviewer.rendermodes). To define your own rendermode, simply define a
 list of rendermode primitive *objects* like so::
 
     my_rendermode = [Base(), EdgeLines(), SmoothLighting()]

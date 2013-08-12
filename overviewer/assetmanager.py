@@ -148,7 +148,7 @@ directory.
     def output_noconfig(self):
 
         # copy web assets into destdir:
-        global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
+        global_assets = os.path.join(util.get_program_path(), "overviewer", "data", "web_assets")
         if not os.path.isdir(global_assets):
             global_assets = os.path.join(util.get_program_path(), "web_assets")
         mirror_dir(global_assets, self.outputdir)
@@ -165,7 +165,7 @@ directory.
 
 
         # create overviewer.js from the source js files
-        js_src = os.path.join(util.get_program_path(), "overviewer_core", "data", "js_src")
+        js_src = os.path.join(util.get_program_path(), "overviewer", "data", "js_src")
         if not os.path.isdir(js_src):
             js_src = os.path.join(util.get_program_path(), "js_src")
         with FileReplacer(os.path.join(self.outputdir, "overviewer.js")) as tmpfile:

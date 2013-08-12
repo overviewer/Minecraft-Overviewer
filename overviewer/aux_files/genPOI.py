@@ -20,9 +20,9 @@ import json
 import sys
 from optparse import OptionParser
 
-from overviewer_core import logger
-from overviewer_core import nbt
-from overviewer_core import configParser, world
+from overviewer import logger
+from overviewer import nbt
+from overviewer import configParser, world
 
 def replaceBads(s):
     "Replaces bad characters with good characters!"

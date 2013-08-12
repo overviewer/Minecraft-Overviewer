@@ -112,7 +112,7 @@ appropriate perspective.
     the blocks in Minecraft. There are lots of irregular blocks that aren't
     cubes (fences, torches, doors) which require custom rendering. Irregular
     blocks are not covered by this design document. Each type of block has its
-    own function in :mod:`overviewer_core.textures` that defines how to render
+    own function in :mod:`overviewer.textures` that defines how to render
     it.
 
 .. image:: blockrendering/texturecubing.png
@@ -143,7 +143,7 @@ transformations can be chained together simply by multiplying the transformation
 matrices together, only one transformation is actually done.
 
 This can be seen in the function
-:func:`overviewer_core.textures.transform_image`. It performs three steps:
+:func:`overviewer.textures.transform_image`. It performs three steps:
 
 1. The texture is re-sized to 17 by 17 pixels. This is done because the diagonal
    of a square with sides 17 is approximately 24, which is the target size for

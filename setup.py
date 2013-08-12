@@ -14,7 +14,7 @@ import sys, os, os.path
 import glob
 import platform
 import time
-import overviewer_core.util as util
+import overviewer.util as util
 import numpy
 
 try:
@@ -83,7 +83,7 @@ def recursive_data_files(src, dest=None):
     return ret
 
 # helper to create a 'package_data'-type sequence recursively for a given dir
-def recursive_package_data(src, package_dir='overviewer_core'):
+def recursive_package_data(src, package_dir='overviewer'):
     full_src = os.path.join(package_dir, src)
     ret = []
     for dirpath, dirnames, filenames in os.walk(full_src, topdown=False):
@@ -102,10 +102,10 @@ if py2exe is not None:
     # py2exe likes a very particular type of version number:
     setup_kwargs['version'] = util.findGitVersion().replace("-",".")
 
-    setup_kwargs['console'] = ['overviewer.py', 'contribManager.py']
+    setup_kwargs['console'] = ['contribManager.py']
     setup_kwargs['data_files'] = [('', doc_files)]
-    setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/web_assets', 'web_assets')
-    setup_kwargs['data_files'] += recursive_data_files('overviewer_core/data/js_src', 'js_src')
+    setup_kwargs['data_files'] += recursive_data_files('overviewer/data/web_assets', 'web_assets')
+    setup_kwargs['data_files'] += recursive_data_files('overviewer/data/js_src', 'js_src')
     setup_kwargs['data_files'] += recursive_data_files('contrib', 'contrib')
     setup_kwargs['zipfile'] = None
     if platform.system() == 'Windows' and '64bit' in platform.architecture():
@@ -113,24 +113,24 @@ if py2exe is not None:
     else:
         b = 1
     setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter', 'includes':
-        ['fileinput', 'overviewer_core.aux_files.genPOI']}
+        ['fileinput', 'overviewer.aux_files.genPOI']}
 
 #
 # py2app options
 #
 
-if py2app is not None:
-    setup_kwargs['app'] = ['overviewer.py']
-    setup_kwargs['options']['py2app'] = {'argv_emulation' : False}
-    setup_kwargs['setup_requires'] = ['py2app']
+#if py2app is not None:
+#    setup_kwargs['app'] = ['overviewer.py']
+#    setup_kwargs['options']['py2app'] = {'argv_emulation' : False}
+#    setup_kwargs['setup_requires'] = ['py2app']
 
 #
 # script, package, and data
 #
 
-setup_kwargs['packages'] = ['overviewer_core', 'overviewer_core/aux_files']
-setup_kwargs['scripts'] = ['overviewer.py']
-setup_kwargs['package_data'] = {'overviewer_core': recursive_package_data('data/web_assets') + recursive_package_data('data/js_src')}
+setup_kwargs['packages'] = ['overviewer', 'overviewer/aux_files']
+setup_kwargs['scripts'] = []
+setup_kwargs['package_data'] = {'overviewer': recursive_package_data('data/web_assets') + recursive_package_data('data/js_src')}
 
 if py2exe is None:
     setup_kwargs['data_files'] = [('share/doc/minecraft-overviewer', doc_files)]
@@ -166,9 +166,9 @@ oil_includes = [
     "oil-backend-cpu.def",
 ]
 
-oil_files = ['overviewer_core/oil/' + s for s in oil_files]
-oil_includes = ['overviewer_core/oil/' + s for s in oil_includes]
-setup_kwargs['ext_modules'].append(Extension('overviewer_core.oil', oil_files, depends=oil_includes, libraries=['png']))
+oil_files = ['overviewer/oil/' + s for s in oil_files]
+oil_includes = ['overviewer/oil/' + s for s in oil_includes]
+setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depends=oil_includes, libraries=['png']))
 
 # chunkrenderer extension
 try:
@@ -179,11 +179,11 @@ except AttributeError:
 chunkrenderer_files = ['chunkrenderer.c']
 chunkrenderer_includes = []
 
-chunkrenderer_files = ['overviewer_core/chunkrenderer/' + s for s in chunkrenderer_files]
-chunkrenderer_includes = ['overviewer_core/chunkrenderer/' + s for s in chunkrenderer_includes]
+chunkrenderer_files = ['overviewer/chunkrenderer/' + s for s in chunkrenderer_files]
+chunkrenderer_includes = ['overviewer/chunkrenderer/' + s for s in chunkrenderer_includes]
 
 # todo: better oil handling!
-setup_kwargs['ext_modules'].append(Extension('overviewer_core.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include, 'overviewer_core/oil'], depends=chunkrenderer_includes, extra_objects=['overviewer_core/oil.so']))
+setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include, 'overviewer/oil'], depends=chunkrenderer_includes, extra_objects=['overviewer/oil.so']))
 
 
 # tell build_ext to build the extension in-place
@@ -200,9 +200,9 @@ class CustomClean(clean):
         # try to remove '_composite.{so,pyd,...}' extension,
         # regardless of the current system's extension name convention
         build_ext = self.get_finalized_command('build_ext')
-        ext_fname = build_ext.get_ext_filename('overviewer_core.chunkrenderer')
-        oil_fname = build_ext.get_ext_filename('overviewer_core.oil')
-        versionpath = os.path.join("overviewer_core", "overviewer_version.py")
+        ext_fname = build_ext.get_ext_filename('overviewer.chunkrenderer')
+        oil_fname = build_ext.get_ext_filename('overviewer.oil')
+        versionpath = os.path.join("overviewer", "overviewer_version.py")
 
         for fname in [ext_fname, oil_fname]:
             if os.path.exists(fname):
@@ -235,7 +235,7 @@ def generate_version_py():
         outstr += "BUILD_DATE=%r\n" % time.asctime()
         outstr += "BUILD_PLATFORM=%r\n" % platform.processor()
         outstr += "BUILD_OS=%r\n" % platform.platform()
-        f = open("overviewer_core/overviewer_version.py", "w")
+        f = open("overviewer/overviewer_version.py", "w")
         f.write(outstr)
         f.close()
     except Exception:
@@ -297,9 +297,9 @@ class CustomBuildExt(build_ext):
                 e.libraries.append("GLEW")
 
         # build in place, and in the build/ tree
-        self.inplace = False
-        build_ext.build_extensions(self)
         self.inplace = True
+        build_ext.build_extensions(self)
+        self.inplace = False
         build_ext.build_extensions(self)
 
 

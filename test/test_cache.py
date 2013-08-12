@@ -1,6 +1,6 @@
 import unittest
 
-from overviewer_core import cache
+from overviewer import cache
 
 class TestLRU(unittest.TestCase):
 

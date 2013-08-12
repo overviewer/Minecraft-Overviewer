@@ -20,22 +20,17 @@ ImPlatform.h
 Imaging.h
 
 # various forms of compiled c_overviewer extensions
-overviewer_core/c_overviewer.so
-overviewer_core/c_overviewer.pyd
-overviewer_core/c_overviewer_d.pyd
-overviewer_core/c_overviewer.dylib
-overviewer_core/chunkrenderer.so
-overviewer_core/chunkrenderer.pyd
-overviewer_core/chunkrenderer_d.pyd
-overviewer_core/chunkrenderer.dylib
-overviewer_core/oil.so
-overviewer_core/oil.pyd
-overviewer_core/oil.pyd
-overviewer_core/oil.dylib
+overviewer/chunkrenderer.so
+overviewer/chunkrenderer.pyd
+overviewer/chunkrenderer_d.pyd
+overviewer/chunkrenderer.dylib
+overviewer/oil.so
+overviewer/oil.pyd
+overviewer/oil.pyd
+overviewer/oil.dylib
 
 # generated files
-overviewer_core/overviewer_version.py
-overviewer_core/src/primitives.h
+overviewer/overviewer_version.py
 
 # Mac OS X noise
 .DS_Store

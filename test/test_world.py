@@ -2,7 +2,7 @@ import unittest
 
 import os
 
-from overviewer_core import world
+from overviewer import world
 
 class ExampleWorldTest(unittest.TestCase):
     @classmethod

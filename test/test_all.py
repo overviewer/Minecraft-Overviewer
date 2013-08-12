@@ -26,7 +26,7 @@ if 0:
             self.lock = None
     root.addHandler(NullHandler())
 else:
-    from overviewer_core import logger
+    from overviewer import logger
     logger.configure(logging.DEBUG, True)
 
 

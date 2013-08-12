@@ -6,7 +6,7 @@ import os
 import os.path
 import random
 
-from overviewer_core import tileset
+from overviewer import tileset
 
 # Supporing data
 # chunks list: chunkx, chunkz mapping to chunkmtime

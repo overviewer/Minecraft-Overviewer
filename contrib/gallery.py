@@ -2,7 +2,7 @@
 Outputs a huge image with all currently-supported block textures.
 """
 
-from overviewer_core import textures
+from overviewer import textures
 import sys
 import Image
 

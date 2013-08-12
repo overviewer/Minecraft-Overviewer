@@ -17,12 +17,12 @@ import sys
 import re
 import os.path
 
-# incantation to be able to import overviewer_core
+# incantation to be able to import overviewer
 if not hasattr(sys, "frozen"):
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '..')))
 
-from overviewer_core import world
-from overviewer import list_worlds
+from overviewer import world
+from overviewer.main import list_worlds
 
 def main():
     parser = OptionParser(usage=usage, description=description)
