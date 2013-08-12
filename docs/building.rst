@@ -81,6 +81,10 @@ Building with mingw
 4. Build::
 
     python setup.py build --compiler=mingw32
+    
+If the build fails with complaints about ``-mno-cygwin``, open the file ``Lib/distutils/cygwincompiler.py``
+in an editor of your choice, and remove all mentions of ``-mno-cygwin``. This is a bug in distutils,
+filed as `Issue 12641 <http://bugs.python.org/issue12641>`_. 
 
 
 Linux
