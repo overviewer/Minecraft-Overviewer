@@ -220,7 +220,7 @@ class Textures(object):
         versiondir = None
         if "APPDATA" in os.environ and sys.platform.startswith("win"):
             versiondir = os.path.join(os.environ['APPDATA'], ".minecraft", "versions")
-        if "HOME" in os.environ:
+        elif "HOME" in os.environ:
             # For linux:
             versiondir = os.path.join(os.environ['HOME'], ".minecraft", "versions")
             if not os.path.exists(versiondir) and sys.platform.startswith("darwin"):
