@@ -1,0 +1,17 @@
+#ifndef BACKEND
+#error oil-backends.def was included without BACKEND(name, symbol) defined
+#endif
+
+/* built-in backends */
+BACKEND(CPU, oil_backend_cpu)
+BACKEND(DEBUG, oil_backend_debug)
+
+/* optional backends */
+
+#ifdef ENABLE_CPU_SSE_BACKEND
+BACKEND(CPU_SSE, oil_backend_cpu_sse)
+#endif /* ENABLE_CPU_SSE_BACKEND */
+
+#ifdef ENABLE_OPENGL_BACKEND
+BACKEND(OPENGL, oil_backend_opengl)
+#endif /* ENABLE_OPENGL_BACKEND */
