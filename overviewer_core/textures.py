@@ -18,7 +18,7 @@ import os
 import logging
 import zipfile
 
-import OIL
+from .oil import Image
 
 """
 This file contains the Textures class, which is responsible for
@@ -78,10 +78,10 @@ class Textures(object):
         if filename in self.cache:
             return self.cache[filename]
         
-        img = OIL.Image.load(self._find_file(filename))
+        img = Image.load(self._find_file(filename))
         w, h = img.size
         if w != h:
-            dest = OIL.Image(w, w)
+            dest = Image(w, w)
             dest.composite(img, 255, 0, 0)
             img = dest
         

@@ -175,6 +175,41 @@ c_overviewer_includes = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_inc
 
 setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
 
+# oil extension
+#
+# STILL TODO: verify libpng is present
+#
+
+oil_files = [
+    "oil-python.c",
+    "oil-matrix.c",
+    "oil-image.c",
+    "oil-format.c",
+    "oil-format-png.c",
+    "oil-palette.c",
+    "oil-dither.c",
+    "oil-backend.c",
+    "oil-backend-cpu.c",
+    "oil-backend-debug.c",
+    "oil-backend-cpu-sse.c",
+    "oil-backend-opengl.c",
+]
+
+oil_includes = [
+    "oil.h",
+    "oil-python.h",
+    "oil-dither-private.h",
+    "oil-format-private.h",
+    "oil-image-private.h",
+    "oil-palette-private.h",
+    "oil-backend-private.h",
+    "oil-backend-cpu.def",
+]
+
+oil_files = ['overviewer_core/oil/' + s for s in oil_files]
+oil_includes = ['overviewer_core/oil/' + s for s in oil_includes]
+setup_kwargs['ext_modules'].append(Extension('overviewer_core.oil', oil_files, depends=oil_includes, libraries=['png']))
+
 # chunkrenderer extension
 chunkrenderer_files = ['chunkrenderer.c']
 chunkrenderer_includes = []
@@ -182,8 +217,8 @@ chunkrenderer_includes = []
 chunkrenderer_files = ['overviewer_core/chunkrenderer/' + s for s in chunkrenderer_files]
 chunkrenderer_includes = ['overviewer_core/chunkrenderer/' + s for s in chunkrenderer_includes]
 
-import OIL
-setup_kwargs['ext_modules'].append(Extension('overviewer_core.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include] + pil_include, depends=chunkrenderer_includes, extra_objects=[OIL.__file__]))
+# todo: better oil handling!
+setup_kwargs['ext_modules'].append(Extension('overviewer_core.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include, 'overviewer_core/oil'], depends=chunkrenderer_includes, extra_objects=['overviewer_core/oil.so']))
 
 
 # tell build_ext to build the extension in-place
@@ -202,10 +237,11 @@ class CustomClean(clean):
         build_ext = self.get_finalized_command('build_ext')
         ext_fname = build_ext.get_ext_filename('overviewer_core.c_overviewer')
         next_fname = build_ext.get_ext_filename('overviewer_core.chunkrenderer')
+        oil_fname = build_ext.get_ext_filename('overviewer_core.oil')
         versionpath = os.path.join("overviewer_core", "overviewer_version.py")
         primspath = os.path.join("overviewer_core", "src", "primitives.h")
 
-        for fname in [ext_fname, next_fname, primspath]:
+        for fname in [ext_fname, next_fname, oil_fname, primspath]:
             if os.path.exists(fname):
                 try:
                     log.info("removing '%s'", fname)
@@ -274,6 +310,16 @@ class CustomBuild(build):
         print "\nBuild Complete"
 
 class CustomBuildExt(build_ext):
+    user_options = build_ext.user_options + [
+        ('with-sse', None, "build with SSE CPU backend"),
+        ('with-opengl', None, "build with OpenGL GPU backend"),
+    ]
+
+    def initialize_options(self):
+        self.with_sse = False
+        self.with_opengl = False
+        build_ext.initialize_options(self)
+    
     def build_extensions(self):
         c = self.compiler.compiler_type
         if c == "msvc":
@@ -283,13 +329,27 @@ class CustomBuildExt(build_ext):
         if c == "unix":
             # customize the build options for this compilier
             for e in self.extensions:
-                e.extra_compile_args.append("-Wno-unused-variable") # quell some annoying warnings
-                e.extra_compile_args.append("-Wno-unused-function") # quell some annoying warnings
+                # optimizations
+                e.extra_compile_args.append("-ffast-math")
+                e.extra_compile_args.append("-O2")
+                
+                # warnings and errors (quality control \o/)
+                e.extra_compile_args.append("-Wno-unused-variable")
+                e.extra_compile_args.append("-Wno-unused-function")
                 e.extra_compile_args.append("-Wdeclaration-after-statement")
                 p = platform.linux_distribution()
                 if not (p[0] == 'CentOS' and p[1][0] == '5'):
                     e.extra_compile_args.append("-Werror=declaration-after-statement")
 
+        # various optional features
+        for e in self.extensions:
+            if self.with_sse:
+                e.define_macros.append(("ENABLE_CPU_SSE_BACKEND", None))
+            if self.with_opengl:
+                e.define_macros.append(("ENABLE_OPENGL_BACKEND", None))
+                e.libraries.append("X11")
+                e.libraries.append("GL")
+                e.libraries.append("GLEW")
 
         # build in place, and in the build/ tree
         self.inplace = False

@@ -27,8 +27,7 @@ import stat
 from collections import namedtuple
 from itertools import product, izip
 
-from OIL import Image
-
+from .oil import Image
 from .util import roundrobin
 from .canvas import Canvas
 from . import nbt

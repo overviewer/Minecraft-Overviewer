@@ -7,7 +7,7 @@
 /* helper to get an OIL module type */
 static PyTypeObject *py_oil_get_type(const char *typ) {
     PyTypeObject *typeobj;
-    PyObject *oilmod = PyImport_ImportModule("OIL");
+    PyObject *oilmod = PyImport_ImportModule("overviewer_core.oil");
     if (!oilmod)
         return NULL;
     typeobj = (PyTypeObject *)PyObject_GetAttrString(oilmod, typ);

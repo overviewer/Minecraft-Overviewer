@@ -42,7 +42,7 @@ from overviewer_core import configParser, tileset, assetmanager, dispatcher
 from overviewer_core import isometricrenderer, blockdefinitions
 from overviewer_core import cache
 from overviewer_core import observer
-import OIL
+from overviewer_core.oil import Matrix
 
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
@@ -440,7 +440,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
         
         bdefs = blockdefinitions.get_default()
-        matrix = OIL.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
+        matrix = Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
         renderer = isometricrenderer.IsometricRenderer(rset, tex, bdefs, matrix)
         tset = tileset.TileSet(w, rset, assetMrg, tileSetOpts, renderer, tileset_dir)
         tilesets.append(tset)

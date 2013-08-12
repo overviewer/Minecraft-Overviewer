@@ -17,7 +17,7 @@ from math import ceil
 from itertools import product
 from operator import itemgetter
 
-import OIL
+from .oil import Image, Matrix
 from .canvas import Renderer
 from . import chunkrenderer
 
@@ -39,7 +39,7 @@ class IsometricRenderer(Renderer):
         self.textures = textures
         self.blockdefs = blockdefs
         self.origmatrix = matrix
-        self.matrix = OIL.Matrix().scale(1, -1, 1) * matrix
+        self.matrix = Matrix().scale(1, -1, 1) * matrix
         self.inverse = self.matrix.inverse
         
         # computed handy things, relative vectors
@@ -66,7 +66,7 @@ class IsometricRenderer(Renderer):
     def __setstate__(self, args):
         # turn the matrix back into an OIL Matrix
         mat = args[-1]
-        mat = OIL.Matrix(mat)
+        mat = Matrix(mat)
         args = args[:-1] + (mat,)
         self.__init__(*args)
     
@@ -172,7 +172,7 @@ class IsometricRenderer(Renderer):
         if not chunks:
             return
         
-        im_matrix = OIL.Matrix().orthographic(origin[0], origin[0] + im.size[0], origin[1] + im.size[1], origin[1], minz, maxz)
+        im_matrix = Matrix().orthographic(origin[0], origin[0] + im.size[0], origin[1] + im.size[1], origin[1], minz, maxz)
         im_matrix *= self.matrix
         
         for x, y, _, chunkx, chunkz, _ in chunks:
@@ -186,5 +186,5 @@ class IsometricRenderer(Renderer):
                 if (x + self.sectionbox[1][0] < 0 or x + self.sectionbox[0][0] >= im.size[0] or y + self.sectionbox[1][1] < 0 or y + self.sectionbox[0][1] >= im.size[1]):
                     continue
                 
-                local_matrix = im_matrix * OIL.Matrix().translate(chunkx * 16, chunky * 16, chunkz * 16)
+                local_matrix = im_matrix * Matrix().translate(chunkx * 16, chunky * 16, chunkz * 16)
                 chunkrenderer.render(self.regionset, chunkx, chunky, chunkz, im, local_matrix, self.compiled_blockdefs)

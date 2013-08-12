@@ -755,7 +755,7 @@ static PyTypeObject PyOILImageType = {
     (newfunc)PyOILImage_new,   /* tp_new */
 };
 
-static PyObject *OIL_backend_set(PyObject *self, PyObject *args) {
+static PyObject *py_oil_backend_set(PyObject *self, PyObject *args) {
     unsigned int backend = OIL_BACKEND_CPU;
     if (!PyArg_ParseTuple(args, "I", &backend)) {
         return NULL;
@@ -774,8 +774,8 @@ static PyObject *OIL_backend_set(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
-static PyMethodDef OIL_methods[] = {
-    {"backend_set", OIL_backend_set, METH_VARARGS,
+static PyMethodDef oil_methods[] = {
+    {"backend_set", py_oil_backend_set, METH_VARARGS,
      "Set the OIL backend to use"},
     {NULL, NULL, 0, NULL}
 };
@@ -787,11 +787,11 @@ static PyMethodDef OIL_methods[] = {
         PyModule_AddObject(mod, type.tp_name, (PyObject *)&type);   \
     } while (0)
 
-PyMODINIT_FUNC initOIL(void) {
+PyMODINIT_FUNC initoil(void) {
     PyObject *mod;
     
-    mod = Py_InitModule3("OIL", OIL_methods,
-                         "OIL is an image handling library for Python.");
+    mod = Py_InitModule3("oil", oil_methods,
+                         "oil is an image handling library for Python.");
     if (mod == NULL)
         return;
     

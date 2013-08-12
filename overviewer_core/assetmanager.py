@@ -21,8 +21,7 @@ import time
 import logging
 import traceback
 
-from OIL import Image
-
+from .oil import Image
 import world
 import util
 from files import FileReplacer, mirror_dir
