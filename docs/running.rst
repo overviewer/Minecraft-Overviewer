@@ -253,15 +253,17 @@ If you want or need to provide your own textures, you have several options:
   launcher would normally put it. Overviewer will find it and use it.
 
   You can use the following commands to download the client jar on Linux or Mac.
-  Adjust the version to the latest since these docs may not always reflect the
-  latest Minecraft version.
+  Run the first line in a terminal, changing the version string to the latest as appropriate
+  (these docs may not always be updated to reflect the latest). Then paste the second line
+  into your terminal to download the latest version. ``${VERSION}`` will be replaced
+  by the acutal version string from the first line.
 
   ::
 
     VERSION=1.6.1
-    wget https://s3.amazonaws.com/Minecraft.Download/versions/$VERSION/${VERSION}.jar -P ~/.minecraft/versions/$VERSION/
+    wget https://s3.amazonaws.com/Minecraft.Download/versions/${VERSION}/${VERSION}.jar -P ~/.minecraft/versions/${VERSION}/
     
-  For example, to "install" the default minecraft textures for 1.6.2, run::
+  If that's too confusing for you, then just take this single line paste it into the terminal to get 1.6.2 textures.
   
     wget https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/1.6.2.jar -P ~/.minecraft/versions/1.6.2/
 
