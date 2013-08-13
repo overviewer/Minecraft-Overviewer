@@ -263,7 +263,7 @@ If you want or need to provide your own textures, you have several options:
     VERSION=1.6.1
     wget https://s3.amazonaws.com/Minecraft.Download/versions/${VERSION}/${VERSION}.jar -P ~/.minecraft/versions/${VERSION}/
     
-  If that's too confusing for you, then just take this single line paste it into the terminal to get 1.6.2 textures.
+  If that's too confusing for you, then just take this single line paste it into the terminal to get 1.6.2 textures::
   
     wget https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/1.6.2.jar -P ~/.minecraft/versions/1.6.2/
 
