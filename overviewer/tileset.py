@@ -466,7 +466,7 @@ class TileSet(Canvas):
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
         # FIXME for OIL
-        isOverlay = self.options.get("overlay", False)
+        isOverlay = bool(self.options.get("overlay", False))
         
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
