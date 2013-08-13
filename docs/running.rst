@@ -260,6 +260,10 @@ If you want or need to provide your own textures, you have several options:
 
     VERSION=1.6.1
     wget https://s3.amazonaws.com/Minecraft.Download/versions/$VERSION/${VERSION}.jar -P ~/.minecraft/versions/$VERSION/
+    
+  For example, to "install" the default minecraft textures for 1.6.2, run::
+  
+    wget https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/1.6.2.jar -P ~/.minecraft/versions/1.6.2/
 
 * You can also just run the launcher to install the client.
   
