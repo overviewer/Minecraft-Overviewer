@@ -279,10 +279,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             texopts = util.dict_subset(render, ["texturepath"])
 
             tex = textures.Textures(**texopts)
-            f = tex.find_file("textures/blocks/stone.png", verbose=True)
-            f = tex.find_file("textures/blocks/tallgrass.png", verbose=True)
-            f = tex.find_file("textures/blocks/oreDiamond.png", verbose=True)
-            f = tex.find_file("textures/blocks/wood.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/sandstone_top.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/grass_top.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/diamond_ore.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/planks_oak.png", verbose=True)
         return 0
 
     ############################################################
