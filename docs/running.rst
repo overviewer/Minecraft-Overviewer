@@ -295,3 +295,15 @@ modification times intact, use ``cp -p``. For people who render from backups,
 GNU ``tar`` automatically handles modification times correctly. ``rsync -a
 --delete`` will handle this correctly as well. If you use some other tool,
 you'll have to figure out how to do this yourself.
+
+HTTPS support
+-------------
+
+In order to support displaying maps over HTTPS, Overviewer loads the Google
+maps API and JQuery over HTTPS. This avoids security warnings for HTTPS
+sites, and is not expected to cause problems for users.
+
+If this change causes problems, take a look at the
+:ref:`custom web assets<customwebassets>` option. This allows you to
+provide a custom index.html which loads the required Javascript libraries
+over HTTP.
