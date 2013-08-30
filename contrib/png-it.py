@@ -68,7 +68,7 @@ def main():
     
     all_images = glob(path)
     if not all_images:
-        "Error! No images found in this zoom level. Is this really an overviewer tile set directory?"
+        print "Error! No images found in this zoom level. Is this really an overviewer tile set directory?"
         sys.exit(1)
 
     # autocrop will calculate the center and crop values automagically
