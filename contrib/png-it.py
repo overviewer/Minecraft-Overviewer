@@ -18,7 +18,7 @@ def main():
     parser.add_option('--memory-limit', '-m', help = 'Limit the amount of ram to use in MB. If it\'s expected to exceed the limit it won\'t do anything.',\
         metavar = '<memory>', type = int, dest = 'memory_limit', default = None)
     
-    parser.add_option('--zoom-level', '-z', help = 'Which zoom leve to use from the overviewer map. NOTE: the RAM usage will increase exponentially with the zoom level.',\
+    parser.add_option('--zoom-level', '-z', help = 'Which zoom level to use from the overviewer map. NOTE: the RAM usage will increase exponentially with the zoom level.',\
         metavar = '<zoom-level>', type = int, dest = 'zoom_level', default = None)
 
     parser.add_option('--crop', '-c', help = 'It will crop a frame around the image, give it in percentage. For example in a image of 1000x2000 pixels, a 10% crop will crop 100 pixels in the left, right sides and 200 pixels in the bottom and top sides. NOTE: this is no exact, it will be rounded to the nearest overviewer map tile.',\
@@ -68,7 +68,7 @@ def main():
     
     all_images = glob(path)
     if not all_images:
-        "Error! No images found in this zoom leve. Is this really an overviewer tile set directory?"
+        print "Error! No images found in this zoom level. Is this really an overviewer tile set directory?"
         sys.exit(1)
 
     # autocrop will calculate the center and crop values automagically

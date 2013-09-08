@@ -87,6 +87,14 @@ A more complicated example
         "dimension": "nether",
     }
 
+    renders["survivalnethersouth"] = {
+        "world": "survival",
+        "title": "Survival Nether",
+        "rendermode": nether_smooth_lighting,
+        "dimension": "nether",
+        "northdirection" : "lower-right",
+    }
+
     renders["creative"] = {
         "world": "creative",
         "title": "Creative",
@@ -460,7 +468,7 @@ values. The valid configuration keys are listed below.
         objects.  See :ref:`customrendermodes` for more information.
 
 ``northdirection``
-    This is direction that north will be rendered. This north direction will
+    This is direction or viewpoint angle with which north will be rendered. This north direction will
     match the established north direction in the game where the sun rises in the
     east and sets in the west.
 
