@@ -74,6 +74,10 @@ static void
 base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     PrimitiveBase *self = (PrimitiveBase *)data;
 
+    /* in order to detect top parts of doublePlant grass & ferns */
+    unsigned char below_block = get_data(state, BLOCKS, state->x, state->y-1, state->z);
+    unsigned char below_data = get_data(state, DATA, state->x, state->y-1, state->z);
+
     /* draw the block! */
     alpha_over(state->img, src, mask, state->imgx, state->imgy, 0, 0);
     
@@ -102,7 +106,11 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         /* vines */
         state->block == 106 ||
         /* lily pads */
-        state->block == 111)
+        state->block == 111 ||
+        /* doublePlant grass & ferns */
+        (state->block == 175 && (state->block_data == 2 || state->block_data == 3)) ||
+        /* doublePlant grass & ferns tops */
+        (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3)) )
     {
         /* do the biome stuff! */
         PyObject *facemask = mask;
@@ -153,6 +161,10 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             break;
         case 111:
             /* lily pads */
+            color_table = self->grasscolor;
+            break;
+        case 175:
+            /* doublePlant grass & ferns */
             color_table = self->grasscolor;
             break;
         default:
