@@ -252,7 +252,7 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
      */
     int x = state->x, y = state->y, z = state->z;
     unsigned char data = 0;
-    
+
     if (state->block == 2) { /* grass */
         /* return 0x10 if grass is covered in snow */
         if (get_data(state, BLOCKS, x, y+1, z) == 78)
@@ -416,6 +416,17 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         pr = pr * pr * 42317861 + pr * 11;
         rotation = 3 & (pr >> 16);
         return rotation;
+    } else if (state->block == 175) { /* doublePlants */
+        /* use bottom block data format plus one bit for top
+         * block (0x8)
+         */
+        if( get_data(state, BLOCKS, x, y-1, z) == 175 ) {
+            data = get_data(state, DATA, x, y-1, z) | 0x8;
+        } else {
+            data = ancilData;
+        }
+
+        return data;
     }
 
 
@@ -564,7 +575,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 85) || (state.block == 90) ||
                         (state.block == 101) || (state.block == 102) ||
                         (state.block == 111) || (state.block == 113) ||
-                        (state.block == 139)) {
+                        (state.block == 139) || (state.block == 175)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
                     } else {
@@ -586,6 +597,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 if (t != NULL && t != Py_None)
                 {
                     PyObject *src, *mask, *mask_light;
+                    int do_rand = (state.block == 31 /*|| state.block == 38 || state.block == 175*/);
                     int randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 0);
@@ -594,7 +606,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     if (mask == Py_None)
                         mask = src;
 
-                    if (state.block == 31) {
+                    if (do_rand) {
                         /* add a random offset to the postion of the tall grass to make it more wild */
                         randx = rand() % 6 + 1 - 3;
                         randy = rand() % 6 + 1 - 3;
@@ -604,7 +616,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     
                     render_mode_draw(rendermode, src, mask, mask_light);
                     
-                    if (state.block == 31) {
+                    if (do_rand) {
                         /* undo the random offsets */
                         state.imgx -= randx;
                         state.imgy -= randy;
