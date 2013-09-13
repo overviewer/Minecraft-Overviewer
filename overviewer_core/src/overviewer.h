@@ -147,6 +147,7 @@ block_has_property(unsigned short b, BlockProperty prop) {
     return block_properties[b] & (1 << prop);
 }
 #define is_transparent(b) block_has_property((b), TRANSPARENT)
+#define is_known_transparent(b) block_has_property((b), TRANSPARENT) && block_has_property((b), KNOWN)
 
 /* helper for indexing section data possibly across section boundaries */
 typedef enum
