@@ -712,7 +712,7 @@ class Textures(object):
         """
         img = Image.new("RGBA", (24,24), self.bgcolor)
 
-        front = tex.resize((14, 11), Image.ANTIALIAS)
+        front = tex.resize((14, 12), Image.ANTIALIAS)
         alpha_over(img, front, (5,9))
         return img
 
@@ -1443,8 +1443,16 @@ def wool(self, blockid, data):
 
 # dandelion
 sprite(blockid=37, imagename="assets/minecraft/textures/blocks/flower_dandelion.png")
-# rose
-sprite(blockid=38, imagename="assets/minecraft/textures/blocks/flower_rose.png")
+
+# flowers
+@material(blockid=38, data=range(10), transparent=True)
+def flower(self, blockid, data):
+    flower_map = ["rose", "blue_orchid", "allium", "houstonia", "tulip_red", "tulip_orange",
+                  "tulip_white", "tulip_pink", "oxeye_daisy", "dandelion"]
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_%s.png" % flower_map[data])
+
+    return self.build_billboard(texture)
+
 # brown mushroom
 sprite(blockid=39, imagename="assets/minecraft/textures/blocks/mushroom_brown.png")
 # red mushroom
@@ -3849,7 +3857,7 @@ def beacon(self, blockid, data):
     
     return img
 
-# cobbleston and mossy cobblestone walls
+# cobblestone and mossy cobblestone walls
 # one additional bit of data value added for mossy and cobblestone
 @material(blockid=139, data=range(32), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
@@ -4184,3 +4192,25 @@ def stained_clay(self, blockid, data):
 
 #coal block
 block(blockid=173, top_image="assets/minecraft/textures/blocks/coal_block.png")
+
+#doublePlant blocks
+@material(blockid=175, data=range(16), transparent=True)
+def flower(self, blockid, data):
+    doublePlant_map = ["sunflower", "syringa", "grass", "fern", "rose", "paeonia", "paeonia", "paeonia"]
+    plant = doublePlant_map[data & 0x7]
+
+    if data & 0x8:
+        part = "top"
+    else:
+        part = "bottom"
+
+    png = "assets/minecraft/textures/blocks/doublePlant_%s_%s.png" % (plant,part)
+    texture = self.load_image_texture(png)
+    img = self.build_billboard(texture)
+
+    #sunflower top
+    if data == 8:
+        bloom_tex = self.load_image_texture("assets/minecraft/textures/blocks/doublePlant_sunflower_front.png")
+        alpha_over(img, bloom_tex.resize((14, 11), Image.ANTIALIAS), (5,5))
+
+    return img
