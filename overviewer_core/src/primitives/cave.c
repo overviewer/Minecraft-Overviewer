@@ -43,9 +43,9 @@ cave_occluded(void *data, RenderState *state, int x, int y, int z) {
     /* check for normal occlusion */
     /* use ajacent chunks, if not you get blocks spreaded in chunk edges */
 
-    if (!is_transparent(get_data(state, BLOCKS, x-1, y, z)) &&
-        !is_transparent(get_data(state, BLOCKS, x, y, z+1)) &&
-        !is_transparent(get_data(state, BLOCKS, x, y+1, z))) {
+    if (!is_known_transparent(get_data(state, BLOCKS, x-1, y, z)) &&
+        !is_known_transparent(get_data(state, BLOCKS, x, y, z+1)) &&
+        !is_known_transparent(get_data(state, BLOCKS, x, y+1, z))) {
         return 1;
     }
     
