@@ -864,7 +864,18 @@ def grass(self, blockid, data):
     return img
 
 # dirt
-block(blockid=3, top_image="assets/minecraft/textures/blocks/dirt.png")
+@material(blockid=3, data=range(3), solid=True)
+def dirt_blocks(self, blockid, data):
+    side_img = self.load_image_texture("assets/minecraft/textures/blocks/dirt.png")
+    if data == 0: # normal
+        img =  self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/dirt.png"), side_img)
+    if data == 1: # grassless
+        img = self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/dirt.png"), side_img)
+    if data == 2: # podzol
+        side_img = self.load_image_texture("assets/minecraft/textures/blocks/dirt_podzol_side.png")
+        img = self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/dirt_podzol_top.png"), side_img)
+    return img
+
 # cobblestone
 block(blockid=4, top_image="assets/minecraft/textures/blocks/cobblestone.png")
 
