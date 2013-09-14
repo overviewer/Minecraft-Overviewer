@@ -2639,6 +2639,9 @@ def snow(self, blockid, data):
 # snow block
 block(blockid=80, top_image="assets/minecraft/textures/blocks/snow.png")
 
+# packed ice block
+block(blockid=174, top_image="assets/minecraft/textures/blocks/ice_packed.png")
+
 # cactus
 @material(blockid=81, data=range(15), transparent=True, solid=True, nospawn=True)
 def cactus(self, blockid, data):
