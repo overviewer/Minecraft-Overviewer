@@ -244,6 +244,27 @@ check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned short bloc
 }
 
 
+static int
+is_stairs(int block) {
+    /*
+     * Determines if a block is stairs of any material
+     */
+    switch (block) {
+        case 53: /* oak wood stairs */
+        case 67: /* cobblestone stairs */
+        case 108: /* brick stairs */
+        case 109: /* stone brick stairs */
+        case 114: /* nether brick stairs */
+        case 128: /* sandstone stairs */
+        case 134: /* spruce wood stairs */
+        case 135: /* birch wood stairs */
+        case 136: /* jungle wood stairs */
+        case 156: /* quartz stairs */
+            return 1;
+    }
+    return 0;
+}
+
 unsigned char
 generate_pseudo_data(RenderState *state, unsigned char ancilData) {
     /*
@@ -416,11 +437,115 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         pr = pr * pr * 42317861 + pr * 11;
         rotation = 3 & (pr >> 16);
         return rotation;
+    } else if (is_stairs(state->block)) { /* stairs */
+        /* 4 ancillary bits will be added to indicate which quarters of the block contain the 
+         * upper step. Regular stairs will have 2 bits set & corner stairs will have 1 or 3.
+         *     Southwest quarter is part of the upper step - 0x40
+         *    / Southeast " - 0x20
+         *    |/ Northeast " - 0x10
+         *    ||/ Northwest " - 0x8
+         *    |||/ flip upside down (Minecraft)
+         *    ||||/ has North/South alignment (Minecraft)
+         *    |||||/ ascends North or West, not South or East (Minecraft)
+         *    ||||||/
+         *  0b0011011 = Stair ascending north, upside up, with both north quarters filled
+         */
+
+        /* keep track of whether neighbors are stairs, and their data */
+        unsigned char stairs_base[8];
+        unsigned char neigh_base[8];
+        unsigned char *stairs = stairs_base;
+        unsigned char *neigh = neigh_base;
+
+        /* amount to rotate/roll to get to east, west, south, north */
+        size_t rotations[] = {0,2,3,1};
+
+        /* masks for the filled (ridge) stair quarters: */
+        /* Example: the ridge for an east-ascending stair are the two east quarters */
+        /*                  ascending: east  west south north */
+        unsigned char ridge_mask[] = { 0x30, 0x48, 0x60, 0x18 };
+
+        /* masks for the open (trench) stair quarters: */
+        unsigned char trench_mask[] = { 0x48, 0x30, 0x18, 0x60 };
+
+        /* boat analogy! up the stairs is toward the bow of the boat */
+        /* masks for port and starboard, i.e. left and right sides while ascending: */
+        unsigned char port_mask[] = { 0x18, 0x60, 0x30, 0x48 };
+        unsigned char starboard_mask[] = { 0x60, 0x18, 0x48, 0x30 };
+
+        /* we may need to lock some quarters into place depending on neighbors */
+        unsigned char lock_mask = 0;
+
+        unsigned char repair_rot[] = { 0, 1, 2, 3,  2, 3, 1, 0,  1, 0, 3, 2,  3, 2, 0, 1 };
+
+        /* need to get northdirection of the render */
+        /* TODO: get this just once? store in state? */
+        PyObject *texrot;
+        int northdir;
+        texrot = PyObject_GetAttrString(state->textures, "rotation");
+        northdir = PyInt_AsLong(texrot);
+
+        /* fix the rotation value for different northdirections */
+        #define FIX_ROT(x) (((x) & ~0x3) | repair_rot[((x) & 0x3) | (northdir << 2)])
+        ancilData = FIX_ROT(ancilData);
+
+        /* fill the ancillary bits assuming normal stairs with no corner yet */
+        ancilData |= ridge_mask[ancilData & 0x3];
+
+        /* get block & data for neighbors in this order: east, north, west, south */
+        /* so we can rotate things easily */
+        stairs[0] = stairs[4] = is_stairs(get_data(state, BLOCKS, x+1, y, z));
+        stairs[1] = stairs[5] = is_stairs(get_data(state, BLOCKS, x, y, z-1));
+        stairs[2] = stairs[6] = is_stairs(get_data(state, BLOCKS, x-1, y, z));
+        stairs[3] = stairs[7] = is_stairs(get_data(state, BLOCKS, x, y, z+1));
+        neigh[0] = neigh[4] = FIX_ROT(get_data(state, DATA, x+1, y, z));
+        neigh[1] = neigh[5] = FIX_ROT(get_data(state, DATA, x, y, z-1));
+        neigh[2] = neigh[6] = FIX_ROT(get_data(state, DATA, x-1, y, z));
+        neigh[3] = neigh[7] = FIX_ROT(get_data(state, DATA, x, y, z+1));
+
+        #undef FIX_ROT
+
+        /* Rotate the neighbors so we only have to worry about one orientation
+         * No matter which way the boat is facing, the the neighbors will be:
+         *   0: bow
+         *   1: port
+         *   2: stern
+         *   3: starboard */
+        stairs += rotations[ancilData & 0x3];
+        neigh += rotations[ancilData & 0x3];
+
+        /* Matching neighbor stairs to the sides should prevent cornering on that side */
+        /* If found, set bits in lock_mask to lock the current quarters as they are */
+        if (stairs[1] && (neigh[1] & 0x7) == (ancilData & 0x7)) {
+            /* Neighbor on port side is stairs of the same orientation as me */
+            /* Do NOT allow changing quarters on the port side */
+            lock_mask |= port_mask[ancilData & 0x3];
+        }
+        if (stairs[3] && (neigh[3] & 0x7) == (ancilData & 0x7)) {
+            /* Neighbor on starboard side is stairs of the same orientation as me */
+            /* Do NOT allow changing quarters on the starboard side */
+            lock_mask |= starboard_mask[ancilData & 0x3];
+        }
+
+        /* Make corner stairs -- prefer outside corners like Minecraft */
+        if (stairs[0] && (neigh[0] & 0x4) == (ancilData & 0x4)) {
+            /* neighbor at bow is stairs with same flip */
+            if ((neigh[0] & 0x2) != (ancilData & 0x2)) {
+                /* neighbor is perpendicular, cut a trench, but not where locked */
+                ancilData &= ~trench_mask[neigh[0] & 0x3] | lock_mask;
+            }
+        } else if (stairs[2] && (neigh[2] & 0x4) == (ancilData & 0x4)) {
+            /* neighbor at stern is stairs with same flip */
+            if ((neigh[2] & 0x2) != (ancilData & 0x2)) {
+                /* neighbor is perpendicular, add a ridge, but not where locked */
+                ancilData |= ridge_mask[neigh[2] & 0x3] & ~lock_mask;
+            }
+        }
+
+        return ancilData;
     }
 
-
     return 0;
-
 }
 
 
@@ -556,7 +681,7 @@ chunk_render(PyObject *self, PyObject *args) {
                     state.block_data = ancilData;
                     /* block that need pseudo ancildata:
                      * grass, water, glass, chest, restone wire,
-                     * ice, fence, portal, iron bars, glass panes */
+                     * ice, fence, portal, iron bars, glass panes, stairs */
                     if ((state.block ==  2) || (state.block ==  9) ||
                         (state.block == 20) || (state.block == 54) ||
                         (state.block == 55) || (state.block == 64) ||
@@ -564,7 +689,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 85) || (state.block == 90) ||
                         (state.block == 101) || (state.block == 102) ||
                         (state.block == 111) || (state.block == 113) ||
-                        (state.block == 139)) {
+                        (state.block == 139) || is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
                     } else {

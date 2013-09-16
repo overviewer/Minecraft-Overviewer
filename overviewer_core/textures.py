@@ -1622,143 +1622,115 @@ def fire(self, blockid, data):
 block(blockid=52, top_image="assets/minecraft/textures/blocks/mob_spawner.png", transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle and quartz stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156], data=range(8), transparent=True, solid=True, nospawn=True)
+@material(blockid=[53,67,108,109,114,128,134,135,136,156], data=range(128), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
-
-    # first, rotations
     # preserve the upside-down bit
     upside_down = data & 0x4
-    data = data & 0x3
-    if self.rotation == 1:
-        if data == 0: data = 2
-        elif data == 1: data = 3
-        elif data == 2: data = 1
-        elif data == 3: data = 0
-    elif self.rotation == 2:
-        if data == 0: data = 1
-        elif data == 1: data = 0
-        elif data == 2: data = 3
-        elif data == 3: data = 2
-    elif self.rotation == 3:
-        if data == 0: data = 3
-        elif data == 1: data = 2
-        elif data == 2: data = 0
-        elif data == 3: data = 1
-    data = data | upside_down
+
+    # find solid quarters within the top or bottom half of the block
+    #                   NW           NE           SE           SW
+    quarters = [data & 0x8, data & 0x10, data & 0x20, data & 0x40]
+
+    # rotate the quarters so we can pretend northdirection is always upper-left
+    numpy.roll(quarters, [0,1,3,2][self.rotation])
+    nw,ne,se,sw = quarters
 
     if blockid == 53: # wooden
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
     elif blockid == 67: # cobblestone
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png").copy()
     elif blockid == 108: # red brick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/brick.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/brick.png").copy()
     elif blockid == 109: # stone brick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png").copy()
     elif blockid == 114: # netherbrick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()
     elif blockid == 128: # sandstone stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_normal.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_normal.png").copy()
     elif blockid == 134: # spruce wood stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
     elif blockid == 135: # birch wood  stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
     elif blockid == 136: # jungle good stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
     elif blockid == 156: # quartz block stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png")
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png").copy()
 
+    outside_l = texture.copy()
+    outside_r = texture.copy()
+    inside_l = texture.copy()
+    inside_r = texture.copy()
 
-    side = texture.copy()
-    half_block_u = texture.copy() # up, down, left, right
-    half_block_d = texture.copy()
-    half_block_l = texture.copy()
-    half_block_r = texture.copy()
-
-    # sandstone stairs have spcial top texture
+    # sandstone & quartz stairs have special top texture
     if blockid == 128:
-        half_block_u = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png").copy()
-        half_block_d = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png").copy()
         texture = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png").copy()
-    elif blockid == 156: # also quartz stairs
-        half_block_u = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_top.png").copy()
-        half_block_d = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_top.png").copy()
+    elif blockid == 156:
         texture = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_top.png").copy()
 
-    # generate needed geometries
-    ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(half_block_u).rectangle((0,8,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(half_block_d).rectangle((0,0,15,6),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(half_block_l).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(half_block_r).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    
-    if data & 0x4 == 0x4: # upside doen stair
-        side = side.transpose(Image.FLIP_TOP_BOTTOM)
-        if data & 0x3 == 0: # ascending east
-            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
-            tmp = self.transform_image_side(half_block_d)
-            alpha_over(img, tmp, (6,3))
-            alpha_over(img, self.build_full_block(texture, None, None, half_block_u, side.transpose(Image.FLIP_LEFT_RIGHT)))
+    slab_top = texture.copy()
 
-        elif data & 0x3 == 0x1: # ascending west
-            img = self.build_full_block(texture, None, None, texture, side)
-        
-        elif data & 0x3 == 0x2: # ascending south
-            img = self.build_full_block(texture, None, None, side, texture)
-            
-        elif data & 0x3 == 0x3: # ascending north
-            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
-            tmp = self.transform_image_side(half_block_d).transpose(Image.FLIP_LEFT_RIGHT)
-            alpha_over(img, tmp, (6,3))
-            alpha_over(img, self.build_full_block(texture, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_u))
-        
-    else: # normal stair
-        if data == 0: # ascending east
-            img = self.build_full_block(half_block_r, None, None, half_block_d, side.transpose(Image.FLIP_LEFT_RIGHT))
-            tmp1 = self.transform_image_side(half_block_u)
-            
-            # Darken the vertical part of the second step
-            sidealpha = tmp1.split()[3]
-            # darken it a bit more than usual, looks better
-            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.8)
-            tmp1.putalpha(sidealpha)
-            
-            alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
-            alpha_over(img, tmp1, (6,3))
-            tmp2 = self.transform_image_top(half_block_l)
-            alpha_over(img, tmp2, (0,6))
-            
-        elif data == 1: # ascending west
-            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
-            tmp1 = self.transform_image_top(half_block_r)
-            alpha_over(img, tmp1, (0,6))
-            tmp2 = self.build_full_block(half_block_l, None, None, texture, side)
-            alpha_over(img, tmp2)
-        
-        elif data == 2: # ascending south
-            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
-            tmp1 = self.transform_image_top(half_block_u)
-            alpha_over(img, tmp1, (0,6))
-            tmp2 = self.build_full_block(half_block_d, None, None, side, texture)
-            alpha_over(img, tmp2)
-            
-        elif data == 3: # ascending north
-            img = self.build_full_block(half_block_u, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_d)
-            tmp1 = self.transform_image_side(half_block_u).transpose(Image.FLIP_LEFT_RIGHT)
-            
-            # Darken the vertical part of the second step
-            sidealpha = tmp1.split()[3]
-            # darken it a bit more than usual, looks better
-            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.7)
-            tmp1.putalpha(sidealpha)
-            
-            alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
-            alpha_over(img, tmp1, (6,3))
-            tmp2 = self.transform_image_top(half_block_d)
-            alpha_over(img, tmp2, (0,6))
-        
-        # touch up a (horrible) pixel
-        img.putpixel((18,3),(0,0,0,0))
-        
+    push = 8 if upside_down else 0
+
+    def rect(tex,coords):
+        ImageDraw.Draw(tex).rectangle(coords,outline=(0,0,0,0),fill=(0,0,0,0))
+
+    # cut out top or bottom half from inner surfaces
+    rect(inside_l, (0,8-push,15,15-push))
+    rect(inside_r, (0,8-push,15,15-push))
+
+    # cut out missing or obstructed quarters from each surface
+    if not nw:
+        rect(outside_l, (0,push,7,7+push))
+        rect(texture, (0,0,7,7))
+    if not nw or sw:
+        rect(inside_r, (8,push,15,7+push)) # will be flipped
+    if not ne:
+        rect(texture, (8,0,15,7))
+    if not ne or nw:
+        rect(inside_l, (0,push,7,7+push))
+    if not ne or se:
+        rect(inside_r, (0,push,7,7+push)) # will be flipped
+    if not se:
+        rect(outside_r, (0,push,7,7+push)) # will be flipped
+        rect(texture, (8,8,15,15))
+    if not se or sw:
+        rect(inside_l, (8,push,15,7+push))
+    if not sw:
+        rect(outside_l, (8,push,15,7+push))
+        rect(outside_r, (8,push,15,7+push)) # will be flipped
+        rect(texture, (0,8,7,15))
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+
+    if upside_down:
+        # top should have no cut-outs after all
+        texture = slab_top
+    else:
+        # render the slab-level surface
+        slab_top = self.transform_image_top(slab_top)
+        alpha_over(img, slab_top, (0,6))
+
+    # render inner left surface
+    inside_l = self.transform_image_side(inside_l)
+    # Darken the vertical part of the second step
+    sidealpha = inside_l.split()[3]
+    # darken it a bit more than usual, looks better
+    inside_l = ImageEnhance.Brightness(inside_l).enhance(0.8)
+    inside_l.putalpha(sidealpha)
+    alpha_over(img, inside_l, (6,3))
+
+    # render inner right surface
+    inside_r = self.transform_image_side(inside_r).transpose(Image.FLIP_LEFT_RIGHT)
+    # Darken the vertical part of the second step
+    sidealpha = inside_r.split()[3]
+    # darken it a bit more than usual, looks better
+    inside_r = ImageEnhance.Brightness(inside_r).enhance(0.7)
+    inside_r.putalpha(sidealpha)
+    alpha_over(img, inside_r, (6,3))
+
+    # render outer surfaces
+    alpha_over(img, self.build_full_block(texture, None, None, outside_l, outside_r))
+
     return img
 
 # normal, locked (used in april's fool day), ender and trapped chest
