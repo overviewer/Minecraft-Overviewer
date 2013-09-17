@@ -864,7 +864,18 @@ def grass(self, blockid, data):
     return img
 
 # dirt
-block(blockid=3, top_image="assets/minecraft/textures/blocks/dirt.png")
+@material(blockid=3, data=range(3), solid=True)
+def dirt_blocks(self, blockid, data):
+    side_img = self.load_image_texture("assets/minecraft/textures/blocks/dirt.png")
+    if data == 0: # normal
+        img =  self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/dirt.png"), side_img)
+    if data == 1: # grassless
+        img = self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/dirt.png"), side_img)
+    if data == 2: # podzol
+        side_img = self.load_image_texture("assets/minecraft/textures/blocks/dirt_podzol_side.png")
+        img = self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/dirt_podzol_top.png"), side_img)
+    return img
+
 # cobblestone
 block(blockid=4, top_image="assets/minecraft/textures/blocks/cobblestone.png")
 
@@ -2635,6 +2646,9 @@ def snow(self, blockid, data):
 
 # snow block
 block(blockid=80, top_image="assets/minecraft/textures/blocks/snow.png")
+
+# packed ice block
+block(blockid=174, top_image="assets/minecraft/textures/blocks/ice_packed.png")
 
 # cactus
 @material(blockid=81, data=range(15), transparent=True, solid=True, nospawn=True)
