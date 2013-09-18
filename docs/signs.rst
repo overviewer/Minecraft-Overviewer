@@ -235,3 +235,12 @@ Predefined Filter Functions
 
 TODO write some filter functions, then document them here
 
+Marker Icons Overviewer ships by default
+========================================
+
+Overviewer comes with multiple small icons that you can use for your markers.
+You can find them in the ``overviewer_core/data/web_assets/`` directory.
+
+If you want to make your own in the same style, you can use the provided
+``marker_base_plain.svg`` and ``marker_base_plain_red.svg`` as template, with
+a vector editing software such as `Inkscape <http://inkscape.org>`_.
