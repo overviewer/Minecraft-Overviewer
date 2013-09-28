@@ -928,7 +928,7 @@ primitive object's constructor::
 
 Then you can use your new rendermode in your render definitions::
 
-    render["survivalday"] = {
+    renders["survivalday"] = {
         "world": "survival",
         "title": "Survival Daytime",
         "rendermode": my_rendermode,
