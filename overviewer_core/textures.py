@@ -4207,24 +4207,24 @@ def stained_clay(self, blockid, data):
 #coal block
 block(blockid=173, top_image="assets/minecraft/textures/blocks/coal_block.png")
 
-#doublePlant blocks
+#double_plant blocks
 @material(blockid=175, data=range(16), transparent=True)
 def flower(self, blockid, data):
-    doublePlant_map = ["sunflower", "syringa", "grass", "fern", "rose", "paeonia", "paeonia", "paeonia"]
-    plant = doublePlant_map[data & 0x7]
+    double_plant_map = ["sunflower", "syringa", "grass", "fern", "rose", "paeonia", "paeonia", "paeonia"]
+    plant = double_plant_map[data & 0x7]
 
     if data & 0x8:
         part = "top"
     else:
         part = "bottom"
 
-    png = "assets/minecraft/textures/blocks/doublePlant_%s_%s.png" % (plant,part)
+    png = "assets/minecraft/textures/blocks/double_plant_%s_%s.png" % (plant,part)
     texture = self.load_image_texture(png)
     img = self.build_billboard(texture)
 
     #sunflower top
     if data == 8:
-        bloom_tex = self.load_image_texture("assets/minecraft/textures/blocks/doublePlant_sunflower_front.png")
+        bloom_tex = self.load_image_texture("assets/minecraft/textures/blocks/double_plant_sunflower_front.png")
         alpha_over(img, bloom_tex.resize((14, 11), Image.ANTIALIAS), (5,5))
 
     return img
