@@ -60,7 +60,7 @@ def parseBucketChunks(bucket, rset):
 
     return pois
 
-def handleEntities(rset, outputdir, render, rname):
+def handleEntities(rset, outputdir, render, rname, config):
 
     # if we're already handled the POIs for this region regionset, do nothing
     if hasattr(rset, "_pois"):
@@ -71,30 +71,40 @@ def handleEntities(rset, outputdir, render, rname):
     filters = render['markers']
     rset._pois = dict(TileEntities=[], Entities=[])
 
-    numbuckets = 8;
-    buckets = [[] for i in range(numbuckets)];
+    numbuckets = config['processes'];
+    if numbuckets < 0:
+        numbuckets = multiprocessing.cpu_count()
 
-    for (x,z,mtime) in rset.iterate_chunks():
-        i = x / 32 + z / 32
-        i = i % numbuckets 
-        buckets[i].append([x,z])
-
-    for b in buckets:
-        logging.info("Buckets has %d entries", len(b));
-
-    # create the partial to lock the rset
-    dest = partial(parseBucketChunks, rset=rset)
-
-    # Create a pool of processes and run all the functions
-    pool = Pool(processes=numbuckets)
-    results = pool.map(dest, buckets)
-
-    logging.info("All the threads completed")
-
-    # Fix up all the quests in the reset
-    for data in results:
-        rset._pois['TileEntities'] += data['TileEntities']
-        rset._pois['Entities']     += data['Entities']
+    if numbuckets == 1:
+        for (x,z,mtime) in rset.iterate_chunks():
+            data = rset.get_chunk(x,z) 
+            rset._pois['TileEntities'] += data['TileEntities']
+            rset._pois['Entities']     += data['Entities']
+  
+    else:
+        buckets = [[] for i in range(numbuckets)];
+  
+        for (x,z,mtime) in rset.iterate_chunks():
+            i = x / 32 + z / 32
+            i = i % numbuckets 
+            buckets[i].append([x,z])
+  
+        for b in buckets:
+            logging.info("Buckets has %d entries", len(b));
+  
+        # create the partial to lock the rset
+        dest = partial(parseBucketChunks, rset=rset)
+  
+        # Create a pool of processes and run all the functions
+        pool = Pool(processes=numbuckets)
+        results = pool.map(dest, buckets)
+  
+        logging.info("All the threads completed")
+  
+        # Fix up all the quests in the reset
+        for data in results:
+            rset._pois['TileEntities'] += data['TileEntities']
+            rset._pois['Entities']     += data['Entities']
 
     logging.info("Done.")
 
@@ -233,7 +243,7 @@ def main():
                 markers[rname] = [to_append]
         
         if not options.skipscan:
-            handleEntities(rset, os.path.join(destdir, rname), render, rname)
+            handleEntities(rset, os.path.join(destdir, rname), render, rname, config)
 
         handlePlayers(rset, render, worldpath)
         handleManual(rset, render['manualpois'])
