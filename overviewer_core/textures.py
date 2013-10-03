@@ -961,7 +961,14 @@ def lava(self, blockid, data):
     return self.build_block(lavatex, lavatex)
 
 # sand
-block(blockid=12, top_image="assets/minecraft/textures/blocks/sand.png")
+@material(blockid=12, data=range(2), solid=True)
+def sand_blocks(self, blockid, data):
+    if data == 0: # normal
+        img = self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/sand.png"), self.load_image_texture("assets/minecraft/textures/blocks/sand.png"))
+    if data == 1: # red
+        img = self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/red_sand.png"), self.load_image_texture("assets/minecraft/textures/blocks/red_sand.png"))
+    return img
+
 # gravel
 block(blockid=13, top_image="assets/minecraft/textures/blocks/gravel.png")
 # gold ore
@@ -2647,9 +2654,6 @@ def snow(self, blockid, data):
 # snow block
 block(blockid=80, top_image="assets/minecraft/textures/blocks/snow.png")
 
-# packed ice block
-block(blockid=174, top_image="assets/minecraft/textures/blocks/ice_packed.png")
-
 # cactus
 @material(blockid=81, data=range(15), transparent=True, solid=True, nospawn=True)
 def cactus(self, blockid, data):
@@ -4207,7 +4211,9 @@ def stained_clay(self, blockid, data):
 #coal block
 block(blockid=173, top_image="assets/minecraft/textures/blocks/coal_block.png")
 
-#double_plant blocks
+# packed ice block
+block(blockid=174, top_image="assets/minecraft/textures/blocks/ice_packed.png")
+
 @material(blockid=175, data=range(16), transparent=True)
 def flower(self, blockid, data):
     double_plant_map = ["sunflower", "syringa", "grass", "fern", "rose", "paeonia", "paeonia", "paeonia"]
