@@ -1,0 +1,592 @@
+===============================
+Overviewer V2 (with oil) Design
+===============================
+
+
+.. warning::
+
+    The `oil` branch is still experimental and in constant flux. Do not expect
+    these documents to be completely accurate. Until the branch stabilizes,
+    these docs are merely notes.
+
+OIL Overview
+============
+
+OIL is the Overviewer Imaging Library. It is also a nickname for the sweeping
+changes and generalizations to The Overviewer that have been kicking around for
+some time.
+
+At its core `oil` is a tiny 3D engine. It draws texture-mapped triangles. This
+is aimed to replace the old style sprite-renderer of the original Overviewer.
+Before, Overviewer would take Minecraft textures, transform them with a
+manually-coded sequence of transformations (one for each block type) into a
+block sprite, and paste these block sprites on the tiles.
+
+This was reasonably fast, but had some limitations:
+
+* It's cumbersome to add new block types, especially for complex models that
+  aren't just cubes. It requires someone figuring out a sequence of
+  transformations to take textures and turn them into blocks at just the right
+  angle. Wouldn't it be great to import a 3-D model in a standard format and
+  have Overviewer figure out how to render it itself?
+
+  Being able to add blocks easily is especially important for supporting
+  Minecraft mods that add new blocks.
+
+* It's not very general. Every block sprite is hard coded to display at a
+  particular angle and size. If you wanted a lower or higher angle, more zoomed
+  in, less zoomed in, you were out of luck.
+
+* Image format limitations: using our own image library instead of PIL is
+  important since we can then support indexed PNGs, drastically reducing the
+  size of the output images. PIL doesn't support this and probably never will.
+
+* PIL and numpy as dependencies were never all that justified. PIL was only ever
+  used to read and write the PNG format (and as mentioned above it's not very
+  good at that). Numpy was used for the integer arrays representing the raw data
+  from Minecraft worlds, and for a few matrix operations. Both are fairly large
+  dependencies that don't have much justification in our cases. If we can get
+  rid of those dependencies, not only will Overviewer be easier to install, but
+  we may get better compatibility with other Python implementations such as
+  PyPy, or make the transition to Python 3 easier.
+
+Big moving Parts
+----------------
+
+Here are the main parts of the new oil-based overviewer to be familiar with. Not
+all of this is done yet.
+
+* A generalized renderer system. This lets us abstract the implementation of *how* to
+  render something from the implementation of the output format, i.e. a quadtree
+  of tiles. See `Renderer Objects`_
+
+* Specifically, the :class:`.IsometricRenderer` abstraction lets you render from
+  any angle in an isometric perspective. This is a new layer of abstraction that
+  sits between the :class:`.TileSet` object and the :class:`.RegionSet` object,
+  and determines what Minecraft chunks should be drawn where depending on the
+  angle specified. It is supported by a C backend to do the actual rendering.
+
+* A more flexible way to define blocks. Now we can specify a set of verticies
+  and faces in 3-D space to draw blocks, instead of having to figure out a
+  manual set of operations for transforming textures into block sprites. See
+  `Block definitions`_.
+
+* A completely re-done rendering engine written in C based on the new imaging
+  library.
+
+* A new configuration format to reflect the additional flexibility and available
+  options.
+
+What hasn't changed? Here's what we don't plan on changing.
+
+* The quadtree format. We're still going to render a quadtree of tiles. The leaf
+  tiles in the tree are rendered from block and world data. The inner nodes of
+  the tree are composed of the children by zooming them out. (although making a
+  new :class:`.Canvas` object for a format of your choice is no longer a messy
+  and complicated task)
+
+
+
+Walkthrough
+===========
+This section attempts to summarize the workflow of a typical Overviewer render, with cross references to other sections. Not everything in here will make perfect sense without additional knowledge of the different classes, their purposes, and their interactions, but this is a good place to start.
+
+#. Processing starts in the main() method.
+
+#. The configuration is processed.
+
+#. A :class:`.World` object is created.
+
+#. The :class:`.World` object scans the directory for dimensions and creates a :class:`.RegionSet` object for each one.
+
+#. The :class:`.RegionSet` constructor creates a map of region x,z coords to regionfile names.
+
+#. Next the main() method creates a :class:`.Textures` object with the current texture options, or gets the default texture options from :func:`textures.get_default`, which finds a Minecraft.jar and uses it as the :class:`.Texture` object constructor parameter.
+
+#. The :class:`.World` object has its :meth:`.World.get_regionset` method called.
+
+#. RegionSet caching is applied: the RegionSet object is wrapped in a :class:`.CachedRegionSet` object.
+
+#. The following happens for each render requested:
+
+   #. Any region transformations are applied
+
+   #. A function called :func:`blockdefinitions.get_default` is called. See the section on `Block Definitions`_.
+
+   #. A :class:`.Matrix` object is created and transformed in a specific way such as to define the render's perspective and projection. See the section on `Matrix Objects`_.
+
+   #. An :class:`.IsometricRenderer` object is created using the :class:`.RegionSet` object, the :class:`.Textures` object, the :class:`.BlockDefinitions` object, and the above matrix. See the `Renderer Objects`_ section.
+
+   #. A :class:`.TileSet` object (a kind of :class:`.Worker` and :class:`.Canvas`) is created. Parameters to the constructor include the :class:`.World` object, the :class:`.RegionSet` object, the asset manager, the tileset options, the :class:`.IsometricRenderer` object, and the output directory.
+
+   #. The :class:`.TileSet` object is appended to a list of all tilesets for this job.
+
+#. For each :class:`.TileSet` object, its :meth:`.TileSet.do_preprocessing` method is called
+
+   * This checks if the tiles should be arranged if the number of zoom levels has changed
+
+   * Then it performs a chunk scan, which builds a set of "dirty tiles" that need to be rendered. See the `Chunk Scanning`_ section.
+
+#. Next the asset manager object is initialized. Passed in is the list of tileset objects. All this does is create and write out the assets (which is done again at the end), so that one can potentially view the map being built in progress.
+
+#. Next a :class:`.Dispatcher` object is created. See the section on `Dispatchers and Workers`_.
+
+#. The dispatcher is started with the list of workers (tileset) objects.
+
+#. The dispatcher gets a list of "work items" from the tileset's :meth:`.TileSet.iterate_work_items` method, and passes them to the tileset's :meth:`.TileSet.do_work` method.
+
+#. In the tileset's do_work method:
+   
+   * the work item parameter is a tuple of integers in the range 0-3 representing a path in the quad tree for which tile to render.
+
+   * if the length of the path is equal to the tree depth, then we render the tile. Otherwise, the tile is composed of its 4 child tiles.
+
+#. For render tiles:
+
+   #. :meth:`.TileSet._render_rendertile` is called after making a :class:`.RenderTile` object from the path
+
+   #. The path on the filesystem to save the tile is determined
+
+   #. The directory is created if it doesn't exist
+
+   #. The tileset calls :meth:`.IsometricRenderer.get_render_sources_in_rect` which returns all chunks that are required to render the given area of the canvas. This is used along with :meth:`.IsometricRenderer.get_render_source_mtime` to determine the maximum mtime of this rect, which is later used to set the mtime of the tile on disk.
+
+   #. An oil :class:`.Image` object is created
+
+   #. :meth:`.IsometricRenderer.render` is called.
+
+    #. This method calls :meth:`.IsometricRenderer._get_tile_chunks` to get a list of all chunks that apply to the given tile
+
+    #. A projection matrix is set up for this tile
+
+    #. For every chunk from the above call, exactly where this chunk is to be rendered on the tile is calculated, and a new translated matrix is computed.
+
+    #. Then the C code is entered: :func:`.chunkrenderer.render` is called, given the :class:`.RegionSet` object, the chunk coordinates, the :class:`Image` object, the matrix, and the compiled block definitions.
+
+
+Block Definitions
+=================
+A block definition defines how to render a particular Minecraft block. There are two relevant objects defined in the :mod:`blockdefinitions` module.
+
+.. module:: overviewer.blockdefinitions
+
+.. class:: BlockDefinitions
+
+    This is simply a container for many :class:`BlockDefinition` objects.
+
+.. class:: BlockDefinition
+
+    These objects contain the definition for how to draw a particular type of block. It only contains data and is used by the C code to tell how to render something.
+
+    .. attribute:: verticies
+
+        This is a list of (coord, texcoords, color) tuples
+
+        * coord is a 3-tuple of numbers which define this point. The units are world units, so a block typically renders itself between 0,0,0 and 1,1,1, but it's possible to have larger blocks.
+
+        * texcoords is a 2-tuple. It specifies in UV coords where in the texture image maps to this vertex. Specified as numbers between 0 and 1.
+
+        * color is a 4-tuple of 8-bit integers. It applies a multiplicative color mask to this vertex. Faces are colored by an interpolation between its verticies.
+
+    .. attribute:: faces
+
+        This is a list of ([point index list], face_type)
+
+        * [point index list] is a list of integers representing an index into the :attr:`verticies` list.
+
+        * face_type is one of the chunkrenderer.FACE_TYPE_* constants.
+
+    .. attribute:: tex
+
+        A texture path
+
+    .. attribute:: transparent
+
+        a boolean indicating to draw this block with transparency enabled
+
+    .. attribute:: solid
+
+        a boolean
+
+    .. attribute:: fluid
+
+        a boolean
+
+    .. attribute:: nospawn
+
+        a boolean
+
+    .. attribute:: nodata
+
+        a boolean
+
+    .. attribute triangles
+
+        This is a property, dynamically computed from the :attr:`faces` attribute. It yields ((i,j,k), facetype) tuples where each i,j,k are indicies into the :attr:`verticies` list, together representing a triangle face.
+
+.. function:: get_default
+
+    This function is called from the main() method. It makes a new :class:`BlockDefinitions` object and adds hard-coded definitions for several types of blocks. Specifically, it performs the following actions:
+
+    #. Creates a :class:`BlockDefinitions` object.
+
+    #. For each cube block to add:
+
+        #. Calls :func:`make_simple` giving it the texture path to use
+
+        #. Passes the result to :meth:`Blockdefinitions.add` along with the Minecraft block ID.
+
+.. function:: make_simple
+
+    This function takes a texture path and kwargs, and calls :func:`make_box`. It passes in (0,0,1,1) for each of the texture coord parameters.
+
+.. function:: make_box
+
+    This function constructs a new :class:`BlockDefinition` object. It assumes the object is a cube, and has the same texture on each side. The verticies and faces are hard coded.
+
+Matrix Objects
+==============
+
+.. module:: overviewer.oil
+
+.. class:: Matrix
+
+    This is a 2-dimensional 4×4 matrix of floating point numbers, written in C,
+    exposed as a Python object. The object is defined in the file oil-python.c,
+    which hold the Python binding wrappers around the code in oil-matrix.c,
+    which is code adapted from some other GPL matrix implementation.
+
+    .. method:: get_data
+
+        Returns a nested tuple of the matrix data.
+
+    .. method:: transform(x,y,z)
+
+        takes 3 floating point numbers and returns the three floats after
+        applying the matrix as a transformation. (computes the dot product of
+        the given vector on the matrix as if it were 3×3)
+
+    .. method:: get_inverse
+
+        returns a copy of the matrix, inverted
+
+    .. method:: invert
+
+        inverts this matrix in place. Returns None.
+
+    .. method:: translate(x,y,z)
+
+        takes 3 floats and translates the matrix in place by the given offsets
+        on each axis
+
+    .. method:: scale(x,y,z)
+
+        takes 3 floats and scales each axis by the corresponding value.
+        Transforms in place.
+
+    .. method:: rotate(x,y,z)
+
+        rotates in place. Takes 3 floats. Represents a rotation in 3D space with
+        an amount in radians about the respective axes. This builds a rotation
+        matrix and then multiplies it intothe current matrix in place.
+
+    .. method:: orthographic(x1,x2,y1,y2,z1,z2)
+
+        Takes 2 sets of x,y,z floats. Builds a transformation matrix and then
+        multiplies it in place to the current matrix. This has to do with
+        projection I'm pretty sure but I forget how this stuff works.
+
+    .. attribute:: data
+
+        A nested tuple of the matrix data, same as returned from :meth:`get_data`. You
+        can also assign to this property.
+
+    .. attribute:: inverse
+
+        The inverse of this matrix. This is the property version of :meth:`get_inverse`.
+
+    This class also implements standard python arithmetic operators: add,
+    subtract, multiply, negative, positive, nonzero, inplace_add,
+    inplace_subtract, inplace_multiply.
+
+    * The python type is PyOILMatrix in oil-python.c
+    * The matrix type is OILMatrix in oil.h
+    * The python type definition is PyOILMatrixType in oil-python.c
+    * The python bindings are defined in oil.python.c
+    * The actual matrix implementation is in oil-matrix.c
+
+Renderer Objects
+================
+
+.. currentmodule:: overviewer.canvas
+
+.. class:: Renderer
+
+    This class is used in conjunction with a :class:`Canvas` object. Together
+    they abstract the concept of drawing one large image on a canvas but having
+    it split into tiles.
+
+        The Canvas / Renderer interface lets you implement a Renderer that turns
+        arbitrary, opaque "render source" objects into images renderer on a
+        virtual canvas. The Renderer informs the Canvas of what render sources
+        are available, where they are located, and how big a virtual canvas is
+        needed. The Canvas object then uses this information to decide how to
+        render this virtual canvas, and provides the Renderer with image objects
+        to render to.
+
+    Renderer objects provide the following interface definitions
+
+    .. method:: get_render_sources
+
+        Returns an iterator over all render sources. A render source is an
+        opaque object that is passed back to the renderer to decide how to
+        proceed with rendering. In Overviewer, render sources are Minecraft
+        chunks. Canvas objects are agnostic to this, they only know that a
+        particular area on the canvas depends on some number of "render
+        sources". The Renderer is aware of what these render sources mean.
+
+    .. method:: get_render_source_mtime(render_source)
+
+        Returns the last modified time for the given render source. Canvas
+        objects use this information to do incremental updates and decide what
+        sections need rendering.
+
+    .. method:: get_rect_for_render_source(render_source)
+
+        Returns a (xmin, ymin, xmax, ymax) tuple representing the bounding
+        rectangle on the virtual canvas that bounds the given render source.
+
+    .. method:: get_render_sources_in_rect(rect)
+
+        Given a bounding rectangle on the virtual canvas, returns all render
+        sources that might possibly be contained within it.
+
+        `rect` is (xmin, ymin, xmax, ymax)
+
+    .. method:: get_full_rect
+
+        Returns the bounding box of all render sources. i.e. the entire virtual
+        canvas size.
+
+    .. method::  render(origin, im)
+
+        The renderer object is requested to render a portion of the virtual
+        canvas. `origin` is a 2-tuple specifying where on the virtual canvas the
+        image lies. `im` is the image object (:class:`overviewer.oil.Image` or
+        :class:`PIL.Image` ?)
+
+        The renderer is responsible for computing the relevant render sources
+        and calling to the underlying renderer machinery to do so.
+
+IsometricRenderer objects
+-------------------------
+
+.. module:: overviewer.isometricrenderer
+
+.. class:: IsometricRenderer(Renderer)
+
+    This class is a "renderer implementation that renders :class:`.RegionSet`
+    objects in an isometric perspective. It uses the
+    :mod:`~overviewer.chunkrenderer` module, a generalized (C-based) 3D chunk
+    renderer"
+
+    .. note::
+
+        Not all methods are documented unless the implementation is notable. See
+        docs for :class:`.Renderer` for info on what methods are available and what
+        they do.
+
+    This object uses Minecraft chunks as render sources. The render source
+    object is a 3-tuple: `(x, z, mtime)` where `x` and `z` specify the chunk
+    location and `mtime` is the chunk mtime from the region file header.
+
+    .. method:: get_render_sources_in_rect(rect)
+
+        Iterates over :meth:`_get_chunks_in_rect`
+
+    .. method:: _get_chunks_in_rect(rect)
+
+        Does some matrix computations to determine which render sources are
+        relevant to this rectangle. Makes calls to
+        :meth:`.RegionSet.get_chunk_mtime` to get chunk mtimes.
+
+    .. method:: get_render_source_mtime(render_source)
+
+        Returns `render_source[2]` since render sources are (x, z, mtime)
+
+    .. method:: render(origin, im)
+
+        Makes a call to :meth:`_get_tile_chunks`, does some matrix calculations,
+        and calls into :func:`overviewer.chunkrenderer.render` for each relevant chunk.
+
+    .. method:: _get_tile_chunks(origin, im)
+
+        Calculates the bounding rectangle of the given image and origin, and
+        makes a call to :meth:`_get_chunks_in_rect`. Chunks are sorted, and a
+        (minz, maxz, chunk_list) tuple is returned.
+
+TileSet Objects
+===============
+
+.. module:: overviewer.tileset
+
+.. class:: TileSet(Canvas)
+
+    A TileSet object represents a set of output tiles. It takes as a parameter
+    to its initializer a :class:`.World` object, a :class:`.RegionSet` object,
+    an asset manager, an options dict, the :class:`.Renderer` object, and an
+    output directory path.
+
+    The TileSet inherits from a :class:`.canvas.Canvas` object, and so it
+    implements the canvas interface and the :class:`.dispatcher.Worker`
+    interface. Thus it represents a virtual canvas that is split up into tiles
+    and drawn individually. The worker interface means it has work to be done,
+    and this class represents each tile as a work item.
+
+    The TileSet is responsible for figuring out how to divide up the virtual
+    canvas into tiles, and then giving each tile to the dispatcher. The
+    dispatcher figures out when and where to render a tile. This class then uses
+    the underlying :class:`.Renderer` object to do the rendering work for each
+    tile.
+
+    .. note::
+
+        The main interface to the actual render work is through the
+        :class:`.Renderer` object. This class historically used to operate on
+        the :class:`.World` object and/or :class:`.RegionSet` object directly.
+        With the additional abstraction, this is probably unnecessary, and the
+        TileSet object should remain unaware of the underlying Regionset or
+        World objects, only interfacing with the Renderer.
+
+        This appears to already be mostly the case; the World object isn't
+        actually used in the body of the class it appears, and RegionSet is only
+        used for a couple of irrelevant things that could probably be moved
+        elsewhere (persistent data handling). Mark this as TODO.
+
+Chunk Scanning
+--------------
+
+The tilesets, as part of the preprocessing step, perform a chunk scan. This scans all chunks of the world and creates a set of tiles that need rendering, depending on the chunk’s last modified time and the configuration file’s last render timestamp.
+
+The chunk scan operates in one of three modes. The normal mode is to scan all chunks and then render tiles that contain at least one chunk whose mtime is greater than the last render time.
+
+Mode 1 is to mark all tiles as needing rendering, and then during rendering check the mtime of the tile itself on disk. This is used when a render was interrupted, since the last render timestamp is not accurate.
+
+Mode 2 is to mark all tiles as needing rendering and then unconditionally render all of them.
+
+The chunk scan loops over all “render sources” (chunks) from the Renderer object by calling :meth:`.get_render_sources()`. It then asks the Renderer for the mtime and the bounding rectangle on the virtual canvas of that chunk.
+
+The bounding rectangle is then passed to :meth:`.RenderTile.from_rect`, which returns all the render tiles that intersect that rectangle. For each of those tile objects, it’s added to the dirty tile set depending on the scan mode.
+
+
+
+As a side effect of the chunk scan, the maximum mtime of all chunks is determined, and this is eventually used as the “last render timestamp” of the current render.
+
+Dispatchers and Workers
+=======================
+Dispatcher objects coordinate work done by worker objects. Multiple workers can
+be managed by a dispatcher. Dispatchers provide features such as progress bars
+and multiprocessing dispatching among workers.
+
+.. module:: overviewer.dispatcher
+
+.. class:: Worker
+
+    Worker objects are objects that implement the worker interface (this class
+    only defines the interface). Objects that implement this interface have some
+    work that needs to be done, and has methods that are used to get how much
+    work needs to be done and such.
+
+    Specifically, work is broken down into one or more "phases". All work from
+    one phase must be done before the next phase. Each phase may have a
+    different amount of work. Workers may have only one phase.
+
+    This class is subclassed by the :class:`.Canvas` object, another abstract
+    class that represents a virtual canvas that needs rendering. That in turn is
+    subclassed by the :class:`.TileSet` class, representing a bunch of tiles
+    that need rendering (which represents the virtual canvas). For the TileSet
+    class, each tile is a work item.
+
+    .. note::
+
+        The original idea was for phases to represent each level of the quadtree
+        for TileSet objects, but this was removed when we decided to change the
+        quadtree rendering order from a layer-by-layer order to a
+        post-tree-traversal order. Currently, TileSet objects represent all
+        their work with a single phase.
+
+    .. method:: get_num_phases
+
+        Returns the number of phases of work this worker has
+
+    .. method:: get_phase_length(phasenum)
+
+        Returns in integer indicating some notion of how much work is in the
+        given phase. This is purely informational, for progress bars and such. A
+        worker may return None if no reasonable estimate exists.
+
+    .. method:: iterate_work_items(phasenum)
+
+        This returns an iterator over all "work items" in the given phase. A
+        work item is an opaque object that is passed back to the :meth:`do_work`
+        method by the dispatcher. work items must be picklable and may be passed
+        to a different, identically configured worker object running in a
+        possibly different thread or process.
+
+        The actual expected return type is an iterable over (work_item, [d1, d2,
+        ...]) tuples where work_item is some opaque object, and `d1, d2` are
+        dependency work items, indicating those work items must be completed
+        before this one is started. The dispatcher is responsible for correctly
+        handling dependencies. Dependency objects are compared with the equality
+        operator (==) so the work item object must correctly implement that.
+
+        The worker is guaranteed to always have a work item submitted *after*
+        all its dependencies are finished. No other ordering guarantees are
+        made. Dependencies, however, must come before dependent work items in
+        the iterator given by this method.
+
+    .. method:: do_work(work_item)
+
+        performs the work for the given work item. This method is not expected
+        to return anything. For TileSet objects, this calls into
+        :meth:`.Renderer.render` (for leaf nodes in the quadtree; inner nodes,
+        however, are composed out of their children)
+
+.. class:: Dispatcher
+
+    Dispatchers are given a list of worker objects to the dispatch_all method.
+    Dispatchers are responsible for handing out work items to their
+    corresponding workers and managing the dependencies. Dispatchers may also
+    choose to copy worker objects and run some work in other threads /
+    processes, but this is tricky since all state of the worker must be
+    picklable and any file system or other resources the workers use must also
+    be accessible by all workers.
+
+World and RegionSet objects
+===========================
+
+These objects represent data from Minecraft worlds. They contain methods to retrieve information about the worlds.
+
+.. module:: overviewer.world
+
+.. class:: World(worlddir)
+
+    This represents a Minecraft world. It usually contains one or more :class:`RegionSet` objects. The constructor of this object scans the directory and automatically creates a :class:`RegionSet` object for each dimension it finds.
+
+.. class:: RegionSet(regiondir, rel)
+
+    This represents a set of region files. Minecraft worlds may contain more than one "dimension", each represented by a RegionSet object.
+
+    The constructor creates a map of region x,z coordinates to regionfile names.
+
+    .. method:: get_chunk(self, x, z)
+
+        Returns a dictionary representing the parsed NBT data for the given chunk.
+
+    .. method:: iterate_chunks(self)
+
+        Returns an iterator over all chunks. Each item is a (x, z, mtime) tuple representing one chunk.
+
+    .. method:: get_chunk_mtime(self, x, z)
+    
+        Returns the mtime for the given chunk.
