@@ -71,6 +71,14 @@ class IsometricRenderer(Renderer):
         self.__init__(*args)
     
     def _transformrel(self, x, y, z, inverse=False):
+        """Given a length vector in world-space (also called a delta vector),
+        return the transformed length vector in canvas-space. This is a
+        transformation, but with the origin subtracted out, so that any
+        translations in the transformation matrix are not applied.
+
+        if inverse=True, the transformation is from canvas-space to
+        world-space.
+        """
         mat = self.matrix
         origin = self.origin
         if inverse:

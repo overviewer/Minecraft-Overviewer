@@ -172,11 +172,41 @@ A block definition defines how to render a particular Minecraft block. There are
 
 .. class:: BlockDefinitions
 
-    This is simply a container for many :class:`BlockDefinition` objects.
+    This is simply a container for many :class:`BlockDefinition` objects. Block
+    definitions are added to this object using the :func:`add` method. Once all
+    blocks are defined, this object is passed to the
+    :func:`.compile_block_definitions` function.
+
+    .. method:: add(blockdef, blockid, data=0)
+
+        Adds a block definition object
+
+        :param blockdef: the block definition to add
+        :type blockdef: :class:`BlockDefinition`
+        :param blockid: the block ID that renders this block
+        :type blockid: int or iterable of ints
+        :param data: extra data used by the renderer. (I think this has to do
+            with block metadata, so different models may be used for different
+            situations for the same block? I'm not sure)
+        :type data: int or iterable of ints
+
+    .. attribute:: max_blockid
+
+        The maximum of all blockids added with :meth:`add`
+
+    .. attribute:: max_data
+
+        The maximum of all data parameters passed to :meth:`add`
+
+    .. attribute:: blocks
+
+        A dictionary mapping (`blockid`, `data`) to a block definition object.
 
 .. class:: BlockDefinition
 
     These objects contain the definition for how to draw a particular type of block. It only contains data and is used by the C code to tell how to render something.
+
+    These objects have the following attributes:
 
     .. attribute:: verticies
 
@@ -194,7 +224,7 @@ A block definition defines how to render a particular Minecraft block. There are
 
         * [point index list] is a list of integers representing an index into the :attr:`verticies` list.
 
-        * face_type is one of the chunkrenderer.FACE_TYPE_* constants.
+        * face_type is one of the chunkrenderer.FACE_TYPE_* constants. See `Face Types`_
 
     .. attribute:: tex
 
@@ -220,7 +250,7 @@ A block definition defines how to render a particular Minecraft block. There are
 
         a boolean
 
-    .. attribute triangles
+    .. attribute:: triangles
 
         This is a property, dynamically computed from the :attr:`faces` attribute. It yields ((i,j,k), facetype) tuples where each i,j,k are indicies into the :attr:`verticies` list, together representing a triangle face.
 
@@ -247,7 +277,7 @@ A block definition defines how to render a particular Minecraft block. There are
 Matrix Objects
 ==============
 
-.. module:: overviewer.oil
+.. currentmodule:: overviewer.oil
 
 .. class:: Matrix
 
@@ -590,3 +620,169 @@ These objects represent data from Minecraft worlds. They contain methods to retr
     .. method:: get_chunk_mtime(self, x, z)
     
         Returns the mtime for the given chunk.
+
+The Chunkrenderer
+=================
+
+.. module:: overviewer.chunkrenderer
+
+The :mod:`overviewer.chunkrenderer` module is a C extension module and is the
+main gateway to the rendering routines. It is primarily used by the
+:class:`.IsometricRenderer` class to do the actual rendering, but is not
+restricted to isometric renders.
+
+There are two functions exported by this module, and several constants.
+
+Face Types
+----------
+These constants are used by `Block Definitions`_ to specify properties of a
+face.
+
+.. data:: FACE_TYPE_NX
+.. data:: FACE_TYPE_NY
+.. data:: FACE_TYPE_NZ
+.. data:: FACE_TYPE_PX
+.. data:: FACE_TYPE_PY
+.. data:: FACE_TYPE_PZ
+
+    These constants define the normal vector of the face. Positive/negative X,
+    Y, or Z. The renderer uses this value to determine whether to render a face
+    or not.
+
+    .. warning::
+
+        This is mostly conjecture. Check on this.
+
+Functions
+---------
+
+.. function:: compile_block_definitions(textures, blockdefs)
+
+    This compiles the block definitions for use in rendering. It is a C function
+    exported to Python.
+
+    :param textures: is a :class:`.Textures` object
+    :param blockdefs: is a :class:`.BlockDefinitions` object
+    :return: an opaque object that should be passed back to the :func:`render`
+        function
+
+    This first creates a new :c:type:`BlockDefs` struct. The
+    :attr:`.BlockDefinitions.max_blockid` and :attr:`.BlockDefinitions.max_data`
+    attributes are saved into the struct.
+
+    Then the code looks at the max blockid and max data parameters and allocates
+    an array of :c:type:`BlockDef` structs with length max_blockid * max_data,
+    and assigns it to the :c:data:`BlockDefs.defs` pointer.
+
+    Then for each block definition in the :attr:`.BlockDefinitions.blocks` dict,
+    a :c:type:`BlockDef` struct is allocated and added to the :c:data:`BlockDefs.defs`
+    array. It does this by calling :c:func:`compile_block_definition`, a
+    staticly defined inline function.
+
+.. c:function:: int compile_block_definition(PyObject* pytextures, BlockDef* def, PyObject* pydef)
+
+    This is a static inline C function used to compile a particular block's
+    definition and store it in the BlockDef struct pointer given.
+    
+    `pytextures` is the :class:`.Textures` object given to
+    :func:`compile_block_definitions`.
+
+    `def` is a pointer to the appropriate element of the
+    :c:data:`BlockDefs.defs` array created above.
+
+    `pydef` is a pointer to the :class:`.BlockDefinition` object.
+    
+    This function does the following:
+
+    #. Gets the :attr:`~.BlockDefinition.verticies`,
+       :attr:`~.BlockDefinition.triangles`, and
+       :attr:`~.BlockDefinition.tex` attributes from the
+       :class:`.BlockDefinition` object.
+
+    #. Calls :meth:`.Textures.load` with the value returned from the `tex`
+       attribute. The return value is expected to be a :class:`.oil.Image` type.
+
+    #. Checks the `transparent`, `solid`, `fluid`, `nospawn`, and `nodata`
+       attributes and sets the corresponding booleans on the struct
+
+    #. Checks that the verticies and triangles objects returned were sequences
+
+    #. Initializes the verticies buffer by calling :c:func:`buffer_init`
+
+    #. For every face, initializes 6 indices buffers by calling
+       :c:func:`buffer_init`
+
+    #. Loops over the verticies sequence. Creates a new :c:type:`OILVertex`
+       struct and fills it with the values from the current sequence element.
+       Calls :c:func:`buffer_append` to add this struct to the verticies buffer.
+
+    #. Loops over the triangles sequence. Does the same as  for the verticies
+       except instead of a OILVertex object, it's just an array of 3 ints.
+       Triangles are added to the corresponding buffer that they were declared
+       with depending on the face type declaration.
+
+    #. Sets the :c:data:`BlockDef.tex` member to the underlying image structure
+       of the texture object returned from Textures.load.
+
+    #. Sets the known member to 1.
+
+.. function:: render(regionset, chunk_x, chunk_y, chunk_z, image, matrix, compiled_blockdefs)
+
+    This function is called to render a single chunk section on the given image
+    using the given perspective matrix, pulling chunk data from the given
+    regionset, using the given block definitions.
+
+    :param regionset: is the :class:`.RegionSet` object to pull chunk
+        information from
+    :param chunk_x: is the x coordinate of the chunk to render
+    :param chunk_y: is the section number of the chunk to render
+    :param chunk_z: is the z coordinate of the chunk to render
+    :param image: is the :class:`.oil.Image` object to render onto.
+    :param matrix: is the :class:`.oil.Matrix` object to use as the projection
+        matrix
+    :param compiled_blockdefs: is the object returned from the
+        :func:`compile_block_definitions` function.
+
+    Details coming soon!
+
+
+Structs Used
+~~~~~~~~~~~~
+
+.. c:type:: BlockDefs
+
+    A structure representing all the block definitions
+
+    .. c:member:: BlockDef* defs
+    .. c:member:: unsigned int max_blockid
+    .. c:member:: unsigned int max_data
+
+.. c:type:: BlockDef
+
+    A single definition of a block. Holds the same data as the corresponding
+    :class:`.BlockDefinition` object: verticies, indicies, texture, and several
+    booleans.
+
+    .. c:member:: int known
+
+        A value that is by default 0 since the :data:`BlockDefs.defs` array is
+        initialized with `calloc`. This is therefore set to nonzero if this
+        block is defined.
+
+    .. c:member:: Buffer verticies
+    .. c:member:: Buffer indicies[FACE_TYPE_COUNT]
+    .. c:member:: OILImage* tex
+
+    .. c:member:: int transparent
+    .. c:member:: int solid
+    .. c:member:: int fluid
+    .. c:member:: int nospawn
+    .. c:member:: int nodata
+
+.. c:type:: Buffer
+
+    .. c:member:: void* data
+    .. c:member:: unsigned int element_size
+    .. c:member:: unsigned int length
+    .. c:member:: unsigned int reserved
+    
