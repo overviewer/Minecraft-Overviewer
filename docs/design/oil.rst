@@ -339,11 +339,29 @@ Matrix Objects
     subtract, multiply, negative, positive, nonzero, inplace_add,
     inplace_subtract, inplace_multiply.
 
-    * The python type is PyOILMatrix in oil-python.c
-    * The matrix type is OILMatrix in oil.h
+    * The python type is :c:type:`PyOILMatrix` in oil-python.h
+    * The matrix type is :c:type:`OILMatrix` in oil.h
     * The python type definition is PyOILMatrixType in oil-python.c
-    * The python bindings are defined in oil.python.c
+    * The python bindings are defined in oil-python.c
     * The actual matrix implementation is in oil-matrix.c
+
+C Type
+------
+.. c:type:: OILMatrix
+
+    This is a struct defined in oil.h. It has a single member:
+
+    .. c:member:: float data[4][4]
+
+        This member defines the 16 floating point values for the matrix
+
+.. c:type:: PyOILMatrix
+
+    This is the python type defined in oil-python.h which holds a
+    :c:type:`OILMatrix` and provides a python interface for it.
+
+    .. c:member:: PyObject_HEAD
+    .. c:member:: OILMatrix matrix
 
 Renderer Objects
 ================
@@ -635,8 +653,8 @@ There are two functions exported by this module, and several constants.
 
 Face Types
 ----------
-These constants are used by `Block Definitions`_ to specify properties of a
-face.
+These constants are used in the :attr:`~.BlockDefinition.faces` attribute of the
+:class:`.BlockDefinition` object.
 
 .. data:: FACE_TYPE_NX
 .. data:: FACE_TYPE_NY
@@ -645,16 +663,14 @@ face.
 .. data:: FACE_TYPE_PY
 .. data:: FACE_TYPE_PZ
 
-    These constants define the normal vector of the face. Positive/negative X,
-    Y, or Z. The renderer uses this value to determine whether to render a face
-    or not.
+    These constants define the (rough) normal vector of the face.
+    Positive/negative X, Y, or Z. The renderer uses this value to determine
+    whether to render a face or not. A face will only be rendered if the
+    neighboring block in the given direction has the TRANSPARENT property.
 
-    .. warning::
-
-        This is mostly conjecture. Check on this.
-
-Functions
----------
+Python-exported Functions
+-------------------------
+The renderer is written in C, but there are 2 functions exposed to Python.
 
 .. function:: compile_block_definitions(textures, blockdefs)
 
@@ -678,6 +694,31 @@ Functions
     a :c:type:`BlockDef` struct is allocated and added to the :c:data:`BlockDefs.defs`
     array. It does this by calling :c:func:`compile_block_definition`, a
     staticly defined inline function.
+
+.. function:: render(regionset, chunk_x, chunk_y, chunk_z, image, matrix, compiled_blockdefs)
+
+    This function is called to render a single chunk section on the given image
+    using the given perspective matrix, pulling chunk data from the given
+    regionset, using the given block definitions.
+
+    :param regionset: is the :class:`.RegionSet` object to pull chunk
+        information from
+    :param chunk_x: is the x coordinate of the chunk to render
+    :param chunk_y: is the section number of the chunk to render
+    :param chunk_z: is the z coordinate of the chunk to render
+    :param image: is the :class:`.oil.Image` object to render onto.
+    :param matrix: is the :class:`.oil.Matrix` object to use as the projection
+        matrix
+    :param compiled_blockdefs: is the object returned from the
+        :func:`compile_block_definitions` function.
+
+    This is the main entry point for rendering. See the :ref:`rendering` section
+    for details and a complete walkthrough of how it works.
+
+Compiling the Blocks
+--------------------
+
+This C function compiles the block definitions.
 
 .. c:function:: int compile_block_definition(PyObject* pytextures, BlockDef* def, PyObject* pydef)
 
@@ -726,25 +767,6 @@ Functions
 
     #. Sets the known member to 1.
 
-.. function:: render(regionset, chunk_x, chunk_y, chunk_z, image, matrix, compiled_blockdefs)
-
-    This function is called to render a single chunk section on the given image
-    using the given perspective matrix, pulling chunk data from the given
-    regionset, using the given block definitions.
-
-    :param regionset: is the :class:`.RegionSet` object to pull chunk
-        information from
-    :param chunk_x: is the x coordinate of the chunk to render
-    :param chunk_y: is the section number of the chunk to render
-    :param chunk_z: is the z coordinate of the chunk to render
-    :param image: is the :class:`.oil.Image` object to render onto.
-    :param matrix: is the :class:`.oil.Matrix` object to use as the projection
-        matrix
-    :param compiled_blockdefs: is the object returned from the
-        :func:`compile_block_definitions` function.
-
-    Details coming soon!
-
 
 Structs Used
 ~~~~~~~~~~~~
@@ -771,6 +793,11 @@ Structs Used
 
     .. c:member:: Buffer verticies
     .. c:member:: Buffer indicies[FACE_TYPE_COUNT]
+
+        This holds the face definitions from the
+        :attr:`.BlockDefinition.triangles` attribute. It is grouped by the face
+        type declaration.
+
     .. c:member:: OILImage* tex
 
     .. c:member:: int transparent
@@ -779,10 +806,230 @@ Structs Used
     .. c:member:: int nospawn
     .. c:member:: int nodata
 
+
+Buffers
+-------
+Buffers are used in a few places and are described in this section.
+
+A Buffer is a dynamic array of some arbitrary element type. It has an efficient
+append method that doubles the allocated space on expansion.
+
 .. c:type:: Buffer
 
     .. c:member:: void* data
     .. c:member:: unsigned int element_size
     .. c:member:: unsigned int length
+
+        The number of elements currently stored in the buffer.
+
     .. c:member:: unsigned int reserved
+        
+        The amount of space actually allocated to the :c:member:`data`
+        pointer. This is given in number of elements.
+
+.. c:function:: void buffer_init(Buffer* buffer, unsigned int element_size, unsigned int initial_length)
+
+    Initializes a buffer given a newly-allocated Buffer struct. This sets the
+    :c:member:`~Buffer.data` element to `NULL`, :c:member:`~Buffer.length` to 0,
+    and the other two members to their corresponding parameter values.
+
+.. c:function:: void buffer_append(Buffer* buffer, const void* newdata, unsigned int newdata_length)
     
+    Calls :c:func:`buffer_reserve` to make sure there is enough space allocated
+    in the buffer.
+
+    Then calls `memcpy` to append the new data to the buffer and changes the
+    buffer's length attribute appropriately.
+
+.. c:function:: void buffer_reserve(Buffer* buffer, unsigned int length)
+
+    Makes sure there is space for at least :c:member:`Buffer.length` + `length`
+    elements allocated in the buffer. This function may call `realloc` on the
+    buffer's :c:member:`~Buffer.data` member.
+
+.. _rendering:
+
+Rendering
+---------
+
+Rendering starts at the :func:`overviewer.chunkrenderer.render` function. This calls into
+the C function :c:func:`render` defined in chunkrenderer.c.
+
+.. c:function:: PyObject* render(PyObject* self, PyObject* args)
+
+    This function does the following:
+
+    #. Creates a :c:type:`RenderState` struct on the stack.
+
+    #. The following attributes of the `RenderState` struct are saved from the
+       arguments to the function: `blockdefs`, `im`, `matrix`, the chunk
+       coordinates, `regionset`.
+
+    #. Sets the :c:member:`ChunkData.loaded` property of each element of the
+       :c:member:`RenderState.chunks` member to 0.
+
+    #. :c:func:`load_chunk` is called with the address of the `state` struct,
+       and the parameters 0, 0, 1. This indicates that it should load the chunk
+       at relative position 0,0 (the chunk we're actually rendering) and that it
+       is required. See docs for that function for more information.
+
+       This loads the chunk into slot [1][1] of the `chunks` member.
+    
+    #. If the requested section of the requested chunk was not loaded
+       successfully or does not exist, the function bails.
+
+    #. Two :c:type:`Buffer` structs are declared on the stack: `blockverticies`
+       and `blockindicies`. Calls :c:func:`buffer_init` twice to "set up the
+       mesh buffers". Once with the address of each buffer.
+
+       `blockverticies` will hold :c:type:`OILVertex` structs, and
+       `blockindicies` will hold unsigned ints.
+
+    #. Local variables `blocks` and `datas` are set to point to the PyObjects
+       for the :c:member:`~section.blocks` and :c:member:`~section.data` values
+       of the current chunk section.
+
+    #. Seeds the random number generator with a fixed constant
+
+    #. Does the following in a loop over every block in the current chunk
+       section
+
+       #. Calls :c:func:`get_array_short_3d` to get the current block ID.
+
+       #. Calls :c:func:`get_array_byte_3d` to get the current data byte.
+
+       #. Calls :c:func:`get_block_definition` to get a :c:type:`BlockDef`
+          pointer for the current block.
+
+       #. Sets the `blockverticies` buffer length to 0, effectively clearing the
+          array (but not deallocating it)
+
+       #. Calls :c:func:`buffer_append` to append the block data verticies to
+          this buffer.
+
+       #. For each vertex in the vertex buffer, adjusts the x, y, and z
+          coordinates by the block's x,y,z coordinates within the chunk. This
+          sets each vertex coordinate relative to the chunk, not to the block.
+
+       #. Sets the `blockindicies` buffer length to 0.
+
+       #. Calls :c:func:`get_data` for each neighboring block.
+
+       #. For the neighboring blocks who have the property `TRANSPARENT`,
+          appends the faces whose face type property is facing the transparent
+          neighboring block to the `blockindicies` buffer.
+
+       #. If the `blockindicies` buffer is not empty, calls :c:func:`emit_mesh`
+          to do the actual drawing of the culled faces and verticies.
+
+    #. Memory is freed and None is returned.
+
+.. c:function:: int load_chunk(RenderState* state, int relx, int relz, int required)
+.. c:function:: get_array_short_3d
+.. c:function:: get_array_byte_3d
+.. c:function:: BlockDef* get_block_definition(RenderState* state, int x, int y, int z, unsigned int blockid, unsigned int data)
+
+    Returns the `BlockDef` struct that defines the given block/data pair, or
+    NULL if none exists.
+
+    The x,y,z parameters are for blocks that need to consider data from
+    neighboring blocks—"pseudo data". This is not currently implemented.
+
+.. c:function:: get_data
+.. c:function:: void emit_mesh(RenderState* state, OILImage* tex, const Buffer* verticies, const Buffer* indicies)
+
+    This function is a one-line dispatch to :c:func:`oil_image_draw_triangles`
+
+
+Structs Used
+~~~~~~~~~~~~
+
+.. c:type:: RenderState
+
+    This defines the configuration parameters for a particular call to the
+    :c:func:`render` function.
+
+    .. c:member:: PyObject* regionset
+    .. c:member:: int chunkx
+    .. c:member:: int chunky
+    .. c:member:: int chunkz
+
+        Holds the chunk coordinates and chunk section that is being rendered by
+        the current call to :c:func:`render`. chunkx and z specify the chunk
+        address, and chunky specifies the section within the chunk.
+
+    .. c:member:: ChunkData chunks
+
+        This is a [3][3] array holding the chunk and 8 surrounding chunks used
+        in the current render. Since some blocks depend on neighboring blocks,
+        those chunks may be loaded and stored here. (These are not loaded
+        preemptively, however.)
+
+    .. c:member:: OILImage* im
+    .. c:member:: OILMatrix *matrix
+    .. c:member:: BlockDefs* blockdefs
+
+.. c:type:: ChunkData
+
+    Holds the loaded and parsed data for a single chunk (including all chunk
+    sections)
+
+    .. c:member:: int loaded
+    .. c:member:: PyObject* biomes
+    .. c:member:: section sections
+
+        This is actually an inline-defined struct array. It contains
+        :c:macro:`SECTIONS_PER_CHUNK` elements.
+
+.. c:type:: section
+
+    This is a struct that only exists within the scope of the
+    :c:type:`ChunkData` struct. It's defined separately in the docs due to
+    limitations in the documentation software.
+
+    Each member represents all there is to know about a particular chunk section
+
+    .. c:member:: PyObject* blocks
+    .. c:member:: PyObject* data
+    .. c:member:: PyObject* skylight
+    .. c:member:: PyObject* blocklight
+
+.. c:type:: OILVertex
+
+    Defines a single vertex.
+
+    .. c:member:: float x
+    .. c:member:: float y
+    .. c:member:: float z
+    .. c:member:: float s
+    .. c:member:: float t
+    .. c:member:: OILPixel color
+
+.. c:type:: OILPixel
+
+    Defines a color plus alpha channel
+
+    .. c:member:: unsigned char r
+    .. c:member:: unsigned char g
+    .. c:member:: unsigned char b
+    .. c:member:: unsigned char a
+
+Oil Image Objects
+=================
+
+.. currentmodule:: overviewer.oil
+
+.. class:: Image
+    
+
+.. c:type:: OILImage
+
+OIL
+===
+
+This section describes OIL, the core Overviewer Imaging Library.
+
+C Functions
+-----------
+
+.. c:function:: oil_image_draw_triangles
