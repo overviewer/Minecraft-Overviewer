@@ -499,7 +499,7 @@ resize_half(PyObject *dest, PyObject *src) {
     /* alpha properties */
     int src_has_alpha, dest_has_alpha;
     /* iteration variables */
-    unsigned int x, y;
+    int x, y;
     /* temp color variables */
     unsigned int r, g, b, a;    
     /* size values for source and destination */
@@ -508,8 +508,9 @@ resize_half(PyObject *dest, PyObject *src) {
     imDest = imaging_python_to_c(dest);
     imSrc = imaging_python_to_c(src);
     
-    if (!imDest || !imSrc)
+    if (!imDest || !imSrc) {
         return NULL;
+    }
     
     /* check the various image modes, make sure they make sense */
     if (strcmp(imDest->mode, "RGBA") != 0) {
@@ -558,51 +559,35 @@ resize_half(PyObject *dest, PyObject *src) {
         
         for (x = 0; x < dest_width; x++) {
             
-            // read first column
-            r = *in_row1;    
-            r += *in_row2;
-            in_row1++;
-            in_row2++;
-            g = *in_row1;        
-            g += *in_row2;
-            in_row1++;
-            in_row2++;
-            b = *in_row1;        
-            b += *in_row2;
-            in_row1++;
-            in_row2++;            
+            /* read first column */
+            r = *in_row1++;    
+            g = *in_row1++;   
+            b = *in_row1++;      
+            r += *in_row2++;    
+            g += *in_row2++;   
+            b += *in_row2++; 
             
-            if (src_has_alpha)
-            {
-                a = *in_row1;        
-                a += *in_row2;
-                in_row1++;
-                in_row2++;
+            if (src_has_alpha) {
+
+                a = *in_row1++;        
+                a += *in_row2++;
             }
             
-            // read second column 
-            r += *in_row1;        
-            r += *in_row2;
-            in_row1++;
-            in_row2++;
-            g += *in_row1;        
-            g += *in_row2;
-            in_row1++;
-            in_row2++;
-            b += *in_row1;        
-            b += *in_row2;
-            in_row1++;
-            in_row2++;
+            /* read second column */
+            r += *in_row1++;   
+            g += *in_row1++;   
+            b += *in_row1++;     
+            r += *in_row2++;      
+            g += *in_row2++;       
+            b += *in_row2++;
             
-            if (src_has_alpha)
-            {
-                a += *in_row1;        
-                a += *in_row2;
-                in_row1++;
-                in_row2++;
+            if (src_has_alpha) {
+
+                a += *in_row1++;        
+                a += *in_row2++;
             }
             
-            // write blended color            
+            /* write blended color */           
             *out = (UINT8)(r >> 2);
             out++;
             *out = (UINT8)(g >> 2);
@@ -621,22 +606,230 @@ resize_half(PyObject *dest, PyObject *src) {
     return dest;
 }
 
-/* wraps resize_half so it can be called directly from python */
+/* sharpens the image
+ */
+inline PyObject *
+sharpen(PyObject *src, double sharpness) {
+    /* libImaging handles */
+    Imaging imSrc;
+    /* iteration variables */
+    int x, y, i;
+    /* temp color variables */
+    int r, g, b, a;    
+    /* size values for source and destination */
+    int width, height;
+    /* kernel values for middle, edge and corner*/
+    int k_mid, k_edg, k_crn;
+    
+    imSrc = imaging_python_to_c(src);
+    
+    if (!imSrc) {
+        return NULL;
+    }
+    
+    /* check if sharpness value is out of range */
+    if (sharpness < 0 || sharpness > 1) {
+        PyErr_SetString(PyExc_ValueError,
+                        "sharpness must be in the range [0, 1]");
+        return NULL;
+    }
+
+    /* check image mode, make sure it makes sense */
+    if (strcmp(imSrc->mode, "RGBA") != 0 && strcmp(imSrc->mode, "RGB") != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "given source image does not have mode \"RGBA\" or \"RGB\"");
+        return NULL;
+    }
+    
+    width = imSrc->xsize;
+    height = imSrc->ysize;
+        
+    /* check that there exists anything to sharpen */
+    if (width <= 2 || height <= 2) {
+        /* nothing to do, return */
+        return src;
+    }
+
+    /* kernel normalized to 1024 */
+    k_edg = -(int)(sharpness * 1024) / 6; 
+    k_crn = k_edg / 2;
+    k_mid = 1024 - 4 * (k_edg + k_crn);
+    
+    {
+        const int kernel[9] = {
+            k_crn, k_edg, k_crn,
+            k_edg, k_mid, k_edg,
+            k_crn, k_edg, k_crn
+        };
+        
+        int alpha_kernel[9];
+        int sum = 0;
+        
+        const int has_alpha = (imSrc->pixelsize == 4 ? 1 : 0);    
+        const int pixel_size = imSrc->pixelsize;
+        const int row_width = pixel_size * width;
+        const int temp_width = row_width + pixel_size * 2;
+
+        UINT8 *temp1 = calloc(temp_width, sizeof(UINT8));
+        UINT8 *temp2 = calloc(temp_width, sizeof(UINT8));
+        UINT8 *temp3 = calloc(temp_width, sizeof(UINT8));
+        
+        UINT8 *temp_above = temp1 + pixel_size;
+        UINT8 *temp_middle = temp2 + pixel_size;
+        UINT8 *temp_below = temp3 + pixel_size;
+        UINT8 *temp;
+        
+        memcpy(alpha_kernel, kernel, 9);
+        for (i = 0; i < 9; i++)
+            sum += alpha_kernel[i];
+
+        memcpy(temp_above, (UINT8 *)imSrc->image[0], row_width);
+        memcpy(temp_middle, (UINT8 *)imSrc->image[0], row_width);
+        memcpy(temp_below, (UINT8 *)imSrc->image[1], row_width);
+        
+        memcpy(temp_above - pixel_size, temp_above, pixel_size);
+        memcpy(temp_middle - pixel_size, temp_middle, pixel_size);
+        memcpy(temp_below - pixel_size, temp_below, pixel_size);
+
+        memcpy(temp_above + row_width, temp_above + row_width - pixel_size, pixel_size);
+        memcpy(temp_middle + row_width, temp_middle + row_width - pixel_size, pixel_size);
+        memcpy(temp_below + row_width, temp_below + row_width - pixel_size, pixel_size);
+
+        for (y = 0; y < height; y++) {
+        
+            UINT8 *row = (UINT8 *)imSrc->image[y];
+        
+            for (x = 0; x < row_width; x += pixel_size) {
+                
+                int rx = x;
+                int gx = x + 1;
+                int bx = x + 2;
+                int ax = x + 3;
+                
+                if (has_alpha) {
+                                 
+                    row[ax] = temp_middle[ax];
+                    sum = 0;
+
+                    /* pre-multiply alpha */
+                    alpha_kernel[0] = kernel[0] * temp_above[ax - pixel_size];
+                    alpha_kernel[1] = kernel[1] * temp_above[ax];
+                    alpha_kernel[2] = kernel[2] * temp_above[ax + pixel_size];
+                    alpha_kernel[3] = kernel[3] * temp_middle[ax - pixel_size];
+                    alpha_kernel[4] = kernel[4] * temp_middle[ax];
+                    alpha_kernel[5] = kernel[5] * temp_middle[ax + pixel_size];
+                    alpha_kernel[6] = kernel[6] * temp_below[ax - pixel_size];
+                    alpha_kernel[7] = kernel[7] * temp_below[ax];
+                    alpha_kernel[8] = kernel[8] * temp_below[ax + pixel_size];
+
+                    for (i = 0; i < 9; i++)
+                        sum += alpha_kernel[i];
+                        
+                    if (sum == 0) {
+                        row[rx] = temp_middle[rx];
+                        row[gx] = temp_middle[gx];
+                        row[bx] = temp_middle[bx];
+                        row[ax] = temp_middle[ax];
+                        continue;                        
+                    }
+                }
+
+                r = alpha_kernel[0] * temp_above[rx - pixel_size];
+                r += alpha_kernel[1] * temp_above[rx];
+                r += alpha_kernel[2] * temp_above[rx + pixel_size];
+                r += alpha_kernel[3] * temp_middle[rx - pixel_size];
+                r += alpha_kernel[4] * temp_middle[rx];
+                r += alpha_kernel[5] * temp_middle[rx + pixel_size];
+                r += alpha_kernel[6] * temp_below[rx - pixel_size];
+                r += alpha_kernel[7] * temp_below[rx];
+                r += alpha_kernel[8] * temp_below[rx + pixel_size];
+                
+                g = alpha_kernel[0] * temp_above[gx - pixel_size];
+                g += alpha_kernel[1] * temp_above[gx];
+                g += alpha_kernel[2] * temp_above[gx + pixel_size];
+                g += alpha_kernel[3] * temp_middle[gx - pixel_size];
+                g += alpha_kernel[4] * temp_middle[gx];
+                g += alpha_kernel[5] * temp_middle[gx + pixel_size];
+                g += alpha_kernel[6] * temp_below[gx - pixel_size];
+                g += alpha_kernel[7] * temp_below[gx];
+                g += alpha_kernel[8] * temp_below[gx + pixel_size];
+                
+                b = alpha_kernel[0] * temp_above[bx - pixel_size];
+                b += alpha_kernel[1] * temp_above[bx];
+                b += alpha_kernel[2] * temp_above[bx + pixel_size];
+                b += alpha_kernel[3] * temp_middle[bx - pixel_size];
+                b += alpha_kernel[4] * temp_middle[bx];
+                b += alpha_kernel[5] * temp_middle[bx + pixel_size];
+                b += alpha_kernel[6] * temp_below[bx - pixel_size];
+                b += alpha_kernel[7] * temp_below[bx];
+                b += alpha_kernel[8] * temp_below[bx + pixel_size];
+                
+                r /= sum;
+                g /= sum;
+                b /= sum;
+                
+                if(r > 0xFF) r = 0xFF;
+                else if(r < 0) r = 0;
+
+                if(g > 0xFF) g = 0xFF;
+                else if(g < 0) g = 0;
+
+                if(b > 0xFF) b = 0xFF;
+                else if(b < 0) b = 0;
+
+                row[rx] = r;
+                row[gx] = g;
+                row[bx] = b;
+            }
+            
+            temp = temp_above;
+            temp_above = temp_middle;
+            temp_middle = temp_below;
+            temp_below = temp;
+
+            if(y < height - 2) {            
+                memcpy(temp_below, (UINT8 *)imSrc->image[y + 2], row_width);
+                memcpy(temp_below - pixel_size, temp_below, pixel_size);
+                memcpy(temp_below + row_width, temp_below + row_width - pixel_size, pixel_size);
+            } else {
+                memcpy(temp_below - pixel_size, temp_middle - pixel_size, temp_width);
+            }
+        }
+        
+        free(temp1);
+        free(temp2);
+        free(temp3);
+    }
+    
+    return src;
+}
+
+/* wraps resize_half and sharpen so they can be called from python */
 PyObject *
 resize_half_wrap(PyObject *self, PyObject *args)
 {
     /* raw input python variables */
     PyObject *dest, *src;
+    /* sharpness parameter in range [0, 1] */
+    double sharpness;
     /* return value: dest image on success */
     PyObject *ret;
     
-    if (!PyArg_ParseTuple(args, "OO", &dest, &src))
+    if (!PyArg_ParseTuple(args, "OOd", &dest, &src, &sharpness))
         return NULL;
     
     ret = resize_half(dest, src);
+    
     if (ret == dest) {
+
+        if(sharpness > 0) {
+            /* sharpen resized texture */
+            ret = sharpen(ret, sharpness);
+        }
+
         /* Python needs us to own our return value */
         Py_INCREF(dest);
     }
+
     return ret;
 }

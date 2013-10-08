@@ -24,6 +24,7 @@ import functools
 import time
 import errno
 import stat
+import math
 from collections import namedtuple
 from itertools import product, izip
 
@@ -490,7 +491,17 @@ class TileSet(object):
                 # All others
                 dest = os.path.join(self.outputdir, *(str(x) for x in tilepath[:-1]))
                 name = str(tilepath[-1])
-            self._render_compositetile(dest, name)
+                
+            # Intensity of the sharpness filter when zoomed all the way in, range = [0, 1]
+            initial_sharpness = 0.4
+            # Reduction in the filter's intensity for each level zoomed out, range = [0, 1]
+            decay_rate = 0.5
+			            
+            sharpness = initial_sharpness * math.pow(decay_rate, self.treedepth - len(tilepath) - 1)
+            if sharpness < 0.01:
+                sharpness = 0
+
+            self._render_compositetile(dest, name, sharpness)
 
     def get_initial_data(self):
         """This is called similarly to get_persistent_data, but is called after
@@ -803,7 +814,7 @@ class TileSet(object):
     def __str__(self):
         return "<TileSet for %s>" % os.path.basename(self.outputdir)
 
-    def _render_compositetile(self, dest, name):
+    def _render_compositetile(self, dest, name, sharpness):
         """
         Renders a tile at os.path.join(dest, name)+".ext" by taking tiles from
         os.path.join(dest, name, "{0,1,2,3}.png")
@@ -869,11 +880,10 @@ class TileSet(object):
 
         for path in quadPath_filtered:
             try:
-                #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
                 src = Image.open(path[1])
                 src.load()
                 quad = Image.new("RGBA", (192, 192), self.options['bgcolor'])
-                resize_half(quad, src)
+                resize_half(quad, src, sharpness)
                 img.paste(quad, path[0])
             except Exception, e:
                 logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
