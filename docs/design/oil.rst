@@ -89,7 +89,45 @@ What hasn't changed? Here's what we don't plan on changing.
 
 Walkthrough
 ===========
-This section attempts to summarize the workflow of a typical Overviewer render, with cross references to other sections. Not everything in here will make perfect sense without additional knowledge of the different classes, their purposes, and their interactions, but this is a good place to start.
+
+Summary
+-------
+
+Here are the high level steps and components of a render:
+
+1. First create a :class:`.RegionSet` object to represent the minecraft
+   dimension to render. This can be created by first creating a :class:`.World`
+   object, which has methods to scan for and create RegionSet objects of that
+   world.
+
+2. Then create a :class:`.IsometricRenderer` object, giving it the RegionSet
+   from step 1.
+
+3. Then create a :class:`.TileSet` object, giving it the renderer object from
+   step 2.
+
+4. Then create a :class:`.Dispatcher` object, or a
+   :class:`.MultiprocessorDispatcher` for multiprocessor rendering.
+
+5. Add the TileSet object from step 3 to the Dispatcher as a worker. The
+   dispatcher will tell the TileSet to do its work.
+
+.. warning::
+
+    You must wrap the RegionSet in a CachedRegionSet object or rendering will be
+    exceedingly slow. We really ought to make caching non-optional.
+
+.. note::
+
+    An AssetMananger, Textures, BlockDefinitions objects are also required, and
+    so the above steps are not complete and true to the current code. 
+    I want to make sensible defaults to simplify the above workflow; the above
+    is a goal.
+
+Details
+-------
+
+This section attempts to detail the workflow of a typical Overviewer render, with cross references to other sections. Not everything in here will make perfect sense without additional knowledge of the different classes, their purposes, and their interactions, but this is a good place to start.
 
 #. Processing starts in the main() method.
 
@@ -101,7 +139,7 @@ This section attempts to summarize the workflow of a typical Overviewer render, 
 
 #. The :class:`.RegionSet` constructor creates a map of region x,z coords to regionfile names.
 
-#. Next the main() method creates a :class:`.Textures` object with the current texture options, or gets the default texture options from :func:`textures.get_default`, which finds a Minecraft.jar and uses it as the :class:`.Texture` object constructor parameter.
+#. Next the main() method creates a :class:`.Textures` object with the current texture options, or gets the default texture options from :func:`.textures.get_default`, which finds a Minecraft.jar and uses it as the Textures object constructor parameter.
 
 #. The :class:`.World` object has its :meth:`.World.get_regionset` method called.
 
@@ -111,7 +149,7 @@ This section attempts to summarize the workflow of a typical Overviewer render, 
 
    #. Any region transformations are applied
 
-   #. A function called :func:`blockdefinitions.get_default` is called. See the section on `Block Definitions`_.
+   #. A function called :func:`.blockdefinitions.get_default` is called. See the section on `Block Definitions`_.
 
    #. A :class:`.Matrix` object is created and transformed in a specific way such as to define the render's perspective and projection. See the section on `Matrix Objects`_.
 
@@ -281,10 +319,10 @@ Matrix Objects
 
 .. class:: Matrix
 
-    This is a 2-dimensional 4×4 matrix of floating point numbers, written in C,
-    exposed as a Python object. The object is defined in the file oil-python.c,
-    which hold the Python binding wrappers around the code in oil-matrix.c,
-    which is code adapted from some other GPL matrix implementation.
+    This is a 4×4 matrix of floating point numbers, written in C, exposed as a
+    Python object. The object is defined in the file oil-python.c, which hold
+    the Python binding wrappers around the code in oil-matrix.c, which is code
+    adapted from some other GPL matrix implementation.
 
     .. method:: get_data
 
@@ -448,6 +486,22 @@ IsometricRenderer objects
     object is a 3-tuple: `(x, z, mtime)` where `x` and `z` specify the chunk
     location and `mtime` is the chunk mtime from the region file header.
 
+    .. method:: __init__(regionset, textures, blockdefs, matrix)
+
+        Initialize the renderer with the given parameters
+
+        :param regionset: The regionset object to pull world data from and
+            render
+        :type regionset: :class:`.RegionSet`
+        :param textures: The textures to use in rendering
+        :type textures: :class:`.Textures`
+        :param blockdefs: The block definitions that define how to render each
+            block
+        :type blockdefs: :class:`.BlockDefinitions`
+        :param matrix: The perspective matrix that defines the rendering angle.
+            This is assumed to be isometric.
+        :type matrix: :class:`.oil.Matrix`
+
     .. method:: get_render_sources_in_rect(rect)
 
         Iterates over :meth:`_get_chunks_in_rect`
@@ -510,6 +564,31 @@ TileSet Objects
         actually used in the body of the class it appears, and RegionSet is only
         used for a couple of irrelevant things that could probably be moved
         elsewhere (persistent data handling). Mark this as TODO.
+
+    .. method:: __init__(worldobj, regionsetobj, assetmanagerobj, options, rendererobj, outputdir)
+
+        Initialize the TileSet object with the given parameters.
+
+        :param worldobj: The world object to render from. This parameter is obsolete and will
+            be removed.
+        :type worldobj: :class:`.World`
+        :param regionsetobj: The regionset to render from. This parameter is
+            obsolete and will be removed.
+        :type regionsetobj: :class:`.RegionSet`
+        :param assetmanagerobj: Since the TileSet object needs to output some
+            metadata, this is done through the assetmanager. This will also probably
+            be removed in the future, in favor of the TileSet handling its own
+            metadata.
+        :type assetmanagerobj: :class:`~overviewer.assetmanager.AssetManager`
+        :param options: The options dictionary. See the class docstring for
+            valid and required options.
+        :type options: dict
+        :param rendererobj: Typically an :class:`.IsometricRenderer` object,
+            this is any renderer object. This determines what we are actually
+            rendering.
+        :type rendererobj: :class:`.Renderer`
+        :param outputdir: The path on the filesystem to output our files.
+        :type outputdir: str
 
 Chunk Scanning
 --------------
@@ -617,15 +696,63 @@ These objects represent data from Minecraft worlds. They contain methods to retr
 
 .. module:: overviewer.world
 
-.. class:: World(worlddir)
+.. class:: World
 
     This represents a Minecraft world. It usually contains one or more :class:`RegionSet` objects. The constructor of this object scans the directory and automatically creates a :class:`RegionSet` object for each dimension it finds.
 
-.. class:: RegionSet(regiondir, rel)
+    .. method:: __init__(worlddir)
+
+        Initialize this World object with the given world directory. This will
+        load and parse the world metadata level.dat file, and also scan for
+        dimensions and create a :class:`RegionSet` object for each one.
+
+    .. method:: get_regionsets
+    
+        Returns an iterable over all RegionSet objects found in this world.
+
+    .. method:: get_regionset(index)
+
+        Returns the RegionSet found at the given index. `index` can also specify
+        the RegionSet type (as returned by :meth:`RegionSet.get_type`). The
+        first matching type is returned.
+
+        :type index: int or str
+        :param index: Specifies which RegionSet to return, the one at the given
+            index or the first one with the given type.
+        :return: The :class:`RegionSet` object, or None if none were found with
+            the given type.
+        :raises: IndexError if the given index does not exist.
+
+    .. method:: get_level_dat_data
+
+        Returns a dictionary of the data parsed from level.dat
+
+    .. method:: find_true_spawn
+
+        Returns the spawn point given in level.dat, adjusted to attempt to find
+        where players will actually spawn. Minecraft won't spawn users in the
+        middle of a mountain for example, so this opens up the relevant chunk
+        and finds the first air block above the given spawn point.
+
+.. class:: RegionSet
 
     This represents a set of region files. Minecraft worlds may contain more than one "dimension", each represented by a RegionSet object.
 
-    The constructor creates a map of region x,z coordinates to regionfile names.
+    .. method:: __init__(regiondir, rel)
+
+        Creates a new RegionSet. In the process, this also creates a map of
+        region x,z coordinates to regionfile names.
+
+        :param str regiondir: The path on the filesystem to the directory of
+            region files.
+        :param str rel: The relative path to the regiondir with respect to the world
+            directory. This is only used to determine the RegionSet type.
+
+    .. method:: get_type
+
+        Returns the regionset type. This is `None` for the main world, or is the
+        name of the directory within the world directory that holds this
+        regionset, e.g. "DIM-1"
 
     .. method:: get_chunk(self, x, z)
 
@@ -638,6 +765,46 @@ These objects represent data from Minecraft worlds. They contain methods to retr
     .. method:: get_chunk_mtime(self, x, z)
     
         Returns the mtime for the given chunk.
+
+Texture Objects
+===============
+
+.. module:: overviewer.textures
+
+.. class:: Textures
+
+    This class encapsulates a set of textures that come from a Minecraft
+    resource pack or a Minecraft installation. It can find a Minecraft
+    installation and use those textures, or a resource pack can be specified
+    explicitly.
+
+    This class contains routines for loading texture images into memory.
+
+    .. method:: __init__(path)
+
+        Initialize a Textures object from the resource pack at the given path.
+        The path must name a Minecraft jar or resource pack zip (they are the
+        same format). `path` may also refer to the directory of an unzipped
+        resource pack.
+
+    .. method:: load(filename)
+
+        This loads the image with the given filename. The file is searched
+        within the resource pack and loaded as an image. `filename` can also be
+        the full path to an image relative to the resource pack root.
+
+        Returned images are always square. If the given image has more than one
+        frame, the first one is used.
+
+        :returns: :class:`.oil.Image`
+
+.. function:: get_default
+
+    This searches for a Minecraft installation and makes a Textures object with
+    it.
+
+    TODO: This ought to be a classmethod of the Textures object, or just rolled
+    into the default constructor and have path be an optional parameter.
 
 The Chunkrenderer
 =================
