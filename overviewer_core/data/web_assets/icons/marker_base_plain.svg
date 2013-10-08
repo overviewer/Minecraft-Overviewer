@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:cc="http://creativecommons.org/ns#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:svg="http://www.w3.org/2000/svg"
+     xmlns="http://www.w3.org/2000/svg"
+     version="1.1"
+     width="32"
+     height="37"
+     id="svg2">
+    <defs
+         id="defs4">
+        <filter
+             x="-0.25"
+             y="-0.25"
+             width="1.5"
+             height="1.5"
+             id="filter3802">
+            <feGaussianBlur
+                 result="blur"
+                 stdDeviation="2"
+                 in="SourceAlpha"
+                 id="feGaussianBlur3804" />
+            <feColorMatrix
+                 values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 "
+                 type="matrix"
+                 result="bluralpha"
+                 id="feColorMatrix3806" />
+            <feOffset
+                 result="offsetBlur"
+                 dy="0"
+                 dx="0"
+                 in="bluralpha"
+                 id="feOffset3808" />
+            <feMerge
+                 id="feMerge3810">
+                <feMergeNode
+                     in="offsetBlur"
+                     id="feMergeNode3812" />
+                <feMergeNode
+                     in="SourceGraphic"
+                     id="feMergeNode3814" />
+            </feMerge>
+        </filter>
+    </defs>
+    <metadata
+         id="metadata7">
+        <rdf:RDF>
+            <cc:Work
+                 rdf:about="">
+                <dc:format>image/svg+xml</dc:format>
+                <dc:type
+                     rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+                <dc:title></dc:title>
+            </cc:Work>
+        </rdf:RDF>
+    </metadata>
+    <g
+         transform="translate(0,-1015.3622)"
+         id="layer1">
+        <path
+             d="m 5.3953731,1018.8294 c -1.0681842,0 -1.928114,0.8381 -1.928114,1.8793 l 0,20.6699 c 0,1.0409 0.8599298,1.879 1.928114,1.879 l 4.3382568,0 5.7843411,5.6373 0.964058,0 5.784341,-5.6373 4.338257,0 c 1.068185,0 1.928114,-0.8381 1.928114,-1.879 l 0,-20.6699 c 0,-1.0412 -0.859929,-1.8793 -1.928114,-1.8793 l -21.2092539,0 z"
+             id="rect2987"
+             style="fill:#6e68e3;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;filter:url(#filter3802)" />
+    </g>
+</svg>

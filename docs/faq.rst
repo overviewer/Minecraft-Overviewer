@@ -219,7 +219,7 @@ into your config.  In your config, do the following
     
     # all the usual config stuff goes here
     
-    render["myrender"] = {
+    renders["myrender"] = {
         "title" : "foo",
         "world" : "someworld",
         "manualpois" : mymarkers,                         # IMPORTANT! Variable name from manualmarkers.py

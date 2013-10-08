@@ -365,7 +365,7 @@ values. The valid configuration keys are listed below.
 
     Then you don't need to specify a ``world`` key in the render dictionaries::
 
-        render['arender'] = {
+        renders['arender'] = {
                 'title': 'This render doesn't explicitly declare a world!',
                 }
 
@@ -928,7 +928,7 @@ primitive object's constructor::
 
 Then you can use your new rendermode in your render definitions::
 
-    render["survivalday"] = {
+    renders["survivalday"] = {
         "world": "survival",
         "title": "Survival Daytime",
         "rendermode": my_rendermode,
