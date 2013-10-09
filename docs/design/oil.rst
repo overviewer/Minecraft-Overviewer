@@ -1181,22 +1181,218 @@ Structs Used
     .. c:member:: unsigned char b
     .. c:member:: unsigned char a
 
-Oil Image Objects
-=================
-
-.. currentmodule:: overviewer.oil
-
-.. class:: Image
-    
-
-.. c:type:: OILImage
-
 OIL
 ===
 
 This section describes OIL, the core Overviewer Imaging Library.
 
-C Functions
------------
+Python Functions
+----------------
+This module exports the following functions, as well as
+:class:`~overviewer.oil.Image` and :class:`~overviewer.oil.Matrix` already
+documented elsewhere.
 
-.. c:function:: oil_image_draw_triangles
+.. module:: overviewer.oil
+
+.. function:: backend_set
+
+    This sets the OIL backend to use. Set it to one of the BACKEND_* constants
+    described below. This calls :c:func:`oil_backend_set`
+
+.. data:: BACKEND_CPU
+.. data:: BACKEND_DEBUG
+.. data:: BACKEND_CPU_SSE
+
+    Only defined when compiled with ENABLE_CPU_SSE_BACKEND
+
+.. data:: BACKEND_OPENGL
+
+    Only defined when compiled with ENABLE_OPENGL_BACKEND
+
+The above constants also have C equivalents called OIL_BACKEND_*, defined in an
+enum in oil.h with some macros.
+
+.. c:function:: int oil_backend_set(OILBackendName backend)
+
+    Defined in oil-backend.c, this sets the global pointer :c:data:`oil_backend`
+
+.. c:var:: OILBackend* oil_backend
+
+    This is a global pointer indicating which backend is set. It is by default
+    set to the address of :c:data:`oil_backend_cpu`
+
+Backends
+--------
+
+The :c:type:`OILBackend` struct
+defines a number of function pointers that control how to do the rendering.
+
+CPU backends are defined in oil-backend-cpu.def. Both CPU backend includes this
+file after setting some other macros appropriately, since they share a lot of
+code. It appears the only difference is that the SSE backend also includes
+emmintrin.h and stdint.h.
+
+.. c:type:: OILBackend
+
+    This struct is defined in oil-backend-private.h. This struct defines a
+    rendering backend, which is a set of primitive operations needed to support
+    our rendering requirements. It holds the following function pointers:
+
+    .. c:member:: int (*initialize)(void)
+
+        Called when starting up this backend. Return 0 for failure.
+
+    .. c:member:: void (*new)(OILImage *im)
+
+        Called when creating an image
+
+    .. c:member:: void (*free)(OILImage *im)
+
+        Called when destroying an image
+
+    .. c:member:: void (*load)(OILImage *im)
+
+        Load data out of backend and into im. called during (for example)
+        get_data()
+
+    .. c:member:: void (save)(OILImage *im)
+
+        Save data from im into the backend. called during (for example) unlock()
+
+    .. c:member:: int (*composite)(OILImage *im, OILImage *src, unsigned char alpha, int dx, int dy, unsigned int sx, unsigned int sy, unsigned int xsize, unsigned int ysize)
+
+        Do a composite operation
+
+    .. c:member:: void (*draw_triangles)(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *verticies, unsigned int verticies_length, unsigned int *indicies, unsigned int indicies_length, OILTriangleFlags flags)
+
+        Draw triangles
+
+    .. c:member:: (*resize_half)(OILImage *im, OILImage *src)
+
+        Cut src in half and write to im
+
+    .. c:member:: (*clear)(OILImage *im)
+
+        Clear the image
+
+Oil Image Objects
+-----------------
+
+.. currentmodule:: overviewer.oil
+
+.. class:: Image
+
+    This is a python-exported object to an :c:type:`OILImage` struct and some
+    associated methods.
+
+    .. classmethod:: load(path)
+
+        :type path: str or file-like object
+        :param path: The file to load       
+
+        Load the given path name into an Image object. This dispatches to
+        :c:func:`oil_image_load_ex` (either through :c:func:`oil_image_load` or
+        by calling it itself, depending on whether `path` is a str or a file
+        object).
+
+    .. method:: save
+
+        Save the image object to a file
+
+    .. method:: get_size
+
+        Return a (width, height) tuple
+
+    .. method:: composite
+
+        Composite another image on top of this one
+
+    .. method:: draw_triangles
+
+        Draw 3D triangles on top of the image
+        
+    .. method:: resize_half
+
+        Shrink the given image by half and copy onto self
+
+    .. method:: clear
+
+        Clear the image
+    
+
+.. c:type:: OILImage
+
+    .. c:member:: unsigned int width
+    .. c:member:: unsigned int height
+    .. c:member:: OILPixel *data
+    .. c:member:: int locked
+    .. c:member:: OILBackend *backend
+    .. c:member:: void *backend_data
+
+.. c:function:: OILImage *oil_image_load(const char *path)
+
+    Sets up a :c:type:`OILFile` with the `oil_image_read` reader and calls
+    :c:func:`oil_image_load_ex`
+
+.. c:function:: OILImage *oil_image_load_ex(OILFile *file)
+
+    Loads an image from the specified file. Right now this is hard coded to read
+    from element 0 of the :c:data:`oil_formats` array, which is the PNG reader.
+    TODO: have this support other formats.
+
+Oil Files and Image Loaders
+---------------------------
+
+.. c:var:: OILFormat *oil_formats
+
+    In oil-format.c is an array of image formats that oil supports reading and
+    writing. Each element of this array is a struct that has two function
+    pointers, one for reading and one for writing. Without going into too many
+    details, the load function takes an :c:type:`OILFile` struct and returns an
+    :c:type:`OILImage` pointer.
+
+.. c:type:: OILFile
+
+    This is a struct defined in oil.h. It has 4 members
+
+    .. c:member:: void *file
+    .. c:member:: size_t (*read)(void *file, void *data, size_t length)
+    .. c:member:: size_t (*write)(void *file, void *data, size_t length)
+    .. c:member:: void (*flush)(void *file)
+
+    This struct abstracts different ways of loading an image. This way we can
+    support reading from a raw FD, a python file object, etc.
+
+    Implementations include:
+    
+    * `oil_python_read`, `oil_python_write`, and `oil_python_flush` defined in
+      oil-python.c, for reading/writing to python file objects. `*file` is a
+      pointer to the Python File object.
+    * `oil_image_read`, `oil_image_write`, `oil_image_flush` defined in
+      oil-image.c for reading/writing plain old FILEs. `*file` is the FILE
+      pointer.
+
+PNG Format
+~~~~~~~~~~
+This is currently the only image format defined in oil-format.c. The png
+functions are defined in oil-format-png.c.
+
+There's no need to go into details here, it's just a lot of libpng boilerplate.
+Worth noting is the support of indexed PNGs in the output writer.
+
+C Rendering Functions
+---------------------
+
+.. c:function:: void oil_image_draw_triangles(OILImage *im, OILMatrix *matrix, OILImage *tex, OILVertex *vertices, unsigned int vertices_length, unsigned int *indices, unsigned int indices_length, OILTriangleFlags flags)
+
+    This is the main entry point for the C renderer functionality. It is called
+    from the :func:`overviewer.chunkrenderer.render` function's implementation,
+    as well as from :meth:`.Image.draw_triangles` (only the former is used in
+    the main overviewer workflow)
+
+    It is defined in oil-image.c
+
+    Since it is drawing triangles, `indices_length` must be a multiple of 3. The
+    destination `im` and the texture `tex` must have the same backend. This
+    dispatches to the `draw_triangles` routine of the backend, which is saved as
+    :c:data:`OILImage.backend`
