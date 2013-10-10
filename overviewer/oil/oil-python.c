@@ -54,7 +54,6 @@ static PyOILMatrix *PyOILMatrix_new(PyTypeObject *subtype, PyObject *args, PyObj
     PyObject *data = NULL;
     PyOILMatrix *self;
     
-    /* for now, do not allow initialization */
     if (!PyArg_ParseTuple(args, "|O", &data)) {
         return NULL;
     }
@@ -127,7 +126,17 @@ static PyObject *PyOILMatrix_transform(PyOILMatrix *self, PyObject *args) {
 static int PyOILMatrix_set_data(PyOILMatrix *self, PyObject *arg, void *unused) {
     int i;
     float data[4][4];
-    PyObject *argfast = PySequence_Fast(arg, "matrix data is not a 4x4 sequence of sequences");
+    PyObject *argfast;
+    
+    // Set data given another matrix object
+    if (PyObject_TypeCheck(arg, &PyOILMatrixType)) {
+        memcpy(self->matrix.data, ((PyOILMatrix*) arg)->matrix.data, sizeof(float) * 16);
+        return 0;
+    }
+
+    // no? assume arg is a nested 4x4 tuple then
+
+    argfast = PySequence_Fast(arg, "matrix data is not a 4x4 sequence of sequences");
     if (!argfast)
         return 1;
     
