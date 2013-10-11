@@ -145,21 +145,21 @@ class Textures(object):
         'environment/'.
         
         """
-        if verbose: logging.info("Starting search for {0}".format(filename))
+        logging.info("Starting search for {0}".format(filename))
 
         # a list of subdirectories to search for a given file,
         # after the obvious '.'
-        search_dirs = ['anim', 'misc', 'environment', 'item', 'entity', 'entity/chest']
+        search_dirs = ['anim', 'misc', 'environment', 'item', 'item/chests', 'entity', 'entity/chest']
         search_zip_paths = [filename,] + [d + '/' + filename for d in search_dirs]
         def search_dir(base):
             """Search the given base dir for filename, in search_dirs."""
             for path in [os.path.join(base, d, filename) for d in ['',] + search_dirs]:
-                if verbose: logging.info('filename: ' + filename + ' ; path: ' + path)
+                logging.info('filename: ' + filename + ' ; path: ' + path)
                 if os.path.isfile(path):
                     return path
 
             return None
-        if verbose: logging.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
+        logging.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
 
         # we've sucessfully loaded something from here before, so let's quickly try
         # this before searching again
@@ -167,7 +167,7 @@ class Textures(object):
             for jarfilename in search_zip_paths:
                 try:
                     self.jar.getinfo(jarfilename)
-                    if verbose: logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
+                    logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
                     return self.jar.open(jarfilename)
                 except (KeyError, IOError), e:
                     pass
@@ -178,7 +178,7 @@ class Textures(object):
             if os.path.isdir(self.find_file_local_path):
                 path = search_dir(self.find_file_local_path)
                 if path:
-                    if verbose: logging.info("Found %s in '%s'", filename, path)
+                    logging.info("Found %s in '%s'", filename, path)
                     return open(path, mode)
             elif os.path.isfile(self.find_file_local_path):
                 # Must be a resource pack. Look for the requested file within
@@ -190,7 +190,7 @@ class Textures(object):
                             # pack.getinfo() will raise KeyError if the file is
                             # not found.
                             pack.getinfo(packfilename)
-                            if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
+                            logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
                             return pack.open(packfilename)
                         except (KeyError, IOError):
                             pass
@@ -199,7 +199,7 @@ class Textures(object):
                             # 2nd try with completed path.
                             packfilename = 'assets/minecraft/textures/' + packfilename
                             pack.getinfo(packfilename)
-                            if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
+                            logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
                             return pack.open(packfilename)
                         except (KeyError, IOError):
                             pass
@@ -208,24 +208,24 @@ class Textures(object):
 
         # If we haven't returned at this point, then the requested file was NOT
         # found in the user-specified texture path or resource pack.
-        if verbose: logging.info("Did not find the file in specified texture path")
+        logging.info("Did not find the file in specified texture path")
 
 
         # Look in the location of the overviewer executable for the given path
         programdir = util.get_program_path()
         path = search_dir(programdir)
         if path:
-            if verbose: logging.info("Found %s in '%s'", filename, path)
+            logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
         if sys.platform.startswith("darwin"):
             path = search_dir("/Applications/Minecraft")
             if path:
-                if verbose: logging.info("Found %s in '%s'", filename, path)
+                logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        if verbose: logging.info("Did not find the file in overviewer executable directory")
-        if verbose: logging.info("Looking for installed minecraft jar files...")
+        logging.info("Did not find the file in overviewer executable directory")
+        logging.info("Looking for installed minecraft jar files...")
 
         # Find an installed minecraft client jar and look in it for the texture
         # file we need.
@@ -242,7 +242,7 @@ class Textures(object):
 
         try:
             versions = os.listdir(versiondir)
-            if verbose: logging.info("Found these versions: {0}".format(versions))
+            logging.info("Found these versions: {0}".format(versions))
         except OSError:
             # Directory doesn't exist? Ignore it. It will find no versions and
             # fall through the checks below to the error at the bottom of the
@@ -271,7 +271,7 @@ class Textures(object):
                 most_recent_version = versionparts
 
         if most_recent_version != [0,0,0]:
-            if verbose: logging.info("Most recent version >=1.6.0: {0}. Searching it for the file...".format(most_recent_version))
+            logging.info("Most recent version >=1.6.0: {0}. Searching it for the file...".format(most_recent_version))
 
             jarname = ".".join(str(x) for x in most_recent_version)
             jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
@@ -281,15 +281,15 @@ class Textures(object):
                 for jarfilename in search_zip_paths:
                     try:
                         jar.getinfo(jarfilename)
-                        if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
+                        logging.info("Found %s in '%s'", jarfilename, jarpath)
                         self.jar, self.jarpath = jar, jarpath
                         return jar.open(jarfilename)
                     except (KeyError, IOError), e:
                         pass
 
-            if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
+            logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
         else:
-            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.6.0")
+            logging.info("Did not find any non-snapshot minecraft jars >=1.6.0")
             
         # Last ditch effort: look for the file is stored in with the overviewer
         # installation. We include a few files that aren't included with Minecraft
@@ -297,16 +297,16 @@ class Textures(object):
         # they were generated by the game and not stored as images. Nowdays I
         # believe that's not true, but we still have a few files distributed
         # with overviewer.
-        if verbose: logging.info("Looking for texture in overviewer_core/data/textures")
+        logging.info("Looking for texture in overviewer_core/data/textures")
         path = search_dir(os.path.join(programdir, "overviewer_core", "data", "textures"))
         if path:
-            if verbose: logging.info("Found %s in '%s'", filename, path)
+            logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
         elif hasattr(sys, "frozen") or imp.is_frozen("__main__"):
             # windows special case, when the package dir doesn't exist
             path = search_dir(os.path.join(programdir, "textures"))
             if path:
-                if verbose: logging.info("Found %s in '%s'", filename, path)
+                logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
         raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.6-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
@@ -425,8 +425,11 @@ class Textures(object):
 
     def load_foliage_color(self):
         """Helper function to load the foliage color texture."""
+        #logging.info("load_foliage_color start")
         if not hasattr(self, "foliagecolor"):
             self.foliagecolor = list(self.load_image("foliage.png").getdata())
+            logging.debug("load_foliage_color loaded texture %s", self.foliagecolor)
+        #logging.info("load_foliage_color end")
         return self.foliagecolor
 
 	#I guess "watercolor" is wrong. But I can't correct as my texture pack don't define water color.
@@ -1805,9 +1808,13 @@ def chests(self, blockid, data):
     
     if data & 24 == 0:
         if blockid == 130: t = self.load_image("ender.png")
-        else: t = self.load_image("normal.png")
+        else:
+            try:
+                t = self.load_image("normal.png")
+            except (TextureException, IOError):
+                t = self.load_image("trap_small.png")
 
-        # the textures is no longer in terrain.png, get it from 
+        # the textures is no longer in terrain.png, get it from
         # item/chest.png and get by cropping all the needed stuff
         if t.size != (64,64): t = t.resize((64,64), Image.ANTIALIAS)
         # top
@@ -3175,7 +3182,7 @@ def comparator(self, blockid, data):
     
     
 # trapdoor
-# TODO the trapdoor is looks like a sprite when opened, that's not good
+# the trapdoor is looks like a sprite when opened, that's not good
 @material(blockid=96, data=range(16), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
