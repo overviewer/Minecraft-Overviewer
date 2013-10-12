@@ -1443,8 +1443,30 @@ def wool(self, blockid, data):
 
 # dandelion
 sprite(blockid=37, imagename="assets/minecraft/textures/blocks/flower_dandelion.png")
-# rose
-sprite(blockid=38, imagename="assets/minecraft/textures/blocks/flower_rose.png")
+
+# flowers
+@material(blockid=38, data=range(9), transparent=True)
+def flowers(self, blockid, data):
+    if data == 0: # rose
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_rose.png")
+    elif data == 1:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_blue_orchid.png")
+    elif data == 2:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_allium.png")
+    elif data == 3:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_houstonia.png")
+    elif data == 4:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_tulip_red.png")
+    elif data == 5:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_tulip_orange.png")
+    elif data == 6:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_tulip_white.png")
+    elif data == 7:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_tulip_pink.png")
+    elif data == 8:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_oxeye_daisy.png")
+    return self.build_billboard(texture)
+
 # brown mushroom
 sprite(blockid=39, imagename="assets/minecraft/textures/blocks/mushroom_brown.png")
 # red mushroom
