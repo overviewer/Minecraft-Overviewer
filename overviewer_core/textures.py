@@ -1809,7 +1809,7 @@ def chests(self, blockid, data):
             try:
                 t = self.load_image("normal.png")
             except (TextureException, IOError):
-                t = self.load_image("trap_small.png")
+                t = self.load_image("chest.png")
 
         # the textures is no longer in terrain.png, get it from
         # item/chest.png and get by cropping all the needed stuff
