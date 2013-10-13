@@ -159,7 +159,7 @@ class Textures(object):
                     return path
 
             return None
-         if verbose: logging.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
+        if verbose: logging.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
 
         # we've sucessfully loaded something from here before, so let's quickly try
         # this before searching again
@@ -281,7 +281,7 @@ class Textures(object):
                 for jarfilename in search_zip_paths:
                     try:
                         jar.getinfo(jarfilename)
-                         if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
+                        if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
                         self.jar, self.jarpath = jar, jarpath
                         return jar.open(jarfilename)
                     except (KeyError, IOError), e:
