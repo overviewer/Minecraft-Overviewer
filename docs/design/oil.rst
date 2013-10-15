@@ -340,29 +340,39 @@ Matrix Objects
 
     .. method:: invert
 
-        inverts this matrix in place. Returns None.
+        inverts this matrix in place.
+
+        :returns: None
 
     .. method:: translate(x,y,z)
 
         takes 3 floats and translates the matrix in place by the given offsets
         on each axis
 
+        :returns: self
+
     .. method:: scale(x,y,z)
 
         takes 3 floats and scales each axis by the corresponding value.
         Transforms in place.
 
+        :returns: self
+
     .. method:: rotate(x,y,z)
 
         rotates in place. Takes 3 floats. Represents a rotation in 3D space with
         an amount in radians about the respective axes. This builds a rotation
-        matrix and then multiplies it intothe current matrix in place.
+        matrix and then multiplies it into the current matrix in place.
+
+        :returns: self
 
     .. method:: orthographic(x1,x2,y1,y2,z1,z2)
 
         Takes 2 sets of x,y,z floats. Builds a transformation matrix and then
         multiplies it in place to the current matrix. This has to do with
         projection I'm pretty sure but I forget how this stuff works.
+
+        :returns: self
 
     .. attribute:: data
 
