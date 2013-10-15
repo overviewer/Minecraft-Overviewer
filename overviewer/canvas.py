@@ -18,9 +18,9 @@ from math import ceil
 import os
 import numpy
 from itertools import product
-from PIL import Image
 
-from .dispatcher import Worker
+from overviewer.oil import Image
+from overviewer.dispatcher import Worker
 
 """
 
@@ -83,6 +83,31 @@ class Canvas(Worker):
     implement the Worker interface. Canvas objects are designed to be
     used in conjunction with Renderer objects."""
     pass
+
+class SingleImageCanvas(Canvas):
+    """This class renders a single image of the given size at the given origin
+    using the given renderer.
+    
+    """
+    def __init__(self, origin, size, renderer, outputpath):
+        self.size = size
+        self.origin = origin
+        self.renderer = renderer
+        self.outputpath = outputpath
+
+    def iterate_work_items(self, phase):
+        return [(0, ())]
+
+    def do_work(self, workobj):
+        if workobj != 0:
+            raise ValueError()
+
+        image = Image(*self.size)
+        self.renderer.render(self.origin, image)
+        image.save(self.outputpath)
+
+    def get_phase_length(self,_):
+        return 1
 
 class SimpleCanvas(Canvas):
     # how big the tiles should be
