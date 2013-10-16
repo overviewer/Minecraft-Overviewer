@@ -16,10 +16,13 @@
 from math import ceil
 from itertools import product
 from operator import itemgetter
+from collections import namedtuple
 
 from .oil import Image, Matrix
 from .canvas import Renderer
 from . import chunkrenderer
+
+XYRange = namedtuple("XYRange", ['minx', 'miny', 'maxx', 'maxy'])
 
 """
 
@@ -33,12 +36,31 @@ renderer.
 """
 
 class IsometricRenderer(Renderer):
+    """This is a renderer implementation that renders minecraft worlds in an
+    isometric perspective to a virtual canvas. It is designed to read from a
+    RegionSet object and provide the Renderer interface for use with a Canvas
+    object.
+
+    Note that this class depends on a specific format for chunk data from the
+    underlying RegionSet object. The "opaqueness" of a "render source" refers
+    to the renderer-canvas interface.
+
+    This class defines a virtual canvas that is as big as necessary for
+    rendering the given world. The given projection matrix should define an
+    isometric perspective. Typically something like
+    Matrix().rotate(math.atan2(1,math.sqrt(2)),0,0).rotate(0,math.radians(45),0).scale(17,17,17)
+
+    """
     sections_per_chunk = 16
     def __init__(self, regionset, textures, blockdefs, matrix):
         self.regionset = regionset
         self.textures = textures
         self.blockdefs = blockdefs
+
+        # This is only used to save our state when pickling
         self.origmatrix = matrix
+
+        # Reverse the Y scale, since positive Y is up instead of down
         self.matrix = Matrix().scale(1, -1, 1) * matrix
         self.inverse = self.matrix.inverse
         
@@ -46,16 +68,20 @@ class IsometricRenderer(Renderer):
         # assumes the matrix is affine
         # so: only scales, rotations, and translations!
         
+        # The origin of the canvas. This may be different than 0,0,0 if the
+        # projection matrix does any translations, but is usually 0,0,0.
         self.origin = self.matrix.transform(0, 0, 0)
         self.invorigin = self.inverse.transform(0, 0, 0)
         
+        # The bounding box in canvas space of a chunk
         self.chunkbox = self._makebox((16, 0, 0), (0, 16 * self.sections_per_chunk, 0), (0, 0, 16))
+        # The bounding box in canvas space of a single section
         self.sectionbox = self._makebox((16, 0, 0), (0, 16, 0), (0, 0, 16))
         self.sectionvec = self._transformrel(0, 16, 0)
         self.viewvec = self._transformrel(0, 0, -1, inverse=True)
         assert self.viewvec[1] != 0
         
-        # campile the block definitions
+        # compile the block definitions
         self.compiled_blockdefs = chunkrenderer.compile_block_definitions(self.textures, self.blockdefs)
     
     def __getstate__(self):
@@ -112,6 +138,10 @@ class IsometricRenderer(Renderer):
         return (int(x + self.chunkbox[0][0]), int(y + self.chunkbox[0][1]), int(x + self.chunkbox[1][0]) + 1, int(y + self.chunkbox[1][1]) + 1)
 
     def get_render_sources_in_rect(self, rect):
+        """Given an (xmin, ymin, xmax, ymax) tuple, returns an iterator over an
+        opaque object representing the "render sources" in this rectangle.
+
+        """
         for _, _, _, cx, cy, mtime in self._get_chunks_in_rect(rect):
             yield (cx, cy, mtime)
 
@@ -128,15 +158,29 @@ class IsometricRenderer(Renderer):
         return (int(minx + self.chunkbox[0][0]), int(miny + self.chunkbox[0][1]), int(maxx + self.chunkbox[1][0]) + 1, int(maxy + self.chunkbox[1][1]) + 1)
 
     def _get_chunks_in_rect(self, rect):
+        """Given a rectangle in canvas-space, returns a list of chunks that are
+        drawn in the rectangle.
+
+        Returns a sequence of (x,y,z,cx,cz,mtime) for each chunk.
+        cx, cz is the chunk coordinate (world-space coordinate divided by 16)
+        x,y,z is the coordinates of the chunk origin in canvas space (z is the depth plane)
+
+        """
+        # Adjust the minimum and maximum so that chunk origins that are just
+        # outside the given range are inside the adjusted range (since chunks
+        # have width and height)
         minx = rect[0] - self.chunkbox[1][0]
         miny = rect[1] - self.chunkbox[1][1]
         maxx = rect[2] - self.chunkbox[0][0] + 1
         maxy = rect[3] - self.chunkbox[0][1] + 1
-        rect = (minx, miny, maxx, maxy)
+
+        # This named tuple is used to make the following code slightly more
+        # readable
+        rect = XYRange(minx, miny, maxx, maxy)
         
-        origin = self.inverse.transform(rect[0], rect[1], 0)
-        vec1 = self._transformrel(rect[2] - rect[0], 0, 0, inverse=True)
-        vec2 = self._transformrel(0, rect[3] - rect[1], 0, inverse=True)
+        origin = self.inverse.transform(rect.minx, rect.miny, 0)
+        vec1 = self._transformrel(rect.maxx - rect.minx, 0, 0, inverse=True)
+        vec2 = self._transformrel(0, rect.maxy - rect.miny, 0, inverse=True)
 
         pt1 = tuple(origin)
         pt2 = tuple(origin[i] + vec1[i] for i in range(3))
@@ -155,7 +199,7 @@ class IsometricRenderer(Renderer):
         maxz = int(max([i[2] / 16 for i in (pt1, pt2, pt3, pt4)]))
         for cx, cz in product(xrange(minx, maxx + 1), xrange(minz, maxz + 1)):
             x, y, z = self.matrix.transform(16 * cx, 0, 16 * cz)
-            if not (x >= rect[0] and x < rect[2]) or not (y >= rect[1] and rect[3]):
+            if not (x >= rect.minx and x < rect.maxx) or not (y >= rect.miny and y < rect.maxy):
                 continue
             mtime = self.regionset.get_chunk_mtime(cx, cz)
             if mtime is None:
@@ -194,5 +238,12 @@ class IsometricRenderer(Renderer):
                 if (x + self.sectionbox[1][0] < 0 or x + self.sectionbox[0][0] >= im.size[0] or y + self.sectionbox[1][1] < 0 or y + self.sectionbox[0][1] >= im.size[1]):
                     continue
                 
+                # Add in a translation for the chunk coordinates (since block
+                # vertices are given relative to their chunk, we need to
+                # translate everything to the position of the chunk within the
+                # world)
+                # Note that individual block definition vertex coordinates are
+                # translated again for their position within the chunk. This
+                # happens within the chunkrender.render routine.
                 local_matrix = im_matrix * Matrix().translate(chunkx * 16, chunky * 16, chunkz * 16)
                 chunkrenderer.render(self.regionset, chunkx, chunky, chunkz, im, local_matrix, self.compiled_blockdefs)
