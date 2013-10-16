@@ -454,9 +454,8 @@ class RegionSet(object):
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
     def get_chunk_mtime(self, x, z):
-        """Returns a chunk's mtime, or False if the chunk does not exist.  This
-        is therefore a dual purpose method. It corrects for the given north
-        direction as described in the docs for get_chunk()
+        """Returns a chunk's mtime, or None if the chunk does not exist.  This
+        is therefore a dual purpose method.
         
         """
 
