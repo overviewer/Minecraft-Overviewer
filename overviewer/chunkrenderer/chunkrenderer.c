@@ -56,7 +56,7 @@ typedef unsigned char FaceType;
 
 typedef struct {
     /* these are points. They reference an index into the vertices array */
-    unsigned int p1, p2, p3;
+    unsigned int p[3];
 
     /* Flags a face may have. See the FaceType enum */
     FaceType face_type;
@@ -407,9 +407,7 @@ static inline void render_block(OILImage *im, OILMatrix *matrix, Buffer *vertice
          * has a transparent block
          */
         if ((face->face_type & 63) & ~opaque_neighbors) {
-            buffer_append(&indices, &face->p1, 1);
-            buffer_append(&indices, &face->p2, 1);
-            buffer_append(&indices, &face->p3, 1);
+            buffer_append(&indices, &face->p, 3);
         }
     }
 
@@ -670,7 +668,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
         FaceDef face;
         unsigned int type;
         PyObject *triangle = PySequence_Fast_GET_ITEM(pytrifast, i);
-        if (!PyArg_ParseTuple(triangle, "(III)I", &face.p1, &face.p2, &face.p3, &type)) {
+        if (!PyArg_ParseTuple(triangle, "(III)I", &face.p[0], &face.p[1], &face.p[2], &type)) {
             Py_DECREF(pyvertfast);
             Py_DECREF(pytrifast);
             Py_DECREF(pytex);
