@@ -37,8 +37,8 @@ class BlockDefinition(object):
        2-tuple, and color is a 4-tuple of integers between 0 and 255.
      
      * triangles: a list of ((i, j, k), type) tuples where i, j, k are
-       indexes into the vertices list, and type is one of the
-       chunkrenderer.FACE_TYPE_*
+       indexes into the vertices list, and type is a bitmask made from
+       chunkrenderer.FACE_TYPE_* constants.
      
      * tex: a texture path (as a string, uses textures.Textures
        eventually)

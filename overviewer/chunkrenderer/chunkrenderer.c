@@ -16,6 +16,7 @@
 static PyTypeObject *PyOILMatrixType = NULL;
 static PyTypeObject *PyOILImageType = NULL;
 
+/* This holds information on a particular chunk */
 typedef struct {
     /* whether this chunk is loaded: use load_chunk to load */
     int loaded;
@@ -28,23 +29,42 @@ typedef struct {
     } sections[SECTIONS_PER_CHUNK];
 } ChunkData;
 
+/* A generic buffer type, aka an expandable array */
 typedef struct {
     void *data;
+    /* size of each element in bytes */
     unsigned int element_size;
+    /* Number of elements currently in the array */
     unsigned int length;
+    /* Number of element slots reserved */
     unsigned int reserved;
 } Buffer;
 
-typedef enum {
-    FACE_TYPE_PX,
-    FACE_TYPE_NX,
-    FACE_TYPE_PY,
-    FACE_TYPE_NY,
-    FACE_TYPE_PZ,
-    FACE_TYPE_NZ,
-    FACE_TYPE_COUNT
-} FaceType;
+/* Properties a model face can have. These correspond to bitfields in the
+ * FaceDef struct below */
+enum {
+    FACE_TYPE_PX=1,
+    FACE_TYPE_NX=2,
+    FACE_TYPE_PY=4,
+    FACE_TYPE_NY=8,
+    FACE_TYPE_PZ=16,
+    FACE_TYPE_NZ=32,
+    /* Lower 6 bits are the face directions. upper bits are other flags. */
+    BIOME_COLORED=64
+};
+typedef unsigned char FaceType;
 
+typedef struct {
+    /* these are points. They reference an index into the vertices array */
+    unsigned int p1, p2, p3;
+
+    /* Flags a face may have. See the FaceType enum */
+    FaceType face_type;
+} FaceDef;
+
+/* Properties a block can have. These correspond to bitfields in the BlockDef
+ * struct below. To add a new property, make sure to change the
+ * block_has_property function as well. */
 typedef enum {
     KNOWN,
     TRANSPARENT,
@@ -55,16 +75,18 @@ typedef enum {
 } BlockProperty;
 
 typedef struct {
-    int known;
+    int known: 1;
+    /* This is a buffer of OILVertex structs */
     Buffer vertices;
-    Buffer indices[FACE_TYPE_COUNT];
+    /* This is a buffer of FaceDef structs */
+    Buffer faces;
     OILImage *tex;
     
-    int transparent;
-    int solid;
-    int fluid;
-    int nospawn;
-    int nodata;
+    int transparent: 1;
+    int solid: 1;
+    int fluid: 1;
+    int nospawn: 1;
+    int nodata: 1;
 } BlockDef;
 
 typedef struct {
@@ -73,6 +95,8 @@ typedef struct {
     unsigned int max_data;
 } BlockDefs;
 
+/* This struct holds information necessary to render a particular chunk section
+ * */
 typedef struct {
     PyObject *regionset;
     int chunkx, chunky, chunkz;
@@ -292,15 +316,18 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
     return get_array_byte_3d(data_array, x, y, z);
 }
 
-/* helper to get a block property */
+/* helper to get a block property for block id `b`.
+ * If such a block is not defined, the default is 0 for all properties except
+ * TRANSPARENT, where the default is 1 */
 static inline int block_has_property(RenderState *state, unsigned short b, BlockProperty prop) {
     int def = (prop == TRANSPARENT ? 1 : 0);
     BlockDef bd;
     if (b >= state->blockdefs->max_blockid)
         return def;
     
-    /* assume blocks have uniform properties across all data
-       (otherwise to do this right we'd need to calculate pseudo-data) */
+    /* assume blocks have uniform properties across all data -- that these
+     * properties do not depend on the data field.
+     * (otherwise to do this right we'd need to calculate pseudo-data) */
     bd = state->blockdefs->defs[b * state->blockdefs->max_data];
     if (!bd.known)
         return def;
@@ -323,7 +350,10 @@ static inline int block_has_property(RenderState *state, unsigned short b, Block
     return def;
 }
 
-/* helper to get a block definition */
+/* helper to get a block definition
+ * This takes the entire RenderState struct instead of just the block
+ * definitions because we will one day probably need to get neighboring blocks
+ * for pseudo data. */
 static inline BlockDef *get_block_definition(RenderState *state, int x, int y, int z, unsigned int blockid, unsigned int data) {
     BlockDef *def;
     if (blockid >= state->blockdefs->max_blockid)
@@ -353,13 +383,48 @@ static inline void emit_mesh(RenderState *state, OILImage *tex, const Buffer *ve
     oil_image_draw_triangles(state->im, state->matrix, tex, vertices->data, vertices->length, indices->data, indices->length, OIL_DEPTH_TEST);
 }
 
+/* 
+ * Renders a single block to an image, given a model vertices and faces.
+ * opaque_neighbors is a bitfield showing which neighboring blocks are
+ * not transparent (using the FACE_TYPE_* bitflags).
+ */
+static inline void render_block(OILImage *im, OILMatrix *matrix, Buffer *vertices, Buffer *faces, FaceType opaque_neighbors, OILImage *tex)
+{
+    int i;
+    Buffer indices;
+
+    buffer_init(&indices, sizeof(unsigned int), faces->length * 3);
+
+    for (i=0; i < faces->length; i++) {
+        FaceDef *face = &((FaceDef *)(faces->data))[i];
+
+        /* 
+         * the first 6 bits of face_type define which directions the face is
+         * visible from.
+         * opaque_neighbors is a bit mask showing which directions have
+         * transparent blocks.
+         * Therefore, only render the face if at least one of the directions
+         * has a transparent block
+         */
+        if ((face->face_type & 63) & ~opaque_neighbors) {
+            buffer_append(&indices, &face->p1, 1);
+            buffer_append(&indices, &face->p2, 1);
+            buffer_append(&indices, &face->p3, 1);
+        }
+    }
+
+    if (indices.length && vertices->length)
+        oil_image_draw_triangles(im, matrix, tex, vertices->data, vertices->length, indices.data, indices.length, OIL_DEPTH_TEST);
+
+    buffer_free(&indices);
+}
+
 static PyObject *render(PyObject *self, PyObject *args) {
     RenderState state;
     PyOILImage *im;
     PyOILMatrix *mat;
     PyObject *pyblockdefs;
     Buffer blockvertices;
-    Buffer blockindices;
 
     int i, j;
     int x, y, z;
@@ -392,7 +457,6 @@ static PyObject *render(PyObject *self, PyObject *args) {
     
     /* set up the mesh buffers */
     buffer_init(&blockvertices, sizeof(OILVertex), BLOCK_BUFFER_SIZE);
-    buffer_init(&blockindices, sizeof(unsigned int), BLOCK_BUFFER_SIZE * 2);
     
     /* convenience */
     blocks = state.chunks[1][1].sections[state.chunky].blocks;
@@ -401,17 +465,27 @@ static PyObject *render(PyObject *self, PyObject *args) {
     /* set up the random number generator in a known state per chunk */
     srand(1);
     
+    /* Here starts the loop over every block in this chunk section */
     for (x = 0; x < 16; x++) {
         for (z = 0; z < 16; z++) {
             for (y = 15; y >= 0; y--) {
                 unsigned short block = get_array_short_3d(blocks, x, y, z);
                 unsigned short data = get_array_byte_3d(datas, x, y, z);
+                FaceType opaque_neighbors = 0;
                 BlockDef *bd = get_block_definition(&state, x, y, z, block, data);
                 if (!bd)
                     continue;
                 
+                /* Clear out the block vertices buffer and then fill it with
+                 * this block's vertices. We have to copy this buffer because
+                 * we adjust the vertices below. */
                 blockvertices.length = 0;
                 buffer_append(&blockvertices, bd->vertices.data, bd->vertices.length);
+
+                /* Adjust each vertex coordinate for the position within the
+                 * chunk. (model vertex coordinates are typically within the
+                 * unit cube, and this adds the offset for where that cube is
+                 * within the chunk section) */
                 for (i = 0; i < blockvertices.length; i++) {
                     OILVertex *v = &((OILVertex *)(blockvertices.data))[i];
                     v->x += x;
@@ -419,37 +493,32 @@ static PyObject *render(PyObject *self, PyObject *args) {
                     v->z += z;
                 }
 
-                blockindices.length = 0;
-                for (j = 0; j < FACE_TYPE_COUNT; j++) {
-                    unsigned short testblock = 0;
-                    switch (j) {
-                    case FACE_TYPE_PX:
-                        testblock = get_data(&state, BLOCKS, x + 1, y, z);
-                        break;
-                    case FACE_TYPE_NX:
-                        testblock = get_data(&state, BLOCKS, x - 1, y, z);
-                        break;
-                    case FACE_TYPE_PY:
-                        testblock = get_data(&state, BLOCKS, x, y + 1, z);
-                        break;
-                    case FACE_TYPE_NY:
-                        testblock = get_data(&state, BLOCKS, x, y - 1, z);
-                        break;
-                    case FACE_TYPE_PZ:
-                        testblock = get_data(&state, BLOCKS, x, y, z + 1);
-                        break;
-                    case FACE_TYPE_NZ:
-                        testblock = get_data(&state, BLOCKS, x, y, z - 1);
-                        break;
-                    };
-                    
-                    if (block_has_property(&state, testblock, TRANSPARENT)) {
-                        buffer_append(&blockindices, bd->indices[j].data, bd->indices[j].length);
-                    }
+                /* Here we look at the neighboring blocks and build a bitmask
+                 * of the faces that we should render on the model depending on
+                 * which neighboring blocks are transparent.
+                 */
+                if (!block_has_property(&state, get_data(&state, BLOCKS, x+1, y, z), TRANSPARENT)) {
+                    opaque_neighbors |= FACE_TYPE_PX;
                 }
-                
-                if (blockvertices.length && blockindices.length)
-                    emit_mesh(&state, bd->tex, &(blockvertices), &(blockindices));
+                if (!block_has_property(&state, get_data(&state, BLOCKS, x-1, y, z), TRANSPARENT)) {
+                    opaque_neighbors |= FACE_TYPE_NX;
+                }
+                if (!block_has_property(&state, get_data(&state, BLOCKS, x, y+1, z), TRANSPARENT)) {
+                    opaque_neighbors |= FACE_TYPE_PY;
+                }
+                if (!block_has_property(&state, get_data(&state, BLOCKS, x, y-1, z), TRANSPARENT)) {
+                    opaque_neighbors |= FACE_TYPE_NY;
+                }
+                if (!block_has_property(&state, get_data(&state, BLOCKS, x, y, z+1), TRANSPARENT)) {
+                    opaque_neighbors |= FACE_TYPE_PZ;
+                }
+                if (!block_has_property(&state, get_data(&state, BLOCKS, x, y, z-1), TRANSPARENT)) {
+                    opaque_neighbors |= FACE_TYPE_NZ;
+                }
+
+                /* Now draw the block. This function takes care of figuring out
+                 * what faces to draw based on the above */
+                render_block(state.im, state.matrix, &blockvertices, &bd->faces, opaque_neighbors, bd->tex);
             }
         }
     }
@@ -457,7 +526,6 @@ static PyObject *render(PyObject *self, PyObject *args) {
     /* clean up */
     unload_all_chunks(&state);
     buffer_free(&blockvertices);
-    buffer_free(&blockindices);
     
     Py_RETURN_NONE;
 }
@@ -468,9 +536,7 @@ static void free_block_definitions(void *obj) {
     
     for (i = 0; i < defs->max_blockid * defs->max_data; i++) {
         buffer_free(&(defs->defs[i].vertices));
-        for (j = 0; j < FACE_TYPE_COUNT; j++) {
-            buffer_free(&(defs->defs[i].indices[j]));
-        }
+        buffer_free(&(defs->defs[i].faces));
     }
     
     free(defs->defs);
@@ -585,9 +651,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     triangles_length = PySequence_Fast_GET_SIZE(pytrifast);
     
     buffer_init(&(def->vertices), sizeof(OILVertex), BLOCK_BUFFER_SIZE);
-    for (i = 0; i < FACE_TYPE_COUNT; i++) {
-        buffer_init(&(def->indices[i]), sizeof(unsigned int), BLOCK_BUFFER_SIZE * 2);
-    }
+    buffer_init(&(def->faces), sizeof(FaceDef), BLOCK_BUFFER_SIZE);
     
     for (i = 0; i < vertices_length; i++) {
         OILVertex vert;
@@ -596,26 +660,34 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
             Py_DECREF(pyvertfast);
             Py_DECREF(pytrifast);
             Py_DECREF(pytex);
-            PyErr_SetString(PyExc_ValueError, "vertex has invalid form");
+            PyErr_SetString(PyExc_ValueError, "vertex has invalid form. expected ((float, float, float), (float, float), (byte, byte, byte))");
             return 0;
         }
         buffer_append(&(def->vertices), &vert, 1);
     }
 
     for (i = 0; i < triangles_length; i++) {
-        PyObject *pytri = PySequence_Fast_GET_ITEM(pytrifast, i);
-        unsigned int tri[3];
-        unsigned int facetype;
-        if (!PyArg_ParseTuple(pytri, "(III)I", &(tri[0]), &(tri[1]), &(tri[2]), &facetype) || facetype >= FACE_TYPE_COUNT) {
+        FaceDef face;
+        unsigned int type;
+        PyObject *triangle = PySequence_Fast_GET_ITEM(pytrifast, i);
+        if (!PyArg_ParseTuple(triangle, "(III)I", &face.p1, &face.p2, &face.p3, &type)) {
             Py_DECREF(pyvertfast);
             Py_DECREF(pytrifast);
             Py_DECREF(pytex);
-            PyErr_SetString(PyExc_ValueError, "triangle has invalid form");
+            PyErr_SetString(PyExc_ValueError, "triangle has invalid form. expected ((int, int, int), int)");
             return 0;
         }
-        buffer_append(&(def->indices[facetype]), tri, 3);
+        face.face_type = (FaceType) type;
+        if ((face.face_type & 63) == 0) {
+            /* No face direction information given. Assume it faces all
+             * directions instead. This bit of logic should probably go
+             * someplace more conspicuous.
+             */
+            face.face_type |= 63;
+        }
+        buffer_append(&(def->faces), &face, 1);
     }
-    
+
     def->tex = ((PyOILImage *)pytex)->im;
     def->known = 1;
     
@@ -674,6 +746,8 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         return NULL;
     }
 
+    /* Important to use calloc so the "known" member of the BlockDef struct is
+     * by default 0 */
     defs->defs = calloc(defs->max_blockid * defs->max_data, sizeof(BlockDef));
     if (!(defs->defs)) {
         PyErr_SetString(PyExc_RuntimeError, "out of memory");
@@ -717,11 +791,47 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     return compiled;
 }
 
+/*
+ * Python export of the render_block function
+ * signature: render_block(image, matrix, compiled_blockdefs, blockid, data=0)
+ */
+static PyObject *py_render_block(PyObject *self, PyObject *args, PyObject *kwargs) {
+    PyOILImage *im;
+    PyOILMatrix *mat;
+    PyObject *pyblockdefs;
+    BlockDefs *bd;
+    BlockDef *block;
+    unsigned int blockid;
+    unsigned int data=0;
+
+    static char *kwlist[] = {"image", "matrix", "blockdefs", "blockid", "data"};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O!OI|I", kwlist, 
+                PyOILImageType, &im,
+                PyOILMatrixType, &mat,
+                &pyblockdefs,
+                &blockid,
+                &data
+                )) {
+        return 0;
+    }
+
+    bd = PyCObject_AsVoidPtr(pyblockdefs);
+
+    /* Look up this block's definition */
+    block = &(bd->defs[blockid * bd->max_data + data]);
+
+    render_block(im->im, &mat->matrix, &block->vertices, &block->faces, 0, block->tex);
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef chunkrenderer_methods[] = {
     {"render", render, METH_VARARGS,
      "Render a chunk to an image."},
     {"compile_block_definitions", compile_block_definitions, METH_VARARGS,
      "Compiles a Textures object and a BlockDefinitions object into a form usable by the render method."},
+    {"render_block", py_render_block, METH_VARARGS | METH_KEYWORDS,
+     "Renders a single block to the given image with the given matrix"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -749,7 +859,7 @@ PyMODINIT_FUNC initchunkrenderer(void) {
     PyModule_AddIntConstant(mod, "FACE_TYPE_NZ", FACE_TYPE_NZ);
     
     /* tell the compiler to shut up about unused things
-       sizeof(...) does not evaluate it's argument (:D) */
+       sizeof(...) does not evaluate its argument (:D) */
     (void)sizeof(import_array());
     
     /* import numpy on our own, because import_array breaks across
