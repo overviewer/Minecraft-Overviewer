@@ -43,14 +43,16 @@ typedef struct {
 /* Properties a model face can have. These correspond to bitfields in the
  * FaceDef struct below */
 enum {
-    FACE_TYPE_PX=1,
-    FACE_TYPE_NX=2,
-    FACE_TYPE_PY=4,
-    FACE_TYPE_NY=8,
-    FACE_TYPE_PZ=16,
-    FACE_TYPE_NZ=32,
+    FACE_TYPE_PX=(1<<0),
+    FACE_TYPE_NX=(1<<1),
+    FACE_TYPE_PY=(1<<2),
+    FACE_TYPE_NY=(1<<3),
+    FACE_TYPE_PZ=(1<<4),
+    FACE_TYPE_NZ=(1<<5),
+    FACE_TYPE_MASK=(1<<6)-1,
     /* Lower 6 bits are the face directions. upper bits are other flags. */
-    BIOME_COLORED=64
+    /* BIOME_COLOED tells the renderer to apply biome coloring to this face */
+    BIOME_COLORED=(1<<6)
 };
 typedef unsigned char FaceType;
 
@@ -378,11 +380,6 @@ static inline BlockDef *get_block_definition(RenderState *state, int x, int y, i
     return def;
 }
 
-/* helper to emit some mesh info */
-static inline void emit_mesh(RenderState *state, OILImage *tex, const Buffer *vertices, const Buffer *indices) {
-    oil_image_draw_triangles(state->im, state->matrix, tex, vertices->data, vertices->length, indices->data, indices->length, OIL_DEPTH_TEST);
-}
-
 /* 
  * Renders a single block to an image, given a model vertices and faces.
  * opaque_neighbors is a bitfield showing which neighboring blocks are
@@ -402,11 +399,11 @@ static inline void render_block(OILImage *im, OILMatrix *matrix, Buffer *vertice
          * the first 6 bits of face_type define which directions the face is
          * visible from.
          * opaque_neighbors is a bit mask showing which directions have
-         * transparent blocks.
+         * non-transparent blocks.
          * Therefore, only render the face if at least one of the directions
          * has a transparent block
          */
-        if ((face->face_type & 63) & ~opaque_neighbors) {
+        if ((face->face_type & FACE_TYPE_MASK) & ~opaque_neighbors) {
             buffer_append(&indices, &face->p, 3);
         }
     }
@@ -514,9 +511,11 @@ static PyObject *render(PyObject *self, PyObject *args) {
                     opaque_neighbors |= FACE_TYPE_NZ;
                 }
 
-                /* Now draw the block. This function takes care of figuring out
-                 * what faces to draw based on the above */
-                render_block(state.im, state.matrix, &blockvertices, &bd->faces, opaque_neighbors, bd->tex);
+                /* Now draw the block. The render_block function takes care of
+                 * figuring out what faces to draw based on the above.
+                 * Skip calling this if there is an opaque block in every direction. */
+                if (opaque_neighbors != FACE_TYPE_MASK)
+                    render_block(state.im, state.matrix, &blockvertices, &bd->faces, opaque_neighbors, bd->tex);
             }
         }
     }
@@ -676,12 +675,12 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
             return 0;
         }
         face.face_type = (FaceType) type;
-        if ((face.face_type & 63) == 0) {
+        if ((face.face_type & FACE_TYPE_MASK) == 0) {
             /* No face direction information given. Assume it faces all
              * directions instead. This bit of logic should probably go
              * someplace more conspicuous.
              */
-            face.face_type |= 63;
+            face.face_type |= FACE_TYPE_MASK;
         }
         buffer_append(&(def->faces), &face, 1);
     }
