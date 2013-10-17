@@ -18,7 +18,7 @@ import os
 import logging
 import zipfile
 
-from .oil import Image
+from overviewer.oil import Image
 
 """
 This file contains the Textures class, which is responsible for
@@ -74,6 +74,10 @@ class Textures(object):
             return open(full_filename, 'rb')
         
     def load(self, filename):
+        """Returns an overviewer.oil.Image object from the given texture
+        name
+        
+        """
         # Textures may be animated, this method un-animates them
         if filename in self.cache:
             return self.cache[filename]

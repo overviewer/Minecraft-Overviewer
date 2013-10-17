@@ -15,7 +15,7 @@
 
 from itertools import tee, izip
 
-from . import chunkrenderer
+from overviewer import chunkrenderer
 
 """
 
