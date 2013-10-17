@@ -52,19 +52,21 @@ enum {
     FACE_TYPE_MASK=(1<<6)-1,
     /* Lower 6 bits are the face directions. upper bits are other flags. */
     /* BIOME_COLOED tells the renderer to apply biome coloring to this face */
-    BIOME_COLORED=(1<<6)
+    FACE_BIOME_COLORED=(1<<6)
 };
 typedef unsigned char FaceType;
 
+/* Represents a triangle, as part of a block model definition */
 typedef struct {
-    /* these are points. They reference an index into the vertices array */
+    /* these are the three points of the triangle. They reference an index into
+     * the vertices array of the block definition */
     unsigned int p[3];
 
     /* Flags a face may have. See the FaceType enum */
     FaceType face_type;
 } FaceDef;
 
-/* Properties a block can have. These correspond to bitfields in the BlockDef
+/* Properties a block can have. These correspond to fields in the BlockDef
  * struct below. To add a new property, make sure to change the
  * block_has_property function as well. */
 typedef enum {
@@ -101,6 +103,7 @@ typedef struct {
  * */
 typedef struct {
     PyObject *regionset;
+    /* chunky is the section number within the chunk */
     int chunkx, chunky, chunkz;
     ChunkData chunks[3][3];
     
@@ -540,7 +543,10 @@ static void free_block_definitions(void *obj) {
     free(defs);
 }
 
-/* helper for compile_block_definitions */
+/* helper for compile_block_definitions.
+ * pytextures argument is the python Textures object
+ * def is the BlockDef struct we are to mutate according to the python
+ * BlockDefinition object in pydef */
 inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef) {
     unsigned int i;
     PyObject *pyvertices = PyObject_GetAttrString(pydef, "vertices");
@@ -854,6 +860,7 @@ PyMODINIT_FUNC initchunkrenderer(void) {
     PyModule_AddIntConstant(mod, "FACE_TYPE_NY", FACE_TYPE_NY);
     PyModule_AddIntConstant(mod, "FACE_TYPE_PZ", FACE_TYPE_PZ);
     PyModule_AddIntConstant(mod, "FACE_TYPE_NZ", FACE_TYPE_NZ);
+    PyModule_AddIntConstant(mod, "FACE_BIOME_COLORED", FACE_BIOME_COLORED);
     
     /* tell the compiler to shut up about unused things
        sizeof(...) does not evaluate its argument (:D) */
