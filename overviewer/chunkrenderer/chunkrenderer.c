@@ -79,24 +79,28 @@ typedef enum {
 } BlockProperty;
 
 typedef struct {
-    int known: 1;
+    unsigned int known: 1;
     /* This is a buffer of OILVertex structs */
     Buffer vertices;
     /* This is a buffer of FaceDef structs */
     Buffer faces;
     OILImage *tex;
     
-    int transparent: 1;
-    int solid: 1;
-    int fluid: 1;
-    int nospawn: 1;
-    int nodata: 1;
+    unsigned int transparent: 1;
+    unsigned int solid: 1;
+    unsigned int fluid: 1;
+    unsigned int nospawn: 1;
+    unsigned int nodata: 1;
 } BlockDef;
 
 typedef struct {
     BlockDef *defs;
     unsigned int max_blockid;
     unsigned int max_data;
+    /* This is a python list of the images used by the block definitions. This
+     * is so that if the textures object gets garbage collected, handles to
+     * images we use won't be freed */
+    PyObject *images;
 } BlockDefs;
 
 /* This struct holds information necessary to render a particular chunk section
@@ -538,6 +542,8 @@ static void free_block_definitions(void *obj) {
         buffer_free(&(defs->defs[i].vertices));
         buffer_free(&(defs->defs[i].faces));
     }
+
+    Py_DECREF(defs->images);
     
     free(defs->defs);
     free(defs);
@@ -546,8 +552,11 @@ static void free_block_definitions(void *obj) {
 /* helper for compile_block_definitions.
  * pytextures argument is the python Textures object
  * def is the BlockDef struct we are to mutate according to the python
- * BlockDefinition object in pydef */
-inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef) {
+ * BlockDefinition object in pydef
+ * image_list is a python list. We should append all oil.Image objects to it so
+ * we can guarantee they are not garbage collected.
+ * */
+inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef, PyObject *image_list) {
     unsigned int i;
     PyObject *pyvertices = PyObject_GetAttrString(pydef, "vertices");
     unsigned int vertices_length;
@@ -566,6 +575,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
         return 0;
     }
     
+    /* pytex is the string indicating which texture to load */
     pyteximg = PyObject_CallMethod(pytextures, "load", "O", pytex);
     if (!pyteximg || !PyObject_TypeCheck(pyteximg, PyOILImageType)) {
         if (pyteximg) {
@@ -579,6 +589,15 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     }
     Py_DECREF(pytex);
     pytex = pyteximg;
+    /* now pytex is the oil.Image object */
+
+    /* Make sure we have a reference to this image */
+    if (PyList_Append(image_list, pytex) == -1) {
+        Py_DECREF(pytex);
+        Py_XDECREF(pyvertices);
+        Py_XDECREF(pytriangles);
+        return 0;
+    }
     
     prop = PyObject_GetAttrString(pydef, "transparent");
     if (prop) {
@@ -720,6 +739,8 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_RuntimeError, "out of memory");
         return NULL;
     }
+
+    defs->images = PyList_New(0);
     
     pymaxblockid = PyObject_GetAttrString(pyblockdefs, "max_blockid");
     if (!pymaxblockid) {
@@ -772,7 +793,11 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         
             val = PyDict_GetItem(pyblocks, key);
             if (val) {
-                if (!compile_block_definition(pytextures, &(defs->defs[blockid * defs->max_data + data]), val)) {
+                if (!compile_block_definition(pytextures,
+                                              &(defs->defs[blockid * defs->max_data + data]),
+                                              val,
+                                              defs->images)
+                                              ) {
                     free_block_definitions(defs);
                     Py_DECREF(pyblocks);
                     return NULL;
@@ -833,7 +858,7 @@ static PyMethodDef chunkrenderer_methods[] = {
      "Render a chunk to an image."},
     {"compile_block_definitions", compile_block_definitions, METH_VARARGS,
      "Compiles a Textures object and a BlockDefinitions object into a form usable by the render method."},
-    {"render_block", py_render_block, METH_VARARGS | METH_KEYWORDS,
+    {"render_block", (PyCFunction)py_render_block, METH_VARARGS | METH_KEYWORDS,
      "Renders a single block to the given image with the given matrix"},
     {NULL, NULL, 0, NULL}
 };
