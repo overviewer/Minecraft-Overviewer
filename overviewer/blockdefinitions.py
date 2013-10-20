@@ -106,7 +106,7 @@ class BlockDefinitions(object):
                 self.max_blockid = max(self.max_blockid, b + 1)
                 self.max_data = max(self.max_data, d + 1)
 
-def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1, 1), nz=(0, 0, 1, 1), pz=(0, 0, 1, 1), color=(255, 255, 255, 255), topcolor=None):
+def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1, 1), nz=(0, 0, 1, 1), pz=(0, 0, 1, 1), color=(255, 255, 255, 255), topcolor=None, transparent=False):
     if topcolor is None:
         topcolor = color
     xcolor = tuple(int(c * 0.8) for c in color[:3]) + (color[3],)
@@ -152,6 +152,7 @@ def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1
         ([20, 21, 22, 23], chunkrenderer.FACE_TYPE_PY),
     ]
     bd.tex = tex
+    bd.transparent = transparent
     return bd
 
 def make_simple(terrain, **kwargs):
@@ -162,7 +163,7 @@ def get_default():
     bd = BlockDefinitions()
     
     # stone
-    bd.add(make_simple("textures/blocks/stone.png"), 1)
+    bd.add(make_simple("assets/minecraft/textures/blocks/stone.png"), 1)
     
     # grass
     #sides = (3, 0)
@@ -171,23 +172,26 @@ def get_default():
     #bd.add(make_box(terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides, topcolor=(150, 255, 150, 255)), 2)
     
     # dirt
-    bd.add(make_simple("textures/blocks/dirt.png"), 3)
+    bd.add(make_simple("assets/minecraft/textures/blocks/dirt.png"), 3)
     # cobblestone
-    bd.add(make_simple("textures/blocks/stonebrick.png"), 4)
+    bd.add(make_simple("assets/minecraft/textures/blocks/stonebrick.png"), 4)
     # wood planks
-    bd.add(make_simple("textures/blocks/wood.png"), 5)
+    bd.add(make_simple("assets/minecraft/textures/blocks/planks_oak.png"), 5, 0)
+    bd.add(make_simple("assets/minecraft/textures/blocks/planks_spruce.png"), 5, 1)
+    bd.add(make_simple("assets/minecraft/textures/blocks/planks_birch.png"), 5, 2)
+    bd.add(make_simple("assets/minecraft/textures/blocks/planks_jungle.png"), 5, 3)
     # bedrock
-    bd.add(make_simple("textures/blocks/bedrock.png"), 7)
+    bd.add(make_simple("assets/minecraft/textures/blocks/bedrock.png"), 7)
     # sand
-    bd.add(make_simple("textures/blocks/sand.png"), 12)
+    bd.add(make_simple("assets/minecraft/textures/blocks/sand.png"), 12)
     # gravel
-    bd.add(make_simple("textures/blocks/gravel.png"), 13)
+    bd.add(make_simple("assets/minecraft/textures/blocks/gravel.png"), 13)
     # gold ore
-    bd.add(make_simple("textures/blocks/oreGold.png"), 14)
+    bd.add(make_simple("assets/minecraft/textures/blocks/gold_ore.png"), 14)
     # iron ore
-    bd.add(make_simple("textures/blocks/oreIron.png"), 15)
+    bd.add(make_simple("assets/minecraft/textures/blocks/iron_ore.png"), 15)
     # coal
-    bd.add(make_simple("textures/blocks/oreCoal.png"), 16)
+    bd.add(make_simple("assets/minecraft/textures/blocks/coal_ore.png"), 16)
     
     # logs
     #sides = (4, 1)
@@ -196,8 +200,9 @@ def get_default():
     #bd.add(make_box(terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides), 17)
     
     # leaves
-    defn = make_simple("textures/blocks/leaves.png", color=(0, 150, 0, 255))
-    defn.transparent = True
-    bd.add(defn, 18)
-    
+    bd.add(make_simple("assets/minecraft/textures/blocks/leaves_oak.png", color=(0, 150, 0, 255), transparent=True), 18, 0)
+    bd.add(make_simple("assets/minecraft/textures/blocks/leaves_spruce.png", color=(0, 150, 0, 255), transparent=True), 18, 1)
+    bd.add(make_simple("assets/minecraft/textures/blocks/leaves_birch.png", color=(0, 150, 0, 255), transparent=True), 18, 2)
+    bd.add(make_simple("assets/minecraft/textures/blocks/leaves_jungle.png", color=(0, 150, 0, 255), transparent=True), 18, 3)
+
     return bd
