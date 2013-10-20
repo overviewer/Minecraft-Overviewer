@@ -96,6 +96,9 @@ def main():
     parser.add_option("--simple-output", dest="simple", action="store_true", default=False,
             help="Use a simple output format, with no colors or progress bars")
 
+    # Options that will be eventually folded away when we update the config file format
+    parser.add_option("--texturepath", action="store", default=None, help="Specify a resource pack to pull textures from")
+
     # create a group for "plugin exes" (the concept of a plugin exe is only loosly defined at this point)
     exegroup = OptionGroup(parser, "Other Scripts",
             "These scripts may accept different arguments than the ones listed above")
@@ -396,7 +399,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         texopts = util.dict_subset(render, ["texturepath"])
         texopts_key = tuple(texopts.items())
         if texopts_key not in texcache:
-            tex = textures.Textures(texopts.get("texturepath", None))
+            tex = textures.Textures(options.texturepath)
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
