@@ -36,31 +36,9 @@ renderer.
 
 """
 
-class IsometricRenderer(Renderer):
-    """This is a renderer implementation that renders minecraft worlds in an
-    isometric perspective to a virtual canvas. It is designed to read from a
-    RegionSet object and provide the Renderer interface for use with a Canvas
-    object.
-
-    Note that this class depends on a specific format for chunk data from the
-    underlying RegionSet object. The "opaqueness" of a "render source" refers
-    to the renderer-canvas interface.
-
-    This class defines a virtual canvas that is as big as necessary for
-    rendering the given world. The given projection matrix should define an
-    isometric perspective. Typically something like
-    Matrix().rotate(math.atan2(1,math.sqrt(2)),0,0).rotate(0,math.radians(45),0).scale(17,17,17)
-
-    """
-    sections_per_chunk = 16
-    def __init__(self, regionset, textures, blockdefs, matrix):
-        self.regionset = regionset
-        self.textures = textures
-        self.blockdefs = blockdefs
-
-        # This is only used to save our state when pickling
-        self.origmatrix = matrix
-
+class IsometricBase(Renderer):
+    """This class holds some common functions for isometric renderers"""
+    def __init__(self, matrix):
         # Reverse the Y scale, since positive Y is up instead of down
         self.matrix = Matrix().scale(1, -1, 1) * matrix
         self.inverse = self.matrix.inverse
@@ -74,29 +52,7 @@ class IsometricRenderer(Renderer):
         self.origin = self.matrix.transform(0, 0, 0)
         self.invorigin = self.inverse.transform(0, 0, 0)
         
-        # The bounding box in canvas space of a chunk
-        self.chunkbox = self._makebox((16, 0, 0), (0, 16 * self.sections_per_chunk, 0), (0, 0, 16))
-        # The bounding box in canvas space of a single section
-        self.sectionbox = self._makebox((16, 0, 0), (0, 16, 0), (0, 0, 16))
-        self.sectionvec = self._transformrel(0, 16, 0)
-        self.viewvec = self._transformrel(0, 0, -1, inverse=True)
-        assert self.viewvec[1] != 0
-        
-        # compile the block definitions
-        self.compiled_blockdefs = chunkrenderer.compile_block_definitions(self.textures, self.blockdefs)
-    
-    def __getstate__(self):
-        # a lot of our internal structure is not pickleable
-        # so just send the args for __init__
-        return (self.regionset, self.textures, self.blockdefs, self.origmatrix.data)
-    
-    def __setstate__(self, args):
-        # turn the matrix back into an OIL Matrix
-        mat = args[-1]
-        mat = Matrix(mat)
-        args = args[:-1] + (mat,)
-        self.__init__(*args)
-    
+
     def _transformrel(self, x, y, z, inverse=False):
         """Given a length vector in world-space (also called a delta vector),
         return the transformed length vector in canvas-space. This is a
@@ -128,6 +84,119 @@ class IsometricRenderer(Renderer):
         
         return XYZRange(min(xs), min(ys), min(zs), max(xs), max(ys), max(zs))
 
+
+class IsometricSingleBlockRenderer(IsometricBase):
+    """A simple renderer class that renders a single block. This isn't used in
+    normal overviewer renders, but is handy for testing block models and block
+    rendering code.
+
+    """
+    def __init__(self, blockid, data, matrix, compiled_blockdefs):
+        self.blockid = blockid
+        self.data = data
+        self.matrix = matrix
+        self.bd = compiled_blockdefs
+
+        super(IsometricSingleBlockRenderer, self).__init__(matrix)
+
+        # Assume the block fits in a unit cube for now. (some blocks may be
+        # larger)
+        # This is *only* the bounding vectors of the box, *not* the coordinates
+        # of the box on the virtual canvas
+        self.blockbox = self._makebox((1, 0, 0), (0, 1, 0), (0, 0, 1))
+
+    def get_render_sources(self):
+        return [0]
+
+    def get_render_source_mtime(self, source):
+        return 0
+
+    def get_rect_for_render_source(self, source):
+        # round up for the upper coordinates
+        # We have to adjust for the origin here because blockbox is only the
+        # bounding box vectors, not the coordinates.
+        return XYRange(
+                int(self.blockbox.minx + self.origin[0]),
+                int(self.blockbox.miny + self.origin[1]),
+                int(self.blockbox.maxx + self.origin[0])+1,
+                int(self.blockbox.maxy + self.origin[1])+1)
+
+    def get_render_sources_in_rect(self, rect):
+        """Return an iterator over all render sources that might
+        possibly be contained inside the given (xmin, ymin, xmax,
+        ymax) rect."""
+        rect = XYRange(rect)
+        block = XYRange(self.get_rect_for_render_source(0))
+        if     ((rect.xmin > block.xmin and rect.xmin <= block.xmax) or
+                (rect.xmax > block.xmin and rect.xmax <= block.xmax) or
+                (rect.ymin > block.ymin and rect.ymin <= block.ymax) or
+                (rect.ymax > block.ymin and rect.ymax <= block.ymax)
+                ):
+            yield 0
+        return
+
+    def get_full_rect(self):
+        return self.get_rect_for_render_source(0)
+
+    def render(self, origin, im):
+        im_matrix = Matrix().orthographic(origin[0], origin[0]+im.size[0],
+                                          origin[1]+im.size[1], origin[1],
+                                          self.blockbox.minz + self.origin[2],
+                                          self.blockbox.maxz + self.origin[2])
+        im_matrix *= self.matrix
+        chunkrenderer.render_block(im, im_matrix, self.bd, self.blockid, self.data)
+
+class IsometricRenderer(IsometricBase):
+    """This is a renderer implementation that renders minecraft worlds in an
+    isometric perspective to a virtual canvas. It is designed to read from a
+    RegionSet object and provide the Renderer interface for use with a Canvas
+    object.
+
+    Note that this class depends on a specific format for chunk data from the
+    underlying RegionSet object. The "opaqueness" of a "render source" refers
+    to the renderer-canvas interface.
+
+    This class defines a virtual canvas that is as big as necessary for
+    rendering the given world. The given projection matrix should define an
+    isometric perspective. Typically something like
+    Matrix().rotate(math.atan2(1,math.sqrt(2)),0,0).rotate(0,math.radians(45),0).scale(17,17,17)
+
+    """
+    sections_per_chunk = 16
+    def __init__(self, regionset, textures, blockdefs, matrix):
+        self.regionset = regionset
+        self.textures = textures
+        self.blockdefs = blockdefs
+
+        # This is only used to save our state when pickling
+        self.origmatrix = matrix
+
+        # Sets the self.matrix attribute and calculates a few other matrices
+        super(IsometricRenderer, self).__init__(matrix)
+
+        # The bounding box in canvas space of a chunk
+        self.chunkbox = self._makebox((16, 0, 0), (0, 16 * self.sections_per_chunk, 0), (0, 0, 16))
+        # The bounding box in canvas space of a single section
+        self.sectionbox = self._makebox((16, 0, 0), (0, 16, 0), (0, 0, 16))
+        self.sectionvec = self._transformrel(0, 16, 0)
+        self.viewvec = self._transformrel(0, 0, -1, inverse=True)
+        assert self.viewvec[1] != 0
+        
+        # compile the block definitions
+        self.compiled_blockdefs = chunkrenderer.compile_block_definitions(self.textures, self.blockdefs)
+    
+    def __getstate__(self):
+        # a lot of our internal structure is not pickleable
+        # so just send the args for __init__
+        return (self.regionset, self.textures, self.blockdefs, self.origmatrix.data)
+    
+    def __setstate__(self, args):
+        # turn the matrix back into an OIL Matrix
+        mat = args[-1]
+        mat = Matrix(mat)
+        args = args[:-1] + (mat,)
+        self.__init__(*args)
+    
     def get_render_sources(self):
         return self.regionset.iterate_chunks()
 
@@ -135,9 +204,10 @@ class IsometricRenderer(Renderer):
         return source[2]
 
     def get_rect_for_render_source(self, source):
-        # compute the origin of the given chunk:
+        # compute the origin on the canvas of the given chunk:
         x, y, _ = self.matrix.transform(16 * source[0], 0, 16 * source[1])
-        # Now compute the bounding box of that chunk
+        # Now compute the bounding box of that chunk. Add 1 to the max values
+        # to round *up* to the nearest pixel
         return (int(x + self.chunkbox.minx), int(y + self.chunkbox.miny), int(x + self.chunkbox.maxx) + 1, int(y + self.chunkbox.maxy) + 1)
 
     def get_render_sources_in_rect(self, rect):
