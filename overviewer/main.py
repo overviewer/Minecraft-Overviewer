@@ -396,10 +396,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         texopts = util.dict_subset(render, ["texturepath"])
         texopts_key = tuple(texopts.items())
         if texopts_key not in texcache:
-            if texopts:
-                tex = textures.Textures(texopts["texturepath"])
-            else:
-                tex = textures.get_default()
+            tex = textures.Textures(texopts.get("texturepath", None))
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
