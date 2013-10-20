@@ -23,6 +23,7 @@ from .canvas import Renderer
 from . import chunkrenderer
 
 XYRange = namedtuple("XYRange", ['minx', 'miny', 'maxx', 'maxy'])
+XYZRange = namedtuple("XYZRange", ['minx' ,'miny', 'minz', 'maxx', 'maxy', 'maxz'])
 
 """
 
@@ -125,7 +126,7 @@ class IsometricRenderer(Renderer):
         ys = [t[1] for t in allpts]
         zs = [t[2] for t in allpts]
         
-        return ((min(xs), min(ys), min(zs)), (max(xs), max(ys), max(zs)))
+        return XYZRange(min(xs), min(ys), min(zs), max(xs), max(ys), max(zs))
 
     def get_render_sources(self):
         return self.regionset.iterate_chunks()
@@ -134,8 +135,10 @@ class IsometricRenderer(Renderer):
         return source[2]
 
     def get_rect_for_render_source(self, source):
+        # compute the origin of the given chunk:
         x, y, _ = self.matrix.transform(16 * source[0], 0, 16 * source[1])
-        return (int(x + self.chunkbox[0][0]), int(y + self.chunkbox[0][1]), int(x + self.chunkbox[1][0]) + 1, int(y + self.chunkbox[1][1]) + 1)
+        # Now compute the bounding box of that chunk
+        return (int(x + self.chunkbox.minx), int(y + self.chunkbox.miny), int(x + self.chunkbox.maxx) + 1, int(y + self.chunkbox.maxy) + 1)
 
     def get_render_sources_in_rect(self, rect):
         """Given an (xmin, ymin, xmax, ymax) tuple, returns an iterator over an
@@ -146,6 +149,8 @@ class IsometricRenderer(Renderer):
             yield (cx, cy, mtime)
 
     def get_full_rect(self):
+        # these vars represent the boundaries of the chunk origins, in world
+        # coordinates.
         minx = miny = maxx = maxy = 0
         for cx, cz, _ in self.regionset.iterate_chunks():
             x, y, _ = self.matrix.transform(16 * cx, 0, 16 * cz)
@@ -155,7 +160,9 @@ class IsometricRenderer(Renderer):
             miny = min(miny, y)
             maxy = max(maxy, y)
 
-        return (int(minx + self.chunkbox[0][0]), int(miny + self.chunkbox[0][1]), int(maxx + self.chunkbox[1][0]) + 1, int(maxy + self.chunkbox[1][1]) + 1)
+        # We still have to account for the size of a chunk itself, since the
+        # origin may not be at the edge depending on the projection
+        return (int(minx + self.chunkbox.minx), int(miny + self.chunkbox.miny), int(maxx + self.chunkbox.maxx) + 1, int(maxy + self.chunkbox.maxy) + 1)
 
     def _get_chunks_in_rect(self, rect):
         """Given a rectangle in canvas-space, returns a list of chunks that are
@@ -169,10 +176,10 @@ class IsometricRenderer(Renderer):
         # Adjust the minimum and maximum so that chunk origins that are just
         # outside the given range are inside the adjusted range (since chunks
         # have width and height)
-        minx = rect[0] - self.chunkbox[1][0]
-        miny = rect[1] - self.chunkbox[1][1]
-        maxx = rect[2] - self.chunkbox[0][0] + 1
-        maxy = rect[3] - self.chunkbox[0][1] + 1
+        minx = rect[0] - self.chunkbox.maxx
+        miny = rect[1] - self.chunkbox.maxy
+        maxx = rect[2] - self.chunkbox.minx + 1
+        maxy = rect[3] - self.chunkbox.miny + 1
 
         # This named tuple is used to make the following code slightly more
         # readable
@@ -214,8 +221,8 @@ class IsometricRenderer(Renderer):
         chunks_out.sort(key=itemgetter(1))
         
         zs = map(itemgetter(2), chunks_out)
-        minz = min(zs) + self.chunkbox[0][2]
-        maxz = max(zs) + self.chunkbox[1][2]
+        minz = min(zs) + self.chunkbox.minz;
+        maxz = max(zs) + self.chunkbox.maxz
         
         return (minz, maxz, chunks_out)
 
@@ -235,7 +242,7 @@ class IsometricRenderer(Renderer):
             for chunky in xrange(self.sections_per_chunk - 1, -1, -1):
                 x -= self.sectionvec[0]
                 y -= self.sectionvec[1]
-                if (x + self.sectionbox[1][0] < 0 or x + self.sectionbox[0][0] >= im.size[0] or y + self.sectionbox[1][1] < 0 or y + self.sectionbox[0][1] >= im.size[1]):
+                if (x + self.sectionbox.maxx < 0 or x + self.sectionbox.minx >= im.size[0] or y + self.sectionbox.maxy < 0 or y + self.sectionbox.miny >= im.size[1]):
                     continue
                 
                 # Add in a translation for the chunk coordinates (since block
