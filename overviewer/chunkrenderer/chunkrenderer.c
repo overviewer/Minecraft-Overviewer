@@ -591,7 +591,8 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     pytex = pyteximg;
     /* now pytex is the oil.Image object */
 
-    /* Make sure we have a reference to this image */
+    /* Make sure we have a reference to this image for the lifetime of these
+     * block definitions */
     if (PyList_Append(image_list, pytex) == -1) {
         Py_DECREF(pytex);
         Py_XDECREF(pyvertices);

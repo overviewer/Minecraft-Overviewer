@@ -20,6 +20,8 @@ import cPickle as pickle
 import Queue
 import time
 
+import overviewer.observer
+
 class Worker(object):
     """This class provides jobs that can be dispatched by a
     Dispatcher. It provides default implementations for most methods,
@@ -89,6 +91,10 @@ class Dispatcher(object):
         which case it is ignored."""
         # setup workerlist
         self.setup_workers(workerlist)
+
+        if observer is None:
+            # Make a dummy observer
+            observer = overviewer.observer.Observer()
 
         # iterate through all possible phases
         num_phases = [worker.get_num_phases() for worker in workerlist]
