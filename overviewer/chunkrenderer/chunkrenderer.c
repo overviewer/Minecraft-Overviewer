@@ -64,6 +64,9 @@ typedef struct {
 
     /* Flags a face may have. See the FaceType enum */
     FaceType face_type;
+
+    /* The texture to draw on this face */
+    OILImage *tex;
 } FaceDef;
 
 /* Properties a block can have. These correspond to fields in the BlockDef
@@ -84,7 +87,6 @@ typedef struct {
     Buffer vertices;
     /* This is a buffer of FaceDef structs */
     Buffer faces;
-    OILImage *tex;
     
     unsigned int transparent: 1;
     unsigned int solid: 1;
@@ -97,9 +99,9 @@ typedef struct {
     BlockDef *defs;
     unsigned int max_blockid;
     unsigned int max_data;
-    /* This is a python list of the images used by the block definitions. This
-     * is so that if the textures object gets garbage collected, handles to
-     * images we use won't be freed */
+    /* This is a python set of the images used by the block definitions. This
+     * keeps references to the images so that if the textures object gets
+     * garbage collected, the images we use won't be freed */
     PyObject *images;
 } BlockDefs;
 
@@ -149,6 +151,10 @@ static inline void buffer_append(Buffer *buffer, const void *newdata, unsigned i
     buffer_reserve(buffer, newdata_length);
     memcpy(buffer->data + (buffer->element_size * buffer->length), newdata, buffer->element_size * newdata_length);
     buffer->length += newdata_length;
+}
+
+static inline void buffer_clear(Buffer *buffer) {
+    buffer->length = 0;
 }
 
 /* helper to load a chunk into state->chunks
@@ -387,20 +393,38 @@ static inline BlockDef *get_block_definition(RenderState *state, int x, int y, i
     return def;
 }
 
+static inline void emit_mesh(OILImage *im, OILMatrix *matrix, Buffer *vertices, Buffer *indices, OILImage *tex)
+{
+    if (indices->length && vertices->length)
+        oil_image_draw_triangles(im, matrix, tex, vertices->data, vertices->length, indices->data, indices->length, OIL_DEPTH_TEST);
+
+}
+
 /* 
  * Renders a single block to an image, given a model vertices and faces.
  * opaque_neighbors is a bitfield showing which neighboring blocks are
  * not transparent (using the FACE_TYPE_* bitflags).
  */
-static inline void render_block(OILImage *im, OILMatrix *matrix, Buffer *vertices, Buffer *faces, FaceType opaque_neighbors, OILImage *tex)
+static inline void render_block(OILImage *im, OILMatrix *matrix, Buffer *vertices, Buffer *faces, FaceType opaque_neighbors)
 {
     int i;
     Buffer indices;
+    /* Assume there is at least one face in the model */
+    OILImage *tex = (&((FaceDef *)(faces->data))[0])->tex;
 
-    buffer_init(&indices, sizeof(unsigned int), faces->length * 3);
+    buffer_init(&indices, sizeof(unsigned int), BLOCK_BUFFER_SIZE);
 
     for (i=0; i < faces->length; i++) {
         FaceDef *face = &((FaceDef *)(faces->data))[i];
+
+        /* This face has a different texture than the last face. Render all the
+         * faces accumulated so far.
+         */
+        if (tex != face->tex) {
+            emit_mesh(im, matrix, vertices, &indices, tex);
+            buffer_clear(&indices);
+            tex = face->tex;
+        }
 
         /* 
          * the first 6 bits of face_type define which directions the face is
@@ -415,8 +439,8 @@ static inline void render_block(OILImage *im, OILMatrix *matrix, Buffer *vertice
         }
     }
 
-    if (indices.length && vertices->length)
-        oil_image_draw_triangles(im, matrix, tex, vertices->data, vertices->length, indices.data, indices.length, OIL_DEPTH_TEST);
+    /* Render any outstanding faces */
+    emit_mesh(im, matrix, vertices, &indices, tex);
 
     buffer_free(&indices);
 }
@@ -481,7 +505,7 @@ static PyObject *render(PyObject *self, PyObject *args) {
                 /* Clear out the block vertices buffer and then fill it with
                  * this block's vertices. We have to copy this buffer because
                  * we adjust the vertices below. */
-                blockvertices.length = 0;
+                buffer_clear(&blockvertices);
                 buffer_append(&blockvertices, bd->vertices.data, bd->vertices.length);
 
                 /* Adjust each vertex coordinate for the position within the
@@ -522,7 +546,7 @@ static PyObject *render(PyObject *self, PyObject *args) {
                  * figuring out what faces to draw based on the above.
                  * Skip calling this if there is an opaque block in every direction. */
                 if (opaque_neighbors != FACE_TYPE_MASK)
-                    render_block(state.im, state.matrix, &blockvertices, &bd->faces, opaque_neighbors, bd->tex);
+                    render_block(state.im, state.matrix, &blockvertices, &bd->faces, opaque_neighbors);
             }
         }
     }
@@ -553,53 +577,25 @@ static void free_block_definitions(void *obj) {
  * pytextures argument is the python Textures object
  * def is the BlockDef struct we are to mutate according to the python
  * BlockDefinition object in pydef
- * image_list is a python list. We should append all oil.Image objects to it so
+ * images is a python set. We should add all oil.Image objects to it so
  * we can guarantee they are not garbage collected.
  * */
-inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef, PyObject *image_list) {
+inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef, PyObject *images) {
     unsigned int i;
     PyObject *pyvertices = PyObject_GetAttrString(pydef, "vertices");
     unsigned int vertices_length;
     PyObject *pytriangles = PyObject_GetAttrString(pydef, "triangles");
     unsigned int triangles_length;
-    PyObject *pytex = PyObject_GetAttrString(pydef, "tex");
-    PyObject *pyteximg;
     PyObject *pyvertfast;
     PyObject *pytrifast;
     PyObject *prop;
     int prop_istrue = 0;
-    if (!pyvertices || !pytriangles || !pytex) {
+    if (!pyvertices || !pytriangles) {
         Py_XDECREF(pyvertices);
         Py_XDECREF(pytriangles);
-        Py_XDECREF(pytex);
         return 0;
     }
-    
-    /* pytex is the string indicating which texture to load */
-    pyteximg = PyObject_CallMethod(pytextures, "load", "O", pytex);
-    if (!pyteximg || !PyObject_TypeCheck(pyteximg, PyOILImageType)) {
-        if (pyteximg) {
-            PyErr_SetString(PyExc_TypeError, "Textures.load() did not return an OIL Image");
-            Py_DECREF(pyteximg);
-        }
-        Py_DECREF(pyvertices);
-        Py_DECREF(pytriangles);
-        Py_DECREF(pytex);
-        return 0;
-    }
-    Py_DECREF(pytex);
-    pytex = pyteximg;
-    /* now pytex is the oil.Image object */
 
-    /* Make sure we have a reference to this image for the lifetime of these
-     * block definitions */
-    if (PyList_Append(image_list, pytex) == -1) {
-        Py_DECREF(pytex);
-        Py_XDECREF(pyvertices);
-        Py_XDECREF(pytriangles);
-        return 0;
-    }
-    
     prop = PyObject_GetAttrString(pydef, "transparent");
     if (prop) {
         def->transparent = prop_istrue = PyObject_IsTrue(prop);
@@ -608,7 +604,6 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     if (!prop || prop_istrue == -1) {
         Py_XDECREF(pyvertices);
         Py_XDECREF(pytriangles);
-        Py_XDECREF(pytex);
         return 0;
     }
 
@@ -620,7 +615,6 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     if (!prop || prop_istrue == -1) {
         Py_XDECREF(pyvertices);
         Py_XDECREF(pytriangles);
-        Py_XDECREF(pytex);
         return 0;
     }
 
@@ -632,7 +626,6 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     if (!prop || prop_istrue == -1) {
         Py_XDECREF(pyvertices);
         Py_XDECREF(pytriangles);
-        Py_XDECREF(pytex);
         return 0;
     }
 
@@ -644,7 +637,6 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     if (!prop || prop_istrue == -1) {
         Py_XDECREF(pyvertices);
         Py_XDECREF(pytriangles);
-        Py_XDECREF(pytex);
         return 0;
     }
 
@@ -656,10 +648,12 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     if (!prop || prop_istrue == -1) {
         Py_XDECREF(pyvertices);
         Py_XDECREF(pytriangles);
-        Py_XDECREF(pytex);
         return 0;
     }
     
+    /* Turn the vertices and triangles sequences into tuples for fast access.
+     * Throw away the original objects.
+     */
     pyvertfast = PySequence_Fast(pyvertices, "vertices were not a sequence");
     pytrifast = PySequence_Fast(pytriangles, "triangles were not a sequence");
     Py_DECREF(pyvertices);
@@ -676,30 +670,61 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     buffer_init(&(def->vertices), sizeof(OILVertex), BLOCK_BUFFER_SIZE);
     buffer_init(&(def->faces), sizeof(FaceDef), BLOCK_BUFFER_SIZE);
     
+    /* Load the vertices list */
     for (i = 0; i < vertices_length; i++) {
         OILVertex vert;
         PyObject *pyvert = PySequence_Fast_GET_ITEM(pyvertfast, i);
         if (!PyArg_ParseTuple(pyvert, "(fff)(ff)(bbbb)", &(vert.x), &(vert.y), &(vert.z), &(vert.s), &(vert.t), &(vert.color.r), &(vert.color.g), &(vert.color.b), &(vert.color.a))) {
             Py_DECREF(pyvertfast);
             Py_DECREF(pytrifast);
-            Py_DECREF(pytex);
             PyErr_SetString(PyExc_ValueError, "vertex has invalid form. expected ((float, float, float), (float, float), (byte, byte, byte))");
             return 0;
         }
         buffer_append(&(def->vertices), &vert, 1);
     }
 
+    /* Load the faces (triangles) list */
     for (i = 0; i < triangles_length; i++) {
         FaceDef face;
         unsigned int type;
+        PyObject *texstring;
+        PyObject *texobj;
         PyObject *triangle = PySequence_Fast_GET_ITEM(pytrifast, i);
-        if (!PyArg_ParseTuple(triangle, "(III)I", &face.p[0], &face.p[1], &face.p[2], &type)) {
+        /* The three points of the triangle get loaded driectly into the face struct */
+        if (!PyArg_ParseTuple(triangle, "(III)IO", &face.p[0], &face.p[1], &face.p[2], &type,
+                              &texstring)) {
             Py_DECREF(pyvertfast);
             Py_DECREF(pytrifast);
-            Py_DECREF(pytex);
-            PyErr_SetString(PyExc_ValueError, "triangle has invalid form. expected ((int, int, int), int)");
+            PyErr_SetString(PyExc_ValueError, "triangle has invalid form. expected ((int, int, int), int, str)");
             return 0;
         }
+
+        /* Load the texture for this face. We rely on the Texture object
+         * caching textures that are already loaded (or this would create many
+         * copies of the same texture in memory)
+         */
+        texobj = PyObject_CallMethod(pytextures, "load", "O", texstring);
+        if (!texobj || !PyObject_TypeCheck(texobj, PyOILImageType)) {
+            if (texobj) {
+                PyErr_SetString(PyExc_TypeError, "Textures.load() did not return an oil.Image object");
+                Py_DECREF(texobj);
+            }
+            Py_DECREF(pyvertfast);
+            Py_DECREF(pytrifast);
+            return 0;
+        }
+        /* Make sure we have a reference to this image for the lifetime of these
+         * block definitions */
+        if (PySet_Add(images, texobj) == -1) {
+            Py_DECREF(texobj);
+            Py_DECREF(pyvertfast);
+            Py_DECREF(pytrifast);
+            return 0;
+        }
+        Py_DECREF(texobj); /* our reference is in the above set */
+        face.tex = ((PyOILImage *)texobj)->im;
+
+        /* Now load the face type */
         face.face_type = (FaceType) type;
         if ((face.face_type & FACE_TYPE_MASK) == 0) {
             /* No face direction information given. Assume it faces all
@@ -708,15 +733,15 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
              */
             face.face_type |= FACE_TYPE_MASK;
         }
+
+        /* Finally, copy this face definition into the faces buffer */
         buffer_append(&(def->faces), &face, 1);
     }
 
-    def->tex = ((PyOILImage *)pytex)->im;
     def->known = 1;
     
     Py_DECREF(pyvertfast);
     Py_DECREF(pytrifast);
-    Py_DECREF(pytex);
     
     return 1;
 }
@@ -741,7 +766,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    defs->images = PyList_New(0);
+    defs->images = PySet_New(NULL);
     
     pymaxblockid = PyObject_GetAttrString(pyblockdefs, "max_blockid");
     if (!pymaxblockid) {
@@ -850,7 +875,7 @@ static PyObject *py_render_block(PyObject *self, PyObject *args, PyObject *kwarg
     /* Look up this block's definition */
     block = &(bd->defs[blockid * bd->max_data + data]);
 
-    render_block(im->im, &mat->matrix, &block->vertices, &block->faces, 0, block->tex);
+    render_block(im->im, &mat->matrix, &block->vertices, &block->faces, 0);
     Py_RETURN_NONE;
 }
 

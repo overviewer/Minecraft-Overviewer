@@ -35,8 +35,13 @@ class BlockDefinition(object):
      * vertices: a list of (coordinate, texcoords, color) tuples,
        where coordinate is a 3-tuple of numbers, texcoords is a
        2-tuple, and color is a 4-tuple of integers between 0 and 255.
+
+     * faces: a list of ((pt, ...), type, texture) where pt is at least 3
+       integers corresponding to indexes into the vertices array. type is a
+       bitmask made from chunkrenderer.FACE_TYPE_* constants. texture is a
+       texture name or path.
      
-     * triangles: a list of ((i, j, k), type) tuples where i, j, k are
+     * triangles: a list of ((i, j, k), type, texture) tuples where i, j, k are
        indexes into the vertices list, and type is a bitmask made from
        chunkrenderer.FACE_TYPE_* constants.
      
@@ -55,7 +60,6 @@ class BlockDefinition(object):
     def __init__(self):
         self.vertices = []
         self.faces = []
-        self.tex = None
         self.transparent = False
         self.solid = True
         self.fluid = False
@@ -64,12 +68,12 @@ class BlockDefinition(object):
 
     @property
     def triangles(self):
-        for indices, facetype in self.faces:
+        for indices, facetype, tex in self.faces:
             first = indices[0]
             a, b = tee(indices[1:])
             b.next()
             for i, j in izip(a, b):
-                yield ((first, i, j), facetype)
+                yield ((first, i, j), facetype, tex)
 
 class BlockDefinitions(object):
     """
@@ -111,47 +115,56 @@ def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1
         topcolor = color
     xcolor = tuple(int(c * 0.8) for c in color[:3]) + (color[3],)
     zcolor = tuple(int(c * 0.9) for c in color[:3]) + (color[3],)
+
+    if isinstance(tex, str):
+        tex = (tex,)*6
+
     bd = BlockDefinition()
     bd.vertices = [
+        # NX face
         ((0, 0, 0), (nx[0], nx[1]), xcolor),
         ((0, 0, 1), (nx[2], nx[1]), xcolor),
         ((0, 1, 1), (nx[2], nx[3]), xcolor),
         ((0, 1, 0), (nx[0], nx[3]), xcolor),
         
-        ((0, 1, 0), (nz[0], nz[1]), zcolor),
-        ((1, 1, 0), (nz[2], nz[1]), zcolor),
-        ((1, 0, 0), (nz[2], nz[3]), zcolor),
-        ((0, 0, 0), (nz[0], nz[3]), zcolor),
+        # NZ face
+        ((1, 0, 0), (nz[0], nz[1]), zcolor),
+        ((0, 0, 0), (nz[2], nz[1]), zcolor),
+        ((0, 1, 0), (nz[2], nz[3]), zcolor),
+        ((1, 1, 0), (nz[0], nz[3]), zcolor),
         
-        ((1, 1, 0), (px[0], px[1]), xcolor),
-        ((1, 1, 1), (px[2], px[1]), xcolor),
-        ((1, 0, 1), (px[2], px[3]), xcolor),
-        ((1, 0, 0), (px[0], px[3]), xcolor),
+        # PX face
+        ((1, 0, 1), (px[0], px[1]), xcolor),
+        ((1, 0, 0), (px[2], px[1]), xcolor),
+        ((1, 1, 0), (px[2], px[3]), xcolor),
+        ((1, 1, 1), (px[0], px[3]), xcolor),
         
+        # PZ face
         ((0, 0, 1), (pz[0], pz[1]), zcolor),
         ((1, 0, 1), (pz[2], pz[1]), zcolor),
         ((1, 1, 1), (pz[2], pz[3]), zcolor),
         ((0, 1, 1), (pz[0], pz[3]), zcolor),
         
+        # NY face
         ((0, 0, 1), (ny[0], ny[1]), color),
         ((0, 0, 0), (ny[2], ny[1]), color),
         ((1, 0, 0), (ny[2], ny[3]), color),
         ((1, 0, 1), (ny[0], ny[3]), color),
         
+        # PY face
         ((1, 1, 1), (py[0], py[1]), topcolor),
         ((1, 1, 0), (py[2], py[1]), topcolor),
         ((0, 1, 0), (py[2], py[3]), topcolor),
         ((0, 1, 1), (py[0], py[3]), topcolor),
     ]
     bd.faces = [
-        ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX),
-        ([4, 5, 6, 7], chunkrenderer.FACE_TYPE_NZ),
-        ([8, 9, 10, 11], chunkrenderer.FACE_TYPE_PX),
-        ([12, 13, 14, 15], chunkrenderer.FACE_TYPE_PZ),
-        ([16, 17, 18, 19], chunkrenderer.FACE_TYPE_NY),
-        ([20, 21, 22, 23], chunkrenderer.FACE_TYPE_PY),
+        ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX, tex[0]),
+        ([4, 5, 6, 7], chunkrenderer.FACE_TYPE_NZ, tex[1]),
+        ([8, 9, 10, 11], chunkrenderer.FACE_TYPE_PX, tex[2]),
+        ([12, 13, 14, 15], chunkrenderer.FACE_TYPE_PZ, tex[3]),
+        ([16, 17, 18, 19], chunkrenderer.FACE_TYPE_NY, tex[4]),
+        ([20, 21, 22, 23], chunkrenderer.FACE_TYPE_PY, tex[5]),
     ]
-    bd.tex = tex
     bd.transparent = transparent
     return bd
 
@@ -166,10 +179,10 @@ def get_default():
     bd.add(make_simple("assets/minecraft/textures/blocks/stone.png"), 1)
     
     # grass
-    #sides = (3, 0)
-    #top = (0, 0)
-    #bottom = (2, 0)
-    #bd.add(make_box(terrain, nx=sides, px=sides, ny=bottom, py=top, nz=sides, pz=sides, topcolor=(150, 255, 150, 255)), 2)
+    side = "assets/minecraft/textures/blocks/grass_side.png"
+    top = "assets/minecraft/textures/blocks/grass_top.png"
+    bottom = "assets/minecraft/textures/blocks/dirt.png"
+    bd.add(make_simple((side,side,side,side,bottom,top), topcolor=(0,255,0,255)), 2)
     
     # dirt
     bd.add(make_simple("assets/minecraft/textures/blocks/dirt.png"), 3)
@@ -204,5 +217,59 @@ def get_default():
     bd.add(make_simple("assets/minecraft/textures/blocks/leaves_spruce.png", color=(0, 150, 0, 255), transparent=True), 18, 1)
     bd.add(make_simple("assets/minecraft/textures/blocks/leaves_birch.png", color=(0, 150, 0, 255), transparent=True), 18, 2)
     bd.add(make_simple("assets/minecraft/textures/blocks/leaves_jungle.png", color=(0, 150, 0, 255), transparent=True), 18, 3)
+
+    # cactus
+    side = "assets/minecraft/textures/blocks/cactus_side.png"
+    top = "assets/minecraft/textures/blocks/cactus_top.png"
+    bottom = "assets/minecraft/textures/blocks/cactus_bottom.png"
+    b = BlockDefinition()
+    nx=px=nz=pz=ny=py=(0,0,1,1)
+    b.vertices = [
+        # NX face
+        ((0+0.0625, 0, 0), (nx[0], nx[1]), (204,204,204,255)),
+        ((0+0.0625, 0, 1), (nx[2], nx[1]), (204,204,204,255)),
+        ((0+0.0625, 1, 1), (nx[2], nx[3]), (204,204,204,255)),
+        ((0+0.0625, 1, 0), (nx[0], nx[3]), (204,204,204,255)),
+        
+        # NZ face
+        ((1, 0, 0+0.0625), (nz[0], nz[1]), (229,229,229,255)),
+        ((0, 0, 0+0.0625), (nz[2], nz[1]), (229,229,229,255)),
+        ((0, 1, 0+0.0625), (nz[2], nz[3]), (229,229,229,255)),
+        ((1, 1, 0+0.0625), (nz[0], nz[3]), (229,229,229,255)),
+        
+        # PX face
+        ((1-0.0625, 0, 1), (px[0], px[1]), (204,204,204,255)),
+        ((1-0.0625, 0, 0), (px[2], px[1]), (204,204,204,255)),
+        ((1-0.0625, 1, 0), (px[2], px[3]), (204,204,204,255)),
+        ((1-0.0625, 1, 1), (px[0], px[3]), (204,204,204,255)),
+        
+        # PZ face
+        ((0, 0, 1-0.0625), (pz[0], pz[1]), (229,229,229,255)),
+        ((1, 0, 1-0.0625), (pz[2], pz[1]), (229,229,229,255)),
+        ((1, 1, 1-0.0625), (pz[2], pz[3]), (229,229,229,255)),
+        ((0, 1, 1-0.0625), (pz[0], pz[3]), (229,229,229,255)),
+        
+        # NY face
+        ((0, 0, 1), (ny[0], ny[1]), (255,255,255,255)),
+        ((0, 0, 0), (ny[2], ny[1]), (255,255,255,255)),
+        ((1, 0, 0), (ny[2], ny[3]), (255,255,255,255)),
+        ((1, 0, 1), (ny[0], ny[3]), (255,255,255,255)),
+        
+        # PY face
+        ((1, 1, 1), (py[0], py[1]), (255,255,255,255)),
+        ((1, 1, 0), (py[2], py[1]), (255,255,255,255)),
+        ((0, 1, 0), (py[2], py[3]), (255,255,255,255)),
+        ((0, 1, 1), (py[0], py[3]), (255,255,255,255)),
+    ]
+    b.faces = [
+        ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX, side),
+        ([4, 5, 6, 7], chunkrenderer.FACE_TYPE_NZ, side),
+        ([8, 9, 10, 11], chunkrenderer.FACE_TYPE_PX, side),
+        ([12, 13, 14, 15], chunkrenderer.FACE_TYPE_PZ, side),
+        ([16, 17, 18, 19], chunkrenderer.FACE_TYPE_NY, bottom),
+        ([20, 21, 22, 23], chunkrenderer.FACE_TYPE_PY, top),
+    ]
+    b.transparent = True
+    bd.add(b, 81)
 
     return bd
