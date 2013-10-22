@@ -46,6 +46,7 @@ def main():
         matrix.scale(500,500,500)
         matrix.rotate(math.atan2(1,math.sqrt(2)),0,0)
         matrix.rotate(0,math.radians(angle),0)
+        matrix.rotate(math.radians(45),math.radians(45),0)
         matrix.translate(-0.5,-0.5,-0.5)
 
         renderers.append(
