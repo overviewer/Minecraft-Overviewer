@@ -18,6 +18,7 @@ import os
 import sys
 import logging
 import zipfile
+import imp
 
 from overviewer import util
 from overviewer.oil import Image
