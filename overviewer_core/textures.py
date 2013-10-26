@@ -926,7 +926,8 @@ def no_inner_surfaces(self, blockid, data):
         texture = self.load_image_texture("assets/minecraft/textures/blocks/ice.png")
 
     # now that we've used the lower 4 bits to get color, shift down to get the 5 bits that encode face hiding
-    data = data >> 4
+    if blockid != 9: # water doesn't have a shifted pseudodata
+        data = data >> 4
 
     if (data & 0b10000) == 16:
         top = texture
