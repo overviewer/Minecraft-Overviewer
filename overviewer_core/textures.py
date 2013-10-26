@@ -978,7 +978,7 @@ block(blockid=15, top_image="assets/minecraft/textures/blocks/iron_ore.png")
 # coal ore
 block(blockid=16, top_image="assets/minecraft/textures/blocks/coal_ore.png")
 
-@material(blockid=17, data=range(12), solid=True)
+@material(blockid=[17,162], data=range(12), solid=True)
 def wood(self, blockid, data):
     # extract orientation and wood type frorm data bits
     wood_type = data & 3
@@ -991,15 +991,29 @@ def wood(self, blockid, data):
         elif wood_orientation == 8: wood_orientation = 4
 
     # choose textures
-    top = self.load_image_texture("assets/minecraft/textures/blocks/log_oak_top.png")
-    if wood_type == 0: # normal
-        side = self.load_image_texture("assets/minecraft/textures/blocks/log_oak.png")
-    if wood_type == 1: # spruce
-        side = self.load_image_texture("assets/minecraft/textures/blocks/log_spruce.png")
-    if wood_type == 2: # birch
-        side = self.load_image_texture("assets/minecraft/textures/blocks/log_birch.png")
-    if wood_type == 3: # jungle wood
-        side = self.load_image_texture("assets/minecraft/textures/blocks/log_jungle.png")
+    if blockid == 17: # regular wood:
+        if wood_type == 0: # normal
+            top = self.load_image_texture("assets/minecraft/textures/blocks/log_oak_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/log_oak.png")
+        if wood_type == 1: # spruce
+            top = self.load_image_texture("assets/minecraft/textures/blocks/log_spruce_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/log_spruce.png")
+        if wood_type == 2: # birch
+            top = self.load_image_texture("assets/minecraft/textures/blocks/log_birch_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/log_birch.png")
+        if wood_type == 3: # jungle wood
+            top = self.load_image_texture("assets/minecraft/textures/blocks/log_jungle_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/log_jungle.png")
+    elif blockid == 162: # acacia/dark wood:
+        if wood_type == 0: # acacia
+            top = self.load_image_texture("assets/minecraft/textures/blocks/log_acacia_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/log_acacia.png")
+        elif wood_type == 1: # dark oak
+            top = self.load_image_texture("assets/minecraft/textures/blocks/log_big_oak_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/log_big_oak.png")
+        else:
+            top = self.load_image_texture("assets/minecraft/textures/blocks/log_acacia_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/log_acacia.png")
 
     # choose orientation and paste textures
     if wood_orientation == 0:
