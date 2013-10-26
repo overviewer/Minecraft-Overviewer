@@ -1029,18 +1029,22 @@ def wood(self, blockid, data):
     elif wood_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
-@material(blockid=18, data=range(16), transparent=True, solid=True)
+@material(blockid=[18, 161], data=range(16), transparent=True, solid=True)
 def leaves(self, blockid, data):
     # mask out the bits 4 and 8
     # they are used for player placed and check-for-decay blocks
     data = data & 0x3
     t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_oak.png")
-    if data == 1:
-        # pine!
+    if (blockid, data) == (18, 1): # pine!
         t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_spruce.png")
-    elif data == 3:
-        # jungle tree
+    elif (blockid, data) == (18, 2): # birth tree
+        t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_birch.png")
+    elif (blockid, data) == (18, 3): # jungle tree
         t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_jungle.png")
+    elif (blockid, data) == (161, 4): # acacia tree
+        t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_acacia.png")
+    elif (blockid, data) == (161, 5): 
+        t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_big_oak.png")
     return self.build_block(t, t)
 
 # sponge
