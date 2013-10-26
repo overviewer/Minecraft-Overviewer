@@ -207,7 +207,7 @@ unload_all_chunks(RenderState *state) {
     }
 }
 
-unsigned char
+unsigned short
 check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned short blockid) {
     /*
      * Generates a pseudo ancillary data for blocks that depend of 
@@ -265,14 +265,14 @@ is_stairs(int block) {
     return 0;
 }
 
-unsigned char
-generate_pseudo_data(RenderState *state, unsigned char ancilData) {
+unsigned short
+generate_pseudo_data(RenderState *state, unsigned short ancilData) {
     /*
      * Generates a fake ancillary data for blocks that are drawn 
      * depending on what are surrounded.
      */
     int x = state->x, y = state->y, z = state->z;
-    unsigned char data = 0;
+    unsigned short data = 0;
 
     if (state->block == 2) { /* grass */
         /* return 0x10 if grass is covered in snow */
@@ -295,15 +295,18 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
             data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f);
             return data;
         }
-    } else if ((state->block == 20) || (state->block == 79)) { /* glass and ice */
-        /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
-        if (get_data(state, BLOCKS, x, y+1, z) == 20) {
+    } else if ((state->block == 20) || (state->block == 79) || (state->block == 95)) { /* glass and ice and stained glass*/
+        /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks
+         * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an unsigned char, 
+         * forcing us to use an unsigned short to hold 16 bits of pseudo ancil data
+         * */
+        if ((get_data(state, BLOCKS, x, y+1, z) == 20) || (get_data(state, BLOCKS, x, y+1, z) == 95)) {
             data = 0;
         } else { 
             data = 16;
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
-        return data;
+        return (data << 4) | (ancilData & 0x0f);
     } else if (state->block == 85) { /* fences */
         /* check for fences AND fence gates */
         return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107);
@@ -379,12 +382,14 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         }
         return final_data;
 
-    } else if ((state->block == 101) || (state->block == 102)) {
+    } else if ((state->block == 101) || (state->block == 102) || (state->block == 160)) {
         /* iron bars and glass panes:
          * they seem to stick to almost everything but air,
          * not sure yet! Still a TODO! */
         /* return check adjacent blocks with air, bit inverted */
-        return check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f;
+        // shift up 4 bits because the lower 4 bits encode color
+        data = (check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f);
+        return (data << 4) | (ancilData & 0xf);
 
     } else if ((state->block == 90) || (state->block == 113)) {
         /* portal and nether brick fences */
@@ -656,7 +661,7 @@ chunk_render(PyObject *self, PyObject *args) {
             state.imgy = yoff - state.x*6 + state.z*6 + 16*12 + 15*6;
             
             for (state.y = 0; state.y < 16; state.y++) {
-                unsigned char ancilData;
+                unsigned short ancilData;
                 
                 state.imgy -= 12;
 		
@@ -701,6 +706,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 101) || (state.block == 102) ||
                         (state.block == 111) || (state.block == 113) ||
                         (state.block == 139) || (state.block == 175) || 
+                        (state.block == 160) || (state.block == 95) ||
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;

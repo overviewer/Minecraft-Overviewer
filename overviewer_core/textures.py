@@ -914,15 +914,20 @@ def water(self, blockid, data):
 
 # other water, glass, and ice (no inner surfaces)
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[9, 20, 79], data=range(32), fluid=(9,), transparent=True, nospawn=True, solid=(79, 20))
+@material(blockid=[9, 20, 79, 95], data=range(512), fluid=(9,), transparent=True, nospawn=True, solid=(79, 20, 95))
 def no_inner_surfaces(self, blockid, data):
     if blockid == 9:
         texture = self.load_water()
     elif blockid == 20:
         texture = self.load_image_texture("assets/minecraft/textures/blocks/glass.png")
+    elif blockid == 95:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/glass_%s.png" % color_map[data & 0x0f])
     else:
         texture = self.load_image_texture("assets/minecraft/textures/blocks/ice.png")
-        
+
+    # now that we've used the lower 4 bits to get color, shift down to get the 5 bits that encode face hiding
+    data = data >> 4
+
     if (data & 0b10000) == 16:
         top = texture
     else:
@@ -1774,7 +1779,8 @@ def stairs(self, blockid, data):
     return img
 
 # normal, locked (used in april's fool day), ender and trapped chest
-@material(blockid=[54,95,130,146], data=range(30), transparent = True)
+# NOTE:  locked chest used to be id95 (which is now stained glass)
+@material(blockid=[54,130,146], data=range(30), transparent = True)
 def chests(self, blockid, data):
     # the first 3 bits are the orientation as stored in minecraft, 
     # bits 0x8 and 0x10 indicate which half of the double chest is it.
@@ -1797,7 +1803,7 @@ def chests(self, blockid, data):
         elif orientation_data == 4: data = 3 | (data & 24)
         elif orientation_data == 5: data = 2 | (data & 24)
     
-    if blockid in (95,130) and not data in [2,3,4,5]: return None
+    if blockid == 130 and not data in [2,3,4,5]: return None
         # iterate.c will only return the ancil data (without pseudo 
         # ancil data) for locked and ender chests, so only 
         # ancilData = 2,3,4,5 are used for this blockids
@@ -3333,12 +3339,14 @@ def huge_mushroom(self, blockid, data):
 # iron bars and glass pane
 # TODO glass pane is not a sprite, it has a texture for the side,
 # at the moment is not used
-@material(blockid=[101,102], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[101,102, 160], data=range(256), transparent=True, nospawn=True)
 def panes(self, blockid, data):
     # no rotation, uses pseudo data
     if blockid == 101:
         # iron bars
         t = self.load_image_texture("assets/minecraft/textures/blocks/iron_bars.png")
+    elif blockid == 160:
+        t = self.load_image_texture("assets/minecraft/textures/blocks/glass_%s.png" % color_map[data & 0xf])
     else:
         # glass panes
         t = self.load_image_texture("assets/minecraft/textures/blocks/glass.png")
@@ -3361,6 +3369,9 @@ def panes(self, blockid, data):
     # +y axis points bottom right direction
     # First compose things in the back of the image, 
     # then things in the front.
+
+    # the lower 4 bits encode color, the upper 4 encode adjencies
+    data = data >> 4
 
     if (data & 0b0001) == 1 or data == 0:
         alpha_over(img,up_left, (6,3),up_left)    # top left

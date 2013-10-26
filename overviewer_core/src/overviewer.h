@@ -26,7 +26,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 43
+#define OVERVIEWER_EXTENSION_VERSION 44
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -108,7 +108,7 @@ typedef struct {
     int x, y, z;
     unsigned short block;
     unsigned char block_data;
-    unsigned char block_pdata;
+    unsigned short block_pdata;
 
     /* useful information about this, and neighboring, chunks */
     PyObject *blockdatas;
