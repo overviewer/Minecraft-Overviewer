@@ -2834,7 +2834,7 @@ block(blockid=88, top_image="assets/minecraft/textures/blocks/soul_sand.png")
 block(blockid=89, top_image="assets/minecraft/textures/blocks/glowstone.png")
 
 # portal
-@material(blockid=90, data=[1, 2, 4, 8], transparent=True)
+@material(blockid=90, data=[1, 2, 4, 5, 8, 10], transparent=True)
 def portal(self, blockid, data):
     # no rotations, uses pseudo data
     portaltexture = self.load_portal()
@@ -2843,10 +2843,10 @@ def portal(self, blockid, data):
     side = self.transform_image_side(portaltexture)
     otherside = side.transpose(Image.FLIP_TOP_BOTTOM)
 
-    if data in (1,4):
+    if data in (1,4,5):
         alpha_over(img, side, (5,4), side)
 
-    if data in (2,8):
+    if data in (2,8,10):
         alpha_over(img, otherside, (5,4), otherside)
 
     return img
