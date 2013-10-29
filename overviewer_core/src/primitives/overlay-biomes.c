@@ -21,7 +21,7 @@
 typedef struct {
     /* inherits from overlay */
     RenderPrimitiveOverlay parent;
-    
+
     void *biomes;
 } RenderPrimitiveBiomes;
 
@@ -53,21 +53,39 @@ static struct BiomeColor default_biomes[] = {
     {19, 100, 100, 240}, /* TaigaHills */
     {20, 255, 25, 15}, /* Extreme Hills Edge */
     {21, 155, 155, 55}, /* Jungle */
-    {22, 175, 255, 55}, /* Jungle Mountains */
+    {22, 175, 255, 55}, /* Jungle Hills */
+    {23, 135, 255, 55}, /* Jungle Edge */
+    {24, 135, 106, 150}, /* Deep Ocean */
+    {25, 255, 25, 15}, /* Stone Beach */
+    {26, 155, 255, 255}, /* Cold Beach */
+    {27, 10, 200, 200}, /* Birch Forest */
+    {28, 10, 200, 200}, /* Birch Forest Edge */
+    {29, 10, 200, 200}, /* Roofed Forest */
+    {30, 155, 255, 255}, /* Cold Taiga */
+    {31, 155, 200, 255}, /* Cold Taiga Hills */
+    {32, 10, 100, 240}, /* Mega Taiga */
+    {33, 10, 100, 240}, /* Mega Taiga Hills*/
+    {34, 255, 55, 55}, /* Extreme Hills+ */
+    {35, 227, 107, 0}, /* Savanna */
+    {36, 227, 107, 0}, /* Savanna Plateau */
+    {37, 255, 100, 100}, /* Mesa */
+    {38, 255, 100, 100}, /* Mesa Plateau F */
+    {39, 255, 100, 100}, /* Mesa Plateau */
+
     /* end of list marker */
     {255, 0, 0, 0}
 };
 
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
-    
+
     unsigned char biome;
     int x = state->x, z = state->z, y_max, y;
     int max_i = -1;
     RenderPrimitiveBiomes* self = (RenderPrimitiveBiomes *)data;
     struct BiomeColor *biomes = (struct BiomeColor *)(self->biomes);
     *a = 0;
-    
+
     y_max = state->y + 1;
     for (y = state->chunky * -16; y <= y_max; y++) {
         int i, tmp;
@@ -83,7 +101,7 @@ static void get_color(void *data, RenderState *state,
                 *r = biomes[i].r;
                 *g = biomes[i].g;
                 *b = biomes[i].b;
-                
+
                 *a = self->parent.color->a;
 
                 max_i = i;
@@ -103,29 +121,29 @@ overlay_biomes_start(void *data, RenderState *state, PyObject *support) {
     int ret = primitive_overlay.start(data, state, support);
     if (ret != 0)
         return ret;
-    
+
     /* now do custom initializations */
     self = (RenderPrimitiveBiomes *)data;
-    
-    // opt is a borrowed reference.  do not deref 
+
+    // opt is a borrowed reference.  do not deref
     if (!render_mode_parse_option(support, "biomes", "O", &(opt)))
         return 1;
     if (opt && opt != Py_None) {
         struct BiomeColor *biomes = NULL;
         Py_ssize_t biomes_size = 0, i;
         /* create custom biomes */
-        
+
         if (!PyList_Check(opt)) {
             PyErr_SetString(PyExc_TypeError, "'biomes' must be a list");
             return 1;
         }
-        
+
         biomes_size = PyList_GET_SIZE(opt);
         biomes = self->biomes = calloc(biomes_size + 1, sizeof(struct BiomeColor));
         if (biomes == NULL) {
             return 1;
         }
-        
+
         for (i = 0; i < biomes_size; i++) {
             PyObject *biome = PyList_GET_ITEM(opt, i);
 	    char *tmpname = NULL;
@@ -152,7 +170,7 @@ overlay_biomes_start(void *data, RenderState *state, PyObject *support) {
     } else {
         self->biomes = default_biomes;
     }
-    
+
     if (!render_mode_parse_option(support, "alpha", "b", &(alpha_tmp))) {
         if (PyErr_Occurred()) {
             PyErr_Clear();
@@ -163,7 +181,7 @@ overlay_biomes_start(void *data, RenderState *state, PyObject *support) {
     }
     /* setup custom color */
     self->parent.get_color = get_color;
-    
+
     return 0;
 }
 
@@ -171,11 +189,11 @@ static void
 overlay_biomes_finish(void *data, RenderState *state) {
     /* first free all *our* stuff */
     RenderPrimitiveBiomes* self = (RenderPrimitiveBiomes *)data;
-    
+
     if (self->biomes && self->biomes != default_biomes) {
         free(self->biomes);
     }
-    
+
     /* now, chain up */
     primitive_overlay.finish(data, state);
 }
