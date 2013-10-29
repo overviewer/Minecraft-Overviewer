@@ -3,162 +3,14 @@
 #include <oil-python.h>
 #include <numpy/arrayobject.h>
 
-#define SECTIONS_PER_CHUNK 16
-#define BLOCK_BUFFER_SIZE 32
+#include "chunkrenderer.h"
 
-/* macro for getting a value out of various numpy arrays the 3D arrays have
-   interesting, swizzled coordinates because minecraft (anvil) stores blocks
-   in y/z/x order for 3D, z/x order for 2D */
-#define get_array_byte_3d(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (y), (z), (x))))
-#define get_array_short_3d(array, x,y,z) (*(unsigned short *)(PyArray_GETPTR3((array), (y), (z), (x))))
-#define get_array_byte_2d(array, x,y) (*(unsigned char *)(PyArray_GETPTR2((array), (y), (x))))
-
-static PyTypeObject *PyOILMatrixType = NULL;
-static PyTypeObject *PyOILImageType = NULL;
-
-/* This holds information on a particular chunk */
-typedef struct {
-    /* whether this chunk is loaded: use load_chunk to load */
-    int loaded;
-    /* biome array */
-    PyObject *biomes;
-    /* all the sections in a given chunk */
-    struct {
-        /* all there is to know about each seciton */
-        PyObject *blocks, *data, *skylight, *blocklight;
-    } sections[SECTIONS_PER_CHUNK];
-} ChunkData;
-
-/* A generic buffer type, aka an expandable array */
-typedef struct {
-    void *data;
-    /* size of each element in bytes */
-    unsigned int element_size;
-    /* Number of elements currently in the array */
-    unsigned int length;
-    /* Number of element slots reserved */
-    unsigned int reserved;
-} Buffer;
-
-/* Properties a model face can have. These correspond to bitfields in the
- * FaceDef struct below */
-enum {
-    FACE_TYPE_PX=(1<<0),
-    FACE_TYPE_NX=(1<<1),
-    FACE_TYPE_PY=(1<<2),
-    FACE_TYPE_NY=(1<<3),
-    FACE_TYPE_PZ=(1<<4),
-    FACE_TYPE_NZ=(1<<5),
-    FACE_TYPE_MASK=(1<<6)-1,
-    /* Lower 6 bits are the face directions. upper bits are other flags. */
-    /* BIOME_COLOED tells the renderer to apply biome coloring to this face */
-    FACE_BIOME_COLORED=(1<<6)
-};
-typedef unsigned char FaceType;
-
-/* Represents a triangle, as part of a block model definition */
-typedef struct {
-    /* these are the three points of the triangle. They reference an index into
-     * the vertices array of the block definition */
-    unsigned int p[3];
-
-    /* Flags a face may have. See the FaceType enum */
-    FaceType face_type;
-
-    /* The texture to draw on this face */
-    OILImage *tex;
-} FaceDef;
-
-/* Properties a block can have. These correspond to fields in the BlockDef
- * struct below. To add a new property, make sure to change the
- * block_has_property function as well. */
-typedef enum {
-    KNOWN,
-    TRANSPARENT,
-    SOLID,
-    FLUID,
-    NOSPAWN,
-    NODATA,
-} BlockProperty;
-
-typedef struct {
-    unsigned int known: 1;
-    /* This is a buffer of OILVertex structs */
-    Buffer vertices;
-    /* This is a buffer of FaceDef structs */
-    Buffer faces;
-    
-    unsigned int transparent: 1;
-    unsigned int solid: 1;
-    unsigned int fluid: 1;
-    unsigned int nospawn: 1;
-    unsigned int nodata: 1;
-} BlockDef;
-
-typedef struct {
-    BlockDef *defs;
-    unsigned int max_blockid;
-    unsigned int max_data;
-    /* This is a python set of the images used by the block definitions. This
-     * keeps references to the images so that if the textures object gets
-     * garbage collected, the images we use won't be freed */
-    PyObject *images;
-} BlockDefs;
-
-/* This struct holds information necessary to render a particular chunk section
- * */
-typedef struct {
-    PyObject *regionset;
-    /* chunky is the section number within the chunk */
-    int chunkx, chunky, chunkz;
-    ChunkData chunks[3][3];
-    
-    OILImage *im;
-    OILMatrix *matrix;
-    
-    BlockDefs *blockdefs;
-} RenderState;
-
-/* Buffer objects are conveniences for realloc'd dynamic arrays */
-
-static inline void buffer_init(Buffer *buffer, unsigned int element_size, unsigned int initial_length) {
-    buffer->data = NULL;
-    buffer->element_size = element_size;
-    buffer->length = 0;
-    buffer->reserved = initial_length;
-}
-
-static inline void buffer_free(Buffer *buffer) {
-    if (buffer->data)
-        free(buffer->data);
-}
-
-static inline void buffer_reserve(Buffer *buffer, unsigned int length) {
-    int needs_realloc = 0;
-    while (buffer->length + length > buffer->reserved) {
-        buffer->reserved *= 2;
-        needs_realloc = 1;
-    }
-    if (buffer->data == NULL)
-        needs_realloc = 1;
-    
-    if (needs_realloc) {
-        buffer->data = realloc(buffer->data, buffer->element_size * buffer->reserved);
-    }
-}
-
-static inline void buffer_append(Buffer *buffer, const void *newdata, unsigned int newdata_length) {
-    buffer_reserve(buffer, newdata_length);
-    memcpy(buffer->data + (buffer->element_size * buffer->length), newdata, buffer->element_size * newdata_length);
-    buffer->length += newdata_length;
-}
-
-static inline void buffer_clear(Buffer *buffer) {
-    buffer->length = 0;
-}
 
 /* helper to load a chunk into state->chunks
  * returns false on error, true on success
+ *
+ * x, y, and z are given relative to the center chunk (the chunk currently
+ * being rendered)
  *
  * if required is true, failure will set a python error
  */
@@ -254,16 +106,12 @@ static inline void unload_all_chunks(RenderState *state) {
     }
 }
 
-/* helper for indexing section data possibly across section boundaries */
-typedef enum
-{
-    BLOCKS,
-    DATA,
-    BLOCKLIGHT,
-    SKYLIGHT,
-    BIOMES,
-} DataType;
-static inline unsigned int get_data(RenderState *state, DataType type, int x, int y, int z)
+/* helper for indexing section data possibly across section boundaries.
+ * x, y, and z are given relative to the center chunk section according to the
+ * render state. 
+ * Not static so that this can be used in blockdata.c
+ */
+inline unsigned int get_data(RenderState *state, enum _get_data_type_enum type, int x, int y, int z)
 {
     int chunkx = 1, chunky = state->chunky, chunkz = 1;
     PyObject *data_array = NULL;
@@ -333,8 +181,10 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
 
 /* helper to get a block property for block id `b`.
  * If such a block is not defined, the default is 0 for all properties except
- * TRANSPARENT, where the default is 1 */
-static inline int block_has_property(RenderState *state, unsigned short b, BlockProperty prop) {
+ * TRANSPARENT, where the default is 1
+ * Not static so that this can be used in blockdata.c
+ */
+inline int block_has_property(RenderState *state, unsigned short b, BlockProperty prop) {
     int def = (prop == TRANSPARENT ? 1 : 0);
     BlockDef bd;
     if (b >= state->blockdefs->max_blockid)
@@ -343,7 +193,7 @@ static inline int block_has_property(RenderState *state, unsigned short b, Block
     /* assume blocks have uniform properties across all data -- that these
      * properties do not depend on the data field.
      * (otherwise to do this right we'd need to calculate pseudo-data) */
-    bd = state->blockdefs->defs[b * state->blockdefs->max_data];
+    bd = state->blockdefs->defs[b];
     if (!bd.known)
         return def;
     
@@ -358,39 +208,48 @@ static inline int block_has_property(RenderState *state, unsigned short b, Block
         return bd.fluid;
     case NOSPAWN:
         return bd.nospawn;
-    case NODATA:
-        return bd.nodata;
     }
     
     return def;
 }
 
-/* helper to get a block definition
- * This takes the entire RenderState struct instead of just the block
- * definitions because we will one day probably need to get neighboring blocks
- * for pseudo data. */
-static inline BlockDef *get_block_definition(RenderState *state, int x, int y, int z, unsigned int blockid, unsigned int data) {
+/* helper to get a block model to use for a given block in a minecraft world.
+ * This function is used by render() This takes the entire RenderState struct
+ * instead of just the block definitions because we need to account for pseudo
+ * data.
+ * x, y, and z are given relative to the center chunk section (chunk [1][1] in
+ * the state struct).
+ */
+static inline BlockModel *get_block_model(RenderState *state, int x, int y, int z) {
     BlockDef *def;
+    BlockModel *model;
+    unsigned int blockid;
+    int effectivedata;
+
+    /* First we need to find the block definition of the requested block. */
+    blockid = get_data(state, BLOCKS, x, y, z);
     if (blockid >= state->blockdefs->max_blockid)
         return NULL;
-    
-    // first, check for nodata set on data == 0
-    def = &(state->blockdefs->defs[blockid * state->blockdefs->max_data]);
-    if (!(def->known))
+
+    def = &state->blockdefs->defs[blockid];
+    if (def->known == 0) {
         return NULL;
-    if (def->nodata)
-        return def;
-    
-    if (data >= state->blockdefs->max_data)
-        return NULL;
-    
-    // data is used, so use it
-    def = &(state->blockdefs->defs[blockid * state->blockdefs->max_data + data]);
-    if (!(def->known))
+    }
+
+    /* Now that we have a block definition, call the data function to determine
+     * which model to use. */
+    effectivedata = def->datatype.datafunc(def->dataparameter, state, x, y, z);
+
+    if (effectivedata >= def->max_data)
         return NULL;
     
-    // still todo: pseudo-data
-    return def;
+    model = &(def->models[effectivedata]);
+
+    if (!model->known) {
+        return NULL;
+    }
+    
+    return model;
 }
 
 static inline void emit_mesh(OILImage *im, OILMatrix *matrix, Buffer *vertices, Buffer *indices, OILImage *tex)
@@ -412,6 +271,8 @@ static inline void render_block(OILImage *im, OILMatrix *matrix, Buffer *vertice
     /* Assume there is at least one face in the model */
     OILImage *tex = (&((FaceDef *)(faces->data))[0])->tex;
 
+    /* Make a buffer of only the faces that we're going to draw, depending on
+     * the opaque neighbors */
     buffer_init(&indices, sizeof(unsigned int), BLOCK_BUFFER_SIZE);
 
     for (i=0; i < faces->length; i++) {
@@ -454,7 +315,6 @@ static PyObject *render(PyObject *self, PyObject *args) {
 
     int i, j;
     int x, y, z;
-    PyObject *blocks, *datas;
     
     if (!PyArg_ParseTuple(args, "OiiiO!O!O", &(state.regionset), &(state.chunkx), &(state.chunky), &(state.chunkz), PyOILImageType, &im, PyOILMatrixType, &mat, &pyblockdefs)) {
         return NULL;
@@ -484,10 +344,6 @@ static PyObject *render(PyObject *self, PyObject *args) {
     /* set up the mesh buffers */
     buffer_init(&blockvertices, sizeof(OILVertex), BLOCK_BUFFER_SIZE);
     
-    /* convenience */
-    blocks = state.chunks[1][1].sections[state.chunky].blocks;
-    datas = state.chunks[1][1].sections[state.chunky].data;
-    
     /* set up the random number generator in a known state per chunk */
     srand(1);
     
@@ -495,18 +351,18 @@ static PyObject *render(PyObject *self, PyObject *args) {
     for (x = 0; x < 16; x++) {
         for (z = 0; z < 16; z++) {
             for (y = 15; y >= 0; y--) {
-                unsigned short block = get_array_short_3d(blocks, x, y, z);
-                unsigned short data = get_array_byte_3d(datas, x, y, z);
                 FaceType opaque_neighbors = 0;
-                BlockDef *bd = get_block_definition(&state, x, y, z, block, data);
-                if (!bd)
+
+                /* Get the model to use */
+                BlockModel *model = get_block_model(&state, x, y, z);
+                if (!model)
                     continue;
                 
                 /* Clear out the block vertices buffer and then fill it with
                  * this block's vertices. We have to copy this buffer because
                  * we adjust the vertices below. */
                 buffer_clear(&blockvertices);
-                buffer_append(&blockvertices, bd->vertices.data, bd->vertices.length);
+                buffer_append(&blockvertices, model->vertices.data, model->vertices.length);
 
                 /* Adjust each vertex coordinate for the position within the
                  * chunk. (model vertex coordinates are typically within the
@@ -546,7 +402,7 @@ static PyObject *render(PyObject *self, PyObject *args) {
                  * figuring out what faces to draw based on the above.
                  * Skip calling this if there is an opaque block in every direction. */
                 if (opaque_neighbors != FACE_TYPE_MASK)
-                    render_block(state.im, state.matrix, &blockvertices, &bd->faces, opaque_neighbors);
+                    render_block(state.im, state.matrix, &blockvertices, &model->faces, opaque_neighbors);
             }
         }
     }
@@ -561,96 +417,68 @@ static PyObject *render(PyObject *self, PyObject *args) {
 static void free_block_definitions(void *obj) {
     unsigned int i, j;
     BlockDefs *defs = (BlockDefs *)obj;
+    BlockDef *d;
+    BlockModel *m;
     
-    for (i = 0; i < defs->max_blockid * defs->max_data; i++) {
-        buffer_free(&(defs->defs[i].vertices));
-        buffer_free(&(defs->defs[i].faces));
-    }
+    /* For each block definition... */
+    for (i = 0; i < defs->max_blockid; i++) {
+        d = &(defs->defs[i]);
+        if (!d->known) {
+            /* Necessary because unused block definitions won't have allocated
+             * a BlockModel array */
+            continue;
+        }
 
+        /* Go through each block model ... */
+        for (j=0; j < d->max_data; j++) {
+            m = &(d->models[j]);
+            if (!m->known) {
+                /* not *really* necessary but only because buffer_free() won't
+                 * attempt to free a null pointer and we use calloc to allocate
+                 * all the BlockModel structs */
+                continue;
+            }
+            /* And free these buffers */
+            buffer_free(&(m->vertices));
+            buffer_free(&(m->faces));
+        }
+
+        /* continue deallocation for this block definition */
+        
+        /* Free the model array */
+        free(d->models);
+
+        /* Deallocate the data parameter, if any */
+        if (d->dataparameter && d->datatype.end) {
+            d->datatype.end(d->dataparameter);
+        }
+    }
+    /* Free the def array */
+    free(defs->defs);
     Py_DECREF(defs->images);
     
-    free(defs->defs);
     free(defs);
 }
 
-/* helper for compile_block_definitions.
- * pytextures argument is the python Textures object
- * def is the BlockDef struct we are to mutate according to the python
- * BlockDefinition object in pydef
- * images is a python set. We should add all oil.Image objects to it so
- * we can guarantee they are not garbage collected.
- * */
-inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef, PyObject *images) {
+/*
+ * Helper to compile a block model definition. One or more models makes up a
+ * block definition.
+ */
+inline static int compile_model_definition(PyObject *pytextures, BlockModel *model, PyObject *pydef, PyObject *images)
+{
     unsigned int i;
-    PyObject *pyvertices = PyObject_GetAttrString(pydef, "vertices");
     unsigned int vertices_length;
-    PyObject *pytriangles = PyObject_GetAttrString(pydef, "triangles");
     unsigned int triangles_length;
     PyObject *pyvertfast;
     PyObject *pytrifast;
-    PyObject *prop;
-    int prop_istrue = 0;
+    PyObject *pytriangles = PyObject_GetAttrString(pydef, "triangles");
+    PyObject *pyvertices = PyObject_GetAttrString(pydef, "vertices");
     if (!pyvertices || !pytriangles) {
         Py_XDECREF(pyvertices);
         Py_XDECREF(pytriangles);
         return 0;
     }
 
-    prop = PyObject_GetAttrString(pydef, "transparent");
-    if (prop) {
-        def->transparent = prop_istrue = PyObject_IsTrue(prop);
-        Py_DECREF(prop);
-    }
-    if (!prop || prop_istrue == -1) {
-        Py_XDECREF(pyvertices);
-        Py_XDECREF(pytriangles);
-        return 0;
-    }
-
-    prop = PyObject_GetAttrString(pydef, "solid");
-    if (prop) {
-        def->solid = prop_istrue = PyObject_IsTrue(prop);
-        Py_DECREF(prop);
-    }
-    if (!prop || prop_istrue == -1) {
-        Py_XDECREF(pyvertices);
-        Py_XDECREF(pytriangles);
-        return 0;
-    }
-
-    prop = PyObject_GetAttrString(pydef, "fluid");
-    if (prop) {
-        def->fluid = prop_istrue = PyObject_IsTrue(prop);
-        Py_DECREF(prop);
-    }
-    if (!prop || prop_istrue == -1) {
-        Py_XDECREF(pyvertices);
-        Py_XDECREF(pytriangles);
-        return 0;
-    }
-
-    prop = PyObject_GetAttrString(pydef, "nospawn");
-    if (prop) {
-        def->nospawn = prop_istrue = PyObject_IsTrue(prop);
-        Py_DECREF(prop);
-    }
-    if (!prop || prop_istrue == -1) {
-        Py_XDECREF(pyvertices);
-        Py_XDECREF(pytriangles);
-        return 0;
-    }
-
-    prop = PyObject_GetAttrString(pydef, "nodata");
-    if (prop) {
-        def->nodata = prop_istrue = PyObject_IsTrue(prop);
-        Py_DECREF(prop);
-    }
-    if (!prop || prop_istrue == -1) {
-        Py_XDECREF(pyvertices);
-        Py_XDECREF(pytriangles);
-        return 0;
-    }
-    
     /* Turn the vertices and triangles sequences into tuples for fast access.
      * Throw away the original objects.
      */
@@ -663,13 +491,18 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
         Py_XDECREF(pytrifast);
         return 0;
     }
-    
+
     vertices_length = PySequence_Fast_GET_SIZE(pyvertfast);
     triangles_length = PySequence_Fast_GET_SIZE(pytrifast);
     
-    buffer_init(&(def->vertices), sizeof(OILVertex), BLOCK_BUFFER_SIZE);
-    buffer_init(&(def->faces), sizeof(FaceDef), BLOCK_BUFFER_SIZE);
-    
+    buffer_init(&(model->vertices), sizeof(OILVertex), BLOCK_BUFFER_SIZE);
+    buffer_init(&(model->faces), sizeof(FaceDef), BLOCK_BUFFER_SIZE);
+
+    /* Now that we have allocated memory, set this entry to known so that if we
+     * return 0, the destructor will properly deallocate this definition.
+     */
+    model->known = 1;
+
     /* Load the vertices list */
     for (i = 0; i < vertices_length; i++) {
         OILVertex vert;
@@ -680,7 +513,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
             PyErr_SetString(PyExc_ValueError, "vertex has invalid form. expected ((float, float, float), (float, float), (byte, byte, byte))");
             return 0;
         }
-        buffer_append(&(def->vertices), &vert, 1);
+        buffer_append(&(model->vertices), &vert, 1);
     }
 
     /* Load the faces (triangles) list */
@@ -735,15 +568,149 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
         }
 
         /* Finally, copy this face definition into the faces buffer */
-        buffer_append(&(def->faces), &face, 1);
+        buffer_append(&(model->faces), &face, 1);
     }
 
-    def->known = 1;
-    
     Py_DECREF(pyvertfast);
     Py_DECREF(pytrifast);
+
+    return 1;
+    
+}
+
+/* helper for compile_block_definitions.
+ * pytextures argument is the python Textures object
+ * def is the BlockDef struct we are to mutate according to the python
+ * BlockDefinition object in pydef
+ * images is a python set. We should add all oil.Image objects to it so
+ * we can guarantee they are not garbage collected.
+ * */
+inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef, PyObject *images) {
+    int i;
+    PyObject *models;
+    PyObject *modelsfast;
+    PyObject *prop;
+    int prop_istrue = 0;
+
+    /* First fill in the properties of this block model */
+    /* transparent */
+    prop = PyObject_GetAttrString(pydef, "transparent");
+    if (prop) {
+        def->transparent = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        return 0;
+    }
+
+    /* solid */
+    prop = PyObject_GetAttrString(pydef, "solid");
+    if (prop) {
+        def->solid = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        return 0;
+    }
+
+    /* fluid */
+    prop = PyObject_GetAttrString(pydef, "fluid");
+    if (prop) {
+        def->fluid = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        return 0;
+    }
+
+    /* nospawn */
+    prop = PyObject_GetAttrString(pydef, "nospawn");
+    if (prop) {
+        def->nospawn = prop_istrue = PyObject_IsTrue(prop);
+        Py_DECREF(prop);
+    }
+    if (!prop || prop_istrue == -1) {
+        return 0;
+    }
+
+    /* Now determine which data function to use */
+    prop = PyObject_GetAttrString(pydef, "datatype");
+    if (!prop) {
+        return 0;
+    }
+    /* the block definition holds the DataType struct itself, not a pointer to
+     * it. Is this worth it? */
+    {
+        DataType *datatype = PyCapsule_GetPointer(prop, "datatype");
+        Py_DECREF(prop);
+        if (!datatype || !datatype->datafunc)
+            return 0;
+        memcpy(&def->datatype, datatype, sizeof(DataType));
+    }
+
+    /* If the datatype declares a start function, get the parameter */
+    if (def->datatype.start) {
+        PyObject *pyparam = PyObject_GetAttrString(pydef, "dataparmeter");
+        if (!pyparam) {
+            return 0;
+        }
+        def->dataparameter = def->datatype.start(pyparam);
+        Py_DECREF(pyparam);
+        if (!def->dataparameter) {
+            return 0;
+        }
+    } else {
+        /* block defs are initialized with calloc, but this can't hurt */
+        def->dataparameter = NULL;
+    }
+
+    /* Now get the models list and allocate memory for the BlockModel array */
+    models = PyObject_GetAttrString(pydef, "models");
+    if (!models) {
+        return 0;
+    }
+    modelsfast = PySequence_Fast(models, "models was not a sequence");
+    Py_DECREF(models);
+    if (!modelsfast) {
+        return 0;
+    }
+    def->max_data = PySequence_Fast_GET_SIZE(modelsfast);
+    def->models = calloc(def->max_data, sizeof(BlockModel));
+    if (!(def->models)) {
+        PyErr_SetString(PyExc_RuntimeError, "out of memory");
+        Py_DECREF(modelsfast);
+        return 0;
+    }
+
+    /* At this point we have allocated memory. Mark this BlockDefinition as
+     * "known" so that if the destructor routine is run, memory is properly
+     * freed. We don't free it ourself in event of an exception because models
+     * may or may not have allocated memory themselves. So we let the caller
+     * call free_block_definitions to properly free *everything* if we return
+     * 0.
+     */
+    def->known = 1;
+
+    for (i=0; i<def->max_data; i++) {
+        /* modeldef is a borrowed reference */
+        PyObject *modeldef = PySequence_Fast_GET_ITEM(modelsfast, i);
+        if (modeldef == Py_None) {
+            /* no definition for this data value */
+            continue;
+        }
+        if (!compile_model_definition(pytextures,
+                                      &(def->models[i]),
+                                      modeldef,
+                                      images)) {
+            Py_DECREF(modelsfast);
+            return 0;
+        }
+    }
+
+    Py_DECREF(modelsfast);
     
     return 1;
+
 }
 
 static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
@@ -766,72 +733,81 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         return NULL;
     }
 
+    /* Create a set to hold the images, so they don't get garbage collected */
     defs->images = PySet_New(NULL);
     
     pymaxblockid = PyObject_GetAttrString(pyblockdefs, "max_blockid");
     if (!pymaxblockid) {
+        Py_DECREF(defs->images);
         free(defs);
+        return NULL;
+    }
+    if (!PyInt_Check(pymaxblockid)) {
+        Py_DECREF(pymaxblockid);
+        Py_DECREF(defs->images);
+        free(defs);
+        PyErr_SetString(PyExc_TypeError, "max_blockid was not an integer wtf are you trying to pull here");
         return NULL;
     }
     defs->max_blockid = PyInt_AsLong(pymaxblockid);
     Py_DECREF(pymaxblockid);
     
-    pymaxdata = PyObject_GetAttrString(pyblockdefs, "max_data");
-    if (!pymaxdata) {
-        free(defs);
-        return NULL;
-    }
-    defs->max_data = PyInt_AsLong(pymaxdata);
-    Py_DECREF(pymaxdata);
-    
     pyblocks = PyObject_GetAttrString(pyblockdefs, "blocks");
     if (!pyblocks) {
+        Py_DECREF(defs->images);
         free(defs);
         return NULL;
     }
     if (!PyDict_Check(pyblocks)) {
-        PyErr_SetString(PyExc_TypeError, "blocks index is not a dictionary");
+        PyErr_SetString(PyExc_TypeError, "blocks is not a dictionary");
+        Py_DECREF(defs->images);
+        Py_DECREF(pyblocks);
+        free(defs);
+        return NULL;
+    }
+
+    /* Important to use calloc so the "known" member of the BlockDef struct is
+     * by default 0; we may have gaps in our known block array */
+    defs->defs = calloc(defs->max_blockid, sizeof(BlockDef));
+    if (!(defs->defs)) {
+        PyErr_SetString(PyExc_RuntimeError, "out of memory");
+        Py_DECREF(defs->images);
         free(defs);
         Py_DECREF(pyblocks);
         return NULL;
     }
 
-    /* Important to use calloc so the "known" member of the BlockDef struct is
-     * by default 0 */
-    defs->defs = calloc(defs->max_blockid * defs->max_data, sizeof(BlockDef));
-    if (!(defs->defs)) {
-        PyErr_SetString(PyExc_RuntimeError, "out of memory");
-        free(defs);
-        Py_DECREF(pyblocks);
-        return NULL;
-    }
+    /* At this point, defs is valid enough such that we can run it through
+     * free_block_definitions() if we need to clean up. */
     
+    /* Loop over every block up to max_blockid and see if there's an entry for
+     * it in the pyblocks dict */
     for (blockid = 0; blockid < defs->max_blockid; blockid++) {
-        for (data = 0; data < defs->max_data; data++) {
-            PyObject *key = Py_BuildValue("II", blockid, data);
-            PyObject *val;
-        
-            if (!key) {
+        PyObject *key = PyInt_FromLong(blockid);
+        PyObject *val;
+    
+        if (!key) {
+            free_block_definitions(defs);
+            Py_DECREF(pyblocks);
+            return NULL;
+        }
+    
+        val = PyDict_GetItem(pyblocks, key);
+        if (val) {
+            /* Compile a block definition from the BlockDefinition object in
+             * val */
+            if (!compile_block_definition(pytextures,
+                                          &(defs->defs[blockid]),
+                                          val,
+                                          defs->images)
+                                          ) {
                 free_block_definitions(defs);
                 Py_DECREF(pyblocks);
                 return NULL;
             }
-        
-            val = PyDict_GetItem(pyblocks, key);
-            if (val) {
-                if (!compile_block_definition(pytextures,
-                                              &(defs->defs[blockid * defs->max_data + data]),
-                                              val,
-                                              defs->images)
-                                              ) {
-                    free_block_definitions(defs);
-                    Py_DECREF(pyblocks);
-                    return NULL;
-                }
-            }
-                        
-            Py_DECREF(key);   
         }
+                    
+        Py_DECREF(key);   
     }
     
     Py_DECREF(pyblocks);
@@ -855,6 +831,7 @@ static PyObject *py_render_block(PyObject *self, PyObject *args, PyObject *kwarg
     PyObject *pyblockdefs;
     BlockDefs *bd;
     BlockDef *block;
+    BlockModel *model;
     unsigned int blockid;
     unsigned int data=0;
 
@@ -872,10 +849,27 @@ static PyObject *py_render_block(PyObject *self, PyObject *args, PyObject *kwarg
 
     bd = PyCObject_AsVoidPtr(pyblockdefs);
 
-    /* Look up this block's definition */
-    block = &(bd->defs[blockid * bd->max_data + data]);
+    if (blockid >= bd->max_blockid) {
+        PyErr_SetString(PyExc_ValueError, "No such block with that ID exists");
+        return NULL;
+    }
 
-    render_block(im->im, &mat->matrix, &block->vertices, &block->faces, 0);
+    /* Look up this block's definition */
+    block = &(bd->defs[blockid]);
+
+    if (!block->known) {
+        PyErr_SetString(PyExc_ValueError, "No such block with that ID exists");
+        return NULL;
+    }
+
+    if (data >= block->max_data) {
+        PyErr_SetString(PyExc_ValueError, "No block model with that data value exists");
+        return NULL;
+    }
+
+    model = &(block->models[data]);
+
+    render_block(im->im, &mat->matrix, &model->vertices, &model->faces, 0);
     Py_RETURN_NONE;
 }
 
@@ -911,7 +905,15 @@ PyMODINIT_FUNC initchunkrenderer(void) {
     PyModule_AddIntConstant(mod, "FACE_TYPE_NY", FACE_TYPE_NY);
     PyModule_AddIntConstant(mod, "FACE_TYPE_PZ", FACE_TYPE_PZ);
     PyModule_AddIntConstant(mod, "FACE_TYPE_NZ", FACE_TYPE_NZ);
+    PyModule_AddIntConstant(mod, "FACE_TYPE_MASK", FACE_TYPE_MASK);
     PyModule_AddIntConstant(mod, "FACE_BIOME_COLORED", FACE_BIOME_COLORED);
+
+    /* Add the data function pointers to the module.
+     * The name parameter will act as sort of a type check, I guess. */
+    PyModule_AddObject(mod, "BLOCK_DATA_NODATA",
+            PyCapsule_New(&chunkrenderer_datatype_nodata, "datatype", NULL));
+    PyModule_AddObject(mod, "BLOCK_DATA_PASSTHROUGH",
+            PyCapsule_New(&chunkrenderer_datatype_passthrough, "datatype", NULL));
     
     /* tell the compiler to shut up about unused things
        sizeof(...) does not evaluate its argument (:D) */
