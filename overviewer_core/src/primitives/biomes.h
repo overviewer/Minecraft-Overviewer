@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is part of the Minecraft Overviewer.
  *
  * Minecraft Overviewer is free software: you can redistribute it and/or
@@ -20,10 +20,10 @@
 
 typedef struct {
     const char* name;
-    
+
     float temperature;
     float rainfall;
-    
+
     unsigned int r, g, b;
 } Biome;
 
@@ -65,8 +65,29 @@ static Biome biome_table[] = {
     {"TaigaHills", 0.05, 0.8, 255, 255, 255},
     /* 20 */
     {"Extreme Hills Edge", 0.2, 0.3, 255, 255, 255},
-    {"Jungle", 2.0, 0.45, 255, 255, 255}, /* <-- GUESS, but a good one */
-    {"Jungle Mountains", 2.0, 0.45, 255, 255, 255}, /* <-- also a guess */
+     /* Values below are guesses */
+    {"Jungle", 2.0, 0.45, 255, 255, 255},
+    {"Jungle Hills", 2.0, 0.45, 255, 255, 255},
+    {"Jungle Edge", 2.0, 0.45, 255, 255, 255},
+    {"Deep Ocean", 0.0, 1, 255, 255, 255},
+    /* 25 */
+    {"Stone Beach", 0.2, 1, 255, 255, 255},
+    {"Cold Beach", 0.2, 1, 255, 255, 255},
+    {"Birch Forest", 0.7, 0.8, 255, 255, 255},
+    {"Birch Forest Hills", 0.7, 0.8, 255, 255, 255},
+    {"Roofed Forest", 2.0, 0.45, 255, 255, 255},
+    /* 30 */
+    {"Cold Taiga", 0.05, 0.8, 255, 255, 255},
+    {"Cold Taiga Hills", 0.05, 0.8, 255, 255, 255},
+    {"Mega Taiga", 0.05, 0.8, 255, 255, 255},
+    {"Mega Taiga Hills", 0.05, 0.8, 255, 255, 255},
+    {"Extreme Hills+", 0.2, 0.3, 255, 255, 255},
+    /* 35 */
+    {"Savanna", 1.0, 0.1, 255, 255, 255},
+    {"Savanna Plateau", 1.0, 0.1, 255, 255, 255},
+    {"Mesa", 1.8, 0.0, 255, 255, 255},
+    {"Mesa Plateau F", 1.8, 0.0, 255, 255, 255},
+    {"Mesa Plateau", 1.8, 0.0, 255, 255, 255}
 };
 
 #define NUM_BIOMES (sizeof(biome_table) / sizeof(Biome))
