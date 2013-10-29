@@ -4,7 +4,7 @@ python:
   - "2.7"
   # - "3.2"
 env:
-  - MC_VERSION=1.6.2
+  - MC_VERSION=1.7.2
 before_install:
   - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/Imaging.h
   - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/ImPlatform.h
