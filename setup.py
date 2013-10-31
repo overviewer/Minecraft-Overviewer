@@ -176,8 +176,14 @@ try:
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
-chunkrenderer_files = ['chunkrenderer.c']
-chunkrenderer_includes = []
+chunkrenderer_files = [
+        'chunkrenderer.c',
+        'blockdata.c',
+]
+chunkrenderer_includes = [
+        'buffer.h',
+        'chunkrenderer.h',
+]
 
 chunkrenderer_files = ['overviewer/chunkrenderer/' + s for s in chunkrenderer_files]
 chunkrenderer_includes = ['overviewer/chunkrenderer/' + s for s in chunkrenderer_includes]

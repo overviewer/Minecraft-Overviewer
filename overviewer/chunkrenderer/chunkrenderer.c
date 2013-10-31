@@ -187,7 +187,7 @@ inline unsigned int get_data(RenderState *state, enum _get_data_type_enum type, 
 inline int block_has_property(RenderState *state, unsigned short b, BlockProperty prop) {
     int def = (prop == TRANSPARENT ? 1 : 0);
     BlockDef bd;
-    if (b >= state->blockdefs->max_blockid)
+    if (b >= state->blockdefs->blockdefs_length)
         return def;
     
     /* assume blocks have uniform properties across all data -- that these
@@ -224,11 +224,11 @@ static inline BlockModel *get_block_model(RenderState *state, int x, int y, int 
     BlockDef *def;
     BlockModel *model;
     unsigned int blockid;
-    int effectivedata;
+    unsigned int effectivedata;
 
     /* First we need to find the block definition of the requested block. */
     blockid = get_data(state, BLOCKS, x, y, z);
-    if (blockid >= state->blockdefs->max_blockid)
+    if (blockid >= state->blockdefs->blockdefs_length)
         return NULL;
 
     def = &state->blockdefs->defs[blockid];
@@ -240,7 +240,7 @@ static inline BlockModel *get_block_model(RenderState *state, int x, int y, int 
      * which model to use. */
     effectivedata = def->datatype.datafunc(def->dataparameter, state, x, y, z);
 
-    if (effectivedata >= def->max_data)
+    if (effectivedata >= def->models_length)
         return NULL;
     
     model = &(def->models[effectivedata]);
@@ -341,7 +341,7 @@ static PyObject *render(PyObject *self, PyObject *args) {
         Py_RETURN_NONE;
     }
     
-    /* set up the mesh buffers */
+    /* set up the mesh buffer */
     buffer_init(&blockvertices, sizeof(OILVertex), BLOCK_BUFFER_SIZE);
     
     /* set up the random number generator in a known state per chunk */
@@ -421,7 +421,7 @@ static void free_block_definitions(void *obj) {
     BlockModel *m;
     
     /* For each block definition... */
-    for (i = 0; i < defs->max_blockid; i++) {
+    for (i = 0; i < defs->blockdefs_length; i++) {
         d = &(defs->defs[i]);
         if (!d->known) {
             /* Necessary because unused block definitions won't have allocated
@@ -430,7 +430,7 @@ static void free_block_definitions(void *obj) {
         }
 
         /* Go through each block model ... */
-        for (j=0; j < d->max_data; j++) {
+        for (j=0; j < d->models_length; j++) {
             m = &(d->models[j]);
             if (!m->known) {
                 /* not *really* necessary but only because buffer_free() won't
@@ -650,7 +650,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
 
     /* If the datatype declares a start function, get the parameter */
     if (def->datatype.start) {
-        PyObject *pyparam = PyObject_GetAttrString(pydef, "dataparmeter");
+        PyObject *pyparam = PyObject_GetAttrString(pydef, "dataparameter");
         if (!pyparam) {
             return 0;
         }
@@ -674,8 +674,8 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     if (!modelsfast) {
         return 0;
     }
-    def->max_data = PySequence_Fast_GET_SIZE(modelsfast);
-    def->models = calloc(def->max_data, sizeof(BlockModel));
+    def->models_length = PySequence_Fast_GET_SIZE(modelsfast);
+    def->models = calloc(def->models_length, sizeof(BlockModel));
     if (!(def->models)) {
         PyErr_SetString(PyExc_RuntimeError, "out of memory");
         Py_DECREF(modelsfast);
@@ -691,7 +691,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
      */
     def->known = 1;
 
-    for (i=0; i<def->max_data; i++) {
+    for (i=0; i<def->models_length; i++) {
         /* modeldef is a borrowed reference */
         PyObject *modeldef = PySequence_Fast_GET_ITEM(modelsfast, i);
         if (modeldef == Py_None) {
@@ -749,7 +749,9 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "max_blockid was not an integer wtf are you trying to pull here");
         return NULL;
     }
-    defs->max_blockid = PyInt_AsLong(pymaxblockid);
+    /* Add 1 since the number of blocks we can actually have includes index 0,
+     * so the array needs to be one larger than this number */
+    defs->blockdefs_length = PyInt_AsLong(pymaxblockid) + 1;
     Py_DECREF(pymaxblockid);
     
     pyblocks = PyObject_GetAttrString(pyblockdefs, "blocks");
@@ -768,7 +770,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
 
     /* Important to use calloc so the "known" member of the BlockDef struct is
      * by default 0; we may have gaps in our known block array */
-    defs->defs = calloc(defs->max_blockid, sizeof(BlockDef));
+    defs->defs = calloc(defs->blockdefs_length, sizeof(BlockDef));
     if (!(defs->defs)) {
         PyErr_SetString(PyExc_RuntimeError, "out of memory");
         Py_DECREF(defs->images);
@@ -780,9 +782,9 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     /* At this point, defs is valid enough such that we can run it through
      * free_block_definitions() if we need to clean up. */
     
-    /* Loop over every block up to max_blockid and see if there's an entry for
+    /* Loop over every block up to blockdefs_length and see if there's an entry for
      * it in the pyblocks dict */
-    for (blockid = 0; blockid < defs->max_blockid; blockid++) {
+    for (blockid = 0; blockid < defs->blockdefs_length; blockid++) {
         PyObject *key = PyInt_FromLong(blockid);
         PyObject *val;
     
@@ -849,7 +851,7 @@ static PyObject *py_render_block(PyObject *self, PyObject *args, PyObject *kwarg
 
     bd = PyCObject_AsVoidPtr(pyblockdefs);
 
-    if (blockid >= bd->max_blockid) {
+    if (blockid >= bd->blockdefs_length) {
         PyErr_SetString(PyExc_ValueError, "No such block with that ID exists");
         return NULL;
     }
@@ -862,7 +864,7 @@ static PyObject *py_render_block(PyObject *self, PyObject *args, PyObject *kwarg
         return NULL;
     }
 
-    if (data >= block->max_data) {
+    if (data >= block->models_length) {
         PyErr_SetString(PyExc_ValueError, "No block model with that data value exists");
         return NULL;
     }
@@ -885,6 +887,7 @@ static PyMethodDef chunkrenderer_methods[] = {
 
 PyMODINIT_FUNC initchunkrenderer(void) {
     PyObject *mod, *numpy;
+    DataType *dt_def;
     
     PyOILMatrixType = py_oil_get_matrix_type();
     PyOILImageType = py_oil_get_image_type();
@@ -910,10 +913,13 @@ PyMODINIT_FUNC initchunkrenderer(void) {
 
     /* Add the data function pointers to the module.
      * The name parameter will act as sort of a type check, I guess. */
-    PyModule_AddObject(mod, "BLOCK_DATA_NODATA",
-            PyCapsule_New(&chunkrenderer_datatype_nodata, "datatype", NULL));
-    PyModule_AddObject(mod, "BLOCK_DATA_PASSTHROUGH",
-            PyCapsule_New(&chunkrenderer_datatype_passthrough, "datatype", NULL));
+    dt_def = chunkrenderer_datatypes;
+    while (dt_def->name != NULL) {
+        PyModule_AddObject(mod, dt_def->name,
+                PyCapsule_New(dt_def, "datatype", NULL)
+        );
+        dt_def++;
+    }
     
     /* tell the compiler to shut up about unused things
        sizeof(...) does not evaluate its argument (:D) */

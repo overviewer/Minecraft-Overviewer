@@ -92,7 +92,7 @@ typedef struct {
 typedef struct {
     /* The function for returning a data value given the world and the block to
      * analyze */
-    int (*datafunc)(void* param, RenderState *state, int x, int y, int z);
+    unsigned int (*datafunc)(void* param, RenderState *state, int x, int y, int z);
     /* This function takes a python parameter and translates it into some kind
      * of C structure that is used with the above data func call. A returned null
      * pointer indicates an error. A null function pointer indicates no data
@@ -101,13 +101,15 @@ typedef struct {
     /* This function deallocates whatever structure was allocated above */
     void (*end)(void *param);
 
+    char * name;
+
 } DataType;
 
 typedef struct {
     unsigned int known: 1;
 
     BlockModel *models;
-    unsigned int max_data;
+    unsigned int models_length;
     
     unsigned int transparent: 1;
     unsigned int solid: 1;
@@ -121,7 +123,7 @@ typedef struct {
 
 typedef struct _blockdefs_struct {
     BlockDef *defs;
-    unsigned int max_blockid;
+    unsigned int blockdefs_length;
 
     /* This is a python set of the images used by the block definitions. This
      * keeps references to the images so that if the textures object gets
@@ -153,9 +155,8 @@ typedef enum {
 } BlockProperty;
 inline int block_has_property(RenderState *state, unsigned short b, BlockProperty prop);
 
-/* DataType declarations */
-extern DataType chunkrenderer_datatype_nodata;
-extern DataType chunkrenderer_datatype_passthrough;
+/* DataType declarations (defined in blockdata.c) */
+extern DataType chunkrenderer_datatypes[];
 
 
 #endif /* __CHUNKRENDERER_H_INCLUDED__ */
