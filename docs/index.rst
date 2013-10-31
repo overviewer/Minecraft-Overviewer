@@ -29,6 +29,22 @@ examples, see `The Example Wiki Page <https://github.com/overviewer/Minecraft-Ov
 
 .. image:: front_page_screenshot.png
     
+Documentation Contents
+======================
+
+.. toctree::
+   :maxdepth: 2
+
+   installing
+   building
+   running
+   config
+   signs
+   win_tut/windowsguide
+   faq
+   design/designdoc
+
+
 
 Features
 ========
@@ -64,31 +80,9 @@ Features
   updated maps! Run it for your Minecraft server world to provide your users
   with a detailed map!
 
-.. _new_features:
-
-Features in version 0.9
------------------------
-
-* Supports the new *Anvil* level format of Minecraft 1.2
-
-* Multi-world! Render all your worlds and dimensions with a single unified
-  interface and configuration file.
-
-* Per-render configuration options - render one world multiple ways, render all
-  your worlds one way, or some complex combination. It's up to you!
-
-* Supports Nether and The End dimensions.
-  
-* New :doc:`configuration file format<config>`. More flexibility and function!
-
-* Build your own rendermodes out of *rendermode primitives* (see
-  :ref:`customrendermodes`)
-
-* Fixed north directions
+* Supports Nether and The End dimensions!
 
 * Built-in support for Biomes!
-
-* *Vastly* cleaned-up codebase.
 
 What The Overviewer is not
 --------------------------
@@ -110,6 +104,8 @@ Full disclosure disclaimers of what The Overviewer is *not*.
   will work just fine. However, since the only interface is currently command
   line based, you will need to know a bit about the command line in order to
   operate The Overviewer.
+
+* The Overviewer is not a potato.
 
 Requirements
 ============
@@ -168,22 +164,6 @@ If you think you've found a bug or other issue, file an issue on our `Issue
 Tracker <https://github.com/overviewer/Minecraft-Overviewer/issues>`_. Filing or
 commenting on an issue sends a notice to our IRC channel, so the response time
 is often very good!
-
-Documentation Contents
-======================
-
-.. toctree::
-   :maxdepth: 2
-
-   installing
-   building
-   running
-   config
-   signs
-   win_tut/windowsguide
-   faq
-   design/designdoc
-
 
 Indices and tables
 ==================
