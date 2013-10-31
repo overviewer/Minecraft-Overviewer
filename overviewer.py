@@ -151,7 +151,7 @@ def main():
             f = tex.find_file("assets/minecraft/textures/blocks/sandstone_top.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/blocks/grass_top.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/blocks/diamond_ore.png", verbose=True)
-            f = tex.find_file("assets/minecraft/textures/blocks/planks_oak.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/blocks/planks_acacia.png", verbose=True)
         except IOError:
             logging.error("Could not find any texture files.")
             return 1

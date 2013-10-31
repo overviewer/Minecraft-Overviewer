@@ -252,14 +252,14 @@ class Textures(object):
             except ValueError:
                 continue
 
-            if versionparts < [1,6]:
+            if versionparts < [1,7]:
                 continue
 
             if versionparts > most_recent_version:
                 most_recent_version = versionparts
 
         if most_recent_version != [0,0,0]:
-            if verbose: logging.info("Most recent version >=1.6.0: {0}. Searching it for the file...".format(most_recent_version))
+            if verbose: logging.info("Most recent version >=1.7.0: {0}. Searching it for the file...".format(most_recent_version))
 
             jarname = ".".join(str(x) for x in most_recent_version)
             jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
@@ -277,7 +277,7 @@ class Textures(object):
 
             if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
         else:
-            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.6.0")
+            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.7.0")
             
         # Last ditch effort: look for the file is stored in with the overviewer
         # installation. We include a few files that aren't included with Minecraft
@@ -297,7 +297,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.6-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.7-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
