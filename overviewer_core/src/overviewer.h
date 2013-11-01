@@ -30,8 +30,8 @@
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
-#include <Imaging.h>
 #include <numpy/arrayobject.h>
+#include <Imaging.h>
 
 /* like (a * b + 127) / 255), but much faster on most platforms
    from PIL's _imaging.c */
