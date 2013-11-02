@@ -189,7 +189,32 @@ def add(bd):
     # lapis block
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/lapis_block.png")), 22)
 
-    # TODO dispenser 
+    # dispenser - 23
+    # data values encode oritentation
+    dispenser = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    def make_dispenser(data, jack=False):
+        top = "assets/minecraft/textures/blocks/furnace_top.png"
+        side = "assets/minecraft/textures/blocks/furnace_side.png"
+        front = "assets/minecraft/textures/blocks/dispenser_front_horizontal.png"
+        vert = "assets/minecraft/textures/blocks/dispenser_front_vertical.png"
+        if data & 0b111 == 0: # pointing down:
+            tex = CubeTextures(ny=vert, py=top, nx=side, px=side, nz=side, pz=side)
+        elif data & 0b111 == 1: # pointing up:
+            tex = CubeTextures(ny=top, py=vert, nx=side, px=side, nz=side, pz=side)
+        elif data & 0b111 == 3: # pointing south
+            tex = CubeTextures(ny=side, py=top, nx=side, px=side, nz=side, pz=front)
+        elif data & 0b111 == 4: # pointing west
+            tex = CubeTextures(ny=side, py=top, nx=front, px=side, nz=side, pz=side)
+        elif data & 0b111 == 2: # pointing north
+            tex = CubeTextures(ny=side, py=top, nx=side, px=side, nz=front, pz=side)
+        elif data & 0b111 == 5: # pointing east
+            tex = CubeTextures(ny=side, py=top, nx=side, px=front, nz=side, pz=side)
+
+        return make_simple(tex)
+    # note: i can't tell if bit 4 is a flagbit or not, since the masking in make_dispenser
+    for x in range(6):
+        dispenser.add(make_dispenser(x), x)
+    bd.add(dispenser, 23)
 
     # sandstone - 24
     sandstone = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
@@ -284,6 +309,33 @@ def add(bd):
             farmland.add(make_simple(wettex), x)
     bd.add(farmland, 60)
 
+    # furnace - 61
+    # lit furnace - 62
+    def make_furnace(data, lit=False):
+        top = "assets/minecraft/textures/blocks/furnace_top.png"
+        side = "assets/minecraft/textures/blocks/furnace_side.png"
+        if lit:
+            front = "assets/minecraft/textures/blocks/furnace_front_on.png"
+        else:
+            front = "assets/minecraft/textures/blocks/furnace_front_off.png"
+        if data == 3: # pointing south
+            tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=side, pz=front)
+        elif data == 4: # pointing west
+            tex = CubeTextures(ny=top, py=top, nx=front, px=side, nz=side, pz=side)
+        elif data == 2: # pointing north
+            tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=front, pz=side)
+        elif data == 5: # pointing east
+            tex = CubeTextures(ny=top, py=top, nx=side, px=front, nz=side, pz=side)
+        return make_simple(tex)
+    furnace = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    lit_furnace = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    for x in range(2,6):
+        furnace.add(make_furnace(x, False), x)
+        lit_furnace.add(make_furnace(x, True), x)
+    bd.add(furnace, 61)
+    bd.add(lit_furnace, 62)
+
+
     # redstone ore  - 73
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_ore.png")), 73)
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_ore.png")), 74) # glowing
@@ -304,7 +356,33 @@ def add(bd):
     tex = CubeTextures(ny=side, py=top, nx=side, px=side, nz=side, pz=side)
     bd.add(BlockDefinition(make_simple(tex)), 84)
 
-    # TODO pumpkins
+    # pumpkins (86) and jackolantern (91)
+    # data values encode oritentation
+    pumpkin = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    jacko = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    def make_pumpkin(data, jack=False):
+        top = "assets/minecraft/textures/blocks/pumpkin_top.png"
+        side = "assets/minecraft/textures/blocks/pumpkin_side.png"
+        if jack:
+            front = "assets/minecraft/textures/blocks/pumpkin_face_on.png"
+        else:
+            front = "assets/minecraft/textures/blocks/pumpkin_face_off.png"
+        if data == 0: # pointing south
+            tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=side, pz=front)
+        elif data == 1: # pointing west
+            tex = CubeTextures(ny=top, py=top, nx=front, px=side, nz=side, pz=side)
+        elif data == 2: # pointing north
+            tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=front, pz=side)
+        elif data == 3: # pointing east
+            tex = CubeTextures(ny=top, py=top, nx=side, px=front, nz=side, pz=side)
+
+        return make_simple(tex)
+    for x in range(4):
+        pumpkin.add(make_pumpkin(x), x)
+        jacko.add(make_pumpkin(x, True), x)
+    bd.add(pumpkin, 86)
+    bd.add(jacko, 91)
+
 
 
     # netherrack - 87
@@ -377,6 +455,33 @@ def add(bd):
     
     # quartz ore - 153
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/quartz_ore.png")), 153)
+    
+    # dropper - 158
+    # data values encode oritentation
+    dropper = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    def make_dropper(data, jack=False):
+        top = "assets/minecraft/textures/blocks/furnace_top.png"
+        side = "assets/minecraft/textures/blocks/furnace_side.png"
+        front = "assets/minecraft/textures/blocks/dropper_front_horizontal.png"
+        vert = "assets/minecraft/textures/blocks/dropper_front_vertical.png"
+        if data & 0b111 == 0: # pointing down:
+            tex = CubeTextures(ny=vert, py=top, nx=side, px=side, nz=side, pz=side)
+        elif data & 0b111 == 1: # pointing up:
+            tex = CubeTextures(ny=top, py=vert, nx=side, px=side, nz=side, pz=side)
+        elif data & 0b111 == 3: # pointing south
+            tex = CubeTextures(ny=side, py=top, nx=side, px=side, nz=side, pz=front)
+        elif data & 0b111 == 4: # pointing west
+            tex = CubeTextures(ny=side, py=top, nx=front, px=side, nz=side, pz=side)
+        elif data & 0b111 == 2: # pointing north
+            tex = CubeTextures(ny=side, py=top, nx=side, px=side, nz=front, pz=side)
+        elif data & 0b111 == 5: # pointing east
+            tex = CubeTextures(ny=side, py=top, nx=side, px=front, nz=side, pz=side)
+
+        return make_simple(tex)
+    # note: i can't tell if bit 4 is a flagbit or not, since the masking in make_dropper
+    for x in range(6):
+        dropper.add(make_dropper(x), x)
+    bd.add(dropper, 158)
 
     # stained hardened clay - 159
     stained_clay = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
