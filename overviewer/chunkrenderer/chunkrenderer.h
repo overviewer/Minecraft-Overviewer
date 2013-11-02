@@ -121,7 +121,7 @@ typedef struct {
     void * dataparameter;
 } BlockDef;
 
-typedef struct _blockdefs_struct {
+struct _blockdefs_struct {
     BlockDef *defs;
     unsigned int blockdefs_length;
 
@@ -129,7 +129,7 @@ typedef struct _blockdefs_struct {
      * keeps references to the images so that if the textures object gets
      * garbage collected, the images we use won't be freed */
     PyObject *images;
-} BlockDefs;
+};
 
 /*
  * Prototypes for chunkrenderer convenience functions, defined in
