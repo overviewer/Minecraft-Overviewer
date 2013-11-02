@@ -157,6 +157,7 @@ inline int block_has_property(RenderState *state, unsigned short b, BlockPropert
 
 /* DataType declarations (defined in blockdata.c) */
 extern DataType chunkrenderer_datatypes[];
+extern const int chunkrenderer_datatypes_length;
 
 
 #endif /* __CHUNKRENDERER_H_INCLUDED__ */

@@ -639,13 +639,17 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
         return 0;
     }
     /* the block definition holds the DataType struct itself, not a pointer to
-     * it. Is this worth it? */
+     * it. Is this worth it? saves a dereference later I suppose. */
     {
-        DataType *datatype = PyCapsule_GetPointer(prop, "datatype");
+        int datatype_index = PyInt_AsLong(prop);
         Py_DECREF(prop);
-        if (!datatype || !datatype->datafunc)
+        if (datatype_index == -1 && PyErr_Occurred())
             return 0;
-        memcpy(&def->datatype, datatype, sizeof(DataType));
+        if (datatype_index >= chunkrenderer_datatypes_length) {
+            PyErr_SetString(PyExc_ValueError, "This is not a defined Data Type");
+            return 0;
+        }
+        memcpy(&def->datatype, &chunkrenderer_datatypes[datatype_index], sizeof(DataType));
     }
 
     /* If the datatype declares a start function, get the parameter */
@@ -888,6 +892,7 @@ static PyMethodDef chunkrenderer_methods[] = {
 PyMODINIT_FUNC initchunkrenderer(void) {
     PyObject *mod, *numpy;
     DataType *dt_def;
+    int i;
     
     PyOILMatrixType = py_oil_get_matrix_type();
     PyOILImageType = py_oil_get_image_type();
@@ -911,14 +916,15 @@ PyMODINIT_FUNC initchunkrenderer(void) {
     PyModule_AddIntConstant(mod, "FACE_TYPE_MASK", FACE_TYPE_MASK);
     PyModule_AddIntConstant(mod, "FACE_BIOME_COLORED", FACE_BIOME_COLORED);
 
-    /* Add the data function pointers to the module.
-     * The name parameter will act as sort of a type check, I guess. */
+    /* Add the data function pointers to the module. */
     dt_def = chunkrenderer_datatypes;
+    i = 0;
     while (dt_def->name != NULL) {
         PyModule_AddObject(mod, dt_def->name,
-                PyCapsule_New(dt_def, "datatype", NULL)
+                PyInt_FromLong(i)
         );
         dt_def++;
+        i++;
     }
     
     /* tell the compiler to shut up about unused things
