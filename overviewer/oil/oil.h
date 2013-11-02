@@ -23,7 +23,7 @@
 
 typedef enum {
 #define BACKEND(name, symbol) OIL_BACKEND_##name,
-#include "oil-backends.def"
+#include "oil-backends.cdef"
 #undef BACKEND
     
     /* used to detect invalid backends */
