@@ -12,6 +12,11 @@ CubeTextures = namedtuple("CubeTextures", ["nx","nz","px","pz","ny","py"])
 color_map = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
         "silver", "cyan", "purple", "blue", "brown", "green", "red", "black"]
 
+# the Positive-Z face faces south
+# the Negative-Z faces north (and is normally hidden from view)
+# the Positive-X faces east (and is normally hidden from view)
+# the Negative-X faces west 
+
 def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1, 1), nz=(0, 0, 1, 1), pz=(0, 0, 1, 1), color=(255, 255, 255, 255), topcolor=None):
     if topcolor is None:
         topcolor = color
@@ -57,10 +62,10 @@ def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1
         ((1, 0, 1), (ny[0], ny[3]), color),
         
         # PY face
-        ((1, 1, 1), (py[0], py[1]), topcolor),
-        ((1, 1, 0), (py[2], py[1]), topcolor),
-        ((0, 1, 0), (py[2], py[3]), topcolor),
-        ((0, 1, 1), (py[0], py[3]), topcolor),
+        ((0, 1, 1), (py[0], py[1]), topcolor),
+        ((1, 1, 1), (py[2], py[1]), topcolor),
+        ((1, 1, 0), (py[2], py[3]), topcolor),
+        ((0, 1, 0), (py[0], py[3]), topcolor),
     ]
     model.faces = [
         ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX, tex.nx),
@@ -257,11 +262,11 @@ def add(bd):
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/diamond_block.png")), 57)
 
     # crafting table - 58
-    # TODO account for map rotation?
+    # the front texture is fixed -- does not depend on block oritentation
     side = "assets/minecraft/textures/blocks/crafting_table_side.png"
     front = "assets/minecraft/textures/blocks/crafting_table_front.png"
     top = "assets/minecraft/textures/blocks/crafting_table_top.png"
-    tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=front, pz=front)
+    tex = CubeTextures(ny=top, py=top, nx=front, px=front, nz=side, pz=side)
     bd.add(BlockDefinition(make_simple(tex)), 58)
 
     # farmland - 60
