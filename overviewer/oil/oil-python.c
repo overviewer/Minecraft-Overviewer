@@ -817,7 +817,7 @@ PyMODINIT_FUNC initoil(void) {
     
     /* add in the backend enums */
 #define BACKEND(name, symbol) PyModule_AddIntConstant(mod, "BACKEND_" #name, OIL_BACKEND_##name);
-#include "oil-backends.def"
+#include "oil-backends.cdef"
 #undef BACKEND
 }
 

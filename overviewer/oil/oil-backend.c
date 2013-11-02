@@ -2,7 +2,7 @@
 #include "oil-backend-private.h"
 
 #define BACKEND(name, symbol) extern OILBackend symbol;
-#include "oil-backends.def"
+#include "oil-backends.cdef"
 #undef BACKEND
 
 /* default backend */
@@ -16,7 +16,7 @@ int oil_backend_set(OILBackendName backend) {
         case OIL_BACKEND_##name:                \
             new_backend = &symbol;              \
             break;
-#include "oil-backends.def"
+#include "oil-backends.cdef"
 #undef BACKEND
     default:
         /* invalid backend */
