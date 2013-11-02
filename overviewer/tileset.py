@@ -28,6 +28,7 @@ from collections import namedtuple
 from itertools import product, izip
 
 from .oil import Image
+from . import oil
 from .util import roundrobin
 from .canvas import Canvas
 from . import nbt
@@ -784,7 +785,7 @@ class TileSet(Canvas):
             if imgformat == 'jpg':
                 assert False # FIXME jpg not supported yet by OIL
             else: # png
-                img.save(tmppath)
+                img.save(tmppath, oil.FORMAT_PNG)
 
             os.utime(tmppath, (max_mtime, max_mtime))
 
@@ -835,7 +836,7 @@ class TileSet(Canvas):
             if self.imgextension == 'jpg':
                 assert False # FIXME OIL does not support jpg yet
             else: # png
-                tileimg.save(tmppath)
+                tileimg.save(tmppath, oil.FORMAT_PNG)
 
             os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))
 

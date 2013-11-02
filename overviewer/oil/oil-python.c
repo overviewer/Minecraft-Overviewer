@@ -532,13 +532,14 @@ static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
 
 static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args, PyObject *kwargs) {
     OILFormatOptions opts = {0, 0};
-    static char *argnames[] = {"dest", "indexed", "palette_size", NULL};
+	unsigned int format;
+    static char *argnames[] = {"dest", "format", "indexed", "palette_size", NULL};
     PyObject *dest = NULL;
     const char *path = NULL;
     int save_success = 0;
     
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|iI", argnames,
-                                     &dest, &opts.indexed, &opts.palette_size)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OI|iI", argnames,
+                                     &dest, &format, &opts.indexed, &opts.palette_size)) {
         return NULL;
     }
     
@@ -547,7 +548,7 @@ static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args, PyObject *kwa
     }
     
     if (path) {
-        save_success = oil_image_save(self->im, path, &opts);
+        save_success = oil_image_save(self->im, path, format, &opts);
     } else {
         OILFile file;
         file.file = dest;
@@ -555,7 +556,7 @@ static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args, PyObject *kwa
         file.write = oil_python_write;
         file.flush = oil_python_flush;
         
-        save_success = oil_image_save_ex(self->im, &file, &opts);
+        save_success = oil_image_save_ex(self->im, &file, format, &opts);
     }
     
     if (!save_success) {
@@ -819,5 +820,10 @@ PyMODINIT_FUNC initoil(void) {
 #define BACKEND(name, symbol) PyModule_AddIntConstant(mod, "BACKEND_" #name, OIL_BACKEND_##name);
 #include "oil-backends.cdef"
 #undef BACKEND
+
+    /* add in the format enums */
+#define FORMAT(name, symbol) PyModule_AddIntConstant(mod, "FORMAT_" #name, OIL_FORMAT_##name);
+#include "oil-formats.cdef"
+#undef FORMAT
 }
 

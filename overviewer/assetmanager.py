@@ -22,6 +22,7 @@ import logging
 import traceback
 
 from .oil import Image
+import oil
 import world
 import util
 from files import FileReplacer, mirror_dir
@@ -133,7 +134,8 @@ directory.
 
             # write a blank image
             blank = Image(1, 1)
-            blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')))
+            formatmap = {'png': oil.FORMAT_PNG}
+            blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')), formatmap[tileset.options.get('imgformat')])
 
         # write out config
         jsondump = json.dumps(dump, indent=4)
