@@ -168,7 +168,7 @@ oil_includes = [
 
 oil_files = ['overviewer/oil/' + s for s in oil_files]
 oil_includes = ['overviewer/oil/' + s for s in oil_includes]
-setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depends=oil_includes, libraries=['png']))
+setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depends=oil_includes, libraries=['png', 'z'], extra_link_args=["-Wl,--export-all-symbols"]))
 
 # chunkrenderer extension
 try:
@@ -189,7 +189,10 @@ chunkrenderer_files = ['overviewer/chunkrenderer/' + s for s in chunkrenderer_fi
 chunkrenderer_includes = ['overviewer/chunkrenderer/' + s for s in chunkrenderer_includes]
 
 # todo: better oil handling!
-setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include, 'overviewer/oil'], depends=chunkrenderer_includes, extra_objects=['overviewer/oil.so']))
+if os.name == "nt":
+    setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include, 'overviewer/oil'], depends=chunkrenderer_includes, extra_objects=['overviewer/oil.pyd']))
+elif os.name == "posix":
+    setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include, 'overviewer/oil'], depends=chunkrenderer_includes, extra_objects=['overviewer/oil.so']))
 
 
 # tell build_ext to build the extension in-place
