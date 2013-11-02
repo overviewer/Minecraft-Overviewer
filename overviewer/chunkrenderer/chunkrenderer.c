@@ -918,13 +918,11 @@ PyMODINIT_FUNC initchunkrenderer(void) {
 
     /* Add the data function pointers to the module. */
     dt_def = chunkrenderer_datatypes;
-    i = 0;
-    while (dt_def->name != NULL) {
+    for (i=0; i < chunkrenderer_datatypes_length; i++) {
         PyModule_AddObject(mod, dt_def->name,
                 PyInt_FromLong(i)
         );
         dt_def++;
-        i++;
     }
     
     /* tell the compiler to shut up about unused things
