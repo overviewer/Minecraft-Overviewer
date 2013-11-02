@@ -880,7 +880,7 @@ def dirt_blocks(self, blockid, data):
 block(blockid=4, top_image="assets/minecraft/textures/blocks/cobblestone.png")
 
 # wooden planks
-@material(blockid=5, data=range(4), solid=True)
+@material(blockid=5, data=range(7), solid=True)
 def wooden_planks(self, blockid, data):
     if data == 0: # normal
         return self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png"), self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png"))
@@ -890,6 +890,10 @@ def wooden_planks(self, blockid, data):
         return self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png"),self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png"))
     if data == 3: # jungle wood
         return self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png"),self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png"))
+    if data == 4: # acacia
+        return self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png"),self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png"))
+    if data == 5: # dark oak
+        return self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png"),self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png"))
 
 @material(blockid=6, data=range(16), transparent=True)
 def saplings(self, blockid, data):
@@ -902,6 +906,10 @@ def saplings(self, blockid, data):
         tex = self.load_image_texture("assets/minecraft/textures/blocks/sapling_birch.png")
     elif data & 0x3 == 3: # jungle sapling
         tex = self.load_image_texture("assets/minecraft/textures/blocks/sapling_jungle.png")
+    elif data & 0x3 == 4: # acacia sapling
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/sapling_acacia.png")
+    elif data & 0x3 == 5: # dark oak/roofed oak/big oak sapling
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/sapling_roofed_oak.png")
     return self.build_sprite(tex)
 
 # bedrock
@@ -1672,7 +1680,7 @@ def fire(self, blockid, data):
 block(blockid=52, top_image="assets/minecraft/textures/blocks/mob_spawner.png", transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle and quartz stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156], data=range(128), transparent=True, solid=True, nospawn=True)
+@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164], data=range(128), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1705,6 +1713,10 @@ def stairs(self, blockid, data):
         texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
     elif blockid == 156: # quartz block stairs
         texture = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png").copy()
+    elif blockid == 163: # acacia wood stairs
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
+    elif blockid == 164: # dark oak stairs
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()
@@ -3729,6 +3741,10 @@ def wooden_slabs(self, blockid, data):
         top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png")
     elif texture== 3: # jungle
         top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png")
+    elif texture== 4: # acacia
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png")
+    elif texture== 5: # dark wood
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png")
     else:
         return None
     
