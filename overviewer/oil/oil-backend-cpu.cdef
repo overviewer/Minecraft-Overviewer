@@ -23,6 +23,7 @@
 
 typedef struct {
     unsigned short *depth_buffer;
+	OILImage **mipmaps;
 } CPUPriv;
 
 /* like (a * b + 127) / 255), but fast */
@@ -45,13 +46,20 @@ static void oil_backend_cpu_new(OILImage *im) {
     CPUPriv *priv;
     priv = im->backend_data = malloc(sizeof(CPUPriv));
     priv->depth_buffer = NULL;
+	priv->mipmaps = NULL;
 }
 
 static void oil_backend_cpu_free(OILImage *im) {
     /* free our data struct */
+	unsigned int i;
     CPUPriv *priv = im->backend_data;
     if (priv->depth_buffer)
         free(priv->depth_buffer);
+	if (priv->mipmaps) {
+		for (i = 0; priv->mipmaps[i] != NULL; i++)
+			oil_image_free(priv->mipmaps[i]);
+		free(priv->mipmaps);
+	}
     free(priv);
 }
 
@@ -61,6 +69,58 @@ static void oil_backend_cpu_load(OILImage *im) {
 
 static void oil_backend_cpu_save(OILImage *im) {
     /* nothing to do */
+}
+
+/* generates resize-half'd mipmaps for an image */
+static inline void generate_mipmaps(OILImage *im) {
+	/* generate mipmaps, a series of half-resized'd versions of im */
+	
+	CPUPriv *priv = im->backend_data;
+	OILImage *lastim = im;
+	unsigned int xmips = 0, ymips = 0, mips, i;
+	unsigned int width, height;
+	
+	/* return early if the mips are already mapped */
+	if (priv->mipmaps != NULL)
+		return;
+	
+	/* figure out how many times we can half-size our image */
+	width = im->width;
+	height = im->height;
+	
+	while (width >= 2) {
+		width >>= 1;
+		xmips++;
+	}
+	while (height >= 2) {
+		height >>= 1;
+		ymips++;
+	}
+	
+	mips = OIL_MIN(xmips, ymips);
+	
+	/* allocate and create them */
+	priv->mipmaps = calloc(mips + 1, sizeof(*(priv->mipmaps)));
+	for (i = 0; i < mips; i++) {
+		OILImage *next = oil_image_new(lastim->width / 2, lastim->height / 2);
+		oil_image_resize_half(next, lastim);
+		
+		priv->mipmaps[i] = next;
+		lastim = next;
+	}
+}
+
+static inline void mark_dirty(OILImage *im) {
+	/* get rid of the mipmaps, to be regenerated later */
+	
+	CPUPriv *priv = im->backend_data;
+	if (priv->mipmaps) {
+		unsigned int i;
+		for (i = 0; priv->mipmaps[i] != NULL; i++)
+			oil_image_free(priv->mipmaps[i]);
+		free(priv->mipmaps);
+		priv->mipmaps = NULL;
+	}
 }
 
 static inline void composite(OILPixel *out, OILPixel *in) {
@@ -94,6 +154,8 @@ static int oil_backend_cpu_composite(OILImage *im, OILImage *src, unsigned char 
     int tmp;
     unsigned int x, y;
     
+	mark_dirty(im);
+	
     for (y = 0; y < ysize; y++) {
         OILPixel *out = &(im->data[dx + (dy + y) * im->width]);
         OILPixel *in = &(src->data[sx + (sy + y) * src->width]);
@@ -127,6 +189,7 @@ static int oil_backend_cpu_composite(OILImage *im, OILImage *src, unsigned char 
 
 static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILVertex v1, OILVertex v2, OILTriangleFlags flags) {
     CPUPriv *priv = im->backend_data;
+	CPUPriv *texpriv = tex->backend_data;
     /* ranges of pixels that are affected */
     int xmin, xmax, ymin, ymax;
     /* the (signed) area of the triangle in normalized 2d space */
@@ -168,7 +231,30 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
        with area less than half a pixel */
     if (area < 0.5)
         return;
-    
+
+	/* get the correct mipmap to use, if needed */
+	if (OIL_LIKELY(tex != NULL)) {
+		unsigned int mipfactor;
+		float texarea = 0.5 * ((v1.s - v0.s) * (v0.t - v2.t) - (v1.t - v0.t) * (v0.s - v2.s)) * tex->width * tex->height;
+		mipfactor = floor(abs(texarea / area));
+		
+		if (mipfactor >= 1) {
+			unsigned int mipindex = 0;
+			OILImage *newtex = tex;
+			
+			/* we need to find and use a mipmap */
+			generate_mipmaps(tex);
+			
+			while (mipfactor >= 1 && texpriv->mipmaps[mipindex] != NULL) {
+				newtex = texpriv->mipmaps[mipindex];
+				
+				mipindex++;
+				mipfactor >>= 1;
+			}
+			tex = newtex;
+		}
+	}
+	    
     /* setup coefficients */
     a12 = v1.y - v2.y; b12 = v2.x - v1.x; c12 = (v1.x * v2.y) - (v2.x * v1.y);
     a20 = v2.y - v0.y; b20 = v0.x - v2.x; c20 = (v2.x * v0.y) - (v0.x * v2.y);
@@ -282,7 +368,9 @@ static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILI
     oil_matrix_scale(&realmat, im->width/2.0f, -(im->height/2.0f), (0xffff/2.0));
     oil_matrix_translate(&realmat, 1.0f, -1.0f, 1.0f);
     oil_matrix_multiply(&realmat, &realmat, matrix);
-    
+
+	/* clear any generated mipmaps for the destination image */
+	mark_dirty(im);
     
     for (i = 0; i < indices_length; i += 3) {
         OILVertex v0, v1, v2;
@@ -301,6 +389,8 @@ static void oil_backend_cpu_draw_triangles(OILImage *im, OILMatrix *matrix, OILI
 static int oil_backend_resize_half(OILImage *im, OILImage *src) {
     unsigned int x, y;
 	unsigned int r, g, b, a;
+	
+	mark_dirty(im);
     
     for (y = 0; y < im->height; y++) {
         OILPixel *out = &(im->data[y * im->width]);
@@ -339,6 +429,7 @@ static int oil_backend_resize_half(OILImage *im, OILImage *src) {
 }
 
 static void oil_backend_cpu_clear(OILImage *im) {
+	mark_dirty(im);
 	memset(im->data, 0, im->width * im->height * sizeof(OILPixel));
 }
 

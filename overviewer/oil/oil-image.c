@@ -317,7 +317,7 @@ int oil_image_resize_half(OILImage *im, OILImage *src) {
         return 0;
     if (im->backend != src->backend)
         return 0;
-    if (im->height * 2 != src->height || im->width * 2 != src->width)
+    if (im->height != src->height / 2 || im->width != src->width / 2)
         return 0;
     
     return im->backend->resize_half(im, src);
