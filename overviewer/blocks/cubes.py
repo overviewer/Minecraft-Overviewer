@@ -17,7 +17,9 @@ color_map = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink
 # the Positive-X faces east (and is normally hidden from view)
 # the Negative-X faces west 
 
-def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1, 1), nz=(0, 0, 1, 1), pz=(0, 0, 1, 1), color=(255, 255, 255, 255), topcolor=None):
+
+# Height must be between 0 and 1.0
+def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1, 1), nz=(0, 0, 1, 1), pz=(0, 0, 1, 1), color=(255, 255, 255, 255), topcolor=None, bottom=0, height=1):
     if topcolor is None:
         topcolor = color
     xcolor = tuple(int(c * 0.8) for c in color[:3]) + (color[3],)
@@ -32,40 +34,40 @@ def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1
     model = BlockModel()
     model.vertices = [
         # NX face
-        ((0, 0, 0), (nx[0], nx[1]), xcolor),
-        ((0, 0, 1), (nx[2], nx[1]), xcolor),
-        ((0, 1, 1), (nx[2], nx[3]), xcolor),
-        ((0, 1, 0), (nx[0], nx[3]), xcolor),
+        ((0, bottom, 0), (nx[0], nx[1]), xcolor),
+        ((0, bottom, 1), (nx[2], nx[1]), xcolor),
+        ((0, height, 1), (nx[2], nx[3]), xcolor),
+        ((0, height, 0), (nx[0], nx[3]), xcolor),
         
         # NZ face
-        ((1, 0, 0), (nz[0], nz[1]), zcolor),
-        ((0, 0, 0), (nz[2], nz[1]), zcolor),
-        ((0, 1, 0), (nz[2], nz[3]), zcolor),
-        ((1, 1, 0), (nz[0], nz[3]), zcolor),
+        ((1, bottom, 0), (nz[0], nz[1]), zcolor),
+        ((0, bottom, 0), (nz[2], nz[1]), zcolor),
+        ((0, height, 0), (nz[2], nz[3]), zcolor),
+        ((1, height, 0), (nz[0], nz[3]), zcolor),
         
         # PX face
-        ((1, 0, 1), (px[0], px[1]), xcolor),
-        ((1, 0, 0), (px[2], px[1]), xcolor),
-        ((1, 1, 0), (px[2], px[3]), xcolor),
-        ((1, 1, 1), (px[0], px[3]), xcolor),
+        ((1, bottom, 1), (px[0], px[1]), xcolor),
+        ((1, bottom, 0), (px[2], px[1]), xcolor),
+        ((1, height, 0), (px[2], px[3]), xcolor),
+        ((1, height, 1), (px[0], px[3]), xcolor),
         
         # PZ face
-        ((0, 0, 1), (pz[0], pz[1]), zcolor),
-        ((1, 0, 1), (pz[2], pz[1]), zcolor),
-        ((1, 1, 1), (pz[2], pz[3]), zcolor),
-        ((0, 1, 1), (pz[0], pz[3]), zcolor),
+        ((0, bottom, 1), (pz[0], pz[1]), zcolor),
+        ((1, bottom, 1), (pz[2], pz[1]), zcolor),
+        ((1, height, 1), (pz[2], pz[3]), zcolor),
+        ((0, height, 1), (pz[0], pz[3]), zcolor),
         
         # NY face
-        ((0, 0, 1), (ny[0], ny[1]), color),
-        ((0, 0, 0), (ny[2], ny[1]), color),
-        ((1, 0, 0), (ny[2], ny[3]), color),
-        ((1, 0, 1), (ny[0], ny[3]), color),
+        ((0, bottom, 1), (ny[0], ny[1]), color),
+        ((0, bottom, 0), (ny[2], ny[1]), color),
+        ((1, bottom, 0), (ny[2], ny[3]), color),
+        ((1, bottom, 1), (ny[0], ny[3]), color),
         
         # PY face
-        ((0, 1, 1), (py[0], py[1]), topcolor),
-        ((1, 1, 1), (py[2], py[1]), topcolor),
-        ((1, 1, 0), (py[2], py[3]), topcolor),
-        ((0, 1, 0), (py[0], py[3]), topcolor),
+        ((0, height, 1), (py[0], py[1]), topcolor),
+        ((1, height, 1), (py[2], py[1]), topcolor),
+        ((1, height, 0), (py[2], py[3]), topcolor),
+        ((0, height, 0), (py[0], py[3]), topcolor),
     ]
     model.faces = [
         ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX, tex.nx),
@@ -80,6 +82,9 @@ def make_box(tex, nx=(0, 0, 1, 1), px=(0, 0, 1, 1), ny=(0, 0, 1, 1), py=(0, 0, 1
 def make_simple(terrain, **kwargs):
     t = (0, 0, 1, 1)
     return make_box(terrain, nx=t, px=t, ny=t, py=t, nz=t, pz=t, **kwargs)
+
+def make_custom(terrain, **kwargs):
+    return make_box(terrain, **kwargs)
 
 def add(bd):
 
@@ -248,12 +253,85 @@ def add(bd):
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/iron_block.png")), 42)
     
     # Double stone slab - 43
-    top = "assets/minecraft/textures/blocks/stone_slab_top.png"
-    side = "assets/minecraft/textures/blocks/stone_slab_side.png"
-    tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=side, pz=side)
-    bd.add(BlockDefinition(make_simple(tex)), 43)
+    double_slab = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    def make_double_slab(data):
+        if data == 0:
+            top = "assets/minecraft/textures/blocks/stone_slab_top.png"
+            side = "assets/minecraft/textures/blocks/stone_slab_side.png"
+        elif data == 1:
+            top = "assets/minecraft/textures/blocks/sandstone_top.png"
+            side = "assets/minecraft/textures/blocks/sandstone_normal.png"
+        elif data == 2:
+            top = "assets/minecraft/textures/blocks/planks_oak.png"
+            side = "assets/minecraft/textures/blocks/planks_oak.png"
+        elif data == 3:
+            top = "assets/minecraft/textures/blocks/cobblestone.png"
+            side = "assets/minecraft/textures/blocks/cobblestone.png"
+        elif data == 4:
+            top = "assets/minecraft/textures/blocks/brick.png"
+            side = "assets/minecraft/textures/blocks/brick.png"
+        elif data == 5:
+            top = "assets/minecraft/textures/blocks/stonebrick.png"
+            side = "assets/minecraft/textures/blocks/stonebrick.png"
+        elif data == 6:
+            top = "assets/minecraft/textures/blocks/nether_brick.png"
+            side = "assets/minecraft/textures/blocks/nether_brick.png"
+        elif data == 7:
+            top = "assets/minecraft/textures/blocks/quartz_block_top.png"
+            side = "assets/minecraft/textures/blocks/quartz_block_side.png"
+        elif data == 8:
+            top = "assets/minecraft/textures/blocks/stone.png"
+            side = "assets/minecraft/textures/blocks/stone.png"
+        elif data == 9:
+            top = "assets/minecraft/textures/blocks/sandstone_top.png"
+            side = "assets/minecraft/textures/blocks/sandstone_smooth.png"
+        tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=side, pz=side)
+        return make_simple(tex)
+    for x in range(10):
+        double_slab.add(make_double_slab(x), x)
+    bd.add(double_slab, 43)
 
-    # TODO signle stone slab - 44
+
+    # signle stone slab - 44
+    stone_slab = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH, transparent=True)
+    def make_stone_slab(data):
+        is_top = (data & 0x8) == 0x8
+        texdata = (data & 0b111)
+        if texdata == 0:
+            top = "assets/minecraft/textures/blocks/stone_slab_top.png"
+            side = "assets/minecraft/textures/blocks/stone_slab_side.png"
+        elif texdata == 1:
+            top = "assets/minecraft/textures/blocks/sandstone_top.png"
+            side = "assets/minecraft/textures/blocks/sandstone_normal.png"
+        elif texdata == 2:
+            top = "assets/minecraft/textures/blocks/planks_oak.png"
+            side = "assets/minecraft/textures/blocks/planks_oak.png"
+        elif texdata == 3:
+            top = "assets/minecraft/textures/blocks/cobblestone.png"
+            side = "assets/minecraft/textures/blocks/cobblestone.png"
+        elif texdata == 4:
+            top = "assets/minecraft/textures/blocks/brick.png"
+            side = "assets/minecraft/textures/blocks/brick.png"
+        elif texdata == 5:
+            top = "assets/minecraft/textures/blocks/stonebrick.png"
+            side = "assets/minecraft/textures/blocks/stonebrick.png"
+        elif texdata == 6:
+            top = "assets/minecraft/textures/blocks/nether_brick.png"
+            side = "assets/minecraft/textures/blocks/nether_brick.png"
+        elif texdata == 7:
+            top = "assets/minecraft/textures/blocks/quartz_block_top.png"
+            side = "assets/minecraft/textures/blocks/quartz_block_side.png"
+        tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=side, pz=side)
+        if not is_top:
+            t = (0, 0, 1, 0.5)
+            return make_custom(tex, nx=t, px=t, nz=t, pz=t, bottom=0, height=0.5)
+        else:
+            t = (0, 0.5, 1, 1)
+            return make_custom(tex, nx=t, px=t, nz=t, pz=t, bottom=0.5, height=1)
+    for x in range(8):
+        stone_slab.add(make_stone_slab(x | 0x8), x | 0x8)
+        stone_slab.add(make_stone_slab(x), x)
+    bd.add(stone_slab, 44)
 
     # Bricks - 45
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/brick.png")), 45)
@@ -335,6 +413,13 @@ def add(bd):
     bd.add(furnace, 61)
     bd.add(lit_furnace, 62)
 
+    # stone pressure plate - 70
+    t = (0, 0, 1, 1.0/16)
+    bd.add(BlockDefinition(make_custom("assets/minecraft/textures/blocks/stone.png", nx=t, px=t, nz=t, pz=t, height=(1.0/16)), transparent=True), 70)
+    
+    # wooden pressure plate - 72
+    t = (0, 0, 1, 1.0/16)
+    bd.add(BlockDefinition(make_custom("assets/minecraft/textures/blocks/planks_oak.png", nx=t, px=t, nz=t, pz=t, height=(1.0/16)), transparent=True), 72)
 
     # redstone ore  - 73
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_ore.png")), 73)
@@ -342,7 +427,7 @@ def add(bd):
 
     # ice - 79
     # TODO do face culling like we do for water?
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/ice.png")), 79)
+    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/ice.png"), transparent=True), 79)
 
     # snow - 80
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/snow.png")), 80)
@@ -396,7 +481,7 @@ def add(bd):
 
     # stained glass - 95
     # TODO face culling?
-    stained_glass = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    stained_glass = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH, transparent=True)
     for color in range(16):
         stained_glass.add(make_simple("assets/minecraft/textures/blocks/glass_%s.png" % color_map[color]), color)
 
@@ -444,11 +529,75 @@ def add(bd):
     # redstoen lamp (on) - 124
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_lamp_on.png")), 124)
 
+    # double wooden slabs - 125
+    double_wooden_slab = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    def make_double_wooden_slab(data):
+        if data == 0:
+            side = "assets/minecraft/textures/blocks/planks_oak.png"
+        elif data == 1:
+            side = "assets/minecraft/textures/blocks/planks_spruce.png"
+        elif data == 2:
+            side = "assets/minecraft/textures/blocks/planks_birch.png"
+        elif data == 3:
+            side = "assets/minecraft/textures/blocks/planks_jungle.png"
+        elif data == 4:
+            side = "assets/minecraft/textures/blocks/planks_acacia.png"
+        elif data == 5:
+            side = "assets/minecraft/textures/blocks/planks_big_oak.png"
+        tex = CubeTextures(ny=side, py=side, nx=side, px=side, nz=side, pz=side)
+        return make_simple(tex)
+    for x in range(6):
+        double_wooden_slab.add(make_double_wooden_slab(x), x)
+    bd.add(double_wooden_slab, 125)
+
+    # wooden slabs (half) - 126
+    wooden_slab = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH, transparent=True)
+    def make_wooden_slab(data):
+        is_top = (data & 0x8) == 0x8
+        texdata = (data & 0b111)
+        if texdata == 0:
+            side = "assets/minecraft/textures/blocks/planks_oak.png"
+        elif texdata == 1:
+            side = "assets/minecraft/textures/blocks/planks_spruce.png"
+        elif texdata == 2:
+            side = "assets/minecraft/textures/blocks/planks_birch.png"
+        elif texdata == 3:
+            side = "assets/minecraft/textures/blocks/planks_jungle.png"
+        elif texdata == 4:
+            side = "assets/minecraft/textures/blocks/planks_acacia.png"
+        elif texdata == 5:
+            side = "assets/minecraft/textures/blocks/planks_big_oak.png"
+        if not is_top:
+            t = (0, 0, 1, 0.5)
+            return make_custom(side, nx=t, px=t, nz=t, pz=t, bottom=0, height=0.5)
+        else:
+            t = (0, 0.5, 1, 1)
+            return make_custom(side, nx=t, px=t, nz=t, pz=t, bottom=0.5, height=1)
+    for x in range(6):
+        wooden_slab.add(make_wooden_slab(x | 0x8), x | 0x8)
+        wooden_slab.add(make_wooden_slab(x), x)
+    bd.add(wooden_slab, 126)
+
     # emerald ore - 129
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/emerald_ore.png")), 129)
 
     # emerald block - 133
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/emerald_block.png")), 133)
+    
+    # light weighted pressure plate - 147
+    t = (0, 0, 1, 1.0/16)
+    bd.add(BlockDefinition(make_custom("assets/minecraft/textures/blocks/gold_block.png", nx=t, px=t, nz=t, pz=t, height=(1.0/16)), transparent=True), 147)
+    
+    # heavy weighted pressure plate - 148
+    t = (0, 0, 1, 1.0/16)
+    bd.add(BlockDefinition(make_custom("assets/minecraft/textures/blocks/iron_block.png", nx=t, px=t, nz=t, pz=t, height=(1.0/16)), transparent=True), 148)
+    
+    # daylight sensor - 151
+    top = "assets/minecraft/textures/blocks/daylight_detector_top.png"
+    side = "assets/minecraft/textures/blocks/daylight_detector_side.png"
+    tex = CubeTextures(ny=side, py=top, nx=side, px=side, nz=side, pz=side)
+    t = (0, 0, 1, 1.0/3)
+    bd.add(BlockDefinition(make_custom(tex, nx=t, px=t, nz=t, pz=t, height=1.0/3), transparent=True), 151)
 
     # redstone block - 152
     bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_block.png")), 152)
