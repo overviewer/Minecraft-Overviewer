@@ -880,7 +880,7 @@ def dirt_blocks(self, blockid, data):
 block(blockid=4, top_image="assets/minecraft/textures/blocks/cobblestone.png")
 
 # wooden planks
-@material(blockid=5, data=range(7), solid=True)
+@material(blockid=5, data=range(6), solid=True)
 def wooden_planks(self, blockid, data):
     if data == 0: # normal
         return self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png"), self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png"))
