@@ -1041,7 +1041,7 @@ def wood(self, blockid, data):
 def leaves(self, blockid, data):
     # mask out the bits 4 and 8
     # they are used for player placed and check-for-decay blocks
-    data = data & 0x3
+    data = data & 0x7
     t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_oak.png")
     if (blockid, data) == (18, 1): # pine!
         t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_spruce.png")
