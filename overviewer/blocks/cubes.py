@@ -631,9 +631,24 @@ def add(bd):
     for x in range(6):
         dropper.add(make_dropper(x), x)
     bd.add(dropper, 158)
-
+    
     # stained hardened clay - 159
     stained_clay = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
     for color in range(16):
         stained_clay.add(make_simple("assets/minecraft/textures/blocks/hardened_clay_stained_%s.png" % color_map[color]), color)
     bd.add(stained_clay, 159)
+    
+    # carpet - 171
+    carpet = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH, transparent=True)
+    for color in range(16):
+        carpet.add(make_simple("assets/minecraft/textures/blocks/wool_colored_%s.png" % color_map[color], height=1.0/16), color)
+    bd.add(carpet, 171)
+    
+    # hardened clay (uncolored) - 172
+    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/hardened_clay.png")), 172)
+    
+    # coal block- 173
+    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/coal_block.png")), 173)
+
+    
+
