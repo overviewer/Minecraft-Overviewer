@@ -134,7 +134,7 @@ directory.
 
             # write a blank image
             blank = Image(1, 1)
-            formatmap = {'png': oil.FORMAT_PNG}
+            formatmap = {'png': oil.FORMAT_PNG, 'jpg': oil.FORMAT_JPEG, 'jpeg': oil.FORMAT_JPEG}
             blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')), formatmap[tileset.options.get('imgformat')])
 
         # write out config

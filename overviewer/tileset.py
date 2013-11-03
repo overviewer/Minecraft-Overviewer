@@ -783,7 +783,7 @@ class TileSet(Canvas):
         # Save it
         with FileReplacer(imgpath) as tmppath:
             if imgformat == 'jpg':
-                assert False # FIXME jpg not supported yet by OIL
+                img.save(tmppath, oil.FORMAT_JPEG)
             else: # png
                 img.save(tmppath, oil.FORMAT_PNG)
 
@@ -834,7 +834,7 @@ class TileSet(Canvas):
         # Save them
         with FileReplacer(imgpath) as tmppath:
             if self.imgextension == 'jpg':
-                assert False # FIXME OIL does not support jpg yet
+                tileimg.save(tmppath, oil.FORMAT_JPEG)
             else: # png
                 tileimg.save(tmppath, oil.FORMAT_PNG)
 

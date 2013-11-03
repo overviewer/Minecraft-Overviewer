@@ -138,6 +138,7 @@ if py2exe is None:
 # oil extension
 #
 # STILL TODO: verify libpng is present
+# and libjpeg
 #
 
 oil_files = [
@@ -146,6 +147,7 @@ oil_files = [
     "oil-image.c",
     "oil-format.c",
     "oil-format-png.c",
+    "oil-format-jpeg.c",
     "oil-palette.c",
     "oil-dither.c",
     "oil-backend.c",
@@ -171,7 +173,7 @@ oil_includes = ['overviewer/oil/' + s for s in oil_includes]
 extra_link_args = []
 if "nt" in os.name:
     extra_link_args.append("-Wl,--export-all-symbols")
-setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depends=oil_includes, libraries=['png', 'z'], extra_link_args=extra_link_args))
+setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depends=oil_includes, libraries=['png', 'z', 'jpeg'], extra_link_args=extra_link_args))
 
 # chunkrenderer extension
 try:

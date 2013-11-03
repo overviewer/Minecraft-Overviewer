@@ -3,3 +3,4 @@
 #endif
 
 FORMAT(PNG, oil_format_png)
+FORMAT(JPEG, oil_format_jpeg)

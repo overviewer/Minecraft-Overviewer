@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /*
  * file IO implementation for plain old FILEs
@@ -19,6 +20,74 @@ static size_t oil_image_write(void *file, void *data, size_t length) {
 
 static void oil_image_flush(void *file) {
     fflush((FILE *)file);
+}
+
+/*
+ * file IO implementation that caches a small buffer in the beginning
+ * used for resetting IO after a format fails to load
+ *
+ * (only implements read)
+ */
+
+#define RESET_FILE_SIZE 4096
+
+typedef struct {
+    OILFile *file;
+    size_t readpos;
+    unsigned char buffer[RESET_FILE_SIZE];
+    size_t buffer_size;
+} OILResetFile;
+
+static size_t oil_reset_file_read(void *file, void *data, size_t length) {
+    size_t read = 0;
+    OILResetFile *rfile = (OILResetFile *)file;
+    
+    if (rfile->buffer_size == 0) {
+        rfile->buffer_size = rfile->file->read(rfile->file->file, rfile->buffer, RESET_FILE_SIZE);
+        if (rfile->buffer_size == 0)
+            return 0;
+    }
+    
+    if (rfile->readpos < rfile->buffer_size) {
+        size_t from_buffer = rfile->buffer_size - rfile->readpos;
+        if (from_buffer > length)
+            from_buffer = length;
+        
+        memcpy(data, &(rfile->buffer[rfile->readpos]), from_buffer);
+        
+        rfile->readpos += from_buffer;
+        read += from_buffer;
+        
+        /* modify these for the next block */
+        data += from_buffer;
+        length -= from_buffer;
+    }
+    
+    if (length > 0) {
+        read += rfile->file->read(rfile->file->file, data, length);
+        rfile->readpos += read;
+    }
+    
+    return read;
+}
+
+static void oil_reset_file_init(OILFile *out, OILResetFile *rfile, OILFile *file) {
+    rfile->file = file;
+    rfile->readpos = 0;
+    rfile->buffer_size = 0;
+    
+    out->file = rfile;
+    out->read = oil_reset_file_read;
+    out->write = NULL;
+    out->flush = NULL;
+}
+
+static inline int oil_reset_file_reset(OILResetFile *rfile) {
+    if (rfile->readpos < RESET_FILE_SIZE) {
+        rfile->readpos = 0;
+        return 1; /* was reset */
+    }
+    return 0; /* cannot be reset */
 }
 
 OILImage *oil_image_new(unsigned int width, unsigned int height) {
@@ -76,14 +145,21 @@ OILImage *oil_image_load(const char *path) {
 }
 
 OILImage *oil_image_load_ex(OILFile *file) {
+    OILFile rfile;
+    OILResetFile rfiledata;
 	unsigned int i;
 	if (!file)
 		return NULL;
+    
+    oil_reset_file_init(&rfile, &rfiledata, file);
 	
 	for (i = 0; i < OIL_FORMAT_MAX; i++) {
-		OILImage *im = oil_formats[i]->load(file);
+		OILImage *im = oil_formats[i]->load(&rfile);
 		if (im != NULL)
 			return im;
+        
+        if (!oil_reset_file_reset(&rfiledata))
+            return NULL;
 	}
 	return NULL;
 }
