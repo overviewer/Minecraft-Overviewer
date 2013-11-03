@@ -3,9 +3,13 @@
 
 #include <stdlib.h>
 
-extern OILFormat oil_format_png;
+#define FORMAT(name, symbol) extern OILFormat symbol;
+#include "oil-formats.cdef"
+#undef FORMAT
 
 OILFormat *oil_formats[] = {
-    &oil_format_png,
+#define FORMAT(name, symbol) &symbol,
+#include "oil-formats.cdef"
+#undef FORMAT
     NULL
 };

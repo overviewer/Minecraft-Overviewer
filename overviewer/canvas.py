@@ -20,6 +20,7 @@ import numpy
 from itertools import product
 
 from overviewer.oil import Image
+import overviewer.oil as oil
 from overviewer.dispatcher import Worker
 
 """
@@ -104,7 +105,7 @@ class SingleImageCanvas(Canvas):
 
         image = Image(*self.size)
         self.renderer.render(self.origin, image)
-        image.save(self.outputpath)
+        image.save(self.outputpath, oil.FORMAT_PNG)
 
     def get_phase_length(self,_):
         return 1
@@ -180,7 +181,7 @@ class SimpleCanvas(Canvas):
                         im = Image.open(path)
                         bigim.paste(im, (x * self.region_size, y * self.region_size))
                         os.remove(path)
-            bigim.save(self.output)
+            bigim.save(self.output, oil.FORMAT_PNG)
             os.utime(self.output, (self.started, self.started))
             return
 
@@ -189,4 +190,4 @@ class SimpleCanvas(Canvas):
         size = tuple([min([self.rect[i + 2] - origin[i], self.region_size]) for i in range(2)])
         im = Image.new("RGBA", size)
         self.renderer.render(origin, im)
-        im.save(self.output + '.' + str(x) + '.' + str(y) + '.png')
+        im.save(self.output + '.' + str(x) + '.' + str(y) + '.png', oil.FORMAT_PNG)

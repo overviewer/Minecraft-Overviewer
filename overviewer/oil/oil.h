@@ -23,7 +23,7 @@
 
 typedef enum {
 #define BACKEND(name, symbol) OIL_BACKEND_##name,
-#include "oil-backends.def"
+#include "oil-backends.cdef"
 #undef BACKEND
     
     /* used to detect invalid backends */
@@ -71,6 +71,15 @@ typedef struct {
     void (*flush)(void *file);
 } OILFile;
 
+typedef enum {
+#define FORMAT(name, symbol) OIL_FORMAT_##name,
+#include "oil-formats.cdef"
+#undef FORMAT
+    
+    /* used to detect invalid formats */
+    OIL_FORMAT_MAX
+} OILFormatName;
+
 typedef struct {
     int indexed;
     unsigned int palette_size;
@@ -90,8 +99,8 @@ OILImage *oil_image_new(unsigned int width, unsigned int height);
 void oil_image_free(OILImage *im);
 OILImage *oil_image_load(const char *path);
 OILImage *oil_image_load_ex(OILFile *file);
-int oil_image_save(OILImage *im, const char *path, OILFormatOptions *opts);
-int oil_image_save_ex(OILImage *im, OILFile *file, OILFormatOptions *opts);
+int oil_image_save(OILImage *im, const char *path, OILFormatName format, OILFormatOptions *opts);
+int oil_image_save_ex(OILImage *im, OILFile *file, OILFormatName format, OILFormatOptions *opts);
 void oil_image_get_size(OILImage *im, unsigned int *width, unsigned int *height);
 const OILPixel *oil_image_get_data(OILImage *im);
 OILPixel *oil_image_lock(OILImage *im);

@@ -1,0 +1,5 @@
+#ifndef FORMAT
+#error oil-formats.cdef was included without FORMAT(name, symbol) defined
+#endif
+
+FORMAT(PNG, oil_format_png)

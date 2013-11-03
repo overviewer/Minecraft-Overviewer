@@ -76,10 +76,19 @@ OILImage *oil_image_load(const char *path) {
 }
 
 OILImage *oil_image_load_ex(OILFile *file) {
-    return oil_formats[0]->load(file);
+	unsigned int i;
+	if (!file)
+		return NULL;
+	
+	for (i = 0; i < OIL_FORMAT_MAX; i++) {
+		OILImage *im = oil_formats[i]->load(file);
+		if (im != NULL)
+			return im;
+	}
+	return NULL;
 }
 
-int oil_image_save(OILImage *im, const char *path, OILFormatOptions *opts) {
+int oil_image_save(OILImage *im, const char *path, OILFormatName format, OILFormatOptions *opts) {
     FILE *fp;
     int ret;
     OILFile file;
@@ -95,13 +104,18 @@ int oil_image_save(OILImage *im, const char *path, OILFormatOptions *opts) {
     file.write = oil_image_write;
     file.flush = oil_image_flush;
     
-    ret = oil_image_save_ex(im, &file, opts);
+    ret = oil_image_save_ex(im, &file, format, opts);
     fclose(fp);
     return ret;
 }
 
-int oil_image_save_ex(OILImage *im, OILFile *file, OILFormatOptions *opts) {
-    return oil_formats[0]->save(im, file, opts);
+int oil_image_save_ex(OILImage *im, OILFile *file, OILFormatName format, OILFormatOptions *opts) {
+	if (!im || !file)
+		return NULL;
+	if (!(format < OIL_FORMAT_MAX))
+		return NULL;
+
+    return oil_formats[format]->save(im, file, opts);
 }
 
 void oil_image_get_size(OILImage *im, unsigned int *width, unsigned int *height) {
