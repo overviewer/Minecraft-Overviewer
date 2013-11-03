@@ -38,3 +38,6 @@ overviewer/overviewer_version.py
 #Script files, as users may want their own scripts.
 *.sh
 *.bat
+
+# output directories
+output_*/
