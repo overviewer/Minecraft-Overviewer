@@ -175,7 +175,7 @@ def add(bd):
     bd.add(logs2, 162)
     
     # leaves
-    leaves = BlockDefinition(transparent=True, datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
+    leaves = BlockDefinition(transparent=True, datatype=chunkrenderer.BLOCK_DATA_MASKED, dataparameter=0x03)
     leaves.add(make_simple("assets/minecraft/textures/blocks/leaves_oak.png", color=(0, 150, 0, 255)), 0)
     leaves.add(make_simple("assets/minecraft/textures/blocks/leaves_spruce.png", color=(0, 150, 0, 255)), 1)
     leaves.add(make_simple("assets/minecraft/textures/blocks/leaves_birch.png", color=(0, 150, 0, 255)), 2)

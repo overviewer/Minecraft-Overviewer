@@ -158,12 +158,35 @@ static void free_sticky_table(void *param)
     free(table);
 }
 
+/* Masked data transformer, for blocks that use the data directly but
+ * only care about certain bits, like leaves.
+ */
+static unsigned int masked(void *param, RenderState *state, int x, int y, int z) {
+	unsigned int *mask = param;
+    return get_data(state, DATA, x, y, z) & (*mask);
+}
+static void *masked_start(PyObject *param) {
+	int mask = PyInt_AsLong(param);
+	unsigned int *maskp;
+	if (mask == -1 && PyErr_Occurred())
+		return NULL;
+	maskp = malloc(sizeof(*maskp));
+	if (!maskp)
+		return NULL;
+	*maskp = mask;
+	return maskp;
+}
+static void masked_end(void *param) {
+	free(param);
+}
+
 /* Add new data types here.
  * The 4th parameter is the name of the python module attribute */
 DataType chunkrenderer_datatypes[] = {
         {nodata, NULL, NULL, "BLOCK_DATA_NODATA"},
         {passthrough, NULL, NULL, "BLOCK_DATA_PASSTHROUGH"},
         {sticky_neighbors, sticky_neighbors_start, free_sticky_table, "BLOCK_DATA_STICKY"},
+		{masked, masked_start, masked_end, "BLOCK_DATA_MASKED"},
 };
 
 const int chunkrenderer_datatypes_length = sizeof(chunkrenderer_datatypes) / sizeof(DataType);

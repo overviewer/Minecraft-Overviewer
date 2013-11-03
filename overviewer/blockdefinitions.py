@@ -98,7 +98,7 @@ class BlockDefinition(object):
         self.fluid = kwargs.get("fluid", False)
         self.nospawn = kwargs.get("nospawn", False)
         self.datatype = kwargs.get("datatype", chunkrenderer.BLOCK_DATA_NODATA)
-        self.dataparameter = kwargs.get("dataparm", None)
+        self.dataparameter = kwargs.get("dataparameter", None)
 
         if model_zero:
             self.add(model_zero, 0)
