@@ -23,14 +23,14 @@ overviewer.models.WorldCollection = Backbone.Collection.extend({
  */
 overviewer.models.TileSetModel = Backbone.Model.extend({
     defaults: {
-        markers: [] ,
+        markers: []
     },
     initialize: function(attrs) {
         // this implies that the Worlds collection must be
         // initialized before any TIleSetModels are created
         attrs.world = overviewer.collections.worlds.get(attrs.world);
         this.set(attrs);
-    },
+    }
 });
 
 overviewer.models.TileSetCollection = Backbone.Collection.extend({
@@ -42,6 +42,6 @@ overviewer.models.GoogleMapModel = Backbone.Model.extend({
     initialize: function(attrs) {
         attrs.currentWorldView = overviewer.collections.worldViews[0];
         this.set(attrs);
-    },
+    }
 });
 
