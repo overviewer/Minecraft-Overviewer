@@ -66,6 +66,7 @@ def main():
     parser.add_option("-p", "--processes", dest="procs", action="store", type="int",
             help="The number of local worker processes to spawn. Defaults to the number of CPU cores your computer has")
 
+    parser.add_option("--pid", dest="pid", action="store", help="Specify the pid file to use.")
     # Options that only apply to the config-less render usage
     parser.add_option("--rendermodes", dest="rendermodes", action="store",
             help="If you're not using a config file, specify which rendermodes to render with this option. This is a comma-separated list.")
@@ -138,6 +139,9 @@ def main():
             print("(build info not found)")
         return 0
 
+    if options.pid:
+        with open(options.pid,"w") as f:
+            f.write(str(os.getpid()))
     # if --check-terrain was specified, but we have NO config file, then we cannot
     # operate on a custom texture path.  we do terrain checking with a custom texture
     # pack later on, after we've parsed the config file
@@ -493,6 +497,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         logging.debug("Final cache stats:")
         for c in caches:
             logging.debug("\t%s: %s hits, %s misses", c.__class__.__name__, c.hits, c.misses)
+    if options.pid:
+        os.remove(options.pid)
 
     return 0
 
