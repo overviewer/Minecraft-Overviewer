@@ -18,6 +18,7 @@ import os
 import logging
 import json
 import sys
+import re
 from optparse import OptionParser
 
 from overviewer_core import logger
@@ -57,9 +58,17 @@ def handlePlayers(rset, render, worldpath):
     # only handle this region set once
     if 'Players' in rset._pois:
         return
-    dimension = {None: 0,
-                 'DIM-1': -1,
-                 'DIM1': 1}[rset.get_type()]
+    dimension = None
+    try:
+        dimension = {None: 0,
+                     'DIM-1': -1,
+                     'DIM1': 1}[rset.get_type()]
+    except KeyError, e:
+        mystdim = re.match(r"^DIM_MYST(\d+)$", e.message)  # Dirty hack. Woo!
+        if mystdim:
+            dimension = int(mystdim.group(1))
+        else:
+            raise
     playerdir = os.path.join(worldpath, "players")
     if os.path.isdir(playerdir):
         playerfiles = os.listdir(playerdir)
