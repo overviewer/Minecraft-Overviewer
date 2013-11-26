@@ -141,8 +141,14 @@ def main():
 
     if options.pid:
         if os.path.exists(options.pid):
-            print("Already running (pid exists) - exiting..")
-            return 0
+            try:
+                with open(options.pid, 'r') as fpid:
+                    pid = int(fpid.read())
+                    if util.pid_exists(pid):
+                        print("Already running (pid exists) - exiting..")
+                        return 0
+            except IOError, ValueError:
+                pass
         with open(options.pid,"w") as f:
             f.write(str(os.getpid()))
     # if --check-terrain was specified, but we have NO config file, then we cannot
