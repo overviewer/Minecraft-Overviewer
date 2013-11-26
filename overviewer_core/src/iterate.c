@@ -347,7 +347,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if (state->block == 54) { /* normal chests */
+    } else if (state->block == 54 || state->block == 146) { /* normal chests and trapped chests */
         /* Orientation is given by ancilData, pseudo data needed to 
          * choose from single or double chest and the correct half of
          * the chest. */
@@ -358,8 +358,8 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
 
         unsigned char chest_data = 0, final_data = 0;
 
-        /* search for chests */
-        chest_data = check_adjacent_blocks(state, x, y, z, 54);
+        /* search for adjacent chests of the same type */
+        chest_data = check_adjacent_blocks(state, x, y, z, state->block);
 
         if (chest_data == 1) { /* another chest in the upper-left */
             final_data = final_data | 0x10 | ancilData;
@@ -699,7 +699,8 @@ chunk_render(PyObject *self, PyObject *args) {
                     state.block_data = ancilData;
                     /* block that need pseudo ancildata:
                      * grass, water, glass, chest, restone wire,
-                     * ice, fence, portal, iron bars, glass panes, stairs */
+                     * ice, fence, portal, iron bars, glass panes,
+                     * trapped chests, stairs */
                     if ((state.block ==  2) || (state.block ==  9) ||
                         (state.block == 20) || (state.block == 54) ||
                         (state.block == 55) || (state.block == 64) ||
@@ -709,6 +710,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 111) || (state.block == 113) ||
                         (state.block == 139) || (state.block == 175) || 
                         (state.block == 160) || (state.block == 95) ||
+                        (state.block == 146) ||
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
