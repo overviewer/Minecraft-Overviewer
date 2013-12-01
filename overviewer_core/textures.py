@@ -217,7 +217,7 @@ class Textures(object):
 
         # Find an installed minecraft client jar and look in it for the texture
         # file we need.
-        versiondir = None
+        versiondir = ""
         if "APPDATA" in os.environ and sys.platform.startswith("win"):
             versiondir = os.path.join(os.environ['APPDATA'], ".minecraft", "versions")
         elif "HOME" in os.environ:
