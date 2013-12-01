@@ -157,12 +157,12 @@ class Textures(object):
         def search_dir(base):
             """Search the given base dir for filename, in search_dirs."""
             for path in [os.path.join(base, d, filename) for d in ['',] + search_dirs]:
-                if verbose: logging.info('filename: ' + filename + ' ; path: ' + path)
+                if verbose: LOG.info('filename: ' + filename + ' ; path: ' + path)
                 if os.path.isfile(path):
                     return path
 
             return None
-        if verbose: logging.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
+        if verbose: LOG.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
 
         # we've sucessfully loaded something from here before, so let's quickly try
         # this before searching again
@@ -170,7 +170,7 @@ class Textures(object):
             for jarfilename in search_zip_paths:
                 try:
                     self.jar.getinfo(jarfilename)
-                    if verbose: logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
+                    if verbose: LOG.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
                     return self.jar.open(jarfilename)
                 except (KeyError, IOError), e:
                     pass
@@ -202,7 +202,7 @@ class Textures(object):
                             # 2nd try with completed path.
                             packfilename = 'assets/minecraft/textures/' + packfilename
                             pack.getinfo(packfilename)
-                            if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
+                            if verbose: LOG.info("Found %s in '%s'", packfilename, self.find_file_local_path)
                             return pack.open(packfilename)
                         except (KeyError, IOError):
                             pass

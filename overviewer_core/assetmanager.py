@@ -67,7 +67,7 @@ directory.
             codecs.lookup(self.preferredencoding)
         except LookupError:
             self.preferredencoding = "utf_8"
-        logging.debug("Preferred enoding set to: %s", self.preferredencoding)
+        LOG.debug("Preferred enoding set to: %s", self.preferredencoding)
 
     def get_tileset_config(self, name):
         "Return the correct dictionary from the parsed overviewerConfig.js"
