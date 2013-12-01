@@ -19,6 +19,12 @@ import logging
 import json
 import sys
 import re
+import Queue
+import multiprocessing
+
+from multiprocessing import Process
+from multiprocessing import Pool
+from functools import partial
 from optparse import OptionParser
 
 from overviewer_core import logger
@@ -33,7 +39,28 @@ def replaceBads(s):
         x = x.replace(bad,"_")
     return x
 
-def handleEntities(rset, outputdir, render, rname):
+def parseBucketChunks(bucket, rset):
+    pid = multiprocessing.current_process().pid
+    pois = dict(TileEntities=[], Entities=[]);
+  
+    i = 0
+    cnt = 0
+    l = len(bucket)
+    for b in bucket:
+        data = rset.get_chunk(b[0],b[1])
+        pois['TileEntities'] += data['TileEntities']
+        pois['Entities']     += data['Entities']
+
+        # Perhaps only on verbose ?
+        i = i + 1
+        if i == 250:
+            i = 0
+            cnt = 250 + cnt
+            logging.info("Found %d entities and %d tile entities in thread %d so far at %d chunks", len(pois['Entities']), len(pois['TileEntities']), pid, cnt);
+
+    return pois
+
+def handleEntities(rset, outputdir, render, rname, config):
 
     # if we're already handled the POIs for this region regionset, do nothing
     if hasattr(rset, "_pois"):
@@ -44,10 +71,40 @@ def handleEntities(rset, outputdir, render, rname):
     filters = render['markers']
     rset._pois = dict(TileEntities=[], Entities=[])
 
-    for (x,z,mtime) in rset.iterate_chunks():
-        data = rset.get_chunk(x,z)
-        rset._pois['TileEntities'] += data['TileEntities']
-        rset._pois['Entities']     += data['Entities']
+    numbuckets = config['processes'];
+    if numbuckets < 0:
+        numbuckets = multiprocessing.cpu_count()
+
+    if numbuckets == 1:
+        for (x,z,mtime) in rset.iterate_chunks():
+            data = rset.get_chunk(x,z) 
+            rset._pois['TileEntities'] += data['TileEntities']
+            rset._pois['Entities']     += data['Entities']
+  
+    else:
+        buckets = [[] for i in range(numbuckets)];
+  
+        for (x,z,mtime) in rset.iterate_chunks():
+            i = x / 32 + z / 32
+            i = i % numbuckets 
+            buckets[i].append([x,z])
+  
+        for b in buckets:
+            logging.info("Buckets has %d entries", len(b));
+  
+        # create the partial to lock the rset
+        dest = partial(parseBucketChunks, rset=rset)
+  
+        # Create a pool of processes and run all the functions
+        pool = Pool(processes=numbuckets)
+        results = pool.map(dest, buckets)
+  
+        logging.info("All the threads completed")
+  
+        # Fix up all the quests in the reset
+        for data in results:
+            rset._pois['TileEntities'] += data['TileEntities']
+            rset._pois['Entities']     += data['Entities']
 
     logging.info("Done.")
 
@@ -194,7 +251,7 @@ def main():
                 markers[rname] = [to_append]
         
         if not options.skipscan:
-            handleEntities(rset, os.path.join(destdir, rname), render, rname)
+            handleEntities(rset, os.path.join(destdir, rname), render, rname, config)
 
         handlePlayers(rset, render, worldpath)
         handleManual(rset, render['manualpois'])
