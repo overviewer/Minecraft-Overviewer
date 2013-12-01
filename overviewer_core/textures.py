@@ -149,14 +149,17 @@ class Textures(object):
 
         # a list of subdirectories to search for a given file,
         # after the obvious '.'
-        search_dirs = ['anim', 'misc', 'environment', 'item']
+        search_dirs = ['anim', 'misc', 'environment', 'item', 'item/chests', 'entity', 'entity/chest']
         search_zip_paths = [filename,] + [d + '/' + filename for d in search_dirs]
         def search_dir(base):
             """Search the given base dir for filename, in search_dirs."""
             for path in [os.path.join(base, d, filename) for d in ['',] + search_dirs]:
+                if verbose: logging.info('filename: ' + filename + ' ; path: ' + path)
                 if os.path.isfile(path):
                     return path
+
             return None
+        if verbose: logging.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
 
         # we've sucessfully loaded something from here before, so let's quickly try
         # this before searching again
@@ -186,6 +189,15 @@ class Textures(object):
                         try:
                             # pack.getinfo() will raise KeyError if the file is
                             # not found.
+                            pack.getinfo(packfilename)
+                            if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
+                            return pack.open(packfilename)
+                        except (KeyError, IOError):
+                            pass
+                        
+                        try:
+                            # 2nd try with completed path.
+                            packfilename = 'assets/minecraft/textures/' + packfilename
                             pack.getinfo(packfilename)
                             if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
                             return pack.open(packfilename)
@@ -408,15 +420,16 @@ class Textures(object):
     def load_grass_color(self):
         """Helper function to load the grass color texture."""
         if not hasattr(self, "grasscolor"):
-            self.grasscolor = list(self.load_image("grasscolor.png").getdata())
+            self.grasscolor = list(self.load_image("grass.png").getdata())
         return self.grasscolor
 
     def load_foliage_color(self):
         """Helper function to load the foliage color texture."""
         if not hasattr(self, "foliagecolor"):
-            self.foliagecolor = list(self.load_image("foliagecolor.png").getdata())
+            self.foliagecolor = list(self.load_image("foliage.png").getdata())
         return self.foliagecolor
 
+	#I guess "watercolor" is wrong. But I can't correct as my texture pack don't define water color.
     def load_water_color(self):
         """Helper function to load the water color texture."""
         if not hasattr(self, "watercolor"):
@@ -1826,10 +1839,14 @@ def chests(self, blockid, data):
         # ancilData = 2,3,4,5 are used for this blockids
     
     if data & 24 == 0:
-        if blockid == 130: t = self.load_image("enderchest.png")
-        else: t = self.load_image("chest.png")
+        if blockid == 130: t = self.load_image("ender.png")
+        else:
+            try:
+                t = self.load_image("normal.png")
+            except (TextureException, IOError):
+                t = self.load_image("chest.png")
 
-        # the textures is no longer in terrain.png, get it from 
+        # the textures is no longer in terrain.png, get it from
         # item/chest.png and get by cropping all the needed stuff
         if t.size != (64,64): t = t.resize((64,64), Image.ANTIALIAS)
         # top
@@ -1882,7 +1899,7 @@ def chests(self, blockid, data):
         # large chest
         # the textures is no longer in terrain.png, get it from 
         # item/chest.png and get all the needed stuff
-        t = self.load_image("largechest.png")
+        t = self.load_image("normal_double.png")
         if t.size != (128,64): t = t.resize((128,64), Image.ANTIALIAS)
         # top
         top = t.crop((14,0,44,14))
@@ -3197,7 +3214,7 @@ def comparator(self, blockid, data):
     
     
 # trapdoor
-# TODO the trapdoor is looks like a sprite when opened, that's not good
+# the trapdoor is looks like a sprite when opened, that's not good
 @material(blockid=96, data=range(16), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
