@@ -20,6 +20,8 @@ import shutil
 import logging
 import stat
 
+LOG = logging.getLogger(__name__)
+
 ## useful recursive copy, that ignores common OS cruft
 def mirror_dir(src, dst, entities=None):
     '''copies all of the entities from src to dst'''
@@ -104,7 +106,7 @@ if renameworks:
                 try:
                     os.remove(self.tmpname)
                 except Exception, e:
-                    logging.warning("An error was raised, so I was doing "
+                    LOG.warning("An error was raised, so I was doing "
                             "some cleanup first, but I couldn't remove "
                             "'%s'!", self.tmpname)
             else:

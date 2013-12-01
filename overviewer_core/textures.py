@@ -29,6 +29,9 @@ import functools
 import util
 from c_overviewer import alpha_over
 
+LOG = logging.getLogger(__name__)
+
+
 class TextureException(Exception):
     "To be thrown when a texture is not found."
     pass
@@ -145,7 +148,7 @@ class Textures(object):
         'environment/'.
         
         """
-        if verbose: logging.info("Starting search for {0}".format(filename))
+        if verbose: LOG.info("Starting search for {0}".format(filename))
 
         # a list of subdirectories to search for a given file,
         # after the obvious '.'
@@ -178,7 +181,7 @@ class Textures(object):
             if os.path.isdir(self.find_file_local_path):
                 path = search_dir(self.find_file_local_path)
                 if path:
-                    if verbose: logging.info("Found %s in '%s'", filename, path)
+                    if verbose: LOG.info("Found %s in '%s'", filename, path)
                     return open(path, mode)
             elif os.path.isfile(self.find_file_local_path):
                 # Must be a resource pack. Look for the requested file within
@@ -190,7 +193,7 @@ class Textures(object):
                             # pack.getinfo() will raise KeyError if the file is
                             # not found.
                             pack.getinfo(packfilename)
-                            if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
+                            if verbose: LOG.info("Found %s in '%s'", packfilename, self.find_file_local_path)
                             return pack.open(packfilename)
                         except (KeyError, IOError):
                             pass
@@ -208,24 +211,24 @@ class Textures(object):
 
         # If we haven't returned at this point, then the requested file was NOT
         # found in the user-specified texture path or resource pack.
-        if verbose: logging.info("Did not find the file in specified texture path")
+        if verbose: LOG.info("Did not find the file in specified texture path")
 
 
         # Look in the location of the overviewer executable for the given path
         programdir = util.get_program_path()
         path = search_dir(programdir)
         if path:
-            if verbose: logging.info("Found %s in '%s'", filename, path)
+            if verbose: LOG.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
         if sys.platform.startswith("darwin"):
             path = search_dir("/Applications/Minecraft")
             if path:
-                if verbose: logging.info("Found %s in '%s'", filename, path)
+                if verbose: LOG.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        if verbose: logging.info("Did not find the file in overviewer executable directory")
-        if verbose: logging.info("Looking for installed minecraft jar files...")
+        if verbose: LOG.info("Did not find the file in overviewer executable directory")
+        if verbose: LOG.info("Looking for installed minecraft jar files...")
 
         # Find an installed minecraft client jar and look in it for the texture
         # file we need.
@@ -242,7 +245,7 @@ class Textures(object):
 
         try:
             versions = os.listdir(versiondir)
-            if verbose: logging.info("Found these versions: {0}".format(versions))
+            if verbose: LOG.info("Found these versions: {0}".format(versions))
         except OSError:
             # Directory doesn't exist? Ignore it. It will find no versions and
             # fall through the checks below to the error at the bottom of the
@@ -271,7 +274,7 @@ class Textures(object):
                 most_recent_version = versionparts
 
         if most_recent_version != [0,0,0]:
-            if verbose: logging.info("Most recent version >=1.7.0: {0}. Searching it for the file...".format(most_recent_version))
+            if verbose: LOG.info("Most recent version >=1.7.0: {0}. Searching it for the file...".format(most_recent_version))
 
             jarname = ".".join(str(x) for x in most_recent_version)
             jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
@@ -281,15 +284,15 @@ class Textures(object):
                 for jarfilename in search_zip_paths:
                     try:
                         jar.getinfo(jarfilename)
-                        if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
+                        if verbose: LOG.info("Found %s in '%s'", jarfilename, jarpath)
                         self.jar, self.jarpath = jar, jarpath
                         return jar.open(jarfilename)
                     except (KeyError, IOError), e:
                         pass
 
-            if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
+            if verbose: LOG.info("Did not find file {0} in jar {1}".format(filename, jarpath))
         else:
-            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.7.0")
+            if verbose: LOG.info("Did not find any non-snapshot minecraft jars >=1.7.0")
             
         # Last ditch effort: look for the file is stored in with the overviewer
         # installation. We include a few files that aren't included with Minecraft
@@ -297,16 +300,16 @@ class Textures(object):
         # they were generated by the game and not stored as images. Nowdays I
         # believe that's not true, but we still have a few files distributed
         # with overviewer.
-        if verbose: logging.info("Looking for texture in overviewer_core/data/textures")
+        if verbose: LOG.info("Looking for texture in overviewer_core/data/textures")
         path = search_dir(os.path.join(programdir, "overviewer_core", "data", "textures"))
         if path:
-            if verbose: logging.info("Found %s in '%s'", filename, path)
+            if verbose: LOG.info("Found %s in '%s'", filename, path)
             return open(path, mode)
         elif hasattr(sys, "frozen") or imp.is_frozen("__main__"):
             # windows special case, when the package dir doesn't exist
             path = search_dir(os.path.join(programdir, "textures"))
             if path:
-                if verbose: logging.info("Found %s in '%s'", filename, path)
+                if verbose: LOG.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
         raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.7-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
@@ -412,7 +415,7 @@ class Textures(object):
         try:
             lightcolor = list(self.load_image("light_normal.png").getdata())
         except Exception:
-            logging.warning("Light color image could not be found.")
+            LOG.warning("Light color image could not be found.")
             lightcolor = None
         self.lightcolor = lightcolor
         return lightcolor

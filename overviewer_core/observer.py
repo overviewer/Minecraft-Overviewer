@@ -20,6 +20,8 @@ import sys
 import os
 import json
 
+LOG = logging.getLogger(__name__)
+
 class Observer(object):
     """Base class that defines the observer interface.
     """
@@ -93,14 +95,14 @@ class LoggingObserver(Observer):
         self.last_update = -101
 
     def finish(self):
-        logging.info("Rendered %d of %d.  %d%% complete", self.get_max_value(),
+        LOG.info("Rendered %d of %d.  %d%% complete", self.get_max_value(),
             self.get_max_value(), 100.0)
         super(LoggingObserver, self).finish()
 
     def update(self, current_value):
         super(LoggingObserver, self).update(current_value)
         if self._need_update():
-            logging.info("Rendered %d of %d.  %d%% complete",
+            LOG.info("Rendered %d of %d.  %d%% complete",
                 self.get_current_value(), self.get_max_value(),
                 self.get_percentage())
             self.last_update = current_value
@@ -137,7 +139,7 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
 
     def start(self, max_value):
         self._set_max_value(max_value)
-        logging.info("Rendering %d total tiles." % max_value)
+        LOG.info("Rendering %d total tiles." % max_value)
         super(ProgressBarObserver, self).start()
 
     def is_started(self):
@@ -147,7 +149,7 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
         self._end_time = time.time()
         super(ProgressBarObserver, self).finish()
         self.fd.write('\n')
-        logging.info("Rendering complete!")
+        LOG.info("Rendering complete!")
 
     def update(self, current_value):
         if super(ProgressBarObserver, self).update(current_value):

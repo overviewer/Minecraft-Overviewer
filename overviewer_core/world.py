@@ -27,6 +27,8 @@ import numpy
 from . import nbt
 from . import cache
 
+LOG = logging.getLogger(__name__)
+
 """
 This module has routines for extracting information about available worlds
 
@@ -49,7 +51,7 @@ def log_other_exceptions(func):
         except ChunkDoesntExist:
             raise
         except Exception, e:
-            logging.exception("%s raised this exception", func.func_name)
+            LOG.exception("%s raised this exception", func.func_name)
             raise
     return newfunc
 
@@ -104,7 +106,7 @@ class World(object):
 
         # Hard-code this to only work with format version 19133, "Anvil"
         if not ('version' in data and data['version'] == 19133):
-            logging.critical("Sorry, This version of Minecraft-Overviewer only works with the 'Anvil' chunk format")
+            LOG.critical("Sorry, This version of Minecraft-Overviewer only works with the 'Anvil' chunk format")
             raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
 
         # This isn't much data, around 15 keys and values for vanilla worlds.
@@ -153,7 +155,7 @@ class World(object):
             return self.regionsets[index]
         else: # assume a get_type() value
             candids = [x for x in self.regionsets if x.get_type() == index]
-            logging.debug("You asked for %r, and I found the following candids: %r", index, candids)
+            LOG.debug("You asked for %r, and I found the following candids: %r", index, candids)
             if len(candids) > 0:
                 return candids[0]
             else: 
@@ -249,8 +251,8 @@ class RegionSet(object):
         """
         self.regiondir = os.path.normpath(regiondir)
         self.rel = os.path.normpath(rel)
-        logging.debug("regiondir is %r" % self.regiondir)
-        logging.debug("rel is %r" % self.rel)
+        LOG.debug("regiondir is %r" % self.regiondir)
+        LOG.debug("rel is %r" % self.rel)
         
         # we want to get rid of /regions, if it exists
         if self.rel.endswith(os.path.normpath("/region")):
@@ -259,10 +261,10 @@ class RegionSet(object):
             # this is the main world
             self.type = None
         else:
-            logging.warning("Unkown region type in %r", regiondir)
+            LOG.warning("Unkown region type in %r", regiondir)
             self.type = "__unknown"
 
-        logging.debug("Scanning regions.  Type is %r" % self.type)
+        LOG.debug("Scanning regions.  Type is %r" % self.type)
         
         # This is populated below. It is a mapping from (x,y) region coords to filename
         self.regionfiles = {}
@@ -275,7 +277,7 @@ class RegionSet(object):
             self.regionfiles[(x,y)] = regionfile
 
         self.empty_chunk = [None,None]
-        logging.debug("Done scanning regions")
+        LOG.debug("Done scanning regions")
 
     # Re-initialize upon unpickling
     def __getstate__(self):
@@ -349,22 +351,22 @@ class RegionSet(object):
                 if tries > 0:
                     # Flush the region cache to possibly read a new region file
                     # header
-                    logging.debug("Encountered a corrupt chunk at %s,%s. Flushing cache and retrying", x, z)
-                    #logging.debug("Error was:", exc_info=1)
+                    LOG.debug("Encountered a corrupt chunk at %s,%s. Flushing cache and retrying", x, z)
+                    #LOG.debug("Error was:", exc_info=1)
                     del self.regioncache[regionfile]
                     time.sleep(0.5)
                     continue
                 else:
                     if isinstance(e, nbt.CorruptRegionError):
-                        logging.warning("Tried several times to read chunk %d,%d. Its region (%d,%d) may be corrupt. Giving up.",
+                        LOG.warning("Tried several times to read chunk %d,%d. Its region (%d,%d) may be corrupt. Giving up.",
                                 x, z,x//32,z//32)
                     elif isinstance(e, nbt.CorruptChunkError):
-                        logging.warning("Tried several times to read chunk %d,%d. It may be corrupt. Giving up.",
+                        LOG.warning("Tried several times to read chunk %d,%d. It may be corrupt. Giving up.",
                                 x, z)
                     else:
-                        logging.warning("Tried several times to read chunk %d,%d. Unknown error. Giving up.",
+                        LOG.warning("Tried several times to read chunk %d,%d. Unknown error. Giving up.",
                                 x, z)
-                    logging.debug("Full traceback:", exc_info=1)
+                    LOG.debug("Full traceback:", exc_info=1)
                     # Let this exception propagate out through the C code into
                     # tileset.py, where it is caught and gracefully continues
                     # with the next chunk
@@ -454,7 +456,7 @@ class RegionSet(object):
             try:
                 mcr = self._get_regionobj(regionfile)
             except nbt.CorruptRegionError:
-                logging.warning("Found a corrupt region file at %s,%s. Skipping it.", regionx, regiony)
+                LOG.warning("Found a corrupt region file at %s,%s. Skipping it.", regionx, regiony)
                 continue
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
@@ -472,7 +474,7 @@ class RegionSet(object):
         try:
             data = self._get_regionobj(regionfile)
         except nbt.CorruptRegionError:
-            logging.warning("Ignoring request for chunk %s,%s; region %s,%s seems to be corrupt",
+            LOG.warning("Ignoring request for chunk %s,%s; region %s,%s seems to be corrupt",
                     x,z, x//32,z//32)
             return None
         if data.chunk_exists(x,z):
@@ -493,7 +495,7 @@ class RegionSet(object):
 
         Returns (regionx, regiony, filename)"""
 
-        logging.debug("regiondir is %s, has type %r", self.regiondir, self.type)
+        LOG.debug("regiondir is %s, has type %r", self.regiondir, self.type)
 
         for f in os.listdir(self.regiondir):
             if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
@@ -501,7 +503,7 @@ class RegionSet(object):
                 x = int(p[1])
                 y = int(p[2])
                 if abs(x) > 500000 or abs(y) > 500000:
-                    logging.warning("Holy shit what is up with region file %s !?" % f)
+                    LOG.warning("Holy shit what is up with region file %s !?" % f)
                 yield (x, y, os.path.join(self.regiondir, f))
 
 class RegionSetWrapper(object):
@@ -674,7 +676,7 @@ class CachedRegionSet(RegionSetWrapper):
         except AttributeError:
             s += repr(obj)
 
-        logging.debug("Initializing a cache with key '%s'", s)
+        LOG.debug("Initializing a cache with key '%s'", s)
 
         s = hashlib.md5(s).hexdigest()
 
