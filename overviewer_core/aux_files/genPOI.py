@@ -59,7 +59,7 @@ def parseBucketChunks(bucket, rset):
         if i == 250:
             i = 0
             cnt = 250 + cnt
-            LOG.info("Found %d entities and %d tile entities in thread %d so far at %d chunks", len(pois['Entities']), len(pois['TileEntities']), pid, cnt);
+            logging.info("Found %d entities and %d tile entities in thread %d so far at %d chunks", len(pois['Entities']), len(pois['TileEntities']), pid, cnt);
 
     return pois
 
@@ -93,7 +93,7 @@ def handleEntities(rset, outputdir, render, rname, config):
             buckets[i].append([x,z])
   
         for b in buckets:
-            LOG.info("Buckets has %d entries", len(b));
+            logging.info("Buckets has %d entries", len(b));
   
         # create the partial to lock the rset
         dest = partial(parseBucketChunks, rset=rset)
@@ -102,7 +102,7 @@ def handleEntities(rset, outputdir, render, rname, config):
         pool = Pool(processes=numbuckets)
         results = pool.map(dest, buckets)
   
-        LOG.info("All the threads completed")
+        logging.info("All the threads completed")
   
         # Fix up all the quests in the reset
         for data in results:

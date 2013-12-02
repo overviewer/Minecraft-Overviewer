@@ -433,9 +433,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         texopts_key = tuple(texopts.items())
         if texopts_key not in texcache:
             tex = textures.Textures(**texopts)
-            LOG.debug("Starting to generate textures")
+            logging.debug("Starting to generate textures")
             tex.generate()
-            LOG.debug("Finished generating textures")
+            logging.debug("Finished generating textures")
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
