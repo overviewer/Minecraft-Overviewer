@@ -32,6 +32,7 @@ import subprocess
 import multiprocessing
 import time
 import logging
+logging.basicConfig()
 from optparse import OptionParser, OptionGroup
 
 from overviewer_core import util

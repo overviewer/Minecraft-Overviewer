@@ -287,6 +287,13 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
 
     """
 
+    # Reset the logger. This is necessary, as the other overviewer modules
+    # cause import side-effects, so I had to add a "basicConfig" to the
+    # application entry point. Without resetting, this would cause messages to
+    # be printed more than once (as there would be multiple handlers)!
+    root = logging.getLogger()
+    map(root.removeHandler, root.handlers[:])
+
     logger = logging.getLogger('overviewer_core')
     logger.setLevel(loglevel)
     is_windows = platform.system() == 'Windows'
