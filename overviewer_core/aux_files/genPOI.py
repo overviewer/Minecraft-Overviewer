@@ -31,9 +31,6 @@ from overviewer_core import logger
 from overviewer_core import nbt
 from overviewer_core import configParser, world
 
-LOG = logging.getLogger(__name__)
-
-
 def replaceBads(s):
     "Replaces bad characters with good characters!"
     bads = [" ", "(", ")"]
@@ -69,7 +66,7 @@ def handleEntities(rset, outputdir, render, rname, config):
     if hasattr(rset, "_pois"):
         return
 
-    LOG.info("Looking for entities in %r", rset)
+    logging.info("Looking for entities in %r", rset)
 
     filters = render['markers']
     rset._pois = dict(TileEntities=[], Entities=[])
@@ -109,7 +106,7 @@ def handleEntities(rset, outputdir, render, rname, config):
             rset._pois['TileEntities'] += data['TileEntities']
             rset._pois['Entities']     += data['Entities']
 
-    LOG.info("Done.")
+    logging.info("Done.")
 
 def handlePlayers(rset, render, worldpath):
     if not hasattr(rset, "_pois"):
@@ -146,7 +143,7 @@ def handlePlayers(rset, render, worldpath):
             if isSinglePlayer:
                 data = data['Data']['Player']
         except IOError:
-            LOG.warning("Skipping bad player dat file %r", playerfile)
+            logging.warning("Skipping bad player dat file %r", playerfile)
             continue
         playername = playerfile.split(".")[0]
         if isSinglePlayer:
@@ -207,7 +204,7 @@ def main():
     try:
         config = mw_parser.get_validated_config()
     except Exception:
-        LOG.exception("An error was encountered with your configuration. See the info below.")
+        logging.exception("An error was encountered with your configuration. See the info below.")
         return 1
 
     destdir = config['outputdir']
@@ -221,7 +218,7 @@ def main():
         try:
             worldpath = config['worlds'][render['world']]
         except KeyError:
-            LOG.error("Render %s's world is '%s', but I could not find a corresponding entry in the worlds dictionary.",
+            logging.error("Render %s's world is '%s', but I could not find a corresponding entry in the worlds dictionary.",
                     rname, render['world'])
             return 1
         render['worldname_orig'] = render['world']
@@ -236,7 +233,7 @@ def main():
         
         rset = w.get_regionset(render['dimension'][1])
         if rset == None: # indicates no such dimension was found:
-            LOG.error("Sorry, you requested dimension '%s' for the render '%s', but I couldn't find it", render['dimension'][0], rname)
+            logging.error("Sorry, you requested dimension '%s' for the render '%s', but I couldn't find it", render['dimension'][0], rname)
             return 1
       
         for f in render['markers']:
@@ -259,8 +256,8 @@ def main():
         handlePlayers(rset, render, worldpath)
         handleManual(rset, render['manualpois'])
 
-    LOG.info("Done handling POIs")
-    LOG.info("Writing out javascript files")
+    logging.info("Done handling POIs")
+    logging.info("Writing out javascript files")
     markerSetDict = dict()
     for (flter, rset) in markersets:
         # generate a unique name for this markerset.  it will not be user visible
@@ -379,7 +376,7 @@ def main():
         output.write("overviewer.util.injectMarkerScript('markersDB.js');\n")
         output.write("overviewer.util.injectMarkerScript('markers.js');\n")
         output.write("overviewer.collections.haveSigns=true;\n")
-    LOG.info("Done")
+    logging.info("Done")
 
 if __name__ == "__main__":
     main()

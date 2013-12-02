@@ -27,10 +27,6 @@ import world
 import util
 from files import FileReplacer, mirror_dir
 
-
-LOG = logging.getLogger(__name__)
-
-
 class AssetManager(object):
     """\
 These objects provide an interface to metadata and persistent data, and at the
@@ -55,8 +51,8 @@ directory.
             self.overviewerConfig = json.loads(overviewerConfig_str)
         except Exception, e:
             if os.path.exists(os.path.join(self.outputdir, "overviewerConfig.js")):
-                LOG.warning("A previous overviewerConfig.js was found, but I couldn't read it for some reason. Continuing with a blank config")
-            LOG.debug(traceback.format_exc())
+                logging.warning("A previous overviewerConfig.js was found, but I couldn't read it for some reason. Continuing with a blank config")
+            logging.debug(traceback.format_exc())
             self.overviewerConfig = dict(tilesets=dict())
 
         # Make sure python knows the preferred encoding. If it does not, set it

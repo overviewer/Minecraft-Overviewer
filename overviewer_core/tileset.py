@@ -37,10 +37,6 @@ import rendermodes
 import c_overviewer
 from c_overviewer import resize_half
 
-
-LOG = logging.getLogger(__name__)
-
-
 """
 
 tileset.py contains the TileSet class, and in general, routines that manage a
@@ -297,24 +293,24 @@ class TileSet(object):
                 if os.path.exists(self.outputdir):
                     # Somehow there's no config but the output dir DOES exist.
                     # That's strange!
-                    LOG.warning(
+                    logging.warning(
                         "For render '%s' I couldn't find any persistent config, "
                         "but I did find my tile directory already exists. This "
                         "shouldn't normally happen, something may be up, but I "
                         "think I can continue...", self.options['name'])
-                    LOG.info("Switching to --check-tiles mode")
+                    logging.info("Switching to --check-tiles mode")
                     self.options['renderchecks'] = 1
                 else:
                     # This is the typical code path for an initial render, make
                     # this a "forcerender"
                     self.options['renderchecks'] = 2
-                    LOG.debug("This is the first time rendering %s. Doing" +
+                    logging.debug("This is the first time rendering %s. Doing" +
                             " a full-render",
                             self.options['name'])
             elif not os.path.exists(self.outputdir):
                 # Somehow the outputdir got erased but the metadata file is
                 # still there. That's strange!
-                LOG.warning(
+                logging.warning(
                         "This is strange. There is metadata for render '%s' but "
                         "the output directory is missing. This shouldn't "
                         "normally happen. I guess we have no choice but to do a "
@@ -323,18 +319,18 @@ class TileSet(object):
             elif config.get("render_in_progress", False):
                 # The last render must have been interrupted. The default should be
                 # a check-tiles render then
-                LOG.warning(
+                logging.warning(
                         "The last render for '%s' didn't finish. I'll be " +
                         "scanning all the tiles to make sure everything's up "+
                         "to date.",
                         self.options['name'],
                         )
-                LOG.warning("The total tile count will be (possibly "+
+                logging.warning("The total tile count will be (possibly "+
                         "wildly) inaccurate, because I don't know how many "+
                         "tiles need rendering. I'll be checking them as I go")
                 self.options['renderchecks'] = 1
             else:
-                LOG.debug("No rendercheck mode specified for %s. "+
+                logging.debug("No rendercheck mode specified for %s. "+
                         "Rendering tile whose chunks have changed since %s",
                         self.options['name'],
                         time.strftime("%x %X", time.localtime(self.last_rendertime)),
@@ -343,7 +339,7 @@ class TileSet(object):
 
         if not os.path.exists(self.outputdir):
             if self.options['renderchecks'] != 2:
-                LOG.warning(
+                logging.warning(
                 "The tile directory didn't exist, but you have specified "
                 "explicitly not to do a --fullrender (which is the default for "
                 "this situation). I'm overriding your decision and setting "
@@ -381,7 +377,7 @@ class TileSet(object):
 
         # This warning goes here so it's only shown once
         if self.treedepth >= 15:
-            LOG.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
+            logging.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
                     self.treedepth)
 
         # Do any tile re-arranging if necessary. Skip if there was no config
@@ -422,7 +418,7 @@ class TileSet(object):
         # The following block of code implementes the changelist functionality.
         fd = self.options.get("changelist", None)
         if fd:
-            LOG.debug("Changelist activated for %s (fileno %s)", self, fd)
+            logging.debug("Changelist activated for %s (fileno %s)", self, fd)
             # This re-implements some of the logic from do_work()
             def write_out(tilepath):
                 if len(tilepath) == self.treedepth:
@@ -614,20 +610,20 @@ class TileSet(object):
             # Skip a depth 1 tree. A depth 1 tree pretty much can't happen, so
             # when we detect this it usually means the tree is actually empty
             return
-        LOG.debug("Current tree depth for %s is reportedly %s. Target tree depth is %s",
+        logging.debug("Current tree depth for %s is reportedly %s. Target tree depth is %s",
                 self.options['name'],
                 curdepth, self.treedepth)
         if self.treedepth != curdepth:
             if self.treedepth > curdepth:
-                LOG.warning("Your map seems to have expanded beyond its previous bounds.")
-                LOG.warning( "Doing some tile re-arrangements... just a sec...")
+                logging.warning("Your map seems to have expanded beyond its previous bounds.")
+                logging.warning( "Doing some tile re-arrangements... just a sec...")
                 for _ in xrange(self.treedepth-curdepth):
                     self._increase_depth()
             elif self.treedepth < curdepth:
-                LOG.warning("Your map seems to have shrunk. Did you delete some chunks? No problem. Re-arranging tiles, just a sec...")
+                logging.warning("Your map seems to have shrunk. Did you delete some chunks? No problem. Re-arranging tiles, just a sec...")
                 for _ in xrange(curdepth - self.treedepth):
                     self._decrease_depth()
-                LOG.info(
+                logging.info(
                         "There done. I'm switching to --check-tiles mode for "
                         "this one render. This will make sure any old tiles that "
                         "should no longer exist are deleted.")
@@ -797,7 +793,7 @@ class TileSet(object):
                     dirty.add(tile.path)
 
         t = int(time.time()-stime)
-        LOG.debug("Finished chunk scan for %s. %s chunks scanned in %s second%s",
+        logging.debug("Finished chunk scan for %s. %s chunks scanned in %s second%s",
                 self.options['name'], chunkcount, t,
                 "s" if t != 1 else "")
 
@@ -860,10 +856,10 @@ class TileSet(object):
                 # Ignore errors if it's "file doesn't exist"
                 if e.errno != errno.ENOENT:
                     raise
-            LOG.warning("Tile %s was requested for render, but no children were found! This is probably a bug", imgpath)
+            logging.warning("Tile %s was requested for render, but no children were found! This is probably a bug", imgpath)
             return
 
-        #LOG.debug("writing out compositetile {0}".format(imgpath))
+        #logging.debug("writing out compositetile {0}".format(imgpath))
 
         # Create the actual image now
         img = Image.new("RGBA", (384, 384), self.options['bgcolor'])
@@ -880,12 +876,12 @@ class TileSet(object):
                 resize_half(quad, src)
                 img.paste(quad, path[0])
             except Exception, e:
-                LOG.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
-                LOG.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
+                logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
+                logging.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
                 try:
                     os.unlink(path[1])
                 except Exception, e:
-                    LOG.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
+                    logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
 
         # Save it
         with FileReplacer(imgpath) as tmppath:
@@ -921,7 +917,7 @@ class TileSet(object):
 
         if not chunks:
             # No chunks were found in this tile
-            LOG.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
+            logging.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
             try:
                 os.unlink(imgpath)
             except OSError, e:
@@ -929,7 +925,7 @@ class TileSet(object):
                 if e.errno != errno.ENOENT:
                     raise
             else:
-                LOG.debug("%s deleted", tile)
+                logging.debug("%s deleted", tile)
             return
 
         # Create the directory if not exists
@@ -944,7 +940,7 @@ class TileSet(object):
                 if e.errno != errno.EEXIST:
                     raise
 
-        #LOG.debug("writing out worldtile {0}".format(imgpath))
+        #logging.debug("writing out worldtile {0}".format(imgpath))
 
         # Compile this image
         tileimg = Image.new("RGBA", (384, 384), self.options['bgcolor'])
@@ -969,10 +965,10 @@ class TileSet(object):
             except nbt.CorruptionError:
                 # A warning and traceback was already printed by world.py's
                 # get_chunk()
-                LOG.debug("Skipping the render of corrupt chunk at %s,%s and moving on.", chunkx, chunkz)
+                logging.debug("Skipping the render of corrupt chunk at %s,%s and moving on.", chunkx, chunkz)
             except Exception, e:
-                LOG.error("Could not render chunk %s,%s for some reason. This is likely a render primitive option error.", chunkx, chunkz)
-                LOG.error("Full error was:", exc_info=1)
+                logging.error("Could not render chunk %s,%s for some reason. This is likely a render primitive option error.", chunkx, chunkz)
+                logging.error("Full error was:", exc_info=1)
                 sys.exit(1)
 
             ## Semi-handy routine for debugging the drawing routine
@@ -1048,14 +1044,14 @@ class TileSet(object):
                 max_chunk_mtime = max(c[5] for c in get_chunks_by_tile(tileobj, self.regionset))
             except ValueError:
                 # max got an empty sequence! something went horribly wrong
-                LOG.warning("tile %s expected contains no chunks! this may be a bug", path)
+                logging.warning("tile %s expected contains no chunks! this may be a bug", path)
                 max_chunk_mtime = 0
 
             if tile_mtime > 120 + max_chunk_mtime:
                 # If a tile has been modified more recently than any of its
                 # chunks, then this could indicate a potential issue with
                 # this or future renders.
-                LOG.warning(
+                logging.warning(
                         "I found a tile with a more recent modification time "
                         "than any of its chunks. This can happen when a tile has "
                         "been modified with an outside program, or by a copy "
@@ -1065,7 +1061,7 @@ class TileSet(object):
                         "preserve the mtimes Overviewer sets. Please see our FAQ "
                         "page on docs.overviewer.org or ask us in IRC for more "
                         "information")
-                LOG.warning("Tile was: %s", imgpath)
+                logging.warning("Tile was: %s", imgpath)
 
             if max_chunk_mtime > tile_mtime:
                 # chunks have a more recent mtime than the tile. Render the tile
@@ -1118,7 +1114,7 @@ class TileSet(object):
                 # Check this tile's mtime
                 imgpath = os.path.join(self.outputdir, *(str(x) for x in path))
                 imgpath += "." + self.imgextension
-                LOG.debug("Testing mtime for composite-tile %s", imgpath)
+                logging.debug("Testing mtime for composite-tile %s", imgpath)
                 try:
                     tile_mtime = os.stat(imgpath)[stat.ST_MTIME]
                 except OSError, e:
@@ -1146,17 +1142,17 @@ class TileSet(object):
             if os.path.exists(imgpath):
                 # No need to catch ENOENT since this is only called from the
                 # master process
-                LOG.debug("Found an image that shouldn't exist. Deleting it: %s", imgpath)
+                logging.debug("Found an image that shouldn't exist. Deleting it: %s", imgpath)
                 os.remove(imgpath)
         else:
             # path referrs to a composite tile, and by extension a directory
             dirpath = os.path.join(self.outputdir, *(str(x) for x in path))
             imgpath = dirpath + "." + self.imgextension
             if os.path.exists(imgpath):
-                LOG.debug("Found an image that shouldn't exist. Deleting it: %s", imgpath)
+                logging.debug("Found an image that shouldn't exist. Deleting it: %s", imgpath)
                 os.remove(imgpath)
             if os.path.exists(dirpath):
-                LOG.debug("Found a subtree that shouldn't exist. Deleting it: %s", dirpath)
+                logging.debug("Found a subtree that shouldn't exist. Deleting it: %s", dirpath)
                 shutil.rmtree(dirpath)
 
 ##

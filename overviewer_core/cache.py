@@ -21,6 +21,7 @@ attribute.
 
 """
 import functools
+import logging
 import cPickle
 
 class LRUCache(object):
