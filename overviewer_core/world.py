@@ -414,31 +414,39 @@ class RegionSet(object):
 
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
-            skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
-            skylight = skylight.reshape((16,16,8))
-            skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-            skylight_expanded[:,:,::2] = skylight & 0x0F
-            skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
-            del skylight
-            section['SkyLight'] = skylight_expanded
+            try:
+                skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
+                skylight = skylight.reshape((16,16,8))
+                skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+                skylight_expanded[:,:,::2] = skylight & 0x0F
+                skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
+                del skylight
+                section['SkyLight'] = skylight_expanded
 
-            # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
-            blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
-            blocklight = blocklight.reshape((16,16,8))
-            blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-            blocklight_expanded[:,:,::2] = blocklight & 0x0F
-            blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
-            del blocklight
-            section['BlockLight'] = blocklight_expanded
+                # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
+                blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
+                blocklight = blocklight.reshape((16,16,8))
+                blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+                blocklight_expanded[:,:,::2] = blocklight & 0x0F
+                blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
+                del blocklight
+                section['BlockLight'] = blocklight_expanded
 
-            # Turn the Data array into a 16x16x16 matrix, same as SkyLight
-            data = numpy.frombuffer(section['Data'], dtype=numpy.uint8)
-            data = data.reshape((16,16,8))
-            data_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-            data_expanded[:,:,::2] = data & 0x0F
-            data_expanded[:,:,1::2] = (data & 0xF0) >> 4
-            del data
-            section['Data'] = data_expanded
+                # Turn the Data array into a 16x16x16 matrix, same as SkyLight
+                data = numpy.frombuffer(section['Data'], dtype=numpy.uint8)
+                data = data.reshape((16,16,8))
+                data_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+                data_expanded[:,:,::2] = data & 0x0F
+                data_expanded[:,:,1::2] = (data & 0xF0) >> 4
+                del data
+                section['Data'] = data_expanded
+            except ValueError:
+                # iv'e seen at least 1 case where numpy raises a value error during the reshapes.  i'm not
+                # sure what's going on here, but let's treat this as a corrupt chunk error
+                logging.warning("There was a problem reading chunk %d,%d.  It might be corrupt.  I am giving up and will not render this particular chunk.", x, z)
+
+                logging.debug("Full traceback:", exc_info=1)
+                raise nbt.CorruptChunkError()
         
         return chunk_data      
     
