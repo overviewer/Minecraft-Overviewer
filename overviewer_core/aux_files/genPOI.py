@@ -47,9 +47,12 @@ def parseBucketChunks(bucket, rset):
     cnt = 0
     l = len(bucket)
     for b in bucket:
-        data = rset.get_chunk(b[0],b[1])
-        pois['TileEntities'] += data['TileEntities']
-        pois['Entities']     += data['Entities']
+        try:
+            data = rset.get_chunk(b[0],b[1])
+            pois['TileEntities'] += data['TileEntities']
+            pois['Entities']     += data['Entities']
+        except nbt.CorruptChunkError:
+            logging.warning("Ignoring POIs in corrupt chunk %d,%d", b[0], b[1])
 
         # Perhaps only on verbose ?
         i = i + 1
@@ -77,9 +80,12 @@ def handleEntities(rset, outputdir, render, rname, config):
 
     if numbuckets == 1:
         for (x,z,mtime) in rset.iterate_chunks():
-            data = rset.get_chunk(x,z) 
-            rset._pois['TileEntities'] += data['TileEntities']
-            rset._pois['Entities']     += data['Entities']
+            try:
+                data = rset.get_chunk(x,z) 
+                rset._pois['TileEntities'] += data['TileEntities']
+                rset._pois['Entities']     += data['Entities']
+            except nbt.CorruptChunkError:
+                logging.warning("Ignoring POIs in corrupt chunk %d,%d", x,z)
   
     else:
         buckets = [[] for i in range(numbuckets)];
