@@ -135,8 +135,12 @@ def main():
             print("built on %s" % overviewer_version.BUILD_DATE)
             if options.verbose > 0:
                 print("Build machine: %s %s" % (overviewer_version.BUILD_PLATFORM, overviewer_version.BUILD_OS))
+                print("Read version information from %r"% overviewer_version.__file__)
         except ImportError:
             print("(build info not found)")
+        if options.verbose > 0:
+            print("Python executable: %r" % sys.executable)
+            print(sys.version)
         return 0
 
     if options.pid:
