@@ -377,7 +377,7 @@ class TileSet(object):
 
         # This warning goes here so it's only shown once
         if self.treedepth >= 15:
-            logging.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
+            logging.warning("Just letting you know, your map requires %s zoom levels. This is REALLY big!",
                     self.treedepth)
 
         # Do any tile re-arranging if necessary. Skip if there was no config
