@@ -24,7 +24,6 @@ import multiprocessing
 
 from multiprocessing import Process
 from multiprocessing import Pool
-from functools import partial
 from optparse import OptionParser
 
 from overviewer_core import logger
@@ -39,7 +38,11 @@ def replaceBads(s):
         x = x.replace(bad,"_")
     return x
 
-def parseBucketChunks(bucket, rset):
+# yes there's a double parenthesis here
+# see below for when this is called, and why we do this
+# a smarter way would be functools.partial, but that's broken on python 2.6
+# when used with multiprocessing
+def parseBucketChunks((bucket, rset)):
     pid = multiprocessing.current_process().pid
     pois = dict(TileEntities=[], Entities=[]);
   
@@ -98,12 +101,9 @@ def handleEntities(rset, outputdir, render, rname, config):
         for b in buckets:
             logging.info("Buckets has %d entries", len(b));
   
-        # create the partial to lock the rset
-        dest = partial(parseBucketChunks, rset=rset)
-  
         # Create a pool of processes and run all the functions
         pool = Pool(processes=numbuckets)
-        results = pool.map(dest, buckets)
+        results = pool.map(parseBucketChunks, ((buck, rset) for buck in buckets))
   
         logging.info("All the threads completed")
   
