@@ -1311,7 +1311,7 @@ class RendertileSet(object):
         # tree
         self.children = [False] * 4
 
-    def posttraversal(self):
+    def posttraversal(self, offset=(0,0)):
         """Returns an iterator over tile paths for every tile in the
         set, including the explictly marked render-tiles, as well as the
         implicitly marked ancestors of those render-tiles. Returns in
@@ -1319,20 +1319,19 @@ class RendertileSet(object):
         yielded after their dependencies.
 
         """
-        return (tuple(reversed(rpath)) for rpath in self._posttraversal_helper())
+        return (tuple(reversed(rpath)) for rpath in self._posttraversal_helper(offset=offset))
 
-    def _posttraversal_helper(self):
+    def _posttraversal_helper(self, offset=(0,0)):
         """Each node returns an iterator over lists of reversed paths"""
         if self.depth == 1:
             # Base case
-            if self.children[0]: yield [0]
-            if self.children[1]: yield [1]
-            if self.children[2]: yield [2]
-            if self.children[3]: yield [3]
+            for childnum, _ in distance_sort(xrange(4), offset):
+                if self.children[childnum]:
+                    yield [childnum]
         else:
-            for childnum, child in enumerate(self.children):
+            for (childnum, child), childoffset in distance_sort(enumerate(self.children), offset):
                 if child == True:
-                    for path in post_traversal_complete_subtree_recursion_helper(self.depth-1):
+                    for path in post_traversal_complete_subtree_recursion_helper(self.depth-1, offset=childoffset):
                         path.append(childnum)
                         yield path
 
@@ -1341,7 +1340,7 @@ class RendertileSet(object):
 
                 else:
                     # Recurse
-                    for path in child._posttraversal_helper():
+                    for path in child._posttraversal_helper(offset=childoffset):
                         path.append(childnum)
                         yield path
 
@@ -1520,7 +1519,7 @@ class RendertileSet(object):
             c += 1
         return c
 
-def post_traversal_complete_subtree_recursion_helper(depth):
+def post_traversal_complete_subtree_recursion_helper(depth, offset=(0,0)):
     """Fakes the recursive calls for RendertileSet.posttraversal() for the case
     that a subtree is collapsed, so that items are still yielded in the correct
     order.
@@ -1528,17 +1527,24 @@ def post_traversal_complete_subtree_recursion_helper(depth):
     """
     if depth == 1:
         # Base case
-        yield [0]
-        yield [1]
-        yield [2]
-        yield [3]
+        for childnum, _ in distance_sort(xrange(4), offset):
+            yield [childnum]
     else:
-        for childnum in xrange(4):
-            for item in post_traversal_complete_subtree_recursion_helper(depth-1):
+        for childnum, childoffset in distance_sort(xrange(4), offset):
+            for item in post_traversal_complete_subtree_recursion_helper(depth-1, offset=childoffset):
                 item.append(childnum)
                 yield item
 
     yield []
+
+def distance_sort(children, (off_x, off_y)):
+    order = []
+    for child, (dx, dy) in izip(children, [(-1,-1), (1,-1), (-1,1), (1,1)]):
+        x = off_x*2 + dx
+        y = off_y*2 + dy
+        order.append((child, (x,y)))
+
+    return sorted(order, key=lambda (_, (x,y)): x*x + y*y)
 
 class RenderTile(object):
     """A simple container class that represents a single render-tile.
