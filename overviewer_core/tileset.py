@@ -1321,9 +1321,11 @@ class RendertileSet(object):
         """
         return (tuple(reversed(rpath)) for rpath in self._posttraversal_helper(offset=offset))
 
-    def _posttraversal_helper(self, offset=(0,0)):
+    def _posttraversal_helper(self, onlydepth=None, offset=(0,0)):
         """Each node returns an iterator over lists of reversed paths"""
-        if self.depth == 1:
+        targetdepth = 1 if onlydepth is None else onlydepth
+
+        if self.depth == targetdepth:
             # Base case
             for childnum, _ in distance_sort(xrange(4), offset):
                 if self.children[childnum]:
@@ -1331,7 +1333,7 @@ class RendertileSet(object):
         else:
             for (childnum, child), childoffset in distance_sort(enumerate(self.children), offset):
                 if child == True:
-                    for path in post_traversal_complete_subtree_recursion_helper(self.depth-1, offset=childoffset):
+                    for path in post_traversal_complete_subtree_recursion_helper(self.depth-targetdepth, onlydepth=onlydepth, offset=childoffset):
                         path.append(childnum)
                         yield path
 
@@ -1340,12 +1342,12 @@ class RendertileSet(object):
 
                 else:
                     # Recurse
-                    for path in child._posttraversal_helper(offset=childoffset):
+                    for path in child._posttraversal_helper(onlydepth=onlydepth, offset=childoffset):
                         path.append(childnum)
                         yield path
 
         # Now do this node itself
-        if bool(self):
+        if onlydepth is None and bool(self):
             yield []
 
 
@@ -1411,7 +1413,7 @@ class RendertileSet(object):
 
     def __iter__(self):
         return self.iterate()
-    def iterate(self, level=None):
+    def iterate(self, level=None, offset=(0,0)):
         """Returns an iterator over every tile in this set. Each item yielded
         is a sequence of integers representing the quadtree path to the tiles
         in the set. Yielded sequences are of length self.depth.
@@ -1432,31 +1434,7 @@ class RendertileSet(object):
                 raise ValueError("Level parameter must be between 1 and %s" % self.depth)
             todepth = self.depth - level + 1
 
-        return (tuple(reversed(rpath)) for rpath in self._iterate_helper(todepth))
-
-    def _iterate_helper(self, todepth):
-        if self.depth == todepth:
-            # Base case
-            if self.children[0]: yield [0]
-            if self.children[1]: yield [1]
-            if self.children[2]: yield [2]
-            if self.children[3]: yield [3]
-
-        else:
-            # Higher levels:
-            for c, child in enumerate(self.children):
-                if child == True:
-                    # All render-tiles are in the set down this subtree,
-                    # iterate over every leaf using iterate_base4
-                    for x in iterate_base4(self.depth-todepth):
-                        x = list(x)
-                        x.append(c)
-                        yield x
-                elif child != False:
-                    # Mixed in/out of the set down this subtree, recurse
-                    for path in child._iterate_helper(todepth):
-                        path.append(c)
-                        yield path
+        return (tuple(reversed(rpath)) for rpath in self._posttraversal_helper(onlydepth=todepth, offset=offset))
 
     def query_path(self, path):
         """Queries for the state of the given tile in the tree.
@@ -1519,7 +1497,7 @@ class RendertileSet(object):
             c += 1
         return c
 
-def post_traversal_complete_subtree_recursion_helper(depth, offset=(0,0)):
+def post_traversal_complete_subtree_recursion_helper(depth, onlydepth=None, offset=(0,0)):
     """Fakes the recursive calls for RendertileSet.posttraversal() for the case
     that a subtree is collapsed, so that items are still yielded in the correct
     order.
@@ -1531,11 +1509,12 @@ def post_traversal_complete_subtree_recursion_helper(depth, offset=(0,0)):
             yield [childnum]
     else:
         for childnum, childoffset in distance_sort(xrange(4), offset):
-            for item in post_traversal_complete_subtree_recursion_helper(depth-1, offset=childoffset):
+            for item in post_traversal_complete_subtree_recursion_helper(depth-1, onlydepth=onlydepth, offset=childoffset):
                 item.append(childnum)
                 yield item
 
-    yield []
+    if onlydepth is None:
+        yield []
 
 def distance_sort(children, (off_x, off_y)):
     order = []
