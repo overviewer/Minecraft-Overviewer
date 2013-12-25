@@ -2,7 +2,7 @@
 import unittest
 
 # For convenience
-import sys,os
+import sys,os,logging
 sys.path.insert(0, os.getcwd())
 sys.path.insert(0, os.path.join(os.getcwd(), os.pardir))
 
@@ -15,7 +15,6 @@ from test_cache import TestLRU
 
 # DISABLE THIS BLOCK TO GET LOG OUTPUT FROM TILESET FOR DEBUGGING
 if 0:
-    import logging
     root = logging.getLogger()
     class NullHandler(logging.Handler):
         def handle(self, record):
