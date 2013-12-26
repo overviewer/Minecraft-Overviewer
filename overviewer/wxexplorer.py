@@ -31,6 +31,8 @@ class MapWindow(wx.Window):
         self.cache = cache.LRUCache()
         self.pool = multiprocessing.Pool()
         self.origin = (0, 0)
+        self.zoom = 0
+        self.scale = 1.0
         self.left_down = None
         self.left_down_origin = None
         
@@ -39,6 +41,7 @@ class MapWindow(wx.Window):
         self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
         self.Bind(wx.EVT_MOTION, self.OnMotion)
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.OnMousewheel)
     
     def get_tile(self, x, y):
         try:
@@ -55,11 +58,22 @@ class MapWindow(wx.Window):
         def cbWrap(f):
             wx.CallAfter(callback, f)
         
-        r = self.rendererf()
-        self.pool.apply_async(render_tile, (r, self.tile_size, x, y), {}, cbWrap)
+        r = self.rendererf(self.scale)
+        if r:
+            self.pool.apply_async(render_tile, (r, self.tile_size, x, y), {}, cbWrap)
         self.cache[(x, y)] = None
         return None
-
+    
+    def ResetMap(self):
+        self.origin = (0, 0)
+        self.zoom = 0
+        self.scale = 1.0
+        self.Refresh()
+    
+    def ClearCache(self):
+       self.cache = cache.LRUCache()
+       self.Refresh()
+    
     def OnLeftDown(self, e):
         e.Skip()
         self.left_down = e.GetPositionTuple()
@@ -73,7 +87,8 @@ class MapWindow(wx.Window):
         x, y = e.GetPositionTuple()
         sx, sy = self.left_down
         ox, oy = self.left_down_origin
-        nox, noy = (ox + sx - x, oy + sy - y)
+        dx, dy = (sx - x, sy - y)
+        nox, noy = (ox + dx, oy + dy)
         self.origin = (nox, noy)
         self.Refresh()
     
@@ -81,6 +96,36 @@ class MapWindow(wx.Window):
         e.Skip()
         self.left_down = None
         self.left_down_origin = None
+    
+    def OnMousewheel(self, e):
+        e.Skip()
+        delta = e.GetWheelDelta()
+        rotation = e.GetWheelRotation()
+        rotation = rotation // delta
+        if rotation == 0:
+            return
+        
+        oldscale = self.scale
+        self.zoom += rotation
+        self.scale = 2.0 ** self.zoom
+        
+        cx, cy = e.GetPositionTuple()
+        
+        ox, oy = self.origin
+        width, height = self.GetSize()
+        ox -= width / 2
+        oy -= height / 2
+        
+        x, y = (ox + cx, oy + cy)
+        x *= self.scale / oldscale
+        y *= self.scale / oldscale
+        
+        ox, oy = (int(x - cx), int(y - cy))
+        ox += width / 2
+        oy += height / 2
+        self.origin = (ox, oy)
+        
+        self.ClearCache()
     
     def OnSize(self, e):
         self.Refresh()
@@ -95,6 +140,8 @@ class MapWindow(wx.Window):
         
         width, height = self.GetSize()
         x, y = self.origin
+        x -= width / 2
+        y -= height / 2
         
         sx, sy = (x // self.tile_size, y // self.tile_size)
         ex, ey = (sx + width // self.tile_size, sy + height // self.tile_size)
@@ -108,31 +155,79 @@ class MapWindow(wx.Window):
                 dc.DrawBitmap(bmp, dx, dy)
                 #dc.DrawRectangle(dx, dy, self.tile_size, self.tile_size)
 
-def make_renderer(wpath):
-    caches = [cache.LRUCache()]
-    w = world.World(wpath)
-    rset = w.get_regionset(0)
-    rset = world.CachedRegionSet(rset, caches)
+class Explorer(wx.Frame):
+    def __init__(self, *args, **kwargs):
+        super(Explorer, self).__init__(*args, **kwargs)
+        
+        box = wx.BoxSizer(wx.HORIZONTAL)
+        
+        panel = wx.Panel(self)
+        box.Add(panel, 0, wx.EXPAND | wx.ALL, 10)
+        panelsizer = wx.GridBagSizer(10, 10)
+        
+        btn = wx.Button(panel, label="Load New World")
+        btn.Bind(wx.EVT_BUTTON, self.OnOpenWorld)
+        panelsizer.Add(btn, (0, 0))
+
+        btn = wx.Button(panel, label="Reset View")
+        btn.Bind(wx.EVT_BUTTON, lambda ev: self.map.ResetMap())
+        panelsizer.Add(btn, (1, 0))
+        
+        btn = wx.RadioButton(panel, label="Isometric", style=wx.RB_GROUP)
+        btn.Bind(wx.EVT_RADIOBUTTON, self.SetIsometric)
+        panelsizer.Add(btn, (2, 0))
+        btn = wx.RadioButton(panel, label="Top-Down")
+        btn.Bind(wx.EVT_RADIOBUTTON, self.SetTopDown)
+        panelsizer.Add(btn, (3, 0))
+
+        panel.SetSizer(panelsizer)
+        
+        # rendererf stuff
+        self.caches = [cache.LRUCache()]
+        self.world = None
+        self.rset = None
+        self.tex = textures.Textures()
+        self.bdefs = blockdefinitions.get_default()
+        self.isomatrix = oil.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0)
+        self.tdmatrix = oil.Matrix().rotate(3.1415926 / 2, 0, 0)
+        self.matrix = self.isomatrix
+        
+        self.map = MapWindow(self.rendererf, self)
+        box.Add(self.map, 1, wx.EXPAND)
+        
+        self.SetSizer(box)
     
-    tex = textures.Textures()
-    bdefs = blockdefinitions.get_default()
-    matrix = oil.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
-    renderer = isometricrenderer.IsometricRenderer(rset, tex, bdefs, matrix)
-    return renderer
+    def rendererf(self, zoom):
+        if self.rset is None:
+            return None
+        matrix = oil.Matrix(self.matrix).scale(17 * zoom, 17 * zoom, 17 * zoom)
+        renderer = isometricrenderer.IsometricRenderer(self.rset, self.tex, self.bdefs, matrix)
+        return renderer
+    
+    def SetIsometric(self, ev):
+        self.matrix = self.isomatrix
+        # fixme preserve origin
+        self.map.ClearCache()
+
+    def SetTopDown(self, ev):
+        self.matrix = self.tdmatrix
+        # fixme preserve origin
+        self.map.ClearCache()
+    
+    def OnOpenWorld(self, ev):
+        dlg = wx.FileDialog(self, "Choose a world", "", "", "*.dat", wx.OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            dirname = dlg.GetDirectory()
+            self.world = world.World(dirname)
+            self.rset = self.world.get_regionset(0)
+            self.rset = world.CachedRegionSet(self.rset, self.caches)
+            self.map.ResetMap()
+            self.map.ClearCache()
+        dlg.Destroy()
 
 if __name__ == '__main__':
-    try:
-        name, wpath = sys.argv
-        name = os.path.split(name)[-1]
-    except ValueError:
-        print("usage: {} [worldpath]".format(sys.argv[0]))
-        sys.exit(1)
-    
-    renderer = make_renderer(wpath)
-    
     app = wx.App()
-    frame = wx.Frame(None, -1, name)
-    MapWindow(lambda: renderer, frame)
+    frame = Explorer(None, -1, "wxExplorer")
     frame.Show()
     
     app.MainLoop()
