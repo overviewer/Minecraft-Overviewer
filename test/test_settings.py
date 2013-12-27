@@ -13,7 +13,7 @@ class SettingsTest(unittest.TestCase):
     
     def test_missing(self):
         "Validates that a non-existant settings.py causes an exception"
-        self.assertRaises(ValueError, self.s.parse, "doesnotexist.py")
+        self.assertRaises(configParser.MissingConfigException, self.s.parse, "doesnotexist.py")
 
     def test_existing_file(self):
         self.s.parse("test/data/settings/settings_test_1.py")
