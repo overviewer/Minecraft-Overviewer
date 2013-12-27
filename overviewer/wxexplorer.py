@@ -109,6 +109,7 @@ class MapWindow(wx.Window):
         super(MapWindow, self).__init__(*args, **kwargs)
         self.rendererf = rendererf
         self.cache = cache.LRUCache()
+        self.oldcache = None
         self.pool = multiprocessing.Pool()
         self.origin = (0, 0)
         self.zoom = 0
@@ -125,7 +126,13 @@ class MapWindow(wx.Window):
     
     def get_tile(self, x, y):
         try:
-            return self.cache[(x, y)]
+            t = self.cache[(x, y)]
+            if t is None and self.oldcache is not None:
+                try:
+                    return self.oldcache[(x, y)]
+                except KeyError:
+                    pass
+            return t
         except KeyError:
             pass
         
@@ -142,6 +149,11 @@ class MapWindow(wx.Window):
         if r:
             self.pool.apply_async(render_tile, (r, self.tile_size, x, y), {}, cbWrap)
         self.cache[(x, y)] = None
+        if self.oldcache is not None:
+            try:
+                return self.oldcache[(x, y)]
+            except KeyError:
+                return None
         return None
     
     def ResetMap(self):
@@ -150,9 +162,13 @@ class MapWindow(wx.Window):
         self.scale = 1.0
         self.Refresh()
     
-    def ClearCache(self):
-       self.cache = cache.LRUCache()
-       self.Refresh()
+    def ClearCache(self, keep_old=False):
+        if keep_old:
+            self.oldcache = self.cache
+        else:
+            self.oldcache = None
+        self.cache = cache.LRUCache()
+        self.Refresh()
     
     def OnLeftDown(self, e):
         e.Skip()
@@ -276,7 +292,7 @@ class Explorer(wx.Frame):
         print "(reloading...)"
         reload_all()
         self.RecreateObjects()
-        self.map.ClearCache()
+        self.map.ClearCache(keep_old=True)
     
     def RecreateObjects(self):
         self.caches = [cache.LRUCache()]
