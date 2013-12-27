@@ -241,6 +241,7 @@ class Textures(object):
                     "Application Support", "minecraft", "versions")
 
         try:
+            if verbose: logging.info("Looking in the following directory: \"%s\"" % versiondir)
             versions = os.listdir(versiondir)
             if verbose: logging.info("Found these versions: {0}".format(versions))
         except OSError:
