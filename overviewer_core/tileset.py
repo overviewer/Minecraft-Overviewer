@@ -1280,7 +1280,7 @@ class RendertileSet(object):
     track of level 1 state, and so forth.
 
     """
-    __slots__ = ("depth", "children")
+    __slots__ = ("depth", "children", "num_tiles", "num_tiles_all")
     def __init__(self, depth):
         """Initialize a new tree with the specified depth. This actually
         initializes a node, which is the root of a subtree, with `depth` levels
@@ -1308,6 +1308,9 @@ class RendertileSet(object):
         # tree
         self.children = [False] * 4
 
+        self.num_tiles     = 0
+        self.num_tiles_all = 0
+
     def add(self, path):
         """Marks the requested leaf node as in this set
 
@@ -1317,6 +1320,11 @@ class RendertileSet(object):
         """
         path = list(path)
         assert len(path) == self.depth
+
+        if self.num_tiles == 0:
+            # The first child is being added. A root composite tile will be
+            # rendered.
+            self.num_tiles_all += 1
 
         self._add_helper(self.children, list(reversed(path)))
 
@@ -1336,6 +1344,9 @@ class RendertileSet(object):
                 # Expand all-false.
                 children[childnum] = [False]*4
 
+                # This also means an additional composite tile.
+                self.num_tiles_all += 1
+
             self._add_helper(children[childnum], path)
 
             if children[childnum] == [True]*4:
@@ -1344,6 +1355,10 @@ class RendertileSet(object):
 
         else:
             # We are at the leaf.
+            if not children[childnum]:
+                self.num_tiles     += 1
+                self.num_tiles_all += 1
+
             children[childnum] = True
 
     def __iter__(self):
@@ -1451,24 +1466,14 @@ class RendertileSet(object):
         """Returns the total number of render-tiles in this set.
 
         """
-        # TODO: Make this more efficient (although for even the largest trees,
-        # this takes only seconds)
-        c = 0
-        for _ in self.iterate():
-            c += 1
-        return c
+        return self.num_tiles
 
     def count_all(self):
         """Returns the total number of render-tiles plus implicitly marked
         upper-tiles in this set
 
         """
-        # TODO: Optimize this too with its own recursive method that avoids
-        # some of the overheads of posttraversal()
-        c = 0
-        for _ in self.posttraversal():
-            c += 1
-        return c
+        return self.num_tiles_all
 
 def distance_sort(children, (off_x, off_y)):
     order = []
