@@ -192,7 +192,7 @@ def main():
     logger.configure()
 
     parser = OptionParser(usage=helptext)
-    parser.add_option("--config", dest="config", action="store", help="Specify the config file to use.")
+    parser.add_option("-c", "--config", dest="config", action="store", help="Specify the config file to use.")
     parser.add_option("--quiet", dest="quiet", action="count", help="Reduce logging output")
     parser.add_option("--skip-scan", dest="skipscan", action="store_true", help="Skip scanning for entities when using GenPOI")
 
