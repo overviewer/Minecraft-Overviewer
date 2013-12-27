@@ -2,8 +2,51 @@ import wx
 import sys
 import os, os.path
 import tempfile
+import threading
+import time
+import types
 import multiprocessing
 
+modules = [
+    'oil',
+    'textures',
+    'world',
+    'isometricrenderer',
+    'blockdefinitions',
+    'blocks',
+    'cache'
+]
+
+def reload_all(verbose=False):
+    global modules
+    for _ in range(2):
+        for name in modules:
+            name = 'overviewer.' + name
+            if verbose:
+                print "reloading", name
+            if not name in sys.modules:
+                exec "import " + name
+            else:
+                reload(sys.modules[name])
+        verbose = False
+    
+    for name in sys.modules['overviewer.blocks'].block_modules:
+        name = 'blocks.' + name
+        if not name in modules:
+            modules.append(name)
+    
+    for name, mod in sys.modules.items():
+        if not isinstance(mod, types.ModuleType):
+            continue
+        if not name.startswith("overviewer."):
+            continue
+        name = name.split('.', 1)[1]
+        if name in modules:
+            continue
+        modules.append(name)
+
+# appease the pickle!
+reload_all()
 from overviewer import oil
 from overviewer import textures
 from overviewer import world
@@ -11,6 +54,45 @@ from overviewer import isometricrenderer
 from overviewer import blockdefinitions
 from overviewer import cache
 
+try:
+    import pyinotify
+    USE_INOTIFY = True
+    print "found pyinotify, reloading enabled"
+except ImportError:
+    print "install pyinotify to get auto-code-reloading"
+    USE_INOTIFY = False
+
+def wait_for_code_change():
+    if not USE_INOTIFY:
+        while True:
+            # if we have no inotify, don't even try
+            time.sleep(10)
+    
+    wm = pyinotify.WatchManager()
+    notifier = None
+    done = []
+    
+    class OnModifyHandler(pyinotify.ProcessEvent):
+        def process_IN_MODIFY(self, event):
+            path = event.pathname
+            exts = ['so', 'dll', 'py', 'dylib']
+            if any(path.endswith('.' + ext) for ext in exts):
+                done.append(())
+    
+    watchpath = os.path.split(__file__)[0]
+    handler = OnModifyHandler()
+    
+    notifier = pyinotify.Notifier(wm, default_proc_fun=handler, read_freq=1, timeout=10)
+    notifier.coalesce_events()
+    wm.add_watch(watchpath, pyinotify.ALL_EVENTS, rec=True, auto_add=True)
+    
+    while not done:
+        notifier.process_events()
+        while notifier.check_events():
+            notifier.read_events()
+            notifier.process_events()
+        
+    notifier.stop()
 
 def render_tile(r, tile_size, x, y):
     im = oil.Image(tile_size, tile_size)
@@ -181,19 +263,33 @@ class Explorer(wx.Frame):
         panel.SetSizer(panelsizer)
         
         # rendererf stuff
-        self.caches = [cache.LRUCache()]
-        self.world = None
-        self.rset = None
-        self.tex = textures.Textures()
-        self.bdefs = blockdefinitions.get_default()
-        self.isomatrix = oil.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
-        self.tdmatrix = oil.Matrix().rotate(3.1415926 / 2, 0, 0).scale(17, 17, 17)
+        self.wpath = None
+        self.RecreateObjects()
         self.matrix = self.isomatrix
         
         self.map = MapWindow(self.rendererf, self)
         box.Add(self.map, 1, wx.EXPAND)
         
         self.SetSizer(box)
+    
+    def OnReload(self):
+        print "(reloading...)"
+        reload_all()
+        self.RecreateObjects()
+        self.map.ClearCache()
+    
+    def RecreateObjects(self):
+        self.caches = [cache.LRUCache()]
+        if self.wpath is None:
+            self.world = None
+            self.rset = None
+        else:
+            self.LoadWorld(self.wpath)
+        self.tex = textures.Textures()
+        self.bdefs = blockdefinitions.get_default()
+        
+        self.isomatrix = oil.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
+        self.tdmatrix = oil.Matrix().rotate(3.1415926 / 2, 0, 0).scale(17, 17, 17)
     
     def rendererf(self, zoom):
         if self.rset is None:
@@ -217,20 +313,33 @@ class Explorer(wx.Frame):
     def SetTopDown(self, ev):
         self.SetMatrix(self.tdmatrix)
     
+    def LoadWorld(self, wpath):
+        self.wpath = wpath
+        self.world = world.World(wpath)
+        self.rset = self.world.get_regionset(0)
+        self.rset = world.CachedRegionSet(self.rset, self.caches)
+    
     def OnOpenWorld(self, ev):
         dlg = wx.FileDialog(self, "Choose a world", "", "", "*.dat", wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             dirname = os.path.split(dlg.GetPath())[0]
-            self.world = world.World(dirname)
-            self.rset = self.world.get_regionset(0)
-            self.rset = world.CachedRegionSet(self.rset, self.caches)
+            self.LoadWorld(dirname)
             self.map.ResetMap()
             self.map.ClearCache()
         dlg.Destroy()
+
+def code_change_thread(frame):
+    while True:
+        wait_for_code_change()
+        wx.CallAfter(frame.OnReload)
 
 if __name__ == '__main__':
     app = wx.App()
     frame = Explorer(None, -1, "wxExplorer")
     frame.Show()
+    
+    cthread = threading.Thread(target=code_change_thread, args=(frame,))
+    cthread.daemon = True
+    cthread.start()
     
     app.MainLoop()
