@@ -23,7 +23,7 @@ def render_tile(r, tile_size, x, y):
     return f
 
 class MapWindow(wx.Window):
-    tile_size = 512
+    tile_size = 256
     
     def __init__(self, rendererf, *args, **kwargs):
         super(MapWindow, self).__init__(*args, **kwargs)
@@ -188,8 +188,8 @@ class Explorer(wx.Frame):
         self.rset = None
         self.tex = textures.Textures()
         self.bdefs = blockdefinitions.get_default()
-        self.isomatrix = oil.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0)
-        self.tdmatrix = oil.Matrix().rotate(3.1415926 / 2, 0, 0)
+        self.isomatrix = oil.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)
+        self.tdmatrix = oil.Matrix().rotate(3.1415926 / 2, 0, 0).scale(17, 17, 17)
         self.matrix = self.isomatrix
         
         self.map = MapWindow(self.rendererf, self)
@@ -200,24 +200,29 @@ class Explorer(wx.Frame):
     def rendererf(self, zoom):
         if self.rset is None:
             return None
-        matrix = oil.Matrix(self.matrix).scale(17 * zoom, 17 * zoom, 17 * zoom)
+        matrix = oil.Matrix(self.matrix).scale(zoom, zoom, zoom)
         renderer = isometricrenderer.IsometricRenderer(self.rset, self.tex, self.bdefs, matrix)
         return renderer
     
-    def SetIsometric(self, ev):
-        self.matrix = self.isomatrix
-        # fixme preserve origin
+    def SetMatrix(self, mat):
+        inv = oil.Matrix(self.matrix).scale(self.map.scale, self.map.scale, self.map.scale)
+        inv.invert()
+        origin = inv.transform(*(self.map.origin + (0,)))
+        self.matrix = mat
+        mat = oil.Matrix(mat).scale(self.map.scale, self.map.scale, self.map.scale)
+        self.map.origin = tuple(int(x) for x in mat.transform(*origin)[:2])
         self.map.ClearCache()
+    
+    def SetIsometric(self, ev):
+        self.SetMatrix(self.isomatrix)
 
     def SetTopDown(self, ev):
-        self.matrix = self.tdmatrix
-        # fixme preserve origin
-        self.map.ClearCache()
+        self.SetMatrix(self.tdmatrix)
     
     def OnOpenWorld(self, ev):
         dlg = wx.FileDialog(self, "Choose a world", "", "", "*.dat", wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            dirname = dlg.GetDirectory()
+            dirname = os.path.split(dlg.GetPath())[0]
             self.world = world.World(dirname)
             self.rset = self.world.get_regionset(0)
             self.rset = world.CachedRegionSet(self.rset, self.caches)
