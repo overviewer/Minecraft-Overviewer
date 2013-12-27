@@ -25,7 +25,7 @@ import time
 import errno
 import stat
 from collections import namedtuple
-from itertools import product, izip
+from itertools import product, izip, chain
 
 from PIL import Image
 
@@ -446,7 +446,7 @@ class TileSet(object):
         # render. Iterate over the tiles in using the posttraversal() method.
         # Yield each item. Easy.
         if self.options['renderchecks'] in (0,2):
-            for tilepath in self.dirtytree.posttraversal():
+            for tilepath in self.dirtytree.posttraversal(robin=True):
                 dependencies = []
                 # These tiles may or may not exist, but the dispatcher won't
                 # care according to the worker interface protocol It will only
@@ -1349,7 +1349,7 @@ class RendertileSet(object):
     def __iter__(self):
         return self.iterate()
 
-    def iterate(self, level=None, offset=(0,0)):
+    def iterate(self, level=None, robin=False, offset=(0,0)):
         """Returns an iterator over every tile in this set. Each item yielded
         is a sequence of integers representing the quadtree path to the tiles
         in the set. Yielded sequences are of length self.depth.
@@ -1362,6 +1362,9 @@ class RendertileSet(object):
         In other words, specifying level causes the tree to be iterated as if
         it was only that depth.
 
+        If the `robin` parameter is True, recurses to the four top-level
+        subtrees simultaneously in a round-robin manner.
+
         """
         if level is None:
             todepth = 1
@@ -1370,18 +1373,22 @@ class RendertileSet(object):
                 raise ValueError("Level parameter must be between 1 and %s" % self.depth)
             todepth = self.depth - level + 1
 
-        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth, onlydepth=todepth, offset=offset))
+        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth, onlydepth=todepth, robin=robin, offset=offset))
 
-    def posttraversal(self, offset=(0,0)):
+    def posttraversal(self, robin=False, offset=(0,0)):
         """Returns an iterator over tile paths for every tile in the
         set, including the explictly marked render-tiles, as well as the
         implicitly marked ancestors of those render-tiles. Returns in
         post-traversal order, so that tiles with dependencies will always be
         yielded after their dependencies.
-        """
-        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth, offset=offset))
 
-    def _iterate_helper(self, path, children, depth, onlydepth=None, offset=(0,0)):
+        If the `robin` parameter is True, recurses to the four top-level
+        subtrees simultaneously in a round-robin manner.
+
+        """
+        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth, robin=robin, offset=offset))
+
+    def _iterate_helper(self, path, children, depth, onlydepth=None, robin=False, offset=(0,0)):
         """Returns an iterator over tile paths for every tile in the set."""
 
         # A variant of children with a collapsed False/True expanded to a list.
@@ -1395,10 +1402,16 @@ class RendertileSet(object):
                 if child:
                     yield path + [childnum]
         else:
-            for (childnum, child), childoffset in distance_sort(enumerate(children_list), offset):
+            gens = []
+            for (childnum_, child), childoffset_ in distance_sort(enumerate(children_list), offset):
                 if child:
-                    for p in self._iterate_helper(path + [childnum], children_list[childnum], depth-1, onlydepth=onlydepth, offset=childoffset):
-                        yield p
+                    def go(childnum, childoffset):
+                        for p in self._iterate_helper(path + [childnum], children_list[childnum], depth-1, onlydepth=onlydepth, offset=childoffset):
+                            yield p
+                    gens.append(go(childnum_, childoffset_))
+
+            for p in roundrobin(gens) if robin else chain(*gens):
+                yield p
 
         if onlydepth is None and children:
             yield path
