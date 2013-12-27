@@ -540,6 +540,18 @@ values. The valid configuration keys are listed below.
 
     **Default:** Automatically set to most detailed zoom level
 
+``minzoom``
+    This specifies the minimum zoom allowed by the zoom control on the web page.  For
+    example, setting this to 2 will disable the two most-zoomed out levels.
+
+    .. note::
+
+            This does not change the number of zoom levels rendered, but allows
+            you to have control over the number of zoom levels accessible via the
+            slider control.
+
+    **Default:** 0 (zero, which does not disable any zoom levels)
+
 ``showlocationmarker``
     Allows you to specify whether to show the location marker when accessing a URL
     with coordinates specified.
