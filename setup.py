@@ -257,10 +257,17 @@ class CustomSDist(sdist):
 class CustomBuild(build):
     def run(self):
         # generate the version file
-        generate_version_py()
-        generate_primitives_h()
-        build.run(self)
-        print "\nBuild Complete"
+        try:
+            generate_version_py()
+            generate_primitives_h()
+            build.run(self)
+            print "\nBuild Complete"
+        except Exception:
+            print "\nFailed to build Overviewer!"
+            print "Please review the errors printed above and the build instructions"
+            print "at <http://docs.overviewer.org/en/latest/building/>.  If you are"
+            print "still having build problems, file an incident on the github tracker"
+            print "or find us in IRC."
 
 class CustomBuildExt(build_ext):
     def build_extensions(self):
