@@ -191,7 +191,7 @@ class TilesetTest(unittest.TestCase):
                 'rerenderprob': 0
                 }
         defoptions.update(options)
-        ts = tileset.TileSet(self.rs, FakeAssetmanager(0), None, defoptions, outputdir)
+        ts = tileset.TileSet(None, self.rs, FakeAssetmanager(0), None, defoptions, outputdir)
         if preprocess:
             preprocess(ts)
         ts.do_preprocessing()
