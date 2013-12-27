@@ -78,15 +78,14 @@ def get_tile_set(chunks):
         col, row = tileset.convert_coords(chunkx, chunkz)
 
         for tilec, tiler in tileset.get_tiles_by_chunk(col, row):
-            tile = tileset.RenderTile.compute_path(tilec, tiler, 3)
+            tile = tileset.RenderTile.compute_path(tilec, tiler, 5)
             tile_set[tile.path] = max(tile_set[tile.path], chunkmtime)
 
     # At this point, tile_set holds all the render-tiles
     for tile, tile_mtime in tile_set.copy().iteritems():
-        # All render-tiles are length 3. Hard-code its upper tiles
-        tile_set[tile[:2]] = max(tile_set[tile[:2]], tile_mtime)
-        tile_set[tile[:1]] = max(tile_set[tile[:1]], tile_mtime)
-        tile_set[tile[:0]] = max(tile_set[tile[:0]], tile_mtime)
+        # All render-tiles are length 5. Hard-code its upper tiles
+        for i in reversed(xrange(5)):
+            tile_set[tile[:i]] = max(tile_set[tile[:i]], tile_mtime)
     return dict(tile_set)
 
 def create_fakedir(outputdir, tiles):
@@ -178,7 +177,7 @@ class TilesetTest(unittest.TestCase):
     def test_get_phase_length(self):
         ts = self.get_tileset({'renderchecks': 2}, self.get_outputdir())
         self.assertEqual(ts.get_num_phases(), 1)
-        self.assertEqual(ts.get_phase_length(0), 41)
+        self.assertEqual(ts.get_phase_length(0), len(get_tile_set(chunks)))
 
     def test_forcerender_iterate(self):
         """Tests that a rendercheck mode 2 iteration returns every render-tile
@@ -234,18 +233,23 @@ class TilesetTest(unittest.TestCase):
         # object.
         # Chosen at random:
         outdated_tiles = [
-                (0,3,3),
-                (1,2,1),
-                (2,1),
+                (0,3,3,3,3),
+                (1,2,2,2,1),
+                (2,1,1),
                 (3,)
                 ]
         # These are the tiles that we also expect it to return, even though
         # they were not outdated, since they depend on the outdated tiles
         additional = [
+                (0,3,3,3),
+                (0,3,3),
                 (0,3),
                 (0,),
+                (1,2,2,2),
+                (1,2,2),
                 (1,2),
                 (1,),
+                (2,1),
                 (2,),
                 (),
                 ]
