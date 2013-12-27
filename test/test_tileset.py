@@ -184,6 +184,7 @@ class TilesetTest(unittest.TestCase):
         is called before do_preprocessing()
         """
         defoptions = {
+                'name': 'world name',
                 'bgcolor': '#000000',
                 'imgformat': 'png',
                 'optimizeimg': 0,
