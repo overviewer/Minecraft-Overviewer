@@ -16,7 +16,6 @@
 from itertools import tee, izip
 
 from overviewer import chunkrenderer
-from overviewer import blocks
 
 """
 
@@ -144,6 +143,7 @@ class BlockDefinitions(object):
 def get_default():
     bd = BlockDefinitions()
     
+    from overviewer import blocks
     blocks.get_all(bd)
 
     return bd
