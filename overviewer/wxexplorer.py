@@ -54,6 +54,8 @@ from overviewer import isometricrenderer
 from overviewer import blockdefinitions
 from overviewer import cache
 
+BACKEND = oil.BACKEND_CPU
+
 try:
     import pyinotify
     USE_INOTIFY = True
@@ -102,6 +104,9 @@ def render_tile(r, tile_size, x, y):
     im.save(f, oil.FORMAT_PNG)
     return f
 
+def worker_initializer():
+    oil.backend_set(BACKEND)
+
 class MapWindow(wx.Window):
     tile_size = 256
     
@@ -110,7 +115,7 @@ class MapWindow(wx.Window):
         self.rendererf = rendererf
         self.cache = cache.LRUCache()
         self.oldcache = None
-        self.pool = multiprocessing.Pool()
+        self.pool = multiprocessing.Pool(initializer=worker_initializer)
         self.origin = (0, 0)
         self.zoom = 0
         self.scale = 1.0
@@ -358,6 +363,10 @@ def code_change_thread(frame):
         wx.CallAfter(frame.OnReload)
 
 if __name__ == '__main__':
+    if '--opengl' in sys.argv:
+        BACKEND = oil.BACKEND_OPENGL
+        print "using opengl backend"
+
     app = wx.App()
     frame = Explorer(None, -1, "wxExplorer")
     frame.Show()
