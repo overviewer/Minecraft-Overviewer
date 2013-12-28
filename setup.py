@@ -285,6 +285,11 @@ class CustomBuildExt(build_ext):
             for e in self.extensions:
                 e.extra_link_args.append("/MANIFEST")
         if c == "unix":
+            if platform.system() == "Darwin":
+                # we want to build dynamic libs, not bundles:
+                if "-bundle" in self.compiler.linker_so:
+                    self.compiler.linker_so.remove("-bundle")
+                self.compiler.linker_so.append("-dynamiclib")
             # customize the build options for this compilier
             for e in self.extensions:
                 # optimizations
