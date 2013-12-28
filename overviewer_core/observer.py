@@ -150,6 +150,9 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
         logging.info("Rendering complete!")
 
     def update(self, current_value):
+        # maxval is an estimate, and progressbar barfs if currval > maxval
+        # so...
+        current_value = min(current_value, self.maxval)
         if super(ProgressBarObserver, self).update(current_value):
             self.last_update = self.get_current_value()
 
