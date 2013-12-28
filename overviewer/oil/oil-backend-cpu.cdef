@@ -227,9 +227,8 @@ static inline void draw_triangle(OILImage *im, OILImage *tex, OILVertex v0, OILV
     
     /* figure out the triangle's area */
     area = 0.5 * ((v1.x - v0.x) * (v0.y - v2.y) - (v1.y - v0.y) * (v0.x - v2.x));
-    /* back-face culling, and don't draw anything
-       with area less than half a pixel */
-    if (area < 0.5)
+    /* back-face culling */
+    if (area < 0.001)
         return;
 
 	/* get the correct mipmap to use, if needed */
