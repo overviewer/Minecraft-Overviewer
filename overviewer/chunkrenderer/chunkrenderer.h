@@ -144,7 +144,8 @@ enum _get_data_type_enum
     SKYLIGHT,
     BIOMES,
 };
-inline unsigned int get_data(RenderState *state, enum _get_data_type_enum type, int x, int y, int z);
+
+extern inline unsigned int get_data(RenderState *state, enum _get_data_type_enum type, int x, int y, int z);
 
 typedef enum {
     KNOWN,
