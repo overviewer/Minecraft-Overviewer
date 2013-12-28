@@ -1,6 +1,9 @@
 import unittest
 
+from itertools import chain, izip
+
 from overviewer_core.tileset import iterate_base4, RendertileSet
+from overviewer_core.util import roundrobin
 
 class RendertileSetTest(unittest.TestCase):
     # If you change this definition, you must also change the hard-coded
@@ -34,6 +37,61 @@ class RendertileSetTest(unittest.TestCase):
             (2,3,3),
             # Nothing under quadrant 3
             ])
+    # The paths as yielded by posttraversal, in an expanding-from-the-center
+    # order.
+    tile_paths_posttraversal_lists = [
+        [
+            (0,0,3),
+            (0,0,1),
+            (0,0,2),
+            (0,0,0),
+            (0,0),
+            (0,),
+        ],
+        [
+            (1,2,0),
+            (1,2),
+
+            (1,0,3),
+            (1,0),
+
+            (1,1,3),
+            (1,1),
+            (1,),
+        ],
+        [
+            (2,1,1),
+            (2,1,0),
+            (2,1,3),
+            (2,1,2),
+            (2,1),
+
+            (2,0,1),
+            (2,0,3),
+            (2,0,0),
+            (2,0,2),
+            (2,0),
+
+            (2,3,1),
+            (2,3,0),
+            (2,3,3),
+            (2,3,2),
+            (2,3),
+
+            (2,2,1),
+            (2,2,0),
+            (2,2,3),
+            (2,2,2),
+            (2,2),
+            (2,),
+        ],
+    ]
+    # Non-round robin post-traversal: finish the first top-level quadrant
+    # before moving to the second etc.
+    tile_paths_posttraversal       = list(chain(*tile_paths_posttraversal_lists))     + [()]
+    # Round-robin post-traversal: start rendering to all directions from the
+    # center.
+    tile_paths_posttraversal_robin = list(roundrobin(tile_paths_posttraversal_lists)) + [()]
 
     def setUp(self):
         self.tree = RendertileSet(3)
@@ -142,56 +200,18 @@ class RendertileSetTest(unittest.TestCase):
 
     def test_posttraverse(self):
         """Test a post-traversal of the tree's dirty tiles"""
-        # Expect these results in this proper order.
-        expected_list = [
-            (0,0,0),
-            (0,0,1),
-            (0,0,2),
-            (0,0,3),
-            (0,0),
-            (0,),
-
-            (1,0,3),
-            (1,0),
-
-            (1,1,3),
-            (1,1),
-
-            (1,2,0),
-            (1,2),
-            (1,),
-
-            (2,0,0),
-            (2,0,1),
-            (2,0,2),
-            (2,0,3),
-            (2,0),
-
-            (2,1,0),
-            (2,1,1),
-            (2,1,2),
-            (2,1,3),
-            (2,1),
-
-            (2,2,0),
-            (2,2,1),
-            (2,2,2),
-            (2,2,3),
-            (2,2),
-
-            (2,3,0),
-            (2,3,1),
-            (2,3,2),
-            (2,3,3),
-            (2,3),
-            (2,),
-
-            # We should expect the root tile to need rendering too.
-            (),
-            ]
+        # Expect the results in this proper order.
         iterator = iter(self.tree.posttraversal())
-        from itertools import izip
-        for expected, actual in izip(expected_list, iterator):
+        for expected, actual in izip(self.tile_paths_posttraversal, iterator):
+            self.assertEqual(actual, expected)
+
+        self.assertRaises(StopIteration, next, iterator)
+
+    def test_posttraverse_roundrobin(self):
+        """Test a round-robin post-traversal of the tree's dirty tiles"""
+        # Expect the results in this proper order.
+        iterator = iter(self.tree.posttraversal(robin=True))
+        for expected, actual in izip(self.tile_paths_posttraversal_robin, iterator):
             self.assertEqual(actual, expected)
 
         self.assertRaises(StopIteration, next, iterator)

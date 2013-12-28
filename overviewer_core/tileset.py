@@ -25,7 +25,7 @@ import time
 import errno
 import stat
 from collections import namedtuple
-from itertools import product, izip
+from itertools import product, izip, chain
 
 from PIL import Image
 
@@ -377,7 +377,7 @@ class TileSet(object):
 
         # This warning goes here so it's only shown once
         if self.treedepth >= 15:
-            logging.warning("Just letting you know, your map requries %s zoom levels. This is REALLY big!",
+            logging.warning("Just letting you know, your map requires %s zoom levels. This is REALLY big!",
                     self.treedepth)
 
         # Do any tile re-arranging if necessary. Skip if there was no config
@@ -446,7 +446,7 @@ class TileSet(object):
         # render. Iterate over the tiles in using the posttraversal() method.
         # Yield each item. Easy.
         if self.options['renderchecks'] in (0,2):
-            for tilepath in self.dirtytree.posttraversal():
+            for tilepath in self.dirtytree.posttraversal(robin=True):
                 dependencies = []
                 # These tiles may or may not exist, but the dispatcher won't
                 # care according to the worker interface protocol It will only
@@ -1268,21 +1268,19 @@ class RendertileSet(object):
     It is typically used to hold tiles that need rendering. This implementation
     collapses subtrees that are completely in or out of the set to save memory.
 
-    Each instance of this class is a node in the tree, and therefore each
-    instance is the root of a subtree.
+    An instance of this class holds a full tree.
 
-    Each node knows its "level", which corresponds to the zoom level where 0 is
-    the inner-most (most zoomed in) tiles.
+    The instance knows its "level", which corresponds to the zoom level where 1
+    is the inner-most (most zoomed in) tiles.
 
     Instances hold the state of their children (in or out of the set). Leaf
     nodes are images and do not physically exist in the tree as objects, but
     are represented as booleans held by the objects at the second-to-last
     level; level 1 nodes keep track of leaf image state. Level 2 nodes keep
-    track of level 1 state, and so fourth.
-
+    track of level 1 state, and so forth.
 
     """
-    __slots__ = ("depth", "children")
+    __slots__ = ("depth", "children", "num_tiles", "num_tiles_all")
     def __init__(self, depth):
         """Initialize a new tree with the specified depth. This actually
         initializes a node, which is the root of a subtree, with `depth` levels
@@ -1303,52 +1301,15 @@ class RendertileSet(object):
         #   All children down this subtree are not in the set
         # True
         #   All children down this subtree are in the set
-        # A RendertileSet instance
-        #   the instance defines which children down that subtree are in the
-        #   set.
+        # An array of the same format
+        #   The array defines which children down that subtree are in the set
         # A node with depth=1 cannot have a RendertileSet instance in its
         # children since its children are leaves, representing images, not more
         # tree
         self.children = [False] * 4
 
-    def posttraversal(self):
-        """Returns an iterator over tile paths for every tile in the
-        set, including the explictly marked render-tiles, as well as the
-        implicitly marked ancestors of those render-tiles. Returns in
-        post-traversal order, so that tiles with dependencies will always be
-        yielded after their dependencies.
-
-        """
-        return (tuple(reversed(rpath)) for rpath in self._posttraversal_helper())
-
-    def _posttraversal_helper(self):
-        """Each node returns an iterator over lists of reversed paths"""
-        if self.depth == 1:
-            # Base case
-            if self.children[0]: yield [0]
-            if self.children[1]: yield [1]
-            if self.children[2]: yield [2]
-            if self.children[3]: yield [3]
-        else:
-            for childnum, child in enumerate(self.children):
-                if child == True:
-                    for path in post_traversal_complete_subtree_recursion_helper(self.depth-1):
-                        path.append(childnum)
-                        yield path
-
-                elif child == False:
-                    pass # do nothing
-
-                else:
-                    # Recurse
-                    for path in child._posttraversal_helper():
-                        path.append(childnum)
-                        yield path
-
-        # Now do this node itself
-        if bool(self):
-            yield []
-
+        self.num_tiles     = 0
+        self.num_tiles_all = 0
 
     def add(self, path):
         """Marks the requested leaf node as in this set
@@ -1359,71 +1320,65 @@ class RendertileSet(object):
         """
         path = list(path)
         assert len(path) == self.depth
-        path.reverse()
-        self._set_add_helper(path)
 
-    def _set_add_helper(self, path):
+        if self.num_tiles == 0:
+            # The first child is being added. A root composite tile will be
+            # rendered.
+            self.num_tiles_all += 1
+
+        self._add_helper(self.children, list(reversed(path)))
+
+    def _add_helper(self, children, path):
         """Recursive helper for add()
-
-        Expects path to be a list in reversed order
-
-        If *all* the nodes below this one are in the set, this function returns
-        true. Otherwise, returns None.
-
         """
 
-        if self.depth == 1:
-            # Base case
-            self.children[path[0]] = True
+        childnum = path.pop()
 
-            # Check to see if all children are in the set
-            if all(self.children):
-                return True
-        else:
-            # Recursive case
+        if path:
+            # We are not at the leaf, recurse.
 
-            childnum = path.pop()
-            child = self.children[childnum]
-
-            if child == False:
-                # Create a new node and recurse.
-                # (The use of __class__ is so possible subclasses of this class
-                # work as expected)
-                child = self.__class__(self.depth-1)
-                child._set_add_helper(path)
-                self.children[childnum] = child
-            elif child == True:
-                # Every child is already in the set and the subtree is already
-                # collapsed. Nothing to do.
+            if children[childnum] == True:
+                # The child is already in the tree.
                 return
-            else:
-                # subtree is mixed. Recurse to the already existing child node
-                ret = child._set_add_helper(path)
-                if ret:
-                    # Child says every descendent is in the set, so we can
-                    # purge the subtree and mark it as such. The subtree will
-                    # be garbage collected when this method exits.
-                    self.children[childnum] = True
+            elif children[childnum] == False:
+                # Expand all-false.
+                children[childnum] = [False]*4
 
-                    # Since we've marked an entire sub-tree as in the set, we
-                    # may be able to signal to our parent to do the same
-                    if all(x is True for x in self.children):
-                        return True
+                # This also means an additional composite tile.
+                self.num_tiles_all += 1
+
+            self._add_helper(children[childnum], path)
+
+            if children[childnum] == [True]*4:
+                # Collapse all-true.
+                children[childnum] = True
+
+        else:
+            # We are at the leaf.
+            if not children[childnum]:
+                self.num_tiles     += 1
+                self.num_tiles_all += 1
+
+            children[childnum] = True
 
     def __iter__(self):
         return self.iterate()
-    def iterate(self, level=None):
+
+    def iterate(self, level=None, robin=False, offset=(0,0)):
         """Returns an iterator over every tile in this set. Each item yielded
         is a sequence of integers representing the quadtree path to the tiles
         in the set. Yielded sequences are of length self.depth.
 
         If level is None, iterates over tiles of the highest level, i.e.
-        worldtiles. If level is a value between 0 and the depth of this tree,
-        this method iterates over tiles at that level. Zoom level 0 is zoomed
+        worldtiles. If level is a value between 1 and the depth of this tree,
+        this method iterates over tiles at that level. Zoom level 1 is zoomed
         all the way out, zoom level `depth` is all the way in.
 
         In other words, specifying level causes the tree to be iterated as if
         it was only that depth.
+
+        If the `robin` parameter is True, recurses to the four top-level
+        subtrees simultaneously in a round-robin manner.
 
         """
         if level is None:
@@ -1433,31 +1388,48 @@ class RendertileSet(object):
                 raise ValueError("Level parameter must be between 1 and %s" % self.depth)
             todepth = self.depth - level + 1
 
-        return (tuple(reversed(rpath)) for rpath in self._iterate_helper(todepth))
+        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth, onlydepth=todepth, robin=robin, offset=offset))
 
-    def _iterate_helper(self, todepth):
-        if self.depth == todepth:
+    def posttraversal(self, robin=False, offset=(0,0)):
+        """Returns an iterator over tile paths for every tile in the
+        set, including the explictly marked render-tiles, as well as the
+        implicitly marked ancestors of those render-tiles. Returns in
+        post-traversal order, so that tiles with dependencies will always be
+        yielded after their dependencies.
+
+        If the `robin` parameter is True, recurses to the four top-level
+        subtrees simultaneously in a round-robin manner.
+
+        """
+        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth, robin=robin, offset=offset))
+
+    def _iterate_helper(self, path, children, depth, onlydepth=None, robin=False, offset=(0,0)):
+        """Returns an iterator over tile paths for every tile in the set."""
+
+        # A variant of children with a collapsed False/True expanded to a list.
+        children_list = [children] * 4 if isinstance(children, bool) else children
+
+        targetdepth = 1 if onlydepth is None else onlydepth
+
+        if depth == targetdepth:
             # Base case
-            if self.children[0]: yield [0]
-            if self.children[1]: yield [1]
-            if self.children[2]: yield [2]
-            if self.children[3]: yield [3]
-
+            for (childnum, child), _ in distance_sort(enumerate(children_list), offset):
+                if child:
+                    yield path + [childnum]
         else:
-            # Higher levels:
-            for c, child in enumerate(self.children):
-                if child == True:
-                    # All render-tiles are in the set down this subtree,
-                    # iterate over every leaf using iterate_base4
-                    for x in iterate_base4(self.depth-todepth):
-                        x = list(x)
-                        x.append(c)
-                        yield x
-                elif child != False:
-                    # Mixed in/out of the set down this subtree, recurse
-                    for path in child._iterate_helper(todepth):
-                        path.append(c)
-                        yield path
+            gens = []
+            for (childnum_, child), childoffset_ in distance_sort(enumerate(children_list), offset):
+                if child:
+                    def go(childnum, childoffset):
+                        for p in self._iterate_helper(path + [childnum], children_list[childnum], depth-1, onlydepth=onlydepth, offset=childoffset):
+                            yield p
+                    gens.append(go(childnum_, childoffset_))
+
+            for p in roundrobin(gens) if robin else chain(*gens):
+                yield p
+
+        if onlydepth is None and children:
+            yield path
 
     def query_path(self, path):
         """Queries for the state of the given tile in the tree.
@@ -1471,74 +1443,46 @@ class RendertileSet(object):
         # collapsed, then just return the stored boolean. Otherwise, if we find
         # the specific tree node requested, return its state using the
         # __nonzero__ call.
-        treenode = self
+        treenode = self.children
         for pathelement in path:
-            treenode = treenode.children[pathelement]
-            if not isinstance(treenode, RendertileSet):
+            treenode = treenode[pathelement]
+            if isinstance(treenode, bool):
                 return treenode
 
         # If the method has not returned at this point, treenode is the
-        # requested node, but it is an inner node with possibly mixed state
-        # subtrees. If any of the children are True return True. This call
-        # relies on the __nonzero__ method
-        return bool(treenode)
+        # requested node, but it is an inner node. That will only happen if one
+        # or more of the children down the tree are True.
+        return True
 
     def __nonzero__(self):
         """Returns the boolean context of this particular node. If any
         descendent of this node is True return True. Otherwise, False.
 
         """
-        # Any chilren that are True or are a RendertileSet that evaluate to
-        # True
-        # IDEA: look at all children for True before recursing
-        # Better idea: every node except the root /must/ have a descendent in
-        # the set or it wouldn't exist. This assumption is only valid as long
-        # as there is no method to remove a tile from the set. So this should
-        # check to see if any children are not False.
+        # Any children that are True or are a list evaluate to True.
         return any(self.children)
 
     def count(self):
         """Returns the total number of render-tiles in this set.
 
         """
-        # TODO: Make this more efficient (although for even the largest trees,
-        # this takes only seconds)
-        c = 0
-        for _ in self.iterate():
-            c += 1
-        return c
+        return self.num_tiles
 
     def count_all(self):
         """Returns the total number of render-tiles plus implicitly marked
         upper-tiles in this set
 
         """
-        # TODO: Optimize this too with its own recursive method that avoids
-        # some of the overheads of posttraversal()
-        c = 0
-        for _ in self.posttraversal():
-            c += 1
-        return c
+        return self.num_tiles_all
 
-def post_traversal_complete_subtree_recursion_helper(depth):
-    """Fakes the recursive calls for RendertileSet.posttraversal() for the case
-    that a subtree is collapsed, so that items are still yielded in the correct
-    order.
+def distance_sort(children, (off_x, off_y)):
+    order = []
+    for child, (dx, dy) in izip(children, [(-1,-1), (1,-1), (-1,1), (1,1)]):
+        x = off_x*2 + dx
+        y = off_y*2 + dy
+        order.append((child, (x,y)))
 
-    """
-    if depth == 1:
-        # Base case
-        yield [0]
-        yield [1]
-        yield [2]
-        yield [3]
-    else:
-        for childnum in xrange(4):
-            for item in post_traversal_complete_subtree_recursion_helper(depth-1):
-                item.append(childnum)
-                yield item
-
-    yield []
+    return sorted(order, key=lambda (_, (x,y)): x*x + y*y)
 
 class RenderTile(object):
     """A simple container class that represents a single render-tile.

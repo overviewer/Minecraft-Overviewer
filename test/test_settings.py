@@ -6,6 +6,8 @@ from overviewer_core.settingsValidators import ValidationException
 from overviewer_core import world
 from overviewer_core import rendermodes
 
+from overviewer_core.util import OrderedDict
+
 class SettingsTest(unittest.TestCase):
     
     def setUp(self):
@@ -13,7 +15,7 @@ class SettingsTest(unittest.TestCase):
     
     def test_missing(self):
         "Validates that a non-existant settings.py causes an exception"
-        self.assertRaises(ValueError, self.s.parse, "doesnotexist.py")
+        self.assertRaises(configParser.MissingConfigException, self.s.parse, "doesnotexist.py")
 
     def test_existing_file(self):
         self.s.parse("test/data/settings/settings_test_1.py")
@@ -45,21 +47,21 @@ class SettingsTest(unittest.TestCase):
         self.s.set_config_item("worlds", {
             'test': "test/data/settings/test_world",
             })
-        self.s.set_config_item("renders", {
-                "myworld": { 
+        self.s.set_config_item("renders", OrderedDict([
+                ("myworld", {
                     "title": "myworld title",
                     "world": "test",
                     "rendermode": rendermodes.normal,
                     "northdirection": "upper-left",
-                },
+                }),
 
-                "otherworld": {
+                ("otherworld", {
                     "title": "otherworld title",
                     "world": "test",
                     "rendermode": rendermodes.normal,
                     "bgcolor": "#ffffff"
-                },
-            })
+                }),
+            ]))
         self.s.set_config_item("outputdir", "/tmp/fictional/outputdir")
         self.assertEquals(fromfile.get_validated_config(), self.s.get_validated_config())
 
