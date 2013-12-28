@@ -1480,14 +1480,28 @@ class RendertileSet(object):
         """Returns the total number of render-tiles in this set.
 
         """
-        return self.num_tiles
+        # XXX There seems to be something wrong with the num_tiles calculation.
+        # Calculate the number of tiles by iteration and emit a warning if it
+        # does not match.
+        from itertools import imap
+        num = sum(imap(lambda _: 1, self.iterate()))
+        if num != self.num_tiles:
+            logging.error("Please report this to the developers: RendertileSet num_tiles=%r, count=%r, children=%r", self.num_tiles, num, self.children)
+        return num
 
     def count_all(self):
         """Returns the total number of render-tiles plus implicitly marked
         upper-tiles in this set
 
         """
-        return self.num_tiles_all
+        # XXX There seems to be something wrong with the num_tiles calculation.
+        # Calculate the number of tiles by iteration and emit a warning if it
+        # does not match.
+        from itertools import imap
+        num = sum(imap(lambda _: 1, self.posttraversal()))
+        if num != self.num_tiles_all:
+            logging.error("Please report this to the developers: RendertileSet num_tiles_all=%r, count_all=%r, children=%r", self.num_tiles, num, self.children)
+        return num
 
 def distance_sort(children, (off_x, off_y)):
     order = []
