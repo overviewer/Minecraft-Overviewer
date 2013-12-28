@@ -1442,7 +1442,7 @@ class RendertileSet(object):
             for p in roundrobin(gens) if robin else chain(*gens):
                 yield p
 
-        if onlydepth is None and children:
+        if onlydepth is None and any(children_list):
             yield path
 
     def query_path(self, path):
