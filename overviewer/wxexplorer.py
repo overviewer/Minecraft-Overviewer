@@ -123,6 +123,7 @@ class MapWindow(wx.Window):
         self.Bind(wx.EVT_MOTION, self.OnMotion)
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
         self.Bind(wx.EVT_MOUSEWHEEL, self.OnMousewheel)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
     
     def get_tile(self, x, y):
         try:
@@ -193,16 +194,9 @@ class MapWindow(wx.Window):
         self.left_down = None
         self.left_down_origin = None
     
-    def OnMousewheel(self, e):
-        e.Skip()
-        delta = e.GetWheelDelta()
-        rotation = e.GetWheelRotation()
-        rotation = rotation // delta
-        if rotation == 0:
-            return
-        
+    def DoZoom(self, e, amount):
         oldscale = self.scale
-        self.zoom += rotation
+        self.zoom += amount
         self.scale = 2.0 ** self.zoom
         
         cx, cy = e.GetPositionTuple()
@@ -222,6 +216,20 @@ class MapWindow(wx.Window):
         self.origin = (ox, oy)
         
         self.ClearCache()
+    
+    def OnMousewheel(self, e):
+        e.Skip()
+        delta = e.GetWheelDelta()
+        rotation = e.GetWheelRotation()
+        rotation = rotation // delta
+        if rotation == 0:
+            return
+        
+        self.DoZoom(e, rotation)
+    
+    def OnDoubleClick(self, e):
+        e.Skip()
+        self.DoZoom(e, 1)
     
     def OnSize(self, e):
         self.Refresh()
