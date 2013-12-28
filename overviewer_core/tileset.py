@@ -115,6 +115,9 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 #       For render-tiles, render all whose chunks have an mtime greater than
 #       the mtime of the tile on disk, and their composite-tile ancestors.
 #
+#       Also rerender any tiles rendered before forcerendertime. It is nonzero
+#       whenever a mode=2 render has been interrupted.
+#
 #       Also check all other composite-tiles and render any that have children
 #       with more rencent mtimes than itself.
 #
@@ -283,6 +286,7 @@ class TileSet(object):
         self.config = config
 
         self.last_rendertime = config.get('last_rendertime', 0)
+        self.forcerendertime = config.get('forcerendertime', 0)
 
         if "renderchecks" not in self.options:
             # renderchecks was not given, this indicates it was not specified
@@ -346,6 +350,11 @@ class TileSet(object):
                 "--fullrender for just this run")
                 self.options['renderchecks'] = 2
             os.mkdir(self.outputdir)
+
+        if self.options['renderchecks'] == 2:
+            # Set forcerendertime so that upon an interruption the next render
+            # will continue where we left off.
+            self.forcerendertime = int(time.time())
 
         # Set the image format according to the options
         if self.options['imgformat'] == 'png':
@@ -502,8 +511,11 @@ class TileSet(object):
         # following exceptions:
         # * last_rendertime is not changed
         # * A key "render_in_progress" is set to True
+        # * forcerendertime is set so that an interrupted mode=2 render will
+        #   finish properly.
         d['last_rendertime'] = self.last_rendertime
         d['render_in_progress'] = True
+        d['forcerendertime'] = self.forcerendertime
         return d
 
     def get_persistent_data(self):
@@ -1063,8 +1075,10 @@ class TileSet(object):
                         "information")
                 logging.warning("Tile was: %s", imgpath)
 
-            if max_chunk_mtime > tile_mtime:
-                # chunks have a more recent mtime than the tile. Render the tile
+            if max_chunk_mtime > tile_mtime or tile_mtime < self.forcerendertime:
+                # chunks have a more recent mtime than the tile or the tile has
+                # an older mtime than the forcerendertime from an interrupted
+                # render. Render the tile.
                 yield (path, None, True)
             else:
                 # This doesn't need rendering. Return mtime to parent in case
