@@ -332,6 +332,12 @@ class TileSet(object):
                 logging.warning("The total tile count will be (possibly "+
                         "wildly) inaccurate, because I don't know how many "+
                         "tiles need rendering. I'll be checking them as I go")
+                if self.forcerendertime != 0:
+                    logging.info(
+                            "The unfinished render was a --forcerender. " +
+                            "Rerendering any tiles older than %s",
+                            time.strftime("%x %X", time.localtime(self.forcerendertime)),
+                            )
                 self.options['renderchecks'] = 1
             else:
                 logging.debug("No rendercheck mode specified for %s. "+
