@@ -6,13 +6,15 @@ import os, shutil, tempfile, time, sys, math, re
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from optparse import OptionParser
 
-overviewer_scripts = ['./overviewer.py', './gmap.py']
+overviewer_scripts = ['./overviewer.py', './gmap.py', './overviewer/main.py']
 
 def check_call(*args, **kwargs):
     quiet = False
     if "quiet" in kwargs.keys():
-        quiet = kwargs["quiet"]
-        del kwargs["quiet"]
+        quiet = kwargs.pop("quiet")
+    ignoreerror = False
+    if "ignoreerror" in kwargs.keys():
+        ignoreerror = kwargs.pop("ignoreerror")
     if quiet:
         kwargs['stdout'] = PIPE
         kwargs['stderr'] = STDOUT
@@ -22,7 +24,7 @@ def check_call(*args, **kwargs):
         while p.poll() == None:
             output += p.communicate()[0]
     returncode = p.wait()
-    if returncode:
+    if returncode and not ignoreerror:
         if quiet:
             print output
         raise CalledProcessError(returncode, args)
@@ -52,7 +54,7 @@ def clean_render(overviewerargs, quiet):
         # check_call raises CalledProcessError when overviewer.py exits badly
         check_call([sys.executable, 'setup.py', 'clean', 'build'], quiet=quiet)
         try:
-            check_call([sys.executable, overviewer_script, '-d'] + overviewerargs, quiet=quiet)
+            check_call([sys.executable, overviewer_script, '-d'] + overviewerargs, quiet=quiet, ignoreerror=True)
         except CalledProcessError:
             pass
         starttime = time.time()
