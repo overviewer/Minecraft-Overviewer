@@ -35,6 +35,13 @@ a ``python2.6`` package. To do this, add the following line to your
 
     deb http://overviewer.org/debian ./
 
+Our APT repository is signed. To install the key (and allow for
+automatic updates), run
+
+::
+
+    wget -O - http://overviewer.org/debian/overviewer.gpg.asc | sudo apt-key add -
+
 Then run ``apt-get update`` and ``apt-get install minecraft-overviewer`` and
 you're all set! See you at the :doc:`running` page!
 
