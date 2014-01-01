@@ -1,0 +1,23 @@
+{
+    "datatype": "passthrough",
+    "models": {
+        "0": {
+            "type": "cube",
+            "top": "assets/minecraft/textures/blocks/sandstone_top.png",
+            "bottom": "assets/minecraft/textures/blocks/sandstone_bottom.png",
+            "side": "assets/minecraft/textures/blocks/sandstone_normal.png"
+        },
+        "1": {
+            "type": "cube",
+            "top": "assets/minecraft/textures/blocks/sandstone_top.png",
+            "bottom": "assets/minecraft/textures/blocks/sandstone_bottom.png",
+            "side": "assets/minecraft/textures/blocks/sandstone_carved.png"
+        },
+        "2": {
+            "type": "cube",
+            "top": "assets/minecraft/textures/blocks/sandstone_top.png",
+            "bottom": "assets/minecraft/textures/blocks/sandstone_bottom.png",
+            "side": "assets/minecraft/textures/blocks/sandstone_smooth.png"
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "type": "cube",
+    "top": "assets/minecraft/textures/blocks/planks_oak.png",
+    "bottom": "assets/minecraft/textures/blocks/planks_oak.png",
+    "side": "assets/minecraft/textures/blocks/bookshelf.png"
+}

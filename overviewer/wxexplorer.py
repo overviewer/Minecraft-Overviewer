@@ -77,7 +77,7 @@ def wait_for_code_change():
     class OnModifyHandler(pyinotify.ProcessEvent):
         def process_IN_MODIFY(self, event):
             path = event.pathname
-            exts = ['so', 'dll', 'py', 'dylib', 'obj', 'mtl']
+            exts = ['so', 'dll', 'py', 'dylib', 'obj', 'mtl', 'json']
             if any(path.endswith('.' + ext) for ext in exts):
                 done.append(())
     

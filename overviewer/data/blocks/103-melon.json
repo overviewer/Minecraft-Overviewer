@@ -1,0 +1,6 @@
+{
+    "type": "cube",
+    "top": "assets/minecraft/textures/blocks/melon_top.png",
+    "bottom": "assets/minecraft/textures/blocks/melon_top.png",
+    "side": "assets/minecraft/textures/blocks/melon_side.png"
+}

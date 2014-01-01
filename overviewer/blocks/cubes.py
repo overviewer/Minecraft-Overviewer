@@ -87,42 +87,12 @@ def make_custom(terrain, **kwargs):
     return make_box(terrain, **kwargs)
 
 def add(bd):
-
-    # stone
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/stone.png")), 1)
-    
     # grass
     side = "assets/minecraft/textures/blocks/grass_side.png"
     top = "assets/minecraft/textures/blocks/grass_top.png"
     bottom = "assets/minecraft/textures/blocks/dirt.png"
     bd.add(BlockDefinition(make_simple((side,side,side,side,bottom,top), topcolor=(0,255,0,255))), 2)
     
-    # dirt
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/dirt.png")), 3)
-    # cobblestone
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/cobblestone.png")), 4)
-    
-    # wood planks
-    wood_planks = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
-    wood_planks.add(make_simple("assets/minecraft/textures/blocks/planks_oak.png"), 0)
-    wood_planks.add(make_simple("assets/minecraft/textures/blocks/planks_spruce.png"), 1)
-    wood_planks.add(make_simple("assets/minecraft/textures/blocks/planks_birch.png"), 2)
-    wood_planks.add(make_simple("assets/minecraft/textures/blocks/planks_jungle.png"), 3)
-    bd.add(wood_planks, 5)
-
-    # bedrock
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/bedrock.png")), 7)
-    # sand
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/sand.png")), 12)
-    # gravel
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/gravel.png")), 13)
-    # gold ore
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/gold_ore.png")), 14)
-    # iron ore
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/iron_ore.png")), 15)
-    # coal
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/coal_ore.png")), 16)
-
     # logs
     side = "assets/minecraft/textures/blocks/log_{type}.png"
     top = "assets/minecraft/textures/blocks/log_{type}_top.png"
@@ -182,18 +152,6 @@ def add(bd):
     leaves.add(make_simple("assets/minecraft/textures/blocks/leaves_jungle.png", color=(0, 150, 0, 255)), 3)
     bd.add(leaves, 18)
 
-    # sponge
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/sponge.png")), 19)
-    
-    # glass
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/glass.png"), transparent=True), 20)
-
-    # lapis core
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/lapis_ore.png")), 21)
-
-    # lapis block
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/lapis_block.png")), 22)
-
     # dispenser - 23
     # data values encode oritentation
     dispenser = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
@@ -221,37 +179,6 @@ def add(bd):
         dispenser.add(make_dispenser(x), x)
     bd.add(dispenser, 23)
 
-    # sandstone - 24
-    sandstone = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
-    def make_sandstone(data):
-        top = "assets/minecraft/textures/blocks/sandstone_top.png"
-        side = "assets/minecraft/textures/blocks/sandstone_{type}.png"
-        bottom = "assets/minecraft/textures/blocks/sandstone_bottom.png"
-        tex = CubeTextures(ny=bottom, py=top, nx=side, px=side, nz=side, pz=side)
-        typemap = ["normal", "carved", "smooth"]
-        tex = tuple(x.format(type=typemap[data]) for x in tex)
-        return make_simple(tex)
-    sandstone.add(make_sandstone(0), 0) # normal
-    sandstone.add(make_sandstone(1), 1) # carved/chiseled
-    sandstone.add(make_sandstone(2), 2) # smooth
-    bd.add(sandstone, 24)
-
-    #  noteblock - 25
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/noteblock.png")), 25)
-
-    # Wool - 35
-    wool = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
-    for color in range(16):
-        wool.add(make_simple("assets/minecraft/textures/blocks/wool_colored_%s.png" % color_map[color]), color)
-
-    bd.add(wool, 35)
-
-    # Gold Block - 41
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/gold_block.png")), 41)
-
-    # Iron Block - 42
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/iron_block.png")), 42)
-    
     # Double stone slab - 43
     double_slab = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
     def make_double_slab(data):
@@ -333,60 +260,6 @@ def add(bd):
         stone_slab.add(make_stone_slab(x), x)
     bd.add(stone_slab, 44)
 
-    # Bricks - 45
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/brick.png")), 45)
-
-    # TNT - 46
-    top = "assets/minecraft/textures/blocks/tnt_top.png"
-    bottom = "assets/minecraft/textures/blocks/tnt_bottom.png"
-    side = "assets/minecraft/textures/blocks/tnt_side.png"
-    tex = CubeTextures(ny=bottom, py=top, nx=side, px=side, nz=side, pz=side)
-    bd.add(BlockDefinition(make_simple(tex)), 46)
-
-    # Bookshel - 47
-    top = "assets/minecraft/textures/blocks/planks_oak.png"
-    side = "assets/minecraft/textures/blocks/bookshelf.png"
-    tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=side, pz=side)
-    bd.add(BlockDefinition(make_simple(tex)), 47)
-
-    # mossy cobblestone - 48
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/cobblestone_mossy.png")), 48)
-
-    # obsidian - 49
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/obsidian.png")), 49)
-
-    # mob spawner - 52
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/mob_spawner.png")), 52)
-
-    # diamond ore - 56
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/diamond_ore.png")), 56)
-    
-    # diamond block - 57
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/diamond_block.png")), 57)
-
-    # crafting table - 58
-    # the front texture is fixed -- does not depend on block oritentation
-    side = "assets/minecraft/textures/blocks/crafting_table_side.png"
-    front = "assets/minecraft/textures/blocks/crafting_table_front.png"
-    top = "assets/minecraft/textures/blocks/crafting_table_top.png"
-    tex = CubeTextures(ny=top, py=top, nx=front, px=front, nz=side, pz=side)
-    bd.add(BlockDefinition(make_simple(tex)), 58)
-
-    # farmland - 60
-    side = "assets/minecraft/textures/blocks/dirt.png"
-    dry = "assets/minecraft/textures/blocks/farmland_dry.png"
-    wet = "assets/minecraft/textures/blocks/farmland_wet.png"
-    farmland = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
-    drytex = CubeTextures(ny=side, py=dry, nx=side, px=side, nz=side, pz=side)
-    wettex = CubeTextures(ny=side, py=wet, nx=side, px=side, nz=side, pz=side)
-    # Im not sure what's up with all these data values.  the wiki doesn't any anything about this, i just copied from masterbranch
-    for x in range(9):
-        if x == 0:
-            farmland.add(make_simple(drytex), x)
-        else:
-            farmland.add(make_simple(wettex), x)
-    bd.add(farmland, 60)
-
     # furnace - 61
     # lit furnace - 62
     def make_furnace(data, lit=False):
@@ -421,26 +294,6 @@ def add(bd):
     t = (0, 0, 1, 1.0/16)
     bd.add(BlockDefinition(make_custom("assets/minecraft/textures/blocks/planks_oak.png", nx=t, px=t, nz=t, pz=t, height=(1.0/16)), transparent=True), 72)
 
-    # redstone ore  - 73
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_ore.png")), 73)
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_ore.png")), 74) # glowing
-
-    # ice - 79
-    # TODO do face culling like we do for water?
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/ice.png"), transparent=True), 79)
-
-    # snow - 80
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/snow.png")), 80)
-
-    # clay - 82
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/clay.png")), 82)
-
-    # jukebox - 84
-    side = "assets/minecraft/textures/blocks/jukebox_side.png"
-    top = "assets/minecraft/textures/blocks/jukebox_top.png"
-    tex = CubeTextures(ny=side, py=top, nx=side, px=side, nz=side, pz=side)
-    bd.add(BlockDefinition(make_simple(tex)), 84)
-
     # pumpkins (86) and jackolantern (91)
     # data values encode oritentation
     pumpkin = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
@@ -467,67 +320,6 @@ def add(bd):
         jacko.add(make_pumpkin(x, True), x)
     bd.add(pumpkin, 86)
     bd.add(jacko, 91)
-
-
-
-    # netherrack - 87
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/netherrack.png")), 87)
-    
-    # soul sand - 88
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/soul_sand.png")), 88)
-    
-    # glowstone - 89
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/glowstone.png")), 89)
-
-    # stained glass - 95
-    # TODO face culling?
-    stained_glass = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH, transparent=True)
-    for color in range(16):
-        stained_glass.add(make_simple("assets/minecraft/textures/blocks/glass_%s.png" % color_map[color]), color)
-
-    bd.add(stained_glass, 95)
-
-
-    # monster egg - 97
-    monster_egg = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
-    def make_egg(data):
-        typemap = ["stone", "cobblestone", "stonebrick", "stonebrick_mossy", "stonebrick_cracked", "stonebrick_carved"]
-        return make_simple("assets/minecraft/textures/blocks/%s.png" % typemap[data])
-    for x in range(6):
-        monster_egg.add(make_egg(x), x)
-    bd.add(monster_egg, 97)
-    
-    # stone brick - 98
-    stone_brick = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
-    def make_brick(data):
-        typemap = ["stonebrick", "stonebrick_mossy", "stonebrick_cracked", "stonebrick_carved"]
-        return make_simple("assets/minecraft/textures/blocks/%s.png" % typemap[data])
-    for x in range(4):
-        stone_brick.add(make_brick(x), x)
-    bd.add(stone_brick, 98)
-
-    # melon block - 103
-    top = "assets/minecraft/textures/blocks/melon_top.png"
-    side = "assets/minecraft/textures/blocks/melon_side.png"
-    tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=side, pz=side)
-    bd.add(BlockDefinition(make_simple(tex)), 103)
-
-    # mycelium - 110
-    top = "assets/minecraft/textures/blocks/mycelium_top.png"
-    side = "assets/minecraft/textures/blocks/mycelium_side.png"
-    tex = CubeTextures(ny=top, py=top, nx=side, px=side, nz=side, pz=side)
-    bd.add(BlockDefinition(make_simple(tex)), 110)
-
-    # nether brick - 112
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/nether_brick.png")), 112)
-
-    # end stone - 121
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/end_stone.png")), 121)
-
-    # redstone lamp (off) - 123
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_lamp_off.png")), 123)
-    # redstoen lamp (on) - 124
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_lamp_on.png")), 124)
 
     # double wooden slabs - 125
     double_wooden_slab = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
@@ -578,12 +370,6 @@ def add(bd):
         wooden_slab.add(make_wooden_slab(x), x)
     bd.add(wooden_slab, 126)
 
-    # emerald ore - 129
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/emerald_ore.png")), 129)
-
-    # emerald block - 133
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/emerald_block.png")), 133)
-    
     # light weighted pressure plate - 147
     t = (0, 0, 1, 1.0/16)
     bd.add(BlockDefinition(make_custom("assets/minecraft/textures/blocks/gold_block.png", nx=t, px=t, nz=t, pz=t, height=(1.0/16)), transparent=True), 147)
@@ -599,12 +385,6 @@ def add(bd):
     t = (0, 0, 1, 1.0/3)
     bd.add(BlockDefinition(make_custom(tex, nx=t, px=t, nz=t, pz=t, height=1.0/3), transparent=True), 151)
 
-    # redstone block - 152
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/redstone_block.png")), 152)
-    
-    # quartz ore - 153
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/quartz_ore.png")), 153)
-    
     # dropper - 158
     # data values encode oritentation
     dropper = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
@@ -632,23 +412,11 @@ def add(bd):
         dropper.add(make_dropper(x), x)
     bd.add(dropper, 158)
     
-    # stained hardened clay - 159
-    stained_clay = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH)
-    for color in range(16):
-        stained_clay.add(make_simple("assets/minecraft/textures/blocks/hardened_clay_stained_%s.png" % color_map[color]), color)
-    bd.add(stained_clay, 159)
-    
     # carpet - 171
     carpet = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH, transparent=True)
     for color in range(16):
         carpet.add(make_simple("assets/minecraft/textures/blocks/wool_colored_%s.png" % color_map[color], height=1.0/16), color)
     bd.add(carpet, 171)
     
-    # hardened clay (uncolored) - 172
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/hardened_clay.png")), 172)
-    
-    # coal block- 173
-    bd.add(BlockDefinition(make_simple("assets/minecraft/textures/blocks/coal_block.png")), 173)
-
     
 

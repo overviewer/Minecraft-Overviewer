@@ -29,14 +29,7 @@ def get_all(bd):
         mod = importlib.import_module(full_name)
 
         mod.add(bd)
-    
-    # load all obj files
-    objspath = os.path.join(util.get_program_path(), "overviewer", "data", "blocks")
-    for root, _, files in os.walk(objspath):
-        for fname in files:
-            if not fname.endswith(".obj"):
-                continue
-            objparser.add_from_path(bd, os.path.join(root, fname))
+
 
 
 

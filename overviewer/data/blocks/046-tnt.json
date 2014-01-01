@@ -1,0 +1,6 @@
+{
+    "type": "cube",
+    "top": "assets/minecraft/textures/blocks/tnt_top.png",
+    "bottom": "assets/minecraft/textures/blocks/tnt_bottom.png",
+    "side": "assets/minecraft/textures/blocks/tnt_side.png"
+}

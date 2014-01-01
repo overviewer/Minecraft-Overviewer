@@ -1,0 +1,69 @@
+{
+    "datatype": "passthrough",
+    "models": {
+        "00": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_white.png"
+        },
+        "01": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_orange.png"
+        },
+        "02": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_magenta.png"
+        },
+        "03": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_light_blue.png"
+        },
+        "04": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_yellow.png"
+        },
+        "05": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_lime.png"
+        },
+        "06": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_pink.png"
+        },
+        "07": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_gray.png"
+        },
+        "08": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_silver.png"
+        },
+        "09": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_cyan.png"
+        },
+        "10": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_purple.png"
+        },
+        "11": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_blue.png"
+        },
+        "12": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_brown.png"
+        },
+        "13": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_green.png"
+        },
+        "14": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_red.png"
+        },
+        "15": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/wool_colored_black.png"
+        }
+    }
+}

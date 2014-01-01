@@ -1,0 +1,6 @@
+{
+    "type": "cube",
+    "top": "assets/minecraft/textures/blocks/mycelium_top.png",
+    "bottom": "assets/minecraft/textures/blocks/mycelium_top.png",
+    "side": "assets/minecraft/textures/blocks/mycelium_side.png"
+}

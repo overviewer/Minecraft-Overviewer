@@ -13,9 +13,13 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+import os.path
+import json
+import logging
 from itertools import tee, izip
 
 from overviewer import chunkrenderer
+from overviewer import util
 
 """
 
@@ -140,10 +144,186 @@ class BlockDefinitions(object):
         for b in blockid:
             self.blocks[b] = blockdef
 
+class BlockLoadError(Exception):
+    def __init__(self, s, file=None):
+        if file:
+            s = "error loading block '{}': {}".format(file, s)
+        else:
+            s = "error loading block: {}".format(s)
+        super(BlockLoadError, self).__init__(s)
+
+def _load_cube_model(model, path):
+    """helper to load a cube-type model, from JSON"""
+    texture = model.pop("texture", None)
+    side = model.pop("side", texture)
+    
+    # Positive X is front
+    # Positive Y is top
+    # Positive Z is ... Right ... ?
+    tdefaults = {'top': texture, 'bottom': texture, 'left': side, 'right': side, 'front': side, 'back': side}
+    
+    t = {}
+    for name, d in tdefaults.items():
+        t[name] = model.pop(name, d)
+    for name, tex in t.items():
+        if not tex:
+            raise RuntimeError("no texture specified for: {}".format(name))
+    
+    # tex coord rects
+    nx = (0, 0, 1, 1)
+    px = (0, 0, 1, 1)
+    ny = (0, 0, 1, 1)
+    py = (0, 0, 1, 1)
+    nz = (0, 0, 1, 1)
+    pz = (0, 0, 1, 1)
+    
+    # face colors
+    color = (255, 255, 255, 255)
+    xcolor = tuple(int(c * 0.8) for c in color[:3]) + (color[3],)
+    zcolor = tuple(int(c * 0.9) for c in color[:3]) + (color[3],)
+    
+    m = BlockModel()
+    m.vertices = [
+        # NX face
+        ((0, 0, 0), (nx[0], nx[1]), xcolor),
+        ((0, 0, 1), (nx[2], nx[1]), xcolor),
+        ((0, 1, 1), (nx[2], nx[3]), xcolor),
+        ((0, 1, 0), (nx[0], nx[3]), xcolor),
+        
+        # NZ face
+        ((1, 0, 0), (nz[0], nz[1]), zcolor),
+        ((0, 0, 0), (nz[2], nz[1]), zcolor),
+        ((0, 1, 0), (nz[2], nz[3]), zcolor),
+        ((1, 1, 0), (nz[0], nz[3]), zcolor),
+        
+        # PX face
+        ((1, 0, 1), (px[0], px[1]), xcolor),
+        ((1, 0, 0), (px[2], px[1]), xcolor),
+        ((1, 1, 0), (px[2], px[3]), xcolor),
+        ((1, 1, 1), (px[0], px[3]), xcolor),
+        
+        # PZ face
+        ((0, 0, 1), (pz[0], pz[1]), zcolor),
+        ((1, 0, 1), (pz[2], pz[1]), zcolor),
+        ((1, 1, 1), (pz[2], pz[3]), zcolor),
+        ((0, 1, 1), (pz[0], pz[3]), zcolor),
+        
+        # NY face
+        ((0, 0, 1), (ny[0], ny[1]), color),
+        ((0, 0, 0), (ny[2], ny[1]), color),
+        ((1, 0, 0), (ny[2], ny[3]), color),
+        ((1, 0, 1), (ny[0], ny[3]), color),
+        
+        # PY face
+        ((0, 1, 1), (py[0], py[1]), color),
+        ((1, 1, 1), (py[2], py[1]), color),
+        ((1, 1, 0), (py[2], py[3]), color),
+        ((0, 1, 0), (py[0], py[3]), color),
+    ]
+
+    m.faces = [
+        ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX, t['back']),
+        ([4, 5, 6, 7], chunkrenderer.FACE_TYPE_NZ, t['left']), # ???
+        ([8, 9, 10, 11], chunkrenderer.FACE_TYPE_PX, t['front']),
+        ([12, 13, 14, 15], chunkrenderer.FACE_TYPE_PZ, t['right']), # ???
+        ([16, 17, 18, 19], chunkrenderer.FACE_TYPE_NY, t['bottom']),
+        ([20, 21, 22, 23], chunkrenderer.FACE_TYPE_PY, t['top']),
+    ]
+    
+    return m
+
+def _load_model(model, path):
+    """helper to load a model from a JSON model definition"""
+    modeltype = model.pop("type", None)
+    if modeltype == "cube":
+        return _load_cube_model(model, path)
+    else:
+        raise RuntimeError("unknown model type: {}".format(modeltype))
+
+def _add_default_models(bd, data, path):
+    """helper to add a default-type block definition, from JSON"""
+    models = data.pop("models", {})
+    for data, model in models.items():
+        data = int(data)
+        model = _load_model(model, path)
+        bd.add(model, data)
+
+def _add_cube_models(bd, data, path):
+    """helper to load a cube-type block definition, from JSON"""
+    model = _load_cube_model(data, path)
+    bd.add(model, 0)
+
+def add_from_path(bd, path, namemap={}):
+    """add a block definition from a json file, given by path"""
+    pathdir, pathfile = os.path.split(path)
+    root, _ = os.path.splitext(pathfile)
+    
+    blockid = None
+    name = None
+    try:
+        blockid, name = root.split('-', 1)
+        blockid = int(blockid)
+    except ValueError:
+        pass
+    
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except ValueError, e:
+        raise BlockLoadError(e, file=path)
+    
+    name = data.pop("name", name)
+    blockid = data.pop("blockid", blockid)
+    if not name:
+        raise BlockLoadError("definition has no name")
+    if not blockid:
+        raise BlockLoadError("definition has no blockid")
+    
+    blockdef_arg_names = ["transparent", "solid", "fluid", "nospawn", "datatype", "dataparameter"]
+    blockdef_args = {}
+    for argname in blockdef_arg_names:
+        if not argname in data:
+            continue
+        blockdef_args[argname] = data.pop(argname)
+    
+    if "datatype" in blockdef_args:
+        try:
+            blockdef_args["datatype"] = getattr(chunkrenderer, "BLOCK_DATA_" + blockdef_args["datatype"].upper())
+        except AttributeError:
+            raise BlockLoadError("unknown datatype: {}".format(blockdef_args["datatype"], file=path))
+    
+    deftype = data.pop("type", "default")
+    bdef = BlockDefinition(**blockdef_args)
+    try:
+        if deftype == "default":
+            _add_default_models(bdef, data, path)
+        elif deftype == "cube":
+            _add_cube_models(bdef, data, path)
+        else:
+            raise BlockLoadError("unknown definition type: {}".format(deftype), file=path)
+    except BlockLoadError:
+        raise
+    except Exception, e:
+        raise BlockLoadError(e, file=path)
+    
+    if data:
+        raise BlockLoadError("unused info: {}".format(data), file=path)
+    
+    bd.add(bdef, blockid)
+
 def get_default():
     bd = BlockDefinitions()
     
     from overviewer import blocks
     blocks.get_all(bd)
+    
+    blockspath = os.path.join(util.get_program_path(), "overviewer", "data", "blocks")
+    for root, _, files in os.walk(blockspath):
+        for fname in files:
+            if fname.startswith("."):
+                continue
+            if not fname.endswith(".json"):
+                continue
+            add_from_path(bd, os.path.join(root, fname))
 
     return bd
