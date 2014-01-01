@@ -153,7 +153,17 @@ class BlockLoadError(Exception):
             s = "error loading block: {}".format(s)
         super(BlockLoadError, self).__init__(s)
 
-def _load_cube_model(model, path, label):
+model_types = {}
+def model_type(typ):
+    """decorator for the load function for a given model type, from JSON"""
+    def wrapper(f):
+        global model_types
+        model_types[typ] = f
+        return f
+    return wrapper
+
+@model_type("cube")
+def load_cube_model(model, path, label):
     """helper to load a cube-type model, from JSON"""
     texture = model.pop("texture", None)
     side = model.pop("side", texture)
@@ -233,7 +243,8 @@ def _load_cube_model(model, path, label):
     
     return m
 
-def _load_obj_model(model, path, label):
+@model_type("obj")
+def load_obj_model(model, path, label):
     objpath = os.path.splitext(path)[0] + ".obj"
     objpath = model.pop("file", objpath)
     if not os.path.exists(objpath):
@@ -256,15 +267,18 @@ def _load_obj_model(model, path, label):
     objmodel = objfile[candidates[0]]
     return objparser.obj_to_blockmodel(objmodel)
 
-def _load_model(model, path, label):
+def load_model(model, path, label):
     """helper to load a model from a JSON model definition"""
     modeltype = model.pop("type", None)
-    if modeltype == "cube":
-        return _load_cube_model(model, path, label)
-    elif modeltype == "obj":
-        return _load_obj_model(model, path, label)
+    modelret = None
+    if modeltype in model_types:
+        modelret = model_types[modeltype](model, path, label)
     else:
         raise RuntimeError("unknown model type: {}".format(modeltype))
+    
+    if model:
+        raise RuntimeError("unused model data: {}".format(model))
+    return modelret
 
 def add_from_path(bd, path, namemap={}):
     """add a block definition from a json file, given by path"""
