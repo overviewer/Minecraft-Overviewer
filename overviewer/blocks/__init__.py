@@ -15,11 +15,9 @@ import os.path
 import os
 
 from .. import util
-from .. import objparser
 
 block_modules = [
         "cubes",
-        "cactus",
         "glass_panes",
         ]
 

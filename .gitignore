@@ -41,3 +41,7 @@ overviewer/overviewer_version.py
 
 # output directories
 output_*/
+
+# recommended storage for unpacked minecraft jar while
+# creating block meshes
+overviewer/data/blocks/JAR

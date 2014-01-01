@@ -20,6 +20,7 @@ from itertools import tee, izip
 
 from overviewer import chunkrenderer
 from overviewer import util
+from overviewer import objparser
 
 """
 
@@ -152,7 +153,7 @@ class BlockLoadError(Exception):
             s = "error loading block: {}".format(s)
         super(BlockLoadError, self).__init__(s)
 
-def _load_cube_model(model, path):
+def _load_cube_model(model, path, label):
     """helper to load a cube-type model, from JSON"""
     texture = model.pop("texture", None)
     side = model.pop("side", texture)
@@ -232,25 +233,50 @@ def _load_cube_model(model, path):
     
     return m
 
-def _load_model(model, path):
+def _load_obj_model(model, path, label):
+    objpath = os.path.splitext(path)[0] + ".obj"
+    objpath = model.pop("file", objpath)
+    if not os.path.exists(objpath):
+        raise RuntimeError("file does not exist: '{}'".format(objpath))
+    
+    mtlfinder = objparser.SimpleMTLFinder(os.path.split(objpath)[0])
+    with open(objpath) as f:
+        objfile = objparser.OBJParser.parse(f, mtlfinder)
+    
+    if len(objfile) == 1:
+        defaultname = objfile.keys()[0]
+    else:
+        defaultname = label
+    
+    name = model.pop("name", defaultname)
+    candidates = [s for s in objfile.keys() if name in s]
+    if len(candidates) > 1 or len(candidates) == 0:
+        raise RuntimeError("object name is ambiguous: {} in '{}'".format(name, objpath))
+    
+    objmodel = objfile[candidates[0]]
+    return objparser.obj_to_blockmodel(objmodel)
+
+def _load_model(model, path, label):
     """helper to load a model from a JSON model definition"""
     modeltype = model.pop("type", None)
     if modeltype == "cube":
-        return _load_cube_model(model, path)
+        return _load_cube_model(model, path, label)
+    elif modeltype == "obj":
+        return _load_obj_model(model, path, label)
     else:
         raise RuntimeError("unknown model type: {}".format(modeltype))
 
 def _add_default_models(bd, data, path):
     """helper to add a default-type block definition, from JSON"""
     models = data.pop("models", {})
-    for data, model in models.items():
-        data = int(data)
-        model = _load_model(model, path)
+    for dataorig, model in models.items():
+        data = int(dataorig)
+        model = _load_model(model, path, dataorig)
         bd.add(model, data)
 
 def _add_cube_models(bd, data, path):
     """helper to load a cube-type block definition, from JSON"""
-    model = _load_cube_model(data, path)
+    model = _load_cube_model(data, path, "0")
     bd.add(model, 0)
 
 def add_from_path(bd, path, namemap={}):
@@ -275,9 +301,9 @@ def add_from_path(bd, path, namemap={}):
     name = data.pop("name", name)
     blockid = data.pop("blockid", blockid)
     if not name:
-        raise BlockLoadError("definition has no name")
+        raise BlockLoadError("definition has no name", file=path)
     if not blockid:
-        raise BlockLoadError("definition has no blockid")
+        raise BlockLoadError("definition has no blockid", file=path)
     
     blockdef_arg_names = ["transparent", "solid", "fluid", "nospawn", "datatype", "dataparameter"]
     blockdef_args = {}
@@ -318,7 +344,9 @@ def get_default():
     blocks.get_all(bd)
     
     blockspath = os.path.join(util.get_program_path(), "overviewer", "data", "blocks")
-    for root, _, files in os.walk(blockspath):
+    for root, subdirs, files in os.walk(blockspath):
+        del subdirs[:]
+        
         for fname in files:
             if fname.startswith("."):
                 continue
