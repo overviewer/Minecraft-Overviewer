@@ -411,12 +411,3 @@ def add(bd):
     for x in range(6):
         dropper.add(make_dropper(x), x)
     bd.add(dropper, 158)
-    
-    # carpet - 171
-    carpet = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_PASSTHROUGH, transparent=True)
-    for color in range(16):
-        carpet.add(make_simple("assets/minecraft/textures/blocks/wool_colored_%s.png" % color_map[color], height=1.0/16), color)
-    bd.add(carpet, 171)
-    
-    
-

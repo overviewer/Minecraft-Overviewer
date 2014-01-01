@@ -16,6 +16,7 @@
 import os.path
 import json
 import logging
+import copy
 from itertools import tee, izip
 
 from overviewer import chunkrenderer
@@ -56,6 +57,12 @@ class BlockModel(object):
     def __init__(self):
         self.vertices = []
         self.faces = []
+    
+    def copy(self):
+        """Returns a copy of self that can be mutated freely without
+        affecting the original model.
+        """
+        return copy.deepcopy(self)
 
     @property
     def triangles(self):
@@ -161,6 +168,28 @@ def model_type(typ):
         model_types[typ] = f
         return f
     return wrapper
+
+transform_types = {}
+def transform_type(typ):
+    """decorator for the transform function for a given type, for JSON"""
+    def wrapper(f):
+        global transform_types
+        transform_types[typ] = f
+        return f
+    return wrapper
+
+@transform_type("texreplace")
+def trans_texreplace(model, data):
+    orig = data.pop("from")
+    new = data.pop("to")
+    
+    newfaces = []
+    for a, b, tex in model.faces:
+        if orig in tex:
+            tex = new
+        newfaces.append((a, b, tex))
+    model.faces = newfaces
+    return model
 
 @model_type("cube")
 def load_cube_model(model, path, label):
@@ -276,6 +305,14 @@ def load_model(model, path, label):
     else:
         raise RuntimeError("unknown model type: {}".format(modeltype))
     
+    transforms = model.pop("transforms", [])
+    for trans in transforms:
+        transtype = trans.pop("type", None)
+        if not transtype in transform_types:
+            raise RuntimeError("unknown transform type: {}".format(transtype))
+        transf = transform_types[transtype]
+        modelret = transf(modelret, trans)
+    
     if model:
         raise RuntimeError("unused model data: {}".format(model))
     return modelret
@@ -323,14 +360,14 @@ def add_from_path(bd, path, namemap={}):
     try:
         if "type" in data:
             # inline model, only one
-            model = _load_model(data, path, "0")
+            model = load_model(data, path, "0")
             bdef.add(model, 0)
         else:
             # multiple models
             models = data.pop("models", {})
             for dataorig, model in models.items():
                 dataval = int(dataorig)
-                model = _load_model(model, path, dataorig)
+                model = load_model(model, path, dataorig)
                 bdef.add(model, dataval)
     except BlockLoadError:
         raise
