@@ -266,19 +266,6 @@ def _load_model(model, path, label):
     else:
         raise RuntimeError("unknown model type: {}".format(modeltype))
 
-def _add_default_models(bd, data, path):
-    """helper to add a default-type block definition, from JSON"""
-    models = data.pop("models", {})
-    for dataorig, model in models.items():
-        data = int(dataorig)
-        model = _load_model(model, path, dataorig)
-        bd.add(model, data)
-
-def _add_cube_models(bd, data, path):
-    """helper to load a cube-type block definition, from JSON"""
-    model = _load_cube_model(data, path, "0")
-    bd.add(model, 0)
-
 def add_from_path(bd, path, namemap={}):
     """add a block definition from a json file, given by path"""
     pathdir, pathfile = os.path.split(path)
@@ -318,15 +305,19 @@ def add_from_path(bd, path, namemap={}):
         except AttributeError:
             raise BlockLoadError("unknown datatype: {}".format(blockdef_args["datatype"], file=path))
     
-    deftype = data.pop("type", "default")
     bdef = BlockDefinition(**blockdef_args)
     try:
-        if deftype == "default":
-            _add_default_models(bdef, data, path)
-        elif deftype == "cube":
-            _add_cube_models(bdef, data, path)
+        if "type" in data:
+            # inline model, only one
+            model = _load_model(data, path, "0")
+            bdef.add(model, 0)
         else:
-            raise BlockLoadError("unknown definition type: {}".format(deftype), file=path)
+            # multiple models
+            models = data.pop("models", {})
+            for dataorig, model in models.items():
+                dataval = int(dataorig)
+                model = _load_model(model, path, dataorig)
+                bdef.add(model, dataval)
     except BlockLoadError:
         raise
     except Exception, e:

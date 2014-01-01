@@ -1,8 +1,4 @@
 {
-    "transparent": true,
-    "models": {
-        "0": {
-            "type": "obj"
-        }
-    }
+    "type": "obj",
+    "transparent": true
 }
