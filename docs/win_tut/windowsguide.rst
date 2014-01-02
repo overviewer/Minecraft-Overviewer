@@ -169,3 +169,29 @@ Common Pitfalls
 
        This should switch your current working directory to D:\
 
+
+Using GitHub Gist
+-----------------
+
+Sometimes, when helping people with issues with Overviewer, we'll often
+ask to see the config file you're using, or, if there was an Overviewer
+error, a full copy of an error message.   Unfortunately, `IRC <http://overviewer.org/irc/>`_
+is not a good way to send large amounts of text.  So we often ask users
+to create a `Gist <http://gist.github.com/>`_ containing the text we want
+to see.  Sites like these are also called Pastebins, and you are welcome
+to use your favorite pastebin site, if you'd like.
+
+* First, go to http://gist.github.com/
+
+* Second, paste your text into the primary text entry area:
+
+    .. image:: gist1.png
+
+* Third, click the 'Create Secret Gist' button.  A secret gist means that
+  only someone with the exact URL can view your gist
+
+    .. image:: gist2.png
+
+* Finally, send us the URL.  This will let us easily view your properly formatted Gist.
+
+    .. image:: gist3.png
