@@ -103,6 +103,7 @@ int oil_image_save(OILImage *im, const char *path, OILFormatName format, OILForm
 int oil_image_save_ex(OILImage *im, OILFile *file, OILFormatName format, OILFormatOptions *opts);
 void oil_image_get_size(OILImage *im, unsigned int *width, unsigned int *height);
 const OILPixel *oil_image_get_data(OILImage *im);
+const OILPixel *oil_image_get_pixel(OILImage *im, unsigned int x, unsigned int y);
 OILPixel *oil_image_lock(OILImage *im);
 void oil_image_unlock(OILImage *im);
 

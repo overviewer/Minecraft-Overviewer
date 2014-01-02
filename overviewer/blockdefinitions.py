@@ -104,12 +104,16 @@ class BlockDefinition(object):
     def __init__(self, model_zero=None, **kwargs):
         self.models = []
 
-        self.transparent = kwargs.get("transparent", False)
-        self.solid = kwargs.get("solid", True)
-        self.fluid = kwargs.get("fluid", False)
-        self.nospawn = kwargs.get("nospawn", False)
-        self.datatype = kwargs.get("datatype", chunkrenderer.BLOCK_DATA_NODATA)
-        self.dataparameter = kwargs.get("dataparameter", None)
+        self.transparent = kwargs.pop("transparent", False)
+        self.solid = kwargs.pop("solid", True)
+        self.fluid = kwargs.pop("fluid", False)
+        self.nospawn = kwargs.pop("nospawn", False)
+        self.datatype = kwargs.pop("datatype", chunkrenderer.BLOCK_DATA_NODATA)
+        self.dataparameter = kwargs.pop("dataparameter", None)
+        self.biomecolors = kwargs.pop("biomecolors", None)
+        
+        if kwargs:
+            raise ValueError("unknown kwargs: {}".format(kwargs))
 
         if model_zero:
             self.add(model_zero, 0)
@@ -188,6 +192,18 @@ def trans_texreplace(model, data):
         if orig in tex:
             tex = new
         newfaces.append((a, b, tex))
+    model.faces = newfaces
+    return model
+
+@transform_type("biomecolor")
+def trans_biomecolor(model, data):
+    needle = data.pop("texture")
+    
+    newfaces = []
+    for a, typ, tex in model.faces:
+        if needle in tex:
+            typ = typ | chunkrenderer.FACE_BIOME_COLORED
+        newfaces.append((a, typ, tex))
     model.faces = newfaces
     return model
 
@@ -314,6 +330,8 @@ def load_model(model, path, label):
             raise RuntimeError("unknown transform type: {}".format(transtype))
         transf = transform_types[transtype]
         modelret = transf(modelret, trans)
+        if trans:
+            raise RuntimeError("unused transform data: {}".format(trans))
     
     if model:
         raise RuntimeError("unused model data: {}".format(model))
@@ -345,7 +363,7 @@ def add_from_path(bd, path, namemap={}):
     if not blockid:
         raise BlockLoadError("definition has no blockid", file=path)
     
-    blockdef_arg_names = ["transparent", "solid", "fluid", "nospawn", "datatype", "dataparameter"]
+    blockdef_arg_names = ["transparent", "solid", "fluid", "nospawn", "datatype", "dataparameter", "biomecolors"]
     blockdef_args = {}
     for argname in blockdef_arg_names:
         if not argname in data:

@@ -7,7 +7,7 @@ sticky_neighbors = set([
 
     ])
 
-glass = BlockDefinition(datavalue=chunkrenderer.BLOCK_DATA_STICKY, dataparameter=sticky_neighbors)
+glass = BlockDefinition(datatype=chunkrenderer.BLOCK_DATA_STICKY, dataparameter=sticky_neighbors)
 
 def add(bd):
     pass

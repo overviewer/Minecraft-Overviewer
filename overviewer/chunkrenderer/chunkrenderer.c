@@ -5,7 +5,6 @@
 
 #include "chunkrenderer.h"
 
-
 /* helper to load a chunk into state->chunks
  * returns false on error, true on success
  *
@@ -213,20 +212,11 @@ inline int block_has_property(RenderState *state, unsigned short b, BlockPropert
     return def;
 }
 
-/* helper to get a block model to use for a given block in a minecraft world.
- * This function is used by render() This takes the entire RenderState struct
- * instead of just the block definitions because we need to account for pseudo
- * data.
- * x, y, and z are given relative to the center chunk section (chunk [1][1] in
- * the state struct).
- */
-static inline BlockModel *get_block_model(RenderState *state, int x, int y, int z) {
+static inline BlockModel *get_block_def(RenderState *state, int x, int y, int z) {
     BlockDef *def;
-    BlockModel *model;
     unsigned int blockid;
-    unsigned int effectivedata;
 
-    /* First we need to find the block definition of the requested block. */
+    /* we need to find the block definition of the requested block. */
     blockid = get_data(state, BLOCKS, x, y, z);
     if (blockid >= state->blockdefs->blockdefs_length)
         return NULL;
@@ -235,6 +225,22 @@ static inline BlockModel *get_block_model(RenderState *state, int x, int y, int 
     if (def->known == 0) {
         return NULL;
     }
+    return def;
+}
+
+/* helper to get a block model to use for a given block in a minecraft world.
+ * This function is used by render() This takes the entire RenderState struct
+ * instead of just the block definitions because we need to account for pseudo
+ * data.
+ * x, y, and z are given relative to the center chunk section (chunk [1][1] in
+ * the state struct).
+ */
+static inline BlockModel *get_block_model(RenderState *state, BlockDef *def, int x, int y, int z) {
+    BlockModel *model;
+    unsigned int effectivedata;
+
+    if (def == NULL)
+        return NULL;
 
     /* Now that we have a block definition, call the data function to determine
      * which model to use. */
@@ -306,6 +312,13 @@ static inline void render_block(OILImage *im, OILMatrix *matrix, Buffer *vertice
     buffer_free(&indices);
 }
 
+static inline void set_biome_color(RenderState *state, BlockDef *def, OILPixel *out) {
+    int tmp;
+    if (def->biomecolors) {
+        *out = *oil_image_get_pixel(def->biomecolors, 0, 0);
+    }
+}
+
 static PyObject *render(PyObject *self, PyObject *args) {
     RenderState state;
     PyOILImage *im;
@@ -354,7 +367,8 @@ static PyObject *render(PyObject *self, PyObject *args) {
                 FaceType opaque_neighbors = 0;
 
                 /* Get the model to use */
-                BlockModel *model = get_block_model(&state, x, y, z);
+                BlockDef *def = get_block_def(&state, x, y, z);
+                BlockModel *model = get_block_model(&state, def, x, y, z);
                 if (!model)
                     continue;
                 
@@ -373,6 +387,20 @@ static PyObject *render(PyObject *self, PyObject *args) {
                     v->x += x;
                     v->y += y;
                     v->z += z;
+                }
+                
+                /* Do biome coloring... */
+                for (i = 0; i < model->faces.length; i++) {
+                    FaceDef *f = &((FaceDef *)(model->faces.data))[i];
+                    if ((f->face_type & FACE_BIOME_COLORED) == 0)
+                        continue;
+                    
+                    /* assume that biome-colored verts and other verts are
+                     * mutually-exclusive. */
+                    for (j = 0; j < 3; j++) {
+                        OILVertex *v = &((OILVertex *)(blockvertices.data))[f->p[j]];
+                        set_biome_color(&state, def, &(v->color));
+                    }
                 }
 
                 /* Here we look at the neighboring blocks and build a bitmask
@@ -630,6 +658,37 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
         Py_DECREF(prop);
     }
     if (!prop || prop_istrue == -1) {
+        return 0;
+    }
+
+    /* biomecolors */
+    prop = PyObject_GetAttrString(pydef, "biomecolors");
+    if (prop) {
+        if (prop == Py_None) {
+            def->biomecolors = NULL;
+        } else {
+            PyObject *texobj = PyObject_CallMethod(pytextures, "load", "O", prop);
+            if (!texobj || !PyObject_TypeCheck(texobj, PyOILImageType)) {
+                if (texobj) {
+                    PyErr_SetString(PyExc_TypeError, "Textures.load() did not return an oil.Image object");
+                    Py_DECREF(texobj);
+                }
+                return 0;
+            }
+            
+            /* ensure we hold on to this for the lifetime of the
+               compiled defs */
+            if (PySet_Add(images, texobj) == -1) {
+                Py_DECREF(texobj);
+                return 0;
+            }
+            
+            def->biomecolors = ((PyOILImage *)texobj)->im;
+            Py_DECREF(texobj);
+        }
+        Py_DECREF(prop);
+    }
+    if (!prop) {
         return 0;
     }
 

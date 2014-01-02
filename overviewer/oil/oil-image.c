@@ -216,6 +216,14 @@ const OILPixel *oil_image_get_data(OILImage *im) {
     return NULL;
 }
 
+const OILPixel *oil_image_get_pixel(OILImage *im, unsigned int x, unsigned int y) {
+    const OILPixel *data;
+    if (!im || x >= im->width || y >= im->height)
+        return NULL;
+    data = oil_image_get_data(im);
+    return &(data[y * im->width + x]);
+}
+
 OILPixel *oil_image_lock(OILImage *im) {
     if (im) {
         if (im->locked)

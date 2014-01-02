@@ -1,0 +1,36 @@
+{
+    "datatype": "masked",
+    "dataparameter": 3,
+    "transparent": true,
+    "biomecolors": "assets/minecraft/textures/colormap/foliage.png",
+    "models": {
+        "0": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/leaves_oak.png",
+            "transforms" : [
+                {"type": "biomecolor", "texture": "leaves"}
+            ]
+        },
+        "1": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/leaves_spruce.png",
+            "transforms" : [
+                {"type": "biomecolor", "texture": "leaves"}
+            ]
+        },
+        "2": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/leaves_birch.png",
+            "transforms" : [
+                {"type": "biomecolor", "texture": "leaves"}
+            ]
+        },
+        "3": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/leaves_jungle.png",
+            "transforms" : [
+                {"type": "biomecolor", "texture": "leaves"}
+            ]
+        }
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "type": "obj",
+    "biomecolors": "assets/minecraft/textures/colormap/grass.png",
+    "transforms": [
+        {"type": "biomecolor", "texture": "grass_top.png"},
+        {"type": "biomecolor", "texture": "grass_side_overlay.png"}
+    ]
+}

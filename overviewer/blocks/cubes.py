@@ -87,16 +87,4 @@ def make_custom(terrain, **kwargs):
     return make_box(terrain, **kwargs)
 
 def add(bd):
-    # grass
-    side = "assets/minecraft/textures/blocks/grass_side.png"
-    top = "assets/minecraft/textures/blocks/grass_top.png"
-    bottom = "assets/minecraft/textures/blocks/dirt.png"
-    bd.add(BlockDefinition(make_simple((side,side,side,side,bottom,top), topcolor=(0,255,0,255))), 2)
-    
-    # leaves
-    leaves = BlockDefinition(transparent=True, datatype=chunkrenderer.BLOCK_DATA_MASKED, dataparameter=0x03)
-    leaves.add(make_simple("assets/minecraft/textures/blocks/leaves_oak.png", color=(0, 150, 0, 255)), 0)
-    leaves.add(make_simple("assets/minecraft/textures/blocks/leaves_spruce.png", color=(0, 150, 0, 255)), 1)
-    leaves.add(make_simple("assets/minecraft/textures/blocks/leaves_birch.png", color=(0, 150, 0, 255)), 2)
-    leaves.add(make_simple("assets/minecraft/textures/blocks/leaves_jungle.png", color=(0, 150, 0, 255)), 3)
-    bd.add(leaves, 18)
+    pass

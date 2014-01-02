@@ -115,6 +115,8 @@ typedef struct {
     unsigned int solid: 1;
     unsigned int fluid: 1;
     unsigned int nospawn: 1;
+    
+    OILImage *biomecolors;
 
     /* The data function, used to determine which block model to use */
     DataType datatype;
