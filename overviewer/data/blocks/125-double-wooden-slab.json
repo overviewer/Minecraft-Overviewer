@@ -1,0 +1,29 @@
+{
+    "datatype": "passthrough",
+    "models": {
+        "00": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/planks_oak.png"
+        },
+        "01": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/planks_spruce.png"
+        },
+        "02": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/planks_birch.png"
+        },
+        "03": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/planks_jungle.png"
+        },
+        "04": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/planks_acacia.png"
+        },
+        "05": {
+            "type": "cube",
+            "texture": "assets/minecraft/textures/blocks/planks_big_oak.png"
+        }
+    }
+}

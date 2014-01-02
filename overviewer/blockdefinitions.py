@@ -199,7 +199,7 @@ def load_cube_model(model, path, label):
     
     # Positive X is front
     # Positive Y is top
-    # Positive Z is ... Right ... ?
+    # Positive Z is right
     tdefaults = {'top': texture, 'bottom': texture, 'left': side, 'right': side, 'front': side, 'back': side}
     
     t = {}
@@ -263,9 +263,9 @@ def load_cube_model(model, path, label):
 
     m.faces = [
         ([0, 1, 2, 3], chunkrenderer.FACE_TYPE_NX, t['back']),
-        ([4, 5, 6, 7], chunkrenderer.FACE_TYPE_NZ, t['left']), # ???
+        ([4, 5, 6, 7], chunkrenderer.FACE_TYPE_NZ, t['left']),
         ([8, 9, 10, 11], chunkrenderer.FACE_TYPE_PX, t['front']),
-        ([12, 13, 14, 15], chunkrenderer.FACE_TYPE_PZ, t['right']), # ???
+        ([12, 13, 14, 15], chunkrenderer.FACE_TYPE_PZ, t['right']),
         ([16, 17, 18, 19], chunkrenderer.FACE_TYPE_NY, t['bottom']),
         ([20, 21, 22, 23], chunkrenderer.FACE_TYPE_PY, t['top']),
     ]
@@ -275,7 +275,9 @@ def load_cube_model(model, path, label):
 @model_type("obj")
 def load_obj_model(model, path, label):
     objpath = os.path.splitext(path)[0] + ".obj"
-    objpath = model.pop("file", objpath)
+    objpathmaybe = model.pop("file", None)
+    if objpathmaybe:
+        objpath = os.path.join(os.path.split(path)[0], objpathmaybe)
     if not os.path.exists(objpath):
         raise RuntimeError("file does not exist: '{}'".format(objpath))
     

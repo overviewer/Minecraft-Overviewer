@@ -113,34 +113,45 @@ class OBJParser(BaseParser):
     def __init__(self, mfinder):
         super(OBJParser, self).__init__()
         self.mfinder = mfinder
+        
+        self.vindex = 1
+        self.tcindex = 1
+        self.nindex = 1
+        self.obj = None
+        
         self.mtls = {}
 
     # helper to parse a face vertex
-    @staticmethod
-    def parse_vert(s):
+    def parse_vert(self, s):
         parts = s.split('/')
         if len(parts) == 1:
-            return (int(parts[0]) - 1, None, None)
+            return (int(parts[0]) - self.vindex, None, None)
         if len(parts) == 2:
-            return (int(parts[0]) - 1, int(parts[1]) - 1, None)
+            return (int(parts[0]) - self.vindex, int(parts[1]) - self.tcindex, None)
         else:
             v, tc, n = parts
-            v = int(v) - 1
-            n = int(n) - 1
+            v = int(v) - self.vindex
+            n = int(n) - self.nindex
             if tc:
-                tc = int(tc) - 1
+                tc = int(tc) - self.tcindex
             else:
                 tc = None
             return (v, tc, n)
     
     def get_emitable(self):
-        if self.obj.faces:
+        if self.obj and self.obj.faces:
             return self.oname, self.obj
         return None
     
     def reset_state(self):
         self.oname = None
         self.fmtl = None
+        
+        if self.obj:
+            self.vindex += len(self.obj.vertices)
+            self.tcindex += len(self.obj.texcoords)
+            self.nindex += len(self.obj.normals)
+        
         self.obj = Object()
     
     def mtllib(self, lib):

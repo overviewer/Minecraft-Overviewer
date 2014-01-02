@@ -1,0 +1,161 @@
+{
+    "datatype": "passthrough",
+    "transparent": true,
+    "models": {
+        "00": {
+            "type": "obj",
+            "name": "bottom"
+        },
+        "08": {
+            "type": "obj",
+            "name": "top"
+        },
+        
+        "01": {
+            "type": "obj",
+            "name": "bottom",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/sandstone_top.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/sandstone_normal.png"}
+            ]
+        },
+        "09": {
+            "type": "obj",
+            "name": "top",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/sandstone_top.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/sandstone_normal.png"}
+            ]
+        },
+
+        "02": {
+            "type": "obj",
+            "name": "bottom",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/planks_oak.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/planks_oak.png"}
+            ]
+        },
+        "10": {
+            "type": "obj",
+            "name": "top",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/planks_oak.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/planks_oak.png"}
+            ]
+        },
+
+        "03": {
+            "type": "obj",
+            "name": "bottom",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/cobblestone.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/cobblestone.png"}
+            ]
+        },
+        "11": {
+            "type": "obj",
+            "name": "top",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/cobblestone.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/cobblestone.png"}
+            ]
+        },
+
+        "04": {
+            "type": "obj",
+            "name": "bottom",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/brick.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/brick.png"}
+            ]
+        },
+        "12": {
+            "type": "obj",
+            "name": "top",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/brick.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/brick.png"}
+            ]
+        },
+
+        "05": {
+            "type": "obj",
+            "name": "bottom",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/stonebrick.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/stonebrick.png"}
+            ]
+        },
+        "13": {
+            "type": "obj",
+            "name": "top",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/stonebrick.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/stonebrick.png"}
+            ]
+        },
+
+        "06": {
+            "type": "obj",
+            "name": "bottom",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/nether_brick.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/nether_brick.png"}
+            ]
+        },
+        "14": {
+            "type": "obj",
+            "name": "top",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/nether_brick.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/nether_brick.png"}
+            ]
+        },
+
+        "07": {
+            "type": "obj",
+            "name": "bottom",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/quartz_block_top.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/quartz_block_side.png"}
+            ]
+        },
+        "15": {
+            "type": "obj",
+            "name": "top",
+            "transforms": [
+                {"type": "texreplace", "from": "top",
+                 "to": "assets/minecraft/textures/blocks/quartz_block_top.png"},
+                {"type": "texreplace", "from": "side",
+                 "to": "assets/minecraft/textures/blocks/quartz_block_side.png"}
+            ]
+        }
+    }
+}

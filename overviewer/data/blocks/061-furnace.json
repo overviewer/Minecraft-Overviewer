@@ -1,0 +1,33 @@
+{
+    "datatype": "passthrough",
+    "models": {
+        "2": {
+            "type": "cube",
+            "top": "assets/minecraft/textures/blocks/furnace_top.png",
+            "bottom": "assets/minecraft/textures/blocks/furnace_top.png",
+            "side": "assets/minecraft/textures/blocks/furnace_side.png",
+            "left": "assets/minecraft/textures/blocks/furnace_front_off.png"
+        },
+        "3": {
+            "type": "cube",
+            "top": "assets/minecraft/textures/blocks/furnace_top.png",
+            "bottom": "assets/minecraft/textures/blocks/furnace_top.png",
+            "side": "assets/minecraft/textures/blocks/furnace_side.png",
+            "right": "assets/minecraft/textures/blocks/furnace_front_off.png"
+        },
+        "4": {
+            "type": "cube",
+            "top": "assets/minecraft/textures/blocks/furnace_top.png",
+            "bottom": "assets/minecraft/textures/blocks/furnace_top.png",
+            "side": "assets/minecraft/textures/blocks/furnace_side.png",
+            "back": "assets/minecraft/textures/blocks/furnace_front_off.png"
+        },
+        "5": {
+            "type": "cube",
+            "top": "assets/minecraft/textures/blocks/furnace_top.png",
+            "bottom": "assets/minecraft/textures/blocks/furnace_top.png",
+            "side": "assets/minecraft/textures/blocks/furnace_side.png",
+            "front": "assets/minecraft/textures/blocks/furnace_front_off.png"
+        }
+    }
+}
