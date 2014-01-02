@@ -236,7 +236,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.6-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        raise TextureException("could not find '{0}'".format(filename))
 
     def load(self, filename):
         """Returns an overviewer.oil.Image object from the given texture
