@@ -61,12 +61,12 @@ try:
     USE_INOTIFY = True
     print "found pyinotify, reloading enabled"
 except ImportError:
-    print "install pyinotify to get auto-code-reloading"
+    print "install pyinotify to get auto-reloading"
     USE_INOTIFY = False
 
-def wait_for_code_change():
+def wait_for_change(path, exts, run_test=lambda: True):
     if not USE_INOTIFY:
-        while True:
+        while run_test():
             # if we have no inotify, don't even try
             time.sleep(10)
     
@@ -77,18 +77,16 @@ def wait_for_code_change():
     class OnModifyHandler(pyinotify.ProcessEvent):
         def process_IN_MODIFY(self, event):
             path = event.pathname
-            exts = ['so', 'dll', 'py', 'dylib', 'obj', 'mtl', 'json']
             if any(path.endswith('.' + ext) for ext in exts):
                 done.append(())
     
-    watchpath = os.path.split(__file__)[0]
     handler = OnModifyHandler()
     
     notifier = pyinotify.Notifier(wm, default_proc_fun=handler, read_freq=1, timeout=10)
     notifier.coalesce_events()
-    wm.add_watch(watchpath, pyinotify.ALL_EVENTS, rec=True, auto_add=True)
+    wm.add_watch(path, pyinotify.ALL_EVENTS, rec=True, auto_add=True)
     
-    while not done:
+    while not done and run_test():
         notifier.process_events()
         while notifier.check_events():
             notifier.read_events()
@@ -302,7 +300,6 @@ class Explorer(wx.Frame):
         self.SetSizer(box)
     
     def OnReload(self):
-        print "(reloading...)"
         reload_all()
         self.RecreateObjects()
         self.map.ClearCache(keep_old=True)
@@ -342,11 +339,33 @@ class Explorer(wx.Frame):
     def SetTopDown(self, ev):
         self.SetMatrix(self.tdmatrix)
     
-    def LoadWorld(self, wpath):
+    def LoadWorld(self, wpath, create_reloader=True):
+        def reloader(path):
+            print("(reloading world...)")
+            self.LoadWorld(path, create_reloader=False)
+            self.map.ClearCache(True)
+        
+        def reloader_thread():
+            cached_wpath = self.wpath
+            def run_test():
+                return self.wpath == cached_wpath
+            
+            exts = ['mca']
+            while run_test():
+                wait_for_change(cached_wpath, exts, run_test=run_test)
+                if run_test():
+                    wx.CallAfter(reloader, cached_wpath)
+        
+        self.caches = [cache.LRUCache()]
         self.wpath = wpath
         self.world = world.World(wpath)
         self.rset = self.world.get_regionset(0)
         self.rset = world.CachedRegionSet(self.rset, self.caches)
+        
+        if create_reloader and '--reload-world' in sys.argv:
+            cthread = threading.Thread(target=reloader_thread)
+            cthread.daemon = True
+            cthread.start()
     
     def OnOpenWorld(self, ev):
         dlg = wx.FileDialog(self, "Choose a world", "", "", "*.dat", wx.OPEN)
@@ -358,8 +377,10 @@ class Explorer(wx.Frame):
         dlg.Destroy()
 
 def code_change_thread(frame):
+    exts = ['so', 'dll', 'py', 'dylib', 'obj', 'mtl', 'json']
     while True:
-        wait_for_code_change()
+        wait_for_change(os.path.split(__file__)[0], exts)
+        print("(reloading code...)")
         wx.CallAfter(frame.OnReload)
 
 if __name__ == '__main__':
