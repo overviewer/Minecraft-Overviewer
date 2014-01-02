@@ -400,12 +400,9 @@ def add_from_path(bd, path, namemap={}):
     bd.add(bdef, blockid)
 
 def get_default():
-    bd = BlockDefinitions()
-    
-    from overviewer import blocks
-    blocks.get_all(bd)
-    
+    bd = BlockDefinitions()    
     blockspath = os.path.join(util.get_program_path(), "overviewer", "data", "blocks")
+    
     for root, subdirs, files in os.walk(blockspath):
         del subdirs[:]
         

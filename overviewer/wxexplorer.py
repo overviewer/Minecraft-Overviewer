@@ -13,7 +13,6 @@ modules = [
     'world',
     'isometricrenderer',
     'blockdefinitions',
-    'blocks',
     'cache'
 ]
 
@@ -29,11 +28,6 @@ def reload_all(verbose=False):
             else:
                 reload(sys.modules[name])
         verbose = False
-    
-    for name in sys.modules['overviewer.blocks'].block_modules:
-        name = 'blocks.' + name
-        if not name in modules:
-            modules.append(name)
     
     for name, mod in sys.modules.items():
         if not isinstance(mod, types.ModuleType):
