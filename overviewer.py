@@ -151,7 +151,7 @@ def main():
                     if util.pid_exists(pid):
                         print("Already running (pid exists) - exiting..")
                         return 0
-            except IOError, ValueError:
+            except (IOError, ValueError):
                 pass
         with open(options.pid,"w") as f:
             f.write(str(os.getpid()))

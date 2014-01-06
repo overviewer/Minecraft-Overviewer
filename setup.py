@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+import sys
+
+# quick version check
+if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
+    print("Sorry, the Overviewer requires at least Python 2.6 to run")
+    if sys.version_info[0] >= 3:
+        print("and will not run on Python 3.0 or later")
+    sys.exit(1)
+
 from distutils.core import setup
 from distutils.extension import Extension
 from distutils.command.build import build
@@ -10,7 +19,7 @@ from distutils.cmd import Command
 from distutils.dir_util import remove_tree
 from distutils.sysconfig import get_python_inc
 from distutils import log
-import sys, os, os.path
+import os, os.path
 import glob
 import platform
 import time
@@ -229,7 +238,7 @@ def generate_version_py():
         f.write(outstr)
         f.close()
     except Exception:
-        print "WARNING: failed to build overviewer_version file"
+        print("WARNING: failed to build overviewer_version file")
 
 def generate_primitives_h():
     global primitives
@@ -261,13 +270,13 @@ class CustomBuild(build):
             generate_version_py()
             generate_primitives_h()
             build.run(self)
-            print "\nBuild Complete"
+            print("\nBuild Complete")
         except Exception:
-            print "\nFailed to build Overviewer!"
-            print "Please review the errors printed above and the build instructions"
-            print "at <http://docs.overviewer.org/en/latest/building/>.  If you are"
-            print "still having build problems, file an incident on the github tracker"
-            print "or find us in IRC."
+            print("\nFailed to build Overviewer!")
+            print("Please review the errors printed above and the build instructions")
+            print("at <http://docs.overviewer.org/en/latest/building/>.  If you are")
+            print("still having build problems, file an incident on the github tracker")
+            print("or find us in IRC.")
 
 class CustomBuildExt(build_ext):
     def build_extensions(self):
