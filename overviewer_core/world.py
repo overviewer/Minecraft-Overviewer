@@ -513,7 +513,7 @@ class RegionSet(object):
         Coords can be either be global chunk coords, or local to a region
 
         """
-        (regionfile,filemtime) = self.regionfiles.get((chunkX//32, chunkY//32),None)
+        (regionfile,filemtime) = self.regionfiles.get((chunkX//32, chunkY//32),(None, None))
         return regionfile
             
     def _iterate_regionfiles(self):
