@@ -1,3 +1,4 @@
+M
 import unittest
 import tempfile
 import shutil
@@ -50,6 +51,10 @@ class FakeRegionset(object):
         return NotImplementedError()
 
     def iterate_chunks(self):
+        for (x,z),mtime in self.chunks.iteritems():
+            yield x,z,mtime
+
+    def iterate_newer_chunks(self, filemtime):
         for (x,z),mtime in self.chunks.iteritems():
             yield x,z,mtime
 
