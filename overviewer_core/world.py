@@ -272,7 +272,7 @@ class RegionSet(object):
         
         for x, y, regionfile in self._iterate_regionfiles():
             # regionfile is a pathname
-            self.regionfiles[(x,y)] = regionfile
+            self.regionfiles[(x,y)] = (regionfile, os.path.getmtime(regionfile))
 
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
@@ -458,12 +458,33 @@ class RegionSet(object):
         
         """
 
-        for (regionx, regiony), regionfile in self.regionfiles.iteritems():
+        for (regionx, regiony), (regionfile, filemtime) in self.regionfiles.iteritems():
             try:
                 mcr = self._get_regionobj(regionfile)
             except nbt.CorruptRegionError:
                 logging.warning("Found a corrupt region file at %s,%s. Skipping it.", regionx, regiony)
                 continue
+            for chunkx, chunky in mcr.get_chunks():
+                yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
+
+    def iterate_newer_chunks(self, mtime):
+        """Returns an iterator over all chunk metadata in this world. Iterates
+        over tuples of integers (x,z,mtime) for each chunk.  Other chunk data
+        is not returned here.
+        
+        """
+
+        for (regionx, regiony), (regionfile, filemtime) in self.regionfiles.iteritems():
+            """ SKIP LOADING A REGION WHICH HAS NOT BEEN MODIFIED! """
+            if (filemtime < mtime):
+                continue
+
+            try:
+                mcr = self._get_regionobj(regionfile)
+            except nbt.CorruptRegionError:
+                logging.warning("Found a corrupt region file at %s,%s. Skipping it.", regionx, regiony)
+                continue
+
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
 
@@ -492,7 +513,7 @@ class RegionSet(object):
         Coords can be either be global chunk coords, or local to a region
 
         """
-        regionfile = self.regionfiles.get((chunkX//32, chunkY//32),None)
+        (regionfile,filemtime) = self.regionfiles.get((chunkX//32, chunkY//32),None)
         return regionfile
             
     def _iterate_regionfiles(self):
@@ -536,6 +557,8 @@ class RegionSetWrapper(object):
         return self._r.get_chunk(x,z)
     def iterate_chunks(self):
         return self._r.iterate_chunks()
+    def iterate_newer_chunks(self,filemtime):
+        return self._r.iterate_newer_chunks(filemtime)
     def get_chunk_mtime(self, x, z):
         return self._r.get_chunk_mtime(x,z)
     
@@ -622,6 +645,11 @@ class RotatedRegionSet(RegionSetWrapper):
             x,z = self.rotate(x,z)
             yield x,z,mtime
 
+    def iterate_newer_chunks(self, filemtime):
+        for x,z,mtime in super(RotatedRegionSet, self).iterate_newer_chunks(filemtime):
+            x,z = self.rotate(x,z)
+            yield x,z,mtime
+
 class CroppedRegionSet(RegionSetWrapper):
     def __init__(self, rsetobj, xmin, zmin, xmax, zmax):
         super(CroppedRegionSet, self).__init__(rsetobj)
@@ -645,6 +673,14 @@ class CroppedRegionSet(RegionSetWrapper):
                     self.xmin <= x <= self.xmax and
                     self.zmin <= z <= self.zmax
                 )
+
+    def iterate_newer_chunks(self, filemtime):
+        return ((x,z,mtime) for (x,z,mtime) in super(CroppedRegionSet,self).iterate_newer_chunks(filemtime)
+                if
+                    self.xmin <= x <= self.xmax and
+                    self.zmin <= z <= self.zmax
+                )
+
     def get_chunk_mtime(self,x,z):
         if (
                 self.xmin <= x <= self.xmax and

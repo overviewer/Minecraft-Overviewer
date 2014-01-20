@@ -757,7 +757,7 @@ class TileSet(object):
         #       Compare the last modified time of the chunk and tile. If the
         #       tile is older, mark it in a RendertileSet object as dirty.
 
-        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks():
+        for chunkx, chunkz, chunkmtime in self.regionset.iterate_newer_chunks(last_rendertime):
 
             chunkcount += 1
 
