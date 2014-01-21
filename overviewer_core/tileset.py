@@ -758,7 +758,7 @@ class TileSet(object):
         #       tile is older, mark it in a RendertileSet object as dirty.
 
 
-        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks() if markall else self.regionset.iterate_newer_chunks(last_rendertime): 
+        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks() if (markall || platform.system() == 'Windows') else self.regionset.iterate_newer_chunks(last_rendertime): 
             chunkcount += 1
 
             if chunkmtime > max_chunk_mtime:
