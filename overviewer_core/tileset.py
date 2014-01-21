@@ -24,6 +24,7 @@ import functools
 import time
 import errno
 import stat
+import platform
 from collections import namedtuple
 from itertools import product, izip, chain
 
