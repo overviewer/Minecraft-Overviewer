@@ -454,8 +454,8 @@ overviewer.util = {
      * @param google.maps.Marker marker
      */
     'createMarkerInfoWindow': function(marker) {
-        var windowContent = '<div class="infoWindow"><img src="' + marker.icon +
-            '"/><p>' + marker.content.replace(/\n/g,'<br/>') + '</p></div>';
+        var windowContent = '<div class="infoWindow"><p><img src="' + marker.icon +
+            '"/><br />' + marker.content.replace(/\n/g,'<br/>') + '</p></div>';
         var infowindow = new google.maps.InfoWindow({
             'content': windowContent
         });
