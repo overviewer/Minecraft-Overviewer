@@ -338,7 +338,7 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
         
             ## An example that updates both a LoggingObserver and a JSObserver
             # Import the Observers
-            from Observer import MultiplexingObserver, LoggingObserver, JSObserver
+            from observer import MultiplexingObserver, LoggingObserver, JSObserver
             
             # Construct the LoggingObserver
             loggingObserver = LoggingObserver()
