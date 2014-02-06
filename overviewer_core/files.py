@@ -110,7 +110,11 @@ if renameworks:
             else:
                 # copy permission bits, if needed
                 if os.path.exists(self.destname):
-                    shutil.copymode(self.destname, self.tmpname)
+                    # only try copymode if it appears the permissions are different.
+                    # this tries to work around an issue when you have weird filesystems like CIFS
+                    # that don't let you chmod (cifs generally exposes everything as 777, which is a dirty lie)
+                    if os.stat(self.destname).st_mode != os.stat(self.tmpname).st_mode:
+                        shutil.copymode(self.destname, self.tmpname)
                 # atomic rename into place
                 os.rename(self.tmpname, self.destname)
 else:
