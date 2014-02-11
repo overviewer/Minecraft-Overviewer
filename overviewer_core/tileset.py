@@ -31,7 +31,7 @@ from PIL import Image
 
 from .util import roundrobin
 from . import nbt
-from .files import FileReplacer
+from .files import FileReplacer, get_fs_caps
 from .optimizeimages import optimize_image
 import rendermodes
 import c_overviewer
@@ -356,6 +356,9 @@ class TileSet(object):
                 "--fullrender for just this run")
                 self.options['renderchecks'] = 2
             os.mkdir(self.outputdir)
+
+        # must wait until outputdir exists
+        self.fs_caps = get_fs_caps(self.outputdir)
 
         if self.options['renderchecks'] == 2:
             # Set forcerendertime so that upon an interruption the next render
@@ -902,7 +905,7 @@ class TileSet(object):
                     logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
 
         # Save it
-        with FileReplacer(imgpath) as tmppath:
+        with FileReplacer(imgpath, capabilities=self.fs_caps) as tmppath:
             if imgformat == 'jpg':
                 img.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
             else: # png
@@ -1006,7 +1009,7 @@ class TileSet(object):
             #draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
 
         # Save them
-        with FileReplacer(imgpath) as tmppath:
+        with FileReplacer(imgpath, capabilities=self.fs_caps) as tmppath:
             if self.imgextension == 'jpg':
                 tileimg.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
             else: # png

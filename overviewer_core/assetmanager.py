@@ -25,7 +25,7 @@ from PIL import Image
 
 import world
 import util
-from files import FileReplacer, mirror_dir
+from files import FileReplacer, mirror_dir, get_fs_caps
 
 class AssetManager(object):
     """\
@@ -43,6 +43,8 @@ directory.
         self.outputdir = outputdir
         self.custom_assets_dir = custom_assets_dir
         self.renders = dict()
+
+        self.fs_caps = get_fs_caps(self.outputdir)
 
         # look for overviewerConfig in self.outputdir
         try:
@@ -148,7 +150,7 @@ directory.
 
         # write out config
         jsondump = json.dumps(dump, indent=4)
-        with FileReplacer(os.path.join(self.outputdir, "overviewerConfig.js")) as tmpfile:
+        with FileReplacer(os.path.join(self.outputdir, "overviewerConfig.js"), capabilities=self.fs_caps) as tmpfile:
             with codecs.open(tmpfile, 'w', encoding='UTF-8') as f:
                 f.write("var overviewerConfig = " + jsondump + ";\n")
 
@@ -162,12 +164,12 @@ directory.
         global_assets = os.path.join(util.get_program_path(), "overviewer_core", "data", "web_assets")
         if not os.path.isdir(global_assets):
             global_assets = os.path.join(util.get_program_path(), "web_assets")
-        mirror_dir(global_assets, self.outputdir)
+        mirror_dir(global_assets, self.outputdir, capabilities=self.fs_caps)
 
         if self.custom_assets_dir:
             # Could have done something fancy here rather than just overwriting
             # the global files, but apparently this what we used to do pre-rewrite.
-            mirror_dir(self.custom_assets_dir, self.outputdir)
+            mirror_dir(self.custom_assets_dir, self.outputdir, capabilities=self.fs_caps)
 
 	# write a dummy baseMarkers.js if none exists
         if not os.path.exists(os.path.join(self.outputdir, "baseMarkers.js")):
@@ -179,7 +181,7 @@ directory.
         js_src = os.path.join(util.get_program_path(), "overviewer_core", "data", "js_src")
         if not os.path.isdir(js_src):
             js_src = os.path.join(util.get_program_path(), "js_src")
-        with FileReplacer(os.path.join(self.outputdir, "overviewer.js")) as tmpfile:
+        with FileReplacer(os.path.join(self.outputdir, "overviewer.js"), capabilities=self.fs_caps) as tmpfile:
             with open(tmpfile, "w") as fout:
                 # first copy in js_src/overviewer.js
                 with open(os.path.join(js_src, "overviewer.js"), 'r') as f:
@@ -199,6 +201,6 @@ directory.
         versionstr = "%s (%s)" % (util.findGitVersion(), util.findGitHash()[:7])
         index = index.replace("{version}", versionstr)
 
-        with FileReplacer(indexpath) as indexpath:
+        with FileReplacer(indexpath, capabilities=self.fs_caps) as indexpath:
             with codecs.open(indexpath, 'w', encoding='UTF-8') as output:
                 output.write(index)

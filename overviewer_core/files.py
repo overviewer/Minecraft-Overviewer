@@ -20,9 +20,50 @@ import shutil
 import logging
 import stat
 
+default_caps = {"chmod_works": True, "rename_works": True}
+
+def get_fs_caps(dir_to_test):
+    return {"chmod_works": does_chmod_work(dir_to_test),
+            "rename_works": does_rename_work(dir_to_test)
+            }
+
+def does_chmod_work(dir_to_test):
+    "Detects if chmod works in a given directory"
+    # a CIFS mounted FS is the only thing known to reliably not provide chmod
+
+    if not os.path.isdir(dir_to_test):
+        return True
+
+    f1 = tempfile.NamedTemporaryFile(dir=dir_to_test)
+    try:
+        f1_stat = os.stat(f1.name)
+        os.chmod(f1.name, f1_stat.st_mode | stat.S_IRUSR)
+        chmod_works = True
+        logging.debug("Detected that chmods work in %r" % dir_to_test)
+    except OSError:
+        chmod_works = False
+        logging.debug("Detected that chmods do NOT work in %r" % dir_to_test)
+    return chmod_works
+
+def does_rename_work(dir_to_test):
+    with tempfile.NamedTemporaryFile(dir=dir_to_test) as f1:
+        with tempfile.NamedTemporaryFile(dir=dir_to_test) as f2:
+            try:
+                os.rename(f1.name,f2.name)
+            except OSError:
+                renameworks = False
+                logging.debug("Detected that overwriting renames do NOT work in %r" % dir_to_test)
+            else:
+                renameworks = True
+                logging.debug("Detected that overwriting renames work in %r" % dir_to_test)
+                # re-make this file so it can be deleted without error
+                open(f1.name, 'w').close()
+    return renameworks
+
 ## useful recursive copy, that ignores common OS cruft
-def mirror_dir(src, dst, entities=None):
+def mirror_dir(src, dst, entities=None, capabilities=default_caps):
     '''copies all of the entities from src to dst'''
+    chmod_works = capabilities.get("chmod_works")
     if not os.path.exists(dst):
         os.mkdir(dst)
     if entities and type(entities) != list: raise Exception("Expected a list, got a %r instead" % type(entities))
@@ -38,10 +79,13 @@ def mirror_dir(src, dst, entities=None):
             continue
         
         if os.path.isdir(os.path.join(src,entry)):
-            mirror_dir(os.path.join(src, entry), os.path.join(dst, entry))
+            mirror_dir(os.path.join(src, entry), os.path.join(dst, entry), capabilities=capabilities)
         elif os.path.isfile(os.path.join(src,entry)):
             try:
-                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
+                if chmod_works:
+                    shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
+                else:
+                    shutil.copyfile(os.path.join(src, entry), os.path.join(dst, entry))
             except IOError as outer: 
                 try:
                     # maybe permission problems?
@@ -51,24 +95,16 @@ def mirror_dir(src, dst, entities=None):
                     os.chmod(os.path.join(dst, entry), dst_stat.st_mode | stat.S_IWUSR)
                 except OSError: # we don't care if this fails
                     pass
-                shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
-                # if this stills throws an error, let it propagate up
+                # try again; if this stills throws an error, let it propagate up
+                if chmod_works:
+                    shutil.copy(os.path.join(src, entry), os.path.join(dst, entry))
+                else:
+                    shutil.copyfile(os.path.join(src, entry), os.path.join(dst, entry))
 
 # Define a context manager to handle atomic renaming or "just forget it write
 # straight to the file" depending on whether os.rename provides atomic
 # overwrites.
 # Detect whether os.rename will overwrite files
-with tempfile.NamedTemporaryFile() as f1:
-    with tempfile.NamedTemporaryFile() as f2:
-        try:
-            os.rename(f1.name,f2.name)
-        except OSError:
-            renameworks = False
-        else:
-            renameworks = True
-            # re-make this file so it can be deleted without error
-            open(f1.name, 'w').close()
-del tempfile,f1,f2
 doc = """This class acts as a context manager for files that are to be written
 out overwriting an existing file.
 
@@ -89,16 +125,20 @@ with FileReplacer("config") as configname:
     with open(configout, 'w') as configout:
         configout.write(newconfig)
 """
-if renameworks:
-    class FileReplacer(object):
-        __doc__ = doc
-        def __init__(self, destname):
-            self.destname = destname
+class FileReplacer(object):
+    __doc__ = doc
+    def __init__(self, destname, capabilities=default_caps):
+        self.caps = capabilities
+        self.destname = destname
+        if self.caps.get("rename_works"):
             self.tmpname = destname + ".tmp"
-        def __enter__(self):
+    def __enter__(self):
+        if self.caps.get("rename_works"):
             # rename works here. Return a temporary filename
             return self.tmpname
-        def __exit__(self, exc_type, exc_val, exc_tb):
+        return self.destname
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.caps.get("rename_works"):
             if exc_type:
                 # error
                 try:
@@ -109,18 +149,7 @@ if renameworks:
                             "'%s'!", self.tmpname)
             else:
                 # copy permission bits, if needed
-                if os.path.exists(self.destname):
+                if self.caps.get("chmod_works") and os.path.exists(self.destname):
                     shutil.copymode(self.destname, self.tmpname)
                 # atomic rename into place
                 os.rename(self.tmpname, self.destname)
-else:
-    class FileReplacer(object):
-        __doc__ = doc
-        def __init__(self, destname):
-            self.destname = destname
-        def __enter__(self):
-            return self.destname
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            return
-del renameworks
-
