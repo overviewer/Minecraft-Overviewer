@@ -133,7 +133,12 @@ overviewer.views.CoordboxView = Backbone.View.extend({
         var worldcoords = overviewer.util.fromLatLngToWorld(latLng.lat(), 
         latLng.lng(),
         overviewer.mapView.options.currentTileSet);
-        this.el.innerHTML = "Coords: X " + Math.round(worldcoords.x) + ", Z " + Math.round(worldcoords.z);
+
+        var regionfileX = Math.floor(worldcoords.x / 32.0);
+        var regionfileZ = Math.floor(worldcoords.z / 32.0);
+        var regionfilename = "r." + regionfileX + "." + regionfileZ + ".mca";
+
+        this.el.innerHTML = "X " + Math.round(worldcoords.x) + " Z " + Math.round(worldcoords.z) + "(" + regionfilename + ")";
     }
 });
 
