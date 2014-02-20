@@ -525,7 +525,7 @@ def list_worlds():
     print("Detected saves:")
 
     # get max length of world name
-    worldNameLen = max([len(str(x)) for x in worlds] + [len("World")])
+    worldNameLen = max([len(x) for x in worlds] + [len("World")])
 
     formatString = "%-" + str(worldNameLen) + "s | %-8s | %-8s | %-16s | %s "
     print(formatString % ("World", "Size", "Playtime", "Modified", "Path"))

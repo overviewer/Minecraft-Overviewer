@@ -21,6 +21,7 @@ import hashlib
 import time
 import random
 import re
+import locale
 
 import numpy
 
@@ -734,6 +735,7 @@ def get_worlds():
     "Returns {world # or name : level.dat information}"
     ret = {}
     save_dir = get_save_dir()
+    loc = locale.getpreferredencoding()
 
     # No dirs found - most likely not running from inside minecraft-dir
     if not save_dir is None:
@@ -741,7 +743,7 @@ def get_worlds():
             world_dat = os.path.join(save_dir, dir, "level.dat")
             if not os.path.exists(world_dat): continue
             info = nbt.load(world_dat)[1]
-            info['Data']['path'] = os.path.join(save_dir, dir)
+            info['Data']['path'] = os.path.join(save_dir, dir).decode(loc)
             if dir.startswith("World") and len(dir) == 6:
                 try:
                     world_n = int(dir[-1])
@@ -755,7 +757,7 @@ def get_worlds():
         world_dat = os.path.join(dir, "level.dat")
         if not os.path.exists(world_dat): continue
         info = nbt.load(world_dat)[1]
-        info['Data']['path'] = os.path.join(".", dir)
+        info['Data']['path'] = os.path.join(".", dir).decode(loc)
         if 'LevelName' in info['Data'].keys():
             ret[info['Data']['LevelName']] = info['Data']
 
