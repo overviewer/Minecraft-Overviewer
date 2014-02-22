@@ -435,7 +435,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         texopts_key = tuple(texopts.items())
         if texopts_key not in texcache:
             tex = textures.Textures(**texopts)
-            logging.debug("Starting to generate textures")
+            logging.info("Generating textures...")
             tex.generate()
             logging.debug("Finished generating textures")
             texcache[texopts_key] = tex
@@ -485,6 +485,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         tilesets.append(tset)
 
     # Do tileset preprocessing here, before we start dispatching jobs
+    logging.info("Preprocessing...")
     for ts in tilesets:
         ts.do_preprocessing()
 
