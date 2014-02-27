@@ -8,10 +8,10 @@ Documentation:
 
 Github code repository:
     http://github.com/overviewer/Minecraft-Overviewer
-	
+
 Travis-CI:
     http://travis-ci.org/overviewer/Minecraft-Overviewer
-	
+
 Blog:
     http://overviewer.org/blog/
 
@@ -74,7 +74,7 @@ do *not* need a Google Maps API key (as was the case with older versions of the
 API), so just copying the directory to your web server should suffice. You are,
 however, bound by the Google Maps API terms of service.
 
-http://code.google.com/apis/maps/terms.html
+https://developers.google.com/maps/terms
 
 Bugs
 ====
