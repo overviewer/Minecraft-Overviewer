@@ -5,6 +5,7 @@ from collections import namedtuple
 
 import rendermodes
 import util
+from optimizeimages import Optimizer
 from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
 
 class ValidationException(Exception):
@@ -155,8 +156,13 @@ def validateBGColor(color):
         return color
 
 
-def validateOptImg(opt):
-    return bool(opt)
+def validateOptImg(optimizers):
+    if isinstance(optimizers, (int, long)):
+        raise ValidationException("You are using a deprecated method of specifying optimizeimg!")
+    for opt in optimizers:
+        if not isinstance(opt, Optimizer):
+            raise ValidationException("Invalid Optimizer!")
+    return optimizers
 
 def validateTexturePath(path):
     # Expand user dir in directories strings
