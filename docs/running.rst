@@ -150,11 +150,12 @@ is typically correct.
     haven't, so each one is checked before it is rendered.
     
     This is slightly slower than :option:`--no-tile-checks` due to the
-    additonaly disk-io involved in reading tile mtimes from the filesystem
+    additional disk-io involved in reading tile mtimes from the filesystem
     
     Since this option also checks for erroneous tiles, **It is also useful after
     you delete sections of your map, e.g. with worldedit, to delete tiles that
-    should no longer exist.**
+    should no longer exist.** Overviewer greatly overestimates tiles to be 
+    rendered and time needed to complete.
 
     The caveats with this option are the same as for :option:`--no-tile-checks`
     with the additional caveat that tile timestamps in the filesystem must be
