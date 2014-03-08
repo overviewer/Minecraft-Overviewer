@@ -4224,6 +4224,9 @@ def hopper(self, blockid, data):
 
     return img
 
+# slime block
+block(blockid=165, top_image="assets/minecraft/textures/blocks/slime.png")
+
 # hay block
 @material(blockid=170, data=range(9), solid=True)
 def hayblock(self, blockid, data):
