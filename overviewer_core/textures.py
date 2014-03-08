@@ -864,7 +864,23 @@ def billboard(blockid=[], imagename=None, **kwargs):
 ##
 
 # stone
-block(blockid=1, top_image="assets/minecraft/textures/blocks/stone.png")
+@material(blockid=1, data=range(7), solid=True)
+def stone(self, blockid, data):
+    if data == 0: # regular old-school stone
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone.png")
+    elif data == 1: # granite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_granite.png")
+    elif data == 2: # polished granite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_granite_smooth.png")
+    elif data == 3: # diorite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_diorite.png")
+    elif data == 4: # polished diorite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_diorite_smooth.png")
+    elif data == 5: # andesite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_andesite.png")
+    elif data == 6: # polished andesite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_andesite_smooth.png")
+    return self.build_block(img, img)
 
 @material(blockid=2, data=range(11)+[0x10,], solid=True)
 def grass(self, blockid, data):
@@ -3216,7 +3232,7 @@ def comparator(self, blockid, data):
     
 # trapdoor
 # the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=96, data=range(16), transparent=True, nospawn=True)
+@material(blockid=[96,167], data=range(16), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
     # rotation
@@ -3238,7 +3254,10 @@ def trapdoor(self, blockid, data):
         elif (data & 0b0011) == 3: data = data & 0b1100 | 0
 
     # texture generation
-    texture = self.load_image_texture("assets/minecraft/textures/blocks/trapdoor.png")
+    if blockid == 96:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/trapdoor.png")
+    else:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/iron_trapdoor.png")
     if data & 0x4 == 0x4: # opened trapdoor
         if data & 0x3 == 0: # west
             img = self.build_full_block(None, None, None, None, texture)
