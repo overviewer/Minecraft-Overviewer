@@ -132,7 +132,11 @@ def handlePlayers(rset, render, worldpath):
             dimension = int(mystdim.group(1))
         else:
             raise
-    playerdir = os.path.join(worldpath, "players")
+    # TODO: get player names from UUIDs once Mojang makes available an API to do it
+    playerdir = os.path.join(worldpath, "playerdata")
+    if not os.path.isdir(playerdir):
+        playerdir = os.path.join(worldpath, "players")
+
     if os.path.isdir(playerdir):
         playerfiles = os.listdir(playerdir)
         playerfiles = [x for x in playerfiles if x.endswith(".dat")]
