@@ -566,13 +566,22 @@ values. The valid configuration keys are listed below.
     **Default:** ``#1a1a1a``
 
 ``defaultzoom``
-    This value specifies the default zoom level that the map will be opened
-    with. It has to be greater than 0.
+    This value specifies the default zoom level that the map will be
+    opened with. It has to be greater than 0, which corresponds to the
+    most zoomed-out level. If you use ``minzoom`` or ``maxzoom``, it
+    should be between those two.
 
     **Default:** ``1``
 
 ``maxzoom``
-    This specifies the maximum zoom allowed by the zoom control on the web page.
+    This specifies the maximum, closest in zoom allowed by the zoom
+    control on the web page. This is relative to 0, the farthest-out
+    image, so setting this to 8 will allow you to zoom in at most 8
+    times. This is *not* relative to ``minzoom``, so setting
+    ``minzoom`` will shave off even more levels. If you wish to
+    specify how many zoom levels to leave off, instead of how many
+    total to use, use a negative number here. For example, setting
+    this to -2 will disable the two most zoomed-in levels.
 
     .. note::
 
@@ -583,8 +592,9 @@ values. The valid configuration keys are listed below.
     **Default:** Automatically set to most detailed zoom level
 
 ``minzoom``
-    This specifies the minimum zoom allowed by the zoom control on the web page.  For
-    example, setting this to 2 will disable the two most-zoomed out levels.
+    This specifies the minimum, farthest away zoom allowed by the zoom
+    control on the web page. For example, setting this to 2 will
+    disable the two most zoomed-out levels.
 
     .. note::
 

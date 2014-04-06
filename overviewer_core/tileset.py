@@ -552,7 +552,9 @@ class TileSet(object):
                 poititle = self.options.get("poititle"),
                 showlocationmarker = self.options.get("showlocationmarker")
                 )
+        d['maxZoom'] = min(self.treedepth, d['maxZoom'])
         d['minZoom'] = min(max(0, self.options.get("minzoom", 0)), d['maxZoom'])
+        d['defaultZoom'] = max(d['minZoom'], min(d['defaultZoom'], d['maxZoom']))
 
         if isOverlay:
             d.update({"tilesets": self.options.get("overlay")})
