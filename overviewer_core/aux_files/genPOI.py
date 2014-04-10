@@ -165,7 +165,7 @@ def handlePlayers(rset, render, worldpath):
                 profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + playername.replace('-','')).read())
                 if 'name' in profile:
                     playername = profile['name']
-            except ValueError:
+            except (ValueError, urllib2.URLError):
                 logging.warning("Unable to get player name for UUID %s", playername)
         if isSinglePlayer:
             playername = 'Player'
