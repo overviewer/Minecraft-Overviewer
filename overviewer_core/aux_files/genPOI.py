@@ -19,6 +19,7 @@ import logging
 import json
 import sys
 import re
+import urllib2
 import Queue
 import multiprocessing
 
@@ -29,6 +30,8 @@ from optparse import OptionParser
 from overviewer_core import logger
 from overviewer_core import nbt
 from overviewer_core import configParser, world
+
+UUID_LOOKUP_URL = 'https://sessionserver.mojang.com/session/minecraft/profile/'
 
 def replaceBads(s):
     "Replaces bad characters with good characters!"
@@ -132,7 +135,12 @@ def handlePlayers(rset, render, worldpath):
             dimension = int(mystdim.group(1))
         else:
             raise
-    playerdir = os.path.join(worldpath, "players")
+    playerdir = os.path.join(worldpath, "playerdata")
+    useUUIDs = True
+    if not os.path.isdir(playerdir):
+        playerdir = os.path.join(worldpath, "players")
+        useUUIDs = False
+
     if os.path.isdir(playerdir):
         playerfiles = os.listdir(playerdir)
         playerfiles = [x for x in playerfiles if x.endswith(".dat")]
@@ -152,6 +160,13 @@ def handlePlayers(rset, render, worldpath):
             logging.warning("Skipping bad player dat file %r", playerfile)
             continue
         playername = playerfile.split(".")[0]
+        if useUUIDs:
+            try:
+                profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + playername.replace('-','')).read())
+                if 'name' in profile:
+                    playername = profile['name']
+            except ValueError:
+                logging.warning("Unable to get player name for UUID %s", playername)
         if isSinglePlayer:
             playername = 'Player'
         if data['Dimension'] == dimension:
