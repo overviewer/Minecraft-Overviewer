@@ -514,6 +514,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     if options.pid:
         os.remove(options.pid)
 
+    logging.info("Your render has been written to '%s', open index.html to view it" % destdir)    
+        
     return 0
 
 def list_worlds():
