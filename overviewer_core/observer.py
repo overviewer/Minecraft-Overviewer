@@ -345,7 +345,7 @@ class ServerAnnounceObserver(Observer):
 
     def update(self, current_value):
         super(ServerAnnounceObserver, self).update(current_value)
-        if self._need_update(current_value):
+        if self._need_update():
             self._send_output('Rendered %d of %d tiles, %d%% complete' %
                 (self.get_current_value(), self.get_max_value(),
                     self.get_percentage()))
