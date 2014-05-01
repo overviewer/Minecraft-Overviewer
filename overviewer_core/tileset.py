@@ -130,6 +130,14 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 #       slowest, but SHOULD be specified if this is the first render because
 #       the scan will forgo tile stat calls. It's also useful for changing
 #       texture packs or other options that effect the output.
+
+#   3
+#       A very special mode. Using this will not actually render
+#       anything, but will leave this tileset in the resulting
+#       map. Useful for renders that you want to keep, but not
+#       update. Since this mode is so simple, it's left out of the
+#       rest of this discussion.
+
 #
 # For 0 our caller has explicitly requested not to check mtimes on disk to
 # speed things up. So the mode 0 chunk scan only looks at chunk mtimes and the
@@ -237,6 +245,13 @@ class TileSet(object):
                 render because the scan will forgo tile stat calls. It's also
                 useful for changing texture packs or other options that effect
                 the output.
+
+            3
+                A very special mode. Using this will not actually render
+                anything, but will leave this tileset in the resulting
+                map. Useful for renders that you want to keep, but not
+                update. Since this mode is so simple, it's left out of the
+                rest of this discussion.
 
         imgformat
             A string indicating the output format. Must be one of 'png' or
@@ -390,6 +405,11 @@ class TileSet(object):
         attribute for later use in iterate_work_items()
 
         """
+
+        # skip if we're told to
+        if self.options['renderchecks'] == 3:
+            return
+        
         # REMEMBER THAT ATTRIBUTES ASSIGNED IN THIS METHOD ARE NOT AVAILABLE IN
         # THE do_work() METHOD (because this is only called in the main process
         # not the workers)
@@ -416,15 +436,16 @@ class TileSet(object):
         return 1
 
     def get_phase_length(self, phase):
-        """Returns the number of work items in a given phase, or None if there
-        is no good estimate.
+        """Returns the number of work items in a given phase.
         """
         # Yeah functional programming!
+        # and by functional we mean a bastardized python switch statement
         return {
                 0: lambda: self.dirtytree.count_all(),
                 #there is no good way to guess this so just give total count
                 1: lambda: (4**(self.treedepth+1)-1)/3,
                 2: lambda: self.dirtytree.count_all(),
+                3: lambda: 0,
                 }[self.options['renderchecks']]()
 
     def iterate_work_items(self, phase):
@@ -434,6 +455,10 @@ class TileSet(object):
         This method returns an iterator over (obj, [dependencies, ...])
         """
 
+        # skip if asked to
+        if self.options['renderchecks'] == 3:
+            return
+        
         # The following block of code implementes the changelist functionality.
         fd = self.options.get("changelist", None)
         if fd:
@@ -536,6 +561,11 @@ class TileSet(object):
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
         isOverlay = self.options.get("overlay") or (not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode")))
+
+        # don't update last render time if we're leaving this alone
+        last_rendertime = self.last_rendertime
+        if self.options['renderchecks'] != 3:
+            last_rendertime = self.max_chunk_mtime        
         
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
@@ -546,7 +576,7 @@ class TileSet(object):
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') +
                     (" - " + self.options.get('dimension')[0] if self.options.get('dimension')[1] != 0 else ''),
-                last_rendertime = self.max_chunk_mtime,
+                last_rendertime = last_rendertime,
                 imgextension = self.imgextension,
                 isOverlay = isOverlay,
                 poititle = self.options.get("poititle"),

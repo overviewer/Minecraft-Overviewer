@@ -318,19 +318,24 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         "--check-tiles, and --no-tile-checks. These options conflict.")
         parser.print_help()
         return 1
+
+    def set_renderchecks(checkname, num):
+        for name, render in config['renders'].iteritems():
+            if render.get('renderchecks', 0) == 3:
+                logging.warning(checkname + " ignoring render " + repr(name) + " since it's marked as \"don't render\".")
+            else:
+                render['renderchecks'] = num
+        
     if options.forcerender:
         logging.info("Forcerender mode activated. ALL tiles will be rendered")
-        for render in config['renders'].itervalues():
-            render['renderchecks'] = 2
+        set_renderchecks("forcerender", 2)
     elif options.checktiles:
         logging.info("Checking all tiles for updates manually.")
-        for render in config['renders'].itervalues():
-            render['renderchecks'] = 1
+        set_renderchecks("checktiles", 1)
     elif options.notilechecks:
         logging.info("Disabling all tile mtime checks. Only rendering tiles "+
         "that need updating since last render")
-        for render in config['renders'].itervalues():
-            render['renderchecks'] = 0
+        set_renderchecks("notilechecks", 0)
 
     if not config['renders']:
         logging.error("You must specify at least one render in your config file. See the docs if you're having trouble")

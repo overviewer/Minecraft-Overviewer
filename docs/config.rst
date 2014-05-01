@@ -704,6 +704,14 @@ values. The valid configuration keys are listed below.
                 'forcerender': True,
         }
 
+``renderchecks``
+    This is an integer, and functions as a more complex form of
+    ``forcerender``. Setting it to 1 enables :option:`--check-tiles`
+    mode, setting it to 2 enables :option:`--forcerender`, and 3 tells
+    Overviewer to keep this particular render in the output, but
+    otherwise don't update it. It defaults to 0, which is the usual
+    update checking mode.
+
 ``changelist``
     This is a string. It names a file where it will write out, one per line, the
     path to tiles that have been updated. You can specify the same file for
