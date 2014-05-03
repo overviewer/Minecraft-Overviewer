@@ -84,6 +84,8 @@ def main():
             help="Tries to locate the texture files. Useful for debugging texture problems.")
     parser.add_option("-V", "--version", dest="version",
             help="Displays version information and then exits", action="store_true")
+    parser.add_option("--check-version", dest="checkversion",
+            help="Fetchs information about the latest version of Overviewer", action="store_true")
     parser.add_option("--update-web-assets", dest='update_web_assets', action="store_true",
             help="Update web assets. Will *not* render tiles or update overviewerConfig.js")
 
@@ -141,7 +143,27 @@ def main():
         if options.verbose > 0:
             print("Python executable: %r" % sys.executable)
             print(sys.version)
+        if not options.checkversion:
+            return 0
+    if options.checkversion:
+        print("Currently running Minecraft Overviewer %s" % util.findGitVersion()),
+        print("(%s)" % util.findGitHash()[:7])
+        try:
+            import urllib
+            import json
+            latest_ver = json.loads(urllib.urlopen("http://overviewer.org/download.json").read())['src']
+            print("Latest version of Minecraft Overviewer %s (%s)" % (latest_ver['version'], latest_ver['commit'][:7]))
+            print("See http://overviewer.org/downloads for more information")
+        except Exception:
+            print("Failed to fetch latest version info.")
+            if options.verbose > 0:
+                import traceback
+                traceback.print_exc()
+            else:
+                print("Re-run with --verbose for more details")
+            return 1
         return 0
+
 
     if options.pid:
         if os.path.exists(options.pid):
