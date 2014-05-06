@@ -28,7 +28,7 @@ class Optimizer:
         raise NotImplementedError("I can't let you do that, Dave.")
     
     def fire_and_forget(self, args):
-        subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
+        subprocess.check_call(args)
 
     def check_availability(self):
         path = os.environ.get("PATH").split(os.pathsep)
@@ -46,7 +46,7 @@ class NonAtomicOptimizer(Optimizer):
         os.rename(img + ".tmp", img)
 
     def fire_and_forget(self, args, img):
-        subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
+        subprocess.check_call(args)
         self.cleanup(img)
 
 class PNGOptimizer:
@@ -76,8 +76,13 @@ class pngnq(NonAtomicOptimizer, PNGOptimizer):
         else:
             extension = ".png.tmp"
 
-        NonAtomicOptimizer.fire_and_forget(self, [self.binaryname, "-s", str(self.sampling),
-                                "-Q", self.dither, "-e", extension, img], img)
+        args = [self.binaryname, "-s", str(self.sampling), "-f", "-e", extension, img]
+        # Workaround for poopbuntu 12.04 which ships an old broken pngnq
+        if self.dither != "n":
+            args.insert(1, "-Q")
+            args.insert(2, self.dither)
+
+        NonAtomicOptimizer.fire_and_forget(self, args, img)
 
 class pngcrush(NonAtomicOptimizer, PNGOptimizer):
     binaryname = "pngcrush"
