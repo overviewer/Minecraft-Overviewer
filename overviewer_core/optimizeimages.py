@@ -16,6 +16,7 @@
 import os
 import subprocess
 import shlex
+import logging
 
 class Optimizer:
     binaryname = ""
@@ -28,6 +29,17 @@ class Optimizer:
     
     def fire_and_forget(self, args):
         subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
+
+    def check_availability(self):
+        path = os.environ.get("PATH").split(os.pathsep)
+        
+        def exists_in_path(prog):
+            result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
+            return len(result) != 0
+
+        if (not exists_in_path(self.binaryname)) and (not exists_in_path(self.binaryname + ".exe")):
+            raise Exception("Optimization program '%s' was not found!" % self.binaryname)
+        
 
 class NonAtomicOptimizer(Optimizer):
     def cleanup(self, img):
@@ -90,17 +102,6 @@ class optipng(Optimizer, PNGOptimizer):
     def optimize(self, img):
         Optimizer.fire_and_forget(self, [self.binaryname, "-o" + str(self.olevel), "-quiet", img])
         
-
-def check_programs(optimizers):
-    path = os.environ.get("PATH").split(os.pathsep)
-    
-    def exists_in_path(prog):
-        result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
-        return len(result) != 0
-    
-    for opt in optimizers:
-        if (not exists_in_path(opt.binaryname)) and (not exists_in_path(opt.binaryname + ".exe")):
-            raise Exception("Optimization program '%s' was not found!" % opt.binaryname)
 
 def optimize_image(imgpath, imgformat, optimizers):
         for opt in optimizers:

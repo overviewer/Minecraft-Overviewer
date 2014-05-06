@@ -7,6 +7,7 @@ import rendermodes
 import util
 from optimizeimages import Optimizer
 from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
+import logging
 
 class ValidationException(Exception):
     pass
@@ -159,7 +160,6 @@ def validateBGColor(color):
 def validateOptImg(optimizers):
     if isinstance(optimizers, (int, long)):
         from optimizeimages import pngcrush
-        import logging
         logging.warning("You're using a deprecated definition of optimizeimg. We'll do what you say for now, but please fix this as soon as possible.")
         optimizers = [pngcrush()]
     if not isinstance(optimizers, list):
@@ -167,6 +167,9 @@ def validateOptImg(optimizers):
     for opt in optimizers:
         if not isinstance(opt, Optimizer):
             raise ValidationException("Invalid Optimizer!")
+
+        opt.check_availability()
+
     return optimizers
 
 def validateTexturePath(path):
