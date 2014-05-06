@@ -158,7 +158,12 @@ def validateBGColor(color):
 
 def validateOptImg(optimizers):
     if isinstance(optimizers, (int, long)):
-        raise ValidationException("You are using a deprecated method of specifying optimizeimg!")
+        from optimizeimages import pngcrush
+        import logging
+        logging.warning("You're using a deprecated definition of optimizeimg. We'll do what you say for now, but please fix this as soon as possible.")
+        optimizers = [pngcrush()]
+    if not isinstance(optimizers, list):
+        raise ValidationException("optimizeimg is not a list. Make sure you specify them like [foo()], with square brackets.")
     for opt in optimizers:
         if not isinstance(opt, Optimizer):
             raise ValidationException("Invalid Optimizer!")
