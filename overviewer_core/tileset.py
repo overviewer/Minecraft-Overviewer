@@ -262,11 +262,7 @@ class TileSet(object):
             relevant in jpeg mode.
 
         optimizeimg
-            an integer indiating optimizations to perform on png outputs. 0
-            indicates no optimizations. Only relevant in png mode.
-            1 indicates pngcrush is run on all output images
-            2 indicates pngcrush and advdef are run on all output images with advdef -z2
-            3 indicates pngcrush and advdef are run on all output images with advdef -z4
+            A list of optimizer instances to use.
 
         rendermode
             Perhaps the most important/relevant option: a string indicating the
@@ -925,7 +921,11 @@ class TileSet(object):
             try:
                 #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
                 src = Image.open(path[1])
+                # optimizeimg may have converted them to a palette image in the meantime
+                if src.mode != "RGB" and src.mode != "RGBA":
+                    src = src.convert("RGBA")
                 src.load()
+
                 quad = Image.new("RGBA", (192, 192), self.options['bgcolor'])
                 resize_half(quad, src)
                 img.paste(quad, path[0])
@@ -1050,7 +1050,7 @@ class TileSet(object):
 
             if self.options['optimizeimg']:
                 optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])
-
+            
             os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))
 
     def _iterate_and_check_tiles(self, path):
