@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import traceback
 
 # quick version check
 if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
@@ -272,6 +273,7 @@ class CustomBuild(build):
             build.run(self)
             print("\nBuild Complete")
         except Exception:
+            traceback.print_exc(limit=1)
             print("\nFailed to build Overviewer!")
             print("Please review the errors printed above and the build instructions")
             print("at <http://docs.overviewer.org/en/latest/building/>.  If you are")

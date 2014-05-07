@@ -5,7 +5,9 @@ from collections import namedtuple
 
 import rendermodes
 import util
+from optimizeimages import Optimizer
 from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
+import logging
 
 class ValidationException(Exception):
     pass
@@ -155,8 +157,20 @@ def validateBGColor(color):
         return color
 
 
-def validateOptImg(opt):
-    return bool(opt)
+def validateOptImg(optimizers):
+    if isinstance(optimizers, (int, long)):
+        from optimizeimages import pngcrush
+        logging.warning("You're using a deprecated definition of optimizeimg. We'll do what you say for now, but please fix this as soon as possible.")
+        optimizers = [pngcrush()]
+    if not isinstance(optimizers, list):
+        raise ValidationException("optimizeimg is not a list. Make sure you specify them like [foo()], with square brackets.")
+    for opt in optimizers:
+        if not isinstance(opt, Optimizer):
+            raise ValidationException("Invalid Optimizer!")
+
+        opt.check_availability()
+
+    return optimizers
 
 def validateTexturePath(path):
     # Expand user dir in directories strings

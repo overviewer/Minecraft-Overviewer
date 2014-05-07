@@ -53,6 +53,10 @@ class FakeRegionset(object):
         for (x,z),mtime in self.chunks.iteritems():
             yield x,z,mtime
 
+    def iterate_newer_chunks(self, filemtime):
+        for (x,z),mtime in self.chunks.iteritems():
+            yield x,z,mtime
+
     def get_chunk_mtime(self, x, z):
         try:
             return self.chunks[x,z]
