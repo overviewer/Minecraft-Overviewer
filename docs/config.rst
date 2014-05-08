@@ -557,7 +557,9 @@ values. The valid configuration keys are listed below.
     The option is a list of Optimizer objects, which are then executed in
     the order in which they're specified::
         
+        # Import the optimizers we need
         from optimizeimages import pngnq, optipng
+
         worlds["world"] = "/path/to/world"
 
         renders["daytime"] = {
@@ -566,6 +568,10 @@ values. The valid configuration keys are listed below.
             "rendermode":smooth_lighting,
             "optimizeimg":[pngnq(sampling=1), optipng(olevel=3)],
         }
+
+    .. note::
+        Don't forget to import the optimizers you use in your config file, as shown in the
+        example above.
     
     Here is a list of supported image optimization programs:
 
@@ -612,8 +618,9 @@ values. The valid configuration keys are listed below.
             **Default:** ``2``
 
     ``pngcrush``
-        pngcrush is very slow and not very good, you should use optipng in probably all cases.
-        However, Overviewer still allows you to use it because we're nice people like that.
+        pngcrush, like optipng, is a lossless PNG recompressor. If you are able to do so, it
+        is recommended to use optipng instead, as it generally yields better results in less
+        time.
         Available settings:
 
         ``brute``
@@ -625,10 +632,6 @@ values. The valid configuration keys are listed below.
                 this option, then you are most likely wrong.
 
             **Default:** ``False``
-
-    .. note::
-        Don't forget to import the optimizers you use in your settings file, as shown in the
-        example above.
 
     **Default:** ``[]``
 
