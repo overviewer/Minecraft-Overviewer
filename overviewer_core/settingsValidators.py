@@ -167,17 +167,18 @@ def validateOptImg(optimizers):
         raise ValidationException("What you passed to optimizeimg is not a list. "\
                                   "Make sure you specify them like [foo()], with square brackets.")
 
-    for opt, next_opt in zip(optimizers, optimizers[1:]) + [(optimizers[-1], None)]:
-        if not isinstance(opt, Optimizer):
-            raise ValidationException("Invalid Optimizer!")
+    if optimizers:
+        for opt, next_opt in zip(optimizers, optimizers[1:]) + [(optimizers[-1], None)]:
+            if not isinstance(opt, Optimizer):
+                raise ValidationException("Invalid Optimizer!")
 
-        opt.check_availability()
+            opt.check_availability()
 
-        # Check whether the chaining is somewhat sane
-        if next_opt:
-            if opt.is_crusher() and not next_opt.is_crusher():
-                logging.warning("You're feeding a crushed output into an optimizer that does not crush. "\
-                                "This is most likely pointless, and wastes time.")
+            # Check whether the chaining is somewhat sane
+            if next_opt:
+                if opt.is_crusher() and not next_opt.is_crusher():
+                    logging.warning("You're feeding a crushed output into an optimizer that does not crush. "\
+                                    "This is most likely pointless, and wastes time.")
 
     return optimizers
 
