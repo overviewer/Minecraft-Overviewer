@@ -11,12 +11,12 @@ static size_t oil_python_read(void *file, void *data, size_t length) {
     
     if (!result)
         return 0;
-    if (!PyString_Check(result)) {
+    if (!PyBytes_Check(result)) {
         Py_DECREF(result);
         return 0;
     }
     
-    PyString_AsStringAndSize(result, (char **)&buffer, &buflength);
+    PyBytes_AsStringAndSize(result, (char **)&buffer, &buflength);
     if (!buffer || !buflength || buflength > length) {
         Py_DECREF(result);
         return 0;
@@ -28,7 +28,7 @@ static size_t oil_python_read(void *file, void *data, size_t length) {
 }
 
 static size_t oil_python_write(void *file, void *data, size_t length) {
-    PyObject *result = PyObject_CallMethod(file, "write", "s#", data, length);
+    PyObject *result = PyObject_CallMethod(file, "write", "y#", data, length);
     if (!result)
         return 0;
     Py_DECREF(result);
@@ -75,7 +75,7 @@ static PyOILMatrix *PyOILMatrix_new(PyTypeObject *subtype, PyObject *args, PyObj
 }
 
 static void PyOILMatrix_dealloc(PyOILMatrix *self) {
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 /* methods for Matrix type */
@@ -194,7 +194,7 @@ static PyObject *PyOILMatrix_str(PyOILMatrix *self) {
 
 static PyObject *PyOILMatrix_repr(PyOILMatrix *self) {
     PyObject *repr = PyOILMatrix_str(self);
-    PyObject *full_repr = PyString_FromFormat("OIL.Matrix(%s)", PyString_AsString(repr));
+    PyObject *full_repr = PyUnicode_FromFormat("OIL.Matrix(%U)", repr);
     Py_DECREF(repr);
     return full_repr;
 }
@@ -259,7 +259,7 @@ static PyObject *PyOILMatrix_positive(PyOILMatrix *mat) {
     return (PyObject *)mat;
 }
 
-static int PyOILMatrix_nonzero(PyOILMatrix *mat) {
+static int PyOILMatrix_bool(PyOILMatrix *mat) {
     return !oil_matrix_is_zero(&(mat->matrix));
 }
 
@@ -370,31 +370,26 @@ static PyNumberMethods PyOILMatrixNumberMethods = {
     (binaryfunc)PyOILMatrix_add, /* nb_add */
     (binaryfunc)PyOILMatrix_subtract, /* nb_subtract */
     (binaryfunc)PyOILMatrix_multiply, /* nb_multiply */
-    NULL,                      /* nb_divide */
     NULL,                      /* nb_remainder */
     NULL,                      /* nb_divmod */
     NULL,                      /* nb_power */
     (unaryfunc)PyOILMatrix_negative, /* nb_negative */
     (unaryfunc)PyOILMatrix_positive, /* nb_positive */
     NULL,                      /* nb_absolute */
-    (inquiry)PyOILMatrix_nonzero, /* nb_nonzero */
+    (inquiry)PyOILMatrix_bool, /* nb_bool */
     NULL,                      /* nb_invert */
     NULL,                      /* nb_lshift */
     NULL,                      /* nb_rshift */
     NULL,                      /* nb_and */
     NULL,                      /* nb_xor */
     NULL,                      /* nb_or */
-    NULL,                      /* nb_coerce */
     NULL,                      /* nb_int */
-    NULL,                      /* nb_long */
+    NULL,                      /* nb_reserved */
     NULL,                      /* nb_float */
-    NULL,                      /* nb_oct */
-    NULL,                      /* nb_hex */
 
     (binaryfunc)PyOILMatrix_inplace_add, /* nb_inplace_add */
     (binaryfunc)PyOILMatrix_inplace_subtract, /* nb_inplace_subtract */
     (binaryfunc)PyOILMatrix_inplace_multiply, /* nb_inplace_multiply */
-    NULL,                      /* nb_inplace_divide */
     NULL,                      /* nb_inplace_remainder */
     NULL,                      /* nb_inplace_power */
     NULL,                      /* nb_inplace_lshift */
@@ -402,39 +397,57 @@ static PyNumberMethods PyOILMatrixNumberMethods = {
     NULL,                      /* nb_inplace_and */
     NULL,                      /* nb_inplace_xor */
     NULL,                      /* nb_inplace_or */
+    
+    NULL,                      /* nb_floor_divide */
+    NULL,                      /* nb_true_divide */
+    NULL,                      /* nb_inplace_floor_divide */
+    NULL,                      /* nb_inplace_true_divide */
+
+    NULL,                      /* nb_index */
 };    
 
 /* the Matrix type */
 static PyTypeObject PyOILMatrixType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "Matrix",                  /* tp_name */
     sizeof(PyOILMatrix),       /* tp_basicsize */
     0,                         /* tp_itemsize */
+    
     (destructor)PyOILMatrix_dealloc, /* tp_dealloc */
     0,                         /* tp_print */
     0,                         /* tp_getattr */
     0,                         /* tp_setattr */
-    0,                         /* tp_compare */
+    0,                         /* tp_reserved */
     (reprfunc)PyOILMatrix_repr, /* tp_repr */
+    
     &(PyOILMatrixNumberMethods), /* tp_as_number */
     0,                         /* tp_as_sequence */
     0,                         /* tp_as_mapping */
+    
     0,                         /* tp_hash */
     0,                         /* tp_call */
     (reprfunc)PyOILMatrix_str, /* tp_str */
     0,                         /* tp_getattro */
     0,                         /* tp_setattro */
+    
     0,                         /* tp_as_buffer */
+    
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
+    
                                /* tp_doc */
     "Encapsulates matrix data and operations.",
+    
     0,                         /* tp_traverse */
+    
     0,                         /* tp_clear */
+    
     0,                         /* tp_richcompare */
+    
     0,                         /* tp_weaklistoffset */
+    
     0,                         /* tp_iter */
     0,                         /* tp_iternext */
+    
     PyOILMatrix_methods,       /* tp_methods */
     NULL,                      /* tp_members */
     PyOILMatrix_getset,        /* tp_getset */
@@ -446,6 +459,13 @@ static PyTypeObject PyOILMatrixType = {
     0,                         /* tp_init */
     0,                         /* tp_alloc */
     (newfunc)PyOILMatrix_new,  /* tp_new */
+    0,                         /* tp_free */
+    0,                         /* tp_is_gc */
+    0,                         /* tp_bases */
+    0,                         /* tp_mro */
+    0,                         /* tp_cache */
+    0,                         /* tp_subclasses */
+    0,                         /* tp_weaklist */
 };
 
 /* forward declaration for the Image type */
@@ -486,7 +506,7 @@ static void PyOILImage_dealloc(PyOILImage *self) {
         oil_image_free(self->im);
         self->im = NULL;
     }
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 /* methods for Image type */
@@ -500,8 +520,11 @@ static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
         return NULL;
     }
     
-    if (PyString_Check(src)) {
-        path = PyString_AsString(src);
+    if (PyUnicode_Check(src)) {
+        src = PyUnicode_EncodeFSDefault(src);
+        if (!src)
+            return NULL;
+        path = PyBytes_AsString(src);
     }
 
     self = (PyOILImage *)(type->tp_alloc(type, 0));
@@ -510,6 +533,7 @@ static PyObject *PyOILImage_load(PyTypeObject *type, PyObject *args) {
     
     if (path) {
         self->im = oil_image_load(path);
+        Py_DECREF(src);
     } else {
         OILFile file;
         file.file = src;
@@ -543,12 +567,16 @@ static PyObject *PyOILImage_save(PyOILImage *self, PyObject *args, PyObject *kwa
         return NULL;
     }
     
-    if (PyString_Check(dest)) {
-        path = PyString_AsString(dest);
+    if (PyUnicode_Check(dest)) {
+        dest = PyUnicode_EncodeFSDefault(dest);
+        if (!dest)
+            return NULL;
+        path = PyBytes_AsString(dest);
     }
     
     if (path) {
         save_success = oil_image_save(self->im, path, format, &opts);
+        Py_DECREF(dest);
     } else {
         OILFile file;
         file.file = dest;
@@ -664,7 +692,7 @@ static PyObject *PyOILImage_draw_triangles(PyOILImage *self, PyObject *args) {
             return NULL;
         }
         
-        indices[i] = PyInt_AsLong(pyindex);
+        indices[i] = PyLong_AsLong(pyindex);
         Py_DECREF(pyindex);
     }
     
@@ -700,7 +728,7 @@ static PyObject *PyOILImage_clear(PyOILImage *self, PyObject *args) {
 static PyMethodDef PyOILImage_methods[] = {
     {"load", (PyCFunction)PyOILImage_load, METH_VARARGS | METH_CLASS,
      "Load the given path name into an Image object."},
-    {"save", (PyCFunction)PyOILImage_save, METH_KEYWORDS,
+    {"save", (PyCFunction)PyOILImage_save, METH_VARARGS | METH_KEYWORDS,
      "Save the Image object to a file."},
     {"get_size", (PyCFunction)PyOILImage_get_size, METH_VARARGS,
      "Return a (width, height) tuple."},
@@ -723,35 +751,46 @@ static PyGetSetDef PyOILImage_getset[] = {
 
 /* the Image type */
 static PyTypeObject PyOILImageType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "Image",                   /* tp_name */
     sizeof(PyOILImage),        /* tp_basicsize */
     0,                         /* tp_itemsize */
+    
     (destructor)PyOILImage_dealloc, /* tp_dealloc */
     0,                         /* tp_print */
     0,                         /* tp_getattr */
     0,                         /* tp_setattr */
-    0,                         /* tp_compare */
+    0,                         /* tp_reserved */
     0,                         /* tp_repr */
+    
     0,                         /* tp_as_number */
     0,                         /* tp_as_sequence */
     0,                         /* tp_as_mapping */
+
     0,                         /* tp_hash */
     0,                         /* tp_call */
     0,                         /* tp_str */
     0,                         /* tp_getattro */
     0,                         /* tp_setattro */
+    
     0,                         /* tp_as_buffer */
+    
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags*/
+    
                                /* tp_doc */
     "Encapsulates image data and image operations.",
+    
     0,                         /* tp_traverse */
+    
     0,                         /* tp_clear */
+    
     0,                         /* tp_richcompare */
+    
     0,                         /* tp_weaklistoffset */
+    
     0,                         /* tp_iter */
     0,                         /* tp_iternext */
+    
     PyOILImage_methods,        /* tp_methods */
     NULL,                      /* tp_members */
     PyOILImage_getset,         /* tp_getset */
@@ -763,6 +802,13 @@ static PyTypeObject PyOILImageType = {
     0,                         /* tp_init */
     0,                         /* tp_alloc */
     (newfunc)PyOILImage_new,   /* tp_new */
+    0,                         /* tp_free */
+    0,                         /* tp_is_gc */
+    0,                         /* tp_bases */
+    0,                         /* tp_mro */
+    0,                         /* tp_cache */
+    0,                         /* tp_subclasses */
+    0,                         /* tp_weaklist */
 };
 
 static PyObject *py_oil_backend_set(PyObject *self, PyObject *args) {
@@ -793,17 +839,28 @@ static PyMethodDef oil_methods[] = {
 /* helper to add a type to the module */
 #define ADD_TYPE(type) do {                                         \
         if (PyType_Ready(&type) < 0)                                \
-            return;                                                 \
+            return NULL;                                                 \
         PyModule_AddObject(mod, type.tp_name, (PyObject *)&type);   \
     } while (0)
 
-PyMODINIT_FUNC initoil(void) {
+PyMODINIT_FUNC PyInit_oil(void) {
     PyObject *mod;
+    static struct PyModuleDef moddef = {
+        PyModuleDef_HEAD_INIT,
+        "oil",                /* m_name */
+                              /* m_doc */
+        "oil is an image handling library for Python.",
+        -1,                   /* m_size */
+        oil_methods,          /* m_methods */
+        NULL,                 /* m_reload */
+        NULL,                 /* m_traverse */
+        NULL,                 /* m_clear */
+        NULL,                 /* m_free */
+    };
     
-    mod = Py_InitModule3("oil", oil_methods,
-                         "oil is an image handling library for Python.");
+    mod = PyModule_Create(&moddef);
     if (mod == NULL)
-        return;
+        return NULL;
     
     /* the sizeof(...) bits are to prevent compiler warnings about unused
        helper functions in oil-python.h */
@@ -825,5 +882,7 @@ PyMODINIT_FUNC initoil(void) {
 #define FORMAT(name, symbol) PyModule_AddIntConstant(mod, "FORMAT_" #name, OIL_FORMAT_##name);
 #include "oil-formats.cdef"
 #undef FORMAT
+    
+    return mod;
 }
 
