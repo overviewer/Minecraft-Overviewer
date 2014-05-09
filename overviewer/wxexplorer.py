@@ -22,7 +22,7 @@ def reload_all(verbose=False):
         for name in modules:
             name = 'overviewer.' + name
             if verbose:
-                print "reloading", name
+                print("reloading", name)
             if not name in sys.modules:
                 exec "import " + name
             else:
@@ -53,9 +53,9 @@ BACKEND = oil.BACKEND_CPU
 try:
     import pyinotify
     USE_INOTIFY = True
-    print "found pyinotify, reloading enabled"
+    print("found pyinotify, reloading enabled")
 except ImportError:
-    print "install pyinotify to get auto-reloading"
+    print("install pyinotify to get auto-reloading")
     USE_INOTIFY = False
 
 def wait_for_change(path, exts, run_test=lambda: True):
@@ -380,7 +380,7 @@ def code_change_thread(frame):
 if __name__ == '__main__':
     if '--opengl' in sys.argv:
         BACKEND = oil.BACKEND_OPENGL
-        print "using opengl backend"
+        print("using opengl backend")
 
     app = wx.App()
     frame = Explorer(None, -1, "wxExplorer")

@@ -1,7 +1,7 @@
 # see settingsDefinition.py
 import os
 import os.path
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 import util
 from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
@@ -233,7 +233,7 @@ def make_dictValidator(keyvalidator, valuevalidator):
 
     """
     def v(d):
-        newd = util.OrderedDict()
+        newd = OrderedDict()
         for key, value in d.iteritems():
             newd[keyvalidator(key)] = valuevalidator(value)
         return newd
@@ -261,7 +261,7 @@ def make_configDictValidator(config, ignore_undefined=False):
 
     """
     def configDictValidator(d):
-        newdict = util.OrderedDict()
+        newdict = OrderedDict()
 
         # values are config keys that the user specified that don't match any
         # valid key

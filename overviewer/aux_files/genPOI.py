@@ -245,7 +245,7 @@ def main():
                 if "createInfoWindow" in poi:
                     d.update({"createInfoWindow": poi['createInfoWindow']})
                 markerSetDict[name]['raw'].append(d)
-    #print markerSetDict
+    #print(markerSetDict)
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
         output.write("var markersDB=")

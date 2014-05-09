@@ -252,7 +252,7 @@ def generate_version_py():
         f.write(outstr)
         f.close()
     except Exception:
-        print "WARNING: failed to build overviewer_version file"
+        print("WARNING: failed to build overviewer_version file")
 
 class CustomSDist(sdist):
     def run(self):
@@ -265,7 +265,7 @@ class CustomBuild(build):
         # generate the version file
         generate_version_py()
         build.run(self)
-        print "\nBuild Complete"
+        print("\nBuild Complete")
 
 class CustomBuildExt(build_ext):
     user_options = build_ext.user_options + [
