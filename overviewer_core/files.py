@@ -19,6 +19,7 @@ import tempfile
 import shutil
 import logging
 import stat
+import errno
 
 default_caps = {"chmod_works": True, "rename_works": True}
 
@@ -150,6 +151,20 @@ class FileReplacer(object):
             else:
                 # copy permission bits, if needed
                 if self.caps.get("chmod_works") and os.path.exists(self.destname):
-                    shutil.copymode(self.destname, self.tmpname)
+                    try:
+                        shutil.copymode(self.destname, self.tmpname)
+                    except OSError, e:
+                        # Ignore errno ENOENT: file does not exist. Due to a race
+                        # condition, two processes could conceivably try and update
+                        # the same temp file at the same time
+                        if e.errno != errno.ENOENT:
+                            raise
                 # atomic rename into place
-                os.rename(self.tmpname, self.destname)
+                try:
+                    os.rename(self.tmpname, self.destname)
+                except OSError, e:
+                    # Ignore errno ENOENT: file does not exist. Due to a race
+                    # condition, two processes could conceivably try and update
+                    # the same temp file at the same time
+                    if e.errno != errno.ENOENT:
+                        raise
