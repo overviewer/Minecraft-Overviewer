@@ -161,17 +161,6 @@ class Textures(object):
             return None
         if verbose: logging.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
 
-        # we've sucessfully loaded something from here before, so let's quickly try
-        # this before searching again
-        if self.jar is not None:
-            for jarfilename in search_zip_paths:
-                try:
-                    self.jar.getinfo(jarfilename)
-                    if verbose: logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
-                    return self.jar.open(jarfilename)
-                except (KeyError, IOError), e:
-                    pass
-
         # A texture path was given on the command line. Search this location
         # for the file first.
         if self.find_file_local_path:
@@ -226,6 +215,17 @@ class Textures(object):
 
         if verbose: logging.info("Did not find the file in overviewer executable directory")
         if verbose: logging.info("Looking for installed minecraft jar files...")
+
+        # we've sucessfully loaded something from here before, so let's quickly try
+        # this before searching again
+        if self.jar is not None:
+            for jarfilename in search_zip_paths:
+                try:
+                    self.jar.getinfo(jarfilename)
+                    if verbose: logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
+                    return self.jar.open(jarfilename)
+                except (KeyError, IOError), e:
+                    pass
 
         # Find an installed minecraft client jar and look in it for the texture
         # file we need.
