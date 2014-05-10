@@ -39,6 +39,10 @@ class Optimizer:
 
         if (not exists_in_path(self.binaryname)) and (not exists_in_path(self.binaryname + ".exe")):
             raise Exception("Optimization program '%s' was not found!" % self.binaryname)
+    
+    def is_crusher(self):
+        """Should return True if the optimization is lossless, i.e. none of the actual image data will be changed."""
+        raise NotImplementedError("I'm so abstract I can't even say whether I'm a crusher.")
         
 
 class NonAtomicOptimizer(Optimizer):
@@ -84,6 +88,9 @@ class pngnq(NonAtomicOptimizer, PNGOptimizer):
 
         NonAtomicOptimizer.fire_and_forget(self, args, img)
 
+    def is_crusher(self):
+        return False
+
 class pngcrush(NonAtomicOptimizer, PNGOptimizer):
     binaryname = "pngcrush"
     # really can't be bothered to add some interface for all
@@ -98,6 +105,9 @@ class pngcrush(NonAtomicOptimizer, PNGOptimizer):
 
         NonAtomicOptimizer.fire_and_forget(self, args, img)
 
+    def is_crusher(self):
+        return True
+
 class optipng(Optimizer, PNGOptimizer):
     binaryname = "optipng"
 
@@ -106,6 +116,9 @@ class optipng(Optimizer, PNGOptimizer):
     
     def optimize(self, img):
         Optimizer.fire_and_forget(self, [self.binaryname, "-o" + str(self.olevel), "-quiet", img])
+
+    def is_crusher(self):
+        return True
         
 
 def optimize_image(imgpath, imgformat, optimizers):

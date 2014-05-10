@@ -160,15 +160,25 @@ def validateBGColor(color):
 def validateOptImg(optimizers):
     if isinstance(optimizers, (int, long)):
         from optimizeimages import pngcrush
-        logging.warning("You're using a deprecated definition of optimizeimg. We'll do what you say for now, but please fix this as soon as possible.")
+        logging.warning("You're using a deprecated definition of optimizeimg. "\
+                        "We'll do what you say for now, but please fix this as soon as possible.")
         optimizers = [pngcrush()]
     if not isinstance(optimizers, list):
-        raise ValidationException("optimizeimg is not a list. Make sure you specify them like [foo()], with square brackets.")
-    for opt in optimizers:
-        if not isinstance(opt, Optimizer):
-            raise ValidationException("Invalid Optimizer!")
+        raise ValidationException("What you passed to optimizeimg is not a list. "\
+                                  "Make sure you specify them like [foo()], with square brackets.")
 
-        opt.check_availability()
+    if optimizers:
+        for opt, next_opt in zip(optimizers, optimizers[1:]) + [(optimizers[-1], None)]:
+            if not isinstance(opt, Optimizer):
+                raise ValidationException("Invalid Optimizer!")
+
+            opt.check_availability()
+
+            # Check whether the chaining is somewhat sane
+            if next_opt:
+                if opt.is_crusher() and not next_opt.is_crusher():
+                    logging.warning("You're feeding a crushed output into an optimizer that does not crush. "\
+                                    "This is most likely pointless, and wastes time.")
 
     return optimizers
 
