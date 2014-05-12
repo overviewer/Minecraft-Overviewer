@@ -709,8 +709,10 @@ values. The valid configuration keys are listed below.
 .. _crop:
 
 ``crop``
-    You can use this to render one or more small subsets of your map, instead
-    of the entire thing. The format is [(min x, min z, max x, max z)].
+    You can use this to render one or more small subsets of your map. The format
+    of an individual crop zone is (min x, min z, max x, max z); if you wish to
+    specify multiple crop zones, you may do so by specifying a list of crop zones,
+    i.e. [(min x1, min z1, max x1, max z1), (min x2, min z2, max x2, max z2)]
 
     The coordinates are block coordinates. The same you get with the debug menu
     in-game and the coordinates shown when you view a map.

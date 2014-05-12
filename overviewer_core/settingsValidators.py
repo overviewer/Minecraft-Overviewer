@@ -230,7 +230,7 @@ def validateCrop(value):
         
     cropZones = []
     for zone in value:
-        if len(zone) != 4:
+        if not isinstance(zone, tuple) or len(zone) != 4:
             raise ValidationException("The value for the 'crop' setting must be an array of tuples of length 4")
         a, b, c, d = tuple(int(x) for x in zone)
     
