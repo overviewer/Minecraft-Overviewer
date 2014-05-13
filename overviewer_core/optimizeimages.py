@@ -47,6 +47,7 @@ class Optimizer:
 
 class NonAtomicOptimizer(Optimizer):
     def cleanup(self, img):
+        os.remove(img)
         os.rename(img + ".tmp", img)
 
     def fire_and_forget(self, args, img):
