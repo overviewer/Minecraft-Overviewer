@@ -638,23 +638,23 @@ class Textures(object):
             increment = int(round((top[1] / 16.)*12.)) # range increment in the block height in pixels (half texture size)
             crop_height = increment
             top = top[0]
-            if side1 != None:
+            if side1 is not None:
                 side1 = side1.copy()
                 ImageDraw.Draw(side1).rectangle((0, 0,16,crop_height),outline=(0,0,0,0),fill=(0,0,0,0))
-            if side2 != None:
+            if side2 is not None:
                 side2 = side2.copy()
                 ImageDraw.Draw(side2).rectangle((0, 0,16,crop_height),outline=(0,0,0,0),fill=(0,0,0,0))
-            if side3 != None:
+            if side3 is not None:
                 side3 = side3.copy()
                 ImageDraw.Draw(side3).rectangle((0, 0,16,crop_height),outline=(0,0,0,0),fill=(0,0,0,0))
-            if side4 != None:
+            if side4 is not None:
                 side4 = side4.copy()
                 ImageDraw.Draw(side4).rectangle((0, 0,16,crop_height),outline=(0,0,0,0),fill=(0,0,0,0))
 
         img = Image.new("RGBA", (24,24), self.bgcolor)
 
         # first back sides
-        if side1 != None :
+        if side1 is not None :
             side1 = self.transform_image_side(side1)
             side1 = side1.transpose(Image.FLIP_LEFT_RIGHT)
 
@@ -666,7 +666,7 @@ class Textures(object):
             alpha_over(img, side1, (0,0), side1)
 
 
-        if side2 != None :
+        if side2 is not None :
             side2 = self.transform_image_side(side2)
 
             # Darken this side.
@@ -676,12 +676,12 @@ class Textures(object):
 
             alpha_over(img, side2, (12,0), side2)
 
-        if bottom != None :
+        if bottom is not None :
             bottom = self.transform_image_top(bottom)
             alpha_over(img, bottom, (0,12), bottom)
 
         # front sides
-        if side3 != None :
+        if side3 is not None :
             side3 = self.transform_image_side(side3)
 
             # Darken this side
@@ -691,7 +691,7 @@ class Textures(object):
 
             alpha_over(img, side3, (0,6), side3)
 
-        if side4 != None :
+        if side4 is not None :
             side4 = self.transform_image_side(side4)
             side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
 
@@ -702,7 +702,7 @@ class Textures(object):
 
             alpha_over(img, side4, (12,6), side4)
 
-        if top != None :
+        if top is not None :
             top = self.transform_image_top(top)
             alpha_over(img, top, (0, increment), top)
 
