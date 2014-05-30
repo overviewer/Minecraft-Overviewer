@@ -117,6 +117,27 @@ def handleEntities(rset, outputdir, render, rname, config):
 
     logging.info("Done.")
 
+class PlayerDict(dict):
+    use_uuid = False
+    _name = ''
+    def __getitem__(self, item):
+        if item == "EntityId":
+            if not super(PlayerDict, self).has_key("EntityId"):
+                if self.use_uuid:
+                    super(PlayerDict, self).__setitem__("EntityId", self.get_name_from_uuid())
+                else:
+                    super(PlayerDict, self).__setitem__("EntityId", self._name)
+        
+        return super(PlayerDict, self).__getitem__(item)
+
+    def get_name_from_uuid(self):
+        try:
+            profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + self._name.replace('-','')).read())
+            if 'name' in profile:
+                return profile['name']
+        except (ValueError, urllib2.URLError):
+            logging.warning("Unable to get player name for UUID %s", playername)
+
 def handlePlayers(rset, render, worldpath):
     if not hasattr(rset, "_pois"):
         rset._pois = dict(TileEntities=[], Entities=[])
@@ -153,37 +174,35 @@ def handlePlayers(rset, render, worldpath):
     rset._pois['Players'] = []
     for playerfile in playerfiles:
         try:
-            data = nbt.load(os.path.join(playerdir, playerfile))[1]
+            data = PlayerDict(nbt.load(os.path.join(playerdir, playerfile))[1])
+            data.use_uuid = useUUIDs
             if isSinglePlayer:
                 data = data['Data']['Player']
         except IOError:
             logging.warning("Skipping bad player dat file %r", playerfile)
             continue
         playername = playerfile.split(".")[0]
-        if useUUIDs:
-            try:
-                profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + playername.replace('-','')).read())
-                if 'name' in profile:
-                    playername = profile['name']
-            except (ValueError, urllib2.URLError):
-                logging.warning("Unable to get player name for UUID %s", playername)
+
         if isSinglePlayer:
             playername = 'Player'
+
+        data._name = playername
+
         if data['Dimension'] == dimension:
             # Position at last logout
             data['id'] = "Player"
-            data['EntityId'] = playername
             data['x'] = int(data['Pos'][0])
             data['y'] = int(data['Pos'][1])
             data['z'] = int(data['Pos'][2])
             rset._pois['Players'].append(data)
         if "SpawnX" in data and dimension == 0:
             # Spawn position (bed or main spawn)
-            spawn = {"id": "PlayerSpawn",
-                     "EntityId": playername,
-                     "x": data['SpawnX'],
-                     "y": data['SpawnY'],
-                     "z": data['SpawnZ']}
+            spawn = PlayerDict()
+            spawn._name = playername
+            spawn["id"] = "PlayerSpawn"
+            spawn["x"] = data['SpawnX']
+            spawn["y"] = data['SpawnY']
+            spawn["z"] = data['SpawnZ']
             rset._pois['Players'].append(spawn)
 
 def handleManual(rset, manualpois):
