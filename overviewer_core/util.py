@@ -43,13 +43,13 @@ def findGitHash():
         line = p.stdout.readlines()[0].strip()
         if line and len(line) == 40 and all(c in hexdigits for c in line):
             return line
-        return "unknown"
     except Exception:
         try:
             import overviewer_version
             return overviewer_version.HASH
         except Exception:
-            return "unknown"
+            pass
+    return "unknown"
 
 def findGitVersion():
     try:
