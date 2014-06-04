@@ -442,6 +442,16 @@ values. The valid configuration keys are listed below.
         nether :ref:`rendermode<option_rendermode>`. Otherwise you'll
         just end up rendering the nether's ceiling.
 
+    .. note::
+
+        For the end, you will most likely want to turn down the strength of
+        the shadows, as you'd otherwise end up with a very dark result.
+        
+        e.g.::
+            
+            end_lighting = [Base(), EdgeLines(), Lighting(strength=0.5)]
+            end_smooth_lighting = [Base(), EdgeLines(), SmoothLighting(strength=0.5)]
+
     **Default:** ``"overworld"``
 
 .. _option_rendermode:
