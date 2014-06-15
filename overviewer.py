@@ -17,6 +17,7 @@
 
 import platform
 import sys
+import pickle
 
 # quick version check
 if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
@@ -41,6 +42,17 @@ from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
 from overviewer_core import cache
 from overviewer_core import observer
+
+def do_work_parallel(observer, tilesets, queue):
+    pid = multiprocessing.current_process().pid
+    for wi in iter(queue.get, 'STOP'):
+        ts = tilesets[wi['tile']]
+        todo = wi['item']
+        #logging.debug(todo)
+        ts.do_work(todo)
+        #logging.debug('Done {0}/{1}'.format(ts, todo))
+        observer.put(1)
+        queue.task_done()
 
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
@@ -463,8 +475,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         if texopts_key not in texcache:
             tex = textures.Textures(**texopts)
             logging.info("Generating textures...")
-            tex.generate()
-            logging.debug("Finished generating textures")
+            tex.generate(concurrency=config['processes'])
+            logging.debug("Finished generating textures: %d", sum([1 for b in tex.blockmap if b is not None]))
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
@@ -509,24 +521,68 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom", "showlocationmarker", "minzoom"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
         tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
+        tset.do_preprocessing()
         tilesets.append(tset)
-
-    # Do tileset preprocessing here, before we start dispatching jobs
-    logging.info("Preprocessing...")
-    for ts in tilesets:
-        ts.do_preprocessing()
 
     # Output initial static data and configuration
     assetMrg.initialize(tilesets)
 
-    # multiprocessing dispatcher
-    if config['processes'] == 1:
-        dispatch = dispatcher.Dispatcher()
-    else:
-        dispatch = dispatcher.MultiprocessingDispatcher(
-            local_procs=config['processes'])
-    dispatch.render_all(tilesets, config['observer'])
-    dispatch.close()
+    concurrency = config['processes']
+    tilesets_queue = multiprocessing.JoinableQueue()
+    update_queue = multiprocessing.Queue()
+    workers = []
+
+    logging.info('Starting %d workers for tile rendering. This *WILL* take a while.', concurrency)
+    observer = config['observer']
+
+    for i in range(concurrency):
+        w = multiprocessing.Process(target=do_work_parallel, args=(update_queue, tilesets, tilesets_queue))
+        workers.append(w)
+        w.start()
+
+    for i, ts in enumerate(tilesets):
+        logging.info('Tileset with %d phases.', ts.get_num_phases())
+        for p in xrange(ts.get_num_phases()):
+            logging.debug('Phase %d', p)
+
+            # Build dependency graph.
+            # successors[wk] reads 'successors of <wk>'
+            successors = {}
+            # predecessors[wk] reads 'predecessors of <wk>'
+            predecessors = {}
+            dones = set()
+            # Bag of all items to compute.
+            todos = {}
+
+            # Bag of dependants items.
+            observer.start(ts.get_phase_length(p))
+            for wk, nexts in tset.iterate_work_items(p):
+                s = todos.get(len(wk), set())
+                s.add(wk)
+                todos[len(wk)] = s
+
+            ordered = sorted(todos.iterkeys())
+
+            while todos:
+                current = ordered.pop()
+                logging.debug('Doing items %d', current)
+                runnables = todos[current]
+                logging.debug('Computing %d tiles', len(runnables))
+                for r in runnables:
+                    tilesets_queue.put({'tile': i, 'item': r})
+                for update in iter(update_queue.get, 'STOP'):
+                    observer.add(1)
+                    # Slight chance of deadlock here.
+                    if tilesets_queue.empty(): update_queue.put('STOP')
+                del todos[current]
+                tilesets_queue.join()
+            observer.finish()
+
+    for w in workers:
+        tilesets_queue.put('STOP')
+
+    for w in workers:
+        w.join()
 
     assetMrg.finalize(tilesets)
 
@@ -591,3 +647,5 @@ See http://docs.overviewer.org/en/latest/index.html#help
 
 This is the error that occurred:""")
         util.nice_exit(1)
+
+# vim: tabstop=4 shiftwidth=4 expandtab
