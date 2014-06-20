@@ -4227,6 +4227,24 @@ def hopper(self, blockid, data):
 # slime block
 block(blockid=165, top_image="assets/minecraft/textures/blocks/slime.png")
 
+# prismarine block
+@material(blockid=168, data=range(3), solid=True)
+def prismarine_block(self, blockid, data):
+
+   if data == 0: # prismarine
+       t = self.load_image_texture("assets/minecraft/textures/blocks/prismarine_rough.png")
+   elif data == 1: # prismarine bricks
+       t = self.load_image_texture("assets/minecraft/textures/blocks/prismarine_bricks.png")
+   elif data == 2: # dark prismarine
+       t = self.load_image_texture("assets/minecraft/textures/blocks/prismarine_dark.png")
+
+   img = self.build_block(t, t)
+
+   return img
+
+# sea lantern 
+block(blockid=169, top_image="assets/minecraft/textures/blocks/sea_lantern.png")
+
 # hay block
 @material(blockid=170, data=range(9), solid=True)
 def hayblock(self, blockid, data):
