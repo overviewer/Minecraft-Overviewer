@@ -136,7 +136,7 @@ class PlayerDict(dict):
             if 'name' in profile:
                 return profile['name']
         except (ValueError, urllib2.URLError):
-            logging.warning("Unable to get player name for UUID %s", playername)
+            logging.warning("Unable to get player name for UUID %s", self._name)
 
 def handlePlayers(rset, render, worldpath):
     if not hasattr(rset, "_pois"):
