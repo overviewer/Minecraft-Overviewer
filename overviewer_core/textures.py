@@ -25,9 +25,21 @@ import numpy
 from PIL import Image, ImageEnhance, ImageOps, ImageDraw
 import logging
 import functools
+import multiprocessing
 
 import util
 from c_overviewer import alpha_over
+
+# Parallelizable wrappers.
+def texgen_parallel((texobj, texgen, blockid, data)):
+    #logging.debug('Building %d:%d', blockid, data)
+    tex = texgen(texobj, blockid, data)
+
+    if tex is not None:
+        tex = numpy.asarray(tex)
+
+    # Pickelable
+    return {'bid': blockid, 'data': data, 'tex': tex}
 
 class TextureException(Exception):
     "To be thrown when a texture is not found."
@@ -70,26 +82,44 @@ class Textures(object):
     
     def __getstate__(self):
         # we must get rid of the huge image lists, and other images
+        blocks = [] 
         attributes = self.__dict__.copy()
-        for attr in ['blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture', 'firetexture', 'portaltexture', 'lightcolor', 'grasscolor', 'foliagecolor', 'watercolor', 'texture_cache']:
+        for attr in ['biome_grass_texture', 'watertexture', 'lavatexture', 'firetexture', 'portaltexture', 'lightcolor', 'grasscolor', 'foliagecolor', 'watercolor', 'texture_cache']:
             try:
                 del attributes[attr]
             except KeyError:
                 pass
+        if 'blockmap' in attributes and attributes['blockmap'] is not None:
+            for v in attributes['blockmap']:
+                if v is not None:
+                    blocks.append((numpy.asarray(v[0]), numpy.asarray(v[1])))
+                else:
+                    blocks.append(v)
+
+        attributes['blockmap'] = blocks
         return attributes
     def __setstate__(self, attrs):
         # regenerate textures, if needed
         for attr, val in attrs.iteritems():
             setattr(self, attr, val)
+        blocks = []
+        if 'blockmap' in attrs and attrs['blockmap'] is not None:
+            for v in attrs['blockmap']:
+                if v is not None:
+                    blocks.append((Image.fromarray(v[0]), Image.fromarray(v[1])))
+                else:
+                    blocks.append(v)
+
+            setattr(self, 'blockmap', blocks)
         self.texture_cache = {}
-        if self.generated:
-            self.generate()
+        #if self.generated:
+        #    self.generate(2)
     
     ##
     ## The big one: generate()
     ##
     
-    def generate(self):
+    def generate(self, concurrency=1):
         
         # generate biome grass mask
         self.biome_grass_texture = self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/grass_top.png"), self.load_image_texture("assets/minecraft/textures/blocks/grass_side_overlay.png"))
@@ -98,10 +128,45 @@ class Textures(object):
         global blockmap_generators
         global known_blocks, used_datas
         self.blockmap = [None] * max_blockid * max_data
+
+        logging.info('Starting %d texture workers.', concurrency)
+        pool = multiprocessing.Pool(concurrency)
         
-        for (blockid, data), texgen in blockmap_generators.iteritems():
-            tex = texgen(self, blockid, data)
+        # test loop with different kinds.
+        #for (blockid, data), texgen in blockmap_generators.iteritems():
+        #    if blockid not in (1, 51, 129, 30, 32):
+                #logging.debug('Skipped %d:%d', blockid, data)
+        #        continue
+        #    logging.debug('Texture for %d:%d', blockid, data)
+        #    tex = pool.apply(texgen_parallel, [(self, texgen, blockid, data)])
+        counter = 0
+        total = len(blockmap_generators.keys())
+        lastpercent = -1
+        chunksize = total / float(concurrency)
+        logging.info('%d items to process, in chunks of %d items. This may take a while...', total, chunksize)
+        for built in pool.imap_unordered(texgen_parallel, [[self, texgen, blockid, data] for (blockid, data), texgen in blockmap_generators.iteritems()], chunksize=chunksize):
+
+            tex = built['tex']
+            blockid = built['bid']
+            data = built['data']
+            #print '{bid}:{data}'.format(**built),
+            percent = counter * 100 / total
+            if round(percent) % 5 == 0 and round(percent) != lastpercent:
+                #logging.info('%d%%', percent)
+                lastpercent = round(percent)
+            counter += 1
+
+
+            #logging.debug('Exploiting results for %d:%d', blockid, data)
+            if tex is not None:
+                tex = Image.fromarray(tex)
+            #else:
+                #logging.debug('No texture for %d:%d', blockid, data)
+
             self.blockmap[blockid * max_data + data] = self.generate_texture_tuple(tex)
+        logging.info('Waiting for workers to finish')
+        pool.close()
+        pool.join()
         
         if self.texture_size != 24:
             # rescale biome grass
@@ -116,6 +181,7 @@ class Textures(object):
                 blockmap[i] = self.generate_texture_tuple(scaled_block)
         
         self.generated = True
+        logging.info('Generation terminated')
     
     ##
     ## Helpers for opening textures
@@ -769,106 +835,133 @@ fluid_blocks = set()
 nospawn_blocks = set()
 nodata_blocks = set()
 
-# the material registration decorator
-def material(blockid=[], data=[0], **kwargs):
-    # mapping from property name to the set to store them in
-    properties = {"transparent" : transparent_blocks, "solid" : solid_blocks, "fluid" : fluid_blocks, "nospawn" : nospawn_blocks, "nodata" : nodata_blocks}
-    
-    # make sure blockid and data are iterable
-    try:
-        iter(blockid)
-    except:
-        blockid = [blockid,]
-    try:
-        iter(data)
-    except:
-        data = [data,]
-        
-    def inner_material(func):
-        global blockmap_generators
-        global max_data, max_blockid
 
-        # create a wrapper function with a known signature
-        @functools.wraps(func)
-        def func_wrapper(texobj, blockid, data):
-            return func(texobj, blockid, data)
+class material(object):
+
+    def __init__(self, **kwargs):
+        global max_data, max_blockid
+        self.blockid = kwargs.pop('blockid', [])
+        self.data = kwargs.pop('data', [0])
+        # mapping from property name to the set to store them in
+        self.properties = {"transparent" : transparent_blocks, "solid" : solid_blocks, "fluid" : fluid_blocks, "nospawn" : nospawn_blocks, "nodata" : nodata_blocks}
+
+        try:
+            iter(self.blockid)
+        except:
+            self.blockid = [self.blockid,]
+
+        try:
+            iter(self.data)
+        except:
+            self.data = [self.data,]
+
+        used_datas.update(self.data)
+        if max(self.data) >= max_data:
+            max_data = max(self.data) + 1
         
-        used_datas.update(data)
-        if max(data) >= max_data:
-            max_data = max(data) + 1
-        
-        for block in blockid:
+        for block in self.blockid:
             # set the property sets appropriately
             known_blocks.update([block])
             if block >= max_blockid:
                 max_blockid = block + 1
-            for prop in properties:
+            for prop in self.properties:
                 try:
                     if block in kwargs.get(prop, []):
-                        properties[prop].update([block])
+                        self.properties[prop].update([block])
                 except TypeError:
                     if kwargs.get(prop, False):
-                        properties[prop].update([block])
+                        self.properties[prop].update([block])
             
-            # populate blockmap_generators with our function
-            for d in data:
-                blockmap_generators[(block, d)] = func_wrapper
-        
-        return func_wrapper
-    return inner_material
+
+
+    def __call__(self, callee):
+        wrapped = self.wrapper(callee)
+        self.register(wrapped)
+        return wrapped
+
+    def wrapper(self, callee):
+        #logging.debug('Material wrapper %s', callee.__name__)
+        @functools.wraps(callee)
+        def wrapped(texobj, blockid, data):
+            #logging.debug('material {0}'.format(callee.__name__))
+            return callee(texobj, blockid, data)
+        return wrapped
+
+    def register(self, wrapped):
+        global blockmap_generators
+        # populate blockmap_generators with our function
+        for block in self.blockid:
+            for d in self.data:
+                blockmap_generators[(block, d)] = wrapped
 
 # shortcut function for pure blocks, default to solid, nodata
-def block(blockid=[], top_image=None, side_image=None, **kwargs):
-    new_kwargs = {'solid' : True, 'nodata' : True}
-    new_kwargs.update(kwargs)
-    
-    if top_image is None:
-        raise ValueError("top_image was not provided")
-    
-    if side_image is None:
-        side_image = top_image
-    
-    @material(blockid=blockid, **new_kwargs)
-    def inner_block(self, unused_id, unused_data):
-        return self.build_block(self.load_image_texture(top_image), self.load_image_texture(side_image))
-    return inner_block
+class block(material):
+    def __init__(self, *args, **kwargs):
+        self.top_image = kwargs.pop('top_image', None)
+        self.side_image = kwargs.pop('side_image', None)
+
+        if self.top_image is None:
+            raise ValueError('top_image was not provided. (%s)', f.__name__)
+
+        if self.side_image is None:
+            self.side_image = self.top_image
+
+        new_kwargs = {'solid': True, 'nodata': True}
+        new_kwargs.update(kwargs)
+
+        super(block, self).__init__(*args, **kwargs)
+
+
+    def wrapper(self, callee):
+        @functools.wraps(callee)
+        def wrapped(texobj, unused_id, unused_data):
+            #logging.debug('Building block %s', self.top_image)
+            return texobj.build_block(texobj.load_image_texture(self.top_image), texobj.load_image_texture(self.side_image))
+
+        return wrapped
+
 
 # shortcut function for sprite blocks, defaults to transparent, nodata
-def sprite(blockid=[], imagename=None, **kwargs):
-    new_kwargs = {'transparent' : True, 'nodata' : True}
-    new_kwargs.update(kwargs)
+class sprite(material):
+
+    def __init__(self, *args, **kwargs):
+        self.imagename = kwargs.pop('imagename', None)
     
-    if imagename is None:
-        raise ValueError("imagename was not provided")
-    
-    @material(blockid=blockid, **new_kwargs)
-    def inner_sprite(self, unused_id, unused_data):
-        return self.build_sprite(self.load_image_texture(imagename))
-    return inner_sprite
+        if self.imagename is None:
+            raise ValueError("imagename was not provided")
+
+        new_kwargs = {'transparent' : True, 'nodata' : True}
+        new_kwargs.update(kwargs)
+        super(sprite, self).__init__(*args, **kwargs)
+
+    def wrapper(self, callee):
+        @functools.wraps(callee)
+        def wrapped(texobj, unused_id, unused_data):
+            #logging.debug('Building sprite %s', self.imagename)
+            return texobj.build_sprite(texobj.load_image_texture(self.imagename))
+        return wrapped
 
 # shortcut function for billboard blocks, defaults to transparent, nodata
-def billboard(blockid=[], imagename=None, **kwargs):
-    new_kwargs = {'transparent' : True, 'nodata' : True}
-    new_kwargs.update(kwargs)
+class billboard(sprite):
+    def wrapper(self, callee):
+        @functools.wraps(callee)
+        def wrapped(texobj, unused_id, unused_data):
+            #logging.debug('Building billboard %s', self.imagename)
+            return texobj.build_billboard(texobj.load_image_texture(self.imagename))
+        return wrapped
     
-    if imagename is None:
-        raise ValueError("imagename was not provided")
-    
-    @material(blockid=blockid, **new_kwargs)
-    def inner_billboard(self, unused_id, unused_data):
-        return self.build_billboard(self.load_image_texture(imagename))
-    return inner_billboard
-
 ##
 ## and finally: actual texture definitions
 ##
 
 # stone
-block(blockid=1, top_image="assets/minecraft/textures/blocks/stone.png")
+@block(blockid=1, top_image="assets/minecraft/textures/blocks/stone.png")
+def stone_block(): pass
 
 @material(blockid=2, data=range(11)+[0x10,], solid=True)
 def grass(self, blockid, data):
     # 0x10 bit means SNOW
+    self.biome_grass_texture = self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/grass_top.png"), self.load_image_texture("assets/minecraft/textures/blocks/grass_side_overlay.png"))
     side_img = self.load_image_texture("assets/minecraft/textures/blocks/grass_side.png")
     if data & 0x10:
         side_img = self.load_image_texture("assets/minecraft/textures/blocks/grass_side_snowed.png")
@@ -891,7 +984,8 @@ def dirt_blocks(self, blockid, data):
     return img
 
 # cobblestone
-block(blockid=4, top_image="assets/minecraft/textures/blocks/cobblestone.png")
+@block(blockid=4, top_image="assets/minecraft/textures/blocks/cobblestone.png")
+def cobblestone(): pass
 
 # wooden planks
 @material(blockid=5, data=range(6), solid=True)
@@ -927,7 +1021,8 @@ def saplings(self, blockid, data):
     return self.build_sprite(tex)
 
 # bedrock
-block(blockid=7, top_image="assets/minecraft/textures/blocks/bedrock.png")
+@block(blockid=7, top_image="assets/minecraft/textures/blocks/bedrock.png")
+def bedrock(): pass
 
 @material(blockid=8, data=range(16), fluid=True, transparent=True, nospawn=True)
 def water(self, blockid, data):
@@ -998,13 +1093,17 @@ def sand_blocks(self, blockid, data):
     return img
 
 # gravel
-block(blockid=13, top_image="assets/minecraft/textures/blocks/gravel.png")
+@block(blockid=13, top_image="assets/minecraft/textures/blocks/gravel.png")
+def gravel(): pass
 # gold ore
-block(blockid=14, top_image="assets/minecraft/textures/blocks/gold_ore.png")
+@block(blockid=14, top_image="assets/minecraft/textures/blocks/gold_ore.png")
+def gold_ore(): pass
 # iron ore
-block(blockid=15, top_image="assets/minecraft/textures/blocks/iron_ore.png")
+@block(blockid=15, top_image="assets/minecraft/textures/blocks/iron_ore.png")
+def iron_ore(): pass
 # coal ore
-block(blockid=16, top_image="assets/minecraft/textures/blocks/coal_ore.png")
+@block(blockid=16, top_image="assets/minecraft/textures/blocks/coal_ore.png")
+def coal_ore(): pass
 
 @material(blockid=[17,162], data=range(12), solid=True)
 def wood(self, blockid, data):
@@ -1070,11 +1169,14 @@ def leaves(self, blockid, data):
     return self.build_block(t, t)
 
 # sponge
-block(blockid=19, top_image="assets/minecraft/textures/blocks/sponge.png")
+@block(blockid=19, top_image="assets/minecraft/textures/blocks/sponge.png")
+def sponge(): pass
 # lapis lazuli ore
-block(blockid=21, top_image="assets/minecraft/textures/blocks/lapis_ore.png")
+@block(blockid=21, top_image="assets/minecraft/textures/blocks/lapis_ore.png")
+def lapis_lazuli_ore(): pass
 # lapis lazuli block
-block(blockid=22, top_image="assets/minecraft/textures/blocks/lapis_block.png")
+@block(blockid=22, top_image="assets/minecraft/textures/blocks/lapis_block.png")
+def lapis_lazuli_block(): pass
 
 # dispensers, dropper, furnaces, and burning furnaces
 @material(blockid=[23, 61, 62, 158], data=range(6), solid=True)
@@ -1137,7 +1239,8 @@ def sandstone(self, blockid, data):
         return self.build_block(top, self.load_image_texture("assets/minecraft/textures/blocks/sandstone_smooth.png"))
 
 # note block
-block(blockid=25, top_image="assets/minecraft/textures/blocks/noteblock.png")
+@block(blockid=25, top_image="assets/minecraft/textures/blocks/noteblock.png")
+def note_block(): pass
 
 @material(blockid=26, data=range(12), transparent=True, nospawn=True)
 def bed(self, blockid, data):
@@ -1483,7 +1586,8 @@ def piston_extension(self, blockid, data):
     return img
 
 # cobweb
-sprite(blockid=30, imagename="assets/minecraft/textures/blocks/web.png", nospawn=True)
+@sprite(blockid=30, imagename="assets/minecraft/textures/blocks/web.png", nospawn=True)
+def cobweb(): pass
 
 @material(blockid=31, data=range(3), transparent=True)
 def tall_grass(self, blockid, data):
@@ -1497,7 +1601,8 @@ def tall_grass(self, blockid, data):
     return self.build_billboard(texture)
 
 # dead bush
-billboard(blockid=32, imagename="assets/minecraft/textures/blocks/deadbush.png")
+@billboard(blockid=32, imagename="assets/minecraft/textures/blocks/deadbush.png")
+def dead_bush(): pass
 
 @material(blockid=35, data=range(16), solid=True)
 def wool(self, blockid, data):
@@ -1506,11 +1611,12 @@ def wool(self, blockid, data):
     return self.build_block(texture, texture)
 
 # dandelion
-sprite(blockid=37, imagename="assets/minecraft/textures/blocks/flower_dandelion.png")
+@sprite(blockid=37, imagename="assets/minecraft/textures/blocks/flower_dandelion.png")
+def dandelion(): pass
 
 # flowers
 @material(blockid=38, data=range(10), transparent=True)
-def flower(self, blockid, data):
+def flower_simple(self, blockid, data):
     flower_map = ["rose", "blue_orchid", "allium", "houstonia", "tulip_red", "tulip_orange",
                   "tulip_white", "tulip_pink", "oxeye_daisy", "dandelion"]
     texture = self.load_image_texture("assets/minecraft/textures/blocks/flower_%s.png" % flower_map[data])
@@ -1518,13 +1624,17 @@ def flower(self, blockid, data):
     return self.build_billboard(texture)
 
 # brown mushroom
-sprite(blockid=39, imagename="assets/minecraft/textures/blocks/mushroom_brown.png")
+@sprite(blockid=39, imagename="assets/minecraft/textures/blocks/mushroom_brown.png")
+def brown_mushroom(): pass
 # red mushroom
-sprite(blockid=40, imagename="assets/minecraft/textures/blocks/mushroom_red.png")
+@sprite(blockid=40, imagename="assets/minecraft/textures/blocks/mushroom_red.png")
+def red_mushroom(): pass
 # block of gold
-block(blockid=41, top_image="assets/minecraft/textures/blocks/gold_block.png")
+@block(blockid=41, top_image="assets/minecraft/textures/blocks/gold_block.png")
+def block_of_gold(): pass
 # block of iron
-block(blockid=42, top_image="assets/minecraft/textures/blocks/iron_block.png")
+@block(blockid=42, top_image="assets/minecraft/textures/blocks/iron_block.png")
+def block_of_iron(): pass
 
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
@@ -1593,15 +1703,20 @@ def slabs(self, blockid, data):
     return img
 
 # brick block
-block(blockid=45, top_image="assets/minecraft/textures/blocks/brick.png")
+@block(blockid=45, top_image="assets/minecraft/textures/blocks/brick.png")
+def brick_block(): pass
 # TNT
-block(blockid=46, top_image="assets/minecraft/textures/blocks/tnt_top.png", side_image="assets/minecraft/textures/blocks/tnt_side.png", nospawn=True)
+@block(blockid=46, top_image="assets/minecraft/textures/blocks/tnt_top.png", side_image="assets/minecraft/textures/blocks/tnt_side.png", nospawn=True)
+def tnt(): pass
 # bookshelf
-block(blockid=47, top_image="assets/minecraft/textures/blocks/planks_oak.png", side_image="assets/minecraft/textures/blocks/bookshelf.png")
+@block(blockid=47, top_image="assets/minecraft/textures/blocks/planks_oak.png", side_image="assets/minecraft/textures/blocks/bookshelf.png")
+def bookshelf(): pass
 # moss stone
-block(blockid=48, top_image="assets/minecraft/textures/blocks/cobblestone_mossy.png")
+@block(blockid=48, top_image="assets/minecraft/textures/blocks/cobblestone_mossy.png")
+def moss_stone(): pass
 # obsidian
-block(blockid=49, top_image="assets/minecraft/textures/blocks/obsidian.png")
+@block(blockid=49, top_image="assets/minecraft/textures/blocks/obsidian.png")
+def obsidian(): pass
 
 # torch, redstone torch (off), redstone torch(on)
 @material(blockid=[50, 75, 76], data=[1, 2, 3, 4, 5], transparent=True)
@@ -1691,7 +1806,8 @@ def fire(self, blockid, data):
     return img
 
 # monster spawner
-block(blockid=52, top_image="assets/minecraft/textures/blocks/mob_spawner.png", transparent=True)
+@block(blockid=52, top_image="assets/minecraft/textures/blocks/mob_spawner.png", transparent=True)
+def monster_spawner(): pass
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle and quartz stairs.
 @material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164], data=range(128), transparent=True, solid=True, nospawn=True)
@@ -2087,9 +2203,11 @@ def wire(self, blockid, data):
     return img
 
 # diamond ore
-block(blockid=56, top_image="assets/minecraft/textures/blocks/diamond_ore.png")
+@block(blockid=56, top_image="assets/minecraft/textures/blocks/diamond_ore.png")
+def diamond_ore(): pass
 # diamond block
-block(blockid=57, top_image="assets/minecraft/textures/blocks/diamond_block.png")
+@block(blockid=57, top_image="assets/minecraft/textures/blocks/diamond_block.png")
+def diamond_block(): pass
 
 # crafting table
 # needs two different sides
@@ -2104,7 +2222,7 @@ def crafting_table(self, blockid, data):
 
 # crops
 @material(blockid=59, data=range(8), transparent=True, nospawn=True)
-def crops(self, blockid, data):
+def crops_wheat(self, blockid, data):
     raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/wheat_stage_%d.png" % data)
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
@@ -2580,7 +2698,8 @@ def pressure_plate(self, blockid, data):
     return img
 
 # normal and glowing redstone ore
-block(blockid=[73, 74], top_image="assets/minecraft/textures/blocks/redstone_ore.png")
+@block(blockid=[73, 74], top_image="assets/minecraft/textures/blocks/redstone_ore.png")
+def normal_and_glowing_redstone_ore(): pass
 
 # stone a wood buttons
 @material(blockid=(77,143), data=range(16), transparent=True)
@@ -2679,7 +2798,8 @@ def snow(self, blockid, data):
     return img
 
 # snow block
-block(blockid=80, top_image="assets/minecraft/textures/blocks/snow.png")
+@block(blockid=80, top_image="assets/minecraft/textures/blocks/snow.png")
+def snow_block(): pass
 
 # cactus
 @material(blockid=81, data=range(15), transparent=True, solid=True, nospawn=True)
@@ -2707,7 +2827,8 @@ def cactus(self, blockid, data):
     return img
 
 # clay block
-block(blockid=82, top_image="assets/minecraft/textures/blocks/clay.png")
+@block(blockid=82, top_image="assets/minecraft/textures/blocks/clay.png")
+def clay_block(): pass
 
 # sugar cane
 @material(blockid=83, data=range(16), transparent=True)
@@ -2855,13 +2976,16 @@ def pumpkin(self, blockid, data): # pumpkins, jack-o-lantern
     return img
 
 # netherrack
-block(blockid=87, top_image="assets/minecraft/textures/blocks/netherrack.png")
+@block(blockid=87, top_image="assets/minecraft/textures/blocks/netherrack.png")
+def netherrack(): pass
 
 # soul sand
-block(blockid=88, top_image="assets/minecraft/textures/blocks/soul_sand.png")
+@block(blockid=88, top_image="assets/minecraft/textures/blocks/soul_sand.png")
+def soul_sand(): pass
 
 # glowstone
-block(blockid=89, top_image="assets/minecraft/textures/blocks/glowstone.png")
+@block(blockid=89, top_image="assets/minecraft/textures/blocks/glowstone.png")
+def glowstone(): pass
 
 # portal
 @material(blockid=90, data=[1, 2, 4, 5, 8, 10], transparent=True)
@@ -3420,7 +3544,8 @@ def panes(self, blockid, data):
     return img
 
 # melon
-block(blockid=103, top_image="assets/minecraft/textures/blocks/melon_top.png", side_image="assets/minecraft/textures/blocks/melon_side.png", solid=True)
+@block(blockid=103, top_image="assets/minecraft/textures/blocks/melon_top.png", side_image="assets/minecraft/textures/blocks/melon_side.png", solid=True)
+def melon(): pass
 
 # pumpkin and melon stem
 # TODO To render it as in game needs from pseudo data and ancil data:
@@ -3571,7 +3696,8 @@ def fence_gate(self, blockid, data):
     return img
 
 # mycelium
-block(blockid=110, top_image="assets/minecraft/textures/blocks/mycelium_top.png", side_image="assets/minecraft/textures/blocks/mycelium_side.png")
+@block(blockid=110, top_image="assets/minecraft/textures/blocks/mycelium_top.png", side_image="assets/minecraft/textures/blocks/mycelium_side.png")
+def mycelium(): pass
 
 # lilypad
 # At the moment of writing this lilypads has no ancil data and their
@@ -3592,7 +3718,8 @@ def lilypad(self, blockid, data):
     return self.build_full_block(None, None, None, None, None, t)
 
 # nether brick
-block(blockid=112, top_image="assets/minecraft/textures/blocks/nether_brick.png")
+@block(blockid=112, top_image="assets/minecraft/textures/blocks/nether_brick.png")
+def nether_brick(): pass
 
 # nether wart
 @material(blockid=115, data=range(4), transparent=True)
@@ -3702,17 +3829,21 @@ def end_portal_frame(self, blockid, data):
     return img
 
 # end stone
-block(blockid=121, top_image="assets/minecraft/textures/blocks/end_stone.png")
+@block(blockid=121, top_image="assets/minecraft/textures/blocks/end_stone.png")
+def end_stone(): pass
 
 # dragon egg
 # NOTE: this isn't a block, but I think it's better than nothing
-block(blockid=122, top_image="assets/minecraft/textures/blocks/dragon_egg.png")
+@block(blockid=122, top_image="assets/minecraft/textures/blocks/dragon_egg.png")
+def dragon_egg(): pass
 
 # inactive redstone lamp
-block(blockid=123, top_image="assets/minecraft/textures/blocks/redstone_lamp_off.png")
+@block(blockid=123, top_image="assets/minecraft/textures/blocks/redstone_lamp_off.png")
+def inactive_redstone_lamp(): pass
 
 # active redstone lamp
-block(blockid=124, top_image="assets/minecraft/textures/blocks/redstone_lamp_on.png")
+@block(blockid=124, top_image="assets/minecraft/textures/blocks/redstone_lamp_on.png")
+def active_redstone_lamp(): pass
 
 # daylight sensor.  
 @material(blockid=151, transparent=True)
@@ -3799,10 +3930,12 @@ def wooden_slabs(self, blockid, data):
     return img
 
 # emerald ore
-block(blockid=129, top_image="assets/minecraft/textures/blocks/emerald_ore.png")
+@block(blockid=129, top_image="assets/minecraft/textures/blocks/emerald_ore.png")
+def emerald_ore(): pass
 
 # emerald block
-block(blockid=133, top_image="assets/minecraft/textures/blocks/emerald_block.png")
+@block(blockid=133, top_image="assets/minecraft/textures/blocks/emerald_block.png")
+def emerald_block(): pass
 
 # cocoa plant
 @material(blockid=127, data=range(12), transparent=True)
@@ -3886,7 +4019,8 @@ def cocoa_plant(self, blockid, data):
     return img
 
 # command block
-block(blockid=137, top_image="assets/minecraft/textures/blocks/command_block.png")
+@block(blockid=137, top_image="assets/minecraft/textures/blocks/command_block.png")
+def command_block(): pass
 
 # beacon block
 # at the moment of writing this, it seems the beacon block doens't use
@@ -4148,10 +4282,12 @@ def anvil(self, blockid, data):
 
 
 # block of redstone
-block(blockid=152, top_image="assets/minecraft/textures/blocks/redstone_block.png")
+@block(blockid=152, top_image="assets/minecraft/textures/blocks/redstone_block.png")
+def block_of_redstone(): pass
 
 # nether quartz ore
-block(blockid=153, top_image="assets/minecraft/textures/blocks/quartz_ore.png")
+@block(blockid=153, top_image="assets/minecraft/textures/blocks/quartz_ore.png")
+def nether_quartz_ore(): pass
 
 # block of quartz
 @material(blockid=155, data=range(5), solid=True)
@@ -4235,7 +4371,8 @@ def carpet(self, blockid, data):
     return self.build_full_block((texture,15),texture,texture,texture,texture)
 
 #clay block
-block(blockid=172, top_image="assets/minecraft/textures/blocks/hardened_clay.png")
+@block(blockid=172, top_image="assets/minecraft/textures/blocks/hardened_clay.png")
+def hardened_clay(): pass
 
 #stained hardened clay
 @material(blockid=159, data=range(16), solid=True)
@@ -4245,10 +4382,12 @@ def stained_clay(self, blockid, data):
     return self.build_block(texture,texture)
 
 #coal block
-block(blockid=173, top_image="assets/minecraft/textures/blocks/coal_block.png")
+@block(blockid=173, top_image="assets/minecraft/textures/blocks/coal_block.png")
+def coal_block(): pass
 
 # packed ice block
-block(blockid=174, top_image="assets/minecraft/textures/blocks/ice_packed.png")
+@block(blockid=174, top_image="assets/minecraft/textures/blocks/ice_packed.png")
+def ice_packed(): pass
 
 @material(blockid=175, data=range(16), transparent=True)
 def flower(self, blockid, data):
@@ -4270,3 +4409,5 @@ def flower(self, blockid, data):
         alpha_over(img, bloom_tex.resize((14, 11), Image.ANTIALIAS), (5,5))
 
     return img
+
+# vim: shiftwidth=4 tabstop=4 expandtab

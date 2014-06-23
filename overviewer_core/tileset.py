@@ -31,7 +31,7 @@ from itertools import product, izip, chain
 from PIL import Image
 
 from .util import roundrobin
-from . import nbt
+from . import nbt, cache
 from .files import FileReplacer, get_fs_caps
 from .optimizeimages import optimize_image
 import rendermodes
@@ -293,6 +293,7 @@ class TileSet(object):
         self.am = assetmanagerobj
         self.textures = texturesobj
         self.outputdir = os.path.abspath(outputdir)
+        self.cache = cache.LRUCache(size=1024)
 
         config = self.am.get_tileset_config(self.options.get("name"))
         self.config = config
@@ -918,24 +919,32 @@ class TileSet(object):
         # this is just straight image stitching, not alpha blending
 
         for path in quadPath_filtered:
+            src = None
             try:
-                #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
-                src = Image.open(path[1])
-                # optimizeimg may have converted them to a palette image in the meantime
-                if src.mode != "RGB" and src.mode != "RGBA":
-                    src = src.convert("RGBA")
-                src.load()
-
-                quad = Image.new("RGBA", (192, 192), self.options['bgcolor'])
-                resize_half(quad, src)
-                img.paste(quad, path[0])
-            except Exception, e:
-                logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
-                logging.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
+                src = self.cache[path[1]]
+                logging.debug('Image %s found in cache, using it.', path[1])
+                raw_input('Youpi.')
+            except: # Cache miss: load from disk.
                 try:
-                    os.unlink(path[1])
+                    #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
+                    src = Image.open(path[1])
                 except Exception, e:
-                    logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
+                    logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
+                    logging.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
+                    try:
+                        os.unlink(path[1])
+                    except Exception, e:
+                        logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
+                    continue
+
+            # optimizeimg may have converted them to a palette image in the meantime
+            if src.mode != "RGB" and src.mode != "RGBA":
+                src = src.convert("RGBA")
+            src.load()
+
+            quad = Image.new("RGBA", (192, 192), self.options['bgcolor'])
+            resize_half(quad, src)
+            img.paste(quad, path[0])
 
         # Save it
         with FileReplacer(imgpath, capabilities=self.fs_caps) as tmppath:
@@ -948,6 +957,9 @@ class TileSet(object):
                 optimize_image(tmppath, imgformat, self.options['optimizeimg'])
 
             os.utime(tmppath, (max_mtime, max_mtime))
+
+        # Add to cache :)
+        self.cache[imgpath] = img
 
     def _render_rendertile(self, tile):
         """Renders the given render-tile.
@@ -1052,6 +1064,11 @@ class TileSet(object):
                 optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])
             
             os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))
+
+        # Add the file to the cache.
+        self.cache[imgpath] = tileimg
+
+
 
     def _iterate_and_check_tiles(self, path):
         """A generator function over all tiles that should exist in the subtree
@@ -1676,3 +1693,4 @@ class RenderTile(object):
                     rowbounds[0] = ymid
 
         return cls(col, row, path)
+# vim: shiftwidth=4 tabstop=4 expandtab
