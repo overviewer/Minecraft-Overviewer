@@ -19,8 +19,14 @@ Python, don't worry, it's pretty simple. Just follow the examples.
     Windows.  This is required because the backslash ("\\") has special meaning
     in Python.  
 
+Examples
+========
+
+The following examples should give you an idea of what a configuration file looks
+like, and also teach you some neat tricks.
+
 A Simple Example
-================
+----------------
 
 ::
 
@@ -60,7 +66,7 @@ The ``renders`` dictionary
     ``worlds["My world"]``
 
 A more complicated example
-==========================
+--------------------------
 ::
 
     worlds["survival"] = "/home/username/server/survivalworld"
@@ -130,7 +136,7 @@ renders.
     example.
 
 A dynamic config file
-=====================
+---------------------
 
 It might be handy to dynamically retrieve parameters. For instance, if you
 periodically render your last map backup which is located in a timestamped
@@ -191,6 +197,9 @@ the overviewer_core.rendermodes module).
 If the above doesn't make sense, just know that items in the config file take
 the form ``key = value``. Two items take a different form:, ``worlds`` and
 ``renders``, which are described below.
+
+General
+-------
 
 ``worlds``
     This is pre-defined as an empty dictionary. The config file is expected to
@@ -258,6 +267,9 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
     e.g.::
 
         processes = 2
+
+Observers
+~~~~~~~~~
 
 .. _observer:
 
@@ -367,6 +379,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
             
             
 
+Custom web assets
+~~~~~~~~~~~~~~~~~
 
 .. _customwebassets:
 
@@ -411,6 +425,9 @@ values. The valid configuration keys are listed below.
                 'title': 'This render doesn't explicitly declare a world!',
                 }
 
+General
+~~~~~~~
+
 ``world``
     Specifies which world this render corresponds to. Its value should be a
     string from the appropriate key in the worlds dictionary.
@@ -442,7 +459,20 @@ values. The valid configuration keys are listed below.
         nether :ref:`rendermode<option_rendermode>`. Otherwise you'll
         just end up rendering the nether's ceiling.
 
+    .. note::
+
+        For the end, you will most likely want to turn down the strength of
+        the shadows, as you'd otherwise end up with a very dark result.
+        
+        e.g.::
+            
+            end_lighting = [Base(), EdgeLines(), Lighting(strength=0.5)]
+            end_smooth_lighting = [Base(), EdgeLines(), SmoothLighting(strength=0.5)]
+
     **Default:** ``"overworld"``
+
+Rendering
+~~~~~~~~~
 
 .. _option_rendermode:
 
@@ -523,14 +553,107 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``"upper-left"``
 
-.. _rerenderprob:
+.. _option_overlay:
 
-``rerenderprob``
-    This is the probability that a tile will be rerendered even though there may
-    have been no changes to any blocks within that tile. Its value should be a
-    floating point number between 0.0 and 1.0.
+``overlay``
+    This specifies which renders that this render will be displayed on top of. 
+    It should be a list of other renders.  If this option is confusing, think
+    of this option's name as "overlay_on_to".
 
-    **Default:** ``0``
+    If you leave this as an empty list, this overlay will be displayed on top
+    of all renders for the same world/dimension as this one.
+
+    As an example, let's assume you have two renders, one called "day" and one 
+    called "night".  You want to create a Biome Overlay to be displayed on top
+    of the "day" render.  Your config file might look like this:
+
+    ::
+
+        outputdir = "output_dir"
+
+
+        worlds["exmaple"] = "exmaple"
+
+        renders['day'] = {
+            'world': 'exmaple',
+            'rendermode': 'smooth_lighting',
+            'title': "Daytime Render",
+        }
+        renders['night'] = {
+            'world': 'exmaple',
+            'rendermode': 'night',
+            'title': "Night Render",
+        }
+
+        renders['biomeover'] = {
+            'world': 'exmaple',
+            'rendermode': [ClearBase(), BiomeOverlay()],
+            'title': "Biome Coloring Overlay",
+            'overlay': ['day']
+        }
+
+    **Default:** ``[]`` (an empty list)
+
+.. _option_texturepath:
+
+``texturepath``
+    This is a where a specific texture or resource pack can be found to use
+    during this render. It can be a path to either a folder or a zip/jar file
+    containing the texture resources. If specifying a folder, this option should
+    point to a directory that *contains* the assets/ directory (it should not
+    point to the assets directory directly or any one particular texture image).
+
+    Its value should be a string: the path on the filesystem to the resource
+    pack.
+
+.. _crop:
+
+``crop``
+    You can use this to render a small subset of your map, instead of the entire
+    thing. The format is (min x, min z, max x, max z).
+
+    The coordinates are block coordinates. The same you get with the debug menu
+    in-game and the coordinates shown when you view a map.
+
+    Example that only renders a 1000 by 1000 square of land about the origin::
+
+        renders['myrender'] = {
+                'world': 'myworld',
+                'title': "Cropped Example",
+                'crop': (-500, -500, 500, 500),
+        }
+
+    This option performs a similar function to the old ``--regionlist`` option
+    (which no longer exists). It is useful for example if someone has wandered
+    really far off and made your map too large. You can set the crop for the
+    largest map you want to render (perhaps ``(-10000,-10000,10000,10000)``). It
+    could also be used to define a really small render showing off one
+    particular feature, perhaps from multiple angles.
+
+    .. warning::
+
+        If you decide to change the bounds on a render, you may find it produces
+        unexpected results. It is recommended to not change the crop settings
+        once it has been rendered once.
+
+        For an expansion to the bounds, because chunks in the new bounds have
+        the same mtime as the old, tiles will not automatically be updated,
+        leaving strange artifacts along the old border. You may need to use
+        :option:`--forcerender` to force those tiles to update.  (You can use
+        the ``forcerender`` option on just one render by adding ``'forcerender':
+        True`` to that render's configuration)
+
+        For reductions to the bounds, you will need to render your map at least
+        once with the :option:`--check-tiles` mode activated, and then once with
+        the :option:`--forcerender` option. The first run will go and delete tiles that
+        should no longer exist, while the second will render the tiles around
+        the edge properly. Also see :ref:`this faq entry<cropping_faq>`.
+
+        Sorry there's no better way to handle these cases at the moment. It's a
+        tricky problem and nobody has devoted the effort to solve it yet.
+
+Image options
+~~~~~~~~~~~~~
 
 ``imgformat``
     This is which image format to render the tiles into. Its value should be a
@@ -635,12 +758,10 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``[]``
 
-``bgcolor``
-    This is the background color to be displayed behind the map. Its value
-    should be either a string in the standard HTML color syntax or a 4-tuple in
-    the format of (r,b,g,a). The alpha entry should be set to 0.
+Zoom
+~~~~
 
-    **Default:** ``#1a1a1a``
+These options control the zooming behavior in the JavaScript output.
 
 ``defaultzoom``
     This value specifies the default zoom level that the map will be
@@ -681,6 +802,9 @@ values. The valid configuration keys are listed below.
 
     **Default:** 0 (zero, which does not disable any zoom levels)
 
+Other HTML/JS output options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ``showlocationmarker``
     Allows you to specify whether to show the location marker when accessing a URL
     with coordinates specified.
@@ -694,63 +818,50 @@ values. The valid configuration keys are listed below.
     tiles folder itself. For example, if the tile images start at
     http://domain.com/map/world_day/ you want to set this to http://domain.com/map/
 
-.. _option_texturepath:
+.. _option_markers:
 
-``texturepath``
-    This is a where a specific texture or resource pack can be found to use
-    during this render. It can be a path to either a folder or a zip/jar file
-    containing the texture resources. If specifying a folder, this option should
-    point to a directory that *contains* the assets/ directory (it should not
-    point to the assets directory directly or any one particular texture image).
+``markers``
+    This controls the display of markers, signs, and other points of interest
+    in the output HTML.  It should be a list of dictionaries.  
 
-    Its value should be a string: the path on the filesystem to the resource
-    pack.
+    .. note::
 
-.. _crop:
+       Setting this configuration option alone does nothing.  In order to get
+       markers and signs on our map, you must also run the genPO script.  See
+       the :doc:`Signs and markers<signs>` section for more details and documenation.
 
-``crop``
-    You can use this to render a small subset of your map, instead of the entire
-    thing. The format is (min x, min z, max x, max z).
 
-    The coordinates are block coordinates. The same you get with the debug menu
-    in-game and the coordinates shown when you view a map.
+    **Default:** ``[]`` (an empty list)
 
-    Example that only renders a 1000 by 1000 square of land about the origin::
 
-        renders['myrender'] = {
-                'world': 'myworld',
-                'title': "Cropped Example",
-                'crop': (-500, -500, 500, 500),
-        }
+``poititle``
+    This controls the display name of the POI/marker dropdown control.
 
-    This option performs a similar function to the old ``--regionlist`` option
-    (which no longer exists). It is useful for example if someone has wandered
-    really far off and made your map too large. You can set the crop for the
-    largest map you want to render (perhaps ``(-10000,-10000,10000,10000)``). It
-    could also be used to define a really small render showing off one
-    particular feature, perhaps from multiple angles.
+    **Default:** "Signs"
 
-    .. warning::
+``showspawn``
+    This is a boolean, and defaults to ``True``. If set to ``False``, then the spawn
+    icon will not be displayed on the rendered map.
 
-        If you decide to change the bounds on a render, you may find it produces
-        unexpected results. It is recommended to not change the crop settings
-        once it has been rendered once.
+``bgcolor``
+    This is the background color to be displayed behind the map. Its value
+    should be either a string in the standard HTML color syntax or a 4-tuple in
+    the format of (r,b,g,a). The alpha entry should be set to 0.
 
-        For an expansion to the bounds, because chunks in the new bounds have
-        the same mtime as the old, tiles will not automatically be updated,
-        leaving strange artifacts along the old border. You may need to use
-        :option:`--forcerender` to force those tiles to update.  (You can use
-        the ``forcerender`` option on just one render by adding ``'forcerender':
-        True`` to that render's configuration)
+    **Default:** ``#1a1a1a``
 
-        For reductions to the bounds, you will need to render your map at least
-        once with the :option:`--check-tiles` mode activated, and then once with
-        the :option:`--forcerender` option. The first run will go and delete tiles that
-        should no longer exist, while the second will render the tiles around
-        the edge properly. Also see :ref:`this faq entry<cropping_faq>`.
+Map update behavior
+~~~~~~~~~~~~~~~~~~~
 
-        Sorry there's no better way to handle these cases at the moment. It's a
-        tricky problem and nobody has devoted the effort to solve it yet.
+.. _rerenderprob:
+
+``rerenderprob``
+    This is the probability that a tile will be rerendered even though there may
+    have been no changes to any blocks within that tile. Its value should be a
+    floating point number between 0.0 and 1.0.
+
+    **Default:** ``0``
+
 
 ``forcerender``
     This is a boolean. If set to ``True`` (or any non-false value) then this
@@ -805,72 +916,6 @@ values. The valid configuration keys are listed below.
         convey with the changelist option. If your map ever shrinks or you've
         removed some tiles, you may need to do some manual deletion on the
         remote side.
-
-.. _option_markers:
-
-``markers``
-    This controls the display of markers, signs, and other points of interest
-    in the output HTML.  It should be a list of dictionaries.  
-
-    .. note::
-
-       Setting this configuration option alone does nothing.  In order to get
-       markers and signs on our map, you must also run the genPO script.  See
-       the :doc:`Signs and markers<signs>` section for more details and documenation.
-
-
-    **Default:** ``[]`` (an empty list)
-
-
-``poititle``
-    This controls the display name of the POI/marker dropdown control.
-
-    **Default:** "Signs"
-
-.. _option_overlay:
-
-``overlay``
-    This specifies which renders that this render will be displayed on top of. 
-    It should be a list of other renders.  If this option is confusing, think
-    of this option's name as "overlay_on_to".
-
-    If you leave this as an empty list, this overlay will be displayed on top
-    of all renders for the same world/dimension as this one.
-
-    As an example, let's assume you have two renders, one called "day" and one 
-    called "night".  You want to create a Biome Overlay to be displayed on top
-    of the "day" render.  Your config file might look like this:
-
-    ::
-
-        outputdir = "output_dir"
-
-
-        worlds["exmaple"] = "exmaple"
-
-        renders['day'] = {
-            'world': 'exmaple',
-            'rendermode': 'smooth_lighting',
-            'title': "Daytime Render",
-        }
-        renders['night'] = {
-            'world': 'exmaple',
-            'rendermode': 'night',
-            'title': "Night Render",
-        }
-
-        renders['biomeover'] = {
-            'world': 'exmaple',
-            'rendermode': [ClearBase(), BiomeOverlay()],
-            'title': "Biome Coloring Overlay",
-            'overlay': ['day']
-        }
-
-    **Default:** ``[]`` (an empty list)
-
-``showspawn``
-    This is a boolean, and defaults to ``True``. If set to ``False``, then the spawn
-    icon will not be displayed on the rendered map.
 
 .. _customrendermodes:
 
@@ -1062,6 +1107,7 @@ BiomeOverlay
 
 Defining Custom Rendermodes
 ---------------------------
+
 Each rendermode primitive listed above is a Python *class* that is automatically
 imported in the context of the config file (They come from
 overviewer_core.rendermodes). To define your own rendermode, simply define a
@@ -1089,7 +1135,8 @@ are referencing the previously defined list, not one of the built-in
 rendermodes.
 
 Built-in Rendermodes
-====================
+--------------------
+
 The built-in rendermodes are nothing but pre-defined lists of rendermode
 primitives for your convenience. Here are their definitions::
 
