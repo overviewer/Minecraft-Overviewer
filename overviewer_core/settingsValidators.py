@@ -225,15 +225,23 @@ def validateOutputDir(d):
     return expand_path(d)
 
 def validateCrop(value):
-    if len(value) != 4:
-        raise ValidationException("The value for the 'crop' setting must be a tuple of length 4")
-    a, b, c, d = tuple(int(x) for x in value)
-
-    if a >= c:
-        a, c = c, a
-    if b >= d:
-        b, d = d, b
-    return (a, b, c, d)
+    if not isinstance(value, list):
+        value = [value]
+        
+    cropZones = []
+    for zone in value:
+        if not isinstance(zone, tuple) or len(zone) != 4:
+            raise ValidationException("The value for the 'crop' setting must be an array of tuples of length 4")
+        a, b, c, d = tuple(int(x) for x in zone)
+    
+        if a >= c:
+            a, c = c, a
+        if b >= d:
+            b, d = d, b
+        
+        cropZones.append((a, b, c, d))
+        
+    return cropZones
 
 def validateObserver(observer):
     if all(map(lambda m: hasattr(observer, m), ['start', 'add', 'update', 'finish'])):

@@ -947,7 +947,14 @@ class TileSet(object):
             if self.options['optimizeimg']:
                 optimize_image(tmppath, imgformat, self.options['optimizeimg'])
 
-            os.utime(tmppath, (max_mtime, max_mtime))
+            try:
+                os.utime(tmppath, (max_mtime, max_mtime))
+            except OSError, e:
+                # Ignore errno ENOENT: file does not exist. Due to a race
+                # condition, two processes could conceivably try and update
+                # the same temp file at the same time
+                if e.errno != errno.ENOENT:
+                    raise
 
     def _render_rendertile(self, tile):
         """Renders the given render-tile.

@@ -609,8 +609,10 @@ Rendering
 .. _crop:
 
 ``crop``
-    You can use this to render a small subset of your map, instead of the entire
-    thing. The format is (min x, min z, max x, max z).
+    You can use this to render one or more small subsets of your map. The format
+    of an individual crop zone is (min x, min z, max x, max z); if you wish to
+    specify multiple crop zones, you may do so by specifying a list of crop zones,
+    i.e. [(min x1, min z1, max x1, max z1), (min x2, min z2, max x2, max z2)]
 
     The coordinates are block coordinates. The same you get with the debug menu
     in-game and the coordinates shown when you view a map.
@@ -621,6 +623,14 @@ Rendering
                 'world': 'myworld',
                 'title': "Cropped Example",
                 'crop': (-500, -500, 500, 500),
+        }
+
+    Example that renders two 500 by 500 squares of land:
+
+        renders['myrender'] = {
+                'world': 'myworld',
+                'title': "Multi cropped Example",
+                'crop': [(-500, -500, 0, 0), (0, 0, 500, 500)]
         }
 
     This option performs a similar function to the old ``--regionlist`` option
@@ -829,7 +839,6 @@ Other HTML/JS output options
        Setting this configuration option alone does nothing.  In order to get
        markers and signs on our map, you must also run the genPO script.  See
        the :doc:`Signs and markers<signs>` section for more details and documenation.
-
 
     **Default:** ``[]`` (an empty list)
 

@@ -488,15 +488,19 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         # regionset cache pulls from the same underlying cache object.
         rset = world.CachedRegionSet(rset, caches)
 
-        # If a crop is requested, wrap the regionset here
-        if "crop" in render:
-            rset = world.CroppedRegionSet(rset, *render['crop'])
-
         # If this is to be a rotated regionset, wrap it in a RotatedRegionSet
         # object
         if (render['northdirection'] > 0):
             rset = world.RotatedRegionSet(rset, render['northdirection'])
         logging.debug("Using RegionSet %r", rset)
+
+        # If a crop is requested, wrap the regionset here
+        if "crop" in render:
+            rsets = []
+            for zone in render['crop']:
+                rsets.append(world.CroppedRegionSet(rset, *zone))
+        else:
+            rsets = [rset]
 
         ###############################
         # Do the final prep and create the TileSet object
@@ -508,8 +512,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
         tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom", "showlocationmarker", "minzoom"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
-        tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
-        tilesets.append(tset)
+        for rset in rsets:
+            tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
+            tilesets.append(tset)
 
     # Do tileset preprocessing here, before we start dispatching jobs
     logging.info("Preprocessing...")
