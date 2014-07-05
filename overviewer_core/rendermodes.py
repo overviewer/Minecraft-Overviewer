@@ -29,13 +29,13 @@ class RenderPrimitive(object):
     def __init__(self, **kwargs):
         if self.name is None:
             raise RuntimeError("RenderPrimitive cannot be used directly")
-        
+
         self.option_values = {}
         for key, val in kwargs.iteritems():
             if not key in self.options:
                 raise ValueError("primitive `{0}' has no option `{1}'".format(self.name, key))
             self.option_values[key] = val
-        
+
         # set up defaults
         for name, (description, default) in self.options.iteritems():
             if not name in self.option_values:
@@ -59,7 +59,7 @@ class HeightFading(RenderPrimitive):
         # 128 is *WRONG*, it should be 64. but we're grandfathered in for now
         "sealevel": ("target sea level", 128),
     }
-    
+
     black_color = Image.new("RGB", (24,24), (0,0,0))
     white_color = Image.new("RGB", (24,24), (255,255,255))
 
@@ -69,13 +69,13 @@ class Depth(RenderPrimitive):
         "min": ("lowest level of blocks to render", 0),
         "max": ("highest level of blocks to render", 255),
     }
-    
+
 class Exposed(RenderPrimitive):
     name = "exposed"
     options = {
         "mode": ("0 = exposed blocks only, 1 = unexposed blocks only", 0),
     }
-    
+
 class NoFluids(RenderPrimitive):
     name = "no-fluids"
 
@@ -93,7 +93,7 @@ class Cave(RenderPrimitive):
 
 class DepthTinting(RenderPrimitive):
     name = "depth-tinting"
-    
+
     @property
     def depth_colors(self):
         depth_colors = getattr(self, "_depth_colors", [])
@@ -106,7 +106,7 @@ class DepthTinting(RenderPrimitive):
             depth_colors.append(r)
             depth_colors.append(g)
             depth_colors.append(b)
-            
+
             if z < 32:
                 g += 7
             elif z < 64:
@@ -132,33 +132,33 @@ class Lighting(RenderPrimitive):
         facemasks = getattr(self, "_facemasks", None)
         if facemasks:
             return facemasks
-        
+
         white = Image.new("L", (24,24), 255)
-        
+
         top = Image.new("L", (24,24), 0)
         left = Image.new("L", (24,24), 0)
         whole = Image.new("L", (24,24), 0)
-        
+
         toppart = textures.Textures.transform_image_top(white)
         leftpart = textures.Textures.transform_image_side(white)
-        
+
         # using the real PIL paste here (not alpha_over) because there is
         # no alpha channel (and it's mode "L")
         top.paste(toppart, (0,0))
         left.paste(leftpart, (0,6))
         right = left.transpose(Image.FLIP_LEFT_RIGHT)
-        
+
         # Manually touch up 6 pixels that leave a gap, like in
         # textures._build_block()
         for x,y in [(13,23), (17,21), (21,19)]:
             right.putpixel((x,y), 255)
         for x,y in [(3,4), (7,2), (11,0)]:
             top.putpixel((x,y), 255)
-    
+
         # special fix for chunk boundary stipple
         for x,y in [(13,11), (17,9), (21,7)]:
             right.putpixel((x,y), 0)
-        
+
         self._facemasks = (top, left, right)
         return self._facemasks
 
@@ -183,13 +183,13 @@ class Overlay(RenderPrimitive):
         white = Image.new("RGBA", (24,24), (255, 255, 255, 255))
         self._whitecolor = white
         return white
-    
+
     @property
     def facemask_top(self):
         facemask_top = getattr(self, "_facemask_top", None)
         if facemask_top:
             return facemask_top
-        
+
         white = Image.new("L", (24,24), 255)
         top = Image.new("L", (24,24), 0)
         toppart = textures.Textures.transform_image_top(white)
@@ -208,7 +208,7 @@ class SlimeOverlay(Overlay):
 class MineralOverlay(Overlay):
     name = "overlay-mineral"
     options = {
-        'minerals' : ('a list of (blockid, (r, g, b)) tuples for coloring minerals', None),
+        'minerals' : ('a list of (blockid, (r, g, b)) or (((relx, rely, relz), blockid), (r, g, b, a)) tuples for coloring minerals', None),
     }
 
 class BiomeOverlay(Overlay):
