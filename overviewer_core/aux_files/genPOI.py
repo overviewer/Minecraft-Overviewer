@@ -145,17 +145,12 @@ def handlePlayers(rset, render, worldpath):
     # only handle this region set once
     if 'Players' in rset._pois:
         return
-    dimension = None
-    try:
-        dimension = {None: 0,
-                     'DIM-1': -1,
-                     'DIM1': 1}[rset.get_type()]
-    except KeyError, e:
-        mystdim = re.match(r"^DIM_MYST(\d+)$", e.message)  # Dirty hack. Woo!
-        if mystdim:
-            dimension = int(mystdim.group(1))
-        else:
-            raise
+
+    if rset.get_type():
+        dimension = int(re.match(r"^DIM(_MYST)?(-?\d+)$", rset.get_type()).group(2))
+    else:
+        dimension = 0
+
     playerdir = os.path.join(worldpath, "playerdata")
     useUUIDs = True
     if not os.path.isdir(playerdir):
