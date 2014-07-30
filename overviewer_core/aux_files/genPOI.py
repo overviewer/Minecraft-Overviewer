@@ -319,8 +319,8 @@ def main():
             return 1
       
         for f in render['markers']:
-            markersets.add(((f['name'], f['filterFunction']), rset))
             name = replaceBads(f['name']) + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
+            markersets.add((name, (f['name'], f['filterFunction']), rset))
             to_append = dict(groupName=name, 
                     displayName = f['name'], 
                     icon=f.get('icon', 'signpost_icon.png'), 
@@ -341,12 +341,12 @@ def main():
     logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
     markerSetDict = dict()
-    for (flter, rset) in markersets:
+
+    for (name, flter, rset) in markersets:
         # generate a unique name for this markerset.  it will not be user visible
         filter_name =     flter[0]
         filter_function = flter[1]
 
-        name = replaceBads(filter_name) + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
         markerSetDict[name] = dict(created=False, raw=[], name=filter_name)
         poi_sets = ['Entities', 'TileEntities', 'Players', 'Manual']
         for poi in itertools.chain(rset._pois[n] for n in poi_sets):
