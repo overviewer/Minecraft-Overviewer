@@ -22,6 +22,7 @@ import re
 import urllib2
 import Queue
 import multiprocessing
+import itertools
 
 from multiprocessing import Process
 from multiprocessing import Pool
@@ -350,22 +351,8 @@ def main():
 
         name = replaceBads(filter_name) + hex(hash(filter_function))[-4:] + "_" + hex(hash(rset))[-4:]
         markerSetDict[name] = dict(created=False, raw=[], name=filter_name)
-        for poi in rset._pois['Entities']:
-            result = filter_function(poi)
-            if result:
-                d = create_marker_from_filter_result(poi, result)
-                markerSetDict[name]['raw'].append(d)
-        for poi in rset._pois['TileEntities']:
-            result = filter_function(poi)
-            if result:
-                d = create_marker_from_filter_result(poi, result)
-                markerSetDict[name]['raw'].append(d)
-        for poi in rset._pois['Players']:
-            result = filter_function(poi)
-            if result:
-                d = create_marker_from_filter_result(poi, result)
-                markerSetDict[name]['raw'].append(d)
-        for poi in rset._pois['Manual']:
+        poi_sets = ['Entities', 'TileEntities', 'Players', 'Manual']
+        for poi in itertools.chain(rset._pois[n] for n in poi_sets):
             result = filter_function(poi)
             if result:
                 d = create_marker_from_filter_result(poi, result)
