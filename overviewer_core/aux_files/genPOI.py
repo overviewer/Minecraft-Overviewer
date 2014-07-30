@@ -224,6 +224,7 @@ def main():
     parser.add_option("-c", "--config", dest="config", action="store", help="Specify the config file to use.")
     parser.add_option("--quiet", dest="quiet", action="count", help="Reduce logging output")
     parser.add_option("--skip-scan", dest="skipscan", action="store_true", help="Skip scanning for entities when using GenPOI")
+    parser.add_option("--skip-players", dest="skipplayers", action="store_true", help="Skip getting player data when using GenPOI")
 
     options, args = parser.parse_args()
     if not options.config:
@@ -288,7 +289,11 @@ def main():
         if not options.skipscan:
             handleEntities(rset, os.path.join(destdir, rname), render, rname, config)
 
-        handlePlayers(rset, render, worldpath)
+        if options.skipplayers:
+            rset._pois['Players'] = []
+        else:
+            handlePlayers(rset, render, worldpath)
+
         handleManual(rset, render['manualpois'])
 
     logging.info("Done handling POIs")

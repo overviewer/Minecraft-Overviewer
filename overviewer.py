@@ -104,6 +104,8 @@ def main():
             help="Runs the genPOI script")
     exegroup.add_option("--skip-scan", dest="skipscan", action="store_true",
             help="When running GenPOI, don't scan for entities")
+    exegroup.add_option("--skip-players", dest="skipplayers", action="store_true",
+            help="When running GenPOI, don't get player data")
 
     parser.add_option_group(exegroup)
 
