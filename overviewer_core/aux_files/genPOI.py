@@ -24,6 +24,7 @@ import Queue
 import multiprocessing
 import itertools
 
+from collections import defaultdict
 from multiprocessing import Process
 from multiprocessing import Pool
 from optparse import OptionParser
@@ -293,7 +294,7 @@ def main():
     worldcache = {}
 
     markersets = set()
-    markers = dict()
+    markers = defaultdict(list)
 
     for rname, render in config['renders'].iteritems():
         try:
@@ -325,11 +326,7 @@ def main():
                     icon=f.get('icon', 'signpost_icon.png'), 
                     createInfoWindow=f.get('createInfoWindow',True),
                     checked = f.get('checked', False))
-            try:
-                l = markers[rname]
-                l.append(to_append)
-            except KeyError:
-                markers[rname] = [to_append]
+            markers[rname].append(to_append)
         
         if not options.skipscan:
             handleEntities(rset, os.path.join(destdir, rname), render, rname, config)
