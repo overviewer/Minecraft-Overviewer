@@ -1092,12 +1092,39 @@ MineralOverlay
     **Options**
 
     minerals
-        A list of (blockid, (r, g, b)) tuples to use as colors. If not
-        provided, a default list of common minerals is used.
+        If not provided, a default list of common minerals is used.
+
+        There are two possibilities the colors can be specified.
+
+        The first possibility is a list of ``(blockid, (r, g, b))`` tuples to
+        use as colors.
 
         Example::
 
             MineralOverlay(minerals=[(64,(255,255,0)), (13,(127,0,127))])
+
+        The second possibility is much more powerfull but also more complex.
+        This representation is able to draw a color on the overlay if blocks
+        match a pattern.
+
+        Patterns are specified as multiple conditions with tuples of the form
+        ``(relx, rely, relz, blockid)``. By specifying ``(0, -1, 0, 4)``
+        the block below the current one has to be a cobblestone.
+
+        One color is specified as ``((condition1, condition2, ...), (r, g, b, a))``
+        where the conditions are relative coordinates and the blockid as
+        specified above. The conditions must match all at the same time
+        for the color to apply.
+
+        Example::
+
+            MineralOverlay(minerals=[(((0, 0, 0, 66), (0, -1, 0, 4)), (255, 0, 0, 255)),
+                                     (((0, 0, 0, 27), (0, -1, 0, 4)), (0, 255, 0, 255))])
+
+        This example produces the following coloring:
+
+        * top line all rails on top of cobblestone are rendered in red
+        * bottom line all powerrails on cobblestone are rendered in green
 
 BiomeOverlay
     Color the map according to the biome at that point. Either use on
