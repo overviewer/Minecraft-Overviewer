@@ -208,7 +208,7 @@ class SlimeOverlay(Overlay):
 class MineralOverlay(Overlay):
     name = "overlay-mineral"
     options = {
-        'minerals' : ('a list of (blockid, (r, g, b)) or (((relx, rely, relz), blockid), (r, g, b, a)) tuples for coloring minerals', None),
+        'minerals' : ('a list of (blockid, (r, g, b)) or ((((relx, rely, relz), blockid),), (r, g, b, a)) tuples for coloring minerals', None),
     }
 
 class BiomeOverlay(Overlay):
