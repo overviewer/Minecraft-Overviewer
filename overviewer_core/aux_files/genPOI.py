@@ -20,18 +20,17 @@ import json
 import sys
 import re
 import urllib2
-import Queue
 import multiprocessing
 import itertools
 
 from collections import defaultdict
-from multiprocessing import Process
 from multiprocessing import Pool
 from optparse import OptionParser
 
 from overviewer_core import logger
 from overviewer_core import nbt
 from overviewer_core import configParser, world
+from overviewer_core import rendermodes
 
 UUID_LOOKUP_URL = 'https://sessionserver.mojang.com/session/minecraft/profile/'
 
@@ -43,22 +42,26 @@ def replaceBads(s):
         x = x.replace(bad,"_")
     return x
 
+
 # yes there's a double parenthesis here
 # see below for when this is called, and why we do this
 # a smarter way would be functools.partial, but that's broken on python 2.6
 # when used with multiprocessing
-def parseBucketChunks((bucket, rset)):
+def parseBucketChunks((bucket, rset, filters)):
     pid = multiprocessing.current_process().pid
-    pois = dict(TileEntities=[], Entities=[]);
-  
+    markers = defaultdict(list)
+
     i = 0
     cnt = 0
-    l = len(bucket)
     for b in bucket:
         try:
             data = rset.get_chunk(b[0],b[1])
-            pois['TileEntities'] += data['TileEntities']
-            pois['Entities']     += data['Entities']
+            for poi in itertools.chain(data['TileEntities'], data['Entities']):
+                for name, filter_function in filters:
+                    result = filter_function(poi)
+                    if result:
+                        d = create_marker_from_filter_result(poi, result)
+                        markers[name].append(d)
         except nbt.CorruptChunkError:
             logging.warning("Ignoring POIs in corrupt chunk %d,%d", b[0], b[1])
 
@@ -67,57 +70,66 @@ def parseBucketChunks((bucket, rset)):
         if i == 250:
             i = 0
             cnt = 250 + cnt
-            logging.info("Found %d entities and %d tile entities in thread %d so far at %d chunks", len(pois['Entities']), len(pois['TileEntities']), pid, cnt);
+            logging.info("Found %d markers in thread %d so far at %d chunks", sum(len(v) for v in markers.itervalues()), pid, cnt);
 
-    return pois
+    return markers
 
-def handleEntities(rset, outputdir, render, rname, config):
 
-    # if we're already handled the POIs for this region regionset, do nothing
-    if hasattr(rset, "_pois"):
-        return
+def handleEntities(rset, config, filters, markers):
+    """
+    Add markers for Entities or TileEntities.
 
+    For this every chunk of the regionset is parsed and filtered using multiple
+    processes, if so configured.
+    This function will not return anything, but it will update the parameter
+    `markers`.
+    """
     logging.info("Looking for entities in %r", rset)
-
-    filters = render['markers']
-    rset._pois = dict(TileEntities=[], Entities=[])
 
     numbuckets = config['processes'];
     if numbuckets < 0:
         numbuckets = multiprocessing.cpu_count()
 
     if numbuckets == 1:
-        for (x,z,mtime) in rset.iterate_chunks():
+        for (x, z, mtime) in rset.iterate_chunks():
             try:
-                data = rset.get_chunk(x,z) 
-                rset._pois['TileEntities'] += data['TileEntities']
-                rset._pois['Entities']     += data['Entities']
+                data = rset.get_chunk(x, z)
+                for poi in itertools.chain(data['TileEntities'], data['Entities']):
+                    for name, __, filter_function, __, __, __ in filters:
+                        result = filter_function(poi)
+                        if result:
+                            d = create_marker_from_filter_result(poi, result)
+                            markers[name]['raw'].append(d)
             except nbt.CorruptChunkError:
                 logging.warning("Ignoring POIs in corrupt chunk %d,%d", x,z)
   
     else:
         buckets = [[] for i in range(numbuckets)];
   
-        for (x,z,mtime) in rset.iterate_chunks():
+        for (x, z, mtime) in rset.iterate_chunks():
             i = x / 32 + z / 32
             i = i % numbuckets 
-            buckets[i].append([x,z])
+            buckets[i].append([x, z])
   
         for b in buckets:
             logging.info("Buckets has %d entries", len(b));
   
         # Create a pool of processes and run all the functions
         pool = Pool(processes=numbuckets)
-        results = pool.map(parseBucketChunks, ((buck, rset) for buck in buckets))
+
+        # simplify the filters dict, so pickle doesn't have to do so much
+        filters = [(name, filter_function) for name, __, filter_function, __, __, __ in filters]
+
+        results = pool.map(parseBucketChunks, ((buck, rset, filters) for buck in buckets))
   
         logging.info("All the threads completed")
   
-        # Fix up all the quests in the reset
-        for data in results:
-            rset._pois['TileEntities'] += data['TileEntities']
-            rset._pois['Entities']     += data['Entities']
+        for marker_dict in results:
+            for name, marker_list in marker_dict.iteritems():
+                markers[name]['raw'].extend(marker_list)
 
     logging.info("Done.")
+
 
 class PlayerDict(dict):
     use_uuid = False
@@ -140,19 +152,16 @@ class PlayerDict(dict):
         except (ValueError, urllib2.URLError):
             logging.warning("Unable to get player name for UUID %s", self._name)
 
-def handlePlayers(rset, render, worldpath):
-    if not hasattr(rset, "_pois"):
-        rset._pois = dict(TileEntities=[], Entities=[])
 
-    # only handle this region set once
-    if 'Players' in rset._pois:
-        return
+def handlePlayers(worldpath, filters, markers):
+    """
+    Add markers for players to the list of markers.
 
-    if rset.get_type():
-        dimension = int(re.match(r"^DIM(_MYST)?(-?\d+)$", rset.get_type()).group(2))
-    else:
-        dimension = 0
-
+    For this the player files under the given `worldpath` are parsed and
+    filtered.
+    This function will not return anything, but it will update the parameter
+    `markers`.
+    """
     playerdir = os.path.join(worldpath, "playerdata")
     useUUIDs = True
     if not os.path.isdir(playerdir):
@@ -163,12 +172,10 @@ def handlePlayers(rset, render, worldpath):
         playerfiles = os.listdir(playerdir)
         playerfiles = [x for x in playerfiles if x.endswith(".dat")]
         isSinglePlayer = False
-
     else:
         playerfiles = [os.path.join(worldpath, "level.dat")]
         isSinglePlayer = True
 
-    rset._pois['Players'] = []
     for playerfile in playerfiles:
         try:
             data = PlayerDict(nbt.load(os.path.join(playerdir, playerfile))[1])
@@ -178,38 +185,63 @@ def handlePlayers(rset, render, worldpath):
         except IOError:
             logging.warning("Skipping bad player dat file %r", playerfile)
             continue
-        playername = playerfile.split(".")[0]
 
+        playername = playerfile.split(".")[0]
         if isSinglePlayer:
             playername = 'Player'
-
         data._name = playername
 
-        if data['Dimension'] == dimension:
-            # Position at last logout
-            data['id'] = "Player"
-            data['x'] = int(data['Pos'][0])
-            data['y'] = int(data['Pos'][1])
-            data['z'] = int(data['Pos'][2])
-            rset._pois['Players'].append(data)
-        if "SpawnX" in data and dimension == 0:
-            # Spawn position (bed or main spawn)
+        # Position at last logout
+        data['id'] = "Player"
+        data['x'] = int(data['Pos'][0])
+        data['y'] = int(data['Pos'][1])
+        data['z'] = int(data['Pos'][2])
+
+        # Spawn position (bed or main spawn)
+        if "SpawnX" in data:
             spawn = PlayerDict()
             spawn._name = playername
             spawn["id"] = "PlayerSpawn"
             spawn["x"] = data['SpawnX']
             spawn["y"] = data['SpawnY']
             spawn["z"] = data['SpawnZ']
-            rset._pois['Players'].append(spawn)
 
-def handleManual(rset, manualpois):
-    if not hasattr(rset, "_pois"):
-        rset._pois = dict(TileEntities=[], Entities=[])
-    
-    rset._pois['Manual'] = []
+        for name, __, filter_function, rset, __, __ in filters:
+            # get the dimension for the filter
+            # This has do be done every time, because we have filters for
+            # different regionsets.
 
-    if manualpois:
-        rset._pois['Manual'].extend(manualpois)
+            if rset.get_type():
+                dimension = int(re.match(r"^DIM(_MYST)?(-?\d+)$", rset.get_type()).group(2))
+            else:
+                dimension = 0
+
+            if data['Dimension'] == dimension:
+                result = filter_function(data)
+                if result:
+                    d = create_marker_from_filter_result(data, result)
+                    markers[name]['raw'].append(d)
+
+            if dimension == 0 and "SpawnX" in data:
+                result = filter_function(spawn)
+                if result:
+                    d = create_marker_from_filter_result(spawn, result)
+                    markers[name]['raw'].append(d)
+
+
+def handleManual(manualpois, filters, markers):
+    """
+    Add markers for manually defined POIs to the list of markers.
+
+    This function will not return anything, but it will update the parameter
+    `markers`.
+    """
+    for poi in manualpois:
+        for name, __, filter_function, __, __, __ in filters:
+            result = filter_function(poi)
+            if result:
+                d = create_marker_from_filter_result(poi, result)
+                markers[name]['raw'].append(d)
 
 
 def create_marker_from_filter_result(poi, result):
@@ -293,10 +325,13 @@ def main():
     # saves us from creating the same World object over and over again
     worldcache = {}
 
-    markersets = set()
-    markers = defaultdict(list)
+    filters = set()
+    marker_groups = defaultdict(list)
 
+    # collect all filters and get regionsets
     for rname, render in config['renders'].iteritems():
+        # Convert render['world'] to the world path, and store the original
+        # in render['worldname_orig']
         try:
             worldpath = config['worlds'][render['world']]
         except KeyError:
@@ -305,64 +340,87 @@ def main():
             return 1
         render['worldname_orig'] = render['world']
         render['world'] = worldpath
-        
+
         # find or create the world object
         if (render['world'] not in worldcache):
             w = world.World(render['world'])
             worldcache[render['world']] = w
         else:
             w = worldcache[render['world']]
-        
+
+        # get the regionset for this dimension
         rset = w.get_regionset(render['dimension'][1])
         if rset == None: # indicates no such dimension was found:
             logging.error("Sorry, you requested dimension '%s' for the render '%s', but I couldn't find it", render['dimension'][0], rname)
             return 1
-      
+
+        # find filters for this render
         for f in render['markers']:
+            # internal identifier for this filter
             name = replaceBads(f['name']) + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
-            markersets.add((name, (f['name'], f['filterFunction']), rset))
-            to_append = dict(groupName=name, 
+
+            # we need to make the function pickleable for multiprocessing to
+            # work
+            # We set a custom prefix here to not override any functions there.
+            # These functions are only pickleable if they are bound to a
+            # module. Since rendermodes imports the config, they are bound to
+            # it anyway, but don't end up importable as
+            # `rendermodes.filter_fn`. That's why we set it here explicitly on
+            # the module.
+            f['filterFunction'].__name__ = "custom_filter_" + f['filterFunction'].__name__
+            setattr(rendermodes, f['filterFunction'].__name__, f['filterFunction'])
+
+            # add it to the list of filters
+            filters.add((name, f['name'], f['filterFunction'], rset, worldpath, rname))
+
+            # add an entry in the menu to show markers found by this filter
+            group = dict(groupName=name,
                     displayName = f['name'], 
                     icon=f.get('icon', 'signpost_icon.png'), 
-                    createInfoWindow=f.get('createInfoWindow',True),
+                    createInfoWindow=f.get('createInfoWindow', True),
                     checked = f.get('checked', False))
-            markers[rname].append(to_append)
-        
-        if not options.skipscan:
-            handleEntities(rset, os.path.join(destdir, rname), render, rname, config)
+            marker_groups[rname].append(group)
 
-        if options.skipplayers:
-            rset._pois['Players'] = []
-        else:
-            handlePlayers(rset, render, worldpath)
+    # initialize the structure for the markers
+    markers = dict((name, dict(created=False, raw=[], name=filter_name))
+                    for name, filter_name, __, __, __, __ in filters)
 
-        handleManual(rset, render['manualpois'])
+    # apply filters to regionsets
+    if not options.skipscan:
+        # group filters by rset
+        keyfunc = lambda x: x[3]
+        sfilters = sorted(filters, key=keyfunc)
+        for rset, rset_filters in itertools.groupby(sfilters, keyfunc):
+            handleEntities(rset, config, rset_filters, markers)
+
+    # apply filters to players
+    if not options.skipplayers:
+        # group filters by worldpath, so we only search for players once per
+        # world
+        keyfunc = lambda x: x[4]
+        sfilters = sorted(filters, key=keyfunc)
+        for worldpath, worldpath_filters in itertools.groupby(sfilters, keyfunc):
+            handlePlayers(worldpath, worldpath_filters, markers)
+
+    # add manual POIs
+    # group filters by name of the render, because only filter functions for
+    # the current render should be used on the current render's manualpois
+    keyfunc = lambda x: x[5]
+    sfilters = sorted(filters, key=keyfunc)
+    for rname, rname_filters in itertools.groupby(sfilters, keyfunc):
+        manualpois = config['renders'][rname]['manualpois']
+        handleManual(manualpois, rname_filters, markers)
 
     logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
-    markerSetDict = dict()
-
-    for (name, flter, rset) in markersets:
-        # generate a unique name for this markerset.  it will not be user visible
-        filter_name =     flter[0]
-        filter_function = flter[1]
-
-        markerSetDict[name] = dict(created=False, raw=[], name=filter_name)
-        poi_sets = ['Entities', 'TileEntities', 'Players', 'Manual']
-        for poi in itertools.chain(rset._pois[n] for n in poi_sets):
-            result = filter_function(poi)
-            if result:
-                d = create_marker_from_filter_result(poi, result)
-                markerSetDict[name]['raw'].append(d)
-    #print markerSetDict
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
         output.write("var markersDB=")
-        json.dump(markerSetDict, output, indent=2)
+        json.dump(markers, output, indent=2)
         output.write(";\n");
     with open(os.path.join(destdir, "markers.js"), "w") as output:
         output.write("var markers=")
-        json.dump(markers, output, indent=2)
+        json.dump(marker_groups, output, indent=2)
         output.write(";\n");
     with open(os.path.join(destdir, "baseMarkers.js"), "w") as output:
         output.write("overviewer.util.injectMarkerScript('markersDB.js');\n")
