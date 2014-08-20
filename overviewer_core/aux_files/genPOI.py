@@ -15,6 +15,7 @@ markers.js holds a list of which markerSets are attached to each tileSet
 
 '''
 import os
+import time
 import logging
 import json
 import sys
@@ -189,6 +190,8 @@ def handlePlayers(rset, render, worldpath):
             data['x'] = int(data['Pos'][0])
             data['y'] = int(data['Pos'][1])
             data['z'] = int(data['Pos'][2])
+            # Time at last logout, calculated from last time the player's file was modified
+            data['time'] = time.ctime(os.path.getmtime(os.path.join(playerdir, playerfile))
             rset._pois['Players'].append(data)
         if "SpawnX" in data and dimension == 0:
             # Spawn position (bed or main spawn)
