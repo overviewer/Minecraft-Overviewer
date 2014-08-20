@@ -23,6 +23,7 @@ import re
 import urllib2
 import Queue
 import multiprocessing
+import gzip
 
 from multiprocessing import Process
 from multiprocessing import Pool
@@ -121,6 +122,30 @@ def handleEntities(rset, outputdir, render, rname, config):
 class PlayerDict(dict):
     use_uuid = False
     _name = ''
+    uuid_cache = None # A cache the UUID->profile lookups
+    
+    @classmethod
+    def load_cache(cls, outputdir):
+        cache_file = os.path.join(outputdir, "uuidcache.dat")
+        pid = multiprocessing.current_process().pid
+        if os.path.exists(cache_file):
+            gz = gzip.GzipFile(cache_file) 
+            cls.uuid_cache = json.load(gz)
+            logging.info("Loaded UUID cache from %r with %d entries", cache_file, len(cls.uuid_cache.keys()))
+        else:
+            cls.uuid_cache = {}
+            logging.info("Initialized an empty UUID cache")
+            cls.save_cache(outputdir)
+
+
+    @classmethod
+    def save_cache(cls, outputdir):
+        cache_file = os.path.join(outputdir, "uuidcache.dat")
+        gz = gzip.GzipFile(cache_file, "wb")
+        json.dump(cls.uuid_cache, gz)
+        logging.info("Wrote UUID cache with %d entries", len(cls.uuid_cache.keys()))
+    
+
     def __getitem__(self, item):
         if item == "EntityId":
             if not super(PlayerDict, self).has_key("EntityId"):
@@ -132,14 +157,22 @@ class PlayerDict(dict):
         return super(PlayerDict, self).__getitem__(item)
 
     def get_name_from_uuid(self):
+        sname = self._name.replace('-','')
         try:
-            profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + self._name.replace('-','')).read())
+            profile = PlayerDict.uuid_cache[sname]
+            return profile['name']
+        except (KeyError,):
+            pass
+
+        try:
+            profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + sname).read())
             if 'name' in profile:
+                PlayerDict.uuid_cache[sname] = profile
                 return profile['name']
         except (ValueError, urllib2.URLError):
             logging.warning("Unable to get player name for UUID %s", self._name)
 
-def handlePlayers(rset, render, worldpath):
+def handlePlayers(rset, render, worldpath, outputdir):
     if not hasattr(rset, "_pois"):
         rset._pois = dict(TileEntities=[], Entities=[])
 
@@ -168,6 +201,7 @@ def handlePlayers(rset, render, worldpath):
         isSinglePlayer = True
 
     rset._pois['Players'] = []
+
     for playerfile in playerfiles:
         try:
             data = PlayerDict(nbt.load(os.path.join(playerdir, playerfile))[1])
@@ -252,6 +286,8 @@ def main():
     markersets = set()
     markers = dict()
 
+    PlayerDict.load_cache(destdir)
+
     for rname, render in config['renders'].iteritems():
         try:
             worldpath = config['worlds'][render['world']]
@@ -291,7 +327,7 @@ def main():
         if not options.skipscan:
             handleEntities(rset, os.path.join(destdir, rname), render, rname, config)
 
-        handlePlayers(rset, render, worldpath)
+        handlePlayers(rset, render, worldpath, destdir)
         handleManual(rset, render['manualpois'])
 
     logging.info("Done handling POIs")
@@ -401,6 +437,8 @@ def main():
                     d.update({"createInfoWindow": poi['createInfoWindow']})
                 markerSetDict[name]['raw'].append(d)
     #print markerSetDict
+
+    PlayerDict.save_cache(destdir)
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
         output.write("var markersDB=")
