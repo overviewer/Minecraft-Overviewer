@@ -191,7 +191,7 @@ def handlePlayers(rset, render, worldpath):
             data['y'] = int(data['Pos'][1])
             data['z'] = int(data['Pos'][2])
             # Time at last logout, calculated from last time the player's file was modified
-            data['time'] = time.ctime(os.path.getmtime(os.path.join(playerdir, playerfile))
+            data['time'] = time.localtime(os.path.getmtime(os.path.join(playerdir, playerfile)))
             rset._pois['Players'].append(data)
         if "SpawnX" in data and dimension == 0:
             # Spawn position (bed or main spawn)
