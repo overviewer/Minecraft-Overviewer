@@ -15,7 +15,7 @@
 
 import gzip, zlib
 import struct
-import StringIO
+from io import StringIO
 import functools
 
 # decorator that turns the first argument from a string into an open file
@@ -23,7 +23,7 @@ import functools
 def _file_loader(func):
     @functools.wraps(func)
     def wrapper(fileobj, *args):
-        if isinstance(fileobj, basestring):
+        if isinstance(fileobj, str):
             # Is actually a filename
             fileobj = open(fileobj, 'rb', 4096)
         return func(fileobj, *args)
@@ -80,7 +80,7 @@ class NBTFileReader(object):
             # pure zlib stream -- maybe later replace this with
             # a custom zlib file object?
             data = zlib.decompress(fileobj.read())
-            self._file = StringIO.StringIO(data)
+            self._file = StringIO(data)
 
         # mapping of NBT type ids to functions to read them out
         self._read_tagmap = {
@@ -150,7 +150,7 @@ class NBTFileReader(object):
 
         read_method = self._read_tagmap[tagid]
         l = []
-        for _ in xrange(length):
+        for _ in range(length):
             l.append(read_method())
         return l
 
@@ -187,7 +187,7 @@ class NBTFileReader(object):
             payload = self._read_tag_compound()
             
             return (name, payload)
-        except (struct.error, ValueError), e:
+        except (struct.error, ValueError) as e:
             raise CorruptNBTError("could not parse nbt: %s" % (str(e),))
 
 # For reference, the MCR format is outlined at
@@ -234,8 +234,8 @@ class MCRFileReader(object):
         file, as (x, z) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
         
-        for x in xrange(32): 
-            for z in xrange(32): 
+        for x in range(32): 
+            for z in range(32): 
                 if self._locations[x + z * 32] >> 8 != 0:
                     yield (x,z)
         
@@ -296,11 +296,11 @@ class MCRFileReader(object):
         data = self._file.read(data_length - 1)
         if len(data) != data_length - 1:
             raise CorruptRegionError("chunk length is invalid")
-        data = StringIO.StringIO(data)
+        data = StringIO(data)
         
         try:
             return NBTFileReader(data, is_gzip=is_gzip).read_all()
         except CorruptionError:
             raise
-        except Exception, e:
+        except Exception as e:
             raise CorruptChunkError("Misc error parsing chunk: " + str(e))

@@ -15,7 +15,7 @@
 
 import time
 import logging
-import progressbar
+from . import progressbar
 import sys
 import os
 import json

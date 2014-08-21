@@ -43,10 +43,10 @@
 # available during the execution of the config file. This way, container types
 # can be initialized and then appended/added to when the config file is parsed.
 
-from settingsValidators import *
+from .settingsValidators import *
 from collections import OrderedDict
-import util
-from observer import ProgressBarObserver, LoggingObserver, JSObserver
+from . import util
+from .observer import ProgressBarObserver, LoggingObserver, JSObserver
 import platform
 import sys
 

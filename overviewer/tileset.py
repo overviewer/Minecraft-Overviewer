@@ -25,7 +25,7 @@ import time
 import errno
 import stat
 from collections import namedtuple
-from itertools import product, izip
+from itertools import product
 
 from .oil import Image
 from . import oil
@@ -54,7 +54,7 @@ do_preprocessing()
 # small but useful
 def iterate_base4(d):
     """Iterates over a base 4 number with d digits"""
-    return product(xrange(4), repeat=d)
+    return product(range(4), repeat=d)
 
 # A note about the implementation of the different rendercheck modes:
 #
@@ -507,7 +507,7 @@ class TileSet(Canvas):
         rect = self.renderer.get_full_rect()
 
         # Calculate the depth of the tree
-        for p in xrange(2,33): # max 32
+        for p in range(2,33): # max 32
             # Will 2^p tiles wide and high suffice?
             # this are halved because it is a radius
             radius = (2 ** (p - 1)) * self.tile_size
@@ -538,11 +538,11 @@ class TileSet(Canvas):
             if self.treedepth > curdepth:
                 logging.warning("Your map seems to have expanded beyond its previous bounds.")
                 logging.warning( "Doing some tile re-arrangements... just a sec...")
-                for _ in xrange(self.treedepth-curdepth):
+                for _ in range(self.treedepth-curdepth):
                     self._increase_depth()
             elif self.treedepth < curdepth:
                 logging.warning("Your map seems to have shrunk. Did you delete some chunks? No problem. Re-arranging tiles, just a sec...")
-                for _ in xrange(curdepth - self.treedepth):
+                for _ in range(curdepth - self.treedepth):
                     self._decrease_depth()
                 logging.info(
                         "There done. I'm switching to --check-tiles mode for "
@@ -608,11 +608,11 @@ class TileSet(Canvas):
             os.rename(getpath("new3"), getpath("3"))
 
         # Delete the files in the top directory to make sure they get re-created.
-        files = [str(num)+"."+self.imgextension for num in xrange(4)] + ["base." + self.imgextension]
+        files = [str(num)+"."+self.imgextension for num in range(4)] + ["base." + self.imgextension]
         for f in files:
             try:
                 os.unlink(getpath(f))
-            except OSError, e:
+            except OSError as e:
                 # Ignore file doesn't exist errors
                 if e.errno != errno.ENOENT:
                     raise
@@ -754,7 +754,7 @@ class TileSet(Canvas):
         if not quadPath_filtered:
             try:
                 os.unlink(imgpath)
-            except OSError, e:
+            except OSError as e:
                 # Ignore errors if it's "file doesn't exist"
                 if e.errno != errno.ENOENT:
                     raise
@@ -772,12 +772,12 @@ class TileSet(Canvas):
                 quad = Image(self.tile_size / 2, self.tile_size / 2)
                 quad.resize_half(src)
                 img.composite(quad, 255, *path[0])
-            except Exception, e:
+            except Exception as e:
                 logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
                 logging.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
                 try:
                     os.unlink(path[1])
-                except Exception, e:
+                except Exception as e:
                     logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
 
         # Save it
@@ -811,7 +811,7 @@ class TileSet(Canvas):
         if not os.path.exists(dirdest):
             try:
                 os.makedirs(dirdest)
-            except OSError, e:
+            except OSError as e:
                 # Ignore errno EEXIST: file exists. Due to a race condition,
                 # two processes could conceivably try and create the same
                 # directory at the same time
@@ -876,7 +876,7 @@ class TileSet(Canvas):
             imgpath = tileobj.get_filepath(self.outputdir, self.imgextension)
             try:
                 tile_mtime = os.stat(imgpath)[stat.ST_MTIME]
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.ENOENT:
                     raise
                 tile_mtime = 0
@@ -917,7 +917,7 @@ class TileSet(Canvas):
             max_child_mtime = 0
 
             # First, recurse to each of our children
-            for childnum in xrange(4):
+            for childnum in range(4):
                 childpath = path + (childnum,)
 
                 # Check if this sub-tree should actually exist, so that we only
@@ -957,7 +957,7 @@ class TileSet(Canvas):
                 logging.debug("Testing mtime for composite-tile %s", imgpath)
                 try:
                     tile_mtime = os.stat(imgpath)[stat.ST_MTIME]
-                except OSError, e:
+                except OSError as e:
                     if e.errno != errno.ENOENT:
                         raise
                     tile_mtime = 0
@@ -1265,7 +1265,7 @@ def post_traversal_complete_subtree_recursion_helper(depth):
         yield [2]
         yield [3]
     else:
-        for childnum in xrange(4):
+        for childnum in range(4):
             for item in post_traversal_complete_subtree_recursion_helper(depth-1):
                 item.append(childnum)
                 yield item

@@ -1,7 +1,7 @@
 import sys
 import os.path
 
-import blockdefinitions
+from .blockdefinitions import BlockModel
 
 class MTLFinder(object):
     """searches for an mtl file by name"""
@@ -190,7 +190,7 @@ def _lookup_tex(tex):
     raise RuntimeError("unknown texture path: '{}'".format(tex))
 
 def obj_to_blockmodel(obj):
-    model = blockdefinitions.BlockModel()
+    model = BlockModel()
     for mi, verts in obj.faces:
         mtl = obj.materials[mi]
         

@@ -22,7 +22,7 @@ attribute.
 """
 import functools
 import logging
-import cPickle
+import pickle
 
 class LRUCache(object):
     """A simple, generic, in-memory LRU cache that implements the standard
@@ -150,7 +150,7 @@ else:
     class Memcached(object):
         def __init__(self, conn='127.0.0.1:11211'):
             self.conn = conn
-            self.mc = memcache.Client([conn], debug=0, pickler=cPickle.Pickler, unpickler=cPickle.Unpickler)
+            self.mc = memcache.Client([conn], debug=0, pickler=pickle.Pickler, unpickler=pickle.Unpickler)
 
         def __getstate__(self):
             return self.conn

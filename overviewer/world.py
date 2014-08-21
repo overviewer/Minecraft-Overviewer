@@ -48,7 +48,7 @@ def log_other_exceptions(func):
             return func(*args)
         except ChunkDoesntExist:
             raise
-        except Exception, e:
+        except Exception as e:
             logging.exception("%s raised this exception", func.func_name)
             raise
     return newfunc
@@ -338,7 +338,7 @@ class RegionSet(object):
             try:
                 region = self._get_regionobj(regionfile)
                 data = region.load_chunk(x, z)
-            except nbt.CorruptionError, e:
+            except nbt.CorruptionError as e:
                 tries -= 1
                 if tries > 0:
                     # Flush the region cache to possibly read a new region file
@@ -444,7 +444,7 @@ class RegionSet(object):
         
         """
 
-        for (regionx, regiony), regionfile in self.regionfiles.iteritems():
+        for (regionx, regiony), regionfile in self.regionfiles.items():
             try:
                 mcr = self._get_regionobj(regionfile)
             except nbt.CorruptRegionError:

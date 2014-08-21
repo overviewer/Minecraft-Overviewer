@@ -18,7 +18,7 @@ import os
 import logging
 import platform
 import ctypes
-from cStringIO import StringIO
+from io import StringIO
 
 # Some cool code for colored logging:
 # For background, add 40. For foreground, add 30

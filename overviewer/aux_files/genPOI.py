@@ -147,7 +147,7 @@ def main():
     markersets = set()
     markers = dict()
 
-    for rname, render in config['renders'].iteritems():
+    for rname, render in config['renders'].items():
         try:
             worldpath = config['worlds'][render['world']]
         except KeyError:

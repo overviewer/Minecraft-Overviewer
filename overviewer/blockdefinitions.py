@@ -17,11 +17,10 @@ import os.path
 import json
 import logging
 import copy
-from itertools import tee, izip
+from itertools import tee
 
 from overviewer import chunkrenderer
 from overviewer import util
-from overviewer import objparser
 
 """
 
@@ -70,7 +69,7 @@ class BlockModel(object):
             first = indices[0]
             a, b = tee(indices[1:])
             b.next()
-            for i, j in izip(a, b):
+            for i, j in zip(a, b):
                 yield ((first, i, j), facetype, tex)
 
 class BlockDefinition(object):
@@ -288,6 +287,8 @@ def load_cube_model(model, path, label):
     
     return m
 
+
+from overviewer import objparser
 @model_type("obj")
 def load_obj_model(model, path, label):
     objpath = os.path.splitext(path)[0] + ".obj"
@@ -353,7 +354,7 @@ def add_from_path(bd, path, namemap={}):
     try:
         with open(path) as f:
             data = json.load(f)
-    except ValueError, e:
+    except ValueError as e:
         raise BlockLoadError(e, file=path)
     
     name = data.pop("name", name)
@@ -391,7 +392,7 @@ def add_from_path(bd, path, namemap={}):
                 bdef.add(model, dataval)
     except BlockLoadError:
         raise
-    except Exception, e:
+    except Exception as e:
         raise BlockLoadError(e, file=path)
     
     if data:

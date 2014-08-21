@@ -15,8 +15,8 @@ t.generate()
 
 blocks = {}
 
-for blockid in xrange(textures.max_blockid):
-    for data in xrange(textures.max_data):
+for blockid in range(textures.max_blockid):
+    for data in range(textures.max_data):
         tex = t.blockmap[blockid * textures.max_data + data]
         if tex:
             if not blockid in blocks:
@@ -30,9 +30,9 @@ texsize = t.texture_size
 gallery = Image.new("RGBA", (columns * texsize, rows * texsize), t.bgcolor)
 
 row = 0
-for blockid, textures in blocks.iteritems():
+for blockid, textures in blocks.items():
     column = 0
-    for data, tex in textures.iteritems():
+    for data, tex in textures.items():
         gallery.paste(tex[0], (column * texsize, row * texsize))
         column += 1
     row += 1

@@ -4,8 +4,8 @@ import os.path
 import logging
 import traceback
 
-import settingsDefinition
-import settingsValidators
+from . import settingsDefinition
+from . import settingsValidators
 
 class MultiWorldParser(object):
     """A class that is used to parse a settings.py file.
@@ -77,7 +77,7 @@ class MultiWorldParser(object):
         try:
             execfile(settings_file, rendermodes.__dict__, self._config_state)
         
-        except Exception, ex:
+        except Exception as ex:
             if isinstance(ex, SyntaxError):
                 logging.error("Syntax error parsing %s" %  settings_file)
                 logging.error("The traceback below will tell you which line triggered the syntax error\n")

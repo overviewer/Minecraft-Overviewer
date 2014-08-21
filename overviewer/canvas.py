@@ -142,7 +142,7 @@ class SimpleCanvas(Canvas):
             miny = rect[1] / self.region_size
             maxx = int(ceil(float(rect[2]) / self.region_size))
             maxy = int(ceil(float(rect[3]) / self.region_size))
-            for x, y in product(xrange(minx, maxx), xrange(miny, maxy)):
+            for x, y in product(range(minx, maxx), range(miny, maxy)):
                 if x < 0 or x >= self.numx or y < 0 or y >= self.numy:
                     continue
                 self.needs_update[x, y] = 1
@@ -163,8 +163,8 @@ class SimpleCanvas(Canvas):
             yield (None, [])
         else:
             # do all the regions
-            for x in xrange(self.numx):
-                for y in xrange(self.numy):
+            for x in range(self.numx):
+                for y in range(self.numy):
                     if self.needs_update[x, y]:
                         yield ((x, y), [])
 
@@ -174,8 +174,8 @@ class SimpleCanvas(Canvas):
                 bigim = Image.open(self.output)
             except IOError:
                 bigim = Image.new("RGBA", self.size)
-            for x in xrange(self.numx):
-                for y in xrange(self.numy):
+            for x in range(self.numx):
+                for y in range(self.numy):
                     if self.needs_update[x, y]:
                         path = self.output + '.' + str(x) + '.' + str(y) + '.png'
                         im = Image.open(path)

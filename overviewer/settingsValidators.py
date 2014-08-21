@@ -3,8 +3,8 @@ import os
 import os.path
 from collections import namedtuple, OrderedDict
 
-import util
-from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
+from . import util
+from .world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
 
 class ValidationException(Exception):
     pass
@@ -234,7 +234,7 @@ def make_dictValidator(keyvalidator, valuevalidator):
     """
     def v(d):
         newd = OrderedDict()
-        for key, value in d.iteritems():
+        for key, value in d.items():
             newd[keyvalidator(key)] = valuevalidator(value)
         return newd
     # Put these objects as attributes of the function so they can be accessed
@@ -294,7 +294,7 @@ def make_configDictValidator(config, ignore_undefined=False):
         # Iterate through the defined keys in the configuration (`config`),
         # checking each one to see if the user specified it (in `d`). Then
         # validate it and copy the result to `newdict`
-        for configkey, configsetting in config.iteritems():
+        for configkey, configsetting in config.items():
             if configkey in d:
                 # This key /was/ specified in the user's dict. Make sure it validates.
                 newdict[configkey] = configsetting.validator(d[configkey])

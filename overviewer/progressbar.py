@@ -220,7 +220,7 @@ class ProgressBar(object):
 
     The simple use is like this:
     >>> pbar = ProgressBar().start()
-    >>> for i in xrange(100):
+    >>> for i in range(100):
     ...    # do something
     ...    pbar.update(i+1)
     ...
@@ -321,7 +321,7 @@ class ProgressBar(object):
 
         It returns self so you can use it like this:
         >>> pbar = ProgressBar().start()
-        >>> for i in xrange(100):
+        >>> for i in range(100):
         ...    # do something
         ...    pbar.update(i+1)
         ...

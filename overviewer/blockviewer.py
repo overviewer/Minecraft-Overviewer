@@ -40,7 +40,7 @@ def main():
     FRAMES = 60
 
     renderers = []
-    for angle in xrange(0, 360, 360//FRAMES):
+    for angle in range(0, 360, 360//FRAMES):
         # Standard viewing angle: ~35 degrees, straight down the diagonal of a cube
         matrix = Matrix()
         matrix.scale(500,500,500)

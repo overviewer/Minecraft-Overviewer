@@ -22,10 +22,10 @@ import logging
 import traceback
 
 from .oil import Image
-import oil
-import world
-import util
-from files import FileReplacer, mirror_dir
+from . import oil
+from . import world
+from . import util
+from .files import FileReplacer, mirror_dir
 
 class AssetManager(object):
     """\
@@ -49,7 +49,7 @@ directory.
             with open(os.path.join(self.outputdir, "overviewerConfig.js")) as c:
                 overviewerConfig_str = "{" + "\n".join(c.readlines()[1:-1]) + "}"
             self.overviewerConfig = json.loads(overviewerConfig_str)
-        except Exception, e:
+        except Exception as e:
             if os.path.exists(os.path.join(self.outputdir, "overviewerConfig.js")):
                 logging.warning("A previous overviewerConfig.js was found, but I couldn't read it for some reason. Continuing with a blank config")
             logging.debug(traceback.format_exc())

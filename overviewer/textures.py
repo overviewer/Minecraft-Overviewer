@@ -106,7 +106,7 @@ class Textures(object):
                     self.jar.getinfo(jarfilename)
                     if verbose: logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
                     return self.jar.open(jarfilename)
-                except (KeyError, IOError), e:
+                except (KeyError, IOError) as e:
                     pass
 
         # A texture path was given on the command line. Search this location
@@ -211,7 +211,7 @@ class Textures(object):
                         if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
                         self.jar, self.jarpath = jar, jarpath
                         return jar.open(jarfilename)
-                    except (KeyError, IOError), e:
+                    except (KeyError, IOError) as e:
                         pass
 
             if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))

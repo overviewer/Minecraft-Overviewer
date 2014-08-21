@@ -274,7 +274,7 @@ class IsometricRenderer(IsometricBase):
         maxx = int(max([i[0] / 16 for i in (pt1, pt2, pt3, pt4)]))
         minz = int(ceil(min([i[2] / 16 for i in (pt1, pt2, pt3, pt4)])))
         maxz = int(max([i[2] / 16 for i in (pt1, pt2, pt3, pt4)]))
-        for cx, cz in product(xrange(minx, maxx + 1), xrange(minz, maxz + 1)):
+        for cx, cz in product(range(minx, maxx + 1), range(minz, maxz + 1)):
             x, y, z = self.matrix.transform(16 * cx, 0, 16 * cz)
             if not (x >= rect.minx and x < rect.maxx) or not (y >= rect.miny and y < rect.maxy):
                 continue
@@ -309,7 +309,7 @@ class IsometricRenderer(IsometricBase):
             y -= origin[1];
             x += self.sectionvec[0] * self.sections_per_chunk
             y += self.sectionvec[1] * self.sections_per_chunk
-            for chunky in xrange(self.sections_per_chunk - 1, -1, -1):
+            for chunky in range(self.sections_per_chunk - 1, -1, -1):
                 x -= self.sectionvec[0]
                 y -= self.sectionvec[1]
                 if (x + self.sectionbox.maxx < 0 or x + self.sectionbox.minx >= im.size[0] or y + self.sectionbox.maxy < 0 or y + self.sectionbox.miny >= im.size[1]):

@@ -103,7 +103,7 @@ if renameworks:
                 # error
                 try:
                     os.remove(self.tmpname)
-                except Exception, e:
+                except Exception as e:
                     logging.warning("An error was raised, so I was doing "
                             "some cleanup first, but I couldn't remove "
                             "'%s'!", self.tmpname)

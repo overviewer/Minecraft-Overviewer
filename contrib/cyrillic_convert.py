@@ -86,7 +86,7 @@ gibberish_to_cyrillic = {
 }
 
 for line in fileinput.FileInput(inplace=1):
-    for i, j in gibberish_to_cyrillic.iteritems():
+    for i, j in gibberish_to_cyrillic.items():
         line = line.replace(i, j)
     sys.stdout.write(line)
 

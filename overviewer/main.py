@@ -302,7 +302,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     #####################
     # Do a few last minute things to each render dictionary here
-    for rname, render in config['renders'].iteritems():
+    for rname, render in config['renders'].items():
         # Convert render['world'] to the world path, and store the original
         # in render['worldname_orig']
         try:
@@ -384,7 +384,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # TODO: optionally more caching layers here
 
     renders = config['renders']
-    for render_name, render in renders.iteritems():
+    for render_name, render in renders.items():
         logging.debug("Found the following render thing: %r", render)
 
         # find or create the world object
@@ -488,8 +488,8 @@ def list_worlds():
     formatString = "%-" + str(worldNameLen) + "s | %-8s | %-8s | %-16s | %s "
     print(formatString % ("World", "Size", "Playtime", "Modified", "Path"))
     print(formatString % ("-"*worldNameLen, "-"*8, "-"*8, '-'*16, '-'*4))
-    for name, info in sorted(worlds.iteritems()):
-        if isinstance(name, basestring) and name.startswith("World") and len(name) == 6:
+    for name, info in sorted(worlds.items()):
+        if isinstance(name, str) and name.startswith("World") and len(name) == 6:
             try:
                 world_n = int(name[-1])
                 # we'll catch this one later, when it shows up as an
@@ -510,11 +510,11 @@ if __name__ == "__main__":
     try:
         ret = main()
         util.nice_exit(ret)
-    except textures.TextureException, e:
+    except textures.TextureException as e:
         # this isn't a "bug", so don't print scary traceback
         logging.error(str(e))
         util.nice_exit(1)
-    except Exception, e:
+    except Exception as e:
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help
 
