@@ -105,7 +105,7 @@ class MultiWorldParser(object):
         # At this point, make a pass through the file to possibly set global
         # render defaults
         render_settings = self._settings['renders'].validator.valuevalidator.config
-        for key in self._config_state.iterkeys():
+        for key in self._config_state.keys():
             if key not in self._settings:
                 if key in render_settings:
                     setting = render_settings[key]

@@ -669,12 +669,12 @@ class CachedRegionSet(RegionSetWrapper):
 
         logging.debug("Initializing a cache with key '%s'", s)
 
-        s = hashlib.md5(s).hexdigest()
+        s = hashlib.md5(s.encode('utf-8')).hexdigest()
 
         self.key = s
 
     def get_chunk(self, x, z):
-        key = hashlib.md5(repr((self.key, x, z))).hexdigest()
+        key = hashlib.md5(repr((self.key, x, z)).encode('utf-8')).hexdigest()
         for i, cache in enumerate(self.caches):
             try:
                 retval = cache[key]

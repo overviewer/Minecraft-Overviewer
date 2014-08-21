@@ -721,16 +721,16 @@ class TileSet(Canvas):
             # directory instead of in a sub-directory
             quadPath = [
                     ((0,0),os.path.join(dest, "0." + imgformat)),
-                    ((self.tile_size / 2,0),os.path.join(dest, "1." + imgformat)),
-                    ((0, self.tile_size / 2),os.path.join(dest, "2." + imgformat)),
-                    ((self.tile_size / 2,self.tile_size / 2),os.path.join(dest, "3." + imgformat)),
+                    ((self.tile_size // 2,0),os.path.join(dest, "1." + imgformat)),
+                    ((0, self.tile_size // 2),os.path.join(dest, "2." + imgformat)),
+                    ((self.tile_size // 2,self.tile_size // 2),os.path.join(dest, "3." + imgformat)),
                     ]
         else:
             quadPath = [
                     ((0,0),os.path.join(dest, name, "0." + imgformat)),
-                    ((self.tile_size / 2,0),os.path.join(dest, name, "1." + imgformat)),
-                    ((0, self.tile_size / 2),os.path.join(dest, name, "2." + imgformat)),
-                    ((self.tile_size / 2,self.tile_size / 2),os.path.join(dest, name, "3." + imgformat)),
+                    ((self.tile_size // 2,0),os.path.join(dest, name, "1." + imgformat)),
+                    ((0, self.tile_size // 2),os.path.join(dest, name, "2." + imgformat)),
+                    ((self.tile_size // 2,self.tile_size // 2),os.path.join(dest, name, "3." + imgformat)),
                     ]
 
         # Check each of the 4 child tiles, getting their existance and mtime
@@ -769,7 +769,7 @@ class TileSet(Canvas):
         for path in quadPath_filtered:
             try:
                 src = Image.load(path[1])
-                quad = Image(self.tile_size / 2, self.tile_size / 2)
+                quad = Image(self.tile_size // 2, self.tile_size // 2)
                 quad.resize_half(src)
                 img.composite(quad, 255, *path[0])
             except Exception as e:

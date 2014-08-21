@@ -284,16 +284,16 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         return 1
     if options.forcerender:
         logging.info("Forcerender mode activated. ALL tiles will be rendered")
-        for render in config['renders'].itervalues():
+        for render in config['renders'].values():
             render['renderchecks'] = 2
     elif options.checktiles:
         logging.info("Checking all tiles for updates manually.")
-        for render in config['renders'].itervalues():
+        for render in config['renders'].values():
             render['renderchecks'] = 1
     elif options.notilechecks:
         logging.info("Disabling all tile mtime checks. Only rendering tiles "+
         "that need updating since last render")
-        for render in config['renders'].itervalues():
+        for render in config['renders'].values():
             render['renderchecks'] = 0
 
     if not config['renders']:
@@ -358,7 +358,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     # The changelist support.
     changelists = {}
-    for render in config['renders'].itervalues():
+    for render in config['renders'].values():
         if 'changelist' in render:
             path = render['changelist']
             if path not in changelists:
@@ -462,7 +462,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
 
     assetMrg.finalize(tilesets)
 
-    for out in changelists.itervalues():
+    for out in changelists.values():
         logging.debug("Closing %s (%s)", out, out.fileno())
         out.close()
 

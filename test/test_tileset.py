@@ -216,7 +216,7 @@ class TilesetTest(unittest.TestCase):
             self.assertTrue(tilepath in expected, "%s was not expected to be returned. Expected %s" % (tilepath, expected))
 
         # Now check that all expected tiles were indeed returned
-        for tilepath in expected.iterkeys():
+        for tilepath in expected.keys():
             self.assertTrue(tilepath in paths, "%s was expected to be returned but wasn't: %s" % (tilepath, paths))
 
     def test_get_phase_length(self):

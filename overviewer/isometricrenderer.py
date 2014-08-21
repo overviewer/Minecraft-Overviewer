@@ -290,7 +290,7 @@ class IsometricRenderer(IsometricBase):
             return (0, 0, [])
         chunks_out.sort(key=itemgetter(1))
         
-        zs = map(itemgetter(2), chunks_out)
+        zs = list(map(itemgetter(2), chunks_out))
         minz = min(zs) + self.chunkbox.minz;
         maxz = max(zs) + self.chunkbox.maxz
         

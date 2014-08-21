@@ -68,7 +68,7 @@ class BlockModel(object):
         for indices, facetype, tex in self.faces:
             first = indices[0]
             a, b = tee(indices[1:])
-            b.next()
+            next(b)
             for i, j in zip(a, b):
                 yield ((first, i, j), facetype, tex)
 
@@ -141,7 +141,7 @@ class BlockDefinitions(object):
 
     @property
     def max_blockid(self):
-        return max(self.blocks.iterkeys())
+        return max(self.blocks.keys())
 
     def add(self, blockdef, blockid):
         """Adds a block definition as block id `blockid`.
@@ -303,7 +303,7 @@ def load_obj_model(model, path, label):
         objfile = objparser.OBJParser.parse(f, mtlfinder)
     
     if len(objfile) == 1:
-        defaultname = objfile.keys()[0]
+        defaultname = list(objfile.keys())[0]
     else:
         defaultname = label
     

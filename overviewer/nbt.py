@@ -15,7 +15,7 @@
 
 import gzip, zlib
 import struct
-from io import StringIO
+from io import BytesIO
 import functools
 
 # decorator that turns the first argument from a string into an open file
@@ -80,7 +80,7 @@ class NBTFileReader(object):
             # pure zlib stream -- maybe later replace this with
             # a custom zlib file object?
             data = zlib.decompress(fileobj.read())
-            self._file = StringIO(data)
+            self._file = BytesIO(data)
 
         # mapping of NBT type ids to functions to read them out
         self._read_tagmap = {
@@ -291,12 +291,12 @@ class MCRFileReader(object):
             # unsupported!
             raise CorruptRegionError("unsupported chunk compression type: %i (should be 1 or 2)" % (compression,))
         
-        # turn the rest of the data into a StringIO object
+        # turn the rest of the data into a BytesIO object
         # (using data_length - 1, as we already read 1 byte for compression)
         data = self._file.read(data_length - 1)
         if len(data) != data_length - 1:
             raise CorruptRegionError("chunk length is invalid")
-        data = StringIO(data)
+        data = BytesIO(data)
         
         try:
             return NBTFileReader(data, is_gzip=is_gzip).read_all()

@@ -269,10 +269,10 @@ def make_configDictValidator(config, ignore_undefined=False):
         undefined_key_matches = {}
 
         # Go through the keys the user gave us and make sure they're all valid.
-        for key in d.iterkeys():
+        for key in d.keys():
             if key not in config:
                 # Try to find a probable match
-                match = _get_closest_match(key, config.iterkeys())
+                match = _get_closest_match(key, config.keys())
                 if match and ignore_undefined:
                     # Save this for later. It only matters if this is a typo of
                     # some required key that wasn't specified. (If all required
