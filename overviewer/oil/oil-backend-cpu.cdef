@@ -3,6 +3,7 @@
 #include "oil-backend-private.h"
 
 #include <float.h>
+#include <math.h>
 #include <string.h>
 
 /* this file is designed to be included (once!) in C files in order to create

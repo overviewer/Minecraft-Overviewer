@@ -187,9 +187,9 @@ int oil_image_save(OILImage *im, const char *path, OILFormatName format, OILForm
 
 int oil_image_save_ex(OILImage *im, OILFile *file, OILFormatName format, OILFormatOptions *opts) {
 	if (!im || !file)
-		return NULL;
+		return 0;
 	if (!(format < OIL_FORMAT_MAX))
-		return NULL;
+		return 0;
 
     return oil_formats[format]->save(im, file, opts);
 }

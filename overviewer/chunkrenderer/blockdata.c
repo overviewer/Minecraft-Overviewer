@@ -125,7 +125,7 @@ static void *sticky_neighbors_start(PyObject *param)
 
     max_blockid = 0;
     for (i=0; i<PySequence_Fast_GET_SIZE(sequence); i++) {
-        int blockid = PyInt_AsLong(PySequence_Fast_GET_ITEM(sequence, i));
+        int blockid = PyLong_AsLong(PySequence_Fast_GET_ITEM(sequence, i));
         if (blockid == -1 && PyErr_Occurred()) {
             Py_DECREF(sequence);
             return NULL;
@@ -143,7 +143,7 @@ static void *sticky_neighbors_start(PyObject *param)
     table->entries = calloc(table->length, sizeof(char));
 
     for (i=0; i<PySequence_Fast_GET_SIZE(sequence); i++) {
-        int blockid = PyInt_AsLong(PySequence_Fast_GET_ITEM(sequence, i));
+        int blockid = PyLong_AsLong(PySequence_Fast_GET_ITEM(sequence, i));
         table->entries[blockid] = 1;
     }
 
@@ -166,7 +166,7 @@ static unsigned int masked(void *param, RenderState *state, int x, int y, int z)
     return get_data(state, DATA, x, y, z) & (*mask);
 }
 static void *masked_start(PyObject *param) {
-	int mask = PyInt_AsLong(param);
+	int mask = PyLong_AsLong(param);
 	unsigned int *maskp;
 	if (mask == -1 && PyErr_Occurred())
 		return NULL;

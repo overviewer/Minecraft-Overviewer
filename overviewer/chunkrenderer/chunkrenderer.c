@@ -5,6 +5,8 @@
 
 #include "chunkrenderer.h"
 
+#define BLOCKDEF_CAPSULE_NAME "chunkrenderer_compiled_blockdefs"
+
 /* helper to load a chunk into state->chunks
  * returns false on error, true on success
  *
@@ -68,7 +70,7 @@ static inline int load_chunk(RenderState *state, int relx, int relz, int require
         if (!ycoord)
             continue;
         
-        sectiony = PyInt_AsLong(ycoord);
+        sectiony = PyLong_AsLong(ycoord);
         if (sectiony >= 0 && sectiony < SECTIONS_PER_CHUNK) {
             dest->sections[i].blocks = PyDict_GetItemString(section, "Blocks");
             Py_XINCREF(dest->sections[i].blocks);
@@ -212,7 +214,7 @@ inline int block_has_property(RenderState *state, unsigned short b, BlockPropert
     return def;
 }
 
-static inline BlockModel *get_block_def(RenderState *state, int x, int y, int z) {
+static inline BlockDef *get_block_def(RenderState *state, int x, int y, int z) {
     BlockDef *def;
     unsigned int blockid;
 
@@ -333,7 +335,10 @@ static PyObject *render(PyObject *self, PyObject *args) {
         return NULL;
     }
     
-    state.blockdefs = PyCObject_AsVoidPtr(pyblockdefs);
+    state.blockdefs = PyCapsule_GetPointer(pyblockdefs, BLOCKDEF_CAPSULE_NAME);
+    if (!state.blockdefs) {
+        return NULL;
+    }
     
     state.im = im->im;
     state.matrix = &(mat->matrix);
@@ -486,6 +491,10 @@ static void free_block_definitions(void *obj) {
     Py_DECREF(defs->images);
     
     free(defs);
+}
+
+static void free_block_definitions_capsule(PyObject *cap) {
+    free_block_definitions(PyCapsule_GetPointer(cap, BLOCKDEF_CAPSULE_NAME));
 }
 
 /*
@@ -700,7 +709,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
     /* the block definition holds the DataType struct itself, not a pointer to
      * it. Is this worth it? saves a dereference later I suppose. */
     {
-        int datatype_index = PyInt_AsLong(prop);
+        int datatype_index = PyLong_AsLong(prop);
         Py_DECREF(prop);
         if (datatype_index == -1 && PyErr_Occurred())
             return 0;
@@ -805,7 +814,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         free(defs);
         return NULL;
     }
-    if (!PyInt_Check(pymaxblockid)) {
+    if (!PyLong_Check(pymaxblockid)) {
         Py_DECREF(pymaxblockid);
         Py_DECREF(defs->images);
         free(defs);
@@ -814,7 +823,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     }
     /* Add 1 since the number of blocks we can actually have includes index 0,
      * so the array needs to be one larger than this number */
-    defs->blockdefs_length = PyInt_AsLong(pymaxblockid) + 1;
+    defs->blockdefs_length = PyLong_AsLong(pymaxblockid) + 1;
     Py_DECREF(pymaxblockid);
     
     pyblocks = PyObject_GetAttrString(pyblockdefs, "blocks");
@@ -848,7 +857,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     /* Loop over every block up to blockdefs_length and see if there's an entry for
      * it in the pyblocks dict */
     for (blockid = 0; blockid < defs->blockdefs_length; blockid++) {
-        PyObject *key = PyInt_FromLong(blockid);
+        PyObject *key = PyLong_FromLong(blockid);
         PyObject *val;
     
         if (!key) {
@@ -877,7 +886,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     
     Py_DECREF(pyblocks);
     
-    compiled = PyCObject_FromVoidPtr(defs, free_block_definitions);
+    compiled = PyCapsule_New(defs, BLOCKDEF_CAPSULE_NAME, free_block_definitions_capsule);
     if (!compiled) {
         free_block_definitions(defs);
         return NULL;
@@ -912,7 +921,9 @@ static PyObject *py_render_block(PyObject *self, PyObject *args, PyObject *kwarg
         return 0;
     }
 
-    bd = PyCObject_AsVoidPtr(pyblockdefs);
+    bd = PyCapsule_GetPointer(pyblockdefs, BLOCKDEF_CAPSULE_NAME);
+    if (!bd)
+        return 0;
 
     if (blockid >= bd->blockdefs_length) {
         PyErr_SetString(PyExc_ValueError, "No such block with that ID exists");
@@ -948,23 +959,45 @@ static PyMethodDef chunkrenderer_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-PyMODINIT_FUNC initchunkrenderer(void) {
+PyMODINIT_FUNC PyInit_chunkrenderer(void) {
     PyObject *mod, *numpy;
     DataType *dt_def;
     int i;
+    static struct PyModuleDef moddef = {
+        PyModuleDef_HEAD_INIT,
+        "chunkrenderer",       /* m_name */
+                               /* m_doc */
+        "chunkrenderer is an oil-based minecraft chunk renderer",
+        -1,                    /* m_size */
+        chunkrenderer_methods, /* m_methods */
+        NULL,                  /* m_reload */
+        NULL,                  /* m_traverse */
+        NULL,                  /* m_clear */
+        NULL,                  /* m_free */
+    };
     
     PyOILMatrixType = py_oil_get_matrix_type();
     PyOILImageType = py_oil_get_image_type();
     if (!(PyOILMatrixType && PyOILImageType)) {
         Py_XDECREF(PyOILMatrixType);
         Py_XDECREF(PyOILImageType);
-        return;
+        return NULL;
     }
+
+    /* tell the compiler to shut up about unused things
+       sizeof(...) does not evaluate its argument (:D) */
+    (void)sizeof(import_array());
     
-    mod = Py_InitModule3("chunkrenderer", chunkrenderer_methods,
-                         "The Overviewer chunk renderer interface.");
+    /* import numpy on our own, because import_array breaks across
+       numpy versions and we barely use numpy */
+    numpy = PyImport_ImportModule("numpy.core.multiarray");
+    if (!numpy)
+        return NULL;
+    Py_XDECREF(numpy);
+    
+    mod = PyModule_Create(&moddef);
     if (mod == NULL)
-        return;
+        return NULL;
 
     PyModule_AddIntConstant(mod, "FACE_TYPE_PX", FACE_TYPE_PX);
     PyModule_AddIntConstant(mod, "FACE_TYPE_NX", FACE_TYPE_NX);
@@ -979,17 +1012,10 @@ PyMODINIT_FUNC initchunkrenderer(void) {
     dt_def = chunkrenderer_datatypes;
     for (i=0; i < chunkrenderer_datatypes_length; i++) {
         PyModule_AddObject(mod, dt_def->name,
-                PyInt_FromLong(i)
+                PyLong_FromLong(i)
         );
         dt_def++;
     }
     
-    /* tell the compiler to shut up about unused things
-       sizeof(...) does not evaluate its argument (:D) */
-    (void)sizeof(import_array());
-    
-    /* import numpy on our own, because import_array breaks across
-       numpy versions and we barely use numpy */
-    numpy = PyImport_ImportModule("numpy.core.multiarray");
-    Py_XDECREF(numpy);
+    return mod;
 }
