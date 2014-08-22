@@ -4,6 +4,7 @@
 #include "oil-dither-private.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <png.h>
 
 static void oil_format_png_read(png_structp png, png_bytep data, png_size_t length) {
@@ -19,6 +20,21 @@ static void oil_format_png_write(png_structp png, png_bytep data, png_size_t len
 static void oil_format_png_flush(png_structp png) {
     OILFile *file = png_get_io_ptr(png);
     file->flush(file->file);
+}
+
+static void oil_format_png_warning(png_structp png, png_const_charp message) {
+    /* Minecraft images will commonly give iCCP warnings on libpng >=1.6
+           libpng warning: iCCP: known incorrect sRGB profile
+       this is here to suppress them, because they are hella annoying
+    */
+    if (!strncmp(message, "iCCP", 4)) {
+        return;
+    }
+    fprintf(stderr, "libpng warning: %s\n", message);
+}
+
+static void oil_format_png_error(png_structp png, png_const_charp message) {
+    fprintf(stderr, "libpng error: %s\n", message);
 }
 
 static inline int oil_format_png_save_default(png_structp png, png_infop info, unsigned int width, unsigned int height, const OILPixel *data, OILImage *im, OILFormatOptions *opts) {
@@ -121,6 +137,7 @@ static int oil_format_png_save(OILImage *im, OILFile *file, OILFormatOptions *op
         return 0;
     }
     
+    png_set_error_fn(png, NULL, oil_format_png_error, oil_format_png_warning);
     info = png_create_info_struct(png);
     if (!info) {
         png_destroy_write_struct(&png, NULL);
@@ -178,6 +195,7 @@ static OILImage *oil_format_png_load(OILFile *file) {
         return NULL;
     }
     
+    png_set_error_fn(png, NULL, oil_format_png_error, oil_format_png_warning);
     info = png_create_info_struct(png);
     if (!info) {
         png_destroy_read_struct(&png, NULL, NULL);
