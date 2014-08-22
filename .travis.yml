@@ -1,14 +1,9 @@
 language: python
 python:
-  - "2.6"
-  - "2.7"
-  # - "3.2"
-before_install:
-  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/Imaging.h
-  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/ImPlatform.h
+  # - "2.6"
+  # - "2.7"
+  - "3.2"
 install:
-  - pip install -q pillow
-  - pip install -q numpy
   - python setup.py build
 before_script:
   - git clone git://github.com/overviewer/Minecraft-Overviewer-Addons.git ~/mcoa/

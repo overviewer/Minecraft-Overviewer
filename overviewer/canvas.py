@@ -16,7 +16,6 @@
 from time import time
 from math import ceil
 import os
-import numpy
 from itertools import product
 
 from overviewer.oil import Image
@@ -132,7 +131,7 @@ class SimpleCanvas(Canvas):
         except os.error:
             out_mtime = 0
 
-        self.needs_update = numpy.zeros((self.numx, self.numy), dtype=numpy.bool)
+        self.needs_update = [False for _ in range(self.numx * self.numy)]
         for source in self.renderer.get_render_sources():
             if self.renderer.get_render_source_mtime(source) <= out_mtime:
                 continue
@@ -145,16 +144,16 @@ class SimpleCanvas(Canvas):
             for x, y in product(range(minx, maxx), range(miny, maxy)):
                 if x < 0 or x >= self.numx or y < 0 or y >= self.numy:
                     continue
-                self.needs_update[x, y] = 1
+                self.needs_update[x + self.numx * y] = True
 
     def get_num_phases(self):
-        if self.needs_update.sum() == 0:
+        if sum(self.needs_update) == 0:
             return 0
         return 2
 
     def get_phase_length(self, phase):
         if phase == 0:
-            return self.needs_update.sum()
+            return sum(self.needs_update)
         return 1
 
     def iterate_work_items(self, phase):
@@ -165,7 +164,7 @@ class SimpleCanvas(Canvas):
             # do all the regions
             for x in range(self.numx):
                 for y in range(self.numy):
-                    if self.needs_update[x, y]:
+                    if self.needs_update[x + self.numx * y]:
                         yield ((x, y), [])
 
     def do_work(self, item):
@@ -176,7 +175,7 @@ class SimpleCanvas(Canvas):
                 bigim = Image.new("RGBA", self.size)
             for x in range(self.numx):
                 for y in range(self.numy):
-                    if self.needs_update[x, y]:
+                    if self.needs_update[x + self.numx * y]:
                         path = self.output + '.' + str(x) + '.' + str(y) + '.png'
                         im = Image.open(path)
                         bigim.paste(im, (x * self.region_size, y * self.region_size))

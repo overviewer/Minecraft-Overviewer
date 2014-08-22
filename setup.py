@@ -15,7 +15,6 @@ import glob
 import platform
 import time
 import overviewer.util as util
-import numpy
 
 try:
     import py2exe
@@ -176,11 +175,6 @@ if "nt" in os.name:
 setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depends=oil_includes, libraries=['png', 'z', 'jpeg'], extra_link_args=extra_link_args))
 
 # chunkrenderer extension
-try:
-    numpy_include = numpy.get_include()
-except AttributeError:
-    numpy_include = numpy.get_numpy_include()
-
 chunkrenderer_files = [
         'chunkrenderer.c',
         'blockdata.c',
@@ -197,7 +191,7 @@ chunkrenderer_includes = ['overviewer/chunkrenderer/' + s for s in chunkrenderer
 output_name = 'overviewer/oil.so'
 if "nt" in os.name:
     output_name = 'overviewer/oil.pyd'
-setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=[numpy_include, 'overviewer/oil'], depends=chunkrenderer_includes, extra_objects=[output_name]))
+setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=['overviewer/oil'], depends=chunkrenderer_includes, extra_objects=[output_name]))
 
 # tell build_ext to build the extension in-place
 # (NOT in build/)

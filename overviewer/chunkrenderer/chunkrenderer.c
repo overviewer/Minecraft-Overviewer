@@ -1,7 +1,6 @@
 #include <Python.h>
 #include <oil.h>
 #include <oil-python.h>
-#include <numpy/arrayobject.h>
 
 #include "chunkrenderer.h"
 
@@ -174,10 +173,12 @@ inline unsigned int get_data(RenderState *state, enum _get_data_type_enum type, 
         return def;
     
     if (type == BLOCKS)
-        return get_array_short_3d(data_array, x, y, z);
+        return bytes3b(data_array, x, y, z); /* FIXME use Add */
     if (type == BIOMES)
-        return get_array_byte_2d(data_array, x, z);
-    return get_array_byte_3d(data_array, x, y, z);
+        return bytes2b(data_array, x, z);
+    
+    /* all that's left is DATA, BLOCKLIGHT, SKYLIGHT */
+    return bytes3n(data_array, x, y, z);
 }
 
 /* helper to get a block property for block id `b`.
@@ -960,7 +961,7 @@ static PyMethodDef chunkrenderer_methods[] = {
 };
 
 PyMODINIT_FUNC PyInit_chunkrenderer(void) {
-    PyObject *mod, *numpy;
+    PyObject *mod;
     DataType *dt_def;
     int i;
     static struct PyModuleDef moddef = {
@@ -984,17 +985,6 @@ PyMODINIT_FUNC PyInit_chunkrenderer(void) {
         return NULL;
     }
 
-    /* tell the compiler to shut up about unused things
-       sizeof(...) does not evaluate its argument (:D) */
-    (void)sizeof(import_array());
-    
-    /* import numpy on our own, because import_array breaks across
-       numpy versions and we barely use numpy */
-    numpy = PyImport_ImportModule("numpy.core.multiarray");
-    if (!numpy)
-        return NULL;
-    Py_XDECREF(numpy);
-    
     mod = PyModule_Create(&moddef);
     if (mod == NULL)
         return NULL;

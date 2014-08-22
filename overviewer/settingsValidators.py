@@ -4,7 +4,6 @@ import os.path
 from collections import namedtuple, OrderedDict
 
 from . import util
-from .world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
 
 class ValidationException(Exception):
     pass
@@ -89,10 +88,10 @@ def validateNorthDirection(direction):
         intdir = direction
     elif isinstance(direction, str):
         direction = direction.lower().replace("-","").replace("_","")
-        if direction == "upperleft": intdir = UPPER_LEFT
-        elif direction == "upperright": intdir = UPPER_RIGHT
-        elif direction == "lowerright": intdir = LOWER_RIGHT
-        elif direction == "lowerleft": intdir = LOWER_LEFT
+        if direction == "upperleft": intdir = 0
+        elif direction == "upperright": intdir = 1
+        elif direction == "lowerright": intdir = 2
+        elif direction == "lowerleft": intdir = 3
         else:
             raise ValidationException("'%s' is not a valid north direction" % direction)
     if intdir < 0 or intdir > 3:

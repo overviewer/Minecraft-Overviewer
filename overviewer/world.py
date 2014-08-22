@@ -22,8 +22,6 @@ import hashlib
 import time
 import random
 
-import numpy
-
 from . import nbt
 from . import cache
 
@@ -308,20 +306,7 @@ class RegionSet(object):
         chunk does not exist.
 
         The returned dictionary corresponds to the "Level" structure in the
-        chunk file, with a few changes:
-
-        * The Biomes array is transformed into a 16x16 numpy array
-
-        * For each chunk section:
-
-          * The "Blocks" byte string is transformed into a 16x16x16 numpy array
-          * The Add array, if it exists, is bitshifted left 8 bits and
-            added into the Blocks array
-          * The "SkyLight" byte string is transformed into a 16x16x128 numpy
-            array
-          * The "BlockLight" byte string is transformed into a 16x16x128 numpy
-            array
-          * The "Data" byte string is transformed into a 16x16x128 numpy array
+        chunk file, with potentially missing fields added.
 
         Warning: the returned data may be cached and thus should not be
         modified, lest it affect the return values of future calls for the same
@@ -374,66 +359,15 @@ class RegionSet(object):
         level = data[1]['Level']
         chunk_data = level
 
-        # Turn the Biomes array into a 16x16 numpy array
-        try:
-            biomes = numpy.frombuffer(chunk_data['Biomes'], dtype=numpy.uint8)
-            biomes = biomes.reshape((16,16))
-        except KeyError:
-            # worlds converted by Jeb's program may be missing the Biomes key
-            biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
-        chunk_data['Biomes'] = biomes
+        # worlds converted by Jeb's program may be missing the Biomes key
+        if not 'Biomes' in chunk_data:
+            chunk_data['Biomes'] = b'\0' * 16 * 16
 
         for section in chunk_data['Sections']:
+            # if the 'Add' array is not present, add it
+            if not 'Add' in section:
+                section['Add'] = b'\0' * 16 * 16 * 8
 
-            # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
-            # adding in the additional block array if included.
-            blocks = numpy.frombuffer(section['Blocks'], dtype=numpy.uint8)
-            # Cast up to uint16, blocks can have up to 12 bits of data
-            blocks = blocks.astype(numpy.uint16)
-            blocks = blocks.reshape((16,16,16))
-            if "Add" in section:
-                # This section has additional bits to tack on to the blocks
-                # array. Add is a packed array with 4 bits per slot, so
-                # it needs expanding
-                additional = numpy.frombuffer(section['Add'], dtype=numpy.uint8)
-                additional = additional.astype(numpy.uint16).reshape((16,16,8))
-                additional_expanded = numpy.empty((16,16,16), dtype=numpy.uint16)
-                additional_expanded[:,:,::2] = (additional & 0x0F) << 8
-                additional_expanded[:,:,1::2] = (additional & 0xF0) << 4
-                blocks += additional_expanded
-                del additional
-                del additional_expanded
-                del section['Add'] # Save some memory
-            section['Blocks'] = blocks
-
-            # Turn the skylight array into a 16x16x16 matrix. The array comes
-            # packed 2 elements per byte, so we need to expand it.
-            skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
-            skylight = skylight.reshape((16,16,8))
-            skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-            skylight_expanded[:,:,::2] = skylight & 0x0F
-            skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
-            del skylight
-            section['SkyLight'] = skylight_expanded
-
-            # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
-            blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
-            blocklight = blocklight.reshape((16,16,8))
-            blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-            blocklight_expanded[:,:,::2] = blocklight & 0x0F
-            blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
-            del blocklight
-            section['BlockLight'] = blocklight_expanded
-
-            # Turn the Data array into a 16x16x16 matrix, same as SkyLight
-            data = numpy.frombuffer(section['Data'], dtype=numpy.uint8)
-            data = data.reshape((16,16,8))
-            data_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-            data_expanded[:,:,::2] = data & 0x0F
-            data_expanded[:,:,1::2] = (data & 0xF0) >> 4
-            del data
-            section['Data'] = data_expanded
-        
         return chunk_data      
     
 
@@ -523,89 +457,6 @@ class RegionSetWrapper(object):
         return self._r.iterate_chunks()
     def get_chunk_mtime(self, x, z):
         return self._r.get_chunk_mtime(x,z)
-    
-# see RegionSet.rotate.  These values are chosen so that they can be
-# passed directly to rot90; this means that they're the number of
-# times to rotate by 90 degrees CCW
-UPPER_LEFT  = 0 ## - Return the world such that north is down the -Z axis (no rotation)
-UPPER_RIGHT = 1 ## - Return the world such that north is down the +X axis (rotate 90 degrees counterclockwise)
-LOWER_RIGHT = 2 ## - Return the world such that north is down the +Z axis (rotate 180 degrees)
-LOWER_LEFT  = 3 ## - Return the world such that north is down the -X axis (rotate 90 degrees clockwise)
-
-class RotatedRegionSet(RegionSetWrapper):
-    """A regionset, only rotated such that north points in the given direction
-
-    """
-    
-    # some class-level rotation constants
-    _NO_ROTATION =               lambda x,z: (x,z)
-    _ROTATE_CLOCKWISE =          lambda x,z: (-z,x)
-    _ROTATE_COUNTERCLOCKWISE =   lambda x,z: (z,-x)
-    _ROTATE_180 =                lambda x,z: (-x,-z)
-    
-    # These take rotated coords and translate into un-rotated coords
-    _unrotation_funcs = [
-        _NO_ROTATION,
-        _ROTATE_COUNTERCLOCKWISE,
-        _ROTATE_180,
-        _ROTATE_CLOCKWISE,
-    ]
-    
-    # These translate un-rotated coordinates into rotated coordinates
-    _rotation_funcs = [
-        _NO_ROTATION,
-        _ROTATE_CLOCKWISE,
-        _ROTATE_180,
-        _ROTATE_COUNTERCLOCKWISE,
-    ]
-    
-    def __init__(self, rsetobj, north_dir):
-        self.north_dir = north_dir
-        self.unrotate = self._unrotation_funcs[north_dir]
-        self.rotate = self._rotation_funcs[north_dir]
-
-        super(RotatedRegionSet, self).__init__(rsetobj)
-
-    
-    # Re-initialize upon unpickling. This is needed because we store a couple
-    # lambda functions as instance variables
-    def __getstate__(self):
-        return (self._r, self.north_dir)
-    def __setstate__(self, args):
-        self.__init__(args[0], args[1])
-    
-    def get_chunk(self, x, z):
-        x,z = self.unrotate(x,z)
-        chunk_data = dict(super(RotatedRegionSet, self).get_chunk(x,z))
-        newsections = []
-        for section in chunk_data['Sections']:
-            section = dict(section)
-            newsections.append(section)
-            for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight']:
-                array = section[arrayname]
-                # Since the anvil change, arrays are arranged with axes Y,Z,X
-                # numpy.rot90 always rotates the first two axes, so for it to
-                # work, we need to temporarily move the X axis to the 0th axis.
-                array = numpy.swapaxes(array, 0,2)
-                array = numpy.rot90(array, self.north_dir)
-                array = numpy.swapaxes(array, 0,2)
-                section[arrayname] = array
-        chunk_data['Sections'] = newsections
-        
-        # same as above, for biomes (Z/X indexed)
-        biomes = numpy.swapaxes(chunk_data['Biomes'], 0, 1)
-        biomes = numpy.rot90(biomes, self.north_dir)
-        chunk_data['Biomes'] = numpy.swapaxes(biomes, 0, 1)
-        return chunk_data
-
-    def get_chunk_mtime(self, x, z):
-        x,z = self.unrotate(x,z)
-        return super(RotatedRegionSet, self).get_chunk_mtime(x, z)
-
-    def iterate_chunks(self):
-        for x,z,mtime in super(RotatedRegionSet, self).iterate_chunks():
-            x,z = self.rotate(x,z)
-            yield x,z,mtime
 
 class CroppedRegionSet(RegionSetWrapper):
     def __init__(self, rsetobj, xmin, zmin, xmax, zmax):
