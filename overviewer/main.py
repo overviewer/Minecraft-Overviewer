@@ -35,7 +35,7 @@ from optparse import OptionParser, OptionGroup
 
 from overviewer import util
 from overviewer import logger
-from overviewer import textures
+from overviewer import assetpack
 from overviewer import world
 from overviewer import configParser, tileset, assetmanager, dispatcher
 from overviewer import isometricrenderer, blockdefinitions
@@ -142,10 +142,8 @@ def main():
 
     if options.check_terrain:
         import hashlib
-        from overviewer.textures import Textures
         # TODO custom textures path?
-        tex = Textures()
-
+        # also #TODO this is crazy broken
         try:
             f = tex.find_file("terrain.png", verbose=True)
         except IOError:
@@ -398,7 +396,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         texopts = util.dict_subset(render, ["texturepath"])
         texopts_key = tuple(texopts.items())
         if texopts_key not in texcache:
-            tex = textures.Textures(options.texturepath)
+            # FIXME oil hack, does not actually load custom asset packs
+            tex = assetpack.get_default()
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
@@ -510,10 +509,6 @@ if __name__ == "__main__":
     try:
         ret = main()
         util.nice_exit(ret)
-    except textures.TextureException as e:
-        # this isn't a "bug", so don't print scary traceback
-        logging.error(str(e))
-        util.nice_exit(1)
     except Exception as e:
         logging.exception("""An error has occurred. This may be a bug. Please let us know!
 See http://docs.overviewer.org/en/latest/index.html#help

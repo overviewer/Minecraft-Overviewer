@@ -9,7 +9,9 @@ import multiprocessing
 
 modules = [
     'oil',
-    'textures',
+    'assetpack',
+    'util',
+    'path',
     'world',
     'isometricrenderer',
     'blockdefinitions',
@@ -42,7 +44,7 @@ def reload_all(verbose=False):
 # appease the pickle!
 reload_all()
 from overviewer import oil
-from overviewer import textures
+from overviewer import assetpack
 from overviewer import world
 from overviewer import isometricrenderer
 from overviewer import blockdefinitions
@@ -305,7 +307,7 @@ class Explorer(wx.Frame):
             self.rset = None
         else:
             self.LoadWorld(self.wpath)
-        self.tex = textures.Textures()
+        self.tex = assetpack.get_default()
         self.bdefs = blockdefinitions.get_default()
         
         self.isomatrix = oil.Matrix().rotate(0.6154797, 0, 0).rotate(0, 0.7853982, 0).scale(17, 17, 17)

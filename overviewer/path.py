@@ -18,6 +18,11 @@ import os.path
 import sys
 
 def get_data_path(*args):
+    """Create a path inside overviewer/data/, wherever that ends up when
+    installed.
+
+    """
+    
     if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
         return os.path.join(os.path.dirname(sys.executable), *args)
     else:
@@ -27,3 +32,28 @@ def get_data_path(*args):
             return os.path.join(os.path.dirname(__file__), "data", *args)
         except NameError:
             return os.path.join(os.path.dirname(sys.argv[0]), *args)
+
+class InstalledMinecraftError(Exception):
+    pass
+
+def get_minecraft_path(*args):
+    """Look in various system-specific places for an installed minecraft,
+    then construct a path off that location if found. Otherwise, raise
+    InstalledMinecraftError.
+
+    """
+    
+    def generator():
+        if 'APPDATA' in os.environ and sys.platform.startswith('win'):
+            yield os.path.join(os.environ['APPDATA'], '.minecraft')
+        if 'HOME' in os.environ:
+            if sys.platform.startswith('darwin'):
+                yield os.path.join(os.environ['HOME'], 'Library', 'Application Support', 'minecraft')
+            yield os.path.join(os.environ['HOME'], '.minecraft')
+    
+    paths = list(generator())
+    for path in paths:
+        if os.path.exists(path):
+            return os.path.join(path, *args)
+    
+    raise InstalledMinecraftError("Could not find an installed minecraft in: " + " or ".join(paths))

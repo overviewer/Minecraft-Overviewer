@@ -502,7 +502,7 @@ static void free_block_definitions_capsule(PyObject *cap) {
  * Helper to compile a block model definition. One or more models makes up a
  * block definition.
  */
-inline static int compile_model_definition(PyObject *pytextures, BlockModel *model, PyObject *pydef, PyObject *images)
+inline static int compile_model_definition(PyObject *pyassets, BlockModel *model, PyObject *pydef, PyObject *images)
 {
     unsigned int i;
     unsigned int vertices_length;
@@ -574,10 +574,10 @@ inline static int compile_model_definition(PyObject *pytextures, BlockModel *mod
          * caching textures that are already loaded (or this would create many
          * copies of the same texture in memory)
          */
-        texobj = PyObject_CallMethod(pytextures, "load", "O", texstring);
+        texobj = PyObject_CallMethod(pyassets, "open_texture", "O", texstring);
         if (!texobj || !PyObject_TypeCheck(texobj, PyOILImageType)) {
             if (texobj) {
-                PyErr_SetString(PyExc_TypeError, "Textures.load() did not return an oil.Image object");
+                PyErr_SetString(PyExc_TypeError, "AssetPack.open_texture() did not return an oil.Image object");
                 Py_DECREF(texobj);
             }
             Py_DECREF(pyvertfast);
@@ -617,13 +617,13 @@ inline static int compile_model_definition(PyObject *pytextures, BlockModel *mod
 }
 
 /* helper for compile_block_definitions.
- * pytextures argument is the python Textures object
+ * pyassets argument is the python AssetPack object
  * def is the BlockDef struct we are to mutate according to the python
  * BlockDefinition object in pydef
  * images is a python set. We should add all oil.Image objects to it so
  * we can guarantee they are not garbage collected.
  * */
-inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, PyObject *pydef, PyObject *images) {
+inline static int compile_block_definition(PyObject *pyassets, BlockDef *def, PyObject *pydef, PyObject *images) {
     int i;
     PyObject *models;
     PyObject *modelsfast;
@@ -677,10 +677,10 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
         if (prop == Py_None) {
             def->biomecolors = NULL;
         } else {
-            PyObject *texobj = PyObject_CallMethod(pytextures, "load", "O", prop);
+            PyObject *texobj = PyObject_CallMethod(pyassets, "open_texture", "O", prop);
             if (!texobj || !PyObject_TypeCheck(texobj, PyOILImageType)) {
                 if (texobj) {
-                    PyErr_SetString(PyExc_TypeError, "Textures.load() did not return an oil.Image object");
+                    PyErr_SetString(PyExc_TypeError, "AssetPack.open_texture() did not return an oil.Image object");
                     Py_DECREF(texobj);
                 }
                 return 0;
@@ -771,7 +771,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
             /* no definition for this data value */
             continue;
         }
-        if (!compile_model_definition(pytextures,
+        if (!compile_model_definition(pyassets,
                                       &(def->models[i]),
                                       modeldef,
                                       images)) {
@@ -787,7 +787,7 @@ inline static int compile_block_definition(PyObject *pytextures, BlockDef *def, 
 }
 
 static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
-    PyObject *pytextures;
+    PyObject *pyassets;
     PyObject *pyblockdefs;
     PyObject *pymaxblockid;
     PyObject *pymaxdata;
@@ -796,7 +796,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
     BlockDefs *defs;
     unsigned int blockid, data;
     
-    if (!PyArg_ParseTuple(args, "OO", &pytextures, &pyblockdefs)) {
+    if (!PyArg_ParseTuple(args, "OO", &pyassets, &pyblockdefs)) {
         return NULL;
     }
     
@@ -871,7 +871,7 @@ static PyObject *compile_block_definitions(PyObject *self, PyObject *args) {
         if (val) {
             /* Compile a block definition from the BlockDefinition object in
              * val */
-            if (!compile_block_definition(pytextures,
+            if (!compile_block_definition(pyassets,
                                           &(defs->defs[blockid]),
                                           val,
                                           defs->images)
@@ -954,7 +954,7 @@ static PyMethodDef chunkrenderer_methods[] = {
     {"render", render, METH_VARARGS,
      "Render a chunk to an image."},
     {"compile_block_definitions", compile_block_definitions, METH_VARARGS,
-     "Compiles a Textures object and a BlockDefinitions object into a form usable by the render method."},
+     "Compiles an AssetPack object and a BlockDefinitions object into a form usable by the render method."},
     {"render_block", (PyCFunction)py_render_block, METH_VARARGS | METH_KEYWORDS,
      "Renders a single block to the given image with the given matrix"},
     {NULL, NULL, 0, NULL}

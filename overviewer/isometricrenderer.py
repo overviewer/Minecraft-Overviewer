@@ -163,9 +163,9 @@ class IsometricRenderer(IsometricBase):
 
     """
     sections_per_chunk = 16
-    def __init__(self, regionset, textures, blockdefs, matrix):
+    def __init__(self, regionset, assetpack, blockdefs, matrix):
         self.regionset = regionset
-        self.textures = textures
+        self.assetpack = assetpack
         self.blockdefs = blockdefs
 
         # This is only used to save our state when pickling
@@ -183,12 +183,12 @@ class IsometricRenderer(IsometricBase):
         assert self.viewvec[1] != 0
         
         # compile the block definitions
-        self.compiled_blockdefs = chunkrenderer.compile_block_definitions(self.textures, self.blockdefs)
+        self.compiled_blockdefs = chunkrenderer.compile_block_definitions(self.assetpack, self.blockdefs)
     
     def __getstate__(self):
         # a lot of our internal structure is not pickleable
         # so just send the args for __init__
-        return (self.regionset, self.textures, self.blockdefs, self.origmatrix.data)
+        return (self.regionset, self.assetpack, self.blockdefs, self.origmatrix.data)
     
     def __setstate__(self, args):
         # turn the matrix back into an OIL Matrix

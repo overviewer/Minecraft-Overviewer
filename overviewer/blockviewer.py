@@ -7,7 +7,7 @@ import argparse
 
 from overviewer import blockdefinitions
 from overviewer.oil import Matrix
-from overviewer import textures
+from overviewer import assetpack
 from overviewer import chunkrenderer
 from overviewer import isometricrenderer
 from overviewer import canvas
@@ -27,15 +27,20 @@ def main():
     parser = argparse.ArgumentParser(description="Renders an animated GIF of a single block. Used to test the renderer and block models")
     parser.add_argument("blockid", type=int, help="The block ID to render")
     parser.add_argument("data", type=int, help="The data value of the block to render, if applicable", default=0)
-    parser.add_argument("--texturepath", type=str, help="specify a resource pack to use")
+    parser.add_argument("--texturepath", type=str, help="specify a resource pack to use", default=None)
 
     args = parser.parse_args()
     blockid = args.blockid
     data = args.data
+    
+    ap = assetpack.get_default()
+    if args.texturepath:
+        other = assetpack.ZipAssetPack(args.texturepath)
+        ap = assetpack.CompositeAssetPack([ap, other])
 
     blockdefs = chunkrenderer.compile_block_definitions(
-            textures.Textures(local_path=args.texturepath),
-            blockdefinitions.get_default())
+        ap,
+        blockdefinitions.get_default())
 
     FRAMES = 60
 
