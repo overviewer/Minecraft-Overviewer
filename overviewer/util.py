@@ -17,28 +17,18 @@
 Misc utility routines used by multiple files that don't belong anywhere else
 """
 
-import imp
 import os.path
 import sys
 import platform
 from subprocess import Popen, PIPE
 from itertools import cycle, islice, product
 
-def get_program_path():
-    if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
-        return os.path.dirname(sys.executable)
-    else:
-        try:
-            # normally, we're in ./overviewer/util.py
-            # we want ./
-            return os.path.dirname(os.path.dirname(__file__))
-        except NameError:
-            return os.path.dirname(sys.argv[0])
-
-
 # does not require git, very likely to work everywhere
 def findGitHash():
-    this_dir = get_program_path()
+    # normally, we're in ./overviewer/util.py
+    # we want ./
+    this_dir = os.path.dirname(os.path.dirname(__file__))
+    
     if os.path.exists(os.path.join(this_dir,".git")):
         with open(os.path.join(this_dir,".git","HEAD")) as f:
             data = f.read().strip()

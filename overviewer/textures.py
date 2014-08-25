@@ -20,8 +20,8 @@ import logging
 import zipfile
 import imp
 
-from overviewer import util
-from overviewer.oil import Image
+from .path import get_data_path
+from .oil import Image
 
 """
 This file contains the Textures class, which is responsible for
@@ -137,13 +137,6 @@ class Textures(object):
         # If we haven't returned at this point, then the requested file was NOT
         # found in the user-specified texture path or resource pack.
         if verbose: logging.info("Did not find the file in specified texture path")
-
-        # Look in the location of the overviewer executable for the given path
-        programdir = util.get_program_path()
-        path = search_dir(programdir)
-        if path:
-            if verbose: logging.info("Found %s in '%s'", filename, path)
-            return open(path, mode)
 
         if sys.platform.startswith("darwin"):
             path = search_dir("/Applications/Minecraft")

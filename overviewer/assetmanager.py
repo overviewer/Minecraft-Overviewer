@@ -25,6 +25,7 @@ from .oil import Image
 from . import oil
 from . import world
 from . import util
+from .path import get_data_path
 from .files import FileReplacer, mirror_dir
 
 class AssetManager(object):
@@ -150,9 +151,7 @@ directory.
     def output_noconfig(self):
 
         # copy web assets into destdir:
-        global_assets = os.path.join(util.get_program_path(), "overviewer", "data", "web_assets")
-        if not os.path.isdir(global_assets):
-            global_assets = os.path.join(util.get_program_path(), "web_assets")
+        global_assets = get_data_path("web_assets")
         mirror_dir(global_assets, self.outputdir)
 
         if self.custom_assets_dir:
@@ -167,9 +166,7 @@ directory.
 
 
         # create overviewer.js from the source js files
-        js_src = os.path.join(util.get_program_path(), "overviewer", "data", "js_src")
-        if not os.path.isdir(js_src):
-            js_src = os.path.join(util.get_program_path(), "js_src")
+        js_src = get_data_path("js_src")
         with FileReplacer(os.path.join(self.outputdir, "overviewer.js")) as tmpfile:
             with open(tmpfile, "w") as fout:
                 # first copy in js_src/overviewer.js

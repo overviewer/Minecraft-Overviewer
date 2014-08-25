@@ -19,8 +19,8 @@ import logging
 import copy
 from itertools import tee
 
-from overviewer import chunkrenderer
-from overviewer import util
+from . import chunkrenderer
+from .path import get_data_path
 
 """
 
@@ -402,7 +402,7 @@ def add_from_path(bd, path, namemap={}):
 
 def get_default():
     bd = BlockDefinitions()    
-    blockspath = os.path.join(util.get_program_path(), "overviewer", "data", "blocks")
+    blockspath = get_data_path("blocks")
     
     for root, subdirs, files in os.walk(blockspath):
         del subdirs[:]
