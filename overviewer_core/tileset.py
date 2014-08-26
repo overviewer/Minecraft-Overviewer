@@ -24,6 +24,7 @@ import functools
 import time
 import errno
 import stat
+import platform
 from collections import namedtuple
 from itertools import product, izip, chain
 
@@ -129,6 +130,14 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 #       slowest, but SHOULD be specified if this is the first render because
 #       the scan will forgo tile stat calls. It's also useful for changing
 #       texture packs or other options that effect the output.
+
+#   3
+#       A very special mode. Using this will not actually render
+#       anything, but will leave this tileset in the resulting
+#       map. Useful for renders that you want to keep, but not
+#       update. Since this mode is so simple, it's left out of the
+#       rest of this discussion.
+
 #
 # For 0 our caller has explicitly requested not to check mtimes on disk to
 # speed things up. So the mode 0 chunk scan only looks at chunk mtimes and the
@@ -237,6 +246,13 @@ class TileSet(object):
                 useful for changing texture packs or other options that effect
                 the output.
 
+            3
+                A very special mode. Using this will not actually render
+                anything, but will leave this tileset in the resulting
+                map. Useful for renders that you want to keep, but not
+                update. Since this mode is so simple, it's left out of the
+                rest of this discussion.
+
         imgformat
             A string indicating the output format. Must be one of 'png' or
             'jpeg'
@@ -246,11 +262,7 @@ class TileSet(object):
             relevant in jpeg mode.
 
         optimizeimg
-            an integer indiating optimizations to perform on png outputs. 0
-            indicates no optimizations. Only relevant in png mode.
-            1 indicates pngcrush is run on all output images
-            2 indicates pngcrush and advdef are run on all output images with advdef -z2
-            3 indicates pngcrush and advdef are run on all output images with advdef -z4
+            A list of optimizer instances to use.
 
         rendermode
             Perhaps the most important/relevant option: a string indicating the
@@ -389,6 +401,11 @@ class TileSet(object):
         attribute for later use in iterate_work_items()
 
         """
+
+        # skip if we're told to
+        if self.options['renderchecks'] == 3:
+            return
+        
         # REMEMBER THAT ATTRIBUTES ASSIGNED IN THIS METHOD ARE NOT AVAILABLE IN
         # THE do_work() METHOD (because this is only called in the main process
         # not the workers)
@@ -415,15 +432,16 @@ class TileSet(object):
         return 1
 
     def get_phase_length(self, phase):
-        """Returns the number of work items in a given phase, or None if there
-        is no good estimate.
+        """Returns the number of work items in a given phase.
         """
         # Yeah functional programming!
+        # and by functional we mean a bastardized python switch statement
         return {
                 0: lambda: self.dirtytree.count_all(),
                 #there is no good way to guess this so just give total count
                 1: lambda: (4**(self.treedepth+1)-1)/3,
                 2: lambda: self.dirtytree.count_all(),
+                3: lambda: 0,
                 }[self.options['renderchecks']]()
 
     def iterate_work_items(self, phase):
@@ -433,6 +451,10 @@ class TileSet(object):
         This method returns an iterator over (obj, [dependencies, ...])
         """
 
+        # skip if asked to
+        if self.options['renderchecks'] == 3:
+            return
+        
         # The following block of code implementes the changelist functionality.
         fd = self.options.get("changelist", None)
         if fd:
@@ -535,6 +557,11 @@ class TileSet(object):
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
         isOverlay = self.options.get("overlay") or (not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode")))
+
+        # don't update last render time if we're leaving this alone
+        last_rendertime = self.last_rendertime
+        if self.options['renderchecks'] != 3:
+            last_rendertime = self.max_chunk_mtime        
         
         d = dict(name = self.options.get('title'),
                 zoomLevels = self.treedepth,
@@ -545,13 +572,15 @@ class TileSet(object):
                 bgcolor = bgcolorformat(self.options.get('bgcolor')),
                 world = self.options.get('worldname_orig') +
                     (" - " + self.options.get('dimension')[0] if self.options.get('dimension')[1] != 0 else ''),
-                last_rendertime = self.max_chunk_mtime,
+                last_rendertime = last_rendertime,
                 imgextension = self.imgextension,
                 isOverlay = isOverlay,
                 poititle = self.options.get("poititle"),
                 showlocationmarker = self.options.get("showlocationmarker")
                 )
+        d['maxZoom'] = min(self.treedepth, d['maxZoom'])
         d['minZoom'] = min(max(0, self.options.get("minzoom", 0)), d['maxZoom'])
+        d['defaultZoom'] = max(d['minZoom'], min(d['defaultZoom'], d['maxZoom']))
 
         if isOverlay:
             d.update({"tilesets": self.options.get("overlay")})
@@ -760,8 +789,8 @@ class TileSet(object):
         #       Compare the last modified time of the chunk and tile. If the
         #       tile is older, mark it in a RendertileSet object as dirty.
 
-        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks():
 
+        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks() if (markall or platform.system() == 'Windows') else self.regionset.iterate_newer_chunks(last_rendertime): 
             chunkcount += 1
 
             if chunkmtime > max_chunk_mtime:
@@ -892,7 +921,11 @@ class TileSet(object):
             try:
                 #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
                 src = Image.open(path[1])
+                # optimizeimg may have converted them to a palette image in the meantime
+                if src.mode != "RGB" and src.mode != "RGBA":
+                    src = src.convert("RGBA")
                 src.load()
+
                 quad = Image.new("RGBA", (192, 192), self.options['bgcolor'])
                 resize_half(quad, src)
                 img.paste(quad, path[0])
@@ -914,7 +947,14 @@ class TileSet(object):
             if self.options['optimizeimg']:
                 optimize_image(tmppath, imgformat, self.options['optimizeimg'])
 
-            os.utime(tmppath, (max_mtime, max_mtime))
+            try:
+                os.utime(tmppath, (max_mtime, max_mtime))
+            except OSError, e:
+                # Ignore errno ENOENT: file does not exist. Due to a race
+                # condition, two processes could conceivably try and update
+                # the same temp file at the same time
+                if e.errno != errno.ENOENT:
+                    raise
 
     def _render_rendertile(self, tile):
         """Renders the given render-tile.
@@ -1017,7 +1057,7 @@ class TileSet(object):
 
             if self.options['optimizeimg']:
                 optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])
-
+            
             os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))
 
     def _iterate_and_check_tiles(self, path):

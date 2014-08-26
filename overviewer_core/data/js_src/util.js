@@ -119,7 +119,7 @@ overviewer.util = {
                     zoom = overviewer.mapView.options.currentTileSet.get('minZoom');
                 } else {
                     zoom = parseInt(zoom);
-                    if (zoom < 0 && zoom + overviewer.mapView.options.currentTileSet.get('maxZoom') >= 0) {
+                    if (zoom < 0) {
                         // if zoom is negative, treat it as a "zoom out from max"
                         zoom += overviewer.mapView.options.currentTileSet.get('maxZoom');
                     } else {
@@ -127,6 +127,13 @@ overviewer.util = {
                         zoom = overviewer.mapView.options.currentTileSet.get('defaultZoom');
                     }
                 }
+                
+                // clip zoom
+                if (zoom > overviewer.mapView.options.currentTileSet.get('maxZoom'))
+                    zoom = overviewer.mapView.options.currentTileSet.get('maxZoom');
+                if (zoom < overviewer.mapView.options.currentTileSet.get('minZoom'))
+                    zoom = overviewer.mapView.options.currentTileSet.get('minZoom');
+                
                 overviewer.map.setZoom(zoom);
             }
 
@@ -512,9 +519,9 @@ overviewer.util = {
         }
 
 
-        if (zoom == currTileset.get('maxZoom')) {
+        if (zoom >= currTileset.get('maxZoom')) {
             zoom = 'max';
-        } else if (zoom == currTileset.get('minZoom')) {
+        } else if (zoom <= currTileset.get('minZoom')) {
             zoom = 'min';
         } else {
             // default to (map-update friendly) negative zooms
@@ -556,7 +563,7 @@ overviewer.util = {
             zoom = tsetModel.get('minZoom');
         } else {
             zoom = parseInt(zoom);
-            if (zoom < 0 && zoom + tsetModel.get('maxZoom') >= 0) {
+            if (zoom < 0) {
                 // if zoom is negative, treat it as a "zoom out from max"
                 zoom += tsetModel.get('maxZoom');
             } else {
@@ -564,6 +571,12 @@ overviewer.util = {
                 zoom = tsetModel.get('defaultZoom');
             }
         }
+
+        // clip zoom
+        if (zoom > tsetModel.get('maxZoom'))
+            zoom = tsetModel.get('maxZoom');
+        if (zoom < tsetModel.get('minZoom'))
+            zoom = tsetModel.get('minZoom');
 
         overviewer.map.setCenter(latlngcoords);
         overviewer.map.setZoom(zoom);

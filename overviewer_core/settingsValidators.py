@@ -5,7 +5,9 @@ from collections import namedtuple
 
 import rendermodes
 import util
+from optimizeimages import Optimizer
 from world import UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
+import logging
 
 class ValidationException(Exception):
     pass
@@ -155,8 +157,30 @@ def validateBGColor(color):
         return color
 
 
-def validateOptImg(opt):
-    return bool(opt)
+def validateOptImg(optimizers):
+    if isinstance(optimizers, (int, long)):
+        from optimizeimages import pngcrush
+        logging.warning("You're using a deprecated definition of optimizeimg. "\
+                        "We'll do what you say for now, but please fix this as soon as possible.")
+        optimizers = [pngcrush()]
+    if not isinstance(optimizers, list):
+        raise ValidationException("What you passed to optimizeimg is not a list. "\
+                                  "Make sure you specify them like [foo()], with square brackets.")
+
+    if optimizers:
+        for opt, next_opt in zip(optimizers, optimizers[1:]) + [(optimizers[-1], None)]:
+            if not isinstance(opt, Optimizer):
+                raise ValidationException("Invalid Optimizer!")
+
+            opt.check_availability()
+
+            # Check whether the chaining is somewhat sane
+            if next_opt:
+                if opt.is_crusher() and not next_opt.is_crusher():
+                    logging.warning("You're feeding a crushed output into an optimizer that does not crush. "\
+                                    "This is most likely pointless, and wastes time.")
+
+    return optimizers
 
 def validateTexturePath(path):
     # Expand user dir in directories strings
@@ -201,15 +225,23 @@ def validateOutputDir(d):
     return expand_path(d)
 
 def validateCrop(value):
-    if len(value) != 4:
-        raise ValidationException("The value for the 'crop' setting must be a tuple of length 4")
-    a, b, c, d = tuple(int(x) for x in value)
-
-    if a >= c:
-        a, c = c, a
-    if b >= d:
-        b, d = d, b
-    return (a, b, c, d)
+    if not isinstance(value, list):
+        value = [value]
+        
+    cropZones = []
+    for zone in value:
+        if not isinstance(zone, tuple) or len(zone) != 4:
+            raise ValidationException("The value for the 'crop' setting must be an array of tuples of length 4")
+        a, b, c, d = tuple(int(x) for x in zone)
+    
+        if a >= c:
+            a, c = c, a
+        if b >= d:
+            b, d = d, b
+        
+        cropZones.append((a, b, c, d))
+        
+    return cropZones
 
 def validateObserver(observer):
     if all(map(lambda m: hasattr(observer, m), ['start', 'add', 'update', 'finish'])):

@@ -34,7 +34,7 @@ hereby called "blocks", where each block in the world's grid has a type that
 determines what it is (grass, stone, ...).  This makes worlds relatively
 uncomplicated to render, the Overviewer simply determines what blocks to draw
 and where. Since everything in Minecraft is aligned to a strict grid, placement
-and rendering decisions are completely deterministic and can be performed in an
+and rendering decisions are completely deterministic and can be performed
 iteratively.
 
 The coordinate system for Minecraft has three axes. The X and Z axes are the

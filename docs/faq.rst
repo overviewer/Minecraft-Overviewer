@@ -8,6 +8,22 @@ Frequently Asked Questions
 General Questions
 =================
 
+Does the Overviewer work with mod blocks?
+-----------------------------------------
+
+The Overviewer will render the world, but none of the blocks added by mods
+will be visible. Currently, the blocks Overviewer supports are hardcoded, and
+because there is no official Minecraft modding API as of the time of writing,
+supporting mod blocks is not trivial.
+
+Can I view Overviewer maps without having an internet connection?
+-----------------------------------------------------------------
+
+Not at the moment. The Overviewer relies on the Google maps API to display
+maps, which your browser needs to load from Google. However, switching away
+from Google Maps is something that will most likely be looked into in the
+future.
+
 When my map expands, I see remnants of another zoom level
 ---------------------------------------------------------
 

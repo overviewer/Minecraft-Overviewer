@@ -16,37 +16,117 @@
 import os
 import subprocess
 import shlex
+import logging
 
-pngcrush = "pngcrush"
-optipng = "optipng"
-advdef = "advdef"
+class Optimizer:
+    binaryname = ""
 
-def check_programs(level):
-    path = os.environ.get("PATH").split(os.pathsep)
+    def __init__(self):
+        raise NotImplementedError("I can't let you do that, Dave.")
+
+    def optimize(self, img):
+        raise NotImplementedError("I can't let you do that, Dave.")
     
-    def exists_in_path(prog):
-        result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
-        return len(result) != 0
+    def fire_and_forget(self, args):
+        subprocess.check_call(args)
+
+    def check_availability(self):
+        path = os.environ.get("PATH").split(os.pathsep)
+        
+        def exists_in_path(prog):
+            result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
+            return len(result) != 0
+
+        if (not exists_in_path(self.binaryname)) and (not exists_in_path(self.binaryname + ".exe")):
+            raise Exception("Optimization program '%s' was not found!" % self.binaryname)
     
-    for prog,l in [(pngcrush,1), (advdef,2)]:
-        if l <= level:
-            if (not exists_in_path(prog)) and (not exists_in_path(prog + ".exe")):
-                raise Exception("Optimization prog %s for level %d not found!" % (prog, l))
+    def is_crusher(self):
+        """Should return True if the optimization is lossless, i.e. none of the actual image data will be changed."""
+        raise NotImplementedError("I'm so abstract I can't even say whether I'm a crusher.")
+        
 
-def optimize_image(imgpath, imgformat, optimizeimg):
-    if imgformat == 'png':
-        if optimizeimg >= 1:
-            # we can't do an atomic replace here because windows is terrible
-            # so instead, we make temp files, delete the old ones, and rename
-            # the temp files. go windows!
-            subprocess.Popen([pngcrush, imgpath, imgpath + ".tmp"],
-                stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
-            os.remove(imgpath)
-            os.rename(imgpath+".tmp", imgpath)
+class NonAtomicOptimizer(Optimizer):
+    def cleanup(self, img):
+        os.remove(img)
+        os.rename(img + ".tmp", img)
 
-        if optimizeimg >= 2:
-            # the "-nc" it's needed to no broke the transparency of tiles
-            recompress_option = "-z2" if optimizeimg == 2 else "-z4"
-            subprocess.Popen([advdef, recompress_option,imgpath], stderr=subprocess.STDOUT,
-                stdout=subprocess.PIPE).communicate()[0]
+    def fire_and_forget(self, args, img):
+        subprocess.check_call(args)
+        self.cleanup(img)
 
+class PNGOptimizer:
+    def __init__(self):
+        raise NotImplementedError("I can't let you do that, Dave.")
+
+class JPEGOptimizer:
+    def __init__(self):
+        raise NotImplementedError("I can't let you do that, Dave.")
+
+class pngnq(NonAtomicOptimizer, PNGOptimizer):
+    binaryname = "pngnq"
+
+    def __init__(self, sampling=3, dither="n"):
+        if sampling < 1 or sampling > 10:
+            raise Exception("Invalid sampling value '%d' for pngnq!" % sampling)
+
+        if dither not in ["n", "f"]:
+            raise Exception("Invalid dither method '%s' for pngnq!" % dither)
+
+        self.sampling = sampling
+        self.dither = dither
+    
+    def optimize(self, img):
+        if img.endswith(".tmp"):
+            extension = ".tmp"
+        else:
+            extension = ".png.tmp"
+
+        args = [self.binaryname, "-s", str(self.sampling), "-f", "-e", extension, img]
+        # Workaround for poopbuntu 12.04 which ships an old broken pngnq
+        if self.dither != "n":
+            args.insert(1, "-Q")
+            args.insert(2, self.dither)
+
+        NonAtomicOptimizer.fire_and_forget(self, args, img)
+
+    def is_crusher(self):
+        return False
+
+class pngcrush(NonAtomicOptimizer, PNGOptimizer):
+    binaryname = "pngcrush"
+    # really can't be bothered to add some interface for all
+    # the pngcrush options, it sucks anyway
+    def __init__(self, brute=False):
+        self.brute = brute
+        
+    def optimize(self, img):
+        args = [self.binaryname, img, img + ".tmp"]
+        if self.brute == True:  # Was the user an idiot?
+            args.insert(1, "-brute")
+
+        NonAtomicOptimizer.fire_and_forget(self, args, img)
+
+    def is_crusher(self):
+        return True
+
+class optipng(Optimizer, PNGOptimizer):
+    binaryname = "optipng"
+
+    def __init__(self, olevel=2):
+        self.olevel = olevel
+    
+    def optimize(self, img):
+        Optimizer.fire_and_forget(self, [self.binaryname, "-o" + str(self.olevel), "-quiet", img])
+
+    def is_crusher(self):
+        return True
+        
+
+def optimize_image(imgpath, imgformat, optimizers):
+        for opt in optimizers:
+            if imgformat == 'png':
+                if isinstance(opt, PNGOptimizer):
+                    opt.optimize(imgpath)
+            elif imgformat == 'jpg':
+                if isinstance(opt, JPEGOptimizer):
+                    opt.optimize(imgpath)

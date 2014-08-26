@@ -84,6 +84,8 @@ def main():
             help="Tries to locate the texture files. Useful for debugging texture problems.")
     parser.add_option("-V", "--version", dest="version",
             help="Displays version information and then exits", action="store_true")
+    parser.add_option("--check-version", dest="checkversion",
+            help="Fetchs information about the latest version of Overviewer", action="store_true")
     parser.add_option("--update-web-assets", dest='update_web_assets', action="store_true",
             help="Update web assets. Will *not* render tiles or update overviewerConfig.js")
 
@@ -141,7 +143,27 @@ def main():
         if options.verbose > 0:
             print("Python executable: %r" % sys.executable)
             print(sys.version)
+        if not options.checkversion:
+            return 0
+    if options.checkversion:
+        print("Currently running Minecraft Overviewer %s" % util.findGitVersion()),
+        print("(%s)" % util.findGitHash()[:7])
+        try:
+            import urllib
+            import json
+            latest_ver = json.loads(urllib.urlopen("http://overviewer.org/download.json").read())['src']
+            print("Latest version of Minecraft Overviewer %s (%s)" % (latest_ver['version'], latest_ver['commit'][:7]))
+            print("See http://overviewer.org/downloads for more information")
+        except Exception:
+            print("Failed to fetch latest version info.")
+            if options.verbose > 0:
+                import traceback
+                traceback.print_exc()
+            else:
+                print("Re-run with --verbose for more details")
+            return 1
         return 0
+
 
     if options.pid:
         if os.path.exists(options.pid):
@@ -318,19 +340,24 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         "--check-tiles, and --no-tile-checks. These options conflict.")
         parser.print_help()
         return 1
+
+    def set_renderchecks(checkname, num):
+        for name, render in config['renders'].iteritems():
+            if render.get('renderchecks', 0) == 3:
+                logging.warning(checkname + " ignoring render " + repr(name) + " since it's marked as \"don't render\".")
+            else:
+                render['renderchecks'] = num
+        
     if options.forcerender:
         logging.info("Forcerender mode activated. ALL tiles will be rendered")
-        for render in config['renders'].itervalues():
-            render['renderchecks'] = 2
+        set_renderchecks("forcerender", 2)
     elif options.checktiles:
         logging.info("Checking all tiles for updates manually.")
-        for render in config['renders'].itervalues():
-            render['renderchecks'] = 1
+        set_renderchecks("checktiles", 1)
     elif options.notilechecks:
         logging.info("Disabling all tile mtime checks. Only rendering tiles "+
         "that need updating since last render")
-        for render in config['renders'].itervalues():
-            render['renderchecks'] = 0
+        set_renderchecks("notilechecks", 0)
 
     if not config['renders']:
         logging.error("You must specify at least one render in your config file. See the docs if you're having trouble")
@@ -461,15 +488,19 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         # regionset cache pulls from the same underlying cache object.
         rset = world.CachedRegionSet(rset, caches)
 
-        # If a crop is requested, wrap the regionset here
-        if "crop" in render:
-            rset = world.CroppedRegionSet(rset, *render['crop'])
-
         # If this is to be a rotated regionset, wrap it in a RotatedRegionSet
         # object
         if (render['northdirection'] > 0):
             rset = world.RotatedRegionSet(rset, render['northdirection'])
         logging.debug("Using RegionSet %r", rset)
+
+        # If a crop is requested, wrap the regionset here
+        if "crop" in render:
+            rsets = []
+            for zone in render['crop']:
+                rsets.append(world.CroppedRegionSet(rset, *zone))
+        else:
+            rsets = [rset]
 
         ###############################
         # Do the final prep and create the TileSet object
@@ -481,8 +512,9 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         render['name'] = render_name # perhaps a hack. This is stored here for the asset manager
         tileSetOpts = util.dict_subset(render, ["name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom", "imgquality", "optimizeimg", "rendermode", "worldname_orig", "title", "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom", "showlocationmarker", "minzoom"])
         tileSetOpts.update({"spawn": w.find_true_spawn()}) # TODO find a better way to do this
-        tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
-        tilesets.append(tset)
+        for rset in rsets:
+            tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
+            tilesets.append(tset)
 
     # Do tileset preprocessing here, before we start dispatching jobs
     logging.info("Preprocessing...")
@@ -514,6 +546,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     if options.pid:
         os.remove(options.pid)
 
+    logging.info("Your render has been written to '%s', open index.html to view it" % destdir)    
+        
     return 0
 
 def list_worlds():

@@ -48,7 +48,8 @@ def findGitHash():
             import overviewer_version
             return overviewer_version.HASH
         except Exception:
-            return "unknown"
+            pass
+    return "unknown"
 
 def findGitVersion():
     try:

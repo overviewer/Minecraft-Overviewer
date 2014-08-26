@@ -19,8 +19,14 @@ Python, don't worry, it's pretty simple. Just follow the examples.
     Windows.  This is required because the backslash ("\\") has special meaning
     in Python.  
 
+Examples
+========
+
+The following examples should give you an idea of what a configuration file looks
+like, and also teach you some neat tricks.
+
 A Simple Example
-================
+----------------
 
 ::
 
@@ -60,7 +66,7 @@ The ``renders`` dictionary
     ``worlds["My world"]``
 
 A more complicated example
-==========================
+--------------------------
 ::
 
     worlds["survival"] = "/home/username/server/survivalworld"
@@ -130,7 +136,7 @@ renders.
     example.
 
 A dynamic config file
-=====================
+---------------------
 
 It might be handy to dynamically retrieve parameters. For instance, if you
 periodically render your last map backup which is located in a timestamped
@@ -191,6 +197,9 @@ the overviewer_core.rendermodes module).
 If the above doesn't make sense, just know that items in the config file take
 the form ``key = value``. Two items take a different form:, ``worlds`` and
 ``renders``, which are described below.
+
+General
+-------
 
 ``worlds``
     This is pre-defined as an empty dictionary. The config file is expected to
@@ -258,6 +267,9 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
     e.g.::
 
         processes = 2
+
+Observers
+~~~~~~~~~
 
 .. _observer:
 
@@ -367,6 +379,8 @@ the form ``key = value``. Two items take a different form:, ``worlds`` and
             
             
 
+Custom web assets
+~~~~~~~~~~~~~~~~~
 
 .. _customwebassets:
 
@@ -411,6 +425,9 @@ values. The valid configuration keys are listed below.
                 'title': 'This render doesn't explicitly declare a world!',
                 }
 
+General
+~~~~~~~
+
 ``world``
     Specifies which world this render corresponds to. Its value should be a
     string from the appropriate key in the worlds dictionary.
@@ -442,7 +459,20 @@ values. The valid configuration keys are listed below.
         nether :ref:`rendermode<option_rendermode>`. Otherwise you'll
         just end up rendering the nether's ceiling.
 
+    .. note::
+
+        For the end, you will most likely want to turn down the strength of
+        the shadows, as you'd otherwise end up with a very dark result.
+        
+        e.g.::
+            
+            end_lighting = [Base(), EdgeLines(), Lighting(strength=0.5)]
+            end_smooth_lighting = [Base(), EdgeLines(), SmoothLighting(strength=0.5)]
+
     **Default:** ``"overworld"``
+
+Rendering
+~~~~~~~~~
 
 .. _option_rendermode:
 
@@ -523,215 +553,6 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``"upper-left"``
 
-.. _rerenderprob:
-
-``rerenderprob``
-    This is the probability that a tile will be rerendered even though there may
-    have been no changes to any blocks within that tile. Its value should be a
-    floating point number between 0.0 and 1.0.
-
-    **Default:** ``0``
-
-``imgformat``
-    This is which image format to render the tiles into. Its value should be a
-    string containing "png", "jpg", or "jpeg".
-
-    **Default:** ``"png"``
-
-``imgquality``
-    This is the image quality used when saving the tiles into the JPEG image
-    format. Its value should be an integer between 0 and 100.
-
-    **Default:** ``95``
-
-``optimizeimg``
-    This option specifies which additional tools overviewer should use to
-    optimize the filesize of png tiles.
-    The tools used must be placed somewhere, where overviewer can find them, for
-    example the "PATH" environment variable or a directory like /usr/bin.
-    This should be an integer between 0 and 3.
-    * ``1 - Use pngcrush``
-    * ``2 - Use advdef``
-    * ``3 - Use pngcrush and advdef (Not recommended)``
-    Using this option may significantly increase render time, but will make
-    the resulting tiles smaller, with lossless image quality.
-
-    **Default:** ``0``
-
-``bgcolor``
-    This is the background color to be displayed behind the map. Its value
-    should be either a string in the standard HTML color syntax or a 4-tuple in
-    the format of (r,b,g,a). The alpha entry should be set to 0.
-
-    **Default:** ``#1a1a1a``
-
-``defaultzoom``
-    This value specifies the default zoom level that the map will be opened
-    with. It has to be greater than 0.
-
-    **Default:** ``1``
-
-``maxzoom``
-    This specifies the maximum zoom allowed by the zoom control on the web page.
-
-    .. note::
-
-            This does not change the number of zoom levels rendered, but allows
-            you to neglect uploading the larger and more detailed zoom levels if bandwidth
-            usage is an issue.
-
-    **Default:** Automatically set to most detailed zoom level
-
-``minzoom``
-    This specifies the minimum zoom allowed by the zoom control on the web page.  For
-    example, setting this to 2 will disable the two most-zoomed out levels.
-
-    .. note::
-
-            This does not change the number of zoom levels rendered, but allows
-            you to have control over the number of zoom levels accessible via the
-            slider control.
-
-    **Default:** 0 (zero, which does not disable any zoom levels)
-
-``showlocationmarker``
-    Allows you to specify whether to show the location marker when accessing a URL
-    with coordinates specified.
-
-    **Default:** ``True``
-
-``base``
-    Allows you to specify a remote location for the tile folder, useful if you
-    rsync your map's images to a remote server. Leave a trailing slash and point
-    to the location that contains the tile folders for each render, not the
-    tiles folder itself. For example, if the tile images start at
-    http://domain.com/map/world_day/ you want to set this to http://domain.com/map/
-
-.. _option_texturepath:
-
-``texturepath``
-    This is a where a specific texture or resource pack can be found to use
-    during this render. It can be a path to either a folder or a zip/jar file
-    containing the texture resources. If specifying a folder, this option should
-    point to a directory that *contains* the assets/ directory (it should not
-    point to the assets directory directly or any one particular texture image).
-
-    Its value should be a string: the path on the filesystem to the resource
-    pack.
-
-.. _crop:
-
-``crop``
-    You can use this to render a small subset of your map, instead of the entire
-    thing. The format is (min x, min z, max x, max z).
-
-    The coordinates are block coordinates. The same you get with the debug menu
-    in-game and the coordinates shown when you view a map.
-
-    Example that only renders a 1000 by 1000 square of land about the origin::
-
-        renders['myrender'] = {
-                'world': 'myworld',
-                'title': "Cropped Example",
-                'crop': (-500, -500, 500, 500),
-        }
-
-    This option performs a similar function to the old ``--regionlist`` option
-    (which no longer exists). It is useful for example if someone has wandered
-    really far off and made your map too large. You can set the crop for the
-    largest map you want to render (perhaps ``(-10000,-10000,10000,10000)``). It
-    could also be used to define a really small render showing off one
-    particular feature, perhaps from multiple angles.
-
-    .. warning::
-
-        If you decide to change the bounds on a render, you may find it produces
-        unexpected results. It is recommended to not change the crop settings
-        once it has been rendered once.
-
-        For an expansion to the bounds, because chunks in the new bounds have
-        the same mtime as the old, tiles will not automatically be updated,
-        leaving strange artifacts along the old border. You may need to use
-        :option:`--forcerender` to force those tiles to update.  (You can use
-        the ``forcerender`` option on just one render by adding ``'forcerender':
-        True`` to that render's configuration)
-
-        For reductions to the bounds, you will need to render your map at least
-        once with the :option:`--check-tiles` mode activated, and then once with
-        the :option:`--forcerender` option. The first run will go and delete tiles that
-        should no longer exist, while the second will render the tiles around
-        the edge properly. Also see :ref:`this faq entry<cropping_faq>`.
-
-        Sorry there's no better way to handle these cases at the moment. It's a
-        tricky problem and nobody has devoted the effort to solve it yet.
-
-``forcerender``
-    This is a boolean. If set to ``True`` (or any non-false value) then this
-    render will unconditionally re-render every tile regardless of whether it
-    actually needs updating or not.
-
-    The :option:`--forcerender` command line option acts similarly, but with
-    one important difference. Say you have 3 renders defined in your
-    configuration file. If you use :option:`--forcerender`, then all 3 of those
-    renders get re-rendered completely. However, if you just need one of them
-    re-rendered, that's unnecessary extra work.
-
-    If you set ``'forcerender': True,`` on just one of those renders, then just
-    that one gets re-rendered completely. The other two render normally (only
-    tiles that need updating are rendered).
-
-    You probably don't want to leave this option in your config file, it is
-    intended to be used temporarily, such as after a setting change, to
-    re-render the entire map with new settings. If you leave it in, then
-    Overviewer will end up doing a lot of unnecessary work rendering parts of
-    your map that may not have changed.
-
-    Example::
-
-        renders['myrender'] = {
-                'world': 'myworld',
-                'title': "Forced Example",
-                'forcerender': True,
-        }
-
-``changelist``
-    This is a string. It names a file where it will write out, one per line, the
-    path to tiles that have been updated. You can specify the same file for
-    multiple (or all) renders and they will all be written to the same file. The
-    file is cleared when The Overviewer starts.
-
-    This option is useful in conjunction with a simple upload script, to upload
-    the files that have changed.
-
-    .. warning::
-
-        A solution like ``rsync -a --delete`` is much better because it also
-        watches for tiles that should be *deleted*, which is impossible to
-        convey with the changelist option. If your map ever shrinks or you've
-        removed some tiles, you may need to do some manual deletion on the
-        remote side.
-
-.. _option_markers:
-
-``markers``
-    This controls the display of markers, signs, and other points of interest
-    in the output HTML.  It should be a list of dictionaries.  
-
-    .. note::
-
-       Setting this configuration option alone does nothing.  In order to get
-       markers and signs on our map, you must also run the genPO script.  See
-       the :doc:`Signs and markers<signs>` section for more details and documenation.
-
-
-    **Default:** ``[]`` (an empty list)
-
-
-``poititle``
-    This controls the display name of the POI/marker dropdown control.
-
-    **Default:** "Signs"
-
 .. _option_overlay:
 
 ``overlay``
@@ -773,9 +594,337 @@ values. The valid configuration keys are listed below.
 
     **Default:** ``[]`` (an empty list)
 
+.. _option_texturepath:
+
+``texturepath``
+    This is a where a specific texture or resource pack can be found to use
+    during this render. It can be a path to either a folder or a zip/jar file
+    containing the texture resources. If specifying a folder, this option should
+    point to a directory that *contains* the assets/ directory (it should not
+    point to the assets directory directly or any one particular texture image).
+
+    Its value should be a string: the path on the filesystem to the resource
+    pack.
+
+.. _crop:
+
+``crop``
+    You can use this to render one or more small subsets of your map. The format
+    of an individual crop zone is (min x, min z, max x, max z); if you wish to
+    specify multiple crop zones, you may do so by specifying a list of crop zones,
+    i.e. [(min x1, min z1, max x1, max z1), (min x2, min z2, max x2, max z2)]
+
+    The coordinates are block coordinates. The same you get with the debug menu
+    in-game and the coordinates shown when you view a map.
+
+    Example that only renders a 1000 by 1000 square of land about the origin::
+
+        renders['myrender'] = {
+                'world': 'myworld',
+                'title': "Cropped Example",
+                'crop': (-500, -500, 500, 500),
+        }
+
+    Example that renders two 500 by 500 squares of land::
+
+        renders['myrender'] = {
+                'world': 'myworld',
+                'title': "Multi cropped Example",
+                'crop': [(-500, -500, 0, 0), (0, 0, 500, 500)]
+        }
+
+    This option performs a similar function to the old ``--regionlist`` option
+    (which no longer exists). It is useful for example if someone has wandered
+    really far off and made your map too large. You can set the crop for the
+    largest map you want to render (perhaps ``(-10000,-10000,10000,10000)``). It
+    could also be used to define a really small render showing off one
+    particular feature, perhaps from multiple angles.
+
+    .. warning::
+
+        If you decide to change the bounds on a render, you may find it produces
+        unexpected results. It is recommended to not change the crop settings
+        once it has been rendered once.
+
+        For an expansion to the bounds, because chunks in the new bounds have
+        the same mtime as the old, tiles will not automatically be updated,
+        leaving strange artifacts along the old border. You may need to use
+        :option:`--forcerender` to force those tiles to update.  (You can use
+        the ``forcerender`` option on just one render by adding ``'forcerender':
+        True`` to that render's configuration)
+
+        For reductions to the bounds, you will need to render your map at least
+        once with the :option:`--check-tiles` mode activated, and then once with
+        the :option:`--forcerender` option. The first run will go and delete tiles that
+        should no longer exist, while the second will render the tiles around
+        the edge properly. Also see :ref:`this faq entry<cropping_faq>`.
+
+        Sorry there's no better way to handle these cases at the moment. It's a
+        tricky problem and nobody has devoted the effort to solve it yet.
+
+Image options
+~~~~~~~~~~~~~
+
+``imgformat``
+    This is which image format to render the tiles into. Its value should be a
+    string containing "png", "jpg", or "jpeg".
+
+    **Default:** ``"png"``
+
+``imgquality``
+    This is the image quality used when saving the tiles into the JPEG image
+    format. Its value should be an integer between 0 and 100.
+
+    **Default:** ``95``
+
+``optimizeimg``
+
+    .. warning::
+        Using image optimizers will increase render times significantly.
+
+    This option specifies which additional tools overviewer should use to
+    optimize the filesize of png tiles.
+    The tools used must be placed somewhere, where overviewer can find them, for
+    example the "PATH" environment variable or a directory like /usr/bin.
+
+    The option is a list of Optimizer objects, which are then executed in
+    the order in which they're specified::
+        
+        # Import the optimizers we need
+        from optimizeimages import pngnq, optipng
+
+        worlds["world"] = "/path/to/world"
+
+        renders["daytime"] = {
+            "world":"world",
+            "title":"day",
+            "rendermode":smooth_lighting,
+            "optimizeimg":[pngnq(sampling=1), optipng(olevel=3)],
+        }
+
+    .. note::
+        Don't forget to import the optimizers you use in your config file, as shown in the
+        example above.
+    
+    Here is a list of supported image optimization programs:
+
+    ``pngnq``
+        pngnq quantizes 32-bit RGBA images into 8-bit RGBA palette PNGs. This is
+        lossy, but reduces filesize significantly. Available settings:
+        
+        ``sampling``
+            An integer between ``1`` and ``10``, ``1`` samples all pixels, is slow and yields
+            the best quality. Higher values sample less of the image, which makes
+            the process faster, but less accurate.
+
+            **Default:** ``3``
+
+        ``dither``
+            Either the string ``"n"`` for no dithering, or ``"f"`` for Floyd
+            Steinberg dithering. Dithering helps eliminate colorbanding, sometimes
+            increasing visual quality.
+
+            .. warning::
+                With pngnq version 1.0 (which is what Ubuntu 12.04 ships), the
+                dithering option is broken. Only the default, no dithering,
+                can be specified on those systems.
+
+            **Default:** ``"n"``
+
+        .. warning::
+            Because of several PIL bugs, only the most zoomed in level has transparency
+            when using pngnq. The other zoom levels have all transparency replaced by
+            black. This is *not* pngnq's fault, as pngnq supports multiple levels of
+            transparency just fine, it's PIL's fault for not even reading indexed
+            PNGs correctly.
+
+    ``optipng``
+        optipng tunes the deflate algorithm and removes unneeded channels from the PNG,
+        producing a smaller, lossless output image. It was inspired by pngcrush.
+        Available settings:
+
+        ``olevel``
+            An integer between ``0`` (few optimizations) and ``7`` (many optimizations).
+            The default should be satisfactory for everyone, higher levels than the default
+            see almost no benefit.
+
+            **Default:** ``2``
+
+    ``pngcrush``
+        pngcrush, like optipng, is a lossless PNG recompressor. If you are able to do so, it
+        is recommended to use optipng instead, as it generally yields better results in less
+        time.
+        Available settings:
+
+        ``brute``
+            Either ``True`` or ``False``. Cycles through all compression methods, and is very slow.
+
+            .. note::
+                There is practically no reason to ever use this. optipng will beat pngcrush, and
+                throwing more CPU time at pngcrush most likely won't help. If you think you need
+                this option, then you are most likely wrong.
+
+            **Default:** ``False``
+
+    **Default:** ``[]``
+
+Zoom
+~~~~
+
+These options control the zooming behavior in the JavaScript output.
+
+``defaultzoom``
+    This value specifies the default zoom level that the map will be
+    opened with. It has to be greater than 0, which corresponds to the
+    most zoomed-out level. If you use ``minzoom`` or ``maxzoom``, it
+    should be between those two.
+
+    **Default:** ``1``
+
+``maxzoom``
+    This specifies the maximum, closest in zoom allowed by the zoom
+    control on the web page. This is relative to 0, the farthest-out
+    image, so setting this to 8 will allow you to zoom in at most 8
+    times. This is *not* relative to ``minzoom``, so setting
+    ``minzoom`` will shave off even more levels. If you wish to
+    specify how many zoom levels to leave off, instead of how many
+    total to use, use a negative number here. For example, setting
+    this to -2 will disable the two most zoomed-in levels.
+
+    .. note::
+
+            This does not change the number of zoom levels rendered, but allows
+            you to neglect uploading the larger and more detailed zoom levels if bandwidth
+            usage is an issue.
+
+    **Default:** Automatically set to most detailed zoom level
+
+``minzoom``
+    This specifies the minimum, farthest away zoom allowed by the zoom
+    control on the web page. For example, setting this to 2 will
+    disable the two most zoomed-out levels.
+
+    .. note::
+
+            This does not change the number of zoom levels rendered, but allows
+            you to have control over the number of zoom levels accessible via the
+            slider control.
+
+    **Default:** 0 (zero, which does not disable any zoom levels)
+
+Other HTML/JS output options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``showlocationmarker``
+    Allows you to specify whether to show the location marker when accessing a URL
+    with coordinates specified.
+
+    **Default:** ``True``
+
+``base``
+    Allows you to specify a remote location for the tile folder, useful if you
+    rsync your map's images to a remote server. Leave a trailing slash and point
+    to the location that contains the tile folders for each render, not the
+    tiles folder itself. For example, if the tile images start at
+    http://domain.com/map/world_day/ you want to set this to http://domain.com/map/
+
+.. _option_markers:
+
+``markers``
+    This controls the display of markers, signs, and other points of interest
+    in the output HTML.  It should be a list of dictionaries.  
+
+    .. note::
+
+       Setting this configuration option alone does nothing.  In order to get
+       markers and signs on our map, you must also run the genPO script.  See
+       the :doc:`Signs and markers<signs>` section for more details and documenation.
+
+    **Default:** ``[]`` (an empty list)
+
+
+``poititle``
+    This controls the display name of the POI/marker dropdown control.
+
+    **Default:** "Signs"
+
 ``showspawn``
     This is a boolean, and defaults to ``True``. If set to ``False``, then the spawn
     icon will not be displayed on the rendered map.
+
+``bgcolor``
+    This is the background color to be displayed behind the map. Its value
+    should be either a string in the standard HTML color syntax or a 4-tuple in
+    the format of (r,b,g,a). The alpha entry should be set to 0.
+
+    **Default:** ``#1a1a1a``
+
+Map update behavior
+~~~~~~~~~~~~~~~~~~~
+
+.. _rerenderprob:
+
+``rerenderprob``
+    This is the probability that a tile will be rerendered even though there may
+    have been no changes to any blocks within that tile. Its value should be a
+    floating point number between 0.0 and 1.0.
+
+    **Default:** ``0``
+
+
+``forcerender``
+    This is a boolean. If set to ``True`` (or any non-false value) then this
+    render will unconditionally re-render every tile regardless of whether it
+    actually needs updating or not.
+
+    The :option:`--forcerender` command line option acts similarly, but with
+    one important difference. Say you have 3 renders defined in your
+    configuration file. If you use :option:`--forcerender`, then all 3 of those
+    renders get re-rendered completely. However, if you just need one of them
+    re-rendered, that's unnecessary extra work.
+
+    If you set ``'forcerender': True,`` on just one of those renders, then just
+    that one gets re-rendered completely. The other two render normally (only
+    tiles that need updating are rendered).
+
+    You probably don't want to leave this option in your config file, it is
+    intended to be used temporarily, such as after a setting change, to
+    re-render the entire map with new settings. If you leave it in, then
+    Overviewer will end up doing a lot of unnecessary work rendering parts of
+    your map that may not have changed.
+
+    Example::
+
+        renders['myrender'] = {
+                'world': 'myworld',
+                'title': "Forced Example",
+                'forcerender': True,
+        }
+
+``renderchecks``
+    This is an integer, and functions as a more complex form of
+    ``forcerender``. Setting it to 1 enables :option:`--check-tiles`
+    mode, setting it to 2 enables :option:`--forcerender`, and 3 tells
+    Overviewer to keep this particular render in the output, but
+    otherwise don't update it. It defaults to 0, which is the usual
+    update checking mode.
+
+``changelist``
+    This is a string. It names a file where it will write out, one per line, the
+    path to tiles that have been updated. You can specify the same file for
+    multiple (or all) renders and they will all be written to the same file. The
+    file is cleared when The Overviewer starts.
+
+    This option is useful in conjunction with a simple upload script, to upload
+    the files that have changed.
+
+    .. warning::
+
+        A solution like ``rsync -a --delete`` is much better because it also
+        watches for tiles that should be *deleted*, which is impossible to
+        convey with the changelist option. If your map ever shrinks or you've
+        removed some tiles, you may need to do some manual deletion on the
+        remote side.
 
 .. _customrendermodes:
 
@@ -967,6 +1116,7 @@ BiomeOverlay
 
 Defining Custom Rendermodes
 ---------------------------
+
 Each rendermode primitive listed above is a Python *class* that is automatically
 imported in the context of the config file (They come from
 overviewer_core.rendermodes). To define your own rendermode, simply define a
@@ -994,7 +1144,8 @@ are referencing the previously defined list, not one of the built-in
 rendermodes.
 
 Built-in Rendermodes
-====================
+--------------------
+
 The built-in rendermodes are nothing but pre-defined lists of rendermode
 primitives for your convenience. Here are their definitions::
 
