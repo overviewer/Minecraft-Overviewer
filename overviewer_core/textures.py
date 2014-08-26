@@ -2738,7 +2738,7 @@ def jukebox(self, blockid, data):
 
 # nether and normal fences
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[85, 113], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[85, 188, 189, 190, 191, 192, 113], data=range(16), transparent=True, nospawn=True)
 def fence(self, blockid, data):
     # no need for rotations, it uses pseudo data.
     # create needed images for Big stick fence
@@ -2746,6 +2746,26 @@ def fence(self, blockid, data):
         fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
         fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
+    elif blockid == 188: # spruce fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
+    elif blockid == 189: # birch fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
+    elif blockid == 190: # jungle fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
+    elif blockid == 191: # big/dark oak fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
+    elif blockid == 192: # acacia oak fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
     else: # netherbrick fence
         fence_top = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()

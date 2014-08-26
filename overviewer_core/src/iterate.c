@@ -309,7 +309,8 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if (state->block == 85) { /* fences */
+    } else if ((state->block == 85) || (state->block == 188) || (state->block == 189) ||
+            (state->block == 190) || (state->block == 191) || (state->block == 192)) { /* fences */
         /* check for fences AND fence gates */
         return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107);
 
@@ -710,7 +711,9 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 111) || (state.block == 113) ||
                         (state.block == 139) || (state.block == 175) || 
                         (state.block == 160) || (state.block == 95) ||
-                        (state.block == 146) ||
+                        (state.block == 146) || (state.block == 188) ||
+                        (state.block == 189) || (state.block == 190) ||
+                        (state.block == 191) || (state.block == 192) ||
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
