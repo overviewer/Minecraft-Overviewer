@@ -2195,7 +2195,7 @@ def signpost(self, blockid, data):
 
 # wooden and iron door
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[64,71], data=range(32), transparent=True)
+@material(blockid=[64,71,193,194,195,196,197], data=range(32), transparent=True)
 def door(self, blockid, data):
     #Masked to not clobber block top/bottom & swung info
     if self.rotation == 1:
@@ -2215,9 +2215,35 @@ def door(self, blockid, data):
         elif (data & 0b00011) == 3: data = data & 0b11100 | 2
 
     if data & 0x8 == 0x8: # top of the door
-        raw_door = self.load_image_texture("assets/minecraft/textures/blocks/%s.png" % ("door_wood_upper" if blockid == 64 else "door_iron_upper"))
+        if blockid == 64: # classic wood door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_wood_upper.png")
+        elif blockid == 71: # iron door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_iron_upper.png")
+        elif blockid == 193: # spruce door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_spruce_upper.png")
+        elif blockid == 194: # birch door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_birch_upper.png")
+        elif blockid == 195: # jungle door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_jungle_upper.png")
+        elif blockid == 196: # acacia door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_acacia_upper.png")
+        elif blockid == 197: # dark_oak door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_dark_oak_upper.png")
     else: # bottom of the door
-        raw_door = self.load_image_texture("assets/minecraft/textures/blocks/%s.png" % ("door_wood_lower" if blockid == 64 else "door_iron_lower"))
+        if blockid == 64:
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_wood_lower.png")
+        elif blockid == 71: # iron door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_iron_lower.png")
+        elif blockid == 193: # spruce door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_spruce_lower.png")
+        elif blockid == 194: # birch door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_birch_lower.png")
+        elif blockid == 195: # jungle door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_jungle_lower.png")
+        elif blockid == 196: # acacia door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_acacia_lower.png")
+        elif blockid == 197: # dark_oak door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_dark_oak_lower.png")
     
     # if you want to render all doors as closed, then force
     # force closed to be True
