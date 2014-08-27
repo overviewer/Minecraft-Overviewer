@@ -23,24 +23,36 @@ and to serve as a test of the block rendering routines.
 """
 
 def main():
-
     parser = argparse.ArgumentParser(description="Renders an animated GIF of a single block. Used to test the renderer and block models")
     parser.add_argument("blockid", type=int, help="The block ID to render")
-    parser.add_argument("data", type=int, help="The data value of the block to render, if applicable", default=0)
+    parser.add_argument("data", type=int, help="The data value of the block to render, if applicable", default=0, nargs='?')
     parser.add_argument("--texturepath", type=str, help="specify a resource pack to use", default=None)
 
     args = parser.parse_args()
     blockid = args.blockid
     data = args.data
-    
-    ap = assetpack.get_default()
     if args.texturepath:
         other = assetpack.ZipAssetPack(args.texturepath)
-        ap = assetpack.CompositeAssetPack([ap, other])
+    else:
+        other = None
+    render(blockid, data, otherap=other)
 
-    blockdefs = chunkrenderer.compile_block_definitions(
-        ap,
-        blockdefinitions.get_default())
+def render(block, data=0, otherap=None, out="output.gif"):
+    ap = assetpack.get_default()
+    if otherap:
+        ap = assetpack.CompositeAssetPack([ap, otherap])
+    
+    bdefs = blockdefinitions.get_default()
+    
+    if isinstance(block, blockdefinitions.BlockModel):
+        blockid = bdefs.max_blockid
+        bdef = blockdefinitions.BlockDefinition()
+        bdef.add(block, data)
+        bdefs.add(bdef, blockid)
+    else:
+        blockid = block
+    
+    blockdefs = chunkrenderer.compile_block_definitions(ap, bdefs)
 
     FRAMES = 60
 
@@ -81,7 +93,7 @@ def main():
                      "-delay", "5",
                      "-dispose", "Background",
                      ] + filenames + [
-                     "output.gif",
+                     out,
                      ])
 
     print("Cleaning up frame images from {0}".format(directory))
