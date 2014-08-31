@@ -625,7 +625,7 @@ Rendering
                 'crop': (-500, -500, 500, 500),
         }
 
-    Example that renders two 500 by 500 squares of land:
+    Example that renders two 500 by 500 squares of land::
 
         renders['myrender'] = {
                 'world': 'myworld',
