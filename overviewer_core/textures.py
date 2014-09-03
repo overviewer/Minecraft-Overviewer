@@ -3626,7 +3626,7 @@ def fence_gate(self, blockid, data):
         gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
     elif blockid == 187: # Acacia
         gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
-    else
+    else:
         return None
 
     gate_side_draw = ImageDraw.Draw(gate_side)
