@@ -3587,7 +3587,7 @@ def vines(self, blockid, data):
     return img
 
 # fence gates
-@material(blockid=[107, 183, 184, 185, 186, 187] data=range(8), transparent=True, nospawn=True)
+@material(blockid=[107, 183, 184, 185, 186, 187], data=range(8), transparent=True, nospawn=True)
 def fence_gate(self, blockid, data):
 
     # rotation
