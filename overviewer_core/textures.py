@@ -1606,10 +1606,7 @@ def slabs(self, blockid, data):
         else:
             return None
     
-    if blockid == 43: # double slab
-        return self.build_block(top, side)
-        
-    if blockid == 181: # double red sandstone slab
+    if blockid == 43 or blockid == 181: # double slab
         return self.build_block(top, side)
     
     # cut the side texture in half
