@@ -252,12 +252,12 @@ class Textures(object):
 
         most_recent_version = [0,0,0]
         for version in versions:
-            # Look for the latest non-snapshot that is at least 1.6. This
-            # version is only compatible with >=1.6, and we cannot in general
+            # Look for the latest non-snapshot that is at least 1.8. This
+            # version is only compatible with >=1.8, and we cannot in general
             # tell if a snapshot is more or less recent than a release.
 
-            # Allow two component names such as "1.6" and three component names
-            # such as "1.6.1"
+            # Allow two component names such as "1.8" and three component names
+            # such as "1.8.1"
             if version.count(".") not in (1,2):
                 continue
             try:
@@ -265,14 +265,14 @@ class Textures(object):
             except ValueError:
                 continue
 
-            if versionparts < [1,7]:
+            if versionparts < [1,8]:
                 continue
 
             if versionparts > most_recent_version:
                 most_recent_version = versionparts
 
         if most_recent_version != [0,0,0]:
-            if verbose: logging.info("Most recent version >=1.7.0: {0}. Searching it for the file...".format(most_recent_version))
+            if verbose: logging.info("Most recent version >=1.8.0: {0}. Searching it for the file...".format(most_recent_version))
 
             jarname = ".".join(str(x) for x in most_recent_version)
             jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
@@ -290,7 +290,7 @@ class Textures(object):
 
             if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
         else:
-            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.7.0")
+            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.8.0")
             
         # Last ditch effort: look for the file is stored in with the overviewer
         # installation. We include a few files that aren't included with Minecraft
@@ -310,7 +310,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.7-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.8-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
@@ -864,7 +864,23 @@ def billboard(blockid=[], imagename=None, **kwargs):
 ##
 
 # stone
-block(blockid=1, top_image="assets/minecraft/textures/blocks/stone.png")
+@material(blockid=1, data=range(7), solid=True)
+def stone(self, blockid, data):
+    if data == 0: # regular old-school stone
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone.png")
+    elif data == 1: # granite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_granite.png")
+    elif data == 2: # polished granite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_granite_smooth.png")
+    elif data == 3: # diorite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_diorite.png")
+    elif data == 4: # polished diorite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_diorite_smooth.png")
+    elif data == 5: # andesite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_andesite.png")
+    elif data == 6: # polished andesite
+        img = self.load_image_texture("assets/minecraft/textures/blocks/stone_andesite_smooth.png")
+    return self.build_block(img, img)
 
 @material(blockid=2, data=range(11)+[0x10,], solid=True)
 def grass(self, blockid, data):
@@ -2179,7 +2195,7 @@ def signpost(self, blockid, data):
 
 # wooden and iron door
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[64,71], data=range(32), transparent=True)
+@material(blockid=[64,71,193,194,195,196,197], data=range(32), transparent=True)
 def door(self, blockid, data):
     #Masked to not clobber block top/bottom & swung info
     if self.rotation == 1:
@@ -2199,9 +2215,35 @@ def door(self, blockid, data):
         elif (data & 0b00011) == 3: data = data & 0b11100 | 2
 
     if data & 0x8 == 0x8: # top of the door
-        raw_door = self.load_image_texture("assets/minecraft/textures/blocks/%s.png" % ("door_wood_upper" if blockid == 64 else "door_iron_upper"))
+        if blockid == 64: # classic wood door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_wood_upper.png")
+        elif blockid == 71: # iron door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_iron_upper.png")
+        elif blockid == 193: # spruce door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_spruce_upper.png")
+        elif blockid == 194: # birch door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_birch_upper.png")
+        elif blockid == 195: # jungle door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_jungle_upper.png")
+        elif blockid == 196: # acacia door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_acacia_upper.png")
+        elif blockid == 197: # dark_oak door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_dark_oak_upper.png")
     else: # bottom of the door
-        raw_door = self.load_image_texture("assets/minecraft/textures/blocks/%s.png" % ("door_wood_lower" if blockid == 64 else "door_iron_lower"))
+        if blockid == 64:
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_wood_lower.png")
+        elif blockid == 71: # iron door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_iron_lower.png")
+        elif blockid == 193: # spruce door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_spruce_lower.png")
+        elif blockid == 194: # birch door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_birch_lower.png")
+        elif blockid == 195: # jungle door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_jungle_lower.png")
+        elif blockid == 196: # acacia door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_acacia_lower.png")
+        elif blockid == 197: # dark_oak door
+            raw_door = self.load_image_texture("assets/minecraft/textures/blocks/door_dark_oak_lower.png")
     
     # if you want to render all doors as closed, then force
     # force closed to be True
@@ -2722,7 +2764,7 @@ def jukebox(self, blockid, data):
 
 # nether and normal fences
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[85, 113], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[85, 188, 189, 190, 191, 192, 113], data=range(16), transparent=True, nospawn=True)
 def fence(self, blockid, data):
     # no need for rotations, it uses pseudo data.
     # create needed images for Big stick fence
@@ -2730,6 +2772,26 @@ def fence(self, blockid, data):
         fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
         fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
+    elif blockid == 188: # spruce fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
+    elif blockid == 189: # birch fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
+    elif blockid == 190: # jungle fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
+    elif blockid == 191: # big/dark oak fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
+    elif blockid == 192: # acacia oak fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
     else: # netherbrick fence
         fence_top = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()
@@ -3216,7 +3278,7 @@ def comparator(self, blockid, data):
     
 # trapdoor
 # the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=96, data=range(16), transparent=True, nospawn=True)
+@material(blockid=[96,167], data=range(16), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
     # rotation
@@ -3238,7 +3300,10 @@ def trapdoor(self, blockid, data):
         elif (data & 0b0011) == 3: data = data & 0b1100 | 0
 
     # texture generation
-    texture = self.load_image_texture("assets/minecraft/textures/blocks/trapdoor.png")
+    if blockid == 96:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/trapdoor.png")
+    else:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/iron_trapdoor.png")
     if data & 0x4 == 0x4: # opened trapdoor
         if data & 0x3 == 0: # west
             img = self.build_full_block(None, None, None, None, texture)
@@ -4204,6 +4269,27 @@ def hopper(self, blockid, data):
     alpha_over(img, hop_top, (0,-6), hop_top)
 
     return img
+
+# slime block
+block(blockid=165, top_image="assets/minecraft/textures/blocks/slime.png")
+
+# prismarine block
+@material(blockid=168, data=range(3), solid=True)
+def prismarine_block(self, blockid, data):
+
+   if data == 0: # prismarine
+       t = self.load_image_texture("assets/minecraft/textures/blocks/prismarine_rough.png")
+   elif data == 1: # prismarine bricks
+       t = self.load_image_texture("assets/minecraft/textures/blocks/prismarine_bricks.png")
+   elif data == 2: # dark prismarine
+       t = self.load_image_texture("assets/minecraft/textures/blocks/prismarine_dark.png")
+
+   img = self.build_block(t, t)
+
+   return img
+
+# sea lantern 
+block(blockid=169, top_image="assets/minecraft/textures/blocks/sea_lantern.png")
 
 # hay block
 @material(blockid=170, data=range(9), solid=True)
