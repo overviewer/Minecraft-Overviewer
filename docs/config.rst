@@ -1099,6 +1099,32 @@ MineralOverlay
 
             MineralOverlay(minerals=[(64,(255,255,0)), (13,(127,0,127))])
 
+StructureOverlay
+    Color the map according to patterns of blocks. With this rail overlays
+    or overlays for other small structures can be realized. It can also be
+    a MineralOverlay with alpha support.
+
+    This Overlay colors according to a patterns that are specified as
+    multiple tuples of the form ``(relx, rely, relz, blockid)``. So
+    by specifying ``(0, -1, 0, 4)`` the block below the current one has to
+    be a cobblestone.
+
+    One color is then specified as
+    ``((relblockid1, relblockid2, ...), (r, g, b, a))`` where the
+    ``relblockid*`` are relative coordinates and the blockid as specified
+    above. The ``relblockid*`` must match all at the same time for the
+    color to apply.
+
+    Example::
+
+        MineralOverlay(minerals=[(((0, 0, 0, 66), (0, -1, 0, 4)), (255, 0, 0, 255)),
+                                 (((0, 0, 0, 27), (0, -1, 0, 4)), (0, 255, 0, 255))])
+
+    In this example all rails(66) on top of cobblestone are rendered in
+    pure red. And all powerrails(27) are rendered in green.
+
+    If ``minerals`` is not provided, a default rail coloring is used.
+
 BiomeOverlay
     Color the map according to the biome at that point. Either use on
     top of other modes or on top of ClearBase to create a pure overlay.
