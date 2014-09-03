@@ -430,7 +430,7 @@ class Textures(object):
             self.foliagecolor = list(self.load_image("foliage.png").getdata())
         return self.foliagecolor
 
-	#I guess "watercolor" is wrong. But I can't correct as my texture pack don't define water color.
+    #I guess "watercolor" is wrong. But I can't correct as my texture pack don't define water color.
     def load_water_color(self):
         """Helper function to load the water color texture."""
         if not hasattr(self, "watercolor"):
@@ -1151,6 +1151,18 @@ def sandstone(self, blockid, data):
         return self.build_block(top, self.load_image_texture("assets/minecraft/textures/blocks/sandstone_carved.png"))
     if data == 2: # soft
         return self.build_block(top, self.load_image_texture("assets/minecraft/textures/blocks/sandstone_smooth.png"))
+        
+# red sandstone
+@material(blockid=179, data=range(3), solid=True)
+def sandstone(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top.png")
+    if data == 0: # normal
+            side = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_normal.png")
+            return self.build_full_block(top, None, None, side, side, self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_bottom.png") )
+    if data == 1: # hieroglyphic
+        return self.build_block(top, self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_carved.png"))
+    if data == 2: # soft
+        return self.build_block(top, self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_smooth.png"))
 
 # note block
 block(blockid=25, top_image="assets/minecraft/textures/blocks/noteblock.png")
@@ -1545,38 +1557,59 @@ block(blockid=42, top_image="assets/minecraft/textures/blocks/iron_block.png")
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks
-@material(blockid=[43, 44], data=range(16), transparent=(44,), solid=True)
+@material(blockid=[43, 44, 181, 182], data=range(16), transparent=(44,182,), solid=True)
 def slabs(self, blockid, data):
-    if blockid == 44: 
+    if blockid == 44 or blockid == 182: 
         texture = data & 7
     else: # data > 8 are special double slabs
         texture = data
-    if texture== 0: # stone slab
-        top = self.load_image_texture("assets/minecraft/textures/blocks/stone_slab_top.png")
-        side = self.load_image_texture("assets/minecraft/textures/blocks/stone_slab_side.png")
-    elif texture== 1: # smooth stone
-        top = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
-        side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_normal.png")
-    elif texture== 2: # wooden slab
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
-    elif texture== 3: # cobblestone slab
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png")
-    elif texture== 4: # brick
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/brick.png")
-    elif texture== 5: # stone brick
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
-    elif texture== 6: # nether brick slab
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png")
-    elif texture== 7: #quartz        
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png")
-    elif texture== 8: # special stone double slab with top texture only
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/stone_slab_top.png")
-    elif texture== 9: # special sandstone double slab with top texture only
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
-    else:
-        return None
+
+    if blockid == 44 or blockid == 43:
+        if texture== 0: # stone slab
+            top = self.load_image_texture("assets/minecraft/textures/blocks/stone_slab_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/stone_slab_side.png")
+        elif texture== 1: # sandstone slab
+            top = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_normal.png")
+        elif texture== 2: # wooden slab
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
+        elif texture== 3: # cobblestone slab
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png")
+        elif texture== 4: # brick
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/brick.png")
+        elif texture== 5: # stone brick
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
+        elif texture== 6: # nether brick slab
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png")
+        elif texture== 7: #quartz        
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png")
+        elif texture== 8: # special stone double slab with top texture only
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/stone_slab_top.png")
+        elif texture== 9: # special sandstone double slab with top texture only
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
+        else:
+            return None
+            
+    elif blockid == 182: # single red sandstone slab
+        if texture == 0:
+            top = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_normal.png")
+        else:
+            return None
+
+    elif blockid == 181: # double red sandstone slab
+        if texture == 0: # red sandstone
+            top = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_normal.png")
+        elif texture == 8: # 'full' red sandstone (smooth)
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top");
+        else:
+            return None
     
     if blockid == 43: # double slab
+        return self.build_block(top, side)
+        
+    if blockid == 181: # double red sandstone slab
         return self.build_block(top, side)
     
     # cut the side texture in half
@@ -1709,8 +1742,8 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_image="assets/minecraft/textures/blocks/mob_spawner.png", transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle and quartz stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164], data=range(128), transparent=True, solid=True, nospawn=True)
+# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, and red sandstone stairs.
+@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180], data=range(128), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1747,17 +1780,22 @@ def stairs(self, blockid, data):
         texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
     elif blockid == 164: # dark oak stairs
         texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
+    elif blockid == 180: # red sandstone stairs
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_normal").copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()
     inside_l = texture.copy()
     inside_r = texture.copy()
 
-    # sandstone & quartz stairs have special top texture
+    # sandstone, red sandstone, and quartz stairs have special top texture
     if blockid == 128:
         texture = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png").copy()
     elif blockid == 156:
         texture = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_top.png").copy()
+    elif blockid == 180:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top").copy()
+
 
     slab_top = texture.copy()
 
