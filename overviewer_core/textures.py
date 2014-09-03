@@ -1589,7 +1589,7 @@ def slabs(self, blockid, data):
             top = side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
         else:
             return None
-            
+
     elif blockid == 182: # single red sandstone slab
         if texture == 0:
             top = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top.png")
@@ -1602,7 +1602,7 @@ def slabs(self, blockid, data):
             top = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top.png")
             side = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_normal.png")
         elif texture == 8: # 'full' red sandstone (smooth)
-            top = side = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top");
+            top = side = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top.png");
         else:
             return None
     
@@ -1781,7 +1781,7 @@ def stairs(self, blockid, data):
     elif blockid == 164: # dark oak stairs
         texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
     elif blockid == 180: # red sandstone stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_normal").copy()
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_normal.png").copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()
@@ -1794,7 +1794,7 @@ def stairs(self, blockid, data):
     elif blockid == 156:
         texture = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_top.png").copy()
     elif blockid == 180:
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top").copy()
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top.png").copy()
 
 
     slab_top = texture.copy()
