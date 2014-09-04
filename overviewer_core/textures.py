@@ -1606,10 +1606,7 @@ def slabs(self, blockid, data):
         else:
             return None
     
-    if blockid == 43: # double slab
-        return self.build_block(top, side)
-        
-    if blockid == 181: # double red sandstone slab
+    if blockid == 43 or blockid == 181: # double slab
         return self.build_block(top, side)
     
     # cut the side texture in half
@@ -3590,7 +3587,7 @@ def vines(self, blockid, data):
     return img
 
 # fence gates
-@material(blockid=107, data=range(8), transparent=True, nospawn=True)
+@material(blockid=[107, 183, 184, 185, 186, 187], data=range(8), transparent=True, nospawn=True)
 def fence_gate(self, blockid, data):
 
     # rotation
@@ -3617,7 +3614,21 @@ def fence_gate(self, blockid, data):
         data = data | 0x4
 
     # create the closed gate side
-    gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
+    if blockid == 107: # Oak
+        gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
+    elif blockid == 183: # Spruce
+        gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
+    elif blockid == 184: # Birch
+        gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
+    elif blockid == 185: # Jungle
+        gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
+    elif blockid == 186: # Dark Oak
+        gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
+    elif blockid == 187: # Acacia
+        gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
+    else:
+        return None
+
     gate_side_draw = ImageDraw.Draw(gate_side)
     gate_side_draw.rectangle((7,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
     gate_side_draw.rectangle((7,4,9,6),outline=(0,0,0,0),fill=(0,0,0,0))

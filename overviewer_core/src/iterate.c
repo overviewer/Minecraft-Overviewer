@@ -313,7 +313,9 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
     } else if ((state->block == 85) || (state->block == 188) || (state->block == 189) ||
             (state->block == 190) || (state->block == 191) || (state->block == 192)) { /* fences */
         /* check for fences AND fence gates */
-        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107);
+        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107) |
+                check_adjacent_blocks(state, x, y, z, 183) | check_adjacent_blocks(state, x, y, z, 184) | check_adjacent_blocks(state, x, y, z, 185) |
+                check_adjacent_blocks(state, x, y, z, 186) | check_adjacent_blocks(state, x, y, z, 187);
 
     } else if (state->block == 55) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
