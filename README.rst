@@ -76,6 +76,13 @@ however, bound by the Google Maps API terms of service.
 
 https://developers.google.com/maps/terms
 
+Dependencies
+============
+Here's a list of needed dependencies
+* Python 2
+* Python 2 Numpy
+* Python 2 pyllow
+
 Bugs
 ====
 
