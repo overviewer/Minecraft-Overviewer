@@ -120,6 +120,42 @@ class optipng(Optimizer, PNGOptimizer):
 
     def is_crusher(self):
         return True
+
+class jpegoptim(Optimizer, JPEGOptimizer):
+    binaryname = "jpegoptim"
+    crusher = True
+    quality = None
+    target_size = None
+
+    def __init__(self, quality = None, target_size = None):
+        if quality is not None:
+            if quality < 0 or quality > 100:
+                raise Exception("Invalid target quality %d for jpegoptim" % quality)
+            self.quality = quality
+
+        if target_size is not None:
+            self.target_size = target_size
+
+    def optimize(self, img):
+        args = [self.binaryname, "-q", "-p"]
+        if self.quality is not None:
+            args.append("-m" + str(self.quality))
+
+        if self.target_size is not None:
+            args.append("-S" + str(self.target_size))
+
+        args.append(img)
+
+        Optimizer.fire_and_forget(self, args)
+
+    def is_crusher(self):
+        # Technically, optimisation is lossless if input image quality
+        # is below target quality, but this is irrelevant in this case
+        if (self.quality is not None) or (self.target_size is not None):
+            return False
+        else:
+            return True
+
         
 
 def optimize_image(imgpath, imgformat, optimizers):
