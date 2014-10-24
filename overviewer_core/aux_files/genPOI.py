@@ -230,6 +230,7 @@ def handlePlayers(rset, render, worldpath, outputdir):
         if "SpawnX" in data and dimension == 0:
             # Spawn position (bed or main spawn)
             spawn = PlayerDict()
+            spawn.use_uuid = useUUIDs
             spawn._name = playername
             spawn["id"] = "PlayerSpawn"
             spawn["x"] = data['SpawnX']
