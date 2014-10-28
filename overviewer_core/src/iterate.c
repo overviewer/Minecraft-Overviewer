@@ -262,6 +262,7 @@ is_stairs(int block) {
         case 156: /* quartz stairs */
         case 163: /* acacia wood stairs */
         case 164: /* dark wood stairs */
+        case 180: /* red sandstone stairs */
             return 1;
     }
     return 0;
@@ -309,9 +310,12 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if (state->block == 85) { /* fences */
+    } else if ((state->block == 85) || (state->block == 188) || (state->block == 189) ||
+            (state->block == 190) || (state->block == 191) || (state->block == 192)) { /* fences */
         /* check for fences AND fence gates */
-        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107);
+        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107) |
+                check_adjacent_blocks(state, x, y, z, 183) | check_adjacent_blocks(state, x, y, z, 184) | check_adjacent_blocks(state, x, y, z, 185) |
+                check_adjacent_blocks(state, x, y, z, 186) | check_adjacent_blocks(state, x, y, z, 187);
 
     } else if (state->block == 55) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
@@ -397,7 +401,9 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         /* portal and nether brick fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
 
-    } else if ((state->block == 64) || (state->block == 71)) {
+    } else if ((state->block == 64) || (state->block == 71) || (state->block == 193) ||
+            (state->block == 194) || (state->block == 195) || (state->block == 196) ||
+            (state->block ==197)) {
         /* use bottom block data format plus one bit for top/down
          * block (0x8) and one bit for hinge position (0x10)
          */
@@ -703,14 +709,21 @@ chunk_render(PyObject *self, PyObject *args) {
                      * trapped chests, stairs */
                     if ((state.block ==  2) || (state.block ==  9) ||
                         (state.block == 20) || (state.block == 54) ||
-                        (state.block == 55) || (state.block == 64) ||
-                        (state.block == 71) || (state.block == 79) ||
+                        (state.block == 55) ||
+                        /* doors */
+                        (state.block == 64) || (state.block == 193) ||
+                        (state.block == 194) || (state.block == 195) ||
+                        (state.block == 196) || (state.block == 197) ||
+                        (state.block == 71) || /* end doors */
+                        (state.block == 79) ||
                         (state.block == 85) || (state.block == 90) ||
                         (state.block == 101) || (state.block == 102) ||
                         (state.block == 111) || (state.block == 113) ||
                         (state.block == 139) || (state.block == 175) || 
                         (state.block == 160) || (state.block == 95) ||
-                        (state.block == 146) ||
+                        (state.block == 146) || (state.block == 188) ||
+                        (state.block == 189) || (state.block == 190) ||
+                        (state.block == 191) || (state.block == 192) ||
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;

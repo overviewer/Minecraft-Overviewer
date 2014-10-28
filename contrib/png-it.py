@@ -34,7 +34,7 @@ def main():
         metavar = '<output>', type = str, dest = 'output', default = "output.png")
 
     (options, args) = parser.parse_args()
-    tileset = args[0]
+    
 
     # arg is overviewer tile set folder
     if len(args) > 1:
@@ -42,6 +42,7 @@ def main():
 
     if not args:
         parser.error("Error! Need an overviewer tile set folder. Use --help for a complete list of options.")
+    tileset = args[0] #set the tileset dir after ensuring it's been provided, not before.
     
     if not options.zoom_level:
         parser.error("Error! The option zoom-level is mandatory.")
@@ -126,7 +127,7 @@ def main():
     print "The image size will be {0}x{1}".format(final_cropped_img_size[0],final_cropped_img_size[1])
     print "A total of {0} MB of memory will be used.".format(mem/1024**2)
     if mem/1024.**2. > options.memory_limit:
-        print "Warning! The expected RAM usage exceeds the spicifyed limit. Exiting."
+        print "Warning! The expected RAM usage exceeds the specified limit. Exiting."
         sys.exit(1)
 
     # Create a new huge image

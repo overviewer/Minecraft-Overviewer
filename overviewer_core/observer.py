@@ -92,17 +92,50 @@ class LoggingObserver(Observer):
         #this is an easy way to make the first update() call print a line
         self.last_update = -101
 
+        # a fake ProgressBar, for the sake of ETA
+        class FakePBar(object):
+            def __init__(self):
+                self.maxval = None
+                self.currval = 0
+                self.finished = False
+                self.start_time = None
+                self.seconds_elapsed = 0
+            def finish(self):
+                self.update(self.maxval)
+            def update(self, value):
+                assert 0 <= value <= self.maxval
+                self.currval = value
+                if self.finished:
+                    return False
+                if not self.start_time:
+                    self.start_time = time.time()
+                self.seconds_elapsed = time.time() - self.start_time
+
+                if value == self.maxval:
+                    self.finished = True
+
+        self.fake = FakePBar();
+        self.eta = progressbar.ETA()
+
+    def start(self, max_value):
+        self.fake.maxval = max_value
+        super(LoggingObserver, self).start(max_value)
+
+
     def finish(self):
-        logging.info("Rendered %d of %d.  %d%% complete", self.get_max_value(),
-            self.get_max_value(), 100.0)
+        self.fake.finish()
+        logging.info("Rendered %d of %d.  %d%% complete.  %s", self.get_max_value(),
+            self.get_max_value(), 100.0, self.eta.update(self.fake))
         super(LoggingObserver, self).finish()
 
     def update(self, current_value):
         super(LoggingObserver, self).update(current_value)
+        self.fake.update(current_value)
+
         if self._need_update():
-            logging.info("Rendered %d of %d.  %d%% complete",
+            logging.info("Rendered %d of %d.  %d%% complete.  %s",
                 self.get_current_value(), self.get_max_value(),
-                self.get_percentage())
+                self.get_percentage(), self.eta.update(self.fake))
             self.last_update = current_value
             return True
         return False

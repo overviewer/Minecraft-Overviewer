@@ -15,6 +15,7 @@ markers.js holds a list of which markerSets are attached to each tileSet
 
 '''
 import os
+import time
 import logging
 import json
 import sys
@@ -22,6 +23,7 @@ import re
 import urllib2
 import multiprocessing
 import itertools
+import gzip
 
 from collections import defaultdict
 from multiprocessing import Pool
@@ -134,6 +136,26 @@ def handleEntities(rset, config, filters, markers):
 class PlayerDict(dict):
     use_uuid = False
     _name = ''
+    uuid_cache = None # A cache for the UUID->profile lookups
+    
+    @classmethod
+    def load_cache(cls, outputdir):
+        cache_file = os.path.join(outputdir, "uuidcache.dat")
+        if os.path.exists(cache_file):
+            gz = gzip.GzipFile(cache_file) 
+            cls.uuid_cache = json.load(gz)
+            logging.info("Loaded UUID cache from %r with %d entries", cache_file, len(cls.uuid_cache.keys()))
+        else:
+            cls.uuid_cache = {}
+            logging.info("Initialized an empty UUID cache")
+
+    @classmethod
+    def save_cache(cls, outputdir):
+        cache_file = os.path.join(outputdir, "uuidcache.dat")
+        gz = gzip.GzipFile(cache_file, "wb")
+        json.dump(cls.uuid_cache, gz)
+        logging.info("Wrote UUID cache with %d entries", len(cls.uuid_cache.keys()))
+
     def __getitem__(self, item):
         if item == "EntityId":
             if not super(PlayerDict, self).has_key("EntityId"):
@@ -145,9 +167,17 @@ class PlayerDict(dict):
         return super(PlayerDict, self).__getitem__(item)
 
     def get_name_from_uuid(self):
+        sname = self._name.replace('-','')
         try:
-            profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + self._name.replace('-','')).read())
+            profile = PlayerDict.uuid_cache[sname]
+            return profile['name']
+        except (KeyError,):
+            pass
+
+        try:
+            profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + sname).read())
             if 'name' in profile:
+                PlayerDict.uuid_cache[sname] = profile
                 return profile['name']
         except (ValueError, urllib2.URLError):
             logging.warning("Unable to get player name for UUID %s", self._name)
@@ -196,9 +226,12 @@ def handlePlayers(worldpath, filters, markers):
         data['x'] = int(data['Pos'][0])
         data['y'] = int(data['Pos'][1])
         data['z'] = int(data['Pos'][2])
+        # Time at last logout, calculated from last time the player's file was modified
+        data['time'] = time.localtime(os.path.getmtime(os.path.join(playerdir, playerfile)))
 
         # Spawn position (bed or main spawn)
         if "SpawnX" in data:
+            # Spawn position (bed or main spawn)
             spawn = PlayerDict()
             spawn._name = playername
             spawn["id"] = "PlayerSpawn"
@@ -395,6 +428,7 @@ def main():
 
     # apply filters to players
     if not options.skipplayers:
+        PlayerDict.load_cache(destdir)
         # group filters by worldpath, so we only search for players once per
         # world
         keyfunc = lambda x: x[4]
@@ -413,6 +447,8 @@ def main():
 
     logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
+
+    PlayerDict.save_cache(destdir)
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
         output.write("var markersDB=")
