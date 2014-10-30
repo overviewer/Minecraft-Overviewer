@@ -233,6 +233,7 @@ def handlePlayers(worldpath, filters, markers):
         if "SpawnX" in data:
             # Spawn position (bed or main spawn)
             spawn = PlayerDict()
+            spawn.use_uuid = useUUIDs
             spawn._name = playername
             spawn["id"] = "PlayerSpawn"
             spawn["x"] = data['SpawnX']
