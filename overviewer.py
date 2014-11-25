@@ -50,6 +50,16 @@ def main():
     # bootstrap the logger with defaults
     logger.configure()
 
+    if os.name == "posix":
+        if os.geteuid() == 0:
+            logging.warning("You are running Overviewer as root. "
+                            "It is recommended that you never do this, "
+                            "as it is dangerous for your system. If you are running "
+                            "into permission errors, fix your file/directory "
+                            "permissions instead. Overviewer does not need access to "
+                            "critical system resources and therefore does not require "
+                            "root access.")
+
     try:
         cpus = multiprocessing.cpu_count()
     except NotImplementedError:
