@@ -105,8 +105,12 @@ class World(object):
 
         # Hard-code this to only work with format version 19133, "Anvil"
         if not ('version' in data and data['version'] == 19133):
-            logging.critical("Sorry, This version of Minecraft-Overviewer only works with the 'Anvil' chunk format")
-            raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
+            if 'version' in data and data['version'] == 0:
+                logging.debug("Note: Allowing a version of zero in level.dat!")
+                ## XXX temporary fix for #1194
+            else:
+                logging.critical("Sorry, This version of Minecraft-Overviewer only works with the 'Anvil' chunk format")
+                raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
 
         # This isn't much data, around 15 keys and values for vanilla worlds.
         self.leveldat = data
