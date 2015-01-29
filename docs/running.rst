@@ -78,7 +78,7 @@ Usage
 =====
 
 For this section, we assume the executable is ``overviewer.py``. Replace that
-with ``overviewer.exe`` for windows. 
+with ``overviewer.exe`` for windows.
 
 Overviewer usage::
 
@@ -131,7 +131,7 @@ is typically correct.
     is not detected. This means that changes in your render configuration will
     not be reflected in your world except in updated chunks. It could also cause
     problems if the system clock of the machine running Minecraft is not stable.
-    
+
     **This option is the default** unless :option:`--forcerender` or
     :option:`--check-tiles` is in effect.  This option conflicts with
     :option:`--forcerender` and :option:`--check-tiles`.
@@ -148,13 +148,13 @@ is typically correct.
     automatically stored. This option was designed to handle the case where the
     last render was interrupted -- some tiles have been updated but others
     haven't, so each one is checked before it is rendered.
-    
+
     This is slightly slower than :option:`--no-tile-checks` due to the
     additional disk-io involved in reading tile mtimes from the filesystem
-    
+
     Since this option also checks for erroneous tiles, **It is also useful after
     you delete sections of your map, e.g. with worldedit, to delete tiles that
-    should no longer exist.** Overviewer greatly overestimates tiles to be 
+    should no longer exist.** Overviewer greatly overestimates tiles to be
     rendered and time needed to complete.
 
     The caveats with this option are the same as for :option:`--no-tile-checks`
@@ -186,14 +186,13 @@ is typically correct.
     conflicts with :option:`--check-tiles` and :option:`--no-tile-checks`
 
 .. cmdoption:: --genpoi
-    
+
     .. note::
         Don't use this flag without first reading :ref:`signsmarkers`!
 
-    Generates the POI markers for your map. This option does not do any tile/map 
-    generation, and ONLY generates markers. See :ref:`signsmarkers` on how to 
+    Generates the POI markers for your map. This option does not do any tile/map
+    generation, and ONLY generates markers. See :ref:`signsmarkers` on how to
     configure POI options.
-
 
 .. cmdoption:: -p <procs>, --processes <procs>
 
@@ -202,6 +201,17 @@ is typically correct.
     specified.
 
     This option can also be specified in the config file as :ref:`processes <processes>`
+
+.. cmdoption:: --skip-scan
+
+    .. note::
+        Don't use this flag without first reading :ref:`signsmarkers`!
+
+    When generating POI markers, this option prevents scanning for entities and
+    tile entities, and only creates the markers specified in the config file.
+    This considerably speeds up the POI marker generation process if no entities
+    or tile entities are being used for POI markers. See :ref:`signsmarkers` on
+    how to configure POI options.
 
 .. cmdoption:: -v, --verbose
 
@@ -237,7 +247,7 @@ Installing the Textures
 
 If Overviewer is running on a machine with the Minecraft client installed, it
 will automatically use the default textures from Minecraft.
-    
+
 .. note::
     Overviewer will only search for installed client *release* versions, not
     snapshots. If you want to use a snapshot client jar for the textures,
@@ -263,21 +273,21 @@ If you want or need to provide your own textures, you have several options:
 
     VERSION=1.8
     wget https://s3.amazonaws.com/Minecraft.Download/versions/${VERSION}/${VERSION}.jar -P ~/.minecraft/versions/${VERSION}/
-    
+
   If that's too confusing for you, then just take this single line and paste it into
   a terminal to get 1.8 textures::
-  
+
     wget https://s3.amazonaws.com/Minecraft.Download/versions/1.8/1.8.jar -P ~/.minecraft/versions/1.8/
 
 * You can also just run the launcher to install the client.
-  
+
 * You can transfer the client jar to the correct place manually, from a computer
   that does have the client, to your server. The correct places are:
-  
+
   * For Linux: ``~/.minecraft/versions/<version>/<version>.jar``
 
   * For Mac: ``~/Library/Application Support/minecraft/versions/<version>/<version>.jar``
-    
+
   * For Windows: ``%APPDATA%/.minecraft/versions/<version>/<version>.jar``
 
 * You can download and use a custom resource pack. Download the resource pack
