@@ -689,6 +689,25 @@ class TileSet(object):
         # 2 is now 2/1
         # 3 is now 3/0
         # then all that needs to be done is to regenerate the new top level
+
+        def rollback_mkdir(dnum):
+            p = getpath("new" + str(dnum))
+            if os.path.exists(p):
+                os.rmdir(p)
+
+        def rollback_filerename(dnum):
+            newnum = (3,2,1,0)[dnum]
+            qimg = getpath("new%d/%d.%s" % (dnum, newnum, self.imgextension))
+            qdir = getpath("new%d/%d" % (dnum, newnum))
+
+            if os.path.exists(qimg):
+                os.rename(qimg, getpath("%d.%s" % (dnum, self.imgextension)))
+            if os.path.exists(qdir):
+                os.rename(qdir, getpath(str(dnum)))
+
+        def rollback_dirrename(dnum):
+            os.rename(getpath(str(dnum)), getpath("new" + str(dnum)))
+
         for dirnum in range(4):
             newnum = (3,2,1,0)[dirnum]
 
@@ -698,12 +717,31 @@ class TileSet(object):
             files = [str(dirnum)+"."+self.imgextension, str(dirnum)]
             newfiles = [str(newnum)+"."+self.imgextension, str(newnum)]
 
-            os.mkdir(newdirpath)
-            for f, newf in zip(files, newfiles):
-                p = getpath(f)
-                if os.path.exists(p):
-                    os.rename(p, getpath(newdir, newf))
-            os.rename(newdirpath, getpath(str(dirnum)))
+            try:
+                try:
+                    os.mkdir(newdirpath)
+                    try:
+                        for f, newf in zip(files, newfiles):
+                            p = getpath(f)
+                            if os.path.exists(p):
+                                os.rename(p, getpath(newdir, newf))
+                    except:
+                        rollback_filerename(dirnum)
+                        raise
+                except:
+                    rollback_mkdir(dirnum)
+                    raise
+                os.rename(newdirpath, getpath(str(dirnum)))
+            except:
+                logging.warning("Overviewer was interrupted during tile "
+                                "re-arrangement.")
+                logging.warning("Rolling back changes...")
+                # Moonwalk the fuck out of here
+                for lastdir in range(dirnum - 1, -1, -1):
+                    rollback_dirrename(lastdir)
+                    rollback_filerename(lastdir)
+                    rollback_mkdir(lastdir)
+                raise
 
     def _decrease_depth(self):
         """If the map size decreases, or perhaps the user has a depth override
