@@ -376,6 +376,31 @@ Observers
             once for every 1% of progress.
             
             **Required**
+
+    ``RConObserver(target, password[, port][, pct_interval])``
+        This Observer will announce render progress with the server's ``say``
+        command through RCon.
+
+        * ``target=<address>``
+            Address of the target Minecraft server.
+
+            **Required**
+
+        * ``password=<rcon password>``
+            The server's rcon password.
+
+            **Required**
+
+        * ``port=<port number>``
+            Port on which the Minecraft server listens for incoming RCon connections.
+
+            **Default:** ``25575``
+
+        * ``pct_interval=<update rate, in percent>``
+            Percentage interval in which the progress should be announced, the same as
+            for ``ServerAnnounceObserver``.
+
+            **Default:** ``10``
             
             
 

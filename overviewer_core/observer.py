@@ -19,6 +19,7 @@ import progressbar
 import sys
 import os
 import json
+import rcon
 
 class Observer(object):
     """Base class that defines the observer interface.
@@ -392,3 +393,43 @@ class ServerAnnounceObserver(Observer):
         self.target_handle.write('say %s\n' % output)
         self.target_handle.flush()
 
+
+# Fair amount of code duplication incoming
+# Perhaps both ServerAnnounceObserver and RConObserver
+# could share the percentage interval code.
+
+class RConObserver(Observer):
+    """Send the output to a Minecraft server via rcon"""
+
+    def __init__(self, target, password, port=25575, pct_interval=10):
+        self.pct_interval = pct_interval
+        self.conn = rcon.RConConnection(target, port)
+        self.conn.login(password)
+        self.last_update = 0
+        super(RConObserver, self).__init__()
+
+    def start(self, max_value):
+        self._send_output("Starting render of %d total tiles" % max_value)
+        super(RConObserver, self).start(max_value)
+
+    def finish(self):
+        self._send_output("Render complete!")
+        super(RConObserver, self).finish()
+        self.conn.close()
+
+    def update(self, current_value):
+        super(RConObserver, self).update(current_value)
+        if self._need_update():
+            self._send_output('Rendered %d of %d tiles, %d%% complete' %
+                (self.get_current_value(), self.get_max_value(),
+                    self.get_percentage()))
+            self.last_update = current_value
+
+    def _need_update(self):
+        return self.get_percentage() - \
+            (self.last_update * 100.0 / self.get_max_value()) >= self.pct_interval
+
+    def _send_output(self, output):
+        self.conn.command("say", output)
+        
+        
