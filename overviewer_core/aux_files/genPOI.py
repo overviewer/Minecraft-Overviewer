@@ -452,6 +452,7 @@ def main():
     with open(os.path.join(destdir, "baseMarkers.js"), "w") as output:
         output.write("overviewer.util.injectMarkerScript('markersDB.js');\n")
         output.write("overviewer.util.injectMarkerScript('markers.js');\n")
+        output.write("overviewer.util.injectMarkerScript('regions.js');\n")
         output.write("overviewer.collections.haveSigns=true;\n")
     logging.info("Done")
 
