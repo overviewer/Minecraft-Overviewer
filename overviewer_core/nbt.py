@@ -65,7 +65,9 @@ class NBTFileReader(object):
     # compile the unpacker's into a classes
     _byte   = struct.Struct("b")
     _short  = struct.Struct(">h")
+    _ushort = struct.Struct(">H")
     _int    = struct.Struct(">i")
+    _uint   = struct.Struct(">I")
     _long   = struct.Struct(">q")
     _float  = struct.Struct(">f")
     _double = struct.Struct(">d") 
@@ -128,17 +130,17 @@ class NBTFileReader(object):
         return self._double.unpack(bytes)[0]
 
     def _read_tag_byte_array(self):
-        length = self._read_tag_int()
+        length = self._uint.unpack(self._file.read(4))[0]
         bytes = self._file.read(length)
         return bytes
 
     def _read_tag_int_array(self):
-        length = self._read_tag_int()
+        length = self._uint.unpack(self._file.read(4))[0]
         int_bytes = self._file.read(length*4)
         return struct.unpack(">%ii" % length, int_bytes)
 
     def _read_tag_string(self):
-        length = self._read_tag_short()
+        length = self._ushort.unpack(self._file.read(2))[0]
         # Read the string
         string = self._file.read(length)
         # decode it and return
@@ -146,7 +148,7 @@ class NBTFileReader(object):
 
     def _read_tag_list(self):
         tagid = self._read_tag_byte()
-        length = self._read_tag_int()
+        length = self._uint.unpack(self._file.read(4))[0]
 
         read_method = self._read_tagmap[tagid]
         l = []
