@@ -486,8 +486,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             logging.error("Sorry, I can't find anything to render!  Are you sure there are .mca files in the world directory?")
             return 1
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
-            return 1
+            logging.warn("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
+            continue
 
         #################
         # Apply any regionset transformations here
