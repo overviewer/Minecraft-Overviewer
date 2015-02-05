@@ -308,8 +308,8 @@ def main():
         
         rset = w.get_regionset(render['dimension'][1])
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for the render '%s', but I couldn't find it", render['dimension'][0], rname)
-            return 1
+            logging.warn("Sorry, you requested dimension '%s' for the render '%s', but I couldn't find it", render['dimension'][0], rname)
+            continue
       
         for f in render['markers']:
             markersets.add(((f['name'], f['filterFunction']), rset))
