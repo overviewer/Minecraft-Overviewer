@@ -376,6 +376,31 @@ Observers
             once for every 1% of progress.
             
             **Required**
+
+    ``RConObserver(target, password[, port][, pct_interval])``
+        This Observer will announce render progress with the server's ``say``
+        command through RCon.
+
+        * ``target=<address>``
+            Address of the target Minecraft server.
+
+            **Required**
+
+        * ``password=<rcon password>``
+            The server's rcon password.
+
+            **Required**
+
+        * ``port=<port number>``
+            Port on which the Minecraft server listens for incoming RCon connections.
+
+            **Default:** ``25575``
+
+        * ``pct_interval=<update rate, in percent>``
+            Percentage interval in which the progress should be announced, the same as
+            for ``ServerAnnounceObserver``.
+
+            **Default:** ``10``
             
             
 
@@ -683,8 +708,8 @@ Image options
         Using image optimizers will increase render times significantly.
 
     This option specifies which additional tools overviewer should use to
-    optimize the filesize of png tiles.
-    The tools used must be placed somewhere, where overviewer can find them, for
+    optimize the filesize of rendered tiles.
+    The tools used must be placed somewhere where overviewer can find them, for
     example the "PATH" environment variable or a directory like /usr/bin.
 
     The option is a list of Optimizer objects, which are then executed in
@@ -765,6 +790,34 @@ Image options
                 this option, then you are most likely wrong.
 
             **Default:** ``False``
+
+    ``jpegoptim``
+        jpegoptim can do both lossy and lossless JPEG optimisation. If no options are specified,
+        jpegoptim will only do lossless optimisations.
+        Available settings:
+
+        ``quality``
+            A number between 0 and 100 that corresponds to the jpeg quality level. If the input
+            image has a lower quality specified than the output image, jpegoptim will only do
+            lossless optimisations.
+            
+            If this option is specified and the above condition does not apply, jpegoptim will
+            do lossy optimisation.
+
+            **Default:** ``None`` *(= Unspecified)*
+
+        ``target_size``
+            Either a percentage of the original filesize (e.g. ``"50%"``) or a target filesize
+            in kilobytes (e.g. ``15``). jpegoptim will then try to reach this as its target size.
+
+            If specified, jpegoptim will do lossy optimisation.
+
+            .. warning::
+                This appears to have a greater performance impact than just setting ``quality``.
+                Unless predictable filesizes are a thing you need, you should probably use ``quality``
+                instead.
+
+            **Default:** ``None`` *(= Unspecified)*
 
     **Default:** ``[]``
 
@@ -1098,6 +1151,32 @@ MineralOverlay
         Example::
 
             MineralOverlay(minerals=[(64,(255,255,0)), (13,(127,0,127))])
+
+StructureOverlay
+    Color the map according to patterns of blocks. With this rail overlays
+    or overlays for other small structures can be realized. It can also be
+    a MineralOverlay with alpha support.
+
+    This Overlay colors according to a patterns that are specified as
+    multiple tuples of the form ``(relx, rely, relz, blockid)``. So
+    by specifying ``(0, -1, 0, 4)`` the block below the current one has to
+    be a cobblestone.
+
+    One color is then specified as
+    ``((relblockid1, relblockid2, ...), (r, g, b, a))`` where the
+    ``relblockid*`` are relative coordinates and the blockid as specified
+    above. The ``relblockid*`` must match all at the same time for the
+    color to apply.
+
+    Example::
+
+        MineralOverlay(minerals=[(((0, 0, 0, 66), (0, -1, 0, 4)), (255, 0, 0, 255)),
+                                 (((0, 0, 0, 27), (0, -1, 0, 4)), (0, 255, 0, 255))])
+
+    In this example all rails(66) on top of cobblestone are rendered in
+    pure red. And all powerrails(27) are rendered in green.
+
+    If ``minerals`` is not provided, a default rail coloring is used.
 
 BiomeOverlay
     Color the map according to the biome at that point. Either use on

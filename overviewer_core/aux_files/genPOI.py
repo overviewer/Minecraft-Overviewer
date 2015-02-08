@@ -385,8 +385,8 @@ def main():
         # get the regionset for this dimension
         rset = w.get_regionset(render['dimension'][1])
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for the render '%s', but I couldn't find it", render['dimension'][0], rname)
-            return 1
+            logging.warn("Sorry, you requested dimension '%s' for the render '%s', but I couldn't find it", render['dimension'][0], rname)
+            continue
 
         # find filters for this render
         for f in render['markers']:
@@ -462,6 +462,7 @@ def main():
     with open(os.path.join(destdir, "baseMarkers.js"), "w") as output:
         output.write("overviewer.util.injectMarkerScript('markersDB.js');\n")
         output.write("overviewer.util.injectMarkerScript('markers.js');\n")
+        output.write("overviewer.util.injectMarkerScript('regions.js');\n")
         output.write("overviewer.collections.haveSigns=true;\n")
     logging.info("Done")
 

@@ -50,6 +50,16 @@ def main():
     # bootstrap the logger with defaults
     logger.configure()
 
+    if os.name == "posix":
+        if os.geteuid() == 0:
+            logging.warning("You are running Overviewer as root. "
+                            "It is recommended that you never do this, "
+                            "as it is dangerous for your system. If you are running "
+                            "into permission errors, fix your file/directory "
+                            "permissions instead. Overviewer does not need access to "
+                            "critical system resources and therefore does not require "
+                            "root access.")
+
     try:
         cpus = multiprocessing.cpu_count()
     except NotImplementedError:
@@ -478,8 +488,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             logging.error("Sorry, I can't find anything to render!  Are you sure there are .mca files in the world directory?")
             return 1
         if rset == None: # indicates no such dimension was found:
-            logging.error("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
-            return 1
+            logging.warn("Sorry, you requested dimension '%s' for %s, but I couldn't find it", render['dimension'][0], render_name)
+            continue
 
         #################
         # Apply any regionset transformations here
@@ -517,6 +527,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         for rset in rsets:
             tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
             tilesets.append(tset)
+
+    # If none of the requested dimenstions exist, tilesets will be empty
+    if not tilesets:
+        logging.error("There are no tilesets to render!  There's nothing to do, so exiting.")
+        return 1
+
 
     # Do tileset preprocessing here, before we start dispatching jobs
     logging.info("Preprocessing...")

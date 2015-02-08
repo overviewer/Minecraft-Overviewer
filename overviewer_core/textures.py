@@ -3437,7 +3437,7 @@ def huge_mushroom(self, blockid, data):
         img = self.build_full_block(cap, None, None, cap, porous)
 
     if data == 2: # east side
-        img = self.build_full_block(cap, None, None, porous, porous)
+        img = self.build_full_block(cap, None, None, porous, cap)
 
     if data == 3: # south-east corner
         img = self.build_full_block(cap, None, None, porous, cap)

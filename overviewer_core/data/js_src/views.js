@@ -497,6 +497,26 @@ overviewer.views.SignControlView = Backbone.View.extend({
                         });
 						dataRoot[i].markerObjs.push(polyline);
                     }
+					
+					// Polygons
+                    if (typeof entity['polygon'] != 'undefined') {
+						var polypath = new Array();
+                        for (point in entity.polygon) {
+                            polypath.push(overviewer.util.fromWorldToLatLng(entity.polygon[point].x, entity.polygon[point].y, entity.polygon[point].z, overviewer.mapView.options.currentTileSet));
+                        }
+                        
+                        var polygon = new google.maps.Polygon({
+								'clickable': false,
+								'fillColor': entity['fillColor'],
+								'fillOpacity': entity['fillOpacity'],
+								'map': overviewer.map,
+								'path': polypath,
+								'strokeColor': entity['strokeColor'],
+								'strokeOpacity': entity['strokeOpacity'],
+								'visible': false
+                        });
+						dataRoot[i].markerObjs.push(polygon);
+                    }
                 }
                 dataRoot[i].created = true;
             }
