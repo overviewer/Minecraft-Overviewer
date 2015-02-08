@@ -526,6 +526,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
             tilesets.append(tset)
 
+    # If none of the requested dimenstions exist, tilesets will be empty
+    if not tilesets:
+        logging.error("There are no tilesets to render!  There's nothing to do, so exiting.")
+        return 1
+
+
     # Do tileset preprocessing here, before we start dispatching jobs
     logging.info("Preprocessing...")
     for ts in tilesets:
