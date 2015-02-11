@@ -55,6 +55,15 @@ be used as the hover text, the second will be used as the info window content::
         if poi['id'] == "Chest":
             return ("Chest", "Chest with %d items" % len(poi['Items']))
 
+Because of the way the config file is loaded, if you need to import a function or module
+for use in your filter function, you need to explicitly load it into the global namespace:
+
+    global escape
+    from cgi import escape
+    def signFilter(poi):
+        if poi['id'] == 'Sign':
+            return "\n".join(map(escape, [poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']]))
+
 Since writing these filters can be a little tedious, a set of predefined filters
 functions are provided.  See the :ref:`predefined_filter_functions` section for
 details.
