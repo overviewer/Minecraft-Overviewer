@@ -220,7 +220,9 @@ General
 
 ``renders``
     This is also pre-defined as an empty dictionary. The config file is expected
-    to add at least one item to it.
+    to add at least one item to it. By default, it is an ordered dictionary; the
+    order you add entries to it will determine the default render in the output
+    map and the order the buttons appear in the map UI.
 
     Keys are strings that are used as the identifier for this render in the
     javascript, and also as the directory name for the tiles, but it's
