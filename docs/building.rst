@@ -43,7 +43,6 @@ Visual Studio will only build 32-bit executables.  We currently don't have a
 recommended way of building Overviewer on 64-bit Windows using free tools.  If you
 have bought a copy of Visual Studio, you can use it for 64-bit builds.
 
-
 Prerequisites
 ~~~~~~~~~~~~~
 
@@ -56,7 +55,11 @@ Building with Visual Studio
 2. From the Start menu, navigate to the 'Microsoft Visual Studio 2010 Express' and open the 'Visual Studio Command Prompt (2010)' shortcut.
 3. cd to the folder containing the Overviewer source code.
 4. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory.
-5. First try a build::
+5. Install additional dependencies::
+
+    c:\python26\python setup.py develop
+
+6. Then try a build::
 
     c:\python26\python setup.py build
 
@@ -78,13 +81,17 @@ Building with mingw
 1. Open a MinGW shell.
 2. cd to the Overviewer directory.
 3. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory.
-4. Build::
+4. Install dependencies::
+
+    python setup.py develop
+
+5. Build::
 
     python setup.py build --compiler=mingw32
-    
+
 If the build fails with complaints about ``-mno-cygwin``, open the file ``Lib/distutils/cygwincompiler.py``
 in an editor of your choice, and remove all mentions of ``-mno-cygwin``. This is a bug in distutils,
-filed as `Issue 12641 <http://bugs.python.org/issue12641>`_. 
+filed as `Issue 12641 <http://bugs.python.org/issue12641>`_.
 
 
 Linux
@@ -100,7 +107,11 @@ You will need the following packages (at least):
 * python-dev
 * python-numpy
 
-Then to build::
+Install remaining dependencies from the Python Package Index::
+
+    python setup.py develop
+
+Finally build::
 
     python setup.py build
 
@@ -117,6 +128,10 @@ OSX
 2. Compile the PIL code (``python ./setup.py build``)
 3. Install PIL (``sudo python ./setup.py install``)
 4. Find the path to the ``libImaging`` directory in the PIL source tree.
+5. Install the remaining dependencies::
+
+    python setup.py develop
+
 5. Build Minecraft Overviewer with the path from step 4 as the value for PIL_INCLUDE_DIR::
 
     PIL_INCLUDE_DIR="path from step 4" python ./setup.py build
@@ -136,6 +151,9 @@ The following script (copied into your MCO source directory) should handle every
         tar xzf imaging.tgz
         rm imaging.tgz
     fi
+
+    # Install dependencies
+    python setup.py develop
 
     # build MCO
     PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
@@ -182,8 +200,9 @@ regular user.
 
   1. ``$ git clone git://github.com/overviewer/Minecraft-Overviewer.git``
   2. ``$ cd Minecraft-Overviewer``
-  3. ``$ python26 setup.py build``
-  4. Change the first line of overviewer.py from ``#!/usr/bin/env python`` to ``#!/usr/bin/env python26`` so that the Python 2.6 interpreter is used instead of the default 2.4
+  3. ``$ python26 setup.py develop``
+  4. ``$ python26 setup.py build``
+  5. Change the first line of overviewer.py from ``#!/usr/bin/env python`` to ``#!/usr/bin/env python26`` so that the Python 2.6 interpreter is used instead of the default 2.4
 
 4. Run Overviewer as usual
 
