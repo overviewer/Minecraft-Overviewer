@@ -314,9 +314,7 @@ def create_marker_from_filter_result(poi, result):
         if 'polyline' in result and hasattr(result['polyline'], '__iter__'):
             d['polyline'] = []
             for point in result['polyline']:
-                # This poor man's validation code almost definately needs improving.
-                if type(point) == dict:
-                    d['polyline'].append(dict(x=point['x'], y=point['y'], z=point['z']))
+                d['polyline'].append(dict(x=point['x'], y=point['y'], z=point['z'])) # point.copy() would work, but this validates better
             if isinstance(result['color'], basestring):
                 d['strokeColor'] = result['color']
 
