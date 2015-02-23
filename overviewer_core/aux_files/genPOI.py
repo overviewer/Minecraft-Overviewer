@@ -290,6 +290,13 @@ def create_marker_from_filter_result(poi, result):
     else:
         d = dict((v, poi[v]) for v in 'xyz')
 
+    # read some Defaults from POI
+    if "icon" in poi:
+        d["icon"] = poi['icon']
+    if "createInfoWindow" in poi:
+        d["createInfoWindow"] = poi['createInfoWindow']
+
+    # Fill in the rest from result
     if isinstance(result, basestring):
         d.update(dict(text=result, hovertext=result))
     elif type(result) == tuple:
@@ -313,10 +320,10 @@ def create_marker_from_filter_result(poi, result):
             if isinstance(result['color'], basestring):
                 d['strokeColor'] = result['color']
 
-    if "icon" in poi:
-        d.update({"icon": poi['icon']})
-    if "createInfoWindow" in poi:
-        d.update({"createInfoWindow": poi['createInfoWindow']})
+            if "icon" in result:
+                d["icon"] = result['icon']
+            if "createInfoWindow" in result:
+                d["createInfoWindow"] = result['createInfoWindow']
 
     return d
 
