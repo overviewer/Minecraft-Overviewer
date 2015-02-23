@@ -299,19 +299,19 @@ def create_marker_from_filter_result(poi, result):
     # Fill in the rest from result
     if isinstance(result, basestring):
         d.update(dict(text=result, hovertext=result))
-    elif type(result) == tuple:
+    elif isinstance(result, tuple):
         d.update(dict(text=result[1], hovertext=result[0]))
     # Dict support to allow more flexible things in the future as well as polylines on the map.
-    elif type(result) == dict:
+    elif isinstance(result, dict):
         d['text'] = result['text']
 
         # Use custom hovertext if provided...
-        if 'hovertext' in result and isinstance(result['hovertext'], basestring):
-            d['hovertext'] = result['hovertext']
+        if 'hovertext' in result:
+            d['hovertext'] = unicode(result['hovertext'])
         else: # ...otherwise default to display text.
             d['hovertext'] = result['text']
 
-        if 'polyline' in result and type(result['polyline']) == tuple:  #if type(result.get('polyline', '')) == tuple:
+        if 'polyline' in result and hasattr(result['polyline'], '__iter__'):
             d['polyline'] = []
             for point in result['polyline']:
                 # This poor man's validation code almost definately needs improving.
@@ -324,6 +324,8 @@ def create_marker_from_filter_result(poi, result):
                 d["icon"] = result['icon']
             if "createInfoWindow" in result:
                 d["createInfoWindow"] = result['createInfoWindow']
+    else:
+        raise ValueError("got an %s as result for POI with id %s" % (type(result).__name__, poi['id']))
 
     return d
 
