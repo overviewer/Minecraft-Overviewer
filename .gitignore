@@ -31,6 +31,7 @@ overviewer/oil.dylib
 
 # generated files
 overviewer/overviewer_version.py
+overviewer/oil/oil.c
 
 # Mac OS X noise
 .DS_Store

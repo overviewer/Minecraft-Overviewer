@@ -1,31 +1,24 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
-from distutils.extension import Extension
+from setuptools import setup, find_packages, Extension
+
 from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
-from distutils.cmd import Command
-from distutils.dir_util import remove_tree
-from distutils.sysconfig import get_python_inc
 from distutils import log
 import sys, os, os.path
-import glob
 import platform
 import time
 import overviewer.util as util
 
+# TODO error out if cython not here
 try:
-    import py2exe
+    from Cython.Build import cythonize
+    USE_CYTHON = True
 except ImportError:
-    py2exe = None
-
-try:
-    import py2app
-    from setuptools.extension import Extension
-except ImportError:
-    py2app = None
+    cythonize = lambda x: x
+    USE_CYTHON = False
 
 # make sure our current working directory is the same directory
 # setup.py is in
@@ -34,7 +27,6 @@ if curdir:
     os.chdir(curdir)
 
 # now, setup the keyword arguments for setup
-# (because we don't know until runtime if py2exe/py2app is available)
 setup_kwargs = {}
 setup_kwargs['ext_modules'] = []
 setup_kwargs['cmdclass'] = {}
@@ -44,13 +36,6 @@ setup_kwargs['options'] = {}
 # metadata
 #
 
-# Utility function to read the README file.
-# Used for the long_description.  It's nice, because now 1) we have a top level
-# README file and 2) it's easier to type in the README file than to put a raw
-# string in below ...
-def read(fname):
-    return open(fname).read()
-
 setup_kwargs['name'] = 'Minecraft-Overviewer'
 setup_kwargs['version'] = util.findGitVersion()
 setup_kwargs['description'] = 'Generates large resolution images of a Minecraft map.'
@@ -58,81 +43,34 @@ setup_kwargs['url'] = 'http://overviewer.org/'
 setup_kwargs['author'] = 'Andrew Brown'
 setup_kwargs['author_email'] = 'brownan@gmail.com'
 setup_kwargs['license'] = 'GNU General Public License v3'
-setup_kwargs['long_description'] = read('README.rst')
+setup_kwargs['long_description'] = open('README.rst').read()
 
 # top-level files that should be included as documentation
 doc_files = ['COPYING.txt', 'README.rst', 'CONTRIBUTORS.rst', 'sample_config.py']
 
-# helper to create a 'data_files'-type sequence recursively for a given dir
-def recursive_data_files(src, dest=None):
-    if dest is None:
-        dest = src
-
-    ret = []
-    for dirpath, dirnames, filenames in os.walk(src):
-        current_dest = os.path.relpath(dirpath, src)
-        if current_dest == '.':
-            current_dest = dest
-        else:
-            current_dest = os.path.join(dest, current_dest)
-
-        current_sources = map(lambda p: os.path.join(dirpath, p), filenames)
-
-        ret.append((current_dest, current_sources))
-    return ret
-
-# helper to create a 'package_data'-type sequence recursively for a given dir
-def recursive_package_data(src, package_dir='overviewer'):
-    full_src = os.path.join(package_dir, src)
-    ret = []
-    for dirpath, dirnames, filenames in os.walk(full_src, topdown=False):
-        current_path = os.path.relpath(dirpath, package_dir)
-        for filename in filenames:
-            ret.append(os.path.join(current_path, filename))
-
-    return ret
-
 #
-# py2exe options
+# requires
 #
 
-if py2exe is not None:
-    setup_kwargs['comments'] = "http://overviewer.org"
-    # py2exe likes a very particular type of version number:
-    setup_kwargs['version'] = util.findGitVersion().replace("-",".")
-
-    setup_kwargs['console'] = ['contribManager.py']
-    setup_kwargs['data_files'] = [('', doc_files)]
-    setup_kwargs['data_files'] += recursive_data_files('overviewer/data/web_assets', 'web_assets')
-    setup_kwargs['data_files'] += recursive_data_files('overviewer/data/js_src', 'js_src')
-    setup_kwargs['data_files'] += recursive_data_files('contrib', 'contrib')
-    setup_kwargs['zipfile'] = None
-    if platform.system() == 'Windows' and '64bit' in platform.architecture():
-        b = 3
-    else:
-        b = 1
-    setup_kwargs['options']['py2exe'] = {'bundle_files' : b, 'excludes': 'Tkinter', 'includes':
-        ['fileinput', 'overviewer.aux_files.genPOI']}
-
-#
-# py2app options
-#
-
-#if py2app is not None:
-#    setup_kwargs['app'] = ['overviewer.py']
-#    setup_kwargs['options']['py2app'] = {'argv_emulation' : False}
-#    setup_kwargs['setup_requires'] = ['py2app']
+setup_kwargs['install_requires'] = ['Cython >= 0.19']
+setup_kwargs['setup_requires'] = ['setuptools_git >= 0.3']
 
 #
 # script, package, and data
 #
 
-setup_kwargs['packages'] = ['overviewer', 'overviewer/aux_files']
-setup_kwargs['scripts'] = []
-setup_kwargs['package_data'] = {'overviewer': recursive_package_data('data/web_assets') + recursive_package_data('data/js_src')}
+setup_kwargs['packages'] = find_packages()
+setup_kwargs['include_package_data'] = True
 
-if py2exe is None:
-    setup_kwargs['data_files'] = [('share/doc/minecraft-overviewer', doc_files)]
+# helper for extension file names
+def make_files(base, pyx_to, ends):
+    r = []
+    for e in ends:
+        if not USE_CYTHON and e.endswith('.pyx'):
+            e, _ = e.rsplit('.', 1)
+            e += '.' + pyx_to
+        r.append(base + e)
+    return r
 
 # oil extension
 #
@@ -140,8 +78,8 @@ if py2exe is None:
 # and libjpeg
 #
 
-oil_files = [
-    "oil-python.c",
+oil_files = make_files('overviewer/oil/', 'c', [
+    "oil.pyx",
     "oil-matrix.c",
     "oil-image.c",
     "oil-format.c",
@@ -154,44 +92,38 @@ oil_files = [
     "oil-backend-debug.c",
     "oil-backend-cpu-sse.c",
     "oil-backend-opengl.c",
-]
+])
 
-oil_includes = [
+oil_includes = make_files('overviewer/oil/', 'h', [
     "oil.h",
-    "oil-python.h",
     "oil-dither-private.h",
     "oil-format-private.h",
     "oil-image-private.h",
     "oil-palette-private.h",
     "oil-backend-private.h",
     "oil-backend-cpu.def",
-]
+])
 
-oil_files = ['overviewer/oil/' + s for s in oil_files]
-oil_includes = ['overviewer/oil/' + s for s in oil_includes]
 extra_link_args = []
 if "nt" in os.name:
     extra_link_args.append("-Wl,--export-all-symbols")
 setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depends=oil_includes, libraries=['png', 'z', 'jpeg'], extra_link_args=extra_link_args))
 
 # chunkrenderer extension
-chunkrenderer_files = [
+chunkrenderer_files = make_files('overviewer/chunkrenderer/', 'c', [
         'chunkrenderer.c',
         'blockdata.c',
-]
-chunkrenderer_includes = [
+])
+chunkrenderer_includes = make_files('overviewer/chunkrenderer/', 'h', [
         'buffer.h',
         'chunkrenderer.h',
-]
-
-chunkrenderer_files = ['overviewer/chunkrenderer/' + s for s in chunkrenderer_files]
-chunkrenderer_includes = ['overviewer/chunkrenderer/' + s for s in chunkrenderer_includes]
+])
 
 # todo: better oil handling!
 output_name = 'overviewer/oil.so'
 if "nt" in os.name:
     output_name = 'overviewer/oil.pyd'
-setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=['overviewer/oil'], depends=chunkrenderer_includes, extra_objects=[output_name]))
+#setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=['overviewer/oil'], depends=chunkrenderer_includes, extra_objects=[output_name]))
 
 # tell build_ext to build the extension in-place
 # (NOT in build/)
@@ -320,6 +252,8 @@ setup_kwargs['cmdclass']['sdist'] = CustomSDist
 setup_kwargs['cmdclass']['build'] = CustomBuild
 setup_kwargs['cmdclass']['build_ext'] = CustomBuildExt
 ###
+
+setup_kwargs['ext_modules'] = cythonize(setup_kwargs['ext_modules'])
 
 setup(**setup_kwargs)
 
