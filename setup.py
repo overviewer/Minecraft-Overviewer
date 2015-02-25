@@ -79,7 +79,7 @@ def make_files(base, pyx_to, ends):
 #
 
 oil_files = make_files('overviewer/oil/', 'c', [
-    "oil.pyx",
+    "__init__.pyx",
     "oil-matrix.c",
     "oil-image.c",
     "oil-format.c",
@@ -111,7 +111,7 @@ setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depend
 
 # chunkrenderer extension
 chunkrenderer_files = make_files('overviewer/chunkrenderer/', 'c', [
-        'chunkrenderer.pyx',
+        '__init__.pyx',
 ])
 chunkrenderer_includes = make_files('overviewer/chunkrenderer/', 'h', [
         'buffer.h',
@@ -252,7 +252,7 @@ setup_kwargs['cmdclass']['build'] = CustomBuild
 setup_kwargs['cmdclass']['build_ext'] = CustomBuildExt
 ###
 
-setup_kwargs['ext_modules'] = cythonize(setup_kwargs['ext_modules'], include_path=['overviewer/oil/'])
+setup_kwargs['ext_modules'] = cythonize(setup_kwargs['ext_modules'])
 
 setup(**setup_kwargs)
 

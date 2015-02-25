@@ -14,7 +14,6 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 from . import chunkrenderer
-from . import blockdefinitions
 
 dirmap = {
     'up':    'PY',
@@ -26,7 +25,8 @@ dirmap = {
 }
 
 class MCModelBuilder:
-    def __init__(self, namespace):
+    def __init__(self, ap, namespace):
+        self.ap = ap
         self.texturevars = {}
         self.namespace = namespace
         self.vi = 0
@@ -99,7 +99,7 @@ class MCModelBuilder:
             face = faces.get(dm, {})
             if 'cullface' in face:
                 culla = dirmap[face['cullface']]
-                types[da] = getattr(chunkrenderer, 'FACE_TYPE_' + culla)
+                types[da] = getattr(chunkrenderer, culla)
             else:
                 types[da] = 0
             if 'texture' in face:
@@ -127,11 +127,9 @@ class MCModelBuilder:
         def resolve_tex(tx):
             while tx.startswith('#') and tx in self.texturevars:
                 tx = self.texturevars[tx]
-            return tx
-        bm = blockdefinitions.BlockModel()
-        bm.vertices = self.vertices
-        bm.faces = [(vs, ty, resolve_tex(tx)) for vs, ty, tx in self.faces]
-        return bm
+            return self.ap.open_texture(tx)
+        faces = [(vs, ty, resolve_tex(tx)) for vs, ty, tx in self.faces]
+        return chunkrenderer.BlockModel(self.vertices, faces)
 
 def load_model(ap, name, namespace="minecraft"):
     def assemble_builder(rawname):
@@ -139,8 +137,7 @@ def load_model(ap, name, namespace="minecraft"):
         if 'parent' in data:
             builder = assemble_builder(data['parent'])
         else:
-            builder = MCModelBuilder(namespace)
-        print(data)
+            builder = MCModelBuilder(ap, namespace)
         
         for el in data.get('elements', []):
             a = el.get('from', [0, 0, 0])

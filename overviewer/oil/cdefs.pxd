@@ -1,8 +1,9 @@
 cdef extern from "oil.h":
-    unsigned int OIL_BACKEND_CPU
-    unsigned int OIL_BACKEND_MAX
+    ctypedef enum OILBackendName:
+        OIL_BACKEND_CPU
+        OIL_BACKEND_MAX
     
-    bint oil_backend_set(int backend)
+    bint oil_backend_set(OILBackendName backend)
     
     ctypedef struct OILMatrix:
         float data[4][4]
@@ -34,8 +35,9 @@ cdef extern from "oil.h":
         size_t (*write)(void *file, void *data, size_t length)
         void (*flush)(void *file)
     
-    unsigned int OIL_FORMAT_PNG
-    unsigned int OIL_FORMAT_MAX
+    ctypedef enum OILFormatName:
+        OIL_FORMAT_PNG
+        OIL_FORMAT_MAX
     
     ctypedef struct OILFormatOptions:
         int indexed
@@ -53,8 +55,8 @@ cdef extern from "oil.h":
     void oil_image_free(OILImage *im)
     OILImage *oil_image_load(const char *path)
     OILImage *oil_image_load_ex(OILFile *file)
-    int oil_image_save(OILImage *im, const char *path, int format, OILFormatOptions *opts)
-    int oil_image_save_ex(OILImage *im, OILFile *file, int format, OILFormatOptions *opts)
+    int oil_image_save(OILImage *im, const char *path, OILFormatName format, OILFormatOptions *opts)
+    int oil_image_save_ex(OILImage *im, OILFile *file, OILFormatName format, OILFormatOptions *opts)
     void oil_image_get_size(OILImage *im, unsigned int *width, unsigned int *height)
     const OILPixel *oil_image_get_data(OILImage *im)
     const OILPixel *oil_image_get_pixel(OILImage *im, unsigned int x, unsigned int y)

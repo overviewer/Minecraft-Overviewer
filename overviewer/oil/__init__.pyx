@@ -1,21 +1,37 @@
 from libc.string cimport memcpy
 from libc.stdlib cimport malloc, free
 from cpython cimport bytes
-from coil cimport *
+from overviewer.oil.cdefs cimport *
+import sys
 
 BACKEND_CPU = OIL_BACKEND_CPU
 FORMAT_PNG = OIL_FORMAT_PNG
 DEPTH_TEST = OIL_DEPTH_TEST
 
-def backend_set(unsigned int backend):
+def backend_set(OILBackendName backend):
     if not backend < OIL_BACKEND_MAX:
         raise ValueError("invalid backend")
     if not oil_backend_set(backend):
         raise RuntimeError("could not set backend")
 
+cdef inline matrix_binop(pa, pb, void (*op)(OILMatrix*, const OILMatrix*, const OILMatrix*), bint inplace):
+    cdef Matrix result, a, b
+    if not (isinstance(pa, Matrix) and isinstance(pb, Matrix)):
+        return NotImplemented
+    a = pa
+    b = pb
+    
+    if not inplace:
+        result = Matrix.__new__(Matrix)
+        op(&result._m, &a._m, &b._m)
+        return result
+    
+    op(&a._m, &a._m, &b._m)
+    return a
+
+
 cdef class Matrix:
     """Encapsulates matrix data and operations."""
-    cdef OILMatrix _m
     
     def __init__(self, data=None):
         if data:
@@ -65,36 +81,20 @@ cdef class Matrix:
     def __repr__(self):
         return "Matrix({0})".format(self.__str__())
     
-    @staticmethod
-    cdef _binop(pa, pb, void (*op)(OILMatrix*, const OILMatrix*, const OILMatrix*), bint inplace):
-        cdef Matrix result, a, b
-        if not (isinstance(pa, Matrix) and isinstance(pb, Matrix)):
-            return NotImplemented
-        a = pa
-        b = pb
-        
-        if not inplace:
-            result = Matrix.__new__(Matrix)
-            op(&result._m, &a._m, &b._m)
-            return result
-        
-        op(&a._m, &a._m, &b._m)
-        return a
-    
     def __add__(a, b):
-        return Matrix._binop(a, b, &oil_matrix_add, False)
+        return matrix_binop(a, b, &oil_matrix_add, False)
     def __iadd__(self, x):
-        return Matrix._binop(self, x, &oil_matrix_add, True)
+        return matrix_binop(self, x, &oil_matrix_add, True)
     
     def __sub__(a, b):
-        return Matrix._binop(a, b, &oil_matrix_subtract, False)
+        return matrix_binop(a, b, &oil_matrix_subtract, False)
     def __isub__(self, x):
-        return Matrix._binop(self, x, &oil_matrix_subtract, True)
+        return matrix_binop(self, x, &oil_matrix_subtract, True)
     
     def __mul__(a, b):
-        return Matrix._binop(a, b, &oil_matrix_multiply, False)
+        return matrix_binop(a, b, &oil_matrix_multiply, False)
     def __imul__(self, x):
-        return Matrix._binop(self, x, &oil_matrix_multiply, True)
+        return matrix_binop(self, x, &oil_matrix_multiply, True)
     
     def __neg__(self):
         cdef Matrix result = Matrix.__new__(Matrix)
@@ -164,7 +164,6 @@ cdef void oil_python_flush(void* f):
 
 cdef class Image:
     """Encapsulates image data and image operations."""    
-    cdef OILImage *_im
     
     def __cinit__(self):
         pass
@@ -188,7 +187,8 @@ cdef class Image:
         cdef OILFile file
         
         if isinstance(path_or_file, str):
-            self._im = oil_image_load(path_or_file)
+            path = path_or_file.encode(sys.getfilesystemencoding())
+            self._im = oil_image_load(path)
         else:
             file.file = <void*>path_or_file
             file.read = &oil_python_read
@@ -201,7 +201,7 @@ cdef class Image:
         
         return self
     
-    def save(self, dest, int format, bint indexed=0, unsigned int palette_size=0):
+    def save(self, dest, OILFormatName format, bint indexed=0, unsigned int palette_size=0):
         """Save the Image object to a file."""
         cdef OILFile file
         cdef OILFormatOptions opts
@@ -214,7 +214,8 @@ cdef class Image:
         opts.palette_size = palette_size
         
         if isinstance(dest, str):
-            save_success = oil_image_save(self._im, dest, format, &opts)
+            destb = dest.encode(sys.getfilesystemencoding())
+            save_success = oil_image_save(self._im, destb, format, &opts)
         else:
             file.file = <void*>dest
             file.read = &oil_python_read

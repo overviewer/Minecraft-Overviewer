@@ -31,8 +31,8 @@ overviewer/oil.dylib
 
 # generated files
 overviewer/overviewer_version.py
-overviewer/oil/oil.c
-overviewer/chunkrenderer/chunkrenderer.c
+overviewer/oil/__init__.c
+overviewer/chunkrenderer/__init__.c
 
 # Mac OS X noise
 .DS_Store

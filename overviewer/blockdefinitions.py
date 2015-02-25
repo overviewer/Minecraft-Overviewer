@@ -33,45 +33,6 @@ vanilla Minecraft blocks.
 
 """
 
-class BlockModel(object):
-    """This represents a mesh, or a description of how to draw a model. It
-    includes the vertices, textures, and face definitions.
-
-    The C code expects this object to have the following attributes:
-    
-     * vertices: a list of (coordinate, texcoords, color) tuples,
-       where coordinate is a 3-tuple of numbers, texcoords is a
-       2-tuple, and color is a 4-tuple of integers between 0 and 255.
-
-     * faces: a list of ((pt, ...), type, texture) where pt is at least 3
-       integers corresponding to indexes into the vertices array. type is a
-       bitmask made from chunkrenderer.FACE_TYPE_* constants. texture is a
-       texture name or path.
-     
-    Note that the C code actually expects `triangles`, not `faces`. In this
-    implementation, `triangles` is generated from `faces`, which is
-    similarly-structured but may contain more than 3 indexes per face.
-
-    """
-    def __init__(self):
-        self.vertices = []
-        self.faces = []
-    
-    def copy(self):
-        """Returns a copy of self that can be mutated freely without
-        affecting the original model.
-        """
-        return copy.deepcopy(self)
-
-    @property
-    def triangles(self):
-        for indices, facetype, tex in self.faces:
-            first = indices[0]
-            a, b = tee(indices[1:])
-            next(b)
-            for i, j in zip(a, b):
-                yield ((first, i, j), facetype, tex)
-
 class BlockDefinition(object):
     """
     This represents the definition for a block, holding one or more BlockModel
