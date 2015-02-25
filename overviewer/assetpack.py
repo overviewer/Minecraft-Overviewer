@@ -103,8 +103,7 @@ class ZipAssetPack(AssetPack):
     def open(self, *path):
         return self.zip.open('/'.join(path))
 
-# FIXME: don't use snapshots after 1.8 is out
-def get_default(want_version='snapshot'):
+def get_default(want_version='release'):
     """Get the default assetpack, from an installed minecraft client. The
     version argument can be set to select a specific version, or you
     can use the special versions 'release' and 'snapshot' to select

@@ -17,7 +17,7 @@ try:
     from Cython.Build import cythonize
     USE_CYTHON = True
 except ImportError:
-    cythonize = lambda x: x
+    cythonize = lambda x, **kwargs: x
     USE_CYTHON = False
 
 # make sure our current working directory is the same directory
@@ -111,19 +111,18 @@ setup_kwargs['ext_modules'].append(Extension('overviewer.oil', oil_files, depend
 
 # chunkrenderer extension
 chunkrenderer_files = make_files('overviewer/chunkrenderer/', 'c', [
-        'chunkrenderer.c',
-        'blockdata.c',
+        'chunkrenderer.pyx',
 ])
 chunkrenderer_includes = make_files('overviewer/chunkrenderer/', 'h', [
         'buffer.h',
-        'chunkrenderer.h',
+        'indexing.h',
 ])
 
 # todo: better oil handling!
 output_name = 'overviewer/oil.so'
 if "nt" in os.name:
     output_name = 'overviewer/oil.pyd'
-#setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=['overviewer/oil'], depends=chunkrenderer_includes, extra_objects=[output_name]))
+setup_kwargs['ext_modules'].append(Extension('overviewer.chunkrenderer', chunkrenderer_files, include_dirs=['overviewer/oil'], depends=chunkrenderer_includes, extra_objects=[output_name]))
 
 # tell build_ext to build the extension in-place
 # (NOT in build/)
@@ -253,7 +252,7 @@ setup_kwargs['cmdclass']['build'] = CustomBuild
 setup_kwargs['cmdclass']['build_ext'] = CustomBuildExt
 ###
 
-setup_kwargs['ext_modules'] = cythonize(setup_kwargs['ext_modules'])
+setup_kwargs['ext_modules'] = cythonize(setup_kwargs['ext_modules'], include_path=['overviewer/oil/'])
 
 setup(**setup_kwargs)
 

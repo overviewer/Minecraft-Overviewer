@@ -1,9 +1,0 @@
-{
-    "type": "cube",
-    "top": "assets/minecraft/textures/blocks/crafting_table_top.png",
-    "bottom": "assets/minecraft/textures/blocks/crafting_table_top.png",
-    "front": "assets/minecraft/textures/blocks/crafting_table_front.png",
-    "back": "assets/minecraft/textures/blocks/crafting_table_front.png",
-    "left": "assets/minecraft/textures/blocks/crafting_table_side.png",
-    "right": "assets/minecraft/textures/blocks/crafting_table_side.png"
-}

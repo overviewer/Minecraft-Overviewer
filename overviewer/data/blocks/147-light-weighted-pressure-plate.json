@@ -1,9 +1,0 @@
-{
-    "type": "obj",
-    "file": "070-stone-pressure-plate.obj",
-    "transparent": true,
-    "transforms": [
-        {"type": "texreplace", "from": "stone",
-        "to": "assets/minecraft/textures/blocks/gold_block.png"}
-    ]
-}
