@@ -24,6 +24,7 @@ import urllib2
 import multiprocessing
 import itertools
 import gzip
+import json
 
 from collections import defaultdict
 from multiprocessing import Pool
@@ -44,6 +45,46 @@ def replaceBads(s):
         x = x.replace(bad,"_")
     return x
 
+# If you want to keep your stomach contents do not, under any circumstance,
+# read the body of the following function. You have been warned.
+# All of this could be replaced by a simple json.loads if Mojang had
+# introduced a TAG_JSON, but they didn't.
+#
+# So here are a few curiosities how 1.7 signs get seen in 1.8 in Minecraft:
+# - null        ->
+# - "null"      -> null
+# - ["Hello"]   -> Hello
+# - [Hello]     -> Hello
+# - [1,2,3]     -> 123
+# Mojang just broke signs for everyone who ever used [, { and ". GG.
+def jsonText(s):
+    if s is None or s == "null":
+        return ""
+    if (s.startswith('"') and s.endswith('"')) or \
+        (s.startswith('{') and s.endswith('}')):
+        try:
+            js = json.loads(s)
+        except ValueError:
+            return s
+
+        def parseLevel(foo):
+            bar = ""
+            if isinstance(foo, list):
+                for extra in foo:
+                    bar += parseLevel(extra)
+            elif isinstance(foo, dict):
+                if "text" in foo:
+                    bar += foo["text"]
+                if "extra" in foo:
+                    bar += parseLevel(foo["extra"])
+            elif isinstance(foo, basestring):
+                bar = foo
+            return bar
+
+        return parseLevel(js)
+
+    else:
+        return s
 
 # yes there's a double parenthesis here
 # see below for when this is called, and why we do this
@@ -59,6 +100,8 @@ def parseBucketChunks((bucket, rset, filters)):
         try:
             data = rset.get_chunk(b[0],b[1])
             for poi in itertools.chain(data['TileEntities'], data['Entities']):
+                if poi['id'] == 'Sign':
+                    poi = signWrangler(poi)
                 for name, filter_function in filters:
                     result = filter_function(poi)
                     if result:
@@ -75,6 +118,14 @@ def parseBucketChunks((bucket, rset, filters)):
             logging.info("Found %d markers in thread %d so far at %d chunks", sum(len(v) for v in markers.itervalues()), pid, cnt);
 
     return markers
+
+def signWrangler(poi):
+    """
+    Just does the JSON things for signs
+    """
+    for field in ["Text1", "Text2", "Text3", "Text4"]:
+        poi[field] = jsonText(poi[field])
+    return poi
 
 
 def handleEntities(rset, config, filters, markers):
@@ -97,6 +148,8 @@ def handleEntities(rset, config, filters, markers):
             try:
                 data = rset.get_chunk(x, z)
                 for poi in itertools.chain(data['TileEntities'], data['Entities']):
+                    if poi['id'] == 'Sign': # kill me
+                        poi = signWrangler(poi)
                     for name, __, filter_function, __, __, __ in filters:
                         result = filter_function(poi)
                         if result:
