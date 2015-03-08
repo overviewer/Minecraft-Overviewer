@@ -47,7 +47,19 @@ def replaceBads(s):
 
 # If you want to keep your stomach contents do not, under any circumstance,
 # read the body of the following function. You have been warned.
+# All of this could be replaced by a simple json.loads if Mojang had
+# introduced a TAG_JSON, but they didn't.
+#
+# So here are a few curiosities how 1.7 signs get seen in 1.8 in Minecraft:
+# - null        ->
+# - "null"      -> null
+# - ["Hello"]   -> Hello
+# - [Hello]     -> Hello
+# - [1,2,3]     -> 123
+# Mojang just broke signs for everyone who ever used [, { and ". GG.
 def jsonText(s):
+    if s is None or s == "null":
+        return ""
     if (s.startswith('"') and s.endswith('"')) or \
         (s.startswith('{') and s.endswith('}')):
         try:
@@ -60,15 +72,14 @@ def jsonText(s):
             if isinstance(foo, list):
                 for extra in foo:
                     bar += parseLevel(extra)
-                return bar
-            if isinstance(foo, dict):
+            elif isinstance(foo, dict):
                 if "text" in foo:
                     bar += foo["text"]
                 if "extra" in foo:
                     bar += parseLevel(foo["extra"])
-                return bar
             elif isinstance(foo, basestring):
-                return foo
+                bar = foo
+            return bar
 
         return parseLevel(js)
 
