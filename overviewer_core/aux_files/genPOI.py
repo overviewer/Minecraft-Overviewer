@@ -504,7 +504,7 @@ def main():
     sfilters = sorted(filters, key=keyfunc)
     for rname, rname_filters in itertools.groupby(sfilters, keyfunc):
         manualpois = config['renders'][rname]['manualpois']
-        handleManual(manualpois, rname_filters, markers)
+        handleManual(manualpois, list(rname_filters), markers)
 
     logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
