@@ -24,7 +24,6 @@ import urllib2
 import multiprocessing
 import itertools
 import gzip
-import json
 
 from collections import defaultdict
 from multiprocessing import Pool
