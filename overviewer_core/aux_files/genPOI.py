@@ -24,7 +24,6 @@ import urllib2
 import multiprocessing
 import itertools
 import gzip
-import json
 
 from collections import defaultdict
 from multiprocessing import Pool
@@ -504,7 +503,7 @@ def main():
     sfilters = sorted(filters, key=keyfunc)
     for rname, rname_filters in itertools.groupby(sfilters, keyfunc):
         manualpois = config['renders'][rname]['manualpois']
-        handleManual(manualpois, rname_filters, markers)
+        handleManual(manualpois, list(rname_filters), markers)
 
     logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
