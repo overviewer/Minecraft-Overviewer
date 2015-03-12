@@ -494,7 +494,7 @@ def main():
         keyfunc = lambda x: x[4]
         sfilters = sorted(filters, key=keyfunc)
         for worldpath, worldpath_filters in itertools.groupby(sfilters, keyfunc):
-            handlePlayers(worldpath, worldpath_filters, markers)
+            handlePlayers(worldpath, list(worldpath_filters), markers)
 
     # add manual POIs
     # group filters by name of the render, because only filter functions for
