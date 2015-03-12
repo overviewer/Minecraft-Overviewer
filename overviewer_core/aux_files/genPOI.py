@@ -97,7 +97,7 @@ def initBucketChunks(config_path):
     for name, render in config['renders'].iteritems():
         for f in render['markers']:
             ff = f['filterFunction']
-            bucketChunkFuncs[ff.__name__] == ff
+            bucketChunkFuncs[ff.__name__] = ff
 
 # yes there's a double parenthesis here
 # see below for when this is called, and why we do this
