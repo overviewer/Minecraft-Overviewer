@@ -14,16 +14,16 @@ markers.js holds a list of which markerSets are attached to each tileSet
 
 
 '''
-import os
-import time
-import logging
-import json
-import sys
-import re
-import urllib2
-import multiprocessing
-import itertools
 import gzip
+import itertools
+import json
+import logging
+import multiprocessing
+import os
+import re
+import sys
+import time
+import urllib2
 
 from collections import defaultdict
 from multiprocessing import Pool
