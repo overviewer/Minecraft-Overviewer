@@ -14,16 +14,16 @@ markers.js holds a list of which markerSets are attached to each tileSet
 
 
 '''
-import os
-import time
-import logging
-import json
-import sys
-import re
-import urllib2
-import multiprocessing
-import itertools
 import gzip
+import itertools
+import json
+import logging
+import multiprocessing
+import os
+import re
+import sys
+import time
+import urllib2
 
 from collections import defaultdict
 from multiprocessing import Pool
@@ -499,7 +499,7 @@ def main():
         keyfunc = lambda x: x[4]
         sfilters = sorted(filters, key=keyfunc)
         for worldpath, worldpath_filters in itertools.groupby(sfilters, keyfunc):
-            handlePlayers(worldpath, worldpath_filters, markers)
+            handlePlayers(worldpath, list(worldpath_filters), markers)
 
     # add manual POIs
     # group filters by name of the render, because only filter functions for
