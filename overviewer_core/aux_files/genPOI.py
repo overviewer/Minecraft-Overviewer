@@ -32,7 +32,6 @@ from optparse import OptionParser
 from overviewer_core import logger
 from overviewer_core import nbt
 from overviewer_core import configParser, world
-from overviewer_core import rendermodes
 
 UUID_LOOKUP_URL = 'https://sessionserver.mojang.com/session/minecraft/profile/'
 
@@ -85,11 +84,27 @@ def jsonText(s):
     else:
         return s
 
+# Since functions are not pickleable, we send their names instead.
+# Here, set up worker processes to have a name -> function map
+bucketChunkFuncs = {}
+def initBucketChunks(config_path):
+    global bucketChunkFuncs
+    
+    mw_parser = configParser.MultiWorldParser()
+    mw_parser.parse(config_path)
+    # ought not to fail since we already did it once
+    config = mw_parser.get_validated_config()
+    for name, render in config['renders'].iteritems():
+        for f in render['markers']:
+            ff = f['filterFunction']
+            bucketChunkFuncs[ff.__name__] == ff
+
 # yes there's a double parenthesis here
 # see below for when this is called, and why we do this
 # a smarter way would be functools.partial, but that's broken on python 2.6
 # when used with multiprocessing
 def parseBucketChunks((bucket, rset, filters)):
+    global bucketChunkFuncs
     pid = multiprocessing.current_process().pid
     markers = defaultdict(list)
 
@@ -102,7 +117,8 @@ def parseBucketChunks((bucket, rset, filters)):
                 if poi['id'] == 'Sign':
                     poi = signWrangler(poi)
                 for name, filter_function in filters:
-                    result = filter_function(poi)
+                    ff = bucketChunkFuncs[filter_function]
+                    result = ff(poi)
                     if result:
                         d = create_marker_from_filter_result(poi, result)
                         markers[name].append(d)
@@ -127,7 +143,7 @@ def signWrangler(poi):
     return poi
 
 
-def handleEntities(rset, config, filters, markers):
+def handleEntities(rset, config, config_path, filters, markers):
     """
     Add markers for Entities or TileEntities.
 
@@ -169,10 +185,10 @@ def handleEntities(rset, config, filters, markers):
             logging.info("Buckets has %d entries", len(b));
   
         # Create a pool of processes and run all the functions
-        pool = Pool(processes=numbuckets)
+        pool = Pool(processes=numbuckets, initializer=initBucketChunks, initargs=(config_path,))
 
         # simplify the filters dict, so pickle doesn't have to do so much
-        filters = [(name, filter_function) for name, __, filter_function, __, __, __ in filters]
+        filters = [(name, filter_function.__name__) for name, __, filter_function, __, __, __ in filters]
 
         results = pool.map(parseBucketChunks, ((buck, rset, filters) for buck in buckets))
   
@@ -452,17 +468,6 @@ def main():
             # internal identifier for this filter
             name = replaceBads(f['name']) + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
 
-            # we need to make the function pickleable for multiprocessing to
-            # work
-            # We set a custom prefix here to not override any functions there.
-            # These functions are only pickleable if they are bound to a
-            # module. Since rendermodes imports the config, they are bound to
-            # it anyway, but don't end up importable as
-            # `rendermodes.filter_fn`. That's why we set it here explicitly on
-            # the module.
-            f['filterFunction'].__name__ = "custom_filter_" + f['filterFunction'].__name__
-            setattr(rendermodes, f['filterFunction'].__name__, f['filterFunction'])
-
             # add it to the list of filters
             filters.add((name, f['name'], f['filterFunction'], rset, worldpath, rname))
 
@@ -484,7 +489,7 @@ def main():
         keyfunc = lambda x: x[3]
         sfilters = sorted(filters, key=keyfunc)
         for rset, rset_filters in itertools.groupby(sfilters, keyfunc):
-            handleEntities(rset, config, rset_filters, markers)
+            handleEntities(rset, config, options.config, rset_filters, markers)
 
     # apply filters to players
     if not options.skipplayers:
