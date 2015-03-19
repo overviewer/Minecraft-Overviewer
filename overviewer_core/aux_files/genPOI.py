@@ -489,7 +489,7 @@ def main():
         keyfunc = lambda x: x[3]
         sfilters = sorted(filters, key=keyfunc)
         for rset, rset_filters in itertools.groupby(sfilters, keyfunc):
-            handleEntities(rset, config, options.config, rset_filters, markers)
+            handleEntities(rset, config, options.config, list(rset_filters), markers)
 
     # apply filters to players
     if not options.skipplayers:
