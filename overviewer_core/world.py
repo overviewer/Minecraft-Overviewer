@@ -312,7 +312,7 @@ class RegionSet(object):
             return region
     
     #@log_other_exceptions
-    def get_chunk(self, x, z):
+    def get_chunk(self, x, z, entities_only=False):
         """Returns a dictionary object representing the "Level" NBT Compound
         structure for a chunk given its x, z coordinates. The coordinates given
         are chunk coordinates. Raises ChunkDoesntExist exception if the given
@@ -395,66 +395,21 @@ class RegionSet(object):
         chunk_data['Biomes'] = biomes
 
         for section in chunk_data['Sections']:
+            if not entities_only:
+                section['Blocks'] = extract_blocks(section)
+                try:
+                    section['SkyLight'] = extract_skylight(section)
+                    section['BlockLight'] = extract_blocklight(section)
+                except ValueError:
+                    # Iv'e seen at least 1 case where numpy raises a ValueError
+                    # during the reshapes.  I'm not sure what's going on here,
+                    # but let's treat this as a corrupt chunk error.
+                    logging.warning("There was a problem reading chunk %d,%d.  It might be corrupt.  I am giving up and will not render this particular chunk.", x, z)
 
-            # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
-            # adding in the additional block array if included.
-            blocks = numpy.frombuffer(section['Blocks'], dtype=numpy.uint8)
-            # Cast up to uint16, blocks can have up to 12 bits of data
-            blocks = blocks.astype(numpy.uint16)
-            blocks = blocks.reshape((16,16,16))
-            if "Add" in section:
-                # This section has additional bits to tack on to the blocks
-                # array. Add is a packed array with 4 bits per slot, so
-                # it needs expanding
-                additional = numpy.frombuffer(section['Add'], dtype=numpy.uint8)
-                additional = additional.astype(numpy.uint16).reshape((16,16,8))
-                additional_expanded = numpy.empty((16,16,16), dtype=numpy.uint16)
-                additional_expanded[:,:,::2] = (additional & 0x0F) << 8
-                additional_expanded[:,:,1::2] = (additional & 0xF0) << 4
-                blocks += additional_expanded
-                del additional
-                del additional_expanded
-                del section['Add'] # Save some memory
-            section['Blocks'] = blocks
-
-            # Turn the skylight array into a 16x16x16 matrix. The array comes
-            # packed 2 elements per byte, so we need to expand it.
-            try:
-                skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
-                skylight = skylight.reshape((16,16,8))
-                skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-                skylight_expanded[:,:,::2] = skylight & 0x0F
-                skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
-                del skylight
-                section['SkyLight'] = skylight_expanded
-
-                # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
-                blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
-                blocklight = blocklight.reshape((16,16,8))
-                blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-                blocklight_expanded[:,:,::2] = blocklight & 0x0F
-                blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
-                del blocklight
-                section['BlockLight'] = blocklight_expanded
-
-                # Turn the Data array into a 16x16x16 matrix, same as SkyLight
-                data = numpy.frombuffer(section['Data'], dtype=numpy.uint8)
-                data = data.reshape((16,16,8))
-                data_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-                data_expanded[:,:,::2] = data & 0x0F
-                data_expanded[:,:,1::2] = (data & 0xF0) >> 4
-                del data
-                section['Data'] = data_expanded
-            except ValueError:
-                # iv'e seen at least 1 case where numpy raises a value error during the reshapes.  i'm not
-                # sure what's going on here, but let's treat this as a corrupt chunk error
-                logging.warning("There was a problem reading chunk %d,%d.  It might be corrupt.  I am giving up and will not render this particular chunk.", x, z)
-
-                logging.debug("Full traceback:", exc_info=1)
-                raise nbt.CorruptChunkError()
-        
+                    logging.debug("Full traceback:", exc_info=1)
+                    raise nbt.CorruptChunkError()
+            section['Data'] = extract_data(section)
         return chunk_data      
-    
 
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates
@@ -537,6 +492,59 @@ class RegionSet(object):
                 if abs(x) > 500000 or abs(y) > 500000:
                     logging.warning("Holy shit what is up with region file %s !?" % f)
                 yield (x, y, os.path.join(self.regiondir, f))
+
+def extract_blocks(section):
+    # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
+    # adding in the additional block array if included.
+    blocks = numpy.frombuffer(section['Blocks'], dtype=numpy.uint8)
+    # Cast up to uint16, blocks can have up to 12 bits of data
+    blocks = blocks.astype(numpy.uint16)
+    blocks = blocks.reshape((16,16,16))
+    if 'Add' in section:
+        # This section has additional bits to tack on to the blocks
+        # array. Add is a packed array with 4 bits per slot, so
+        # it needs expanding
+        additional = numpy.frombuffer(section['Add'], dtype=numpy.uint8)
+        additional = additional.astype(numpy.uint16).reshape((16,16,8))
+        additional_expanded = numpy.empty((16,16,16), dtype=numpy.uint16)
+        additional_expanded[:,:,::2] = (additional & 0x0F) << 8
+        additional_expanded[:,:,1::2] = (additional & 0xF0) << 4
+        blocks += additional_expanded
+        del additional
+        del additional_expanded
+        del section['Add'] # Save some memory
+    return blocks
+
+def extract_skylight(section):
+    # Turn the skylight array into a 16x16x16 matrix. The array comes
+    # packed 2 elements per byte, so we need to expand it.
+    skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
+    skylight = skylight.reshape((16,16,8))
+    skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+    skylight_expanded[:,:,::2] = skylight & 0x0F
+    skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
+    del skylight
+    return skylight_expanded
+
+def extract_blocklight(section):
+    # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
+    blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
+    blocklight = blocklight.reshape((16,16,8))
+    blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+    blocklight_expanded[:,:,::2] = blocklight & 0x0F
+    blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
+    del blocklight
+    return blocklight_expanded
+
+def extract_data(section):
+    # Turn the Data array into a 16x16x16 matrix, same as SkyLight
+    data = numpy.frombuffer(section['Data'], dtype=numpy.uint8)
+    data = data.reshape((16,16,8))
+    data_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+    data_expanded[:,:,::2] = data & 0x0F
+    data_expanded[:,:,1::2] = (data & 0xF0) >> 4
+    del data
+    return data_expanded
 
 class RegionSetWrapper(object):
     """This is the base class for all "wrappers" of RegionSet objects. A
