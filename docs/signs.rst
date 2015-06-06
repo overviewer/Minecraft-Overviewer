@@ -220,6 +220,9 @@ POI markers. For example::
 .. note::
     A --genpoi run will NOT generate a map render, it will only generate markers.
 
+If all went well, you will see a "Markers" button in the upper-right corner of
+your map.
+
 genPOI.py
 ---------
 
