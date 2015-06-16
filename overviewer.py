@@ -19,10 +19,10 @@ import platform
 import sys
 
 # quick version check
-if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
+if sys.version_info < (2, 6, 0):
     print("Sorry, the Overviewer requires at least Python 2.6 to run")
-    if sys.version_info[0] >= 3:
-        print("and will not run on Python 3.0 or later")
+    if sys.version_info >= (3, 0, 0):
+        print("Overviewer does not run on Python 3.0 or later")
     sys.exit(1)
 
 import os
@@ -359,7 +359,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
                 logging.warning(checkname + " ignoring render " + repr(name) + " since it's marked as \"don't render\".")
             else:
                 render['renderchecks'] = num
-        
+
     if options.forcerender:
         logging.info("Forcerender mode activated. ALL tiles will be rendered")
         set_renderchecks("forcerender", 2)
@@ -425,7 +425,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # create our asset manager... ASSMAN
     assetMrg = assetmanager.AssetManager(destdir, config.get('customwebassets', None))
 
-    # If we've been asked to update web assets, do that and then exit 
+    # If we've been asked to update web assets, do that and then exit
     if options.update_web_assets:
         assetMrg.output_noconfig()
         logging.info("Web assets have been updated")
@@ -480,7 +480,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             texcache[texopts_key] = tex
         else:
             tex = texcache[texopts_key]
-    
+
         try:
             logging.debug("Asking for regionset %r" % render['dimension'][1])
             rset = w.get_regionset(render['dimension'][1])
@@ -564,8 +564,8 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     if options.pid:
         os.remove(options.pid)
 
-    logging.info("Your render has been written to '%s', open index.html to view it" % destdir)    
-        
+    logging.info("Your render has been written to '%s', open index.html to view it" % destdir)
+
     return 0
 
 def list_worlds():

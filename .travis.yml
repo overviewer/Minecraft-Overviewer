@@ -1,16 +1,16 @@
+sudo: false
 language: python
 python:
   - "2.6"
   - "2.7"
-  # - "3.2"
 env:
   - MC_VERSION=1.8
-before_install:
-  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/Imaging.h
-  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/ImPlatform.h
 install:
-  - pip install -q pillow
-  - pip install -q numpy
+  - mkdir -p Imaging/libImaging
+  - curl -L -o Imaging/libImaging/Imaging.h http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/Imaging.h
+  - curl -L -o Imaging/libImaging/ImPlatform.h http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/ImPlatform.h
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -r requirements-2.6.txt --download-cache $HOME/.pip-cache; fi
+  - if [[ $TRAVIS_PYTHON_VERSION != '2.6' ]]; then pip install -r requirements.txt --download-cache $HOME/.pip-cache; fi
   - python setup.py build
 before_script:
   - git clone git://github.com/overviewer/Minecraft-Overviewer-Addons.git ~/mcoa/
@@ -26,6 +26,3 @@ notifications:
     skip_join: true
     template:
       - "\x0313Minecraft-Overviewer\x03/\x0306%{branch}\x03 \x0314%{commit}\x03 %{build_url} %{message}"
-# matrix:
-  # allow_failures:
-    # - python: "3.2"
