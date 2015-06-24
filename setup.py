@@ -183,7 +183,7 @@ c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
 c_overviewer_files = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_files)
 c_overviewer_includes = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_includes)
 
-setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
+setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files + c_overviewer_includes, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
 
 
 # tell build_ext to build the extension in-place
