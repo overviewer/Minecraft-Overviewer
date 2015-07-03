@@ -1172,13 +1172,13 @@ StructureOverlay
 
     Example::
 
-        MineralOverlay(minerals=[(((0, 0, 0, 66), (0, -1, 0, 4)), (255, 0, 0, 255)),
-                                 (((0, 0, 0, 27), (0, -1, 0, 4)), (0, 255, 0, 255))])
+        StructureOverlay(structures=[(((0, 0, 0, 66), (0, -1, 0, 4)), (255, 0, 0, 255)),
+                                     (((0, 0, 0, 27), (0, -1, 0, 4)), (0, 255, 0, 255))])
 
     In this example all rails(66) on top of cobblestone are rendered in
     pure red. And all powerrails(27) are rendered in green.
 
-    If ``minerals`` is not provided, a default rail coloring is used.
+    If ``structures`` is not provided, a default rail coloring is used.
 
 BiomeOverlay
     Color the map according to the biome at that point. Either use on
