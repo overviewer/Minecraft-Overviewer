@@ -513,7 +513,8 @@ def main():
     logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
 
-    PlayerDict.save_cache(destdir)
+    if not options.skipplayers:
+        PlayerDict.save_cache(destdir)
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
         output.write("var markersDB=")
