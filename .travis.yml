@@ -5,6 +5,9 @@ python:
   # - "3.2"
 env:
   - MC_VERSION=1.8
+before_install:
+  - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/libImaging/Imaging.h
+  - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/libImaging/ImPlatform.h
 install:
   - pip install -q pillow
   - pip install -q numpy
@@ -20,7 +23,6 @@ notifications:
   irc:
     channels:
       - "chat.freenode.net#overviewer"
-    skip_join: true
     template:
       - "\x0313Minecraft-Overviewer\x03/\x0306%{branch}\x03 \x0314%{commit}\x03 %{build_url} %{message}"
 # matrix:
