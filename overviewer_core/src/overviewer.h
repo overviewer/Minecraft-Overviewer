@@ -32,6 +32,8 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <Imaging.h>
+/* Fix Pillow on mingw-w64 which includes windows.h in Imaging.h */
+#undef TRANSPARENT
 
 /* like (a * b + 127) / 255), but much faster on most platforms
    from PIL's _imaging.c */
