@@ -72,6 +72,36 @@ then try the following::
 
 If the build was successful, there should be a c_overviewer.pyd file in your current working directory.
 
+Building with mingw-w64 and msys2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the recommended way to build on Windows without MSVC.
+
+1. Install msys2 by following **all** the instructions on 
+   `the msys2 installation page <https://msys2.github.io/>`_.
+
+2. Install the dependencies::
+
+    pacman -S git mingw-w64-x86_64-python2-numpy mingw-w64-x86_64-python2-Pillow mingw-w64-x86_64-python2 mingw-w64-x86_64-toolchain
+
+3. Clone the Minecraft-Overviewer git repository::
+
+    git clone https://github.com/overviewer/Minecraft-Overviewer.git
+
+   The source code will be downloaded to your msys2 home directory, e.g.
+   ``C:\msys2\home\Potato\Minecraft-Overviewer``
+
+4. Close the msys2 shell. Instead, open the MinGW64 shell.
+
+5. Build the Overviewer by changing your current working directory into the source
+   directory and executing the build script::
+
+    cd Minecraft-Overviewer
+    python2 setup.py build
+
+After it finishes, you should now be able to execute ``overviewer.py`` from the MINGW64
+shell.
+
 Building with mingw
 ~~~~~~~~~~~~~~~~~~~
 
