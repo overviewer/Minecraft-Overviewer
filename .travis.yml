@@ -5,9 +5,6 @@ python:
   # - "3.2"
 env:
   - MC_VERSION=1.8
-before_install:
-  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/Imaging.h
-  - wget http://hg.effbot.org/pil-117/raw/f356a1f64271/libImaging/ImPlatform.h
 install:
   - pip install -q pillow
   - pip install -q numpy
@@ -22,7 +19,7 @@ notifications:
   email: false
   irc:
     channels:
-      - "irc.freenode.org#overviewer"
+      - "chat.freenode.net#overviewer"
     skip_join: true
     template:
       - "\x0313Minecraft-Overviewer\x03/\x0306%{branch}\x03 \x0314%{commit}\x03 %{build_url} %{message}"
