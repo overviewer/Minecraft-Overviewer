@@ -125,7 +125,7 @@ class advpng(Optimizer, PNGOptimizer):
     binaryname = "advpng"
     crusher = True
 
-    def __init__(self, olevel=3)
+    def __init__(self, olevel=3):
         self.olevel = olevel
 
     def optimize(self, img):
