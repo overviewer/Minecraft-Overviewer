@@ -360,6 +360,7 @@ class RegionSet(object):
                     time.sleep(0.5)
                     continue
                 else:
+                    logging.warning("The following was encountered while reading from %s:", self.regiondir)
                     if isinstance(e, nbt.CorruptRegionError):
                         logging.warning("Tried several times to read chunk %d,%d. Its region (%d,%d) may be corrupt. Giving up.",
                                 x, z,x//32,z//32)
@@ -467,7 +468,7 @@ class RegionSet(object):
             try:
                 mcr = self._get_regionobj(regionfile)
             except nbt.CorruptRegionError:
-                logging.warning("Found a corrupt region file at %s,%s. Skipping it.", regionx, regiony)
+                logging.warning("Found a corrupt region file at %s,%s in %s, Skipping it.", regionx, regiony, self.regiondir)
                 continue
             for chunkx, chunky in mcr.get_chunks():
                 yield chunkx+32*regionx, chunky+32*regiony, mcr.get_chunk_timestamp(chunkx, chunky)
@@ -487,7 +488,7 @@ class RegionSet(object):
             try:
                 mcr = self._get_regionobj(regionfile)
             except nbt.CorruptRegionError:
-                logging.warning("Found a corrupt region file at %s,%s. Skipping it.", regionx, regiony)
+                logging.warning("Found a corrupt region file at %s,%s in %s, Skipping it.", regionx, regiony, self.regiondir)
                 continue
 
             for chunkx, chunky in mcr.get_chunks():
