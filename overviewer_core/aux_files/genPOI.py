@@ -466,7 +466,7 @@ def main():
         # find filters for this render
         for f in render['markers']:
             # internal identifier for this filter
-            name = replaceBads(f['name']) + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rset))[-4:]
+            name = replaceBads(f['name']) + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rname))[-4:]
 
             # add it to the list of filters
             filters.add((name, f['name'], f['filterFunction'], rset, worldpath, rname))
