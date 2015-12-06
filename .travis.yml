@@ -4,7 +4,7 @@ python:
   - "2.7"
   # - "3.2"
 env:
-  - MC_VERSION=15w49b
+  - MC_VERSION=1.8
 before_install:
   - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/libImaging/Imaging.h
   - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/libImaging/ImPlatform.h
