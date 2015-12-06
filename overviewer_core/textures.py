@@ -2177,8 +2177,8 @@ def farmlands(self, blockid, data):
             top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_dry.png")
 			
     #else:
-    #    top = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_top.png")
-    #    side = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_side.png")
+        top = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_side.png")
 
     # cut the side texture in 15/16
     mask = side.crop((0,15,16,16))
