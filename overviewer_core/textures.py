@@ -2168,7 +2168,7 @@ def crops(self, blockid, data):
     return img
 
 # farmland and grass path (15/16 blocks)
-@material(blockid=60, data=range(9), solid=True)
+@material(blockid=[60,208], data=range(9), solid=True)
 def farmlands(self, blockid, data):
     if blockid == 60:
         side = self.load_image_texture("assets/minecraft/textures/blocks/dirt.png")
@@ -2176,7 +2176,7 @@ def farmlands(self, blockid, data):
         if data == 0:
             top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_dry.png")
 			
-    #else:
+    else:
         top = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_top.png")
         side = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_side.png")
 

@@ -165,6 +165,7 @@ items = {
     173: 'Block of Coal',
     174: 'Packed Ice',
     175: 'Large Flowers',
+	208: 'Grass Path'
     256: 'Iron Shovel',
     257: 'Iron Pickaxe',
     258: 'Iron Axe',
