@@ -2175,6 +2175,7 @@ def farmland_and_grass_path(self, blockid, data):
         top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_wet.png")
         if data == 0:
             top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_dry.png")
+			
     else:
         top = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_top.png")
         side = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_side.png")
