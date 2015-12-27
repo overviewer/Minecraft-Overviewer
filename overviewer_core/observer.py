@@ -234,7 +234,7 @@ class JSObserver(Observer):
         else:
             raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
         if not os.path.exists(outputdir):
-            raise Exception("JSObserver: Output directory specified (%s) doesn't appear to exist. This should be the same as the Overviewer output directory")
+            raise Exception("JSObserver: Output directory specified (%s) doesn't appear to exist. This should be the same as the Overviewer output directory" % outputdir)
 
         self.logfile = open(os.path.join(outputdir, "progress.json"), "w+", 0)
         self.json["message"]="Render starting..."
