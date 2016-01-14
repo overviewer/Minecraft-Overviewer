@@ -24,6 +24,7 @@ import re
 import sys
 import time
 import urllib2
+import datetime
 
 from collections import defaultdict
 from multiprocessing import Pool
@@ -32,6 +33,7 @@ from optparse import OptionParser
 from overviewer_core import logger
 from overviewer_core import nbt
 from overviewer_core import configParser, world
+from overviewer_core.files import FileReplacer
 
 UUID_LOOKUP_URL = 'https://sessionserver.mojang.com/session/minecraft/profile/'
 
@@ -210,9 +212,21 @@ class PlayerDict(dict):
     def load_cache(cls, outputdir):
         cache_file = os.path.join(outputdir, "uuidcache.dat")
         if os.path.exists(cache_file):
-            gz = gzip.GzipFile(cache_file) 
-            cls.uuid_cache = json.load(gz)
-            logging.info("Loaded UUID cache from %r with %d entries", cache_file, len(cls.uuid_cache.keys()))
+            try:
+                gz = gzip.GzipFile(cache_file) 
+                cls.uuid_cache = json.load(gz)
+                logging.info("Loaded UUID cache from %r with %d entries", cache_file, len(cls.uuid_cache.keys()))
+            except (ValueError, IOError):
+                logging.warning("Failed to load UUID cache -- it might be corrupt")
+                cls.uuid_cache = {}
+                corrupted_cache = cache_file + ".corrupted." + datetime.datetime.now().isoformat()
+                try:
+                    os.rename(cache_file, corrupted_cache)
+                    logging.warning("If %s does not appear to contain meaningful data, you may safely delete it", corrupted_cache)
+                except OSError:
+                    logging.warning("Failed to backup corrupted UUID cache")
+
+                logging.info("Initialized an empty UUID cache")
         else:
             cls.uuid_cache = {}
             logging.info("Initialized an empty UUID cache")
@@ -220,9 +234,11 @@ class PlayerDict(dict):
     @classmethod
     def save_cache(cls, outputdir):
         cache_file = os.path.join(outputdir, "uuidcache.dat")
-        gz = gzip.GzipFile(cache_file, "wb")
-        json.dump(cls.uuid_cache, gz)
-        logging.info("Wrote UUID cache with %d entries", len(cls.uuid_cache.keys()))
+
+        with FileReplacer(cache_file) as cache_file_name:
+            gz = gzip.GzipFile(cache_file_name, "wb")
+            json.dump(cls.uuid_cache, gz)
+            logging.info("Wrote UUID cache with %d entries", len(cls.uuid_cache.keys()))
 
     def __getitem__(self, item):
         if item == "EntityId":
