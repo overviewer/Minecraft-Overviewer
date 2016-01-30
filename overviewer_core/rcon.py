@@ -68,7 +68,8 @@ class RConConnection():
         if not toread:
             raise RConException(self.rid, "Request timed out.")
 
-        res_len, res_id, res_type = struct.unpack("<iii", self.sock.recv(12))
+        res_len, res_id, res_type = \
+            struct.unpack("<iii", self.sock.recv(12, socket.MSG_WAITALL))
         res_data = self.sock.recv(res_len - 4 - 4)
         res_data = res_data[:-2]
         
