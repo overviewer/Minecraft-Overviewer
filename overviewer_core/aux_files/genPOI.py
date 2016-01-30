@@ -213,9 +213,10 @@ class PlayerDict(dict):
         cache_file = os.path.join(outputdir, "uuidcache.dat")
         if os.path.exists(cache_file):
             try:
-                gz = gzip.GzipFile(cache_file) 
-                cls.uuid_cache = json.load(gz)
-                logging.info("Loaded UUID cache from %r with %d entries", cache_file, len(cls.uuid_cache.keys()))
+                with gzip.GzipFile(cache_file) as gz:
+                    cls.uuid_cache = json.load(gz)
+                    logging.info("Loaded UUID cache from %r with %d entries",
+                                 cache_file, len(cls.uuid_cache.keys()))
             except (ValueError, IOError):
                 logging.warning("Failed to load UUID cache -- it might be corrupt")
                 cls.uuid_cache = {}
@@ -236,9 +237,10 @@ class PlayerDict(dict):
         cache_file = os.path.join(outputdir, "uuidcache.dat")
 
         with FileReplacer(cache_file) as cache_file_name:
-            gz = gzip.GzipFile(cache_file_name, "wb")
-            json.dump(cls.uuid_cache, gz)
-            logging.info("Wrote UUID cache with %d entries", len(cls.uuid_cache.keys()))
+            with gzip.GzipFile(cache_file_name, "wb") as gz:
+                json.dump(cls.uuid_cache, gz)
+                logging.info("Wrote UUID cache with %d entries",
+                             len(cls.uuid_cache.keys()))
 
     def __getitem__(self, item):
         if item == "EntityId":
