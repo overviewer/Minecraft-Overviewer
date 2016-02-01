@@ -33,6 +33,7 @@ from optparse import OptionParser
 from overviewer_core import logger
 from overviewer_core import nbt
 from overviewer_core import configParser, world
+from overviewer_core.files import FileReplacer
 
 UUID_LOOKUP_URL = 'https://sessionserver.mojang.com/session/minecraft/profile/'
 
@@ -233,13 +234,11 @@ class PlayerDict(dict):
     @classmethod
     def save_cache(cls, outputdir):
         cache_file = os.path.join(outputdir, "uuidcache.dat")
-        try:
-            gz = gzip.GzipFile(cache_file + ".tmp", "wb")
+
+        with FileReplacer(cache_file) as cache_file_name:
+            gz = gzip.GzipFile(cache_file_name, "wb")
             json.dump(cls.uuid_cache, gz)
-            os.rename(cache_file + ".tmp", cache_file)
             logging.info("Wrote UUID cache with %d entries", len(cls.uuid_cache.keys()))
-        except (IOError, OSError):
-            logging.warning("Failed to save UUID cache!")
 
     def __getitem__(self, item):
         if item == "EntityId":
