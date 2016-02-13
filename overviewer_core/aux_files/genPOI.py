@@ -27,6 +27,7 @@ import urllib2
 import datetime
 
 from collections import defaultdict
+from contextlib import closing
 from multiprocessing import Pool
 from optparse import OptionParser
 
@@ -213,7 +214,7 @@ class PlayerDict(dict):
         cache_file = os.path.join(outputdir, "uuidcache.dat")
         if os.path.exists(cache_file):
             try:
-                with gzip.GzipFile(cache_file) as gz:
+                with closing(gzip.GzipFile(cache_file)) as gz:
                     cls.uuid_cache = json.load(gz)
                     logging.info("Loaded UUID cache from %r with %d entries",
                                  cache_file, len(cls.uuid_cache.keys()))
@@ -237,7 +238,7 @@ class PlayerDict(dict):
         cache_file = os.path.join(outputdir, "uuidcache.dat")
 
         with FileReplacer(cache_file) as cache_file_name:
-            with gzip.GzipFile(cache_file_name, "wb") as gz:
+            with closing(gzip.GzipFile(cache_file_name, "wb")) as gz:
                 json.dump(cls.uuid_cache, gz)
                 logging.info("Wrote UUID cache with %d entries",
                              len(cls.uuid_cache.keys()))
