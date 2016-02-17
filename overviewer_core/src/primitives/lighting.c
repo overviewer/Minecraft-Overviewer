@@ -95,7 +95,7 @@ calculate_light_color_fancy_night(void *data,
  * may (and probably should) pass NULL.
  */
 
-inline unsigned char
+unsigned char
 estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
                          int x, int y, int z, int *authoratative) {
 
