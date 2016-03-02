@@ -3998,7 +3998,12 @@ def cocoa_plant(self, blockid, data):
     return img
 
 # command block
-block(blockid=137, top_image="assets/minecraft/textures/blocks/command_block.png")
+@material(blockid=137, solid=True, nodata=True)
+def command_block(self, blockid, data):
+    front = self.load_image_texture("assets/minecraft/textures/blocks/command_block_front.png")
+    side = self.load_image_texture("assets/minecraft/textures/blocks/command_block_side.png")
+    back = self.load_image_texture("assets/minecraft/textures/blocks/command_block_back.png")
+    return self.build_full_block(side, side, back, front, side)
 
 # beacon block
 # at the moment of writing this, it seems the beacon block doens't use
