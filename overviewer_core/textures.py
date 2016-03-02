@@ -1557,7 +1557,7 @@ block(blockid=42, top_image="assets/minecraft/textures/blocks/iron_block.png")
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks
-@material(blockid=[43, 44, 181, 182], data=range(16), transparent=(44,182,), solid=True)
+@material(blockid=[43, 44, 181, 182, 204, 205], data=range(16), transparent=(44,182,205), solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1605,8 +1605,11 @@ def slabs(self, blockid, data):
             top = side = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_top.png");
         else:
             return None
+    elif blockid == 204 or blockid == 205: # purpur slab (single=205 double=204)
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/purpur_block.png");
+
     
-    if blockid == 43 or blockid == 181: # double slab
+    if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
     
     # cut the side texture in half
@@ -1740,7 +1743,7 @@ def fire(self, blockid, data):
 block(blockid=52, top_image="assets/minecraft/textures/blocks/mob_spawner.png", transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, and red sandstone stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180], data=range(128), transparent=True, solid=True, nospawn=True)
+@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203], data=range(128), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1779,6 +1782,8 @@ def stairs(self, blockid, data):
         texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
     elif blockid == 180: # red sandstone stairs
         texture = self.load_image_texture("assets/minecraft/textures/blocks/red_sandstone_normal.png").copy()
+    elif blockid == 203: # purpur stairs
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/purpur_block.png").copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()
@@ -4408,3 +4413,12 @@ def flower(self, blockid, data):
         alpha_over(img, bloom_tex.resize((14, 11), Image.ANTIALIAS), (5,5))
 
     return img
+
+# purpur block
+block(blockid=201, top_image="assets/minecraft/textures/blocks/purpur_block.png")
+
+# purpur pilar
+block(blockid=202, top_image="assets/minecraft/textures/blocks/purpur_pillar_top.png", side_image="assets/minecraft/textures/blocks/purpur_pillar.png")
+
+# end brick
+block(blockid=206, top_image="assets/minecraft/textures/blocks/end_bricks.png")
