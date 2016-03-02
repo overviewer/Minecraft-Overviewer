@@ -2170,13 +2170,42 @@ def crops(self, blockid, data):
     alpha_over(img, crop3, (6,3), crop3)
     return img
 
-# farmland
-@material(blockid=60, data=range(9), solid=True)
-def farmland(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_wet.png")
-    if data == 0:
-        top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_dry.png")
-    return self.build_block(top, self.load_image_texture("assets/minecraft/textures/blocks/dirt.png"))
+# farmland and grass path (15/16 blocks)
+@material(blockid=[60,208], data=range(9), solid=True)
+def farmlands(self, blockid, data):
+    if blockid == 60:
+        side = self.load_image_texture("assets/minecraft/textures/blocks/dirt.png")
+        top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_wet.png")
+        if data == 0:
+            top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_dry.png")
+			
+    else:
+        top = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_side.png")
+
+    # cut the side texture in 15/16
+    mask = side.crop((0,15,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask,(0,0,16,15), mask)
+
+    # plain 15/16 block
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12), side)
+    alpha_over(img, otherside, (12,12), otherside)
+    alpha_over(img, top, (0,6), top)
+
+    return img
 
 # signposts
 @material(blockid=63, data=range(16), transparent=True)
