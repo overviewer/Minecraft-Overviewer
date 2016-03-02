@@ -2063,18 +2063,18 @@ def chests(self, blockid, data):
 def wire(self, blockid, data):
 
     if data & 0b1000000 == 64: # powered redstone wire
-        redstone_wire_t = self.load_image_texture("assets/minecraft/textures/blocks/redstone_dust_line.png")
+        redstone_wire_t = self.load_image_texture("assets/minecraft/textures/blocks/redstone_dust_line0.png").rotate(90)
         redstone_wire_t = self.tint_texture(redstone_wire_t,(255,0,0))
 
-        redstone_cross_t = self.load_image_texture("assets/minecraft/textures/blocks/redstone_dust_cross.png")
+        redstone_cross_t = self.load_image_texture("assets/minecraft/textures/blocks/redstone_dust_dot.png")
         redstone_cross_t = self.tint_texture(redstone_cross_t,(255,0,0))
 
         
     else: # unpowered redstone wire
-        redstone_wire_t = self.load_image_texture("assets/minecraft/textures/blocks/redstone_dust_line.png")
+        redstone_wire_t = self.load_image_texture("assets/minecraft/textures/blocks/redstone_dust_line0.png").rotate(90)
         redstone_wire_t = self.tint_texture(redstone_wire_t,(48,0,0))
         
-        redstone_cross_t = self.load_image_texture("assets/minecraft/textures/blocks/redstone_dust_cross.png")
+        redstone_cross_t = self.load_image_texture("assets/minecraft/textures/blocks/redstone_dust_dot.png")
         redstone_cross_t = self.tint_texture(redstone_cross_t,(48,0,0))
 
     # generate an image per redstone direction
@@ -2101,26 +2101,24 @@ def wire(self, blockid, data):
     # generate the bottom texture
     if data & 0b111111 == 0:
         bottom = redstone_cross_t.copy()
-    
-    elif data & 0b1111 == 10: #= 0b1010 redstone wire in the x direction
-        bottom = redstone_wire_t.copy()
-        
-    elif data & 0b1111 == 5: #= 0b0101 redstone wire in the y direction
-        bottom = redstone_wire_t.copy().rotate(90)
-    
+
+    # see iterate.c for where these masks come from
+    has_x = (data & 0b1010) > 0
+    has_z = (data & 0b0101) > 0
+    if has_x and has_z:
+        bottom = redstone_cross_t.copy()
+        if has_x:
+            alpha_over(bottom, redstone_wire_t.copy())
+        if has_z:
+            alpha_over(bottom, redstone_wire_t.copy().rotate(90))
+
     else:
-        bottom = Image.new("RGBA", (16,16), self.bgcolor)
-        if (data & 0b0001) == 1:
-            alpha_over(bottom,branch_top_left)
-            
-        if (data & 0b1000) == 8:
-            alpha_over(bottom,branch_top_right)
-            
-        if (data & 0b0010) == 2:
-            alpha_over(bottom,branch_bottom_left)
-            
-        if (data & 0b0100) == 4:
-            alpha_over(bottom,branch_bottom_right)
+        if has_x:
+            bottom = redstone_wire_t.copy()
+        elif has_z:
+            bottom = redstone_wire_t.copy().rotate(90)
+        elif data & 0b1111 == 0: 
+            bottom = redstone_cross_t.copy()
 
     # check for going up redstone wire
     if data & 0b100000 == 32:
