@@ -2170,13 +2170,25 @@ def crops(self, blockid, data):
     alpha_over(img, crop3, (6,3), crop3)
     return img
 
-# farmland
-@material(blockid=60, data=range(9), solid=True)
+# farmland and grass path (15/16 blocks)
+@material(blockid=[60,208], data=range(9), solid=True)
 def farmland(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_wet.png")
-    if data == 0:
-        top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_dry.png")
-    return self.build_block(top, self.load_image_texture("assets/minecraft/textures/blocks/dirt.png"))
+    if blockid == 60:
+        side = self.load_image_texture("assets/minecraft/textures/blocks/dirt.png")
+        top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_wet.png")
+        if data == 0:
+            top = self.load_image_texture("assets/minecraft/textures/blocks/farmland_dry.png")
+        # dirt.png is 16 pixels tall, so we need to crop it before building full block
+        side = side.crop((0, 1, 16, 16))
+        return self.build_full_block((top, 1), side, side, side, side)
+			
+    else:
+        top = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/grass_path_side.png")
+        # side already has 1 transparent pixel at the top, so it doesn't need to be modified
+        # just shift the top image down 1 pixel
+        return self.build_full_block((top, 1), side, side, side, side)
+
 
 # signposts
 @material(blockid=63, data=range(16), transparent=True)
