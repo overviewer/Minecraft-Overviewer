@@ -4443,7 +4443,17 @@ def flower(self, blockid, data):
 block(blockid=201, top_image="assets/minecraft/textures/blocks/purpur_block.png")
 
 # purpur pilar
-block(blockid=202, top_image="assets/minecraft/textures/blocks/purpur_pillar_top.png", side_image="assets/minecraft/textures/blocks/purpur_pillar.png")
+@material(blockid=202, data=range(12) , solid=True)
+def purpur_pillar(self, blockid, data):
+    pillar_orientation = data & 12
+    top=self.load_image_texture("assets/minecraft/textures/blocks/purpur_pillar_top.png")
+    side=self.load_image_texture("assets/minecraft/textures/blocks/purpur_pillar.png")
+    if pillar_orientation == 0: # east-west orientation
+        return self.build_block(top, side)
+    elif pillar_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif pillar_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
 
 # end brick
 block(blockid=206, top_image="assets/minecraft/textures/blocks/end_bricks.png")
