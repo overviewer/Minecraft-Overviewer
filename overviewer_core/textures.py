@@ -4017,11 +4017,20 @@ def cocoa_plant(self, blockid, data):
     return img
 
 # command block
-@material(blockid=137, solid=True, nodata=True)
+@material(blockid=[137,210,211], solid=True, nodata=True)
 def command_block(self, blockid, data):
-    front = self.load_image_texture("assets/minecraft/textures/blocks/command_block_front.png")
-    side = self.load_image_texture("assets/minecraft/textures/blocks/command_block_side.png")
-    back = self.load_image_texture("assets/minecraft/textures/blocks/command_block_back.png")
+    if blockid == 210:
+        front = self.load_image_texture("assets/minecraft/textures/blocks/repeating_command_block_front.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/repeating_command_block_side.png")
+        back = self.load_image_texture("assets/minecraft/textures/blocks/repeating_command_block_back.png")
+    elif blockid == 211:
+        front = self.load_image_texture("assets/minecraft/textures/blocks/chain_command_block_front.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/chain_command_block_side.png")
+        back = self.load_image_texture("assets/minecraft/textures/blocks/chain_command_block_back.png")
+    else:
+        front = self.load_image_texture("assets/minecraft/textures/blocks/command_block_front.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/command_block_side.png")
+        back = self.load_image_texture("assets/minecraft/textures/blocks/command_block_back.png")
     return self.build_full_block(side, side, back, front, side)
 
 # beacon block
