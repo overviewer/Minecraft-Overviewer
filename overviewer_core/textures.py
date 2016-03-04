@@ -4457,3 +4457,22 @@ def purpur_pillar(self, blockid, data):
 
 # end brick
 block(blockid=206, top_image="assets/minecraft/textures/blocks/end_bricks.png")
+
+# frosted ice
+@material(blockid=212, data=range(4), solid=True)
+def frosted_ice(self, blockid, data):
+    img = self.load_image_texture("assets/minecraft/textures/blocks/frosted_ice_%d.png" % data)
+    return self.build_block(img, img)
+
+# structure_block
+@material(blockid=255, data=range(4), solid=True)
+def structure block(self, blockid, data):
+    if data == 0:
+        img = self.load_image_texture("assets/minecraft/textures/blocks/structure_block_save.png")
+    elif data == 1:
+        img = self.load_image_texture("assets/minecraft/textures/blocks/structure_block_load.png")
+    elif data == 2:
+        img = self.load_image_texture("assets/minecraft/textures/blocks/structure_block_corner.png")
+    elif data == 3:
+        img = self.load_image_texture("assets/minecraft/textures/blocks/structure_block_data.png")
+    return self.build_block(img, img)
