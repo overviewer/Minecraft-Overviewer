@@ -4464,9 +4464,9 @@ def frosted_ice(self, blockid, data):
     img = self.load_image_texture("assets/minecraft/textures/blocks/frosted_ice_%d.png" % data)
     return self.build_block(img, img)
 
-# structure_block
+# structure block
 @material(blockid=255, data=range(4), solid=True)
-def structure block(self, blockid, data):
+def structure_block(self, blockid, data):
     if data == 0:
         img = self.load_image_texture("assets/minecraft/textures/blocks/structure_block_save.png")
     elif data == 1:
