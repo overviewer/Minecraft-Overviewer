@@ -3787,8 +3787,8 @@ def cauldron(self, blockid, data):
 
     return img
 
-# end portal
-@material(blockid=119, transparent=True, nodata=True)
+# end portal and end_gateway
+@material(blockid=[119,209], transparent=True, nodata=True)
 def end_portal(self, blockid, data):
     img = Image.new("RGBA", (24,24), self.bgcolor)
     # generate a black texure with white, blue and grey dots resembling stars
@@ -3798,7 +3798,9 @@ def end_portal(self, blockid, data):
             x = randint(0,15)
             y = randint(0,15)
             t.putpixel((x,y),color)
-
+    if blockid == 209: # end_gateway
+        return  self.build_block(t, t)
+        
     t = self.transform_image_top(t)
     alpha_over(img, t, (0,0), t)
 
