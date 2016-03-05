@@ -4479,3 +4479,17 @@ def structure_block(self, blockid, data):
     elif data == 3:
         img = self.load_image_texture("assets/minecraft/textures/blocks/structure_block_data.png")
     return self.build_block(img, img)
+
+# beetroots
+@material(blockid=[207], data=range(4), transparent=True, nospawn=True)
+def crops(self, blockid, data):
+    raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/beetroots_stage_%d.png" % data)
+    crop1 = self.transform_image_top(raw_crop)
+    crop2 = self.transform_image_side(raw_crop)
+    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, crop1, (0,12), crop1)
+    alpha_over(img, crop2, (6,3), crop2)
+    alpha_over(img, crop3, (6,3), crop3)
+    return img
