@@ -706,6 +706,15 @@ class Textures(object):
             top = self.transform_image_top(top)
             alpha_over(img, top, (0, increment), top)
 
+        # Manually touch up 6 pixels that leave a gap because of how the
+        # shearing works out. This makes the blocks perfectly tessellate-able
+        for x,y in [(13,23), (17,21), (21,19)]:
+            # Copy a pixel to x,y from x-1,y
+            img.putpixel((x,y), img.getpixel((x-1,y)))
+        for x,y in [(3,4), (7,2), (11,0)]:
+            # Copy a pixel to x,y from x+1,y
+            img.putpixel((x,y), img.getpixel((x+1,y)))
+
         return img
 
     def build_sprite(self, side):
