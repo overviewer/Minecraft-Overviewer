@@ -4073,7 +4073,7 @@ def cobblestone_wall(self, blockid, data):
     if blockid == 199:
         t = self.load_image_texture("assets/minecraft/textures/blocks/chorus_plant.png").copy()
     # no rotation, uses pseudo data
-    if data & 0b10000 == 0:
+    elif data & 0b10000 == 0:
         # cobblestone
         t = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png").copy()
     else:
