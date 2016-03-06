@@ -2156,9 +2156,9 @@ def crafting_table(self, blockid, data):
     img = self.build_full_block(top, None, None, side3, side4, None)
     return img
 
-# crops
+# crops with 8 data values (like wheat)
 @material(blockid=59, data=range(8), transparent=True, nospawn=True)
-def crops(self, blockid, data):
+def crops8(self, blockid, data):
     raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/wheat_stage_%d.png" % data)
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
@@ -4185,19 +4185,22 @@ def cobblestone_wall(self, blockid, data):
     
     return img
 
-# carrots, potatoes, and beetroot
+# carrots, potatoes
 @material(blockid=[141,142,207], data=range(8), transparent=True, nospawn=True)
-def crops(self, blockid, data):
-    if data != 7: # when growing they look the same
-        # data = 7 -> fully grown, everything else is growing
-        # this seems to work, but still not sure
-        raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/potatoes_stage_%d.png" % (data % 3))
-    elif blockid == 141: # carrots
-        raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/carrots_stage_3.png")
-    elif blockid == 207: # beetroot
-        raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/beetroots_stage_3.png")
+def crops4(self, blockid, data):
+    # carrots and potatoes have 8 data, but only 4 visual stages
+    stage = {0:0,
+             1:0,
+             2:1,
+             3:1,
+             4:2,
+             5:2,
+             6:2,
+             7:3}[data]
+    if blockid == 141: # carrots
+        raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/carrots_stage_%d.png" % stage)
     else: # potatoes
-        raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/potatoes_stage_3.png")
+        raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/potatoes_stage_%d.png" % stage)
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
     crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
