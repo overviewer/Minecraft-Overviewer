@@ -4195,7 +4195,7 @@ def cobblestone_wall(self, blockid, data):
     return img
 
 # carrots, potatoes
-@material(blockid=[141,142,207], data=range(8), transparent=True, nospawn=True)
+@material(blockid=[141,142], data=range(8), transparent=True, nospawn=True)
 def crops4(self, blockid, data):
     # carrots and potatoes have 8 data, but only 4 visual stages
     stage = {0:0,
@@ -4490,7 +4490,7 @@ def structure_block(self, blockid, data):
     return self.build_block(img, img)
 
 # beetroots
-@material(blockid=[207], data=range(4), transparent=True, nospawn=True)
+@material(blockid=207, data=range(4), transparent=True, nospawn=True)
 def crops(self, blockid, data):
     raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/beetroots_stage_%d.png" % data)
     crop1 = self.transform_image_top(raw_crop)
