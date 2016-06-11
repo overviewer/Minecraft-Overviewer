@@ -4476,6 +4476,7 @@ def purpur_pillar(self, blockid, data):
     elif pillar_orientation == 4: # east-west orientation
         return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
     elif pillar_orientation == 8: # north-south orientation
+
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
 # end brick
@@ -4486,6 +4487,37 @@ block(blockid=206, top_image="assets/minecraft/textures/blocks/end_bricks.png")
 def frosted_ice(self, blockid, data):
     img = self.load_image_texture("assets/minecraft/textures/blocks/frosted_ice_%d.png" % data)
     return self.build_block(img, img)
+
+# magma block
+block(blockid=213, top_image="assets/minecraft/textures/blocks/magma.png")
+
+# nether wart block
+block(blockid=214, top_image="assets/minecraft/textures/blocks/nether_wart_block.png")
+
+# red nether brick
+block(blockid=215, top_image="assets/minecraft/textures/blocks/red_nether_brick.png")
+
+@material(blockid=216, data=range(12), solid=True)
+def boneblock(self, blockid, data):
+    # extract orientation
+    boneblock_orientation = data & 12
+    if self.rotation == 1:
+        if boneblock_orientation == 4: boneblock_orientation = 8
+        elif boneblock_orientation == 8: boneblock_orientation = 4
+    elif self.rotation == 3:
+        if boneblock_orientation == 4: boneblock_orientation = 8
+        elif boneblock_orientation == 8: boneblock_orientation = 4
+
+    top = self.load_image_texture("assets/minecraft/textures/blocks/bone_block_top.png")
+    side = self.load_image_texture("assets/minecraft/textures/blocks/bone_block_side.png")
+
+    # choose orientation and paste textures
+    if boneblock_orientation == 0:
+        return self.build_block(top, side)
+    elif boneblock_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif boneblock_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
 
 # structure block
 @material(blockid=255, data=range(4), solid=True)
