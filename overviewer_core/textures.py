@@ -4062,12 +4062,15 @@ def beacon(self, blockid, data):
     
     return img
 
-# cobblestone and mossy cobblestone walls
+# cobblestone and mossy cobblestone walls, chorus plants
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=139, data=range(32), transparent=True, nospawn=True)
+@material(blockid=[139, 199], data=range(32), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
+    # chorus plants
+    if blockid == 199:
+        t = self.load_image_texture("assets/minecraft/textures/blocks/chorus_plant.png").copy()
     # no rotation, uses pseudo data
-    if data & 0b10000 == 0:
+    elif data & 0b10000 == 0:
         # cobblestone
         t = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png").copy()
     else:
@@ -4447,6 +4450,17 @@ def flower(self, blockid, data):
         alpha_over(img, bloom_tex.resize((14, 11), Image.ANTIALIAS), (5,5))
 
     return img
+
+# chorus flower
+@material(blockid=200, data=range(6), solid=True)
+def chorus_flower(self, blockid, data):
+    # aged 5, dead
+    if data == 5:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/chorus_flower_dead.png")
+    else:
+        texture = self.load_image_texture("assets/minecraft/textures/blocks/chorus_flower.png")
+
+    return self.build_block(texture,texture)
 
 # purpur block
 block(blockid=201, top_image="assets/minecraft/textures/blocks/purpur_block.png")
