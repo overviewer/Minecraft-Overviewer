@@ -500,12 +500,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         # regionset cache pulls from the same underlying cache object.
         rset = world.CachedRegionSet(rset, caches)
 
-        # If this is to be a rotated regionset, wrap it in a RotatedRegionSet
-        # object
-        if (render['northdirection'] > 0):
-            rset = world.RotatedRegionSet(rset, render['northdirection'])
-        logging.debug("Using RegionSet %r", rset)
-
         # If a crop is requested, wrap the regionset here
         if "crop" in render:
             rsets = []
@@ -513,6 +507,15 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
                 rsets.append(world.CroppedRegionSet(rset, *zone))
         else:
             rsets = [rset]
+
+        # If this is to be a rotated regionset, wrap it in a RotatedRegionSet
+        # object
+        if (render['northdirection'] > 0):
+            newrsets = []
+            for r in rsets:
+                r = world.RotatedRegionSet(r, render['northdirection'])
+                newrsets.append(r)
+            rsets = newrsets
 
         ###############################
         # Do the final prep and create the TileSet object
