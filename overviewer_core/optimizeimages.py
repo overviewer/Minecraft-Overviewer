@@ -121,6 +121,19 @@ class optipng(Optimizer, PNGOptimizer):
     def is_crusher(self):
         return True
 
+class advpng(Optimizer, PNGOptimizer):
+    binaryname = "advpng"
+    crusher = True
+
+    def __init__(self, olevel=3):
+        self.olevel = olevel
+
+    def optimize(self, img):
+        Optimizer.fire_and_forget(self, [self.binaryname, "-z" + str(self.olevel), "-q", img])
+
+    def is_crusher(self):
+        return True
+
 class jpegoptim(Optimizer, JPEGOptimizer):
     binaryname = "jpegoptim"
     crusher = True
