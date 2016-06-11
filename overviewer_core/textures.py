@@ -610,6 +610,57 @@ class Textures(object):
 
         return img
 
+    def build_slab_block(self, top, side, upper):
+        """From a top texture and a side texture, build a slab block image.
+        top and side should be 16x16 image objects. Returns a 24x24 image
+
+        """
+        # cut the side texture in half
+        mask = side.crop((0,8,16,16))
+        side = Image.new(side.mode, side.size, self.bgcolor)
+        alpha_over(side, mask,(0,0,16,8), mask)
+
+        # plain slab
+        top = self.transform_image_top(top)
+        side = self.transform_image_side(side)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+        sidealpha = side.split()[3]
+        side = ImageEnhance.Brightness(side).enhance(0.9)
+        side.putalpha(sidealpha)
+        othersidealpha = otherside.split()[3]
+        otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+        otherside.putalpha(othersidealpha)
+
+        # upside down slab
+        delta = 0
+        if upper:
+            delta = 6
+
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(img, side, (0,12 - delta), side)
+        alpha_over(img, otherside, (12,12 - delta), otherside)
+        alpha_over(img, top, (0,6 - delta), top)
+
+        # Manually touch up 6 pixels that leave a gap because of how the
+        # shearing works out. This makes the blocks perfectly tessellate-able
+        if upper:
+            for x,y in [(3,4), (7,2), (11,0)]:
+                # Copy a pixel to x,y from x+1,y
+                img.putpixel((x,y), img.getpixel((x+1,y)))
+            for x,y in [(13,17), (17,15), (21,13)]:
+                # Copy a pixel to x,y from x-1,y
+                img.putpixel((x,y), img.getpixel((x-1,y)))
+        else:
+            for x,y in [(3,10), (7,8), (11,6)]:
+                # Copy a pixel to x,y from x+1,y
+                img.putpixel((x,y), img.getpixel((x+1,y)))
+            for x,y in [(13,23), (17,21), (21,19)]:
+                # Copy a pixel to x,y from x-1,y
+                img.putpixel((x,y), img.getpixel((x-1,y)))
+
+        return img
+
     def build_full_block(self, top, side1, side2, side3, side4, bottom=None):
         """From a top texture, a bottom texture and 4 different side textures,
         build a full block with four differnts faces. All images should be 16x16 
@@ -1621,34 +1672,7 @@ def slabs(self, blockid, data):
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
     
-    # cut the side texture in half
-    mask = side.crop((0,8,16,16))
-    side = Image.new(side.mode, side.size, self.bgcolor)
-    alpha_over(side, mask,(0,0,16,8), mask)
-    
-    # plain slab
-    top = self.transform_image_top(top)
-    side = self.transform_image_side(side)
-    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-    
-    sidealpha = side.split()[3]
-    side = ImageEnhance.Brightness(side).enhance(0.9)
-    side.putalpha(sidealpha)
-    othersidealpha = otherside.split()[3]
-    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
-    otherside.putalpha(othersidealpha)
-    
-    # upside down slab
-    delta = 0
-    if data & 8 == 8:
-        delta = 6
-    
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, side, (0,12 - delta), side)
-    alpha_over(img, otherside, (12,12 - delta), otherside)
-    alpha_over(img, top, (0,6 - delta), top)
-    
-    return img
+    return self.build_slab_block(top, side, data & 8 == 8);
 
 # brick block
 block(blockid=45, top_image="assets/minecraft/textures/blocks/brick.png")
@@ -3909,34 +3933,7 @@ def wooden_slabs(self, blockid, data):
     if blockid == 125: # double slab
         return self.build_block(top, side)
     
-    # cut the side texture in half
-    mask = side.crop((0,8,16,16))
-    side = Image.new(side.mode, side.size, self.bgcolor)
-    alpha_over(side, mask,(0,0,16,8), mask)
-    
-    # plain slab
-    top = self.transform_image_top(top)
-    side = self.transform_image_side(side)
-    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-    
-    sidealpha = side.split()[3]
-    side = ImageEnhance.Brightness(side).enhance(0.9)
-    side.putalpha(sidealpha)
-    othersidealpha = otherside.split()[3]
-    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
-    otherside.putalpha(othersidealpha)
-    
-    # upside down slab
-    delta = 0
-    if data & 8 == 8:
-        delta = 6
-    
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, side, (0,12 - delta), side)
-    alpha_over(img, otherside, (12,12 - delta), otherside)
-    alpha_over(img, top, (0,6 - delta), top)
-    
-    return img
+    return self.build_slab_block(top, side, data & 8 == 8);
 
 # emerald ore
 block(blockid=129, top_image="assets/minecraft/textures/blocks/emerald_ore.png")
