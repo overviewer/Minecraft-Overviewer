@@ -32,145 +32,59 @@ overviewer.util = {
      * feature gets added.
      */
     'initialize': function() {
-        overviewer.util.initializeClassPrototypes();
+        //overviewer.util.initializeClassPrototypes();
+        document.getElementById('NoJSWarning').remove();
 
-        overviewer.collections.worlds = new overviewer.models.WorldCollection();
 
-        $.each(overviewerConfig.worlds, function(index, el) {
-                var n = new overviewer.models.WorldModel({name: el, id:el});
-                overviewer.collections.worlds.add(n);
-                });
+        overviewer.control = L.Control.extend({
+            onAdd: function() {
+                console.log("onAdd mycontrol");
+                var container = L.DomUtil.create('div', 'my-custom-control');
+                container.innerHTML = "hi";
 
-        $.each(overviewerConfig.tilesets, function(index, el) {
-                var newTset = new overviewer.models.TileSetModel(el);
-                overviewer.collections.worlds.get(el.world).get("tileSets").add(newTset);
-                });
-
-        overviewer.collections.worlds.each(function(world, index, list) {
-                var nv = new overviewer.views.WorldView({model: world});
-                overviewer.collections.worldViews.push(nv);
-                });
-
-        overviewer.mapModel = new overviewer.models.GoogleMapModel({});
-        overviewer.mapView = new overviewer.views.GoogleMapView({el: document.getElementById(overviewerConfig.CONST.mapDivId), model:overviewer.mapModel});
-
-        // any controls must be created after the GoogleMapView is created
-        // controls should be added in the order they should appear on screen, 
-        // with controls on the outside of the page being added first
-
-        var compass = new overviewer.views.CompassView({tagName: 'DIV', model:overviewer.mapModel});
-        // no need to render the compass now.  it's render event will get fired by
-        // the maptypeid_chagned event
-
-        var coordsdiv = new overviewer.views.CoordboxView({tagName: 'DIV'});
-        coordsdiv.render();
-
-        var progressdiv = new overviewer.views.ProgressView({tagName: 'DIV'});
-        progressdiv.render();
-        progressdiv.updateProgress();
-
-        if (overviewer.collections.haveSigns) {
-            var signs = new overviewer.views.SignControlView();
-            signs.registerEvents(signs);
-        }
-
-        var overlayControl = new overviewer.views.OverlayControlView();
-
-        var spawnmarker = new overviewer.views.SpawnIconView();
-
-        // Update coords on mousemove
-        google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
-            coordsdiv.updateCoords(event.latLng);    
-        });
-        google.maps.event.addListener(overviewer.map, 'idle', function (event) {
-            overviewer.util.updateHash();
-        });
-
-        google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function(event) {
-            // it's handy to keep track of the currently visible tileset.  we let
-            // the GoogleMapView manage this
-            overviewer.mapView.updateCurrentTileset();
-
-            compass.render();
-            spawnmarker.render();
-            if (overviewer.collections.locationMarker) {
-                overviewer.collections.locationMarker.setMap(null);
-                overviewer.collections.locationMarker = null;
+                return container
             }
-
-            // update list of spawn overlays
-            overlayControl.render();
-
-            // re-center on the last viewport
-            var currentWorldView = overviewer.mapModel.get("currentWorldView");
-            if (currentWorldView.options.lastViewport) {
-                var x = currentWorldView.options.lastViewport[0];
-                var y = currentWorldView.options.lastViewport[1];
-                var z = currentWorldView.options.lastViewport[2];
-                var zoom = currentWorldView.options.lastViewport[3];
-
-                var latlngcoords = overviewer.util.fromWorldToLatLng(x, y, z,
-                    overviewer.mapView.options.currentTileSet);
-                overviewer.map.setCenter(latlngcoords);
-
-                if (zoom == 'max') {
-                    zoom = overviewer.mapView.options.currentTileSet.get('maxZoom');
-                } else if (zoom == 'min') {
-                    zoom = overviewer.mapView.options.currentTileSet.get('minZoom');
-                } else {
-                    zoom = parseInt(zoom);
-                    if (zoom < 0) {
-                        // if zoom is negative, treat it as a "zoom out from max"
-                        zoom += overviewer.mapView.options.currentTileSet.get('maxZoom');
-                    } else {
-                        // fall back to default zoom
-                        zoom = overviewer.mapView.options.currentTileSet.get('defaultZoom');
-                    }
-                }
-                
-                // clip zoom
-                if (zoom > overviewer.mapView.options.currentTileSet.get('maxZoom'))
-                    zoom = overviewer.mapView.options.currentTileSet.get('maxZoom');
-                if (zoom < overviewer.mapView.options.currentTileSet.get('minZoom'))
-                    zoom = overviewer.mapView.options.currentTileSet.get('minZoom');
-                
-                overviewer.map.setZoom(zoom);
-            }
-
-
         });
 
-
-        // hook up some events
-
-        overviewer.mapModel.bind("change:currentWorldView", overviewer.mapView.render, overviewer.mapView);
-
-        overviewer.mapView.render();
-         
-        // Jump to the hash if given (and do so for any further hash changes)
-        overviewer.util.initHash();
-        $(window).on('hashchange', function() { overviewer.util.initHash(); });
-
-        // create this control after initHash so it can correctly select the current world
-        var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
-        overviewer.collections.worlds.bind("add", worldSelector.render, worldSelector);
 
         
-        overviewer.util.initializeMarkers();
+        overviewer.map = L.map('mcmap', {
+                crs: L.CRS.Simple,
+                minZoom: 0});
+    
+        var tset = overviewerConfig.tilesets[0];
 
-        /*
-           overviewer.util.initializeMapTypes();
-           overviewer.util.initializeMap();
-           overviewer.util.initializeRegions();
-           overviewer.util.createMapControls();
-           */
-           
-        // run ready callbacks now
-        google.maps.event.addListenerOnce(overviewer.map, 'idle', function(){
-            // ok now..
-            overviewer.util.runReadyQueue();
-            overviewer.util.isReady = true;
+        overviewer.map.on("click", function(e) {
+            console.log(e.latlng);
+            var point = overviewer.util.fromLatLngToWorld(e.latlng.lat, e.latlng.lng, tset);
+            console.log(point);
         });
+
+        var tilesetLayers = {}
+
+        $.each(overviewerConfig.worlds, function(idx, world_name) {
+            overviewer.collections.mapTypes[world_name] = {}
+        });
+
+        $.each(overviewerConfig.tilesets, function(idx, obj) {
+            var myLayer = new L.tileLayer('', {
+                tileSize: overviewerConfig.CONST.tileSize,
+                noWrap: true,
+                maxZoom: obj.maxZoom,
+                minZoom: obj.minZoom,
+            });
+            myLayer.getTileUrl = overviewer.gmap.getTileUrlGenerator(obj.path, obj.base, obj.imgextension);
+
+            overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
+
+        });
+
+        L.control.layers(overviewer.collections.mapTypes[overviewerConfig.worlds[0]], {}, {collapsed: false}).addTo(overviewer.map);
+
+        //myLayer.addTo(overviewer.map);
+        overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), 1);
+
+
     },
 
     'injectMarkerScript': function(url) {
@@ -263,15 +177,6 @@ overviewer.util = {
         return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
     },
     /**
-     * Change the map's div's background color according to the mapType's bg_color setting
-     *
-     * @param string mapTypeId
-     * @return string
-     */
-    'getMapTypeBackgroundColor': function(id) {
-        return overviewerConfig.tilesets[id].bgcolor;
-    },
-    /**
      * Gee, I wonder what this does.
      * 
      * @param string msg
@@ -316,10 +221,10 @@ overviewer.util = {
      * 
      * @return google.maps.LatLng
      */
-    'fromWorldToLatLng': function(x, y, z, model) {
+    'fromWorldToLatLng': function(x, y, z, tset) {
 
-        var zoomLevels = model.get("zoomLevels");
-        var north_direction = model.get('north_direction');
+        var zoomLevels = tset.zoomLevels;
+        var north_direction = tset.north_direction;
 
         // the width and height of all the highest-zoom tiles combined,
         // inverted
@@ -367,7 +272,7 @@ overviewer.util = {
         // add on 12 px to the X coordinate to center our point
         lng += 12 * perPixel;
 
-        return new google.maps.LatLng(lat, lng);
+        return [-lat*overviewerConfig.CONST.tileSize, lng*overviewerConfig.CONST.tileSize]
     },
     /**
      * The opposite of fromWorldToLatLng
@@ -379,9 +284,15 @@ overviewer.util = {
      * 
      * @return Array
      */
-    'fromLatLngToWorld': function(lat, lng, model) {
-        var zoomLevels = model.get("zoomLevels");
-        var north_direction = model.get("north_direction");
+    'fromLatLngToWorld': function(lat, lng, tset) {
+        var zoomLevels = tset.zoomLevels;
+        var north_direction = tset.north_direction;
+
+        lat = -lat/overviewerConfig.CONST.tileSize;
+        lng = lng/overviewerConfig.CONST.tileSize;
+
+        // lat lng will always be between (0,0) -- top left corner
+        //                                (-384, 384) -- bottom right corner
 
         // Initialize world x/y/z object to be returned
         var point = Array();

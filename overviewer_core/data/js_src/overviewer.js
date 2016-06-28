@@ -85,18 +85,19 @@ overviewer.gmap = {
          * @param string pathExt
          */
         'getTileUrlGenerator': function(path, pathBase, pathExt) {
-            return function(tile, zoom) {
+            return function(o) {
                 var url = path;
+                var zoom = o.z;
                 var urlBase = ( pathBase ? pathBase : '' );
-                if(tile.x < 0 || tile.x >= Math.pow(2, zoom) ||
-                   tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
+                if(o.x < 0 || o.x >= Math.pow(2, zoom) ||
+                   o.y < 0 || o.y >= Math.pow(2, zoom)) {
                     url += '/blank';
                 } else if(zoom === 0) {
                     url += '/base';
                 } else {
                     for(var z = zoom - 1; z >= 0; --z) {
-                        var x = Math.floor(tile.x / Math.pow(2, z)) % 2;
-                        var y = Math.floor(tile.y / Math.pow(2, z)) % 2;
+                        var x = Math.floor(o.x / Math.pow(2, z)) % 2;
+                        var y = Math.floor(o.y / Math.pow(2, z)) % 2;
                         url += '/' + (x + 2 * y);
                     }
                 }
