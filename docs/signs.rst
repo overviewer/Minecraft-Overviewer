@@ -238,9 +238,27 @@ outputdir.
 Options
 -------
 
-genPOI.py has a single option :option:`--config`. You should use the same configfile as 
-used for your normal renders.
+genPOI comes with a few options of its own.
 
+.. cmdoption:: -c <file>, --config=<file>
+
+    The config file to use for the genPOI operation. This must be the same
+    config file that you use for your normal rendering runs.
+
+.. cmdoption:: -q, --quiet
+
+    Outputs less information onto the terminal while running.
+
+.. cmdoption:: --skip-scan
+
+    Skip scanning the world for entities and tile entities. Useful if you only
+    want to generate markers for players or through manual POIs, as you can
+    speed up the genPOI operation considerably.
+
+.. cmdoption:: --skip-players
+
+    Skip reading and retrieving player data during genPOI runs. This is useful
+    if you don't plan on generating markers for the player locations.
 
 .. _predefined_filter_functions:
 

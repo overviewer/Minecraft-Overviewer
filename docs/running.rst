@@ -110,10 +110,10 @@ The first render can take a while, depending on the size of your world.
 Options
 -------
 
-The following three options change the way The Overviewer determines which tiles
-to update, and are intended to be things you only have to use in special
-situations. You should not normally have to specify these options; the default
-is typically correct.
+The following options change the way The Overviewer generates or updates the
+map, and are intended to be things you only have to use in special situations.
+You should not normally have to specify these options; the default is
+typically correct.
 
 .. cmdoption:: --no-tile-checks
 
