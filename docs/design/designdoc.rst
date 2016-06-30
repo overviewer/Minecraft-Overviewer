@@ -25,8 +25,8 @@ Background Info
 ===============
 
 The Overviewer's task is to take Minecraft worlds and render them into a set of
-tiles that can be displayed with a Google Maps interface. This section goes over
-how Minecraft worlds work and are stored.
+tiles that can be displayed with a Leaflet interface. This section goes over how
+Minecraft worlds work and are stored.
 
 A Minecraft world extends indefinitely along the two horizontal axes, and are
 exactly 256 units high. Minecraft worlds are made of voxels (volumetric pixels),
@@ -455,12 +455,12 @@ quickly become too much data to handle at once. (Early versions of the
 Overviewer did this, but the large, unwieldy images quickly motivated the
 development of rendering to individual tiles).
 
-Hence choosing a technology like Google Maps, which draws small tiles together
-to make it look like one large image, lets rendering even the largest worlds
-possible. The Overviewer can draw each tile separately and not have to load the
-entire map into memory at once. The next sections describe how to determine
-which chunks to render in which tiles, and how to reason about tile ↔ chunk
-mappings.
+Hence choosing a technology like Google Maps or Leaflet, which draws small
+tiles together to make it look like one large image, lets rendering even the
+largest worlds possible. The Overviewer can draw each tile separately and not
+have to load the entire map into memory at once. The next sections describe
+how to determine which chunks to render in which tiles, and how to reason
+about tile ↔ chunk mappings.
 
 Tile Layout
 -----------
