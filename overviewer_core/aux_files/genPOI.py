@@ -419,18 +419,22 @@ def main():
 
     if os.path.basename(sys.argv[0]) == """genPOI.py""":
         helptext = """genPOI.py
-            %prog --config=<config file> [--quiet]"""
+            %prog --config=<config file> [options]"""
     else:
         helptext = """genPOI
-            %prog --genpoi --config=<config file> [--quiet]"""
+            %prog --genpoi --config=<config file> [options]"""
 
     logger.configure()
 
     parser = OptionParser(usage=helptext)
-    parser.add_option("-c", "--config", dest="config", action="store", help="Specify the config file to use.")
-    parser.add_option("--quiet", dest="quiet", action="count", help="Reduce logging output")
-    parser.add_option("--skip-scan", dest="skipscan", action="store_true", help="Skip scanning for entities when using GenPOI")
-    parser.add_option("--skip-players", dest="skipplayers", action="store_true", help="Skip getting player data when using GenPOI")
+    parser.add_option("-c", "--config", dest="config", action="store",
+                      help="Specify the config file to use.")
+    parser.add_option("-q", "--quiet", dest="quiet", action="count",
+                      help="Reduce logging output")
+    parser.add_option("--skip-scan", dest="skipscan", action="store_true",
+                      help="Skip scanning for entities when using GenPOI")
+    parser.add_option("--skip-players", dest="skipplayers", action="store_true",
+                      help="Skip getting player data when using GenPOI")
 
     options, args = parser.parse_args()
     if not options.config:
