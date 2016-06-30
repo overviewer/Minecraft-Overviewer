@@ -11,8 +11,10 @@ var overviewer = {};
  * This holds the map, probably the most important var in this file
  */
 overviewer.map = null;
-overviewer.mapView = null;
-
+overviewer.worldCtrl = null;
+overviewer.layerCtrl = null;
+overviewer.current_world = null;
+    
 
 overviewer.collections = {
         /**
@@ -28,6 +30,12 @@ overviewer.collections = {
          * there is only one open at a time.
          */
         'infoWindow':   null,
+
+        /**
+         * When switching regionsets, where should we zoom to?
+         * Defaults to spawn.  Stored as map of world names to [latlng, zoom]
+         */
+        'centers': {},
 
         'worldViews': [],
 

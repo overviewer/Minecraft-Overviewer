@@ -37,12 +37,52 @@ overviewer.util = {
 
 
         overviewer.control = L.Control.extend({
+            initialize: function(options) {
+                L.Util.setOptions(this, options);
+                
+                this.container = L.DomUtil.create('div', 'worldcontrol');
+                this.select = L.DomUtil.create('select');
+                this.select.onchange = this.onChange;
+                this.container.appendChild(this.select);
+            },
+            addWorld: function(world) {
+                var option = L.DomUtil.create('option');
+                option.value = world;
+                option.innerText = world;
+                this.select.appendChild(option);
+            },
+            onChange: function(ev) {
+                console.log(ev.target);
+                console.log(ev.target.value);
+                var selected_world = ev.target.value;
+
+                // save current view for the current_world
+                overviewer.collections.centers[overviewer.current_world][0] = overviewer.map.getCenter();
+                overviewer.collections.centers[overviewer.current_world][1] = overviewer.map.getZoom();
+
+                for (var world_name in overviewer.collections.mapTypes) {
+                    for (var tset_name in overviewer.collections.mapTypes[world_name]) {
+                        var lyr = overviewer.collections.mapTypes[world_name][tset_name];
+                        if (world_name == selected_world) {
+                            overviewer.layerCtrl.addBaseLayer(lyr, tset_name);
+                            overviewer.map.addLayer(lyr);
+                        } else {
+                            overviewer.layerCtrl.removeLayer(lyr);
+                            overviewer.map.removeLayer(lyr);
+                        }
+
+                    }
+                }
+
+                var center = overviewer.collections.centers[selected_world];
+                overviewer.map.setView(center[0], center[1]);
+
+                overviewer.current_world = selected_world;
+            },
             onAdd: function() {
                 console.log("onAdd mycontrol");
-                var container = L.DomUtil.create('div', 'my-custom-control');
-                container.innerHTML = "hi";
-
-                return container
+                
+                return this.container
             }
         });
 
@@ -62,9 +102,15 @@ overviewer.util = {
 
         var tilesetLayers = {}
 
+        overviewer.worldCtrl = new overviewer.control();
+        
+
         $.each(overviewerConfig.worlds, function(idx, world_name) {
             overviewer.collections.mapTypes[world_name] = {}
+            overviewer.worldCtrl.addWorld(world_name);
         });
+
+        overviewer.worldCtrl.addTo(overviewer.map);
 
         $.each(overviewerConfig.tilesets, function(idx, obj) {
             var myLayer = new L.tileLayer('', {
@@ -77,9 +123,16 @@ overviewer.util = {
 
             overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
 
+        
+            overviewer.collections.centers[obj.world] = [
+                overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj),
+                1
+            ];
+
         });
 
-        L.control.layers(overviewer.collections.mapTypes[overviewerConfig.worlds[0]], {}, {collapsed: false}).addTo(overviewer.map);
+        overviewer.layerCtrl = L.control.layers(overviewer.collections.mapTypes[overviewerConfig.worlds[0]], {}, {collapsed: false}).addTo(overviewer.map);
+        overviewer.current_world = overviewerConfig.worlds[0];
 
         //myLayer.addTo(overviewer.map);
         overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), 1);
