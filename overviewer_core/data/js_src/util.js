@@ -60,17 +60,29 @@ overviewer.util = {
                 overviewer.collections.centers[overviewer.current_world][0] = overviewer.map.getCenter();
                 overviewer.collections.centers[overviewer.current_world][1] = overviewer.map.getZoom();
 
+                overviewer.layerCtrl.remove();
+
+                overviewer.layerCtrl = L.control.layers(
+                        overviewer.collections.mapTypes[selected_world],
+                        overviewer.collections.overlays[selected_world],
+                        {collapsed: false})
+                .addTo(overviewer.map);
+
                 for (var world_name in overviewer.collections.mapTypes) {
                     for (var tset_name in overviewer.collections.mapTypes[world_name]) {
                         var lyr = overviewer.collections.mapTypes[world_name][tset_name];
-                        if (world_name == selected_world) {
-                            overviewer.layerCtrl.addBaseLayer(lyr, tset_name);
-                            overviewer.map.addLayer(lyr);
-                        } else {
-                            overviewer.layerCtrl.removeLayer(lyr);
-                            overviewer.map.removeLayer(lyr);
+                        if (world_name != selected_world) {
+                            if (overviewer.map.hasLayer(lyr))
+                                overviewer.map.removeLayer(lyr);
                         }
-
+                    }
+                    
+                    for (var tset_name in overviewer.collections.overlays[world_name]) {
+                        var lyr = overviewer.collections.overlays[world_name][tset_name];
+                        if (world_name != selected_world) {
+                            if (overviewer.map.hasLayer(lyr))
+                                overviewer.map.removeLayer(lyr);
+                        }
                     }
                 }
 
@@ -78,6 +90,9 @@ overviewer.util = {
                 overviewer.map.setView(center[0], center[1]);
 
                 overviewer.current_world = selected_world;
+
+                if (overviewer.collections.mapTypes[selected_world])
+                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][overviewer.current_layer[selected_world]]);
             },
             onAdd: function() {
                 console.log("onAdd mycontrol");
@@ -91,6 +106,10 @@ overviewer.util = {
         overviewer.map = L.map('mcmap', {
                 crs: L.CRS.Simple,
                 minZoom: 0});
+
+        overviewer.map.on('baselayerchange', function(ev) {
+            overviewer.current_layer[overviewer.current_world] = ev.name;
+        });
     
         var tset = overviewerConfig.tilesets[0];
 
@@ -107,6 +126,7 @@ overviewer.util = {
 
         $.each(overviewerConfig.worlds, function(idx, world_name) {
             overviewer.collections.mapTypes[world_name] = {}
+            overviewer.collections.overlays[world_name] = {}
             overviewer.worldCtrl.addWorld(world_name);
         });
 
@@ -121,17 +141,27 @@ overviewer.util = {
             });
             myLayer.getTileUrl = overviewer.gmap.getTileUrlGenerator(obj.path, obj.base, obj.imgextension);
 
-            overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
+            if (obj.isOverlay) {
+                overviewer.collections.overlays[obj.world][obj.name] = myLayer;
+            } else {
+                overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
+            }
 
-        
-            overviewer.collections.centers[obj.world] = [
-                overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj),
-                1
-            ];
+      
+            if (typeof(obj.spawn) == "object") {
+                var latlng = overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj);
+                overviewer.collections.centers[obj.world] = [ latlng, 1 ];
+            } else {
+                overviewer.collections.centers[obj.world] = [ [0, 0], 1 ];
+            }
 
         });
 
-        overviewer.layerCtrl = L.control.layers(overviewer.collections.mapTypes[overviewerConfig.worlds[0]], {}, {collapsed: false}).addTo(overviewer.map);
+        overviewer.layerCtrl = L.control.layers(
+                overviewer.collections.mapTypes[overviewerConfig.worlds[0]],
+                overviewer.collections.overlays[overviewerConfig.worlds[0]],
+                {collapsed: false})
+            .addTo(overviewer.map);
         overviewer.current_world = overviewerConfig.worlds[0];
 
         //myLayer.addTo(overviewer.map);

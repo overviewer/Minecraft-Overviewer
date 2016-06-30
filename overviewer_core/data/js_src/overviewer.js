@@ -14,6 +14,9 @@ overviewer.map = null;
 overviewer.worldCtrl = null;
 overviewer.layerCtrl = null;
 overviewer.current_world = null;
+
+/// Records the current layer by name (if any) of each world
+overviewer.current_layer = {};
     
 
 overviewer.collections = {
@@ -36,6 +39,8 @@ overviewer.collections = {
          * Defaults to spawn.  Stored as map of world names to [latlng, zoom]
          */
         'centers': {},
+
+        'overlays': {},
 
         'worldViews': [],
 
