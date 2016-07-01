@@ -138,6 +138,7 @@ overviewer.util = {
                 noWrap: true,
                 maxZoom: obj.maxZoom,
                 minZoom: obj.minZoom,
+                errorTileUrl: obj.base + obj.path + "/blank.png",
             });
             myLayer.getTileUrl = overviewer.gmap.getTileUrlGenerator(obj.path, obj.base, obj.imgextension);
 
