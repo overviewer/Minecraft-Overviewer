@@ -103,8 +103,8 @@ directory.
                 'defaultMarker':    'signpost.png',
                 'signMarker':       'signpost_icon.png',
                 'bedMarker':        'bed.png',
-                'spawnMarker':      'https://google-maps-icons.googlecode.com/files/home.png',
-                'queryMarker':      'https://google-maps-icons.googlecode.com/files/regroup.png'
+                'spawnMarker':      'icons/marker_home.png',
+                'queryMarker':      'icons/marker_location.png'
                 }
         dump['CONST']['mapDivId'] = 'mcmap'
         dump['CONST']['regionStrokeWeight'] = 2 # Obselete

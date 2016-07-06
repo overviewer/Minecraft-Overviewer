@@ -109,6 +109,18 @@ overviewer.util = {
 
         overviewer.map.on('baselayerchange', function(ev) {
             overviewer.current_layer[overviewer.current_world] = ev.name;
+
+            // Remove old spawn marker, add new one
+            if (overviewer.collections.spawnMarker) {
+                overviewer.collections.spawnMarker.remove();
+            }
+            if (overviewer.collections.spawnMarkers[overviewer.current_world]) {
+                overviewer.collections.spawnMarker = overviewer.collections
+                    .spawnMarkers[overviewer.current_world];
+                overviewer.collections.spawnMarker.addTo(overviewer.map);
+            } else {
+                overviewer.collections.spawnMarker = null;
+            }
         });
     
         var tset = overviewerConfig.tilesets[0];
@@ -152,6 +164,13 @@ overviewer.util = {
             if (typeof(obj.spawn) == "object") {
                 var latlng = overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj);
                 overviewer.collections.centers[obj.world] = [ latlng, 1 ];
+
+                /// TODO: Retina Icon
+                var spawnIcon = L.icon({
+                    iconUrl: overviewerConfig.CONST.image.spawnMarker,
+                });
+                var ohaimark = L.marker(latlng, {icon: spawnIcon, title: "Spawn"});
+                overviewer.collections.spawnMarkers[obj.world] = ohaimark;
             } else {
                 overviewer.collections.centers[obj.world] = [ [0, 0], 1 ];
             }
