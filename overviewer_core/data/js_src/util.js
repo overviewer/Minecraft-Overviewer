@@ -111,6 +111,9 @@ overviewer.util = {
             overviewer.current_layer[overviewer.current_world] = ev.name;
             var ovconf = ev.layer.tileSetConfig;
 
+            // Set the background colour
+            document.getElementById("mcmap").style.backgroundColor = ovconf.bgcolor;
+
             // Remove old spawn marker, add new one
             if (overviewer.collections.spawnMarker) {
                 overviewer.collections.spawnMarker.remove();
