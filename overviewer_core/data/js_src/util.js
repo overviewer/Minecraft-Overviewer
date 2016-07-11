@@ -161,7 +161,7 @@ overviewer.util = {
                 minZoom: obj.minZoom,
                 errorTileUrl: obj.base + obj.path + "/blank.png",
             });
-            myLayer.getTileUrl = overviewer.gmap.getTileUrlGenerator(obj.path, obj.base, obj.imgextension);
+            myLayer.getTileUrl = overviewer.util.getTileUrlGenerator(obj.path, obj.base, obj.imgextension);
 
             if (obj.isOverlay) {
                 overviewer.collections.overlays[obj.world][obj.name] = myLayer;
@@ -600,5 +600,37 @@ overviewer.util = {
         overviewer.map.setZoom(zoom);
         var locationmarker = new overviewer.views.LocationIconView();
         locationmarker.render();
+    },
+    /**
+     * Generate a function to get the path to a tile at a particular location
+     * and zoom level.
+     *
+     * @param string path
+     * @param string pathBase
+     * @param string pathExt
+     */
+    'getTileUrlGenerator': function(path, pathBase, pathExt) {
+        return function(o) {
+            var url = path;
+            var zoom = o.z;
+            var urlBase = ( pathBase ? pathBase : '' );
+            if(o.x < 0 || o.x >= Math.pow(2, zoom) ||
+                o.y < 0 || o.y >= Math.pow(2, zoom)) {
+                url += '/blank';
+            } else if(zoom === 0) {
+                url += '/base';
+            } else {
+                for(var z = zoom - 1; z >= 0; --z) {
+                    var x = Math.floor(o.x / Math.pow(2, z)) % 2;
+                    var y = Math.floor(o.y / Math.pow(2, z)) % 2;
+                    url += '/' + (x + 2 * y);
+                }
+            }
+            url = url + '.' + pathExt;
+            if(typeof overviewerConfig.map.cacheTag !== 'undefined') {
+                url += '?c=' + overviewerConfig.map.cacheTag;
+            }
+            return(urlBase + url);
+        };
     }
 };
