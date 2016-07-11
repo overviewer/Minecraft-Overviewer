@@ -109,14 +109,23 @@ overviewer.util = {
 
         overviewer.map.on('baselayerchange', function(ev) {
             overviewer.current_layer[overviewer.current_world] = ev.name;
+            var ovconf = ev.layer.tileSetConfig;
 
             // Remove old spawn marker, add new one
             if (overviewer.collections.spawnMarker) {
                 overviewer.collections.spawnMarker.remove();
             }
-            if (overviewer.collections.spawnMarkers[overviewer.current_world]) {
-                overviewer.collections.spawnMarker = overviewer.collections
-                    .spawnMarkers[overviewer.current_world];
+            if (typeof(ovconf.spawn) == "object") {
+                /// TODO: Retina Icon
+                var spawnIcon = L.icon({
+                    iconUrl: overviewerConfig.CONST.image.spawnMarker,
+                });
+                var latlng = overviewer.util.fromWorldToLatLng(ovconf.spawn[0],
+                                                               ovconf.spawn[1],
+                                                               ovconf.spawn[2],
+                                                               ovconf);
+                var ohaimark = L.marker(latlng, {icon: spawnIcon, title: "Spawn"});
+                overviewer.collections.spawnMarker = ohaimark
                 overviewer.collections.spawnMarker.addTo(overviewer.map);
             } else {
                 overviewer.collections.spawnMarker = null;
@@ -160,17 +169,12 @@ overviewer.util = {
                 overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
             }
 
+            myLayer["tileSetConfig"] = obj;
+
       
             if (typeof(obj.spawn) == "object") {
                 var latlng = overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj);
                 overviewer.collections.centers[obj.world] = [ latlng, 1 ];
-
-                /// TODO: Retina Icon
-                var spawnIcon = L.icon({
-                    iconUrl: overviewerConfig.CONST.image.spawnMarker,
-                });
-                var ohaimark = L.marker(latlng, {icon: spawnIcon, title: "Spawn"});
-                overviewer.collections.spawnMarkers[obj.world] = ohaimark;
             } else {
                 overviewer.collections.centers[obj.world] = [ [0, 0], 1 ];
             }

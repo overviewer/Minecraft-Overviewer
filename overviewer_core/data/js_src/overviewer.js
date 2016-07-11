@@ -52,17 +52,14 @@ overviewer.collections = {
         'markerInfo': {},
 
         /**
-         * holds a reference to the current spawn marker.
+         * holds a reference to the spawn marker.
          */
         'spawnMarker': null,
+
         /**
-         * contains the spawn marker for each world
-         */
-        'spawnMarkers': {},
-	
-	/**
-	 * if a user visits a specific URL, this marker will point to the coordinates in the hash
-	 */
+        * if a user visits a specific URL, this marker will point to the
+        * coordinates in the hash
+        */
         'locationMarker': null
     };
 
