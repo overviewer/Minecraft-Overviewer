@@ -159,7 +159,7 @@ overviewer.util = {
                 noWrap: true,
                 maxZoom: obj.maxZoom,
                 minZoom: obj.minZoom,
-                errorTileUrl: obj.base + obj.path + "/blank.png",
+                errorTileUrl: obj.base + obj.path + "/blank." + obj.imgextension,
             });
             myLayer.getTileUrl = overviewer.util.getTileUrlGenerator(obj.path, obj.base, obj.imgextension);
 
