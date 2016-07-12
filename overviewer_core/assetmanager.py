@@ -104,7 +104,9 @@ directory.
                 'signMarker':       'signpost_icon.png',
                 'bedMarker':        'bed.png',
                 'spawnMarker':      'icons/marker_home.png',
-                'queryMarker':      'icons/marker_location.png'
+                'spawnMarker2x':    'icons/marker_home_2x.png',
+                'queryMarker':      'icons/marker_location.png',
+                'queryMarker2x':    'icons/marker_location_2x.png'
                 }
         dump['CONST']['mapDivId'] = 'mcmap'
         dump['CONST']['regionStrokeWeight'] = 2 # Obselete
