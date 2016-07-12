@@ -139,6 +139,9 @@ overviewer.util = {
                                                                ovconf.spawn[2],
                                                                ovconf);
                 var ohaimark = L.marker(latlng, {icon: spawnIcon, title: "Spawn"});
+                ohaimark.on('click', function(ev) {
+                    overviewer.map.setView(ev.latlng);
+                });
                 overviewer.collections.spawnMarker = ohaimark
                 overviewer.collections.spawnMarker.addTo(overviewer.map);
             } else {
