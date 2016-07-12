@@ -122,6 +122,9 @@ overviewer.util = {
             // Set the background colour
             document.getElementById("mcmap").style.backgroundColor = ovconf.bgcolor;
 
+            if (overviewer.collections.locationMarker) {
+                overviewer.collections.locationMarker.remove();
+            }
             // Remove old spawn marker, add new one
             if (overviewer.collections.spawnMarker) {
                 overviewer.collections.spawnMarker.remove();
@@ -677,10 +680,22 @@ overviewer.util = {
 
         overviewer.map.setView(latlngcoords, zoom);
 
-
-        // TODO re-add this
-        //var locationmarker = new overviewer.views.LocationIconView();
-        //locationmarker.render();
+        if (ovconf.showlocationmarker) {
+            /// TODO: Retina Icon
+            var locationIcon = L.icon({
+                iconUrl: overviewerConfig.CONST.image.queryMarker,
+            });
+            var locationm = L.marker(latlngcoords, {  icon: locationIcon,
+                                                title: "Linked location"});
+            overviewer.collections.locationMarker = locationm
+            overviewer.collections.locationMarker.on('contextmenu', function(ev) {
+               overviewer.collections.locationMarker.remove();
+            });
+            overviewer.collections.locationMarker.on('click', function(ev) {
+                overviewer.map.setView(ev.latlng);
+            });
+            overviewer.collections.locationMarker.addTo(overviewer.map);
+        }
     },
     /**
      * Generate a function to get the path to a tile at a particular location
