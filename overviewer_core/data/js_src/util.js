@@ -134,6 +134,7 @@ overviewer.util = {
                     iconUrl: overviewerConfig.CONST.image.spawnMarker,
                     iconRetinaUrl: overviewerConfig.CONST.image.spawnMarker2x,
                     iconSize: [32, 37],
+                    iconAnchor: [15, 33],
                 });
                 var latlng = overviewer.util.fromWorldToLatLng(ovconf.spawn[0],
                                                                ovconf.spawn[1],
@@ -689,6 +690,7 @@ overviewer.util = {
                 iconUrl: overviewerConfig.CONST.image.queryMarker,
                 iconRetinaUrl: overviewerConfig.CONST.image.queryMarker2x,
                 iconSize: [32, 37],
+                iconAnchor: [15, 33],
             });
             var locationm = L.marker(latlngcoords, {  icon: locationIcon,
                                                 title: "Linked location"});
