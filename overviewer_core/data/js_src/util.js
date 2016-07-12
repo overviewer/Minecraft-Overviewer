@@ -55,6 +55,7 @@ overviewer.util = {
                 console.log(ev.target);
                 console.log(ev.target.value);
                 var selected_world = ev.target.value;
+                
 
                 // save current view for the current_world
                 overviewer.collections.centers[overviewer.current_world][0] = overviewer.map.getCenter();
@@ -91,8 +92,12 @@ overviewer.util = {
 
                 overviewer.current_world = selected_world;
 
-                if (overviewer.collections.mapTypes[selected_world])
-                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][overviewer.current_layer[selected_world]]);
+                if (overviewer.collections.mapTypes[selected_world] && overviewer.current_layer[selected_world]) {
+                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][overviewer.current_layer[selected_world].tileSetConfig.name]);
+                } else {
+                    var tset_name = Object.keys(overviewer.collections.mapTypes[selected_world])[0]
+                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][tset_name]);
+                }
             },
             onAdd: function() {
                 console.log("onAdd mycontrol");
@@ -108,7 +113,7 @@ overviewer.util = {
                 minZoom: 0});
 
         overviewer.map.on('baselayerchange', function(ev) {
-            overviewer.current_layer[overviewer.current_world] = ev.name;
+            overviewer.current_layer[overviewer.current_world] = ev.layer;
             var ovconf = ev.layer.tileSetConfig;
 
             // Set the background colour
@@ -133,6 +138,11 @@ overviewer.util = {
             } else {
                 overviewer.collections.spawnMarker = null;
             }
+            overviewer.util.updateHash();
+        });
+
+        overviewer.map.on('moveend', function(ev) {
+            overviewer.util.updateHash();
         });
     
         var tset = overviewerConfig.tilesets[0];
@@ -193,6 +203,10 @@ overviewer.util = {
 
         //myLayer.addTo(overviewer.map);
         overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), 1);
+
+        if (!overviewer.util.initHash()) {
+            overviewer.worldCtrl.onChange({target: {value: overviewer.current_world}});
+        }
 
 
     },
@@ -503,52 +517,42 @@ overviewer.util = {
                 overviewer.util.goToHash();
                 // Clean up the hash.
                 overviewer.util.updateHash();
+                return true;
+            } else {
+                return false; // signal to caller that we didn't goto any hash
             }
         }
     },
     'setHash': function(x, y, z, zoom, w, maptype)    {
         // save this info is a nice easy to parse format
-        var currentWorldView = overviewer.mapModel.get("currentWorldView");
-        currentWorldView.options.lastViewport = [x,y,z,zoom];
-        var newHash = "#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + w + "/" + maptype;
+        var newHash = "#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + encodeURI(w) + "/" + encodeURI(maptype);
         overviewer.util.lastHash = newHash; // this should not trigger initHash
         window.location.replace(newHash);
     },
     'updateHash': function() {
-        var currTileset = overviewer.mapView.options.currentTileSet;
+        // name of current world
+        var currWorld = overviewer.current_world;
+        if (currWorld == null) {return;}
+
+        var currTileset = overviewer.current_layer[currWorld];
         if (currTileset == null) {return;}
-        var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), 
-                overviewer.map.getCenter().lng(),
-                currTileset);
+
+        var ovconf = currTileset.tileSetConfig;
+
+        var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat, 
+                overviewer.map.getCenter().lng,
+                ovconf);
         var zoom = overviewer.map.getZoom();
-        var maptype = overviewer.map.getMapTypeId();
 
-        // convert mapType into a index
-        var currentWorldView = overviewer.mapModel.get("currentWorldView");
-        var maptypeId = -1;
-        for (id in currentWorldView.options.mapTypeIds) {
-            if (currentWorldView.options.mapTypeIds[id] == maptype) {
-                maptypeId = id;
-            }
-        }
-
-        var worldId = -1;
-        for (id in overviewer.collections.worldViews) {
-            if (overviewer.collections.worldViews[id] == currentWorldView) {
-                worldId = id;
-            }
-        }
-
-
-        if (zoom >= currTileset.get('maxZoom')) {
+        if (zoom >= ovconf.maxZoom) {
             zoom = 'max';
-        } else if (zoom <= currTileset.get('minZoom')) {
+        } else if (zoom <= ovconf.minZoom) {
             zoom = 'min';
         } else {
             // default to (map-update friendly) negative zooms
-            zoom -= currTileset.get('maxZoom');
+            zoom -= ovconf.maxZoom;
         }
-        overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, worldId, maptypeId);
+        overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, currWorld, ovconf.name);
     },
     'goToHash': function() {
         // Note: the actual data begins at coords[1], coords[0] is empty.
@@ -556,53 +560,59 @@ overviewer.util = {
 
 
         var zoom;
-        var worldid = -1;
-        var maptyped = -1;
+        var world_name = null;
+        var tileset_name = null;
         // The if-statements try to prevent unexpected behaviour when using incomplete hashes, e.g. older links
         if (coords.length > 4) {
             zoom = coords[4];
         }
         if (coords.length > 6) {
-            worldid = coords[5];
-            maptypeid = coords[6];
+            world_name = decodeURI(coords[5]);
+            tileset_name = decodeURI(coords[6]);
         }
-        var worldView = overviewer.collections.worldViews[worldid];
-        overviewer.mapModel.set({currentWorldView: worldView});
 
-        var maptype = worldView.options.mapTypeIds[maptypeid];
-        overviewer.map.setMapTypeId(maptype);
-        var tsetModel = worldView.model.get("tileSets").at(maptypeid);
-        
+        var target_layer = overviewer.collections.mapTypes[world_name][tileset_name];
+        var ovconf = target_layer.tileSetConfig;
+
         var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), 
                 parseInt(coords[2]), 
                 parseInt(coords[3]),
-                tsetModel);
+                ovconf);
 
         if (zoom == 'max') {
-            zoom = tsetModel.get('maxZoom');
+            zoom = ovconf.maxZoom;
         } else if (zoom == 'min') {
-            zoom = tsetModel.get('minZoom');
+            zoom = ovconf.minZoom;
         } else {
             zoom = parseInt(zoom);
             if (zoom < 0) {
                 // if zoom is negative, treat it as a "zoom out from max"
-                zoom += tsetModel.get('maxZoom');
+                zoom += ovconf.maxZoom;
             } else {
                 // fall back to default zoom
-                zoom = tsetModel.get('defaultZoom');
+                zoom = ovconf.defaultZoom;
             }
         }
 
         // clip zoom
-        if (zoom > tsetModel.get('maxZoom'))
-            zoom = tsetModel.get('maxZoom');
-        if (zoom < tsetModel.get('minZoom'))
-            zoom = tsetModel.get('minZoom');
+        if (zoom > ovconf.maxZoom)
+            zoom = ovconf.maxZoom;
+        if (zoom < ovconf.minZoom)
+            zoom = ovconf.minZoom;
 
-        overviewer.map.setCenter(latlngcoords);
-        overviewer.map.setZoom(zoom);
-        var locationmarker = new overviewer.views.LocationIconView();
-        locationmarker.render();
+        // build a fake event for the world switcher control
+        overviewer.worldCtrl.onChange({target: {value: world_name}});
+        overviewer.worldCtrl.select.value = world_name;
+        if  (!overviewer.map.hasLayer(target_layer)) {
+            overviewer.map.addLayer(target_layer);
+        }
+
+        overviewer.map.setView(latlngcoords, zoom);
+
+
+        // TODO re-add this
+        //var locationmarker = new overviewer.views.LocationIconView();
+        //locationmarker.render();
     },
     /**
      * Generate a function to get the path to a tile at a particular location
