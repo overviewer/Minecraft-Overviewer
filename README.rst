@@ -53,7 +53,7 @@ the initial render to take at least an hour, possibly more. (Since Minecraft
 maps are practically infinite, the maximum time this could take is also
 infinite!)
 
-If you press <kbd>Ctrl-C</kbd>, it will stop. The next run will pick up where it left off.
+If you press `Ctrl-C`, it will stop. The next run will pick up where it left off.
 
 Once your initial render is done, subsequent renderings will be MUCH faster due
 to all the caching that happens behind the scenes. Just use the same output
