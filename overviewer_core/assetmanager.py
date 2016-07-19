@@ -100,20 +100,25 @@ directory.
         dump = dict()
         dump['CONST'] = dict(tileSize=384)
         dump['CONST']['image'] = {
-                'defaultMarker':    'signpost.png',
-                'signMarker':       'signpost_icon.png',
-                'bedMarker':        'bed.png',
-                'spawnMarker':      'icons/marker_home.png',
-                'spawnMarker2x':    'icons/marker_home_2x.png',
-                'queryMarker':      'icons/marker_location.png',
-                'queryMarker2x':    'icons/marker_location_2x.png'
-                }
+            'defaultMarker':    'signpost.png',
+            'signMarker':       'signpost_icon.png',
+            'bedMarker':        'bed.png',
+            'spawnMarker':      'icons/marker_home.png',
+            'spawnMarker2x':    'icons/marker_home_2x.png',
+            'queryMarker':      'icons/marker_location.png',
+            'queryMarker2x':    'icons/marker_location_2x.png'
+        }
         dump['CONST']['mapDivId'] = 'mcmap'
-        dump['CONST']['regionStrokeWeight'] = 2 # Obselete
-        dump['CONST']['UPPERLEFT']  = world.UPPER_LEFT;
-        dump['CONST']['UPPERRIGHT'] = world.UPPER_RIGHT;
-        dump['CONST']['LOWERLEFT']  = world.LOWER_LEFT;
-        dump['CONST']['LOWERRIGHT'] = world.LOWER_RIGHT;
+        dump['CONST']['UPPERLEFT']  = world.UPPER_LEFT
+        dump['CONST']['UPPERRIGHT'] = world.UPPER_RIGHT
+        dump['CONST']['LOWERLEFT']  = world.LOWER_LEFT
+        dump['CONST']['LOWERRIGHT'] = world.LOWER_RIGHT
+        dump['CONST']['image']['compass'] = {
+            world.UPPER_LEFT:'compass_upper-left.png',
+            world.UPPER_RIGHT:'compass_upper-right.png',
+            world.LOWER_LEFT:'compass_lower-left.png',
+            world.LOWER_RIGHT:'compass_lower-right.png'
+        }
 
         # based on the tilesets we have, group them by worlds
         worlds = []
@@ -136,7 +141,6 @@ directory.
             'mapType': True,
             'overlays': True,
             'coordsBox': True,
-            'searchBox': True   # Lolwat. Obselete
             }
 
 

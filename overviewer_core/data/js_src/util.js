@@ -38,7 +38,19 @@ overviewer.util = {
 
         document.getElementById('NoJSWarning').remove();
 
-
+        overviewer.compassClass = L.Control.extend({
+            initialize: function(imagedict, options) {
+                L.Util.setOptions(this, options);
+                this.compass_img = L.DomUtil.create('img', 'compass');
+                this.imagedict = imagedict;
+            },
+            render: function(direction) {
+                this.compass_img.src = this.imagedict[direction];
+            },
+            onAdd: function() {
+                return this.compass_img;
+            }
+        });
         overviewer.control = L.Control.extend({
             initialize: function(options) {
                 L.Util.setOptions(this, options);
@@ -119,6 +131,9 @@ overviewer.util = {
             overviewer.current_layer[overviewer.current_world] = ev.layer;
             var ovconf = ev.layer.tileSetConfig;
 
+            // Change the compass
+            overviewer.compass.render(ovconf.north_direction);
+
             // Set the background colour
             document.getElementById("mcmap").style.backgroundColor = ovconf.bgcolor;
 
@@ -176,6 +191,8 @@ overviewer.util = {
         var tilesetLayers = {}
 
         overviewer.worldCtrl = new overviewer.control();
+        overviewer.compass = new overviewer.compassClass(
+            overviewerConfig.CONST.image.compass);
         
 
         $.each(overviewerConfig.worlds, function(idx, world_name) {
@@ -184,6 +201,7 @@ overviewer.util = {
             overviewer.worldCtrl.addWorld(world_name);
         });
 
+        overviewer.compass.addTo(overviewer.map);
         overviewer.worldCtrl.addTo(overviewer.map);
 
         $.each(overviewerConfig.tilesets, function(idx, obj) {
