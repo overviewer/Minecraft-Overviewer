@@ -423,7 +423,7 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # Now we start the actual processing, now that all the configuration has
     # been gathered and validated
     # create our asset manager... ASSMAN
-    assetMrg = assetmanager.AssetManager(destdir, config.get('customwebassets', None))
+    assetMrg = assetmanager.AssetManager(destdir, config.get('customwebassets', None), config.get('google_api_key', "insert-your-api-key"))
 
     # If we've been asked to update web assets, do that and then exit 
     if options.update_web_assets:
