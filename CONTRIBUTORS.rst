@@ -33,6 +33,7 @@ for many different parts of the code.
  * Richard Pastrick <rpastric@contre.us>
  * Michael Writhe <michael@writhem.com>
  * Xon <Xon@localhost>
+ * Nicolas Frattaroli <ovdev@fratti.ch>
 
 ------------------------
 Short-term Contributions
@@ -52,7 +53,6 @@ feature.
  * Carter Charbonneau <zcarterc@gmail.com>
  * Alex Cline <cline@vivisimo.com>
  * Andrew Clunis <andrew@orospakr.ca>
- * CounterPillow <spam@tes-cheese.ch>
  * Mark Crichton <crichton@gmail.com>
  * Johannes Dewender <github@JonnyJD.net>
  * Michael Fallows <michael@fallo.ws>
