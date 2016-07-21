@@ -34,7 +34,7 @@ same time, controls the generated javascript files in the output directory.
 There should only be one instances of these per execution.
     """
 
-    def __init__(self, outputdir, custom_assets_dir=None):
+    def __init__(self, outputdir, custom_assets_dir=None, google_api_key=None):
         """\
 Initializes the AssetManager with the top-level output directory.  
 It can read/parse and write/dump the overviewerConfig.js file into this top-level
@@ -42,6 +42,7 @@ directory.
         """
         self.outputdir = outputdir
         self.custom_assets_dir = custom_assets_dir
+        self.google_api_key = google_api_key
         self.renders = dict()
 
         self.fs_caps = get_fs_caps(self.outputdir)
@@ -197,6 +198,7 @@ directory.
 
         index = codecs.open(indexpath, 'r', encoding='UTF-8').read()
         index = index.replace("{title}", "Minecraft Overviewer")
+        index = index.replace("{google_api_key}", self.google_api_key)
         index = index.replace("{time}", time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime()).decode(self.preferredencoding))
         versionstr = "%s (%s)" % (util.findGitVersion(), util.findGitHash()[:7])
         index = index.replace("{version}", versionstr)

@@ -257,6 +257,14 @@ General
 
     **Required**
 
+.. _googleapikey:
+
+``google_api_key = "your-google-api-key"``
+    This is the key issued by Google to use their Google Maps Javascript
+    APIs.
+
+    **Required**
+
 .. _processes:
 
 ``processes = num_procs``
