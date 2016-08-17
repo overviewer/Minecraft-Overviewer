@@ -161,6 +161,10 @@ class FileReplacer(object):
                             raise
                 # atomic rename into place
                 try:
+                    try:
+                        os.remove(self.destname)
+                    except OSError, e:
+                        pass
                     os.rename(self.tmpname, self.destname)
                 except OSError, e:
                     # Ignore errno ENOENT: file does not exist. Due to a race
