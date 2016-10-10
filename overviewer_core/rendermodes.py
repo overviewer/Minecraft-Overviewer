@@ -216,7 +216,15 @@ class StructureOverlay(Overlay):
                         (((0, 0, 0, 157), (0, -1, 0, 4)), (255, 100, 0, 255)),
                        ]),
     }
-
+	
+class BoundsOverlay(Overlay):
+    name = "overlay-bounds"
+    options = {
+        'bounds': ('a list of ((((minx, minx, maxx, maxz)), ...), (r, g, b, a)) tuples for coloring boundaries',
+                       [(((0, 0, 16, -16)), (255,160,122, 255)),
+                        (((32, 32, 48, 48)), (255, 255, 0, 255))
+                       ]),
+    }	
 
 class MineralOverlay(Overlay):
     name = "overlay-mineral"
