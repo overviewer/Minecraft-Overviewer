@@ -37,8 +37,11 @@ struct Color {
     unsigned char r, g, b, a;
 };
 
+/*
+* Determines if point x,z is inside bounds minx, minz, maxx, maxz
+*/
 static int is_inside(int x, int z, int minx, int minz, int maxx, int maxz) {
-	
+	return (x >= minx && x <= maxx && z >= minz && z <= maxz);
 }
 
 static void get_color(void *data,
@@ -68,7 +71,7 @@ static void get_color(void *data,
         for (cond = 0; cond < bounds[col].numconds; cond++) {
             c = (struct Condition *)&bounds[col].conditions[cond];
             // check current point is in the condition
-            if(is_inside(x, z, c)) {
+            if(is_inside(x, z, c->minx, c->minz, c->maxx, c->maxz)) {
 				any = true;
             }
         }
