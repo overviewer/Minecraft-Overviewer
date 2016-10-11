@@ -24,7 +24,7 @@ typedef struct {
     RenderPrimitiveOverlay parent;
     void *bounds;
     int numcolors;
-} RenderPrimitiveStructure;
+} RenderPrimitiveBounds;
 
 struct Condition{
     int minx, minz, maxx, maxz;
@@ -53,12 +53,11 @@ static void get_color(void *data,
     /**
      * Calculate the color at the current position and store the values to r,g,b,a.
      **/
-    RenderPrimitiveStructure *self = (RenderPrimitiveStructure *)data;
-    int x = state->x, z = state->z, y_max, y, col, cond;
+    RenderPrimitiveBounds *self = (RenderPrimitiveBounds *)data;
+    int x = state->x, z = state->z, col, cond;
     struct Color *bounds = (struct Color *)(self->bounds);
     struct Condition * c = NULL;
     bool any = true;
-    y_max = state->y + 1;
 
     /**
      * Check for every color in the current point is in the given bounds,
@@ -95,7 +94,7 @@ static int overlay_bounds_start(void *data, RenderState *state, PyObject *suppor
      * appropriate bounds. If no arguments are passed create and use default values.
      **/
     PyObject *opt;
-    RenderPrimitiveStructure* self;
+    RenderPrimitiveBounds* self;
 
     /* first, chain up */
     int ret = primitive_overlay.start(data, state, support);
@@ -103,7 +102,7 @@ static int overlay_bounds_start(void *data, RenderState *state, PyObject *suppor
         return ret;
 
     /* now do custom initializations */
-    self = (RenderPrimitiveStructure *)data;
+    self = (RenderPrimitiveBounds *)data;
 
     // opt is a borrowed reference.  do not deref
     // store the bounds python object into opt.
@@ -139,14 +138,14 @@ static int overlay_bounds_start(void *data, RenderState *state, PyObject *suppor
          **/
         if (cont) {
             for (i = 0; i < bounds_size; i++) {
-                PyObject *structure = PyList_GET_ITEM(opt, i);
+                PyObject *bound = PyList_GET_ITEM(opt, i);
                 // condspy holding the conditions tuple of variable length (python object)
                 PyObject *condspy;
                 // colorpy holding the 4 tuple with r g b a values of the color
                 PyObject *colorpy;
 
                 // getting the condspy and colorpy out of the bounds.
-                if (!PyArg_ParseTuple(structure, "OO", &condspy, &colorpy)) {
+                if (!PyArg_ParseTuple(bound, "OO", &condspy, &colorpy)) {
                     // Exception set automatically
                     free(bounds);
                     self->bounds = NULL;
@@ -214,11 +213,11 @@ static int overlay_bounds_start(void *data, RenderState *state, PyObject *suppor
 
 static void overlay_bounds_finish(void *data, RenderState *state) {
     /* first free all *our* stuff */
-    RenderPrimitiveStructure* self = (RenderPrimitiveStructure *)data;
+	RenderPrimitiveBounds* self = (RenderPrimitiveBounds *)data;
     int i = 0;
 
     if(self->bounds) {
-        // freeing the nested structure
+        // freeing the nested bounds
         struct Color * m = self->bounds;
         for(i = 0; i < self->numcolors; i++){
             if(m[i].conditions)
@@ -237,7 +236,7 @@ static void overlay_bounds_finish(void *data, RenderState *state) {
 
 RenderPrimitiveInterface primitive_overlay_bounds = {
     "overlay-bounds",
-    sizeof(RenderPrimitiveStructure),
+    sizeof(RenderPrimitiveBounds),
     overlay_bounds_start,
     overlay_bounds_finish,
     NULL,
