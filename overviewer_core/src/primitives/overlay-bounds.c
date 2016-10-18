@@ -54,11 +54,11 @@ static void get_color(void *data,
      * Calculate the color at the current position and store the values to r,g,b,a.
      **/
     RenderPrimitiveBounds *self = (RenderPrimitiveBounds *)data;
-    int x = state->x, z = state->z, col, cond;
+    int x = (state->chunkx * 16) + state->x, z = (state->chunkz * 16) + state->z, col, cond;
     struct Color *bounds = (struct Color *)(self->bounds);
     struct Condition * c = NULL;
     bool any = true;
-
+	
     /**
      * Check for every color in the current point is in the given bounds,
 	 * and color appropriately
