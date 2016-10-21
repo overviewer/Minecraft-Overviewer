@@ -98,16 +98,18 @@ static int overlay_bounds_start(void *data, RenderState *state, PyObject *suppor
 
     /* first, chain up */
     int ret = primitive_overlay.start(data, state, support);
-    if (ret != 0)
-        return ret;
+    if (ret != 0) {
+		return ret;
+	}   
 
     /* now do custom initializations */
     self = (RenderPrimitiveBounds *)data;
 
     // opt is a borrowed reference.  do not deref
     // store the bounds python object into opt.
-    if (!render_mode_parse_option(support, "bounds", "O", &(opt)))
-        return 1;
+    if (!render_mode_parse_option(support, "bounds", "O", &(opt))) {
+        return 1;	
+	}
 
     /**
      * Check if a sane option was passed.
@@ -220,8 +222,9 @@ static void overlay_bounds_finish(void *data, RenderState *state) {
         // freeing the nested bounds
         struct Color * m = self->bounds;
         for(i = 0; i < self->numcolors; i++){
-            if(m[i].conditions)
-                free(m[i].conditions);
+            if(m[i].conditions) {
+				free(m[i].conditions);
+			}
         }
     }
 
