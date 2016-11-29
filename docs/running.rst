@@ -271,13 +271,13 @@ If you want or need to provide your own textures, you have several options:
 
   ::
 
-    VERSION=1.10
+    VERSION=1.11
     wget https://s3.amazonaws.com/Minecraft.Download/versions/${VERSION}/${VERSION}.jar -P ~/.minecraft/versions/${VERSION}/
 
   If that's too confusing for you, then just take this single line and paste it into
-  a terminal to get 1.10 textures::
+  a terminal to get 1.11 textures::
 
-    wget https://s3.amazonaws.com/Minecraft.Download/versions/1.10/1.10.jar -P ~/.minecraft/versions/1.10/
+    wget https://s3.amazonaws.com/Minecraft.Download/versions/1.11/1.11.jar -P ~/.minecraft/versions/1.11/
 
 * You can also just run the launcher to install the client.
 
