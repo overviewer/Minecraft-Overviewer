@@ -20,6 +20,7 @@ import logging
 
 class Optimizer:
     binaryname = ""
+    binarynames = []
 
     def __init__(self):
         raise NotImplementedError("I can't let you do that, Dave.")
@@ -37,8 +38,13 @@ class Optimizer:
             result = filter(lambda x: os.path.exists(os.path.join(x, prog)), path)
             return len(result) != 0
 
-        if (not exists_in_path(self.binaryname)) and (not exists_in_path(self.binaryname + ".exe")):
-            raise Exception("Optimization program '%s' was not found!" % self.binaryname)
+        binaries = self.binarynames + [x + ".exe" for x in self.binarynames]
+        for b in binaries:
+            if (exists_in_path(b)):
+                self.binaryname = b
+                break
+        else:
+            raise Exception("Optimization programs '%s' were not found!" % binaries)
     
     def is_crusher(self):
         """Should return True if the optimization is lossless, i.e. none of the actual image data will be changed."""
@@ -63,7 +69,7 @@ class JPEGOptimizer:
         raise NotImplementedError("I can't let you do that, Dave.")
 
 class pngnq(NonAtomicOptimizer, PNGOptimizer):
-    binaryname = "pngnq"
+    binarynames = ["pngnq-s9", "pngnq"]
 
     def __init__(self, sampling=3, dither="n"):
         if sampling < 1 or sampling > 10:
@@ -93,7 +99,7 @@ class pngnq(NonAtomicOptimizer, PNGOptimizer):
         return False
 
 class pngcrush(NonAtomicOptimizer, PNGOptimizer):
-    binaryname = "pngcrush"
+    binarynames = ["pngcrush"]
     # really can't be bothered to add some interface for all
     # the pngcrush options, it sucks anyway
     def __init__(self, brute=False):
@@ -110,7 +116,7 @@ class pngcrush(NonAtomicOptimizer, PNGOptimizer):
         return True
 
 class optipng(Optimizer, PNGOptimizer):
-    binaryname = "optipng"
+    binarynames = ["optipng"]
 
     def __init__(self, olevel=2):
         self.olevel = olevel
@@ -122,7 +128,7 @@ class optipng(Optimizer, PNGOptimizer):
         return True
 
 class advpng(Optimizer, PNGOptimizer):
-    binaryname = "advpng"
+    binarynames = ["advpng"]
     crusher = True
 
     def __init__(self, olevel=3):
@@ -135,7 +141,7 @@ class advpng(Optimizer, PNGOptimizer):
         return True
 
 class jpegoptim(Optimizer, JPEGOptimizer):
-    binaryname = "jpegoptim"
+    binarynames = ["jpegoptim"]
     crusher = True
     quality = None
     target_size = None
