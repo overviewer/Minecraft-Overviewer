@@ -310,7 +310,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.10-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.11-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
@@ -4518,6 +4518,98 @@ def boneblock(self, blockid, data):
         return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
     elif boneblock_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
+
+# observer
+@material(blockid=218, data=range(6), solid=True, nospawn=True)
+def observer(self, blockid, data):
+    # first, do the rotation if needed
+    if self.rotation == 1:
+        if data == 2: data = 5
+        elif data == 3: data = 4
+        elif data == 4: data = 2
+        elif data == 5: data = 3
+    elif self.rotation == 2:
+        if data == 2: data = 3
+        elif data == 3: data = 2
+        elif data == 4: data = 5
+        elif data == 5: data = 4
+    elif self.rotation == 3:
+        if data == 2: data = 4
+        elif data == 3: data = 5
+        elif data == 4: data = 3
+        elif data == 5: data = 2
+
+    front = self.load_image_texture("assets/minecraft/textures/blocks/observer_front.png").copy()
+    side = self.load_image_texture("assets/minecraft/textures/blocks/observer_side.png").copy()
+    back = self.load_image_texture("assets/minecraft/textures/blocks/observer_back.png").copy()
+    top = self.load_image_texture("assets/minecraft/textures/blocks/observer_top.png").copy()
+
+    if data == 0: # down
+        side = side.rotate(90)
+        img = self.build_full_block(back, None, None, side, top)
+    elif data == 1: # up
+        side = side.rotate(90)
+        img = self.build_full_block(front.rotate(180), None, None, side, top.rotate(180))
+    elif data == 2: # east
+        img = self.build_full_block(top.rotate(180), None, None, side, back)
+    elif data == 3: # west
+        img = self.build_full_block(top, None, None, side, front)
+    elif data == 4: # north
+        img = self.build_full_block(top.rotate(270), None, None, front, side)
+    elif data == 5: # south
+        img = self.build_full_block(top.rotate(90), None, None, back, side)
+
+    return img
+
+# shulker box
+@material(blockid=range(219,235), data=range(6), solid=True, nospawn=True)
+def shulker_box(self, blockid, data):
+    # first, do the rotation if needed
+    data = data & 7
+    if self.rotation == 1:
+        if data == 2: data = 5
+        elif data == 3: data = 4
+        elif data == 4: data = 2
+        elif data == 5: data = 3
+    elif self.rotation == 2:
+        if data == 2: data = 3
+        elif data == 3: data = 2
+        elif data == 4: data = 5
+        elif data == 5: data = 4
+    elif self.rotation == 3:
+        if data == 2: data = 4
+        elif data == 3: data = 5
+        elif data == 4: data = 3
+        elif data == 5: data = 2
+
+    color = color_map[blockid - 219]
+    shulker_t = self.load_image_texture("assets/minecraft/textures/entity/shulker/shulker_%s.png" % color).copy()
+    w,h = shulker_t.size
+    res = w / 4
+    # Cut out the parts of the shulker texture we need for the box
+    top = shulker_t.crop((res,0,res*2,res))
+    bottom = shulker_t.crop((res*2,int(res*1.75),res*3,int(res*2.75)))
+    side_top = shulker_t.crop((0,res,res,int(res*1.75)))
+    side_bottom = shulker_t.crop((0,int(res*2.75),res,int(res*3.25)))
+    side = Image.new('RGBA', (res,res))
+    side.paste(side_top, (0,0), side_top)
+    side.paste(side_bottom, (0,res/2), side_bottom)
+
+    if data == 0: # down
+        side = side.rotate(180)
+        img = self.build_full_block(bottom, None, None, side, side)
+    elif data == 1: # up
+        img = self.build_full_block(top, None, None, side, side)
+    elif data == 2: # east
+        img = self.build_full_block(side, None, None, side.rotate(90), bottom)
+    elif data == 3: # west
+        img = self.build_full_block(side.rotate(180), None, None, side.rotate(270), top)
+    elif data == 4: # north
+        img = self.build_full_block(side.rotate(90), None, None, top, side.rotate(270))
+    elif data == 5: # south
+        img = self.build_full_block(side.rotate(270), None, None, bottom, side.rotate(90))
+
+    return img
 
 # structure block
 @material(blockid=255, data=range(4), solid=True)
