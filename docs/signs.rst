@@ -25,7 +25,7 @@ The function should accept one argument (a dictionary, also know as an associati
 array), and return a string representing the text to be displayed.  For example::
 
     def signFilter(poi):
-        if poi['id'] == 'Sign':
+        if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
             return "\n".join([poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']])
 
 If a POI doesn't match, the filter can return None (which is the default if a python 
