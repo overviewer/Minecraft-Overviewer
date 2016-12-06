@@ -307,6 +307,8 @@ def handlePlayers(worldpath, filters, markers):
         if isSinglePlayer:
             playername = 'Player'
         data._name = playername
+        if useUUIDs:
+            data['uuid'] = playername
 
         # Position at last logout
         data['id'] = "Player"
