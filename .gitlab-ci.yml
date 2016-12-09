@@ -1,0 +1,184 @@
+stages:
+  - build
+  - test
+  - package
+  - verify
+  - render
+
+variables:
+  EXMAPLE_REPO: "https://github.com/overviewer/Minecraft-Overviewer-Addons"
+  MC_VERSION: "1.11"
+
+build:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  stage: build
+  script:
+    - python2 setup.py build
+    - python2 overviewer.py --verbose --version
+
+build:docs:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  stage: build
+  script:
+    - cd docs
+    - make
+  artifacts:
+    name: "overviewer-docs"
+    expire_in: 2 weeks
+    paths:
+      - docs/_build/html/
+
+test:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  stage: test
+  dependencies:
+    - build
+  script:
+    - python2 setup.py build
+    - python2 test/test_all.py
+
+
+# Builds a source package
+package:src:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  stage: package
+  script:
+    - python2 setup.py sdist
+    - ls -lh dist
+  artifacts:
+    paths:
+      - dist/*.tar.gz
+
+package:centos7rpm:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
+  stage: package
+  script:
+    - export MCO_VERSION=`python2 setup.py --version`
+    - echo  "Building Minecraft version ${MCO_VERSION}"
+    - mkdir -p ${HOME}/rpmbuild/SOURCES
+    - tar --transform 's,^,Minecraft-Overviewer/,S' -czf ${HOME}/rpmbuild/SOURCES/Minecraft-Overviewer-${MCO_VERSION}.tar.gz *
+    - sed s/{VERSION}/$MCO_VERSION/g build-tools/dockerfiles/centos7/Minecraft-Overviewer.spec > Minecraft-Overviewer.spec
+    - pwd
+    - rpmbuild -bs --define 'dist .centos7' Minecraft-Overviewer.spec
+    - /usr/bin/mock -r centos-7-x86_64 ${HOME}/rpmbuild/SRPMS/Minecraft-Overviewer-${MCO_VERSION}-1.centos7.src.rpm
+    - cp /var/lib/mock/centos-7-x86_64/result/Minecraft-Overviewer*.x86_64.rpm .
+    - ls -l *.rpm
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - Minecraft-Overviewer*.x86_64.rpm
+
+package:centos7-32rpm:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
+  stage: package
+  only:
+    - master
+    - triggers
+  script:
+    - export MCO_VERSION=`python2 setup.py --version`
+    - echo  "Building Minecraft version ${MCO_VERSION}"
+    - mkdir -p ${HOME}/rpmbuild/SOURCES
+    - tar --transform 's,^,Minecraft-Overviewer/,S' -czf ${HOME}/rpmbuild/SOURCES/Minecraft-Overviewer-${MCO_VERSION}.tar.gz *
+    - sed s/{VERSION}/$MCO_VERSION/g build-tools/dockerfiles/centos7/Minecraft-Overviewer.spec > Minecraft-Overviewer.spec
+    - pwd
+    - rpmbuild -bs --define 'dist .centos7' Minecraft-Overviewer.spec
+    - /usr/bin/mock -r centos-7-i386 ${HOME}/rpmbuild/SRPMS/Minecraft-Overviewer-${MCO_VERSION}-1.centos7.src.rpm
+    - cp /var/lib/mock/centos-7-i386/result/Minecraft-Overviewer*.i*86.rpm .
+    - ls -l *.rpm
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - Minecraft-Overviewer*.i*86.rpm
+
+# Note that even though we are building a centos6 rpm, we can still use the centos7 docker image
+package:centos6rpm:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
+  stage: package
+  only:
+    - master
+    - triggers
+  script:
+    - export MCO_VERSION=`python2 setup.py --version`
+    - echo  "Building Minecraft version ${MCO_VERSION}"
+    - mkdir -p ${HOME}/rpmbuild/SOURCES
+    - tar --transform 's,^,Minecraft-Overviewer/,S' -czf ${HOME}/rpmbuild/SOURCES/Minecraft-Overviewer-${MCO_VERSION}.tar.gz *
+    - sed s/{VERSION}/$MCO_VERSION/g build-tools/dockerfiles/centos6/Minecraft-Overviewer.spec > Minecraft-Overviewer.spec
+    - pwd
+    - rpmbuild -bs --define 'dist .centos6' Minecraft-Overviewer.spec
+    - /usr/bin/mock -r centos-6-x86_64 ${HOME}/rpmbuild/SRPMS/Minecraft-Overviewer-${MCO_VERSION}-1.centos6.src.rpm
+    - cp /var/lib/mock/centos-6-x86_64/result/Minecraft-Overviewer*.x86_64.rpm .
+    - ls -l *.rpm
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - Minecraft-Overviewer*.x86_64.rpm
+
+package:debian64:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
+  stage: package
+  script:
+    - export MCO_VERSION=`python2 setup.py --version`
+    - echo  "Building Minecraft version ${MCO_VERSION}"
+    - python setup.py build
+    - cp -r build-tools/dockerfiles/debian64 debian
+    - sh debian/generate_changelog.sh > debian/changelog
+    - cat debian/changelog 
+    - debuild -i -us -uc -b
+    - mv ../*.deb .
+    - ls -l *.deb
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - minecraft-overviewer*.deb
+
+
+verify:centos7:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7-verify
+  stage: verify
+  dependencies:
+    - package:centos7rpm
+  script:
+    - ls -l *.rpm
+    - ls -l
+    - echo yum -y install ./Minecraft-Overviewer-0*.rpm
+    - yum -y install ./Minecraft-Overviewer-0*.rpm
+    - which overviewer.py
+    - overviewer.py --verbose --version
+    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
+    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
+    - overviewer.py --check-terrain --verbose
+
+
+verify:debian64:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian-verify
+  stage: verify
+  dependencies:
+    - package:debian64
+  script:
+    - dpkg -i ./minecraft-overviewer*.deb || echo ""
+    - apt-get -y -f install
+    - which overviewer.py
+    - overviewer.py --verbose --version
+    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
+    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
+    - overviewer.py --check-terrain --verbose
+
+
+render:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
+  stage: render
+  tags:
+    - diax
+  dependencies:
+    - package:debian64
+  environment:
+    name: review/$CI_BUILD_REF_NAME
+    url: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_NAME/$CI_BUILD_ID
+  script:
+    - dpkg -i ./minecraft-overviewer*.deb
+    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
+    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
+    - export RENDER_DIR=/renders/$CI_BUILD_REF_NAME/$CI_BUILD_ID
+    - mkdir -p $RENDER_DIR
+    - overviewer.py -p2 --rendermode=smooth_lighting maprepo/exmaple $RENDER_DIR
+    - "echo Map render now available at: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_NAME/$CI_BUILD_ID"

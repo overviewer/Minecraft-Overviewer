@@ -1,0 +1,1 @@
+This dockerfile is a very basic image that we use to verify that debian .deb files can be installed

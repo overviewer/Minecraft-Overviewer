@@ -1,0 +1,35 @@
+This package was debianized by Aaron Griffith <agrif@overviewer.org>
+ on Sat, 14 May 2011 14:21:24 -0400.
+
+It was downloaded from http://github.com/overviewer/Minecraft-Overviewer
+
+Upstream Author:
+
+    Andrew Brown <brownan@overviewer.org>
+
+Files: *
+Copyright:
+    2010-2011, Andrew Brown
+License: GPL
+
+Files: debian/*
+Copyright:
+    2011, Aaron Griffith
+License: GPL
+
+License: GPL
+   This package is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This package is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this package; if not, see .
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL-3'

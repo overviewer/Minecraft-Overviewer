@@ -1,0 +1,3 @@
+This image is a centos:7 image that contains all the necessary tools to build
+and run Overviewer.  It can serve as a base image for other images, or be used
+directly.
