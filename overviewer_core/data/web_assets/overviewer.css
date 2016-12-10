@@ -150,3 +150,17 @@ div.searchResultItem img {
     width: 24px;
     height: 24px;
 }
+
+
+div.worldcontrol {
+    border: 2px solid rgba(0,0,0,0.2);
+    border-radius: 5px;
+    background: #fff;
+    padding: 2px;
+}
+div.worldcontrol select {
+    background: #fff;
+    border: 1px solid #fff;
+    color: #333;
+    font-size: 1.2em;
+}
