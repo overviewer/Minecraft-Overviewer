@@ -33,6 +33,8 @@ overviewer.util = {
      */
     'initialize': function() {
         //overviewer.util.initializeClassPrototypes();
+        overviewer.util.initializePolyfills();
+
         document.getElementById('NoJSWarning').remove();
 
 
@@ -219,6 +221,21 @@ overviewer.util = {
 
     'initializeMarkers': function() {
         return;
+
+    },
+
+    /** Any polyfills needed to improve browser compatibility
+     */
+    'initializePolyfills': function() {
+        // From https://developer.mozilla.org/en-US/docs/Web/API/ChildNode/remove
+        // IE is missing this
+        if (!('remove' in Element.prototype)) {
+            Element.prototype.remove = function() {
+                if (this.parentNode) {
+                    this.parentNode.removeChild(this);
+                }
+            };
+        }
 
     },
 
