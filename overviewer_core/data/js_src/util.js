@@ -34,6 +34,7 @@ overviewer.util = {
     'initialize': function() {
         //overviewer.util.initializeClassPrototypes();
         overviewer.util.initializePolyfills();
+        overviewer.util.initializeMarkers();
 
         document.getElementById('NoJSWarning').remove();
 
@@ -140,6 +141,15 @@ overviewer.util = {
             } else {
                 overviewer.collections.spawnMarker = null;
             }
+
+            // reset the markers control with the markers for this layer
+            if (ovconf.marker_groups.length > 0) {
+                console.log("markers for", ovconf.marker_groups);
+                markerCtrl = L.control.layers(
+                        [],
+                        ovconf.marker_groups).addTo(overviewer.map);
+            }
+
             overviewer.util.updateHash();
         });
 
@@ -184,6 +194,40 @@ overviewer.util = {
                 overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
             }
 
+            obj.marker_groups = [];
+
+            if (overviewer.collections.haveSigns == true) {
+                // if there are markers for this tileset, create them now
+                if (obj.path in markers) {
+                    console.log("this tileset has markers:", obj);
+
+                    for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
+                        var marker_group = new L.layerGroup();
+                        var marker_entry = markers[obj.path][mkidx];
+                        var icon =  L.icon({iconUrl: marker_entry.icon});
+                        console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
+
+                        for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
+                            var db = markersDB[marker_entry.groupName].raw[dbidx];
+                            var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
+                            console.log(latlng);
+                            marker_group.addLayer(new L.marker(latlng, {
+                                icon: icon
+                            }));
+                        }
+                        obj.marker_groups.push(marker_group);
+                    }
+
+
+                    //var latlng = overviewer.util.fromWorldToLatLng(
+                    //        ovconf.spawn[0],
+                    //        ovconf.spawn[1],
+                    //        ovconf.spawn[2],
+                    //        obj);
+                    //marker_group.addLayer(L.marker(
+                }
+            }
+
             myLayer["tileSetConfig"] = obj;
 
       
@@ -220,6 +264,13 @@ overviewer.util = {
     },
 
     'initializeMarkers': function() {
+        if (overviewer.collections.haveSigns=true) {
+            console.log("initializeMarkers");
+
+
+            //Object.keys(
+            //
+        }
         return;
 
     },
