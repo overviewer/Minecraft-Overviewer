@@ -613,6 +613,12 @@ def list_worlds():
             playstamp = ""
         path = info['path']
         print(formatString % (name, playstamp, timestamp, path))
+    found_corrupt = any([x.get("IsCorrupt") for x in worlds.values()])
+    if found_corrupt:
+        print("")
+        print("An error has been detected in one or more of your worlds (see the above table).")
+        print("This is usually due to a corrupt level.dat file.  Corrupt worlds need to be")
+        print("repaired before Overviewer can render them.")
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
