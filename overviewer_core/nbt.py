@@ -189,7 +189,7 @@ class NBTFileReader(object):
             payload = self._read_tag_compound()
             
             return (name, payload)
-        except (struct.error, ValueError), e:
+        except (struct.error, ValueError, TypeError), e:
             raise CorruptNBTError("could not parse nbt: %s" % (str(e),))
 
 # For reference, the MCR format is outlined at

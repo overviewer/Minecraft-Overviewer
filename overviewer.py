@@ -41,6 +41,7 @@ from overviewer_core import optimizeimages, world
 from overviewer_core import configParser, tileset, assetmanager, dispatcher
 from overviewer_core import cache
 from overviewer_core import observer
+from overviewer_core.nbt import CorruptNBTError
 
 helptext = """
 %prog [--rendermodes=...] [options] <World> <Output Dir>
@@ -466,7 +467,12 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
         try:
             w = worldcache[render['world']]
         except KeyError:
-            w = world.World(render['world'])
+            try:
+                w = world.World(render['world'])
+            except CorruptNBTError, e:
+                logging.error("Failed to open world %r", render['world'])
+                raise e
+
             worldcache[render['world']] = w
 
         # find or create the textures object
@@ -595,10 +601,16 @@ def list_worlds():
                 continue
             except ValueError:
                 pass
-        timestamp = time.strftime("%Y-%m-%d %H:%M",
+        if info['LastPlayed'] > 0:
+            timestamp = time.strftime("%Y-%m-%d %H:%M",
                                   time.localtime(info['LastPlayed'] / 1000))
-        playtime = info['Time'] / 20
-        playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
+        else:
+            timestamp = ""
+        if info['Time'] > 0:
+            playtime = info['Time'] / 20
+            playstamp = '%d:%02d' % (playtime / 3600, playtime / 60 % 60)
+        else:
+            playstamp = ""
         path = info['path']
         print(formatString % (name, playstamp, timestamp, path))
 
