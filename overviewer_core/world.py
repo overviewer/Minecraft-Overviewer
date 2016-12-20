@@ -781,13 +781,20 @@ def get_worlds():
     # No dirs found - most likely not running from inside minecraft-dir
     if not save_dir is None:
         for dir in os.listdir(save_dir):
-            world_dat = os.path.join(save_dir, dir, "level.dat")
+            world_path = os.path.join(save_dir, dir)
+            world_dat = os.path.join(world_path, "level.dat")
             if not os.path.exists(world_dat): continue
-            info = nbt.load(world_dat)[1]
-            info['Data']['path'] = os.path.join(save_dir, dir).decode(loc)
+            try:
+                info = nbt.load(world_dat)[1]
+                info['Data']['path'] = os.path.join(save_dir, dir).decode(loc)
+                if 'LevelName' in info['Data'].keys():
+                    ret[info['Data']['LevelName']] = info['Data']
+            except nbt.CorruptNBTError:
+                ret[os.path.basename(world_path).decode(loc) + " (corrupt)"] = {'path': world_path.decode(loc),
+                        'LastPlayed': 0,
+                        'Time': 0,
+                        'IsCorrupt': True}
 
-            if 'LevelName' in info['Data'].keys():
-                ret[info['Data']['LevelName']] = info['Data']
     
     for dir in os.listdir("."):
         world_dat = os.path.join(dir, "level.dat")
