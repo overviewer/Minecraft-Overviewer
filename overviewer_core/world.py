@@ -625,7 +625,7 @@ class RotatedRegionSet(RegionSetWrapper):
         for section in chunk_data['Sections']:
             section = dict(section)
             newsections.append(section)
-            for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight']:
+            for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight', 'Add']:
                 array = section[arrayname]
                 # Since the anvil change, arrays are arranged with axes Y,Z,X
                 # numpy.rot90 always rotates the first two axes, so for it to
