@@ -279,6 +279,7 @@ class CustomBuild(build):
             print("at <http://docs.overviewer.org/en/latest/building/>.  If you are")
             print("still having build problems, file an incident on the github tracker")
             print("or find us in IRC.")
+            sys.exit(1)
 
 class CustomBuildExt(build_ext):
     def build_extensions(self):
