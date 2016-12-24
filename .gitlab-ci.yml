@@ -167,6 +167,8 @@ verify:debian64:
 render:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
   stage: render
+  variables:
+    GIT_STRATEGY: none
   tags:
     - diax
   dependencies:
@@ -174,11 +176,30 @@ render:
   environment:
     name: review/$CI_BUILD_REF_NAME
     url: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_NAME/$CI_BUILD_ID
+    on_stop: remove_render
+  only:
+    - branches
+  except:
+    - master
   script:
     - dpkg -i ./minecraft-overviewer*.deb
     - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
     - git clone --depth=1 ${EXMAPLE_REPO} maprepo
-    - export RENDER_DIR=/renders/$CI_BUILD_REF_NAME/$CI_BUILD_ID
+    - export RENDER_DIR=/renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
     - mkdir -p $RENDER_DIR
     - overviewer.py -p2 --rendermode=smooth_lighting maprepo/exmaple $RENDER_DIR
-    - "echo Map render now available at: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_NAME/$CI_BUILD_ID"
+    - "echo Map render now available at: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_SLUG/$CI_BUILD_ID"
+
+remove_render:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  stage: render
+  variables:
+    GIT_STRATEGY: none
+  when: manual
+  script:
+    - echo "Removing all renders for the branch $CI_BUILD_REF_NAME :"
+    - ls -l /renders/$CI_BUILD_REF_SLUG/
+    - rm -rf /renders/$CI_BUILD_REF_SLUG/
+  environment:
+    name: review/$CI_BUILD_REF_NAME
+    action: stop
