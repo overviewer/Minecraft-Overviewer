@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # The contrib manager is used to help control the contribs script 
 # that are shipped with overviewer in Windows packages
