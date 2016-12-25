@@ -203,3 +203,7 @@ remove_render:
   environment:
     name: review/$CI_BUILD_REF_NAME
     action: stop
+  only:
+    - branches
+  except:
+    - master
