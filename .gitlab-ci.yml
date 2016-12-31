@@ -53,7 +53,7 @@ test:
   tags:
     - linux
   dependencies:
-    - build
+    - build:linux
   script:
     - python2 setup.py build
     - python2 test/test_all.py
