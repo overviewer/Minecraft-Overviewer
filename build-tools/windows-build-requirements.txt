@@ -1,0 +1,6 @@
+future==0.16.0
+numpy==1.11.3
+pefile==2016.3.28
+Pillow==3.4.2
+PyInstaller==3.2
+pypiwin32==219
