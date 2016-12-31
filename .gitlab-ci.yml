@@ -9,16 +9,33 @@ variables:
   EXMAPLE_REPO: "https://github.com/overviewer/Minecraft-Overviewer-Addons"
   MC_VERSION: "1.11"
 
-build:
+build:linux:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: build
+  tags:
+    - linux
   script:
     - python2 setup.py build
     - python2 overviewer.py --verbose --version
 
+build:windows:
+  stage: build
+  tags:
+    - windows
+  script:
+    - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+    - set DISTUTILS_USE_SDK=1
+    - set MSSdk=1
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - c:\devel\venv_64\Scripts\python.exe setup.py build
+    - c:\devel\venv_64\Scripts\python.exe overviewer.py --verbose --version
+
+
 build:docs:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: build
+  tags:
+    - linux
   script:
     - cd docs
     - make
@@ -31,6 +48,8 @@ build:docs:
 test:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: test
+  tags:
+    - linux
   dependencies:
     - build
   script:
@@ -52,6 +71,8 @@ package:src:
 package:centos7rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  tags:
+    - linux
   script:
     - export MCO_VERSION=`python2 setup.py --version`
     - echo  "Building Minecraft version ${MCO_VERSION}"
@@ -71,6 +92,8 @@ package:centos7rpm:
 package:centos7-32rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  tags:
+    - linux
   only:
     - master
     - triggers
@@ -94,6 +117,8 @@ package:centos7-32rpm:
 package:centos6rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  tags:
+    - linux
   only:
     - master
     - triggers
@@ -116,6 +141,8 @@ package:centos6rpm:
 package:debian64:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
   stage: package
+  tags:
+    - linux
   script:
     - export MCO_VERSION=`python2 setup.py --version`
     - echo  "Building Minecraft version ${MCO_VERSION}"
@@ -132,9 +159,29 @@ package:debian64:
       - minecraft-overviewer*.deb
 
 
+package:win64:
+  stage: package
+  tags:
+    - windows
+  script:
+    - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+    - set DISTUTILS_USE_SDK=1
+    - set MSSdk=1
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - c:\devel\venv_64\Scripts\python.exe setup.py build
+    - copy build-tools\overviewer.spec .
+    - c:\devel\venv_64\Scripts\pyinstaller.exe overviewer.spec
+    - dist\overviewer\overviewer.exe --verbose --version
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - dist/overviewer
+
 verify:centos7:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7-verify
   stage: verify
+  tags:
+    - linux
   dependencies:
     - package:centos7rpm
   script:
@@ -152,6 +199,8 @@ verify:centos7:
 verify:debian64:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:debian-verify
   stage: verify
+  tags:
+    - linux
   dependencies:
     - package:debian64
   script:
@@ -195,6 +244,8 @@ remove_render:
   stage: render
   variables:
     GIT_STRATEGY: none
+  tags:
+    - diax
   when: manual
   script:
     - echo "Removing all renders for the branch $CI_BUILD_REF_NAME :"

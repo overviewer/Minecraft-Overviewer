@@ -2,6 +2,9 @@
 
 block_cipher = None
 
+def get_overviewer_pkgname():
+    from overviewer_core import overviewer_version
+    return "overviewer-" + overviewer_version.VERSION
 
 a = Analysis(['overviewer.py'],
              pathex=['Z:\\devel\\Minecraft-Overviewer'],
@@ -30,4 +33,4 @@ coll = COLLECT(exe,
                a.datas,
                strip=False,
                upx=True,
-               name='overviewer')
+               name=get_overviewer_pkgname())
