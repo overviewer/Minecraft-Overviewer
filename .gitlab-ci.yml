@@ -63,6 +63,8 @@ test:
 package:src:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: package
+  tags:
+    - linux
   script:
     - python2 setup.py sdist
     - ls -lh dist
