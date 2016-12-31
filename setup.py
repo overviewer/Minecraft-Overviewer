@@ -288,6 +288,8 @@ class CustomBuildExt(build_ext):
             # customize the build options for this compilier
             for e in self.extensions:
                 e.extra_link_args.append("/MANIFEST")
+                e.extra_link_args.append("/DWINVER=0x060")
+                e.extra_link_args.append("/D_WIN32_WINNT=0x060")
         if c == "unix":
             # customize the build options for this compilier
             for e in self.extensions:
