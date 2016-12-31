@@ -27,8 +27,10 @@ build:windows:
     - set DISTUTILS_USE_SDK=1
     - set MSSdk=1
     - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
-    - c:\devel\venv_64\Scripts\python.exe setup.py build
-    - c:\devel\venv_64\Scripts\python.exe overviewer.py --verbose --version
+    - c:\Python27\python.exe c:\devel\virtualenv\virtualenv.py ci_env
+    - ci_env\scripts\pip.exe install numpy Pillow
+    - ci_env\Scripts\python.exe setup.py build
+    - ci_env\Scripts\python.exe overviewer.py --verbose --version
 
 
 build:docs:
@@ -168,14 +170,38 @@ package:win64:
     - set DISTUTILS_USE_SDK=1
     - set MSSdk=1
     - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
-    - c:\devel\venv_64\Scripts\python.exe setup.py build
+    - c:\Python27\python.exe c:\devel\virtualenv\virtualenv.py ci_env
+    - ci_env\scripts\pip.exe install numpy Pillow pyinstaller sphinx
+    - ci_env\Scripts\python.exe setup.py build
     - copy build-tools\overviewer.spec .
-    - c:\devel\venv_64\Scripts\pyinstaller.exe overviewer.spec
-    - dist\overviewer\overviewer.exe --verbose --version
+    - ci_env\Scripts\pyinstaller.exe overviewer.spec
+    - for /f "delims=" %%a in ('ci_env\Scripts\python.exe setup.py --version') do @set OVR_VERSION=%%a
+    - ci_env\Scripts\sphinx-build.exe docs dist\overviewer-%OVR_VERSION%\docs
   artifacts:
     expire_in: 2 weeks
     paths:
-      - dist/overviewer
+      - dist
+
+package:win32:
+  stage: package
+  tags:
+    - windows
+  script:
+    - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+    - set DISTUTILS_USE_SDK=1
+    - set MSSdk=1
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - "\"c:\\Python27 (x86)\\python.exe\" c:\\devel\\virtualenv\\virtualenv.py ci_env"
+    - ci_env\scripts\pip.exe install numpy Pillow pyinstaller sphinx
+    - ci_env\Scripts\python.exe setup.py build
+    - copy build-tools\overviewer.spec .
+    - ci_env\Scripts\pyinstaller.exe overviewer.spec
+    - for /f "delims=" %%a in ('ci_env\Scripts\python.exe setup.py --version') do @set OVR_VERSION=%%a
+    - ci_env\Scripts\sphinx-build.exe docs dist\overviewer-%OVR_VERSION%\docs
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - dist
 
 verify:centos7:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7-verify
