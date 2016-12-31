@@ -2,6 +2,9 @@
 
 block_cipher = None
 
+import sys
+sys.modules['FixTk'] = None
+
 def get_overviewer_pkgname():
     from overviewer_core import overviewer_version
     return "overviewer-" + overviewer_version.VERSION
@@ -12,7 +15,7 @@ a = Analysis(['overviewer.py'],
              datas=[("overviewer_core/data", "overviewer_core/data")],
              hiddenimports=['overviewer_core.aux_files.genPOI'],
              hookspath=[],
-             runtime_hooks=[],
+             runtime_hooks=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter'],
              excludes=[],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
