@@ -19,6 +19,7 @@ build:linux:
       - overviewer_core/c_overviewer.so
       - overviewer_core/overviewer_version.py
       - overviewer_core/src/primitives.h
+      - build/
   script:
     - python2 setup.py build
     - python2 overviewer.py --verbose --version
@@ -63,6 +64,7 @@ test:
       - overviewer_core/c_overviewer.so
       - overviewer_core/overviewer_version.py
       - overviewer_core/src/primitives.h
+      - build/
   script:
     - python2 setup.py build
     - python2 test/test_all.py
@@ -83,6 +85,7 @@ render:
       - overviewer_core/c_overviewer.so
       - overviewer_core/overviewer_version.py
       - overviewer_core/src/primitives.h
+      - build/
   script:
     - python2 setup.py build
     - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
