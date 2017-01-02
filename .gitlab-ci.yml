@@ -3,7 +3,6 @@ stages:
   - test
   - package
   - verify
-  - render
 
 variables:
   EXMAPLE_REPO: "https://github.com/overviewer/Minecraft-Overviewer-Addons"
@@ -13,7 +12,13 @@ build:linux:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: build
   tags:
-    - linux
+    - docker
+  cache:
+    key: "$CI_BUILD_REF_NAME/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
   script:
     - python2 setup.py build
     - python2 overviewer.py --verbose --version
@@ -37,7 +42,7 @@ build:docs:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: build
   tags:
-    - linux
+    - docker
   script:
     - cd docs
     - make
@@ -51,20 +56,47 @@ test:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: test
   tags:
-    - linux
-  dependencies:
-    - build:linux
+    - docker
+  cache:
+    key: "$CI_BUILD_REF_NAME/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
   script:
     - python2 setup.py build
     - python2 test/test_all.py
 
+
+render:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  stage: test
+  tags:
+    - docker
+  only:
+    - branches
+  except:
+    - master
+  cache:
+    key: "$CI_BUILD_REF_NAME/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
+  script:
+    - python2 setup.py build
+    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
+    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
+    - export RENDER_DIR=/renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
+    - mkdir -p $RENDER_DIR
+    - overviewer.py -p2 --rendermode=smooth_lighting maprepo/exmaple $RENDER_DIR
 
 # Builds a source package
 package:src:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: package
   tags:
-    - linux
+    - docker
   script:
     - python2 setup.py sdist
     - ls -lh dist
@@ -76,7 +108,7 @@ package:centos7rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
   tags:
-    - linux
+    - docker
   script:
     - export MCO_VERSION=`python2 setup.py --version`
     - echo  "Building Minecraft version ${MCO_VERSION}"
@@ -97,7 +129,7 @@ package:centos7-32rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
   tags:
-    - linux
+    - docker
   only:
     - master
     - triggers
@@ -122,7 +154,7 @@ package:centos6rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
   tags:
-    - linux
+    - docker
   only:
     - master
     - triggers
@@ -146,7 +178,7 @@ package:debian64:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
   stage: package
   tags:
-    - linux
+    - docker
   script:
     - export MCO_VERSION=`python2 setup.py --version`
     - echo  "Building Minecraft version ${MCO_VERSION}"
@@ -209,7 +241,7 @@ verify:centos7:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7-verify
   stage: verify
   tags:
-    - linux
+    - docker
   dependencies:
     - package:centos7rpm
   script:
@@ -228,7 +260,7 @@ verify:debian64:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:debian-verify
   stage: verify
   tags:
-    - linux
+    - docker
   dependencies:
     - package:debian64
   script:
@@ -241,48 +273,4 @@ verify:debian64:
     - overviewer.py --check-terrain --verbose
 
 
-render:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
-  stage: render
-  variables:
-    GIT_STRATEGY: none
-  tags:
-    - diax
-  dependencies:
-    - package:debian64
-  environment:
-    name: review/$CI_BUILD_REF_NAME
-    url: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_NAME/$CI_BUILD_ID
-    on_stop: remove_render
-  only:
-    - branches
-  except:
-    - master
-  script:
-    - dpkg -i ./minecraft-overviewer*.deb
-    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
-    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
-    - export RENDER_DIR=/renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
-    - mkdir -p $RENDER_DIR
-    - overviewer.py -p2 --rendermode=smooth_lighting maprepo/exmaple $RENDER_DIR
-    - "echo Map render now available at: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_SLUG/$CI_BUILD_ID"
 
-remove_render:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
-  stage: render
-  variables:
-    GIT_STRATEGY: none
-  tags:
-    - diax
-  when: manual
-  script:
-    - echo "Removing all renders for the branch $CI_BUILD_REF_NAME :"
-    - ls -l /renders/$CI_BUILD_REF_SLUG/
-    - rm -rf /renders/$CI_BUILD_REF_SLUG/
-  environment:
-    name: review/$CI_BUILD_REF_NAME
-    action: stop
-  only:
-    - branches
-  except:
-    - master
