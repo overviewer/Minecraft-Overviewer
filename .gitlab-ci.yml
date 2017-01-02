@@ -3,7 +3,7 @@ stages:
   - test
   - package
   - verify
-  - render
+  - deploy
 
 variables:
   EXMAPLE_REPO: "https://github.com/overviewer/Minecraft-Overviewer-Addons"
@@ -12,14 +12,23 @@ variables:
 build:linux:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: build
+  dependencies: []
   tags:
-    - linux
+    - docker
+  cache:
+    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
+      - build/
   script:
     - python2 setup.py build
     - python2 overviewer.py --verbose --version
 
 build:windows:
   stage: build
+  dependencies: []
   tags:
     - windows
   script:
@@ -36,8 +45,9 @@ build:windows:
 build:docs:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: build
+  dependencies: []
   tags:
-    - linux
+    - docker
   script:
     - cd docs
     - make
@@ -50,33 +60,73 @@ build:docs:
 test:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: test
+  dependencies: []
   tags:
-    - linux
-  dependencies:
-    - build:linux
+    - docker
+  cache:
+    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
+      - build/
   script:
     - python2 setup.py build
     - python2 test/test_all.py
+
+
+render:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  stage: test
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - branches
+  except:
+    - master
+  cache:
+    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
+      - build/
+  script:
+    - python2 setup.py build
+    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
+    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
+    - export RENDER_DIR=render/
+    - mkdir -p $RENDER_DIR
+    - python2 overviewer.py -p2 --rendermode=smooth_lighting maprepo/exmaple $RENDER_DIR
+    - zip -r render.zip $RENDER_DIR
+  artifacts:
+    expire_in: 2 days
+    paths:
+      - render.zip
 
 
 # Builds a source package
 package:src:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: package
+  dependencies: []
   tags:
-    - linux
+    - docker
   script:
     - python2 setup.py sdist
     - ls -lh dist
   artifacts:
+    expire_in: 2 weeks
     paths:
       - dist/*.tar.gz
 
 package:centos7rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  dependencies: []
   tags:
-    - linux
+    - docker
   script:
     - export MCO_VERSION=`python2 setup.py --version`
     - echo  "Building Minecraft version ${MCO_VERSION}"
@@ -96,8 +146,9 @@ package:centos7rpm:
 package:centos7-32rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  dependencies: []
   tags:
-    - linux
+    - docker
   only:
     - master
     - triggers
@@ -121,8 +172,9 @@ package:centos7-32rpm:
 package:centos6rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  dependencies: []
   tags:
-    - linux
+    - docker
   only:
     - master
     - triggers
@@ -145,8 +197,9 @@ package:centos6rpm:
 package:debian64:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
   stage: package
+  dependencies: []
   tags:
-    - linux
+    - docker
   script:
     - export MCO_VERSION=`python2 setup.py --version`
     - echo  "Building Minecraft version ${MCO_VERSION}"
@@ -165,6 +218,7 @@ package:debian64:
 
 package:win64:
   stage: package
+  dependencies: []
   tags:
     - windows
   script:
@@ -179,13 +233,15 @@ package:win64:
     - ci_env\Scripts\pyinstaller.exe overviewer.spec
     - for /f "delims=" %%a in ('ci_env\Scripts\python.exe setup.py --version') do @set OVR_VERSION=%%a
     - ci_env\Scripts\sphinx-build.exe docs dist\overviewer-%OVR_VERSION%\docs
+    - rename dist dist-win64
   artifacts:
     expire_in: 2 weeks
     paths:
-      - dist
+      - dist-win64/*
 
 package:win32:
   stage: package
+  dependencies: []
   tags:
     - windows
   script:
@@ -200,16 +256,17 @@ package:win32:
     - ci_env\Scripts\pyinstaller.exe overviewer.spec
     - for /f "delims=" %%a in ('ci_env\Scripts\python.exe setup.py --version') do @set OVR_VERSION=%%a
     - ci_env\Scripts\sphinx-build.exe docs dist\overviewer-%OVR_VERSION%\docs
+    - rename dist dist-win32
   artifacts:
     expire_in: 2 weeks
     paths:
-      - dist
+      - dist-win32
 
 verify:centos7:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7-verify
   stage: verify
   tags:
-    - linux
+    - docker
   dependencies:
     - package:centos7rpm
   script:
@@ -228,7 +285,7 @@ verify:debian64:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:debian-verify
   stage: verify
   tags:
-    - linux
+    - docker
   dependencies:
     - package:debian64
   script:
@@ -241,48 +298,41 @@ verify:debian64:
     - overviewer.py --check-terrain --verbose
 
 
-render:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
-  stage: render
-  variables:
-    GIT_STRATEGY: none
-  tags:
-    - diax
-  dependencies:
-    - package:debian64
-  environment:
-    name: review/$CI_BUILD_REF_NAME
-    url: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_NAME/$CI_BUILD_ID
-    on_stop: remove_render
-  only:
-    - branches
-  except:
-    - master
-  script:
-    - dpkg -i ./minecraft-overviewer*.deb
-    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
-    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
-    - export RENDER_DIR=/renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
-    - mkdir -p $RENDER_DIR
-    - overviewer.py -p2 --rendermode=smooth_lighting maprepo/exmaple $RENDER_DIR
-    - "echo Map render now available at: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_SLUG/$CI_BUILD_ID"
 
-remove_render:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
-  stage: render
-  variables:
-    GIT_STRATEGY: none
+deploy:
+  stage: deploy
   tags:
     - diax
-  when: manual
+    - deploy
+  variables:
+      GIT_STRATEGY: none
+  dependencies:
+    - render
   script:
-    - echo "Removing all renders for the branch $CI_BUILD_REF_NAME :"
-    - ls -l /renders/$CI_BUILD_REF_SLUG/
-    - rm -rf /renders/$CI_BUILD_REF_SLUG/
-  environment:
-    name: review/$CI_BUILD_REF_NAME
-    action: stop
-  only:
-    - branches
-  except:
-    - master
+    - rm -rf render
+    - unzip render.zip
+    - mkdir -p /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - mv -T render /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
+
+deploy:builds:
+  stage: deploy
+  tags:
+    - diax
+    - deploy
+  variables:
+      GIT_STRATEGY: none
+  dependencies:
+    - build:docs
+    - package:src
+    - package:centos7rpm
+    - package:centos7-32rpm
+    - package:centos6rpm
+    - package:debian64
+    - package:win64
+    - package:win32
+  script:
+    - ls -ltr
+    - mkdir -p /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - mv *.deb /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - mv *.rpm /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - mv dist* /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
