@@ -307,5 +307,7 @@ deploy:
   dependencies:
     - render
   script:
+    - rm -rf render
     - unzip render.zip
-    - mv render /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - mkdir -p /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - mv -T render /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
