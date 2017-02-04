@@ -311,3 +311,22 @@ deploy:
     - unzip render.zip
     - mkdir -p /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
     - mv -T render /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
+
+deploy:builds:
+  stage: deploy
+  tags:
+    - diax
+    - deploy
+  variables:
+      GIT_STRATEGY: none
+  dependencies:
+    - build:docs
+    - package:src
+    - package:centos7rpm
+    - package:centos7-32rpm
+    - package:centos6rpm
+    - package:debian64
+    - package:win64
+    - package:win32
+  script:
+    - ls -ltr
