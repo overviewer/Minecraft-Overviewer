@@ -224,7 +224,7 @@ overviewer.util = {
 
             if (overviewer.collections.haveSigns == true) {
                 // if there are markers for this tileset, create them now
-                if (obj.path in markers) {
+                if ((typeof markers !== 'undefined') && (obj.path in markers)) {
                     console.log("this tileset has markers:", obj);
 
                     for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
