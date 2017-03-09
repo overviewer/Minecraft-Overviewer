@@ -4114,7 +4114,7 @@ def cobblestone_wall(self, blockid, data):
     alpha_over(wall_pole,wall_pole_side, (3,4),wall_pole_side)
     alpha_over(wall_pole,wall_pole_other_side, (9,4),wall_pole_other_side)
     alpha_over(wall_pole,wall_pole_top, (0,0),wall_pole_top)
-    
+
     # create the sides and the top of a wall attached to a pole
     ImageDraw.Draw(wall_side).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(wall_side).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -4637,3 +4637,16 @@ def crops(self, blockid, data):
     alpha_over(img, crop2, (6,3), crop2)
     alpha_over(img, crop3, (6,3), crop3)
     return img
+
+# Concrete
+@material(blockid=251, data=range(16), solid=True)
+def concrete(self, blockid, data):
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/concrete_%s.png" % color_map[data])
+    return self.build_block(texture, texture)
+
+
+# Glazed Terracotta
+@material(blockid=range(235,251), solid=True, nodata=True)
+def glazed_terracotta(self, blockid, data):
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/glazed_terracotta_%s.png" % color_map[blockid - 235])
+    return self.build_block(texture, texture)
