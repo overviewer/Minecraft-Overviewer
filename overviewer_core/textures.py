@@ -4644,6 +4644,11 @@ def concrete(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/blocks/concrete_%s.png" % color_map[data])
     return self.build_block(texture, texture)
 
+# Concrete Powder
+@material(blockid=252, data=range(16), solid=True)
+def concrete(self, blockid, data):
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/concrete_powder_%s.png" % color_map[data])
+    return self.build_block(texture, texture)
 
 # Glazed Terracotta
 @material(blockid=range(235,251), solid=True, nodata=True)
