@@ -116,10 +116,11 @@ package:src:
   script:
     - python2 setup.py sdist
     - ls -lh dist
+    - mv dist/*.tar.gz .
   artifacts:
     expire_in: 2 weeks
     paths:
-      - dist/*.tar.gz
+      - Minecraft-Overviewer*.tar.gz
 
 package:centos7rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
@@ -234,10 +235,11 @@ package:win64:
     - for /f "delims=" %%a in ('ci_env\Scripts\python.exe setup.py --version') do @set OVR_VERSION=%%a
     - ci_env\Scripts\sphinx-build.exe docs dist\overviewer-%OVR_VERSION%\docs
     - rename dist dist-win64
+    - ci_env\Scripts\python.exe -m zipfile -c overviewer-win64-%OVR_VERSION%.zip dist-win64\overviewer-%OVR_VERSION%\
   artifacts:
     expire_in: 2 weeks
     paths:
-      - dist-win64/*
+      - overviewer-win64-*.zip
 
 package:win32:
   stage: package
@@ -257,10 +259,11 @@ package:win32:
     - for /f "delims=" %%a in ('ci_env\Scripts\python.exe setup.py --version') do @set OVR_VERSION=%%a
     - ci_env\Scripts\sphinx-build.exe docs dist\overviewer-%OVR_VERSION%\docs
     - rename dist dist-win32
+    - ci_env\Scripts\python.exe -m zipfile -c overviewer-win32-%OVR_VERSION%.zip dist-win32\overviewer-%OVR_VERSION%\
   artifacts:
     expire_in: 2 weeks
     paths:
-      - dist-win32
+      - overviewer-win32-*.zip
 
 verify:centos7:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7-verify
@@ -336,4 +339,5 @@ deploy:builds:
     - mkdir -p /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
     - mv *.deb /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
     - mv *.rpm /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
-    - mv dist* /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - mv overviewer*.zip /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - echo Artifacts copied to http://static-backend.overviewer.org/builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
