@@ -14,6 +14,7 @@ overviewer.map = null;
 overviewer.worldCtrl = null;
 overviewer.layerCtrl = null;
 overviewer.compass = null;
+overviewer.coord_box = null;
 overviewer.current_world = null;
 
 /// Records the current layer by name (if any) of each world

@@ -38,6 +38,37 @@ overviewer.util = {
 
         document.getElementById('NoJSWarning').remove();
 
+        overviewer.coordBoxClass = L.Control.extend({
+            options: {
+                position: 'bottomleft',
+            },
+            initialize: function() {
+                this.coord_box = L.DomUtil.create('div', 'coordbox');
+            },
+            render: function(latlng) {
+                var currWorld = overviewer.current_world;
+                if (currWorld == null) {return;}
+
+                var currTileset = overviewer.current_layer[currWorld];
+                if (currTileset == null) {return;}
+
+                var ovconf = currTileset.tileSetConfig;
+
+                w_coords = overviewer.util.fromLatLngToWorld(latlng.lat, latlng.lng, ovconf);
+
+                var r_x = Math.floor(Math.floor(w_coords.x / 16.0) / 32.0);
+                var r_z = Math.floor(Math.floor(w_coords.z / 16.0) / 32.0);
+                var r_name = "r." + r_x + "." + r_z + ".mca";
+
+                this.coord_box.innerHTML = "<strong>X</strong> " +
+                                           Math.round(w_coords.x) +
+                                           " <strong>Z</strong> " + Math.round(w_coords.z) +
+                                           " (" + r_name + ")";
+            },
+            onAdd: function() {
+                return this.coord_box;
+            }
+        });
         overviewer.compassClass = L.Control.extend({
             initialize: function(imagedict, options) {
                 L.Util.setOptions(this, options);
@@ -193,6 +224,7 @@ overviewer.util = {
         overviewer.worldCtrl = new overviewer.control();
         overviewer.compass = new overviewer.compassClass(
             overviewerConfig.CONST.image.compass);
+        overviewer.coord_box = new overviewer.coordBoxClass();
         
 
         $.each(overviewerConfig.worlds, function(idx, world_name) {
@@ -203,6 +235,11 @@ overviewer.util = {
 
         overviewer.compass.addTo(overviewer.map);
         overviewer.worldCtrl.addTo(overviewer.map);
+        overviewer.coord_box.addTo(overviewer.map);
+
+        overviewer.map.on('mousemove', function(ev) {
+            overviewer.coord_box.render(ev.latlng);
+        });
 
         $.each(overviewerConfig.tilesets, function(idx, obj) {
             var myLayer = new L.tileLayer('', {
