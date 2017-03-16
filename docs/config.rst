@@ -779,6 +779,7 @@ Image options
 
     ``oxipng``
         An optipng replacement written in Rust. Works much like optipng.
+
         ``olevel``
             An integer between ``0`` (few optimizations) and ``6`` (many
             optimizations). The default should be satisfactory for everyone,
