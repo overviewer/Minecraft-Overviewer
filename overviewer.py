@@ -455,8 +455,6 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
     # Set up the cache objects to use
     caches = []
     caches.append(cache.LRUCache(size=100))
-    if config.get("memcached_host", False):
-        caches.append(cache.Memcached(config['memcached_host']))
     # TODO: optionally more caching layers here
 
     renders = config['renders']

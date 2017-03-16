@@ -103,10 +103,6 @@ outputdir = Setting(required=True, validator=validateOutputDir, default=None)
 
 processes = Setting(required=True, validator=int, default=-1)
 
-# memcached is an option, but unless your IO costs are really high, it just
-# ends up adding overhead and isn't worth it.
-memcached_host = Setting(required=False, validator=str, default=None)
-
 # TODO clean up this ugly in sys.argv hack
 if platform.system() == 'Windows' or not sys.stdout.isatty() or "--simple" in sys.argv:
     obs = LoggingObserver()

@@ -731,7 +731,7 @@ class CachedRegionSet(RegionSetWrapper):
         self.key = s
 
     def get_chunk(self, x, z):
-        key = hashlib.md5(repr((self.key, x, z))).hexdigest()
+        key = (self.key, x, z)
         for i, cache in enumerate(self.caches):
             try:
                 retval = cache[key]
