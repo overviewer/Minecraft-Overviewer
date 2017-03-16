@@ -192,6 +192,26 @@ class jpegoptim(Optimizer, JPEGOptimizer):
             return True
 
 
+class oxipng(Optimizer, PNGOptimizer):
+    binarynames = ["oxipng"]
+
+    def __init__(self, olevel=2, threads=1):
+        if olevel > 6:
+            raise Exception("olevel should be between 0 and 6 inclusive")
+        if threads < 1:
+            raise Exception("threads needs to be at least 1")
+        self.olevel = olevel
+        self.threads = threads
+
+    def optimize(self, img):
+        Optimizer.fire_and_forget(self, [self.binaryname, "-o" +
+                                         str(self.olevel), "-q", "-t" +
+                                         str(self.threads), img])
+
+    def is_crusher(self):
+        return True
+
+
 def optimize_image(imgpath, imgformat, optimizers):
         for opt in optimizers:
             if imgformat == 'png':
