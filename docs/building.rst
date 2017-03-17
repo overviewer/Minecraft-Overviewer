@@ -132,7 +132,7 @@ You will need the following packages (at least):
 
 Then to build::
 
-    python setup.py build
+    python2 setup.py build
     
 At this point, you can run ``./overviewer.py`` from the current directory, so to run it you'll have to be in this directory and run ``./overviewer.py`` or provide the the full path to ``overviewer.py``.  Another option would be to add this directory to your ``$PATH``.   Note that there is a ``python2 setup.py install`` step that you can run which will install things into ``/usr/local/bin``, but this is strongly not recommended as it might conflict with other installs of Overviewer.
 
@@ -146,12 +146,12 @@ OSX
     Xcode Preferences dialog).
 
 1. Download the source code for PIL from http://www.pythonware.com/products/pil/
-2. Compile the PIL code (``python ./setup.py build``)
-3. Install PIL (``sudo python ./setup.py install``)
+2. Compile the PIL code (``python2 ./setup.py build``)
+3. Install PIL (``sudo python2 ./setup.py install``)
 4. Find the path to the ``libImaging`` directory in the PIL source tree.
 5. Build Minecraft Overviewer with the path from step 4 as the value for PIL_INCLUDE_DIR::
 
-    PIL_INCLUDE_DIR="path from step 4" python ./setup.py build
+    PIL_INCLUDE_DIR="path from step 4" python2 ./setup.py build
 
 The following script (copied into your MCO source directory) should handle everything for you:
 
@@ -160,7 +160,7 @@ The following script (copied into your MCO source directory) should handle every
     #!/bin/bash
 
     # start with a clean place to work
-    python ./setup.py clean
+    python2 ./setup.py clean
 
     # get PIL
     if [ ! -d "`pwd`/Imaging-1.1.7/libImaging" ]; then
@@ -170,7 +170,7 @@ The following script (copied into your MCO source directory) should handle every
     fi
 
     # build MCO
-    PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
+    PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python2 ./setup.py build
 
 FreeBSD
 -------
