@@ -4,6 +4,7 @@ stages:
   - package
   - verify
   - deploy
+  - testrepo
 
 variables:
   EXMAPLE_REPO: "https://github.com/overviewer/Minecraft-Overviewer-Addons"
@@ -285,7 +286,7 @@ verify:centos7:
 
 
 verify:debian64:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian-verify
+  image: debian:jessie
   stage: verify
   tags:
     - docker
@@ -293,6 +294,7 @@ verify:debian64:
     - package:debian64
   script:
     - apt-get -y update
+    - apt-get -y install wget git
     - dpkg -i ./minecraft-overviewer*.deb || echo ""
     - apt-get -y -f install
     - which overviewer.py
@@ -316,15 +318,14 @@ deploy:
     - rm -rf render
     - unzip render.zip
     - mkdir -p /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
-    - mv -T render /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
+    - cp -r render/* /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - echo View render at http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
 
 deploy:builds:
   stage: deploy
   tags:
     - diax
     - deploy
-  variables:
-      GIT_STRATEGY: none
   dependencies:
     - build:docs
     - package:src
@@ -337,7 +338,151 @@ deploy:builds:
   script:
     - ls -ltr
     - mkdir -p /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
-    - mv *.deb /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
-    - mv *.rpm /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
-    - mv overviewer*.zip /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - cp *.deb /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - cp *.rpm /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - cp overviewer*.zip /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
     - echo Artifacts copied to http://static-backend.overviewer.org/builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+
+deploy:repos:
+  stage: deploy
+  tags:
+    - diax
+    - deploy
+  only:
+    - master
+  dependencies:
+    - package:centos7rpm
+    - package:centos7-32rpm
+    - package:centos6rpm
+    - package:debian64
+  script:
+    - ls -ltr
+    - dpkg-sig -g '--use-agent --batch --no-tty' --sign builder *.deb
+    - cp *.deb /repos/debian/files/
+    - make -C /repos/debian/ -f /gitlab_runner/debian/Makefile
+    - /gitlab_runner/rpmsign.sh *.rpm
+    - cp *.rpm /repos/rpm/7/x86_64/packages/
+    - make -C /repos/rpm/ -f /gitlab_runner/rpm/Makefile
+
+
+
+repo:centos7:
+  image: centos:7
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:centos6:
+  image: centos:6
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:fc25:
+  image: fedora:25
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:fc24:
+  image: fedora:24
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:fc23:
+  image: fedora:23
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:jessie:
+  image: debian:jessie
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - apt-get -y update
+    - apt-get -y install wget
+    - wget -O - http://overviewer.org/debian_new/overviewer.gpg.asc | apt-key add -
+    - echo 'deb http://overviewer.org/debian_new ./' >> /etc/apt/sources.list
+    - apt-get -y update
+    - apt-get -y install minecraft-overviewer
+    - overviewer.py --verbose --version
+
+repo:stretch:
+  image: debian:stretch
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - apt-get -y update
+    - apt-get -y install wget gnupg
+    - wget -O - http://overviewer.org/debian_new/overviewer.gpg.asc | apt-key add -
+    - echo 'deb http://overviewer.org/debian_new ./' >> /etc/apt/sources.list
+    - apt-get -y update
+    - apt-get -y install minecraft-overviewer
+    - overviewer.py --verbose --version
+
+repo:wheezy:
+  image: debian:wheezy
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - apt-get -y update
+    - apt-get -y install wget
+    - wget -O - http://overviewer.org/debian_new/overviewer.gpg.asc | apt-key add -
+    - echo 'deb http://overviewer.org/debian_new ./' >> /etc/apt/sources.list
+    - apt-get -y update
+    - apt-get -y install minecraft-overviewer
+    - overviewer.py --verbose --version
