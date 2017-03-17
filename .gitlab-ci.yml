@@ -82,10 +82,6 @@ render:
   dependencies: []
   tags:
     - docker
-  only:
-    - branches
-  except:
-    - master
   cache:
     key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
     paths:
