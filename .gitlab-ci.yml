@@ -357,7 +357,8 @@ deploy:repos:
     - cp *.deb /repos/debian/files/
     - make -C /repos/debian/ -f /gitlab_runner/debian/Makefile
     - /gitlab_runner/rpmsign.sh *.rpm
-    - cp *.rpm /repos/rpm/7/x86_64/packages/
+    - cp *.el7.*.rpm /repos/rpm/7/x86_64/packages/
+    - cp *.el6.*.rpm /repos/rpm/6/x86_64/packages/
     - make -C /repos/rpm/ -f /gitlab_runner/rpm/Makefile
 
 
