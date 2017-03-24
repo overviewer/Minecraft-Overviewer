@@ -25,7 +25,7 @@ Now that you know how to open a command line, and haven't been scared off yet,
 the next step is to download the latest Overviewer.
 
 **Step 2:** Download Overviewer
-    Go to the `Downloads Page <http://overviewer.org/downloads>`_ and
+    Go to the `Downloads Page <https://overviewer.org/downloads>`_ and
     download the *latest* version for your architecture, either 32 bit
     or 64 bit.
     
@@ -141,7 +141,7 @@ yet.
 The preferred way to run The Overviewer is with a *configuration file*. Without
 one, you can only do the most basic of renders. Once you're ready, head to the
 :doc:`../config` page to see what else The Overviewer can do. And as always,
-feel free to drop by in `IRC <http://overviewer.org/irc/>`_ if you have any
+feel free to drop by in `IRC <https://overviewer.org/irc/>`_ if you have any
 questions! We're glad to help!
 
 Common Pitfalls
@@ -175,9 +175,9 @@ Using GitHub Gist
 
 Sometimes, when helping people with issues with Overviewer, we'll often
 ask to see the config file you're using, or, if there was an Overviewer
-error, a full copy of an error message.   Unfortunately, `IRC <http://overviewer.org/irc/>`_
+error, a full copy of an error message.   Unfortunately, `IRC <https://overviewer.org/irc/>`_
 is not a good way to send large amounts of text.  So we often ask users
-to create a `Gist <http://gist.github.com/>`_ containing the text we want
+to create a `Gist <https://gist.github.com/>`_ containing the text we want
 to see.  Sites like these are also called Pastebins, and you are welcome
 to use your favorite pastebin site, if you'd like.
 

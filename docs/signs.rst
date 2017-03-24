@@ -92,7 +92,7 @@ Here's an example that displays icons for each player::
 
     def playerIcons(poi):
         if poi['id'] == 'Player':
-            poi['icon'] = "http://overviewer.org/avatar/%s" % poi['EntityId']
+            poi['icon'] = "https://overviewer.org/avatar/%s" % poi['EntityId']
             return "Last known location for %s" % poi['EntityId']
 
 Note how each POI can get a different icon by setting ``poi['icon']``. These icons must exist in either
