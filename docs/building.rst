@@ -121,8 +121,7 @@ Linux
 -----
 
 You will need the gcc compiler and a working build environment. On Ubuntu and
-Debian, this can be done by installing the ``build-essential`` package. For
-CentOS machines, see the :ref:`centos` section below
+Debian, this can be done by installing the ``build-essential`` package.
 
 You will need the following packages (at least):
 

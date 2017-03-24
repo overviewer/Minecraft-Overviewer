@@ -62,12 +62,6 @@ Some new features will only show up in newly-rendered areas. Use the
 large map and don't want to re-render everything, take a look at
 the :ref:`rerenderprob` configuration option.
 
-How do I use this on CentOS 5?
-------------------------------
-
-CentOS 5 comes with Python 2.4, but the Overviewer needs 2.6 or higher. See the
-special instructions at :ref:`centos`
-
 The background color of the map is black, and I don't like it!
 --------------------------------------------------------------
 

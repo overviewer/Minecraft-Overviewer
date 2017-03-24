@@ -48,9 +48,7 @@ you're all set! See you at the :doc:`running` page!
 CentOS / RHEL / Fedora
 ======================
 We also provide a RPM repository with pre-built packages for users on RPM-based
-distros. Note that on CentOS 5, the `EPEL <http://fedoraproject.org/wiki/EPEL>`_
-repository is required to get Python 2.6 . To add the Overviewer repository to
-YUM, just run
+distros. To add the Overviewer repository to YUM, just run
 
 ::
 
