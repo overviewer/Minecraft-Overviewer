@@ -18,9 +18,9 @@ right place!
 
 1. Head to the `Downloads <https://overviewer.org/downloads>`_ page and download the most recent Windows download for your architecture (32 or 64 bit).
 
-2. For 32 bit you may need to install the `VC++ 2008 <http://www.microsoft.com/downloads/en/details.aspx?FamilyID=9b2da534-3e03-4391-8a4d-074b9f2bc1bf>`_ and `VC++ 2010 <http://www.microsoft.com/downloads/en/details.aspx?familyid=a7b7a05e-6de6-4d3a-a423-37bf0912db84>`_ redistributables.
+2. For 32 bit you may need to install the `VC++ 2008 (x86) <http://www.microsoft.com/downloads/en/details.aspx?FamilyID=9b2da534-3e03-4391-8a4d-074b9f2bc1bf>`_ and `VC++ 2010 (x86) <http://www.microsoft.com/downloads/en/details.aspx?familyid=a7b7a05e-6de6-4d3a-a423-37bf0912db84>`_ redistributables.
 
-   For 64 bit, you'll want these instead: `VC++ 2008 <http://www.microsoft.com/downloads/en/details.aspx?familyid=bd2a6171-e2d6-4230-b809-9a8d7548c1b6>`_ and `VC++ 2010 <http://www.microsoft.com/download/en/details.aspx?id=14632>`_
+   For 64 bit, you'll want these instead: `VC++ 2008 (x64) <http://www.microsoft.com/downloads/en/details.aspx?familyid=bd2a6171-e2d6-4230-b809-9a8d7548c1b6>`_ and `VC++ 2010 (x64) <http://www.microsoft.com/download/en/details.aspx?id=14632>`_
 
 3. That's it! Proceed with instructions on :doc:`running`.
 
