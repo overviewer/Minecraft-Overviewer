@@ -56,7 +56,7 @@ be used as the hover text, the second will be used as the info window content::
             return ("Chest", "Chest with %d items" % len(poi['Items']))
 
 Because of the way the config file is loaded, if you need to import a function or module
-for use in your filter function, you need to explicitly load it into the global namespace:
+for use in your filter function, you need to explicitly load it into the global namespace::
 
     global escape
     from cgi import escape
