@@ -1,7 +1,6 @@
 # see settingsDefinition.py
 import os
 import os.path
-from collections import namedtuple
 
 import rendermodes
 import util

@@ -16,7 +16,6 @@
 import util
 import multiprocessing
 import multiprocessing.managers
-import cPickle as pickle
 import Queue
 import time
 from signals import Signal

@@ -20,8 +20,6 @@ Each cache class should implement the standard container type interface
 attribute.
 
 """
-import functools
-import logging
 
 class LRUCache(object):
     """A simple, generic, in-memory LRU cache that implements the standard
