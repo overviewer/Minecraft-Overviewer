@@ -1,19 +1,19 @@
-====================
+====================================
 Minecraft Overviewer  |Build Status|
-====================
+====================================
 By Andrew Brown and contributors (see CONTRIBUTORS.rst).
 
 Documentation:
     http://docs.overviewer.org
 
 Github code repository:
-    http://github.com/overviewer/Minecraft-Overviewer
+    https://github.com/overviewer/Minecraft-Overviewer
 
 Travis-CI:
-    http://travis-ci.org/overviewer/Minecraft-Overviewer
+    https://travis-ci.org/overviewer/Minecraft-Overviewer
 
 Blog:
-    http://overviewer.org/blog/
+    https://overviewer.org/blog/
 
 
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
@@ -69,12 +69,13 @@ directory hierarchy full of images. To view your world, simply open index.html
 in a web browser. Internet access is required to load the Google Maps API
 files, but you otherwise don't need anything else.
 
-You can throw these files up to a web server to let others view your map. You
-do *not* need a Google Maps API key (as was the case with older versions of the
-API), so just copying the directory to your web server should suffice. You are,
-however, bound by the Google Maps API terms of service.
+You can throw these files up to a web server to let others view your map. To
+ensure the map works when viewed through the Internet, you'll need a Google
+Maps API key, which you can `get for free from Google`_. Please note that you
+are also bound by the `Google Maps API Terms of Service`_.
 
-https://developers.google.com/maps/terms
+.. _get for free from Google: https://developers.google.com/maps/documentation/javascript/get-api-key
+.. _Google Maps API Terms of Service: https://developers.google.com/maps/terms
 
 Bugs
 ====
