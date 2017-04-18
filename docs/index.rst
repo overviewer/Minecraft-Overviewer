@@ -45,6 +45,7 @@ Documentation Contents
    signs
    win_tut/windowsguide
    faq
+   contributing
    design/designdoc
 
 
