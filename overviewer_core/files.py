@@ -20,7 +20,9 @@ import shutil
 import logging
 import stat
 import errno
+import platform
 
+on_windows = platform.system() == 'Windows'
 default_caps = {"chmod_works": True, "rename_works": True}
 
 def get_fs_caps(dir_to_test):
@@ -161,6 +163,11 @@ class FileReplacer(object):
                             raise
                 # atomic rename into place
                 try:
+                    if on_windows:
+                        try:
+                            os.remove(self.destname)
+                        except OSError, e:
+                            pass
                     os.rename(self.tmpname, self.destname)
                 except OSError, e:
                     # Ignore errno ENOENT: file does not exist. Due to a race
