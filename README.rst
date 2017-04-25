@@ -77,6 +77,13 @@ are also bound by the `Google Maps API Terms of Service`_.
 .. _get for free from Google: https://developers.google.com/maps/documentation/javascript/get-api-key
 .. _Google Maps API Terms of Service: https://developers.google.com/maps/terms
 
+Dependencies
+============
+Here's a list of needed dependencies
+* Python 2
+* Python 2 Numpy
+* Python 2 pyllow
+
 Bugs
 ====
 
