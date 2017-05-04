@@ -394,6 +394,14 @@ class RegionSet(object):
             biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
         chunk_data['Biomes'] = biomes
 
+
+        # Looking for activated beacons
+        beacons = [];
+        for entity in  chunk_data['TileEntities']:
+            if (entity['id'] == "minecraft:beacon") and (entity['Levels'] > 0):
+                beacons.append({'x': entity['x'], 'y': entity['y'], 'z':entity['z']})
+
+        sectionCount = 0
         for section in chunk_data['Sections']:
 
             # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
@@ -452,8 +460,34 @@ class RegionSet(object):
 
                 logging.debug("Full traceback:", exc_info=1)
                 raise nbt.CorruptChunkError()
-        
-        return chunk_data      
+
+
+            # Add beacon beam to the current section (if needed)
+            for beacon in beacons:
+                if (beacon['y'] / 16 <= sectionCount):
+                    yMin=max(0, beacon['y'] - sectionCount * 16)
+                    for y in range(yMin, 16):
+                        if (section['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] == 0):
+                            section['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] = 138
+                            section['Data'][y][beacon['z'] % 16][beacon['x'] % 16] = 1
+
+            sectionCount +=1
+
+        # Add section if beacon beams are needed (to reach the sky !!)
+        if beacons:
+            while sectionCount < 256/16:
+                section1 = {'Blocks': numpy.zeros((16,16,16), dtype=numpy.uint16),
+                            'Data': numpy.zeros((16,16,16), dtype=numpy.uint8),
+                            'SkyLight': numpy.zeros((16,16,16), dtype=numpy.uint8),
+                            'BlockLight': numpy.zeros((16,16,16), dtype=numpy.uint8)}
+                for beacon in beacons:
+                    for y in range(0, 16):
+                        if (section1['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] == 0):
+                            section1['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] = 138
+                            section1['Data'][y][beacon['z'] % 16][beacon['x'] % 16] = 1
+                chunk_data['Sections'].append(section1)
+                sectionCount+=1;
+        return chunk_data
     
 
     def iterate_chunks(self):
