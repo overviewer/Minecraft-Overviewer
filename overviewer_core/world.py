@@ -394,15 +394,14 @@ class RegionSet(object):
             biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
         chunk_data['Biomes'] = biomes
 
-
         # Looking for activated beacons
-        beacons = [];
-        for entity in  chunk_data['TileEntities']:
+        beacons = []
+        for entity in chunk_data['TileEntities']:
             if (entity['id'] == "minecraft:beacon") and (entity['Levels'] > 0):
-                beacons.append({'x': entity['x'], 'y': entity['y'], 'z':entity['z']})
+                beacons.append({'x': entity['x'], 'y': entity['y'], 'z': entity['z']})
 
-        sectionCount = 0
-        newSections = [];
+        section_count = 0
+        new_sections = []
         for section in chunk_data['Sections']:
 
             # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
@@ -463,44 +462,42 @@ class RegionSet(object):
                 raise nbt.CorruptChunkError()
 
             # if we got beacons and missing regions, add one
-            while beacons and section['Y'] > sectionCount:
-                section1 = {'Y': sectionCount,
+            while beacons and section['Y'] > section_count:
+                section1 = {'Y': section_count,
                             'Blocks': numpy.zeros((16, 16, 16), dtype=numpy.uint16),
                             'Data': numpy.zeros((16, 16, 16), dtype=numpy.uint8),
                             'SkyLight': numpy.zeros((16, 16, 16), dtype=numpy.uint8),
                             'BlockLight': numpy.zeros((16, 16, 16), dtype=numpy.uint8)}
                 self.add_beams_to_section(beacons, section1)
-                newSections.append(section1)
-                sectionCount += 1
-
+                new_sections.append(section1)
+                section_count += 1
 
             # Add beacon beam to the current section (if needed)
             self.add_beams_to_section(beacons, section)
-            newSections.append(section)
+            new_sections.append(section)
 
-            sectionCount +=1
+            section_count += 1
 
         # Add section if beacon beams are needed (to reach the sky !!)
-        while beacons and sectionCount < 16:
-            section1 = {'Y': sectionCount,
+        while beacons and section_count < 16:
+            section1 = {'Y': section_count,
                         'Blocks': numpy.zeros((16, 16, 16), dtype=numpy.uint16),
                         'Data': numpy.zeros((16, 16, 16), dtype=numpy.uint8),
                         'SkyLight': numpy.zeros((16, 16, 16), dtype=numpy.uint8),
                         'BlockLight': numpy.zeros((16, 16, 16), dtype=numpy.uint8)}
             self.add_beams_to_section(beacons, section1)
-            newSections.append(section1)
-            sectionCount += 1
+            new_sections.append(section1)
+            section_count += 1
 
-        chunk_data['Sections'] = newSections
-
+        chunk_data['Sections'] = new_sections
 
         return chunk_data
 
     def add_beams_to_section(self, beacons, section):
         for beacon in beacons:
             if (beacon['y'] / 16 <= section['Y']):
-                yMin=max(0, beacon['y'] - section['Y'] * 16)
-                for y in range(yMin, 16):
+                y_min=max(0, beacon['y'] - section['Y'] * 16)
+                for y in range(y_min, 16):
                     if (section['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] == 0):
                         section['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] = 138
                         section['Data'][y][beacon['z'] % 16][beacon['x'] % 16] = 1
