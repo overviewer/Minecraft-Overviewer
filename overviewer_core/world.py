@@ -402,6 +402,7 @@ class RegionSet(object):
                 beacons.append({'x': entity['x'], 'y': entity['y'], 'z':entity['z']})
 
         sectionCount = 0
+        newSections = [];
         for section in chunk_data['Sections']:
 
             # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
@@ -461,34 +462,50 @@ class RegionSet(object):
                 logging.debug("Full traceback:", exc_info=1)
                 raise nbt.CorruptChunkError()
 
+            # if we got beacons and missing regions, add one
+            while beacons and section['Y'] > sectionCount:
+                section1 = {'Y': sectionCount,
+                            'Blocks': numpy.zeros((16, 16, 16), dtype=numpy.uint16),
+                            'Data': numpy.zeros((16, 16, 16), dtype=numpy.uint8),
+                            'SkyLight': numpy.zeros((16, 16, 16), dtype=numpy.uint8),
+                            'BlockLight': numpy.zeros((16, 16, 16), dtype=numpy.uint8)}
+                self.add_beams_to_section(beacons, section1)
+                newSections.append(section1)
+                sectionCount += 1
+
 
             # Add beacon beam to the current section (if needed)
-            for beacon in beacons:
-                if (beacon['y'] / 16 <= sectionCount):
-                    yMin=max(0, beacon['y'] - sectionCount * 16)
-                    for y in range(yMin, 16):
-                        if (section['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] == 0):
-                            section['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] = 138
-                            section['Data'][y][beacon['z'] % 16][beacon['x'] % 16] = 1
+            self.add_beams_to_section(beacons, section)
+            newSections.append(section)
 
             sectionCount +=1
 
         # Add section if beacon beams are needed (to reach the sky !!)
-        if beacons:
-            while sectionCount < 256/16:
-                section1 = {'Blocks': numpy.zeros((16,16,16), dtype=numpy.uint16),
-                            'Data': numpy.zeros((16,16,16), dtype=numpy.uint8),
-                            'SkyLight': numpy.zeros((16,16,16), dtype=numpy.uint8),
-                            'BlockLight': numpy.zeros((16,16,16), dtype=numpy.uint8)}
-                for beacon in beacons:
-                    for y in range(0, 16):
-                        if (section1['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] == 0):
-                            section1['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] = 138
-                            section1['Data'][y][beacon['z'] % 16][beacon['x'] % 16] = 1
-                chunk_data['Sections'].append(section1)
-                sectionCount+=1;
+        while beacons and sectionCount < 16:
+            section1 = {'Y': sectionCount,
+                        'Blocks': numpy.zeros((16, 16, 16), dtype=numpy.uint16),
+                        'Data': numpy.zeros((16, 16, 16), dtype=numpy.uint8),
+                        'SkyLight': numpy.zeros((16, 16, 16), dtype=numpy.uint8),
+                        'BlockLight': numpy.zeros((16, 16, 16), dtype=numpy.uint8)}
+            self.add_beams_to_section(beacons, section1)
+            newSections.append(section1)
+            sectionCount += 1
+
+        chunk_data['Sections'] = newSections
+
+
         return chunk_data
-    
+
+    def add_beams_to_section(self, beacons, section):
+        for beacon in beacons:
+            if (beacon['y'] / 16 <= section['Y']):
+                yMin=max(0, beacon['y'] - section['Y'] * 16)
+                for y in range(yMin, 16):
+                    if (section['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] == 0):
+                        section['Blocks'][y][beacon['z'] % 16][beacon['x'] % 16] = 138
+                        section['Data'][y][beacon['z'] % 16][beacon['x'] % 16] = 1
+                        section['BlockLight'][y][beacon['z'] % 16][beacon['x'] % 16] = 15
+                        section['SkyLight'][y][beacon['z'] % 16][beacon['x'] % 16] = 15
 
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates
