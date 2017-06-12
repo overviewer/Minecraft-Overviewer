@@ -56,7 +56,7 @@ be used as the hover text, the second will be used as the info window content::
             return ("Chest", "Chest with %d items" % len(poi['Items']))
 
 Because of the way the config file is loaded, if you need to import a function or module
-for use in your filter function, you need to explicitly load it into the global namespace:
+for use in your filter function, you need to explicitly load it into the global namespace::
 
     global escape
     from cgi import escape
@@ -92,7 +92,7 @@ Here's an example that displays icons for each player::
 
     def playerIcons(poi):
         if poi['id'] == 'Player':
-            poi['icon'] = "http://overviewer.org/avatar/%s" % poi['EntityId']
+            poi['icon'] = "https://overviewer.org/avatar/%s" % poi['EntityId']
             return "Last known location for %s" % poi['EntityId']
 
 Note how each POI can get a different icon by setting ``poi['icon']``. These icons must exist in either

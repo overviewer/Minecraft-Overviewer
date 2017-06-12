@@ -777,6 +777,25 @@ Image options
 
             **Default:** ``2``
 
+    ``oxipng``
+        An optipng replacement written in Rust. Works much like optipng.
+
+        ``olevel``
+            An integer between ``0`` (few optimizations) and ``6`` (many
+            optimizations). The default should be satisfactory for everyone,
+            higher levels than the default see almost no benefit.
+
+            **Default:** ``2``
+
+        ``threads``
+            An integer specifying how many threads per process to use. Note that
+            Overviewer spawns one oxipng process per Overviewer worker process,
+            so increasing this value if you already have one Overviewer process
+            per CPU thread makes little sense, and can actually slow down the
+            rendering.
+
+            **Default:** ``1``
+
     ``pngcrush``
         pngcrush, like optipng, is a lossless PNG recompressor. If you are able to do so, it
         is recommended to use optipng instead, as it generally yields better results in less

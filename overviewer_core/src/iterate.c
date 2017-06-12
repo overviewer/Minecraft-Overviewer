@@ -104,10 +104,10 @@ PyObject *init_chunk_render(void) {
 
 /* helper for load_chunk, loads a section into a chunk */
 static inline void load_chunk_section(ChunkData *dest, int i, PyObject *section) {
-    dest->sections[i].blocks = PyDict_GetItemString(section, "Blocks");
-    dest->sections[i].data = PyDict_GetItemString(section, "Data");
-    dest->sections[i].skylight = PyDict_GetItemString(section, "SkyLight");
-    dest->sections[i].blocklight = PyDict_GetItemString(section, "BlockLight");
+    dest->sections[i].blocks = (PyArrayObject*) PyDict_GetItemString(section, "Blocks");
+    dest->sections[i].data = (PyArrayObject*) PyDict_GetItemString(section, "Data");
+    dest->sections[i].skylight = (PyArrayObject*) PyDict_GetItemString(section, "SkyLight");
+    dest->sections[i].blocklight = (PyArrayObject*) PyDict_GetItemString(section, "BlockLight");
     Py_INCREF(dest->sections[i].blocks);
     Py_INCREF(dest->sections[i].data);
     Py_INCREF(dest->sections[i].skylight);
@@ -166,7 +166,7 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
         return 1;
     }
     
-    dest->biomes = PyDict_GetItemString(chunk, "Biomes");
+    dest->biomes = (PyArrayObject*) PyDict_GetItemString(chunk, "Biomes");
     Py_INCREF(dest->biomes);
     
     for (i = 0; i < PySequence_Fast_GET_SIZE(sections); i++) {
@@ -586,11 +586,11 @@ chunk_render(PyObject *self, PyObject *args) {
     PyObject *imgsize, *imgsize0_py, *imgsize1_py;
     int imgsize0, imgsize1;
     
-    PyObject *blocks_py;
-    PyObject *left_blocks_py;
-    PyObject *right_blocks_py;
-    PyObject *up_left_blocks_py;
-    PyObject *up_right_blocks_py;
+    PyArrayObject *blocks_py;
+    PyArrayObject *left_blocks_py;
+    PyArrayObject *right_blocks_py;
+    PyArrayObject *up_left_blocks_py;
+    PyArrayObject *up_right_blocks_py;
 
     RenderMode *rendermode;
     

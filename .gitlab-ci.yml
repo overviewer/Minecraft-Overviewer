@@ -3,22 +3,52 @@ stages:
   - test
   - package
   - verify
-  - render
+  - deploy
+  - testrepo
 
 variables:
   EXMAPLE_REPO: "https://github.com/overviewer/Minecraft-Overviewer-Addons"
-  MC_VERSION: "1.11"
+  MC_VERSION: "1.12"
 
-build:
+build:linux:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: build
+  dependencies: []
+  tags:
+    - docker
+  cache:
+    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
+      - build/
   script:
     - python2 setup.py build
     - python2 overviewer.py --verbose --version
 
+build:windows:
+  stage: build
+  dependencies: []
+  tags:
+    - windows
+  script:
+    - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+    - set DISTUTILS_USE_SDK=1
+    - set MSSdk=1
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - c:\Python27\python.exe c:\devel\virtualenv\virtualenv.py ci_env
+    - ci_env\scripts\pip.exe install numpy Pillow
+    - ci_env\Scripts\python.exe setup.py build
+    - ci_env\Scripts\python.exe overviewer.py --verbose --version
+
+
 build:docs:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: build
+  dependencies: []
+  tags:
+    - docker
   script:
     - cd docs
     - make
@@ -31,27 +61,70 @@ build:docs:
 test:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: test
-  dependencies:
-    - build
+  dependencies: []
+  tags:
+    - docker
+  cache:
+    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
+      - build/
   script:
     - python2 setup.py build
     - python2 test/test_all.py
+
+
+render:
+  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  stage: test
+  dependencies: []
+  tags:
+    - docker
+  cache:
+    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    paths:
+      - overviewer_core/c_overviewer.so
+      - overviewer_core/overviewer_version.py
+      - overviewer_core/src/primitives.h
+      - build/
+  script:
+    - python2 setup.py build
+    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
+    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
+    - export RENDER_DIR=render/
+    - mkdir -p $RENDER_DIR
+    - python2 overviewer.py -p2 --rendermode=smooth_lighting maprepo/exmaple $RENDER_DIR
+    - zip -r render.zip $RENDER_DIR
+  artifacts:
+    expire_in: 2 days
+    paths:
+      - render.zip
 
 
 # Builds a source package
 package:src:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
   stage: package
+  dependencies: []
+  tags:
+    - docker
   script:
     - python2 setup.py sdist
     - ls -lh dist
+    - mv dist/*.tar.gz .
   artifacts:
+    expire_in: 2 weeks
     paths:
-      - dist/*.tar.gz
+      - Minecraft-Overviewer*.tar.gz
 
 package:centos7rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  dependencies: []
+  tags:
+    - docker
   script:
     - export MCO_VERSION=`python2 setup.py --version`
     - echo  "Building Minecraft version ${MCO_VERSION}"
@@ -71,6 +144,9 @@ package:centos7rpm:
 package:centos7-32rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  dependencies: []
+  tags:
+    - docker
   only:
     - master
     - triggers
@@ -94,6 +170,9 @@ package:centos7-32rpm:
 package:centos6rpm:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
   stage: package
+  dependencies: []
+  tags:
+    - docker
   only:
     - master
     - triggers
@@ -116,6 +195,9 @@ package:centos6rpm:
 package:debian64:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
   stage: package
+  dependencies: []
+  tags:
+    - docker
   script:
     - export MCO_VERSION=`python2 setup.py --version`
     - echo  "Building Minecraft version ${MCO_VERSION}"
@@ -132,9 +214,59 @@ package:debian64:
       - minecraft-overviewer*.deb
 
 
+package:win64:
+  stage: package
+  dependencies: []
+  tags:
+    - windows
+  script:
+    - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+    - set DISTUTILS_USE_SDK=1
+    - set MSSdk=1
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - c:\Python27\python.exe c:\devel\virtualenv\virtualenv.py ci_env
+    - ci_env\scripts\pip.exe install numpy Pillow pyinstaller sphinx
+    - ci_env\Scripts\python.exe setup.py build
+    - copy build-tools\overviewer.spec .
+    - ci_env\Scripts\pyinstaller.exe overviewer.spec
+    - for /f "delims=" %%a in ('ci_env\Scripts\python.exe setup.py --version') do @set OVR_VERSION=%%a
+    - ci_env\Scripts\sphinx-build.exe docs dist\overviewer-%OVR_VERSION%\docs
+    - rename dist dist-win64
+    - ci_env\Scripts\python.exe -m zipfile -c overviewer-win64-%OVR_VERSION%.zip dist-win64\overviewer-%OVR_VERSION%\
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - overviewer-win64-*.zip
+
+package:win32:
+  stage: package
+  dependencies: []
+  tags:
+    - windows
+  script:
+    - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+    - set DISTUTILS_USE_SDK=1
+    - set MSSdk=1
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - "\"c:\\Python27 (x86)\\python.exe\" c:\\devel\\virtualenv\\virtualenv.py ci_env"
+    - ci_env\scripts\pip.exe install numpy Pillow pyinstaller sphinx
+    - ci_env\Scripts\python.exe setup.py build
+    - copy build-tools\overviewer.spec .
+    - ci_env\Scripts\pyinstaller.exe overviewer.spec
+    - for /f "delims=" %%a in ('ci_env\Scripts\python.exe setup.py --version') do @set OVR_VERSION=%%a
+    - ci_env\Scripts\sphinx-build.exe docs dist\overviewer-%OVR_VERSION%\docs
+    - rename dist dist-win32
+    - ci_env\Scripts\python.exe -m zipfile -c overviewer-win32-%OVR_VERSION%.zip dist-win32\overviewer-%OVR_VERSION%\
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - overviewer-win32-*.zip
+
 verify:centos7:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7-verify
   stage: verify
+  tags:
+    - docker
   dependencies:
     - package:centos7rpm
   script:
@@ -150,11 +282,15 @@ verify:centos7:
 
 
 verify:debian64:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian-verify
+  image: debian:jessie
   stage: verify
+  tags:
+    - docker
   dependencies:
     - package:debian64
   script:
+    - apt-get -y update
+    - apt-get -y install wget git
     - dpkg -i ./minecraft-overviewer*.deb || echo ""
     - apt-get -y -f install
     - which overviewer.py
@@ -164,46 +300,186 @@ verify:debian64:
     - overviewer.py --check-terrain --verbose
 
 
-render:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
-  stage: render
-  variables:
-    GIT_STRATEGY: none
+
+deploy:
+  stage: deploy
   tags:
     - diax
-  dependencies:
-    - package:debian64
-  environment:
-    name: review/$CI_BUILD_REF_NAME
-    url: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_NAME/$CI_BUILD_ID
-    on_stop: remove_render
-  only:
-    - branches
-  except:
-    - master
-  script:
-    - dpkg -i ./minecraft-overviewer*.deb
-    - wget -N https://s3.amazonaws.com/Minecraft.Download/versions/${MC_VERSION}/${MC_VERSION}.jar -P ~/.minecraft/versions/${MC_VERSION}/
-    - git clone --depth=1 ${EXMAPLE_REPO} maprepo
-    - export RENDER_DIR=/renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID
-    - mkdir -p $RENDER_DIR
-    - overviewer.py -p2 --rendermode=smooth_lighting maprepo/exmaple $RENDER_DIR
-    - "echo Map render now available at: http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_SLUG/$CI_BUILD_ID"
-
-remove_render:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
-  stage: render
+    - deploy
   variables:
-    GIT_STRATEGY: none
-  when: manual
+      GIT_STRATEGY: none
+  dependencies:
+    - render
   script:
-    - echo "Removing all renders for the branch $CI_BUILD_REF_NAME :"
-    - ls -l /renders/$CI_BUILD_REF_SLUG/
-    - rm -rf /renders/$CI_BUILD_REF_SLUG/
-  environment:
-    name: review/$CI_BUILD_REF_NAME
-    action: stop
+    - rm -rf render
+    - unzip render.zip
+    - mkdir -p /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - cp -r render/* /renders/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - echo View render at http://static-backend.overviewer.org/renders/ci/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+
+deploy:builds:
+  stage: deploy
+  tags:
+    - diax
+    - deploy
+  dependencies:
+    - build:docs
+    - package:src
+    - package:centos7rpm
+    - package:centos7-32rpm
+    - package:centos6rpm
+    - package:debian64
+    - package:win64
+    - package:win32
+  script:
+    - ls -ltr
+    - mkdir -p /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - cp *.deb /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - cp *.rpm /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - cp overviewer*.zip /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+    - echo Artifacts copied to http://static-backend.overviewer.org/builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
+
+deploy:repos:
+  stage: deploy
+  tags:
+    - diax
+    - deploy
   only:
-    - branches
-  except:
     - master
+  dependencies:
+    - package:centos7rpm
+    - package:centos7-32rpm
+    - package:centos6rpm
+    - package:debian64
+  script:
+    - ls -ltr
+    - dpkg-sig -g '--use-agent --batch --no-tty' --sign builder *.deb
+    - cp *.deb /repos/debian/files/
+    - make -C /repos/debian/ -f /gitlab_runner/debian/Makefile
+    - /gitlab_runner/rpmsign.sh *.rpm
+    - cp *.el7.*.rpm /repos/rpm/7/x86_64/packages/
+    - cp *.el6.*.rpm /repos/rpm/6/x86_64/packages/
+    - make -C /repos/rpm/ -f /gitlab_runner/rpm/Makefile
+
+
+
+repo:centos7:
+  image: centos:7
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:centos6:
+  image: centos:6
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:fc25:
+  image: fedora:25
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:fc24:
+  image: fedora:24
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:fc23:
+  image: fedora:23
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - yum -y install wget
+    - wget -O /etc/yum.repos.d/overviewer.repo http://overviewer.org/rpms_new/overviewer.repo
+    - yum -y install Minecraft-Overviewer
+    - overviewer.py --verbose --version
+
+repo:jessie:
+  image: debian:jessie
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - apt-get -y update
+    - apt-get -y install wget
+    - wget -O - http://overviewer.org/debian_new/overviewer.gpg.asc | apt-key add -
+    - echo 'deb http://overviewer.org/debian_new ./' >> /etc/apt/sources.list
+    - apt-get -y update
+    - apt-get -y install minecraft-overviewer
+    - overviewer.py --verbose --version
+
+repo:stretch:
+  image: debian:stretch
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - apt-get -y update
+    - apt-get -y install wget gnupg
+    - wget -O - http://overviewer.org/debian_new/overviewer.gpg.asc | apt-key add -
+    - echo 'deb http://overviewer.org/debian_new ./' >> /etc/apt/sources.list
+    - apt-get -y update
+    - apt-get -y install minecraft-overviewer
+    - overviewer.py --verbose --version
+
+repo:wheezy:
+  image: debian:wheezy
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - apt-get -y update
+    - apt-get -y install wget
+    - wget -O - http://overviewer.org/debian_new/overviewer.gpg.asc | apt-key add -
+    - echo 'deb http://overviewer.org/debian_new ./' >> /etc/apt/sources.list
+    - apt-get -y update
+    - apt-get -y install minecraft-overviewer
+    - overviewer.py --verbose --version

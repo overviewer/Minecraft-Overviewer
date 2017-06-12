@@ -1,7 +1,6 @@
 # see settingsDefinition.py
 import os
 import os.path
-from collections import namedtuple
 
 import rendermodes
 import util
@@ -26,22 +25,14 @@ def expand_path(p):
     return p
 
 def checkBadEscape(s):
-    #If any of these weird characters are in the path, raise an exception instead of fixing
-    #this should help us educate our users about pathslashes
-    if "\a" in s:
-        raise ValueError("Invalid character '\\a' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
-    if "\b" in s:
-        raise ValueError("Invalid character '\\b' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
-    if "\t" in s:
-        raise ValueError("Invalid character '\\t' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
-    if "\n" in s:
-        raise ValueError("Invalid character '\\n' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
-    if "\v" in s:
-        raise ValueError("Invalid character '\\v' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
-    if "\f" in s:
-        raise ValueError("Invalid character '\\f' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
-    if "\r" in s:
-        raise ValueError("Invalid character '\\r' in path.  Please use forward slashes ('/').  Please see our docs for more info.")
+    # If any of these weird characters are in the path, raise an exception
+    # instead of fixing this should help us educate our users about pathslashes
+    bad_escapes = ['\a', '\b', '\t', '\n', '\v', '\f', '\r']
+    for b in bad_escapes:
+        if b in s:
+            raise ValueError("Invalid character %s in path.  Please use "
+                             "forward slashes ('/').  Please see our docs for "
+                             "more info." % repr(b))
     for c in range(10):
         if chr(c) in s:
             raise ValueError("Invalid character '\\%s' in path.  Please use forward slashes ('/').  Please see our docs for more info." % c)

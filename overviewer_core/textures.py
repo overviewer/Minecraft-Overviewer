@@ -310,7 +310,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.11-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.12-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
@@ -1247,47 +1247,74 @@ def bed(self, blockid, data):
         elif (data & 0b0011) == 2: data = data & 0b1100 | 1
         elif (data & 0b0011) == 3: data = data & 0b1100 | 2
     
+    bed_texture = self.load_image("assets/minecraft/textures/entity/bed/red.png") # FIXME: do tile entity colours
     increment = 8
     left_face = None
     right_face = None
+    top_face = None
     if data & 0x8 == 0x8: # head of the bed
-        top = self.load_image_texture("assets/minecraft/textures/blocks/bed_head_top.png")
-        if data & 0x00 == 0x00: # head pointing to West
-            top = top.copy().rotate(270)
-            left_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_head_side.png")
-            right_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_head_end.png")
-        if data & 0x01 == 0x01: # ... North
-            top = top.rotate(270)
-            left_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_head_end.png")
-            right_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_head_side.png")
-        if data & 0x02 == 0x02: # East
-            top = top.rotate(180)
-            left_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_head_side.png").transpose(Image.FLIP_LEFT_RIGHT)
-            right_face = None
-        if data & 0x03 == 0x03: # South
-            right_face = None
-            right_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_head_side.png").transpose(Image.FLIP_LEFT_RIGHT)
+        top = bed_texture.copy().crop((6,6,22,22))
+
+        # Composing the side
+        side = Image.new("RGBA", (16,16))
+        side_part1 = bed_texture.copy().crop((0,6,6,22)).rotate(90, expand=True)
+        # foot of the bed
+        side_part2 = bed_texture.copy().crop((53,3,56,6))
+        side_part2_f = side_part2.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(side, side_part1, (0,7), side_part1)
+        alpha_over(side, side_part2, (0,13), side_part2)
+
+        end = Image.new("RGBA", (16,16))
+        end_part = bed_texture.copy().crop((6,0,22,6)).rotate(180)
+        alpha_over(end, end_part, (0,7), end_part)
+        alpha_over(end, side_part2, (0,13), side_part2)
+        alpha_over(end, side_part2_f, (13,13), side_part2_f)
+        if data & 0x00 == 0x00: # South
+            top_face = top.rotate(180)
+            left_face = side.transpose(Image.FLIP_LEFT_RIGHT)
+            right_face = end
+        if data & 0x01 == 0x01: # West
+            top_face = top.rotate(90)
+            left_face = end
+            right_face = side.transpose(Image.FLIP_LEFT_RIGHT)
+        if data & 0x02 == 0x02: # North
+            top_face = top
+            left_face = side
+        if data & 0x03 == 0x03: # East
+            top_face = top.rotate(270)
+            right_face = side
     
     else: # foot of the bed
-        top = self.load_image_texture("assets/minecraft/textures/blocks/bed_feet_top.png")
-        if data & 0x00 == 0x00: # head pointing to West
-            top = top.rotate(270)
-            left_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_feet_side.png")
-            right_face = None
-        if data & 0x01 == 0x01: # ... North
-            top = top.rotate(270)
-            left_face = None
-            right_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_feet_side.png")
-        if data & 0x02 == 0x02: # East
-            top = top.rotate(180)
-            left_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_feet_side.png").transpose(Image.FLIP_LEFT_RIGHT)
-            right_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_feet_end.png").transpose(Image.FLIP_LEFT_RIGHT)
-        if data & 0x03 == 0x03: # South
-            left_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_feet_end.png")
-            right_face = self.load_image_texture("assets/minecraft/textures/blocks/bed_feet_side.png").transpose(Image.FLIP_LEFT_RIGHT)
-    
-    top = (top, increment)
-    return self.build_full_block(top, None, None, left_face, right_face)
+        top = bed_texture.copy().crop((6,28,22,44))
+        side = Image.new("RGBA", (16,16))
+        side_part1 = bed_texture.copy().crop((0,28,6,44)).rotate(90, expand=True)
+        side_part2 = bed_texture.copy().crop((53,3,56,6))
+        side_part2_f = side_part2.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(side, side_part1, (0,7), side_part1)
+        alpha_over(side, side_part2, (13,13), side_part2)
+
+        end = Image.new("RGBA", (16,16))
+        end_part = bed_texture.copy().crop((22,22,38,28)).rotate(180)
+        alpha_over(end, end_part, (0,7), end_part)
+        alpha_over(end, side_part2, (0,13), side_part2)
+        alpha_over(end, side_part2_f, (13,13), side_part2_f)
+        if data & 0x00 == 0x00: # South
+            top_face = top.rotate(180)
+            left_face = side.transpose(Image.FLIP_LEFT_RIGHT)
+        if data & 0x01 == 0x01: # West
+            top_face = top.rotate(90)
+            right_face = side.transpose(Image.FLIP_LEFT_RIGHT)
+        if data & 0x02 == 0x02: # North
+            top_face = top
+            left_face = side
+            right_face = end
+        if data & 0x03 == 0x03: # East
+            top_face = top.rotate(270)
+            left_face = end
+            right_face = side
+
+    top_face = (top_face, increment)
+    return self.build_full_block(top_face, None, None, left_face, right_face)
 
 # powered, detector, activator and normal rails
 @material(blockid=[27, 28, 66, 157], data=range(14), transparent=True)
@@ -4114,7 +4141,7 @@ def cobblestone_wall(self, blockid, data):
     alpha_over(wall_pole,wall_pole_side, (3,4),wall_pole_side)
     alpha_over(wall_pole,wall_pole_other_side, (9,4),wall_pole_other_side)
     alpha_over(wall_pole,wall_pole_top, (0,0),wall_pole_top)
-    
+
     # create the sides and the top of a wall attached to a pole
     ImageDraw.Draw(wall_side).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(wall_side).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
@@ -4637,3 +4664,21 @@ def crops(self, blockid, data):
     alpha_over(img, crop2, (6,3), crop2)
     alpha_over(img, crop3, (6,3), crop3)
     return img
+
+# Concrete
+@material(blockid=251, data=range(16), solid=True)
+def concrete(self, blockid, data):
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/concrete_%s.png" % color_map[data])
+    return self.build_block(texture, texture)
+
+# Concrete Powder
+@material(blockid=252, data=range(16), solid=True)
+def concrete(self, blockid, data):
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/concrete_powder_%s.png" % color_map[data])
+    return self.build_block(texture, texture)
+
+# Glazed Terracotta
+@material(blockid=range(235,251), solid=True, nodata=True)
+def glazed_terracotta(self, blockid, data):
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/glazed_terracotta_%s.png" % color_map[blockid - 235])
+    return self.build_block(texture, texture)

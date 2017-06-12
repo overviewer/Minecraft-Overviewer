@@ -3,6 +3,7 @@
 #
 
 import os.path
+import os
 import platform
 import traceback
 import sys
@@ -19,6 +20,8 @@ def check_c_overviewer():
     try:
         import c_overviewer
     except ImportError:
+        if os.environ.get("OVERVIEWER_DEBUG_IMPORT") == "1":
+            traceback.print_exc()
         ## if this is a frozen windows package, the following error messages about
         ## building the c_overviewer extension are not appropriate
         if hasattr(sys, "frozen") and platform.system() == 'Windows':

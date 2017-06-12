@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # -*- coding: iso-8859-1 -*-
 #
 # progressbar  - Text progressbar library for python.

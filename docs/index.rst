@@ -6,11 +6,14 @@
 The Minecraft Overviewer
 ========================
 
-See also the `Github Homepage`_ and the `Updates Blog`_
+See also the `Github Homepage`_ and the `Updates Blog`_, and follow us on
+our `Twitter account`_
 
 .. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
 
-.. _Updates Blog: http://overviewer.org/blog/
+.. _Updates Blog: https://overviewer.org/blog/
+
+.. _Twitter account: https://twitter.com/mcoverviewer
 
 Introduction
 ============
@@ -24,7 +27,7 @@ and many plugins for even more features! It is written mostly in Python with
 critical sections in C as an extension module.
 
 For a simple example of what your renders will look like, head over to `The
-"Example" Map <http://overviewer.org/example/>`_. For more user-contributed
+"Example" Map <https://overviewer.org/example/>`_. For more user-contributed
 examples, see `The Example Wiki Page <https://github.com/overviewer/Minecraft-Overviewer/wiki/Map-examples>`_.
 
 .. image:: front_page_screenshot.png
@@ -42,6 +45,7 @@ Documentation Contents
    signs
    win_tut/windowsguide
    faq
+   contributing
    design/designdoc
 
 

@@ -298,3 +298,6 @@ def configure(loglevel=logging.INFO, verbose=False, simple=False):
         logger.overviewerHandler.setFormatter(formatter)
         logger.addHandler(logger.overviewerHandler)
         logger.setLevel(loglevel)
+
+    # Make sure Pillow doesn't spam us in verbose mode
+    logging.getLogger("PIL").setLevel(logging.WARNING)

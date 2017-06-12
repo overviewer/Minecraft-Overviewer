@@ -121,8 +121,7 @@ Linux
 -----
 
 You will need the gcc compiler and a working build environment. On Ubuntu and
-Debian, this can be done by installing the ``build-essential`` package. For
-CentOS machines, see the :ref:`centos` section below
+Debian, this can be done by installing the ``build-essential`` package.
 
 You will need the following packages (at least):
 
@@ -132,7 +131,7 @@ You will need the following packages (at least):
 
 Then to build::
 
-    python setup.py build
+    python2 setup.py build
     
 At this point, you can run ``./overviewer.py`` from the current directory, so to run it you'll have to be in this directory and run ``./overviewer.py`` or provide the the full path to ``overviewer.py``.  Another option would be to add this directory to your ``$PATH``.   Note that there is a ``python2 setup.py install`` step that you can run which will install things into ``/usr/local/bin``, but this is strongly not recommended as it might conflict with other installs of Overviewer.
 
@@ -146,12 +145,12 @@ OSX
     Xcode Preferences dialog).
 
 1. Download the source code for PIL from http://www.pythonware.com/products/pil/
-2. Compile the PIL code (``python ./setup.py build``)
-3. Install PIL (``sudo python ./setup.py install``)
+2. Compile the PIL code (``python2 ./setup.py build``)
+3. Install PIL (``sudo python2 ./setup.py install``)
 4. Find the path to the ``libImaging`` directory in the PIL source tree.
 5. Build Minecraft Overviewer with the path from step 4 as the value for PIL_INCLUDE_DIR::
 
-    PIL_INCLUDE_DIR="path from step 4" python ./setup.py build
+    PIL_INCLUDE_DIR="path from step 4" python2 ./setup.py build
 
 The following script (copied into your MCO source directory) should handle everything for you:
 
@@ -160,7 +159,7 @@ The following script (copied into your MCO source directory) should handle every
     #!/bin/bash
 
     # start with a clean place to work
-    python ./setup.py clean
+    python2 ./setup.py clean
 
     # get PIL
     if [ ! -d "`pwd`/Imaging-1.1.7/libImaging" ]; then
@@ -170,7 +169,7 @@ The following script (copied into your MCO source directory) should handle every
     fi
 
     # build MCO
-    PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python ./setup.py build
+    PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python2 ./setup.py build
 
 FreeBSD
 -------
@@ -182,42 +181,3 @@ You may need or want to add the line::
     PYTHON_VERSION=2.7
 
 to the file /etc/make.conf, but read the ports documentation to be sure of what this might do to other Python applications on your system.
-
-.. _centos:
-
-CentOS 5
---------
-
-.. note::
-
-    If you are using CentOS 6, you do not need to install the epel repo.
-    CentOS 6 should come with the right python version, you can check
-    your version running *python --version*.
-
-Since CentOS has an older version of Python (2.4), there are some difficulties
-in getting the Overviewer to work. Follow these steps which have been reported
-to work.
-
-Note: commands prefixed with a "#" mean to run as root, and "$" mean to run as a
-regular user.
-
-1. Install the `EPEL repo <http://fedoraproject.org/wiki/EPEL>`_. Go to step #2 if you already have the EPEL repo installed.
-
-  1. ``$ wget http://download.fedoraproject.org/pub/epel/5/i386/epel-release-5-4.noarch.rpm``
-  2. ``# rpm -Uhv epel-release-5-4.noarch.rpm``
-
-2. Install the python26 packages and build dependancies
-
-  1. ``# yum install -y python26{,-imaging,-numpy}{,-devel} gcc``
-
-3. Install and setup Overviewer
-
-  1. ``$ git clone git://github.com/overviewer/Minecraft-Overviewer.git``
-  2. ``$ cd Minecraft-Overviewer``
-  3. ``$ python26 setup.py build``
-  4. Change the first line of overviewer.py from ``#!/usr/bin/env python`` to ``#!/usr/bin/env python26`` so that the Python 2.6 interpreter is used instead of the default 2.4
-
-4. Run Overviewer as usual
-
-  1. ``$ ./overviewer.py path/to/world/ path/to/output/`` or ``$ python26 path/to/overviewer.py path/to/world/ path/to/output/``
-  2. Proceed to the :doc:`Running <running>` instructions for more info.
