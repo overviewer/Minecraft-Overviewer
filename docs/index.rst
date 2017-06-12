@@ -24,7 +24,7 @@ and many plugins for even more features! It is written mostly in Python with
 critical sections in C as an extension module.
 
 For a simple example of what your renders will look like, head over to `The
-"Exmaple" Map <http://overviewer.org/example/>`_. For more user-contributed
+"Example" Map <http://overviewer.org/example/>`_. For more user-contributed
 examples, see `The Example Wiki Page <https://github.com/overviewer/Minecraft-Overviewer/wiki/Map-examples>`_.
 
 .. image:: front_page_screenshot.png
