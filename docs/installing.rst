@@ -27,13 +27,15 @@ right place!
 Debian / Ubuntu
 ===============
 We provide an APT repository with pre-built Overviewer packages for
-Debian and Ubuntu users. These packages should work on any system with
-a ``python2.6`` package. To do this, add the following line to your
+Debian and Ubuntu users. To do this, add the following line to your
 ``/etc/apt/sources.list``
 
 ::
 
     deb https://overviewer.org/debian ./
+
+Note that you will need to have the ``apt-transport-https`` package installed
+for this source to work.
 
 Our APT repository is signed. To install the key (and allow for
 automatic updates), run
