@@ -8,7 +8,7 @@ stages:
 
 variables:
   EXMAPLE_REPO: "https://github.com/overviewer/Minecraft-Overviewer-Addons"
-  MC_VERSION: "1.11"
+  MC_VERSION: "1.12"
 
 build:linux:
   image: code.em32.net:14567/overviewer/minecraft-overviewer:base
