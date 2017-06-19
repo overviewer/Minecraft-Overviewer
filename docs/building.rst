@@ -47,18 +47,20 @@ have bought a copy of Visual Studio, you can use it for 64-bit builds.
 Prerequisites
 ~~~~~~~~~~~~~
 
-You will need a copy of the `PIL sources <http://www.pythonware.com/products/pil/>`_.
+You will need a copy of the `Pillow sources <https://github.com/python-pillow/Pillow>`_.
 
 Building with Visual Studio
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+For this, you will need an installation of `Python 2.7 <https://www.python.org/downloads/windows/>`_ along with Pillow and numpy installed in your Python environment.
+
 1. Get the latest Overviewer source code as per above.
 2. From the Start menu, navigate to the 'Microsoft Visual Studio 2010 Express' and open the 'Visual Studio Command Prompt (2010)' shortcut.
 3. cd to the folder containing the Overviewer source code.
-4. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory.
+4. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
 5. First try a build::
 
-    c:\python26\python setup.py build
+    c:\python27\python setup.py build
 
 If you encounter the following errors::
 
@@ -68,7 +70,7 @@ then try the following::
 
     set DISTUTILS_USE_SDK=1
     set MSSdk=1
-    c:\python26\python setup.py build
+    c:\python27\python setup.py build
 
 If the build was successful, there should be a c_overviewer.pyd file in your current working directory.
 
@@ -107,7 +109,7 @@ Building with mingw
 
 1. Open a MinGW shell.
 2. cd to the Overviewer directory.
-3. Copy Imaging.h and ImPlatform.h from your PIL installation into the current working directory.
+3. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
 4. Build::
 
     python setup.py build --compiler=mingw32
@@ -125,7 +127,8 @@ Debian, this can be done by installing the ``build-essential`` package.
 
 You will need the following packages (at least):
 
-* python-imaging (for PIL)
+* python-imaging or python-pillow
+* python-imaging-dev or python-pillow-dev
 * python-dev
 * python-numpy
 
