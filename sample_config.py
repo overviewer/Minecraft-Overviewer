@@ -9,6 +9,10 @@ worlds['My World'] = "/path/to/your/world"
 # Define where to put the output here.
 outputdir = "/tmp/test_render"
 
+# The Google Maps javascript API now requires an API key. They're free and
+# easy to get. Go here: https://console.developers.google.com/apis/credentials
+google_api_key = "your-api-key-here"
+
 # This is an item usually specified in a renders dictionary below, but if you
 # set it here like this, it becomes the default for all renders that don't
 # define it.
