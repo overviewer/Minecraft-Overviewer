@@ -59,10 +59,14 @@ static int random_next_int(long long *seed, int n) {
     return val;
 }
 
-static int is_slime(long long map_seed, long chunkx, long chunkz) {
+static int is_slime(long long map_seed, int chunkx, int chunkz) {
     /* lots of magic numbers, but they're all correct! I swear! */
     long long seed;
-    random_set_seed(&seed, map_seed + (chunkx * chunkx * 0x4c1906LL) + (chunkx * 0x5ac0dbLL) + (chunkz * chunkz * 0x4307a7LL) + (chunkz * 0x5f24fLL) ^ 0x3ad8025fLL);
+    random_set_seed(&seed, (map_seed +
+                            (long long)(chunkx * chunkx * 0x4c1906) +
+                            (long long)(chunkx * 0x5ac0db) +
+                            (long long)(chunkz * chunkz * 0x4307a7LL) +
+                            (long long)(chunkz * 0x5f24f)) ^ 0x3ad8025f);
     return (random_next_int(&seed, 10) == 0);
 }
 
