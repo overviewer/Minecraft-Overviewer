@@ -36,26 +36,29 @@ Windows Build Instructions
 --------------------------
 
 First, you'll need a compiler.  You can either use Visual Studio, or
-cygwin/mingw. The free `Visual Studio Express
-<http://www.microsoft.com/express/Windows/>`_ is okay. You will want the C++
-version (Microsoft® Visual C++® 2010 Express).  Note that the Express version of
-Visual Studio will only build 32-bit executables.  We currently don't have a
-recommended way of building Overviewer on 64-bit Windows using free tools.  If you
-have bought a copy of Visual Studio, you can use it for 64-bit builds.
+cygwin/mingw. The free `Visual Studio Community
+<https://www.visualstudio.com/vs/community/>`_ is okay. You will need to select the "Desktop Development with C++" WORKLOAD. Microsoft has been changing up the names on this with the "Community" edition of Visual Studio. If nothing else works, just install every Individual Visual C++ component you can find :)
 
 
 Prerequisites
 ~~~~~~~~~~~~~
 
-You will need a copy of the `Pillow sources <https://github.com/python-pillow/Pillow>`_.
+You will need the following:
+
+- `Python 2.7 <https://www.python.org/downloads/windows/>`_
+- A copy of the `Pillow sources <https://github.com/python-pillow/Pillow>`_.
+- The Pillow Extension for Python.
+- The Numpy Extension for Python.
+- The extensions can be installed via::
+
+    c:\python27\python.exe -m pip -U numpy pillow
+
 
 Building with Visual Studio
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For this, you will need an installation of `Python 2.7 <https://www.python.org/downloads/windows/>`_ along with Pillow and numpy installed in your Python environment.
-
 1. Get the latest Overviewer source code as per above.
-2. From the Start menu, navigate to the 'Microsoft Visual Studio 2010 Express' and open the 'Visual Studio Command Prompt (2010)' shortcut.
+2. From the Start menu, navigate to 'Visual Studio 2017' and open the **'Developer Command Prompt for VS 2017'** (*or whatever year*) shortcut. A regular command or powershell prompt will *NOT* work for this.
 3. cd to the folder containing the Overviewer source code.
 4. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
 5. First try a build::
@@ -183,4 +186,4 @@ You may need or want to add the line::
 
     PYTHON_VERSION=2.7
 
-to the file /etc/make.conf, but read the ports documentation to be sure of what this might do to other Python applications on your system.
+to the file /etc/make.conf, but read the ports documentation to be sure of what this might do to other Python applications on your system.  

@@ -258,13 +258,15 @@ class PlayerDict(dict):
         sname = self._name.replace('-','')
         try:
             profile = PlayerDict.uuid_cache[sname]
-            return profile['name']
+            if profile['retrievedAt'] > time.mktime(self['time']):
+                return profile['name']
         except (KeyError,):
             pass
 
         try:
             profile = json.loads(urllib2.urlopen(UUID_LOOKUP_URL + sname).read())
             if 'name' in profile:
+                profile['retrievedAt'] = time.mktime(time.localtime())
                 PlayerDict.uuid_cache[sname] = profile
                 return profile['name']
         except (ValueError, urllib2.URLError):
