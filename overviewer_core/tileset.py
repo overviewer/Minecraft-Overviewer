@@ -978,7 +978,7 @@ class TileSet(object):
         # Save it
         with FileReplacer(imgpath, capabilities=self.fs_caps) as tmppath:
             if imgformat == 'jpg':
-                img.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
+                img.convert('RGB').save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
             else: # png
                 img.save(tmppath, "png")
 
@@ -1089,7 +1089,7 @@ class TileSet(object):
         # Save them
         with FileReplacer(imgpath, capabilities=self.fs_caps) as tmppath:
             if self.imgextension == 'jpg':
-                tileimg.save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
+                tileimg.convert('RGB').save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
             else: # png
                 tileimg.save(tmppath, "png")
 
