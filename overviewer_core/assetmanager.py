@@ -146,6 +146,8 @@ directory.
 
             # write a blank image
             blank = Image.new("RGBA", (1,1), tileset.options.get('bgcolor'))
+            if tileset.options.get('imgformat') != 'png':
+                blank = blank.convert("RGB")
             blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')))
 
         # write out config
