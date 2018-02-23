@@ -6,8 +6,9 @@ python:
 env:
   - MC_VERSION=1.12
 before_install:
-  - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/libImaging/Imaging.h
-  - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/libImaging/ImPlatform.h
+  - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/src/libImaging/Imaging.h
+  - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/src/libImaging/ImagingUtils.h
+  - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/src/libImaging/ImPlatform.h
 install:
   - pip install -q pillow
   - pip install -q numpy
