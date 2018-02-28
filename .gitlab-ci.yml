@@ -17,7 +17,7 @@ build:linux:
   tags:
     - docker
   cache:
-    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    key: "$CI_BUILD_REF_NAME-$CI_PIPELINE_ID-linuxbuild"
     paths:
       - overviewer_core/c_overviewer.so
       - overviewer_core/overviewer_version.py
@@ -65,7 +65,7 @@ test:
   tags:
     - docker
   cache:
-    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    key: "$CI_BUILD_REF_NAME-$CI_PIPELINE_ID-linuxbuild"
     paths:
       - overviewer_core/c_overviewer.so
       - overviewer_core/overviewer_version.py
@@ -83,7 +83,7 @@ render:
   tags:
     - docker
   cache:
-    key: "$CI_BUILD_REF_NAME/$CI_PIPELINE_ID/linuxbuild"
+    key: "$CI_BUILD_REF_NAME-$CI_PIPELINE_ID-linuxbuild"
     paths:
       - overviewer_core/c_overviewer.so
       - overviewer_core/overviewer_version.py
