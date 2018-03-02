@@ -483,3 +483,20 @@ repo:wheezy:
     - apt-get -y update
     - apt-get -y install minecraft-overviewer
     - overviewer.py --verbose --version
+
+repo:artful:
+  image: ubuntu:artful
+  stage: testrepo
+  dependencies: []
+  tags:
+    - docker
+  only:
+    - master
+  script:
+    - apt-get -y update
+    - apt-get -y install wget
+    - wget -O - http://overviewer.org/debian_new/overviewer.gpg.asc | apt-key add -
+    - echo 'deb http://overviewer.org/debian_new ./' >> /etc/apt/sources.list
+    - apt-get -y update
+    - apt-get -y install minecraft-overviewer
+    - overviewer.py --verbose --version
