@@ -11,7 +11,7 @@ variables:
   MC_VERSION: "1.12"
 
 build:linux:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:base
   stage: build
   dependencies: []
   tags:
@@ -44,7 +44,7 @@ build:windows:
 
 
 build:docs:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:base
   stage: build
   dependencies: []
   tags:
@@ -59,7 +59,7 @@ build:docs:
       - docs/_build/html/
 
 test:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:base
   stage: test
   dependencies: []
   tags:
@@ -77,7 +77,7 @@ test:
 
 
 render:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:base
   stage: test
   dependencies: []
   tags:
@@ -105,7 +105,7 @@ render:
 
 # Builds a source package
 package:src:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:base
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:base
   stage: package
   dependencies: []
   tags:
@@ -120,7 +120,7 @@ package:src:
       - Minecraft-Overviewer*.tar.gz
 
 package:centos7rpm:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:centos7
   stage: package
   dependencies: []
   tags:
@@ -142,7 +142,7 @@ package:centos7rpm:
       - Minecraft-Overviewer*.x86_64.rpm
 
 package:centos7-32rpm:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:centos7
   stage: package
   dependencies: []
   tags:
@@ -168,7 +168,7 @@ package:centos7-32rpm:
 
 # Note that even though we are building a centos6 rpm, we can still use the centos7 docker image
 package:centos6rpm:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:centos7
   stage: package
   dependencies: []
   tags:
@@ -193,7 +193,7 @@ package:centos6rpm:
       - Minecraft-Overviewer*.x86_64.rpm
 
 package:debian64:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:debian64
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:debian64
   stage: package
   dependencies: []
   tags:
@@ -263,7 +263,7 @@ package:win32:
       - overviewer-win32-*.zip
 
 verify:centos7:
-  image: code.em32.net:14567/overviewer/minecraft-overviewer:centos7-verify
+  image: registry.code.em32.net/overviewer/minecraft-overviewer:centos7-verify
   stage: verify
   tags:
     - docker
