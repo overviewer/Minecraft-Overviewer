@@ -104,7 +104,7 @@ render:
 
 
 # Builds a source package
-package:src:
+pkg:src:
   image: registry.code.em32.net/overviewer/minecraft-overviewer:base
   stage: package
   dependencies: []
@@ -119,7 +119,7 @@ package:src:
     paths:
       - Minecraft-Overviewer*.tar.gz
 
-package:centos7rpm:
+pkg:centos7rpm:
   image: registry.code.em32.net/overviewer/minecraft-overviewer:centos7
   stage: package
   dependencies: []
@@ -141,7 +141,7 @@ package:centos7rpm:
     paths:
       - Minecraft-Overviewer*.x86_64.rpm
 
-package:centos7-32rpm:
+pkg:centos7-32rpm:
   image: registry.code.em32.net/overviewer/minecraft-overviewer:centos7
   stage: package
   dependencies: []
@@ -167,7 +167,7 @@ package:centos7-32rpm:
       - Minecraft-Overviewer*.i*86.rpm
 
 # Note that even though we are building a centos6 rpm, we can still use the centos7 docker image
-package:centos6rpm:
+pkg:centos6rpm:
   image: registry.code.em32.net/overviewer/minecraft-overviewer:centos7
   stage: package
   dependencies: []
@@ -192,7 +192,7 @@ package:centos6rpm:
     paths:
       - Minecraft-Overviewer*.x86_64.rpm
 
-package:debian64:
+pkg:debian64:
   image: registry.code.em32.net/overviewer/minecraft-overviewer:debian64
   stage: package
   dependencies: []
@@ -214,7 +214,7 @@ package:debian64:
       - minecraft-overviewer*.deb
 
 
-package:win64:
+pkg:win64:
   stage: package
   dependencies: []
   tags:
@@ -238,7 +238,7 @@ package:win64:
     paths:
       - overviewer-win64-*.zip
 
-package:win32:
+pkg:win32:
   stage: package
   dependencies: []
   tags:
@@ -268,7 +268,7 @@ verify:centos7:
   tags:
     - docker
   dependencies:
-    - package:centos7rpm
+    - pkg:centos7rpm
   script:
     - ls -l *.rpm
     - ls -l
@@ -287,7 +287,7 @@ verify:debian64:
   tags:
     - docker
   dependencies:
-    - package:debian64
+    - pkg:debian64
   script:
     - apt-get -y update
     - apt-get -y install wget git
@@ -324,13 +324,13 @@ deploy:builds:
     - deploy
   dependencies:
     - build:docs
-    - package:src
-    - package:centos7rpm
-    - package:centos7-32rpm
-    - package:centos6rpm
-    - package:debian64
-    - package:win64
-    - package:win32
+    - pkg:src
+    - pkg:centos7rpm
+    - pkg:centos7-32rpm
+    - pkg:centos6rpm
+    - pkg:debian64
+    - pkg:win64
+    - pkg:win32
   script:
     - ls -ltr
     - mkdir -p /builds/$CI_BUILD_REF_SLUG/$CI_BUILD_ID/
@@ -347,10 +347,10 @@ deploy:repos:
   only:
     - master
   dependencies:
-    - package:centos7rpm
-    - package:centos7-32rpm
-    - package:centos6rpm
-    - package:debian64
+    - pkg:centos7rpm
+    - pkg:centos7-32rpm
+    - pkg:centos6rpm
+    - pkg:debian64
   script:
     - ls -ltr
     - dpkg-sig -g '--use-agent --batch --no-tty' --sign builder *.deb
