@@ -1,11 +1,14 @@
 tag=debian64
 
 build:
-	docker build -t code.em32.net:14567/overviewer/minecraft-overviewer:$(tag) . 
+	docker build -t registry.code.em32.net/overviewer/minecraft-overviewer:$(tag) . 
+
+forcebuild:
+	docker build --no-cache -t registry.code.em32.net/overviewer/minecraft-overviewer:$(tag) . 
 
 push:
-	docker push code.em32.net:14567/overviewer/minecraft-overviewer:$(tag)
+	docker push registry.code.em32.net/overviewer/minecraft-overviewer:$(tag)
 
 run:
-	docker run --rm --privileged -it code.em32.net:14567/overviewer/minecraft-overviewer:$(tag) /bin/bash
+	docker run --rm --privileged -it registry.code.em32.net/overviewer/minecraft-overviewer:$(tag) /bin/bash
 
