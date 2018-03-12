@@ -111,6 +111,17 @@ class World(object):
                 logging.critical("Sorry, This version of Minecraft-Overviewer only works with the 'Anvil' chunk format")
                 raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
 
+
+        # Check for versions of minecraft after the 17w47a changes
+        if 'Version' in data:
+            version = int(data['Version']["Id"])
+            # version Id of 17w47a 
+            if version >= 1452: 
+                logging.critical("Sorry, This version of Minecraft-Overviewer only works with versions of Minecraft 1.12 and under")
+                logging.critical("This is due to a change in the map chunk format that happened in snapshot 17w47a")
+                raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
+
+
         # This isn't much data, around 15 keys and values for vanilla worlds.
         self.leveldat = data
 
