@@ -21,6 +21,7 @@ import time
 import random
 import re
 import locale
+import sys
 
 import numpy
 
@@ -115,11 +116,10 @@ class World(object):
         # Check for versions of minecraft after the 17w47a changes
         if 'Version' in data:
             version = int(data['Version']["Id"])
-            # version Id of 17w47a 
             if version >= 1452: 
                 logging.critical("Sorry, This version of Minecraft-Overviewer only works with versions of Minecraft 1.12 and under")
                 logging.critical("This is due to a change in the map chunk format that happened in snapshot 17w47a")
-                raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
+                sys.exit(1)
 
 
         # This isn't much data, around 15 keys and values for vanilla worlds.
