@@ -3906,9 +3906,12 @@ block(blockid=123, top_image="assets/minecraft/textures/blocks/redstone_lamp_off
 block(blockid=124, top_image="assets/minecraft/textures/blocks/redstone_lamp_on.png")
 
 # daylight sensor.  
-@material(blockid=151, transparent=True)
+@material(blockid=[151,178], transparent=True)
 def daylight_sensor(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/blocks/daylight_detector_top.png")
+    if blockid == 151: # daylight sensor
+        top = self.load_image_texture("assets/minecraft/textures/blocks/daylight_detector_top.png")
+    else: # inverted daylight sensor
+        top = self.load_image_texture("assets/minecraft/textures/blocks/daylight_detector_inverted_top.png")
     side = self.load_image_texture("assets/minecraft/textures/blocks/daylight_detector_side.png")
 
     # cut the side texture in half
