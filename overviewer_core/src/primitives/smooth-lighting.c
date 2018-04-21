@@ -49,7 +49,7 @@ struct SmoothLightingFace {
 };
 
 /* top face touchups, pulled from textures.py (_build_block) */
-static int top_touchups[] = {3, 4, 7, 2, 11, 0};
+static int top_touchups[] = {1, 5, 3, 4, 5, 3, 7, 2, 9, 1, 11, 0};
 
 /* the lighting face rule list! */
 static struct SmoothLightingFace lighting_rules[] = {
@@ -83,7 +83,7 @@ static struct SmoothLightingFace lighting_rules[] = {
              -1, 0, 0,
              0, 0, 1},
         },
-     top_touchups, 3},
+     top_touchups, 6},
     
     /* left */
     {-1, 0, 0, {
