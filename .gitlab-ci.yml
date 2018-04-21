@@ -225,7 +225,7 @@ pkg:win64:
     - set MSSdk=1
     - set PIL_INCLUDE_DIR=c:\devel\pillow\src\libImaging
     - c:\Python27\python.exe c:\devel\virtualenv\virtualenv.py ci_env
-    - ci_env\scripts\pip.exe install numpy Pillow==5.10 pyinstaller sphinx
+    - ci_env\scripts\pip.exe install numpy Pillow==5.1.0 pyinstaller sphinx
     - ci_env\Scripts\python.exe setup.py build
     - copy build-tools\overviewer.spec .
     - ci_env\Scripts\pyinstaller.exe overviewer.spec
