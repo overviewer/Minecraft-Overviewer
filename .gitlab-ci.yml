@@ -36,9 +36,9 @@ build:windows:
     - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
     - set DISTUTILS_USE_SDK=1
     - set MSSdk=1
-    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\src\libImaging
     - c:\Python27\python.exe c:\devel\virtualenv\virtualenv.py ci_env
-    - ci_env\scripts\pip.exe install numpy Pillow
+    - ci_env\scripts\pip.exe install numpy Pillow==5.1.0
     - ci_env\Scripts\python.exe setup.py build
     - ci_env\Scripts\python.exe overviewer.py --verbose --version
 
@@ -223,9 +223,9 @@ package:win64:
     - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
     - set DISTUTILS_USE_SDK=1
     - set MSSdk=1
-    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\src\libImaging
     - c:\Python27\python.exe c:\devel\virtualenv\virtualenv.py ci_env
-    - ci_env\scripts\pip.exe install numpy Pillow pyinstaller sphinx
+    - ci_env\scripts\pip.exe install numpy Pillow==5.10 pyinstaller sphinx
     - ci_env\Scripts\python.exe setup.py build
     - copy build-tools\overviewer.spec .
     - ci_env\Scripts\pyinstaller.exe overviewer.spec
@@ -247,9 +247,9 @@ package:win32:
     - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
     - set DISTUTILS_USE_SDK=1
     - set MSSdk=1
-    - set PIL_INCLUDE_DIR=c:\devel\pillow\libImaging
+    - set PIL_INCLUDE_DIR=c:\devel\pillow\src\libImaging
     - "\"c:\\Python27 (x86)\\python.exe\" c:\\devel\\virtualenv\\virtualenv.py ci_env"
-    - ci_env\scripts\pip.exe install numpy Pillow pyinstaller sphinx
+    - ci_env\scripts\pip.exe install numpy Pillow==5.1.0 pyinstaller sphinx
     - ci_env\Scripts\python.exe setup.py build
     - copy build-tools\overviewer.spec .
     - ci_env\Scripts\pyinstaller.exe overviewer.spec
