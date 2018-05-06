@@ -201,7 +201,7 @@ overviewer.util = {
                 console.log("markers for", ovconf.marker_groups);
                 markerCtrl = L.control.layers(
                         [],
-                        ovconf.marker_groups).addTo(overviewer.map);
+                        ovconf.marker_groups, {collapsed: false}).addTo(overviewer.map);
             }
 
             overviewer.util.updateHash();
