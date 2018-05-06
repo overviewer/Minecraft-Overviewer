@@ -267,7 +267,8 @@ overviewer.util = {
                     for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
                         var marker_group = new L.layerGroup();
                         var marker_entry = markers[obj.path][mkidx];
-                        var icon =  L.icon({iconUrl: marker_entry.icon});
+                        var icon =  L.icon({iconUrl: marker_entry.icon,
+                                            iconSize: [32, 32]});
                         console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
 
                         for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
