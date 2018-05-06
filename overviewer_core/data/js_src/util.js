@@ -197,7 +197,7 @@ overviewer.util = {
             }
 
             // reset the markers control with the markers for this layer
-            if (ovconf.marker_groups.length > 0) {
+            if (ovconf.marker_groups) {
                 console.log("markers for", ovconf.marker_groups);
                 markerCtrl = L.control.layers(
                         [],
@@ -257,7 +257,7 @@ overviewer.util = {
                 overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
             }
 
-            obj.marker_groups = [];
+            obj.marker_groups = {};
 
             if (overviewer.collections.haveSigns == true) {
                 // if there are markers for this tileset, create them now
@@ -278,7 +278,7 @@ overviewer.util = {
                                 icon: icon
                             }));
                         }
-                        obj.marker_groups.push(marker_group);
+                        obj.marker_groups[marker_entry.displayName] = marker_group;
                     }
 
 
