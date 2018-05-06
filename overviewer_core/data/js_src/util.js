@@ -158,6 +158,9 @@ overviewer.util = {
                 crs: L.CRS.Simple,
                 minZoom: 0});
 
+        overviewer.map.attributionControl.setPrefix(
+            '<a href="https://overviewer.org">Overviewer/Leaflet</a>');
+
         overviewer.map.on('baselayerchange', function(ev) {
             overviewer.current_layer[overviewer.current_world] = ev.layer;
             var ovconf = ev.layer.tileSetConfig;
