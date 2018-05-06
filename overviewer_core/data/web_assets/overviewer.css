@@ -150,3 +150,26 @@ div.searchResultItem img {
     width: 24px;
     height: 24px;
 }
+
+
+div.worldcontrol {
+    border: 2px solid rgba(0,0,0,0.2);
+    border-radius: 5px;
+    background: #fff;
+    padding: 2px;
+}
+div.worldcontrol select {
+    background: #fff;
+    border: 1px solid #fff;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.leaflet-container .coordbox {
+    box-shadow: none;
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    padding: 0 5px;
+    color: #333;
+}

@@ -32,145 +32,296 @@ overviewer.util = {
      * feature gets added.
      */
     'initialize': function() {
-        overviewer.util.initializeClassPrototypes();
+        //overviewer.util.initializeClassPrototypes();
+        overviewer.util.initializePolyfills();
+        overviewer.util.initializeMarkers();
 
-        overviewer.collections.worlds = new overviewer.models.WorldCollection();
+        document.getElementById('NoJSWarning').remove();
 
-        $.each(overviewerConfig.worlds, function(index, el) {
-                var n = new overviewer.models.WorldModel({name: el, id:el});
-                overviewer.collections.worlds.add(n);
-                });
+        overviewer.coordBoxClass = L.Control.extend({
+            options: {
+                position: 'bottomleft',
+            },
+            initialize: function() {
+                this.coord_box = L.DomUtil.create('div', 'coordbox');
+            },
+            render: function(latlng) {
+                var currWorld = overviewer.current_world;
+                if (currWorld == null) {return;}
 
-        $.each(overviewerConfig.tilesets, function(index, el) {
-                var newTset = new overviewer.models.TileSetModel(el);
-                overviewer.collections.worlds.get(el.world).get("tileSets").add(newTset);
-                });
+                var currTileset = overviewer.current_layer[currWorld];
+                if (currTileset == null) {return;}
 
-        overviewer.collections.worlds.each(function(world, index, list) {
-                var nv = new overviewer.views.WorldView({model: world});
-                overviewer.collections.worldViews.push(nv);
-                });
+                var ovconf = currTileset.tileSetConfig;
 
-        overviewer.mapModel = new overviewer.models.GoogleMapModel({});
-        overviewer.mapView = new overviewer.views.GoogleMapView({el: document.getElementById(overviewerConfig.CONST.mapDivId), model:overviewer.mapModel});
+                w_coords = overviewer.util.fromLatLngToWorld(latlng.lat, latlng.lng, ovconf);
 
-        // any controls must be created after the GoogleMapView is created
-        // controls should be added in the order they should appear on screen, 
-        // with controls on the outside of the page being added first
+                var r_x = Math.floor(Math.floor(w_coords.x / 16.0) / 32.0);
+                var r_z = Math.floor(Math.floor(w_coords.z / 16.0) / 32.0);
+                var r_name = "r." + r_x + "." + r_z + ".mca";
 
-        var compass = new overviewer.views.CompassView({tagName: 'DIV', model:overviewer.mapModel});
-        // no need to render the compass now.  it's render event will get fired by
-        // the maptypeid_chagned event
-
-        var coordsdiv = new overviewer.views.CoordboxView({tagName: 'DIV'});
-        coordsdiv.render();
-
-        var progressdiv = new overviewer.views.ProgressView({tagName: 'DIV'});
-        progressdiv.render();
-        progressdiv.updateProgress();
-
-        if (overviewer.collections.haveSigns) {
-            var signs = new overviewer.views.SignControlView();
-            signs.registerEvents(signs);
-        }
-
-        var overlayControl = new overviewer.views.OverlayControlView();
-
-        var spawnmarker = new overviewer.views.SpawnIconView();
-
-        // Update coords on mousemove
-        google.maps.event.addListener(overviewer.map, 'mousemove', function (event) {
-            coordsdiv.updateCoords(event.latLng);    
+                this.coord_box.innerHTML = "<strong>X</strong> " +
+                                           Math.round(w_coords.x) +
+                                           " <strong>Z</strong> " + Math.round(w_coords.z) +
+                                           " (" + r_name + ")";
+            },
+            onAdd: function() {
+                return this.coord_box;
+            }
         });
-        google.maps.event.addListener(overviewer.map, 'idle', function (event) {
+        overviewer.compassClass = L.Control.extend({
+            initialize: function(imagedict, options) {
+                L.Util.setOptions(this, options);
+                this.compass_img = L.DomUtil.create('img', 'compass');
+                this.imagedict = imagedict;
+            },
+            render: function(direction) {
+                this.compass_img.src = this.imagedict[direction];
+            },
+            onAdd: function() {
+                return this.compass_img;
+            }
+        });
+        overviewer.control = L.Control.extend({
+            initialize: function(options) {
+                L.Util.setOptions(this, options);
+                
+                this.container = L.DomUtil.create('div', 'worldcontrol');
+                this.select = L.DomUtil.create('select');
+                this.select.onchange = this.onChange;
+                this.container.appendChild(this.select);
+            },
+            addWorld: function(world) {
+                var option = L.DomUtil.create('option');
+                option.value = world;
+                option.innerText = world;
+                this.select.appendChild(option);
+            },
+            onChange: function(ev) {
+                console.log(ev.target);
+                console.log(ev.target.value);
+                var selected_world = ev.target.value;
+                
+
+                // save current view for the current_world
+                overviewer.collections.centers[overviewer.current_world][0] = overviewer.map.getCenter();
+                overviewer.collections.centers[overviewer.current_world][1] = overviewer.map.getZoom();
+
+                overviewer.layerCtrl.remove();
+
+                overviewer.layerCtrl = L.control.layers(
+                        overviewer.collections.mapTypes[selected_world],
+                        overviewer.collections.overlays[selected_world],
+                        {collapsed: false})
+                .addTo(overviewer.map);
+
+                for (var world_name in overviewer.collections.mapTypes) {
+                    for (var tset_name in overviewer.collections.mapTypes[world_name]) {
+                        var lyr = overviewer.collections.mapTypes[world_name][tset_name];
+                        if (world_name != selected_world) {
+                            if (overviewer.map.hasLayer(lyr))
+                                overviewer.map.removeLayer(lyr);
+                        }
+                    }
+                    
+                    for (var tset_name in overviewer.collections.overlays[world_name]) {
+                        var lyr = overviewer.collections.overlays[world_name][tset_name];
+                        if (world_name != selected_world) {
+                            if (overviewer.map.hasLayer(lyr))
+                                overviewer.map.removeLayer(lyr);
+                        }
+                    }
+                }
+
+                var center = overviewer.collections.centers[selected_world];
+                overviewer.map.setView(center[0], center[1]);
+
+                overviewer.current_world = selected_world;
+
+                if (overviewer.collections.mapTypes[selected_world] && overviewer.current_layer[selected_world]) {
+                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][overviewer.current_layer[selected_world].tileSetConfig.name]);
+                } else {
+                    var tset_name = Object.keys(overviewer.collections.mapTypes[selected_world])[0]
+                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][tset_name]);
+                }
+            },
+            onAdd: function() {
+                console.log("onAdd mycontrol");
+                
+                return this.container
+            }
+        });
+
+
+        
+        overviewer.map = L.map('mcmap', {
+                crs: L.CRS.Simple,
+                minZoom: 0});
+
+        overviewer.map.attributionControl.setPrefix(
+            '<a href="https://overviewer.org">Overviewer/Leaflet</a>');
+
+        overviewer.map.on('baselayerchange', function(ev) {
+            overviewer.current_layer[overviewer.current_world] = ev.layer;
+            var ovconf = ev.layer.tileSetConfig;
+
+            // Change the compass
+            overviewer.compass.render(ovconf.north_direction);
+
+            // Set the background colour
+            document.getElementById("mcmap").style.backgroundColor = ovconf.bgcolor;
+
+            if (overviewer.collections.locationMarker) {
+                overviewer.collections.locationMarker.remove();
+            }
+            // Remove old spawn marker, add new one
+            if (overviewer.collections.spawnMarker) {
+                overviewer.collections.spawnMarker.remove();
+            }
+            if (typeof(ovconf.spawn) == "object") {
+                var spawnIcon = L.icon({
+                    iconUrl: overviewerConfig.CONST.image.spawnMarker,
+                    iconRetinaUrl: overviewerConfig.CONST.image.spawnMarker2x,
+                    iconSize: [32, 37],
+                    iconAnchor: [15, 33],
+                });
+                var latlng = overviewer.util.fromWorldToLatLng(ovconf.spawn[0],
+                                                               ovconf.spawn[1],
+                                                               ovconf.spawn[2],
+                                                               ovconf);
+                var ohaimark = L.marker(latlng, {icon: spawnIcon, title: "Spawn"});
+                ohaimark.on('click', function(ev) {
+                    overviewer.map.setView(ev.latlng);
+                });
+                overviewer.collections.spawnMarker = ohaimark
+                overviewer.collections.spawnMarker.addTo(overviewer.map);
+            } else {
+                overviewer.collections.spawnMarker = null;
+            }
+
+            // reset the markers control with the markers for this layer
+            if (ovconf.marker_groups) {
+                console.log("markers for", ovconf.marker_groups);
+                markerCtrl = L.control.layers(
+                        [],
+                        ovconf.marker_groups, {collapsed: false}).addTo(overviewer.map);
+            }
+
             overviewer.util.updateHash();
         });
 
-        google.maps.event.addListener(overviewer.map, 'maptypeid_changed', function(event) {
-            // it's handy to keep track of the currently visible tileset.  we let
-            // the GoogleMapView manage this
-            overviewer.mapView.updateCurrentTileset();
+        overviewer.map.on('moveend', function(ev) {
+            overviewer.util.updateHash();
+        });
+    
+        var tset = overviewerConfig.tilesets[0];
 
-            compass.render();
-            spawnmarker.render();
-            if (overviewer.collections.locationMarker) {
-                overviewer.collections.locationMarker.setMap(null);
-                overviewer.collections.locationMarker = null;
-            }
-
-            // update list of spawn overlays
-            overlayControl.render();
-
-            // re-center on the last viewport
-            var currentWorldView = overviewer.mapModel.get("currentWorldView");
-            if (currentWorldView.options.lastViewport) {
-                var x = currentWorldView.options.lastViewport[0];
-                var y = currentWorldView.options.lastViewport[1];
-                var z = currentWorldView.options.lastViewport[2];
-                var zoom = currentWorldView.options.lastViewport[3];
-
-                var latlngcoords = overviewer.util.fromWorldToLatLng(x, y, z,
-                    overviewer.mapView.options.currentTileSet);
-                overviewer.map.setCenter(latlngcoords);
-
-                if (zoom == 'max') {
-                    zoom = overviewer.mapView.options.currentTileSet.get('maxZoom');
-                } else if (zoom == 'min') {
-                    zoom = overviewer.mapView.options.currentTileSet.get('minZoom');
-                } else {
-                    zoom = parseInt(zoom);
-                    if (zoom < 0) {
-                        // if zoom is negative, treat it as a "zoom out from max"
-                        zoom += overviewer.mapView.options.currentTileSet.get('maxZoom');
-                    } else {
-                        // fall back to default zoom
-                        zoom = overviewer.mapView.options.currentTileSet.get('defaultZoom');
-                    }
-                }
-                
-                // clip zoom
-                if (zoom > overviewer.mapView.options.currentTileSet.get('maxZoom'))
-                    zoom = overviewer.mapView.options.currentTileSet.get('maxZoom');
-                if (zoom < overviewer.mapView.options.currentTileSet.get('minZoom'))
-                    zoom = overviewer.mapView.options.currentTileSet.get('minZoom');
-                
-                overviewer.map.setZoom(zoom);
-            }
-
-
+        overviewer.map.on("click", function(e) {
+            console.log(e.latlng);
+            var point = overviewer.util.fromLatLngToWorld(e.latlng.lat, e.latlng.lng, tset);
+            console.log(point);
         });
 
+        var tilesetLayers = {}
 
-        // hook up some events
-
-        overviewer.mapModel.bind("change:currentWorldView", overviewer.mapView.render, overviewer.mapView);
-
-        overviewer.mapView.render();
-         
-        // Jump to the hash if given (and do so for any further hash changes)
-        overviewer.util.initHash();
-        $(window).on('hashchange', function() { overviewer.util.initHash(); });
-
-        // create this control after initHash so it can correctly select the current world
-        var worldSelector = new overviewer.views.WorldSelectorView({tagName:'DIV'});
-        overviewer.collections.worlds.bind("add", worldSelector.render, worldSelector);
-
+        overviewer.worldCtrl = new overviewer.control();
+        overviewer.compass = new overviewer.compassClass(
+            overviewerConfig.CONST.image.compass);
+        overviewer.coord_box = new overviewer.coordBoxClass();
         
-        overviewer.util.initializeMarkers();
 
-        /*
-           overviewer.util.initializeMapTypes();
-           overviewer.util.initializeMap();
-           overviewer.util.initializeRegions();
-           overviewer.util.createMapControls();
-           */
-           
-        // run ready callbacks now
-        google.maps.event.addListenerOnce(overviewer.map, 'idle', function(){
-            // ok now..
-            overviewer.util.runReadyQueue();
-            overviewer.util.isReady = true;
+        $.each(overviewerConfig.worlds, function(idx, world_name) {
+            overviewer.collections.mapTypes[world_name] = {}
+            overviewer.collections.overlays[world_name] = {}
+            overviewer.worldCtrl.addWorld(world_name);
         });
+
+        overviewer.compass.addTo(overviewer.map);
+        overviewer.worldCtrl.addTo(overviewer.map);
+        overviewer.coord_box.addTo(overviewer.map);
+
+        overviewer.map.on('mousemove', function(ev) {
+            overviewer.coord_box.render(ev.latlng);
+        });
+
+        $.each(overviewerConfig.tilesets, function(idx, obj) {
+            var myLayer = new L.tileLayer('', {
+                tileSize: overviewerConfig.CONST.tileSize,
+                noWrap: true,
+                maxZoom: obj.maxZoom,
+                minZoom: obj.minZoom,
+                errorTileUrl: obj.base + obj.path + "/blank." + obj.imgextension,
+            });
+            myLayer.getTileUrl = overviewer.util.getTileUrlGenerator(obj.path, obj.base, obj.imgextension);
+
+            if (obj.isOverlay) {
+                overviewer.collections.overlays[obj.world][obj.name] = myLayer;
+            } else {
+                overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
+            }
+
+            obj.marker_groups = {};
+
+            if (overviewer.collections.haveSigns == true) {
+                // if there are markers for this tileset, create them now
+                if ((typeof markers !== 'undefined') && (obj.path in markers)) {
+                    console.log("this tileset has markers:", obj);
+
+                    for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
+                        var marker_group = new L.layerGroup();
+                        var marker_entry = markers[obj.path][mkidx];
+                        var icon =  L.icon({iconUrl: marker_entry.icon,
+                                            iconSize: [32, 32]});
+                        console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
+
+                        for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
+                            var db = markersDB[marker_entry.groupName].raw[dbidx];
+                            var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
+                            console.log(latlng);
+                            marker_group.addLayer(new L.marker(latlng, {
+                                icon: icon
+                            }));
+                        }
+                        obj.marker_groups[marker_entry.displayName] = marker_group;
+                    }
+
+
+                    //var latlng = overviewer.util.fromWorldToLatLng(
+                    //        ovconf.spawn[0],
+                    //        ovconf.spawn[1],
+                    //        ovconf.spawn[2],
+                    //        obj);
+                    //marker_group.addLayer(L.marker(
+                }
+            }
+
+            myLayer["tileSetConfig"] = obj;
+
+      
+            if (typeof(obj.spawn) == "object") {
+                var latlng = overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj);
+                overviewer.collections.centers[obj.world] = [ latlng, 1 ];
+            } else {
+                overviewer.collections.centers[obj.world] = [ [0, 0], 1 ];
+            }
+
+        });
+
+        overviewer.layerCtrl = L.control.layers(
+                overviewer.collections.mapTypes[overviewerConfig.worlds[0]],
+                overviewer.collections.overlays[overviewerConfig.worlds[0]],
+                {collapsed: false})
+            .addTo(overviewer.map);
+        overviewer.current_world = overviewerConfig.worlds[0];
+
+        //myLayer.addTo(overviewer.map);
+        overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), 1);
+
+        if (!overviewer.util.initHash()) {
+            overviewer.worldCtrl.onChange({target: {value: overviewer.current_world}});
+        }
+
+
     },
 
     'injectMarkerScript': function(url) {
@@ -180,7 +331,29 @@ overviewer.util = {
     },
 
     'initializeMarkers': function() {
+        if (overviewer.collections.haveSigns=true) {
+            console.log("initializeMarkers");
+
+
+            //Object.keys(
+            //
+        }
         return;
+
+    },
+
+    /** Any polyfills needed to improve browser compatibility
+     */
+    'initializePolyfills': function() {
+        // From https://developer.mozilla.org/en-US/docs/Web/API/ChildNode/remove
+        // IE is missing this
+        if (!('remove' in Element.prototype)) {
+            Element.prototype.remove = function() {
+                if (this.parentNode) {
+                    this.parentNode.removeChild(this);
+                }
+            };
+        }
 
     },
 
@@ -263,15 +436,6 @@ overviewer.util = {
         return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
     },
     /**
-     * Change the map's div's background color according to the mapType's bg_color setting
-     *
-     * @param string mapTypeId
-     * @return string
-     */
-    'getMapTypeBackgroundColor': function(id) {
-        return overviewerConfig.tilesets[id].bgcolor;
-    },
-    /**
      * Gee, I wonder what this does.
      * 
      * @param string msg
@@ -316,10 +480,10 @@ overviewer.util = {
      * 
      * @return google.maps.LatLng
      */
-    'fromWorldToLatLng': function(x, y, z, model) {
+    'fromWorldToLatLng': function(x, y, z, tset) {
 
-        var zoomLevels = model.get("zoomLevels");
-        var north_direction = model.get('north_direction');
+        var zoomLevels = tset.zoomLevels;
+        var north_direction = tset.north_direction;
 
         // the width and height of all the highest-zoom tiles combined,
         // inverted
@@ -367,7 +531,7 @@ overviewer.util = {
         // add on 12 px to the X coordinate to center our point
         lng += 12 * perPixel;
 
-        return new google.maps.LatLng(lat, lng);
+        return [-lat*overviewerConfig.CONST.tileSize, lng*overviewerConfig.CONST.tileSize]
     },
     /**
      * The opposite of fromWorldToLatLng
@@ -379,9 +543,15 @@ overviewer.util = {
      * 
      * @return Array
      */
-    'fromLatLngToWorld': function(lat, lng, model) {
-        var zoomLevels = model.get("zoomLevels");
-        var north_direction = model.get("north_direction");
+    'fromLatLngToWorld': function(lat, lng, tset) {
+        var zoomLevels = tset.zoomLevels;
+        var north_direction = tset.north_direction;
+
+        lat = -lat/overviewerConfig.CONST.tileSize;
+        lng = lng/overviewerConfig.CONST.tileSize;
+
+        // lat lng will always be between (0,0) -- top left corner
+        //                                (-384, 384) -- bottom right corner
 
         // Initialize world x/y/z object to be returned
         var point = Array();
@@ -482,52 +652,42 @@ overviewer.util = {
                 overviewer.util.goToHash();
                 // Clean up the hash.
                 overviewer.util.updateHash();
+                return true;
+            } else {
+                return false; // signal to caller that we didn't goto any hash
             }
         }
     },
     'setHash': function(x, y, z, zoom, w, maptype)    {
         // save this info is a nice easy to parse format
-        var currentWorldView = overviewer.mapModel.get("currentWorldView");
-        currentWorldView.options.lastViewport = [x,y,z,zoom];
-        var newHash = "#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + w + "/" + maptype;
+        var newHash = "#/" + Math.floor(x) + "/" + Math.floor(y) + "/" + Math.floor(z) + "/" + zoom + "/" + encodeURI(w) + "/" + encodeURI(maptype);
         overviewer.util.lastHash = newHash; // this should not trigger initHash
         window.location.replace(newHash);
     },
     'updateHash': function() {
-        var currTileset = overviewer.mapView.options.currentTileSet;
+        // name of current world
+        var currWorld = overviewer.current_world;
+        if (currWorld == null) {return;}
+
+        var currTileset = overviewer.current_layer[currWorld];
         if (currTileset == null) {return;}
-        var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat(), 
-                overviewer.map.getCenter().lng(),
-                currTileset);
+
+        var ovconf = currTileset.tileSetConfig;
+
+        var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat, 
+                overviewer.map.getCenter().lng,
+                ovconf);
         var zoom = overviewer.map.getZoom();
-        var maptype = overviewer.map.getMapTypeId();
 
-        // convert mapType into a index
-        var currentWorldView = overviewer.mapModel.get("currentWorldView");
-        var maptypeId = -1;
-        for (id in currentWorldView.options.mapTypeIds) {
-            if (currentWorldView.options.mapTypeIds[id] == maptype) {
-                maptypeId = id;
-            }
-        }
-
-        var worldId = -1;
-        for (id in overviewer.collections.worldViews) {
-            if (overviewer.collections.worldViews[id] == currentWorldView) {
-                worldId = id;
-            }
-        }
-
-
-        if (zoom >= currTileset.get('maxZoom')) {
+        if (zoom >= ovconf.maxZoom) {
             zoom = 'max';
-        } else if (zoom <= currTileset.get('minZoom')) {
+        } else if (zoom <= ovconf.minZoom) {
             zoom = 'min';
         } else {
             // default to (map-update friendly) negative zooms
-            zoom -= currTileset.get('maxZoom');
+            zoom -= ovconf.maxZoom;
         }
-        overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, worldId, maptypeId);
+        overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, currWorld, ovconf.name);
     },
     'goToHash': function() {
         // Note: the actual data begins at coords[1], coords[0] is empty.
@@ -535,52 +695,104 @@ overviewer.util = {
 
 
         var zoom;
-        var worldid = -1;
-        var maptyped = -1;
+        var world_name = null;
+        var tileset_name = null;
         // The if-statements try to prevent unexpected behaviour when using incomplete hashes, e.g. older links
         if (coords.length > 4) {
             zoom = coords[4];
         }
         if (coords.length > 6) {
-            worldid = coords[5];
-            maptypeid = coords[6];
+            world_name = decodeURI(coords[5]);
+            tileset_name = decodeURI(coords[6]);
         }
-        var worldView = overviewer.collections.worldViews[worldid];
-        overviewer.mapModel.set({currentWorldView: worldView});
 
-        var maptype = worldView.options.mapTypeIds[maptypeid];
-        overviewer.map.setMapTypeId(maptype);
-        var tsetModel = worldView.model.get("tileSets").at(maptypeid);
-        
+        var target_layer = overviewer.collections.mapTypes[world_name][tileset_name];
+        var ovconf = target_layer.tileSetConfig;
+
         var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), 
                 parseInt(coords[2]), 
                 parseInt(coords[3]),
-                tsetModel);
+                ovconf);
 
         if (zoom == 'max') {
-            zoom = tsetModel.get('maxZoom');
+            zoom = ovconf.maxZoom;
         } else if (zoom == 'min') {
-            zoom = tsetModel.get('minZoom');
+            zoom = ovconf.minZoom;
         } else {
             zoom = parseInt(zoom);
             if (zoom < 0) {
                 // if zoom is negative, treat it as a "zoom out from max"
-                zoom += tsetModel.get('maxZoom');
+                zoom += ovconf.maxZoom;
             } else {
                 // fall back to default zoom
-                zoom = tsetModel.get('defaultZoom');
+                zoom = ovconf.defaultZoom;
             }
         }
 
         // clip zoom
-        if (zoom > tsetModel.get('maxZoom'))
-            zoom = tsetModel.get('maxZoom');
-        if (zoom < tsetModel.get('minZoom'))
-            zoom = tsetModel.get('minZoom');
+        if (zoom > ovconf.maxZoom)
+            zoom = ovconf.maxZoom;
+        if (zoom < ovconf.minZoom)
+            zoom = ovconf.minZoom;
 
-        overviewer.map.setCenter(latlngcoords);
-        overviewer.map.setZoom(zoom);
-        var locationmarker = new overviewer.views.LocationIconView();
-        locationmarker.render();
+        // build a fake event for the world switcher control
+        overviewer.worldCtrl.onChange({target: {value: world_name}});
+        overviewer.worldCtrl.select.value = world_name;
+        if  (!overviewer.map.hasLayer(target_layer)) {
+            overviewer.map.addLayer(target_layer);
+        }
+
+        overviewer.map.setView(latlngcoords, zoom);
+
+        if (ovconf.showlocationmarker) {
+            var locationIcon = L.icon({
+                iconUrl: overviewerConfig.CONST.image.queryMarker,
+                iconRetinaUrl: overviewerConfig.CONST.image.queryMarker2x,
+                iconSize: [32, 37],
+                iconAnchor: [15, 33],
+            });
+            var locationm = L.marker(latlngcoords, {  icon: locationIcon,
+                                                title: "Linked location"});
+            overviewer.collections.locationMarker = locationm
+            overviewer.collections.locationMarker.on('contextmenu', function(ev) {
+               overviewer.collections.locationMarker.remove();
+            });
+            overviewer.collections.locationMarker.on('click', function(ev) {
+                overviewer.map.setView(ev.latlng);
+            });
+            overviewer.collections.locationMarker.addTo(overviewer.map);
+        }
+    },
+    /**
+     * Generate a function to get the path to a tile at a particular location
+     * and zoom level.
+     *
+     * @param string path
+     * @param string pathBase
+     * @param string pathExt
+     */
+    'getTileUrlGenerator': function(path, pathBase, pathExt) {
+        return function(o) {
+            var url = path;
+            var zoom = o.z;
+            var urlBase = ( pathBase ? pathBase : '' );
+            if(o.x < 0 || o.x >= Math.pow(2, zoom) ||
+                o.y < 0 || o.y >= Math.pow(2, zoom)) {
+                url += '/blank';
+            } else if(zoom === 0) {
+                url += '/base';
+            } else {
+                for(var z = zoom - 1; z >= 0; --z) {
+                    var x = Math.floor(o.x / Math.pow(2, z)) % 2;
+                    var y = Math.floor(o.y / Math.pow(2, z)) % 2;
+                    url += '/' + (x + 2 * y);
+                }
+            }
+            url = url + '.' + pathExt;
+            if(typeof overviewerConfig.map.cacheTag !== 'undefined') {
+                url += '?c=' + overviewerConfig.map.cacheTag;
+            }
+            return(urlBase + url);
+        };
     }
 };

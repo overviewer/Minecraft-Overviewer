@@ -18,7 +18,7 @@ Blog:
 
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
 maps of Minecraft worlds. It generates a set of static html and image files and
-uses the Google Maps API to display a nice interactive map.
+uses Leaflet to display a nice interactive map.
 
 The Overviewer has been in active development for several years and has many
 features, including day and night lighting, cave rendering, mineral overlays,
@@ -66,16 +66,9 @@ Viewing the Results
 -------------------
 Within the output directory you will find two things: an index.html file, and a
 directory hierarchy full of images. To view your world, simply open index.html
-in a web browser. Internet access is required to load the Google Maps API
-files, but you otherwise don't need anything else.
+in a web browser.
 
-You can throw these files up to a web server to let others view your map. To
-ensure the map works when viewed through the Internet, you'll need a Google
-Maps API key, which you can `get for free from Google`_. Please note that you
-are also bound by the `Google Maps API Terms of Service`_.
-
-.. _get for free from Google: https://developers.google.com/maps/documentation/javascript/get-api-key
-.. _Google Maps API Terms of Service: https://developers.google.com/maps/terms
+You can throw these files up to a web server to let others view your map.
 
 Bugs
 ====

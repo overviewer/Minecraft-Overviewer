@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="svg2"
+   height="37"
+   width="32"
+   version="1.1">
+  <defs
+     id="defs4">
+    <filter
+       id="filter3802"
+       height="1.5"
+       width="1.5"
+       y="-0.25"
+       x="-0.25">
+      <feGaussianBlur
+         id="feGaussianBlur3804"
+         in="SourceAlpha"
+         stdDeviation="2"
+         result="blur" />
+      <feColorMatrix
+         id="feColorMatrix3806"
+         result="bluralpha"
+         type="matrix"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
+      <feOffset
+         id="feOffset3808"
+         in="bluralpha"
+         dx="0"
+         dy="0"
+         result="offsetBlur" />
+      <feMerge
+         id="feMerge3810">
+        <feMergeNode
+           id="feMergeNode3812"
+           in="offsetBlur" />
+        <feMergeNode
+           id="feMergeNode3814"
+           in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     transform="translate(0,-1015.3622)">
+    <path
+       style="fill:#d38d5f;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;filter:url(#filter3802)"
+       id="rect2987"
+       d="m 5.3953731,1018.8294 c -1.0681842,0 -1.928114,0.8381 -1.928114,1.8793 l 0,20.6699 c 0,1.0409 0.8599298,1.879 1.928114,1.879 l 4.3382568,0 5.7843411,5.6373 0.964058,0 5.784341,-5.6373 4.338257,0 c 1.068185,0 1.928114,-0.8381 1.928114,-1.879 l 0,-20.6699 c 0,-1.0412 -0.859929,-1.8793 -1.928114,-1.8793 l -21.2092539,0 z" />
+  </g>
+  <circle
+     r="2.5"
+     cy="24"
+     cx="16"
+     id="path4171"
+     style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:65;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <path
+     id="path4173"
+     d="m 16,20 -6,-6 4,0 0,-8 4,0 0,8 4,0 z"
+     style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+</svg>

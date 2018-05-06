@@ -11,8 +11,15 @@ var overviewer = {};
  * This holds the map, probably the most important var in this file
  */
 overviewer.map = null;
-overviewer.mapView = null;
+overviewer.worldCtrl = null;
+overviewer.layerCtrl = null;
+overviewer.compass = null;
+overviewer.coord_box = null;
+overviewer.current_world = null;
 
+/// Records the current layer by name (if any) of each world
+overviewer.current_layer = {};
+    
 
 overviewer.collections = {
         /**
@@ -29,6 +36,14 @@ overviewer.collections = {
          */
         'infoWindow':   null,
 
+        /**
+         * When switching regionsets, where should we zoom to?
+         * Defaults to spawn.  Stored as map of world names to [latlng, zoom]
+         */
+        'centers': {},
+
+        'overlays': {},
+
         'worldViews': [],
 
         'haveSigns': false,
@@ -39,13 +54,14 @@ overviewer.collections = {
         'markerInfo': {},
 
         /**
-         * holds a reference to the spawn marker. 
+         * holds a reference to the spawn marker.
          */
         'spawnMarker': null,
-	
-	/**
-	 * if a user visits a specific URL, this marker will point to the coordinates in the hash
-	 */
+
+        /**
+        * if a user visits a specific URL, this marker will point to the
+        * coordinates in the hash
+        */
         'locationMarker': null
     };
 
@@ -71,40 +87,4 @@ overviewer.classes = {
             this.tileSize = tileSize;
         }
 
-};
-
-
-overviewer.gmap = {
-
-        /**
-         * Generate a function to get the path to a tile at a particular location
-         * and zoom level.
-         * 
-         * @param string path
-         * @param string pathBase
-         * @param string pathExt
-         */
-        'getTileUrlGenerator': function(path, pathBase, pathExt) {
-            return function(tile, zoom) {
-                var url = path;
-                var urlBase = ( pathBase ? pathBase : '' );
-                if(tile.x < 0 || tile.x >= Math.pow(2, zoom) ||
-                   tile.y < 0 || tile.y >= Math.pow(2, zoom)) {
-                    url += '/blank';
-                } else if(zoom === 0) {
-                    url += '/base';
-                } else {
-                    for(var z = zoom - 1; z >= 0; --z) {
-                        var x = Math.floor(tile.x / Math.pow(2, z)) % 2;
-                        var y = Math.floor(tile.y / Math.pow(2, z)) % 2;
-                        url += '/' + (x + 2 * y);
-                    }
-                }
-                url = url + '.' + pathExt;
-                if(typeof overviewerConfig.map.cacheTag !== 'undefined') {
-                    url += '?c=' + overviewerConfig.map.cacheTag;
-                }
-                return(urlBase + url);
-            };
-        }
 };

@@ -19,10 +19,10 @@ supporting mod blocks is not trivial.
 Can I view Overviewer maps without having an internet connection?
 -----------------------------------------------------------------
 
-Not at the moment. The Overviewer relies on the Google maps API to display
-maps, which your browser needs to load from Google. However, switching away
-from Google Maps is something that will most likely be looked into in the
-future.
+Yes, absolutely. The Overviewer switched away from the Google Maps API and
+now uses Leaflet. All files which Overviewer needs are included in the output,
+so even if you have no internet connection, you will still be able to view the
+map without any issues.
 
 When my map expands, I see remnants of another zoom level
 ---------------------------------------------------------
