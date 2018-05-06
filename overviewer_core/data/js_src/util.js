@@ -122,6 +122,14 @@ overviewer.util = {
                             if (overviewer.map.hasLayer(lyr))
                                 overviewer.map.removeLayer(lyr);
                         }
+                        if (lyr.tileSetConfig.marker_groups) {
+                            for (var marker_group in lyr.tileSetConfig.marker_groups) {
+                                lyr.tileSetConfig.marker_groups[marker_group].remove();
+                            }
+                        }
+                        if (lyr.tileSetConfig.markerCtrl) {
+                            lyr.tileSetConfig.markerCtrl.remove();
+                        }
                     }
                     
                     for (var tset_name in overviewer.collections.overlays[world_name]) {
@@ -162,6 +170,19 @@ overviewer.util = {
             '<a href="https://overviewer.org">Overviewer/Leaflet</a>');
 
         overviewer.map.on('baselayerchange', function(ev) {
+            // before updating the current_layer, remove the marker control, if it exists
+            if (overviewer.current_world && overviewer.current_layer[overviewer.current_world]) {
+                let tsc = overviewer.current_layer[overviewer.current_world].tileSetConfig;
+
+                if (tsc.markerCtrl)
+                    tsc.markerCtrl.remove();
+                if (tsc.marker_groups) {
+                    for (var marker_group in tsc.marker_groups) {
+                        tsc.marker_groups[marker_group].remove();
+                    }
+                }
+
+            }
             overviewer.current_layer[overviewer.current_world] = ev.layer;
             var ovconf = ev.layer.tileSetConfig;
 
@@ -202,7 +223,7 @@ overviewer.util = {
             // reset the markers control with the markers for this layer
             if (ovconf.marker_groups) {
                 console.log("markers for", ovconf.marker_groups);
-                markerCtrl = L.control.layers(
+                ovconf.markerCtrl = L.control.layers(
                         [],
                         ovconf.marker_groups, {collapsed: false}).addTo(overviewer.map);
             }
@@ -260,12 +281,13 @@ overviewer.util = {
                 overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
             }
 
-            obj.marker_groups = {};
+            obj.marker_groups = undefined;
 
             if (overviewer.collections.haveSigns == true) {
                 // if there are markers for this tileset, create them now
                 if ((typeof markers !== 'undefined') && (obj.path in markers)) {
                     console.log("this tileset has markers:", obj);
+                    obj.marker_groups = {};
 
                     for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
                         var marker_group = new L.layerGroup();
@@ -278,9 +300,9 @@ overviewer.util = {
                             var db = markersDB[marker_entry.groupName].raw[dbidx];
                             var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
                             console.log(latlng);
-                            marker_group.addLayer(new L.marker(latlng, {
-                                icon: icon
-                            }));
+                            let new_marker = new L.marker(latlng, {icon: icon});
+                            new_marker.bindPopup(db.text);
+                            marker_group.addLayer(new_marker);
                         }
                         obj.marker_groups[marker_entry.displayName] = marker_group;
                     }
