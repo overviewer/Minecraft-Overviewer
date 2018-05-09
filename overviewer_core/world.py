@@ -21,7 +21,6 @@ import time
 import random
 import re
 import locale
-import sys
 
 import numpy
 
@@ -35,6 +34,11 @@ This module has routines for extracting information about available worlds
 
 class ChunkDoesntExist(Exception):
     pass
+
+
+class UnsupportedVersion(Exception):
+    pass
+
 
 def log_other_exceptions(func):
     """A decorator that prints out any errors that are not
@@ -109,18 +113,22 @@ class World(object):
                 logging.debug("Note: Allowing a version of zero in level.dat!")
                 ## XXX temporary fix for #1194
             else:
-                logging.critical("Sorry, This version of Minecraft-Overviewer only works with the 'Anvil' chunk format")
-                raise ValueError("World at %s is not compatible with Overviewer" % self.worlddir)
+                raise UnsupportedVersion(
+                    ("Sorry, This version of Minecraft-Overviewer only works "
+                     "with the 'Anvil' chunk format\n"
+                     "World at %s is not compatible with Overviewer")
+                    % self.worlddir)
 
 
         # Check for versions of minecraft after the 17w47a changes
         if 'Version' in data:
             version = int(data['Version']["Id"])
             if version >= 1452: 
-                logging.critical("Sorry, This version of Minecraft-Overviewer only works with versions of Minecraft 1.12 and under")
-                logging.critical("This is due to a change in the map chunk format that happened in snapshot 17w47a")
-                sys.exit(1)
-
+                raise UnsupportedVersion(
+                    "Sorry, This version of Minecraft-Overviewer only works "
+                    "with versions of Minecraft 1.12 and under\n"
+                    "This is due to a change in the map chunk format that "
+                    "happened in snapshot 17w47a")
 
         # This isn't much data, around 15 keys and values for vanilla worlds.
         self.leveldat = data

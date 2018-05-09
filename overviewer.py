@@ -470,6 +470,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             except CorruptNBTError, e:
                 logging.error("Failed to open world %r", render['world'])
                 raise e
+            except world.UnsupportedVersion, e:
+                for ln in str(e).split('\n'):
+                    logging.error(ln)
+                sys.exit(1)
 
             worldcache[render['world']] = w
 
