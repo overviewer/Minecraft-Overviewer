@@ -293,14 +293,20 @@ overviewer.util = {
                         var marker_group = new L.layerGroup();
                         var marker_entry = markers[obj.path][mkidx];
                         var icon =  L.icon({iconUrl: marker_entry.icon,
-                                            iconSize: [32, 32]});
+                                            className: "custom-icon"});
                         console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
 
                         for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
                             var db = markersDB[marker_entry.groupName].raw[dbidx];
                             var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
-                            console.log(latlng);
-                            let new_marker = new L.marker(latlng, {icon: icon});
+                            var m_icon;
+                            if (db.icon != undefined) {
+                                m_icon = L.icon({iconUrl: db.icon,
+                                                 className: "custom-icon"});
+                            } else {
+                                m_icon = icon;
+                            }
+                            let new_marker = new L.marker(latlng, {icon: m_icon});
                             new_marker.bindPopup(db.text);
                             marker_group.addLayer(new_marker);
                         }
