@@ -292,8 +292,7 @@ overviewer.util = {
                     for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
                         var marker_group = new L.layerGroup();
                         var marker_entry = markers[obj.path][mkidx];
-                        var icon =  L.icon({iconUrl: marker_entry.icon,
-                                            className: "custom-icon"});
+                        var icon =  L.icon({iconUrl: marker_entry.icon});
                         console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
 
                         for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
@@ -301,8 +300,7 @@ overviewer.util = {
                             var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
                             var m_icon;
                             if (db.icon != undefined) {
-                                m_icon = L.icon({iconUrl: db.icon,
-                                                 className: "custom-icon"});
+                                m_icon = L.icon({iconUrl: db.icon});
                             } else {
                                 m_icon = icon;
                             }

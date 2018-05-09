@@ -173,9 +173,3 @@ div.worldcontrol select {
     padding: 0 5px;
     color: #333;
 }
-
-.custom-icon {
-    position:relative;
-    left:-50%;
-    top:-50%;
-}
