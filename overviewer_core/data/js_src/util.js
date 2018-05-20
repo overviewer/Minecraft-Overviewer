@@ -62,8 +62,7 @@ overviewer.util = {
 
                 this.coord_box.innerHTML = "<strong>X</strong> " +
                                            Math.round(w_coords.x) +
-                                           " <strong>Z</strong> " + Math.round(w_coords.z) +
-                                           " (" + r_name + ")";
+                                           " <strong>Z</strong> " + Math.round(w_coords.z);
             },
             onAdd: function() {
                 return this.coord_box;
@@ -163,8 +162,8 @@ overviewer.util = {
 
         
         overviewer.map = L.map('mcmap', {
-                crs: L.CRS.Simple,
-                minZoom: 0});
+                crs: L.CRS.Simple
+				});
 
         overviewer.map.attributionControl.setPrefix(
             '<a href="https://overviewer.org">Overviewer/Leaflet</a>');
@@ -199,7 +198,7 @@ overviewer.util = {
             if (overviewer.collections.spawnMarker) {
                 overviewer.collections.spawnMarker.remove();
             }
-            if (typeof(ovconf.spawn) == "object") {
+            if (typeof(ovconf.spawn) == "object" && ovconf.spawnMarker) {
                 var spawnIcon = L.icon({
                     iconUrl: overviewerConfig.CONST.image.spawnMarker,
                     iconRetinaUrl: overviewerConfig.CONST.image.spawnMarker2x,
@@ -210,11 +209,11 @@ overviewer.util = {
                                                                ovconf.spawn[1],
                                                                ovconf.spawn[2],
                                                                ovconf);
-                var ohaimark = L.marker(latlng, {icon: spawnIcon, title: "Spawn"});
-                ohaimark.on('click', function(ev) {
+                var spawnMarker = L.marker(latlng, {icon: spawnIcon, title: "Spawn"});
+                spawnMarker.on('click', function(ev) {
                     overviewer.map.setView(ev.latlng);
                 });
-                overviewer.collections.spawnMarker = ohaimark
+                overviewer.collections.spawnMarker = spawnMarker
                 overviewer.collections.spawnMarker.addTo(overviewer.map);
             } else {
                 overviewer.collections.spawnMarker = null;
@@ -285,39 +284,88 @@ overviewer.util = {
 
             if (overviewer.collections.haveSigns == true) {
                 // if there are markers for this tileset, create them now
-                if ((typeof markers !== 'undefined') && (obj.path in markers)) {
+				console.log("haveSigns = true");
+				console.log(obj);
+				test = obj;
+                if ((typeof markers !== 'undefined') && (obj.poititle in markers)) {
                     console.log("this tileset has markers:", obj);
                     obj.marker_groups = {};
 
-                    for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
+                    for (var mkidx = 0; mkidx < markers[obj.poititle].length; mkidx++) {
                         var marker_group = new L.layerGroup();
-                        var marker_entry = markers[obj.path][mkidx];
+						// var marker_group = L.markerClusterGroup({ chunkedLoading: true }); /* If using Leaflet Marker Cluster Group */
+                        var marker_entry = markers[obj.poititle][mkidx];
                         var icon =  L.icon({iconUrl: marker_entry.icon});
                         console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
-
-                        for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
-                            var db = markersDB[marker_entry.groupName].raw[dbidx];
-                            var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
-                            var m_icon;
-                            if (db.icon != undefined) {
-                                m_icon = L.icon({iconUrl: db.icon});
-                            } else {
-                                m_icon = icon;
-                            }
-                            let new_marker = new L.marker(latlng, {icon: m_icon});
-                            new_marker.bindPopup(db.text);
-                            marker_group.addLayer(new_marker);
+						var entity = markersDB[marker_entry.groupName].raw;
+                        for (var dbidx = 0; dbidx < entity.length; dbidx++) {
+                            var db = entity[dbidx];
+							
+							
+                             if(typeof db.x != 'undefined' || typeof db.y != 'undefined' || typeof db.z != 'undefined') { 
+								/* Leaflet doesn't like having null values for Lat Lng Marker */			
+								var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
+								var m_icon;
+								if (db.icon != undefined) {
+									m_icon = L.icon({
+										iconUrl: db.icon
+									});
+								} else {
+									m_icon = icon;
+								}
+								let new_marker = new L.marker(latlng, {icon: m_icon});
+								new_marker.bindPopup(db.text);
+								marker_group.addLayer(new_marker);
+							}else{
+								// Polyline stuffs
+								if (typeof db.polyline != 'undefined') {
+									var polyPoints = [];
+									for(point in db.polyline){
+										polyPoints.push(overviewer.util.fromWorldToLatLng(db.polyline[point].x, db.polyline[point].y, db.polyline[point].z, obj));
+									}
+									let polyline = L.polyline(polyPoints, {
+										interactive: true,
+										stroke: true,
+										fill: true,
+										fillColor: db.fillColor,
+										fillOpacity: db.fillOpacity,
+										map: overviewer.map,
+										color: db.strokeColor,
+										strokeOpacity: db.strokeOpacity
+									});
+									polyline.bindPopup(db.text);
+									marker_group.addLayer(polyline);
+								}
+								
+								// Polygon stuffs
+								if (typeof db.polygon != 'undefined') {
+									var polyPoints = [];
+									for(point in db.polygon){
+										polyPoints.push(overviewer.util.fromWorldToLatLng(db.polygon[point].x, db.polygon[point].y, db.polygon[point].z, obj));
+									}
+									let polygon = L.polygon(polyPoints, {
+										interactive: true,
+										stroke: true,
+										fill: true,
+										fillColor: db.fillColor,
+										fillOpacity: db.fillOpacity,
+										map: overviewer.map,
+										color: db.strokeColor,
+										strokeOpacity: db.strokeOpacity
+									});
+									polygon.bindPopup(db.text);
+									marker_group.addLayer(polygon);
+								}
+							}
+							
                         }
                         obj.marker_groups[marker_entry.displayName] = marker_group;
+						console.log(marker_entry.checked);
+						if(marker_entry.checked) {
+							console.log("Adding Layer");
+							// marker_group.addTo(overviewer.map); /* Doesn't seem to work properly as intended */
+						}
                     }
-
-
-                    //var latlng = overviewer.util.fromWorldToLatLng(
-                    //        ovconf.spawn[0],
-                    //        ovconf.spawn[1],
-                    //        ovconf.spawn[2],
-                    //        obj);
-                    //marker_group.addLayer(L.marker(
                 }
             }
 
@@ -357,7 +405,7 @@ overviewer.util = {
     },
 
     'initializeMarkers': function() {
-        if (overviewer.collections.haveSigns=true) {
+        if (overviewer.collections.haveSigns==true) {
             console.log("initializeMarkers");
 
 
@@ -705,9 +753,9 @@ overviewer.util = {
                 ovconf);
         var zoom = overviewer.map.getZoom();
 
-        if (zoom >= ovconf.maxZoom) {
+        if (zoom == ovconf.maxZoom) {
             zoom = 'max';
-        } else if (zoom <= ovconf.minZoom) {
+        } else if (zoom == ovconf.minZoom) {
             zoom = 'min';
         } else {
             // default to (map-update friendly) negative zooms
