@@ -62,7 +62,8 @@ overviewer.util = {
 
                 this.coord_box.innerHTML = "<strong>X</strong> " +
                                            Math.round(w_coords.x) +
-                                           " <strong>Z</strong> " + Math.round(w_coords.z);
+                                           " <strong>Z</strong> " + Math.round(w_coords.z) +
+                                           " (" + r_name + ")";
             },
             onAdd: function() {
                 return this.coord_box;
