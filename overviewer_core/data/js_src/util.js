@@ -477,7 +477,9 @@ overviewer.util = {
      *
      */
     'ready': function(callback){
-        if (!callback || !_.isFunction(callback)) return;
+        if (!callback || typeof callback != 'function') {
+			return;
+		}
         if (overviewer.util.isReady){ // run instantly if overviewer already is ready
             overviewer.util.readyQueue.push(callback);
             overviewer.util.runReadyQueue();
@@ -486,9 +488,9 @@ overviewer.util = {
         }
     },       
     'runReadyQueue': function(){
-        _.each(overviewer.util.readyQueue, function(callback){
-            callback();
-        });
+		for(var i in overviewer.util.readyQueue){
+			overviewer.util.readyQueue[i]();
+		}
         overviewer.util.readyQueue.length = 0;
     },
     /**
