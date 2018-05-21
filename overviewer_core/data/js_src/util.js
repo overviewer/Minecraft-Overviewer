@@ -164,8 +164,14 @@ overviewer.util = {
         
         overviewer.map = L.map('mcmap', {
                 crs: L.CRS.Simple
-				});
-
+	});
+	    
+	overviewer.map.on('load', function(){
+		/* Map has loaded */
+		overviewer.util.runReadyQueue();
+		overviewer.util.isReady = true;
+	});
+	    
         overviewer.map.attributionControl.setPrefix(
             '<a href="https://overviewer.org">Overviewer/Leaflet</a>');
 
