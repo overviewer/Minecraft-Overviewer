@@ -34,7 +34,6 @@ overviewer.util = {
     'initialize': function() {
         //overviewer.util.initializeClassPrototypes();
         overviewer.util.initializePolyfills();
-        overviewer.util.initializeMarkers();
 
         document.getElementById('NoJSWarning').remove();
 
@@ -60,10 +59,10 @@ overviewer.util = {
                 var r_z = Math.floor(Math.floor(w_coords.z / 16.0) / 32.0);
                 var r_name = "r." + r_x + "." + r_z + ".mca";
 
-                this.coord_box.innerHTML = "<strong>X</strong> " +
-                                           Math.round(w_coords.x) +
-                                           " <strong>Z</strong> " + Math.round(w_coords.z) +
-                                           " (" + r_name + ")";
+                this.coord_box.innerHTML = "<strong>X</strong> " + 
+                                           Math.round(w_coords.x) + 
+                                           " <strong>Z</strong> " + Math.round(w_coords.z) + 
+                                           " (" + r_name + ")"; 
             },
             onAdd: function() {
                 return this.coord_box;
@@ -163,15 +162,15 @@ overviewer.util = {
 
         
         overviewer.map = L.map('mcmap', {
-                crs: L.CRS.Simple
-	});
-	    
-	overviewer.map.on('load', function(){
-		/* Map has loaded */
-		overviewer.util.runReadyQueue();
-		overviewer.util.isReady = true;
-	});
-	    
+			crs: L.CRS.Simple,
+		});
+			
+		overviewer.map.on('load', function(){
+			/* Map Loaded */
+			overviewer.util.runReadyQueue();
+			overviewer.util.isReady = true;
+		});
+
         overviewer.map.attributionControl.setPrefix(
             '<a href="https://overviewer.org">Overviewer/Leaflet</a>');
 
@@ -270,6 +269,8 @@ overviewer.util = {
         overviewer.map.on('mousemove', function(ev) {
             overviewer.coord_box.render(ev.latlng);
         });
+		
+		var checked = [];
 
         $.each(overviewerConfig.tilesets, function(idx, obj) {
             var myLayer = new L.tileLayer('', {
@@ -299,17 +300,20 @@ overviewer.util = {
                     obj.marker_groups = {};
 
                     for (var mkidx = 0; mkidx < markers[obj.poititle].length; mkidx++) {
-                        var marker_group = new L.layerGroup();
-						// var marker_group = L.markerClusterGroup({ chunkedLoading: true }); /* If using Leaflet Marker Cluster Group */
                         var marker_entry = markers[obj.poititle][mkidx];
+						if(marker_entry.clustered) {
+							/* Only possible if using Leaflet Marker Clusters */
+							var marker_group = L.markerClusterGroup({ chunkedLoading: true, disableClusteringAtZoom: 5 });
+						}else{
+							var marker_group = new L.layerGroup();
+						}
                         var icon =  L.icon({iconUrl: marker_entry.icon});
                         console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
 						var entity = markersDB[marker_entry.groupName].raw;
                         for (var dbidx = 0; dbidx < entity.length; dbidx++) {
                             var db = entity[dbidx];
-							
-							
-                             if(typeof db.x != 'undefined' || typeof db.y != 'undefined' || typeof db.z != 'undefined') { 
+
+							if(typeof db.x != 'undefined' && typeof db.y != 'undefined' && typeof db.z != 'undefined') { 
 								/* Leaflet doesn't like having null values for Lat Lng Marker */			
 								var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
 								var m_icon;
@@ -369,8 +373,7 @@ overviewer.util = {
                         obj.marker_groups[marker_entry.displayName] = marker_group;
 						console.log(marker_entry.checked);
 						if(marker_entry.checked) {
-							console.log("Adding Layer");
-							// marker_group.addTo(overviewer.map); /* Doesn't seem to work properly as intended */
+							checked.push(marker_group);
 						}
                     }
                 }
@@ -387,6 +390,7 @@ overviewer.util = {
             }
 
         });
+		
 
         overviewer.layerCtrl = L.control.layers(
                 overviewer.collections.mapTypes[overviewerConfig.worlds[0]],
@@ -394,13 +398,20 @@ overviewer.util = {
                 {collapsed: false})
             .addTo(overviewer.map);
         overviewer.current_world = overviewerConfig.worlds[0];
+		
+		setTimeout(function() { 
+			for(var i in checked){
+				checked[i].addTo(overviewer.map);
+			}
+		}, 500);
 
-        //myLayer.addTo(overviewer.map);
         overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), 1);
+		
 
         if (!overviewer.util.initHash()) {
             overviewer.worldCtrl.onChange({target: {value: overviewer.current_world}});
         }
+		
 
 
     },
@@ -409,18 +420,6 @@ overviewer.util = {
         var m = document.createElement('script'); m.type = 'text/javascript'; m.async = false;
         m.src = url;
         var s = document.getElementsByTagName('script')[0]; s.parentNode.appendChild(m);
-    },
-
-    'initializeMarkers': function() {
-        if (overviewer.collections.haveSigns==true) {
-            console.log("initializeMarkers");
-
-
-            //Object.keys(
-            //
-        }
-        return;
-
     },
 
     /** Any polyfills needed to improve browser compatibility
@@ -436,45 +435,6 @@ overviewer.util = {
             };
         }
 
-    },
-
-
-    /**
-     * This adds some methods to these classes because Javascript is stupid
-     * and this seems like the best way to avoid re-creating the same methods
-     * on each object at object creation time.
-     */
-    'initializeClassPrototypes': function() {
-        overviewer.classes.MapProjection.prototype.fromLatLngToPoint = function(latLng) {
-            var x = latLng.lng() * overviewerConfig.CONST.tileSize;
-            var y = latLng.lat() * overviewerConfig.CONST.tileSize;
-            return new google.maps.Point(x, y);
-        };
-
-        overviewer.classes.MapProjection.prototype.fromPointToLatLng = function(point) {
-            var lng = point.x * this.inverseTileSize;
-            var lat = point.y * this.inverseTileSize;
-            return new google.maps.LatLng(lat, lng);
-        };
-
-        overviewer.classes.CoordMapType.prototype.getTile = function(coord, zoom, ownerDocument) {
-            var div = ownerDocument.createElement('DIV');
-            div.innerHTML = '(' + coord.x + ', ' + coord.y + ', ' + zoom +
-                ')' + '<br />';
-            //TODO: figure out how to get the current mapType, I think this
-            //will add the maptile url to the grid thing once it works
-
-            //div.innerHTML += overviewer.collections.mapTypes[0].getTileUrl(coord, zoom);
-
-            //this should probably just have a css class
-            div.style.width = this.tileSize.width + 'px';
-            div.style.height = this.tileSize.height + 'px';
-            div.style.fontSize = '10px';
-            div.style.borderStyle = 'solid';
-            div.style.borderWidth = '1px';
-            div.style.borderColor = '#AAAAAA';
-            return div;
-        };
     },
     /**
      * onready function for other scripts that rely on overviewer
@@ -682,50 +642,6 @@ overviewer.util = {
         }
 
         return point;
-    },
-    /**
-     * Create the pop-up infobox for when you click on a region, this can't
-     * be done in-line because of stupid Javascript scoping problems with
-     * closures or something.
-     * 
-     * @param google.maps.Polygon|google.maps.Polyline shape
-     */
-    'createRegionInfoWindow': function(shape) {
-        var infowindow = new google.maps.InfoWindow();
-        google.maps.event.addListener(shape, 'click', function(event, i) {
-                if (overviewer.collections.infoWindow) {
-                overviewer.collections.infoWindow.close();
-                }
-                // Replace our Info Window's content and position
-                var point = overviewer.util.fromLatLngToWorld(event.latLng.lat(),event.latLng.lng());
-                var contentString = '<b>Region: ' + shape.name + '</b><br />' +
-                'Clicked Location: <br />' + Math.round(point.x,1) + ', ' + point.y
-                + ', ' + Math.round(point.z,1)
-                + '<br />';
-                infowindow.setContent(contentString);
-                infowindow.setPosition(event.latLng);
-                infowindow.open(overviewer.map);
-                overviewer.collections.infoWindow = infowindow;
-                });
-    },
-    /**
-     * Same as createRegionInfoWindow()
-     * 
-     * @param google.maps.Marker marker
-     */
-    'createMarkerInfoWindow': function(marker) {
-        var windowContent = '<div class="infoWindow"><p><img src="' + marker.icon +
-            '"/><br />' + marker.content.replace(/\n/g,'<br/>') + '</p></div>';
-        var infowindow = new google.maps.InfoWindow({
-            'content': windowContent
-        });
-        google.maps.event.addListener(marker, 'click', function() {
-            if (overviewer.collections.infoWindow) {
-                overviewer.collections.infoWindow.close();
-            }
-            infowindow.open(overviewer.map, marker);
-            overviewer.collections.infoWindow = infowindow;
-        });
     },
     'initHash': function() {
         var newHash = window.location.hash;
