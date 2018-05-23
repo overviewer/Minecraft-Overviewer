@@ -385,8 +385,6 @@ def create_marker_from_filter_result(poi, result):
     # read some Defaults from POI
     if "icon" in poi:
         d["icon"] = poi['icon']
-    if "createInfoWindow" in poi:
-        d["createInfoWindow"] = poi['createInfoWindow']
 
     # Fill in the rest from result
     if isinstance(result, basestring):
@@ -412,8 +410,7 @@ def create_marker_from_filter_result(poi, result):
 
             if "icon" in result:
                 d["icon"] = result['icon']
-            if "createInfoWindow" in result:
-                d["createInfoWindow"] = result['createInfoWindow']
+				
     else:
         raise ValueError("got an %s as result for POI with id %s" % (type(result).__name__, poi['id']))
 
@@ -503,7 +500,6 @@ def main():
             group = dict(groupName=name,
                     displayName = f['name'], 
                     icon=f.get('icon', 'signpost_icon.png'), 
-                    createInfoWindow=f.get('createInfoWindow', True),
                     checked = f.get('checked', False))
             marker_groups[rname].append(group)
 
