@@ -1,5 +1,5 @@
 overviewer.util = {
-    
+
     // vars for callback
     readyQueue: [],
     isReady: false,
@@ -83,7 +83,7 @@ overviewer.util = {
         overviewer.control = L.Control.extend({
             initialize: function(options) {
                 L.Util.setOptions(this, options);
-                
+
                 this.container = L.DomUtil.create('div', 'worldcontrol');
                 this.select = L.DomUtil.create('select');
                 this.select.onchange = this.onChange;
@@ -99,7 +99,7 @@ overviewer.util = {
                 console.log(ev.target);
                 console.log(ev.target.value);
                 var selected_world = ev.target.value;
-                
+
 
                 // save current view for the current_world
                 overviewer.collections.centers[overviewer.current_world][0] = overviewer.map.getCenter();
@@ -129,7 +129,7 @@ overviewer.util = {
                             lyr.tileSetConfig.markerCtrl.remove();
                         }
                     }
-                    
+
                     for (var tset_name in overviewer.collections.overlays[world_name]) {
                         var lyr = overviewer.collections.overlays[world_name][tset_name];
                         if (world_name != selected_world) {
@@ -153,13 +153,13 @@ overviewer.util = {
             },
             onAdd: function() {
                 console.log("onAdd mycontrol");
-                
+
                 return this.container
             }
         });
 
 
-        
+
         overviewer.map = L.map('mcmap', {
                 crs: L.CRS.Simple,
                 minZoom: 0});
@@ -232,7 +232,7 @@ overviewer.util = {
         overviewer.map.on('moveend', function(ev) {
             overviewer.util.updateHash();
         });
-    
+
         var tset = overviewerConfig.tilesets[0];
 
         overviewer.map.on("click", function(e) {
@@ -247,7 +247,7 @@ overviewer.util = {
         overviewer.compass = new overviewer.compassClass(
             overviewerConfig.CONST.image.compass);
         overviewer.coord_box = new overviewer.coordBoxClass();
-        
+
 
         $.each(overviewerConfig.worlds, function(idx, world_name) {
             overviewer.collections.mapTypes[world_name] = {}
@@ -321,7 +321,7 @@ overviewer.util = {
 
             myLayer["tileSetConfig"] = obj;
 
-      
+
             if (typeof(obj.spawn) == "object") {
                 var latlng = overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj);
                 overviewer.collections.centers[obj.world] = [ latlng, 1 ];
@@ -433,7 +433,7 @@ overviewer.util = {
         } else {
             overviewer.util.readyQueue.push(callback); // wait until initialize is finished
         }
-    },       
+    },
     'runReadyQueue': function(){
         _.each(overviewer.util.readyQueue, function(callback){
             callback();
@@ -461,7 +461,7 @@ overviewer.util = {
     },
     /**
      * Gee, I wonder what this does.
-     * 
+     *
      * @param string msg
      */
     'debug': function(msg) {
@@ -472,7 +472,7 @@ overviewer.util = {
     /**
      * Simple helper function to split the query string into key/value
      * pairs. Doesn't do any type conversion but both are lowercase'd.
-     * 
+     *
      * @return Object
      */
     'parseQueryString': function() {
@@ -496,12 +496,12 @@ overviewer.util = {
      * X, Y, Z order (arguments are *out of order*, because within the
      * function we use the axes like the rest of Minecraft Overviewer --
      * with the Z and Y flipped from normal minecraft usage.)
-     * 
+     *
      * @param int x
      * @param int z
      * @param int y
      * @param TileSetModel model
-     * 
+     *
      * @return google.maps.LatLng
      */
     'fromWorldToLatLng': function(x, y, z, tset) {
@@ -561,10 +561,10 @@ overviewer.util = {
      * The opposite of fromWorldToLatLng
      * NOTE: X, Y and Z in this function are Minecraft world definitions
      * (that is, X is horizontal, Y is altitude and Z is vertical).
-     * 
+     *
      * @param float lat
      * @param float lng
-     * 
+     *
      * @return Array
      */
     'fromLatLngToWorld': function(lat, lng, tset) {
@@ -628,7 +628,7 @@ overviewer.util = {
      * Create the pop-up infobox for when you click on a region, this can't
      * be done in-line because of stupid Javascript scoping problems with
      * closures or something.
-     * 
+     *
      * @param google.maps.Polygon|google.maps.Polyline shape
      */
     'createRegionInfoWindow': function(shape) {
@@ -651,7 +651,7 @@ overviewer.util = {
     },
     /**
      * Same as createRegionInfoWindow()
-     * 
+     *
      * @param google.maps.Marker marker
      */
     'createMarkerInfoWindow': function(marker) {
@@ -698,7 +698,7 @@ overviewer.util = {
 
         var ovconf = currTileset.tileSetConfig;
 
-        var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat, 
+        var coordinates = overviewer.util.fromLatLngToWorld(overviewer.map.getCenter().lat,
                 overviewer.map.getCenter().lng,
                 ovconf);
         var zoom = overviewer.map.getZoom();
@@ -733,8 +733,8 @@ overviewer.util = {
         var target_layer = overviewer.collections.mapTypes[world_name][tileset_name];
         var ovconf = target_layer.tileSetConfig;
 
-        var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]), 
-                parseInt(coords[2]), 
+        var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]),
+                parseInt(coords[2]),
                 parseInt(coords[3]),
                 ovconf);
 
