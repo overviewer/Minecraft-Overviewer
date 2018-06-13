@@ -36,8 +36,6 @@ overviewer.util = {
         overviewer.util.initializePolyfills();
         overviewer.util.initializeMarkers();
 
-        document.getElementById('NoJSWarning').remove();
-
         overviewer.coordBoxClass = L.Control.extend({
             options: {
                 position: 'bottomleft',
