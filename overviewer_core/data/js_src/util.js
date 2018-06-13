@@ -249,7 +249,7 @@ overviewer.util = {
         overviewer.coord_box = new overviewer.coordBoxClass();
         
 
-        $.each(overviewerConfig.worlds, function(idx, world_name) {
+        overviewerConfig.worlds.forEach(function(world_name, idx) {
             overviewer.collections.mapTypes[world_name] = {}
             overviewer.collections.overlays[world_name] = {}
             overviewer.worldCtrl.addWorld(world_name);
@@ -263,7 +263,7 @@ overviewer.util = {
             overviewer.coord_box.render(ev.latlng);
         });
 
-        $.each(overviewerConfig.tilesets, function(idx, obj) {
+        overviewerConfig.tilesets.forEach(function(obj, idx) {
             var myLayer = new L.tileLayer('', {
                 tileSize: overviewerConfig.CONST.tileSize,
                 noWrap: true,
@@ -426,7 +426,7 @@ overviewer.util = {
      *
      */
     'ready': function(callback){
-        if (!callback || !_.isFunction(callback)) return;
+        if (typeof callback !== 'function') return;
         if (overviewer.util.isReady){ // run instantly if overviewer already is ready
             overviewer.util.readyQueue.push(callback);
             overviewer.util.runReadyQueue();
@@ -435,10 +435,11 @@ overviewer.util = {
         }
     },       
     'runReadyQueue': function(){
-        _.each(overviewer.util.readyQueue, function(callback){
+        if(overviewer.util.readyQueue.length === 0) return;
+        overviewer.util.readyQueue.forEach(function(callback){
             callback();
         });
-        overviewer.util.readyQueue.length = 0;
+        overviewer.util.readyQueue = [];
     },
     /**
      * Quote an arbitrary string for use in a regex matcher.
