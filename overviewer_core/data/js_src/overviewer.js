@@ -19,7 +19,7 @@ overviewer.current_world = null;
 
 /// Records the current layer by name (if any) of each world
 overviewer.current_layer = {};
-    
+
 
 overviewer.collections = {
         /**
@@ -80,7 +80,7 @@ overviewer.classes = {
          * This is a mapType used only for debugging, to draw a grid on the screen
          * showing the tile co-ordinates and tile path. Currently the tile path
          * part does not work.
-         * 
+         *
          * @param google.maps.Size tileSize
          */
         'CoordMapType': function(tileSize) {
