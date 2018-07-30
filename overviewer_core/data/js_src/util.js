@@ -302,7 +302,7 @@ overviewer.util = {
                             } else {
                                 m_icon = icon;
                             }
-                            let new_marker = new L.marker(latlng, {icon: m_icon});
+                            let new_marker = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
                             new_marker.bindPopup(db.text);
                             marker_group.addLayer(new_marker);
                         }
