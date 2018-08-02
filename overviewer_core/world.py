@@ -123,12 +123,12 @@ class World(object):
         # Check for versions of minecraft after the 17w47a changes
         if 'Version' in data:
             version = int(data['Version']["Id"])
-            if version >= 1452: 
+            if version < 1519: 
                 raise UnsupportedVersion(
                     "Sorry, This version of Minecraft-Overviewer only works "
-                    "with versions of Minecraft 1.12 and under\n"
-                    "This is due to a change in the map chunk format that "
-                    "happened in snapshot 17w47a")
+                    "with versions of Minecraft 1.13 and newer\n"
+                    "This is due to a change in the map chunk format and changes "
+                    "to texture names")
 
         # This isn't much data, around 15 keys and values for vanilla worlds.
         self.leveldat = data
