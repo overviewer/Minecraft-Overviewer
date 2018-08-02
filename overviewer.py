@@ -200,10 +200,10 @@ def main():
 
         logging.info("Looking for a few common texture files...")
         try:
-            f = tex.find_file("assets/minecraft/textures/blocks/sandstone_top.png", verbose=True)
-            f = tex.find_file("assets/minecraft/textures/blocks/grass_top.png", verbose=True)
-            f = tex.find_file("assets/minecraft/textures/blocks/diamond_ore.png", verbose=True)
-            f = tex.find_file("assets/minecraft/textures/blocks/planks_acacia.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/block/sandstone_top.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/block/grass_block_top.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/block/diamond_ore.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/block/acacia_planks.png", verbose=True)
         except IOError:
             logging.error("Could not find any texture files.")
             return 1
@@ -331,10 +331,10 @@ dir but you forgot to put quotes around the directory, since it contains spaces.
             texopts = util.dict_subset(render, ["texturepath"])
 
             tex = textures.Textures(**texopts)
-            f = tex.find_file("assets/minecraft/textures/blocks/sandstone_top.png", verbose=True)
-            f = tex.find_file("assets/minecraft/textures/blocks/grass_top.png", verbose=True)
-            f = tex.find_file("assets/minecraft/textures/blocks/diamond_ore.png", verbose=True)
-            f = tex.find_file("assets/minecraft/textures/blocks/planks_oak.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/block/sandstone_top.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/block/grass_block_top.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/block/diamond_ore.png", verbose=True)
+            f = tex.find_file("assets/minecraft/textures/block/oak_planks.png", verbose=True)
         return 0
 
     ############################################################
