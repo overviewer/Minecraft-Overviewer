@@ -1362,7 +1362,7 @@ def rails(self, blockid, data):
     
     if blockid == 27: # powered rail
         if data & 0x8 == 0: # unpowered
-            raw_straight = self.load_image_texture("assets/minecraft/textures/block/rail_golden.png")
+            raw_straight = self.load_image_texture("assets/minecraft/textures/block/powered_rail.png")
             raw_corner = self.load_image_texture("assets/minecraft/textures/block/rail_corner.png")    # they don't exist but make the code
                                                 # much simplier
         elif data & 0x8 == 0x8: # powered
@@ -2341,7 +2341,7 @@ def door(self, blockid, data):
             raw_door = self.load_image_texture("assets/minecraft/textures/block/dark_oak_door_top.png")
     else: # bottom of the door
         if blockid == 64:
-            raw_door = self.load_image_texture("assets/minecraft/textures/block/wood_door_bottom.png")
+            raw_door = self.load_image_texture("assets/minecraft/textures/block/oak_door_bottom.png")
         elif blockid == 71: # iron door
             raw_door = self.load_image_texture("assets/minecraft/textures/block/iron_door_bottom.png")
         elif blockid == 193: # spruce door
