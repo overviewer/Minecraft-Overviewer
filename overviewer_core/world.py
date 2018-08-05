@@ -328,6 +328,85 @@ class RegionSet(object):
             region = nbt.load_region(regionfilename)
             self.regioncache[regionfilename] = region
             return region
+
+    def _packed_longarray_to_shorts(self, long_array, n):
+        bits_per_value = (len(long_array) * 64) / n
+        if bits_per_value < 4 or 8 < bits_per_value:
+            raise nbt.CorruptChunkError()
+        b = numpy.frombuffer(numpy.asarray(long_array), dtype=numpy.uint8)
+        if bits_per_value == 8:
+            result = b.astype(numpy.uint16)
+        else:
+            result = []
+            i = 0
+            # We will consume the byte array in chunks equal to bits_per_value.
+            while i < len(b):
+                if bits_per_value == 4:
+                    for k in range(0, 4):
+                        result.extend([
+                             b[i + k] & 0x0f,
+                            (b[i + k] & 0xf0) >> 4,
+                            ])
+                    i += 4
+                elif bits_per_value == 5:
+                    result.extend([
+                          b[i] & 0x1f,
+                        ((b[i+1] & 0x03) << 3) | ((b[i] & 0xe0) >> 5),
+                         (b[i+1] & 0x7c) >> 2,
+                        ((b[i+2] & 0x0f) << 1) | ((b[i+1] & 0x80) >> 7),
+                        ((b[i+3] & 0x01) << 4) | ((b[i+2] & 0xf0) >> 4),
+                         (b[i+3] & 0x3e) >> 1,
+                        ((b[i+4]   & 0x07) << 2) | ((b[i+3] & 0xc0) >> 6),
+                         (b[i+4]   & 0xf8) >> 3,
+                        ])
+                    i += 5
+                elif bits_per_value == 6:
+                    result.extend([
+                          b[i] & 0x3f,
+                        ((b[i+1] & 0x0f) << 2) | ((b[i]   & 0xc0) >> 6),
+                        ((b[i+2] & 0x03) << 4) | ((b[i+1] & 0xf0) >> 4),
+                         (b[i+2] & 0xfc) >> 2,
+                         ])
+                    i += 3
+                elif bits_per_value == 7:
+                    result.extend([
+                          b[i] & 0x7f,
+                        ((b[i+1] & 0x3f) << 1) | ((b[i]   & 0x80) >> 7),
+                        ((b[i+2] & 0x1f) << 2) | ((b[i+1] & 0xc0) >> 6),
+                        ((b[i+3] & 0x0f) << 3) | ((b[i+2] & 0xe0) >> 5),
+                        ((b[i+4] & 0x07) << 4) | ((b[i+3] & 0xf0) >> 4),
+                        ((b[i+5] & 0x03) << 5) | ((b[i+4] & 0xf8) >> 3),
+                        ((b[i+6] & 0x01) << 6) | ((b[i+5] & 0xfc) >> 2),
+                         (b[i+6] & 0xfc) >> 1,
+                         ])
+                    i += 7
+                else:
+                    i += bits_per_value
+            result = numpy.asarray(result, numpy.uint16)
+        return result
+
+    def get_block_and_data(self, palette_entry):
+        blockmap = {
+            'minecraft:stone': (1, 0),
+            'minecraft:air': (0, 0),
+            'minecraft:diorite': (1, 3),
+            'minecraft:bedrock': (7, 0),
+            'minecraft:dirt': (3, 0),
+            'minecraft:andesite': (1, 5),
+            'minecraft:granite': (1, 1),
+            'minecraft:cave_air': (0, 0),
+            'minecraft:gravel': (13, 0),
+            'minecraft:grass_block': (2, 0),
+            'minecraft:snow': (78, 0),
+            'minecraft:coal_ore': (16, 0),
+            'minecraft:iron_ore': (15, 0),
+            'minecraft:redstone_ore': (73, 0),
+            'minecraft:lava': (10, 0),
+            'minecraft:grass': (175, 2),
+            'minecraft:gold_ore': (14, 0),
+        }
+        return blockmap.get(palette_entry['Name'], (0, 0)) # default to air
+
     
     #@log_other_exceptions
     def get_chunk(self, x, z):
@@ -405,36 +484,27 @@ class RegionSet(object):
         chunk_data = level
 
         # Turn the Biomes array into a 16x16 numpy array
-        try:
-            biomes = numpy.frombuffer(chunk_data['Biomes'], dtype=numpy.uint8)
-            biomes = biomes.reshape((16,16))
-        except KeyError:
-            # worlds converted by Jeb's program may be missing the Biomes key
+        biomes = numpy.asarray(chunk_data['Biomes'])
+        if len(biomes) == 0:
             biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
+        else:
+            biomes = biomes.reshape((16,16))
         chunk_data['Biomes'] = biomes
 
         for section in chunk_data['Sections']:
+            # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
+            block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
+            blocks = numpy.zeros((4096,), dtype=numpy.uint16)
+            data = numpy.zeros((4096,), dtype=numpy.uint8)
+            for i in range(len(block_states)):
+                palette_entry = section['Palette'][block_states[i]]
+                (blocks[i], data[i]) = self.get_block_and_data(palette_entry)
 
-            # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
-            # adding in the additional block array if included.
-            blocks = numpy.frombuffer(section['Blocks'], dtype=numpy.uint8)
-            # Cast up to uint16, blocks can have up to 12 bits of data
-            blocks = blocks.astype(numpy.uint16)
-            blocks = blocks.reshape((16,16,16))
-            if "Add" in section:
-                # This section has additional bits to tack on to the blocks
-                # array. Add is a packed array with 4 bits per slot, so
-                # it needs expanding
-                additional = numpy.frombuffer(section['Add'], dtype=numpy.uint8)
-                additional = additional.astype(numpy.uint16).reshape((16,16,8))
-                additional_expanded = numpy.empty((16,16,16), dtype=numpy.uint16)
-                additional_expanded[:,:,::2] = (additional & 0x0F) << 8
-                additional_expanded[:,:,1::2] = (additional & 0xF0) << 4
-                blocks += additional_expanded
-                del additional
-                del additional_expanded
-                del section['Add'] # Save some memory
-            section['Blocks'] = blocks
+            # Turn the Data array into a 16x16x16 matrix, same as SkyLight
+            section['Blocks'] = blocks.reshape((16, 16, 16))
+            section['Data'] = data.reshape((16, 16, 16))
+            del blocks
+            del data
 
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
@@ -455,15 +525,6 @@ class RegionSet(object):
                 blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
                 del blocklight
                 section['BlockLight'] = blocklight_expanded
-
-                # Turn the Data array into a 16x16x16 matrix, same as SkyLight
-                data = numpy.frombuffer(section['Data'], dtype=numpy.uint8)
-                data = data.reshape((16,16,8))
-                data_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-                data_expanded[:,:,::2] = data & 0x0F
-                data_expanded[:,:,1::2] = (data & 0xF0) >> 4
-                del data
-                section['Data'] = data_expanded
             except ValueError:
                 # iv'e seen at least 1 case where numpy raises a value error during the reshapes.  i'm not
                 # sure what's going on here, but let's treat this as a corrupt chunk error
