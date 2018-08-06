@@ -300,6 +300,80 @@ class RegionSet(object):
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
 
+        self._blockmap = {
+            'minecraft:air': (0, 0),
+            'minecraft:cave_air': (0, 0),
+            'minecraft:stone': (1, 0),
+            'minecraft:granite': (1, 1),
+            'minecraft:diorite': (1, 3),
+            'minecraft:andesite': (1, 5),
+            'minecraft:grass_block': (2, 0),
+            'minecraft:dirt': (3, 0),
+            'minecraft:coarse_dirt': (3, 1),
+            'minecraft:podzol': (3, 2),
+            'minecraft:cobblestone': (4, 0),
+            'minecraft:oak_planks': (5, 0),
+            'minecraft:pine_planks': (5, 1),
+            'minecraft:birch_planks': (5, 2),
+            'minecraft:jungle_wood_planks': (5, 3),
+            'minecraft:acacia_planks': (5, 4),
+            'minecraft:dark_oak_planks': (5, 5),
+            'minecraft:oak_sapling': (6, 0),
+            'minecraft:spruce_sapling': (6, 1),
+            'minecraft:birch_sapling': (6, 2),
+            'minecraft:jungle_wood_sapling': (6, 3),
+            'minecraft:acacia_sapling': (6, 4),
+            'minecraft:dark_oak_sapling': (6, 5),
+            'minecraft:bedrock': (7, 0),
+            'minecraft:water': (8, 0),
+            'minecraft:lava': (10, 0),
+            'minecraft:sand': (12, 0),
+            'minecraft:red_sand': (12, 1),
+            'minecraft:gravel': (13, 0),
+            'minecraft:gold_ore': (14, 0),
+            'minecraft:iron_ore': (15, 0),
+            'minecraft:coal_ore': (16, 0),
+            'minecraft:oak_log': (17, 0),
+            'minecraft:spruce_log': (17, 1),
+            'minecraft:birch_log': (17, 2),
+            'minecraft:jungle_wood_log': (17, 3),
+            'minecraft:spruce_leaves': (18, 1),
+            'minecraft:lapis_ore': (21, 0),
+            'minecraft:cobweb': (30, 0),
+            'minecraft:grass': (31, 1),
+            'minecraft:fern': (31, 2),
+            'minecraft:dandelion': (37, 0),
+            'minecraft:brown_mushroom': (39, 0),
+            'minecraft:stone_slab': (44, 0),
+            'minecraft:sandstone_slab': (44, 1),
+            'minecraft:wood_slab': (44, 2),
+            'minecraft:cobblestone_slab': (44, 3),
+            'minecraft:stone_brick_slab': (44, 3), #wrong
+            'minecraft:stone_bricks': (44, 5),
+            'minecraft:red_mushroom': (40, 0),
+            'minecraft:obsidian': (49, 0),
+            'minecraft:wall_torch': (50, 0),
+            'minecraft:torch': (50, 5),
+            'minecraft:spawner': (52, 0),
+            'minecraft:diamond_ore': (56, 0),
+            'minecraft:redstone_ore': (73, 0),
+            'minecraft:snow': (78, 0),
+            'minecraft:ice': (79, 0),
+            'minecraft:snow_block': (80, 0),
+            'minecraft:sugar_cane': (83, 0),
+            'minecraft:pumpkin': (86, 0),
+            'minecraft:attached_melon_stem': (104, 0),
+            'minecraft:stone_brick_stairs': (109, 0),
+            'minecraft:mossy_cobblestone': (139, 16),
+            'minecraft:acacia_log': (162, 0),
+            'minecraft:dark_oak_log': (162, 1),
+            'minecraft:packed_ice': (174, 0),
+            'minecraft:grass': (175, 2),
+            'minecraft:large_fern': (175, 3),
+            'minecraft:grass_path': (208, 0),
+            'minecraft:magma_block': (213, 0),
+        }
+
     # Re-initialize upon unpickling
     def __getstate__(self):
         return (self.regiondir, self.rel)
@@ -308,6 +382,30 @@ class RegionSet(object):
 
     def __repr__(self):
         return "<RegionSet regiondir=%r>" % self.regiondir
+
+    def _get_block(self, palette_entry):
+        key = palette_entry['Name']
+        (block, data) = self._blockmap[key]
+        if key == 'minecraft:redstone_ore':
+            if palette_entry['Properties']['lit']:
+                block += 1
+        elif key == 'minecraft:grass':
+            if palette_entry['Properties']['snowy']:
+                data = 0x10
+        elif key == 'minecraft:large_fern':
+            if palette_entry['Properties']['half'] == 'upper':
+                data |= 0x08
+        elif key.endswith('_log'):
+            axis = palette_entry['Properties']['axis']
+            if axis == 'x':
+                data |= 4
+            elif axis == 'z':
+                data |= 8
+        elif key == 'minecraft:wall_torch':
+            facing = palette_entry['Properties']['facing']
+            data = {'south': 1, 'north': 2, 'west': 3, 'east': 4}[facing]
+
+        return (block, data)
 
     def get_type(self):
         """Attempts to return a string describing the dimension
@@ -385,29 +483,6 @@ class RegionSet(object):
             result = numpy.asarray(result, numpy.uint16)
         return result
 
-    def get_block_and_data(self, palette_entry):
-        blockmap = {
-            'minecraft:stone': (1, 0),
-            'minecraft:air': (0, 0),
-            'minecraft:diorite': (1, 3),
-            'minecraft:bedrock': (7, 0),
-            'minecraft:dirt': (3, 0),
-            'minecraft:andesite': (1, 5),
-            'minecraft:granite': (1, 1),
-            'minecraft:cave_air': (0, 0),
-            'minecraft:gravel': (13, 0),
-            'minecraft:grass_block': (2, 0),
-            'minecraft:snow': (78, 0),
-            'minecraft:coal_ore': (16, 0),
-            'minecraft:iron_ore': (15, 0),
-            'minecraft:redstone_ore': (73, 0),
-            'minecraft:lava': (10, 0),
-            'minecraft:grass': (175, 2),
-            'minecraft:gold_ore': (14, 0),
-        }
-        return blockmap.get(palette_entry['Name'], (0, 0)) # default to air
-
-    
     #@log_other_exceptions
     def get_chunk(self, x, z):
         """Returns a dictionary object representing the "Level" NBT Compound
@@ -491,6 +566,7 @@ class RegionSet(object):
             biomes = biomes.reshape((16,16))
         chunk_data['Biomes'] = biomes
 
+        unrecognized_blocks = {}
         for section in chunk_data['Sections']:
             # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
             block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
@@ -498,7 +574,13 @@ class RegionSet(object):
             data = numpy.zeros((4096,), dtype=numpy.uint8)
             for i in range(len(block_states)):
                 palette_entry = section['Palette'][block_states[i]]
-                (blocks[i], data[i]) = self.get_block_and_data(palette_entry)
+                try:
+                    (blocks[i], data[i]) = self._get_block(palette_entry)
+                except KeyError as e:
+                    # Unknown block type? Track it, treat it as air, and move on.
+                    key = palette_entry['Name']
+                    unrecognized_blocks[key] = unrecognized_blocks.get(key, 0) + 1
+                    (blocks[i], data[i]) = self._blockmap['minecraft:air']
 
             # Turn the Data array into a 16x16x16 matrix, same as SkyLight
             section['Blocks'] = blocks.reshape((16, 16, 16))
@@ -532,7 +614,10 @@ class RegionSet(object):
 
                 logging.debug("Full traceback:", exc_info=1)
                 raise nbt.CorruptChunkError()
-        
+       
+        for k in unrecognized_blocks:
+            logging.warning("Found %d blocks of unknown type %s" % (unrecognized_blocks[k], key))
+
         return chunk_data      
     
 
