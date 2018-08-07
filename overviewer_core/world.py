@@ -403,6 +403,8 @@ class RegionSet(object):
             'minecraft:pumpkin': (86, 0),
             'minecraft:netherrack': (87, 0),
             'minecraft:soul_sand': (88, 0),
+            'minecraft:glowstone': (89, 0),
+            'minecraft:portal': (90, 0),
             'minecraft:jack_o_lantern': (91, 0),
             'minecraft:oak_trapdoor': (96, 0),
             'minecraft:spruce_trapdoor': (96, 0), #wrong
@@ -619,7 +621,7 @@ class RegionSet(object):
 
     def _packed_longarray_to_shorts(self, long_array, n):
         bits_per_value = (len(long_array) * 64) / n
-        if bits_per_value < 4 or 8 < bits_per_value:
+        if bits_per_value < 4 or 12 < bits_per_value:
             raise nbt.CorruptChunkError()
         b = numpy.frombuffer(numpy.asarray(long_array), dtype=numpy.uint8)
         if bits_per_value == 8:
@@ -679,8 +681,33 @@ class RegionSet(object):
                         ((b[i+7] & 0x7f) << 2) | ((b[i+6] & 0xc0) >> 6),
                          (b[i+8] << 1) | ((b[i+7] & 0x80) >> 7),
                         ])
-                else:
-                    i += bits_per_value
+                    i += 9
+                elif bits_per_value == 10:
+                    result.extend([
+                        ((b[i+1] & 0x03) << 8) |   b[0],
+                        ((b[i+2] & 0x0f) << 6) | ((b[i+1] & 0xfc) >> 2),
+                        ((b[i+3] & 0x3f) << 4) | ((b[i+2] & 0xf0) >> 4),
+                         (b[i+4] << 2)         | ((b[i+3] & 0xc0) >> 6),
+                        ])
+                    i += 5
+                elif bits_per_value == 11:
+                    result.extend([
+                        ((b[i+1] & 0x07) << 8) |   b[0],
+                        ((b[i+2] & 0x3f) << 5) | ((b[i+1] & 0xf8) >> 3),
+                        ((b[i+4] & 0x01) << 10)| (b[i+3] << 2) | ((b[i+2] & 0xc0) >> 6),
+                        ((b[i+5] & 0x0f) << 7) | ((b[i+4] & 0xfe) >> 1),
+                        ((b[i+6] & 0x7f) << 4) | ((b[i+5] & 0xf0) >> 4),
+                        ((b[i+8] & 0x03) << 9) | (b[i+7] << 1) | ((b[i+6] & 0x80) >> 7),
+                        ((b[i+9] & 0x1f) << 2) | ((b[i+8] & 0xfc) >> 2),
+                         (b[i+10]        << 3) | ((b[i+9] & 0xe0) >> 5),
+                       ])
+                    i += 11
+                elif bits_per_value == 12:
+                    result.extend([
+                        ((b[i+1] & 0x0f) << 8) |   b[0],
+                         (b[i+2]         << 4) | ((b[i+1] & 0xf0) >> 4),
+                        ])
+                    i += 3
             result = numpy.asarray(result, numpy.uint16)
         return result
 
