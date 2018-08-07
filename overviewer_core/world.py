@@ -305,23 +305,26 @@ class RegionSet(object):
             'minecraft:cave_air': (0, 0),
             'minecraft:stone': (1, 0),
             'minecraft:granite': (1, 1),
+            'minecraft:polished_granite': (1, 2),
             'minecraft:diorite': (1, 3),
+            'minecraft:polished_diorite': (1, 4),
             'minecraft:andesite': (1, 5),
+            'minecraft:polished_andesite': (1, 6),
             'minecraft:grass_block': (2, 0),
             'minecraft:dirt': (3, 0),
             'minecraft:coarse_dirt': (3, 1),
             'minecraft:podzol': (3, 2),
             'minecraft:cobblestone': (4, 0),
             'minecraft:oak_planks': (5, 0),
-            'minecraft:pine_planks': (5, 1),
+            'minecraft:spruce_planks': (5, 1),
             'minecraft:birch_planks': (5, 2),
-            'minecraft:jungle_wood_planks': (5, 3),
+            'minecraft:jungle_planks': (5, 3),
             'minecraft:acacia_planks': (5, 4),
             'minecraft:dark_oak_planks': (5, 5),
             'minecraft:oak_sapling': (6, 0),
             'minecraft:spruce_sapling': (6, 1),
             'minecraft:birch_sapling': (6, 2),
-            'minecraft:jungle_wood_sapling': (6, 3),
+            'minecraft:jungle_sapling': (6, 3),
             'minecraft:acacia_sapling': (6, 4),
             'minecraft:dark_oak_sapling': (6, 5),
             'minecraft:bedrock': (7, 0),
@@ -336,42 +339,197 @@ class RegionSet(object):
             'minecraft:oak_log': (17, 0),
             'minecraft:spruce_log': (17, 1),
             'minecraft:birch_log': (17, 2),
-            'minecraft:jungle_wood_log': (17, 3),
+            'minecraft:jungle_log': (17, 3),
+            'minecraft:oak_leaves': (18, 0),
             'minecraft:spruce_leaves': (18, 1),
+            'minecraft:birch_leaves': (18, 2),
+            'minecraft:jungle_leaves': (18, 3),
+            'minecraft:acacia_leaves': (18, 4),
+            'minecraft:dark_oak_leaves': (18, 5),
+            'minecraft:glass': (20, 0),
             'minecraft:lapis_ore': (21, 0),
+            'minecraft:sandstone': (24, 0),
+            'minecraft:cut_sandstone': (24, 2),
+            'minecraft:chiseled_sandstone': (24, 3),
             'minecraft:cobweb': (30, 0),
+            'minecraft:dead_bush': (31, 0),
             'minecraft:grass': (31, 1),
             'minecraft:fern': (31, 2),
-            'minecraft:dandelion': (37, 0),
+            'minecraft:poppy': (38, 0),
+            'minecraft:blue_orchid': (38, 1),
+            'minecraft:allium': (38, 2),
+            'minecraft:azure_bluet': (38, 3),
+            'minecraft:red_tulip': (38, 4),
+            'minecraft:orange_tulip': (38, 5),
+            'minecraft:white_tulip': (38, 6),
+            'minecraft:pink_tulip': (38, 7),
+            'minecraft:oxeye_daisy': (38, 8),
+            'minecraft:dandelion': (38, 9),
             'minecraft:brown_mushroom': (39, 0),
             'minecraft:stone_slab': (44, 0),
             'minecraft:sandstone_slab': (44, 1),
             'minecraft:wood_slab': (44, 2),
             'minecraft:cobblestone_slab': (44, 3),
-            'minecraft:stone_brick_slab': (44, 3), #wrong
-            'minecraft:stone_bricks': (44, 5),
+            'minecraft:brick_slab': (44, 4),
+            'minecraft:stone_brick_slab': (44, 5),
+            'minecraft:nether_brick_slab': (44, 6),
+            'minecraft:quartz_slab': (44, 7),
             'minecraft:red_mushroom': (40, 0),
             'minecraft:obsidian': (49, 0),
             'minecraft:wall_torch': (50, 0),
             'minecraft:torch': (50, 5),
+            'minecraft:fire': (51, 0),
             'minecraft:spawner': (52, 0),
+            'minecraft:oak_stairs': (53, 0),
+            'minecraft:chest': (54, 0),
             'minecraft:diamond_ore': (56, 0),
+            'minecraft:crafting_table': (58, 0),
+            'minecraft:wheat': (59, 0),
+            'minecraft:farmland': (60, 0),
+            'minecraft:furnace': (61, 0),
+            'minecraft:oak_door': (64, 0),
+            'minecraft:ladder': (65, 3), # todo: incorporate facing
+            'minecraft:rail': (66, 0),
+            'minecraft:cobblestone_stairs': (67, 0),
+            'minecraft:iron_door': (71, 0),
             'minecraft:redstone_ore': (73, 0),
             'minecraft:snow': (78, 0),
             'minecraft:ice': (79, 0),
             'minecraft:snow_block': (80, 0),
+            'minecraft:cactus': (81, 0),
+            'minecraft:clay': (82, 0),
             'minecraft:sugar_cane': (83, 0),
+            'minecraft:oak_fence': (85, 0),
             'minecraft:pumpkin': (86, 0),
+            'minecraft:netherrack': (87, 0),
+            'minecraft:soul_sand': (88, 0),
+            'minecraft:jack_o_lantern': (91, 0),
+            'minecraft:oak_trapdoor': (96, 0),
+            'minecraft:spruce_trapdoor': (96, 0), #wrong
+            'minecraft:birch_trapdoor': (96, 0),
+            'minecraft:jungle_trapdoor': (96, 0),
+            'minecraft:acacia_trapdoor': (96, 0),
+            'minecraft:dark_oak_trapdoor': (96, 0),
+            'minecraft:stone_bricks': (98, 0),
+            'minecraft:infested_stone_bricks': (98, 0),
+            'minecraft:mossy_stone_bricks': (98, 1),
+            'minecraft:cracked_stone_bricks': (98, 2),
+            'minecraft:chiseled_stone_bricks': (98, 3),
+            'minecraft:infested_chiseled_stone_bricks': (98, 3),
+            'minecraft:glass_pane': (20, 0), # wrong
             'minecraft:attached_melon_stem': (104, 0),
+            'minecraft:vine': (106, 0),
+            'minecraft:red_brick_stairs': (108, 0),
             'minecraft:stone_brick_stairs': (109, 0),
+            'minecraft:lily_pad': (111, 0),
+            'minecraft:nether_brick_fence': (113, 0),
+            'minecraft:nether_brick_stairs': (114, 0),
+            'minecraft:nether_wart': (115, 0),
+            'minecraft:brewing_stand': (117, 0),
+            'minecraft:oak_slab': (126, 0),
+            'minecraft:spruce_slab': (126, 1),
+            'minecraft:birch_slab': (126, 2),
+            'minecraft:jungle_slab': (126, 3),
+            'minecraft:acacia_slab': (126, 4),
+            'minecraft:dark_oak_slab': (126, 5),
+            'minecraft:sandstone_stairs': (128, 0),
+            'minecraft:spruce_stairs': (134, 0),
+            'minecraft:birch_stairs': (135, 0),
+            'minecraft:jungle_stairs': (136, 0),
             'minecraft:mossy_cobblestone': (139, 16),
+            'minecraft:nether_quartz_ore': (153, 0),
+            'minecraft:hopper': (154, 0),
+            'minecraft:quartz_stairs': (156, 0),
+            'minecraft:white_terracotta': (159, 0),
+            'minecraft:orange_terracotta': (159, 1),
+            'minecraft:magenta_terracotta': (159, 2),
+            'minecraft:light_blue_terracotta': (159, 3),
+            'minecraft:yellow_terracotta': (159, 4),
+            'minecraft:lime_terracotta': (159, 5),
+            'minecraft:pink_terracotta': (159, 6),
+            'minecraft:gray_terracotta': (159, 7),
+            'minecraft:light_gray_terracotta': (159, 8),
+            'minecraft:cyan_terracotta': (159, 9),
+            'minecraft:purple_terracotta': (159, 10),
+            'minecraft:blue_terracotta': (159, 11),
+            'minecraft:brown_terracotta': (159, 12),
+            'minecraft:green_terracotta': (159, 13),
+            'minecraft:red_terracotta': (159, 14),
+            'minecraft:black_terracotta': (159, 15),
             'minecraft:acacia_log': (162, 0),
             'minecraft:dark_oak_log': (162, 1),
+            'minecraft:acacia_stairs': (163, 0),
+            'minecraft:dark_oak_stairs': (164, 0),
+            'minecraft:iron_trapdoor': (167, 0),
+            'minecraft:terracotta': (172, 0),
             'minecraft:packed_ice': (174, 0),
-            'minecraft:grass': (175, 2),
+            'minecraft:blue_ice': (174, 0), # close enough
+            'minecraft:sunflower': (175, 0),
+            'minecraft:lilac': (175, 1),
+            'minecraft:tall_grass': (175, 2),
             'minecraft:large_fern': (175, 3),
+            'minecraft:rose_bush': (175, 4),
+            'minecraft:peony': (175, 5),
+            'minecraft:red_sandstone': (179, 0),
+            'minecraft:red_sandstone_stairs': (180, 0),
+            'minecraft:spruce_fence': (188, 0),
+            'minecraft:birch_fence': (189, 0),
+            'minecraft:jungle_fence': (190, 0),
+            'minecraft:dark_oak_fence': (191, 0),
+            'minecraft:acacia_fence': (192, 0),
+            'minecraft:spruce_door': (193, 0),
+            'minecraft:birch_door': (194, 0),
+            'minecraft:jungle_door': (195, 0),
+            'minecraft:acacia_door': (196, 0),
+            'minecraft:dark_oak_door': (197, 0),
+            'minecraft:purpur_stairs': (203, 0),
             'minecraft:grass_path': (208, 0),
             'minecraft:magma_block': (213, 0),
+            'minecraft:white_concrete': (251, 0),
+            'minecraft:orange_concrete': (251, 1),
+            'minecraft:magenta_concrete': (251, 2),
+            'minecraft:light_blue_concrete': (251, 3),
+            'minecraft:yellow_concrete': (251, 4),
+            'minecraft:lime_concrete': (251, 5),
+            'minecraft:pink_concrete': (251, 6),
+            'minecraft:gray_concrete': (251, 7),
+            'minecraft:light_gray_concrete': (251, 8),
+            'minecraft:cyan_concrete': (251, 9),
+            'minecraft:purple_concrete': (251, 10),
+            'minecraft:blue_concrete': (251, 11),
+            'minecraft:brown_concrete': (251, 12),
+            'minecraft:green_concrete': (251, 13),
+            'minecraft:red_concrete': (251, 14),
+            'minecraft:black_concrete': (251, 15),
+
+            # The following blocks are underwater and are not yet rendered.
+            # To avoid spurious warnings, we'll treat them as air for now.
+            'minecraft:brain_coral': (0, 0),
+            'minecraft:brain_coral_block': (0, 0),
+            'minecraft:brain_coral_fan': (0, 0),
+            'minecraft:brain_coral_wall_fan': (0, 0),
+            'minecraft:bubble_column': (0, 0),
+            'minecraft:bubble_coral': (0, 0),
+            'minecraft:bubble_coral_block': (0, 0),
+            'minecraft:bubble_coral_fan': (0, 0),
+            'minecraft:bubble_coral_wall_fan': (0, 0),
+            'minecraft:fire_coral': (0, 0),
+            'minecraft:fire_coral_block': (0, 0),
+            'minecraft:fire_coral_fan': (0, 0),
+            'minecraft:fire_coral_wall_fan': (0, 0),
+            'minecraft:horn_coral': (0, 0),
+            'minecraft:horn_coral_block': (0, 0),
+            'minecraft:horn_coral_fan': (0, 0),
+            'minecraft:horn_coral_wall_fan': (0, 0),
+            'minecraft:kelp': (0, 0),
+            'minecraft:kelp_plant': (0, 0),
+            'minecraft:sea_pickle': (0, 0),
+            'minecraft:seagrass': (0, 0),
+            'minecraft:tall_seagrass': (0, 0),
+            'minecraft:tube_coral': (0, 0),
+            'minecraft:tube_coral_block': (0, 0),
+            'minecraft:tube_coral_fan': (0, 0),
+            'minecraft:tube_coral_wall_fan': (0, 0),
         }
 
     # Re-initialize upon unpickling
@@ -389,21 +547,53 @@ class RegionSet(object):
         if key == 'minecraft:redstone_ore':
             if palette_entry['Properties']['lit']:
                 block += 1
-        elif key == 'minecraft:grass':
+        elif key == 'minecraft:grass_block':
             if palette_entry['Properties']['snowy']:
                 data = 0x10
-        elif key == 'minecraft:large_fern':
+        elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
+        elif key == 'minecraft_wheat':
+            data = int(palette_entry['Properties']['age'])
+        elif key == 'minecraft:wall_torch':
+            facing = palette_entry['Properties']['facing']
+            data = {'south': 1, 'north': 2, 'west': 3, 'east': 4}[facing]
+        elif key == 'minecraft:nether_wart':
+            data = int(palette_entry['Properties']['age'])
         elif key.endswith('_log'):
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
                 data |= 4
             elif axis == 'z':
                 data |= 8
-        elif key == 'minecraft:wall_torch':
+        elif key == 'minecraft:vine':
+            p = palette_entry['Properties']
+            if p['south'] == 'true': data |= 1
+            if p['west']  == 'true': data |= 2
+            if p['north'] == 'true': data |= 4
+            if p['east']  == 'true': data |= 8
+        elif key.endswith('_fence'):
+            p = palette_entry['Properties']
+            if p['north'] == 'true': data |= 1
+            if p['west']  == 'true': data |= 2
+            if p['south'] == 'true': data |= 4
+            if p['east']  == 'true': data |= 8
+        elif key.endswith('_stairs'):
             facing = palette_entry['Properties']['facing']
-            data = {'south': 1, 'north': 2, 'west': 3, 'east': 4}[facing]
+            if   facing == 'north': data |= 0x20 | 0x40
+            elif facing == 'west':  data |= 0x10 | 0x20
+            elif facing == 'south': data |= 0x08 | 0x10
+            elif facing == 'east':  data |= 0x08 | 0x40
+        elif key.endswith('_door'):
+            p = palette_entry['Properties']
+            if p['hinge'] == 'left': data |= 0x10
+            if p['half'] == 'upper': data |= 0x08
+            data |= {
+                'north': 0x01,
+                'west':  0x04,
+                'south': 0x03,
+                'east':  0x02,
+               }[p['facing']]
 
         return (block, data)
 
@@ -566,21 +756,32 @@ class RegionSet(object):
             biomes = biomes.reshape((16,16))
         chunk_data['Biomes'] = biomes
 
-        unrecognized_blocks = {}
+        unrecognized_block_types = {}
         for section in chunk_data['Sections']:
-            # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
-            block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
-            blocks = numpy.zeros((4096,), dtype=numpy.uint16)
-            data = numpy.zeros((4096,), dtype=numpy.uint8)
-            for i in range(len(block_states)):
-                palette_entry = section['Palette'][block_states[i]]
+
+            # Translate each entry in the palette to a 1.2-era (block, data) int pair.
+            num_palette_entries = len(section['Palette'])
+            palette_translated = [] # (block, data) pairs, num_palette_entries in length
+            palette_block_counts = [] # ints, num_palette_entries in length
+            unrecognized_palette_entries = []
+            for i in range(num_palette_entries):
+                key = section['Palette'][i]
+                palette_block_counts.append(0)
                 try:
-                    (blocks[i], data[i]) = self._get_block(palette_entry)
+                    palette_translated.append(self._get_block(key))
                 except KeyError as e:
                     # Unknown block type? Track it, treat it as air, and move on.
-                    key = palette_entry['Name']
-                    unrecognized_blocks[key] = unrecognized_blocks.get(key, 0) + 1
-                    (blocks[i], data[i]) = self._blockmap['minecraft:air']
+                    unrecognized_palette_entries.append(i)
+                    palette_translated.append(self._blockmap['minecraft:air'])
+
+            # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
+            blocks = numpy.zeros((4096,), dtype=numpy.uint16)
+            data = numpy.zeros((4096,), dtype=numpy.uint8)
+            block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
+            for i in range(4096):
+                palette_index = block_states[i]
+                (blocks[i], data[i]) = palette_translated[palette_index]
+                palette_block_counts[palette_index] += 1
 
             # Turn the Data array into a 16x16x16 matrix, same as SkyLight
             section['Blocks'] = blocks.reshape((16, 16, 16))
@@ -614,9 +815,17 @@ class RegionSet(object):
 
                 logging.debug("Full traceback:", exc_info=1)
                 raise nbt.CorruptChunkError()
+
+            for i in unrecognized_palette_entries:
+                if palette_block_counts[i] > 0:
+                    palette_entry = section['Palette'][i]
+                    k = palette_entry['Name']
+                    if 'Properties' in palette_entry:
+                        k += " %s" % str(palette_entry['Properties'])
+                    unrecognized_block_types[k] = unrecognized_block_types.get(k, 0) + palette_block_counts[i]
        
-        for k in unrecognized_blocks:
-            logging.warning("Found %d blocks of unknown type %s" % (unrecognized_blocks[k], key))
+        for k in unrecognized_block_types:
+            logging.warning("Found %d blocks of unknown type %s" % (unrecognized_block_types[k], k))
 
         return chunk_data      
     
