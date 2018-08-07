@@ -668,6 +668,17 @@ class RegionSet(object):
                          (b[i+6] & 0xfc) >> 1,
                          ])
                     i += 7
+                elif bits_per_value == 9:
+                    result.extend([
+                        ((b[i+1] & 0x01) << 8) | b[0],
+                        ((b[i+2] & 0x03) << 7) | ((b[i+1] & 0xfe) >> 1),
+                        ((b[i+3] & 0x07) << 6) | ((b[i+2] & 0xfc) >> 2),
+                        ((b[i+4] & 0x0f) << 5) | ((b[i+3] & 0xf8) >> 3),
+                        ((b[i+5] & 0x1f) << 4) | ((b[i+4] & 0xf0) >> 4),
+                        ((b[i+6] & 0x3f) << 3) | ((b[i+5] & 0xe0) >> 5),
+                        ((b[i+7] & 0x7f) << 2) | ((b[i+6] & 0xc0) >> 6),
+                         (b[i+8] << 1) | ((b[i+7] & 0x80) >> 7),
+                        ])
                 else:
                     i += bits_per_value
             result = numpy.asarray(result, numpy.uint16)
