@@ -424,6 +424,7 @@ class RegionSet(object):
             'minecraft:red_brick_stairs': (108, 0),
             'minecraft:stone_brick_stairs': (109, 0),
             'minecraft:lily_pad': (111, 0),
+            'minecraft:nether_bricks': (112, 0),
             'minecraft:nether_brick_fence': (113, 0),
             'minecraft:nether_brick_stairs': (114, 0),
             'minecraft:nether_wart': (115, 0),
@@ -442,22 +443,6 @@ class RegionSet(object):
             'minecraft:nether_quartz_ore': (153, 0),
             'minecraft:hopper': (154, 0),
             'minecraft:quartz_stairs': (156, 0),
-            'minecraft:white_terracotta': (159, 0),
-            'minecraft:orange_terracotta': (159, 1),
-            'minecraft:magenta_terracotta': (159, 2),
-            'minecraft:light_blue_terracotta': (159, 3),
-            'minecraft:yellow_terracotta': (159, 4),
-            'minecraft:lime_terracotta': (159, 5),
-            'minecraft:pink_terracotta': (159, 6),
-            'minecraft:gray_terracotta': (159, 7),
-            'minecraft:light_gray_terracotta': (159, 8),
-            'minecraft:cyan_terracotta': (159, 9),
-            'minecraft:purple_terracotta': (159, 10),
-            'minecraft:blue_terracotta': (159, 11),
-            'minecraft:brown_terracotta': (159, 12),
-            'minecraft:green_terracotta': (159, 13),
-            'minecraft:red_terracotta': (159, 14),
-            'minecraft:black_terracotta': (159, 15),
             'minecraft:acacia_log': (162, 0),
             'minecraft:dark_oak_log': (162, 1),
             'minecraft:acacia_stairs': (163, 0),
@@ -487,52 +472,31 @@ class RegionSet(object):
             'minecraft:purpur_stairs': (203, 0),
             'minecraft:grass_path': (208, 0),
             'minecraft:magma_block': (213, 0),
-            'minecraft:white_concrete': (251, 0),
-            'minecraft:orange_concrete': (251, 1),
-            'minecraft:magenta_concrete': (251, 2),
-            'minecraft:light_blue_concrete': (251, 3),
-            'minecraft:yellow_concrete': (251, 4),
-            'minecraft:lime_concrete': (251, 5),
-            'minecraft:pink_concrete': (251, 6),
-            'minecraft:gray_concrete': (251, 7),
-            'minecraft:light_gray_concrete': (251, 8),
-            'minecraft:cyan_concrete': (251, 9),
-            'minecraft:purple_concrete': (251, 10),
-            'minecraft:blue_concrete': (251, 11),
-            'minecraft:brown_concrete': (251, 12),
-            'minecraft:green_concrete': (251, 13),
-            'minecraft:red_concrete': (251, 14),
-            'minecraft:black_concrete': (251, 15),
-
-            # The following blocks are underwater and are not yet rendered.
-            # To avoid spurious warnings, we'll treat them as air for now.
-            'minecraft:brain_coral': (0, 0),
-            'minecraft:brain_coral_block': (0, 0),
-            'minecraft:brain_coral_fan': (0, 0),
-            'minecraft:brain_coral_wall_fan': (0, 0),
-            'minecraft:bubble_column': (0, 0),
-            'minecraft:bubble_coral': (0, 0),
-            'minecraft:bubble_coral_block': (0, 0),
-            'minecraft:bubble_coral_fan': (0, 0),
-            'minecraft:bubble_coral_wall_fan': (0, 0),
-            'minecraft:fire_coral': (0, 0),
-            'minecraft:fire_coral_block': (0, 0),
-            'minecraft:fire_coral_fan': (0, 0),
-            'minecraft:fire_coral_wall_fan': (0, 0),
-            'minecraft:horn_coral': (0, 0),
-            'minecraft:horn_coral_block': (0, 0),
-            'minecraft:horn_coral_fan': (0, 0),
-            'minecraft:horn_coral_wall_fan': (0, 0),
-            'minecraft:kelp': (0, 0),
-            'minecraft:kelp_plant': (0, 0),
-            'minecraft:sea_pickle': (0, 0),
-            'minecraft:seagrass': (0, 0),
-            'minecraft:tall_seagrass': (0, 0),
-            'minecraft:tube_coral': (0, 0),
-            'minecraft:tube_coral_block': (0, 0),
-            'minecraft:tube_coral_fan': (0, 0),
-            'minecraft:tube_coral_wall_fan': (0, 0),
+            'minecraft:red_nether_bricks': (215, 0),
         }
+
+
+        # The following blocks are underwater and are not yet rendered.
+        # To avoid spurious warnings, we'll treat them as water for now.
+        treat_as_water = [
+             'brain_coral',  'brain_coral_block',  'brain_coral_fan',  'brain_coral_wall_fan',
+            'bubble_coral', 'bubble_coral_block', 'bubble_coral_fan', 'bubble_coral_wall_fan',
+              'fire_coral',   'fire_coral_block',   'fire_coral_fan',   'fire_coral_wall_fan',
+              'horn_coral',   'horn_coral_block',   'horn_coral_fan',   'horn_coral_wall_fan',
+              'tube_coral',   'tube_coral_block',   'tube_coral_fan',   'tube_coral_wall_fan',
+            'kelp', 'kelp_plant', 'sea_pickle', 'seagrass', 'tall_seagrass',
+            'bubble_column',
+        ]
+        for t in treat_as_water:
+            self._blockmap['minecraft:%s' % t] = (8, 0)
+
+        colors = [   'white', 'orange', 'magenta', 'light_blue',
+                    'yellow',   'lime',    'pink',       'gray',
+                'light_gray',   'cyan',  'purple',       'blue',
+                     'brown',  'green',     'red',      'black']
+        for i in range(len(colors)):
+            self._blockmap['minecraft:%s_terracotta' % colors[i]] = (159, i)
+            self._blockmap['minecraft:%s_concrete'   % colors[i]] = (251, i)
 
     # Re-initialize upon unpickling
     def __getstate__(self):
@@ -582,10 +546,10 @@ class RegionSet(object):
             if p['east']  == 'true': data |= 8
         elif key.endswith('_stairs'):
             facing = palette_entry['Properties']['facing']
-            if   facing == 'north': data |= 0x20 | 0x40
-            elif facing == 'west':  data |= 0x10 | 0x20
-            elif facing == 'south': data |= 0x08 | 0x10
-            elif facing == 'east':  data |= 0x08 | 0x40
+            if   facing == 'south': data |= 0x60
+            elif facing == 'east':  data |= 0x30
+            elif facing == 'north': data |= 0x18
+            elif facing == 'west':  data |= 0x48
         elif key.endswith('_door'):
             p = palette_entry['Properties']
             if p['hinge'] == 'left': data |= 0x10
@@ -779,19 +743,28 @@ class RegionSet(object):
                 # no exception raised: break out of the loop
                 break
 
-
         if data is None:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         level = data[1]['Level']
         chunk_data = level
 
+        # From the interior of a map to the edge, a chunk's status may be one of:
+        # - postprocessed (interior, or next to fullchunk)
+        # - fullchunk (next to decorated)
+        # - decorated (next to liquid_carved)
+        # - liquid_carved (next to carved)
+        # - carved (edge of world)
+        # - empty
+        # Empty is self-explanatory, and liquid_carved and carved seem to correspond
+        # to SkyLight not being calculated, which results in mostly-black chunks,
+        # so we'll just pretend they aren't there.
+        if chunk_data['Status'] in ("empty", "carved", "liquid_carved"):
+            raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
+
         # Turn the Biomes array into a 16x16 numpy array
         biomes = numpy.asarray(chunk_data['Biomes'])
-        if len(biomes) == 0:
-            biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
-        else:
-            biomes = biomes.reshape((16,16))
+        biomes = biomes.reshape((16,16))
         chunk_data['Biomes'] = biomes
 
         unrecognized_block_types = {}
