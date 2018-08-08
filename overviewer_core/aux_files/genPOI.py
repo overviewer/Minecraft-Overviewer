@@ -175,6 +175,10 @@ def handleEntities(rset, config, config_path, filters, markers):
                             markers[name]['raw'].append(d)
             except nbt.CorruptChunkError:
                 logging.warning("Ignoring POIs in corrupt chunk %d,%d", x,z)
+            except world.ChunkDoesntExist:
+                # iterate_chunks() doesn't inspect chunks and filter out
+                # placeholder ones. It's okay for this chunk to not exist.
+                pass
   
     else:
         buckets = [[] for i in range(numbuckets)];

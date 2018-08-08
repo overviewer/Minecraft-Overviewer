@@ -32,6 +32,7 @@ from PIL import Image
 
 from .util import roundrobin
 from . import nbt
+from . import world
 from .files import FileReplacer, get_fs_caps
 from .optimizeimages import optimize_image
 import rendermodes
@@ -1065,6 +1066,10 @@ class TileSet(object):
                 # A warning and traceback was already printed by world.py's
                 # get_chunk()
                 logging.debug("Skipping the render of corrupt chunk at %s,%s and moving on.", chunkx, chunkz)
+            except world.ChunkDoesntExist:
+                # Some chunks are present on disk but not fully initialized.
+                # This is okay.
+                pass
             except Exception, e:
                 logging.error("Could not render chunk %s,%s for some reason. This is likely a render primitive option error.", chunkx, chunkz)
                 logging.error("Full error was:", exc_info=1)
