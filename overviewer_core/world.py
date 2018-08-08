@@ -587,7 +587,7 @@ class RegionSet(object):
         bits_per_value = (len(long_array) * 64) / n
         if bits_per_value < 4 or 12 < bits_per_value:
             raise nbt.CorruptChunkError()
-        b = numpy.frombuffer(numpy.asarray(long_array), dtype=numpy.uint8)
+        b = numpy.frombuffer(numpy.asarray(long_array, dtype=numpy.uint64), dtype=numpy.uint8)
         if bits_per_value == 8:
             result = b.astype(numpy.uint16)
         else:
