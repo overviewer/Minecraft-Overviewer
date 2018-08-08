@@ -759,7 +759,7 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
-        if chunk_data['Status'] in ("empty", "carved", "liquid_carved"):
+        if chunk_data['Status'] in ("empty", "carved", "liquid_carved", "decorated"):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array
