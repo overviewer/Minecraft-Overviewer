@@ -820,11 +820,15 @@ class RegionSet(object):
         if chunk_data.get("Status", "") in ("empty", "carved", "liquid_carved", "decorated"):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
-        # Turn the Biomes array into a 16x16 numpy array
-        try:
-            biomes = numpy.frombuffer(chunk_data['Biomes'], dtype=numpy.uint8)
+        # Turn the Biomes array into a 16x16 numpy arra
+        if 'Biomes' in chunk_data:
+            biomes = chunk_data['Biomes']
+            if isinstance(biomes, str):
+                biomes = numpy.frombuffer(biomes, dtype=numpy.uint8)
+            else:
+                biomes = numpy.asarray(biomes)
             biomes = biomes.reshape((16,16))
-        except KeyError:
+        else:
             # worlds converted by Jeb's program may be missing the Biomes key
             biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
         chunk_data['Biomes'] = biomes
