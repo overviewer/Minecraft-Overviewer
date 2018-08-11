@@ -119,17 +119,6 @@ class World(object):
                      "World at %s is not compatible with Overviewer")
                     % self.worlddir)
 
-
-        # Check for versions of minecraft after the 17w47a changes
-        if 'Version' in data:
-            version = int(data['Version']["Id"])
-            if version < 1519: 
-                raise UnsupportedVersion(
-                    "Sorry, This version of Minecraft-Overviewer only works "
-                    "with versions of Minecraft 1.13 and newer\n"
-                    "This is due to a change in the map chunk format and changes "
-                    "to texture names")
-
         # This isn't much data, around 15 keys and values for vanilla worlds.
         self.leveldat = data
 
@@ -675,6 +664,75 @@ class RegionSet(object):
             result = numpy.asarray(result, numpy.uint16)
         return result
 
+    def _get_blockdata_v113(self, section, unrecognized_block_types):
+        # Translate each entry in the palette to a 1.2-era (block, data) int pair.
+        num_palette_entries = len(section['Palette'])
+        palette_translated = [] # (block, data) pairs, num_palette_entries in length
+        palette_block_counts = [] # ints, num_palette_entries in length
+        unrecognized_palette_entries = []
+        for i in range(num_palette_entries):
+            key = section['Palette'][i]
+            palette_block_counts.append(0)
+            try:
+                palette_translated.append(self._get_block(key))
+            except KeyError as e:
+                # Unknown block type? Track it, treat it as air, and move on.
+                unrecognized_palette_entries.append(i)
+                palette_translated.append(self._blockmap['minecraft:air'])
+
+        # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
+        blocks = numpy.zeros((4096,), dtype=numpy.uint16)
+        data = numpy.zeros((4096,), dtype=numpy.uint8)
+        block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
+        for i in range(4096):
+            palette_index = block_states[i]
+            (blocks[i], data[i]) = palette_translated[palette_index]
+            palette_block_counts[palette_index] += 1
+
+        # Turn the Data array into a 16x16x16 matrix, same as SkyLight
+        blocks  = blocks.reshape((16, 16, 16))
+        data = data.reshape((16, 16, 16))
+
+        for i in unrecognized_palette_entries:
+            if palette_block_counts[i] > 0:
+                palette_entry = section['Palette'][i]
+                k = palette_entry['Name']
+                if 'Properties' in palette_entry:
+                    k += " %s" % str(palette_entry['Properties'])
+                unrecognized_block_types[k] = unrecognized_block_types.get(k, 0) + palette_block_counts[i]
+
+        return (blocks, data)
+
+    def _get_blockdata_v112(self, section):
+        # Turn the Data array into a 16x16x16 matrix, same as SkyLight
+        data = numpy.frombuffer(section['Data'], dtype=numpy.uint8)
+        data = data.reshape((16,16,8))
+        data_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+        data_expanded[:,:,::2] = data & 0x0F
+        data_expanded[:,:,1::2] = (data & 0xF0) >> 4
+
+        # Turn the Blocks array into a 16x16x16 numpy matrix of shorts,
+        # adding in the additional block array if included.
+        blocks = numpy.frombuffer(section['Blocks'], dtype=numpy.uint8)
+        # Cast up to uint16, blocks can have up to 12 bits of data
+        blocks = blocks.astype(numpy.uint16)
+        blocks = blocks.reshape((16,16,16))
+        if "Add" in section:
+            # This section has additional bits to tack on to the blocks
+            # array. Add is a packed array with 4 bits per slot, so
+            # it needs expanding
+            additional = numpy.frombuffer(section['Add'], dtype=numpy.uint8)
+            additional = additional.astype(numpy.uint16).reshape((16,16,8))
+            additional_expanded = numpy.empty((16,16,16), dtype=numpy.uint16)
+            additional_expanded[:,:,::2] = (additional & 0x0F) << 8
+            additional_expanded[:,:,1::2] = (additional & 0xF0) << 4
+            blocks += additional_expanded
+            del additional
+            del additional_expanded
+            del section['Add'] # Save some memory
+
+        return (blocks, data_expanded)
+
     #@log_other_exceptions
     def get_chunk(self, x, z):
         """Returns a dictionary object representing the "Level" NBT Compound
@@ -759,46 +817,20 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
-        if chunk_data['Status'] in ("empty", "carved", "liquid_carved", "decorated"):
+        if chunk_data.get("Status", "") in ("empty", "carved", "liquid_carved", "decorated"):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array
-        biomes = numpy.asarray(chunk_data['Biomes'])
-        biomes = biomes.reshape((16,16))
+        try:
+            biomes = numpy.frombuffer(chunk_data['Biomes'], dtype=numpy.uint8)
+            biomes = biomes.reshape((16,16))
+        except KeyError:
+            # worlds converted by Jeb's program may be missing the Biomes key
+            biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
         chunk_data['Biomes'] = biomes
 
         unrecognized_block_types = {}
         for section in chunk_data['Sections']:
-
-            # Translate each entry in the palette to a 1.2-era (block, data) int pair.
-            num_palette_entries = len(section['Palette'])
-            palette_translated = [] # (block, data) pairs, num_palette_entries in length
-            palette_block_counts = [] # ints, num_palette_entries in length
-            unrecognized_palette_entries = []
-            for i in range(num_palette_entries):
-                key = section['Palette'][i]
-                palette_block_counts.append(0)
-                try:
-                    palette_translated.append(self._get_block(key))
-                except KeyError as e:
-                    # Unknown block type? Track it, treat it as air, and move on.
-                    unrecognized_palette_entries.append(i)
-                    palette_translated.append(self._blockmap['minecraft:air'])
-
-            # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
-            blocks = numpy.zeros((4096,), dtype=numpy.uint16)
-            data = numpy.zeros((4096,), dtype=numpy.uint8)
-            block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
-            for i in range(4096):
-                palette_index = block_states[i]
-                (blocks[i], data[i]) = palette_translated[palette_index]
-                palette_block_counts[palette_index] += 1
-
-            # Turn the Data array into a 16x16x16 matrix, same as SkyLight
-            section['Blocks'] = blocks.reshape((16, 16, 16))
-            section['Data'] = data.reshape((16, 16, 16))
-            del blocks
-            del data
 
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
@@ -819,6 +851,13 @@ class RegionSet(object):
                 blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
                 del blocklight
                 section['BlockLight'] = blocklight_expanded
+
+                if 'Palette' in section:
+                    (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types)
+                else:
+                    (blocks, data) = self._get_blockdata_v112(section)
+                (section['Blocks'], section['Data']) = (blocks, data)
+
             except ValueError:
                 # iv'e seen at least 1 case where numpy raises a value error during the reshapes.  i'm not
                 # sure what's going on here, but let's treat this as a corrupt chunk error
@@ -827,16 +866,8 @@ class RegionSet(object):
                 logging.debug("Full traceback:", exc_info=1)
                 raise nbt.CorruptChunkError()
 
-            for i in unrecognized_palette_entries:
-                if palette_block_counts[i] > 0:
-                    palette_entry = section['Palette'][i]
-                    k = palette_entry['Name']
-                    if 'Properties' in palette_entry:
-                        k += " %s" % str(palette_entry['Properties'])
-                    unrecognized_block_types[k] = unrecognized_block_types.get(k, 0) + palette_block_counts[i]
-       
         for k in unrecognized_block_types:
-            logging.warning("Found %d blocks of unknown type %s" % (unrecognized_block_types[k], k))
+            logging.debug("Found %d blocks of unknown type %s" % (unrecognized_block_types[k], k))
 
         return chunk_data      
     
