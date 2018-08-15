@@ -1005,16 +1005,11 @@ def saplings(self, blockid, data):
 # bedrock
 block(blockid=7, top_image="assets/minecraft/textures/block/bedrock.png")
 
-@material(blockid=8, data=range(16), fluid=True, transparent=True, nospawn=True)
-def water(self, blockid, data):
-    watertex = self.load_water()
-    return self.build_block(watertex, watertex)
-
-# other water, glass, and ice (no inner surfaces)
+# water, glass, and ice (no inner surfaces)
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[9, 20, 79, 95], data=range(512), fluid=(9,), transparent=True, nospawn=True, solid=(79, 20, 95))
+@material(blockid=[8, 9, 20, 79, 95], data=range(512), fluid=(8, 9), transparent=True, nospawn=True, solid=(79, 20, 95))
 def no_inner_surfaces(self, blockid, data):
-    if blockid == 9:
+    if blockid == 8 or blockid == 9:
         texture = self.load_water()
     elif blockid == 20:
         texture = self.load_image_texture("assets/minecraft/textures/block/glass.png")
@@ -1024,7 +1019,7 @@ def no_inner_surfaces(self, blockid, data):
         texture = self.load_image_texture("assets/minecraft/textures/block/ice.png")
 
     # now that we've used the lower 4 bits to get color, shift down to get the 5 bits that encode face hiding
-    if blockid != 9: # water doesn't have a shifted pseudodata
+    if not (blockid == 8 or blockid == 9): # water doesn't have a shifted pseudodata
         data = data >> 4
 
     if (data & 0b10000) == 16:

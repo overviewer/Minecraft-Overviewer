@@ -283,22 +283,12 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         if (get_data(state, BLOCKS, x, y+1, z) == 78)
             return 0x10;
         return ancilData;
-    } else if (state->block == 9) { /* water */
+    } else if (state->block == 8 || state->block == 9) { /* water */
+        data = check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f;
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
-        if (ancilData == 0) { /* static water */
-            if (get_data(state, BLOCKS, x, y+1, z) == 9) {
-                data = 0;
-            } else { 
-                data = 16;
-            }
-            return data; /* = 0b10000 */
-        } else if ((ancilData > 0) && (ancilData < 8)) { /* flowing water */
-            data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | 0x10;
-            return data;
-        } else if (ancilData >= 8) { /* falling water */
-            data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f);
-            return data;
-        }
+        if (get_data(state, BLOCKS, x, y+1, z) != state->block)
+            data |= 0x10;
+        return data;
     } else if ((state->block == 20) || (state->block == 79) || (state->block == 95)) { /* glass and ice and stained glass*/
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks
          * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an unsigned char, 
@@ -708,7 +698,8 @@ chunk_render(PyObject *self, PyObject *args) {
                      * grass, water, glass, chest, restone wire,
                      * ice, fence, portal, iron bars, glass panes,
                      * trapped chests, stairs */
-                    if ((state.block ==  2) || (state.block ==  9) ||
+                    if ((state.block ==  2) ||
+                        (state.block ==  8) || (state.block ==  9) ||
                         (state.block == 20) || (state.block == 54) ||
                         (state.block == 55) ||
                         /* doors */
