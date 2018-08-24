@@ -38,3 +38,5 @@ overviewer_core/src/primitives.h
 
 # PyCharm directory
 .idea
+/.vs/Minecraft-Overviewer/v15/.suo
+/.vs
