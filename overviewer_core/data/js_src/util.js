@@ -324,9 +324,9 @@ overviewer.util = {
 
             if (typeof(obj.spawn) == "object") {
                 var latlng = overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj);
-                overviewer.collections.centers[obj.world] = [ latlng, 1 ];
+                overviewer.collections.centers[obj.world] = [ latlng, obj.defaultZoom ];
             } else {
-                overviewer.collections.centers[obj.world] = [ [0, 0], 1 ];
+                overviewer.collections.centers[obj.world] = [ [0, 0], obj.defaultZoom ];
             }
 
         });
@@ -339,7 +339,7 @@ overviewer.util = {
         overviewer.current_world = overviewerConfig.worlds[0];
 
         //myLayer.addTo(overviewer.map);
-        overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), 1);
+        overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), tset.defaultZoom);
 
         if (!overviewer.util.initHash()) {
             overviewer.worldCtrl.onChange({target: {value: overviewer.current_world}});
