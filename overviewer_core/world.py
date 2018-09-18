@@ -654,49 +654,34 @@ class RegionSet(object):
             'minecraft:comparator': (149, 0), # temporary map all comparators to inactive
             'minecraft:armor_stand': (416, 0),
             # The following blocks are underwater and are not yet rendered.
-            # To avoid spurious warnings, we'll treat them as air for now.
-            'minecraft:brain_coral': (0, 0),
-            'minecraft:brain_coral_block': (0, 0),
-            'minecraft:brain_coral_fan': (0, 0),
-            'minecraft:brain_coral_wall_fan': (0, 0),
-            'minecraft:bubble_column': (0, 0),
-            'minecraft:bubble_coral': (0, 0),
-            'minecraft:bubble_coral_block': (0, 0),
-            'minecraft:bubble_coral_fan': (0, 0),
-            'minecraft:bubble_coral_wall_fan': (0, 0),
-            'minecraft:fire_coral': (0, 0),
-            'minecraft:fire_coral_block': (0, 0),
-            'minecraft:fire_coral_fan': (0, 0),
-            'minecraft:fire_coral_wall_fan': (0, 0),
-            'minecraft:horn_coral': (0, 0),
-            'minecraft:horn_coral_block': (0, 0),
-            'minecraft:horn_coral_fan': (0, 0),
-            'minecraft:horn_coral_wall_fan': (0, 0),
-            'minecraft:kelp': (0, 0),
-            'minecraft:kelp_plant': (0, 0),
-            'minecraft:sea_pickle': (0, 0),
-            'minecraft:seagrass': (0, 0),
-            'minecraft:tall_seagrass': (0, 0),
-            'minecraft:tube_coral': (0, 0),
-            'minecraft:tube_coral_block': (0, 0),
-            'minecraft:tube_coral_fan': (0, 0),
-            'minecraft:tube_coral_wall_fan': (0, 0),
+            # To avoid spurious warnings, we'll treat them as water for now.
+            'minecraft:brain_coral': (8, 0),
+            'minecraft:brain_coral_block': (8, 0),
+            'minecraft:brain_coral_fan': (8, 0),
+            'minecraft:brain_coral_wall_fan': (8, 0),
+            'minecraft:bubble_column': (8, 0),
+            'minecraft:bubble_coral': (8, 0),
+            'minecraft:bubble_coral_block': (8, 0),
+            'minecraft:bubble_coral_fan': (8, 0),
+            'minecraft:bubble_coral_wall_fan': (8, 0),
+            'minecraft:fire_coral': (8, 0),
+            'minecraft:fire_coral_block': (8, 0),
+            'minecraft:fire_coral_fan': (8, 0),
+            'minecraft:fire_coral_wall_fan': (8, 0),
+            'minecraft:horn_coral': (8, 0),
+            'minecraft:horn_coral_block': (8, 0),
+            'minecraft:horn_coral_fan': (8, 0),
+            'minecraft:horn_coral_wall_fan': (8, 0),
+            'minecraft:kelp': (8, 0),
+            'minecraft:kelp_plant': (8, 0),
+            'minecraft:sea_pickle': (8, 0),
+            'minecraft:seagrass': (8, 0),
+            'minecraft:tall_seagrass': (8, 0),
+            'minecraft:tube_coral': (8, 0),
+            'minecraft:tube_coral_block': (8, 0),
+            'minecraft:tube_coral_fan': (8, 0),
+            'minecraft:tube_coral_wall_fan': (8, 0),
         }
-
-
-        # The following blocks are underwater and are not yet rendered.
-        # To avoid spurious warnings, we'll treat them as water for now.
-        treat_as_water = [
-             'brain_coral',  'brain_coral_block',  'brain_coral_fan',  'brain_coral_wall_fan',
-            'bubble_coral', 'bubble_coral_block', 'bubble_coral_fan', 'bubble_coral_wall_fan',
-              'fire_coral',   'fire_coral_block',   'fire_coral_fan',   'fire_coral_wall_fan',
-              'horn_coral',   'horn_coral_block',   'horn_coral_fan',   'horn_coral_wall_fan',
-              'tube_coral',   'tube_coral_block',   'tube_coral_fan',   'tube_coral_wall_fan',
-            'kelp', 'kelp_plant', 'sea_pickle', 'seagrass', 'tall_seagrass',
-            'bubble_column',
-        ]
-        for t in treat_as_water:
-            self._blockmap['minecraft:%s' % t] = (8, 0)
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
                     'yellow',   'lime',    'pink',       'gray',
