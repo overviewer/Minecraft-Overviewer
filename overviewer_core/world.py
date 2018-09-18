@@ -651,15 +651,8 @@ class RegionSet(object):
             'minecraft:black_glazed_terracotta': (250, 0),
 
             'minecraft:structure_block': (255, 0),
-            'minecraft:sign': (323, 0),
             'minecraft:comparator': (149, 0), # temporary map all comparators to inactive
-            'minecraft:prismarine_shard': (409, 0),
-            'minecraft:prismarine_crystals': (410, 0),
-            'minecraft:rabbit_stew': (413, 0),
-            'minecraft:rabbit_foot': (414, 0),
-            'minecraft:rabbit_hide': (415, 0),
             'minecraft:armor_stand': (416, 0),
-            'minecraft:mutton': (423, 0),
             # The following blocks are underwater and are not yet rendered.
             # To avoid spurious warnings, we'll treat them as air for now.
             'minecraft:brain_coral': (0, 0),
