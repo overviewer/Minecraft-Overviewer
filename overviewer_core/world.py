@@ -85,14 +85,14 @@ class World(object):
     and the parsed level.dat data
 
     """
-    
+
     def __init__(self, worlddir):
         self.worlddir = worlddir
 
         # This list, populated below, will hold RegionSet files that are in
         # this world
         self.regionsets = []
-       
+
         # The level.dat file defines a minecraft world, so assert that this
         # object corresponds to a world on disk
         if not os.path.exists(os.path.join(self.worlddir, "level.dat")):
@@ -105,7 +105,7 @@ class World(object):
         # update: 0,50,0 is the default spawn, and may be valid is some cases
         # more info is needed
         data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-            
+
 
         # Hard-code this to only work with format version 19133, "Anvil"
         if not ('version' in data and data['version'] == 19133):
@@ -139,7 +139,7 @@ class World(object):
                     self.regionsets.insert(0, rset)
                 else:
                     self.regionsets.append(rset)
-        
+
         # TODO move a lot of the following code into the RegionSet
 
 
@@ -149,13 +149,13 @@ class World(object):
         except KeyError:
             # but very old ones might not? so we'll just go with the world dir name if they don't
             self.name = os.path.basename(os.path.realpath(self.worlddir))
-        
+
         try:
             # level.dat also has a RandomSeed attribute
             self.seed = data['RandomSeed']
         except KeyError:
             self.seed = 0 # oh well
-       
+
         # TODO figure out where to handle regionlists
 
     def get_regionsets(self):
@@ -168,21 +168,21 @@ class World(object):
             logging.debug("You asked for %r, and I found the following candids: %r", index, candids)
             if len(candids) > 0:
                 return candids[0]
-            else: 
+            else:
                 return None
 
 
     def get_level_dat_data(self):
         # Return a copy
         return dict(self.data)
-      
+
     def find_true_spawn(self):
         """Returns the spawn point for this world. Since there is one spawn
         point for a world across all dimensions (RegionSets), this method makes
         sense as a member of the World class.
-        
+
         Returns (x, y, z)
-        
+
         """
         # The spawn Y coordinate is almost always the default of 64.  Find the
         # first air block above the stored spawn location for the true spawn
@@ -193,17 +193,17 @@ class World(object):
         disp_spawnX = spawnX = data['SpawnX']
         spawnY = data['SpawnY']
         disp_spawnZ = spawnZ = data['SpawnZ']
-   
-        ## The chunk that holds the spawn location 
+
+        ## The chunk that holds the spawn location
         chunkX = spawnX//16
         chunkZ = spawnZ//16
-        
+
         ## clamp spawnY to a sane value, in-chunk value
         if spawnY < 0:
             spawnY = 0
         if spawnY > 255:
             spawnY = 255
-        
+
         # Open up the chunk that the spawn is in
         regionset = self.get_regionset(None)
         if not regionset:
@@ -212,7 +212,7 @@ class World(object):
             chunk = regionset.get_chunk(chunkX, chunkZ)
         except ChunkDoesntExist:
             return (spawnX, spawnY, spawnZ)
-    
+
         def getBlock(y):
             "This is stupid and slow but I don't care"
             targetSection = spawnY//16
@@ -251,7 +251,7 @@ class RegionSet(object):
         directory.
 
         regiondir is a path to a directory containing region files.
-        
+
         rel is the relative path of this directory, with respect to the
         world directory.
 
@@ -263,7 +263,7 @@ class RegionSet(object):
         self.rel = os.path.normpath(rel)
         logging.debug("regiondir is %r" % self.regiondir)
         logging.debug("rel is %r" % self.rel)
-        
+
         # we want to get rid of /regions, if it exists
         if self.rel.endswith(os.path.normpath("/region")):
             self.type = self.rel[0:-len(os.path.normpath("/region"))]
@@ -275,13 +275,13 @@ class RegionSet(object):
             self.type = "__unknown"
 
         logging.debug("Scanning regions.  Type is %r" % self.type)
-        
+
         # This is populated below. It is a mapping from (x,y) region coords to filename
         self.regionfiles = {}
 
         # This holds a cache of open regionfile objects
         self.regioncache = cache.LRUCache(size=16, destructor=lambda regionobj: regionobj.close())
-        
+
         for x, y, regionfile in self._iterate_regionfiles():
             # regionfile is a pathname
             self.regionfiles[(x,y)] = (regionfile, os.path.getmtime(regionfile))
@@ -1094,14 +1094,14 @@ class RegionSet(object):
         for k in unrecognized_block_types:
             logging.debug("Found %d blocks of unknown type %s" % (unrecognized_block_types[k], k))
 
-        return chunk_data      
-    
+        return chunk_data
+
 
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates
         over tuples of integers (x,z,mtime) for each chunk.  Other chunk data
         is not returned here.
-        
+
         """
 
         for (regionx, regiony), (regionfile, filemtime) in self.regionfiles.iteritems():
@@ -1117,7 +1117,7 @@ class RegionSet(object):
         """Returns an iterator over all chunk metadata in this world. Iterates
         over tuples of integers (x,z,mtime) for each chunk.  Other chunk data
         is not returned here.
-        
+
         """
 
         for (regionx, regiony), (regionfile, filemtime) in self.regionfiles.iteritems():
@@ -1138,7 +1138,7 @@ class RegionSet(object):
         """Returns a chunk's mtime, or False if the chunk does not exist.  This
         is therefore a dual purpose method. It corrects for the given north
         direction as described in the docs for get_chunk()
-        
+
         """
 
         regionfile = self._get_region_path(x,z)
@@ -1161,9 +1161,9 @@ class RegionSet(object):
         """
         (regionfile,filemtime) = self.regionfiles.get((chunkX//32, chunkY//32),(None, None))
         return regionfile
-            
+
     def _iterate_regionfiles(self):
-        """Returns an iterator of all of the region files, along with their 
+        """Returns an iterator of all of the region files, along with their
         coordinates
 
         Returns (regionx, regiony, filename)"""
@@ -1207,7 +1207,7 @@ class RegionSetWrapper(object):
         return self._r.iterate_newer_chunks(filemtime)
     def get_chunk_mtime(self, x, z):
         return self._r.get_chunk_mtime(x,z)
-    
+
 # see RegionSet.rotate.  These values are chosen so that they can be
 # passed directly to rot90; this means that they're the number of
 # times to rotate by 90 degrees CCW
@@ -1220,13 +1220,13 @@ class RotatedRegionSet(RegionSetWrapper):
     """A regionset, only rotated such that north points in the given direction
 
     """
-    
+
     # some class-level rotation constants
     _NO_ROTATION =               lambda x,z: (x,z)
     _ROTATE_CLOCKWISE =          lambda x,z: (-z,x)
     _ROTATE_COUNTERCLOCKWISE =   lambda x,z: (z,-x)
     _ROTATE_180 =                lambda x,z: (-x,-z)
-    
+
     # These take rotated coords and translate into un-rotated coords
     _unrotation_funcs = [
         _NO_ROTATION,
@@ -1234,7 +1234,7 @@ class RotatedRegionSet(RegionSetWrapper):
         _ROTATE_180,
         _ROTATE_CLOCKWISE,
     ]
-    
+
     # These translate un-rotated coordinates into rotated coordinates
     _rotation_funcs = [
         _NO_ROTATION,
@@ -1242,7 +1242,7 @@ class RotatedRegionSet(RegionSetWrapper):
         _ROTATE_180,
         _ROTATE_COUNTERCLOCKWISE,
     ]
-    
+
     def __init__(self, rsetobj, north_dir):
         self.north_dir = north_dir
         self.unrotate = self._unrotation_funcs[north_dir]
@@ -1250,14 +1250,14 @@ class RotatedRegionSet(RegionSetWrapper):
 
         super(RotatedRegionSet, self).__init__(rsetobj)
 
-    
+
     # Re-initialize upon unpickling. This is needed because we store a couple
     # lambda functions as instance variables
     def __getstate__(self):
         return (self._r, self.north_dir)
     def __setstate__(self, args):
         self.__init__(args[0], args[1])
-    
+
     def get_chunk(self, x, z):
         x,z = self.unrotate(x,z)
         chunk_data = dict(super(RotatedRegionSet, self).get_chunk(x,z))
@@ -1275,7 +1275,7 @@ class RotatedRegionSet(RegionSetWrapper):
                 array = numpy.swapaxes(array, 0,2)
                 section[arrayname] = array
         chunk_data['Sections'] = newsections
-        
+
         # same as above, for biomes (Z/X indexed)
         biomes = numpy.swapaxes(chunk_data['Biomes'], 0, 1)
         biomes = numpy.rot90(biomes, self.north_dir)
@@ -1388,7 +1388,7 @@ class CachedRegionSet(RegionSetWrapper):
             cache[key] = retval
 
         return retval
-        
+
 
 def get_save_dir():
     """Returns the path to the local saves directory
@@ -1397,7 +1397,7 @@ def get_save_dir():
       * at $HOME/.minecraft/saves/
 
     """
-    
+
     savepaths = []
     if "APPDATA" in os.environ:
         savepaths += [os.path.join(os.environ['APPDATA'], ".minecraft", "saves")]
@@ -1433,7 +1433,7 @@ def get_worlds():
                         'Time': 0,
                         'IsCorrupt': True}
 
-    
+
     for dir in os.listdir("."):
         world_dat = os.path.join(dir, "level.dat")
         if not os.path.exists(world_dat): continue
