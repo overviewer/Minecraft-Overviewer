@@ -457,7 +457,7 @@ class RegionSet(object):
             'minecraft:nether_portal': (90, 0),
             'minecraft:jack_o_lantern': (91, 0),
             'minecraft:cake': (92, 0),
-            'minecraft:repeater': (93,0), # temporarily map to inactive repeater
+            'minecraft:repeater': (93,0),
             'minecraft:oak_trapdoor': (96, 0),
             'minecraft:spruce_trapdoor': (96, 0), #wrong
             'minecraft:birch_trapdoor': (96, 0),
@@ -522,6 +522,7 @@ class RegionSet(object):
             'minecraft:trapped_chest': (146, 0),
             'minecraft:light_weighted_pressure_plate': (147, 0),
             'minecraft:heavy_weighted_pressure_plate': (148, 0),
+            'minecraft:comparator': (149, 0),
             'minecraft:daylight_detector': (151, 0),
             'minecraft:redstone_block': (152, 0),
             'minecraft:nether_quartz_ore': (153, 0),
@@ -651,8 +652,9 @@ class RegionSet(object):
             'minecraft:black_glazed_terracotta': (250, 0),
 
             'minecraft:structure_block': (255, 0),
-            'minecraft:comparator': (149, 0), # temporary map all comparators to inactive
+
             'minecraft:armor_stand': (416, 0),
+
             # The following blocks are underwater and are not yet rendered.
             # To avoid spurious warnings, we'll treat them as water for now.
             'minecraft:brain_coral': (8, 0),
@@ -706,9 +708,17 @@ class RegionSet(object):
     def _get_block(self, palette_entry):
         key = palette_entry['Name']
         (block, data) = self._blockmap[key]
-        if key == 'minecraft:redstone_ore':
-            if palette_entry['Properties']['lit']:
+        if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
+            if palette_entry['Properties']['lit'] == 'true':
                 block += 1
+        elif key in ['minecraft:comparator', 'minecraft:repeater']:
+            if palette_entry['Properties']['powered'] == 'true':
+                block += 1
+        elif key == 'minecraft:daylight_detector':
+            if palette_entry['Properties']['inverted'] == 'true':
+                block = 178
+        elif key == 'minecraft:redstone_wire':
+            data = palette_entry['Properties']['power']
         elif key == 'minecraft:grass_block':
             if palette_entry['Properties']['snowy']:
                 data = 0x10
