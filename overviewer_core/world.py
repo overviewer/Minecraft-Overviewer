@@ -439,8 +439,8 @@ class RegionSet(object):
             'minecraft:iron_door': (71, 0),
             'minecraft:oak_pressure_plate': (72, 0),
             'minecraft:redstone_ore': (73, 0),
-            'minecraft:redstone_wall_torch': (75, 0), #not rendering
-            'minecraft:redstone_torch': (76, 0), #not rendering
+            'minecraft:redstone_wall_torch': (75, 0),
+            'minecraft:redstone_torch': (75, 5),
             'minecraft:stone_button': (77, 0),
             'minecraft:snow': (78, 0),
             'minecraft:ice': (79, 0),
@@ -741,7 +741,6 @@ class RegionSet(object):
                 data |= 0x08
         elif key == 'minecraft_wheat':
             data = int(palette_entry['Properties']['age'])
-        elif key == 'minecraft:wall_torch':
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
@@ -756,6 +755,11 @@ class RegionSet(object):
                 data |= 4
             elif axis == 'z':
                 data |= 8
+        elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch', 'minecraft:wall_torch']:
+            if palette_entry['Properties']['lit'] == 'true':
+                block += 1
+            facing = palette_entry['Properties'].get('facing', 'up')
+            data = {'east': 1, 'west': 2, 'south': 3, 'north': 4, 'up': 5}[facing]
         elif key == 'minecraft:vine':
             p = palette_entry['Properties']
             if p['south'] == 'true': data |= 1
