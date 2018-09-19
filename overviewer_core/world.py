@@ -728,6 +728,8 @@ class RegionSet(object):
         elif key in ['minecraft:comparator', 'minecraft:repeater']:
             if palette_entry['Properties']['powered'] == 'true':
                 block += 1
+            facing = palette_entry['Properties']['facing']
+            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
         elif key == 'minecraft:daylight_detector':
             if palette_entry['Properties']['inverted'] == 'true':
                 block = 178
