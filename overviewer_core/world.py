@@ -520,6 +520,7 @@ class RegionSet(object):
             'minecraft:flower_pot': (140, 0),
             'minecraft:carrots': (141, 0),
             'minecraft:potatoes': (142, 0),
+            'minecraft:oak_button': (143, 0),
             'minecraft:skeleton_wall_skull': (144, 0),
             'minecraft:wither_skeleton_wall_skull': (144, 1),
             'minecraft:zombie_wall_head': (144, 2),
