@@ -640,6 +640,7 @@ class RegionSet(object):
             'minecraft:gray_shulker_box': (226, 0),
             'minecraft:light_gray_shulker_box': (227, 0),
             'minecraft:cyan_shulker_box': (228, 0),
+            'minecraft:shulker_box': (229, 0), #wrong (purple)
             'minecraft:purple_shulker_box': (229, 0),
             'minecraft:blue_shulker_box': (230, 0),
             'minecraft:brown_shulker_box': (231, 0),
@@ -754,6 +755,9 @@ class RegionSet(object):
             data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
         elif key == 'minecraft:nether_wart':
             data = int(palette_entry['Properties']['age'])
+        elif key.endswith('shulker_box') or key in ['minecraft:observer']:
+            facing = palette_entry['Properties']['facing']
+            data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
         elif key.endswith('_log'):
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
