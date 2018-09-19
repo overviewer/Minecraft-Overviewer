@@ -404,7 +404,7 @@ class RegionSet(object):
             'minecraft:iron_block': (42, 0),
             'minecraft:stone_slab': (44, 0),
             'minecraft:sandstone_slab': (44, 1),
-            'minecraft:wood_slab': (44, 2),
+            'minecraft:oak_slab': (44, 2),
             'minecraft:cobblestone_slab': (44, 3),
             'minecraft:brick_slab': (44, 4),
             'minecraft:stone_brick_slab': (44, 5),
@@ -743,6 +743,9 @@ class RegionSet(object):
                 data |= 0x08
         elif key == 'minecraft_wheat':
             data = int(palette_entry['Properties']['age'])
+        elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab', 'minecraft:oak_slab', 'minecraft:cobblestone_slab', 'minecraft:brick_slab', 'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab', 'minecraft:quartz_slab']:
+            if palette_entry['Properties']['type'] == 'top':
+                data += 8
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
