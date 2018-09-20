@@ -767,7 +767,7 @@ class RegionSet(object):
             data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
         elif key == 'minecraft:nether_wart':
             data = int(palette_entry['Properties']['age'])
-        elif key.endswith('shulker_box') or key in ['minecraft:observer']:
+        elif key.endswith('shulker_box') or key.endswith('piston') or key in ['minecraft:observer']:
             facing = palette_entry['Properties']['facing']
             data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
         elif key.endswith('_log'):
