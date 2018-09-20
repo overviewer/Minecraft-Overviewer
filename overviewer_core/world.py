@@ -521,13 +521,13 @@ class RegionSet(object):
             'minecraft:carrots': (141, 0),
             'minecraft:potatoes': (142, 0),
             'minecraft:oak_button': (143, 0),
-            'minecraft:skeleton_wall_skull': (144, 0),
-            'minecraft:wither_skeleton_wall_skull': (144, 1),
-            'minecraft:zombie_wall_head': (144, 2),
-            'minecraft:player_wall_head': (144, 3),
-            'minecraft:creeper_wall_head': (144, 4),
-            'minecraft:dragon_wall_head': (144, 5),
-            'minecraft:anvil': (145, 0),
+            'minecraft:skeleton_wall_skull': (144, 0), #not rendering
+            'minecraft:wither_skeleton_wall_skull': (144, 1), #not rendering
+            'minecraft:zombie_wall_head': (144, 2), #not rendering
+            'minecraft:player_wall_head': (144, 3), #not rendering
+            'minecraft:creeper_wall_head': (144, 4), #not rendering
+            'minecraft:dragon_wall_head': (144, 5), #not rendering
+            'minecraft:anvil': (145, 0), #not rendering
             'minecraft:trapped_chest': (146, 0),
             'minecraft:light_weighted_pressure_plate': (147, 0),
             'minecraft:heavy_weighted_pressure_plate': (148, 0),
@@ -641,7 +641,7 @@ class RegionSet(object):
             'minecraft:gray_shulker_box': (226, 0),
             'minecraft:light_gray_shulker_box': (227, 0),
             'minecraft:cyan_shulker_box': (228, 0),
-            'minecraft:shulker_box': (229, 0), #wrong (purple)
+            'minecraft:shulker_box': (229, 0), #wrong color
             'minecraft:purple_shulker_box': (229, 0),
             'minecraft:blue_shulker_box': (230, 0),
             'minecraft:brown_shulker_box': (231, 0),
@@ -667,7 +667,7 @@ class RegionSet(object):
 
             'minecraft:structure_block': (255, 0),
 
-            'minecraft:armor_stand': (416, 0),
+            'minecraft:armor_stand': (416, 0), #not rendering
 
             # The following blocks are underwater and are not yet rendered.
             # To avoid spurious warnings, we'll treat them as water for now.
@@ -706,8 +706,8 @@ class RegionSet(object):
         for i in range(len(colors)):
             self._blockmap['minecraft:%s_stained_glass'      % colors[i]] = (95, i)
             self._blockmap['minecraft:%s_stained_glass_pane' % colors[i]] = (160, i)
-            self._blockmap['minecraft:%s_banner'             % colors[i]] = (176, i)
-            self._blockmap['minecraft:%s_wall_banner'        % colors[i]] = (177, i)
+            self._blockmap['minecraft:%s_banner'             % colors[i]] = (176, i) #not rendering
+            self._blockmap['minecraft:%s_wall_banner'        % colors[i]] = (177, i) #not rendering
             self._blockmap['minecraft:%s_concrete'           % colors[i]] = (251, i)
             self._blockmap['minecraft:%s_concrete_powder'    % colors[i]] = (252, i)
 
