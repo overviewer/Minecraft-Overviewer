@@ -67,6 +67,48 @@ overviewer.util = {
                 return this.coord_box;
             }
         });
+        overviewer.progressClass = L.Control.extend({
+            options: {
+                position: 'bottomright'
+            },
+            initialize: function() {
+                this.progress = L.DomUtil.create("div", "progress");
+                this.progress.innerHTML = 'Current render progress';
+                this.progress.style.visibility = 'hidden';
+            },
+            update: function() {
+                fetch("progress.json")
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.progress.innerHTML = data.message;
+                        if (data.update > 0) {
+                            setTimeout(this.update.bind(this), data.update);
+                            this.progress.style.visibility = '';
+                        } else {
+                            setTimeout(this.update.bind(this), 60000);
+                            this.progress.innerHTML = 'Hidden - data.update < 0';
+                            this.progress.style.visibility = 'hidden';
+                        }
+                    })
+                    .catch(error => {
+                        this.progress.innerHtml = 'Hidden - no data';
+                        this.progress.style.visibility = 'hidden';
+                        console.info('Error getting progress; hiding control', error);
+                    });
+            },
+            onAdd: function() {
+                // Not all browsers may have this
+                if ('fetch' in window) {
+                    setTimeout(this.update.bind(this), 0);
+                }
+                return this.progress;
+            }
+        });
         overviewer.compassClass = L.Control.extend({
             initialize: function(imagedict, options) {
                 L.Util.setOptions(this, options);
@@ -247,6 +289,7 @@ overviewer.util = {
         overviewer.compass = new overviewer.compassClass(
             overviewerConfig.CONST.image.compass);
         overviewer.coord_box = new overviewer.coordBoxClass();
+        overviewer.progress = new overviewer.progressClass();
 
 
         overviewerConfig.worlds.forEach(function(world_name, idx) {
@@ -258,6 +301,7 @@ overviewer.util = {
         overviewer.compass.addTo(overviewer.map);
         overviewer.worldCtrl.addTo(overviewer.map);
         overviewer.coord_box.addTo(overviewer.map);
+        overviewer.progress.addTo(overviewer.map);
 
         overviewer.map.on('mousemove', function(ev) {
             overviewer.coord_box.render(ev.latlng);
