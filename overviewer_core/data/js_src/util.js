@@ -338,8 +338,8 @@ overviewer.util = {
             .addTo(overviewer.map);
         overviewer.current_world = overviewerConfig.worlds[0];
 
-        //myLayer.addTo(overviewer.map);
-        overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), tset.defaultZoom);
+        let center = overviewer.collections.centers[overviewer.current_world];
+        overviewer.map.setView(center[0], center[1]);
 
         if (!overviewer.util.initHash()) {
             overviewer.worldCtrl.onChange({target: {value: overviewer.current_world}});
