@@ -165,7 +165,7 @@ def handleEntities(rset, config, config_path, filters, markers):
         for (x, z, mtime) in rset.iterate_chunks():
             try:
                 data = rset.get_chunk(x, z)
-                for poi in itertools.chain(data['TileEntities'], data['Entities']):
+                for poi in itertools.chain(data.get('TileEntities', []), data.get('Entities', [])):
                     if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign': # kill me
                         poi = signWrangler(poi)
                     for name, __, filter_function, __, __, __ in filters:
@@ -346,7 +346,7 @@ def handlePlayers(worldpath, filters, markers):
             else:
                 dimension = 0
 
-            if data['Dimension'] == dimension:
+            if data.get('Dimension', 0) == dimension:
                 result = filter_function(data)
                 if result:
                     d = create_marker_from_filter_result(data, result)
