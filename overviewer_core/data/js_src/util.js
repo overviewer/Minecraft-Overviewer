@@ -349,7 +349,9 @@ overviewer.util = {
                                 m_icon = icon;
                             }
                             let new_marker = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
-                            new_marker.bindPopup(db.text);
+                            if (marker_entry.createInfoWindow) {
+                                new_marker.bindPopup(db.text);
+                            }
                             marker_group.addLayer(new_marker);
                         }
                         obj.marker_groups[marker_entry.displayName] = marker_group;
