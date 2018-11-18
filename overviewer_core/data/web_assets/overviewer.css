@@ -173,3 +173,9 @@ div.worldcontrol select {
     padding: 0 5px;
     color: #333;
 }
+
+.ov-marker {
+    position:relative;
+    margin-left:-50%;
+    margin-top:-50%;
+}
