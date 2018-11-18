@@ -4071,26 +4071,83 @@ def command_block(self, blockid, data):
 
 # beacon block
 # at the moment of writing this, it seems the beacon block doens't use
-# the data values
-@material(blockid=138, transparent=True, nodata = True)
+# the data values (we create a "fake" data to add a beam block)
+@material(blockid=138, transparent=True, data=range(2))
 def beacon(self, blockid, data):
-    # generate the three pieces of the block
-    t = self.load_image_texture("assets/minecraft/textures/blocks/glass.png")
-    glass = self.build_block(t,t)
-    t = self.load_image_texture("assets/minecraft/textures/blocks/obsidian.png")
-    obsidian = self.build_full_block((t,12),None, None, t, t)
-    obsidian = obsidian.resize((20,20), Image.ANTIALIAS)
-    t = self.load_image_texture("assets/minecraft/textures/blocks/beacon.png")
-    crystal = self.build_block(t,t)
-    crystal = crystal.resize((16,16),Image.ANTIALIAS)
+
+    # First create the normal (real) block
+    if (data == 0):
+        # generate the three pieces of the block
+        t = self.load_image_texture("assets/minecraft/textures/blocks/glass.png")
+        glass = self.build_block(t,t)
+        t = self.load_image_texture("assets/minecraft/textures/blocks/obsidian.png")
+        obsidian = self.build_full_block((t,12),None, None, t, t)
+        obsidian = obsidian.resize((20,20), Image.ANTIALIAS)
+        t = self.load_image_texture("assets/minecraft/textures/blocks/beacon.png")
+        crystal = self.build_block(t,t)
+        crystal = crystal.resize((16,16),Image.ANTIALIAS)
     
-    # compose the block
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, obsidian, (2, 4), obsidian)
-    alpha_over(img, crystal, (4,3), crystal)
-    alpha_over(img, glass, (0,0), glass)
+        # compose the block
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(img, obsidian, (2, 4), obsidian)
+        alpha_over(img, crystal, (4,3), crystal)
+        alpha_over(img, glass, (0,0), glass)
     
-    return img
+        return img
+
+    # This is a "fake" block to display the beam
+    else:
+
+        # first, the beam itself
+        beacon_beam_top = self.load_image_texture("assets/minecraft/textures/entity/beacon_beam.png")
+        beacon_beam_top = beacon_beam_top.resize((8,8), Image.ANTIALIAS);
+
+        beam_top = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(beam_top, beacon_beam_top, (8, 8), beacon_beam_top)
+        beam_top = self.transform_image_top(beam_top)
+
+
+        beacon_beam = self.load_image_texture("assets/minecraft/textures/entity/beacon_beam.png").copy()
+        beacon_beam = beacon_beam.resize((8,24),Image.ANTIALIAS)
+
+        beam_side = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(beam_side, beacon_beam, (8, 0), beacon_beam)
+        beam_side = self.transform_image_side(beam_side)
+        beam_other_side = beam_side.transpose(Image.FLIP_LEFT_RIGHT)
+
+        # Darken the sides slightly. These methods also affect the alpha layer,
+        # so save them first (we don't want to "darken" the alpha layer making
+        # the block transparent)
+        sidealpha = beam_side.split()[3]
+        beam_side = ImageEnhance.Brightness(beam_side).enhance(0.9)
+        beam_side.putalpha(sidealpha)
+        othersidealpha = beam_other_side.split()[3]
+        beam_other_side = ImageEnhance.Brightness(beam_other_side).enhance(0.8)
+        beam_other_side.putalpha(othersidealpha)
+
+        # then, the halo around the beam
+        halo_top = Image.new("RGBA", (24,24), self.bgcolor)
+        halo_side = self.load_image_texture("assets/minecraft/textures/entity/beacon_beam.png").copy()
+        halo_block = self.build_block(halo_top,halo_side)
+        halo_block_copy = halo_block.copy()
+        halo_block_copy = ImageEnhance.Brightness(halo_block_copy).enhance(0.2)
+        halo_block.putalpha(halo_block_copy.split()[3])
+        #halo_block = ImageEnhance.Brightness(halo_block).enhance(0.4)
+
+        ## create the block
+        beam_block = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(beam_block, beam_top, (0,0), beam_top)
+        alpha_over(beam_block,beam_side, (4,4),beam_side)
+        alpha_over(beam_block,beam_other_side, (8,4),beam_other_side)
+        alpha_over(beam_block,halo_block, (0,0),halo_block)
+
+
+        #beam2 = self.build_block(t,t)
+        #beam2 = beam1.resize((16,24),Image.ANTIALIAS)
+
+
+        return beam_block
+
 
 # cobblestone and mossy cobblestone walls, chorus plants
 # one additional bit of data value added for mossy and cobblestone
