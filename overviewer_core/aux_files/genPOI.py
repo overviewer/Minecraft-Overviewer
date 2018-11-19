@@ -164,7 +164,7 @@ def handleEntities(rset, config, config_path, filters, markers):
     if numbuckets == 1:
         for (x, z, mtime) in rset.iterate_chunks():
             try:
-                data = rset.get_chunk(x, z)
+                data = rset.get_chunk(x, z, entities_only=True)
                 for poi in itertools.chain(data['TileEntities'], data['Entities']):
                     if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign': # kill me
                         poi = signWrangler(poi)
