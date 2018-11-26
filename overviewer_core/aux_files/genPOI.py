@@ -127,6 +127,8 @@ def parseBucketChunks((bucket, rset, filters)):
                         markers[name].append(d)
         except nbt.CorruptChunkError:
             logging.warning("Ignoring POIs in corrupt chunk %d,%d", b[0], b[1])
+        except world.ChunkDoesntExist:
+            pass
 
         # Perhaps only on verbose ?
         i = i + 1
