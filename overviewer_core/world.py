@@ -473,6 +473,7 @@ class RegionSet(object):
             'minecraft:infested_chiseled_stone_bricks': (98, 3),
             'minecraft:brown_mushroom_block': (99, 0),
             'minecraft:red_mushroom_block': (100, 0),
+            'minecraft:mushroom_stem': (100,10),
             'minecraft:iron_bars': (101, 0),
             'minecraft:glass_pane': (102, 0),
             'minecraft:attached_pumpkin_stem': (104, 0),
@@ -783,6 +784,23 @@ class RegionSet(object):
                 data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
             else:
                 data = 5
+        elif key in ['minecraft:brown_mushroom_block','minecraft:red_mushroom_block']:
+            p = palette_entry['Properties']
+            if p['up'] == 'true': data = 5
+            else: data = 0
+            if p['north'] == 'true':
+               if p['south'] == 'true': data = 14
+               elif p['east'] == 'true': data = 3
+               elif p['west'] == 'true': data = 1
+               else: data = 2
+            elif p['east'] == 'true':
+               if p['west'] == 'true': data = 14
+               elif p['south'] == 'true': data = 9
+               else: data = 6
+            elif p['south'] == 'true':
+               if p['west'] == 'true': data = 7
+               else: data = 8
+            elif p['west'] == 'true': data = 4
         elif key == 'minecraft:vine':
             p = palette_entry['Properties']
             if p['south'] == 'true': data |= 1
