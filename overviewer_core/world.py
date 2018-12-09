@@ -775,11 +775,14 @@ class RegionSet(object):
                 data |= 4
             elif axis == 'z':
                 data |= 8
-        elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch', 'minecraft:wall_torch']:
-            if palette_entry['Properties']['lit'] == 'true':
+        elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch']:
+            if key.startswith('minecraft:redstone_') and palette_entry['Properties']['lit'] == 'true':
                 block += 1
-            facing = palette_entry['Properties'].get('facing', 'up')
-            data = {'east': 1, 'west': 2, 'south': 3, 'north': 4, 'up': 5}[facing]
+            if key.endswith('wall_torch'):
+                facing = palette_entry['Properties'].get('facing')
+                data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
+            else:
+                data = 5
         elif key == 'minecraft:vine':
             p = palette_entry['Properties']
             if p['south'] == 'true': data |= 1
