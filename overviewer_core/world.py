@@ -560,8 +560,10 @@ class RegionSet(object):
             'minecraft:redstone_block': (152, 0),
             'minecraft:nether_quartz_ore': (153, 0),
             'minecraft:hopper': (154, 0),
-            'minecraft:smooth_quartz': (155, 0),
+            'minecraft:smooth_quartz': (155, 0), #How are new textures going to be handled
             'minecraft:quartz_block': (155, 0),
+            'minecraft:quartz_pillar': (155, 2),
+            'minecraft:chiseled_quartz_block': (155, 1),
             'minecraft:quartz_stairs': (156, 0),
             'minecraft:activator_rail': (157, 0),
             'minecraft:dropper': (158, 0),
@@ -799,6 +801,12 @@ class RegionSet(object):
                 data |= 4
             elif axis == 'z':
                 data |= 8
+        elif key == 'minecraft:quartz_pillar':
+            axis = palette_entry['Properties']['axis']
+            if axis == 'z':
+                data = 3
+            if axis == 'x':
+                data = 4
         elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch']:
             if key.startswith('minecraft:redstone_') and palette_entry['Properties']['lit'] == 'true':
                 block += 1
