@@ -427,7 +427,7 @@ class RegionSet(object):
             'minecraft:wheat': (59, 0),
             'minecraft:farmland': (60, 0),
             'minecraft:furnace': (61, 0),
-            'minecraft:standing_sign': (63, 0),
+            'minecraft:sign': (63, 0),
             'minecraft:oak_door': (64, 0),
             'minecraft:ladder': (65, 0), # todo: incorporate facing
             'minecraft:rail': (66, 0),
@@ -549,7 +549,9 @@ class RegionSet(object):
             'minecraft:player_wall_head': (144, 3), #not rendering
             'minecraft:creeper_wall_head': (144, 4), #not rendering
             'minecraft:dragon_wall_head': (144, 5), #not rendering
-            'minecraft:anvil': (145, 0), #not rendering
+            'minecraft:anvil': (145, 0),
+            'minecraft:chipped_anvil': (145, 4),
+            'minecraft:damaged_anvil': (145, 8),
             'minecraft:trapped_chest': (146, 0),
             'minecraft:light_weighted_pressure_plate': (147, 0),
             'minecraft:heavy_weighted_pressure_plate': (148, 0),
@@ -828,6 +830,20 @@ class RegionSet(object):
             if p['west']  == 'true': data |= 2
             if p['north'] == 'true': data |= 4
             if p['east']  == 'true': data |= 8
+        elif key.endswith('anvil'):
+            facing = palette_entry['Properties']['facing']
+            if facing == 'west':  data += 1
+            if facing == 'north': data += 2
+            if facing == 'east':  data += 3
+        elif key == 'minecraft:sign':
+            p = palette_entry['Properties']
+            data = p['rotation']
+        elif key == 'minecraft:wall_sign':
+            facing = palette_entry['Properties']['facing']
+            if   facing == 'north': data = 2
+            elif facing == 'west':  data = 4
+            elif facing == 'south': data = 3
+            elif facing == 'east':  data = 5
         elif key.endswith('_fence'):
             p = palette_entry['Properties']
             if p['north'] == 'true': data |= 1
