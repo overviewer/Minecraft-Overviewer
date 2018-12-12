@@ -584,7 +584,7 @@ class RegionSet(object):
             'minecraft:lime_terracotta': (159, 5),
             'minecraft:pink_terracotta': (159, 6),
             'minecraft:gray_terracotta': (159, 7),
-            'minecraft:silver_terracotta': (159, 8),
+            'minecraft:light_gray_terracotta': (159, 8),
             'minecraft:cyan_terracotta': (159, 9),
             'minecraft:purple_terracotta': (159, 10),
             'minecraft:blue_terracotta': (159, 11),
@@ -842,7 +842,7 @@ class RegionSet(object):
                if p['west'] == 'true': data = 7
                else: data = 8
             elif p['west'] == 'true': data = 4
-        elif key in ['minecraft:carved_pumpkin', 'minecraft:jack_o_lantern']:
+        elif key in ['minecraft:carved_pumpkin', 'minecraft:jack_o_lantern'] or key.endswith('glazed_terracotta'):
             facing = palette_entry['Properties']['facing']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
         elif key == 'minecraft:vine':
