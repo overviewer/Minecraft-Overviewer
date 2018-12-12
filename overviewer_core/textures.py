@@ -4362,13 +4362,13 @@ def quartz_block(self, blockid, data):
         return self.build_block(top, side)
     elif data == 3: # north-south oriented
         if self.rotation in (0,2):
-            return self.build_full_block(side, None, None, top, side.rotate(90))
-        return self.build_full_block(side.rotate(90), None, None, side.rotate(90), top)
+            return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+        return self.build_full_block(side, None, None, side.rotate(90), top)
         
     elif data == 4: # east-west oriented
         if self.rotation in (0,2):
-            return self.build_full_block(side.rotate(90), None, None, side.rotate(90), top)
-        return self.build_full_block(side, None, None, top, side.rotate(90))
+            return self.build_full_block(side, None, None, side.rotate(90), top)
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
     
 # hopper
 @material(blockid=154, data=range(4), transparent=True)
@@ -4732,4 +4732,3 @@ def glazed_terracotta(self, blockid, data):
             return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
         elif glazed_terracotta_orientation == 3: # east / Player was facing west
             return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-    
