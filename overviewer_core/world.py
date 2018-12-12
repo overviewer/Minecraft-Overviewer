@@ -345,7 +345,7 @@ class RegionSet(object):
             'minecraft:sandstone': (24, 0),
             'minecraft:cut_sandstone': (24, 2),
             'minecraft:chiseled_sandstone': (24, 3),
-
+            'minecraft:note_block': (25, 0),
             'minecraft:white_bed': (26, 0),
             'minecraft:orange_bed': (26, 0),
             'minecraft:magenta_bed': (26, 0),
@@ -429,7 +429,7 @@ class RegionSet(object):
             'minecraft:furnace': (61, 0),
             'minecraft:sign': (63, 0),
             'minecraft:oak_door': (64, 0),
-            'minecraft:ladder': (65, 0), # todo: incorporate facing
+            'minecraft:ladder': (65, 0),
             'minecraft:rail': (66, 0),
             'minecraft:stone_stairs': (67, 0),
             'minecraft:cobblestone_stairs': (67, 0),
@@ -438,6 +438,11 @@ class RegionSet(object):
             'minecraft:stone_pressure_plate': (70, 0),
             'minecraft:iron_door': (71, 0),
             'minecraft:oak_pressure_plate': (72, 0),
+            'minecraft:spruce_pressure_plate': (72, 0),    #new textures needed
+            'minecraft:birch_pressure_plate': (72, 0),
+            'minecraft:jungle_pressure_plate': (72, 0),
+            'minecraft:acacia_pressure_plate': (72, 0),
+            'minecraft:dark_oak_pressure_plate': (72, 0),
             'minecraft:redstone_ore': (73, 0),
             'minecraft:redstone_wall_torch': (75, 0),
             'minecraft:redstone_torch': (75, 5),
@@ -451,6 +456,7 @@ class RegionSet(object):
             'minecraft:jukebox': (84, 0),
             'minecraft:oak_fence': (85, 0),
             'minecraft:pumpkin': (86, 0),
+            'minecraft:carved_pumpkin': (86, 0),
             'minecraft:netherrack': (87, 0),
             'minecraft:soul_sand': (88, 0),
             'minecraft:glowstone': (89, 0),
@@ -468,7 +474,9 @@ class RegionSet(object):
             'minecraft:stone_bricks': (98, 0),
             'minecraft:infested_stone_bricks': (98, 0),
             'minecraft:mossy_stone_bricks': (98, 1),
+            'minecraft:infested_mossy_stone_bricks': (98, 1),
             'minecraft:cracked_stone_bricks': (98, 2),
+            'minecraft:infested_cracked_stone_bricks': (98, 2),
             'minecraft:chiseled_stone_bricks': (98, 3),
             'minecraft:infested_chiseled_stone_bricks': (98, 3),
             'minecraft:brown_mushroom_block': (99, 0),
@@ -476,6 +484,7 @@ class RegionSet(object):
             'minecraft:mushroom_stem': (100,10),
             'minecraft:iron_bars': (101, 0),
             'minecraft:glass_pane': (102, 0),
+            'minecraft:melon': (103,0),
             'minecraft:attached_pumpkin_stem': (104, 0),
             'minecraft:attached_melon_stem': (104, 0),
             'minecraft:pumpkin_stem': (105, 0),
@@ -583,6 +592,7 @@ class RegionSet(object):
             'minecraft:green_terracotta': (159, 13),
             'minecraft:red_terracotta': (159, 14),
             'minecraft:black_terracotta': (159, 15),
+            # What to do about stripped logs?
             'minecraft:acacia_log': (162, 0),
             'minecraft:dark_oak_log': (162, 1),
             'minecraft:acacia_stairs': (163, 0),
@@ -832,6 +842,9 @@ class RegionSet(object):
                if p['west'] == 'true': data = 7
                else: data = 8
             elif p['west'] == 'true': data = 4
+        elif key in ['minecraft:carved_pumpkin', 'minecraft:jack_o_lantern']:
+            facing = palette_entry['Properties']['facing']
+            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
         elif key == 'minecraft:vine':
             p = palette_entry['Properties']
             if p['south'] == 'true': data |= 1
