@@ -813,9 +813,9 @@ class RegionSet(object):
                 data |= 8
         elif key == 'minecraft:quartz_pillar':
             axis = palette_entry['Properties']['axis']
-            if axis == 'z':
-                data = 3
             if axis == 'x':
+                data = 3
+            if axis == 'z':
                 data = 4
         elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch']:
             if key.startswith('minecraft:redstone_') and palette_entry['Properties']['lit'] == 'true':
