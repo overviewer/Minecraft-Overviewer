@@ -305,6 +305,7 @@ class RegionSet(object):
             'minecraft:coarse_dirt': (3, 1),
             'minecraft:podzol': (3, 2),
             'minecraft:cobblestone': (4, 0),
+            'minecraft:infested_cobblestone': (4, 0),
             'minecraft:oak_planks': (5, 0),
             'minecraft:spruce_planks': (5, 1),
             'minecraft:birch_planks': (5, 2),
