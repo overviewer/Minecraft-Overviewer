@@ -587,7 +587,6 @@ class RegionSet(object):
             'minecraft:green_terracotta': (159, 13),
             'minecraft:red_terracotta': (159, 14),
             'minecraft:black_terracotta': (159, 15),
-            # What to do about stripped logs?
             'minecraft:acacia_log': (162, 0),
             'minecraft:dark_oak_log': (162, 1),
             'minecraft:acacia_stairs': (163, 0),
@@ -736,6 +735,12 @@ class RegionSet(object):
             'minecraft:jungle_pressure_plate': (11303, 0),
             'minecraft:acacia_pressure_plate': (11304, 0),
             'minecraft:dark_oak_pressure_plate': (11305, 0),
+            'minecraft:stripped_oak_log': (11306, 0),
+            'minecraft:stripped_spruce_log': (11306, 1),
+            'minecraft:stripped_birch_log': (11306, 2),
+            'minecraft:stripped_jungle_log': (11306, 3),
+            'minecraft:stripped_acacia_log': (11307, 0),
+            'minecraft:stripped_dark_oak_log': (11307, 1),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
