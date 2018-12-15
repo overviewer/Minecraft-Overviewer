@@ -2985,7 +2985,7 @@ def fence(self, blockid, data):
     return img
 
 # pumpkin
-@material(blockid=[86, 91], data=range(4), solid=True)
+@material(blockid=[86, 91,11300], data=range(4), solid=True)
 def pumpkin(self, blockid, data): # pumpkins, jack-o-lantern
     # rotation
     if self.rotation == 1:
@@ -3006,7 +3006,10 @@ def pumpkin(self, blockid, data): # pumpkins, jack-o-lantern
     
     # texture generation
     top = self.load_image_texture("assets/minecraft/textures/block/pumpkin_top.png")
-    frontName = "assets/minecraft/textures/block/carved_pumpkin.png" if blockid == 86 else "assets/minecraft/textures/block/jack_o_lantern.png"
+    frontName = {86: "assets/minecraft/textures/block/pumpkin_side.png",
+                 91: "assets/minecraft/textures/block/jack_o_lantern.png",
+                 11300: "assets/minecraft/textures/block/carved_pumpkin.png"
+                }[blockid]
     front = self.load_image_texture(frontName)
     side = self.load_image_texture("assets/minecraft/textures/block/pumpkin_side.png")
 

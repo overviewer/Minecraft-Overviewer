@@ -457,7 +457,6 @@ class RegionSet(object):
             'minecraft:jukebox': (84, 0),
             'minecraft:oak_fence': (85, 0),
             'minecraft:pumpkin': (86, 0),
-            'minecraft:carved_pumpkin': (86, 0),
             'minecraft:netherrack': (87, 0),
             'minecraft:soul_sand': (88, 0),
             'minecraft:glowstone': (89, 0),
@@ -734,6 +733,9 @@ class RegionSet(object):
             'minecraft:tube_coral_block': (8, 0),
             'minecraft:tube_coral_fan': (8, 0),
             'minecraft:tube_coral_wall_fan': (8, 0),
+
+            #New blocks
+            'minecraft:carved_pumpkin': (11300, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
