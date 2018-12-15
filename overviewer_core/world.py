@@ -439,11 +439,6 @@ class RegionSet(object):
             'minecraft:stone_pressure_plate': (70, 0),
             'minecraft:iron_door': (71, 0),
             'minecraft:oak_pressure_plate': (72, 0),
-            'minecraft:spruce_pressure_plate': (72, 0),    #new textures needed
-            'minecraft:birch_pressure_plate': (72, 0),
-            'minecraft:jungle_pressure_plate': (72, 0),
-            'minecraft:acacia_pressure_plate': (72, 0),
-            'minecraft:dark_oak_pressure_plate': (72, 0),
             'minecraft:redstone_ore': (73, 0),
             'minecraft:redstone_wall_torch': (75, 0),
             'minecraft:redstone_torch': (75, 5),
@@ -736,6 +731,11 @@ class RegionSet(object):
 
             #New blocks
             'minecraft:carved_pumpkin': (11300, 0),
+            'minecraft:spruce_pressure_plate': (11301, 0),
+            'minecraft:birch_pressure_plate': (11302, 0),
+            'minecraft:jungle_pressure_plate': (11303, 0),
+            'minecraft:acacia_pressure_plate': (11304, 0),
+            'minecraft:dark_oak_pressure_plate': (11305, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',

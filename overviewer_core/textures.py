@@ -2692,16 +2692,19 @@ def levers(self, blockid, data):
     return img
 
 # wooden and stone pressure plates, and weighted pressure plates
-@material(blockid=[70, 72,147,148], data=[0,1], transparent=True)
+@material(blockid=[70, 72,147,148,11301,11302,11303,11304,11305], data=[0,1], transparent=True)
 def pressure_plate(self, blockid, data):
-    if blockid == 70: # stone
-        t = self.load_image_texture("assets/minecraft/textures/block/stone.png").copy()
-    elif blockid == 72: # wooden
-        t = self.load_image_texture("assets/minecraft/textures/block/oak_planks.png").copy()
-    elif blockid == 147: # light golden
-        t = self.load_image_texture("assets/minecraft/textures/block/gold_block.png").copy()
-    else: # blockid == 148: # heavy iron
-        t = self.load_image_texture("assets/minecraft/textures/block/iron_block.png").copy()
+    texture_name = {70:"assets/minecraft/textures/block/stone.png",              # stone
+                    72:"assets/minecraft/textures/block/oak_planks.png",         # oak
+                    11301:"assets/minecraft/textures/block/spruce_planks.png",   # spruce
+                    11302:"assets/minecraft/textures/block/birch_planks.png",    # birch
+                    11303:"assets/minecraft/textures/block/jungle_planks.png",   # jungle
+                    11304:"assets/minecraft/textures/block/acacia_planks.png",   # acacia
+                    11305:"assets/minecraft/textures/block/dark_oak_planks.png", # dark oak
+                    147:"assets/minecraft/textures/block/gold_block.png",        # light golden
+                    148:"assets/minecraft/textures/block/iron_block.png",        # heavy iron
+                   }[blockid]
+    t = self.load_image_texture(texture_name).copy()
     
     # cut out the outside border, pressure plates are smaller
     # than a normal block
