@@ -741,6 +741,18 @@ class RegionSet(object):
             'minecraft:stripped_jungle_log': (11306, 3),
             'minecraft:stripped_acacia_log': (11307, 0),
             'minecraft:stripped_dark_oak_log': (11307, 1),
+            'minecraft:oak_wood': (11308, 0),
+            'minecraft:spruce_wood': (11308, 1),
+            'minecraft:birch_wood': (11308, 2),
+            'minecraft:jungle_wood': (11308, 3),
+            'minecraft:acacia_wood': (11309, 0),
+            'minecraft:dark_oak_wood': (11309, 1),
+            'minecraft:stripped_oak_wood': (11310, 0),
+            'minecraft:stripped_spruce_wood': (11310, 1),
+            'minecraft:stripped_birch_wood': (11310, 2),
+            'minecraft:stripped_jungle_wood': (11310, 3),
+            'minecraft:stripped_acacia_wood': (11311, 0),
+            'minecraft:stripped_dark_oak_wood': (11311, 1),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -813,7 +825,7 @@ class RegionSet(object):
         elif key.endswith('shulker_box') or key.endswith('piston') or key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser']:
             facing = palette_entry['Properties']['facing']
             data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
-        elif key.endswith('_log'):
+        elif key.endswith('_log') or key.endswith('_wood'):
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
                 data |= 4

@@ -1077,7 +1077,7 @@ block(blockid=15, top_image="assets/minecraft/textures/block/iron_ore.png")
 # coal ore
 block(blockid=16, top_image="assets/minecraft/textures/block/coal_ore.png")
 
-@material(blockid=[17,162,11306,11307], data=range(12), solid=True)
+@material(blockid=[17,162,11306,11307,11308,11309,11310,11311], data=range(12), solid=True)
 def wood(self, blockid, data):
     # extract orientation and wood type frorm data bits
     wood_type = data & 3
@@ -1136,6 +1136,52 @@ def wood(self, blockid, data):
         else:
             top = self.load_image_texture("assets/minecraft/textures/block/stripped_acacia_log_top.png")
             side = self.load_image_texture("assets/minecraft/textures/block/stripped_acacia_log.png")
+    if blockid == 11308: # regular bark:
+        if wood_type == 0: # normal
+            top = self.load_image_texture("assets/minecraft/textures/block/oak_log.png")
+            side = top
+        if wood_type == 1: # spruce
+            top = self.load_image_texture("assets/minecraft/textures/block/spruce_log.png")
+            side = top
+        if wood_type == 2: # birch
+            top = self.load_image_texture("assets/minecraft/textures/block/birch_log.png")
+            side = top
+        if wood_type == 3: # jungle wood
+            top = self.load_image_texture("assets/minecraft/textures/block/jungle_log.png")
+            side = top
+    elif blockid == 11309: # acacia/dark bark:
+        if wood_type == 0: # acacia
+            top = self.load_image_texture("assets/minecraft/textures/block/acacia_log.png")
+            side = top
+        elif wood_type == 1: # dark oak
+            top = self.load_image_texture("assets/minecraft/textures/block/dark_oak_log.png")
+            side = top
+        else:
+            top = self.load_image_texture("assets/minecraft/textures/block/acacia_log.png")
+            side = top
+    if blockid == 11310: # stripped regular wood:
+        if wood_type == 0: # normal
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_oak_log.png")
+            side = top
+        if wood_type == 1: # spruce
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_spruce_log.png")
+            side = top
+        if wood_type == 2: # birch
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_birch_log.png")
+            side = top
+        if wood_type == 3: # jungle wood
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_jungle_log.png")
+            side = top
+    elif blockid == 11311: # stripped acacia/dark wood:
+        if wood_type == 0: # acacia
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_acacia_log.png")
+            side = top
+        elif wood_type == 1: # dark oak
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_dark_oak_log.png")
+            side = top
+        else:
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_acacia_log.png")
+            side = top
 
     # choose orientation and paste textures
     if wood_orientation == 0:
