@@ -460,11 +460,6 @@ class RegionSet(object):
             'minecraft:cake': (92, 0),
             'minecraft:repeater': (93,0),
             'minecraft:oak_trapdoor': (96, 0),
-            'minecraft:spruce_trapdoor': (96, 0), #wrong
-            'minecraft:birch_trapdoor': (96, 0),
-            'minecraft:jungle_trapdoor': (96, 0),
-            'minecraft:acacia_trapdoor': (96, 0),
-            'minecraft:dark_oak_trapdoor': (96, 0),
             'minecraft:infested_stone': (97, 0),
             'minecraft:stone_bricks': (98, 0),
             'minecraft:infested_stone_bricks': (98, 0),
@@ -766,6 +761,12 @@ class RegionSet(object):
             'minecraft:jungle_button': (11328,0),
             'minecraft:acacia_button': (11329,0),
             'minecraft:dark_oak_button': (11330,0),
+            'minecraft:dried_kelp_block': (11331,0),
+            'minecraft:spruce_trapdoor': (11332, 0),
+            'minecraft:birch_trapdoor': (11333, 0),
+            'minecraft:jungle_trapdoor': (11334, 0),
+            'minecraft:acacia_trapdoor': (11335, 0),
+            'minecraft:dark_oak_trapdoor': (11336, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -927,6 +928,11 @@ class RegionSet(object):
                 'south': 0x03,
                 'east':  0x02,
                }[p['facing']]
+        elif key.endswith('_trapdoor'):
+            p = palette_entry['Properties']
+            data = {'south': 1, 'north': 0, 'east': 3, 'west': 2}[p['facing']]
+            if p['open'] == 'true': data |= 0x04
+            if p['half'] == 'top': data |= 0x08
 
         return (block, data)
 

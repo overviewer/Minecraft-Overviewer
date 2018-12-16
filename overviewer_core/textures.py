@@ -3483,7 +3483,7 @@ def comparator(self, blockid, data):
     
 # trapdoor
 # the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=[96,167], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[96,167,11332,11333,11334,11335,11336], data=range(16), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
     # rotation
@@ -3505,11 +3505,19 @@ def trapdoor(self, blockid, data):
         elif (data & 0b0011) == 3: data = data & 0b1100 | 0
 
     # texture generation
-    if blockid == 96:
-        texture = self.load_image_texture("assets/minecraft/textures/block/oak_trapdoor.png")
-    else:
-        texture = self.load_image_texture("assets/minecraft/textures/block/iron_trapdoor.png")
+    texturepath = {96:"assets/minecraft/textures/block/oak_trapdoor.png",
+                   167:"assets/minecraft/textures/block/iron_trapdoor.png",
+                   11332:"assets/minecraft/textures/block/spruce_trapdoor.png",
+                   11333:"assets/minecraft/textures/block/birch_trapdoor.png",
+                   11334:"assets/minecraft/textures/block/jungle_trapdoor.png",
+                   11335:"assets/minecraft/textures/block/acacia_trapdoor.png",
+                   11336:"assets/minecraft/textures/block/dark_oak_trapdoor.png"
+                  }[blockid]
+
     if data & 0x4 == 0x4: # opened trapdoor
+        if data & 0x08 == 0x08: texture = self.load_image_texture(texturepath).transpose(Image.FLIP_TOP_BOTTOM)
+        else: texture = self.load_image_texture(texturepath)
+
         if data & 0x3 == 0: # west
             img = self.build_full_block(None, None, None, None, texture)
         if data & 0x3 == 1: # east
@@ -3518,8 +3526,9 @@ def trapdoor(self, blockid, data):
             img = self.build_full_block(None, None, texture, None, None)
         if data & 0x3 == 3: # north
             img = self.build_full_block(None, None, None, texture, None)
-        
+
     elif data & 0x4 == 0: # closed trapdoor
+        texture = self.load_image_texture(texturepath)
         if data & 0x8 == 0x8: # is a top trapdoor
             img = Image.new("RGBA", (24,24), self.bgcolor)
             t = self.build_full_block((texture, 12), None, None, texture, texture)
@@ -4850,3 +4859,8 @@ def glazed_terracotta(self, blockid, data):
         elif glazed_terracotta_orientation == 3: # east / Player was facing west
             return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
     
+# dried kelp block
+@material(blockid=11331, data=[0], solid=True)
+def sandstone(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/dried_kelp_top.png")
+    return self.build_block(top, self.load_image_texture("assets/minecraft/textures/block/dried_kelp_side.png"))
