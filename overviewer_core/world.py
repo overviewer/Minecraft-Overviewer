@@ -761,6 +761,11 @@ class RegionSet(object):
             'minecraft:dead_fire_coral_block': (11323, 0),
             'minecraft:dead_horn_coral_block': (11324, 0),
             'minecraft:dead_tube_coral_block': (11325, 0),
+            'minecraft:spruce_button': (11326,0),
+            'minecraft:birch_button': (11327,0),
+            'minecraft:jungle_button': (11328,0),
+            'minecraft:acacia_button': (11329,0),
+            'minecraft:dark_oak_button': (11330,0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -825,9 +830,16 @@ class RegionSet(object):
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
-        elif key in ['minecraft:stone_button', 'minecraft:oak_button']:
+        elif key.endswith('_button'):
             facing = palette_entry['Properties']['facing']
-            data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
+            face   = palette_entry['Properties']['face']
+            if face == 'ceiling':
+                block = 0
+                data = 0
+            elif face == 'wall':
+                data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
+            elif face == 'floor':
+                data = {'east': 6, 'west': 6, 'south': 5, 'north': 5}[facing]
         elif key == 'minecraft:nether_wart':
             data = int(palette_entry['Properties']['age'])
         elif key.endswith('shulker_box') or key.endswith('piston') or key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser']:
