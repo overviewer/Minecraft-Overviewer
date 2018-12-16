@@ -4530,6 +4530,28 @@ block(blockid=173, top_image="assets/minecraft/textures/block/coal_block.png")
 # packed ice block
 block(blockid=174, top_image="assets/minecraft/textures/block/packed_ice.png")
 
+#blue ice
+block(blockid=11312, top_image="assets/minecraft/textures/block/blue_ice.png")
+
+#smooth stones
+block(blockid=11313, top_image="assets/minecraft/textures/block/stone_slab_top.png") # stone
+block(blockid=11314, top_image="assets/minecraft/textures/block/sandstone_top.png") # sandstone
+block(blockid=11315, top_image="assets/minecraft/textures/block/red_sandstone_top.png") # red sandstone
+
+#coral blocks
+block(blockid=11316, top_image="assets/minecraft/textures/block/brain_coral_block.png")
+block(blockid=11317, top_image="assets/minecraft/textures/block/bubble_coral_block.png")
+block(blockid=11318, top_image="assets/minecraft/textures/block/fire_coral_block.png")
+block(blockid=11319, top_image="assets/minecraft/textures/block/horn_coral_block.png")
+block(blockid=11320, top_image="assets/minecraft/textures/block/tube_coral_block.png")
+
+#dead coral blocks
+block(blockid=11321, top_image="assets/minecraft/textures/block/dead_brain_coral_block.png")
+block(blockid=11322, top_image="assets/minecraft/textures/block/dead_bubble_coral_block.png")
+block(blockid=11323, top_image="assets/minecraft/textures/block/dead_fire_coral_block.png")
+block(blockid=11324, top_image="assets/minecraft/textures/block/dead_horn_coral_block.png")
+block(blockid=11325, top_image="assets/minecraft/textures/block/dead_tube_coral_block.png")
+
 @material(blockid=175, data=range(16), transparent=True)
 def flower(self, blockid, data):
     double_plant_map = ["sunflower", "lilac", "tall_grass", "large_fern", "rose_bush", "peony", "peony", "peony"]

@@ -564,8 +564,8 @@ class RegionSet(object):
             'minecraft:redstone_block': (152, 0),
             'minecraft:nether_quartz_ore': (153, 0),
             'minecraft:hopper': (154, 0),
-            'minecraft:smooth_quartz': (155, 0), #How are new textures going to be handled
             'minecraft:quartz_block': (155, 0),
+            'minecraft:smooth_quartz': (155, 0), # Only bottom texture is different
             'minecraft:quartz_pillar': (155, 2),
             'minecraft:chiseled_quartz_block': (155, 1),
             'minecraft:quartz_stairs': (156, 0),
@@ -617,7 +617,6 @@ class RegionSet(object):
             'minecraft:terracotta': (172, 0),
             'minecraft:coal_block': (173, 0),
             'minecraft:packed_ice': (174, 0),
-            'minecraft:blue_ice': (174, 0), # close enough
             'minecraft:sunflower': (175, 0),
             'minecraft:lilac': (175, 1),
             'minecraft:tall_grass': (175, 2),
@@ -702,20 +701,16 @@ class RegionSet(object):
             # The following blocks are underwater and are not yet rendered.
             # To avoid spurious warnings, we'll treat them as water for now.
             'minecraft:brain_coral': (8, 0),
-            'minecraft:brain_coral_block': (8, 0),
             'minecraft:brain_coral_fan': (8, 0),
             'minecraft:brain_coral_wall_fan': (8, 0),
             'minecraft:bubble_column': (8, 0),
             'minecraft:bubble_coral': (8, 0),
-            'minecraft:bubble_coral_block': (8, 0),
             'minecraft:bubble_coral_fan': (8, 0),
             'minecraft:bubble_coral_wall_fan': (8, 0),
             'minecraft:fire_coral': (8, 0),
-            'minecraft:fire_coral_block': (8, 0),
             'minecraft:fire_coral_fan': (8, 0),
             'minecraft:fire_coral_wall_fan': (8, 0),
             'minecraft:horn_coral': (8, 0),
-            'minecraft:horn_coral_block': (8, 0),
             'minecraft:horn_coral_fan': (8, 0),
             'minecraft:horn_coral_wall_fan': (8, 0),
             'minecraft:kelp': (8, 0),
@@ -724,7 +719,6 @@ class RegionSet(object):
             'minecraft:seagrass': (8, 0),
             'minecraft:tall_seagrass': (8, 0),
             'minecraft:tube_coral': (8, 0),
-            'minecraft:tube_coral_block': (8, 0),
             'minecraft:tube_coral_fan': (8, 0),
             'minecraft:tube_coral_wall_fan': (8, 0),
 
@@ -753,6 +747,20 @@ class RegionSet(object):
             'minecraft:stripped_jungle_wood': (11310, 3),
             'minecraft:stripped_acacia_wood': (11311, 0),
             'minecraft:stripped_dark_oak_wood': (11311, 1),
+            'minecraft:blue_ice': (11312, 0),
+            'minecraft:smooth_stone': (11313, 0),
+            'minecraft:smooth_sandstone': (11314, 0),
+            'minecraft:smooth_red_sandstone': (11315, 0),
+            'minecraft:brain_coral_block': (11316, 0),
+            'minecraft:bubble_coral_block': (11317, 0),
+            'minecraft:fire_coral_block': (11318, 0),
+            'minecraft:horn_coral_block': (11319, 0),
+            'minecraft:tube_coral_block': (11320, 0),
+            'minecraft:dead_brain_coral_block': (11321, 0),
+            'minecraft:dead_bubble_coral_block': (11322, 0),
+            'minecraft:dead_fire_coral_block': (11323, 0),
+            'minecraft:dead_horn_coral_block': (11324, 0),
+            'minecraft:dead_tube_coral_block': (11325, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -825,7 +833,7 @@ class RegionSet(object):
         elif key.endswith('shulker_box') or key.endswith('piston') or key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser']:
             facing = palette_entry['Properties']['facing']
             data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
-        elif key.endswith('_log') or key.endswith('_wood'):
+        elif key.endswith('_log') or key.endswith('_wood') or key == 'minecraft:bone_block':
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
                 data |= 4
