@@ -58,9 +58,9 @@ overviewer.util = {
                 var r_z = Math.floor(Math.floor(w_coords.z / 16.0) / 32.0);
                 var r_name = "r." + r_x + "." + r_z + ".mca";
 
-                this.coord_box.innerHTML = "<strong>X</strong> " +
+                this.coord_box.innerHTML = "X " +
                                            Math.round(w_coords.x) +
-                                           " <strong>Z</strong> " + Math.round(w_coords.z) +
+                                           " Z " + Math.round(w_coords.z) +
                                            " (" + r_name + ")";
             },
             onAdd: function() {
