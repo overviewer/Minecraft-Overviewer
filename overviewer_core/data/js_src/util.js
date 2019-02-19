@@ -67,6 +67,48 @@ overviewer.util = {
                 return this.coord_box;
             }
         });
+        overviewer.progressClass = L.Control.extend({
+            options: {
+                position: 'bottomright'
+            },
+            initialize: function() {
+                this.progress = L.DomUtil.create("div", "progress");
+                this.progress.innerHTML = 'Current render progress';
+                this.progress.style.visibility = 'hidden';
+            },
+            update: function() {
+                fetch("progress.json")
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.progress.innerHTML = data.message;
+                        if (data.update > 0) {
+                            setTimeout(this.update.bind(this), data.update);
+                            this.progress.style.visibility = '';
+                        } else {
+                            setTimeout(this.update.bind(this), 60000);
+                            this.progress.innerHTML = 'Hidden - data.update < 0';
+                            this.progress.style.visibility = 'hidden';
+                        }
+                    })
+                    .catch(error => {
+                        this.progress.innerHtml = 'Hidden - no data';
+                        this.progress.style.visibility = 'hidden';
+                        console.info('Error getting progress; hiding control', error);
+                    });
+            },
+            onAdd: function() {
+                // Not all browsers may have this
+                if ('fetch' in window) {
+                    setTimeout(this.update.bind(this), 0);
+                }
+                return this.progress;
+            }
+        });
         overviewer.compassClass = L.Control.extend({
             initialize: function(imagedict, options) {
                 L.Util.setOptions(this, options);
@@ -247,6 +289,7 @@ overviewer.util = {
         overviewer.compass = new overviewer.compassClass(
             overviewerConfig.CONST.image.compass);
         overviewer.coord_box = new overviewer.coordBoxClass();
+        overviewer.progress = new overviewer.progressClass();
 
 
         overviewerConfig.worlds.forEach(function(world_name, idx) {
@@ -258,6 +301,7 @@ overviewer.util = {
         overviewer.compass.addTo(overviewer.map);
         overviewer.worldCtrl.addTo(overviewer.map);
         overviewer.coord_box.addTo(overviewer.map);
+        overviewer.progress.addTo(overviewer.map);
 
         overviewer.map.on('mousemove', function(ev) {
             overviewer.coord_box.render(ev.latlng);
@@ -290,7 +334,8 @@ overviewer.util = {
                     for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
                         var marker_group = new L.layerGroup();
                         var marker_entry = markers[obj.path][mkidx];
-                        var icon =  L.icon({iconUrl: marker_entry.icon});
+                        var icon =  L.icon({iconUrl: marker_entry.icon,
+                                            className: "ov-marker"});
                         console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
 
                         for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
@@ -298,12 +343,15 @@ overviewer.util = {
                             var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
                             var m_icon;
                             if (db.icon != undefined) {
-                                m_icon = L.icon({iconUrl: db.icon});
+                                m_icon = L.icon({iconUrl: db.icon,
+                                                 className: "ov-marker"});
                             } else {
                                 m_icon = icon;
                             }
                             let new_marker = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
-                            new_marker.bindPopup(db.text);
+                            if (marker_entry.createInfoWindow) {
+                                new_marker.bindPopup(db.text);
+                            }
                             marker_group.addLayer(new_marker);
                         }
                         obj.marker_groups[marker_entry.displayName] = marker_group;
@@ -324,9 +372,9 @@ overviewer.util = {
 
             if (typeof(obj.spawn) == "object") {
                 var latlng = overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj);
-                overviewer.collections.centers[obj.world] = [ latlng, 1 ];
+                overviewer.collections.centers[obj.world] = [ latlng, obj.defaultZoom ];
             } else {
-                overviewer.collections.centers[obj.world] = [ [0, 0], 1 ];
+                overviewer.collections.centers[obj.world] = [ [0, 0], obj.defaultZoom ];
             }
 
         });
@@ -338,8 +386,8 @@ overviewer.util = {
             .addTo(overviewer.map);
         overviewer.current_world = overviewerConfig.worlds[0];
 
-        //myLayer.addTo(overviewer.map);
-        overviewer.map.setView(overviewer.util.fromWorldToLatLng(tset.spawn[0], tset.spawn[1], tset.spawn[2], tset), 1);
+        let center = overviewer.collections.centers[overviewer.current_world];
+        overviewer.map.setView(center[0], center[1]);
 
         if (!overviewer.util.initHash()) {
             overviewer.worldCtrl.onChange({target: {value: overviewer.current_world}});

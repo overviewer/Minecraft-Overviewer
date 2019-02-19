@@ -150,7 +150,7 @@ class NBTFileReader(object):
         # Read the string
         string = self._file.read(length)
         # decode it and return
-        return string.decode("UTF-8")
+        return string.decode("UTF-8", 'replace')
 
     def _read_tag_list(self):
         tagid = self._read_tag_byte()

@@ -22,11 +22,6 @@ script:
   - python overviewer.py ~/mcoa/exmaple ~/test-output --rendermodes=smooth-lighting -p1
 notifications:
   email: false
-  irc:
-    channels:
-      - "chat.freenode.net#overviewer"
-    template:
-      - "\x0313Minecraft-Overviewer\x03/\x0306%{branch}\x03 \x0314%{commit}\x03 %{build_url} %{message}"
 # matrix:
   # allow_failures:
     # - python: "3.2"

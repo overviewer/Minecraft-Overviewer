@@ -165,11 +165,17 @@ div.worldcontrol select {
     font-size: 1.2em;
 }
 
-.leaflet-container .coordbox {
+.leaflet-container .coordbox, .leaflet-container .progress {
     box-shadow: none;
     font-size: 11px;
     background: rgba(255, 255, 255, 0.7);
     margin: 0;
     padding: 0 5px;
     color: #333;
+}
+
+.ov-marker {
+    position:relative;
+    margin-left:-50%;
+    margin-top:-50%;
 }

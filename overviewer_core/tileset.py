@@ -590,7 +590,7 @@ class TileSet(object):
         if (self.regionset.get_type() == None and self.options.get("showspawn", True)):
             d.update({"spawn": self.options.get("spawn")})
         else:
-            d.update({"spawn": "false"});
+            d.update({"spawn": False})
 
         try:
             d['north_direction'] = self.regionset.north_dir

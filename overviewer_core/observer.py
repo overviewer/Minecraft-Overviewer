@@ -294,7 +294,7 @@ class JSObserver(Observer):
         """
         self._current_value = current_value
         if self._need_update():
-            refresh = max(1500*(time.time() - self.last_update_time), self.minrefresh) // 1
+            refresh = max(1500*(time.time() - max(self.start_time, self.last_update_time)), self.minrefresh) // 1
             self.logfile.seek(0)
             self.logfile.truncate()
             if self.get_current_value():
