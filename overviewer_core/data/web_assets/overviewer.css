@@ -179,3 +179,8 @@ div.worldcontrol select {
     margin-left:-50%;
     margin-top:-50%;
 }
+
+.leaflet-div-icon {
+    background: 0;
+    border: 0;
+}
