@@ -267,6 +267,12 @@ overviewer.util = {
                         [],
                         ovconf.marker_groups, {collapsed: false}).addTo(overviewer.map);
             }
+            for (var marker_group in ovconf.marker_groups) {
+                var mg = ovconf.marker_groups[marker_group];
+                if (mg.options.default_checked) {
+                    mg.addTo(overviewer.map);
+                }
+            }
 
             overviewer.util.updateHash();
         });
@@ -334,6 +340,7 @@ overviewer.util = {
                     for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
                         var marker_group = new L.layerGroup();
                         var marker_entry = markers[obj.path][mkidx];
+                        L.Util.setOptions(marker_group, {default_checked: marker_entry.checked});
                         var icon =  L.divIcon({html: `<img class="ov-marker" src="${marker_entry.icon}">`});
                         console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
 
