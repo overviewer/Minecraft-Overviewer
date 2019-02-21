@@ -45,7 +45,7 @@ A more complicated filter function can construct a more customized display text:
 
     def chestFilter(poi):
         if poi['id'] == "Chest":
-            return "Chest with %d items" % len(poi['Items'])
+            return "Chest with %d items" % len(poi.get('Items'))
 
 It is also possible to return a tuple from the filter function to specify a hovertext
 different from the text displayed in the info window. The first entry of the tuple will
@@ -53,7 +53,7 @@ be used as the hover text, the second will be used as the info window content::
 
     def chestFilter(poi):
         if poi['id'] == "Chest":
-            return ("Chest", "Chest with %d items" % len(poi['Items']))
+            return ("Chest", "Chest with %d items" % len(poi.get('Items')))
 
 Because of the way the config file is loaded, if you need to import a function or module
 for use in your filter function, you need to explicitly load it into the global namespace::
