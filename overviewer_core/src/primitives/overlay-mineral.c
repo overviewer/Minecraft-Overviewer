@@ -68,7 +68,7 @@ static void get_color(void *data, RenderState *state,
                 *b = minerals[i].b;
                 
                 tmp = (128 - y_max + y) * 2 - 40;
-                *a = MIN(MAX(0, tmp), 255);
+                *a = OV_MIN(OV_MAX(0, tmp), 255);
                 
                 max_i = i;
                 break;

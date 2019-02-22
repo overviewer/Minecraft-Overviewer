@@ -183,7 +183,7 @@ alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alp
             
             /* apply overall_alpha */
             if (overall_alpha_int != 255 && *inmask != 0) {
-                in_alpha = MULDIV255(*inmask, overall_alpha_int, tmp1);
+                in_alpha = OV_MULDIV255(*inmask, overall_alpha_int, tmp1);
             } else {
                 in_alpha = *inmask;
             }
@@ -204,11 +204,11 @@ alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alp
                 in += 3;
             } else {
                 /* general case */
-                int alpha = in_alpha + MULDIV255(*outmask, 255 - in_alpha, tmp1);
+                int alpha = in_alpha + OV_MULDIV255(*outmask, 255 - in_alpha, tmp1);
                 for (i = 0; i < 3; i++) {
                     /* general case */
-                    *out = MULDIV255(*in, in_alpha, tmp1) +
-                        MULDIV255(MULDIV255(*out, *outmask, tmp2), 255 - in_alpha, tmp3);
+                    *out = OV_MULDIV255(*in, in_alpha, tmp1) +
+                        OV_MULDIV255(OV_MULDIV255(*out, *outmask, tmp2), 255 - in_alpha, tmp3);
                     
                     *out = (*out * 255) / alpha;
                     out++, in++;
@@ -332,13 +332,13 @@ tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
         for (x = 0; x < xsize; x++) {
             /* special cases */
             if (*inmask == 255) {
-                *out = MULDIV255(*out, sr, tmp1);
+                *out = OV_MULDIV255(*out, sr, tmp1);
                 out++;
-                *out = MULDIV255(*out, sg, tmp1);
+                *out = OV_MULDIV255(*out, sg, tmp1);
                 out++;
-                *out = MULDIV255(*out, sb, tmp1);
+                *out = OV_MULDIV255(*out, sb, tmp1);
                 out++;
-                *out = MULDIV255(*out, sa, tmp1);
+                *out = OV_MULDIV255(*out, sa, tmp1);
                 out++;
             } else if (*inmask == 0) {
                 /* do nothing -- source is fully transparent */
@@ -347,13 +347,13 @@ tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
                 /* general case */
                 
                 /* TODO work out general case */
-                *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sr, *inmask, tmp1), tmp2);
+                *out = OV_MULDIV255(*out, (255 - *inmask) + OV_MULDIV255(sr, *inmask, tmp1), tmp2);
                 out++;
-                *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sg, *inmask, tmp1), tmp2);
+                *out = OV_MULDIV255(*out, (255 - *inmask) + OV_MULDIV255(sg, *inmask, tmp1), tmp2);
                 out++;
-                *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sb, *inmask, tmp1), tmp2);
+                *out = OV_MULDIV255(*out, (255 - *inmask) + OV_MULDIV255(sb, *inmask, tmp1), tmp2);
                 out++;
-                *out = MULDIV255(*out, (255 - *inmask) + MULDIV255(sa, *inmask, tmp1), tmp2);
+                *out = OV_MULDIV255(*out, (255 - *inmask) + OV_MULDIV255(sa, *inmask, tmp1), tmp2);
                 out++;
             }
 
@@ -410,15 +410,15 @@ draw_triangle(PyObject *dest, int inclusive,
     }
     
     /* set up draw ranges */
-    xmin = MIN(x0, MIN(x1, x2));
-    ymin = MIN(y0, MIN(y1, y2));
-    xmax = MAX(x0, MAX(x1, x2)) + 1;
-    ymax = MAX(y0, MAX(y1, y2)) + 1;
+    xmin = OV_MIN(x0, OV_MIN(x1, x2));
+    ymin = OV_MIN(y0, OV_MIN(y1, y2));
+    xmax = OV_MAX(x0, OV_MAX(x1, x2)) + 1;
+    ymax = OV_MAX(y0, OV_MAX(y1, y2)) + 1;
     
-    xmin = MAX(xmin, 0);
-    ymin = MAX(ymin, 0);
-    xmax = MIN(xmax, imDest->xsize);
-    ymax = MIN(ymax, imDest->ysize);
+    xmin = OV_MAX(xmin, 0);
+    ymin = OV_MAX(ymin, 0);
+    xmax = OV_MIN(xmax, imDest->xsize);
+    ymax = OV_MIN(ymax, imDest->ysize);
     
     /* setup coefficients */
     a12 = y1 - y2; b12 = x2 - x1; c12 = (x1 * y2) - (x2 * y1);
@@ -446,9 +446,9 @@ draw_triangle(PyObject *dest, int inclusive,
                 unsigned int g = alpha * g0 + beta * g1 + gamma * g2;
                 unsigned int b = alpha * b0 + beta * b1 + gamma * b2;
                 
-                *out = MULDIV255(*out, r, tmp); out++;
-                *out = MULDIV255(*out, g, tmp); out++;
-                *out = MULDIV255(*out, b, tmp); out++;
+                *out = OV_MULDIV255(*out, r, tmp); out++;
+                *out = OV_MULDIV255(*out, g, tmp); out++;
+                *out = OV_MULDIV255(*out, b, tmp); out++;
                 
                 /* keep alpha the same */
                 out++;
@@ -482,9 +482,9 @@ draw_triangle(PyObject *dest, int inclusive,
         g = alpha * g0 + beta * g1 + gamma * g2;
         b = alpha * b0 + beta * b1 + gamma * b2;
                 
-        *out = MULDIV255(*out, r, tmp); out++;
-        *out = MULDIV255(*out, g, tmp); out++;
-        *out = MULDIV255(*out, b, tmp); out++;
+        *out = OV_MULDIV255(*out, r, tmp); out++;
+        *out = OV_MULDIV255(*out, g, tmp); out++;
+        *out = OV_MULDIV255(*out, b, tmp); out++;
     }
     
     return dest;

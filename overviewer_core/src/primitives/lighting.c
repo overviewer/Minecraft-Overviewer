@@ -25,7 +25,7 @@ static void
 calculate_light_color(void *data,
                       unsigned char skylight, unsigned char blocklight,
                       unsigned char *r, unsigned char *g, unsigned char *b) {
-    unsigned char v = 255 * powf(0.8f, 15.0 - MAX(blocklight, skylight));
+    unsigned char v = 255 * powf(0.8f, 15.0 - OV_MAX(blocklight, skylight));
     *r = v;
     *g = v;
     *b = v;
@@ -40,7 +40,7 @@ calculate_light_color_fancy(void *data,
     unsigned int index;
     PyObject *color;
     
-    blocklight = MAX(blocklight, skylight);
+    blocklight = OV_MAX(blocklight, skylight);
     
     index = skylight + blocklight * 16;
     color = PySequence_GetItem(mode->lightcolor, index);
@@ -60,7 +60,7 @@ static void
 calculate_light_color_night(void *data,
                             unsigned char skylight, unsigned char blocklight,
                             unsigned char *r, unsigned char *g, unsigned char *b) {
-    unsigned char v = 255 * powf(0.8f, 15.0 - MAX(blocklight, skylight - 11));
+    unsigned char v = 255 * powf(0.8f, 15.0 - OV_MAX(blocklight, skylight - 11));
     *r = v;
     *g = v;
     *b = v;
@@ -194,7 +194,7 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
         return;
     }
     
-    self->calculate_light_color(self, MIN(skylevel, 15), MIN(blocklevel, 15), r, g, b);
+    self->calculate_light_color(self, OV_MIN(skylevel, 15), OV_MIN(blocklevel, 15), r, g, b);
 }
 
 /* does per-face occlusion checking for do_shading_with_mask */

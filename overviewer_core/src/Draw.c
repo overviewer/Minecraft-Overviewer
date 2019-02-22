@@ -55,6 +55,7 @@
 /* FIXME: support clip window (and mask?) */
 
 #include "Imaging.h"
+#include "utils.h"
 
 #include <math.h>
 
@@ -63,13 +64,6 @@
 
 #define INK8(ink) (*(UINT8*)ink)
 #define INK32(ink) (*(INT32*)ink)
-
-/* like (a * b + 127) / 255), but much faster on most platforms */
-#define MULDIV255(a, b, tmp)\
-        (tmp = (a) * (b) + 128, ((((tmp) >> 8) + (tmp)) >> 8))
-
-#define BLEND(mask, in1, in2, tmp1, tmp2)\
-        (MULDIV255(in1, 255 - mask, tmp1) + MULDIV255(in2, mask, tmp2))
 
 /* -------------------------------------------------------------------- */
 /* Primitives                                                           */
@@ -105,9 +99,9 @@ point32rgba(Imaging im, int x, int y, int ink)
     if (x >= 0 && x < im->xsize && y >= 0 && y < im->ysize) {
         UINT8* out = (UINT8*) im->image[y]+x*4;
         UINT8* in = (UINT8*) &ink;
-        out[0] = BLEND(in[3], out[0], in[0], tmp1, tmp2);
-        out[1] = BLEND(in[3], out[1], in[1], tmp1, tmp2);
-        out[2] = BLEND(in[3], out[2], in[2], tmp1, tmp2);
+        out[0] = OV_BLEND(in[3], out[0], in[0], tmp1, tmp2);
+        out[1] = OV_BLEND(in[3], out[1], in[1], tmp1, tmp2);
+        out[2] = OV_BLEND(in[3], out[2], in[2], tmp1, tmp2);
     }
 }
 
@@ -176,9 +170,9 @@ hline32rgba(Imaging im, int x0, int y0, int x1, int ink)
             UINT8* out = (UINT8*) im->image[y0]+x0*4;
             UINT8* in = (UINT8*) &ink;
             while (x0 <= x1) {
-                out[0] = BLEND(in[3], out[0], in[0], tmp1, tmp2);
-                out[1] = BLEND(in[3], out[1], in[1], tmp1, tmp2);
-                out[2] = BLEND(in[3], out[2], in[2], tmp1, tmp2);
+                out[0] = OV_BLEND(in[3], out[0], in[0], tmp1, tmp2);
+                out[1] = OV_BLEND(in[3], out[1], in[1], tmp1, tmp2);
+                out[2] = OV_BLEND(in[3], out[2], in[2], tmp1, tmp2);
                 x0++; out += 4;
             }
         }

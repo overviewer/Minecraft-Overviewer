@@ -33,7 +33,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 54
+#define OVERVIEWER_EXTENSION_VERSION 56
 
 /* Python PIL, and numpy headers */
 #include <Python.h>
@@ -41,11 +41,9 @@
 #include <Imaging.h>
 /* Fix Pillow on mingw-w64 which includes windows.h in Imaging.h */
 #undef TRANSPARENT
+/* Utility macros */
+#include "utils.h"
 
-/* like (a * b + 127) / 255), but much faster on most platforms
-   from PIL's _imaging.c */
-#define MULDIV255(a, b, tmp)								\
-	(tmp = (a) * (b) + 128, ((((tmp) >> 8) + (tmp)) >> 8))
 
 /* macro for getting a value out of various numpy arrays the 3D arrays have
    interesting, swizzled coordinates because minecraft (anvil) stores blocks
@@ -54,11 +52,6 @@
 #define getArrayShort3D(array, x,y,z) (*(unsigned short *)(PyArray_GETPTR3((array), (y), (z), (x))))
 #define getArrayByte2D(array, x,y) (*(unsigned char *)(PyArray_GETPTR2((array), (y), (x))))
 
-
-/* generally useful MAX / MIN macros */
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define CLAMP(x, a, b) (MIN(MAX(x, a), b))
 
 /* in composite.c */
 Imaging imaging_python_to_c(PyObject *obj);

@@ -46,10 +46,10 @@ static void get_color(void *data, RenderState *state,
     blocklight = get_data(state, BLOCKLIGHT, x, y_light, z);
     skylight = get_data(state, SKYLIGHT, x, y_light, z);
     
-    if (MAX(blocklight, skylight) <= 7) {
+    if (OV_MAX(blocklight, skylight) <= 7) {
         /* hostile mobs spawn in daylight */
         *a = 240;
-    } else if (MAX(blocklight, skylight - 11) <= 7) {
+    } else if (OV_MAX(blocklight, skylight - 11) <= 7) {
         /* hostile mobs spawn at night */
         *a = 150;
     }

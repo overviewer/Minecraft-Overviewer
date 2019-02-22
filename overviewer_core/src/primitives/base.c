@@ -220,8 +220,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             rain *= temp;
             
             /* make sure they're sane */
-            temp = CLAMP(temp, 0.0, 1.0);
-            rain = CLAMP(rain, 0.0, 1.0);
+            temp = OV_CLAMP(temp, 0.0, 1.0);
+            rain = OV_CLAMP(rain, 0.0, 1.0);
             
             /* convert to x/y coordinates in color table */
             tablex = 255 - (255 * temp);
@@ -240,9 +240,9 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             Py_DECREF(color);
             
             /* do the after-coloration */
-            r = MULDIV255(r, multr, tmp);
-            g = MULDIV255(g, multg, tmp);
-            b = MULDIV255(b, multb, tmp);
+            r = OV_MULDIV255(r, multr, tmp);
+            g = OV_MULDIV255(g, multg, tmp);
+            b = OV_MULDIV255(b, multb, tmp);
         }
         
         /* final coloration */
