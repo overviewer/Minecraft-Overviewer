@@ -1009,7 +1009,7 @@ class RegionSet(object):
                     i += 7
                 elif bits_per_value == 9:
                     result.extend([
-                        ((b[i+1] & 0x01) << 8) | b[0],
+                        ((b[i+1] & 0x01) << 8) | b[i],
                         ((b[i+2] & 0x03) << 7) | ((b[i+1] & 0xfe) >> 1),
                         ((b[i+3] & 0x07) << 6) | ((b[i+2] & 0xfc) >> 2),
                         ((b[i+4] & 0x0f) << 5) | ((b[i+3] & 0xf8) >> 3),
@@ -1021,7 +1021,7 @@ class RegionSet(object):
                     i += 9
                 elif bits_per_value == 10:
                     result.extend([
-                        ((b[i+1] & 0x03) << 8) |   b[0],
+                        ((b[i+1] & 0x03) << 8) |   b[i],
                         ((b[i+2] & 0x0f) << 6) | ((b[i+1] & 0xfc) >> 2),
                         ((b[i+3] & 0x3f) << 4) | ((b[i+2] & 0xf0) >> 4),
                          (b[i+4] << 2)         | ((b[i+3] & 0xc0) >> 6),
@@ -1029,7 +1029,7 @@ class RegionSet(object):
                     i += 5
                 elif bits_per_value == 11:
                     result.extend([
-                        ((b[i+1] & 0x07) << 8) |   b[0],
+                        ((b[i+1] & 0x07) << 8) |   b[i],
                         ((b[i+2] & 0x3f) << 5) | ((b[i+1] & 0xf8) >> 3),
                         ((b[i+4] & 0x01) << 10)| (b[i+3] << 2) | ((b[i+2] & 0xc0) >> 6),
                         ((b[i+5] & 0x0f) << 7) | ((b[i+4] & 0xfe) >> 1),
@@ -1041,7 +1041,7 @@ class RegionSet(object):
                     i += 11
                 elif bits_per_value == 12:
                     result.extend([
-                        ((b[i+1] & 0x0f) << 8) |   b[0],
+                        ((b[i+1] & 0x0f) << 8) |   b[i],
                          (b[i+2]         << 4) | ((b[i+1] & 0xf0) >> 4),
                         ])
                     i += 3
