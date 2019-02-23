@@ -14,7 +14,6 @@ RUN mkdir /tmp/overviewer
 WORKDIR /tmp/overviewer
 ADD https://launcher.mojang.com/v1/objects/30bfe37a8db404db11c7edf02cb5165817afb4d9/client.jar /tmp/overviewer/
 RUN chmod 755 /tmp/overviewer/client.jar
-RUN ls -la
 
 COPY . /tmp/overviewer
 COPY overviewer_core/aux_files/genPOI.py /tmp/overviewer
