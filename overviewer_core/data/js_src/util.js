@@ -811,6 +811,11 @@ overviewer.util = {
         }
 
         var target_layer = overviewer.collections.mapTypes[world_name][tileset_name];
+        if (!target_layer) {
+            var default_tset_name = Object.keys(
+                overviewer.collections.mapTypes[world_name])[0];
+            target_layer = overviewer.collections.mapTypes[world_name][default_tset_name];
+        }
         var ovconf = target_layer.tileSetConfig;
 
         var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]),
