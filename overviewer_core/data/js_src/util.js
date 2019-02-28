@@ -149,10 +149,21 @@ overviewer.util = {
 
                 overviewer.layerCtrl.remove();
 
+                var base_layers = {};
+                var overlay_layers = {};
+                for (var bl in overviewer.collections.mapTypes[selected_world]) {
+                    var bl_o = overviewer.collections.mapTypes[selected_world][bl];
+                    base_layers[bl_o.tileSetConfig.name] = bl_o;
+                }
+                for (var ol in overviewer.collections.overlays[selected_world]) {
+                    var ol_o = overviewer.collections.overlays[selected_world][ol];
+                    overlay_layers[ol_o.tileSetConfig.name] = ol_o;
+                }
+
                 overviewer.layerCtrl = L.control.layers(
-                        overviewer.collections.mapTypes[selected_world],
-                        overviewer.collections.overlays[selected_world],
-                        {collapsed: false})
+                    base_layers,
+                    overlay_layers,
+                    {collapsed: false})
                 .addTo(overviewer.map);
 
                 for (var world_name in overviewer.collections.mapTypes) {
@@ -187,7 +198,7 @@ overviewer.util = {
                 overviewer.current_world = selected_world;
 
                 if (overviewer.collections.mapTypes[selected_world] && overviewer.current_layer[selected_world]) {
-                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][overviewer.current_layer[selected_world].tileSetConfig.name]);
+                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][overviewer.current_layer[selected_world].tileSetConfig.path]);
                 } else {
                     var tset_name = Object.keys(overviewer.collections.mapTypes[selected_world])[0]
                     overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][tset_name]);
@@ -221,7 +232,6 @@ overviewer.util = {
                         tsc.marker_groups[marker_group].remove();
                     }
                 }
-
             }
             overviewer.current_layer[overviewer.current_world] = ev.layer;
             var ovconf = ev.layer.tileSetConfig;
@@ -273,6 +283,22 @@ overviewer.util = {
                     mg.addTo(overviewer.map);
                 }
             }
+            // Update overlays
+            for (var olw in overviewer.collections.overlays) {
+                for (var ol in overviewer.collections.overlays[olw]) {
+                    var ol_o = overviewer.collections.overlays[olw][ol];
+                    if (ol_o.tileSetConfig.isOverlay.includes(ovconf.path)) {
+                        if (!overviewer.util.isInLayerCtrl(overviewer.layerCtrl, ol_o)) {
+                            overviewer.layerCtrl.addOverlay(ol_o, ol_o.tileSetConfig.name);
+                        }
+                    } else {
+                        if (overviewer.util.isInLayerCtrl(overviewer.layerCtrl, ol_o)) {
+                            overviewer.layerCtrl.removeLayer(ol_o);
+                        }
+                    }
+                }
+            }
+
 
             overviewer.util.updateHash();
         });
@@ -324,9 +350,9 @@ overviewer.util = {
             myLayer.getTileUrl = overviewer.util.getTileUrlGenerator(obj.path, obj.base, obj.imgextension);
 
             if (obj.isOverlay) {
-                overviewer.collections.overlays[obj.world][obj.name] = myLayer;
+                overviewer.collections.overlays[obj.world][obj.path] = myLayer;
             } else {
-                overviewer.collections.mapTypes[obj.world][obj.name] = myLayer;
+                overviewer.collections.mapTypes[obj.world][obj.path] = myLayer;
             }
 
             obj.marker_groups = undefined;
@@ -765,7 +791,7 @@ overviewer.util = {
             // default to (map-update friendly) negative zooms
             zoom -= ovconf.maxZoom;
         }
-        overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, currWorld, ovconf.name);
+        overviewer.util.setHash(coordinates.x, coordinates.y, coordinates.z, zoom, currWorld, ovconf.path);
     },
     'goToHash': function() {
         // Note: the actual data begins at coords[1], coords[0] is empty.
@@ -785,6 +811,11 @@ overviewer.util = {
         }
 
         var target_layer = overviewer.collections.mapTypes[world_name][tileset_name];
+        if (!target_layer) {
+            var default_tset_name = Object.keys(
+                overviewer.collections.mapTypes[world_name])[0];
+            target_layer = overviewer.collections.mapTypes[world_name][default_tset_name];
+        }
         var ovconf = target_layer.tileSetConfig;
 
         var latlngcoords = overviewer.util.fromWorldToLatLng(parseInt(coords[1]),
@@ -872,5 +903,13 @@ overviewer.util = {
             }
             return(urlBase + url);
         };
+    },
+    'isInLayerCtrl': function(ctrl, layer) {
+        for (var l in ctrl._layers) {
+            if (ctrl._layers[l].layer.tileSetConfig.path == layer.tileSetConfig.path) {
+                return true;
+            }
+        }
+        return false;
     }
 };
