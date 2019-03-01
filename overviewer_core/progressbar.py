@@ -314,6 +314,7 @@ class ProgressBar(object):
         else:
             self.finished = True
             self.fd.write(self._format_line() + '\n')
+        self.fd.flush()
         return True
 
     def start(self):
