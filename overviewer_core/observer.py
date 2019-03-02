@@ -13,13 +13,15 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
-import logging
-import progressbar
-import sys
-import os
 import json
+import logging
+import os
+import sys
+import time
+
+import progressbar
 import rcon
+
 
 class Observer(object):
     """Base class that defines the observer interface.
@@ -85,12 +87,13 @@ class Observer(object):
     def _set_max_value(self, max_value):
         self._max_value = max_value
 
+
 class LoggingObserver(Observer):
     """Simple observer that just outputs status through logging.
     """
     def __init__(self):
         super(Observer, self).__init__()
-        #this is an easy way to make the first update() call print a line
+        # this is an easy way to make the first update() call print a line
         self.last_update = -101
 
         # a fake ProgressBar, for the sake of ETA
@@ -101,8 +104,10 @@ class LoggingObserver(Observer):
                 self.finished = False
                 self.start_time = None
                 self.seconds_elapsed = 0
+
             def finish(self):
                 self.update(self.maxval)
+
             def update(self, value):
                 assert 0 <= value <= self.maxval
                 self.currval = value
@@ -115,18 +120,18 @@ class LoggingObserver(Observer):
                 if value == self.maxval:
                     self.finished = True
 
-        self.fake = FakePBar();
+        self.fake = FakePBar()
         self.eta = progressbar.ETA()
 
     def start(self, max_value):
         self.fake.maxval = max_value
         super(LoggingObserver, self).start(max_value)
 
-
     def finish(self):
         self.fake.finish()
-        logging.info("Rendered %d of %d.  %d%% complete.  %s", self.get_max_value(),
-            self.get_max_value(), 100.0, self.eta.update(self.fake))
+        logging.info("Rendered %d of %d.  %d%% complete.  %s",
+                     self.get_max_value(), self.get_max_value(), 100.0,
+                     self.eta.update(self.fake))
         super(LoggingObserver, self).finish()
 
     def update(self, current_value):
@@ -135,8 +140,8 @@ class LoggingObserver(Observer):
 
         if self._need_update():
             logging.info("Rendered %d of %d.  %d%% complete.  %s",
-                self.get_current_value(), self.get_max_value(),
-                self.get_percentage(), self.eta.update(self.fake))
+                         self.get_current_value(), self.get_max_value(),
+                         self.get_percentage(), self.eta.update(self.fake))
             self.last_update = current_value
             return True
         return False
@@ -150,6 +155,7 @@ class LoggingObserver(Observer):
         else:
             return cur_val - self.last_update > 100
 
+
 default_widgets = [
     progressbar.Percentage(), ' ',
     progressbar.Bar(marker='=', left='[', right=']'), ' ',
@@ -157,16 +163,19 @@ default_widgets = [
     progressbar.GenericSpeed(format='%.2ft/s'), ' ',
     progressbar.ETA(prefix='eta ')
 ]
+
+
 class ProgressBarObserver(progressbar.ProgressBar, Observer):
     """Display progress through a progressbar.
     """
 
-    #the progress bar is only updated in increments of this for performance
+    # the progress bar is only updated in increments of this for performance
     UPDATE_INTERVAL = 25
 
-    def __init__(self, widgets=default_widgets, term_width=None, fd=sys.stderr):
+    def __init__(self, widgets=default_widgets, term_width=None,
+                 fd=sys.stderr):
         super(ProgressBarObserver, self).__init__(widgets=widgets,
-            term_width=term_width, fd=fd)
+                                                  term_width=term_width, fd=fd)
         self.last_update = 0 - (self.UPDATE_INTERVAL + 1)
 
     def start(self, max_value):
@@ -202,7 +211,9 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
         self.maxval = max_value
 
     def _need_update(self):
-        return self.get_current_value() - self.last_update > self.UPDATE_INTERVAL
+        return (self.get_current_value() - self.last_update
+                > self.UPDATE_INTERVAL)
+
 
 class JSObserver(Observer):
     """Display progress on index.html using JavaScript
@@ -210,36 +221,51 @@ class JSObserver(Observer):
 
     def __init__(self, outputdir, minrefresh=5, messages=False):
         """Initialise observer
-        outputdir must be set to the map output directory path
-        minrefresh specifies the minimum gap between requests, in seconds [optional]
-        messages is a dictionary which allows the displayed messages to be customised [optional]
+
+        :outputdir: must be set to the map output directory path
+        :minrefresh: specifies the minimum gap between requests,
+                     in seconds [optional]
+        :messages: is a dictionary which allows the displayed messages to
+                   be customised [optional]
         """
         self.last_update = -11
-        self.last_update_time = -1 
+        self.last_update_time = -1
         self._current_value = -1
         self.minrefresh = 1000*minrefresh
         self.json = dict()
-        
+
         # function to print formatted eta
         self.format = lambda seconds: '%02ih %02im %02is' % \
             (seconds // 3600, (seconds % 3600) // 60, seconds % 60)
 
-        if (messages == False):
-            self.messages=dict(totalTiles="Rendering %d tiles", renderCompleted="Render completed in %02d:%02d:%02d", renderProgress="Rendered %d of %d tiles (%d%% ETA:%s)")
+        if (not messages):
+            self.messages = dict(
+                totalTiles="Rendering %d tiles",
+                renderCompleted="Render completed in %02d:%02d:%02d",
+                renderProgress="Rendered %d of %d tiles (%d%% ETA:%s)")
         elif (isinstance(messages, dict)):
-            if ('totalTiles' in messages and 'renderCompleted' in messages and 'renderProgress' in messages):
+            if ('totalTiles' in messages
+                    and 'renderCompleted' in messages
+                    and 'renderProgress' in messages):
                 self.messages = messages
             else:
-                raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
+                raise Exception("JSObserver: messages parameter must be a "
+                                "dictionary with three entries: totalTiles, "
+                                "renderCompleted and renderProgress")
         else:
-            raise Exception("JSObserver: messages parameter must be a dictionary with three entries: totalTiles, renderCompleted and renderProgress")
+            raise Exception("JSObserver: messages parameter must be a "
+                            "dictionary with three entries: totalTiles, "
+                            "renderCompleted and renderProgress")
         if not os.path.exists(outputdir):
-            raise Exception("JSObserver: Output directory specified (%s) doesn't appear to exist. This should be the same as the Overviewer output directory" % outputdir)
+            raise Exception("JSObserver: Output directory specified (%s) "
+                            "doesn't appear to exist. This should be the "
+                            "same as the Overviewer output directory"
+                            % outputdir)
 
         self.logfile = open(os.path.join(outputdir, "progress.json"), "w+", 0)
-        self.json["message"]="Render starting..."
-        self.json["update"]=self.minrefresh
-        self.json["messageTime"]=time.time()
+        self.json["message"] = "Render starting..."
+        self.json["update"] = self.minrefresh
+        self.json["messageTime"] = time.time()
         json.dump(self.json, self.logfile)
         self.logfile.flush()
 
@@ -251,7 +277,7 @@ class JSObserver(Observer):
         self.json["messageTime"] = time.time()
         json.dump(self.json, self.logfile)
         self.logfile.flush()
-        self.start_time=time.time()
+        self.start_time = time.time()
         self._set_max_value(max_value)
 
     def is_started(self):
@@ -269,8 +295,11 @@ class JSObserver(Observer):
         duration = duration % 3600
         minutes = duration // 60
         seconds = duration % 60
-        self.json["message"] = self.messages["renderCompleted"] % (hours, minutes, seconds)
-        self.json["update"] = 60000 # The 'renderCompleted' message will always be visible (until the next render)
+        self.json["message"] = self.messages["renderCompleted"] \
+            % (hours, minutes, seconds)
+        # The 'renderCompleted' message will always be visible
+        # (until the next render)
+        self.json["update"] = 60000
         self.json["messageTime"] = time.time()
         json.dump(self.json, self.logfile)
         self.logfile.close()
@@ -294,15 +323,20 @@ class JSObserver(Observer):
         """
         self._current_value = current_value
         if self._need_update():
-            refresh = max(1500*(time.time() - max(self.start_time, self.last_update_time)), self.minrefresh) // 1
+            refresh = max(1500 * (time.time() - max(self.start_time,
+                                                    self.last_update_time)),
+                          self.minrefresh) // 1
             self.logfile.seek(0)
             self.logfile.truncate()
             if self.get_current_value():
                 duration = time.time() - self.start_time
-                eta = self.format(duration * self.get_max_value() / self.get_current_value() - duration)
+                eta = self.format(duration * self.get_max_value() /
+                                  self.get_current_value() - duration)
             else:
                 eta = "?"
-            self.json["message"] = self.messages["renderProgress"] % (self.get_current_value(), self.get_max_value(), self.get_percentage(), str(eta))
+            self.json["message"] = self.messages["renderProgress"] \
+                % (self.get_current_value(), self.get_max_value(),
+                   self.get_percentage(), str(eta))
             self.json["update"] = refresh
             self.json["messageTime"] = time.time()
             json.dump(self.json, self.logfile)
@@ -327,7 +361,7 @@ class JSObserver(Observer):
         return self._max_value
 
     def _set_max_value(self, max_value):
-        self._max_value = max_value 
+        self._max_value = max_value
 
     def _need_update(self):
         cur_val = self.get_current_value()
@@ -337,6 +371,7 @@ class JSObserver(Observer):
             return cur_val - self.last_update > 50
         else:
             return cur_val - self.last_update > 100
+
 
 class MultiplexingObserver(Observer):
     """Combine multiple observers into one.
@@ -360,6 +395,7 @@ class MultiplexingObserver(Observer):
             o.update(current_value)
         super(MultiplexingObserver, self).update(current_value)
 
+
 class ServerAnnounceObserver(Observer):
     """Send the output to a Minecraft server via FIFO or stdin"""
     def __init__(self, target='/dev/null', pct_interval=10):
@@ -381,13 +417,14 @@ class ServerAnnounceObserver(Observer):
         super(ServerAnnounceObserver, self).update(current_value)
         if self._need_update():
             self._send_output('Rendered %d of %d tiles, %d%% complete' %
-                (self.get_current_value(), self.get_max_value(),
-                    self.get_percentage()))
+                              (self.get_current_value(), self.get_max_value(),
+                               self.get_percentage()))
             self.last_update = current_value
 
     def _need_update(self):
-        return self.get_percentage() - \
-            (self.last_update * 100.0 / self.get_max_value()) >= self.pct_interval
+        return(self.get_percentage() -
+               (self.last_update * 100.0 / self.get_max_value())
+               >= self.pct_interval)
 
     def _send_output(self, output):
         self.target_handle.write('say %s\n' % output)
@@ -421,15 +458,14 @@ class RConObserver(Observer):
         super(RConObserver, self).update(current_value)
         if self._need_update():
             self._send_output('Rendered %d of %d tiles, %d%% complete' %
-                (self.get_current_value(), self.get_max_value(),
-                    self.get_percentage()))
+                              (self.get_current_value(), self.get_max_value(),
+                               self.get_percentage()))
             self.last_update = current_value
 
     def _need_update(self):
-        return self.get_percentage() - \
-            (self.last_update * 100.0 / self.get_max_value()) >= self.pct_interval
+        return(self.get_percentage() -
+               (self.last_update * 100.0 / self.get_max_value())
+               >= self.pct_interval)
 
     def _send_output(self, output):
         self.conn.command("say", output)
-        
-        
