@@ -13,10 +13,12 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import gzip, zlib
-import struct
-import StringIO
 import functools
+import gzip
+import StringIO
+import struct
+import zlib
+
 
 # decorator that turns the first argument from a string into an open file
 # handle
@@ -29,12 +31,14 @@ def _file_loader(func):
         return func(fileobj, *args)
     return wrapper
 
+
 @_file_loader
 def load(fileobj):
     """Reads in the given file as NBT format, parses it, and returns the
-    result as a (name, data) tuple.    
+    result as a (name, data) tuple.
     """
     return NBTFileReader(fileobj).read_all()
+
 
 @_file_loader
 def load_region(fileobj):
@@ -45,23 +49,29 @@ def load_region(fileobj):
 
 class CorruptionError(Exception):
     pass
+
+
 class CorruptRegionError(CorruptionError):
     """An exception raised when the MCRFileReader class encounters an
     error during region file parsing.
     """
     pass
+
+
 class CorruptChunkError(CorruptionError):
     pass
+
+
 class CorruptNBTError(CorruptionError):
     """An exception raised when the NBTFileReader class encounters
     something unexpected in an NBT file."""
     pass
 
+
 class NBTFileReader(object):
     """Low level class that reads the Named Binary Tag format used by Minecraft
 
     """
-    
     # compile the unpacker's into a classes
     _byte   = struct.Struct("b")
     _short  = struct.Struct(">h")
@@ -70,8 +80,8 @@ class NBTFileReader(object):
     _uint   = struct.Struct(">I")
     _long   = struct.Struct(">q")
     _float  = struct.Struct(">f")
-    _double = struct.Struct(">d") 
- 
+    _double = struct.Struct(">d")
+
     def __init__(self, fileobj, is_gzip=True):
         """Create a NBT parsing object with the given file-like
         object. Setting is_gzip to False parses the file as a zlib
@@ -96,9 +106,9 @@ class NBTFileReader(object):
             7: self._read_tag_byte_array,
             8: self._read_tag_string,
             9: self._read_tag_list,
-            10:self._read_tag_compound,
-            11:self._read_tag_int_array,
-            12:self._read_tag_long_array,
+            10: self._read_tag_compound,
+            11: self._read_tag_int_array,
+            12: self._read_tag_long_array,
         }
 
     # These private methods read the payload only of the following types
@@ -109,7 +119,7 @@ class NBTFileReader(object):
     def _read_tag_byte(self):
         byte = self._file.read(1)
         return self._byte.unpack(byte)[0]
-    
+
     def _read_tag_short(self):
         bytes = self._file.read(2)
         return self._short.unpack(bytes)[0]
@@ -137,12 +147,12 @@ class NBTFileReader(object):
 
     def _read_tag_int_array(self):
         length = self._uint.unpack(self._file.read(4))[0]
-        int_bytes = self._file.read(length*4)
+        int_bytes = self._file.read(length * 4)
         return struct.unpack(">%ii" % length, int_bytes)
 
     def _read_tag_long_array(self):
         length = self._uint.unpack(self._file.read(4))[0]
-        long_bytes = self._file.read(length*8)
+        long_bytes = self._file.read(length * 8)
         return struct.unpack(">%iq" % length, long_bytes)
 
     def _read_tag_string(self):
@@ -177,7 +187,7 @@ class NBTFileReader(object):
             tags[name] = payload
 
         return tags
-    
+
     def read_all(self):
         """Reads the entire file and returns (name, payload)
         name is the name of the root tag, and payload is a dictionary mapping
@@ -189,14 +199,13 @@ class NBTFileReader(object):
             tagtype = ord(self._file.read(1))
             if tagtype != 10:
                 raise Exception("Expected a tag compound")
-            
             # Read the tag name
             name = self._read_tag_string()
             payload = self._read_tag_compound()
-            
             return (name, payload)
         except (struct.error, ValueError, TypeError), e:
             raise CorruptNBTError("could not parse nbt: %s" % (str(e),))
+
 
 # For reference, the MCR format is outlined at
 # <http://www.minecraftwiki.net/wiki/Beta_Level_Format>
@@ -206,16 +215,16 @@ class MCRFileReader(object):
     chunks (as (name, data) tuples), getting chunk timestamps, and for
     listing chunks contained in the file.
     """
-    
+
     _location_table_format = struct.Struct(">1024I")
     _timestamp_table_format = struct.Struct(">1024i")
     _chunk_header_format = struct.Struct(">I B")
-    
+
     def __init__(self, fileobj):
         """This creates a region object from the given file-like
         object. Chances are you want to use load_region instead."""
         self._file = fileobj
-        
+
         # read in the location table
         location_data = self._file.read(4096)
         if not len(location_data) == 4096:
@@ -234,29 +243,29 @@ class MCRFileReader(object):
         with keeping it open. Using this object after closing it
         results in undefined behaviour.
         """
-        
+
         self._file.close()
         self._file = None
 
-    def get_chunks(self):    
+    def get_chunks(self):
         """Return an iterator of all chunks contained in this region
         file, as (x, z) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
-        
-        for x in xrange(32): 
-            for z in xrange(32): 
+
+        for x in xrange(32):
+            for z in xrange(32):
                 if self._locations[x + z * 32] >> 8 != 0:
-                    yield (x,z)
-        
+                    yield (x, z)
+
     def get_chunk_timestamp(self, x, z):
         """Return the given chunk's modification time. If the given
         chunk doesn't exist, this number may be nonsense. Like
         load_chunk(), this will wrap x and z into the range [0, 31].
         """
         x = x % 32
-        z = z % 32        
-        return self._timestamps[x + z * 32]   
-    
+        z = z % 32
+        return self._timestamps[x + z * 32]
+
     def chunk_exists(self, x, z):
         """Determines if a chunk exists."""
         x = x % 32
@@ -273,40 +282,42 @@ class MCRFileReader(object):
         x = x % 32
         z = z % 32
         location = self._locations[x + z * 32]
-        offset = (location >> 8) * 4096;
-        sectors = location & 0xff;
-        
+        offset = (location >> 8) * 4096
+        sectors = location & 0xff
+
         if offset == 0:
             return None
-        
+
         # seek to the data
         self._file.seek(offset)
-        
+
         # read in the chunk data header
         header = self._file.read(5)
         if len(header) != 5:
             raise CorruptChunkError("chunk header is invalid")
-        data_length, compression =  self._chunk_header_format.unpack(header)
-        
+        data_length, compression = self._chunk_header_format.unpack(header)
+
         # figure out the compression
         is_gzip = True
         if compression == 1:
-            # gzip -- not used by the official client, but trivial to support here so...
+            # gzip -- not used by the official client, but trivial to
+            # support here so...
             is_gzip = True
         elif compression == 2:
             # deflate -- pure zlib stream
             is_gzip = False
         else:
             # unsupported!
-            raise CorruptRegionError("unsupported chunk compression type: %i (should be 1 or 2)" % (compression,))
-        
+            raise CorruptRegionError("unsupported chunk compression type: %i "
+                                     "(should be 1 or 2)" % (compression,))
+
         # turn the rest of the data into a StringIO object
         # (using data_length - 1, as we already read 1 byte for compression)
         data = self._file.read(data_length - 1)
         if len(data) != data_length - 1:
             raise CorruptRegionError("chunk length is invalid")
         data = StringIO.StringIO(data)
-        
+
         try:
             return NBTFileReader(data, is_gzip=is_gzip).read_all()
         except CorruptionError:
