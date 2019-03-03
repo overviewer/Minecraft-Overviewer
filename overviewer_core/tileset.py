@@ -13,31 +13,32 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
+import functools
 import itertools
 import logging
 import os
 import os.path
-import sys
-import shutil
-import random
-import functools
-import time
-import errno
-import stat
 import platform
+import random
+import shutil
+import stat
+import sys
+import time
 from collections import namedtuple
-from itertools import product, izip, chain
+from itertools import chain, izip, product
 
 from PIL import Image
 
-from .util import roundrobin
-from . import nbt
-from . import world
+import c_overviewer
+import rendermodes
+from c_overviewer import resize_half
+
+from . import nbt, world
 from .files import FileReplacer, get_fs_caps
 from .optimizeimages import optimize_image
-import rendermodes
-import c_overviewer
-from c_overviewer import resize_half
+from .util import roundrobin
+
 
 """
 
@@ -90,14 +91,17 @@ do_work(workobj)
 
 """
 
+
 # small but useful
 def iterate_base4(d):
     """Iterates over a base 4 number with d digits"""
     return product(xrange(4), repeat=d)
 
+
 # A named tuple class storing the row and column bounds for the to-be-rendered
 # world
 Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
+
 
 # A note about the implementation of the different rendercheck modes:
 #
@@ -171,6 +175,8 @@ Bounds = namedtuple("Bounds", ("mincol", "maxcol", "minrow", "maxrow"))
 # any additional checks.
 
 __all__ = ["TileSet"]
+
+
 class TileSet(object):
     """The TileSet object manages the work required to produce a set of tiles
     on disk. It calculates the work that needs to be done and tells the
@@ -185,7 +191,7 @@ class TileSet(object):
 
         options is a dictionary of configuration parameters (strings mapping to
         values) that are interpreted by the rendering engine.
-        
+
         worldobj is the World object that regionsetobj is from.
 
         regionsetobj is the RegionSet object that is used to render the tiles.
@@ -321,52 +327,50 @@ class TileSet(object):
                     # This is the typical code path for an initial render, make
                     # this a "forcerender"
                     self.options['renderchecks'] = 2
-                    logging.debug("This is the first time rendering %s. Doing" +
-                            " a full-render",
-                            self.options['name'])
+                    logging.debug("This is the first time rendering %s. Doing "
+                                  "a full-render", self.options['name'])
             elif not os.path.exists(self.outputdir):
                 # Somehow the outputdir got erased but the metadata file is
                 # still there. That's strange!
                 logging.warning(
-                        "This is strange. There is metadata for render '%s' but "
-                        "the output directory is missing. This shouldn't "
-                        "normally happen. I guess we have no choice but to do a "
-                        "--forcerender", self.options['name'])
+                    "This is strange. There is metadata for render '%s' but "
+                    "the output directory is missing. This shouldn't "
+                    "normally happen. I guess we have no choice but to do a "
+                    "--forcerender", self.options['name'])
                 self.options['renderchecks'] = 2
             elif config.get("render_in_progress", False):
                 # The last render must have been interrupted. The default should be
                 # a check-tiles render then
                 logging.warning(
-                        "The last render for '%s' didn't finish. I'll be " +
-                        "scanning all the tiles to make sure everything's up "+
-                        "to date.",
-                        self.options['name'],
-                        )
-                logging.warning("The total tile count will be (possibly "+
-                        "wildly) inaccurate, because I don't know how many "+
-                        "tiles need rendering. I'll be checking them as I go")
+                    "The last render for '%s' didn't finish. I'll be "
+                    "scanning all the tiles to make sure everything's up "
+                    "to date.",
+                    self.options['name'])
+                logging.warning(
+                    "The total tile count will be (possibly "
+                    "wildly) inaccurate, because I don't know how many "
+                    "tiles need rendering. I'll be checking them as I go.")
                 if self.forcerendertime != 0:
                     logging.info(
-                            "The unfinished render was a --forcerender. " +
-                            "Rerendering any tiles older than %s",
-                            time.strftime("%x %X", time.localtime(self.forcerendertime)),
-                            )
+                        "The unfinished render was a --forcerender. "
+                        "Rerendering any tiles older than %s.",
+                        time.strftime("%x %X", time.localtime(self.forcerendertime)))
                 self.options['renderchecks'] = 1
             else:
-                logging.debug("No rendercheck mode specified for %s. "+
-                        "Rendering tile whose chunks have changed since %s",
-                        self.options['name'],
-                        time.strftime("%x %X", time.localtime(self.last_rendertime)),
-                        )
+                logging.debug(
+                    "No rendercheck mode specified for %s. "
+                    "Rendering tile whose chunks have changed since %s.",
+                    self.options['name'],
+                    time.strftime("%x %X", time.localtime(self.last_rendertime)))
                 self.options['renderchecks'] = 0
 
         if not os.path.exists(self.outputdir):
             if self.options['renderchecks'] != 2:
                 logging.warning(
-                "The tile directory didn't exist, but you have specified "
-                "explicitly not to do a --fullrender (which is the default for "
-                "this situation). I'm overriding your decision and setting "
-                "--fullrender for just this run")
+                    "The tile directory didn't exist, but you have specified "
+                    "explicitly not to do a --fullrender (which is the default for "
+                    "this situation). I'm overriding your decision and setting "
+                    "--fullrender for just this run.")
                 self.options['renderchecks'] = 2
             os.mkdir(self.outputdir)
 
@@ -393,6 +397,7 @@ class TileSet(object):
     # do_preprocessing step
     def __getstate__(self):
         return self.world, self.regionset, self.am, self.textures, self.options, self.outputdir
+
     def __setstate__(self, state):
         self.__init__(*state)
 
@@ -406,15 +411,16 @@ class TileSet(object):
         # skip if we're told to
         if self.options['renderchecks'] == 3:
             return
-        
+
         # REMEMBER THAT ATTRIBUTES ASSIGNED IN THIS METHOD ARE NOT AVAILABLE IN
         # THE do_work() METHOD (because this is only called in the main process
         # not the workers)
 
         # This warning goes here so it's only shown once
         if self.treedepth >= 15:
-            logging.warning("Just letting you know, your map requires %s zoom levels. This is REALLY big!",
-                    self.treedepth)
+            logging.warning(
+                "Just letting you know, your map requires %s "
+                "zoom levels. This is REALLY big!", self.treedepth)
 
         # Do any tile re-arranging if necessary. Skip if there was no config
         # from the asset-manager, which typically indicates this is a new
@@ -438,12 +444,12 @@ class TileSet(object):
         # Yeah functional programming!
         # and by functional we mean a bastardized python switch statement
         return {
-                0: lambda: self.dirtytree.count_all(),
-                #there is no good way to guess this so just give total count
-                1: lambda: (4**(self.treedepth+1)-1)/3,
-                2: lambda: self.dirtytree.count_all(),
-                3: lambda: 0,
-                }[self.options['renderchecks']]()
+            0: lambda: self.dirtytree.count_all(),
+            # there is no good way to guess this so just give total count
+            1: lambda: (4**(self.treedepth + 1) - 1) / 3,
+            2: lambda: self.dirtytree.count_all(),
+            3: lambda: 0,
+        }[self.options['renderchecks']]()
 
     def iterate_work_items(self, phase):
         """Iterates over the dirty tiles in the tree and return them in the
@@ -455,18 +461,19 @@ class TileSet(object):
         # skip if asked to
         if self.options['renderchecks'] == 3:
             return
-        
+
         # The following block of code implementes the changelist functionality.
         fd = self.options.get("changelist", None)
         if fd:
             logging.debug("Changelist activated for %s (fileno %s)", self, fd)
+
             # This re-implements some of the logic from do_work()
             def write_out(tilepath):
                 if len(tilepath) == self.treedepth:
                     rt = RenderTile.from_path(tilepath)
                     imgpath = rt.get_filepath(self.outputdir, self.imgextension)
                 elif len(tilepath) == 0:
-                    imgpath = os.path.join(self.outputdir, "base."+self.imgextension)
+                    imgpath = os.path.join(self.outputdir, "base." + self.imgextension)
                 else:
                     dest = os.path.join(self.outputdir, *(str(x) for x in tilepath[:-1]))
                     name = str(tilepath[-1])
@@ -479,21 +486,20 @@ class TileSet(object):
                 # file object may be garbage collected, closing the file.
                 os.write(fd, imgpath + "\n")
 
-
         # See note at the top of this file about the rendercheck modes for an
         # explanation of what this method does in different situations.
         #
         # For modes 0 and 2, self.dirtytree holds exactly the tiles we need to
         # render. Iterate over the tiles in using the posttraversal() method.
         # Yield each item. Easy.
-        if self.options['renderchecks'] in (0,2):
+        if self.options['renderchecks'] in (0, 2):
             for tilepath in self.dirtytree.posttraversal(robin=True):
                 dependencies = []
                 # These tiles may or may not exist, but the dispatcher won't
                 # care according to the worker interface protocol It will only
                 # wait for the items that do exist and are in the queue.
                 for i in range(4):
-                    dependencies.append( tilepath + (i,) )
+                    dependencies.append(tilepath + (i,))
                 if fd:
                     write_out(tilepath)
                 yield tilepath, dependencies
@@ -506,7 +512,7 @@ class TileSet(object):
                 if needs_rendering:
                     dependencies = []
                     for i in range(4):
-                        dependencies.append( tilepath + (i,) )
+                        dependencies.append(tilepath + (i,))
                     if fd:
                         write_out(tilepath)
                     yield tilepath, dependencies
@@ -557,28 +563,35 @@ class TileSet(object):
         """
         def bgcolorformat(color):
             return "#%02x%02x%02x" % color[0:3]
-        isOverlay = self.options.get("overlay") or (not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode")))
+        isOverlay = self.options.get("overlay") or \
+            (not any(isinstance(x, rendermodes.Base) for x in self.options.get("rendermode")))
 
         # don't update last render time if we're leaving this alone
         last_rendertime = self.last_rendertime
         if self.options['renderchecks'] != 3:
-            last_rendertime = self.max_chunk_mtime        
-        
-        d = dict(name = self.options.get('title'),
-                zoomLevels = self.treedepth,
-                defaultZoom = self.options.get('defaultzoom'),
-                maxZoom = self.options.get('maxzoom', self.treedepth) if self.options.get('maxzoom', self.treedepth) >= 0 else self.treedepth+self.options.get('maxzoom'),
-                path = self.options.get('name'),
-                base = self.options.get('base'),
-                bgcolor = bgcolorformat(self.options.get('bgcolor')),
-                world = self.options.get('worldname_orig') +
-                    (" - " + self.options.get('dimension')[0] if self.options.get('dimension')[1] != 0 else ''),
-                last_rendertime = last_rendertime,
-                imgextension = self.imgextension,
-                isOverlay = isOverlay,
-                poititle = self.options.get("poititle"),
-                showlocationmarker = self.options.get("showlocationmarker")
-                )
+            last_rendertime = self.max_chunk_mtime
+
+        d = dict(
+            name=self.options.get('title'),
+            zoomLevels=self.treedepth,
+            defaultZoom=self.options.get('defaultzoom'),
+            maxZoom=None,
+            path=self.options.get('name'),
+            base=self.options.get('base'),
+            bgcolor=bgcolorformat(self.options.get('bgcolor')),
+            world=None,
+            last_rendertime=last_rendertime,
+            imgextension=self.imgextension,
+            isOverlay=isOverlay,
+            poititle=self.options.get("poititle"),
+            showlocationmarker=self.options.get("showlocationmarker")
+        )
+        d['maxZoom'] = self.options.get('maxzoom', self.treedepth)
+        if d['maxZoom'] < 0:
+            d['maxZoom'] = self.treedepth + self.options.get('maxzoom')
+        d['world'] = self.options.get('worldname_orig')
+        if self.options.get('dimension')[1] != 0:
+            d['world'] += " - " + self.options.get('dimension')[0]
         d['maxZoom'] = min(self.treedepth, d['maxZoom'])
         d['minZoom'] = min(max(0, self.options.get("minzoom", 0)), d['maxZoom'])
         d['defaultZoom'] = max(d['minZoom'], min(d['defaultZoom'], d['maxZoom']))
@@ -587,7 +600,7 @@ class TileSet(object):
             d.update({"tilesets": self.options.get("overlay")})
 
         # None means overworld
-        if (self.regionset.get_type() == None and self.options.get("showspawn", True)):
+        if (self.regionset.get_type() is None and self.options.get("showspawn", True)):
             d.update({"spawn": self.options.get("spawn")})
         else:
             d.update({"spawn": False})
@@ -628,7 +641,7 @@ class TileSet(object):
         bounds = self._find_chunk_range()
 
         # Calculate the depth of the tree
-        for p in xrange(2,33): # max 32
+        for p in xrange(2, 33):  # max 32
             # Will 2^p tiles wide and high suffice?
 
             # X has twice as many chunks as tiles, then halved since this is a
@@ -636,7 +649,7 @@ class TileSet(object):
             xradius = 2**p
             # Y has 4 times as many chunks as tiles, then halved since this is
             # a radius
-            yradius = 2*2**p
+            yradius = 2 * 2**p
             # The +32 on the y bounds is because chunks are very tall, and in
             # rare cases when the bottom of the map is close to a border, it
             # could get cut off
@@ -661,23 +674,25 @@ class TileSet(object):
             # Skip a depth 1 tree. A depth 1 tree pretty much can't happen, so
             # when we detect this it usually means the tree is actually empty
             return
-        logging.debug("Current tree depth for %s is reportedly %s. Target tree depth is %s",
-                self.options['name'],
-                curdepth, self.treedepth)
+        logging.debug(
+            "Current tree depth for %s is reportedly %s. Target tree depth is %s.",
+            self.options['name'], curdepth, self.treedepth)
         if self.treedepth != curdepth:
             if self.treedepth > curdepth:
                 logging.warning("Your map seems to have expanded beyond its previous bounds.")
-                logging.warning( "Doing some tile re-arrangements... just a sec...")
-                for _ in xrange(self.treedepth-curdepth):
+                logging.warning("Doing some tile re-arrangements... just a sec...")
+                for _ in xrange(self.treedepth - curdepth):
                     self._increase_depth()
             elif self.treedepth < curdepth:
-                logging.warning("Your map seems to have shrunk. Did you delete some chunks? No problem. Re-arranging tiles, just a sec...")
+                logging.warning(
+                    "Your map seems to have shrunk. Did you delete some "
+                    "chunks? No problem. Re-arranging tiles, just a sec...")
                 for _ in xrange(curdepth - self.treedepth):
                     self._decrease_depth()
                 logging.info(
-                        "There done. I'm switching to --check-tiles mode for "
-                        "this one render. This will make sure any old tiles that "
-                        "should no longer exist are deleted.")
+                    "There, done. I'm switching to --check-tiles mode for "
+                    "this one render. This will make sure any old tiles that "
+                    "should no longer exist are deleted.")
                 self.options['renderchecks'] = 1
 
     def _increase_depth(self):
@@ -697,7 +712,7 @@ class TileSet(object):
                 os.rmdir(p)
 
         def rollback_filerename(dnum):
-            newnum = (3,2,1,0)[dnum]
+            newnum = (3, 2, 1, 0)[dnum]
             qimg = getpath("new%d/%d.%s" % (dnum, newnum, self.imgextension))
             qdir = getpath("new%d/%d" % (dnum, newnum))
 
@@ -710,13 +725,13 @@ class TileSet(object):
             os.rename(getpath(str(dnum)), getpath("new" + str(dnum)))
 
         for dirnum in range(4):
-            newnum = (3,2,1,0)[dirnum]
+            newnum = (3, 2, 1, 0)[dirnum]
 
             newdir = "new" + str(dirnum)
             newdirpath = getpath(newdir)
 
-            files = [str(dirnum)+"."+self.imgextension, str(dirnum)]
-            newfiles = [str(newnum)+"."+self.imgextension, str(newnum)]
+            files = [str(dirnum) + "." + self.imgextension, str(dirnum)]
+            newfiles = [str(newnum) + "." + self.imgextension, str(newnum)]
 
             try:
                 try:
@@ -726,14 +741,16 @@ class TileSet(object):
                             p = getpath(f)
                             if os.path.exists(p):
                                 os.rename(p, getpath(newdir, newf))
-                    except:
+                    # We're catching BaseException here since we'll also want to do this on
+                    # exit.
+                    except BaseException:
                         rollback_filerename(dirnum)
                         raise
-                except:
+                except BaseException:
                     rollback_mkdir(dirnum)
                     raise
                 os.rename(newdirpath, getpath(str(dirnum)))
-            except:
+            except BaseException:
                 logging.warning("Overviewer was interrupted during tile "
                                 "re-arrangement.")
                 logging.warning("Rolling back changes...")
@@ -776,7 +793,8 @@ class TileSet(object):
             os.rename(getpath("new3"), getpath("3"))
 
         # Delete the files in the top directory to make sure they get re-created.
-        files = [str(num)+"."+self.imgextension for num in xrange(4)] + ["base." + self.imgextension]
+        files = [str(num) + "." + self.imgextension for num in xrange(4)] + \
+            ["base." + self.imgextension]
         for f in files:
             try:
                 os.unlink(getpath(f))
@@ -814,7 +832,7 @@ class TileSet(object):
         stime = time.time()
 
         rendercheck = self.options['renderchecks']
-        markall = rendercheck in (1,2)
+        markall = rendercheck in (1, 2)
 
         rerender_prob = self.options['rerenderprob']
 
@@ -822,14 +840,14 @@ class TileSet(object):
 
         max_chunk_mtime = 0
 
-
         # For each chunk, do this:
         #   For each tile that the chunk touches, do this:
         #       Compare the last modified time of the chunk and tile. If the
         #       tile is older, mark it in a RendertileSet object as dirty.
 
-
-        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks() if (markall or platform.system() == 'Windows') else self.regionset.iterate_newer_chunks(last_rendertime): 
+        for chunkx, chunkz, chunkmtime in self.regionset.iterate_chunks() \
+                if (markall or platform.system() == 'Windows') \
+                else self.regionset.iterate_newer_chunks(last_rendertime):
             chunkcount += 1
 
             if chunkmtime > max_chunk_mtime:
@@ -848,8 +866,7 @@ class TileSet(object):
                         c < -xradius or
                         c >= xradius or
                         r < -yradius or
-                        r >= yradius
-                        ):
+                        r >= yradius):
                     continue
 
                 # Computes the path in the quadtree from the col,row coordinates
@@ -873,7 +890,7 @@ class TileSet(object):
                 # rendering, but since a tile gets touched up to 32 times
                 # (once for each chunk in it), divide the probability by
                 # 32.
-                if rerender_prob and rerender_prob/32 > random.random():
+                if rerender_prob and rerender_prob / 32 > random.random():
                     dirty.add(tile.path)
                     continue
 
@@ -881,10 +898,11 @@ class TileSet(object):
                 if chunkmtime > last_rendertime:
                     dirty.add(tile.path)
 
-        t = int(time.time()-stime)
-        logging.debug("Finished chunk scan for %s. %s chunks scanned in %s second%s",
-                self.options['name'], chunkcount, t,
-                "s" if t != 1 else "")
+        t = int(time.time() - stime)
+        logging.debug(
+            "Finished chunk scan for %s. %s chunks scanned in %s second%s.",
+            self.options['name'], chunkcount, t,
+            "s" if t != 1 else "")
 
         self.max_chunk_mtime = max_chunk_mtime
         return dirty
@@ -907,18 +925,18 @@ class TileSet(object):
             # Special case for the base tile. Its children are in the same
             # directory instead of in a sub-directory
             quadPath = [
-                    ((0,0),os.path.join(dest, "0." + imgformat)),
-                    ((192,0),os.path.join(dest, "1." + imgformat)),
-                    ((0, 192),os.path.join(dest, "2." + imgformat)),
-                    ((192,192),os.path.join(dest, "3." + imgformat)),
-                    ]
+                ((0, 0), os.path.join(dest, "0." + imgformat)),
+                ((192, 0), os.path.join(dest, "1." + imgformat)),
+                ((0, 192), os.path.join(dest, "2." + imgformat)),
+                ((192, 192), os.path.join(dest, "3." + imgformat)),
+            ]
         else:
             quadPath = [
-                    ((0,0),os.path.join(dest, name, "0." + imgformat)),
-                    ((192,0),os.path.join(dest, name, "1." + imgformat)),
-                    ((0, 192),os.path.join(dest, name, "2." + imgformat)),
-                    ((192,192),os.path.join(dest, name, "3." + imgformat)),
-                    ]
+                ((0, 0), os.path.join(dest, name, "0." + imgformat)),
+                ((192, 0), os.path.join(dest, name, "1." + imgformat)),
+                ((0, 192), os.path.join(dest, name, "2." + imgformat)),
+                ((192, 192), os.path.join(dest, name, "3." + imgformat)),
+            ]
 
         # Check each of the 4 child tiles, getting their existance and mtime
         # infomation. Also keep track of the max mtime of all children
@@ -945,20 +963,17 @@ class TileSet(object):
                 # Ignore errors if it's "file doesn't exist"
                 if e.errno != errno.ENOENT:
                     raise
-            logging.warning("Tile %s was requested for render, but no children were found! This is probably a bug", imgpath)
+            logging.warning(
+                "Tile %s was requested for render, but no children were found! "
+                "This is probably a bug.", imgpath)
             return
-
-        #logging.debug("writing out compositetile {0}".format(imgpath))
 
         # Create the actual image now
         img = Image.new("RGBA", (384, 384), self.options['bgcolor'])
-		
-        # we'll use paste (NOT alpha_over) for quadtree generation because
+        # We'll use paste (NOT alpha_over) for quadtree generation because
         # this is just straight image stitching, not alpha blending
-
         for path in quadPath_filtered:
             try:
-                #quad = Image.open(path[1]).resize((192,192), Image.ANTIALIAS)
                 src = Image.open(path[1])
                 # optimizeimg may have converted them to a palette image in the meantime
                 if src.mode != "RGB" and src.mode != "RGBA":
@@ -969,18 +984,23 @@ class TileSet(object):
                 resize_half(quad, src)
                 img.paste(quad, path[0])
             except Exception, e:
-                logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'", path[1], e)
-                logging.warning("I'm going to try and delete it. You will need to run the render again and with --check-tiles")
+                logging.warning("Couldn't open %s. It may be corrupt. Error was '%s'.", path[1], e)
+                logging.warning(
+                    "I'm going to try and delete it. You will need to run "
+                    "the render again and with --check-tiles.")
                 try:
                     os.unlink(path[1])
                 except Exception, e:
-                    logging.error("While attempting to delete corrupt image %s, an error was encountered. You will need to delete it yourself. Error was '%s'", path[1], e)
+                    logging.error(
+                        "While attempting to delete corrupt image %s, an error was encountered. "
+                        "You will need to delete it yourself. Error was '%s'", path[1], e)
 
         # Save it
         with FileReplacer(imgpath, capabilities=self.fs_caps) as tmppath:
             if imgformat == 'jpg':
-                img.convert('RGB').save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
-            else: # png
+                img.convert('RGB').save(tmppath, "jpeg", quality=self.options['imgquality'],
+                                        subsampling=0)
+            else:   # PNG
                 img.save(tmppath, "png")
 
             if self.options['optimizeimg']:
@@ -1017,7 +1037,8 @@ class TileSet(object):
 
         if not chunks:
             # No chunks were found in this tile
-            logging.warning("%s was requested for render, but no chunks found! This may be a bug", tile)
+            logging.warning("%s was requested for render, but no chunks found! "
+                            "This may be a bug.", tile)
             try:
                 os.unlink(imgpath)
             except OSError, e:
@@ -1040,8 +1061,6 @@ class TileSet(object):
                 if e.errno != errno.EEXIST:
                     raise
 
-        #logging.debug("writing out worldtile {0}".format(imgpath))
-
         # Compile this image
         tileimg = Image.new("RGBA", (384, 384), self.options['bgcolor'])
 
@@ -1051,56 +1070,41 @@ class TileSet(object):
         # row rowstart will get drawn on the image starting at y coordinates -(192/2)
         max_chunk_mtime = 0
         for col, row, chunkx, chunky, chunkz, chunk_mtime in chunks:
-            xpos = -192 + (col-colstart)*192
-            ypos = -96 + (row-rowstart)*96 + (16-1 - chunky)*192
+            xpos = -192 + (col - colstart) * 192
+            ypos = -96 + (row - rowstart) * 96 + (16 - 1 - chunky) * 192
 
             if chunk_mtime > max_chunk_mtime:
                 max_chunk_mtime = chunk_mtime
 
             # draw the chunk!
             try:
-                c_overviewer.render_loop(self.world, self.regionset, chunkx, chunky,
-                        chunkz, tileimg, xpos, ypos,
-                        self.options['rendermode'], self.textures)
+                c_overviewer.render_loop(
+                    self.world, self.regionset, chunkx, chunky, chunkz, tileimg, xpos, ypos,
+                    self.options['rendermode'], self.textures)
             except nbt.CorruptionError:
                 # A warning and traceback was already printed by world.py's
                 # get_chunk()
-                logging.debug("Skipping the render of corrupt chunk at %s,%s and moving on.", chunkx, chunkz)
+                logging.debug("Skipping the render of corrupt chunk at %s,%s "
+                              "and moving on.", chunkx, chunkz)
             except world.ChunkDoesntExist:
                 # Some chunks are present on disk but not fully initialized.
                 # This is okay.
                 pass
             except Exception, e:
-                logging.error("Could not render chunk %s,%s for some reason. This is likely a render primitive option error.", chunkx, chunkz)
+                logging.error("Could not render chunk %s,%s for some reason. "
+                              "This is likely a render primitive option error.", chunkx, chunkz)
                 logging.error("Full error was:", exc_info=1)
                 sys.exit(1)
-
-            ## Semi-handy routine for debugging the drawing routine
-            ## Draw the outline of the top of the chunk
-            #import ImageDraw
-            #draw = ImageDraw.Draw(tileimg)
-            ## Draw top outline
-            #draw.line([(192,0), (384,96)], fill='red')
-            #draw.line([(192,0), (0,96)], fill='red')
-            #draw.line([(0,96), (192,192)], fill='red')
-            #draw.line([(384,96), (192,192)], fill='red')
-            ## Draw side outline
-            #draw.line([(0,96),(0,96+192)], fill='red')
-            #draw.line([(384,96),(384,96+192)], fill='red')
-            ## Which chunk this is:
-            #draw.text((96,48), "C: %s,%s" % (chunkx, chunkz), fill='red')
-            #draw.text((96,96), "c,r: %s,%s" % (col, row), fill='red')
 
         # Save them
         with FileReplacer(imgpath, capabilities=self.fs_caps) as tmppath:
             if self.imgextension == 'jpg':
-                tileimg.convert('RGB').save(tmppath, "jpeg", quality=self.options['imgquality'], subsampling=0)
-            else: # png
+                tileimg.convert('RGB').save(tmppath, "jpeg", quality=self.options['imgquality'],
+                                            subsampling=0)
+            else:   # PNG
                 tileimg.save(tmppath, "png")
-
             if self.options['optimizeimg']:
                 optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])
-            
             os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))
 
     def _iterate_and_check_tiles(self, path):
@@ -1143,7 +1147,7 @@ class TileSet(object):
                 if e.errno != errno.ENOENT:
                     raise
                 tile_mtime = 0
-            
+
             try:
                 max_chunk_mtime = max(c[5] for c in get_chunks_by_tile(tileobj, self.regionset))
             except ValueError:
@@ -1156,15 +1160,15 @@ class TileSet(object):
                 # chunks, then this could indicate a potential issue with
                 # this or future renders.
                 logging.warning(
-                        "I found a tile with a more recent modification time "
-                        "than any of its chunks. This can happen when a tile has "
-                        "been modified with an outside program, or by a copy "
-                        "utility that doesn't preserve mtimes. Overviewer uses "
-                        "the filesystem's mtimes to determine which tiles need "
-                        "rendering and which don't, so it's important to "
-                        "preserve the mtimes Overviewer sets. Please see our FAQ "
-                        "page on docs.overviewer.org or ask us in IRC for more "
-                        "information")
+                    "I found a tile with a more recent modification time "
+                    "than any of its chunks. This can happen when a tile has "
+                    "been modified with an outside program, or by a copy "
+                    "utility that doesn't preserve mtimes. Overviewer uses "
+                    "the filesystem's mtimes to determine which tiles need "
+                    "rendering and which don't, so it's important to "
+                    "preserve the mtimes Overviewer sets. Please see our FAQ "
+                    "page on docs.overviewer.org or ask us in IRC for more "
+                    "information.")
                 logging.warning("Tile was: %s", imgpath)
 
             if max_chunk_mtime > tile_mtime or tile_mtime < self.forcerendertime:
@@ -1195,7 +1199,7 @@ class TileSet(object):
 
                 for child_path, child_mtime, child_needs_rendering in \
                         self._iterate_and_check_tiles(childpath):
-                    if len(child_path) == len(path)+1:
+                    if len(child_path) == len(path) + 1:
                         # Do these checks for our immediate children
                         if child_needs_rendering:
                             render_me = True
@@ -1261,10 +1265,10 @@ class TileSet(object):
                 logging.debug("Found a subtree that shouldn't exist. Deleting it: %s", dirpath)
                 shutil.rmtree(dirpath)
 
-##
-## Functions for converting (x, z) to (col, row) and back
-##
 
+#
+# Functions for converting (x, z) to (col, row) and back
+#
 def convert_coords(chunkx, chunkz):
     """Takes a coordinate (chunkx, chunkz) where chunkx and chunkz are
     in the chunk coordinate system, and figures out the row and column
@@ -1275,12 +1279,14 @@ def convert_coords(chunkx, chunkz):
     # change this function, and you MUST change unconvert_coords
     return (chunkx + chunkz, chunkz - chunkx)
 
+
 def unconvert_coords(col, row):
     """Undoes what convert_coords does. Returns (chunkx, chunkz)."""
 
     # col + row = chunkz + chunkz => (col + row)/2 = chunkz
     # col - row = chunkx + chunkx => (col - row)/2 = chunkx
     return ((col - row) / 2, (col + row) / 2)
+
 
 ######################
 # The following two functions define the mapping from chunks to tiles and back.
@@ -1300,7 +1306,7 @@ def get_tiles_by_chunk(chunkcol, chunkrow):
 
     # If this chunk is in an /even/ column, then it spans two tiles.
     if chunkcol % 2 == 0:
-        colrange = (tilecol-2, tilecol)
+        colrange = (tilecol - 2, tilecol)
     else:
         colrange = (tilecol,)
 
@@ -1308,11 +1314,12 @@ def get_tiles_by_chunk(chunkcol, chunkrow):
     # tile above it as well. Also touches the next 4 tiles down (16
     # rows)
     if chunkrow % 4 == 0:
-        rowrange = xrange(tilerow-4, tilerow+32+1, 4)
+        rowrange = xrange(tilerow - 4, tilerow + 32 + 1, 4)
     else:
-        rowrange = xrange(tilerow, tilerow+32+1, 4)
+        rowrange = xrange(tilerow, tilerow + 32 + 1, 4)
 
     return product(colrange, rowrange)
+
 
 def get_chunks_by_tile(tile, regionset):
     """Get chunk sections that are relevant to the given render-tile. Only
@@ -1330,7 +1337,8 @@ def get_chunks_by_tile(tile, regionset):
     # This is not a documented usage of this function and is used only for
     # debugging
     if regionset is None:
-        get_mtime = lambda x,y: True
+        def get_mtime(x, y):
+            return True
     else:
         get_mtime = regionset.get_chunk_mtime
 
@@ -1340,13 +1348,13 @@ def get_chunks_by_tile(tile, regionset):
     # "passes through" three chunk sections.
     oddcol_sections = []
     for i, y in enumerate(reversed(xrange(16))):
-        for row in xrange(tile.row + 3 - i*2, tile.row - 2 - i*2, -2):
-            oddcol_sections.append((tile.col+1, row, y))
+        for row in xrange(tile.row + 3 - i * 2, tile.row - 2 - i * 2, -2):
+            oddcol_sections.append((tile.col + 1, row, y))
 
     evencol_sections = []
     for i, y in enumerate(reversed(xrange(16))):
-        for row in xrange(tile.row + 4 - i*2, tile.row - 3 - i*2, -2):
-            evencol_sections.append((tile.col+2, row, y))
+        for row in xrange(tile.row + 4 - i * 2, tile.row - 3 - i * 2, -2):
+            evencol_sections.append((tile.col + 2, row, y))
             evencol_sections.append((tile.col, row, y))
 
     eveniter = reversed(evencol_sections)
@@ -1356,18 +1364,18 @@ def get_chunks_by_tile(tile, regionset):
     # rows on odd columns. This iteration order yields them in back-to-front
     # order appropriate for rendering
     for col, row, y in roundrobin((
-            eveniter,eveniter,
+            eveniter, eveniter,
             odditer,
-            eveniter,eveniter,
+            eveniter, eveniter,
             odditer,
-            eveniter,eveniter,
+            eveniter, eveniter,
             odditer,
-            eveniter,eveniter,
-            )):
+            eveniter, eveniter,)):
         chunkx, chunkz = unconvert_coords(col, row)
         mtime = get_mtime(chunkx, chunkz)
         if mtime:
             yield (col, row, chunkx, y, chunkz, mtime)
+
 
 class RendertileSet(object):
     """This object holds a set of render-tiles using a quadtree data structure.
@@ -1387,6 +1395,7 @@ class RendertileSet(object):
 
     """
     __slots__ = ("depth", "children", "num_tiles", "num_tiles_all")
+
     def __init__(self, depth):
         """Initialize a new tree with the specified depth. This actually
         initializes a node, which is the root of a subtree, with `depth` levels
@@ -1443,19 +1452,23 @@ class RendertileSet(object):
         if path:
             # We are not at the leaf, recurse.
 
-            if children[childnum] == True:
+            # Don't try to make this "prettier" by getting rid of is True and replacing
+            # the elif with not children[childnum], Python 2 thinks that's semantically different
+            # and you suddenly have no tiles being rendered anymore.
+            # No, I don't know either.
+            if children[childnum] is True:
                 # The child is already in the tree.
                 return
-            elif children[childnum] == False:
+            elif children[childnum] is False:
                 # Expand all-false.
-                children[childnum] = [False]*4
+                children[childnum] = [False] * 4
 
                 # This also means an additional composite tile.
                 self.num_tiles_all += 1
 
             self._add_helper(children[childnum], path)
 
-            if children[childnum] == [True]*4:
+            if children[childnum] == [True] * 4:
                 # Collapse all-true.
                 children[childnum] = True
 
@@ -1470,7 +1483,7 @@ class RendertileSet(object):
     def __iter__(self):
         return self.iterate()
 
-    def iterate(self, level=None, robin=False, offset=(0,0)):
+    def iterate(self, level=None, robin=False, offset=(0, 0)):
         """Returns an iterator over every tile in this set. Each item yielded
         is a sequence of integers representing the quadtree path to the tiles
         in the set. Yielded sequences are of length self.depth.
@@ -1494,9 +1507,11 @@ class RendertileSet(object):
                 raise ValueError("Level parameter must be between 1 and %s" % self.depth)
             todepth = self.depth - level + 1
 
-        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth, onlydepth=todepth, robin=robin, offset=offset))
+        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth,
+                                                             onlydepth=todepth, robin=robin,
+                                                             offset=offset))
 
-    def posttraversal(self, robin=False, offset=(0,0)):
+    def posttraversal(self, robin=False, offset=(0, 0)):
         """Returns an iterator over tile paths for every tile in the
         set, including the explictly marked render-tiles, as well as the
         implicitly marked ancestors of those render-tiles. Returns in
@@ -1507,9 +1522,10 @@ class RendertileSet(object):
         subtrees simultaneously in a round-robin manner.
 
         """
-        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth, robin=robin, offset=offset))
+        return (tuple(path) for path in self._iterate_helper([], self.children, self.depth,
+                                                             robin=robin, offset=offset))
 
-    def _iterate_helper(self, path, children, depth, onlydepth=None, robin=False, offset=(0,0)):
+    def _iterate_helper(self, path, children, depth, onlydepth=None, robin=False, offset=(0, 0)):
         """Returns an iterator over tile paths for every tile in the set."""
 
         # A variant of children with a collapsed False/True expanded to a list.
@@ -1527,7 +1543,9 @@ class RendertileSet(object):
             for (childnum_, child), childoffset_ in distance_sort(enumerate(children_list), offset):
                 if child:
                     def go(childnum, childoffset):
-                        for p in self._iterate_helper(path + [childnum], children_list[childnum], depth-1, onlydepth=onlydepth, offset=childoffset):
+                        for p in self._iterate_helper(path + [childnum], children_list[childnum],
+                                                      depth - 1, onlydepth=onlydepth,
+                                                      offset=childoffset):
                             yield p
                     gens.append(go(childnum_, childoffset_))
 
@@ -1578,7 +1596,8 @@ class RendertileSet(object):
         from itertools import imap
         num = sum(imap(lambda _: 1, self.iterate()))
         if num != self.num_tiles:
-            logging.error("Please report this to the developers: RendertileSet num_tiles=%r, count=%r, children=%r", self.num_tiles, num, self.children)
+            logging.error("Please report this to the developers: RendertileSet num_tiles=%r, "
+                          "count=%r, children=%r", self.num_tiles, num, self.children)
         return num
 
     def count_all(self):
@@ -1592,17 +1611,20 @@ class RendertileSet(object):
         from itertools import imap
         num = sum(imap(lambda _: 1, self.posttraversal()))
         if num != self.num_tiles_all:
-            logging.error("Please report this to the developers: RendertileSet num_tiles_all=%r, count_all=%r, children=%r", self.num_tiles, num, self.children)
+            logging.error("Please report this to the developers: RendertileSet num_tiles_all=%r, "
+                          "count_all=%r, children=%r", self.num_tiles, num, self.children)
         return num
+
 
 def distance_sort(children, (off_x, off_y)):
     order = []
-    for child, (dx, dy) in izip(children, [(-1,-1), (1,-1), (-1,1), (1,1)]):
-        x = off_x*2 + dx
-        y = off_y*2 + dy
-        order.append((child, (x,y)))
+    for child, (dx, dy) in izip(children, [(-1, -1), (1, -1), (-1, 1), (1, 1)]):
+        x = off_x * 2 + dx
+        y = off_y * 2 + dy
+        order.append((child, (x, y)))
 
-    return sorted(order, key=lambda (_, (x,y)): x*x + y*y)
+    return sorted(order, key=lambda (_, (x, y)): x * x + y * y)
+
 
 class RenderTile(object):
     """A simple container class that represents a single render-tile.
@@ -1612,6 +1634,7 @@ class RenderTile(object):
 
     """
     __slots__ = ("col", "row", "path")
+
     def __init__(self, col, row, path):
         """Initialize the tile obj with the given parameters. It's probably
         better to use one of the other constructors though
@@ -1624,8 +1647,9 @@ class RenderTile(object):
     def __repr__(self):
         return "%s(%r,%r,%r)" % (self.__class__.__name__, self.col, self.row, self.path)
 
-    def __eq__(self,other):
-        return self.col == other.col and self.row == other.row and tuple(self.path) == tuple(other.path)
+    def __eq__(self, other):
+        return(self.col == other.col and self.row == other.row
+               and tuple(self.path) == tuple(other.path))
 
     def __ne__(self, other):
         return not self == other
@@ -1633,6 +1657,7 @@ class RenderTile(object):
     # To support pickling
     def __getstate__(self):
         return self.col, self.row, self.path
+
     def __setstate__(self, state):
         self.__init__(*state)
 
@@ -1650,7 +1675,6 @@ class RenderTile(object):
         imgpath = ".".join((path, imgformat))
         return imgpath
 
-
     @classmethod
     def from_path(cls, path):
         """Constructor that takes a path and computes the col,row address of
@@ -1665,7 +1689,7 @@ class RenderTile(object):
         # (Diameter in X is 2**depth, divided by 2 for a radius, multiplied by
         # 2 for 2 chunks per tile. Similarly for Y)
         xradius = 2**depth
-        yradius = 2*2**depth
+        yradius = 2 * 2**depth
 
         col = -xradius
         row = -yradius
@@ -1673,9 +1697,9 @@ class RenderTile(object):
         ysize = yradius
 
         for p in path:
-            if p in (1,3):
+            if p in (1, 3):
                 col += xsize
-            if p in (2,3):
+            if p in (2, 3):
                 row += ysize
             xsize //= 2
             ysize //= 2
@@ -1691,7 +1715,7 @@ class RenderTile(object):
         assert row % 4 == 0
 
         xradius = 2**depth
-        yradius = 2*2**depth
+        yradius = 2 * 2**depth
 
         colbounds = [-xradius, xradius]
         rowbounds = [-yradius, yradius]
