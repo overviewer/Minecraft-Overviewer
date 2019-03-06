@@ -261,12 +261,15 @@ class TileSet(object):
                 rest of this discussion.
 
         imgformat
-            A string indicating the output format. Must be one of 'png' or
-            'jpeg'
+            A string indicating the output format. Must be one of 'png',
+            'jpeg' or 'webp'
 
         imgquality
             An integer 1-100 indicating the quality of the jpeg output. Only
-            relevant in jpeg mode.
+            relevant in jpeg and webp mode.
+
+        imglossless
+            A boolean indicating whether to save a webp image in lossless mode.
 
         optimizeimg
             A list of optimizer instances to use.
@@ -387,8 +390,10 @@ class TileSet(object):
             self.imgextension = 'png'
         elif self.options['imgformat'] in ('jpeg', 'jpg'):
             self.imgextension = 'jpg'
+        elif self.options['imgformat'] == 'webp':
+            self.imgextension = 'webp'
         else:
-            raise ValueError("imgformat must be one of: 'png' or 'jpg'")
+            raise ValueError("imgformat must be one of: 'png', 'jpg' or 'webp'")
 
         # This sets self.treedepth, self.xradius, and self.yradius
         self._set_map_size()
@@ -1000,8 +1005,11 @@ class TileSet(object):
             if imgformat == 'jpg':
                 img.convert('RGB').save(tmppath, "jpeg", quality=self.options['imgquality'],
                                         subsampling=0)
-            else:   # PNG
+            elif imgformat == 'png':   # PNG
                 img.save(tmppath, "png")
+            elif imgformat == 'webp':
+                img.save(tmppath, "webp", quality=self.options['imgquality'],
+                         lossless=self.options['imglossless'])
 
             if self.options['optimizeimg']:
                 optimize_image(tmppath, imgformat, self.options['optimizeimg'])
@@ -1101,8 +1109,11 @@ class TileSet(object):
             if self.imgextension == 'jpg':
                 tileimg.convert('RGB').save(tmppath, "jpeg", quality=self.options['imgquality'],
                                             subsampling=0)
-            else:   # PNG
+            elif self.imgextension == 'png':   # PNG
                 tileimg.save(tmppath, "png")
+            elif self.imgextension == 'webp':
+                tileimg.save(tmppath, "webp", quality=self.options['imgquality'],
+                         lossless=self.options['imglossless'])
             if self.options['optimizeimg']:
                 optimize_image(tmppath, self.imgextension, self.options['optimizeimg'])
             os.utime(tmppath, (max_chunk_mtime, max_chunk_mtime))

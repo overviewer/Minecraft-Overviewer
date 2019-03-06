@@ -115,9 +115,14 @@ def validateRerenderprob(s):
     return val
 
 def validateImgFormat(fmt):
-    if fmt not in ("png", "jpg", "jpeg"):
+    if fmt not in ("png", "jpg", "jpeg", "webp"):
         raise ValidationException("%r is not a valid image format" % fmt)
     if fmt == "jpeg": fmt = "jpg"
+    if fmt == "webp":
+        try:
+            from PIL import _webp
+        except ImportError:
+            raise ValidationException("WebP is not supported by your PIL/Pillow installation")
     return fmt
 
 def validateImgQuality(qual):
