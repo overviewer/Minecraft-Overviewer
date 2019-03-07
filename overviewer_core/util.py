@@ -17,14 +17,16 @@
 Misc utility routines used by multiple files that don't belong anywhere else
 """
 
+import errno
 import imp
 import os.path
-import sys
 import platform
-from string import hexdigits
-from subprocess import Popen, PIPE
+import sys
 from itertools import cycle, islice, product
-import errno
+from string import hexdigits
+from subprocess import PIPE, Popen
+
+
 def get_program_path():
     if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
         return os.path.dirname(sys.executable)
@@ -35,6 +37,7 @@ def get_program_path():
             return os.path.dirname(os.path.dirname(__file__))
         except NameError:
             return os.path.dirname(sys.argv[0])
+
 
 def findGitHash():
     try:
@@ -50,6 +53,7 @@ def findGitHash():
         except Exception:
             pass
     return "unknown"
+
 
 def findGitVersion():
     try:
@@ -78,6 +82,7 @@ def findGitVersion():
         except Exception:
             return "unknown"
 
+
 def is_bare_console():
     """Returns true if Overviewer is running in a bare console in
     Windows, that is, if overviewer wasn't started in a cmd.exe
@@ -90,20 +95,22 @@ def is_bare_console():
             num = GetConsoleProcessList(ctypes.byref(ctypes.c_int(0)), ctypes.c_int(1))
             if (num == 1):
                 return True
-                
+
         except Exception:
             pass
     return False
+
 
 def nice_exit(ret=0):
     """Drop-in replacement for sys.exit that will automatically detect
     bare consoles and wait for user input before closing.
     """
     if ret and is_bare_console():
-        print
-        print "Press [Enter] to close this window."
+        print("")
+        print("Press [Enter] to close this window.")
         raw_input()
     sys.exit(ret)
+
 
 # http://docs.python.org/library/itertools.html
 def roundrobin(iterables):
@@ -119,6 +126,7 @@ def roundrobin(iterables):
             pending -= 1
             nexts = cycle(islice(nexts, pending))
 
+
 def dict_subset(d, keys):
     "Return a new dictionary that is built from copying select keys from d"
     n = dict()
@@ -127,10 +135,10 @@ def dict_subset(d, keys):
             n[key] = d[key]
     return n
 
-## (from http://code.activestate.com/recipes/576693/ [r9])
+
+# (from http://code.activestate.com/recipes/576693/ [r9])
 # Backport of OrderedDict() class that runs on Python 2.4, 2.5, 2.6, 2.7 and pypy.
 # Passes Python2.7's test suite and incorporates all the latest updates.
-
 try:
     from thread import get_ident as _get_ident
 except ImportError:
@@ -140,6 +148,7 @@ try:
     from _abcoll import KeysView, ValuesView, ItemsView
 except ImportError:
     pass
+
 
 class OrderedDict(dict):
     'Dictionary that remembers insertion order'
@@ -366,7 +375,7 @@ class OrderedDict(dict):
 
         '''
         if isinstance(other, OrderedDict):
-            return len(self)==len(other) and self.items() == other.items()
+            return len(self) == len(other) and self.items() == other.items()
         return dict.__eq__(self, other)
 
     def __ne__(self, other):
@@ -386,6 +395,7 @@ class OrderedDict(dict):
         "od.viewitems() -> a set-like object providing a view on od's items"
         return ItemsView(self)
 
+
 # now replace all that with the official version, if available
 try:
     import collections
@@ -393,7 +403,8 @@ try:
 except (ImportError, AttributeError):
     pass
 
-def pid_exists(pid): # http://stackoverflow.com/a/6940314/1318435
+
+def pid_exists(pid):    # http://stackoverflow.com/a/6940314/1318435
     """Check whether pid exists in the current process table."""
     if pid < 0:
         return False
