@@ -150,7 +150,7 @@ def main():
     # This section of main() runs in response to any one-time options we have,
     # such as -V for version reporting
     if options.version:
-        print("Minecraft Overviewer %s" % util.findGitVersion()),
+        print("Minecraft Overviewer %s" % util.findGitVersion())
         print("(%s)" % util.findGitHash()[:7])
         try:
             import overviewer_core.overviewer_version as overviewer_version
@@ -167,7 +167,7 @@ def main():
         if not options.checkversion:
             return 0
     if options.checkversion:
-        print("Currently running Minecraft Overviewer %s" % util.findGitVersion()),
+        print("Currently running Minecraft Overviewer %s" % util.findGitVersion())
         print("(%s)" % util.findGitHash()[:7])
         try:
             import urllib
@@ -484,10 +484,10 @@ def main():
         except KeyError:
             try:
                 w = world.World(render['world'])
-            except CorruptNBTError, e:
+            except CorruptNBTError as e:
                 logging.error("Failed to open world %r.", render['world'])
                 raise e
-            except world.UnsupportedVersion, e:
+            except world.UnsupportedVersion as e:
                 for ln in str(e).split('\n'):
                     logging.error(ln)
                 sys.exit(1)
