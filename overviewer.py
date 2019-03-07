@@ -150,8 +150,8 @@ def main():
     # This section of main() runs in response to any one-time options we have,
     # such as -V for version reporting
     if options.version:
-        print("Minecraft Overviewer %s" % util.findGitVersion())
-        print("(%s)" % util.findGitHash()[:7])
+        print("Minecraft Overviewer %s" % util.findGitVersion() +
+              " (%s)" % util.findGitHash()[:7])
         try:
             import overviewer_core.overviewer_version as overviewer_version
             print("built on %s" % overviewer_version.BUILD_DATE)
@@ -167,8 +167,8 @@ def main():
         if not options.checkversion:
             return 0
     if options.checkversion:
-        print("Currently running Minecraft Overviewer %s" % util.findGitVersion())
-        print("(%s)" % util.findGitHash()[:7])
+        print("Currently running Minecraft Overviewer %s" % util.findGitVersion() +
+              " (%s)" % util.findGitHash()[:7])
         try:
             import urllib
             import json
