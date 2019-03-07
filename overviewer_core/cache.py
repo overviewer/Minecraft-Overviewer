@@ -21,6 +21,7 @@ attribute.
 
 """
 
+
 class LRUCache(object):
     """A simple, generic, in-memory LRU cache that implements the standard
     python container interface.
@@ -40,7 +41,8 @@ class LRUCache(object):
     """
     class _LinkNode(object):
         __slots__ = ['left', 'right', 'key', 'value']
-        def __init__(self,l=None,r=None,k=None,v=None):
+
+        def __init__(self, l=None, r=None, k=None, v=None):
             self.left = l
             self.right = r
             self.key = k
@@ -73,6 +75,7 @@ class LRUCache(object):
     # Initialize an empty cache of the same size for worker processes
     def __getstate__(self):
         return self.size
+
     def __setstate__(self, size):
         self.__init__(size)
 
@@ -116,7 +119,7 @@ class LRUCache(object):
 
         # The node doesn't exist already, and we have room for it. Let's do this.
         tail = self.listtail
-        link = LRUCache._LinkNode(tail.left, tail,key,value)
+        link = LRUCache._LinkNode(tail.left, tail, key, value)
         tail.left.right = link
         tail.left = link
 
@@ -129,7 +132,7 @@ class LRUCache(object):
         del cache[key]
         link.left.right = link.right
         link.right.left = link.left
-        
+
         # Call the destructor
         d = self.destructor
         if d:
