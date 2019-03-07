@@ -13,11 +13,11 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import os
-import logging
-import platform
 import ctypes
+import logging
+import os
+import platform
+import sys
 from cStringIO import StringIO
 
 # Some cool code for colored logging:
@@ -41,7 +41,6 @@ BACKGROUND_GREEN  = 0x20
 BACKGROUND_RED    = 0x40
 
 COLORIZE = {
-    #'INFO': WHITe,
     'DEBUG': CYAN,
 }
 HIGHLIGHT = {
@@ -60,7 +59,7 @@ class WindowsOutputStream(object):
         assert platform.system() == 'Windows'
         self.stream = stream or sys.stderr
 
-        # go go gadget ctypes 
+        # go go gadget ctypes
         self.GetStdHandle = ctypes.windll.kernel32.GetStdHandle
         self.SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
         self.STD_OUTPUT_HANDLE = ctypes.c_int(0xFFFFFFF5)
@@ -68,47 +67,51 @@ class WindowsOutputStream(object):
         if self.output_handle == 0xFFFFFFFF:
             raise Exception("Something failed in WindowsColorFormatter")
 
-
         # default is white text on a black background
         self.currentForeground = FOREGROUND_WHITE
         self.currentBackground = BACKGROUND_BLACK
         self.currentBold       = 0
 
     def updateWinColor(self, Fore=None, Back=None, Bold=False):
-        if Fore != None: self.currentForeground = Fore
-        if Back != None: self.currentBackground = Back
-        if Bold: 
+        if Fore is not None:
+            self.currentForeground = Fore
+        if Back is not None:
+            self.currentBackground = Back
+        if Bold:
             self.currentBold = FOREGROUND_BOLD
         else:
             self.currentBold = 0
 
-        self.SetConsoleTextAttribute(self.output_handle,
-                ctypes.c_int(self.currentForeground | self.currentBackground | self.currentBold))
+        self.SetConsoleTextAttribute(
+            self.output_handle,
+            ctypes.c_int(self.currentForeground | self.currentBackground | self.currentBold))
 
     def write(self, s):
 
-        msg_strm = StringIO(s) 
-    
+        msg_strm = StringIO(s)
+
         while (True):
             c = msg_strm.read(1)
-            if c == '': break
+            if c == '':
+                break
             if c == '\033':
                 c1 = msg_strm.read(1)
-                if c1 != '[': # 
+                if c1 != '[':
                     sys.stream.write(c + c1)
                     continue
                 c2 = msg_strm.read(2)
-                if c2 == "0m": # RESET_SEQ
+                if c2 == "0m":  # RESET_SEQ
                     self.updateWinColor(Fore=FOREGROUND_WHITE, Back=BACKGROUND_BLACK)
 
                 elif c2 == "1;":
                     color = ""
                     while(True):
                         nc = msg_strm.read(1)
-                        if nc == 'm': break
+                        if nc == 'm':
+                            break
                         color += nc
-                    color = int(color) 
-                    if (color >= 40): # background
+                    color = int(color)
+                    if (color >= 40):       # background
                         color = color - 40
                         if color == BLACK:
                             self.updateWinColor(Back=BACKGROUND_BLACK)
@@ -125,8 +128,9 @@ class WindowsOutputStream(object):
                         elif color == CYAN:
                             self.updateWinColor(Back=BACKGROUND_GREEN | BACKGROUND_BLUE)
                         elif color == WHITE:
-                            self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE)
-                    elif (color >= 30): # foreground
+                            self.updateWinColor(Back=BACKGROUND_RED | BACKGROUND_GREEN |
+                                                BACKGROUND_BLUE)
+                    elif (color >= 30):     # foreground
                         color = color - 30
                         if color == BLACK:
                             self.updateWinColor(Fore=FOREGROUND_BLACK)
@@ -144,33 +148,25 @@ class WindowsOutputStream(object):
                             self.updateWinColor(Fore=FOREGROUND_GREEN | FOREGROUND_BLUE)
                         elif color == WHITE:
                             self.updateWinColor(Fore=FOREGROUND_WHITE)
-
-                         
-                    
-                elif c2 == "1m": # BOLD_SEQ
+                elif c2 == "1m":    # BOLD_SEQ
                     pass
-                
             else:
                 self.stream.write(c)
-
-
 
     def flush(self):
         self.stream.flush()
 
+
 class HighlightingFormatter(logging.Formatter):
-    """Base class of our custom formatter
-    
-    """
+    """Base class of our custom formatter"""
     datefmt = "%Y-%m-%d %H:%M:%S"
     funcName_len = 15
 
     def __init__(self, verbose=False):
         if verbose:
-            fmtstr = '%(fileandlineno)-18s %(pid)s %(asctime)s ' \
-                    '%(levelname)-8s %(message)s'
+            fmtstr = '%(fileandlineno)-18s %(pid)s %(asctime)s %(levelname)-8s %(message)s'
         else:
-            fmtstr = '%(asctime)s ' '%(shortlevelname)-1s%(message)s'
+            fmtstr = '%(asctime)s %(shortlevelname)-1s%(message)s'
 
         logging.Formatter.__init__(self, fmtstr, self.datefmt)
 
@@ -189,11 +185,12 @@ class HighlightingFormatter(logging.Formatter):
 
         shortlevelname
             The level name truncated to 1 character
-        
+
         """
 
-        record.shortlevelname = record.levelname[0] + ' ' 
-        if record.levelname == 'INFO': record.shortlevelname = ''
+        record.shortlevelname = record.levelname[0] + ' '
+        if record.levelname == 'INFO':
+            record.shortlevelname = ''
 
         record.pid = os.getpid()
         record.fileandlineno = "%s:%s" % (record.filename, record.lineno)
@@ -215,6 +212,7 @@ class HighlightingFormatter(logging.Formatter):
         """
         return logging.Formatter.format(self, record)
 
+
 class DumbFormatter(HighlightingFormatter):
     """Formatter for dumb terminals that don't support color, or log files.
     Prints a bunch of stars before a highlighted line.
@@ -223,7 +221,7 @@ class DumbFormatter(HighlightingFormatter):
     def highlight(self, record):
         if record.levelname in HIGHLIGHT:
             line = logging.Formatter.format(self, record)
-            line = "*" * min(79,len(line)) + "\n" + line
+            line = "*" * min(79, len(line)) + "\n" + line
             return line
         else:
             return HighlightingFormatter.highlight(self, record)
@@ -238,21 +236,21 @@ class ANSIColorFormatter(HighlightingFormatter):
             # Colorize just the levelname
             # left justify again because the color sequence bumps the length up
             # above 8 chars
-            levelname_color = COLOR_SEQ % (30 + COLORIZE[record.levelname]) + \
-                    "%-8s" % record.levelname + RESET_SEQ
+            levelname_color = (COLOR_SEQ % (30 + COLORIZE[record.levelname])
+                               + "%-8s" % record.levelname + RESET_SEQ)
             record.levelname = levelname_color
             return logging.Formatter.format(self, record)
 
         elif record.levelname in HIGHLIGHT:
             # Colorize the entire line
             line = logging.Formatter.format(self, record)
-            line = COLOR_SEQ % (40 + HIGHLIGHT[record.levelname]) + line + \
-                    RESET_SEQ
+            line = COLOR_SEQ % (40 + HIGHLIGHT[record.levelname]) + line + RESET_SEQ
             return line
 
         else:
             # No coloring if it's not to be highlighted or colored
             return logging.Formatter.format(self, record)
+
 
 def configure(loglevel=logging.INFO, verbose=False, simple=False):
     """Configures the root logger to our liking
