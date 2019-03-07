@@ -211,10 +211,10 @@ class oxipng(Optimizer, PNGOptimizer):
 
 
 def optimize_image(imgpath, imgformat, optimizers):
-        for opt in optimizers:
-            if imgformat == 'png':
-                if isinstance(opt, PNGOptimizer):
-                    opt.optimize(imgpath)
-            elif imgformat == 'jpg':
-                if isinstance(opt, JPEGOptimizer):
-                    opt.optimize(imgpath)
+    for opt in optimizers:
+        if imgformat == 'png':
+            if isinstance(opt, PNGOptimizer):
+                opt.optimize(imgpath)
+        elif imgformat == 'jpg':
+            if isinstance(opt, JPEGOptimizer):
+                opt.optimize(imgpath)
