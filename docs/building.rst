@@ -149,12 +149,12 @@ macOS
 3. Install PIP (``sudo easy-install pip``)
 4. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same funcitonality) (``pip install Pillow``)
 5. Download the Pillow source files from https://files.pythonhosted.org/packages/3c/7e/443be24431324bd34d22dd9d11cc845d995bcd3b500676bcf23142756975/Pillow-5.4.1.tar.gz and unpack the tar.gz file and move to your desktop
-6. Download the Minercaft Overviewer source-code from http://overviewer.org/builds/src/93/overviewer-0.13.19.tar.gz
-7. Extract overviewer-0.13.19.tar.gz and move it to your desktop
-8. Go into your Pillow-5.4.1 folder and navigate to the /src/libImaging directory
-9. Drag the following files from the Pillow-5.4.1/src/libImaging folder to your overviewer-0.13.19 folder (``Imaging.h, ImagingUtils, ImPlatform.h``)
+6. Download the Minercaft Overviewer source-code from https://overviewer.org/builds/overviewer-latest.tar.gz
+7. Extract overviewer-[Version].tar.gz and move it to a directory you can remember
+8. Go into your Pillow-[Version] folder and navigate to the /src/libImaging directory
+9. Drag the following files from the Pillow-[Version]/src/libImaging folder to your overviewer-[Version] folder (``Imaging.h, ImagingUtils, ImPlatform.h``)
 10. Symlink Python by running the command (``sudo ln -sf /usr/bin/python2.7 /usr/local/bin/python2``) in terminal
-11. In terminal change directory to your overviewer-0.13.19 folder (most likely cd Desktop/overviewer-0.13.19)
+11. In terminal change directory to your overviewer-[Version] folder (e.g ``cd Desktop/overviewer-[Version]``)
 12. Build::
 
     (``PIL_INCLUDE_DIR="/path/to/Pillow-[version]/libImaging" python2 setup.py build``)
