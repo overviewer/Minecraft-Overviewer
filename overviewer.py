@@ -129,7 +129,21 @@ def main():
     exegroup.add_argument("--skip-players", dest="skipplayers", action="store_true",
                           help="When running GenPOI, don't scan player data.")
 
-    args = parser.parse_args()
+    args, unknowns = parser.parse_known_args()
+
+    # Check for possible shell quoting issues
+    if len(unknowns) > 0:
+        possible_mistakes = []
+        for i in xrange(len(unknowns) + 1):
+            possible_mistakes.append(" ".join([args.world, args.output] + unknowns[:i]))
+            possible_mistakes.append(" ".join([args.output] + unknowns[:i]))
+        for mistake in possible_mistakes:
+            if os.path.exists(mistake):
+                logging.warning("Looks like you tried to make me use {0} as an argument, but "
+                                "forgot to quote the argument correctly. Try using \"{0}\" "
+                                "instead if the spaces are part of the path.".format(mistake))
+                parser.error("Too many arguments.")
+        parser.error("Too many arguments.")
 
     # first thing to do is check for stuff in the exegroup:
     if args.genpoi:
