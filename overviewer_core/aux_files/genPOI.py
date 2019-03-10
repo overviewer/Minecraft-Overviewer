@@ -14,6 +14,7 @@ markers.js holds a list of which markerSets are attached to each tileSet
 
 
 '''
+import datetime
 import gzip
 import itertools
 import json
@@ -24,27 +25,25 @@ import re
 import sys
 import time
 import urllib2
-import datetime
-
 from collections import defaultdict
 from contextlib import closing
 from multiprocessing import Pool
 from optparse import OptionParser
 
-from overviewer_core import logger
-from overviewer_core import nbt
-from overviewer_core import configParser, world
+from overviewer_core import configParser, logger, nbt, world
 from overviewer_core.files import FileReplacer, get_fs_caps
 
 UUID_LOOKUP_URL = 'https://sessionserver.mojang.com/session/minecraft/profile/'
 
+
 def replaceBads(s):
     "Replaces bad characters with good characters!"
     bads = [" ", "(", ")"]
-    x=s
+    x = s
     for bad in bads:
-        x = x.replace(bad,"_")
+        x = x.replace(bad, "_")
     return x
+
 
 # If you want to keep your stomach contents do not, under any circumstance,
 # read the body of the following function. You have been warned.
@@ -61,8 +60,8 @@ def replaceBads(s):
 def jsonText(s):
     if s is None or s == "null":
         return ""
-    if (s.startswith('"') and s.endswith('"')) or \
-        (s.startswith('{') and s.endswith('}')):
+    if ((s.startswith('"') and s.endswith('"')) or
+            (s.startswith('{') and s.endswith('}'))):
         try:
             js = json.loads(s)
         except ValueError:
@@ -87,12 +86,15 @@ def jsonText(s):
     else:
         return s
 
+
 # Since functions are not pickleable, we send their names instead.
 # Here, set up worker processes to have a name -> function map
 bucketChunkFuncs = {}
+
+
 def initBucketChunks(config_path):
     global bucketChunkFuncs
-    
+
     mw_parser = configParser.MultiWorldParser()
     mw_parser.parse(config_path)
     # ought not to fail since we already did it once
@@ -101,6 +103,7 @@ def initBucketChunks(config_path):
         for f in render['markers']:
             ff = f['filterFunction']
             bucketChunkFuncs[ff.__name__] = ff
+
 
 # yes there's a double parenthesis here
 # see below for when this is called, and why we do this
@@ -115,7 +118,7 @@ def parseBucketChunks((bucket, rset, filters)):
     cnt = 0
     for b in bucket:
         try:
-            data = rset.get_chunk(b[0],b[1])
+            data = rset.get_chunk(b[0], b[1])
             for poi in itertools.chain(data.get('TileEntities', []), data.get('Entities', [])):
                 if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
                     poi = signWrangler(poi)
@@ -126,7 +129,7 @@ def parseBucketChunks((bucket, rset, filters)):
                         d = create_marker_from_filter_result(poi, result)
                         markers[name].append(d)
         except nbt.CorruptChunkError:
-            logging.warning("Ignoring POIs in corrupt chunk %d,%d", b[0], b[1])
+            logging.warning("Ignoring POIs in corrupt chunk %d,%d.", b[0], b[1])
         except world.ChunkDoesntExist:
             pass
 
@@ -135,9 +138,11 @@ def parseBucketChunks((bucket, rset, filters)):
         if i == 250:
             i = 0
             cnt = 250 + cnt
-            logging.info("Found %d markers in thread %d so far at %d chunks", sum(len(v) for v in markers.itervalues()), pid, cnt);
+            logging.info("Found %d markers in thread %d so far at %d chunks.",
+                         sum(len(v) for v in markers.itervalues()), pid, cnt)
 
     return markers
+
 
 def signWrangler(poi):
     """
@@ -157,9 +162,9 @@ def handleEntities(rset, config, config_path, filters, markers):
     This function will not return anything, but it will update the parameter
     `markers`.
     """
-    logging.info("Looking for entities in %r", rset)
+    logging.info("Looking for entities in %r...", rset)
 
-    numbuckets = config['processes'];
+    numbuckets = config['processes']
     if numbuckets < 0:
         numbuckets = multiprocessing.cpu_count()
 
@@ -168,7 +173,7 @@ def handleEntities(rset, config, config_path, filters, markers):
             try:
                 data = rset.get_chunk(x, z)
                 for poi in itertools.chain(data.get('TileEntities', []), data.get('Entities', [])):
-                    if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign': # kill me
+                    if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':    # kill me
                         poi = signWrangler(poi)
                     for name, __, filter_function, __, __, __ in filters:
                         result = filter_function(poi)
@@ -176,33 +181,33 @@ def handleEntities(rset, config, config_path, filters, markers):
                             d = create_marker_from_filter_result(poi, result)
                             markers[name]['raw'].append(d)
             except nbt.CorruptChunkError:
-                logging.warning("Ignoring POIs in corrupt chunk %d,%d", x,z)
+                logging.warning("Ignoring POIs in corrupt chunk %d,%d.", x, z)
             except world.ChunkDoesntExist:
                 # iterate_chunks() doesn't inspect chunks and filter out
                 # placeholder ones. It's okay for this chunk to not exist.
                 pass
-  
     else:
-        buckets = [[] for i in range(numbuckets)];
-  
+        buckets = [[] for i in range(numbuckets)]
+
         for (x, z, mtime) in rset.iterate_chunks():
             i = x / 32 + z / 32
-            i = i % numbuckets 
+            i = i % numbuckets
             buckets[i].append([x, z])
-  
+
         for b in buckets:
-            logging.info("Buckets has %d entries", len(b));
-  
+            logging.info("Buckets has %d entries.", len(b))
+
         # Create a pool of processes and run all the functions
         pool = Pool(processes=numbuckets, initializer=initBucketChunks, initargs=(config_path,))
 
         # simplify the filters dict, so pickle doesn't have to do so much
-        filters = [(name, filter_function.__name__) for name, __, filter_function, __, __, __ in filters]
+        filters = [(name, filter_function.__name__) for name, __, filter_function, __, __, __
+                   in filters]
 
         results = pool.map(parseBucketChunks, ((buck, rset, filters) for buck in buckets))
-  
-        logging.info("All the threads completed")
-  
+
+        logging.info("All the threads completed.")
+
         for marker_dict in results:
             for name, marker_list in marker_dict.iteritems():
                 markers[name]['raw'].extend(marker_list)
@@ -213,8 +218,8 @@ def handleEntities(rset, config, config_path, filters, markers):
 class PlayerDict(dict):
     use_uuid = False
     _name = ''
-    uuid_cache = None # A cache for the UUID->profile lookups
-    
+    uuid_cache = None   # A cache for the UUID->profile lookups
+
     @classmethod
     def load_cache(cls, outputdir):
         cache_file = os.path.join(outputdir, "uuidcache.dat")
@@ -222,22 +227,23 @@ class PlayerDict(dict):
             try:
                 with closing(gzip.GzipFile(cache_file)) as gz:
                     cls.uuid_cache = json.load(gz)
-                    logging.info("Loaded UUID cache from %r with %d entries",
+                    logging.info("Loaded UUID cache from %r with %d entries.",
                                  cache_file, len(cls.uuid_cache.keys()))
             except (ValueError, IOError):
-                logging.warning("Failed to load UUID cache -- it might be corrupt")
+                logging.warning("Failed to load UUID cache -- it might be corrupt.")
                 cls.uuid_cache = {}
                 corrupted_cache = cache_file + ".corrupted." + datetime.datetime.now().isoformat()
                 try:
                     os.rename(cache_file, corrupted_cache)
-                    logging.warning("If %s does not appear to contain meaningful data, you may safely delete it", corrupted_cache)
+                    logging.warning("If %s does not appear to contain meaningful data, you may "
+                                    "safely delete it.", corrupted_cache)
                 except OSError:
-                    logging.warning("Failed to backup corrupted UUID cache")
+                    logging.warning("Failed to backup corrupted UUID cache.")
 
-                logging.info("Initialized an empty UUID cache")
+                logging.info("Initialized an empty UUID cache.")
         else:
             cls.uuid_cache = {}
-            logging.info("Initialized an empty UUID cache")
+            logging.info("Initialized an empty UUID cache.")
 
     @classmethod
     def save_cache(cls, outputdir):
@@ -247,7 +253,7 @@ class PlayerDict(dict):
         with FileReplacer(cache_file, caps) as cache_file_name:
             with closing(gzip.GzipFile(cache_file_name, "wb")) as gz:
                 json.dump(cls.uuid_cache, gz)
-                logging.info("Wrote UUID cache with %d entries",
+                logging.info("Wrote UUID cache with %d entries.",
                              len(cls.uuid_cache.keys()))
 
     def __getitem__(self, item):
@@ -257,11 +263,10 @@ class PlayerDict(dict):
                     super(PlayerDict, self).__setitem__("EntityId", self.get_name_from_uuid())
                 else:
                     super(PlayerDict, self).__setitem__("EntityId", self._name)
-        
         return super(PlayerDict, self).__getitem__(item)
 
     def get_name_from_uuid(self):
-        sname = self._name.replace('-','')
+        sname = self._name.replace('-', '')
         try:
             profile = PlayerDict.uuid_cache[sname]
             if profile['retrievedAt'] > time.mktime(self['time']):
@@ -276,7 +281,7 @@ class PlayerDict(dict):
                 PlayerDict.uuid_cache[sname] = profile
                 return profile['name']
         except (ValueError, urllib2.URLError):
-            logging.warning("Unable to get player name for UUID %s", self._name)
+            logging.warning("Unable to get player name for UUID %s.", self._name)
 
 
 def handlePlayers(worldpath, filters, markers):
@@ -309,7 +314,7 @@ def handlePlayers(worldpath, filters, markers):
             if isSinglePlayer:
                 data = data['Data']['Player']
         except (IOError, TypeError):
-            logging.warning("Skipping bad player dat file %r", playerfile)
+            logging.warning("Skipping bad player dat file %r.", playerfile)
             continue
 
         playername = playerfile.split(".")[0]
@@ -406,13 +411,14 @@ def create_marker_from_filter_result(poi, result):
         # Use custom hovertext if provided...
         if 'hovertext' in result:
             d['hovertext'] = unicode(result['hovertext'])
-        else: # ...otherwise default to display text.
+        else:   # ...otherwise default to display text.
             d['hovertext'] = result['text']
 
         if 'polyline' in result and hasattr(result['polyline'], '__iter__'):
             d['polyline'] = []
             for point in result['polyline']:
-                d['polyline'].append(dict(x=point['x'], y=point['y'], z=point['z'])) # point.copy() would work, but this validates better
+                # point.copy() would work, but this validates better
+                d['polyline'].append(dict(x=point['x'], y=point['y'], z=point['z']))
             if isinstance(result['color'], basestring):
                 d['strokeColor'] = result['color']
 
@@ -421,7 +427,8 @@ def create_marker_from_filter_result(poi, result):
             if "createInfoWindow" in result:
                 d["createInfoWindow"] = result['createInfoWindow']
     else:
-        raise ValueError("got an %s as result for POI with id %s" % (type(result).__name__, poi['id']))
+        raise ValueError("Got an %s as result for POI with id %s"
+                         % (type(result).__name__, poi['id']))
 
     return d
 
@@ -478,8 +485,8 @@ def main():
         try:
             worldpath = config['worlds'][render['world']]
         except KeyError:
-            logging.error("Render %s's world is '%s', but I could not find a corresponding entry in the worlds dictionary.",
-                    rname, render['world'])
+            logging.error("Render %s's world is '%s', but I could not find a corresponding entry "
+                          "in the worlds dictionary.", rname, render['world'])
             return 1
         render['worldname_orig'] = render['world']
         render['world'] = worldpath
@@ -493,34 +500,38 @@ def main():
 
         # get the regionset for this dimension
         rset = w.get_regionset(render['dimension'][1])
-        if rset == None: # indicates no such dimension was found:
-            logging.warn("Sorry, you requested dimension '%s' for the render '%s', but I couldn't find it", render['dimension'][0], rname)
+        if rset is None:    # indicates no such dimension was found:
+            logging.warn("Sorry, you requested dimension '%s' for the render '%s', but I couldn't "
+                         "find it.", render['dimension'][0], rname)
             continue
 
         # find filters for this render
         for f in render['markers']:
             # internal identifier for this filter
-            name = replaceBads(f['name']) + hex(hash(f['filterFunction']))[-4:] + "_" + hex(hash(rname))[-4:]
+            name = (replaceBads(f['name']) + hex(hash(f['filterFunction']))[-4:] + "_"
+                    + hex(hash(rname))[-4:])
 
             # add it to the list of filters
             filters.add((name, f['name'], f['filterFunction'], rset, worldpath, rname))
 
             # add an entry in the menu to show markers found by this filter
-            group = dict(groupName=name,
-                    displayName = f['name'], 
-                    icon=f.get('icon', 'signpost_icon.png'), 
-                    createInfoWindow=f.get('createInfoWindow', True),
-                    checked = f.get('checked', False))
+            group = dict(
+                groupName=name,
+                displayName=f['name'],
+                icon=f.get('icon', 'signpost_icon.png'),
+                createInfoWindow=f.get('createInfoWindow', True),
+                checked=f.get('checked', False))
             marker_groups[rname].append(group)
 
     # initialize the structure for the markers
     markers = dict((name, dict(created=False, raw=[], name=filter_name))
-                    for name, filter_name, __, __, __, __ in filters)
+                   for name, filter_name, __, __, __, __ in filters)
 
     # apply filters to regionsets
     if not options.skipscan:
         # group filters by rset
-        keyfunc = lambda x: x[3]
+        def keyfunc(x):
+            return x[3]
         sfilters = sorted(filters, key=keyfunc)
         for rset, rset_filters in itertools.groupby(sfilters, keyfunc):
             handleEntities(rset, config, options.config, list(rset_filters), markers)
@@ -528,9 +539,11 @@ def main():
     # apply filters to players
     if not options.skipplayers:
         PlayerDict.load_cache(destdir)
+
         # group filters by worldpath, so we only search for players once per
         # world
-        keyfunc = lambda x: x[4]
+        def keyfunc(x):
+            return x[4]
         sfilters = sorted(filters, key=keyfunc)
         for worldpath, worldpath_filters in itertools.groupby(sfilters, keyfunc):
             handlePlayers(worldpath, list(worldpath_filters), markers)
@@ -538,7 +551,8 @@ def main():
     # add manual POIs
     # group filters by name of the render, because only filter functions for
     # the current render should be used on the current render's manualpois
-    keyfunc = lambda x: x[5]
+    def keyfunc(x):
+        return x[5]
     sfilters = sorted(filters, key=keyfunc)
     for rname, rname_filters in itertools.groupby(sfilters, keyfunc):
         manualpois = config['renders'][rname]['manualpois']
@@ -553,17 +567,18 @@ def main():
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
         output.write("var markersDB=")
         json.dump(markers, output, indent=2)
-        output.write(";\n");
+        output.write(";\n")
     with open(os.path.join(destdir, "markers.js"), "w") as output:
         output.write("var markers=")
         json.dump(marker_groups, output, indent=2)
-        output.write(";\n");
+        output.write(";\n")
     with open(os.path.join(destdir, "baseMarkers.js"), "w") as output:
         output.write("overviewer.util.injectMarkerScript('markersDB.js');\n")
         output.write("overviewer.util.injectMarkerScript('markers.js');\n")
         output.write("overviewer.util.injectMarkerScript('regions.js');\n")
         output.write("overviewer.collections.haveSigns=true;\n")
     logging.info("Done")
+
 
 if __name__ == "__main__":
     main()
