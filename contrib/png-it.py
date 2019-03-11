@@ -45,9 +45,10 @@ def main():
         parser.error("You cannot specify --center or --crop with --autocrop.")
 
     # check for the output
-    folder, filename = split(args.output)
-    if folder != '' and not exists(folder):
-        parser.error("The destination folder '{0}' doesn't exist.".format(folder))
+    if args.output != '-':
+        folder, filename = split(args.output)
+        if folder != '' and not exists(folder):
+            parser.error("The destination folder '{0}' doesn't exist.".format(folder))
 
     # calculate stuff
     n = args.zoom_level
@@ -148,7 +149,7 @@ def main():
             print("Pasted {0} of {1}.".format(counter, total), file=sys.stderr)
     print("Done!", file=sys.stderr)
     print("Saving image... (this may take a while)", file=sys.stderr)
-    final_img.save(args.output, "PNG")
+    final_img.save(args.output if args.output != '-' else sys.stdout, "PNG")
 
 
 def get_cropped_centered_img_coords(options, tile_size, center_vector, crop, t):
