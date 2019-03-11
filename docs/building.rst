@@ -148,7 +148,7 @@ macOS
 2. Install Python 2.7.10 if you don't already have it https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg
 3. Install PIP (``sudo easy-install pip``)
 4. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same funcitonality) (``pip install Pillow``)
-5. Download the Pillow source files from https://files.pythonhosted.org/packages/3c/7e/443be24431324bd34d22dd9d11cc845d995bcd3b500676bcf23142756975/Pillow-5.4.1.tar.gz and unpack the tar.gz file and move to your desktop
+5. Download the Pillow source files from https://github.com/python-pillow/Pillow/releases/latest and unpack the tar.gz file and move it to a directory you can remember
 6. Download the Minercaft Overviewer source-code from https://overviewer.org/builds/overviewer-latest.tar.gz
 7. Extract overviewer-[Version].tar.gz and move it to a directory you can remember
 8. Go into your Pillow-[Version] folder and navigate to the /src/libImaging directory
