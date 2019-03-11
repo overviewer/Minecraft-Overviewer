@@ -141,41 +141,23 @@ Then to build::
     
 At this point, you can run ``./overviewer.py`` from the current directory, so to run it you'll have to be in this directory and run ``./overviewer.py`` or provide the the full path to ``overviewer.py``.  Another option would be to add this directory to your ``$PATH``.   Note that there is a ``python2 setup.py install`` step that you can run which will install things into ``/usr/local/bin``, but this is strongly not recommended as it might conflict with other installs of Overviewer.
 
-OSX
----
+macOS
+-----
 
-.. note::
+1. Install xCode Command Line Tools by running the command (``xcode-select --install``) in terminal (located in your /Applications/Utilities folder
+2. Install Python 2.7.10 if you don't already have it https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg
+3. Install PIP (``sudo easy-install pip``)
+4. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same funcitonality) (``pip install Pillow``)
+5. Download the Pillow source files from https://github.com/python-pillow/Pillow/releases/latest and unpack the tar.gz file and move it to a directory you can remember
+6. Download the Minercaft Overviewer source-code from https://overviewer.org/builds/overviewer-latest.tar.gz
+7. Extract overviewer-[Version].tar.gz and move it to a directory you can remember
+8. Go into your Pillow-[Version] folder and navigate to the /src/libImaging directory
+9. Drag the following files from the Pillow-[Version]/src/libImaging folder to your overviewer-[Version] folder (``Imaging.h, ImagingUtils, ImPlatform.h``)
+10. Symlink Python by running the command (``sudo ln -sf /usr/bin/python2.7 /usr/local/bin/python2``) in terminal
+11. In terminal change directory to your overviewer-[Version] folder (e.g ``cd Desktop/overviewer-[Version]``)
+12. Build::
 
-    You will need to have XCode and the XCode Command Line Tools installed (the
-    Command Line Tools can be installed by going to the Downloads tab under the
-    Xcode Preferences dialog).
-
-1. Download the source code for PIL from http://www.pythonware.com/products/pil/
-2. Compile the PIL code (``python2 ./setup.py build``)
-3. Install PIL (``sudo python2 ./setup.py install``)
-4. Find the path to the ``libImaging`` directory in the PIL source tree.
-5. Build Minecraft Overviewer with the path from step 4 as the value for PIL_INCLUDE_DIR::
-
-    PIL_INCLUDE_DIR="path from step 4" python2 ./setup.py build
-
-The following script (copied into your MCO source directory) should handle everything for you:
-
-.. code-block:: bash
-
-    #!/bin/bash
-
-    # start with a clean place to work
-    python2 ./setup.py clean
-
-    # get PIL
-    if [ ! -d "`pwd`/Imaging-1.1.7/libImaging" ]; then
-        /usr/bin/curl -o imaging.tgz http://effbot.org/media/downloads/Imaging-1.1.7.tar.gz
-        tar xzf imaging.tgz
-        rm imaging.tgz
-    fi
-
-    # build MCO
-    PIL_INCLUDE_DIR="`pwd`/Imaging-1.1.7/libImaging" python2 ./setup.py build
+    (``PIL_INCLUDE_DIR="/path/to/Pillow-[version]/libImaging" python2 setup.py build``)
 
 FreeBSD
 -------
