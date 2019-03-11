@@ -3,72 +3,59 @@ Outputs one huge PNG file using the tiles from an Overviewer map.
 """
 
 import sys
+from argparse import ArgumentParser
 from glob import glob
-from optparse import OptionParser
 from os.path import exists, join, split
 
 from PIL import Image
 
 
 def main():
-    usage = 'usage: %prog [options] <tile-set-folder>'
+    parser = ArgumentParser()
 
-    parser = OptionParser(description='', prog='png_it', version='0.0.1', usage=usage)
+    parser.add_argument('--memory-limit', '-m', metavar='SIZE', type=int, dest='memory_limit',
+                        required=True, help="Limit the amount of RAM to use in MiB. If it is "
+                        "expected that we'll exceed the limit, the script will abort.")
+    parser.add_argument('--zoom-level', '-z', metavar='LEVEL', type=int, dest='zoom_level',
+                        required=True, help="Which zoom level to use from the Overviewer map. "
+                        "NOTE: the RAM usage will increase exponentially with the zoom level.")
+    parser.add_argument('--crop', '-c', metavar='CROP', type=int, dest='crop', default=0,
+                        help="Crop a frame around the image, as a percentage of the original. "
+                        "For example in a image of 1000x2000 pixels, a 10%% crop will crop 100 "
+                        "pixels in the left and right sides and 200 pixels in the bottom and "
+                        "top sides. NOTE: this is not exact but will be rounded to the nearest "
+                        "Overviewer map tile.")
+    parser.add_argument('--center', '-e', metavar='X,Y', dest='center', default=None,
+                        help="Mark what will be the center of the image, two comma separated "
+                        "percentage values.")
+    parser.add_argument('--autocrop', '-a', dest='autocrop', default=False, action='store_true',
+                        help="Calculate the center and crop vales automatically to show all the "
+                        "tiles in the smallest possible image size. Unless you want a very "
+                        "specific image this option is recommended.")
+    parser.add_argument('--output', '-o', type=str, dest='output', default="output.png",
+                        metavar='OUTPUT', help="Path for the resulting PNG. The image will be "
+                        "saved as a PNG file, no matter what extension you use.")
+    parser.add_argument('tileset', metavar='TILESET')
 
-    parser.add_option('--memory-limit', '-m', help="Limit the amount of ram to use in MB. "
-                      "If it's expected to exceed the limit it won't do anything.",
-                      metavar='<memory>', type=int, dest='memory_limit', default=None)
-    parser.add_option('--zoom-level', '-z', help="Which zoom level to use from the overviewer "
-                      "map. NOTE: the RAM usage will increase exponentially with the zoom level.",
-                      metavar='<zoom-level>', type=int, dest='zoom_level', default=None)
-    parser.add_option('--crop', '-c', help="Crop a frame around the image, as a percentage of the "
-                      "original. For example in a image of 1000x2000 pixels, a 10% crop will crop "
-                      "100 pixels in the left and right sides and 200 pixels in the bottom and "
-                      "top sides. NOTE: this is no exact, it will be rounded to the nearest "
-                      "Overviewer map tile.", metavar='<crop>', type=int, dest='crop', default=0)
-    parser.add_option('--center', '-e', help="Mark what will be the center of the image, two "
-                      "comma separated percentage values.", metavar='<center>', type=str,
-                      dest='center', default=None)
-    parser.add_option('--autocrop', '-a', help="Calculate the center and crop vales automatically "
-                      "to show all the tiles in the smallest possible image size. Unless you want "
-                      "a very specific image this option is recommended.", action='store_true',
-                      dest='autocrop', default=False)
-    parser.add_option('--output', '-o', help="Path for the resulting PNG. The image will be saved "
-                      "as a PNG file, no matter what extension you use.", metavar='<output>',
-                      type=str, dest='output', default="output.png")
+    args = parser.parse_args()
 
-    (options, args) = parser.parse_args()
-
-    # arg is overviewer tile set folder
-    if len(args) > 1:
-        parser.error("Error! Only one Overviewer tile set accepted as input. Use --help for a "
-                     "complete list of options.")
-    if not args:
-        parser.error("Error! Need an overviewer tile set folder. Use --help for a complete list "
-                     "of options.")
-    # set the tileset dir after ensuring it's been provided, not before.
-    tileset = args[0]
-
-    if not options.zoom_level:
-        parser.error("Error! The option zoom-level is mandatory.")
-
-    if options.autocrop and (options.center or options.crop):
-        parser.error("Error! You can't mix --autocrop with --center or --crop.")
+    if args.autocrop and (args.center or args.crop):
+        parser.error("You cannot specify --center or --crop with --autocrop.")
 
     # check for the output
-    folder, filename = split(options.output)
+    folder, filename = split(args.output)
     if folder != '' and not exists(folder):
-        parser.error("The destination folder \'{0}\' doesn't exist.".format(folder))
+        parser.error("The destination folder '{0}' doesn't exist.".format(folder))
 
     # calculate stuff
-    n = options.zoom_level
+    n = args.zoom_level
     length_in_tiles = 2**n
     tile_size = (384, 384)
     px_size = 4     # bytes
 
     # create a list with all the images in the zoom level
-    path = tileset
-    for i in range(options.zoom_level):
+    path = args.tileset
+    for i in range(args.zoom_level):
         path = join(path, "?")
     path += ".png"
 
@@ -79,7 +66,7 @@ def main():
         sys.exit(1)
 
     # autocrop will calculate the center and crop values automagically
-    if options.autocrop:
+    if args.autocrop:
         min_x = min_y = length_in_tiles
         max_x = max_y = 0
         counter = 0
@@ -87,8 +74,8 @@ def main():
         print("Checking tiles for autocrop calculations:")
         # get the maximum and minimum tiles coordinates of the map
         for path in all_images:
-            t = get_tuple_coords(options, path)
-            c = get_tile_coords_from_tuple(options, t)
+            t = get_tuple_coords(args, path)
+            c = get_tile_coords_from_tuple(args, t)
             min_x = min(min_x, c[0])
             min_y = min(min_y, c[1])
             max_x = max(max_x, c[0])
@@ -114,8 +101,8 @@ def main():
         # the new center tile in tile coords
         # tile coords are how many tile are on the left, x, and
         # how many above, y. The top-left tile has coords (0,0)
-        if options.center:
-            center_x, center_y = options.center.split(",")
+        if args.center:
+            center_x, center_y = args.center.split(",")
             center_x = int(center_x)
             center_y = int(center_y)
             center_tile_x = int(2**n * (center_x / 100.0))
@@ -126,7 +113,7 @@ def main():
             center_vector = (0, 0)
 
         # crop if needed
-        tiles_to_crop = int(2**n * (options.crop / 100.0))
+        tiles_to_crop = int(2**n * (args.crop / 100.0))
         crop = (tiles_to_crop, tiles_to_crop)
 
     final_img_size = (tile_size[0] * length_in_tiles, tile_size[1] * length_in_tiles)
@@ -137,8 +124,8 @@ def main():
     print("The image size will be {0}x{1}"
           .format(final_cropped_img_size[0], final_cropped_img_size[1]))
     print("A total of {0} MB of memory will be used.".format(mem / 1024**2))
-    if mem / 1024.0**2.0 > options.memory_limit:
-        print("Warning! The expected RAM usage exceeds the specified limit. Exiting.")
+    if mem / 1024.0**2.0 > args.memory_limit:
+        print("Error! The expected RAM usage exceeds the specified limit. Exiting.")
         sys.exit(1)
 
     # Create a new huge image
@@ -150,15 +137,15 @@ def main():
     print("Pasting images:")
     for path in all_images:
         img = Image.open(path)
-        t = get_tuple_coords(options, path)
-        x, y = get_cropped_centered_img_coords(options, tile_size, center_vector, crop, t)
+        t = get_tuple_coords(args, path)
+        x, y = get_cropped_centered_img_coords(args, tile_size, center_vector, crop, t)
         final_img.paste(img, (x, y))
         counter += 1
         if (counter % 100 == 0 or counter == total or counter == 1):
             print("Pasted {0} of {1}.".format(counter, total))
     print("Done!")
     print("Saving image... (this may take a while)")
-    final_img.save(options.output, "PNG")
+    final_img.save(args.output, "PNG")
 
 
 def get_cropped_centered_img_coords(options, tile_size, center_vector, crop, t):
