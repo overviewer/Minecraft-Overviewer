@@ -194,17 +194,23 @@ class World(object):
         spawnY = data['SpawnY']
         disp_spawnZ = spawnZ = data['SpawnZ']
 
-        ## The chunk that holds the spawn location
-        chunkX = spawnX//16
-        chunkZ = spawnZ//16
-
         ## clamp spawnY to a sane value, in-chunk value
         if spawnY < 0:
             spawnY = 0
         if spawnY > 255:
             spawnY = 255
+            
+        ## The chunk that holds the spawn location
+        chunkX = spawnX//16
+        chunkY = spawnY//16
+        chunkZ = spawnZ//16
+        
+        ## The block for spawn *within* the chunk
+        inChunkX = spawnX % 16
+        inChunkZ = spawnZ % 16
+        inChunkY = spawnY % 16
 
-        # Open up the chunk that the spawn is in
+        ## Open up the chunk that the spawn is in
         regionset = self.get_regionset(None)
         if not regionset:
             return None
@@ -212,27 +218,22 @@ class World(object):
             chunk = regionset.get_chunk(chunkX, chunkZ)
         except ChunkDoesntExist:
             return (spawnX, spawnY, spawnZ)
-
-        def getBlock(y):
-            "This is stupid and slow but I don't care"
-            targetSection = spawnY//16
-            for section in chunk['Sections']:
-                if section['Y'] == targetSection:
-                    blockArray = section['Blocks']
-                    return blockArray[inChunkX, inChunkZ, y % 16]
-            return 0
-
-
-
-        ## The block for spawn *within* the chunk
-        inChunkX = spawnX - (chunkX*16)
-        inChunkZ = spawnZ - (chunkZ*16)
-
-        ## find the first air block
-        while (getBlock(spawnY) != 0) and spawnY < 256:
-            spawnY += 1
-
-        return spawnX, spawnY, spawnZ
+        
+        ## Check for first air block (0) above spawn
+        
+        # Get only the spawn section and the ones above, ordered from low to high
+        spawnChunkSections = sorted(chunk['Sections'], key=lambda sec: sec['Y'])[chunkY:]
+        for section in spawnChunkSections:
+            # First section, start at registered local y
+            for y in range(inChunkY, 16):
+                # If air, return absolute coords
+                if section['Blocks'][inChunkX, inChunkZ, y] == 0:
+                    return spawnX, spawnY, spawnZ
+                # Keep track of the absolute Y
+                spawnY += 1
+            # Next section, start at local 0
+            inChunkY = 0
+        return spawnX, 256, spawnZ
 
 class RegionSet(object):
     """This object is the gateway to a particular Minecraft dimension within a
