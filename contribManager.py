@@ -14,9 +14,7 @@ if not hasattr(sys, "frozen"):
 from overviewer_core import nbt
 
 scripts=dict( # keys are names, values are scripts
-        clearOldCache   = "clearOldCache.py",
         convertCyrillic = "cyrillic_convert.py",
-        findSigns       = "findSigns.py",
         playerInspect   = "playerInspect.py",
         rerenderBlocks  = "rerenderBlocks.py",
         testRender      = "testRender.py",
