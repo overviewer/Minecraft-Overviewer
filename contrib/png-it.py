@@ -2,6 +2,8 @@
 Outputs one huge PNG file using the tiles from an Overviewer map.
 """
 
+from __future__ import print_function
+
 import sys
 from argparse import ArgumentParser
 from glob import glob
@@ -62,7 +64,7 @@ def main():
     all_images = glob(path)
     if not all_images:
         print("Error! No images found in this zoom level. Is this really an Overviewer tile set "
-              "directory?")
+              "directory?", file=sys.stderr)
         sys.exit(1)
 
     # autocrop will calculate the center and crop values automagically
@@ -71,7 +73,7 @@ def main():
         max_x = max_y = 0
         counter = 0
         total = len(all_images)
-        print("Checking tiles for autocrop calculations:")
+        print("Checking tiles for autocrop calculations:", file=sys.stderr)
         # get the maximum and minimum tiles coordinates of the map
         for path in all_images:
             t = get_tuple_coords(args, path)
@@ -82,7 +84,7 @@ def main():
             max_y = max(max_y, c[1])
             counter += 1
             if (counter % 100 == 0 or counter == total or counter == 1):
-                print("Checked {0} of {1}.".format(counter, total))
+                print("Checked {0} of {1}.".format(counter, total), file=sys.stderr)
 
         # the center of the map will be in the middle of the occupied zone
         center = (int((min_x + max_x) / 2.0), int((min_y + max_y) / 2.0))
@@ -121,11 +123,12 @@ def main():
                               final_img_size[1] - 2 * crop[1] * tile_size[1])
 
     mem = final_cropped_img_size[0] * final_cropped_img_size[1] * px_size    # bytes!
-    print("The image size will be {0}x{1}"
-          .format(final_cropped_img_size[0], final_cropped_img_size[1]))
-    print("A total of {0} MB of memory will be used.".format(mem / 1024**2))
+    print("The image size will be {0}x{1}."
+          .format(final_cropped_img_size[0], final_cropped_img_size[1]), file=sys.stderr)
+    print("A total of {0} MB of memory will be used.".format(mem / 1024**2), file=sys.stderr)
     if mem / 1024.0**2.0 > args.memory_limit:
-        print("Error! The expected RAM usage exceeds the specified limit. Exiting.")
+        print("Error! The expected RAM usage exceeds the specified limit. Exiting.",
+              file=sys.stderr)
         sys.exit(1)
 
     # Create a new huge image
@@ -134,7 +137,7 @@ def main():
     # Paste ALL the images
     total = len(all_images)
     counter = 0
-    print("Pasting images:")
+    print("Pasting images:", file=sys.stderr)
     for path in all_images:
         img = Image.open(path)
         t = get_tuple_coords(args, path)
@@ -142,9 +145,9 @@ def main():
         final_img.paste(img, (x, y))
         counter += 1
         if (counter % 100 == 0 or counter == total or counter == 1):
-            print("Pasted {0} of {1}.".format(counter, total))
-    print("Done!")
-    print("Saving image... (this may take a while)")
+            print("Pasted {0} of {1}.".format(counter, total), file=sys.stderr)
+    print("Done!", file=sys.stderr)
+    print("Saving image... (this may take a while)", file=sys.stderr)
     final_img.save(args.output, "PNG")
 
 
