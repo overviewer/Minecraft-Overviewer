@@ -355,46 +355,54 @@ overviewer.util = {
                 overviewer.collections.mapTypes[obj.world][obj.path] = myLayer;
             }
 
-            obj.marker_groups = undefined;
+            /**
+             *  MARKER SECTION
+             */
 
+            obj.marker_groups = undefined;
             if (overviewer.collections.haveSigns == true) {
                 // if there are markers for this tileset, create them now
                 if ((typeof markers !== 'undefined') && (obj.path in markers)) {
                     console.log("this tileset has markers:", obj);
                     obj.marker_groups = {};
 
+                    // For every group of markers
                     for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
+                        // Create a Leaflet layer group
                         var marker_group = new L.layerGroup();
                         var marker_entry = markers[obj.path][mkidx];
                         L.Util.setOptions(marker_group, {default_checked: marker_entry.checked});
-                        var icon =  L.divIcon({html: `<img class="ov-marker" src="${marker_entry.icon}">`});
                         console.log("marker group:", marker_entry.displayName, marker_entry.groupName);
 
+                        // For every marker in group
                         for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
-                            var db = markersDB[marker_entry.groupName].raw[dbidx];
-                            var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
-                            var m_icon;
-                            if (db.icon != undefined) {
-                                m_icon = L.divIcon({html: `<img class="ov-marker" src="${db.icon}">`});
+                            let db = markersDB[marker_entry.groupName].raw[dbidx];
+                            var layerObj = undefined;
+                            
+                            // Polyline or marker?
+                            if ('polygon' in db) {
+                                // Convert all coords
+                                plLatLng = db['polygon'].map(function(plobj) {return overviewer.util.fromWorldToLatLng(plobj.x, plobj.y, plobj.z, obj);})
+                                layerObj = L.polyline(plLatLng, {color: db['strokeColor'], fillOpacity: .1});
+                                // TODO: add other config options (fill color, fill opacity, stroke width)
                             } else {
-                                m_icon = icon;
+                                // Convert coords
+                                let latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
+                                // Set icon and use default icon if not specified
+                                let m_icon = L.divIcon({html: `<img class="ov-marker" src="${db.icon == undefined ? marker_entry.icon : db.icon}">`});
+                                // Create marker
+                                layerObj = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
+                                // Add popup to marker
+                                if (marker_entry.createInfoWindow) {
+                                    layerObj.bindPopup(db.text);
+                                }
                             }
-                            let new_marker = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
-                            if (marker_entry.createInfoWindow) {
-                                new_marker.bindPopup(db.text);
-                            }
-                            marker_group.addLayer(new_marker);
+                            // Add the polyline or marker to the layer
+                            marker_group.addLayer(layerObj);
                         }
+                        // Save marker group
                         obj.marker_groups[marker_entry.displayName] = marker_group;
                     }
-
-
-                    //var latlng = overviewer.util.fromWorldToLatLng(
-                    //        ovconf.spawn[0],
-                    //        ovconf.spawn[1],
-                    //        ovconf.spawn[2],
-                    //        obj);
-                    //marker_group.addLayer(L.marker(
                 }
             }
 
@@ -423,8 +431,6 @@ overviewer.util = {
         if (!overviewer.util.initHash()) {
             overviewer.worldCtrl.onChange({target: {value: overviewer.current_world}});
         }
-
-
     },
 
     'injectMarkerScript': function(url) {
