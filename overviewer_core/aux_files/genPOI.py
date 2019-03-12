@@ -153,6 +153,14 @@ def signWrangler(poi):
     return poi
 
 
+def filterPOI(poi, filters, markers):
+    for name, __, filter_function, __, __, __ in filters:
+        result = filter_function(poi)
+        if result:
+            d = create_marker_from_filter_result(poi, result)
+            markers[name]['raw'].append(d)
+
+
 def handleEntities(rset, config, config_path, filters, markers):
     """
     Add markers for Entities or TileEntities.
@@ -175,11 +183,7 @@ def handleEntities(rset, config, config_path, filters, markers):
                 for poi in itertools.chain(data.get('TileEntities', []), data.get('Entities', [])):
                     if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':    # kill me
                         poi = signWrangler(poi)
-                    for name, __, filter_function, __, __, __ in filters:
-                        result = filter_function(poi)
-                        if result:
-                            d = create_marker_from_filter_result(poi, result)
-                            markers[name]['raw'].append(d)
+                    filterPOI(poi, filters, markers)
             except nbt.CorruptChunkError:
                 logging.warning("Ignoring POIs in corrupt chunk %d,%d.", x, z)
             except world.ChunkDoesntExist:
@@ -374,11 +378,7 @@ def handleManual(manualpois, filters, markers):
     `markers`.
     """
     for poi in manualpois:
-        for name, __, filter_function, __, __, __ in filters:
-            result = filter_function(poi)
-            if result:
-                d = create_marker_from_filter_result(poi, result)
-                markers[name]['raw'].append(d)
+        filterPOI(poi, filters, markers)
 
 
 def create_marker_from_filter_result(poi, result):
