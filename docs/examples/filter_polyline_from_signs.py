@@ -14,7 +14,7 @@ def bordersFromSigns(poi):
             loc = poi['Text2']  # e.g. 2/9
             delimiter = loc.index('/')
             order = loc[:delimiter]
-            size = loc[delimiter:delimiter]
+            size = loc[delimiter + 1:]
             try:
                 order = int(order)
                 size = int(size)
@@ -29,8 +29,8 @@ def bordersFromSigns(poi):
             color = poi['Text4'].lower()
 
             first = True
-            for border in borders:
-                if border.name == name:
+            for key in borders:
+                if key == name:
                     first = False
                     borders[name]['count'] += 1
 
@@ -44,7 +44,7 @@ def bordersFromSigns(poi):
                     'polyline': {}
                 }
 
-            borders['polyline'][order] = {'x': poi['x'], 'y': poi['y'], 'z': poi['z']}
+            borders[name]['polyline'][order] = {'x': poi['x'], 'y': poi['y'], 'z': poi['z']}
             borders[name]['size'] = size
 
             # If color occurs once on any sign it's enough
@@ -52,13 +52,9 @@ def bordersFromSigns(poi):
                 borders[name]['color'] = color
 
             # If last
-            if borders['count'] == borders['size']:
+            if borders[name]['count'] == borders[name]['size']:
                 # Convert dict to ordered list
-                tuples = sorted(borders['polyline'].items())
+                tuples = sorted(borders[name]['polyline'].items())
                 # Make sure the signs close by adding the first sign xyz again at the end
                 tuples.append(tuples[0])
-                return {
-                    'color': borders[name]['color'],
-                    'text': borders[name]['text'],
-                    'polyline': [t[1] for t in tuples]  # Only return the xyz values
-                }
+                return dict(color=borders[name]['color'], text=borders[name]['text'], polyline=[t[1] for t in tuples])

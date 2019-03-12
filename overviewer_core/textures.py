@@ -37,7 +37,7 @@ class TextureException(Exception):
 color_map = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
              "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"]
 
-blocks_path = '/assets/minecraft/textures/block/'
+blocks_path = 'assets/minecraft/textures/block/'
 
 ##
 ## Textures object
