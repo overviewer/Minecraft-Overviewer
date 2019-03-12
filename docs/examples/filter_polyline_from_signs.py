@@ -14,7 +14,7 @@ def bordersFromSigns(poi):
             loc = poi['Text2']  # e.g. 2/9
             delimiter = loc.index('/')
             order = loc[:delimiter]
-            size = loc[delimiter:delimiter]
+            size = loc[delimiter:]
             try:
                 order = int(order)
                 size = int(size)
@@ -57,8 +57,4 @@ def bordersFromSigns(poi):
                 tuples = sorted(borders[name]['polyline'].items())
                 # Make sure the signs close by adding the first sign xyz again at the end
                 tuples.append(tuples[0])
-                return {
-                    'color': borders[name]['color'],
-                    'text': borders[name]['text'],
-                    'polyline': [t[1] for t in tuples]  # Only return the xyz values
-                }
+                return dict(color=borders[name]['color'], text=borders[name]['text'], polyline=[t[1] for t in tuples])
