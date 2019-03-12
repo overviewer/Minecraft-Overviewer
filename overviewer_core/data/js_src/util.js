@@ -380,9 +380,9 @@ overviewer.util = {
                             var layerObj = undefined;
                             
                             // Polyline or marker?
-                            if ('polygon' in db) {
+                            if ('polyline' in db) {
                                 // Convert all coords
-                                plLatLng = db['polygon'].map(function(plobj) {return overviewer.util.fromWorldToLatLng(plobj.x, plobj.y, plobj.z, obj);})
+                                plLatLng = db['polyline'].map(function(plobj) {return overviewer.util.fromWorldToLatLng(plobj.x, plobj.y, plobj.z, obj);})
                                 layerObj = L.polyline(plLatLng, {color: db['strokeColor'], fillOpacity: .1});
                                 // TODO: add other config options (fill color, fill opacity, stroke width)
                             } else {

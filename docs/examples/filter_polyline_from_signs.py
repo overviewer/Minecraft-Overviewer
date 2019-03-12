@@ -44,7 +44,7 @@ def bordersFromSigns(poi):
                     'polyline': {}
                 }
 
-            borders['polyline'][order] = {'x': poi['x'], 'y': poi['y'], 'z': poi['z']}
+            borders[name]['polyline'][order] = {'x': poi['x'], 'y': poi['y'], 'z': poi['z']}
             borders[name]['size'] = size
 
             # If color occurs once on any sign it's enough
@@ -52,9 +52,9 @@ def bordersFromSigns(poi):
                 borders[name]['color'] = color
 
             # If last
-            if borders['count'] == borders['size']:
+            if borders[name]['count'] == borders[name]['size']:
                 # Convert dict to ordered list
-                tuples = sorted(borders['polyline'].items())
+                tuples = sorted(borders[name]['polyline'].items())
                 # Make sure the signs close by adding the first sign xyz again at the end
                 tuples.append(tuples[0])
                 return {
