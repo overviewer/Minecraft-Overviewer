@@ -161,7 +161,7 @@ macOS
 
 FreeBSD
 -------
-FreeBSD is similar to OSX and Linux, but ensure you're using Python 2.7. The port of Python 2.6 has bugs with threading under FreeBSD.
+FreeBSD is similar to macOS and Linux, but ensure you're using Python 2.7. The port of Python 2.6 has bugs with threading under FreeBSD.
 Everything else you should need is ported, in particular math/py-numpy and graphics/py-imaging.
 
 You may need or want to add the line::
