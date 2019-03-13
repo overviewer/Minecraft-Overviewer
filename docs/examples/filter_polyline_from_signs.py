@@ -14,7 +14,7 @@ def bordersFromSigns(poi):
             loc = poi['Text2']  # e.g. 2/9
             delimiter = loc.index('/')
             order = loc[:delimiter]
-            size = loc[delimiter:]
+            size = loc[delimiter + 1:]
             try:
                 order = int(order)
                 size = int(size)
@@ -29,8 +29,8 @@ def bordersFromSigns(poi):
             color = poi['Text4'].lower()
 
             first = True
-            for border in borders:
-                if border.name == name:
+            for key in borders:
+                if key == name:
                     first = False
                     borders[name]['count'] += 1
 
