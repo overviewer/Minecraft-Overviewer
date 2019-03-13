@@ -383,8 +383,12 @@ overviewer.util = {
                             if ('polyline' in db) {
                                 // Convert all coords
                                 plLatLng = db['polyline'].map(function(plobj) {return overviewer.util.fromWorldToLatLng(plobj.x, plobj.y, plobj.z, obj);})
-                                layerObj = L.polyline(plLatLng, {color: db['strokeColor'], fillOpacity: .1});
-                                // TODO: add other config options (fill color, fill opacity, stroke width)
+                                layerObj = L.polyline(plLatLng, {
+                                    color: db['strokeColor'], 
+                                    weight: db['strokeWeight'], 
+                                    fill: db['fill']
+                                });
+                                // TODO: add other config options (fill color, fill opacity)
                             } else {
                                 // Convert coords
                                 let latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
