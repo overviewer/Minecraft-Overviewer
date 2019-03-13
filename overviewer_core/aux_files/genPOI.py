@@ -412,32 +412,38 @@ def create_marker_from_filter_result(poi, result):
             d['hovertext'] = unicode(result['hovertext'])
         except KeyError:
             d['hovertext'] = result['text']
-            pass
 
-        if 'polyline' in result and hasattr(result['polyline'], '__iter__'):
-            d['polyline'] = []
-            for point in result['polyline']:
-                # point.copy() would work, but this validates better
-                d['polyline'].append(dict(x=point['x'], y=point['y'], z=point['z']))
-            if isinstance(result['color'], basestring):
+        if "icon" in result:
+            d["icon"] = result['icon']
+        if "createInfoWindow" in result:
+            d["createInfoWindow"] = result['createInfoWindow']
+
+        # Polylines and polygons
+        if ('polyline' in result and hasattr(result['polyline'], '__iter__')) or \
+            'polygon' in result and hasattr(result['polygon'], '__iter__'):
+            # If the points form a line or closed shape
+            d['isLine'] = 'polyline' in result
+            # Collect points
+            d['points'] = []
+            for point in (result['polyline'] if d['isLine'] else result['polygon']):
+                try:
+                    d['points'].append(dict(x=point['x'], y=point['y'], z=point['z']))
+                except KeyError:
+                    pass # ignore (incomplete) coords
+
+            # Options and default values
+            try:
                 d['strokeColor'] = result['color']
-
+            except KeyError:
+                d['strokeColor'] = 'red'
             try:
                 d['fill'] = result['fill']
             except KeyError:
-                d['fill'] = False
-                pass
-
+                d['fill'] = d['closed']  # fill polygons by default
             try:
                 d['strokeWeight'] = result['weight']
             except KeyError:
                 d['strokeWeight'] = 2
-                pass
-
-            if "icon" in result:
-                d["icon"] = result['icon']
-            if "createInfoWindow" in result:
-                d["createInfoWindow"] = result['createInfoWindow']
     else:
         raise ValueError("Got an %s as result for POI with id %s"
                          % (type(result).__name__, poi['id']))

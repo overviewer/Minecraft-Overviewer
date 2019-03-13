@@ -10,7 +10,8 @@ markersDB[groupName] = {
 		"strokeColor": "#FF0000",
 		"strokeWeight": 2,
 		"fill": true,
-		"polyline" : [
+		"isLine": true,
+		"points" : [
 			{"x": 347, "y": 67, "z": 95},
 			{"x": 347, "y": 77, "z": 95},
 			{"x": 347, "y": 77, "z": 105},
