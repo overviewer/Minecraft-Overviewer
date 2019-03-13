@@ -392,10 +392,10 @@ overviewer.util = {
                                 let m_icon = L.divIcon({html: `<img class="ov-marker" src="${db.icon == undefined ? marker_entry.icon : db.icon}">`});
                                 // Create marker
                                 layerObj = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
-                                // Add popup to marker
-                                if (marker_entry.createInfoWindow) {
-                                    layerObj.bindPopup(db.text);
-                                }
+                            }
+                            // Add popup to marker
+                            if (marker_entry.createInfoWindow) {
+                                layerObj.bindPopup(db.text);
                             }
                             // Add the polyline or marker to the layer
                             marker_group.addLayer(layerObj);
