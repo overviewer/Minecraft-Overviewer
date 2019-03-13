@@ -57,4 +57,4 @@ def bordersFromSigns(poi):
                 tuples = sorted(borders[name]['polyline'].items())
                 # Make sure the signs close by adding the first sign xyz again at the end
                 tuples.append(tuples[0])
-                return dict(color=borders[name]['color'], text=borders[name]['text'], polyline=[t[1] for t in tuples])
+                return dict(color=borders[name]['color'], fill=True, text=borders[name]['text'], polyline=[t[1] for t in tuples])

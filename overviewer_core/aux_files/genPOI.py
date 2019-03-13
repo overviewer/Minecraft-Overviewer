@@ -408,11 +408,11 @@ def create_marker_from_filter_result(poi, result):
     elif isinstance(result, dict):
         d['text'] = result['text']
 
-        # Use custom hovertext if provided...
-        if 'hovertext' in result:
+        try:
             d['hovertext'] = unicode(result['hovertext'])
-        else:   # ...otherwise default to display text.
+        except KeyError:
             d['hovertext'] = result['text']
+            pass
 
         if 'polyline' in result and hasattr(result['polyline'], '__iter__'):
             d['polyline'] = []
@@ -421,6 +421,18 @@ def create_marker_from_filter_result(poi, result):
                 d['polyline'].append(dict(x=point['x'], y=point['y'], z=point['z']))
             if isinstance(result['color'], basestring):
                 d['strokeColor'] = result['color']
+
+            try:
+                d['fill'] = result['fill']
+            except KeyError:
+                d['fill'] = False
+                pass
+
+            try:
+                d['strokeWeight'] = result['weight']
+            except KeyError:
+                d['strokeWeight'] = 2
+                pass
 
             if "icon" in result:
                 d["icon"] = result['icon']
