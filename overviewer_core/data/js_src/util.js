@@ -379,15 +379,16 @@ overviewer.util = {
                             let db = markersDB[marker_entry.groupName].raw[dbidx];
                             var layerObj = undefined;
                             
-                            // Polyline or marker?
-                            if ('polyline' in db) {
+                            // Shape or marker?
+                            if ('points' in db) {
                                 // Convert all coords
-                                plLatLng = db['polyline'].map(function(plobj) {return overviewer.util.fromWorldToLatLng(plobj.x, plobj.y, plobj.z, obj);})
-                                layerObj = L.polyline(plLatLng, {
+                                plLatLng = db['points'].map(function(plobj) {return overviewer.util.fromWorldToLatLng(plobj.x, plobj.y, plobj.z, obj);})
+                                options = {
                                     color: db['strokeColor'], 
                                     weight: db['strokeWeight'], 
                                     fill: db['fill']
-                                });
+                                };
+                                layerObj = db['isLine'] ? L.polyline(plLatLng, options) : L.polygon(plLatLng, options);
                                 // TODO: add other config options (fill color, fill opacity)
                             } else {
                                 // Convert coords

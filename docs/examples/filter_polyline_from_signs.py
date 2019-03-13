@@ -1,17 +1,19 @@
-borders = {}
+polylines = {}
 
-def bordersFromSigns(poi):
+def lineFromSigns(poi):
     """
-        BORDER
-         2/9
-    Hanoko Village
-        purple
+    Example sign:
+    
+    LINE
+    2/8
+    Train Track 2
+    black
     """
-    global borders
+    global polylines
     if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
-        if poi['Text1'].lower() == 'border':
+        if poi['Text1'].lower() == 'line':
             # Get the order of this point and the total number of points from the 2nd line
-            loc = poi['Text2']  # e.g. 2/9
+            loc = poi['Text2']  # e.g. 2/8
             delimiter = loc.index('/')
             order = loc[:delimiter]
             size = loc[delimiter + 1:]
@@ -29,14 +31,14 @@ def bordersFromSigns(poi):
             color = poi['Text4'].lower()
 
             first = True
-            for key in borders:
+            for key in polylines:
                 if key == name:
                     first = False
-                    borders[name]['count'] += 1
+                    polylines[name]['count'] += 1
 
             if first:
                 # Create base dict for that border
-                borders[name] = {
+                polylines[name] = {
                     'color': 'red',
                     'text': name,
                     'size': -1,
@@ -44,17 +46,15 @@ def bordersFromSigns(poi):
                     'polyline': {}
                 }
 
-            borders[name]['polyline'][order] = {'x': poi['x'], 'y': poi['y'], 'z': poi['z']}
-            borders[name]['size'] = size
+            polylines[name]['polyline'][order] = {'x': poi['x'], 'y': poi['y'], 'z': poi['z']}
+            polylines[name]['size'] = size
 
             # If color occurs once on any sign it's enough
             if color != '':
-                borders[name]['color'] = color
+                polylines[name]['color'] = color
 
             # If last
-            if borders[name]['count'] == borders[name]['size']:
+            if polylines[name]['count'] == polylines[name]['size']:
                 # Convert dict to ordered list
-                tuples = sorted(borders[name]['polyline'].items())
-                # Make sure the signs close by adding the first sign xyz again at the end
-                tuples.append(tuples[0])
-                return dict(color=borders[name]['color'], fill=True, text=borders[name]['text'], polyline=[t[1] for t in tuples])
+                tuples = sorted(polylines[name]['polyline'].items())
+                return dict(color=polylines[name]['color'], fill=False, text=polylines[name]['text'], polyline=[t[1] for t in tuples])
