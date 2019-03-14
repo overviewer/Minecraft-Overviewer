@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
-# The contrib manager is used to help control the contribs script 
-# that are shipped with overviewer in Windows packages
+"""The contrib manager is used to help control the contrib scripts
+that are shipped with overviewer in Windows packages."""
 
 import sys
 import os.path
@@ -13,17 +13,17 @@ if not hasattr(sys, "frozen"):
 
 from overviewer_core import nbt
 
-scripts=dict( # keys are names, values are scripts
-        convertCyrillic = "cyrillic_convert.py",
-        playerInspect   = "playerInspect.py",
-        rerenderBlocks  = "rerenderBlocks.py",
-        testRender      = "testRender.py",
-        validate        = "validateRegionFile.py",
-        pngit           = "png-it.py",
-        gallery         = "gallery.py",
-        regionTrimmer   = "regionTrimmer.py",
-        contributors    = "contributors.py"
-        )
+scripts = {     # keys are names, values are scripts
+    "convertCyrillic":  "cyrillic_convert.py",
+    "playerInspect":    "playerInspect.py",
+    "rerenderBlocks":   "rerenderBlocks.py",
+    "testRender":       "testRender.py",
+    "validate":         "validateRegionFile.py",
+    "pngit":            "png-it.py",
+    "gallery":          "gallery.py",
+    "regionTrimmer":    "regionTrimmer.py",
+    "contributors":     "contributors.py"
+}
 
 # you can symlink or hardlink contribManager.py to another name to have it
 # automatically find the right script to run.  For example:
@@ -33,18 +33,18 @@ scripts=dict( # keys are names, values are scripts
 
 
 # figure out what script to execute
-argv=os.path.basename(sys.argv[0])
+argv = os.path.basename(sys.argv[0])
 
 if argv[-4:] == ".exe":
-    argv=argv[0:-4]
+    argv = argv[0:-4]
 if argv[-3:] == ".py":
-    argv=argv[0:-3]
+    argv = argv[0:-3]
 
 
-usage="""Usage:
+usage = """Usage:
 %s --list-contribs | <script name> <arguments>
 
-Executes a contrib script.  
+Executes a contrib script.
 
 Options:
   --list-contribs           Lists the supported contrib scripts
@@ -59,14 +59,14 @@ else:
         for contrib in scripts.keys():
             # use an AST to extract the docstring for this module
             script = scripts[contrib]
-            with open(os.path.join("contrib",script)) as f:
+            with open(os.path.join("contrib", script)) as f:
                 d = f.read()
-            node=ast.parse(d, script);
+            node = ast.parse(d, script)
             docstring = ast.get_docstring(node)
             if docstring:
                 docstring = docstring.strip().splitlines()[0]
             else:
-                docstring="(no description found.  add one by adding a docstring to %s)" % script
+                docstring = "(No description found. Add one by adding a docstring to %s.)" % script
             print "%s : %s" % (contrib, docstring)
         sys.exit(0)
     if len(sys.argv) > 1 and sys.argv[1] in scripts.keys():
@@ -84,4 +84,3 @@ if not os.path.exists(torun):
     sys.exit(1)
 
 execfile(torun)
-
