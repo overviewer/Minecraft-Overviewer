@@ -37,6 +37,10 @@ def print_player(data, sub_entry=False):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: {} <Player .dat or directory> [selected player]"
+              .format(sys.argv[0]), file=sys.stderr)
+        sys.exit(1)
     print("Inspecting %s" % sys.argv[1])
 
     if os.path.isdir(sys.argv[1]):
