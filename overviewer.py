@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
 import platform
 import sys
 
@@ -588,7 +590,7 @@ def main():
 
 def list_worlds():
     "Prints out a brief summary of saves found in the default directory"
-    print
+    print()
     worlds = world.get_worlds()
     if not worlds:
         print('No world saves found in the usual place.')
@@ -623,7 +625,7 @@ def list_worlds():
         print(formatString % (name, playstamp, timestamp, path))
     found_corrupt = any([x.get("IsCorrupt") for x in worlds.values()])
     if found_corrupt:
-        print("")
+        print()
         print("An error has been detected in one or more of your worlds (see the above table).")
         print("This is usually due to a corrupt level.dat file. Corrupt worlds need to be "
               "repaired before Overviewer can render them.")
