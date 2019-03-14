@@ -3,15 +3,11 @@
 """The contrib manager is used to help control the contrib scripts
 that are shipped with overviewer in Windows packages."""
 
-import sys
-import os.path
+from __future__ import print_function
+
 import ast
-
-# incantation to be able to import overviewer_core
-if not hasattr(sys, "frozen"):
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.split(__file__)[0], '.')))
-
-from overviewer_core import nbt
+import os.path
+import sys
 
 scripts = {     # keys are names, values are scripts
     "convertCyrillic":  "cyrillic_convert.py",
@@ -67,20 +63,20 @@ else:
                 docstring = docstring.strip().splitlines()[0]
             else:
                 docstring = "(No description found. Add one by adding a docstring to %s.)" % script
-            print "%s : %s" % (contrib, docstring)
+            print("%s : %s" % (contrib, docstring))
         sys.exit(0)
     if len(sys.argv) > 1 and sys.argv[1] in scripts.keys():
         script = scripts[sys.argv[1]]
         sys.argv = [script] + sys.argv[2:]
     else:
-        print usage
+        print(usage, file=sys.stderr)
         sys.exit(1)
 
 
 torun = os.path.join("contrib", script)
 
 if not os.path.exists(torun):
-    print "Script '%s' is missing!" % script
+    print("Script '%s' is missing!" % script, file=sys.stderr)
     sys.exit(1)
 
 execfile(torun)
