@@ -543,12 +543,12 @@ class RegionSet(object):
             'minecraft:carrots': (141, 0),
             'minecraft:potatoes': (142, 0),
             'minecraft:oak_button': (143, 0),
-            'minecraft:skeleton_wall_skull': (144, 0), #not rendering
-            'minecraft:wither_skeleton_wall_skull': (144, 1), #not rendering
-            'minecraft:zombie_wall_head': (144, 2), #not rendering
-            'minecraft:player_wall_head': (144, 3), #not rendering
-            'minecraft:creeper_wall_head': (144, 4), #not rendering
-            'minecraft:dragon_wall_head': (144, 5), #not rendering
+            'minecraft:skeleton_wall_skull': (144, 0),  # not rendering
+            'minecraft:wither_skeleton_wall_skull': (144, 1),   # not rendering
+            'minecraft:zombie_wall_head': (144, 2),     # not rendering
+            'minecraft:player_wall_head': (144, 3),     # not rendering
+            'minecraft:creeper_wall_head': (144, 4),    # not rendering
+            'minecraft:dragon_wall_head': (144, 5),     # not rendering
             'minecraft:anvil': (145, 0),
             'minecraft:chipped_anvil': (145, 4),
             'minecraft:damaged_anvil': (145, 8),
@@ -561,7 +561,7 @@ class RegionSet(object):
             'minecraft:nether_quartz_ore': (153, 0),
             'minecraft:hopper': (154, 0),
             'minecraft:quartz_block': (155, 0),
-            'minecraft:smooth_quartz': (155, 0), # Only bottom texture is different
+            'minecraft:smooth_quartz': (155, 0),    # Only bottom texture is different
             'minecraft:quartz_pillar': (155, 2),
             'minecraft:chiseled_quartz_block': (155, 1),
             'minecraft:quartz_stairs': (156, 0),
@@ -638,7 +638,7 @@ class RegionSet(object):
             'minecraft:jungle_door': (195, 0),
             'minecraft:acacia_door': (196, 0),
             'minecraft:dark_oak_door': (197, 0),
-            'minecraft:end_rod': (198, 0), #not rendering
+            'minecraft:end_rod': (198, 0),  # not rendering
             'minecraft:chorus_plant': (199, 0),
             'minecraft:chorus_flower': (200, 0),
             'minecraft:purpur_block': (201, 0),
@@ -666,7 +666,7 @@ class RegionSet(object):
             'minecraft:gray_shulker_box': (226, 0),
             'minecraft:light_gray_shulker_box': (227, 0),
             'minecraft:cyan_shulker_box': (228, 0),
-            'minecraft:shulker_box': (229, 0), #wrong color
+            'minecraft:shulker_box': (229, 0),  # wrong color
             'minecraft:purple_shulker_box': (229, 0),
             'minecraft:blue_shulker_box': (230, 0),
             'minecraft:brown_shulker_box': (231, 0),
@@ -692,7 +692,7 @@ class RegionSet(object):
 
             'minecraft:structure_block': (255, 0),
 
-            'minecraft:armor_stand': (416, 0), #not rendering
+            'minecraft:armor_stand': (416, 0),  # not rendering
 
             # The following blocks are underwater and are not yet rendered.
             # To avoid spurious warnings, we'll treat them as water for now.
@@ -718,7 +718,7 @@ class RegionSet(object):
             'minecraft:tube_coral_fan': (8, 0),
             'minecraft:tube_coral_wall_fan': (8, 0),
 
-            #New blocks
+            # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
             'minecraft:spruce_pressure_plate': (11301, 0),
             'minecraft:birch_pressure_plate': (11302, 0),
@@ -768,6 +768,7 @@ class RegionSet(object):
             'minecraft:jungle_trapdoor': (11334, 0),
             'minecraft:acacia_trapdoor': (11335, 0),
             'minecraft:dark_oak_trapdoor': (11336, 0),
+            'minecraft:petrified_oak_slab': (126, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -826,9 +827,14 @@ class RegionSet(object):
                 data |= 0x08
         elif key == 'minecraft_wheat':
             data = int(palette_entry['Properties']['age'])
-        elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab', 'minecraft:oak_slab', 'minecraft:cobblestone_slab', 'minecraft:brick_slab', 'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab', 'minecraft:quartz_slab']:
+        elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab', 'minecraft:oak_slab',
+                     'minecraft:cobblestone_slab', 'minecraft:brick_slab',
+                     'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
+                     'minecraft:quartz_slab', 'minecraft:petrified_oak_slab']:
             if palette_entry['Properties']['type'] == 'top':
                 data += 8
+            elif palette_entry['Properties']['type'] == 'double':
+                block = 125
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
