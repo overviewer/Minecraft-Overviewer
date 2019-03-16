@@ -826,8 +826,6 @@ class RegionSet(object):
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
-        elif key == 'minecraft_wheat':
-            data = int(palette_entry['Properties']['age'])
         elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab', 'minecraft:oak_slab',
                      'minecraft:cobblestone_slab', 'minecraft:brick_slab',
                      'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
@@ -942,7 +940,7 @@ class RegionSet(object):
             if p['open'] == 'true': data |= 0x04
             if p['half'] == 'top': data |= 0x08
         elif key in ['minecraft:beetroots', 'minecraft:melon_stem', 'minecraft:wheat',
-                     'minecraft:pumpkin_stem']:
+                     'minecraft:pumpkin_stem', 'minecraft:potatoes', 'minecraft:carrots']:
             data = palette_entry['Properties']['age']
 
         return (block, data)
