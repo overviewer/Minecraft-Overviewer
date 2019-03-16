@@ -50,11 +50,11 @@ class FakeRegionset(object):
         return NotImplementedError()
 
     def iterate_chunks(self):
-        for (x,z),mtime in self.chunks.iteritems():
+        for (x,z),mtime in self.chunks.items():
             yield x,z,mtime
 
     def iterate_newer_chunks(self, filemtime):
-        for (x,z),mtime in self.chunks.iteritems():
+        for (x,z),mtime in self.chunks.items():
             yield x,z,mtime
 
     def get_chunk_mtime(self, x, z):
@@ -77,7 +77,7 @@ def get_tile_set(chunks):
     the compare_iterate_to_expected() method.
     """
     tile_set = defaultdict(int)
-    for (chunkx, chunkz), chunkmtime in chunks.iteritems():
+    for (chunkx, chunkz), chunkmtime in chunks.items():
 
         col, row = tileset.convert_coords(chunkx, chunkz)
 
@@ -86,9 +86,9 @@ def get_tile_set(chunks):
             tile_set[tile.path] = max(tile_set[tile.path], chunkmtime)
 
     # At this point, tile_set holds all the render-tiles
-    for tile, tile_mtime in tile_set.copy().iteritems():
+    for tile, tile_mtime in tile_set.copy().items():
         # All render-tiles are length 5. Hard-code its upper tiles
-        for i in reversed(xrange(5)):
+        for i in reversed(range(5)):
             tile_set[tile[:i]] = max(tile_set[tile[:i]], tile_mtime)
     return dict(tile_set)
 
@@ -98,7 +98,7 @@ def create_fakedir(outputdir, tiles):
     files) and sets mtimes appropriately
 
     """
-    for tilepath, tilemtime in tiles.iteritems():
+    for tilepath, tilemtime in tiles.items():
         dirpath = os.path.join(outputdir, *(str(x) for x in tilepath[:-1]))
         if len(tilepath) == 0:
             imgname = "base.png"
@@ -175,7 +175,7 @@ class TilesetTest(unittest.TestCase):
             self.assertTrue(tilepath in expected, "%s was not expected to be returned. Expected %s" % (tilepath, expected))
 
         # Now check that all expected tiles were indeed returned
-        for tilepath in expected.iterkeys():
+        for tilepath in expected.keys():
             self.assertTrue(tilepath in paths, "%s was expected to be returned but wasn't: %s" % (tilepath, paths))
 
     def test_get_phase_length(self):
@@ -215,7 +215,7 @@ class TilesetTest(unittest.TestCase):
         """Same as above but with a different set of chunks
         """
         # Pick 3 random chunks to update
-        chunks = self.rs.chunks.keys()
+        chunks = list(self.rs.chunks.keys())
         self.r.shuffle(chunks)
         updated_chunks = {}
         for key in chunks[:3]:

@@ -234,9 +234,9 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             
             /* look up color! */
             color = PySequence_GetItem(color_table, tabley * 256 + tablex);
-            r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
-            g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
-            b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+            r = PyLong_AsLong(PyTuple_GET_ITEM(color, 0));
+            g = PyLong_AsLong(PyTuple_GET_ITEM(color, 1));
+            b = PyLong_AsLong(PyTuple_GET_ITEM(color, 2));
             Py_DECREF(color);
             
             /* do the after-coloration */

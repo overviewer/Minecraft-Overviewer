@@ -15,7 +15,7 @@
 
 import functools
 import gzip
-import StringIO
+from io import BytesIO
 import struct
 import zlib
 
@@ -25,7 +25,7 @@ import zlib
 def _file_loader(func):
     @functools.wraps(func)
     def wrapper(fileobj, *args):
-        if isinstance(fileobj, basestring):
+        if type(fileobj) == str:
             # Is actually a filename
             fileobj = open(fileobj, 'rb', 4096)
         return func(fileobj, *args)
@@ -92,7 +92,7 @@ class NBTFileReader(object):
             # pure zlib stream -- maybe later replace this with
             # a custom zlib file object?
             data = zlib.decompress(fileobj.read())
-            self._file = StringIO.StringIO(data)
+            self._file = BytesIO(data)
 
         # mapping of NBT type ids to functions to read them out
         self._read_tagmap = {
@@ -168,7 +168,7 @@ class NBTFileReader(object):
 
         read_method = self._read_tagmap[tagid]
         l = []
-        for _ in xrange(length):
+        for _ in range(length):
             l.append(read_method())
         return l
 
@@ -203,7 +203,7 @@ class NBTFileReader(object):
             name = self._read_tag_string()
             payload = self._read_tag_compound()
             return (name, payload)
-        except (struct.error, ValueError, TypeError), e:
+        except (struct.error, ValueError, TypeError) as e:
             raise CorruptNBTError("could not parse nbt: %s" % (str(e),))
 
 
@@ -252,9 +252,9 @@ class MCRFileReader(object):
         file, as (x, z) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
 
-        for x in xrange(32):
-            for z in xrange(32):
-                if self._locations[x + z * 32] >> 8 != 0:
+        for x in range(32):
+            for z in range(32):
+                if self._locations[int(x + z * 32)] >> 8 != 0:
                     yield (x, z)
 
     def get_chunk_timestamp(self, x, z):
@@ -264,13 +264,13 @@ class MCRFileReader(object):
         """
         x = x % 32
         z = z % 32
-        return self._timestamps[x + z * 32]
+        return self._timestamps[int(x + z * 32)]
 
     def chunk_exists(self, x, z):
         """Determines if a chunk exists."""
         x = x % 32
         z = z % 32
-        return self._locations[x + z * 32] >> 8 != 0
+        return self._locations[int(x + z * 32)] >> 8 != 0
 
     def load_chunk(self, x, z):
         """Return a (name, data) tuple for the given chunk, or
@@ -281,7 +281,7 @@ class MCRFileReader(object):
         have the chunks load out of regions properly."""
         x = x % 32
         z = z % 32
-        location = self._locations[x + z * 32]
+        location = self._locations[int(x + z * 32)]
         offset = (location >> 8) * 4096
         sectors = location & 0xff
 
@@ -311,16 +311,16 @@ class MCRFileReader(object):
             raise CorruptRegionError("unsupported chunk compression type: %i "
                                      "(should be 1 or 2)" % (compression,))
 
-        # turn the rest of the data into a StringIO object
+        # turn the rest of the data into a BytesIO object
         # (using data_length - 1, as we already read 1 byte for compression)
         data = self._file.read(data_length - 1)
         if len(data) != data_length - 1:
             raise CorruptRegionError("chunk length is invalid")
-        data = StringIO.StringIO(data)
+        data = BytesIO(data)
 
         try:
             return NBTFileReader(data, is_gzip=is_gzip).read_all()
         except CorruptionError:
             raise
-        except Exception, e:
+        except Exception as e:
             raise CorruptChunkError("Misc error parsing chunk: " + str(e))

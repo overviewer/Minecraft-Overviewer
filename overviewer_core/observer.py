@@ -19,8 +19,8 @@ import os
 import sys
 import time
 
-import progressbar
-import rcon
+from . import progressbar
+from . import rcon
 
 
 class Observer(object):

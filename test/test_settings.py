@@ -1,4 +1,5 @@
 import unittest
+from collections import OrderedDict
 
 from overviewer_core import configParser
 from overviewer_core.settingsValidators import ValidationException
@@ -6,7 +7,6 @@ from overviewer_core.settingsValidators import ValidationException
 from overviewer_core import world
 from overviewer_core import rendermodes
 
-from overviewer_core.util import OrderedDict
 
 class SettingsTest(unittest.TestCase):
     
@@ -23,12 +23,12 @@ class SettingsTest(unittest.TestCase):
         # no exceptions so far.  that's a good thing
 
         # Test the default
-        self.assertEquals(things['renders']['myworld']['bgcolor'], (26,26,26,0))
+        self.assertEqual(things['renders']['myworld']['bgcolor'], (26,26,26,0))
 
         # Test a non-default
-        self.assertEquals(things['renders']['otherworld']['bgcolor'], (255,255,255,0))
+        self.assertEqual(things['renders']['otherworld']['bgcolor'], (255,255,255,0))
 
-        self.assertEquals(things['renders']['myworld']['northdirection'],
+        self.assertEqual(things['renders']['myworld']['northdirection'],
                world.UPPER_LEFT) 
 
     def test_rendermode_validation(self):
@@ -63,7 +63,7 @@ class SettingsTest(unittest.TestCase):
                 }),
             ]))
         self.s.set_config_item("outputdir", "/tmp/fictional/outputdir")
-        self.assertEquals(fromfile.get_validated_config(), self.s.get_validated_config())
+        self.assertEqual(fromfile.get_validated_config(), self.s.get_validated_config())
 
     def test_rendermode_string(self):
         self.s.set_config_item("worlds", {
@@ -79,7 +79,7 @@ class SettingsTest(unittest.TestCase):
                 },
                 })
         p = self.s.get_validated_config()
-        self.assertEquals(p['renders']['myworld']['rendermode'], rendermodes.normal)
+        self.assertEqual(p['renders']['myworld']['rendermode'], rendermodes.normal)
 
 if __name__ == "__main__":
     unittest.main()

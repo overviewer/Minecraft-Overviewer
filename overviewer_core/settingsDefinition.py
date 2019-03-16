@@ -43,10 +43,11 @@
 # available during the execution of the config file. This way, container types
 # can be initialized and then appended/added to when the config file is parsed.
 
-from settingsValidators import *
-import util
-from observer import ProgressBarObserver, LoggingObserver, JSObserver
-from optimizeimages import pngnq, optipng, pngcrush
+from collections import OrderedDict
+
+from .settingsValidators import *
+from .observer import ProgressBarObserver, LoggingObserver, JSObserver
+from .optimizeimages import pngnq, optipng, pngcrush
 import platform
 import sys
 
@@ -60,7 +61,7 @@ import sys
 # objects with their respective validators.
 
 # config file.
-renders = Setting(required=True, default=util.OrderedDict(),
+renders = Setting(required=True, default=OrderedDict(),
         validator=make_dictValidator(validateStr, make_configDictValidator(
         {
             "world": Setting(required=True, validator=validateStr, default=None),
@@ -99,7 +100,7 @@ renders = Setting(required=True, default=util.OrderedDict(),
         )))
 
 # The worlds dict, mapping world names to world paths
-worlds = Setting(required=True, validator=make_dictValidator(validateStr, validateWorldPath), default=util.OrderedDict())
+worlds = Setting(required=True, validator=make_dictValidator(validateStr, validateWorldPath), default=OrderedDict())
 
 outputdir = Setting(required=True, validator=validateOutputDir, default=None)
 

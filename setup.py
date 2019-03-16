@@ -1,14 +1,14 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import sys
 import traceback
 
+
 # quick version check
-if not (sys.version_info[0] == 2 and sys.version_info[1] >= 6):
-    print("Sorry, the Overviewer requires at least Python 2.6 to run")
-    if sys.version_info[0] >= 3:
-        print("and will not run on Python 3.0 or later")
+if sys.version_info[0] == 2 or (sys.version_info[0] == 3 and sys.version_info[1] < 4):
+    print("Sorry, the Overviewer requires at least Python 3.4 to run.")
     sys.exit(1)
+
 
 from distutils.core import setup
 from distutils.extension import Extension
@@ -176,12 +176,12 @@ for name in glob.glob("overviewer_core/src/primitives/*.c"):
     primitives.append(name)
 
 c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
-c_overviewer_files += map(lambda mode: 'primitives/%s.c' % (mode,), primitives)
+c_overviewer_files += ['primitives/%s.c' % (mode) for mode in primitives]
 c_overviewer_files += ['Draw.c']
 c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
 
-c_overviewer_files = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_files)
-c_overviewer_includes = map(lambda s: 'overviewer_core/src/'+s, c_overviewer_includes)
+c_overviewer_files = ['overviewer_core/src/' + s for s in c_overviewer_files]
+c_overviewer_includes = ['overviewer_core/src/' + s for s in c_overviewer_includes]
 
 setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
 

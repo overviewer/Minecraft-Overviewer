@@ -45,9 +45,9 @@ calculate_light_color_fancy(void *data,
     index = skylight + blocklight * 16;
     color = PySequence_GetItem(mode->lightcolor, index);
     
-    *r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
-    *g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
-    *b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+    *r = PyLong_AsLong(PyTuple_GET_ITEM(color, 0));
+    *g = PyLong_AsLong(PyTuple_GET_ITEM(color, 1));
+    *b = PyLong_AsLong(PyTuple_GET_ITEM(color, 2));
     
     Py_DECREF(color);
 }
@@ -78,9 +78,9 @@ calculate_light_color_fancy_night(void *data,
     index = skylight + blocklight * 16;
     color = PySequence_GetItem(mode->lightcolor, index);
     
-    *r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
-    *g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
-    *b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+    *r = PyLong_AsLong(PyTuple_GET_ITEM(color, 0));
+    *g = PyLong_AsLong(PyTuple_GET_ITEM(color, 1));
+    *b = PyLong_AsLong(PyTuple_GET_ITEM(color, 2));
     
     Py_DECREF(color);
 }

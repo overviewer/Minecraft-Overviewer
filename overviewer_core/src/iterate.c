@@ -40,7 +40,6 @@ PyObject *init_chunk_render(void) {
     if (textures) {
         Py_RETURN_NONE;
     }
-
     textures = PyImport_ImportModule("overviewer_core.textures");
     /* ensure none of these pointers are NULL */    
     if ((!textures)) {
@@ -50,13 +49,13 @@ PyObject *init_chunk_render(void) {
     tmp = PyObject_GetAttrString(textures, "max_blockid");
     if (!tmp)
         return NULL;
-    max_blockid = PyInt_AsLong(tmp);
+    max_blockid = PyLong_AsLong(tmp);
     Py_DECREF(tmp);
 
     tmp = PyObject_GetAttrString(textures, "max_data");
     if (!tmp)
         return NULL;
-    max_data = PyInt_AsLong(tmp);
+    max_data = PyLong_AsLong(tmp);
     Py_DECREF(tmp);
 
     /* assemble the property table */
@@ -81,7 +80,7 @@ PyObject *init_chunk_render(void) {
     
     block_properties = calloc(max_blockid, sizeof(unsigned char));
     for (i = 0; i < max_blockid; i++) {
-        PyObject *block = PyInt_FromLong(i);
+        PyObject *block = PyLong_FromLong(i);
         
         if (PySequence_Contains(known_blocks, block))
             block_properties[i] |= 1 << KNOWN;
@@ -177,7 +176,7 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
         if (!ycoord)
             continue;
         
-        sectiony = PyInt_AsLong(ycoord);
+        sectiony = PyLong_AsLong(ycoord);
         if (sectiony >= 0 && sectiony < SECTIONS_PER_CHUNK)
             load_chunk_section(dest, sectiony, section);
     }
@@ -487,7 +486,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         PyObject *texrot;
         int northdir;
         texrot = PyObject_GetAttrString(state->textures, "rotation");
-        northdir = PyInt_AsLong(texrot);
+        northdir = PyLong_AsLong(texrot);
 
         /* fix the rotation value for different northdirections */
         #define FIX_ROT(x) (((x) & ~0x3) | repair_rot[((x) & 0x3) | (northdir << 2)])
@@ -617,8 +616,8 @@ chunk_render(PyObject *self, PyObject *args) {
     imgsize1_py = PySequence_GetItem(imgsize, 1);
     Py_DECREF(imgsize);
 
-    imgsize0 = PyInt_AsLong(imgsize0_py);
-    imgsize1 = PyInt_AsLong(imgsize1_py);
+    imgsize0 = PyLong_AsLong(imgsize0_py);
+    imgsize1 = PyLong_AsLong(imgsize1_py);
     Py_DECREF(imgsize0_py);
     Py_DECREF(imgsize1_py);
     

@@ -34,8 +34,7 @@ class Optimizer:
         path = os.environ.get("PATH").split(os.pathsep)
 
         def exists_in_path(prog):
-            result = filter(lambda x: os.path.exists(os.path.join(x, prog)),
-                            path)
+            result = [x for x in path if os.path.exists(os.path.join(x, prog))]
             return len(result) != 0
 
         binaries = self.binarynames + [x + ".exe" for x in self.binarynames]

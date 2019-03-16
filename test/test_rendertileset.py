@@ -1,6 +1,6 @@
 import unittest
 
-from itertools import chain, izip
+from itertools import chain
 
 from overviewer_core.tileset import iterate_base4, RendertileSet
 from overviewer_core.util import roundrobin
@@ -150,7 +150,7 @@ class RendertileSetTest(unittest.TestCase):
         self.assertRaises(AssertionError, self.test_iterate)
 
     def test_count(self):
-        self.assertEquals(self.tree.count(), len(self.tile_paths))
+        self.assertEqual(self.tree.count(), len(self.tile_paths))
 
     def test_bool(self):
         "Tests the boolean status of a node"
@@ -202,7 +202,7 @@ class RendertileSetTest(unittest.TestCase):
         """Test a post-traversal of the tree's dirty tiles"""
         # Expect the results in this proper order.
         iterator = iter(self.tree.posttraversal())
-        for expected, actual in izip(self.tile_paths_posttraversal, iterator):
+        for expected, actual in zip(self.tile_paths_posttraversal, iterator):
             self.assertEqual(actual, expected)
 
         self.assertRaises(StopIteration, next, iterator)
@@ -211,7 +211,7 @@ class RendertileSetTest(unittest.TestCase):
         """Test a round-robin post-traversal of the tree's dirty tiles"""
         # Expect the results in this proper order.
         iterator = iter(self.tree.posttraversal(robin=True))
-        for expected, actual in izip(self.tile_paths_posttraversal_robin, iterator):
+        for expected, actual in zip(self.tile_paths_posttraversal_robin, iterator):
             self.assertEqual(actual, expected)
 
         self.assertRaises(StopIteration, next, iterator)

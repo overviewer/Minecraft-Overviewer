@@ -18,7 +18,7 @@ import logging
 import os
 import platform
 import sys
-from cStringIO import StringIO
+from io import BytesIO
 
 # Some cool code for colored logging:
 # For background, add 40. For foreground, add 30
@@ -88,7 +88,7 @@ class WindowsOutputStream(object):
 
     def write(self, s):
 
-        msg_strm = StringIO(s)
+        msg_strm = BytesIO(s)
 
         while (True):
             c = msg_strm.read(1)

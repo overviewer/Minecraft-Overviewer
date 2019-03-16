@@ -13,12 +13,12 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import util
+from . import util
 import multiprocessing
 import multiprocessing.managers
-import Queue
+import queue
 import time
-from signals import Signal
+from .signals import Signal
 
 class Dispatcher(object):
     """This class coordinates the work of all the TileSet objects
@@ -51,7 +51,7 @@ class Dispatcher(object):
 
         # iterate through all possible phases
         num_phases = [tileset.get_num_phases() for tileset in tilesetlist]
-        for phase in xrange(max(num_phases)):
+        for phase in range(max(num_phases)):
             # construct a list of iterators to use for this phase
             work_iterators = []
             for i, tileset in enumerate(tilesetlist):
@@ -235,7 +235,7 @@ class MultiprocessingDispatcherProcess(multiprocessing.Process):
             def handler(*args, **kwargs):
                 self.signal_queue.put((name, args, kwargs), False)
             sig.set_interceptor(handler)
-        for name, sig in Signal.signals.iteritems():
+        for name, sig in Signal.signals.items():
             register_signal(name, sig)
 
         # notify that we're starting up
@@ -259,7 +259,7 @@ class MultiprocessingDispatcherProcess(multiprocessing.Process):
                 ret = self.tilesets[ti].do_work(workitem)
                 result = (ti, workitem, ret,)
                 self.result_queue.put(result, False)
-            except Queue.Empty:
+            except queue.Empty:
                 pass
 
 class MultiprocessingDispatcher(Dispatcher):
@@ -288,7 +288,7 @@ class MultiprocessingDispatcher(Dispatcher):
 
         # create and fill the pool
         self.pool = []
-        for i in xrange(self.local_procs):
+        for i in range(self.local_procs):
             proc = MultiprocessingDispatcherProcess(self.manager)
             proc.start()
             self.pool.append(proc)
@@ -300,7 +300,7 @@ class MultiprocessingDispatcher(Dispatcher):
             self._handle_messages()
 
         # send of the end-of-jobs sentinel
-        for p in xrange(self.num_workers):
+        for p in range(self.num_workers):
             self.job_queue.put(None, False)
 
         # TODO better way to be sure worker processes get the message
@@ -350,7 +350,7 @@ class MultiprocessingDispatcher(Dispatcher):
                     else:
                         # new worker
                         self.num_workers += 1
-                except Queue.Empty:
+                except queue.Empty:
                     result_empty = True
             if not signal_empty:
                 try:
@@ -363,7 +363,7 @@ class MultiprocessingDispatcher(Dispatcher):
 
                     sig = Signal.signals[name]
                     sig.emit_intercepted(*args, **kwargs)
-                except Queue.Empty:
+                except queue.Empty:
                     signal_empty = True
 
         return finished_jobs

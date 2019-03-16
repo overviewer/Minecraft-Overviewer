@@ -4,8 +4,8 @@ import os.path
 import logging
 import traceback
 
-import settingsDefinition
-import settingsValidators
+from . import settingsDefinition
+from . import settingsValidators
 
 class MissingConfigException(Exception):
     "To be thrown when the config file can't be found"
@@ -76,12 +76,14 @@ class MultiWorldParser(object):
 
         # The global environment should be the rendermode module, so the config
         # file has access to those resources.
-        import rendermodes
+        from . import rendermodes
 
         try:
-            execfile(settings_file, rendermodes.__dict__, self._config_state)
+            with open(settings_file, "rb") as settings_file_handle:
+                exec(compile(settings_file_handle.read(), settings_file, 'exec'),
+                     rendermodes.__dict__, self._config_state)
         
-        except Exception, ex:
+        except Exception as ex:
             if isinstance(ex, SyntaxError):
                 logging.error("Syntax error parsing %s" %  settings_file)
                 logging.error("The traceback below will tell you which line triggered the syntax error\n")
@@ -109,7 +111,7 @@ class MultiWorldParser(object):
         # At this point, make a pass through the file to possibly set global
         # render defaults
         render_settings = self._settings['renders'].validator.valuevalidator.config
-        for key in self._config_state.iterkeys():
+        for key in self._config_state.keys():
             if key not in self._settings:
                 if key in render_settings:
                     setting = render_settings[key]

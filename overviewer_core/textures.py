@@ -18,7 +18,7 @@ import imp
 import os
 import os.path
 import zipfile
-from cStringIO import StringIO
+from io import BytesIO
 import math
 from random import randint
 import numpy
@@ -26,8 +26,32 @@ from PIL import Image, ImageEnhance, ImageOps, ImageDraw
 import logging
 import functools
 
-import util
-from c_overviewer import alpha_over
+from . import util
+
+
+# global variables to collate information in @material decorators
+blockmap_generators = {}
+
+known_blocks = set()
+used_datas = set()
+max_blockid = 0
+max_data = 0
+
+transparent_blocks = set()
+solid_blocks = set()
+fluid_blocks = set()
+nospawn_blocks = set()
+nodata_blocks = set()
+
+
+# This is here for circular import reasons.
+# Please don't ask, I choose to repress these memories.
+# ... okay fine I'll tell you.
+# Initialising the C extension requires access to the globals above.
+# Due to the circular import, this wouldn't work, unless we reload the
+# module in the C extension or just move the import below its dependencies.
+from .c_overviewer import alpha_over
+
 
 class TextureException(Exception):
     "To be thrown when a texture is not found."
@@ -36,6 +60,7 @@ class TextureException(Exception):
 
 color_map = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
              "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"]
+
 
 ##
 ## Textures object
@@ -76,10 +101,11 @@ class Textures(object):
                 del attributes[attr]
             except KeyError:
                 pass
+        attributes['jar'] = None
         return attributes
     def __setstate__(self, attrs):
         # regenerate textures, if needed
-        for attr, val in attrs.iteritems():
+        for attr, val in list(attrs.items()):
             setattr(self, attr, val)
         self.texture_cache = {}
         if self.generated:
@@ -99,7 +125,7 @@ class Textures(object):
         global known_blocks, used_datas
         self.blockmap = [None] * max_blockid * max_data
         
-        for (blockid, data), texgen in blockmap_generators.iteritems():
+        for (blockid, data), texgen in list(blockmap_generators.items()):
             tex = texgen(self, blockid, data)
             self.blockmap[blockid * max_data + data] = self.generate_texture_tuple(tex)
         
@@ -224,7 +250,7 @@ class Textures(object):
                     self.jar.getinfo(jarfilename)
                     if verbose: logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
                     return self.jar.open(jarfilename)
-                except (KeyError, IOError), e:
+                except (KeyError, IOError) as e:
                     pass
 
         # Find an installed minecraft client jar and look in it for the texture
@@ -285,7 +311,7 @@ class Textures(object):
                         if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
                         self.jar, self.jarpath = jar, jarpath
                         return jar.open(jarfilename)
-                    except (KeyError, IOError), e:
+                    except (KeyError, IOError) as e:
                         pass
 
             if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
@@ -334,7 +360,7 @@ class Textures(object):
             return self.texture_cache[filename]
         
         fileobj = self.find_file(filename)
-        buffer = StringIO(fileobj.read())
+        buffer = BytesIO(fileobj.read())
         img = Image.open(buffer).convert("RGBA")
         self.texture_cache[filename] = img
         return img
@@ -444,8 +470,8 @@ class Textures(object):
         textures = []
         (terrain_width, terrain_height) = terrain.size
         texture_resolution = terrain_width / 16
-        for y in xrange(16):
-            for x in xrange(16):
+        for y in range(16):
+            for x in range(16):
                 left = x*texture_resolution
                 upper = y*texture_resolution
                 right = left+texture_resolution
@@ -815,19 +841,6 @@ class Textures(object):
 ## The other big one: @material and associated framework
 ##
 
-# global variables to collate information in @material decorators
-blockmap_generators = {}
-
-known_blocks = set()
-used_datas = set()
-max_blockid = 0
-max_data = 0
-
-transparent_blocks = set()
-solid_blocks = set()
-fluid_blocks = set()
-nospawn_blocks = set()
-nodata_blocks = set()
 
 # the material registration decorator
 def material(blockid=[], data=[0], **kwargs):
@@ -837,11 +850,11 @@ def material(blockid=[], data=[0], **kwargs):
     # make sure blockid and data are iterable
     try:
         iter(blockid)
-    except:
+    except Exception:
         blockid = [blockid,]
     try:
         iter(data)
-    except:
+    except Exception:
         data = [data,]
         
     def inner_material(func):
@@ -924,7 +937,7 @@ def billboard(blockid=[], imagename=None, **kwargs):
 ##
 
 # stone
-@material(blockid=1, data=range(7), solid=True)
+@material(blockid=1, data=list(range(7)), solid=True)
 def stone(self, blockid, data):
     if data == 0: # regular old-school stone
         img = self.load_image_texture("assets/minecraft/textures/block/stone.png")
@@ -942,7 +955,7 @@ def stone(self, blockid, data):
         img = self.load_image_texture("assets/minecraft/textures/block/polished_andesite.png")
     return self.build_block(img, img)
 
-@material(blockid=2, data=range(11)+[0x10,], solid=True)
+@material(blockid=2, data=list(range(11))+[0x10,], solid=True)
 def grass(self, blockid, data):
     # 0x10 bit means SNOW
     side_img = self.load_image_texture("assets/minecraft/textures/block/grass_block_side.png")
@@ -954,7 +967,7 @@ def grass(self, blockid, data):
     return img
 
 # dirt
-@material(blockid=3, data=range(3), solid=True)
+@material(blockid=3, data=list(range(3)), solid=True)
 def dirt_blocks(self, blockid, data):
     side_img = self.load_image_texture("assets/minecraft/textures/block/dirt.png")
     if data == 0: # normal
@@ -970,7 +983,7 @@ def dirt_blocks(self, blockid, data):
 block(blockid=4, top_image="assets/minecraft/textures/block/cobblestone.png")
 
 # wooden planks
-@material(blockid=5, data=range(6), solid=True)
+@material(blockid=5, data=list(range(6)), solid=True)
 def wooden_planks(self, blockid, data):
     if data == 0: # normal
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/oak_planks.png"), self.load_image_texture("assets/minecraft/textures/block/oak_planks.png"))
@@ -985,7 +998,7 @@ def wooden_planks(self, blockid, data):
     if data == 5: # dark oak
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"),self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"))
 
-@material(blockid=6, data=range(16), transparent=True)
+@material(blockid=6, data=list(range(16)), transparent=True)
 def saplings(self, blockid, data):
     # usual saplings
     tex = self.load_image_texture("assets/minecraft/textures/block/oak_sapling.png")
@@ -1007,7 +1020,7 @@ block(blockid=7, top_image="assets/minecraft/textures/block/bedrock.png")
 
 # water, glass, and ice (no inner surfaces)
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[8, 9, 20, 79, 95], data=range(512), fluid=(8, 9), transparent=True, nospawn=True, solid=(79, 20, 95))
+@material(blockid=[8, 9, 20, 79, 95], data=list(range(512)), fluid=(8, 9), transparent=True, nospawn=True, solid=(79, 20, 95))
 def no_inner_surfaces(self, blockid, data):
     if blockid == 8 or blockid == 9:
         texture = self.load_water()
@@ -1054,13 +1067,13 @@ def no_inner_surfaces(self, blockid, data):
     img = self.build_full_block(top,None,None,side3,side4)
     return img
 
-@material(blockid=[10, 11], data=range(16), fluid=True, transparent=False, nospawn=True)
+@material(blockid=[10, 11], data=list(range(16)), fluid=True, transparent=False, nospawn=True)
 def lava(self, blockid, data):
     lavatex = self.load_lava()
     return self.build_block(lavatex, lavatex)
 
 # sand
-@material(blockid=12, data=range(2), solid=True)
+@material(blockid=12, data=list(range(2)), solid=True)
 def sand_blocks(self, blockid, data):
     if data == 0: # normal
         img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/sand.png"), self.load_image_texture("assets/minecraft/textures/block/sand.png"))
@@ -1077,7 +1090,7 @@ block(blockid=15, top_image="assets/minecraft/textures/block/iron_ore.png")
 # coal ore
 block(blockid=16, top_image="assets/minecraft/textures/block/coal_ore.png")
 
-@material(blockid=[17,162,11306,11307,11308,11309,11310,11311], data=range(12), solid=True)
+@material(blockid=[17,162,11306,11307,11308,11309,11310,11311], data=list(range(12)), solid=True)
 def wood(self, blockid, data):
     # extract orientation and wood type frorm data bits
     wood_type = data & 3
@@ -1191,7 +1204,7 @@ def wood(self, blockid, data):
     elif wood_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
-@material(blockid=[18, 161], data=range(16), transparent=True, solid=True)
+@material(blockid=[18, 161], data=list(range(16)), transparent=True, solid=True)
 def leaves(self, blockid, data):
     # mask out the bits 4 and 8
     # they are used for player placed and check-for-decay blocks
@@ -1217,7 +1230,7 @@ block(blockid=21, top_image="assets/minecraft/textures/block/lapis_ore.png")
 block(blockid=22, top_image="assets/minecraft/textures/block/lapis_block.png")
 
 # dispensers, dropper, furnaces, and burning furnaces
-@material(blockid=[23, 61, 62, 158], data=range(6), solid=True)
+@material(blockid=[23, 61, 62, 158], data=list(range(6)), solid=True)
 def furnaces(self, blockid, data):
     # first, do the rotation if needed
     if self.rotation == 1:
@@ -1266,7 +1279,7 @@ def furnaces(self, blockid, data):
         return self.build_full_block(top, None, None, side, side)
 
 # sandstone
-@material(blockid=24, data=range(3), solid=True)
+@material(blockid=24, data=list(range(3)), solid=True)
 def sandstone(self, blockid, data):
     top = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png")
     if data == 0: # normal
@@ -1277,7 +1290,7 @@ def sandstone(self, blockid, data):
         return self.build_block(top, self.load_image_texture("assets/minecraft/textures/block/cut_sandstone.png"))
         
 # red sandstone
-@material(blockid=179, data=range(3), solid=True)
+@material(blockid=179, data=list(range(3)), solid=True)
 def sandstone(self, blockid, data):
     top = self.load_image_texture("assets/minecraft/textures/block/red_sandstone_top.png")
     if data == 0: # normal
@@ -1291,7 +1304,7 @@ def sandstone(self, blockid, data):
 # note block
 block(blockid=25, top_image="assets/minecraft/textures/block/note_block.png")
 
-@material(blockid=26, data=range(12), transparent=True, nospawn=True)
+@material(blockid=26, data=list(range(12)), transparent=True, nospawn=True)
 def bed(self, blockid, data):
     # first get rotation done
     # Masked to not clobber block head/foot info
@@ -1381,7 +1394,7 @@ def bed(self, blockid, data):
     return self.build_full_block(top_face, None, None, left_face, right_face)
 
 # powered, detector, activator and normal rails
-@material(blockid=[27, 28, 66, 157], data=range(14), transparent=True)
+@material(blockid=[27, 28, 66, 157], data=list(range(14)), transparent=True)
 def rails(self, blockid, data):
     # first, do rotation
     # Masked to not clobber powered rail on/off info
@@ -1664,7 +1677,7 @@ def piston_extension(self, blockid, data):
 # cobweb
 sprite(blockid=30, imagename="assets/minecraft/textures/block/cobweb.png", nospawn=True)
 
-@material(blockid=31, data=range(3), transparent=True)
+@material(blockid=31, data=list(range(3)), transparent=True)
 def tall_grass(self, blockid, data):
     if data == 0: # dead shrub
         texture = self.load_image_texture("assets/minecraft/textures/block/dead_bush.png")
@@ -1678,7 +1691,7 @@ def tall_grass(self, blockid, data):
 # dead bush
 billboard(blockid=32, imagename="assets/minecraft/textures/block/dead_bush.png")
 
-@material(blockid=35, data=range(16), solid=True)
+@material(blockid=35, data=list(range(16)), solid=True)
 def wool(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_wool.png" % color_map[data])
     
@@ -1688,7 +1701,7 @@ def wool(self, blockid, data):
 sprite(blockid=37, imagename="assets/minecraft/textures/block/dandelion.png")
 
 # flowers
-@material(blockid=38, data=range(10), transparent=True)
+@material(blockid=38, data=list(range(10)), transparent=True)
 def flower(self, blockid, data):
     flower_map = ["poppy", "blue_orchid", "allium", "azure_bluet", "red_tulip", "orange_tulip",
                   "white_tulip", "pink_tulip", "oxeye_daisy", "dandelion"]
@@ -1708,7 +1721,7 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks
-@material(blockid=[43, 44, 181, 182, 204, 205], data=range(16), transparent=(44,182,205), solid=True)
+@material(blockid=[43, 44, 181, 182, 204, 205], data=list(range(16)), transparent=(44,182,205), solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1847,7 +1860,7 @@ def torches(self, blockid, data):
     return img
 
 # fire
-@material(blockid=51, data=range(16), transparent=True)
+@material(blockid=51, data=list(range(16)), transparent=True)
 def fire(self, blockid, data):
     firetextures = self.load_fire()
     side1 = self.transform_image_side(firetextures[0])
@@ -1867,7 +1880,7 @@ def fire(self, blockid, data):
 block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, and red sandstone stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203], data=range(128), transparent=True, solid=True, nospawn=True)
+@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203], data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1991,7 +2004,7 @@ def stairs(self, blockid, data):
 
 # normal, locked (used in april's fool day), ender and trapped chest
 # NOTE:  locked chest used to be id95 (which is now stained glass)
-@material(blockid=[54,130,146], data=range(30), transparent = True)
+@material(blockid=[54,130,146], data=list(range(30)), transparent = True)
 def chests(self, blockid, data):
     # the first 3 bits are the orientation as stored in minecraft, 
     # bits 0x8 and 0x10 indicate which half of the double chest is it.
@@ -2188,7 +2201,7 @@ def chests(self, blockid, data):
 
 # redstone wire
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=55, data=range(128), transparent=True)
+@material(blockid=55, data=list(range(128)), transparent=True)
 def wire(self, blockid, data):
 
     if data & 0b1000000 == 64: # powered redstone wire
@@ -2281,7 +2294,7 @@ def crafting_table(self, blockid, data):
     return img
 
 # crops with 8 data values (like wheat)
-@material(blockid=59, data=range(8), transparent=True, nospawn=True)
+@material(blockid=59, data=list(range(8)), transparent=True, nospawn=True)
 def crops8(self, blockid, data):
     raw_crop = self.load_image_texture("assets/minecraft/textures/block/wheat_stage%d.png" % data)
     crop1 = self.transform_image_top(raw_crop)
@@ -2295,7 +2308,7 @@ def crops8(self, blockid, data):
     return img
 
 # farmland and grass path (15/16 blocks)
-@material(blockid=[60,208], data=range(9), solid=True)
+@material(blockid=[60,208], data=list(range(9)), solid=True)
 def farmland(self, blockid, data):
     if blockid == 60:
         side = self.load_image_texture("assets/minecraft/textures/block/dirt.png")
@@ -2315,7 +2328,7 @@ def farmland(self, blockid, data):
 
 
 # signposts
-@material(blockid=63, data=range(16), transparent=True)
+@material(blockid=63, data=list(range(16)), transparent=True)
 def signpost(self, blockid, data):
 
     # first rotations
@@ -2369,7 +2382,7 @@ def signpost(self, blockid, data):
 
 # wooden and iron door
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[64,71,193,194,195,196,197], data=range(32), transparent=True)
+@material(blockid=[64,71,193,194,195,196,197], data=list(range(32)), transparent=True)
 def door(self, blockid, data):
     #Masked to not clobber block top/bottom & swung info
     if self.rotation == 1:
@@ -2618,7 +2631,7 @@ def wall_sign(self, blockid, data): # wall sign
     return img
 
 # levers
-@material(blockid=69, data=range(16), transparent=True)
+@material(blockid=69, data=list(range(16)), transparent=True)
 def levers(self, blockid, data):
     if data & 8 == 8: powered = True
     else: powered = False
@@ -2802,7 +2815,7 @@ def pressure_plate(self, blockid, data):
 block(blockid=[73, 74], top_image="assets/minecraft/textures/block/redstone_ore.png")
 
 # stone a wood buttons
-@material(blockid=(77,143,11326,11327,11328,11329,11330), data=range(16), transparent=True)
+@material(blockid=(77,143,11326,11327,11328,11329,11330), data=list(range(16)), transparent=True)
 def buttons(self, blockid, data):
 
     # 0x8 is set if the button is pressed mask this info and render
@@ -2899,7 +2912,7 @@ def buttons(self, blockid, data):
     return img
 
 # snow
-@material(blockid=78, data=range(16), transparent=True, solid=True)
+@material(blockid=78, data=list(range(16)), transparent=True, solid=True)
 def snow(self, blockid, data):
     # still not rendered correctly: data other than 0
     
@@ -2926,7 +2939,7 @@ def snow(self, blockid, data):
 block(blockid=80, top_image="assets/minecraft/textures/block/snow.png")
 
 # cactus
-@material(blockid=81, data=range(15), transparent=True, solid=True, nospawn=True)
+@material(blockid=81, data=list(range(15)), transparent=True, solid=True, nospawn=True)
 def cactus(self, blockid, data):
     top = self.load_image_texture("assets/minecraft/textures/block/cactus_top.png")
     side = self.load_image_texture("assets/minecraft/textures/block/cactus_side.png")
@@ -2954,19 +2967,19 @@ def cactus(self, blockid, data):
 block(blockid=82, top_image="assets/minecraft/textures/block/clay.png")
 
 # sugar cane
-@material(blockid=83, data=range(16), transparent=True)
+@material(blockid=83, data=list(range(16)), transparent=True)
 def sugar_cane(self, blockid, data):
     tex = self.load_image_texture("assets/minecraft/textures/block/sugar_cane.png")
     return self.build_sprite(tex)
 
 # jukebox
-@material(blockid=84, data=range(16), solid=True)
+@material(blockid=84, data=list(range(16)), solid=True)
 def jukebox(self, blockid, data):
     return self.build_block(self.load_image_texture("assets/minecraft/textures/block/jukebox_top.png"), self.load_image_texture("assets/minecraft/textures/block/note_block.png"))
 
 # nether and normal fences
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[85, 188, 189, 190, 191, 192, 113], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[85, 188, 189, 190, 191, 192, 113], data=list(range(16)), transparent=True, nospawn=True)
 def fence(self, blockid, data):
     # no need for rotations, it uses pseudo data.
     # create needed images for Big stick fence
@@ -3082,7 +3095,7 @@ def fence(self, blockid, data):
     return img
 
 # pumpkin
-@material(blockid=[86, 91,11300], data=range(4), solid=True)
+@material(blockid=[86, 91,11300], data=list(range(4)), solid=True)
 def pumpkin(self, blockid, data): # pumpkins, jack-o-lantern
     # rotation
     if self.rotation == 1:
@@ -3149,7 +3162,7 @@ def portal(self, blockid, data):
     return img
 
 # cake!
-@material(blockid=92, data=range(6), transparent=True, nospawn=True)
+@material(blockid=92, data=list(range(6)), transparent=True, nospawn=True)
 def cake(self, blockid, data):
     
     # cake textures
@@ -3273,7 +3286,7 @@ def cake(self, blockid, data):
     return img
 
 # redstone repeaters ON and OFF
-@material(blockid=[93,94], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[93,94], data=list(range(16)), transparent=True, nospawn=True)
 def repeater(self, blockid, data):
     # rotation
     # Masked to not clobber delay info
@@ -3418,7 +3431,7 @@ def repeater(self, blockid, data):
     return img
 
 # redstone comparator (149 is inactive, 150 is active)
-@material(blockid=[149,150], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[149,150], data=list(range(16)), transparent=True, nospawn=True)
 def comparator(self, blockid, data):
 
     # rotation
@@ -3483,7 +3496,7 @@ def comparator(self, blockid, data):
     
 # trapdoor
 # the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=[96,167,11332,11333,11334,11335,11336], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[96,167,11332,11333,11334,11335,11336], data=list(range(16)), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
     # rotation
@@ -3539,7 +3552,7 @@ def trapdoor(self, blockid, data):
     return img
 
 # block with hidden silverfish (stone, cobblestone and stone brick)
-@material(blockid=97, data=range(3), solid=True)
+@material(blockid=97, data=list(range(3)), solid=True)
 def hidden_silverfish(self, blockid, data):
     if data == 0: # stone
         t = self.load_image_texture("assets/minecraft/textures/block/stone.png")
@@ -3553,7 +3566,7 @@ def hidden_silverfish(self, blockid, data):
     return img
 
 # stone brick
-@material(blockid=98, data=range(4), solid=True)
+@material(blockid=98, data=list(range(4)), solid=True)
 def stone_brick(self, blockid, data):
     if data == 0: # normal
         t = self.load_image_texture("assets/minecraft/textures/block/stone_bricks.png")
@@ -3569,7 +3582,7 @@ def stone_brick(self, blockid, data):
     return img
 
 # huge brown and red mushroom
-@material(blockid=[99,100], data= range(11) + [14,15], solid=True)
+@material(blockid=[99,100], data= list(range(11)) + [14,15], solid=True)
 def huge_mushroom(self, blockid, data):
     # rotation
     if self.rotation == 1:
@@ -3653,7 +3666,7 @@ def huge_mushroom(self, blockid, data):
 # iron bars and glass pane
 # TODO glass pane is not a sprite, it has a texture for the side,
 # at the moment is not used
-@material(blockid=[101,102, 160], data=range(256), transparent=True, nospawn=True)
+@material(blockid=[101,102, 160], data=list(range(256)), transparent=True, nospawn=True)
 def panes(self, blockid, data):
     # no rotation, uses pseudo data
     if blockid == 101:
@@ -3705,7 +3718,7 @@ block(blockid=103, top_image="assets/minecraft/textures/block/melon_top.png", si
 # TODO To render it as in game needs from pseudo data and ancil data:
 # once fully grown the stem bends to the melon/pumpkin block,
 # at the moment only render the growing stem
-@material(blockid=[104,105], data=range(8), transparent=True)
+@material(blockid=[104,105], data=list(range(8)), transparent=True)
 def stem(self, blockid, data):
     # the ancildata value indicates how much of the texture
     # is shown.
@@ -3725,7 +3738,7 @@ def stem(self, blockid, data):
     
 
 # vines
-@material(blockid=106, data=range(16), transparent=True)
+@material(blockid=106, data=list(range(16)), transparent=True)
 def vines(self, blockid, data):
     # rotation
     # vines data is bit coded. decode it first.
@@ -3766,7 +3779,7 @@ def vines(self, blockid, data):
     return img
 
 # fence gates
-@material(blockid=[107, 183, 184, 185, 186, 187], data=range(8), transparent=True, nospawn=True)
+@material(blockid=[107, 183, 184, 185, 186, 187], data=list(range(8)), transparent=True, nospawn=True)
 def fence_gate(self, blockid, data):
 
     # rotation
@@ -3870,7 +3883,7 @@ block(blockid=110, top_image="assets/minecraft/textures/block/mycelium_top.png",
 # At the moment of writing this lilypads has no ancil data and their
 # orientation depends on their position on the map. So it uses pseudo
 # ancildata.
-@material(blockid=111, data=range(4), transparent=True)
+@material(blockid=111, data=list(range(4)), transparent=True)
 def lilypad(self, blockid, data):
     t = self.load_image_texture("assets/minecraft/textures/block/lily_pad.png").copy()
     if data == 0:
@@ -3888,7 +3901,7 @@ def lilypad(self, blockid, data):
 block(blockid=112, top_image="assets/minecraft/textures/block/nether_bricks.png")
 
 # nether wart
-@material(blockid=115, data=range(4), transparent=True)
+@material(blockid=115, data=list(range(4)), transparent=True)
 def nether_wart(self, blockid, data):
     if data == 0: # just come up
         t = self.load_image_texture("assets/minecraft/textures/block/nether_wart_stage0.png")
@@ -3915,7 +3928,7 @@ def enchantment_table(self, blockid, data):
 
 # brewing stand
 # TODO this is a place holder, is a 2d image pasted
-@material(blockid=117, data=range(5), transparent=True)
+@material(blockid=117, data=list(range(5)), transparent=True)
 def brewing_stand(self, blockid, data):
     base = self.load_image_texture("assets/minecraft/textures/block/brewing_stand_base.png")
     img = self.build_full_block(None, None, None, None, None, base)
@@ -3925,7 +3938,7 @@ def brewing_stand(self, blockid, data):
     return img
 
 # cauldron
-@material(blockid=118, data=range(4), transparent=True)
+@material(blockid=118, data=list(range(4)), transparent=True)
 def cauldron(self, blockid, data):
     side = self.load_image_texture("assets/minecraft/textures/block/cauldron_side.png")
     top = self.load_image_texture("assets/minecraft/textures/block/cauldron_top.png")
@@ -3971,7 +3984,7 @@ def end_portal(self, blockid, data):
     return img
 
 # end portal frame (data range 8 to get all orientations of filled)
-@material(blockid=120, data=range(8), transparent=True)
+@material(blockid=120, data=list(range(8)), transparent=True)
 def end_portal_frame(self, blockid, data):
     # The bottom 2 bits are oritation info but seems there is no
     # graphical difference between orientations
@@ -4046,7 +4059,7 @@ def daylight_sensor(self, blockid, data):
 # wooden double and normal slabs
 # these are the new wooden slabs, blockids 43 44 still have wooden
 # slabs, but those are unobtainable without cheating
-@material(blockid=[125, 126], data=range(16), transparent=(44,), solid=True)
+@material(blockid=[125, 126], data=list(range(16)), transparent=(44,), solid=True)
 def wooden_slabs(self, blockid, data):
     texture = data & 7
     if texture== 0: # oak 
@@ -4076,7 +4089,7 @@ block(blockid=129, top_image="assets/minecraft/textures/block/emerald_ore.png")
 block(blockid=133, top_image="assets/minecraft/textures/block/emerald_block.png")
 
 # cocoa plant
-@material(blockid=127, data=range(12), transparent=True)
+@material(blockid=127, data=list(range(12)), transparent=True)
 def cocoa_plant(self, blockid, data):
     orientation = data & 3
     # rotation
@@ -4198,7 +4211,7 @@ def beacon(self, blockid, data):
 
 # cobblestone and mossy cobblestone walls, chorus plants
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=[139, 199], data=range(32), transparent=True, nospawn=True)
+@material(blockid=[139, 199], data=list(range(32)), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
     # chorus plants
     if blockid == 199:
@@ -4329,7 +4342,7 @@ def cobblestone_wall(self, blockid, data):
     return img
 
 # carrots, potatoes
-@material(blockid=[141,142], data=range(8), transparent=True, nospawn=True)
+@material(blockid=[141,142], data=list(range(8)), transparent=True, nospawn=True)
 def crops4(self, blockid, data):
     # carrots and potatoes have 8 data, but only 4 visual stages
     stage = {0:0,
@@ -4355,7 +4368,7 @@ def crops4(self, blockid, data):
     return img
 
 # anvils
-@material(blockid=145, data=range(12), transparent=True)
+@material(blockid=145, data=list(range(12)), transparent=True)
 def anvil(self, blockid, data):
     
     # anvils only have two orientations, invert it for rotations 1 and 3
@@ -4447,7 +4460,7 @@ block(blockid=152, top_image="assets/minecraft/textures/block/redstone_block.png
 block(blockid=153, top_image="assets/minecraft/textures/block/nether_quartz_ore.png")
 
 # block of quartz
-@material(blockid=155, data=range(5), solid=True)
+@material(blockid=155, data=list(range(5)), solid=True)
 def quartz_block(self, blockid, data):
     
     if data in (0,1): # normal and chiseled quartz block
@@ -4475,7 +4488,7 @@ def quartz_block(self, blockid, data):
         return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
     
 # hopper
-@material(blockid=154, data=range(4), transparent=True)
+@material(blockid=154, data=list(range(4)), transparent=True)
 def hopper(self, blockid, data):
     #build the top
     side = self.load_image_texture("assets/minecraft/textures/block/hopper_outside.png")
@@ -4502,7 +4515,7 @@ def hopper(self, blockid, data):
 block(blockid=165, top_image="assets/minecraft/textures/block/slime_block.png")
 
 # prismarine block
-@material(blockid=168, data=range(3), solid=True)
+@material(blockid=168, data=list(range(3)), solid=True)
 def prismarine_block(self, blockid, data):
 
    if data == 0: # prismarine
@@ -4520,7 +4533,7 @@ def prismarine_block(self, blockid, data):
 block(blockid=169, top_image="assets/minecraft/textures/block/sea_lantern.png")
 
 # hay block
-@material(blockid=170, data=range(9), solid=True)
+@material(blockid=170, data=list(range(9)), solid=True)
 def hayblock(self, blockid, data):
     top = self.load_image_texture("assets/minecraft/textures/block/hay_block_top.png")
     side = self.load_image_texture("assets/minecraft/textures/block/hay_block_side.png")
@@ -4542,7 +4555,7 @@ def hayblock(self, blockid, data):
 
 
 # carpet - wool block that's small?
-@material(blockid=171, data=range(16), transparent=True)
+@material(blockid=171, data=list(range(16)), transparent=True)
 def carpet(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_wool.png" % color_map[data])
 
@@ -4552,7 +4565,7 @@ def carpet(self, blockid, data):
 block(blockid=172, top_image="assets/minecraft/textures/block/terracotta.png")
 
 #stained hardened clay
-@material(blockid=159, data=range(16), solid=True)
+@material(blockid=159, data=list(range(16)), solid=True)
 def stained_clay(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_terracotta.png" % color_map[data])
 
@@ -4586,7 +4599,7 @@ block(blockid=11323, top_image="assets/minecraft/textures/block/dead_fire_coral_
 block(blockid=11324, top_image="assets/minecraft/textures/block/dead_horn_coral_block.png")
 block(blockid=11325, top_image="assets/minecraft/textures/block/dead_tube_coral_block.png")
 
-@material(blockid=175, data=range(16), transparent=True)
+@material(blockid=175, data=list(range(16)), transparent=True)
 def flower(self, blockid, data):
     double_plant_map = ["sunflower", "lilac", "tall_grass", "large_fern", "rose_bush", "peony", "peony", "peony"]
     plant = double_plant_map[data & 0x7]
@@ -4608,7 +4621,7 @@ def flower(self, blockid, data):
     return img
 
 # chorus flower
-@material(blockid=200, data=range(6), solid=True)
+@material(blockid=200, data=list(range(6)), solid=True)
 def chorus_flower(self, blockid, data):
     # aged 5, dead
     if data == 5:
@@ -4622,7 +4635,7 @@ def chorus_flower(self, blockid, data):
 block(blockid=201, top_image="assets/minecraft/textures/block/purpur_block.png")
 
 # purpur pilar
-@material(blockid=202, data=range(12) , solid=True)
+@material(blockid=202, data=list(range(12)) , solid=True)
 def purpur_pillar(self, blockid, data):
     pillar_orientation = data & 12
     top=self.load_image_texture("assets/minecraft/textures/block/purpur_pillar_top.png")
@@ -4639,7 +4652,7 @@ def purpur_pillar(self, blockid, data):
 block(blockid=206, top_image="assets/minecraft/textures/block/end_stone_bricks.png")
 
 # frosted ice
-@material(blockid=212, data=range(4), solid=True)
+@material(blockid=212, data=list(range(4)), solid=True)
 def frosted_ice(self, blockid, data):
     img = self.load_image_texture("assets/minecraft/textures/block/frosted_ice_%d.png" % data)
     return self.build_block(img, img)
@@ -4653,7 +4666,7 @@ block(blockid=214, top_image="assets/minecraft/textures/block/nether_wart_block.
 # red nether brick
 block(blockid=215, top_image="assets/minecraft/textures/block/red_nether_bricks.png")
 
-@material(blockid=216, data=range(12), solid=True)
+@material(blockid=216, data=list(range(12)), solid=True)
 def boneblock(self, blockid, data):
     # extract orientation
     boneblock_orientation = data & 12
@@ -4676,7 +4689,7 @@ def boneblock(self, blockid, data):
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
 # observer
-@material(blockid=218, data=range(6), solid=True, nospawn=True)
+@material(blockid=218, data=list(range(6)), solid=True, nospawn=True)
 def observer(self, blockid, data):
     # first, do the rotation if needed
     if self.rotation == 1:
@@ -4718,7 +4731,7 @@ def observer(self, blockid, data):
     return img
 
 # shulker box
-@material(blockid=range(219,235), data=range(6), solid=True, nospawn=True)
+@material(blockid=list(range(219,235)), data=list(range(6)), solid=True, nospawn=True)
 def shulker_box(self, blockid, data):
     # first, do the rotation if needed
     data = data & 7
@@ -4741,15 +4754,15 @@ def shulker_box(self, blockid, data):
     color = color_map[blockid - 219]
     shulker_t = self.load_image_texture("assets/minecraft/textures/entity/shulker/shulker_%s.png" % color).copy()
     w,h = shulker_t.size
-    res = w / 4
+    res = w // 4
     # Cut out the parts of the shulker texture we need for the box
-    top = shulker_t.crop((res,0,res*2,res))
-    bottom = shulker_t.crop((res*2,int(res*1.75),res*3,int(res*2.75)))
-    side_top = shulker_t.crop((0,res,res,int(res*1.75)))
-    side_bottom = shulker_t.crop((0,int(res*2.75),res,int(res*3.25)))
-    side = Image.new('RGBA', (res,res))
-    side.paste(side_top, (0,0), side_top)
-    side.paste(side_bottom, (0,res/2), side_bottom)
+    top = shulker_t.crop((res, 0, res * 2, res))
+    bottom = shulker_t.crop((res * 2, int(res * 1.75), res * 3, int(res * 2.75)))
+    side_top = shulker_t.crop((0, res, res, int(res * 1.75)))
+    side_bottom = shulker_t.crop((0, int(res * 2.75), res, int(res * 3.25)))
+    side = Image.new('RGBA', (res, res))
+    side.paste(side_top, (0, 0), side_top)
+    side.paste(side_bottom, (0, res // 2), side_bottom)
 
     if data == 0: # down
         side = side.rotate(180)
@@ -4768,7 +4781,7 @@ def shulker_box(self, blockid, data):
     return img
 
 # structure block
-@material(blockid=255, data=range(4), solid=True)
+@material(blockid=255, data=list(range(4)), solid=True)
 def structure_block(self, blockid, data):
     if data == 0:
         img = self.load_image_texture("assets/minecraft/textures/block/structure_block_save.png")
@@ -4781,7 +4794,7 @@ def structure_block(self, blockid, data):
     return self.build_block(img, img)
 
 # beetroots
-@material(blockid=207, data=range(4), transparent=True, nospawn=True)
+@material(blockid=207, data=list(range(4)), transparent=True, nospawn=True)
 def crops(self, blockid, data):
     raw_crop = self.load_image_texture("assets/minecraft/textures/block/beetroots_stage%d.png" % data)
     crop1 = self.transform_image_top(raw_crop)
@@ -4795,19 +4808,19 @@ def crops(self, blockid, data):
     return img
 
 # Concrete
-@material(blockid=251, data=range(16), solid=True)
+@material(blockid=251, data=list(range(16)), solid=True)
 def concrete(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_concrete.png" % color_map[data])
     return self.build_block(texture, texture)
 
 # Concrete Powder
-@material(blockid=252, data=range(16), solid=True)
+@material(blockid=252, data=list(range(16)), solid=True)
 def concrete(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_concrete_powder.png" % color_map[data])
     return self.build_block(texture, texture)
 
 # Glazed Terracotta
-@material(blockid=range(235,251), data=range(8), solid=True)
+@material(blockid=list(range(235,251)), data=list(range(8)), solid=True)
 def glazed_terracotta(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_glazed_terracotta.png" % color_map[blockid - 235])
     glazed_terracotta_orientation = data & 3

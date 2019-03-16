@@ -23,9 +23,9 @@ import traceback
 
 from PIL import Image
 
-import world
-import util
-from files import FileReplacer, mirror_dir, get_fs_caps
+from . import world
+from . import util
+from .files import FileReplacer, mirror_dir, get_fs_caps
 
 
 class AssetManager(object):
@@ -53,23 +53,13 @@ top-level directory.
             with open(config_loc) as c:
                 ovconf_str = "{" + "\n".join(c.readlines()[1:-1]) + "}"
             self.overviewerConfig = json.loads(ovconf_str)
-        except Exception, e:
+        except Exception as e:
             if os.path.exists(config_loc):
                 logging.warning("A previous overviewerConfig.js was found, "
                                 "but I couldn't read it for some reason."
                                 "Continuing with a blank config")
             logging.debug(traceback.format_exc())
             self.overviewerConfig = dict(tilesets=dict())
-
-        # Make sure python knows the preferred encoding. If it does not, set it
-        # to utf-8"
-        self.preferredencoding = locale.getpreferredencoding()
-        try:
-            # We don't care what is returned, just that we can get a codec.
-            codecs.lookup(self.preferredencoding)
-        except LookupError:
-            self.preferredencoding = "utf_8"
-        logging.debug("Preferred enoding set to: %s", self.preferredencoding)
 
     def get_tileset_config(self, name):
         "Return the correct dictionary from the parsed overviewerConfig.js"
@@ -213,10 +203,7 @@ top-level directory.
 
         index = codecs.open(indexpath, 'r', encoding='UTF-8').read()
         index = index.replace("{title}", "Minecraft Overviewer")
-        index = index.replace("{time}",
-                              time.strftime("%a, %d %b %Y %H:%M:%S %Z",
-                                            time.localtime())
-                              .decode(self.preferredencoding))
+        index = index.replace("{time}", time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime()))
         versionstr = "%s (%s)" % (util.findGitVersion(),
                                   util.findGitHash()[:7])
         index = index.replace("{version}", versionstr)

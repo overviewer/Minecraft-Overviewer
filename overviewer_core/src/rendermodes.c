@@ -40,7 +40,7 @@ RenderPrimitive *render_primitive_create(PyObject *prim, RenderState *state) {
     pyname = PyObject_GetAttrString(prim, "name");
     if (!pyname)
         return NULL;
-    name = PyString_AsString(pyname);
+    name = PyUnicode_AsUTF8(pyname);
     
     for (i = 0; render_primitives[i] != NULL; i++) {
         if (strcmp(render_primitives[i]->name, name) == 0) {
@@ -204,11 +204,10 @@ int render_mode_parse_option(PyObject *support, const char *name, const char *fo
     Py_DECREF(dict);
     
     if (!ret) {
-        PyObject *errtype, *errvalue, *errtraceback;
-        const char *errstring;
+        PyObject *errtype, *errvalue, *errtraceback, *errstring;
         
         PyErr_Fetch(&errtype, &errvalue, &errtraceback);
-        errstring = PyString_AsString(errvalue);
+        errstring = PyUnicode_AsUTF8String(errvalue);
         
         PyErr_Format(PyExc_TypeError, "rendermode option \"%s\" has incorrect type (%s)", name, errstring);
         

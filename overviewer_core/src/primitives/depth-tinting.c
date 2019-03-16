@@ -56,9 +56,9 @@ depth_tinting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask
     y = (y * 128) / (16 * SECTIONS_PER_CHUNK);
 
     /* get the colors and tint and tint */
-    r = PyInt_AsLong(PyList_GetItem(self->depth_colors, 0 + y*3));
-    g = PyInt_AsLong(PyList_GetItem(self->depth_colors, 1 + y*3));
-    b = PyInt_AsLong(PyList_GetItem(self->depth_colors, 2 + y*3));
+    r = PyLong_AsLong(PyList_GetItem(self->depth_colors, 0 + y*3));
+    g = PyLong_AsLong(PyList_GetItem(self->depth_colors, 1 + y*3));
+    b = PyLong_AsLong(PyList_GetItem(self->depth_colors, 2 + y*3));
     
     tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
 }

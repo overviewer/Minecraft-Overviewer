@@ -144,7 +144,7 @@ class FileReplacer(object):
                 # error
                 try:
                     os.remove(self.tmpname)
-                except Exception, e:
+                except Exception as e:
                     logging.warning("An error was raised, so I was doing "
                             "some cleanup first, but I couldn't remove "
                             "'%s'!", self.tmpname)
@@ -153,7 +153,7 @@ class FileReplacer(object):
                 if self.caps.get("chmod_works") and os.path.exists(self.destname):
                     try:
                         shutil.copymode(self.destname, self.tmpname)
-                    except OSError, e:
+                    except OSError as e:
                         # Ignore errno ENOENT: file does not exist. Due to a race
                         # condition, two processes could conceivably try and update
                         # the same temp file at the same time
@@ -162,7 +162,7 @@ class FileReplacer(object):
                 # atomic rename into place
                 try:
                     os.rename(self.tmpname, self.destname)
-                except OSError, e:
+                except OSError as e:
                     # Ignore errno ENOENT: file does not exist. Due to a race
                     # condition, two processes could conceivably try and update
                     # the same temp file at the same time

@@ -2,11 +2,12 @@
 import logging
 import os
 import os.path
+from collections import OrderedDict
 
-import rendermodes
-import util
-from optimizeimages import Optimizer
-from world import LOWER_LEFT, LOWER_RIGHT, UPPER_LEFT, UPPER_RIGHT
+from . import rendermodes
+from . import util
+from .optimizeimages import Optimizer
+from .world import LOWER_LEFT, LOWER_RIGHT, UPPER_LEFT, UPPER_RIGHT
 
 
 class ValidationException(Exception):
@@ -179,8 +180,8 @@ def validateBGColor(color):
 
 
 def validateOptImg(optimizers):
-    if isinstance(optimizers, (int, long)):
-        from optimizeimages import pngcrush
+    if isinstance(optimizers, int):
+        from .optimizeimages import pngcrush
         logging.warning("You're using a deprecated definition of optimizeimg. "
                         "We'll do what you say for now, but please fix this as soon as possible.")
         optimizers = [pngcrush()]
@@ -189,7 +190,7 @@ def validateOptImg(optimizers):
                                   "Make sure you specify them like [foo()], with square brackets.")
 
     if optimizers:
-        for opt, next_opt in zip(optimizers, optimizers[1:]) + [(optimizers[-1], None)]:
+        for opt, next_opt in list(zip(optimizers, optimizers[1:])) + [(optimizers[-1], None)]:
             if not isinstance(opt, Optimizer):
                 raise ValidationException("Invalid Optimizer!")
 
@@ -272,7 +273,7 @@ def validateCrop(value):
 
 
 def validateObserver(observer):
-    if all(map(lambda m: hasattr(observer, m), ['start', 'add', 'update', 'finish'])):
+    if all([hasattr(observer, m) for m in ['start', 'add', 'update', 'finish']]):
         return observer
     else:
         raise ValidationException("%r does not look like an observer." % repr(observer))
@@ -316,8 +317,8 @@ def make_dictValidator(keyvalidator, valuevalidator):
 
     """
     def v(d):
-        newd = util.OrderedDict()
-        for key, value in d.iteritems():
+        newd = OrderedDict()
+        for key, value in d.items():
             newd[keyvalidator(key)] = valuevalidator(value)
         return newd
     # Put these objects as attributes of the function so they can be accessed
@@ -345,7 +346,7 @@ def make_configDictValidator(config, ignore_undefined=False):
 
     """
     def configDictValidator(d):
-        newdict = util.OrderedDict()
+        newdict = OrderedDict()
 
         # values are config keys that the user specified that don't match any
         # valid key
@@ -353,10 +354,10 @@ def make_configDictValidator(config, ignore_undefined=False):
         undefined_key_matches = {}
 
         # Go through the keys the user gave us and make sure they're all valid.
-        for key in d.iterkeys():
+        for key in d.keys():
             if key not in config:
                 # Try to find a probable match
-                match = _get_closest_match(key, config.iterkeys())
+                match = _get_closest_match(key, iter(config.keys()))
                 if match and ignore_undefined:
                     # Save this for later. It only matters if this is a typo of
                     # some required key that wasn't specified. (If all required
@@ -377,7 +378,7 @@ def make_configDictValidator(config, ignore_undefined=False):
         # Iterate through the defined keys in the configuration (`config`),
         # checking each one to see if the user specified it (in `d`). Then
         # validate it and copy the result to `newdict`
-        for configkey, configsetting in config.iteritems():
+        for configkey, configsetting in config.items():
             if configkey in d:
                 # This key /was/ specified in the user's dict. Make sure it validates.
                 newdict[configkey] = configsetting.validator(d[configkey])
@@ -414,9 +415,9 @@ def _levenshtein(s1, s2):
     l1 = len(s1)
     l2 = len(s2)
 
-    matrix = [range(l1 + 1)] * (l2 + 1)
+    matrix = [list(range(l1 + 1))] * (l2 + 1)
     for zz in range(l2 + 1):
-        matrix[zz] = range(zz, zz + l1 + 1)
+        matrix[zz] = list(range(zz, zz + l1 + 1))
     for zz in range(0, l2):
         for sz in range(0, l1):
             if s1[sz] == s2[zz]:

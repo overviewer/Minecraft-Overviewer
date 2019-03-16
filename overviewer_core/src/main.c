@@ -38,12 +38,20 @@ static PyMethodDef COverviewerMethods[] = {
     {NULL, NULL, 0, NULL}       /* Sentinel */
 };
 
+static PyModuleDef COverviewerModule = {
+    PyModuleDef_HEAD_INIT,
+    "c_overviewer",
+    "",     // TODO: Add documentation here.
+    -1,
+    COverviewerMethods
+};
+
 
 PyMODINIT_FUNC
-initc_overviewer(void)
+PyInit_c_overviewer(void)
 {
     PyObject *mod, *numpy;
-    mod = Py_InitModule("c_overviewer", COverviewerMethods);
+    mod = PyModule_Create(&COverviewerModule);
 
     /* for numpy
        normally you should use import_array(), but that will break across
@@ -57,8 +65,9 @@ initc_overviewer(void)
     if (!init_chunk_render()) {
         PyErr_Print();
         exit(1);
-        return;
+        return NULL;
     }
 
     init_endian();
+    return mod;
 }

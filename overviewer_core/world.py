@@ -53,7 +53,7 @@ def log_other_exceptions(func):
             return func(*args)
         except ChunkDoesntExist:
             raise
-        except Exception, e:
+        except Exception as e:
             logging.exception("%s raised this exception", func.func_name)
             raise
     return newfunc
@@ -1139,7 +1139,7 @@ class RegionSet(object):
             try:
                 region = self._get_regionobj(regionfile)
                 data = region.load_chunk(x, z)
-            except nbt.CorruptionError, e:
+            except nbt.CorruptionError as e:
                 tries -= 1
                 if tries > 0:
                     # Flush the region cache to possibly read a new region file
@@ -1251,7 +1251,7 @@ class RegionSet(object):
 
         """
 
-        for (regionx, regiony), (regionfile, filemtime) in self.regionfiles.iteritems():
+        for (regionx, regiony), (regionfile, filemtime) in self.regionfiles.items():
             try:
                 mcr = self._get_regionobj(regionfile)
             except nbt.CorruptRegionError:
@@ -1267,7 +1267,7 @@ class RegionSet(object):
 
         """
 
-        for (regionx, regiony), (regionfile, filemtime) in self.regionfiles.iteritems():
+        for (regionx, regiony), (regionfile, filemtime) in self.regionfiles.items():
             """ SKIP LOADING A REGION WHICH HAS NOT BEEN MODIFIED! """
             if (filemtime < mtime):
                 continue
@@ -1561,7 +1561,6 @@ def get_worlds():
     "Returns {world # or name : level.dat information}"
     ret = {}
     save_dir = get_save_dir()
-    loc = locale.getpreferredencoding()
 
     # No dirs found - most likely not running from inside minecraft-dir
     if not save_dir is None:
@@ -1571,14 +1570,15 @@ def get_worlds():
             if not os.path.exists(world_dat): continue
             try:
                 info = nbt.load(world_dat)[1]
-                info['Data']['path'] = os.path.join(save_dir, dir).decode(loc)
+                info['Data']['path'] = os.path.join(save_dir, dir)
                 if 'LevelName' in info['Data'].keys():
                     ret[info['Data']['LevelName']] = info['Data']
             except nbt.CorruptNBTError:
-                ret[os.path.basename(world_path).decode(loc) + " (corrupt)"] = {'path': world_path.decode(loc),
-                        'LastPlayed': 0,
-                        'Time': 0,
-                        'IsCorrupt': True}
+                ret[os.path.basename(world_path) + " (corrupt)"] = {
+                    'path': world_path,
+                    'LastPlayed': 0,
+                    'Time': 0,
+                    'IsCorrupt': True}
 
 
     for dir in os.listdir("."):
