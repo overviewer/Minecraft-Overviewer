@@ -415,6 +415,7 @@ class RegionSet(object):
             'minecraft:bricks': (45, 0),
             'minecraft:tnt': (46, 0),
             'minecraft:bookshelf': (47, 0),
+            'minecraft:mossy_cobblestone': (48, 0),
             'minecraft:obsidian': (49, 0),
             'minecraft:wall_torch': (50, 0),
             'minecraft:torch': (50, 5),
@@ -516,8 +517,8 @@ class RegionSet(object):
             'minecraft:jungle_stairs': (136, 0),
             'minecraft:command_block': (137, 0),
             'minecraft:beacon': (138, 0),
-            'minecraft:mossy_cobblestone': (139, 16),
             'minecraft:cobblestone_wall': (139, 0),
+            'minecraft:mossy_cobblestone_wall': (139, 1),
             'minecraft:flower_pot': (140, 0),
             'minecraft:potted_poppy': (140, 0),  # Pots not rendering
             'minecraft:potted_blue_orchid': (140, 0),
