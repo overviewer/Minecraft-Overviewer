@@ -941,6 +941,9 @@ class RegionSet(object):
             data = {'south': 1, 'north': 0, 'east': 3, 'west': 2}[p['facing']]
             if p['open'] == 'true': data |= 0x04
             if p['half'] == 'top': data |= 0x08
+        elif key in ['minecraft:beetroots', 'minecraft:melon_stem', 'minecraft:wheat',
+                     'minecraft:pumpkin_stem']:
+            data = palette_entry['Properties']['age']
 
         return (block, data)
 
