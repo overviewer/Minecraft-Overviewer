@@ -17,6 +17,7 @@
 
 #include "overviewer.h"
 #include "mc_id.h"
+#include "block_class.h"
 
 static PyObject *textures = NULL;
 
@@ -244,32 +245,6 @@ check_adjacent_blocks(RenderState *state, int x,int y,int z, unsigned short bloc
     return pdata;
 }
 
-
-static int
-is_stairs(int block) {
-    /*
-     * Determines if a block is stairs of any material
-     */
-    switch (block) {
-        case block_oak_stairs:
-        case block_stone_stairs:
-        case block_brick_stairs:
-        case block_stone_brick_stairs:
-        case block_nether_brick_stairs:
-        case block_sandstone_stairs:
-        case block_spruce_stairs:
-        case block_birch_stairs:
-        case block_jungle_stairs:
-        case block_quartz_stairs:
-        case block_acacia_stairs:
-        case block_dark_oak_stairs:
-        case block_red_sandstone_stairs:
-        case block_purpur_stairs:
-            return 1;
-    }
-    return 0;
-}
-
 unsigned short
 generate_pseudo_data(RenderState *state, unsigned short ancilData) {
     /*
@@ -302,8 +277,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if ((state->block == block_fence) || (state->block == block_spruce_fence) || (state->block == block_birch_fence) ||
-            (state->block == block_jungle_fence) || (state->block == block_dark_oak_fence) || (state->block == block_acacia_fence)) { /* fences */
+    } else if (block_class_is_subset(state->block,block_class_fence,block_class_fence_len)) { /* fences */
         /* check for fences AND fence gates */
         return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, block_fence_gate) |
                 check_adjacent_blocks(state, x, y, z, block_fence_gate) | check_adjacent_blocks(state, x, y, z, block_birch_fence_gate) | check_adjacent_blocks(state, x, y, z, block_jungle_fence_gate) |
@@ -393,9 +367,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         /* portal and nether brick fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
 
-    } else if ((state->block == block_wooden_door) || (state->block == block_iron_door) || (state->block == block_spruce_door) ||
-            (state->block == block_birch_door) || (state->block == block_jungle_door) || (state->block == block_acacia_door) ||
-            (state->block == block_dark_oak_door)) {
+    } else if (block_class_is_subset(state->block,block_class_door,block_class_door_len)) {
         /* use bottom block data format plus one bit for top/down
          * block (0x8) and one bit for hinge position (0x10)
          */
@@ -442,7 +414,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         pr = pr * pr * 42317861 + pr * 11;
         rotation = 3 & (pr >> 16);
         return rotation;
-    } else if (is_stairs(state->block)) { /* stairs */
+    } else if (block_class_is_subset(state->block,block_class_stair,block_class_stair_len)) { /* stairs */
         /* 4 ancillary bits will be added to indicate which quarters of the block contain the 
          * upper step. Regular stairs will have 2 bits set & corner stairs will have 1 or 3.
          *     Southwest quarter is part of the upper step - 0x40
@@ -499,10 +471,10 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
 
         /* get block & data for neighbors in this order: east, north, west, south */
         /* so we can rotate things easily */
-        stairs[0] = stairs[4] = is_stairs(get_data(state, BLOCKS, x+1, y, z));
-        stairs[1] = stairs[5] = is_stairs(get_data(state, BLOCKS, x, y, z-1));
-        stairs[2] = stairs[6] = is_stairs(get_data(state, BLOCKS, x-1, y, z));
-        stairs[3] = stairs[7] = is_stairs(get_data(state, BLOCKS, x, y, z+1));
+        stairs[0] = stairs[4] = block_class_is_subset(get_data(state, BLOCKS, x+1, y, z),block_class_stair,block_class_stair_len);
+        stairs[1] = stairs[5] = block_class_is_subset(get_data(state, BLOCKS, x, y, z-1),block_class_stair,block_class_stair_len);
+        stairs[2] = stairs[6] = block_class_is_subset(get_data(state, BLOCKS, x-1, y, z),block_class_stair,block_class_stair_len);
+        stairs[3] = stairs[7] = block_class_is_subset(get_data(state, BLOCKS, x, y, z+1),block_class_stair,block_class_stair_len);
         neigh[0] = neigh[4] = FIX_ROT(get_data(state, DATA, x+1, y, z));
         neigh[1] = neigh[5] = FIX_ROT(get_data(state, DATA, x, y, z-1));
         neigh[2] = neigh[6] = FIX_ROT(get_data(state, DATA, x-1, y, z));
@@ -698,29 +670,7 @@ chunk_render(PyObject *self, PyObject *args) {
                      * grass, water, glass, chest, restone wire,
                      * ice, fence, portal, iron bars, glass panes,
                      * trapped chests, stairs */
-                    if ((state.block == block_grass) ||
-                        (state.block == block_flowing_water) || (state.block == block_water) ||
-                        (state.block == block_glass) || (state.block == block_chest) ||
-                        (state.block == block_redstone_wire) ||
-                        /* doors */
-                        (state.block == block_wooden_door  ) ||
-                        (state.block == block_iron_door    ) ||
-                        (state.block == block_spruce_door  ) ||
-                        (state.block == block_birch_door   ) ||
-                        (state.block == block_jungle_door  ) ||
-                        (state.block == block_acacia_door  ) ||
-                        (state.block == block_dark_oak_door) ||
-                        /* end doors */
-                        (state.block == block_ice) ||
-                        (state.block == block_fence) || (state.block == block_portal) ||
-                        (state.block == block_iron_bars) || (state.block == block_glass_pane) ||
-                        (state.block == block_waterlily) || (state.block == block_nether_brick_fence) ||
-                        (state.block == block_cobblestone_wall) || (state.block == block_double_plant) || 
-                        (state.block == block_stained_glass_pane) || (state.block == block_stained_glass) ||
-                        (state.block == block_trapped_chest) || (state.block == block_spruce_fence) ||
-                        (state.block == block_birch_fence) || (state.block == block_jungle_fence) ||
-                        (state.block == block_dark_oak_fence) || (state.block == block_acacia_fence) ||
-                        is_stairs(state.block)) {
+                    if (block_class_is_subset(state.block,block_class_ancil,block_class_ancil_len)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
                     } else {

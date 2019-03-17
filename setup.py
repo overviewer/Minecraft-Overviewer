@@ -175,7 +175,7 @@ for name in glob.glob("overviewer_core/src/primitives/*.c"):
     name = os.path.splitext(name)[0]
     primitives.append(name)
 
-c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c']
+c_overviewer_files = ['main.c', 'composite.c', 'iterate.c', 'endian.c', 'rendermodes.c', 'block_class.c']
 c_overviewer_files += map(lambda mode: 'primitives/%s.c' % (mode,), primitives)
 c_overviewer_files += ['Draw.c']
 c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
