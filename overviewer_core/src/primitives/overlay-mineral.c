@@ -16,6 +16,7 @@
  */
 
 #include "overlay.h"
+#include "../mc_id.h"
 
 typedef struct {
     /* inherits from overlay */
@@ -31,17 +32,17 @@ struct MineralColor {
 
 /* put more valuable ores first -- they take precedence */
 static struct MineralColor default_minerals[] = {
-    {48 /* Mossy Stone  */, 31, 153, 9},
+    {block_mossy_cobblestone, 31, 153, 9},
     
-    {56 /* Diamond Ore  */, 32, 230, 220},
+    {block_diamond_ore, 32, 230, 220},
 
-    {21 /* Lapis Lazuli */, 0, 23, 176},
-    {14 /* Gold Ore     */, 255, 234, 0},
+    {block_lapis_ore, 0, 23, 176},
+    {block_gold_ore, 255, 234, 0},
 
-    {15 /* Iron Ore     */, 204, 204, 204},
-    {73 /* Redstone     */, 186, 0, 0},
-    {74 /* Lit Redstone */, 186, 0, 0},
-    {16 /* Coal Ore     */, 54, 54, 54},
+    {block_iron_ore, 204, 204, 204},
+    {block_redstone_ore, 186, 0, 0},
+    {block_lit_redstone_ore, 186, 0, 0},
+    {block_coal_ore, 54, 54, 54},
     
     /* end of list marker */
     {0, 0, 0, 0}
@@ -61,7 +62,7 @@ static void get_color(void *data, RenderState *state,
         int i, tmp;
         unsigned short blockid = get_data(state, BLOCKS, x, y, z);
         
-        for (i = 0; (max_i == -1 || i < max_i) && minerals[i].blockid != 0; i++) {
+        for (i = 0; (max_i == -1 || i < max_i) && minerals[i].blockid != block_air; i++) {
             if (minerals[i].blockid == blockid) {
                 *r = minerals[i].r;
                 *g = minerals[i].g;
