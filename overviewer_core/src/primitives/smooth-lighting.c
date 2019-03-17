@@ -16,6 +16,7 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
 #include "lighting.h"
 #include <math.h>
 
@@ -228,7 +229,7 @@ smooth_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
     /* non-transparent blocks get the special smooth treatment */
     
     /* special code for water */
-    if (state->block == 9)
+    if (state->block == block_water)
     {
         if (!(state->block_pdata & (1 << 4)))
             light_top = 0;

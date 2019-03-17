@@ -16,6 +16,7 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
 
 struct HideRule {
     unsigned short blockid;

@@ -16,6 +16,7 @@
  */
 
 #include "overlay.h"
+#include "../mc_id.h"
 
 typedef enum { false, true } bool;
 

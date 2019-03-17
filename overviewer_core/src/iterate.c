@@ -666,7 +666,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 state.imgy -= 12;
                 /* get blockid */
                 state.block = getArrayShort3D(blocks_py, state.x, state.y, state.z);
-                if (state.block == 0 || render_mode_hidden(rendermode, state.x, state.y, state.z)) {
+                if (state.block == block_air || render_mode_hidden(rendermode, state.x, state.y, state.z)) {
                     continue;
                 }
                 
