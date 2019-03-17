@@ -16,6 +16,7 @@
  */
 
 #include "overviewer.h"
+#include "mc_id.h"
 
 static PyObject *textures = NULL;
 
@@ -250,20 +251,20 @@ is_stairs(int block) {
      * Determines if a block is stairs of any material
      */
     switch (block) {
-        case 53: /* oak wood stairs */
-        case 67: /* cobblestone stairs */
-        case 108: /* brick stairs */
-        case 109: /* stone brick stairs */
-        case 114: /* nether brick stairs */
-        case 128: /* sandstone stairs */
-        case 134: /* spruce wood stairs */
-        case 135: /* birch wood stairs */
-        case 136: /* jungle wood stairs */
-        case 156: /* quartz stairs */
-        case 163: /* acacia wood stairs */
-        case 164: /* dark wood stairs */
-        case 180: /* red sandstone stairs */
-        case 203: /* purpur stairs */
+        case block_oak_stairs:
+        case block_stone_stairs:
+        case block_brick_stairs:
+        case block_stone_brick_stairs:
+        case block_nether_brick_stairs:
+        case block_sandstone_stairs:
+        case block_spruce_stairs:
+        case block_birch_stairs:
+        case block_jungle_stairs:
+        case block_quartz_stairs:
+        case block_acacia_stairs:
+        case block_dark_oak_stairs:
+        case block_red_sandstone_stairs:
+        case block_purpur_stairs:
             return 1;
     }
     return 0;
@@ -278,18 +279,18 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
     int x = state->x, y = state->y, z = state->z;
     unsigned short data = 0;
 
-    if (state->block == 2) { /* grass */
+    if (state->block == block_grass) { /* grass */
         /* return 0x10 if grass is covered in snow */
         if (get_data(state, BLOCKS, x, y+1, z) == 78)
             return 0x10;
         return ancilData;
-    } else if (state->block == 8 || state->block == 9) { /* water */
+    } else if (state->block == block_flowing_water || state->block == block_water) { /* water */
         data = check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f;
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
         if (get_data(state, BLOCKS, x, y+1, z) != state->block)
             data |= 0x10;
         return data;
-    } else if ((state->block == 20) || (state->block == 79) || (state->block == 95)) { /* glass and ice and stained glass*/
+    } else if ((state->block == block_glass) || (state->block == block_ice) || (state->block == block_stained_glass)) { /* glass and ice and stained glass*/
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks
          * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an unsigned char, 
          * forcing us to use an unsigned short to hold 16 bits of pseudo ancil data
@@ -301,14 +302,14 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if ((state->block == 85) || (state->block == 188) || (state->block == 189) ||
-            (state->block == 190) || (state->block == 191) || (state->block == 192)) { /* fences */
+    } else if ((state->block == block_fence) || (state->block == block_spruce_fence) || (state->block == block_birch_fence) ||
+            (state->block == block_jungle_fence) || (state->block == block_dark_oak_fence) || (state->block == block_acacia_fence)) { /* fences */
         /* check for fences AND fence gates */
-        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107) |
-                check_adjacent_blocks(state, x, y, z, 183) | check_adjacent_blocks(state, x, y, z, 184) | check_adjacent_blocks(state, x, y, z, 185) |
-                check_adjacent_blocks(state, x, y, z, 186) | check_adjacent_blocks(state, x, y, z, 187);
+        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, block_fence_gate) |
+                check_adjacent_blocks(state, x, y, z, block_fence_gate) | check_adjacent_blocks(state, x, y, z, block_birch_fence_gate) | check_adjacent_blocks(state, x, y, z, block_jungle_fence_gate) |
+                check_adjacent_blocks(state, x, y, z, block_dark_oak_fence_gate) | check_adjacent_blocks(state, x, y, z, block_acacia_fence_gate);
 
-    } else if (state->block == 55) { /* redstone */
+    } else if (state->block == block_redstone_wire) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
          * another two for going-up redstone wire in the same block
          * (connection with the level y+1) */
@@ -342,7 +343,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if (state->block == 54 || state->block == 146) { /* normal chests and trapped chests */
+    } else if (state->block == block_chest || state->block == block_trapped_chest) {
         /* Orientation is given by ancilData, pseudo data needed to 
          * choose from single or double chest and the correct half of
          * the chest. */
@@ -379,7 +380,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if ((state->block == 101) || (state->block == 102) || (state->block == 160)) {
+    } else if ((state->block == block_iron_bars) || (state->block == block_glass_pane) || (state->block == block_stained_glass_pane)) {
         /* iron bars and glass panes:
          * they seem to stick to almost everything but air,
          * not sure yet! Still a TODO! */
@@ -388,13 +389,13 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         data = (check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f);
         return (data << 4) | (ancilData & 0xf);
 
-    } else if ((state->block == 90) || (state->block == 113)) {
+    } else if ((state->block == block_portal) || (state->block == block_nether_brick_fence)) {
         /* portal and nether brick fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
 
-    } else if ((state->block == 64) || (state->block == 71) || (state->block == 193) ||
-            (state->block == 194) || (state->block == 195) || (state->block == 196) ||
-            (state->block ==197)) {
+    } else if ((state->block == block_wooden_door) || (state->block == block_iron_door) || (state->block == block_spruce_door) ||
+            (state->block == block_birch_door) || (state->block == block_jungle_door) || (state->block == block_acacia_door) ||
+            (state->block == block_dark_oak_door)) {
         /* use bottom block data format plus one bit for top/down
          * block (0x8) and one bit for hinge position (0x10)
          */
@@ -420,14 +421,14 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         
         }
         return data;
-    } else if (state->block == 139) { /* cobblestone and mossy cobbleston wall  */
+    } else if (state->block == block_cobblestone_wall) {
         /* check for walls and add one bit with the type of wall (mossy or cobblestone)*/
         if (ancilData == 0x1) {
             return check_adjacent_blocks(state, x, y, z, state->block) | 0x10;
         } else {
             return check_adjacent_blocks(state, x, y, z, state->block);
         }
-    } else if (state->block == 111) { /* lilypads */
+    } else if (state->block == block_waterlily) {
         int wx,wz,wy,rotation;
         long pr;
         /* calculate the global block coordinates of this position */
@@ -547,11 +548,11 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
 
         return ancilData;
-    } else if (state->block == 175) { /* doublePlants */
+    } else if (state->block == block_double_plant) { /* doublePlants */
         /* use bottom block data format plus one bit for top
          * block (0x8)
          */
-        if( get_data(state, BLOCKS, x, y-1, z) == 175 ) {
+        if( get_data(state, BLOCKS, x, y-1, z) == block_double_plant ) {
             data = get_data(state, DATA, x, y-1, z) | 0x8;
         } else {
             data = ancilData;
@@ -663,7 +664,6 @@ chunk_render(PyObject *self, PyObject *args) {
                 unsigned short ancilData;
                 
                 state.imgy -= 12;
-		
                 /* get blockid */
                 state.block = getArrayShort3D(blocks_py, state.x, state.y, state.z);
                 if (state.block == 0 || render_mode_hidden(rendermode, state.x, state.y, state.z)) {
@@ -698,24 +698,28 @@ chunk_render(PyObject *self, PyObject *args) {
                      * grass, water, glass, chest, restone wire,
                      * ice, fence, portal, iron bars, glass panes,
                      * trapped chests, stairs */
-                    if ((state.block ==  2) ||
-                        (state.block ==  8) || (state.block ==  9) ||
-                        (state.block == 20) || (state.block == 54) ||
-                        (state.block == 55) ||
+                    if ((state.block == block_grass) ||
+                        (state.block == block_flowing_water) || (state.block == block_water) ||
+                        (state.block == block_glass) || (state.block == block_chest) ||
+                        (state.block == block_redstone_wire) ||
                         /* doors */
-                        (state.block == 64) || (state.block == 193) ||
-                        (state.block == 194) || (state.block == 195) ||
-                        (state.block == 196) || (state.block == 197) ||
-                        (state.block == 71) || /* end doors */
-                        (state.block == 79) ||
-                        (state.block == 85) || (state.block == 90) ||
-                        (state.block == 101) || (state.block == 102) ||
-                        (state.block == 111) || (state.block == 113) ||
-                        (state.block == 139) || (state.block == 175) || 
-                        (state.block == 160) || (state.block == 95) ||
-                        (state.block == 146) || (state.block == 188) ||
-                        (state.block == 189) || (state.block == 190) ||
-                        (state.block == 191) || (state.block == 192) ||
+                        (state.block == block_wooden_door  ) ||
+                        (state.block == block_iron_door    ) ||
+                        (state.block == block_spruce_door  ) ||
+                        (state.block == block_birch_door   ) ||
+                        (state.block == block_jungle_door  ) ||
+                        (state.block == block_acacia_door  ) ||
+                        (state.block == block_dark_oak_door) ||
+                        /* end doors */
+                        (state.block == block_ice) ||
+                        (state.block == block_fence) || (state.block == block_portal) ||
+                        (state.block == block_iron_bars) || (state.block == block_glass_pane) ||
+                        (state.block == block_waterlily) || (state.block == block_nether_brick_fence) ||
+                        (state.block == block_cobblestone_wall) || (state.block == block_double_plant) || 
+                        (state.block == block_stained_glass_pane) || (state.block == block_stained_glass) ||
+                        (state.block == block_trapped_chest) || (state.block == block_spruce_fence) ||
+                        (state.block == block_birch_fence) || (state.block == block_jungle_fence) ||
+                        (state.block == block_dark_oak_fence) || (state.block == block_acacia_fence) ||
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
@@ -738,7 +742,7 @@ chunk_render(PyObject *self, PyObject *args) {
                 if (t != NULL && t != Py_None)
                 {
                     PyObject *src, *mask, *mask_light;
-                    int do_rand = (state.block == 31 /*|| state.block == 38 || state.block == 175*/);
+                    int do_rand = (state.block == block_tallgrass /*|| state.block == block_red_flower || state.block == block_double_plant*/);
                     int randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 0);
@@ -762,7 +766,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         state.imgx -= randx;
                         state.imgy -= randy;
                     }
-                }               
+                }
             }
         }
     }
