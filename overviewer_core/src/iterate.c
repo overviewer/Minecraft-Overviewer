@@ -259,13 +259,13 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         if (get_data(state, BLOCKS, x, y+1, z) == 78)
             return 0x10;
         return ancilData;
-    } else if (state->block == block_flowing_water || state->block == block_water) { /* water */
+    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_flowing_water,block_water},2)) { /* water */
         data = check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f;
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
         if (get_data(state, BLOCKS, x, y+1, z) != state->block)
             data |= 0x10;
         return data;
-    } else if ((state->block == block_glass) || (state->block == block_ice) || (state->block == block_stained_glass)) { /* glass and ice and stained glass*/
+    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_glass,block_ice,block_stained_glass},3)) { /* glass and ice and stained glass*/
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks
          * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an unsigned char, 
          * forcing us to use an unsigned short to hold 16 bits of pseudo ancil data
@@ -317,7 +317,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if (state->block == block_chest || state->block == block_trapped_chest) {
+    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_chest,block_trapped_chest},2)) {
         /* Orientation is given by ancilData, pseudo data needed to 
          * choose from single or double chest and the correct half of
          * the chest. */
@@ -354,7 +354,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if ((state->block == block_iron_bars) || (state->block == block_glass_pane) || (state->block == block_stained_glass_pane)) {
+    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_iron_bars,block_glass_pane,block_stained_glass_pane},3)) {
         /* iron bars and glass panes:
          * they seem to stick to almost everything but air,
          * not sure yet! Still a TODO! */
@@ -363,7 +363,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         data = (check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f);
         return (data << 4) | (ancilData & 0xf);
 
-    } else if ((state->block == block_portal) || (state->block == block_nether_brick_fence)) {
+    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_portal,block_nether_brick_fence},2)) {
         /* portal and nether brick fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
 

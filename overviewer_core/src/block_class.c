@@ -18,15 +18,47 @@
 #include "block_class.h"
 #include "utils.h"
 
+#if defined(__i386__) || defined(__x86_64__)
+#include <immintrin.h>
+#endif
 
 bool block_class_is_subset(
 	mc_block_t block,
 	const mc_block_t block_class[],
-	size_t     block_class_len
+	size_t block_class_len
 )
 {
-	size_t i;
-	for( i = 0; i < block_class_len; ++i )
+	size_t i = 0;
+
+#ifdef __SSE2__
+	for( ; i / 8 < block_class_len / 8; i += 8 )
+	{
+		const __m128i block_class_vec = _mm_loadu_si128(
+			(__m128i*)&block_class[i]
+		);
+		const __m128i block_vec = _mm_set1_epi16(block);
+		const __m128i block_cmp = _mm_cmpeq_epi16(block_vec,block_class_vec);
+		if( _mm_movemask_epi8(block_cmp) )
+		{
+			return true;
+		}
+	}
+#endif
+#ifdef __MMX__
+	for( ; i / 4 < block_class_len / 4; i += 4 )
+	{
+		const __m64 block_class_vec = _mm_cvtsi64_m64(
+			*(uint64_t*)&block_class[i]
+		);
+		const __m64 block_vec = _mm_set1_pi16(block);
+		const __m64 block_cmp = _mm_cmpeq_pi16(block_vec,block_class_vec);
+		if( _mm_cvtm64_si64(block_cmp) )
+		{
+			return true;
+		}
+	}
+#endif
+	for( ; i < block_class_len; ++i )
 	{
 		if( block == block_class[i] )
 		{
@@ -134,3 +166,25 @@ const mc_block_t block_class_ancil[] = {
 	block_acacia_fence
 };
 const size_t block_class_ancil_len = count_of(block_class_ancil);
+
+const mc_block_t block_class_alt_height[] = {
+	block_stone_slab,
+	block_oak_stairs,
+	block_stone_stairs,
+	block_brick_stairs,
+	block_stone_brick_stairs,
+	block_nether_brick_stairs,
+	block_sandstone_stairs,
+	block_spruce_stairs,
+	block_birch_stairs,
+	block_jungle_stairs,
+	block_quartz_stairs,
+	block_acacia_stairs,
+	block_dark_oak_stairs,
+	block_red_sandstone_stairs,
+	block_stone_slab2,
+	block_purpur_stairs,
+	block_purpur_slab,
+	block_wooden_slab
+};
+const size_t block_class_alt_height_len = count_of(block_class_alt_height);
