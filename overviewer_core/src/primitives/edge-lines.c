@@ -16,6 +16,7 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
 
 typedef struct {
     float opacity;
@@ -34,16 +35,16 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
     PrimitiveEdgeLines *self = (PrimitiveEdgeLines *)data;
 
     /* Draw some edge lines! */
-    if (state->block == 44 || state->block == 78 || !is_transparent(state->block)) {
+    if (state->block == block_stone_slab || state->block == block_snow_layer || !is_transparent(state->block)) {
         Imaging img_i = imaging_python_to_c(state->img);
         unsigned char ink[] = {0, 0, 0, 255 * self->opacity};
         unsigned short side_block;
         int x = state->x, y = state->y, z = state->z;
 
         int increment=0;
-        if ((state->block == 44 || state->block == 126) && ((state->block_data & 0x8) == 0 ))  // half-steps BUT no upsidown half-steps
+        if ((state->block == block_stone_slab || state->block == block_wooden_slab) && ((state->block_data & 0x8) == 0 ))  // half-steps BUT no upsidown half-steps
             increment=6;
-        else if ((state->block == 78) || (state->block == 93) || (state->block == 94)) // snow, redstone repeaters (on and off)
+        else if ((state->block == block_snow_layer) || (state->block == block_unpowered_repeater) || (state->block == block_powered_repeater)) // snow, redstone repeaters (on and off)
             increment=9;
         
         /* +X side */
@@ -51,9 +52,9 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
         if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x+1, y, z)) && 
             /* WARNING: ugly special case approaching */
             /* if the block is a slab and the side block is a stair don't draw anything, it can give very ugly results */
-            !((state->block == 44 || state->block == 126) && ((side_block == 53) || (side_block == 67) || (side_block == 108) ||
-            (side_block == 109) || (side_block == 114) || (side_block == 128) || (side_block == 134) || (side_block == 135) ||
-            (side_block == 136)))) {
+            !((state->block == block_stone_slab || state->block == block_wooden_slab) && ((side_block == block_oak_stairs) || (side_block == block_stone_stairs) || (side_block == block_brick_stairs) ||
+            (side_block == block_stone_brick_stairs) || (side_block == block_nether_brick_stairs) || (side_block == block_sandstone_stairs) || (side_block == block_spruce_stairs) || (side_block == block_birch_stairs) ||
+            (side_block == block_jungle_stairs)))) {
             ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
             ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
         }
@@ -63,9 +64,9 @@ edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, P
         if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x, y, z-1)) &&
             /* WARNING: ugly special case approaching */
             /* if the block is a slab and the side block is a stair don't draw anything, it can give very ugly results */
-            !((state->block == 44 || state->block == 126) && ((side_block == 53) || (side_block == 67) || (side_block == 108) ||
-            (side_block == 109) || (side_block == 114) || (side_block == 128) || (side_block == 134) || (side_block == 135) ||
-            (side_block == 136)))) {
+            !((state->block == block_stone_slab || state->block == block_wooden_slab) && ((side_block == block_oak_stairs) || (side_block == block_stone_stairs) || (side_block == block_brick_stairs) ||
+            (side_block == block_stone_brick_stairs) || (side_block == block_nether_brick_stairs) || (side_block == block_sandstone_stairs) || (side_block == block_spruce_stairs) || (side_block == block_birch_stairs) ||
+            (side_block == block_jungle_stairs)))) {
             ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
             ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
         }

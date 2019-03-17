@@ -16,6 +16,7 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
 #include "biomes.h"
 
 typedef struct {
@@ -93,24 +94,24 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
      * biome-compliant ones! The tinting is now all done here.
      */
     if (/* grass, but not snowgrass */
-        (state->block == 2 && get_data(state, BLOCKS, state->x, state->y+1, state->z) != 78) ||
+        (state->block == block_grass && get_data(state, BLOCKS, state->x, state->y+1, state->z) != 78) ||
         /* water */
-        state->block == 8 || state->block == 9 ||
+        state->block == block_flowing_water || state->block == block_water ||
         /* leaves */
-        state->block == 18 || state->block == 161 ||
+        state->block == block_leaves || state->block == block_leaves2 ||
         /* tallgrass, but not dead shrubs */
-        (state->block == 31 && state->block_data != 0) ||
+        (state->block == block_tallgrass && state->block_data != 0) ||
         /* pumpkin/melon stem, not fully grown. Fully grown stems
          * get constant brown color (see textures.py) */
-        (((state->block == 104) || (state->block == 105)) && (state->block_data != 7)) ||
+        (((state->block == block_pumpkin_stem) || (state->block == block_melon_stem)) && (state->block_data != 7)) ||
         /* vines */
-        state->block == 106 ||
+        state->block == block_vine ||
         /* lily pads */
-        state->block == 111 ||
+        state->block == block_waterlily ||
         /* doublePlant grass & ferns */
-        (state->block == 175 && (state->block_data == 2 || state->block_data == 3)) ||
+        (state->block == block_double_plant && (state->block_data == 2 || state->block_data == 3)) ||
         /* doublePlant grass & ferns tops */
-        (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3)) )
+        (state->block == block_double_plant && below_block == block_double_plant && (below_data == 2 || below_data == 3)) )
     {
         /* do the biome stuff! */
         PyObject *facemask = mask;
@@ -118,7 +119,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         PyObject *color_table = NULL;
         unsigned char flip_xy = 0;
         
-        if (state->block == 2) {
+        if (state->block == block_grass) {
             /* grass needs a special facemask */
             facemask = self->grass_texture;
         }

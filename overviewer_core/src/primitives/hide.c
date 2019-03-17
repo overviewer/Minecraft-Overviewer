@@ -16,6 +16,7 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
 
 struct HideRule {
     unsigned short blockid;
@@ -90,7 +91,7 @@ hide_hidden(void *data, RenderState *state, int x, int y, int z) {
         return 0;
     
     block = get_data(state, BLOCKS, x, y, z);
-    for (i = 0; self->rules[i].blockid != 0; i++) {
+    for (i = 0; self->rules[i].blockid != block_air; i++) {
         if (block == self->rules[i].blockid) {
             unsigned char data;
             

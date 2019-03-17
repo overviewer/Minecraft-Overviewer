@@ -16,6 +16,7 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
 #include "lighting.h"
 #include <math.h>
 
@@ -138,7 +139,7 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
     blocklevel = get_data(state, BLOCKLIGHT, x, y, z);
     
     /* no longer a guess */
-    if (!(block == 44 || block == 53 || block == 67 || block == 108 || block == 109 || block == 180 || block == 182 || block == 205) && authoratative) {
+    if (!(block == block_stone_slab || block == block_oak_stairs || block == block_stone_stairs || block == block_brick_stairs || block == block_stone_brick_stairs || block == block_red_sandstone_stairs || block == block_stone_slab2 || block == block_purpur_slab ) && authoratative) {
         *authoratative = 1;
     }
     
@@ -159,9 +160,9 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
 
     /* special half-step handling, stairs handling */
     /* Anvil also needs to be here, blockid 145 */
-    if (block == 44 || block == 53 || block == 67 || block == 108 || block == 109 || block == 114 ||
-        block == 128 || block == 134 || block == 135 || block == 136 || block == 145 || block == 156 ||
-        block == 163 || block == 164 || block == 180 || block == 182 || block == 203 || block == 205) {
+    if (block == block_stone_slab || block == block_oak_stairs || block == block_stone_stairs || block == block_brick_stairs || block == block_stone_brick_stairs || block == block_nether_brick_stairs ||
+        block == block_sandstone_stairs || block == block_spruce_stairs || block == block_birch_stairs || block == block_jungle_stairs || block == block_anvil || block == block_quartz_stairs ||
+        block == block_acacia_stairs || block == block_dark_oak_stairs || block == block_red_sandstone_stairs || block == block_stone_slab2 || block == block_purpur_stairs || block == block_purpur_slab ) {
         unsigned int upper_block;
         
         /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
@@ -170,10 +171,10 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
         do {
             upper_counter++; 
             upper_block = get_data(state, BLOCKS, x, y + upper_counter, z);
-        } while (upper_block == 44 || upper_block == 53 || upper_block == 67 || upper_block == 108 ||
-                 upper_block == 109 || upper_block == 114 || upper_block == 128 || upper_block == 134 ||
-                 upper_block == 135 || upper_block == 136 || upper_block == 156 || upper_block == 163 ||
-                 upper_block == 164 || upper_block == 180 || upper_block == 182 || upper_block == 203 || upper_block == 205);
+        } while (upper_block == block_stone_slab || upper_block == block_oak_stairs || upper_block == block_stone_stairs || upper_block == block_brick_stairs ||
+                 upper_block == block_stone_brick_stairs || upper_block == block_nether_brick_stairs || upper_block == block_sandstone_stairs || upper_block == block_spruce_stairs ||
+                 upper_block == block_birch_stairs || upper_block == block_jungle_stairs || upper_block == block_quartz_stairs || upper_block == block_acacia_stairs ||
+                 upper_block == block_dark_oak_stairs || upper_block == block_red_sandstone_stairs || upper_block == block_stone_slab2 || upper_block == block_purpur_stairs || upper_block == block_purpur_slab );
         if (is_transparent(upper_block)) {
             skylevel = get_data(state, SKYLIGHT, x, y + upper_counter, z);
         } else {
@@ -186,7 +187,7 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
 
     }
     
-    if (block == 10 || block == 11) {
+    if (block == block_flowing_lava || block == block_lava) {
         /* lava blocks should always be lit! */
         *r = 255;
         *g = 255;
@@ -305,7 +306,7 @@ lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyO
     self = (RenderPrimitiveLighting *)data;
     x = state->x, y = state->y, z = state->z;
     
-    if ((state->block == 8) || (state->block == 9)) { /* special case for water */
+    if ((state->block == block_flowing_water) || (state->block == block_water)) { /* special case for water */
         /* looks like we need a new case for lighting, there are
          * blocks that are transparent for occlusion calculations and
          * need per-face shading if the face is drawn. */

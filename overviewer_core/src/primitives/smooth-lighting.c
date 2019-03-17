@@ -16,6 +16,7 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
 #include "lighting.h"
 #include <math.h>
 
@@ -218,7 +219,7 @@ smooth_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
     
     /* special case for leaves, water 8, water 9, ice 79
        -- these are also smooth-lit! */
-    if (state->block != 18 && state->block != 8 && state->block != 9 && state->block != 79 && is_transparent(state->block))
+    if (state->block != block_leaves && state->block != block_flowing_water && state->block != block_water && state->block != block_ice && is_transparent(state->block))
     {
         /* transparent blocks are rendered as usual, with flat lighting */
         primitive_lighting.draw(data, state, src, mask, mask_light);
@@ -228,7 +229,7 @@ smooth_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
     /* non-transparent blocks get the special smooth treatment */
     
     /* special code for water */
-    if (state->block == 9)
+    if (state->block == block_water)
     {
         if (!(state->block_pdata & (1 << 4)))
             light_top = 0;
