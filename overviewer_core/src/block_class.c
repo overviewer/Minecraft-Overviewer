@@ -22,7 +22,7 @@
 #include <immintrin.h>
 #endif
 
-extern inline bool block_class_is_subset(
+bool block_class_is_subset(
 	mc_block_t block,
 	const mc_block_t block_class[],
 	size_t block_class_len
