@@ -26,42 +26,35 @@ bool block_class_is_subset(
 	mc_block_t block,
 	const mc_block_t block_class[],
 	size_t block_class_len
-)
-{
+) {
 	size_t i = 0;
 
 #ifdef __SSE2__
-	for( ; i / 8 < block_class_len / 8; i += 8 )
-	{
+	for (; i / 8 < block_class_len / 8; i += 8) {
 		const __m128i block_class_vec = _mm_loadu_si128(
 			(__m128i*)&block_class[i]
 		);
 		const __m128i block_vec = _mm_set1_epi16(block);
 		const __m128i block_cmp = _mm_cmpeq_epi16(block_vec,block_class_vec);
-		if( _mm_movemask_epi8(block_cmp) )
-		{
+		if (_mm_movemask_epi8(block_cmp)) {
 			return true;
 		}
 	}
 #endif
 #ifdef __MMX__
-	for( ; i / 4 < block_class_len / 4; i += 4 )
-	{
+	for (; i / 4 < block_class_len / 4; i += 4) {
 		const __m64 block_class_vec = _mm_cvtsi64_m64(
 			*(uint64_t*)&block_class[i]
 		);
 		const __m64 block_vec = _mm_set1_pi16(block);
 		const __m64 block_cmp = _mm_cmpeq_pi16(block_vec,block_class_vec);
-		if( _mm_cvtm64_si64(block_cmp) )
-		{
+		if (_mm_cvtm64_si64(block_cmp)) {
 			return true;
 		}
 	}
 #endif
-	for( ; i < block_class_len; ++i )
-	{
-		if( block == block_class[i] )
-		{
+	for (; i < block_class_len; ++i) {
+		if (block == block_class[i]) {
 			return true;
 		}
 	}
@@ -85,7 +78,7 @@ const mc_block_t block_class_stair[] = {
 	block_red_sandstone_stairs,
 	block_purpur_stairs
 };
-const size_t block_class_stair_len = count_of(block_class_stair);
+const size_t block_class_stair_len = COUNT_OF(block_class_stair);
 
 const mc_block_t block_class_door[] = {
 	block_wooden_door,
@@ -96,7 +89,7 @@ const mc_block_t block_class_door[] = {
 	block_acacia_door,
 	block_dark_oak_door
 };
-const size_t block_class_door_len = count_of(block_class_door);
+const size_t block_class_door_len = COUNT_OF(block_class_door);
 
 const mc_block_t block_class_fence[] = {
 	block_fence,
@@ -107,7 +100,7 @@ const mc_block_t block_class_fence[] = {
 	block_dark_oak_fence,
 	block_acacia_fence
 };
-const size_t block_class_fence_len = count_of(block_class_fence);
+const size_t block_class_fence_len = COUNT_OF(block_class_fence);
 
 const mc_block_t block_class_fence_gate[] = {
 	block_fence_gate,
@@ -117,7 +110,7 @@ const mc_block_t block_class_fence_gate[] = {
 	block_dark_oak_fence_gate,
 	block_acacia_fence_gate
 };
-const size_t block_class_fence_gate_len = count_of(block_class_fence_gate);
+const size_t block_class_fence_gate_len = COUNT_OF(block_class_fence_gate);
 
 const mc_block_t block_class_ancil[] = {
 	block_wooden_door,
@@ -165,7 +158,7 @@ const mc_block_t block_class_ancil[] = {
 	block_dark_oak_fence,
 	block_acacia_fence
 };
-const size_t block_class_ancil_len = count_of(block_class_ancil);
+const size_t block_class_ancil_len = COUNT_OF(block_class_ancil);
 
 const mc_block_t block_class_alt_height[] = {
 	block_stone_slab,
@@ -187,4 +180,5 @@ const mc_block_t block_class_alt_height[] = {
 	block_purpur_slab,
 	block_wooden_slab
 };
-const size_t block_class_alt_height_len = count_of(block_class_alt_height);
+const size_t block_class_alt_height_len = COUNT_OF(block_class_alt_height);
+

@@ -259,13 +259,13 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         if (get_data(state, BLOCKS, x, y+1, z) == 78)
             return 0x10;
         return ancilData;
-    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_flowing_water,block_water},2)) { /* water */
+    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_flowing_water,block_water}, 2)) { /* water */
         data = check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f;
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks */
         if (get_data(state, BLOCKS, x, y+1, z) != state->block)
             data |= 0x10;
         return data;
-    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_glass,block_ice,block_stained_glass},3)) { /* glass and ice and stained glass*/
+    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_glass,block_ice,block_stained_glass}, 3)) { /* glass and ice and stained glass*/
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks
          * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an unsigned char, 
          * forcing us to use an unsigned short to hold 16 bits of pseudo ancil data
@@ -277,7 +277,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if (block_class_is_subset(state->block,block_class_fence,block_class_fence_len)) { /* fences */
+    } else if (block_class_is_subset(state->block, block_class_fence, block_class_fence_len)) { /* fences */
         /* check for fences AND fence gates */
         return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, block_fence_gate) |
                 check_adjacent_blocks(state, x, y, z, block_fence_gate) | check_adjacent_blocks(state, x, y, z, block_birch_fence_gate) | check_adjacent_blocks(state, x, y, z, block_jungle_fence_gate) |
@@ -317,7 +317,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_chest,block_trapped_chest},2)) {
+    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_chest,block_trapped_chest}, 2)) {
         /* Orientation is given by ancilData, pseudo data needed to 
          * choose from single or double chest and the correct half of
          * the chest. */
@@ -354,7 +354,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_iron_bars,block_glass_pane,block_stained_glass_pane},3)) {
+    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_iron_bars,block_glass_pane, block_stained_glass_pane},3)) {
         /* iron bars and glass panes:
          * they seem to stick to almost everything but air,
          * not sure yet! Still a TODO! */
@@ -363,11 +363,11 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         data = (check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f);
         return (data << 4) | (ancilData & 0xf);
 
-    } else if (block_class_is_subset(state->block,(mc_block_t[]){block_portal,block_nether_brick_fence},2)) {
+    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_portal,block_nether_brick_fence}, 2)) {
         /* portal and nether brick fences */
         return check_adjacent_blocks(state, x, y, z, state->block);
 
-    } else if (block_class_is_subset(state->block,block_class_door,block_class_door_len)) {
+    } else if (block_class_is_subset(state->block, block_class_door, block_class_door_len)) {
         /* use bottom block data format plus one bit for top/down
          * block (0x8) and one bit for hinge position (0x10)
          */
@@ -414,7 +414,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         pr = pr * pr * 42317861 + pr * 11;
         rotation = 3 & (pr >> 16);
         return rotation;
-    } else if (block_class_is_subset(state->block,block_class_stair,block_class_stair_len)) { /* stairs */
+    } else if (block_class_is_subset(state->block, block_class_stair, block_class_stair_len)) { /* stairs */
         /* 4 ancillary bits will be added to indicate which quarters of the block contain the 
          * upper step. Regular stairs will have 2 bits set & corner stairs will have 1 or 3.
          *     Southwest quarter is part of the upper step - 0x40
@@ -471,10 +471,10 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
 
         /* get block & data for neighbors in this order: east, north, west, south */
         /* so we can rotate things easily */
-        stairs[0] = stairs[4] = block_class_is_subset(get_data(state, BLOCKS, x+1, y, z),block_class_stair,block_class_stair_len);
-        stairs[1] = stairs[5] = block_class_is_subset(get_data(state, BLOCKS, x, y, z-1),block_class_stair,block_class_stair_len);
-        stairs[2] = stairs[6] = block_class_is_subset(get_data(state, BLOCKS, x-1, y, z),block_class_stair,block_class_stair_len);
-        stairs[3] = stairs[7] = block_class_is_subset(get_data(state, BLOCKS, x, y, z+1),block_class_stair,block_class_stair_len);
+        stairs[0] = stairs[4] = block_class_is_subset(get_data(state, BLOCKS, x+1, y, z), block_class_stair, block_class_stair_len);
+        stairs[1] = stairs[5] = block_class_is_subset(get_data(state, BLOCKS, x, y, z-1), block_class_stair, block_class_stair_len);
+        stairs[2] = stairs[6] = block_class_is_subset(get_data(state, BLOCKS, x-1, y, z), block_class_stair, block_class_stair_len);
+        stairs[3] = stairs[7] = block_class_is_subset(get_data(state, BLOCKS, x, y, z+1), block_class_stair, block_class_stair_len);
         neigh[0] = neigh[4] = FIX_ROT(get_data(state, DATA, x+1, y, z));
         neigh[1] = neigh[5] = FIX_ROT(get_data(state, DATA, x, y, z-1));
         neigh[2] = neigh[6] = FIX_ROT(get_data(state, DATA, x-1, y, z));
@@ -670,7 +670,7 @@ chunk_render(PyObject *self, PyObject *args) {
                      * grass, water, glass, chest, restone wire,
                      * ice, fence, portal, iron bars, glass panes,
                      * trapped chests, stairs */
-                    if (block_class_is_subset(state.block,block_class_ancil,block_class_ancil_len)) {
+                    if (block_class_is_subset(state.block, block_class_ancil, block_class_ancil_len)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
                     } else {

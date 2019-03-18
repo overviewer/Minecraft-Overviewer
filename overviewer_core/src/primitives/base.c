@@ -96,7 +96,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
      */
     if (/* grass, but not snowgrass */
         (state->block == block_grass && get_data(state, BLOCKS, state->x, state->y+1, state->z) != 78) ||
-        block_class_is_subset(state->block,(mc_block_t[]){
+        block_class_is_subset(state->block, (mc_block_t[]){
                 block_vine,
                 block_waterlily,
                 block_flowing_water,
@@ -125,7 +125,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             /* grass needs a special facemask */
             facemask = self->grass_texture;
         }
-        if(block_class_is_subset(state->block,(mc_block_t[]){
+        if(block_class_is_subset(state->block, (mc_block_t[]){
             block_grass,
             block_tallgrass,
             block_pumpkin_stem,
@@ -136,12 +136,12 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         },7)) {
             color_table = self->grasscolor;
         }
-        else if(block_class_is_subset(state->block,(mc_block_t[]){
+        else if(block_class_is_subset(state->block, (mc_block_t[]){
             block_flowing_water,block_water
         },2)) {
             color_table = self->watercolor;
         }
-        else if(block_class_is_subset(state->block,(mc_block_t[]){
+        else if(block_class_is_subset(state->block, (mc_block_t[]){
             block_leaves,block_leaves2
         },2)) {
             color_table = self->foliagecolor;

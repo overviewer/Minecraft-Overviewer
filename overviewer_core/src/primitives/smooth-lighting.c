@@ -220,9 +220,9 @@ smooth_lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *ma
     
     /* special case for leaves, water 8, water 9, ice 79
        -- these are also smooth-lit! */
-    if (!block_class_is_subset(state->block,(mc_block_t[]){
+    if (!block_class_is_subset(state->block, (mc_block_t[]){
             block_leaves,block_flowing_water,block_water,block_ice
-        },4) && is_transparent(state->block))
+        }, 4) && is_transparent(state->block))
     {
         /* transparent blocks are rendered as usual, with flat lighting */
         primitive_lighting.draw(data, state, src, mask, mask_light);
