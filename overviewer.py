@@ -133,7 +133,7 @@ def main():
     args, unknowns = parser.parse_known_args()
 
     # Check for possible shell quoting issues
-    if len(unknowns) > 0:
+    if len(unknowns) > 0 and args.world and args.output:
         possible_mistakes = []
         for i in range(len(unknowns) + 1):
             possible_mistakes.append(" ".join([args.world, args.output] + unknowns[:i]))
