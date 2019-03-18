@@ -1,9 +1,7 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """The contrib manager is used to help control the contrib scripts
 that are shipped with overviewer in Windows packages."""
-
-from __future__ import print_function
 
 import ast
 import os.path
@@ -79,4 +77,4 @@ if not os.path.exists(torun):
     print("Script '%s' is missing!" % script, file=sys.stderr)
     sys.exit(1)
 
-execfile(torun)
+exec(compile(open(torun, "rb").read(), torun, 'exec'))
