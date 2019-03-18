@@ -125,23 +125,25 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             /* grass needs a special facemask */
             facemask = self->grass_texture;
         }
-
-        switch (state->block) {
-        case block_grass:
-        case block_tallgrass:
-        case block_pumpkin_stem:
-        case block_melon_stem:
-        case block_vine:
-        case block_waterlily:
-        case block_double_plant:
+        if(block_class_is_subset(state->block,(mc_block_t[]){
+            block_grass,
+            block_tallgrass,
+            block_pumpkin_stem,
+            block_melon_stem,
+            block_vine,
+            block_waterlily,
+            block_double_plant
+        },7)) {
             color_table = self->grasscolor;
-            break;
-        case block_flowing_water:
-        case block_water:
+        }
+        else if(block_class_is_subset(state->block,(mc_block_t[]){
+            block_flowing_water,block_water
+        },2)) {
             color_table = self->watercolor;
-            break;
-        case block_leaves:
-        case block_leaves2:
+        }
+        else if(block_class_is_subset(state->block,(mc_block_t[]){
+            block_leaves,block_leaves2
+        },2)) {
             color_table = self->foliagecolor;
             if (state->block_data == 2)
             {
@@ -149,10 +151,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                    birch foliage color is flipped XY-ways */
                 flip_xy = 1;
             }
-            break;
-        default:
-            break;
-        };
+        }
             
         if (color_table) {
             unsigned char biome;

@@ -26,7 +26,7 @@
 bool block_class_is_subset(
 	mc_block_t block,
 	const mc_block_t block_class[],
-	size_t     block_class_len
+	size_t block_class_len
 );
 
 extern const mc_block_t block_class_stair[];
