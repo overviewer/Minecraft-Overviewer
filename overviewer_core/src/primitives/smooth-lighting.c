@@ -17,6 +17,7 @@
 
 #include "../overviewer.h"
 #include "../mc_id.h"
+#include "../block_class.h"
 #include "lighting.h"
 #include <math.h>
 
