@@ -9,6 +9,7 @@ Moving them to a "higher" list should be a manual process.
 import fileinput
 from subprocess import Popen, PIPE
 
+
 def format_contributor(contributor):
     return " * {0} {1}".format(
             " ".join(contributor["name"]),
@@ -53,58 +54,55 @@ def main():
             new_contributors.append(contributor)
         elif contributor['email'] in old_emails:
             # email is listed, but with another name
-            old_name = filter(lambda x: x['email'] == contributor['email'],
-                    old_contributors)[0]['name']
-            print "new alias %s for %s %s ?" % (
-                    " ".join(contributor['name']),
-                    " ".join(old_name),
-                    contributor['email'])
+            old_name = [x['name'] for x in old_contributors if x['email'] == contributor['email']][0]
+            print("new alias %s for %s %s ?" % (
+                " ".join(contributor['name']),
+                " ".join(old_name),
+                contributor['email']))
             update_mailmap = True
         elif contributor['name'] in old_names:
             # probably a new email for a previous contributor
-            other_mail = filter(lambda x: x['name'] == contributor['name'],
-                old_contributors)[0]['email']
-            print "new email %s for %s %s ?" % (
+            other_mail = [x['email'] for x in old_contributors if x['name'] == contributor['name']][0]
+            print("new email %s for %s %s ?" % (
                 contributor['email'],
                 " ".join(contributor['name']),
-                other_mail)
+                other_mail))
             update_mailmap = True
     if update_mailmap:
-        print "Please update .mailmap"
+        print("Please update .mailmap")
 
     # sort on the last word of the name
-    new_contributors = sorted(new_contributors,
-            key=lambda x: x['name'][-1].lower())
+    new_contributors = sorted(new_contributors, key=lambda x: x['name'][-1].lower())
 
     # show new contributors to be merged to the list
     if new_contributors:
-        print "inserting:"
+        print("inserting:")
         for contributor in new_contributors:
-            print format_contributor(contributor)
+            print(format_contributor(contributor))
 
     # merge with alphabetical (by last part of name) contributor list
     i = 0
     short_term_found = False
     for line in fileinput.input("CONTRIBUTORS.rst", inplace=1):
         if not short_term_found:
-            print line,
+            print(*line, sep=", ")
             if "Short-term" in line:
                 short_term_found = True
         else:
             if i >= len(new_contributors) or "@" not in line:
-                print line,
+                print(*line, sep=", ")
             else:
                 listed_name = line.split()[-2].lower()
                 contributor = new_contributors[i]
                 # insert all new contributors that fit here
                 while listed_name > contributor["name"][-1].lower():
-                    print format_contributor(contributor)
+                    print(format_contributor(contributor))
                     i += 1
                     if i < len(new_contributors):
                         contributor = new_contributors[i]
                     else:
                         break
-                print line,
+                print(*line, sep=", ")
     # append remaining contributors
     with open("CONTRIBUTORS.rst", "a") as contrib_file:
         while i < len(new_contributors):
