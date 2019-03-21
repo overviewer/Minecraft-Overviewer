@@ -16,6 +16,7 @@ from test_settings import SettingsTest
 from test_tileset import TilesetTest
 from test_cache import TestLRU
 from test_contributors import TestContributors
+from test_cyrillic_convert import TestCyrillicConvert
 
 # DISABLE THIS BLOCK TO GET LOG OUTPUT FROM TILESET FOR DEBUGGING
 if 0:
