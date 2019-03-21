@@ -1,8 +1,10 @@
 language: python
+dist: xenial
 python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
 env:
   - MC_VERSION=1.13
 before_install:
@@ -22,6 +24,3 @@ script:
   - python3 overviewer.py ~/mcoa/exmaple ~/test-output --rendermodes=smooth-lighting -p1
 notifications:
   email: false
-# matrix:
-  # allow_failures:
-    # - python: "3.2"
