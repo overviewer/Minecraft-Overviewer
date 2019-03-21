@@ -722,6 +722,11 @@ Image options
     .. warning::
         Using image optimizers will increase render times significantly.
 
+    .. note::
+        With the port to Python 3, the import line has changed. Prefix the
+        ``optimizeimages`` module with a period, so
+        ``from .optimizeimages import foo, bar``.
+
     This option specifies which additional tools overviewer should use to
     optimize the filesize of rendered tiles.
     The tools used must be placed somewhere where overviewer can find them, for
@@ -731,7 +736,7 @@ Image options
     the order in which they're specified::
         
         # Import the optimizers we need
-        from optimizeimages import pngnq, optipng
+        from .optimizeimages import pngnq, optipng
 
         worlds["world"] = "/path/to/world"
 
