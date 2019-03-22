@@ -29,7 +29,7 @@ import urllib.error
 from collections import defaultdict
 from contextlib import closing
 from multiprocessing import Pool
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 from overviewer_core import configParser, logger, nbt, world
 from overviewer_core.files import FileReplacer, get_fs_caps
@@ -438,37 +438,33 @@ def create_marker_from_filter_result(poi, result):
 
 
 def main():
-
-    if os.path.basename(sys.argv[0]) == """genPOI.py""":
-        helptext = """genPOI.py
-            %prog --config=<config file> [options]"""
+    if os.path.basename(sys.argv[0]) == "genPOI.py":
+        prog_name = "genPOI.py"
     else:
-        helptext = """genPOI
-            %prog --genpoi --config=<config file> [options]"""
-
+        prog_name = sys.argv[0] + " --genpoi"
     logger.configure()
 
-    parser = OptionParser(usage=helptext)
-    parser.add_option("-c", "--config", dest="config", action="store",
-                      help="Specify the config file to use.")
-    parser.add_option("-q", "--quiet", dest="quiet", action="count",
-                      help="Reduce logging output")
-    parser.add_option("--skip-scan", dest="skipscan", action="store_true",
-                      help="Skip scanning for entities when using GenPOI")
-    parser.add_option("--skip-players", dest="skipplayers", action="store_true",
-                      help="Skip getting player data when using GenPOI")
+    parser = ArgumentParser(prog=prog_name)
+    parser.add_argument("-c", "--config", dest="config", action="store", required=True,
+                        help="Specify the config file to use.")
+    parser.add_argument("-q", "--quiet", dest="quiet", action="count",
+                        help="Reduce logging output")
+    parser.add_argument("--skip-scan", dest="skipscan", action="store_true",
+                        help="Skip scanning for entities when using GenPOI")
+    parser.add_argument("--skip-players", dest="skipplayers", action="store_true",
+                        help="Skip getting player data when using GenPOI")
 
-    options, args = parser.parse_args()
-    if not options.config:
-        parser.print_help()
-        return
+    args = parser.parse_args()
 
-    if options.quiet and options.quiet > 0:
+    if args.quiet and args.quiet > 0:
         logger.configure(logging.WARN, False)
 
     # Parse the config file
     mw_parser = configParser.MultiWorldParser()
-    mw_parser.parse(options.config)
+    try:
+        mw_parser.parse(args.config)
+    except configParser.MissingConfigException:
+        parser.error("The configuration file '{}' does not exist.".format(args.config))
     try:
         config = mw_parser.get_validated_config()
     except Exception:
@@ -532,16 +528,16 @@ def main():
                    for name, filter_name, __, __, __, __ in filters)
 
     # apply filters to regionsets
-    if not options.skipscan:
+    if not args.skipscan:
         # group filters by rset
         def keyfunc(x):
             return x[3]
         sfilters = sorted(filters, key=keyfunc)
         for rset, rset_filters in itertools.groupby(sfilters, keyfunc):
-            handleEntities(rset, config, options.config, list(rset_filters), markers)
+            handleEntities(rset, config, args.config, list(rset_filters), markers)
 
     # apply filters to players
-    if not options.skipplayers:
+    if not args.skipplayers:
         PlayerDict.load_cache(destdir)
 
         # group filters by worldpath, so we only search for players once per
@@ -565,7 +561,7 @@ def main():
     logging.info("Done handling POIs")
     logging.info("Writing out javascript files")
 
-    if not options.skipplayers:
+    if not args.skipplayers:
         PlayerDict.save_cache(destdir)
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
