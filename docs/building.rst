@@ -87,7 +87,7 @@ This is the recommended way to build on Windows without MSVC.
 
 2. Install the dependencies::
 
-    pacman -S git mingw-w64-x86_64-python2-numpy mingw-w64-x86_64-python2-Pillow mingw-w64-x86_64-python2 mingw-w64-x86_64-toolchain
+    pacman -S git mingw-w64-x86_64-python3-numpy mingw-w64-x86_64-python3-Pillow mingw-w64-x86_64-python3 mingw-w64-x86_64-toolchain
 
 3. Clone the Minecraft-Overviewer git repository::
 
@@ -102,7 +102,7 @@ This is the recommended way to build on Windows without MSVC.
    directory and executing the build script::
 
     cd Minecraft-Overviewer
-    python2 setup.py build
+    python3 setup.py build
 
 After it finishes, you should now be able to execute ``overviewer.py`` from the MINGW64
 shell.
@@ -115,7 +115,7 @@ Building with mingw
 3. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
 4. Build::
 
-    python setup.py build --compiler=mingw32
+    python3 setup.py build --compiler=mingw32
     
 If the build fails with complaints about ``-mno-cygwin``, open the file ``Lib/distutils/cygwincompiler.py``
 in an editor of your choice, and remove all mentions of ``-mno-cygwin``. This is a bug in distutils,
