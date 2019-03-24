@@ -623,6 +623,8 @@ class RegionSet(object):
             'minecraft:standing_banner': (176, 0),
             'minecraft:wall_banner': (177, 0),
             'minecraft:red_sandstone': (179, 0),
+            'minecraft:cut_red_sandstone': (179, 2),
+            'minecraft:chiseled_red_sandstone': (179, 3),
             'minecraft:red_sandstone_stairs': (180, 0),
             'minecraft:spruce_fence_gate': (183, 0),
             'minecraft:birch_fence_gate': (184, 0),
