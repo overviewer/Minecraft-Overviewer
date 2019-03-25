@@ -835,7 +835,10 @@ class RegionSet(object):
             if palette_entry['Properties']['type'] == 'top':
                 data += 8
             elif palette_entry['Properties']['type'] == 'double':
-                block = 125
+                if 'oak' in key:
+                    block = 125
+                elif key == 'minecraft:stone_brick_slab':
+                    block = 98
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
