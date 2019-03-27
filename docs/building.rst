@@ -144,17 +144,32 @@ At this point, you can run ``./overviewer.py`` from the current directory, so to
 macOS
 -----
 
-1. Install xCode Command Line Tools by running the command (``xcode-select --install``) in terminal (located in your /Applications/Utilities folder
-2. Install Python 3 if you don't already have it, for example from `the official Python website <https://www.python.org/downloads/mac-osx/>`_.
-3. Install PIP (``sudo easy-install pip``)
-4. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same funcitonality) (``pip install Pillow``)
-5. Download the Pillow source files from https://github.com/python-pillow/Pillow/releases/latest and unpack the tar.gz file and move it to a directory you can remember
-6. Download the Minercaft Overviewer source-code from https://overviewer.org/builds/overviewer-latest.tar.gz
-7. Extract overviewer-[Version].tar.gz and move it to a directory you can remember
-8. Go into your Pillow-[Version] folder and navigate to the /src/libImaging directory
-9. Drag the following files from the Pillow-[Version]/src/libImaging folder to your overviewer-[Version] folder (``Imaging.h, ImagingUtils, ImPlatform.h``)
-10. Make sure your installation of Python 3 is in ``$PATH``
-11. In terminal change directory to your overviewer-[Version] folder (e.g ``cd Desktop/overviewer-[Version]``)
-12. Build::
+#. Install the Xcode Command Line Tools by running the following command in a terminal (located in your /Applications/Utilities folder)::
 
-    (``PIL_INCLUDE_DIR="/path/to/Pillow-[version]/libImaging" python3 setup.py build``)
+    xcode-select --install
+
+#. Install Python 3 if you don't already have it, for example from `the official Python website <https://www.python.org/downloads/mac-osx/>`_.
+#. Install PIP, e.g. with::
+
+    sudo easy-install pip
+
+#. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same funcitonality)::
+
+    pip install Pillow
+
+#. Download the Pillow source files from https://github.com/python-pillow/Pillow/releases/latest and unpack the tar.gz file and move it to a directory you can remember
+#. Download the Minercaft Overviewer source-code from https://overviewer.org/builds/overviewer-latest.tar.gz
+#. Extract overviewer-[Version].tar.gz and move it to a directory you can remember
+#. Go into your Pillow-[Version] folder and navigate to the /src/libImaging directory
+#. Drag the following files from the Pillow-[Version]/src/libImaging folder to your overviewer-[Version] folder:
+  - ``Imaging.h``
+  - ``ImagingUtils.h``
+  - ``ImPlatform.h``
+#. Make sure your installation of Python 3 is in ``$PATH``
+#. In a terminal, change your current working directory to your overviewer-[Version] folder (e.g. by using ``cd Desktop/overviewer-[Version]``)
+#. Build::
+
+    PIL_INCLUDE_DIR="/path/to/Pillow-[version]/libImaging" python3 setup.py build
+
+You should now be able to run Overviewer with ``./overviewer.py`` inside of the
+Overviewer directory.
