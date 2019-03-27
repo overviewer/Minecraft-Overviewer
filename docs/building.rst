@@ -45,13 +45,13 @@ Prerequisites
 
 You will need the following:
 
-- `Python 2.7 <https://www.python.org/downloads/windows/>`_
+- `Python 3.x <https://www.python.org/downloads/windows/>`_
 - A copy of the `Pillow sources <https://github.com/python-pillow/Pillow>`_.
 - The Pillow Extension for Python.
 - The Numpy Extension for Python.
 - The extensions can be installed via::
 
-    c:\python27\python.exe -m pip -U numpy pillow
+    c:\python37\python.exe -m pip -U numpy pillow
 
 
 Building with Visual Studio
@@ -63,7 +63,7 @@ Building with Visual Studio
 4. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
 5. First try a build::
 
-    c:\python27\python setup.py build
+    c:\python37\python setup.py build
 
 If you encounter the following errors::
 
@@ -73,7 +73,7 @@ then try the following::
 
     set DISTUTILS_USE_SDK=1
     set MSSdk=1
-    c:\python27\python setup.py build
+    c:\python37\python setup.py build
 
 If the build was successful, there should be a c_overviewer.pyd file in your current working directory.
 
@@ -145,7 +145,7 @@ macOS
 -----
 
 1. Install xCode Command Line Tools by running the command (``xcode-select --install``) in terminal (located in your /Applications/Utilities folder
-2. Install Python 2.7.10 if you don't already have it https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg
+2. Install Python 3 if you don't already have it, for example from `the official Python website <https://www.python.org/downloads/mac-osx/>`_.
 3. Install PIP (``sudo easy-install pip``)
 4. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same funcitonality) (``pip install Pillow``)
 5. Download the Pillow source files from https://github.com/python-pillow/Pillow/releases/latest and unpack the tar.gz file and move it to a directory you can remember
@@ -153,19 +153,8 @@ macOS
 7. Extract overviewer-[Version].tar.gz and move it to a directory you can remember
 8. Go into your Pillow-[Version] folder and navigate to the /src/libImaging directory
 9. Drag the following files from the Pillow-[Version]/src/libImaging folder to your overviewer-[Version] folder (``Imaging.h, ImagingUtils, ImPlatform.h``)
-10. Symlink Python by running the command (``sudo ln -sf /usr/bin/python2.7 /usr/local/bin/python2``) in terminal
+10. Make sure your installation of Python 3 is in ``$PATH``
 11. In terminal change directory to your overviewer-[Version] folder (e.g ``cd Desktop/overviewer-[Version]``)
 12. Build::
 
-    (``PIL_INCLUDE_DIR="/path/to/Pillow-[version]/libImaging" python2 setup.py build``)
-
-FreeBSD
--------
-FreeBSD is similar to macOS and Linux, but ensure you're using Python 2.7. The port of Python 2.6 has bugs with threading under FreeBSD.
-Everything else you should need is ported, in particular math/py-numpy and graphics/py-imaging.
-
-You may need or want to add the line::
-
-    PYTHON_VERSION=2.7
-
-to the file /etc/make.conf, but read the ports documentation to be sure of what this might do to other Python applications on your system.  
+    (``PIL_INCLUDE_DIR="/path/to/Pillow-[version]/libImaging" python3 setup.py build``)

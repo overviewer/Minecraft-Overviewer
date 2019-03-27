@@ -13,7 +13,7 @@ changes back into the project, for help on how to compile the Overviewer, check
 Prerequisites
 =============
 
-Ideally you're familiar with Python (Overviewer uses Python 2), and know the
+Ideally you're familiar with Python (Overviewer uses Python 3), and know the
 basics of Git. Both have various very good resources online that help you in
 learning them, but the best way of learning is always to use them in the real
 world, so don't hesitate to jump right in after having a basic grasp and ask
