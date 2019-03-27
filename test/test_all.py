@@ -18,6 +18,7 @@ from test_cache import TestLRU
 from test_contributors import TestContributors
 from test_cyrillic_convert import TestCyrillicConvert
 from test_playerInspect import TestPlayerInspect
+from test_regionTrimmer import TestRegionTrimmer
 
 # DISABLE THIS BLOCK TO GET LOG OUTPUT FROM TILESET FOR DEBUGGING
 if 0:
