@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Outputs a huge image with all currently-supported block textures.
 """

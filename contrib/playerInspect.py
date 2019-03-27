@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Very basic player.dat inspection script
 """

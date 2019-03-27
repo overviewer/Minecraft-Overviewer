@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Update the contributor list
 
 Alias handling is done by git with .mailmap
