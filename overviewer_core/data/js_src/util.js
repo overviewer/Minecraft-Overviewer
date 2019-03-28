@@ -287,7 +287,7 @@ overviewer.util = {
             for (var olw in overviewer.collections.overlays) {
                 for (var ol in overviewer.collections.overlays[olw]) {
                     var ol_o = overviewer.collections.overlays[olw][ol];
-                    if (ol_o.tileSetConfig.isOverlay.includes(ovconf.path)) {
+                    if (ol_o.tileSetConfig.isOverlay) {
                         if (!overviewer.util.isInLayerCtrl(overviewer.layerCtrl, ol_o)) {
                             overviewer.layerCtrl.addOverlay(ol_o, ol_o.tileSetConfig.name);
                         }
