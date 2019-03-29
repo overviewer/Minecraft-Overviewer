@@ -44,7 +44,7 @@ the Minecraft Wiki.
 A more complicated filter function can construct a more customized display text::
 
     def chestFilter(poi):
-        if poi['id'] == "Chest":
+        if poi['id'] == "Chest" or poi['id'] == 'minecraft:chest':
             return "Chest with %d items" % len(poi.get('Items', []))
 
 It is also possible to return a tuple from the filter function to specify a hovertext
@@ -52,7 +52,7 @@ different from the text displayed in the info window. The first entry of the tup
 be used as the hover text, the second will be used as the info window content::
 
     def chestFilter(poi):
-        if poi['id'] == "Chest":
+        if poi['id'] == "Chest" or poi['id'] == 'minecraft:chest':
             return ("Chest", "Chest with %d items" % len(poi.get('Items', [])))
 
 Because of the way the config file is loaded, if you need to import a function or module
@@ -61,7 +61,7 @@ for use in your filter function, you need to explicitly load it into the global 
     global escape
     from cgi import escape
     def signFilter(poi):
-        if poi['id'] == 'Sign':
+        if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
             return "\n".join(map(escape, [poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']]))
 
 Since writing these filters can be a little tedious, a set of predefined filters
