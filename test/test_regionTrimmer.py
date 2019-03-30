@@ -6,7 +6,6 @@ import networkx
 
 import contrib.regionTrimmer as region_trimmer
 
-
 class TestRegionTrimmer(unittest.TestCase):
     def test_get_nodes(self):
         coords = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
@@ -46,13 +45,24 @@ class TestRegionTrimmer(unittest.TestCase):
 
     def test_generate_edges(self):
         graph = networkx.Graph()
-        graph.add_nodes_from([(0, 0), (0, -1), (-1, 0), (-1, -1)])
-
+        graph.add_nodes_from(
+            [(0, 0), (0, -1), (-1, 0), (-1, -1)]
+        )
         graph = region_trimmer.generate_edges(graph)
-        expected = [((-1, 0), (-1, -1)),
-                    ((0, -1), (-1, -1)),
-                    ((0, 0), (-1, -1)),
-                    ((0, 0), (-1, 0)),
-                    ((0, 0), (0, -1))]
-
-        self.assertListEqual(sorted(list(graph.edges)), expected)
+        self.assertEqual(
+            graph.adj,
+            {
+                (0, -1): {(0, 0): {}, (-1, -1): {}},
+                (0, 0): {
+                    (0, -1): {},
+                    (-1, 0): {},
+                    (-1, -1): {},
+                },
+                (-1, 0): {(0, 0): {}, (-1, -1): {}},
+                (-1, -1): {
+                    (0, -1): {},
+                    (0, 0): {},
+                    (-1, 0): {},
+                },
+            },
+        )
