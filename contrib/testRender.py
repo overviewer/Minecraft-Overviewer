@@ -71,7 +71,7 @@ def clean_render(overviewerargs, verbose=False):
 
 def get_stats(timelist):
     average = sum(timelist) / float(len(timelist))
-    meandiff = [(x - stats["average"]) ** 2 for x in timelist]
+    meandiff = [(x - average) ** 2 for x in timelist]
     sd = math.sqrt(sum(meandiff) / len(meandiff))
     return {
         "count": len(timelist),
@@ -82,26 +82,29 @@ def get_stats(timelist):
     }
 
 
-commitre = re.compile('^commit ([a-z0-9]{40})$', re.MULTILINE)
-branchre = re.compile('^\\* (.+)$', re.MULTILINE)
+def get_current_branch():
+    gittext = check_output(split('git rev-parse --abbrev-ref HEAD'))
+    return gittext.strip() if gittext != "HEAD" else None
 
 
 def get_current_commit():
-    gittext = check_output(split('git branch'))
-    match = branchre.search(gittext)
-    if match and not ("no branch" in match.group(1)):
-        return match.group(1)
-    gittext = check_output(split('git show HEAD'))
-    match = commitre.match(gittext)
-    if match == None:
-        return None
-    return match.group(1)
+    gittext = check_output(split('git rev-parse HEAD'))
+    return gittext.strip() if gittext else None
+
+
+def get_current_ref():
+    branch = get_current_branch()
+    if branch:
+        return branch
+
+    commit = get_current_commit()
+    if commit:
+        return commit
 
 
 def get_commits(gitrange):
-    gittext = check_output(split('git log --raw --reverse') + [gitrange, ])
-    for match in commitre.finditer(gittext):
-        yield match.group(1)
+    gittext = check_output(split('git rev-list --reverse') + [gitrange, ])
+    return (c for c in gittext.split("\n"))
 
 
 def set_commit(commit):
@@ -116,13 +119,13 @@ def main(args):
         else:
             commits.append(commit)
     if not commits:
-        commits = [get_current_commit(), ]
+        commits = [get_current_ref(), ]
 
     log = None
     if args.log:
         log = args.log
 
-    reset_commit = get_current_commit()
+    reset_commit = get_current_ref()
     try:
         for commit in commits:
             print("testing commit", commit)
