@@ -102,7 +102,8 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
                          int x, int y, int z, int *authoratative) {
 
     /* placeholders for later data arrays, coordinates */
-    unsigned char block, blocklevel;
+    unsigned short block;
+    unsigned char blocklevel;
     unsigned int average_count = 0, average_gather = 0, coeff = 0;
 
     /* defaults to "guess" until told otherwise */
@@ -153,7 +154,8 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
                    unsigned char *r, unsigned char *g, unsigned char *b) {
 
     /* placeholders for later data arrays, coordinates */
-    unsigned char block, skylevel, blocklevel;
+    unsigned short block;
+    unsigned char skylevel, blocklevel;
     
     block = get_data(state, BLOCKS, x, y, z);
     skylevel = get_data(state, SKYLIGHT, x, y, z);

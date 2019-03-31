@@ -1866,8 +1866,8 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, and red sandstone stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203], data=range(128), transparent=True, solid=True, nospawn=True)
+# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, red sandstone and (dark) prismarine stairs.
+@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203,11337,11338], data=range(128), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1908,6 +1908,10 @@ def stairs(self, blockid, data):
         texture = self.load_image_texture("assets/minecraft/textures/block/red_sandstone.png").copy()
     elif blockid == 203: # purpur stairs
         texture = self.load_image_texture("assets/minecraft/textures/block/purpur_block.png").copy()
+    elif blockid == 11337: # prismarine stairs
+        texture = self.load_image_texture("assets/minecraft/textures/block/prismarine.png").copy()
+    elif blockid == 11338: # dark prismarine stairs
+        texture = self.load_image_texture("assets/minecraft/textures/block/dark_prismarine.png").copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()

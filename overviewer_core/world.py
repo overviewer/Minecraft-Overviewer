@@ -772,6 +772,8 @@ class RegionSet(object):
             'minecraft:acacia_trapdoor': (11335, 0),
             'minecraft:dark_oak_trapdoor': (11336, 0),
             'minecraft:petrified_oak_slab': (126, 0),
+            'minecraft:prismarine_stairs': (11337, 0),
+            'minecraft:dark_prismarine_stairs': (11338, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
