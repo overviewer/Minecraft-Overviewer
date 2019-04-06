@@ -10,9 +10,7 @@ import sys
 scripts = {     # keys are names, values are scripts
     "convertCyrillic":  "cyrillic_convert.py",
     "playerInspect":    "playerInspect.py",
-    "rerenderBlocks":   "rerenderBlocks.py",
     "testRender":       "testRender.py",
-    "validate":         "validateRegionFile.py",
     "pngit":            "png-it.py",
     "gallery":          "gallery.py",
     "regionTrimmer":    "regionTrimmer.py",
@@ -21,9 +19,9 @@ scripts = {     # keys are names, values are scripts
 
 # you can symlink or hardlink contribManager.py to another name to have it
 # automatically find the right script to run.  For example:
-# > ln -s contribManager.py validate.exe
-# > chmod +x validate.exe
-# > ./validate.exe -h
+# > ln -s contribManager.py pngit.exe
+# > chmod +x pngit.exe
+# > ./pngit.exe -h
 
 
 # figure out what script to execute
