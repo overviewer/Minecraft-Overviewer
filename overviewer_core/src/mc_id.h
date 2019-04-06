@@ -259,7 +259,11 @@ enum mc_block_id
     block_concrete_powder = 252,
     block_structure_block = 255,
     block_prismarine_stairs = 11337,
-    block_dark_prismarine_stairs = 11338
+    block_dark_prismarine_stairs = 11338,
+    block_prismarine_brick_stairs = 11339,
+    block_prismarine_slab  = 11340,
+    block_dark_prismarine_slab = 11341,
+    block_prismarine_brick_slab  = 11342
 };
 
 typedef uint16_t mc_block_t;

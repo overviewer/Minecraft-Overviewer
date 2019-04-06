@@ -1707,8 +1707,8 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
-# here because lots of pre-1.3 worlds use this blocks
-@material(blockid=[43, 44, 181, 182, 204, 205], data=range(16), transparent=(44,182,205), solid=True)
+# here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
+@material(blockid=[43, 44, 181, 182, 204, 205,11340,11341,11342], data=range(16), transparent=(44,182,205), solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1759,6 +1759,12 @@ def slabs(self, blockid, data):
     elif blockid == 204 or blockid == 205: # purpur slab (single=205 double=204)
         top = side = self.load_image_texture("assets/minecraft/textures/block/purpur_block.png");
 
+    elif blockid == 11340: # prismarine slabs
+        top = side = self.load_image_texture("assets/minecraft/textures/block/prismarine.png").copy()
+    elif blockid == 11341: # dark prismarine slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/dark_prismarine.png").copy()
+    elif blockid == 11342: #  prismarine brick slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/prismarine_bricks.png").copy()
     
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
@@ -1867,7 +1873,7 @@ def fire(self, blockid, data):
 block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, red sandstone and (dark) prismarine stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203,11337,11338], data=range(128), transparent=True, solid=True, nospawn=True)
+@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203,11337,11338,11339], data=range(128), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1912,6 +1918,8 @@ def stairs(self, blockid, data):
         texture = self.load_image_texture("assets/minecraft/textures/block/prismarine.png").copy()
     elif blockid == 11338: # dark prismarine stairs
         texture = self.load_image_texture("assets/minecraft/textures/block/dark_prismarine.png").copy()
+    elif blockid == 11339: # prismarine brick stairs
+        texture = self.load_image_texture("assets/minecraft/textures/block/prismarine_bricks.png").copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()
