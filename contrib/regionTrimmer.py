@@ -91,8 +91,8 @@ def unlink_file(path):
     try:
         path.unlink()
     except OSError as err:
-        logger.warn("Unable to delete file: %s", path)
-        logger.warn("Error recieved was: %s", err)
+        logger.warning("Unable to delete file: %s", path)
+        logger.warning("Error recieved was: %s", err)
 
 
 def main(args):
@@ -108,7 +108,7 @@ def main(args):
         graph, subgraphs = generate_subgraphs(nodes)
         assert len(graph.nodes()) == sum(len(sg.nodes()) for sg in subgraphs)
         if len(subgraphs) == 1:
-            logger.warn("All regions are contiguous, the needful is done!")
+            logger.warning("All regions are contiguous, the needful is done!")
             return
         logger.info("Found %d discrete region sections", len(subgraphs))
         subgraphs = sorted(subgraphs, key=lambda sg: len(sg), reverse=True)
