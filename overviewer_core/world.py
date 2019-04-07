@@ -626,6 +626,7 @@ class RegionSet(object):
             'minecraft:cut_red_sandstone': (179, 2),
             'minecraft:chiseled_red_sandstone': (179, 3),
             'minecraft:red_sandstone_stairs': (180, 0),
+            'minecraft:red_sandstone_slab': (182,0),
             'minecraft:spruce_fence_gate': (183, 0),
             'minecraft:birch_fence_gate': (184, 0),
             'minecraft:jungle_fence_gate': (185, 0),
@@ -834,7 +835,7 @@ class RegionSet(object):
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
-        elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab', 'minecraft:oak_slab',
+        elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab','minecraft:red_sandstone_slab', 'minecraft:oak_slab',
                      'minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab',
                      'minecraft:spruce_slab','minecraft:birch_slab','minecraft:jungle_slab',
                      'minecraft:acacia_slab','minecraft:dark_oak_slab',
