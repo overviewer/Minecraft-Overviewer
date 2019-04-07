@@ -849,28 +849,28 @@ class RegionSet(object):
                 data |= 0x08
             elif palette_entry['Properties']['type'] == 'double':
                 if key in wood_slabs:
-                    block = 125 # block_double_wooden_slab
+                    block = 125         # block_double_wooden_slab
                 elif key in stone_slabs:
                     if key == 'minecraft:stone_brick_slab':
                         block = 98
                     elif key == 'minecraft:stone_slab':
-                        block = 43 # block_double_stone_slab
+                        block = 43      # block_double_stone_slab
                     elif key == 'minecraft:cobblestone_slab':
-                        block = 4 # cobblestone
+                        block = 4       # cobblestone
                     elif key == 'minecraft:sandstone_slab':
-                        block = 24 # minecraft:sandstone
+                        block = 24      # minecraft:sandstone
                     elif key == 'minecraft:red_sandstone_slab':
-                        block = 179 # minecraft:red_sandstone
+                        block = 179     # minecraft:red_sandstone
                     elif key == 'minecraft:nether_brick_slab':
-                        block = 112 # minecraft:nether_bricks
+                        block = 112     # minecraft:nether_bricks
                     elif key == 'minecraft:quartz_slab':
-                        block = 155 # minecraft:quartz_block
+                        block = 155     # minecraft:quartz_block
                     elif key == 'minecraft:brick_slab':
-                        block = 45 # minecraft:bricks
+                        block = 45      # minecraft:bricks
                     elif key == 'minecraft:purpur_slab':
-                        block = 201 # minecraft:purpur_block
+                        block = 201     # minecraft:purpur_block
                 elif key in  prismarine_slabs:
-                    block = 168 # minecraft:prismarine variants
+                    block = 168         # minecraft:prismarine variants
                     if key == 'minecraft:prismarine_slab':
                         data = 0
                     elif key == 'minecraft:prismarine_brick_slab':
