@@ -836,11 +836,13 @@ class RegionSet(object):
                 data |= 0x08
         elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab', 'minecraft:oak_slab',
                      'minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab',
-                     'minecraft:cobblestone_slab', 'minecraft:brick_slab',
+                     'minecraft:spruce_slab','minecraft:birch_slab','minecraft:jungle_slab',
+                     'minecraft:acacia_slab','minecraft:dark_oak_slab',
+                     'minecraft:cobblestone_slab', 'minecraft:brick_slab','minecraft:purpur_slab',
                      'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
                      'minecraft:quartz_slab', 'minecraft:petrified_oak_slab']:
             if palette_entry['Properties']['type'] == 'top':
-                data += 8
+                data |= 0x08
             elif palette_entry['Properties']['type'] == 'double':
                 if 'oak' in key:
                     block = 125
