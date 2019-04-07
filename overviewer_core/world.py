@@ -626,6 +626,7 @@ class RegionSet(object):
             'minecraft:cut_red_sandstone': (179, 2),
             'minecraft:chiseled_red_sandstone': (179, 3),
             'minecraft:red_sandstone_stairs': (180, 0),
+            'minecraft:red_sandstone_slab': (182,0),
             'minecraft:spruce_fence_gate': (183, 0),
             'minecraft:birch_fence_gate': (184, 0),
             'minecraft:jungle_fence_gate': (185, 0),
@@ -774,6 +775,10 @@ class RegionSet(object):
             'minecraft:petrified_oak_slab': (126, 0),
             'minecraft:prismarine_stairs': (11337, 0),
             'minecraft:dark_prismarine_stairs': (11338, 0),
+            'minecraft:prismarine_brick_stairs': (11339,0),
+            'minecraft:prismarine_slab': (11340, 0),
+            'minecraft:dark_prismarine_slab': (11341, 0),
+            'minecraft:prismarine_brick_slab': (11342, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -799,6 +804,14 @@ class RegionSet(object):
         return "<RegionSet regiondir=%r>" % self.regiondir
 
     def _get_block(self, palette_entry):
+        wood_slabs = ('minecraft:oak_slab','minecraft:spruce_slab','minecraft:birch_slab','minecraft:jungle_slab',
+                        'minecraft:acacia_slab','minecraft:dark_oak_slab','minecraft:petrified_oak_slab')
+        stone_slabs = ('minecraft:stone_slab', 'minecraft:sandstone_slab','minecraft:red_sandstone_slab',
+                        'minecraft:cobblestone_slab', 'minecraft:brick_slab','minecraft:purpur_slab',
+                        'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
+                        'minecraft:quartz_slab')
+        prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
+
         key = palette_entry['Name']
         (block, data) = self._blockmap[key]
         if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
@@ -830,17 +843,40 @@ class RegionSet(object):
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
-        elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab', 'minecraft:oak_slab',
-                     'minecraft:cobblestone_slab', 'minecraft:brick_slab',
-                     'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
-                     'minecraft:quartz_slab', 'minecraft:petrified_oak_slab']:
+        elif key in wood_slabs + stone_slabs + prismarine_slabs:
+        # handle double slabs 
             if palette_entry['Properties']['type'] == 'top':
-                data += 8
+                data |= 0x08
             elif palette_entry['Properties']['type'] == 'double':
-                if 'oak' in key:
-                    block = 125
-                elif key == 'minecraft:stone_brick_slab':
-                    block = 98
+                if key in wood_slabs:
+                    block = 125 # block_double_wooden_slab
+                elif key in stone_slabs:
+                    if key == 'minecraft:stone_brick_slab':
+                        block = 98
+                    elif key == 'minecraft:stone_slab':
+                        block = 43 # block_double_stone_slab
+                    elif key == 'minecraft:cobblestone_slab':
+                        block = 4 # cobblestone
+                    elif key == 'minecraft:sandstone_slab':
+                        block = 24 # minecraft:sandstone
+                    elif key == 'minecraft:red_sandstone_slab':
+                        block = 179 # minecraft:red_sandstone
+                    elif key == 'minecraft:nether_brick_slab':
+                        block = 112 # minecraft:nether_bricks
+                    elif key == 'minecraft:quartz_slab':
+                        block = 155 # minecraft:quartz_block
+                    elif key == 'minecraft:brick_slab':
+                        block = 45 # minecraft:bricks
+                    elif key == 'minecraft:purpur_slab':
+                        block = 201 # minecraft:purpur_block
+                elif key in  prismarine_slabs:
+                    block = 168 # minecraft:prismarine variants
+                    if key == 'minecraft:prismarine_slab':
+                        data = 0
+                    elif key == 'minecraft:prismarine_brick_slab':
+                        data = 1
+                    elif key == 'minecraft:dark_prismarine_slab':
+                        data = 2
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
