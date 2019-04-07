@@ -29,7 +29,7 @@ typedef struct {
 
 struct Condition{
     int relx, rely, relz;
-    unsigned char block;
+    unsigned short block;
 };
 
 struct Color {

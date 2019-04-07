@@ -77,7 +77,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
     PrimitiveBase *self = (PrimitiveBase *)data;
 
     /* in order to detect top parts of doublePlant grass & ferns */
-    unsigned char below_block = get_data(state, BLOCKS, state->x, state->y-1, state->z);
+    unsigned short below_block = get_data(state, BLOCKS, state->x, state->y-1, state->z);
     unsigned char below_data = get_data(state, DATA, state->x, state->y-1, state->z);
 
     /* draw the block! */
