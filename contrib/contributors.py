@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3
 """Update the contributor list
 
 Alias handling is done by git with .mailmap
@@ -6,110 +6,133 @@ New contributors are merged in the short-term list.
 Moving them to a "higher" list should be a manual process.
 """
 
-import fileinput
-from subprocess import Popen, PIPE
+import re
+from pathlib import Path
+import subprocess
+
+CONTRIB_FILE_CONTRIBUTOR_RE = re.compile(r'\* (.+) (<.+>)')
+
 
 def format_contributor(contributor):
-    return " * {0} {1}".format(
-            " ".join(contributor["name"]),
-            contributor["email"])
+    return " * {0} {1}".format(contributor["name"], contributor["email"])
 
 
-def main():
-    # generate list of contributors
+def get_contributors():
+    """ Parse all contributors from output of git shortlog -se
+    """
     contributors = []
-    p_git = Popen(["git", "shortlog", "-se"], stdout=PIPE)
-    for line in p_git.stdout:
-        contributors.append({
-            'count': int(line.split("\t")[0].strip()),
-            'name': line.split("\t")[1].split()[0:-1],
-            'email': line.split("\t")[1].split()[-1]
+    p_git = subprocess.run(["git", "shortlog", "-se"], stdout=subprocess.PIPE)
+    for line in p_git.stdout.decode('utf-8').split('\n'):
+        m = re.search(r"(\d+)\t(.+) (<.+>)", line)
+        if m:
+            contributors.append({
+                "count": int(m.group(1)),
+                "name": m.group(2),
+                "email": m.group(3)
             })
+    return contributors
 
-    # cache listed contributors
+
+def get_old_contributors(contrib_file_lines):
+    """ Parse existing contributors from CONTRIBUTORS.rst
+
+    Returns:
+        (list) Contributors as {"name", "email"} dicts
+    """
     old_contributors = []
-    with open("CONTRIBUTORS.rst", "r") as contrib_file:
-        for line in contrib_file:
-            if "@" in line:
-                old_contributors.append({
-                    'name': line.split()[1:-1],
-                    'email': line.split()[-1]
-                    })
+    for line in contrib_file_lines:
+        m = CONTRIB_FILE_CONTRIBUTOR_RE.search(line)
+        if m:
+            old_contributors.append({"name": m.group(1), "email": m.group(2)})
+    return old_contributors
 
-    old = map(lambda x: (x['name'], x['email']), old_contributors)
-    old_emails = map(lambda x: x['email'], old_contributors)
-    old_names = map(lambda x: x['name'], old_contributors)
 
-    # check which contributors are new
+def get_new_contributors(contributors, old_contributors):
+    """ Find new contributors and any possible alias or email changes
+
+    Returns:
+        (tuple) list of new contributors,
+                list of new aliases as (contributor, existing_name),
+                list of new emails as (contributor, existing_email)
+    """
+    old_email_names = {c['email']: c['name'] for c in old_contributors}
+    old_name_emails = {c['name']: c['email'] for c in old_contributors}
     new_contributors = []
-    update_mailmap = False
+    new_alias = []
+    new_email = []
     for contributor in contributors:
-        if (contributor['name'], contributor['email']) in old:
-            # this exact combination already in the list
+        name, email = contributor['name'], contributor['email']
+        existing_name, existing_email = old_email_names.get(email), old_name_emails.get(name)
+
+        if existing_name == name and existing_email == email:
+            # exact combination already in list
             pass
-        elif (contributor['email'] not in old_emails
-                and contributor['name'] not in old_names):
-            # name AND email are not in the list
+        elif existing_name is None and existing_email is None:
             new_contributors.append(contributor)
-        elif contributor['email'] in old_emails:
-            # email is listed, but with another name
-            old_name = filter(lambda x: x['email'] == contributor['email'],
-                    old_contributors)[0]['name']
-            print "new alias %s for %s %s ?" % (
-                    " ".join(contributor['name']),
-                    " ".join(old_name),
-                    contributor['email'])
-            update_mailmap = True
-        elif contributor['name'] in old_names:
-            # probably a new email for a previous contributor
-            other_mail = filter(lambda x: x['name'] == contributor['name'],
-                old_contributors)[0]['email']
-            print "new email %s for %s %s ?" % (
-                contributor['email'],
-                " ".join(contributor['name']),
-                other_mail)
-            update_mailmap = True
-    if update_mailmap:
-        print "Please update .mailmap"
+        elif existing_name is not None:
+            new_alias.append((contributor, existing_name))
+        elif existing_email is not None:
+            new_email.append((contributor, existing_email))
+    return (
+        sorted(new_contributors, key=lambda x: x['name'].split()[-1].lower()),
+        new_alias,
+        new_email
+    )
 
-    # sort on the last word of the name
-    new_contributors = sorted(new_contributors,
-            key=lambda x: x['name'][-1].lower())
 
-    # show new contributors to be merged to the list
-    if new_contributors:
-        print "inserting:"
-        for contributor in new_contributors:
-            print format_contributor(contributor)
+def merge_short_term_contributors(contrib_file_lines, new_contributors):
+    """ Merge new contributors into Short-term Contributions section in
+    alphabetical order.
 
-    # merge with alphabetical (by last part of name) contributor list
-    i = 0
+    Returns:
+        (list) Lines including new contributors for writing to CONTRIBUTORS.rst
+    """
     short_term_found = False
-    for line in fileinput.input("CONTRIBUTORS.rst", inplace=1):
+    for (i, line) in enumerate(contrib_file_lines):
         if not short_term_found:
-            print line,
             if "Short-term" in line:
                 short_term_found = True
         else:
-            if i >= len(new_contributors) or "@" not in line:
-                print line,
-            else:
-                listed_name = line.split()[-2].lower()
-                contributor = new_contributors[i]
-                # insert all new contributors that fit here
-                while listed_name > contributor["name"][-1].lower():
-                    print format_contributor(contributor)
-                    i += 1
-                    if i < len(new_contributors):
-                        contributor = new_contributors[i]
-                    else:
-                        break
-                print line,
-    # append remaining contributors
-    with open("CONTRIBUTORS.rst", "a") as contrib_file:
-        while i < len(new_contributors):
-            contrib_file.write(format_contributor(new_contributors[i]) + "\n")
-            i += 1
+            if CONTRIB_FILE_CONTRIBUTOR_RE.search(line):
+                break
+
+    short_term_contributor_lines = [l for l in contrib_file_lines[i:] if l] + \
+        [format_contributor(c) + "\n" for c in new_contributors]
+
+    def last_name_sort(contrib_line):
+        m = CONTRIB_FILE_CONTRIBUTOR_RE.search(contrib_line)
+        return m.group(1).split()[-1].lower()
+
+    return contrib_file_lines[:i] + sorted(short_term_contributor_lines, key=last_name_sort)
+
+
+def main():
+    contrib_file = Path("CONTRIBUTORS.rst")
+    with contrib_file.open() as f:
+        contrib_file_lines = f.readlines()
+
+    old_contributors = get_old_contributors(contrib_file_lines)
+
+    contributors = get_contributors()
+    new_contributors, new_alias, new_email = get_new_contributors(contributors, old_contributors)
+
+    for contributor, old_name in new_alias:
+        print("new alias {0} for {1} {2} ?".format(
+            contributor['name'], old_name, contributor['email']))
+
+    for contributor, old_email in new_email:
+        print("new email {0} for {1} {2} ?".format(
+            contributor['email'], contributor['name'], old_email))
+
+    if new_alias or new_email:
+        print("Please update .mailmap")
+
+    if new_contributors:
+        print("inserting:")
+        print("\n".join([format_contributor(c) for c in new_contributors]))
+
+    with contrib_file.open("w") as f:
+        f.writelines(merge_short_term_contributors(contrib_file_lines, new_contributors))
 
 
 if __name__ == "__main__":

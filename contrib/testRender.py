@@ -1,43 +1,47 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 "Test Render Script"
 
-import os, shutil, tempfile, time, sys, math, re
-from subprocess import Popen, PIPE, STDOUT, CalledProcessError
-from optparse import OptionParser
+import argparse
+import math
+import os
+import re
+import shutil
+import sys
+import tempfile
+import time
+from shlex import split
+from subprocess import PIPE, STDOUT, CalledProcessError, run
 
 overviewer_scripts = ['./overviewer.py', './gmap.py']
 
-def check_call(*args, **kwargs):
-    quiet = False
-    if "quiet" in kwargs.keys():
-        quiet = kwargs["quiet"]
-        del kwargs["quiet"]
-    if quiet:
-        kwargs['stdout'] = PIPE
-        kwargs['stderr'] = STDOUT
-    p = Popen(*args, **kwargs)
-    output = ""
-    if quiet:
-        while p.poll() == None:
-            output += p.communicate()[0]
-    returncode = p.wait()
-    if returncode:
-        if quiet:
-            print output
-        raise CalledProcessError(returncode, args)
-    return returncode
 
-def check_output(*args, **kwargs):
-    kwargs['stdout'] = PIPE
-    # will hang for HUGE output... you were warned
-    p = Popen(*args, **kwargs)
-    returncode = p.wait()
-    if returncode:
-        raise CalledProcessError(returncode, args)
-    return p.communicate()[0]
+def check_call(args, verbose=False):
+    try:
+        return run(
+            args,
+            check=True,
+            stdout=None if verbose else PIPE,
+            stderr=None if verbose else STDOUT,
+            universal_newlines=True,
+        )
+    except CalledProcessError as e:
+        if verbose:
+            print(e.output)
+        raise e
 
-def clean_render(overviewerargs, quiet):
+
+def check_output(args):
+    p = run(
+        args,
+        check=True,
+        stdout=PIPE,
+        universal_newlines=True
+    )
+    return p.stdout
+
+
+def clean_render(overviewerargs, verbose=False):
     tempdir = tempfile.mkdtemp('mc-overviewer-test')
     overviewer_script = None
     for script in overviewer_scripts:
@@ -47,115 +51,124 @@ def clean_render(overviewerargs, quiet):
     if overviewer_script is None:
         sys.stderr.write("could not find main overviewer script\n")
         sys.exit(1)
-        
+
     try:
         # check_call raises CalledProcessError when overviewer.py exits badly
-        check_call([sys.executable, 'setup.py', 'clean', 'build'], quiet=quiet)
+        check_call([sys.executable] + split("setup.py clean build"), verbose=verbose)
         try:
-            check_call([sys.executable, overviewer_script, '-d'] + overviewerargs, quiet=quiet)
+            check_call([sys.executable, overviewer_script, '-d'] + overviewerargs, verbose=verbose)
         except CalledProcessError:
             pass
         starttime = time.time()
-        check_call([sys.executable, overviewer_script,] + overviewerargs + [tempdir,], quiet=quiet)
+        check_call([sys.executable, overviewer_script] +
+                   overviewerargs + [tempdir, ], verbose=verbose)
         endtime = time.time()
-        
+
         return endtime - starttime
     finally:
         shutil.rmtree(tempdir, True)
 
-def get_stats(timelist):
-    stats = {}
-    
-    stats['count'] = len(timelist)
-    stats['minimum'] = min(timelist)
-    stats['maximum'] = max(timelist)
-    stats['average'] = sum(timelist) / float(len(timelist))
-    
-    meandiff = map(lambda x: (x - stats['average'])**2, timelist)
-    stats['standard deviation'] = math.sqrt(sum(meandiff) / float(len(meandiff)))
-    
-    return stats
 
-commitre = re.compile('^commit ([a-z0-9]{40})$', re.MULTILINE)
-branchre = re.compile('^\\* (.+)$', re.MULTILINE)
+def get_stats(timelist):
+    average = sum(timelist) / float(len(timelist))
+    meandiff = [(x - average) ** 2 for x in timelist]
+    sd = math.sqrt(sum(meandiff) / len(meandiff))
+    return {
+        "count": len(timelist),
+        "minimum": min(timelist),
+        "maximum": max(timelist),
+        "average": average,
+        "standard deviation": sd
+    }
+
+
+def get_current_branch():
+    gittext = check_output(split('git rev-parse --abbrev-ref HEAD'))
+    return gittext.strip() if gittext != "HEAD" else None
+
+
 def get_current_commit():
-    gittext = check_output(['git', 'branch'])
-    match = branchre.search(gittext)
-    if match and not ("no branch" in match.group(1)):
-        return match.group(1)
-    gittext = check_output(['git', 'show', 'HEAD'])
-    match = commitre.match(gittext)
-    if match == None:
-        return None
-    return match.group(1)
+    gittext = check_output(split('git rev-parse HEAD'))
+    return gittext.strip() if gittext else None
+
+
+def get_current_ref():
+    branch = get_current_branch()
+    if branch:
+        return branch
+
+    commit = get_current_commit()
+    if commit:
+        return commit
+
 
 def get_commits(gitrange):
-    gittext = check_output(['git', 'log', '--raw', '--reverse', gitrange])
-    for match in commitre.finditer(gittext):
-        yield match.group(1)
+    gittext = check_output(split('git rev-list --reverse') + [gitrange, ])
+    return (c for c in gittext.split("\n"))
+
 
 def set_commit(commit):
-    check_call(['git', 'checkout', commit], quiet=True)
+    check_call(split('git checkout') + [commit, ])
 
-parser = OptionParser(usage="usage: %prog [options] -- [overviewer options/world]")
-parser.add_option("-n", "--number", metavar="N",
-                  action="store", type="int", dest="number", default=3,
-                  help="number of renders per commit [default: 3]")
-parser.add_option("-c", "--commits", metavar="RANGE",
-                  action="append", type="string", dest="commits", default=[],
-                  help="the commit (or range of commits) to test [default: current]")
-parser.add_option("-v", "--verbose",
-                  action="store_false", dest="quiet", default=True,
-                  help="don't suppress overviewer output")
-parser.add_option("-k", "--keep-going",
-                  action="store_false", dest="fatal_errors", default=True,
-                  help="don't stop testing when Overviewer croaks")
-parser.add_option("-l", "--log", dest="log", default="", metavar="FILE",
-                  help="log all test results to a file")
 
-(options, args) = parser.parse_args()
+def main(args):
+    commits = []
+    for commit in args.commits:
+        if '..' in commit:
+            commits = get_commits(commit)
+        else:
+            commits.append(commit)
+    if not commits:
+        commits = [get_current_ref(), ]
 
-if len(args) == 0:
-    parser.print_help()
-    sys.exit(0)
+    log = None
+    if args.log:
+        log = args.log
 
-commits = []
-for commit in options.commits:
-    if '..' in commit:
-        commits = get_commits(commit)
-    else:
-        commits.append(commit)
-if not commits:
-    commits = [get_current_commit(),]
+    reset_commit = get_current_ref()
+    try:
+        for commit in commits:
+            print("testing commit", commit)
+            set_commit(commit)
+            timelist = []
+            print(" -- "),
+            try:
+                for i in range(args.number):
+                    sys.stdout.write(str(i + 1) + " ")
+                    sys.stdout.flush()
+                    timelist.append(clean_render(args.overviewer_args, verbose=args.verbose))
+                print("... done")
+                stats = get_stats(timelist)
+                print(stats)
+                if log:
+                    log.write("%s %s\n" % (commit, repr(stats)))
+            except CalledProcessError as e:
+                if args.fatal_errors:
+                    print(e)
+                    print("Overviewer croaked, exiting...")
+                    print("(to avoid this, use --keep-going)")
+                    sys.exit(1)
+    finally:
+        set_commit(reset_commit)
+        if log:
+            log.close()
 
-log = None
-if options.log != "":
-    log = open(options.log, "w")
 
-reset_commit = get_current_commit()
-try:
-    for commit in commits:
-        print "testing commit", commit
-        set_commit(commit)
-        timelist = []
-        print " -- ",
-        try:
-            for i in range(options.number):
-                sys.stdout.write(str(i+1)+" ")
-                sys.stdout.flush()
-                timelist.append(clean_render(args, options.quiet))
-            print "... done"
-            stats = get_stats(timelist)
-            print stats
-            if log:
-                log.write("%s %s\n" % (commit, repr(stats)))
-        except CalledProcessError, e:
-            if options.fatal_errors:
-                print
-                print "Overviewer croaked, exiting..."
-                print "(to avoid this, use --keep-going)"
-                sys.exit(1)
-finally:
-    set_commit(reset_commit)
-    if log:
-        log.close()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("overviewer_args", metavar="[overviewer options/world]", nargs="+")
+    parser.add_argument("-n", "--option", metavar="N", type=int, action="store",
+                        dest="number", default=3, help="number of renders per commit [default: 3]")
+    parser.add_argument("-c", "--commits", metavar="RANGE",
+                        action="append", type=str, dest="commits", default=[],
+                        help="the commit (or range of commits) to test [default: current]")
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
+                        help="don't suppress overviewer output")
+    parser.add_argument("-k", "--keep-going",
+                        action="store_false", dest="fatal_errors", default=True,
+                        help="don't stop testing when Overviewer croaks")
+    parser.add_argument("-l", "--log", dest="log", type=argparse.FileType('w'), metavar="FILE",
+                        help="log all test results to a file")
+
+    args = parser.parse_args()
+    main(args)

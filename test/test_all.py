@@ -2,7 +2,10 @@
 import unittest
 
 # For convenience
-import sys,os,logging
+import sys
+import os
+import logging
+
 sys.path.insert(0, os.getcwd())
 sys.path.insert(0, os.path.join(os.getcwd(), os.pardir))
 
@@ -12,15 +15,23 @@ from test_rendertileset import RendertileSetTest
 from test_settings import SettingsTest
 from test_tileset import TilesetTest
 from test_cache import TestLRU
+from test_contributors import TestContributors
+from test_cyrillic_convert import TestCyrillicConvert
+from test_playerInspect import TestPlayerInspect
+from test_regionTrimmer import TestRegionTrimmer
+from test_testRender import TestTestRender
 
 # DISABLE THIS BLOCK TO GET LOG OUTPUT FROM TILESET FOR DEBUGGING
 if 0:
     root = logging.getLogger()
+
     class NullHandler(logging.Handler):
         def handle(self, record):
             pass
+
         def emit(self, record):
             pass
+
         def createLock(self):
             self.lock = None
     root.addHandler(NullHandler())
