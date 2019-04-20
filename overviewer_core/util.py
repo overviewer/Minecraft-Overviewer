@@ -43,7 +43,7 @@ def findGitHash():
     try:
         p = Popen('git rev-parse HEAD', stdout=PIPE, stderr=PIPE, shell=True)
         p.stderr.close()
-        line = p.stdout.readlines()[0].strip()
+        line = p.stdout.readlines()[0].decode('utf-8').strip()
         if line and len(line) == 40 and all(c in hexdigits for c in line):
             return line
     except Exception:
@@ -59,7 +59,7 @@ def findGitVersion():
     try:
         p = Popen('git describe --tags --match "v*.*.*"', stdout=PIPE, stderr=PIPE, shell=True)
         p.stderr.close()
-        line = p.stdout.readlines()[0]
+        line = p.stdout.readlines()[0].decode('utf-8')
         if line.startswith('release-'):
             line = line.split('-', 1)[1]
         if line.startswith('v'):
