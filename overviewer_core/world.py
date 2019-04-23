@@ -134,11 +134,12 @@ class World(object):
             if mcas:
                 # construct a regionset object for this
                 rel = os.path.relpath(root, self.worlddir)
-                rset = RegionSet(root, rel)
-                if root == os.path.join(self.worlddir, "region"):
-                    self.regionsets.insert(0, rset)
-                else:
-                    self.regionsets.append(rset)
+                if rel != "poi":
+                    rset = RegionSet(root, rel)
+                    if root == os.path.join(self.worlddir, "region"):
+                        self.regionsets.insert(0, rset)
+                    else:
+                        self.regionsets.append(rset)
 
         # TODO move a lot of the following code into the RegionSet
 
@@ -272,7 +273,7 @@ class RegionSet(object):
             # this is the main world
             self.type = None
         else:
-            logging.warning("Unkown region type in %r", regiondir)
+            logging.warning("Unknown region type in %r", regiondir)
             self.type = "__unknown"
 
         logging.debug("Scanning regions.  Type is %r" % self.type)
