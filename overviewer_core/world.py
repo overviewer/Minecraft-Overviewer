@@ -1233,7 +1233,7 @@ class RegionSet(object):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy arra
-        if 'Biomes' in chunk_data:
+        if 'Biomes' in chunk_data and len(chunk_data['Biomes']) > 0:
             biomes = chunk_data['Biomes']
             if isinstance(biomes, str):
                 biomes = numpy.frombuffer(biomes, dtype=numpy.uint8)
@@ -1241,7 +1241,9 @@ class RegionSet(object):
                 biomes = numpy.asarray(biomes)
             biomes = biomes.reshape((16,16))
         else:
-            # worlds converted by Jeb's program may be missing the Biomes key
+            # Worlds converted by Jeb's program may be missing the Biomes key.
+            # Additionally, 19w09a worlds have an empty array as biomes key
+            # in some cases.
             biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
         chunk_data['Biomes'] = biomes
 
@@ -1251,8 +1253,11 @@ class RegionSet(object):
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
             try:
-                skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
-                skylight = skylight.reshape((16,16,8))
+                if 'SkyLight' in section:
+                    skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
+                    skylight = skylight.reshape((16,16,8))
+                else:   # Special case introduced with 1.14
+                    skylight = numpy.zeros((16,16,8), dtype=numpy.uint8)
                 skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
                 skylight_expanded[:,:,::2] = skylight & 0x0F
                 skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
@@ -1260,8 +1265,11 @@ class RegionSet(object):
                 section['SkyLight'] = skylight_expanded
 
                 # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
-                blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
-                blocklight = blocklight.reshape((16,16,8))
+                if 'BlockLight' in section:
+                    blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
+                    blocklight = blocklight.reshape((16,16,8))
+                else:   # Special case introduced with 1.14
+                    blocklight = numpy.zeros((16,16,8), dtype=numpy.uint8)
                 blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
                 blocklight_expanded[:,:,::2] = blocklight & 0x0F
                 blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
@@ -1270,8 +1278,11 @@ class RegionSet(object):
 
                 if 'Palette' in section:
                     (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types)
-                else:
+                elif 'Data' in section:
                     (blocks, data) = self._get_blockdata_v112(section)
+                else:   # Special case introduced with 1.14
+                    blocks = numpy.zeros((16,16,16), dtype=numpy.uint16)
+                    data = numpy.zeros((16,16,16), dtype=numpy.uint8)
                 (section['Blocks'], section['Data']) = (blocks, data)
 
             except ValueError:
