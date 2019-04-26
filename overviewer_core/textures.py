@@ -310,7 +310,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.13-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.14-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
@@ -1718,8 +1718,8 @@ def slabs(self, blockid, data):
 
     if blockid == 44 or blockid == 43:
         if texture== 0: # stone slab
-            top = self.load_image_texture("assets/minecraft/textures/block/stone_slab_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/block/stone_slab_side.png")
+            top = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png")
+            side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png")
         elif texture== 1: # sandstone slab
             top = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png")
             side = self.load_image_texture("assets/minecraft/textures/block/sandstone.png")
@@ -1736,7 +1736,7 @@ def slabs(self, blockid, data):
         elif texture== 7: #quartz        
             top = side = self.load_image_texture("assets/minecraft/textures/block/quartz_block_side.png")
         elif texture== 8: # special stone double slab with top texture only
-            top = side = self.load_image_texture("assets/minecraft/textures/block/stone_slab_top.png")
+            top = side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png")
         elif texture== 9: # special sandstone double slab with top texture only
             top = side = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png")
         else:
@@ -3308,7 +3308,7 @@ def repeater(self, blockid, data):
     
     # generate the diode
     top = self.load_image_texture("assets/minecraft/textures/block/repeater.png") if blockid == 93 else self.load_image_texture("assets/minecraft/textures/block/repeater_on.png")
-    side = self.load_image_texture("assets/minecraft/textures/block/stone_slab_side.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png")
     increment = 13
     
     if (data & 0x3) == 0: # pointing east
@@ -3440,7 +3440,7 @@ def comparator(self, blockid, data):
 
 
     top = self.load_image_texture("assets/minecraft/textures/block/comparator.png") if blockid == 149 else self.load_image_texture("assets/minecraft/textures/block/comparator_on.png")
-    side = self.load_image_texture("assets/minecraft/textures/block/stone_slab_side.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png")
     increment = 13
 
     if (data & 0x3) == 0: # pointing north
@@ -4581,7 +4581,7 @@ block(blockid=174, top_image="assets/minecraft/textures/block/packed_ice.png")
 block(blockid=11312, top_image="assets/minecraft/textures/block/blue_ice.png")
 
 #smooth stones
-block(blockid=11313, top_image="assets/minecraft/textures/block/stone_slab_top.png") # stone
+block(blockid=11313, top_image="assets/minecraft/textures/block/smooth_stone.png") # stone
 block(blockid=11314, top_image="assets/minecraft/textures/block/sandstone_top.png") # sandstone
 block(blockid=11315, top_image="assets/minecraft/textures/block/red_sandstone_top.png") # red sandstone
 
