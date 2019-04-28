@@ -2,6 +2,7 @@
 MANIFEST
 build/
 dist/
+docs/_build/
 Minecraft_Overviewer.egg-info
 terrain.png
 cachedir*
