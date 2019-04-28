@@ -2326,6 +2326,38 @@ def crafting_table(self, blockid, data):
     img = self.build_full_block(top, None, None, side3, side4, None)
     return img
 
+# fletching table
+@material(blockid=11359, solid=True, nodata=True)
+def fletching_table(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/fletching_table_top.png")
+    side3 = self.load_image_texture("assets/minecraft/textures/block/fletching_table_side.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/fletching_table_front.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+# cartography table
+@material(blockid=11360, solid=True, nodata=True)
+def cartography_table(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/cartography_table_top.png")
+    side1 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side3.png")
+    side2 = side1
+    side3 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side2.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side1.png").transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = self.build_full_block(top, side1, side2, side3, side4, None)
+    return img
+
+# smithing table
+@material(blockid=11361, solid=True, nodata=True)
+def smithing_table(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/smithing_table_top.png")
+    side3 = self.load_image_texture("assets/minecraft/textures/block/smithing_table_side.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/smithing_table_front.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
 # crops with 8 data values (like wheat)
 @material(blockid=59, data=range(8), transparent=True, nospawn=True)
 def crops8(self, blockid, data):
