@@ -1708,8 +1708,8 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
-@material(blockid=[43, 44, 181, 182, 204, 205, 11340, 11341, 11342], data=range(16),
-          transparent=(44, 182, 205, 11340, 11341, 11342), solid=True)
+@material(blockid=((43, 44, 181, 182, 204, 205) + tuple(range(11340,11359))), data=range(16),
+          transparent=((44, 182, 205) + tuple(range(11340,11359)) ), solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1766,7 +1766,40 @@ def slabs(self, blockid, data):
         top = side  = self.load_image_texture("assets/minecraft/textures/block/dark_prismarine.png").copy()
     elif blockid == 11342: #  prismarine brick slabs
         top = side  = self.load_image_texture("assets/minecraft/textures/block/prismarine_bricks.png").copy()
-    
+    elif blockid == 11343: #  andesite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/andesite.png").copy()
+    elif blockid == 11344: #  diorite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/diorite.png").copy()
+    elif blockid == 11345: #  granite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/granite.png").copy()
+    elif blockid == 11346: #  polished andesite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_andesite.png").copy()
+    elif blockid == 11347: #  polished diorite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_diorite.png").copy()
+    elif blockid == 11348: #  polished granite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_granite.png").copy()
+    elif blockid == 11349: #  red nether brick slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/red_nether_bricks.png").copy()
+    elif blockid == 11350: #  smooth sandstone slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png").copy()
+    elif blockid == 11351: #  cut sandstone slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/cut_sandstone.png").copy()
+    elif blockid == 11352: #  smooth red sandstone slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/red_sandstone_top.png").copy()
+    elif blockid == 11353: #  cut red sandstone slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/cut_red_sandstone.png").copy()
+    elif blockid == 11354: #  end_stone_brick_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/end_stone_bricks.png").copy()
+    elif blockid == 11355: #  mossy_cobblestone_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/mossy_cobblestone.png").copy()
+    elif blockid == 11356: #  mossy_stone_brick_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/mossy_stone_bricks.png").copy()
+    elif blockid == 11357: #  smooth_quartz_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/quartz_block_bottom.png").copy()
+    elif blockid == 11358: #  smooth_stone_slab
+        top  = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png").copy()
+        side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png").copy()
+
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
     

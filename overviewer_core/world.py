@@ -780,6 +780,22 @@ class RegionSet(object):
             'minecraft:prismarine_slab': (11340, 0),
             'minecraft:dark_prismarine_slab': (11341, 0),
             'minecraft:prismarine_brick_slab': (11342, 0),
+            "minecraft:andesite_slab": (11343, 0),
+            "minecraft:diorite_slab": (11344, 0),
+            "minecraft:granite_slab": (11345, 0),
+            "minecraft:polished_andesite_slab": (11346, 0),
+            "minecraft:polished_diorite_slab": (11347, 0),
+            "minecraft:polished_granite_slab": (11348, 0),
+            "minecraft:red_nether_brick_slab": (11349, 0),
+            "minecraft:smooth_sandstone_slab": (11350,0),
+            "minecraft:cut_sandstone_slab": (11351,0),
+            "minecraft:smooth_red_sandstone_slab": (11352,0),
+            "minecraft:cut_red_sandstone_slab": (11353,0),
+            "minecraft:end_stone_brick_slab": (11354,0),
+            "minecraft:mossy_cobblestone_slab": (11355,0),
+            "minecraft:mossy_stone_brick_slab": (11356,0),
+            "minecraft:smooth_quartz_slab": (11357,0),
+            "minecraft:smooth_stone_slab": (11358,0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -810,7 +826,15 @@ class RegionSet(object):
         stone_slabs = ('minecraft:stone_slab', 'minecraft:sandstone_slab','minecraft:red_sandstone_slab',
                         'minecraft:cobblestone_slab', 'minecraft:brick_slab','minecraft:purpur_slab',
                         'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
-                        'minecraft:quartz_slab')
+                        'minecraft:quartz_slab', "minecraft:andesite_slab", 'minecraft:diorite_slab',
+                        'minecraft:granite_slab', 'minecraft:polished_andesite_slab',
+                        'minecraft:polished_diorite_slab','minecraft:polished_granite_slab',
+                        'minecraft:red_nether_brick_slab','minecraft:smooth_sandstone_slab',
+                        'minecraft:cut_sandstone_slab','minecraft:smooth_red_sandstone_slab',
+                        'minecraft:cut_red_sandstone_slab','minecraft:end_stone_brick_slab',
+                        'minecraft:mossy_cobblestone_slab','minecraft:mossy_stone_brick_slab',
+                        'minecraft:smooth_quartz_slab','minecraft:smooth_stone_slab'
+                         )
         prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
 
         key = palette_entry['Name']
@@ -870,6 +894,55 @@ class RegionSet(object):
                         block = 45      # minecraft:bricks
                     elif key == 'minecraft:purpur_slab':
                         block = 201     # minecraft:purpur_block
+                    elif key == 'minecraft:andesite_slab':
+                        block = 1   # minecraft:andesite
+                        data  = 5
+                    elif key == 'minecraft:diorite_slab':
+                        block = 1   # minecraft:diorite
+                        data  = 3
+                    elif key == 'minecraft:granite_slab':
+                        block = 1   # minecraft:granite
+                        data  = 1
+                    elif key == 'minecraft:polished_andesite_slab':
+                        block = 1   # minecraft: polished_andesite
+                        data  = 6
+                    elif key == 'minecraft:polished_diorite_slab':
+                        block = 1   # minecraft: polished_diorite
+                        data  = 4
+                    elif key == 'minecraft:polished_granite_slab':
+                        block = 1   # minecraft: polished_granite
+                        data  = 2
+                    elif key == 'minecraft:red_nether_brick_slab':
+                        block = 215   # minecraft: red_nether_brick
+                        data  = 0
+                    elif key == 'minecraft:smooth_sandstone_slab':
+                        block = 11314   # minecraft: smooth_sandstone
+                        data  = 0
+                    elif key == 'minecraft:cut_sandstone_slab':
+                        block = 24   # minecraft: cut_sandstone
+                        data  = 2
+                    elif key == 'minecraft:smooth_red_sandstone_slab':
+                        block = 11315   # minecraft: smooth_red_sandstone
+                        data  = 0
+                    elif key == 'minecraft:cut_red_sandstone_slab':
+                        block = 179   # minecraft: cut_red_sandstone
+                        data  = 2
+                    elif key == 'minecraft:end_stone_brick_slab':
+                        block = 206   # minecraft:end_stone_bricks
+                        data  = 0
+                    elif key == 'minecraft:mossy_cobblestone_slab':
+                        block = 48   # minecraft:mossy_cobblestone
+                        data  = 0
+                    elif key == 'minecraft:mossy_stone_brick_slab':
+                        block = 98   # minecraft:mossy_stone_bricks
+                        data  = 1
+                    elif key == 'minecraft:smooth_quartz_slab':
+                        block = 155   # minecraft:smooth_quartz
+                        data  = 0
+                    elif key == 'minecraft:smooth_stone_slab':
+                        block = 11313   # minecraft:smooth_stone
+                        data  = 0
+
                 elif key in  prismarine_slabs:
                     block = 168         # minecraft:prismarine variants
                     if key == 'minecraft:prismarine_slab':
@@ -878,6 +951,7 @@ class RegionSet(object):
                         data = 1
                     elif key == 'minecraft:dark_prismarine_slab':
                         data = 2
+
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
