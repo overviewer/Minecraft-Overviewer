@@ -263,7 +263,23 @@ enum mc_block_id
     block_prismarine_brick_stairs = 11339,
     block_prismarine_slab  = 11340,
     block_dark_prismarine_slab = 11341,
-    block_prismarine_brick_slab  = 11342
+    block_prismarine_brick_slab  = 11342,
+    block_andesite_slab = 11343,
+    block_diorite_slab = 11344,
+    block_granite_slab = 11345,
+    block_polished_andesite_slab = 11346,
+    block_polished_diorite_slab = 11347,
+    block_polished_granite_slab = 11348,
+    block_red_nether_brick_slab = 11349,
+    block_smooth_sandstone_slab = 11350,
+    block_cut_sandstone_slab = 11351,
+    block_smooth_red_sandstone_slab = 11352,
+    block_cut_red_sandstone_slab = 11353,
+    block_end_stone_brick_slab = 11354,
+    block_mossy_cobblestone_slab = 11355,
+    block_mossy_stone_brick_slab = 11356,
+    block_smooth_quartz_slab = 11357,
+    block_smooth_stone_slab = 11358,
 };
 
 typedef uint16_t mc_block_t;

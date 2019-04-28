@@ -40,3 +40,4 @@ overviewer_core/src/primitives.h
 .idea
 /.vs/Minecraft-Overviewer/v15/.suo
 /.vs
+.vscode
