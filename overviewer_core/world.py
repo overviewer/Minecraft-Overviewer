@@ -1307,10 +1307,11 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
-        if chunk_data.get("Status", "") != "full":
+        if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk"):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
-        if not chunk_data.get("isLightOn", 0):
-            raise ChunkDoesntExist("Chunk %s,%s isn't lit" % (x,z))
+        if data[1]['DataVersion'] >= 1952:  # Only check this for 1.14 and above
+            if not chunk_data.get("isLightOn", 0):
+                raise ChunkDoesntExist("Chunk %s,%s isn't lit" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy arra
         if 'Biomes' in chunk_data and len(chunk_data['Biomes']) > 0:
