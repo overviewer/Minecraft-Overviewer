@@ -866,8 +866,8 @@ class RegionSet(object):
         elif key == 'minecraft:redstone_wire':
             data = palette_entry['Properties']['power']
         elif key == 'minecraft:grass_block':
-            if palette_entry['Properties']['snowy']:
-                data = 0x10
+            if palette_entry['Properties']['snowy'] == 'true':
+                data |= 0x10
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
