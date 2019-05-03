@@ -1307,7 +1307,8 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
-        if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk"):
+        if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk",
+                                                "mobs_spawned", ""):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
         if data[1]['DataVersion'] >= 1952:  # Only check this for 1.14 and above
             if not chunk_data.get("isLightOn", 0):
