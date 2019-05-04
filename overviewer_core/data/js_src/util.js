@@ -232,8 +232,8 @@ overviewer.util = {
                     
                 const newMapCoords = overviewer.util.fromWorldToLatLng(
                         currentWorldCoords.x, 
-                        coords.y, 
-                        coords.z, 
+                        currentWorldCoords.y, 
+                        currentWorldCoords.z, 
                         ev.layer.tileSetConfig);
                         
                 overviewer.map.setView(newMapCoords);
