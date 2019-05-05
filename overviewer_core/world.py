@@ -1310,9 +1310,6 @@ class RegionSet(object):
         if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk",
                                                 "mobs_spawned", ""):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
-        if data[1]['DataVersion'] >= 1952:  # Only check this for 1.14 and above
-            if not chunk_data.get("isLightOn", 0):
-                raise ChunkDoesntExist("Chunk %s,%s isn't lit" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy arra
         if 'Biomes' in chunk_data and len(chunk_data['Biomes']) > 0:
