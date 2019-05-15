@@ -236,7 +236,10 @@ overviewer.util = {
                         currentWorldCoords.z, 
                         ev.layer.tileSetConfig);
                         
-                overviewer.map.setView(newMapCoords);
+                overviewer.map.setView(
+                        newMapCoords,
+                        overviewer.map.getZoom(),
+                        { animate: false });
             }
             
             // before updating the current_layer, remove the marker control, if it exists
