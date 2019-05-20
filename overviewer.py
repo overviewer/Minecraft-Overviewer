@@ -63,6 +63,20 @@ def main():
                             "permissions instead. Overviewer does not need access to "
                             "critical system resources and therefore does not require "
                             "root access.")
+        try:
+            with open("/etc/redhat-release", "r") as release_f:
+                rel_contents = release_f.read()
+                try:
+                    major_rel = re.search(r'\d(\.\d+)?', rel_contents).group(0).split('.')[0]
+                    if major_rel == "6":
+                        logging.warning(
+                            "We will be dropping support for this release of your distribution "
+                            "soon. Please upgrade as soon as possible, or you will not receive "
+                            "future Overviewer updates.")
+                except AttributeError:
+                    pass
+        except IOError:
+            pass
 
     try:
         cpus = multiprocessing.cpu_count()
