@@ -49,17 +49,6 @@ you're all set! See you at the :doc:`running` page!
 
 CentOS / RHEL / Fedora
 ======================
-Prerequisites for CentOS/RHEL 6
---------------------------
-We recommend you upgrade to a newer version of your distribution, though in the meantime
-Overviewer should still work with Python 3.4 which is the latest available EPEL package for
-CentOS/RHEL 6, but is no longer supported with security fixes by the Python developers.
-
-Enable EPEL to get a release of Python 3::
-
-    yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
-
-
 Prerequisites for CentOS/RHEL 7
 --------------------------
 Enable EPEL to get a release of Python 3::
