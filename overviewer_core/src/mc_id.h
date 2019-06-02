@@ -280,6 +280,17 @@ enum mc_block_id
     block_mossy_stone_brick_slab = 11356,
     block_smooth_quartz_slab = 11357,
     block_smooth_stone_slab = 11358,
+    block_fletching_table = 11359,
+    block_cartography_table = 11360,
+    block_smithing_table = 11361,
+    block_blast_furnace = 11362,
+    // block_blast_furnace lit 11363
+    block_smoker = 11364,
+    // block_smoker lit = 11365,
+    block_lectern = 11366,
+    block_loom = 11367,
+    block_stonecutter = 11368,
+    block_grindstone = 11369,
 };
 
 typedef uint16_t mc_block_t;

@@ -2358,6 +2358,58 @@ def smithing_table(self, blockid, data):
     img = self.build_full_block(top, None, None, side3, side4, None)
     return img
 
+@material(blockid=11362, solid=True, nodata=True)
+def blast_furnace(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/blast_furnace_top.png")
+    side3 = self.load_image_texture("assets/minecraft/textures/block/blast_furnace_side.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/blast_furnace_front.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+@material(blockid=11364, solid=True, nodata=True)
+def smoker(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/smoker_top.png")
+    side3 = self.load_image_texture("assets/minecraft/textures/block/smoker_side.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/smoker_front.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+@material(blockid=11366, solid=True, nodata=True)
+def lectern(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/lectern_top.png")
+    side3 = self.load_image_texture("assets/minecraft/textures/block/lectern_sides.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/lectern_front.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+@material(blockid=11367, solid=True, nodata=True)
+def loom(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/loom_top.png")
+    side3 = self.load_image_texture("assets/minecraft/textures/block/loom_side.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/loom_front.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+@material(blockid=11368, solid=True, nodata=True)
+def stonecutter(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/stonecutter_top.png")
+    side3 = side4 = self.load_image_texture("assets/minecraft/textures/block/stonecutter_side.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+@material(blockid=11369, solid=True, nodata=True)
+def grindstone(self, blockid, data):
+    top = side3 = side4 = self.load_image_texture("assets/minecraft/textures/block/grindstone_side.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+
 # crops with 8 data values (like wheat)
 @material(blockid=59, data=range(8), transparent=True, nospawn=True)
 def crops8(self, blockid, data):
