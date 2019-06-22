@@ -1721,11 +1721,11 @@ def get_worlds():
         world_path = os.path.join(".", dir)
         try:
             info = nbt.load(world_dat)[1]
-            info['Data']['path'] = world_path.decode(loc)
+            info['Data']['path'] = world_path
             if 'LevelName' in info['Data'].keys():
                 ret[info['Data']['LevelName']] = info['Data']
         except nbt.CorruptNBTError:
-            ret[os.path.basename(world_path).decode(loc) + " (corrupt)"] = {'path': world_path.decode(loc),
+            ret[os.path.basename(world_path) + " (corrupt)"] = {'path': world_path,
                     'LastPlayed': 0,
                     'Time': 0,
                     'IsCorrupt': True}
