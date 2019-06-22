@@ -134,11 +134,12 @@ class World(object):
             if mcas:
                 # construct a regionset object for this
                 rel = os.path.relpath(root, self.worlddir)
-                rset = RegionSet(root, rel)
-                if root == os.path.join(self.worlddir, "region"):
-                    self.regionsets.insert(0, rset)
-                else:
-                    self.regionsets.append(rset)
+                if rel != "poi":
+                    rset = RegionSet(root, rel)
+                    if root == os.path.join(self.worlddir, "region"):
+                        self.regionsets.insert(0, rset)
+                    else:
+                        self.regionsets.append(rset)
 
         # TODO move a lot of the following code into the RegionSet
 
@@ -272,7 +273,7 @@ class RegionSet(object):
             # this is the main world
             self.type = None
         else:
-            logging.warning("Unkown region type in %r", regiondir)
+            logging.warning("Unknown region type in %r", regiondir)
             self.type = "__unknown"
 
         logging.debug("Scanning regions.  Type is %r" % self.type)
@@ -623,7 +624,10 @@ class RegionSet(object):
             'minecraft:standing_banner': (176, 0),
             'minecraft:wall_banner': (177, 0),
             'minecraft:red_sandstone': (179, 0),
+            'minecraft:cut_red_sandstone': (179, 2),
+            'minecraft:chiseled_red_sandstone': (179, 3),
             'minecraft:red_sandstone_stairs': (180, 0),
+            'minecraft:red_sandstone_slab': (182,0),
             'minecraft:spruce_fence_gate': (183, 0),
             'minecraft:birch_fence_gate': (184, 0),
             'minecraft:jungle_fence_gate': (185, 0),
@@ -770,6 +774,31 @@ class RegionSet(object):
             'minecraft:acacia_trapdoor': (11335, 0),
             'minecraft:dark_oak_trapdoor': (11336, 0),
             'minecraft:petrified_oak_slab': (126, 0),
+            'minecraft:prismarine_stairs': (11337, 0),
+            'minecraft:dark_prismarine_stairs': (11338, 0),
+            'minecraft:prismarine_brick_stairs': (11339,0),
+            'minecraft:prismarine_slab': (11340, 0),
+            'minecraft:dark_prismarine_slab': (11341, 0),
+            'minecraft:prismarine_brick_slab': (11342, 0),
+            "minecraft:andesite_slab": (11343, 0),
+            "minecraft:diorite_slab": (11344, 0),
+            "minecraft:granite_slab": (11345, 0),
+            "minecraft:polished_andesite_slab": (11346, 0),
+            "minecraft:polished_diorite_slab": (11347, 0),
+            "minecraft:polished_granite_slab": (11348, 0),
+            "minecraft:red_nether_brick_slab": (11349, 0),
+            "minecraft:smooth_sandstone_slab": (11350, 0),
+            "minecraft:cut_sandstone_slab": (11351, 0),
+            "minecraft:smooth_red_sandstone_slab": (11352, 0),
+            "minecraft:cut_red_sandstone_slab": (11353, 0),
+            "minecraft:end_stone_brick_slab": (11354, 0),
+            "minecraft:mossy_cobblestone_slab": (11355, 0),
+            "minecraft:mossy_stone_brick_slab": (11356, 0),
+            "minecraft:smooth_quartz_slab": (11357, 0),
+            "minecraft:smooth_stone_slab": (11358, 0),
+            "minecraft:fletching_table": (11359, 0),
+            "minecraft:cartography_table": (11360, 0),
+            "minecraft:smithing_table": (11361, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -795,6 +824,22 @@ class RegionSet(object):
         return "<RegionSet regiondir=%r>" % self.regiondir
 
     def _get_block(self, palette_entry):
+        wood_slabs = ('minecraft:oak_slab','minecraft:spruce_slab','minecraft:birch_slab','minecraft:jungle_slab',
+                        'minecraft:acacia_slab','minecraft:dark_oak_slab','minecraft:petrified_oak_slab')
+        stone_slabs = ('minecraft:stone_slab', 'minecraft:sandstone_slab','minecraft:red_sandstone_slab',
+                        'minecraft:cobblestone_slab', 'minecraft:brick_slab','minecraft:purpur_slab',
+                        'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
+                        'minecraft:quartz_slab', "minecraft:andesite_slab", 'minecraft:diorite_slab',
+                        'minecraft:granite_slab', 'minecraft:polished_andesite_slab',
+                        'minecraft:polished_diorite_slab','minecraft:polished_granite_slab',
+                        'minecraft:red_nether_brick_slab','minecraft:smooth_sandstone_slab',
+                        'minecraft:cut_sandstone_slab','minecraft:smooth_red_sandstone_slab',
+                        'minecraft:cut_red_sandstone_slab','minecraft:end_stone_brick_slab',
+                        'minecraft:mossy_cobblestone_slab','minecraft:mossy_stone_brick_slab',
+                        'minecraft:smooth_quartz_slab','minecraft:smooth_stone_slab'
+                         )
+        prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
+
         key = palette_entry['Name']
         (block, data) = self._blockmap[key]
         if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
@@ -821,19 +866,95 @@ class RegionSet(object):
         elif key == 'minecraft:redstone_wire':
             data = palette_entry['Properties']['power']
         elif key == 'minecraft:grass_block':
-            if palette_entry['Properties']['snowy']:
-                data = 0x10
+            if palette_entry['Properties']['snowy'] == 'true':
+                data |= 0x10
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
-        elif key in ['minecraft:stone_slab', 'minecraft:sandstone_slab', 'minecraft:oak_slab',
-                     'minecraft:cobblestone_slab', 'minecraft:brick_slab',
-                     'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
-                     'minecraft:quartz_slab', 'minecraft:petrified_oak_slab']:
+        elif key in wood_slabs + stone_slabs + prismarine_slabs:
+        # handle double slabs 
             if palette_entry['Properties']['type'] == 'top':
-                data += 8
+                data |= 0x08
             elif palette_entry['Properties']['type'] == 'double':
-                block = 125
+                if key in wood_slabs:
+                    block = 125         # block_double_wooden_slab
+                elif key in stone_slabs:
+                    if key == 'minecraft:stone_brick_slab':
+                        block = 98
+                    elif key == 'minecraft:stone_slab':
+                        block = 43      # block_double_stone_slab
+                    elif key == 'minecraft:cobblestone_slab':
+                        block = 4       # cobblestone
+                    elif key == 'minecraft:sandstone_slab':
+                        block = 24      # minecraft:sandstone
+                    elif key == 'minecraft:red_sandstone_slab':
+                        block = 179     # minecraft:red_sandstone
+                    elif key == 'minecraft:nether_brick_slab':
+                        block = 112     # minecraft:nether_bricks
+                    elif key == 'minecraft:quartz_slab':
+                        block = 155     # minecraft:quartz_block
+                    elif key == 'minecraft:brick_slab':
+                        block = 45      # minecraft:bricks
+                    elif key == 'minecraft:purpur_slab':
+                        block = 201     # minecraft:purpur_block
+                    elif key == 'minecraft:andesite_slab':
+                        block = 1   # minecraft:andesite
+                        data  = 5
+                    elif key == 'minecraft:diorite_slab':
+                        block = 1   # minecraft:diorite
+                        data  = 3
+                    elif key == 'minecraft:granite_slab':
+                        block = 1   # minecraft:granite
+                        data  = 1
+                    elif key == 'minecraft:polished_andesite_slab':
+                        block = 1   # minecraft: polished_andesite
+                        data  = 6
+                    elif key == 'minecraft:polished_diorite_slab':
+                        block = 1   # minecraft: polished_diorite
+                        data  = 4
+                    elif key == 'minecraft:polished_granite_slab':
+                        block = 1   # minecraft: polished_granite
+                        data  = 2
+                    elif key == 'minecraft:red_nether_brick_slab':
+                        block = 215   # minecraft: red_nether_brick
+                        data  = 0
+                    elif key == 'minecraft:smooth_sandstone_slab':
+                        block = 11314   # minecraft: smooth_sandstone
+                        data  = 0
+                    elif key == 'minecraft:cut_sandstone_slab':
+                        block = 24   # minecraft: cut_sandstone
+                        data  = 2
+                    elif key == 'minecraft:smooth_red_sandstone_slab':
+                        block = 11315   # minecraft: smooth_red_sandstone
+                        data  = 0
+                    elif key == 'minecraft:cut_red_sandstone_slab':
+                        block = 179   # minecraft: cut_red_sandstone
+                        data  = 2
+                    elif key == 'minecraft:end_stone_brick_slab':
+                        block = 206   # minecraft:end_stone_bricks
+                        data  = 0
+                    elif key == 'minecraft:mossy_cobblestone_slab':
+                        block = 48   # minecraft:mossy_cobblestone
+                        data  = 0
+                    elif key == 'minecraft:mossy_stone_brick_slab':
+                        block = 98   # minecraft:mossy_stone_bricks
+                        data  = 1
+                    elif key == 'minecraft:smooth_quartz_slab':
+                        block = 155   # minecraft:smooth_quartz
+                        data  = 0
+                    elif key == 'minecraft:smooth_stone_slab':
+                        block = 11313   # minecraft:smooth_stone
+                        data  = 0
+
+                elif key in  prismarine_slabs:
+                    block = 168         # minecraft:prismarine variants
+                    if key == 'minecraft:prismarine_slab':
+                        data = 0
+                    elif key == 'minecraft:prismarine_brick_slab':
+                        data = 1
+                    elif key == 'minecraft:dark_prismarine_slab':
+                        data = 2
+
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
@@ -920,10 +1041,12 @@ class RegionSet(object):
             if p['east']  == 'true': data |= 8
         elif key.endswith('_stairs'):
             facing = palette_entry['Properties']['facing']
-            if   facing == 'south': data |= 0x60
-            elif facing == 'east':  data |= 0x30
-            elif facing == 'north': data |= 0x18
-            elif facing == 'west':  data |= 0x48
+            if   facing == 'south': data = 2
+            elif facing == 'east':  data = 0
+            elif facing == 'north': data = 3
+            elif facing == 'west':  data = 1
+            if palette_entry['Properties']['half'] == 'top':
+                data |= 0x4
         elif key.endswith('_door'):
             p = palette_entry['Properties']
             if p['hinge'] == 'left': data |= 0x10
@@ -942,7 +1065,6 @@ class RegionSet(object):
         elif key in ['minecraft:beetroots', 'minecraft:melon_stem', 'minecraft:wheat',
                      'minecraft:pumpkin_stem', 'minecraft:potatoes', 'minecraft:carrots']:
             data = palette_entry['Properties']['age']
-
         return (block, data)
 
     def get_type(self):
@@ -1185,11 +1307,12 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
-        if chunk_data.get("Status", "") in ("empty", "carved", "liquid_carved", "decorated"):
+        if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk",
+                                                "mobs_spawned", ""):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array
-        if 'Biomes' in chunk_data:
+        if 'Biomes' in chunk_data and len(chunk_data['Biomes']) > 0:
             biomes = chunk_data['Biomes']
             if isinstance(biomes, bytes):
                 biomes = numpy.frombuffer(biomes, dtype=numpy.uint8)
@@ -1197,7 +1320,9 @@ class RegionSet(object):
                 biomes = numpy.asarray(biomes)
             biomes = biomes.reshape((16,16))
         else:
-            # worlds converted by Jeb's program may be missing the Biomes key
+            # Worlds converted by Jeb's program may be missing the Biomes key.
+            # Additionally, 19w09a worlds have an empty array as biomes key
+            # in some cases.
             biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
         chunk_data['Biomes'] = biomes
 
@@ -1207,8 +1332,11 @@ class RegionSet(object):
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
             try:
-                skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
-                skylight = skylight.reshape((16,16,8))
+                if 'SkyLight' in section:
+                    skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
+                    skylight = skylight.reshape((16,16,8))
+                else:   # Special case introduced with 1.14
+                    skylight = numpy.zeros((16,16,8), dtype=numpy.uint8)
                 skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
                 skylight_expanded[:,:,::2] = skylight & 0x0F
                 skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
@@ -1216,8 +1344,11 @@ class RegionSet(object):
                 section['SkyLight'] = skylight_expanded
 
                 # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
-                blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
-                blocklight = blocklight.reshape((16,16,8))
+                if 'BlockLight' in section:
+                    blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
+                    blocklight = blocklight.reshape((16,16,8))
+                else:   # Special case introduced with 1.14
+                    blocklight = numpy.zeros((16,16,8), dtype=numpy.uint8)
                 blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
                 blocklight_expanded[:,:,::2] = blocklight & 0x0F
                 blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
@@ -1226,8 +1357,11 @@ class RegionSet(object):
 
                 if 'Palette' in section:
                     (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types)
-                else:
+                elif 'Data' in section:
                     (blocks, data) = self._get_blockdata_v112(section)
+                else:   # Special case introduced with 1.14
+                    blocks = numpy.zeros((16,16,16), dtype=numpy.uint16)
+                    data = numpy.zeros((16,16,16), dtype=numpy.uint8)
                 (section['Blocks'], section['Data']) = (blocks, data)
 
             except ValueError:

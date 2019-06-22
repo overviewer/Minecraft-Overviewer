@@ -336,7 +336,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.13-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.14-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
@@ -1720,8 +1720,9 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
-# here because lots of pre-1.3 worlds use this blocks
-@material(blockid=[43, 44, 181, 182, 204, 205], data=list(range(16)), transparent=(44,182,205), solid=True)
+# here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
+@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340,11359)), data=list(range(16)),
+          transparent=[44, 182, 205] + list(range(11340,11359)), solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1730,8 +1731,8 @@ def slabs(self, blockid, data):
 
     if blockid == 44 or blockid == 43:
         if texture== 0: # stone slab
-            top = self.load_image_texture("assets/minecraft/textures/block/stone_slab_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/block/stone_slab_side.png")
+            top = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png")
+            side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png")
         elif texture== 1: # sandstone slab
             top = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png")
             side = self.load_image_texture("assets/minecraft/textures/block/sandstone.png")
@@ -1748,7 +1749,7 @@ def slabs(self, blockid, data):
         elif texture== 7: #quartz        
             top = side = self.load_image_texture("assets/minecraft/textures/block/quartz_block_side.png")
         elif texture== 8: # special stone double slab with top texture only
-            top = side = self.load_image_texture("assets/minecraft/textures/block/stone_slab_top.png")
+            top = side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png")
         elif texture== 9: # special sandstone double slab with top texture only
             top = side = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png")
         else:
@@ -1772,7 +1773,46 @@ def slabs(self, blockid, data):
     elif blockid == 204 or blockid == 205: # purpur slab (single=205 double=204)
         top = side = self.load_image_texture("assets/minecraft/textures/block/purpur_block.png");
 
-    
+    elif blockid == 11340: # prismarine slabs
+        top = side = self.load_image_texture("assets/minecraft/textures/block/prismarine.png").copy()
+    elif blockid == 11341: # dark prismarine slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/dark_prismarine.png").copy()
+    elif blockid == 11342: #  prismarine brick slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/prismarine_bricks.png").copy()
+    elif blockid == 11343: #  andesite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/andesite.png").copy()
+    elif blockid == 11344: #  diorite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/diorite.png").copy()
+    elif blockid == 11345: #  granite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/granite.png").copy()
+    elif blockid == 11346: #  polished andesite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_andesite.png").copy()
+    elif blockid == 11347: #  polished diorite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_diorite.png").copy()
+    elif blockid == 11348: #  polished granite slabs
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_granite.png").copy()
+    elif blockid == 11349: #  red nether brick slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/red_nether_bricks.png").copy()
+    elif blockid == 11350: #  smooth sandstone slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png").copy()
+    elif blockid == 11351: #  cut sandstone slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/cut_sandstone.png").copy()
+    elif blockid == 11352: #  smooth red sandstone slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/red_sandstone_top.png").copy()
+    elif blockid == 11353: #  cut red sandstone slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/cut_red_sandstone.png").copy()
+    elif blockid == 11354: #  end_stone_brick_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/end_stone_bricks.png").copy()
+    elif blockid == 11355: #  mossy_cobblestone_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/mossy_cobblestone.png").copy()
+    elif blockid == 11356: #  mossy_stone_brick_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/mossy_stone_bricks.png").copy()
+    elif blockid == 11357: #  smooth_quartz_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/quartz_block_bottom.png").copy()
+    elif blockid == 11358: #  smooth_stone_slab
+        top  = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png").copy()
+        side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png").copy()
+
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
     
@@ -1879,8 +1919,8 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, and red sandstone stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203], data=list(range(128)), transparent=True, solid=True, nospawn=True)
+# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, red sandstone and (dark) prismarine stairs.
+@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203,11337,11338,11339], data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1921,6 +1961,12 @@ def stairs(self, blockid, data):
         texture = self.load_image_texture("assets/minecraft/textures/block/red_sandstone.png").copy()
     elif blockid == 203: # purpur stairs
         texture = self.load_image_texture("assets/minecraft/textures/block/purpur_block.png").copy()
+    elif blockid == 11337: # prismarine stairs
+        texture = self.load_image_texture("assets/minecraft/textures/block/prismarine.png").copy()
+    elif blockid == 11338: # dark prismarine stairs
+        texture = self.load_image_texture("assets/minecraft/textures/block/dark_prismarine.png").copy()
+    elif blockid == 11339: # prismarine brick stairs
+        texture = self.load_image_texture("assets/minecraft/textures/block/prismarine_bricks.png").copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()
@@ -2290,6 +2336,38 @@ def crafting_table(self, blockid, data):
     side3 = self.load_image_texture("assets/minecraft/textures/block/crafting_table_side.png")
     side4 = self.load_image_texture("assets/minecraft/textures/block/crafting_table_front.png")
     
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+# fletching table
+@material(blockid=11359, solid=True, nodata=True)
+def fletching_table(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/fletching_table_top.png")
+    side3 = self.load_image_texture("assets/minecraft/textures/block/fletching_table_side.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/fletching_table_front.png")
+
+    img = self.build_full_block(top, None, None, side3, side4, None)
+    return img
+
+# cartography table
+@material(blockid=11360, solid=True, nodata=True)
+def cartography_table(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/cartography_table_top.png")
+    side1 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side3.png")
+    side2 = side1
+    side3 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side2.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side1.png").transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = self.build_full_block(top, side1, side2, side3, side4, None)
+    return img
+
+# smithing table
+@material(blockid=11361, solid=True, nodata=True)
+def smithing_table(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/smithing_table_top.png")
+    side3 = self.load_image_texture("assets/minecraft/textures/block/smithing_table_side.png")
+    side4 = self.load_image_texture("assets/minecraft/textures/block/smithing_table_front.png")
+
     img = self.build_full_block(top, None, None, side3, side4, None)
     return img
 
@@ -3308,7 +3386,7 @@ def repeater(self, blockid, data):
     
     # generate the diode
     top = self.load_image_texture("assets/minecraft/textures/block/repeater.png") if blockid == 93 else self.load_image_texture("assets/minecraft/textures/block/repeater_on.png")
-    side = self.load_image_texture("assets/minecraft/textures/block/stone_slab_side.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png")
     increment = 13
     
     if (data & 0x3) == 0: # pointing east
@@ -3440,7 +3518,7 @@ def comparator(self, blockid, data):
 
 
     top = self.load_image_texture("assets/minecraft/textures/block/comparator.png") if blockid == 149 else self.load_image_texture("assets/minecraft/textures/block/comparator_on.png")
-    side = self.load_image_texture("assets/minecraft/textures/block/stone_slab_side.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png")
     increment = 13
 
     if (data & 0x3) == 0: # pointing north
@@ -4581,7 +4659,7 @@ block(blockid=174, top_image="assets/minecraft/textures/block/packed_ice.png")
 block(blockid=11312, top_image="assets/minecraft/textures/block/blue_ice.png")
 
 #smooth stones
-block(blockid=11313, top_image="assets/minecraft/textures/block/stone_slab_top.png") # stone
+block(blockid=11313, top_image="assets/minecraft/textures/block/smooth_stone.png") # stone
 block(blockid=11314, top_image="assets/minecraft/textures/block/sandstone_top.png") # sandstone
 block(blockid=11315, top_image="assets/minecraft/textures/block/red_sandstone_top.png") # red sandstone
 

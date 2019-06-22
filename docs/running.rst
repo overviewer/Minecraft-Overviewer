@@ -267,17 +267,17 @@ If you want or need to provide your own textures, you have several options:
   Run the first line in a terminal, changing the version string to the latest as appropriate
   (these docs may not always be updated to reflect the latest). Then paste the second line
   into your terminal to download the latest version. ``${VERSION}`` will be replaced
-  by the acutal version string from the first line.
+  by the actual version string from the first line.
 
   ::
 
-    VERSION=1.12
-    wget https://s3.amazonaws.com/Minecraft.Download/versions/${VERSION}/${VERSION}.jar -P ~/.minecraft/versions/${VERSION}/
+    VERSION=1.14
+    wget https://overviewer.org/textures/${VERSION} -O ~/.minecraft/versions/${VERSION}/${VERSION}.jar
 
   If that's too confusing for you, then just take this single line and paste it into
-  a terminal to get 1.12 textures::
+  a terminal to get 1.14 textures::
 
-    wget https://s3.amazonaws.com/Minecraft.Download/versions/1.12/1.12.jar -P ~/.minecraft/versions/1.12/
+    wget https://overviewer.org/textures/1.14 -O ~/.minecraft/versions/1.14/1.14.jar
 
 * You can also just run the launcher to install the client.
 

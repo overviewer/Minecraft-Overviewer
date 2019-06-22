@@ -16,6 +16,7 @@
  */
 
 #include "overlay.h"
+#include "../mc_id.h"
 
 typedef enum { false, true } bool;
 
@@ -28,7 +29,7 @@ typedef struct {
 
 struct Condition{
     int relx, rely, relz;
-    unsigned char block;
+    unsigned short block;
 };
 
 struct Color {

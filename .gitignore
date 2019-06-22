@@ -2,6 +2,7 @@
 MANIFEST
 build/
 dist/
+docs/_build/
 Minecraft_Overviewer.egg-info
 terrain.png
 cachedir*
@@ -40,3 +41,4 @@ overviewer_core/src/primitives.h
 .idea
 /.vs/Minecraft-Overviewer/v15/.suo
 /.vs
+.vscode

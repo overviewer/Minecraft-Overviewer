@@ -16,6 +16,7 @@
  */
 
 #include "overlay.h"
+#include "../mc_id.h"
 
 static void get_color(void *data, RenderState *state,
                       unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
@@ -85,9 +86,9 @@ overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyOb
 
     // exactly analogous to edge-line code for these special blocks
     int increment=0;
-    if (state->block == 44)  // half-step
+    if (state->block == block_stone_slab)  // half-step
         increment=6;
-    else if (state->block == 78) // snow
+    else if (state->block == block_snow_layer) // snow
         increment=9;
     
     /* skip rendering the overlay if we can't see it */

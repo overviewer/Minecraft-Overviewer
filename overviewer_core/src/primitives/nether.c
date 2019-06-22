@@ -16,6 +16,8 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
+#include "../block_class.h"
 #include "nether.h"
 
 static void
@@ -26,16 +28,16 @@ walk_chunk(RenderState *state, RenderPrimitiveNether *data) {
     for (x = -1; x < WIDTH + 1; x++) {
         for (z = -1; z < DEPTH + 1; z++) {
             id = get_data(state, BLOCKS, x, NETHER_ROOF - (state->chunky * 16), z);
-            if (id == 7) {
+            if (id == block_bedrock) {
                 data->remove_block[x+1][NETHER_ROOF][z+1] = 1;
                 id = get_data(state, BLOCKS, x, (NETHER_ROOF + 1) - (state->chunky * 16), z);
-                if (id == 39 || id == 40)
+                if (id == block_brown_mushroom || id == block_red_mushroom)
                     data->remove_block[x+1][NETHER_ROOF + 1][z+1] = 1;
             }
 
             for (y = NETHER_ROOF-1; y>=0; y--) {
                 id = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
-                if (id == 7 || id == 87 || id == 153 || id == 11)
+                if (block_class_is_subset(id, (mc_block_t[]){block_bedrock,block_netherrack,block_quartz_ore,block_lava}, 4))
                     data->remove_block[x+1][y][z+1] = 1;
                 else
                     break;

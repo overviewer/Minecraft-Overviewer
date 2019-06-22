@@ -16,6 +16,8 @@
  */
 
 #include "../overviewer.h"
+#include "../mc_id.h"
+#include "../block_class.h"
 #include "biomes.h"
 
 typedef struct {
@@ -75,7 +77,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
     PrimitiveBase *self = (PrimitiveBase *)data;
 
     /* in order to detect top parts of doublePlant grass & ferns */
-    unsigned char below_block = get_data(state, BLOCKS, state->x, state->y-1, state->z);
+    unsigned short below_block = get_data(state, BLOCKS, state->x, state->y-1, state->z);
     unsigned char below_data = get_data(state, DATA, state->x, state->y-1, state->z);
 
     /* draw the block! */
@@ -93,24 +95,25 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
      * biome-compliant ones! The tinting is now all done here.
      */
     if (/* grass, but not snowgrass */
-        (state->block == 2 && get_data(state, BLOCKS, state->x, state->y+1, state->z) != 78) ||
-        /* water */
-        state->block == 8 || state->block == 9 ||
-        /* leaves */
-        state->block == 18 || state->block == 161 ||
+        (state->block == block_grass && get_data(state, BLOCKS, state->x, state->y+1, state->z) != 78) ||
+        block_class_is_subset(state->block, (mc_block_t[]){
+                block_vine,
+                block_waterlily,
+                block_flowing_water,
+                block_water,
+                block_leaves,
+                block_leaves2
+            },
+        6) ||
         /* tallgrass, but not dead shrubs */
-        (state->block == 31 && state->block_data != 0) ||
+        (state->block == block_tallgrass && state->block_data != 0) ||
         /* pumpkin/melon stem, not fully grown. Fully grown stems
          * get constant brown color (see textures.py) */
-        (((state->block == 104) || (state->block == 105)) && (state->block_data != 7)) ||
-        /* vines */
-        state->block == 106 ||
-        /* lily pads */
-        state->block == 111 ||
+        (((state->block == block_pumpkin_stem) || (state->block == block_melon_stem)) && (state->block_data != 7)) ||
         /* doublePlant grass & ferns */
-        (state->block == 175 && (state->block_data == 2 || state->block_data == 3)) ||
+        (state->block == block_double_plant && (state->block_data == 2 || state->block_data == 3)) ||
         /* doublePlant grass & ferns tops */
-        (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3)) )
+        (state->block == block_double_plant && below_block == block_double_plant && (below_data == 2 || below_data == 3)) )
     {
         /* do the biome stuff! */
         PyObject *facemask = mask;
@@ -118,24 +121,29 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         PyObject *color_table = NULL;
         unsigned char flip_xy = 0;
         
-        if (state->block == 2) {
+        if (state->block == block_grass) {
             /* grass needs a special facemask */
             facemask = self->grass_texture;
         }
-
-        switch (state->block) {
-        case 2:
-            /* grass */
+        if(block_class_is_subset(state->block, (mc_block_t[]){
+            block_grass,
+            block_tallgrass,
+            block_pumpkin_stem,
+            block_melon_stem,
+            block_vine,
+            block_waterlily,
+            block_double_plant
+        },7)) {
             color_table = self->grasscolor;
-            break;
-        case 8:
-        case 9:
-            /* water */
+        }
+        else if(block_class_is_subset(state->block, (mc_block_t[]){
+            block_flowing_water,block_water
+        },2)) {
             color_table = self->watercolor;
-            break;
-        case 18:
-        case 161:
-            /* leaves */
+        }
+        else if(block_class_is_subset(state->block, (mc_block_t[]){
+            block_leaves,block_leaves2
+        },2)) {
             color_table = self->foliagecolor;
             if (state->block_data == 2)
             {
@@ -143,34 +151,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                    birch foliage color is flipped XY-ways */
                 flip_xy = 1;
             }
-            break;
-        case 31:
-            /* tall grass */
-            color_table = self->grasscolor;
-            break;
-        case 104:
-            /* pumpkin stem */
-            color_table = self->grasscolor;
-            break;
-        case 105:
-            /* melon stem */
-            color_table = self->grasscolor;
-            break;
-        case 106:
-            /* vines */
-            color_table = self->grasscolor;
-            break;
-        case 111:
-            /* lily pads */
-            color_table = self->grasscolor;
-            break;
-        case 175:
-            /* doublePlant grass & ferns */
-            color_table = self->grasscolor;
-            break;
-        default:
-            break;
-        };
+        }
             
         if (color_table) {
             unsigned char biome;

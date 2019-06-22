@@ -14,4 +14,7 @@
 #define OV_BLEND(mask, in1, in2, tmp1, tmp2)\
         (OV_MULDIV255(in1, 255 - mask, tmp1) + OV_MULDIV255(in2, mask, tmp2))
 
+#define COUNT_OF(array) \
+    (sizeof(array) / sizeof(array[0]))
+
 #endif
