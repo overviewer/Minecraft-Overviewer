@@ -20,10 +20,10 @@ ImPlatform.h
 Imaging.h
 
 # various forms of compiled c_overviewer extensions
-overviewer_core/c_overviewer.so
-overviewer_core/c_overviewer.pyd
-overviewer_core/c_overviewer_d.pyd
-overviewer_core/c_overviewer.dylib
+overviewer_core/c_overviewer*.so
+overviewer_core/c_overviewer*.pyd
+overviewer_core/c_overviewer_d*.pyd
+overviewer_core/c_overviewer*.dylib
 
 # generated files
 overviewer_core/overviewer_version.py
