@@ -15,42 +15,43 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overlay.h"
 #include "../mc_id.h"
+#include "overlay.h"
 
-typedef enum { false, true } bool;
+typedef enum { false,
+               true } bool;
 
 typedef struct {
     /* inherits from overlay */
     RenderPrimitiveOverlay parent;
-    void *structures;
+    void* structures;
     int numcolors;
 } RenderPrimitiveStructure;
 
-struct Condition{
+struct Condition {
     int relx, rely, relz;
     unsigned short block;
 };
 
 struct Color {
     int numconds;
-    struct Condition *conditions;
+    struct Condition* conditions;
     unsigned char r, g, b, a;
 };
 
-static void get_color(void *data,
-                      RenderState *state,
-                      unsigned char *r,
-                      unsigned char *g,
-                      unsigned char *b,
-                      unsigned char *a) {
+static void get_color(void* data,
+                      RenderState* state,
+                      unsigned char* r,
+                      unsigned char* g,
+                      unsigned char* b,
+                      unsigned char* a) {
     /**
      * Calculate the color at the current position and store the values to r,g,b,a.
      **/
-    RenderPrimitiveStructure *self = (RenderPrimitiveStructure *)data;
+    RenderPrimitiveStructure* self = (RenderPrimitiveStructure*)data;
     int x = state->x, z = state->z, y_max, y, col, cond;
-    struct Color *structures = (struct Color *)(self->structures);
-    struct Condition * c = NULL;
+    struct Color* structures = (struct Color*)(self->structures);
+    struct Condition* c = NULL;
     bool all = true;
     y_max = state->y + 1;
 
@@ -59,20 +60,20 @@ static void get_color(void *data,
      * If all conditions are met for one y level set r,b,g,a accordingly.
      **/
     // iterate over all the colors
-    for ( col = 0; col < self->numcolors; col++) {
+    for (col = 0; col < self->numcolors; col++) {
         // iterate over all y levels
         for (y = state->chunky * -16; y <= y_max; y++) {
             // iterate over all the conditions
             for (cond = 0; cond < structures[col].numconds; cond++) {
                 all = true;
-                c = (struct Condition *)&structures[col].conditions[cond];
+                c = (struct Condition*)&structures[col].conditions[cond];
                 // check if the condition does apply and break from the conditions loop if not.
-                if(!(c->block == get_data(state, BLOCKS, x+c->relx, y+c->rely, z+c->relz))) {
+                if (!(c->block == get_data(state, BLOCKS, x + c->relx, y + c->rely, z + c->relz))) {
                     all = false;
                     break;
                 }
             }
-            if (all){
+            if (all) {
                 // set the color
                 *r = structures[col].r;
                 *g = structures[col].g;
@@ -85,12 +86,12 @@ static void get_color(void *data,
     return;
 }
 
-static int overlay_structure_start(void *data, RenderState *state, PyObject *support) {
+static int overlay_structure_start(void* data, RenderState* state, PyObject* support) {
     /**
      * Initializing the search for structures by parsing the arguments and storing them into
      * appropriate structures. If no arguments are passed create and use default values.
      **/
-    PyObject *opt;
+    PyObject* opt;
     RenderPrimitiveStructure* self;
 
     /* first, chain up */
@@ -99,7 +100,7 @@ static int overlay_structure_start(void *data, RenderState *state, PyObject *sup
         return ret;
 
     /* now do custom initializations */
-    self = (RenderPrimitiveStructure *)data;
+    self = (RenderPrimitiveStructure*)data;
 
     // opt is a borrowed reference.  do not deref
     // store the structures python object into opt.
@@ -110,8 +111,8 @@ static int overlay_structure_start(void *data, RenderState *state, PyObject *sup
      * Check if a sane option was passed.
      **/
     if (opt && opt != Py_None) {
-        struct Color *structures = NULL;
-        struct Condition *cond = NULL;
+        struct Color* structures = NULL;
+        struct Condition* cond = NULL;
         Py_ssize_t structures_size = 0, i, cond_size = 0, n = 0;
         bool cont = true;
 
@@ -135,11 +136,11 @@ static int overlay_structure_start(void *data, RenderState *state, PyObject *sup
          **/
         if (cont) {
             for (i = 0; i < structures_size; i++) {
-                PyObject *structure = PyList_GET_ITEM(opt, i);
+                PyObject* structure = PyList_GET_ITEM(opt, i);
                 // condspy holding the conditions tuple of variable length (python object)
-                PyObject *condspy;
+                PyObject* condspy;
                 // colorpy holding the 4 tuple with r g b a values of the color
-                PyObject *colorpy;
+                PyObject* colorpy;
 
                 // getting the condspy and colorpy out of the structures.
                 if (!PyArg_ParseTuple(structure, "OO", &condspy, &colorpy)) {
@@ -150,11 +151,11 @@ static int overlay_structure_start(void *data, RenderState *state, PyObject *sup
                 }
 
                 // Parse colorpy into a c-struct.
-                if (!PyArg_ParseTuple( colorpy, "bbbb",
-                                       &structures[i].r,
-                                       &structures[i].g,
-                                       &structures[i].b,
-                                       &structures[i].a)) {
+                if (!PyArg_ParseTuple(colorpy, "bbbb",
+                                      &structures[i].r,
+                                      &structures[i].g,
+                                      &structures[i].b,
+                                      &structures[i].a)) {
                     free(structures);
                     self->structures = NULL;
                     return 1;
@@ -162,7 +163,7 @@ static int overlay_structure_start(void *data, RenderState *state, PyObject *sup
 
                 // Convert condspy to a fast sequence
                 condspy = PySequence_Fast(condspy, "Failed to parse conditions");
-                if(condspy == NULL) {
+                if (condspy == NULL) {
                     free(structures);
                     self->structures = NULL;
                     return 1;
@@ -183,14 +184,14 @@ static int overlay_structure_start(void *data, RenderState *state, PyObject *sup
 
                 // iterate over all the conditions and read them.
                 for (n = 0; n < structures[i].numconds; n++) {
-                    PyObject *ccond = PySequence_Fast_GET_ITEM(condspy, n);
-                    if(!PyArg_ParseTuple( ccond, "iiib",
+                    PyObject* ccond = PySequence_Fast_GET_ITEM(condspy, n);
+                    if (!PyArg_ParseTuple(ccond, "iiib",
                                           &cond[n].relx,
                                           &cond[n].rely,
                                           &cond[n].relz,
-                                          &cond[n].block)){
+                                          &cond[n].block)) {
                         int x = 0;
-                        for(x = 0; x < structures_size; x++){
+                        for (x = 0; x < structures_size; x++) {
                             free(structures[x].conditions);
                         }
                         free(structures);
@@ -208,16 +209,16 @@ static int overlay_structure_start(void *data, RenderState *state, PyObject *sup
     return 0;
 }
 
-static void overlay_structure_finish(void *data, RenderState *state) {
+static void overlay_structure_finish(void* data, RenderState* state) {
     /* first free all *our* stuff */
-    RenderPrimitiveStructure* self = (RenderPrimitiveStructure *)data;
+    RenderPrimitiveStructure* self = (RenderPrimitiveStructure*)data;
     int i = 0;
 
-    if(self->structures) {
+    if (self->structures) {
         // freeing the nested structure
-        struct Color * m = self->structures;
-        for(i = 0; i < self->numcolors; i++){
-            if(m[i].conditions)
+        struct Color* m = self->structures;
+        for (i = 0; i < self->numcolors; i++) {
+            if (m[i].conditions)
                 free(m[i].conditions);
         }
     }
@@ -240,4 +241,3 @@ RenderPrimitiveInterface primitive_overlay_structure = {
     NULL,
     overlay_draw,
 };
-

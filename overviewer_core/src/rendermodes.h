@@ -47,20 +47,20 @@
 /* render primitive interface */
 typedef struct {
     /* the name of this mode */
-    const char *name;    
+    const char* name;
     /* the size of the local storage for this rendermode */
     unsigned int data_size;
-    
+
     /* may return non-zero on error, last arg is the python support object */
-    int (*start)(void *, RenderState *, PyObject *);
-    void (*finish)(void *, RenderState *);
+    int (*start)(void*, RenderState*, PyObject*);
+    void (*finish)(void*, RenderState*);
     /* returns non-zero to skip rendering this block because it's not visible */
-    int (*occluded)(void *, RenderState *, int, int, int);
+    int (*occluded)(void*, RenderState*, int, int, int);
     /* returns non-zero to skip rendering this block because the user doesn't
      * want it visible */
-    int (*hidden)(void *, RenderState *, int, int, int);
+    int (*hidden)(void*, RenderState*, int, int, int);
     /* last two arguments are img and mask, from texture lookup */
-    void (*draw)(void *, RenderState *, PyObject *, PyObject *, PyObject *);
+    void (*draw)(void*, RenderState*, PyObject*, PyObject*, PyObject*);
 } RenderPrimitiveInterface;
 
 /* A quick note about the difference between occluded and hidden:
@@ -80,26 +80,26 @@ typedef struct {
 
 /* convenience wrapper for a single primitive + interface */
 typedef struct {
-    void *primitive;
-    RenderPrimitiveInterface *iface;
+    void* primitive;
+    RenderPrimitiveInterface* iface;
 } RenderPrimitive;
 
 /* wrapper for passing around rendermodes */
 struct _RenderMode {
     unsigned int num_primitives;
-    RenderPrimitive **primitives;
-    RenderState *state;
+    RenderPrimitive** primitives;
+    RenderState* state;
 };
 
 /* functions for creating / using rendermodes */
-RenderMode *render_mode_create(PyObject *mode, RenderState *state);
-void render_mode_destroy(RenderMode *self);
-int render_mode_occluded(RenderMode *self, int x, int y, int z);
-int render_mode_hidden(RenderMode *self, int x, int y, int z);
-void render_mode_draw(RenderMode *self, PyObject *img, PyObject *mask, PyObject *mask_light);
+RenderMode* render_mode_create(PyObject* mode, RenderState* state);
+void render_mode_destroy(RenderMode* self);
+int render_mode_occluded(RenderMode* self, int x, int y, int z);
+int render_mode_hidden(RenderMode* self, int x, int y, int z);
+void render_mode_draw(RenderMode* self, PyObject* img, PyObject* mask, PyObject* mask_light);
 
 /* helper function for reading in rendermode options
    works like PyArg_ParseTuple on a support object */
-int render_mode_parse_option(PyObject *support, const char *name, const char *format, ...);
+int render_mode_parse_option(PyObject* support, const char* name, const char* format, ...);
 
 #endif /* __RENDERMODES_H_INCLUDED__ */

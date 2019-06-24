@@ -15,7 +15,6 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #define DEFAULT_BIOME 4 /* forest, nice and green */
 
 typedef struct {
@@ -65,7 +64,7 @@ static Biome biome_table[] = {
     {"TaigaHills", 0.05, 0.8, 255, 255, 255},
     /* 20 */
     {"Extreme Hills Edge", 0.2, 0.3, 255, 255, 255},
-     /* Values below are guesses */
+    /* Values below are guesses */
     {"Jungle", 2.0, 0.45, 255, 255, 255},
     {"JungleHills", 2.0, 0.45, 255, 255, 255},
     {"JungleEdge", 2.0, 0.45, 255, 255, 255},
@@ -245,4 +244,3 @@ static Biome biome_table[] = {
 };
 
 #define NUM_BIOMES (sizeof(biome_table) / sizeof(Biome))
-

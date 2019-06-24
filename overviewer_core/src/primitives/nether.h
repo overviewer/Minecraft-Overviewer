@@ -27,6 +27,6 @@
 typedef struct {
     int walked_chunk;
 
-    int remove_block[WIDTH+2][HEIGHT][DEPTH+2];
-    
+    int remove_block[WIDTH + 2][HEIGHT][DEPTH + 2];
+
 } RenderPrimitiveNether;

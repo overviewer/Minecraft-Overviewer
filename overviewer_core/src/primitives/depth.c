@@ -23,9 +23,9 @@ typedef struct {
 } PrimitiveDepth;
 
 static int
-depth_start(void *data, RenderState *state, PyObject *support) {
-    PrimitiveDepth *self = (PrimitiveDepth *)data;
-    
+depth_start(void* data, RenderState* state, PyObject* support) {
+    PrimitiveDepth* self = (PrimitiveDepth*)data;
+
     if (!render_mode_parse_option(support, "min", "I", &(self->min)))
         return 1;
     if (!render_mode_parse_option(support, "max", "I", &(self->max)))
@@ -35,8 +35,8 @@ depth_start(void *data, RenderState *state, PyObject *support) {
 }
 
 static int
-depth_hidden(void *data, RenderState *state, int x, int y, int z) {
-    PrimitiveDepth *self = (PrimitiveDepth *)data;
+depth_hidden(void* data, RenderState* state, int x, int y, int z) {
+    PrimitiveDepth* self = (PrimitiveDepth*)data;
     y += 16 * state->chunky;
     if (y > self->max || y < self->min) {
         return 1;
@@ -45,7 +45,8 @@ depth_hidden(void *data, RenderState *state, int x, int y, int z) {
 }
 
 RenderPrimitiveInterface primitive_depth = {
-    "depth", sizeof(PrimitiveDepth),
+    "depth",
+    sizeof(PrimitiveDepth),
     depth_start,
     NULL,
     NULL,

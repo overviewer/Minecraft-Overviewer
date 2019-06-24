@@ -27,14 +27,14 @@ typedef struct {
     /* color will be a pointer to either the default_color object below or
        to a specially allocated color object that is instantiated from the
        settings file */
-    OverlayColor *color;
+    OverlayColor* color;
     OverlayColor default_color;
     /* can be overridden in derived classes to control
        overlay alpha and color
        last four vars are r, g, b, a out */
-    void (*get_color)(void *, RenderState *,
-                      unsigned char *, unsigned char *, unsigned char *, unsigned char *);
+    void (*get_color)(void*, RenderState*,
+                      unsigned char*, unsigned char*, unsigned char*, unsigned char*);
 } RenderPrimitiveOverlay;
 extern RenderPrimitiveInterface primitive_overlay;
 
-void overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light);
+void overlay_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light);

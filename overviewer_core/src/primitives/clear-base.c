@@ -18,22 +18,22 @@
 #include "../overviewer.h"
 
 static int
-clear_base_occluded(void *data, RenderState *state, int x, int y, int z) {
-    if ( (x != 0) && (y != 15) && (z != 127) &&
-         !render_mode_hidden(state->rendermode, x-1, y, z) &&
-         !render_mode_hidden(state->rendermode, x, y, z+1) &&
-         !render_mode_hidden(state->rendermode, x, y+1, z) &&
-         !is_transparent(getArrayShort3D(state->blocks, x-1, y, z)) &&
-         !is_transparent(getArrayShort3D(state->blocks, x, y, z+1)) &&
-         !is_transparent(getArrayShort3D(state->blocks, x, y+1, z))) {
+clear_base_occluded(void* data, RenderState* state, int x, int y, int z) {
+    if ((x != 0) && (y != 15) && (z != 127) &&
+        !render_mode_hidden(state->rendermode, x - 1, y, z) &&
+        !render_mode_hidden(state->rendermode, x, y, z + 1) &&
+        !render_mode_hidden(state->rendermode, x, y + 1, z) &&
+        !is_transparent(getArrayShort3D(state->blocks, x - 1, y, z)) &&
+        !is_transparent(getArrayShort3D(state->blocks, x, y, z + 1)) &&
+        !is_transparent(getArrayShort3D(state->blocks, x, y + 1, z))) {
         return 1;
     }
-    
+
     return 0;
 }
 
 static void
-clear_base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+clear_base_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
     /* clear the draw space -- set alpha to 0 within mask */
     tint_with_mask(state->img, 255, 255, 255, 0, mask, state->imgx, state->imgy, 0, 0);
 }

@@ -8,11 +8,11 @@
 
 /* like (a * b + 127) / 255), but much faster on most platforms
    from PIL's _imaging.c */
-#define OV_MULDIV255(a, b, tmp)\
+#define OV_MULDIV255(a, b, tmp) \
     (tmp = (a) * (b) + 128, ((((tmp) >> 8) + (tmp)) >> 8))
 
-#define OV_BLEND(mask, in1, in2, tmp1, tmp2)\
-        (OV_MULDIV255(in1, 255 - mask, tmp1) + OV_MULDIV255(in2, mask, tmp2))
+#define OV_BLEND(mask, in1, in2, tmp1, tmp2) \
+    (OV_MULDIV255(in1, 255 - mask, tmp1) + OV_MULDIV255(in2, mask, tmp2))
 
 #define COUNT_OF(array) \
     (sizeof(array) / sizeof(array[0]))

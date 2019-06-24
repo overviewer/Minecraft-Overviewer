@@ -24,55 +24,51 @@
 #ifndef __OVERVIEWER_H_INCLUDED__
 #define __OVERVIEWER_H_INCLUDED__
 
-
 #define WINVER 0x0601
 #define _WIN32_WINNT 0x0601
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
 #define OVERVIEWER_EXTENSION_VERSION 65
 
 /* Python PIL, and numpy headers */
+#include <Imaging.h>
 #include <Python.h>
 #include <numpy/arrayobject.h>
-#include <Imaging.h>
 /* Fix Pillow on mingw-w64 which includes windows.h in Imaging.h */
 #undef TRANSPARENT
 /* Utility macros */
 #include "utils.h"
 
-
 /* macro for getting a value out of various numpy arrays the 3D arrays have
    interesting, swizzled coordinates because minecraft (anvil) stores blocks
    in y/z/x order for 3D, z/x order for 2D */
-#define getArrayByte3D(array, x,y,z) (*(unsigned char *)(PyArray_GETPTR3((array), (y), (z), (x))))
-#define getArrayShort3D(array, x,y,z) (*(unsigned short *)(PyArray_GETPTR3((array), (y), (z), (x))))
-#define getArrayByte2D(array, x,y) (*(unsigned char *)(PyArray_GETPTR2((array), (y), (x))))
-
+#define getArrayByte3D(array, x, y, z) (*(unsigned char*)(PyArray_GETPTR3((array), (y), (z), (x))))
+#define getArrayShort3D(array, x, y, z) (*(unsigned short*)(PyArray_GETPTR3((array), (y), (z), (x))))
+#define getArrayByte2D(array, x, y) (*(unsigned char*)(PyArray_GETPTR2((array), (y), (x))))
 
 /* in composite.c */
-Imaging imaging_python_to_c(PyObject *obj);
-PyObject *alpha_over(PyObject *dest, PyObject *src, PyObject *mask,
+Imaging imaging_python_to_c(PyObject* obj);
+PyObject* alpha_over(PyObject* dest, PyObject* src, PyObject* mask,
                      int dx, int dy, int xsize, int ysize);
-PyObject *alpha_over_full(PyObject *dest, PyObject *src, PyObject *mask, float overall_alpha,
+PyObject* alpha_over_full(PyObject* dest, PyObject* src, PyObject* mask, float overall_alpha,
                           int dx, int dy, int xsize, int ysize);
-PyObject *alpha_over_wrap(PyObject *self, PyObject *args);
-PyObject *tint_with_mask(PyObject *dest, unsigned char sr, unsigned char sg,
+PyObject* alpha_over_wrap(PyObject* self, PyObject* args);
+PyObject* tint_with_mask(PyObject* dest, unsigned char sr, unsigned char sg,
                          unsigned char sb, unsigned char sa,
-                         PyObject *mask, int dx, int dy, int xsize, int ysize);
-PyObject *draw_triangle(PyObject *dest, int inclusive,
+                         PyObject* mask, int dx, int dy, int xsize, int ysize);
+PyObject* draw_triangle(PyObject* dest, int inclusive,
                         int x0, int y0,
                         unsigned char r0, unsigned char g0, unsigned char b0,
                         int x1, int y1,
                         unsigned char r1, unsigned char g1, unsigned char b1,
                         int x2, int y2,
                         unsigned char r2, unsigned char g2, unsigned char b2,
-                        int tux, int tuy, int *touchups, unsigned int num_touchups);
-PyObject *resize_half(PyObject *dest, PyObject *src);
-PyObject *resize_half_wrap(PyObject *self, PyObject *args);
+                        int tux, int tuy, int* touchups, unsigned int num_touchups);
+PyObject* resize_half(PyObject* dest, PyObject* src);
+PyObject* resize_half_wrap(PyObject* self, PyObject* args);
 
 /* forward declaration of RenderMode object */
 typedef struct _RenderMode RenderMode;
@@ -83,7 +79,7 @@ typedef struct {
     /* whether this chunk is loaded: use load_chunk to load */
     int loaded;
     /* chunk biome array */
-    PyArrayObject *biomes;
+    PyArrayObject* biomes;
     /* all the sections in a given chunk */
     struct {
         /* all there is to know about each section */
@@ -92,20 +88,20 @@ typedef struct {
 } ChunkData;
 typedef struct {
     /* the regionset object, and chunk coords */
-    PyObject *world;
-    PyObject *regionset;
+    PyObject* world;
+    PyObject* regionset;
     int chunkx, chunky, chunkz;
-    
+
     /* the tile image and destination */
-    PyObject *img;
+    PyObject* img;
     int imgx, imgy;
-    
+
     /* the current render mode in use */
-    RenderMode *rendermode;
-    
+    RenderMode* rendermode;
+
     /* the Texture object */
-    PyObject *textures;
-    
+    PyObject* textures;
+
     /* the block position and type, and the block array */
     int x, y, z;
     unsigned short block;
@@ -113,18 +109,17 @@ typedef struct {
     unsigned short block_pdata;
 
     /* useful information about this, and neighboring, chunks */
-    PyArrayObject *blockdatas;
-    PyArrayObject *blocks;
-    
+    PyArrayObject* blockdatas;
+    PyArrayObject* blocks;
+
     /* 3x3 array of this and neighboring chunk columns */
-    ChunkData chunks[3][3];    
+    ChunkData chunks[3][3];
 } RenderState;
-PyObject *init_chunk_render(void);
+PyObject* init_chunk_render(void);
 /* returns true on error, x,z relative */
 int load_chunk(RenderState* state, int x, int z, unsigned char required);
-PyObject *chunk_render(PyObject *self, PyObject *args);
-typedef enum
-{
+PyObject* chunk_render(PyObject* self, PyObject* args);
+typedef enum {
     KNOWN,
     TRANSPARENT,
     SOLID,
@@ -136,7 +131,7 @@ typedef enum
    in block_has_property */
 extern unsigned int max_blockid;
 extern unsigned int max_data;
-extern unsigned char *block_properties;
+extern unsigned char* block_properties;
 static inline int
 block_has_property(unsigned short b, BlockProperty prop) {
     if (b >= max_blockid || !(block_properties[b] & (1 << KNOWN))) {
@@ -145,29 +140,27 @@ block_has_property(unsigned short b, BlockProperty prop) {
             return 1;
         return 0;
     }
-    
+
     return block_properties[b] & (1 << prop);
 }
 #define is_transparent(b) block_has_property((b), TRANSPARENT)
 #define is_known_transparent(b) block_has_property((b), TRANSPARENT) && block_has_property((b), KNOWN)
 
 /* helper for indexing section data possibly across section boundaries */
-typedef enum
-{
+typedef enum {
     BLOCKS,
     DATA,
     BLOCKLIGHT,
     SKYLIGHT,
     BIOMES,
 } DataType;
-static inline unsigned int get_data(RenderState *state, DataType type, int x, int y, int z)
-{
+static inline unsigned int get_data(RenderState* state, DataType type, int x, int y, int z) {
     int chunkx = 1, chunky = state->chunky, chunkz = 1;
-    PyArrayObject *data_array = NULL;
+    PyArrayObject* data_array = NULL;
     unsigned int def = 0;
     if (type == SKYLIGHT)
         def = 15;
-    
+
     if (x >= 16) {
         x -= 16;
         chunkx++;
@@ -193,15 +186,13 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
     }
     if (chunky < 0 || chunky >= SECTIONS_PER_CHUNK)
         return def;
-    
-    if (!(state->chunks[chunkx][chunkz].loaded))
-    {
+
+    if (!(state->chunks[chunkx][chunkz].loaded)) {
         if (load_chunk(state, chunkx - 1, chunkz - 1, 0))
             return def;
     }
-    
-    switch (type)
-    {
+
+    switch (type) {
     case BLOCKS:
         data_array = state->chunks[chunkx][chunkz].sections[chunky].blocks;
         break;
@@ -217,10 +208,10 @@ static inline unsigned int get_data(RenderState *state, DataType type, int x, in
     case BIOMES:
         data_array = state->chunks[chunkx][chunkz].biomes;
     };
-    
+
     if (data_array == NULL)
         return def;
-    
+
     if (type == BLOCKS)
         return getArrayShort3D(data_array, x, y, z);
     if (type == BIOMES)

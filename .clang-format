@@ -1,0 +1,38 @@
+---
+Language: Cpp
+AlignEscapedNewlinesLeft: 'true'
+AlignTrailingComments: 'true'
+AllowShortBlocksOnASingleLine: 'false'
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: 'false'
+AllowShortLoopsOnASingleLine: 'false'
+ColumnLimit: '0'
+ContinuationIndentWidth: '4'
+IndentWidth: '4'
+SortIncludes: true
+IncludeCategories:
+  - Regex:           '<[[:alnum:].]+>'
+    Priority:        -1
+  - Regex:           '\".*\"'
+    Priority:        1
+IndentCaseLabels: false
+MaxEmptyLinesToKeep: '1'
+PointerAlignment: Left
+SpaceBeforeAssignmentOperators: 'true'
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: 'false'
+SpacesBeforeTrailingComments: '1'
+SpacesInCStyleCastParentheses: 'false'
+SpacesInContainerLiterals: 'false'
+SpacesInParentheses: 'false'
+TabWidth: '4'
+BreakBeforeTernaryOperators: true
+Cpp11BracedListStyle: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  BeforeElse: false
+  AfterEnum: false
+  AfterFunction: false
+  AfterStruct: false
+  AfterUnion: false
+...

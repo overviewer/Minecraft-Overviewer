@@ -15,8 +15,8 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../overviewer.h"
 #include "../mc_id.h"
+#include "../overviewer.h"
 
 struct HideRule {
     unsigned short blockid;
@@ -29,21 +29,21 @@ typedef struct {
 } RenderPrimitiveHide;
 
 static int
-hide_start(void *data, RenderState *state, PyObject *support) {
-    PyObject *opt;
-    RenderPrimitiveHide* self = (RenderPrimitiveHide *)data;
+hide_start(void* data, RenderState* state, PyObject* support) {
+    PyObject* opt;
+    RenderPrimitiveHide* self = (RenderPrimitiveHide*)data;
     self->rules = NULL;
-    
+
     if (!render_mode_parse_option(support, "blocks", "O", &(opt)))
         return 1;
     if (opt && opt != Py_None) {
         Py_ssize_t blocks_size = 0, i;
-        
+
         if (!PyList_Check(opt)) {
             PyErr_SetString(PyExc_TypeError, "'blocks' must be a list");
             return 1;
         }
-        
+
         blocks_size = PyList_GET_SIZE(opt);
         self->rules = calloc(blocks_size + 1, sizeof(struct HideRule));
         if (self->rules == NULL) {
@@ -51,8 +51,8 @@ hide_start(void *data, RenderState *state, PyObject *support) {
         }
 
         for (i = 0; i < blocks_size; i++) {
-            PyObject *block = PyList_GET_ITEM(opt, i);
-            
+            PyObject* block = PyList_GET_ITEM(opt, i);
+
             if (PyLong_Check(block)) {
                 /* format 1: just a block id */
                 self->rules[i].blockid = PyLong_AsLong(block);
@@ -68,42 +68,42 @@ hide_start(void *data, RenderState *state, PyObject *support) {
             }
         }
     }
-    
+
     return 0;
 }
 
 static void
-hide_finish(void *data, RenderState *state) {
-    RenderPrimitiveHide *self = (RenderPrimitiveHide *)data;
-    
+hide_finish(void* data, RenderState* state) {
+    RenderPrimitiveHide* self = (RenderPrimitiveHide*)data;
+
     if (self->rules) {
         free(self->rules);
     }
 }
 
 static int
-hide_hidden(void *data, RenderState *state, int x, int y, int z) {
-    RenderPrimitiveHide *self = (RenderPrimitiveHide *)data;
+hide_hidden(void* data, RenderState* state, int x, int y, int z) {
+    RenderPrimitiveHide* self = (RenderPrimitiveHide*)data;
     unsigned int i;
     unsigned short block;
-    
+
     if (self->rules == NULL)
         return 0;
-    
+
     block = get_data(state, BLOCKS, x, y, z);
     for (i = 0; self->rules[i].blockid != block_air; i++) {
         if (block == self->rules[i].blockid) {
             unsigned char data;
-            
+
             if (!(self->rules[i].has_data))
                 return 1;
-            
+
             data = get_data(state, DATA, x, y, z);
             if (data == self->rules[i].data)
                 return 1;
         }
     }
-    
+
     return 0;
 }
 
