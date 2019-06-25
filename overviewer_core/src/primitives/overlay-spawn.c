@@ -55,13 +55,13 @@ static void get_color(void* data, RenderState* state,
     }
 }
 
-static int32_t
+static bool
 overlay_spawn_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveSpawn* self;
 
     /* first, chain up */
-    int32_t ret = primitive_overlay.start(data, state, support);
-    if (ret != 0)
+    bool ret = primitive_overlay.start(data, state, support);
+    if (ret != false)
         return ret;
 
     /* now do custom initializations */
@@ -73,7 +73,7 @@ overlay_spawn_start(void* data, RenderState* state, PyObject* support) {
     self->parent.default_color.b = 38;
     self->parent.default_color.a = 0;
 
-    return 0;
+    return false;
 }
 
 static void

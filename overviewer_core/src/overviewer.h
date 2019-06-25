@@ -121,7 +121,7 @@ typedef struct {
 } RenderState;
 PyObject* init_chunk_render(void);
 /* returns true on error, x,z relative */
-int32_t load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required);
+bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required);
 PyObject* chunk_render(PyObject* self, PyObject* args);
 typedef enum {
     KNOWN,
@@ -141,8 +141,8 @@ block_has_property(mc_block_t b, BlockProperty prop) {
     if (b >= max_blockid || !(block_properties[b] & (1 << KNOWN))) {
         /* block is unknown, return defaults */
         if (prop == TRANSPARENT)
-            return 1;
-        return 0;
+            return true;
+        return false;
     }
 
     return block_properties[b] & (1 << prop);

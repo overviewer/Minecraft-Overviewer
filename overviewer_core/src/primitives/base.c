@@ -28,12 +28,12 @@ typedef struct {
     PyObject* grass_texture;
 } PrimitiveBase;
 
-static int32_t
+static bool
 base_start(void* data, RenderState* state, PyObject* support) {
     PrimitiveBase* self = (PrimitiveBase*)data;
 
     if (!render_mode_parse_option(support, "biomes", "i", &(self->use_biomes)))
-        return 1;
+        return true;
 
     /* biome-compliant grass mask (includes sides!) */
     self->grass_texture = PyObject_GetAttrString(state->textures, "biome_grass_texture");
@@ -43,7 +43,7 @@ base_start(void* data, RenderState* state, PyObject* support) {
     self->grasscolor = PyObject_CallMethod(state->textures, "load_grass_color", "");
     self->watercolor = PyObject_CallMethod(state->textures, "load_water_color", "");
 
-    return 0;
+    return false;
 }
 
 static void
@@ -56,7 +56,7 @@ base_finish(void* data, RenderState* state) {
     Py_DECREF(self->grass_texture);
 }
 
-static int32_t
+static bool
 base_occluded(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     if ((x != 0) && (y != 15) && (z != 15) &&
         !render_mode_hidden(state->rendermode, x - 1, y, z) &&
@@ -65,10 +65,10 @@ base_occluded(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
         !is_transparent(getArrayShort3D(state->blocks, x - 1, y, z)) &&
         !is_transparent(getArrayShort3D(state->blocks, x, y, z + 1)) &&
         !is_transparent(getArrayShort3D(state->blocks, x, y + 1, z))) {
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
 static void
@@ -110,7 +110,7 @@ base_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObjec
         PyObject* facemask = mask;
         uint8_t r = 255, g = 255, b = 255;
         PyObject* color_table = NULL;
-        uint8_t flip_xy = 0;
+        bool flip_xy = false;
 
         if (state->block == block_grass) {
             /* grass needs a special facemask */
@@ -122,11 +122,8 @@ base_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObjec
             color_table = self->watercolor;
         } else if (block_class_is_subset(state->block, (mc_block_t[]){block_leaves, block_leaves2}, 2)) {
             color_table = self->foliagecolor;
-            if (state->block_data == 2) {
-                /* birch!
-                   birch foliage color is flipped XY-ways */
-                flip_xy = 1;
-            }
+            /* birch foliage color is flipped XY-ways */
+            flip_xy = state->block_data == 2;
         }
 
         if (color_table) {

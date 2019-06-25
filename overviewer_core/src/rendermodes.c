@@ -129,9 +129,9 @@ void render_mode_destroy(RenderMode* self) {
     free(self);
 }
 
-int32_t render_mode_occluded(RenderMode* self, int32_t x, int32_t y, int32_t z) {
+bool render_mode_occluded(RenderMode* self, int32_t x, int32_t y, int32_t z) {
     uint32_t i;
-    int32_t occluded = 0;
+    bool occluded = false;
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive* prim = self->primitives[i];
         if (prim->iface->occluded) {
@@ -144,9 +144,9 @@ int32_t render_mode_occluded(RenderMode* self, int32_t x, int32_t y, int32_t z) 
     return occluded;
 }
 
-int32_t render_mode_hidden(RenderMode* self, int32_t x, int32_t y, int32_t z) {
+bool render_mode_hidden(RenderMode* self, int32_t x, int32_t y, int32_t z) {
     uint32_t i;
-    int32_t hidden = 0;
+    bool hidden = false;
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive* prim = self->primitives[i];
         if (prim->iface->hidden) {
@@ -170,22 +170,22 @@ void render_mode_draw(RenderMode* self, PyObject* img, PyObject* mask, PyObject*
 }
 
 /* options parse helper */
-int32_t render_mode_parse_option(PyObject* support, const char* name, const char* format, ...) {
+bool render_mode_parse_option(PyObject* support, const char* name, const char* format, ...) {
     va_list ap;
     PyObject *item, *dict;
-    int32_t ret;
+    bool ret;
 
     if (support == NULL || name == NULL)
-        return 0;
+        return false;
 
     dict = PyObject_GetAttrString(support, "option_values");
     if (!dict)
-        return 0;
+        return false;
 
     item = PyDict_GetItemString(dict, name);
     if (item == NULL) {
         Py_DECREF(dict);
-        return 0;
+        return false;
     };
 
     /* make sure the item we're parsing is a tuple

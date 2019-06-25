@@ -110,15 +110,15 @@ static void get_color(void* data, RenderState* state,
     }
 }
 
-static int32_t
+static bool
 overlay_biomes_start(void* data, RenderState* state, PyObject* support) {
     PyObject* opt;
     RenderPrimitiveBiomes* self;
     uint8_t alpha_tmp = 0;
 
     /* first, chain up */
-    int32_t ret = primitive_overlay.start(data, state, support);
-    if (ret != 0)
+    bool ret = primitive_overlay.start(data, state, support);
+    if (ret != false)
         return ret;
 
     /* now do custom initializations */
@@ -126,7 +126,7 @@ overlay_biomes_start(void* data, RenderState* state, PyObject* support) {
 
     // opt is a borrowed reference.  do not deref
     if (!render_mode_parse_option(support, "biomes", "O", &(opt)))
-        return 1;
+        return true;
     if (opt && opt != Py_None) {
         struct BiomeColor* biomes = NULL;
         Py_ssize_t biomes_size = 0, i;
@@ -134,13 +134,13 @@ overlay_biomes_start(void* data, RenderState* state, PyObject* support) {
 
         if (!PyList_Check(opt)) {
             PyErr_SetString(PyExc_TypeError, "'biomes' must be a list");
-            return 1;
+            return true;
         }
 
         biomes_size = PyList_GET_SIZE(opt);
         biomes = self->biomes = calloc(biomes_size + 1, sizeof(struct BiomeColor));
         if (biomes == NULL) {
-            return 1;
+            return true;
         }
 
         for (i = 0; i < biomes_size; i++) {
@@ -151,7 +151,7 @@ overlay_biomes_start(void* data, RenderState* state, PyObject* support) {
             if (!PyArg_ParseTuple(biome, "s(bbb)", &tmpname, &(biomes[i].r), &(biomes[i].g), &(biomes[i].b))) {
                 free(biomes);
                 self->biomes = NULL;
-                return 1;
+                return true;
             }
 
             //printf("%s, (%d, %d, %d) ->", tmpname, biomes[i].r, biomes[i].g, biomes[i].b);
@@ -181,7 +181,7 @@ overlay_biomes_start(void* data, RenderState* state, PyObject* support) {
     /* setup custom color */
     self->parent.get_color = get_color;
 
-    return 0;
+    return false;
 }
 
 static void

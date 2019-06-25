@@ -31,7 +31,7 @@ typedef struct {
     /* can be set to 0 in derived modes to indicate that lighting the chunk
      * sides is actually important. Right now, this is used in cave mode
      */
-    int32_t skip_sides;
+    bool skip_sides;
 
     float strength;
     int32_t color;
@@ -40,7 +40,7 @@ typedef struct {
 
 /* exposed so that smooth-lighting can use them */
 extern RenderPrimitiveInterface primitive_lighting;
-int32_t lighting_is_face_occluded(RenderState* state, int32_t skip_sides, int32_t x, int32_t y, int32_t z);
+bool lighting_is_face_occluded(RenderState* state, bool skip_sides, int32_t x, int32_t y, int32_t z);
 void get_lighting_color(RenderPrimitiveLighting* self, RenderState* state,
                         int32_t x, int32_t y, int32_t z,
                         uint8_t* r, uint8_t* g, uint8_t* b);

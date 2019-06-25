@@ -83,7 +83,7 @@ static void get_color(void* data,
     return;
 }
 
-static int32_t overlay_structure_start(void* data, RenderState* state, PyObject* support) {
+static bool overlay_structure_start(void* data, RenderState* state, PyObject* support) {
     /**
      * Initializing the search for structures by parsing the arguments and storing them into
      * appropriate structures. If no arguments are passed create and use default values.
@@ -92,8 +92,8 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
     RenderPrimitiveStructure* self;
 
     /* first, chain up */
-    int32_t ret = primitive_overlay.start(data, state, support);
-    if (ret != 0)
+    bool ret = primitive_overlay.start(data, state, support);
+    if (ret != false)
         return ret;
 
     /* now do custom initializations */
@@ -102,7 +102,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
     // opt is a borrowed reference.  do not deref
     // store the structures python object into opt.
     if (!render_mode_parse_option(support, "structures", "O", &(opt)))
-        return 1;
+        return true;
 
     /**
      * Check if a sane option was passed.
@@ -116,7 +116,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
         opt = PySequence_Fast(opt, "expected a sequence");
         if (!opt) {
             PyErr_SetString(PyExc_TypeError, "'structures' must be a a sequence");
-            return 1;
+            return true;
         }
 
         structures_size = PySequence_Fast_GET_SIZE(opt);
@@ -125,7 +125,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
         self->numcolors = structures_size;
         if (structures == NULL) {
             PyErr_SetString(PyExc_MemoryError, "failed to allocate memory");
-            return 1;
+            return true;
         }
 
         /**
@@ -144,7 +144,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
                     // Exception set automatically
                     free(structures);
                     self->structures = NULL;
-                    return 1;
+                    return true;
                 }
 
                 // Parse colorpy into a c-struct.
@@ -155,7 +155,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
                                       &structures[i].a)) {
                     free(structures);
                     self->structures = NULL;
-                    return 1;
+                    return true;
                 }
 
                 // Convert condspy to a fast sequence
@@ -163,7 +163,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
                 if (condspy == NULL) {
                     free(structures);
                     self->structures = NULL;
-                    return 1;
+                    return true;
                 }
 
                 // get the number of conditions.
@@ -176,7 +176,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
                     PyErr_SetString(PyExc_MemoryError, "failed to allocate memory");
                     free(structures);
                     self->structures = NULL;
-                    return 1;
+                    return true;
                 }
 
                 // iterate over all the conditions and read them.
@@ -193,7 +193,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
                         }
                         free(structures);
                         self->structures = NULL;
-                        return 1;
+                        return true;
                     }
                 }
             }
@@ -203,7 +203,7 @@ static int32_t overlay_structure_start(void* data, RenderState* state, PyObject*
     /* setup custom color */
     self->parent.get_color = get_color;
 
-    return 0;
+    return false;
 }
 
 static void overlay_structure_finish(void* data, RenderState* state) {

@@ -121,14 +121,14 @@ static inline void load_chunk_section(ChunkData* dest, int32_t i, PyObject* sect
  * if required is true, failure to load the chunk will raise a python
  * exception and return true.
  */
-int32_t load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
+bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
     ChunkData* dest = &(state->chunks[1 + x][1 + z]);
     int32_t i;
     PyObject* chunk = NULL;
     PyObject* sections = NULL;
 
     if (dest->loaded)
-        return 0;
+        return false;
 
     /* set up reasonable defaults */
     dest->biomes = NULL;
@@ -150,7 +150,7 @@ int32_t load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
         if (!required) {
             PyErr_Clear();
         }
-        return 1;
+        return true;
     }
 
     sections = PyDict_GetItemString(chunk, "Sections");
@@ -163,7 +163,7 @@ int32_t load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
         if (!required) {
             PyErr_Clear();
         }
-        return 1;
+        return true;
     }
 
     dest->biomes = (PyArrayObject*)PyDict_GetItemString(chunk, "Biomes");
@@ -184,7 +184,7 @@ int32_t load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
     Py_DECREF(sections);
     Py_DECREF(chunk);
 
-    return 0;
+    return false;
 }
 
 /* helper to unload all loaded chunks */

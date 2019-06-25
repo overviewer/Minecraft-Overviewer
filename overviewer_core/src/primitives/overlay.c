@@ -41,7 +41,7 @@ overlay_start(void* data, RenderState* state, PyObject* support) {
     color = self->color = calloc(1, sizeof(OverlayColor));
 
     if (color == NULL) {
-        return 1;
+        return true;
     }
 
     self->default_color.r = 200;
@@ -58,12 +58,12 @@ overlay_start(void* data, RenderState* state, PyObject* support) {
         if (render_mode_parse_option(support, "overlay_color", "O", &(opt))) {
             // If it is an object, check to see if it is None, if it is, use the default.
             if (opt && opt != Py_None) {
-                return 1;
+                return true;
             }
         }
     }
 
-    return 0;
+    return false;
 }
 
 static void

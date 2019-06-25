@@ -23,16 +23,16 @@ typedef struct {
     PyObject* depth_colors;
 } RenderPrimitiveDepthTinting;
 
-static int32_t
+static bool
 depth_tinting_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveDepthTinting* self;
     self = (RenderPrimitiveDepthTinting*)data;
 
     self->depth_colors = PyObject_GetAttrString(support, "depth_colors");
     if (self->depth_colors == NULL)
-        return 1;
+        return true;
 
-    return 0;
+    return false;
 }
 
 static void

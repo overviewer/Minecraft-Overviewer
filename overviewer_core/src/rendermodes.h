@@ -51,14 +51,14 @@ typedef struct {
     /* the size of the local storage for this rendermode */
     uint32_t data_size;
 
-    /* may return non-zero on error, last arg is the python support object */
-    int32_t (*start)(void*, RenderState*, PyObject*);
+    /* may return true on error, last arg is the python support object */
+    bool (*start)(void*, RenderState*, PyObject*);
     void (*finish)(void*, RenderState*);
-    /* returns non-zero to skip rendering this block because it's not visible */
-    int32_t (*occluded)(void*, RenderState*, int, int, int);
-    /* returns non-zero to skip rendering this block because the user doesn't
+    /* returns true to skip rendering this block because it's not visible */
+    bool (*occluded)(void*, RenderState*, int, int, int);
+    /* returns true to skip rendering this block because the user doesn't
      * want it visible */
-    int32_t (*hidden)(void*, RenderState*, int, int, int);
+    bool (*hidden)(void*, RenderState*, int, int, int);
     /* last two arguments are img and mask, from texture lookup */
     void (*draw)(void*, RenderState*, PyObject*, PyObject*, PyObject*);
 } RenderPrimitiveInterface;
@@ -94,12 +94,12 @@ struct _RenderMode {
 /* functions for creating / using rendermodes */
 RenderMode* render_mode_create(PyObject* mode, RenderState* state);
 void render_mode_destroy(RenderMode* self);
-int32_t render_mode_occluded(RenderMode* self, int32_t x, int32_t y, int32_t z);
-int32_t render_mode_hidden(RenderMode* self, int32_t x, int32_t y, int32_t z);
+bool render_mode_occluded(RenderMode* self, int32_t x, int32_t y, int32_t z);
+bool render_mode_hidden(RenderMode* self, int32_t x, int32_t y, int32_t z);
 void render_mode_draw(RenderMode* self, PyObject* img, PyObject* mask, PyObject* mask_light);
 
 /* helper function for reading in rendermode options
    works like PyArg_ParseTuple on a support object */
-int32_t render_mode_parse_option(PyObject* support, const char* name, const char* format, ...);
+bool render_mode_parse_option(PyObject* support, const char* name, const char* format, ...);
 
 #endif /* __RENDERMODES_H_INCLUDED__ */

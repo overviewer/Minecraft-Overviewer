@@ -28,26 +28,26 @@ typedef struct {
     struct HideRule* rules;
 } RenderPrimitiveHide;
 
-static int32_t
+static bool
 hide_start(void* data, RenderState* state, PyObject* support) {
     PyObject* opt;
     RenderPrimitiveHide* self = (RenderPrimitiveHide*)data;
     self->rules = NULL;
 
     if (!render_mode_parse_option(support, "blocks", "O", &(opt)))
-        return 1;
+        return true;
     if (opt && opt != Py_None) {
         Py_ssize_t blocks_size = 0, i;
 
         if (!PyList_Check(opt)) {
             PyErr_SetString(PyExc_TypeError, "'blocks' must be a list");
-            return 1;
+            return true;
         }
 
         blocks_size = PyList_GET_SIZE(opt);
         self->rules = calloc(blocks_size + 1, sizeof(struct HideRule));
         if (self->rules == NULL) {
-            return 1;
+            return true;
         }
 
         for (i = 0; i < blocks_size; i++) {
@@ -64,12 +64,12 @@ hide_start(void* data, RenderState* state, PyObject* support) {
                 /* format not recognized */
                 free(self->rules);
                 self->rules = NULL;
-                return 1;
+                return true;
             }
         }
     }
 
-    return 0;
+    return false;
 }
 
 static void
@@ -81,14 +81,14 @@ hide_finish(void* data, RenderState* state) {
     }
 }
 
-static int32_t
+static bool
 hide_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     RenderPrimitiveHide* self = (RenderPrimitiveHide*)data;
     uint32_t i;
     mc_block_t block;
 
     if (self->rules == NULL)
-        return 0;
+        return false;
 
     block = get_data(state, BLOCKS, x, y, z);
     for (i = 0; self->rules[i].blockid != block_air; i++) {
@@ -96,15 +96,15 @@ hide_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
             uint8_t data;
 
             if (!(self->rules[i].has_data))
-                return 1;
+                return true;
 
             data = get_data(state, DATA, x, y, z);
             if (data == self->rules[i].data)
-                return 1;
+                return true;
         }
     }
 
-    return 0;
+    return false;
 }
 
 RenderPrimitiveInterface primitive_hide = {

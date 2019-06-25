@@ -99,7 +99,7 @@ calculate_light_color_fancy_night(void* data,
 
 uint8_t
 estimate_blocklevel(RenderPrimitiveLighting* self, RenderState* state,
-                    int32_t x, int32_t y, int32_t z, int* authoratative) {
+                    int32_t x, int32_t y, int32_t z, bool* authoratative) {
 
     /* placeholders for later data arrays, coordinates */
     mc_block_t block;
@@ -108,12 +108,12 @@ estimate_blocklevel(RenderPrimitiveLighting* self, RenderState* state,
 
     /* defaults to "guess" until told otherwise */
     if (authoratative)
-        *authoratative = 0;
+        *authoratative = false;
 
     block = get_data(state, BLOCKS, x, y, z);
 
     if (authoratative == NULL) {
-        int32_t auth;
+        bool auth;
 
         /* iterate through all surrounding blocks to take an average */
         int32_t dx, dy, dz, local_block;
@@ -196,15 +196,15 @@ get_lighting_color(RenderPrimitiveLighting* self, RenderState* state,
 }
 
 /* does per-face occlusion checking for do_shading_with_mask */
-inline int32_t
-lighting_is_face_occluded(RenderState* state, int32_t skip_sides, int32_t x, int32_t y, int32_t z) {
+inline bool
+lighting_is_face_occluded(RenderState* state, bool skip_sides, int32_t x, int32_t y, int32_t z) {
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16) {
         mc_block_t block = getArrayShort3D(state->blocks, x, y, z);
 
         if (!is_transparent(block) && !render_mode_hidden(state->rendermode, x, y, z)) {
             /* this face isn't visible, so don't draw anything */
-            return 1;
+            return true;
         }
     } else if (!skip_sides) {
         mc_block_t block = get_data(state, BLOCKS, x, y, z);
@@ -213,10 +213,10 @@ lighting_is_face_occluded(RenderState* state, int32_t skip_sides, int32_t x, int
                ugly black doted line between chunks in night rendermode.
                This wouldn't be necessary if the textures were truly
                tessellate-able */
-            return 1;
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
 /* shades the drawn block with the given facemask, based on the
@@ -247,14 +247,14 @@ lighting_start(void* data, RenderState* state, PyObject* support) {
     self = (RenderPrimitiveLighting*)data;
 
     /* don't skip sides by default */
-    self->skip_sides = 0;
+    self->skip_sides = false;
 
     if (!render_mode_parse_option(support, "strength", "f", &(self->strength)))
-        return 1;
-    if (!render_mode_parse_option(support, "night", "i", &(self->night)))
-        return 1;
-    if (!render_mode_parse_option(support, "color", "i", &(self->color)))
-        return 1;
+        return true;
+    if (!render_mode_parse_option(support, "night", "p", &(self->night)))
+        return true;
+    if (!render_mode_parse_option(support, "color", "p", &(self->color)))
+        return true;
 
     self->facemasks_py = PyObject_GetAttrString(support, "facemasks");
     // borrowed references, don't need to be decref'd
@@ -273,7 +273,7 @@ lighting_start(void* data, RenderState* state, PyObject* support) {
         if (self->lightcolor == Py_None) {
             Py_DECREF(self->lightcolor);
             self->lightcolor = NULL;
-            self->color = 0;
+            self->color = false;
         } else {
             if (self->night) {
                 self->calculate_light_color = calculate_light_color_fancy_night;
@@ -285,7 +285,7 @@ lighting_start(void* data, RenderState* state, PyObject* support) {
         self->lightcolor = NULL;
     }
 
-    return 0;
+    return false;
 }
 
 static void

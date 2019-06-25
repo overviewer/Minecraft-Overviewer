@@ -23,17 +23,17 @@ typedef struct {
     uint32_t sealevel;
 } PrimitiveHeightFading;
 
-static int32_t
+static bool
 height_fading_start(void* data, RenderState* state, PyObject* support) {
     PrimitiveHeightFading* self = (PrimitiveHeightFading*)data;
 
     if (!render_mode_parse_option(support, "sealevel", "I", &(self->sealevel)))
-        return 1;
+        return true;
 
     self->black_color = PyObject_GetAttrString(support, "black_color");
     self->white_color = PyObject_GetAttrString(support, "white_color");
 
-    return 0;
+    return false;
 }
 
 static void

@@ -25,8 +25,8 @@
 // add two to these because the primative functions should expect to
 // deal with x and z values of -1 and 16
 typedef struct {
-    int32_t walked_chunk;
+    bool walked_chunk;
 
-    int32_t remove_block[WIDTH + 2][HEIGHT][DEPTH + 2];
+    bool remove_block[WIDTH + 2][HEIGHT][DEPTH + 2];
 
 } RenderPrimitiveNether;

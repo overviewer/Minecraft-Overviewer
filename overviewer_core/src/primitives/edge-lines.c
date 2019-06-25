@@ -23,12 +23,12 @@ typedef struct {
     float opacity;
 } PrimitiveEdgeLines;
 
-static int32_t
+static bool
 edge_lines_start(void* data, RenderState* state, PyObject* support) {
     PrimitiveEdgeLines* self = (PrimitiveEdgeLines*)data;
     if (!render_mode_parse_option(support, "opacity", "f", &(self->opacity)))
-        return 1;
-    return 0;
+        return true;
+    return false;
 }
 
 static void

@@ -181,13 +181,13 @@ do_shading_with_rule(RenderPrimitiveSmoothLighting* self, RenderState* state, st
                   x, y, NULL, 0);
 }
 
-static int32_t
+static bool
 smooth_lighting_start(void* data, RenderState* state, PyObject* support) {
     /* first, chain up */
-    int32_t ret = primitive_lighting.start(data, state, support);
-    if (ret != 0)
+    bool ret = primitive_lighting.start(data, state, support);
+    if (ret != false)
         return ret;
-    return 0;
+    return false;
 }
 
 static void
@@ -198,9 +198,9 @@ smooth_lighting_finish(void* data, RenderState* state) {
 
 static void
 smooth_lighting_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
-    int32_t light_top = 1;
-    int32_t light_left = 1;
-    int32_t light_right = 1;
+    bool light_top   = true;
+    bool light_left  = true;
+    bool light_right = true;
     RenderPrimitiveSmoothLighting* self = (RenderPrimitiveSmoothLighting*)data;
 
     /* special case for leaves, water 8, water 9, ice 79
@@ -216,11 +216,11 @@ smooth_lighting_draw(void* data, RenderState* state, PyObject* src, PyObject* ma
     /* special code for water */
     if (state->block == block_water) {
         if (!(state->block_pdata & (1 << 4)))
-            light_top = 0;
+            light_top = false;
         if (!(state->block_pdata & (1 << 1)))
-            light_left = 0;
+            light_left = false;
         if (!(state->block_pdata & (1 << 2)))
-            light_right = 0;
+            light_right = false;
     }
 
     if (light_top)
