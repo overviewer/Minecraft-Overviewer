@@ -15,13 +15,13 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../overviewer.h"
-#include "../mc_id.h"
-#include "../block_class.h"
 #include "nether.h"
+#include "../block_class.h"
+#include "../mc_id.h"
+#include "../overviewer.h"
 
 static void
-walk_chunk(RenderState *state, RenderPrimitiveNether *data) {
+walk_chunk(RenderState* state, RenderPrimitiveNether* data) {
     int x, y, z;
     int id;
 
@@ -29,16 +29,16 @@ walk_chunk(RenderState *state, RenderPrimitiveNether *data) {
         for (z = -1; z < DEPTH + 1; z++) {
             id = get_data(state, BLOCKS, x, NETHER_ROOF - (state->chunky * 16), z);
             if (id == block_bedrock) {
-                data->remove_block[x+1][NETHER_ROOF][z+1] = 1;
+                data->remove_block[x + 1][NETHER_ROOF][z + 1] = 1;
                 id = get_data(state, BLOCKS, x, (NETHER_ROOF + 1) - (state->chunky * 16), z);
                 if (id == block_brown_mushroom || id == block_red_mushroom)
-                    data->remove_block[x+1][NETHER_ROOF + 1][z+1] = 1;
+                    data->remove_block[x + 1][NETHER_ROOF + 1][z + 1] = 1;
             }
 
-            for (y = NETHER_ROOF-1; y>=0; y--) {
+            for (y = NETHER_ROOF - 1; y >= 0; y--) {
                 id = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
-                if (block_class_is_subset(id, (mc_block_t[]){block_bedrock,block_netherrack,block_quartz_ore,block_lava}, 4))
-                    data->remove_block[x+1][y][z+1] = 1;
+                if (block_class_is_subset(id, (mc_block_t[]){block_bedrock, block_netherrack, block_quartz_ore, block_lava}, 4))
+                    data->remove_block[x + 1][y][z + 1] = 1;
                 else
                     break;
             }
@@ -48,21 +48,22 @@ walk_chunk(RenderState *state, RenderPrimitiveNether *data) {
 }
 
 static int
-nether_hidden(void *data, RenderState *state, int x, int y, int z) {
+nether_hidden(void* data, RenderState* state, int x, int y, int z) {
     RenderPrimitiveNether* self;
     int real_y;
 
-    self = (RenderPrimitiveNether *)data;
+    self = (RenderPrimitiveNether*)data;
 
     if (!(self->walked_chunk))
         walk_chunk(state, self);
 
     real_y = y + (state->chunky * 16);
-    return self->remove_block[x+1][real_y][z+1];
+    return self->remove_block[x + 1][real_y][z + 1];
 }
 
 RenderPrimitiveInterface primitive_nether = {
-    "nether", sizeof(RenderPrimitiveNether),
+    "nether",
+    sizeof(RenderPrimitiveNether),
     NULL,
     NULL,
     NULL,

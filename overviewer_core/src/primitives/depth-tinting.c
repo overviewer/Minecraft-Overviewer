@@ -15,18 +15,18 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../overviewer.h"
 #include <math.h>
+#include "../overviewer.h"
 
 typedef struct {
     /* list of colors used for tinting */
-    PyObject *depth_colors;
+    PyObject* depth_colors;
 } RenderPrimitiveDepthTinting;
 
 static int
-depth_tinting_start(void *data, RenderState *state, PyObject *support) {
+depth_tinting_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveDepthTinting* self;
-    self = (RenderPrimitiveDepthTinting *)data;
+    self = (RenderPrimitiveDepthTinting*)data;
 
     self->depth_colors = PyObject_GetAttrString(support, "depth_colors");
     if (self->depth_colors == NULL)
@@ -36,35 +36,36 @@ depth_tinting_start(void *data, RenderState *state, PyObject *support) {
 }
 
 static void
-depth_tinting_finish(void *data, RenderState *state) {
+depth_tinting_finish(void* data, RenderState* state) {
     RenderPrimitiveDepthTinting* self;
-    self = (RenderPrimitiveDepthTinting *)data;
+    self = (RenderPrimitiveDepthTinting*)data;
 
     Py_DECREF(self->depth_colors);
 }
 
 static void
-depth_tinting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+depth_tinting_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
     RenderPrimitiveDepthTinting* self;
     int y, r, g, b;
-    self = (RenderPrimitiveDepthTinting *)data;
+    self = (RenderPrimitiveDepthTinting*)data;
 
     y = state->chunky * 16 + state->y;
     r = 0, g = 0, b = 0;
-    
+
     /* the colors array assumes y is between 0 and 127, so we scale it */
     y = (y * 128) / (16 * SECTIONS_PER_CHUNK);
 
     /* get the colors and tint and tint */
-    r = PyLong_AsLong(PyList_GetItem(self->depth_colors, 0 + y*3));
-    g = PyLong_AsLong(PyList_GetItem(self->depth_colors, 1 + y*3));
-    b = PyLong_AsLong(PyList_GetItem(self->depth_colors, 2 + y*3));
-    
+    r = PyLong_AsLong(PyList_GetItem(self->depth_colors, 0 + y * 3));
+    g = PyLong_AsLong(PyList_GetItem(self->depth_colors, 1 + y * 3));
+    b = PyLong_AsLong(PyList_GetItem(self->depth_colors, 2 + y * 3));
+
     tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
 }
 
 RenderPrimitiveInterface primitive_depth_tinting = {
-    "depth-tinting", sizeof(RenderPrimitiveDepthTinting),
+    "depth-tinting",
+    sizeof(RenderPrimitiveDepthTinting),
     depth_tinting_start,
     depth_tinting_finish,
     NULL,

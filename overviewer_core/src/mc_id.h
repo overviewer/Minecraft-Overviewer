@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 
-enum mc_block_id
-{
+enum mc_block_id {
     block_air = 0,
     block_stone = 1,
     block_grass = 2,
@@ -261,9 +260,9 @@ enum mc_block_id
     block_prismarine_stairs = 11337,
     block_dark_prismarine_stairs = 11338,
     block_prismarine_brick_stairs = 11339,
-    block_prismarine_slab  = 11340,
+    block_prismarine_slab = 11340,
     block_dark_prismarine_slab = 11341,
-    block_prismarine_brick_slab  = 11342,
+    block_prismarine_brick_slab = 11342,
     block_andesite_slab = 11343,
     block_diorite_slab = 11344,
     block_granite_slab = 11345,
@@ -284,9 +283,7 @@ enum mc_block_id
 
 typedef uint16_t mc_block_t;
 
-
-enum mc_item_id
-{
+enum mc_item_id {
     item_iron_shovel = 256,
     item_iron_pickaxe = 257,
     item_iron_axe = 258,

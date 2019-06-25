@@ -15,69 +15,65 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../overviewer.h"
-#include "../mc_id.h"
 #include "../block_class.h"
+#include "../mc_id.h"
+#include "../overviewer.h"
 
 typedef struct {
     float opacity;
 } PrimitiveEdgeLines;
 
 static int
-edge_lines_start(void *data, RenderState *state, PyObject *support) {
-    PrimitiveEdgeLines *self = (PrimitiveEdgeLines *)data;
+edge_lines_start(void* data, RenderState* state, PyObject* support) {
+    PrimitiveEdgeLines* self = (PrimitiveEdgeLines*)data;
     if (!render_mode_parse_option(support, "opacity", "f", &(self->opacity)))
         return 1;
     return 0;
 }
 
 static void
-edge_lines_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    PrimitiveEdgeLines *self = (PrimitiveEdgeLines *)data;
+edge_lines_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
+    PrimitiveEdgeLines* self = (PrimitiveEdgeLines*)data;
 
     /* Draw some edge lines! */
-    if (block_class_is_subset(state->block, (mc_block_t[]){block_stone_slab,block_snow_layer}, 2)
-        || !is_transparent(state->block)) {
+    if (block_class_is_subset(state->block, (mc_block_t[]){block_stone_slab, block_snow_layer}, 2) || !is_transparent(state->block)) {
         Imaging img_i = imaging_python_to_c(state->img);
         unsigned char ink[] = {0, 0, 0, 255 * self->opacity};
         unsigned short side_block;
         int x = state->x, y = state->y, z = state->z;
 
-        int increment=0;
-        if (block_class_is_subset(state->block, (mc_block_t[]){block_wooden_slab,block_stone_slab}, 2) && ((state->block_data & 0x8) == 0 ))  // half-steps BUT no upsidown half-steps
-            increment=6;
-        else if (block_class_is_subset(state->block, (mc_block_t[]){block_snow_layer,block_unpowered_repeater,block_powered_repeater}, 3)) // snow, redstone repeaters (on and off)
-            increment=9;
-        
+        int increment = 0;
+        if (block_class_is_subset(state->block, (mc_block_t[]){block_wooden_slab, block_stone_slab}, 2) && ((state->block_data & 0x8) == 0)) // half-steps BUT no upsidown half-steps
+            increment = 6;
+        else if (block_class_is_subset(state->block, (mc_block_t[]){block_snow_layer, block_unpowered_repeater, block_powered_repeater}, 3)) // snow, redstone repeaters (on and off)
+            increment = 9;
+
         /* +X side */
-        side_block = get_data(state, BLOCKS, x+1, y, z);
-        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x+1, y, z)) && 
+        side_block = get_data(state, BLOCKS, x + 1, y, z);
+        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x + 1, y, z)) &&
             /* WARNING: ugly special case approaching */
             /* if the block is a slab and the side block is a stair don't draw anything, it can give very ugly results */
-            !(block_class_is_subset(state->block, (mc_block_t[]){block_wooden_slab, block_stone_slab}, 2)
-                && (block_class_is_subset(side_block, block_class_stair, block_class_stair_len))
-            )) {
-            ImagingDrawLine(img_i, state->imgx+12, state->imgy+1+increment, state->imgx+22+1, state->imgy+5+1+increment, &ink, 1);
-            ImagingDrawLine(img_i, state->imgx+12, state->imgy+increment, state->imgx+22+1, state->imgy+5+increment, &ink, 1);
+            !(block_class_is_subset(state->block, (mc_block_t[]){block_wooden_slab, block_stone_slab}, 2) && (block_class_is_subset(side_block, block_class_stair, block_class_stair_len)))) {
+            ImagingDrawLine(img_i, state->imgx + 12, state->imgy + 1 + increment, state->imgx + 22 + 1, state->imgy + 5 + 1 + increment, &ink, 1);
+            ImagingDrawLine(img_i, state->imgx + 12, state->imgy + increment, state->imgx + 22 + 1, state->imgy + 5 + increment, &ink, 1);
         }
-        
+
         /* -Z side */
-        side_block = get_data(state, BLOCKS, x, y, z-1);
-        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x, y, z-1)) &&
+        side_block = get_data(state, BLOCKS, x, y, z - 1);
+        if (side_block != state->block && (is_transparent(side_block) || render_mode_hidden(state->rendermode, x, y, z - 1)) &&
             /* WARNING: ugly special case approaching */
             /* if the block is a slab and the side block is a stair don't draw anything, it can give very ugly results */
             !(
-                block_class_is_subset(state->block, (mc_block_t[]){block_stone_slab,block_wooden_slab}, 2)
-                && (block_class_is_subset(side_block, block_class_stair, block_class_stair_len))
-            )) {
-            ImagingDrawLine(img_i, state->imgx, state->imgy+6+1+increment, state->imgx+12+1, state->imgy+1+increment, &ink, 1);
-            ImagingDrawLine(img_i, state->imgx, state->imgy+6+increment, state->imgx+12+1, state->imgy+increment, &ink, 1);
+                block_class_is_subset(state->block, (mc_block_t[]){block_stone_slab, block_wooden_slab}, 2) && (block_class_is_subset(side_block, block_class_stair, block_class_stair_len)))) {
+            ImagingDrawLine(img_i, state->imgx, state->imgy + 6 + 1 + increment, state->imgx + 12 + 1, state->imgy + 1 + increment, &ink, 1);
+            ImagingDrawLine(img_i, state->imgx, state->imgy + 6 + increment, state->imgx + 12 + 1, state->imgy + increment, &ink, 1);
         }
     }
 }
 
 RenderPrimitiveInterface primitive_edge_lines = {
-    "edge-lines", sizeof(PrimitiveEdgeLines),
+    "edge-lines",
+    sizeof(PrimitiveEdgeLines),
     edge_lines_start,
     NULL,
     NULL,

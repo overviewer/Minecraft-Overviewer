@@ -18,21 +18,21 @@
 #include "../overviewer.h"
 
 typedef struct {
-    PyObject *facemasks_py;
-    PyObject *facemasks[3];
-    
+    PyObject* facemasks_py;
+    PyObject* facemasks[3];
+
     /* light color image, loaded if color_light is True */
-    PyObject *lightcolor;
-    
+    PyObject* lightcolor;
+
     /* can be overridden in derived rendermodes to control lighting
        arguments are data, skylight, blocklight, return RGB */
-    void (*calculate_light_color)(void *, unsigned char, unsigned char, unsigned char *, unsigned char *, unsigned char *);
-    
+    void (*calculate_light_color)(void*, unsigned char, unsigned char, unsigned char*, unsigned char*, unsigned char*);
+
     /* can be set to 0 in derived modes to indicate that lighting the chunk
      * sides is actually important. Right now, this is used in cave mode
      */
     int skip_sides;
-    
+
     float strength;
     int color;
     int night;
@@ -40,7 +40,7 @@ typedef struct {
 
 /* exposed so that smooth-lighting can use them */
 extern RenderPrimitiveInterface primitive_lighting;
-int lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z);
-void get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
+int lighting_is_face_occluded(RenderState* state, int skip_sides, int x, int y, int z);
+void get_lighting_color(RenderPrimitiveLighting* self, RenderState* state,
                         int x, int y, int z,
-                        unsigned char *r, unsigned char *g, unsigned char *b);
+                        unsigned char* r, unsigned char* g, unsigned char* b);

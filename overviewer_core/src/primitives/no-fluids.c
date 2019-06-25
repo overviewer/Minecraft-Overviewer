@@ -18,17 +18,18 @@
 #include "../overviewer.h"
 
 static int
-no_fluids_start(void *data, RenderState *state, PyObject *support) {
+no_fluids_start(void* data, RenderState* state, PyObject* support) {
     return 0;
 }
 
 static int
-no_fluids_hidden(void *data, RenderState *state, int x, int y, int z) {
+no_fluids_hidden(void* data, RenderState* state, int x, int y, int z) {
     return block_has_property(state->block, FLUID);
 }
 
 RenderPrimitiveInterface primitive_no_fluids = {
-    "no-fluids", 0,
+    "no-fluids",
+    0,
     no_fluids_start,
     NULL,
     NULL,

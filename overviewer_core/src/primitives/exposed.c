@@ -22,19 +22,19 @@ typedef struct {
 } PrimitiveExposed;
 
 static int
-exposed_start(void *data, RenderState *state, PyObject *support) {
-    PrimitiveExposed *self = (PrimitiveExposed *)data;
-    
+exposed_start(void* data, RenderState* state, PyObject* support) {
+    PrimitiveExposed* self = (PrimitiveExposed*)data;
+
     if (!render_mode_parse_option(support, "mode", "I", &(self->mode)))
         return 1;
-        
+
     return 0;
 }
 
 static int
-exposed_hidden(void *data, RenderState *state, int x, int y, int z) {
-    PrimitiveExposed *self = (PrimitiveExposed *)data;
-    
+exposed_hidden(void* data, RenderState* state, int x, int y, int z) {
+    PrimitiveExposed* self = (PrimitiveExposed*)data;
+
     /* Unset these flags if seeming exposure from any of these directions would
      * be due to not having data there.
      */
@@ -53,54 +53,54 @@ exposed_hidden(void *data, RenderState *state, int x, int y, int z) {
         /* No data in -x direction */
         validMinusX = 0;
     }
-    
+
     if (x == 15 && (!(state->chunks[2][1].loaded) || state->chunks[2][1].sections[state->chunky].blocks == NULL)) {
         /* No data in +x direction */
         validPlusX = 0;
     }
-    
+
     if (y == 0 && (state->chunky - 1 < 0 || state->chunks[1][1].sections[state->chunky - 1].blocks == NULL)) {
         /* No data in -y direction */
         validMinusY = 0;
     }
-        
+
     if (y == 15 && (state->chunky + 1 >= SECTIONS_PER_CHUNK || state->chunks[1][1].sections[state->chunky + 1].blocks == NULL)) {
         /* No data in +y direction */
         validPlusY = 0;
     }
-    
+
     if (z == 0 && (!(state->chunks[1][0].loaded) || state->chunks[1][0].sections[state->chunky].blocks == NULL)) {
         /* No data in -z direction */
         validMinusZ = 0;
     }
-    
+
     if (z == 15 && (!(state->chunks[1][2].loaded) || state->chunks[1][2].sections[state->chunky].blocks == NULL)) {
         /* No data in +z direction */
         validPlusZ = 0;
     }
-    
+
     /* If any of the 6 blocks adjacent to us are transparent, we're exposed */
-    if( (validMinusX && is_transparent(get_data(state, BLOCKS, x-1, y, z))) ||
-        (validPlusX && is_transparent(get_data(state, BLOCKS, x+1, y, z)))  ||
-        (validMinusY && is_transparent(get_data(state, BLOCKS, x, y-1, z))) ||
-        (validPlusY && is_transparent(get_data(state, BLOCKS, x, y+1, z)))  ||
-        (validMinusZ && is_transparent(get_data(state, BLOCKS, x, y, z-1))) ||
-        (validPlusZ && is_transparent(get_data(state, BLOCKS, x, y, z+1 ))) ) {
-    
+    if ((validMinusX && is_transparent(get_data(state, BLOCKS, x - 1, y, z))) ||
+        (validPlusX && is_transparent(get_data(state, BLOCKS, x + 1, y, z))) ||
+        (validMinusY && is_transparent(get_data(state, BLOCKS, x, y - 1, z))) ||
+        (validPlusY && is_transparent(get_data(state, BLOCKS, x, y + 1, z))) ||
+        (validMinusZ && is_transparent(get_data(state, BLOCKS, x, y, z - 1))) ||
+        (validPlusZ && is_transparent(get_data(state, BLOCKS, x, y, z + 1)))) {
+
         /* Block is exposed */
         /* Returns 1 and hides us if we're rendering unexposed blocks, 0 and 
          * shows us if we're rendering exposed blocks 
          */
-        return self->mode; 
-    
+        return self->mode;
     }
-    
-    /* We have no valid evidence that the block is exposed */ 
+
+    /* We have no valid evidence that the block is exposed */
     return !(self->mode); /* Hide in normal mode, reveal in inverted mode */
 }
 
 RenderPrimitiveInterface primitive_exposed = {
-    "exposed", sizeof(PrimitiveExposed),
+    "exposed",
+    sizeof(PrimitiveExposed),
     exposed_start,
     NULL,
     NULL,

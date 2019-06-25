@@ -18,57 +18,58 @@
 #include "../overviewer.h"
 
 typedef struct {
-    PyObject *black_color;
-    PyObject *white_color;
+    PyObject* black_color;
+    PyObject* white_color;
     unsigned int sealevel;
 } PrimitiveHeightFading;
 
 static int
-height_fading_start(void *data, RenderState *state, PyObject *support) {
-    PrimitiveHeightFading *self = (PrimitiveHeightFading *)data;
-    
+height_fading_start(void* data, RenderState* state, PyObject* support) {
+    PrimitiveHeightFading* self = (PrimitiveHeightFading*)data;
+
     if (!render_mode_parse_option(support, "sealevel", "I", &(self->sealevel)))
         return 1;
-    
+
     self->black_color = PyObject_GetAttrString(support, "black_color");
     self->white_color = PyObject_GetAttrString(support, "white_color");
-    
+
     return 0;
 }
 
 static void
-height_fading_finish(void *data, RenderState *state) {
-    PrimitiveHeightFading *self = (PrimitiveHeightFading *)data;
+height_fading_finish(void* data, RenderState* state) {
+    PrimitiveHeightFading* self = (PrimitiveHeightFading*)data;
 
     Py_DECREF(self->black_color);
     Py_DECREF(self->white_color);
 }
 
 static void
-height_fading_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+height_fading_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
     float alpha;
-    PrimitiveHeightFading *self = (PrimitiveHeightFading *)data;
+    PrimitiveHeightFading* self = (PrimitiveHeightFading*)data;
     int y = 16 * state->chunky + state->y;
 
     /* do some height fading */
-    PyObject *height_color = self->white_color;
+    PyObject* height_color = self->white_color;
 
     /* current formula requires y to be between 0 and 127, so scale it */
     y = (y * 128) / (2 * self->sealevel);
-    
+
     /* negative alpha => darkness, positive => light */
     alpha = (1.0 / (1 + expf((70 - y) / 11.0))) * 0.6 - 0.55;
-    
+
     if (alpha < 0.0) {
         alpha *= -1;
         height_color = self->black_color;
     }
-    
+
     alpha_over_full(state->img, height_color, mask_light, alpha, state->imgx, state->imgy, 0, 0);
 }
 
 RenderPrimitiveInterface primitive_height_fading = {
-    "height-fading", sizeof(PrimitiveHeightFading),
+    "height-fading",
+    sizeof(PrimitiveHeightFading),
     height_fading_start,
     height_fading_finish,
     NULL,

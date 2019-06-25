@@ -15,18 +15,18 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../overviewer.h"
-#include "../mc_id.h"
-#include "../block_class.h"
-#include "lighting.h"
 #include <math.h>
+#include "lighting.h"
+#include "../block_class.h"
+#include "../mc_id.h"
+#include "../overviewer.h"
 
 /* figures out the color from a given skylight and blocklight,
    used in lighting calculations */
 static void
-calculate_light_color(void *data,
+calculate_light_color(void* data,
                       unsigned char skylight, unsigned char blocklight,
-                      unsigned char *r, unsigned char *g, unsigned char *b) {
+                      unsigned char* r, unsigned char* g, unsigned char* b) {
     unsigned char v = 255 * powf(0.8f, 15.0 - OV_MAX(blocklight, skylight));
     *r = v;
     *g = v;
@@ -35,22 +35,22 @@ calculate_light_color(void *data,
 
 /* fancy version that uses the colored light texture */
 static void
-calculate_light_color_fancy(void *data,
+calculate_light_color_fancy(void* data,
                             unsigned char skylight, unsigned char blocklight,
-                            unsigned char *r, unsigned char *g, unsigned char *b) {
-    RenderPrimitiveLighting *mode = (RenderPrimitiveLighting *)(data);
+                            unsigned char* r, unsigned char* g, unsigned char* b) {
+    RenderPrimitiveLighting* mode = (RenderPrimitiveLighting*)(data);
     unsigned int index;
-    PyObject *color;
-    
+    PyObject* color;
+
     blocklight = OV_MAX(blocklight, skylight);
-    
+
     index = skylight + blocklight * 16;
     color = PySequence_GetItem(mode->lightcolor, index);
-    
+
     *r = PyLong_AsLong(PyTuple_GET_ITEM(color, 0));
     *g = PyLong_AsLong(PyTuple_GET_ITEM(color, 1));
     *b = PyLong_AsLong(PyTuple_GET_ITEM(color, 2));
-    
+
     Py_DECREF(color);
 }
 
@@ -59,9 +59,9 @@ calculate_light_color_fancy(void *data,
    (the "skylight - 11" part)
 */
 static void
-calculate_light_color_night(void *data,
+calculate_light_color_night(void* data,
                             unsigned char skylight, unsigned char blocklight,
-                            unsigned char *r, unsigned char *g, unsigned char *b) {
+                            unsigned char* r, unsigned char* g, unsigned char* b) {
     unsigned char v = 255 * powf(0.8f, 15.0 - OV_MAX(blocklight, skylight - 11));
     *r = v;
     *g = v;
@@ -70,20 +70,20 @@ calculate_light_color_night(void *data,
 
 /* fancy night version that uses the colored light texture */
 static void
-calculate_light_color_fancy_night(void *data,
+calculate_light_color_fancy_night(void* data,
                                   unsigned char skylight, unsigned char blocklight,
-                                  unsigned char *r, unsigned char *g, unsigned char *b) {
-    RenderPrimitiveLighting *mode = (RenderPrimitiveLighting *)(data);
+                                  unsigned char* r, unsigned char* g, unsigned char* b) {
+    RenderPrimitiveLighting* mode = (RenderPrimitiveLighting*)(data);
     unsigned int index;
-    PyObject *color;
-    
+    PyObject* color;
+
     index = skylight + blocklight * 16;
     color = PySequence_GetItem(mode->lightcolor, index);
-    
+
     *r = PyLong_AsLong(PyTuple_GET_ITEM(color, 0));
     *g = PyLong_AsLong(PyTuple_GET_ITEM(color, 1));
     *b = PyLong_AsLong(PyTuple_GET_ITEM(color, 2));
-    
+
     Py_DECREF(color);
 }
 
@@ -98,8 +98,8 @@ calculate_light_color_fancy_night(void *data,
  */
 
 unsigned char
-estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
-                         int x, int y, int z, int *authoratative) {
+estimate_blocklevel(RenderPrimitiveLighting* self, RenderState* state,
+                    int x, int y, int z, int* authoratative) {
 
     /* placeholders for later data arrays, coordinates */
     unsigned short block;
@@ -109,19 +109,19 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
     /* defaults to "guess" until told otherwise */
     if (authoratative)
         *authoratative = 0;
-    
+
     block = get_data(state, BLOCKS, x, y, z);
-    
+
     if (authoratative == NULL) {
         int auth;
-        
+
         /* iterate through all surrounding blocks to take an average */
         int dx, dy, dz, local_block;
         for (dx = -1; dx <= 1; dx += 2) {
             for (dy = -1; dy <= 1; dy += 2) {
                 for (dz = -1; dz <= 1; dz += 2) {
-                    coeff = estimate_blocklevel(self, state, x+dx, y+dy, z+dz, &auth);
-                    local_block = get_data(state, BLOCKS, x+dx, y+dy, z+dz);
+                    coeff = estimate_blocklevel(self, state, x + dx, y + dy, z + dz, &auth);
+                    local_block = get_data(state, BLOCKS, x + dx, y + dy, z + dz);
                     /* only add if the block is transparent, this seems to look better than
                        using every block */
                     if (auth && is_transparent(local_block)) {
@@ -132,45 +132,45 @@ estimate_blocklevel(RenderPrimitiveLighting *self, RenderState *state,
             }
         }
     }
-    
+
     /* only return the average if at least one was authoratative */
     if (average_count > 0) {
         return average_gather / average_count;
     }
-    
+
     blocklevel = get_data(state, BLOCKLIGHT, x, y, z);
-    
+
     /* no longer a guess */
     if (!block_class_is_subset(block, block_class_alt_height, block_class_alt_height_len) && authoratative) {
         *authoratative = 1;
     }
-    
+
     return blocklevel;
 }
 
 inline void
-get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
+get_lighting_color(RenderPrimitiveLighting* self, RenderState* state,
                    int x, int y, int z,
-                   unsigned char *r, unsigned char *g, unsigned char *b) {
+                   unsigned char* r, unsigned char* g, unsigned char* b) {
 
     /* placeholders for later data arrays, coordinates */
     unsigned short block;
     unsigned char skylevel, blocklevel;
-    
+
     block = get_data(state, BLOCKS, x, y, z);
     skylevel = get_data(state, SKYLIGHT, x, y, z);
     blocklevel = get_data(state, BLOCKLIGHT, x, y, z);
 
     /* special half-step handling, stairs handling */
     /* Anvil also needs to be here, blockid 145 */
-    if ( block_class_is_subset(block, block_class_alt_height, block_class_alt_height_len) || block == block_anvil) {
+    if (block_class_is_subset(block, block_class_alt_height, block_class_alt_height_len) || block == block_anvil) {
         unsigned int upper_block;
-        
+
         /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
         int upper_counter = 0;
         /* but if the upper_block is one of these special half-steps, we need to look at *its* upper_block */
         do {
-            upper_counter++; 
+            upper_counter++;
             upper_block = get_data(state, BLOCKS, x, y + upper_counter, z);
         } while (block_class_is_subset(upper_block, block_class_alt_height, block_class_alt_height_len));
         if (is_transparent(upper_block)) {
@@ -178,31 +178,30 @@ get_lighting_color(RenderPrimitiveLighting *self, RenderState *state,
         } else {
             skylevel = 15;
         }
-        
+
         /* the block has a bad blocklevel, estimate it from neigborhood
          * use given coordinates, no local ones! */
         blocklevel = estimate_blocklevel(self, state, x, y, z, NULL);
-
     }
-    
-    if (block_class_is_subset(block, (mc_block_t[]){block_flowing_lava,block_lava}, 2)) {
+
+    if (block_class_is_subset(block, (mc_block_t[]){block_flowing_lava, block_lava}, 2)) {
         /* lava blocks should always be lit! */
         *r = 255;
         *g = 255;
         *b = 255;
         return;
     }
-    
+
     self->calculate_light_color(self, OV_MIN(skylevel, 15), OV_MIN(blocklevel, 15), r, g, b);
 }
 
 /* does per-face occlusion checking for do_shading_with_mask */
 inline int
-lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int z) {
+lighting_is_face_occluded(RenderState* state, int skip_sides, int x, int y, int z) {
     /* first, check for occlusion if the block is in the local chunk */
     if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16) {
         unsigned short block = getArrayShort3D(state->blocks, x, y, z);
-        
+
         if (!is_transparent(block) && !render_mode_hidden(state->rendermode, x, y, z)) {
             /* this face isn't visible, so don't draw anything */
             return 1;
@@ -214,7 +213,7 @@ lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int 
                ugly black doted line between chunks in night rendermode.
                This wouldn't be necessary if the textures were truly
                tessellate-able */
-               return 1;
+            return 1;
         }
     }
     return 0;
@@ -223,30 +222,30 @@ lighting_is_face_occluded(RenderState *state, int skip_sides, int x, int y, int 
 /* shades the drawn block with the given facemask, based on the
    lighting results from (x, y, z) */
 static inline void
-do_shading_with_mask(RenderPrimitiveLighting *self, RenderState *state,
-                     int x, int y, int z, PyObject *mask) {
+do_shading_with_mask(RenderPrimitiveLighting* self, RenderState* state,
+                     int x, int y, int z, PyObject* mask) {
     unsigned char r, g, b;
     float comp_strength;
-    
+
     /* check occlusion */
     if (lighting_is_face_occluded(state, self->skip_sides, x, y, z))
         return;
-    
+
     get_lighting_color(self, state, x, y, z, &r, &g, &b);
     comp_strength = 1.0 - self->strength;
-    
+
     r += (255 - r) * comp_strength;
     g += (255 - g) * comp_strength;
     b += (255 - b) * comp_strength;
-    
+
     tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
 }
 
 static int
-lighting_start(void *data, RenderState *state, PyObject *support) {
+lighting_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveLighting* self;
-    self = (RenderPrimitiveLighting *)data;
-    
+    self = (RenderPrimitiveLighting*)data;
+
     /* don't skip sides by default */
     self->skip_sides = 0;
 
@@ -256,19 +255,19 @@ lighting_start(void *data, RenderState *state, PyObject *support) {
         return 1;
     if (!render_mode_parse_option(support, "color", "i", &(self->color)))
         return 1;
-    
+
     self->facemasks_py = PyObject_GetAttrString(support, "facemasks");
     // borrowed references, don't need to be decref'd
     self->facemasks[0] = PyTuple_GetItem(self->facemasks_py, 0);
     self->facemasks[1] = PyTuple_GetItem(self->facemasks_py, 1);
     self->facemasks[2] = PyTuple_GetItem(self->facemasks_py, 2);
-    
+
     if (self->night) {
         self->calculate_light_color = calculate_light_color_night;
     } else {
         self->calculate_light_color = calculate_light_color;
     }
-    
+
     if (self->color) {
         self->lightcolor = PyObject_CallMethod(state->textures, "load_light_color", "");
         if (self->lightcolor == Py_None) {
@@ -285,37 +284,37 @@ lighting_start(void *data, RenderState *state, PyObject *support) {
     } else {
         self->lightcolor = NULL;
     }
-    
+
     return 0;
 }
 
 static void
-lighting_finish(void *data, RenderState *state) {
-    RenderPrimitiveLighting *self = (RenderPrimitiveLighting *)data;
-    
+lighting_finish(void* data, RenderState* state) {
+    RenderPrimitiveLighting* self = (RenderPrimitiveLighting*)data;
+
     Py_DECREF(self->facemasks_py);
 }
 
 static void
-lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
+lighting_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
     RenderPrimitiveLighting* self;
     int x, y, z;
 
-    self = (RenderPrimitiveLighting *)data;
+    self = (RenderPrimitiveLighting*)data;
     x = state->x, y = state->y, z = state->z;
-    
-    if (block_class_is_subset(state->block, (mc_block_t[]){block_flowing_water,block_water}, 2)) { /* special case for water */
+
+    if (block_class_is_subset(state->block, (mc_block_t[]){block_flowing_water, block_water}, 2)) { /* special case for water */
         /* looks like we need a new case for lighting, there are
          * blocks that are transparent for occlusion calculations and
          * need per-face shading if the face is drawn. */
         if ((state->block_pdata & 16) == 16) {
-            do_shading_with_mask(self, state, x, y+1, z, self->facemasks[0]);
+            do_shading_with_mask(self, state, x, y + 1, z, self->facemasks[0]);
         }
         if ((state->block_pdata & 2) == 2) { /* bottom left */
-            do_shading_with_mask(self, state, x-1, y, z, self->facemasks[1]);
+            do_shading_with_mask(self, state, x - 1, y, z, self->facemasks[1]);
         }
         if ((state->block_pdata & 4) == 4) { /* bottom right */
-            do_shading_with_mask(self, state, x, y, z+1, self->facemasks[2]);
+            do_shading_with_mask(self, state, x, y, z + 1, self->facemasks[2]);
         }
         /* leaves and ice are transparent for occlusion calculations but they 
          * per face-shading to look as in game */
@@ -324,14 +323,15 @@ lighting_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyO
         do_shading_with_mask(self, state, x, y, z, mask_light);
     } else {
         /* opaque: do per-face shading */
-        do_shading_with_mask(self, state, x, y+1, z, self->facemasks[0]);
-        do_shading_with_mask(self, state, x-1, y, z, self->facemasks[1]);
-        do_shading_with_mask(self, state, x, y, z+1, self->facemasks[2]);
+        do_shading_with_mask(self, state, x, y + 1, z, self->facemasks[0]);
+        do_shading_with_mask(self, state, x - 1, y, z, self->facemasks[1]);
+        do_shading_with_mask(self, state, x, y, z + 1, self->facemasks[2]);
     }
 }
 
 RenderPrimitiveInterface primitive_lighting = {
-    "lighting", sizeof(RenderPrimitiveLighting),
+    "lighting",
+    sizeof(RenderPrimitiveLighting),
     lighting_start,
     lighting_finish,
     NULL,

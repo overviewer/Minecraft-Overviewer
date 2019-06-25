@@ -18,9 +18,9 @@
 #include "overlay.h"
 #include "../mc_id.h"
 
-static void get_color(void *data, RenderState *state,
-                      unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
-    RenderPrimitiveOverlay* self = (RenderPrimitiveOverlay *)data;
+static void get_color(void* data, RenderState* state,
+                      unsigned char* r, unsigned char* g, unsigned char* b, unsigned char* a) {
+    RenderPrimitiveOverlay* self = (RenderPrimitiveOverlay*)data;
 
     *r = self->color->r;
     *g = self->color->g;
@@ -29,35 +29,35 @@ static void get_color(void *data, RenderState *state,
 }
 
 static int
-overlay_start(void *data, RenderState *state, PyObject *support) {
-    PyObject *opt = NULL;
-    OverlayColor *color = NULL;
-    RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
-    
+overlay_start(void* data, RenderState* state, PyObject* support) {
+    PyObject* opt = NULL;
+    OverlayColor* color = NULL;
+    RenderPrimitiveOverlay* self = (RenderPrimitiveOverlay*)data;
+
     self->facemask_top = PyObject_GetAttrString(support, "facemask_top");
     self->white_color = PyObject_GetAttrString(support, "whitecolor");
     self->get_color = get_color;
-    
+
     color = self->color = calloc(1, sizeof(OverlayColor));
 
     if (color == NULL) {
         return 1;
     }
-    
+
     self->default_color.r = 200;
     self->default_color.g = 200;
     self->default_color.b = 255;
     self->default_color.a = 155;
-    
-    if(!render_mode_parse_option(support, "overlay_color", "bbbb", &(color->r), &(color->g), &(color->b), &(color->a))) {
-        if(PyErr_Occurred())
+
+    if (!render_mode_parse_option(support, "overlay_color", "bbbb", &(color->r), &(color->g), &(color->b), &(color->a))) {
+        if (PyErr_Occurred())
             PyErr_Clear();
         free(color);
         self->color = &self->default_color;
         // Check if it is None, if it is, continue and use the default, if it isn't, return an error
-        if(render_mode_parse_option(support, "overlay_color", "O", &(opt))) {
+        if (render_mode_parse_option(support, "overlay_color", "O", &(opt))) {
             // If it is an object, check to see if it is None, if it is, use the default.
-            if(opt && opt != Py_None) {
+            if (opt && opt != Py_None) {
                 return 1;
             }
         }
@@ -67,56 +67,55 @@ overlay_start(void *data, RenderState *state, PyObject *support) {
 }
 
 static void
-overlay_finish(void *data, RenderState *state) {
-    RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
+overlay_finish(void* data, RenderState* state) {
+    RenderPrimitiveOverlay* self = (RenderPrimitiveOverlay*)data;
 
     if (self->color && self->color != &self->default_color) {
         free(self->color);
     }
-    
+
     Py_DECREF(self->facemask_top);
     Py_DECREF(self->white_color);
 }
 
-void
-overlay_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
-    RenderPrimitiveOverlay *self = (RenderPrimitiveOverlay *)data;
+void overlay_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
+    RenderPrimitiveOverlay* self = (RenderPrimitiveOverlay*)data;
     unsigned char r, g, b, a;
     unsigned short top_block;
 
     // exactly analogous to edge-line code for these special blocks
-    int increment=0;
-    if (state->block == block_stone_slab)  // half-step
-        increment=6;
+    int increment = 0;
+    if (state->block == block_stone_slab) // half-step
+        increment = 6;
     else if (state->block == block_snow_layer) // snow
-        increment=9;
-    
+        increment = 9;
+
     /* skip rendering the overlay if we can't see it */
-    top_block = get_data(state, BLOCKS, state->x, state->y+1, state->z);
+    top_block = get_data(state, BLOCKS, state->x, state->y + 1, state->z);
     if (!is_transparent(top_block)) {
         return;
     }
-    
+
     /* check to be sure this block is solid/fluid */
     if (block_has_property(top_block, SOLID) || block_has_property(top_block, FLUID)) {
-        
+
         /* top block is fluid or solid, skip drawing */
         return;
     }
-    
+
     /* check to be sure this block is solid/fluid */
     if (!block_has_property(state->block, SOLID) && !block_has_property(state->block, FLUID)) {
-        
+
         /* not fluid or solid, skip drawing the overlay */
         return;
     }
 
     /* get our color info */
     self->get_color(data, state, &r, &g, &b, &a);
-    
+
     /* do the overlay */
     if (a > 0) {
-        alpha_over_full(state->img, self->white_color, self->facemask_top, a/255.f, state->imgx, state->imgy + increment, 0, 0);
+        alpha_over_full(state->img, self->white_color, self->facemask_top, a / 255.f, state->imgx, state->imgy + increment, 0, 0);
         tint_with_mask(state->img, r, g, b, 255, self->facemask_top, state->imgx, state->imgy + increment, 0, 0);
     }
 }

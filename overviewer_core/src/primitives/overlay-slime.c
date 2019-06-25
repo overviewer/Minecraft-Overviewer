@@ -15,8 +15,8 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "overlay.h"
 #include <math.h>
+#include "overlay.h"
 
 typedef struct {
     /* inherits from overlay */
@@ -30,28 +30,28 @@ typedef struct {
  * http://docs.oracle.com/javase/1.4.2/docs/api/java/util/Random.html
  */
 
-static void random_set_seed(long long *seed, long long new_seed) {
+static void random_set_seed(long long* seed, long long new_seed) {
     *seed = (new_seed ^ 0x5deece66dLL) & ((1LL << 48) - 1);
 }
 
-static int random_next(long long *seed, int bits) {
+static int random_next(long long* seed, int bits) {
     *seed = (*seed * 0x5deece66dLL + 0xbL) & ((1LL << 48) - 1);
     return (int)(*seed >> (48 - bits));
 }
 
-static int random_next_int(long long *seed, int n) {
+static int random_next_int(long long* seed, int n) {
     int bits, val;
-    
+
     if (n <= 0) {
         /* invalid */
         return 0;
     }
-    
+
     if ((n & -n) == n) {
         /* n is a power of two */
         return (int)((n * (long long)random_next(seed, 31)) >> 31);
     }
-    
+
     do {
         bits = random_next(seed, 31);
         val = bits % n;
@@ -66,14 +66,15 @@ static int is_slime(long long map_seed, int chunkx, int chunkz) {
                             (long long)(chunkx * chunkx * 0x4c1906) +
                             (long long)(chunkx * 0x5ac0db) +
                             (long long)(chunkz * chunkz * 0x4307a7LL) +
-                            (long long)(chunkz * 0x5f24f)) ^ 0x3ad8025f);
+                            (long long)(chunkz * 0x5f24f)) ^
+                               0x3ad8025f);
     return (random_next_int(&seed, 10) == 0);
 }
 
-static void get_color(void *data, RenderState *state,
-                      unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a) {
-    RenderPrimitiveSlime *self = (RenderPrimitiveSlime *)data;
-        
+static void get_color(void* data, RenderState* state,
+                      unsigned char* r, unsigned char* g, unsigned char* b, unsigned char* a) {
+    RenderPrimitiveSlime* self = (RenderPrimitiveSlime*)data;
+
     /* set a nice, pretty green color */
     *r = self->parent.color->r;
     *g = self->parent.color->g;
@@ -81,7 +82,7 @@ static void get_color(void *data, RenderState *state,
 
     /* default to no overlay, until told otherwise */
     *a = 0;
-    
+
     if (is_slime(self->seed, state->chunkx, state->chunkz)) {
         /* slimes can spawn! */
         *a = self->parent.color->a;
@@ -89,24 +90,24 @@ static void get_color(void *data, RenderState *state,
 }
 
 static int
-overlay_slime_start(void *data, RenderState *state, PyObject *support) {
-    RenderPrimitiveSlime *self;
-    PyObject *pyseed;
+overlay_slime_start(void* data, RenderState* state, PyObject* support) {
+    RenderPrimitiveSlime* self;
+    PyObject* pyseed;
 
     /* first, chain up */
     int ret = primitive_overlay.start(data, state, support);
     if (ret != 0)
         return ret;
-    
+
     /* now do custom initializations */
-    self = (RenderPrimitiveSlime *)data;
+    self = (RenderPrimitiveSlime*)data;
     self->parent.get_color = get_color;
-    
+
     self->parent.default_color.r = 40;
     self->parent.default_color.g = 230;
     self->parent.default_color.b = 40;
     self->parent.default_color.a = 240;
-    
+
     pyseed = PyObject_GetAttrString(state->world, "seed");
     if (!pyseed)
         return 1;
@@ -114,12 +115,12 @@ overlay_slime_start(void *data, RenderState *state, PyObject *support) {
     Py_DECREF(pyseed);
     if (PyErr_Occurred())
         return 1;
-    
+
     return 0;
 }
 
 static void
-overlay_slime_finish(void *data, RenderState *state) {
+overlay_slime_finish(void* data, RenderState* state) {
     /* chain up */
     primitive_overlay.finish(data, state);
 }
