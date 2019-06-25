@@ -262,11 +262,11 @@ class JSObserver(Observer):
                             "same as the Overviewer output directory"
                             % outputdir)
 
-        self.logfile = open(os.path.join(outputdir, "progress.json"), "w+", 0)
+        self.logfile = open(os.path.join(outputdir, "progress.json"), "wb+", 0)
         self.json["message"] = "Render starting..."
         self.json["update"] = self.minrefresh
         self.json["messageTime"] = time.time()
-        json.dump(self.json, self.logfile)
+        self.logfile.write(json.dumps(self.json).encode())
         self.logfile.flush()
 
     def start(self, max_value):
@@ -275,7 +275,7 @@ class JSObserver(Observer):
         self.json["message"] = self.messages["totalTiles"] % (max_value)
         self.json["update"] = self.minrefresh
         self.json["messageTime"] = time.time()
-        json.dump(self.json, self.logfile)
+        self.logfile.write(json.dumps(self.json).encode())
         self.logfile.flush()
         self.start_time = time.time()
         self._set_max_value(max_value)
@@ -301,7 +301,7 @@ class JSObserver(Observer):
         # (until the next render)
         self.json["update"] = 60000
         self.json["messageTime"] = time.time()
-        json.dump(self.json, self.logfile)
+        self.logfile.write(json.dumps(self.json).encode())
         self.logfile.close()
 
     def is_finished(self):
@@ -339,7 +339,7 @@ class JSObserver(Observer):
                    self.get_percentage(), str(eta))
             self.json["update"] = refresh
             self.json["messageTime"] = time.time()
-            json.dump(self.json, self.logfile)
+            self.logfile.write(json.dumps(self.json).encode())
             self.logfile.flush()
             self.last_update_time = time.time()
             self.last_update = current_value
