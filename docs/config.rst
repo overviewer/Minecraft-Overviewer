@@ -287,7 +287,7 @@ Observers
     If you want to specify an observer manually, try something like:
     ::
 
-        from observer import ProgressBarObserver
+        from .observer import ProgressBarObserver
         observer = ProgressBarObserver()
 
     There are currently three observers available: ``LoggingObserver``, 
@@ -338,7 +338,7 @@ Observers
 
         ::
 
-            from observer import JSObserver
+            from .observer import JSObserver
             observer = JSObserver(outputdir, 10)
                 
 		
@@ -352,7 +352,7 @@ Observers
         
             ## An example that updates both a LoggingObserver and a JSObserver
             # Import the Observers
-            from observer import MultiplexingObserver, LoggingObserver, JSObserver
+            from .observer import MultiplexingObserver, LoggingObserver, JSObserver
             
             # Construct the LoggingObserver
             loggingObserver = LoggingObserver()
