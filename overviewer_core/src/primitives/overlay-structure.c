@@ -18,38 +18,35 @@
 #include "../mc_id.h"
 #include "overlay.h"
 
-typedef enum { false,
-               true } bool;
-
 typedef struct {
     /* inherits from overlay */
     RenderPrimitiveOverlay parent;
     void* structures;
-    int numcolors;
+    int32_t numcolors;
 } RenderPrimitiveStructure;
 
 struct Condition {
-    int relx, rely, relz;
-    unsigned short block;
+    int32_t relx, rely, relz;
+    mc_block_t block;
 };
 
 struct Color {
-    int numconds;
+    int32_t numconds;
     struct Condition* conditions;
-    unsigned char r, g, b, a;
+    uint8_t r, g, b, a;
 };
 
 static void get_color(void* data,
                       RenderState* state,
-                      unsigned char* r,
-                      unsigned char* g,
-                      unsigned char* b,
-                      unsigned char* a) {
+                      uint8_t* r,
+                      uint8_t* g,
+                      uint8_t* b,
+                      uint8_t* a) {
     /**
      * Calculate the color at the current position and store the values to r,g,b,a.
      **/
     RenderPrimitiveStructure* self = (RenderPrimitiveStructure*)data;
-    int x = state->x, z = state->z, y_max, y, col, cond;
+    int32_t x = state->x, z = state->z, y_max, y, col, cond;
     struct Color* structures = (struct Color*)(self->structures);
     struct Condition* c = NULL;
     bool all = true;
@@ -86,7 +83,7 @@ static void get_color(void* data,
     return;
 }
 
-static int overlay_structure_start(void* data, RenderState* state, PyObject* support) {
+static int32_t overlay_structure_start(void* data, RenderState* state, PyObject* support) {
     /**
      * Initializing the search for structures by parsing the arguments and storing them into
      * appropriate structures. If no arguments are passed create and use default values.
@@ -95,7 +92,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
     RenderPrimitiveStructure* self;
 
     /* first, chain up */
-    int ret = primitive_overlay.start(data, state, support);
+    int32_t ret = primitive_overlay.start(data, state, support);
     if (ret != 0)
         return ret;
 
@@ -190,7 +187,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
                                           &cond[n].rely,
                                           &cond[n].relz,
                                           &cond[n].block)) {
-                        int x = 0;
+                        int32_t x = 0;
                         for (x = 0; x < structures_size; x++) {
                             free(structures[x].conditions);
                         }
@@ -212,7 +209,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
 static void overlay_structure_finish(void* data, RenderState* state) {
     /* first free all *our* stuff */
     RenderPrimitiveStructure* self = (RenderPrimitiveStructure*)data;
-    int i = 0;
+    int32_t i = 0;
 
     if (self->structures) {
         // freeing the nested structure

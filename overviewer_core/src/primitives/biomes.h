@@ -15,6 +15,8 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
+
 #define DEFAULT_BIOME 4 /* forest, nice and green */
 
 typedef struct {
@@ -23,7 +25,7 @@ typedef struct {
     float temperature;
     float rainfall;
 
-    unsigned int r, g, b;
+    uint32_t r, g, b;
 } Biome;
 
 /* each entry in this table is yanked *directly* out of the minecraft source

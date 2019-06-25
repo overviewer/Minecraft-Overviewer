@@ -19,16 +19,16 @@
 #include "../overviewer.h"
 
 struct HideRule {
-    unsigned short blockid;
-    unsigned char has_data;
-    unsigned char data;
+    mc_block_t blockid;
+    bool has_data;
+    uint8_t data;
 };
 
 typedef struct {
     struct HideRule* rules;
 } RenderPrimitiveHide;
 
-static int
+static int32_t
 hide_start(void* data, RenderState* state, PyObject* support) {
     PyObject* opt;
     RenderPrimitiveHide* self = (RenderPrimitiveHide*)data;
@@ -56,10 +56,10 @@ hide_start(void* data, RenderState* state, PyObject* support) {
             if (PyLong_Check(block)) {
                 /* format 1: just a block id */
                 self->rules[i].blockid = PyLong_AsLong(block);
-                self->rules[i].has_data = 0;
+                self->rules[i].has_data = false;
             } else if (PyArg_ParseTuple(block, "Hb", &(self->rules[i].blockid), &(self->rules[i].data))) {
                 /* format 2: (blockid, data) */
-                self->rules[i].has_data = 1;
+                self->rules[i].has_data = true;
             } else {
                 /* format not recognized */
                 free(self->rules);
@@ -81,11 +81,11 @@ hide_finish(void* data, RenderState* state) {
     }
 }
 
-static int
-hide_hidden(void* data, RenderState* state, int x, int y, int z) {
+static int32_t
+hide_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     RenderPrimitiveHide* self = (RenderPrimitiveHide*)data;
-    unsigned int i;
-    unsigned short block;
+    uint32_t i;
+    mc_block_t block;
 
     if (self->rules == NULL)
         return 0;
@@ -93,7 +93,7 @@ hide_hidden(void* data, RenderState* state, int x, int y, int z) {
     block = get_data(state, BLOCKS, x, y, z);
     for (i = 0; self->rules[i].blockid != block_air; i++) {
         if (block == self->rules[i].blockid) {
-            unsigned char data;
+            uint8_t data;
 
             if (!(self->rules[i].has_data))
                 return 1;

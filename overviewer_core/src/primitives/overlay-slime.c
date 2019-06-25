@@ -34,13 +34,13 @@ static void random_set_seed(long long* seed, long long new_seed) {
     *seed = (new_seed ^ 0x5deece66dLL) & ((1LL << 48) - 1);
 }
 
-static int random_next(long long* seed, int bits) {
+static int32_t random_next(long long* seed, int32_t bits) {
     *seed = (*seed * 0x5deece66dLL + 0xbL) & ((1LL << 48) - 1);
     return (int)(*seed >> (48 - bits));
 }
 
-static int random_next_int(long long* seed, int n) {
-    int bits, val;
+static int32_t random_next_int(long long* seed, int32_t n) {
+    int32_t bits, val;
 
     if (n <= 0) {
         /* invalid */
@@ -59,7 +59,7 @@ static int random_next_int(long long* seed, int n) {
     return val;
 }
 
-static int is_slime(long long map_seed, int chunkx, int chunkz) {
+static int32_t is_slime(long long map_seed, int32_t chunkx, int32_t chunkz) {
     /* lots of magic numbers, but they're all correct! I swear! */
     long long seed;
     random_set_seed(&seed, (map_seed +
@@ -72,7 +72,7 @@ static int is_slime(long long map_seed, int chunkx, int chunkz) {
 }
 
 static void get_color(void* data, RenderState* state,
-                      unsigned char* r, unsigned char* g, unsigned char* b, unsigned char* a) {
+                      uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) {
     RenderPrimitiveSlime* self = (RenderPrimitiveSlime*)data;
 
     /* set a nice, pretty green color */
@@ -89,13 +89,13 @@ static void get_color(void* data, RenderState* state,
     }
 }
 
-static int
+static int32_t
 overlay_slime_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveSlime* self;
     PyObject* pyseed;
 
     /* first, chain up */
-    int ret = primitive_overlay.start(data, state, support);
+    int32_t ret = primitive_overlay.start(data, state, support);
     if (ret != 0)
         return ret;
 

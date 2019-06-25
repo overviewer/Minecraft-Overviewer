@@ -26,8 +26,8 @@ typedef struct {
 } RenderPrimitiveBiomes;
 
 struct BiomeColor {
-    unsigned char biome;
-    unsigned char r, g, b;
+    uint8_t biome;
+    uint8_t r, g, b;
 };
 
 static struct BiomeColor default_biomes[] = {
@@ -76,18 +76,18 @@ static struct BiomeColor default_biomes[] = {
     {255, 0, 0, 0}};
 
 static void get_color(void* data, RenderState* state,
-                      unsigned char* r, unsigned char* g, unsigned char* b, unsigned char* a) {
+                      uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) {
 
-    unsigned char biome;
-    int x = state->x, z = state->z, y_max, y;
-    int max_i = -1;
+    uint8_t biome;
+    int32_t x = state->x, z = state->z, y_max, y;
+    int32_t max_i = -1;
     RenderPrimitiveBiomes* self = (RenderPrimitiveBiomes*)data;
     struct BiomeColor* biomes = (struct BiomeColor*)(self->biomes);
     *a = 0;
 
     y_max = state->y + 1;
     for (y = state->chunky * -16; y <= y_max; y++) {
-        int i, tmp;
+        int32_t i, tmp;
         biome = get_data(state, BIOMES, x, y, z);
 
         if (biome >= NUM_BIOMES) {
@@ -110,14 +110,14 @@ static void get_color(void* data, RenderState* state,
     }
 }
 
-static int
+static int32_t
 overlay_biomes_start(void* data, RenderState* state, PyObject* support) {
     PyObject* opt;
     RenderPrimitiveBiomes* self;
-    unsigned char alpha_tmp = 0;
+    uint8_t alpha_tmp = 0;
 
     /* first, chain up */
-    int ret = primitive_overlay.start(data, state, support);
+    int32_t ret = primitive_overlay.start(data, state, support);
     if (ret != 0)
         return ret;
 
@@ -146,7 +146,7 @@ overlay_biomes_start(void* data, RenderState* state, PyObject* support) {
         for (i = 0; i < biomes_size; i++) {
             PyObject* biome = PyList_GET_ITEM(opt, i);
             char* tmpname = NULL;
-            int j = 0;
+            int32_t j = 0;
 
             if (!PyArg_ParseTuple(biome, "s(bbb)", &tmpname, &(biomes[i].r), &(biomes[i].g), &(biomes[i].b))) {
                 free(biomes);

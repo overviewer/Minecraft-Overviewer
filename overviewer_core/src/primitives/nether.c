@@ -22,8 +22,8 @@
 
 static void
 walk_chunk(RenderState* state, RenderPrimitiveNether* data) {
-    int x, y, z;
-    int id;
+    int32_t x, y, z;
+    int32_t id;
 
     for (x = -1; x < WIDTH + 1; x++) {
         for (z = -1; z < DEPTH + 1; z++) {
@@ -47,10 +47,10 @@ walk_chunk(RenderState* state, RenderPrimitiveNether* data) {
     data->walked_chunk = 1;
 }
 
-static int
-nether_hidden(void* data, RenderState* state, int x, int y, int z) {
+static int32_t
+nether_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     RenderPrimitiveNether* self;
-    int real_y;
+    int32_t real_y;
 
     self = (RenderPrimitiveNether*)data;
 

@@ -17,14 +17,14 @@
 
 #include "../overviewer.h"
 
-static int
-netherold_hidden(void* data, RenderState* state, int x, int y, int z) {
+static int32_t
+netherold_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     /* hide all blocks above all air blocks
        
        due to how the nether is currently generated, this will also count
        empty sections as 'solid'
     */
-    unsigned char missing_section = 0;
+    uint8_t missing_section = 0;
     while (y < (SECTIONS_PER_CHUNK - state->chunky) * 16) {
         if (state->chunks[1][1].sections[state->chunky + (y / 16)].blocks == NULL) {
             missing_section = 1;

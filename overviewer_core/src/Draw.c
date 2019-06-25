@@ -71,27 +71,27 @@
 
 typedef struct {
     /* edge descriptor for polygon engine */
-    int d;
-    int x0, y0;
-    int xmin, ymin, xmax, ymax;
+    int32_t d;
+    int32_t x0, y0;
+    int32_t xmin, ymin, xmax, ymax;
     float dx;
 } Edge;
 
 static inline void
-point8(Imaging im, int x, int y, int ink) {
+point8(Imaging im, int32_t x, int32_t y, int32_t ink) {
     if (x >= 0 && x < im->xsize && y >= 0 && y < im->ysize)
         im->image8[y][x] = (UINT8)ink;
 }
 
 static inline void
-point32(Imaging im, int x, int y, int ink) {
+point32(Imaging im, int32_t x, int32_t y, int32_t ink) {
     if (x >= 0 && x < im->xsize && y >= 0 && y < im->ysize)
         im->image32[y][x] = ink;
 }
 
 static inline void
-point32rgba(Imaging im, int x, int y, int ink) {
-    unsigned int tmp1, tmp2;
+point32rgba(Imaging im, int32_t x, int32_t y, int32_t ink) {
+    uint32_t tmp1, tmp2;
 
     if (x >= 0 && x < im->xsize && y >= 0 && y < im->ysize) {
         UINT8* out = (UINT8*)im->image[y] + x * 4;
@@ -103,8 +103,8 @@ point32rgba(Imaging im, int x, int y, int ink) {
 }
 
 static inline void
-hline8(Imaging im, int x0, int y0, int x1, int ink) {
-    int tmp;
+hline8(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t ink) {
+    int32_t tmp;
 
     if (y0 >= 0 && y0 < im->ysize) {
         if (x0 > x1)
@@ -123,8 +123,8 @@ hline8(Imaging im, int x0, int y0, int x1, int ink) {
 }
 
 static inline void
-hline32(Imaging im, int x0, int y0, int x1, int ink) {
-    int tmp;
+hline32(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t ink) {
+    int32_t tmp;
     INT32* p;
 
     if (y0 >= 0 && y0 < im->ysize) {
@@ -145,9 +145,9 @@ hline32(Imaging im, int x0, int y0, int x1, int ink) {
 }
 
 static inline void
-hline32rgba(Imaging im, int x0, int y0, int x1, int ink) {
-    int tmp;
-    unsigned int tmp1, tmp2;
+hline32rgba(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t ink) {
+    int32_t tmp;
+    uint32_t tmp1, tmp2;
 
     if (y0 >= 0 && y0 < im->ysize) {
         if (x0 > x1)
@@ -175,10 +175,10 @@ hline32rgba(Imaging im, int x0, int y0, int x1, int ink) {
 }
 
 static inline void
-line8(Imaging im, int x0, int y0, int x1, int y1, int ink) {
-    int i, n, e;
-    int dx, dy;
-    int xs, ys;
+line8(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t ink) {
+    int32_t i, n, e;
+    int32_t dx, dy;
+    int32_t xs, ys;
 
     /* normalize coordinates */
     dx = x1 - x0;
@@ -249,10 +249,10 @@ line8(Imaging im, int x0, int y0, int x1, int y1, int ink) {
 }
 
 static inline void
-line32(Imaging im, int x0, int y0, int x1, int y1, int ink) {
-    int i, n, e;
-    int dx, dy;
-    int xs, ys;
+line32(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t ink) {
+    int32_t i, n, e;
+    int32_t dx, dy;
+    int32_t xs, ys;
 
     /* normalize coordinates */
     dx = x1 - x0;
@@ -323,10 +323,10 @@ line32(Imaging im, int x0, int y0, int x1, int y1, int ink) {
 }
 
 static inline void
-line32rgba(Imaging im, int x0, int y0, int x1, int y1, int ink) {
-    int i, n, e;
-    int dx, dy;
-    int xs, ys;
+line32rgba(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t ink) {
+    int32_t i, n, e;
+    int32_t dx, dy;
+    int32_t xs, ys;
 
     /* normalize coordinates */
     dx = x1 - x0;
@@ -396,7 +396,7 @@ line32rgba(Imaging im, int x0, int y0, int x1, int y1, int ink) {
     }
 }
 
-static int
+static int32_t
 x_cmp(const void* x0, const void* x1) {
     float diff = *((float*)x0) - *((float*)x1);
     if (diff < 0)
@@ -407,11 +407,11 @@ x_cmp(const void* x0, const void* x1) {
         return 0;
 }
 
-static inline int
-polygon8(Imaging im, int n, Edge* e, int ink, int eofill) {
-    int i, j;
+static inline int32_t
+polygon8(Imaging im, int32_t n, Edge* e, int32_t ink, int32_t eofill) {
+    int32_t i, j;
     float* xx;
-    int ymin, ymax;
+    int32_t ymin, ymax;
     float y;
 
     if (n <= 0)
@@ -465,11 +465,11 @@ polygon8(Imaging im, int n, Edge* e, int ink, int eofill) {
     return 0;
 }
 
-static inline int
-polygon32(Imaging im, int n, Edge* e, int ink, int eofill) {
-    int i, j;
+static inline int32_t
+polygon32(Imaging im, int32_t n, Edge* e, int32_t ink, int32_t eofill) {
+    int32_t i, j;
     float* xx;
-    int ymin, ymax;
+    int32_t ymin, ymax;
     float y;
 
     if (n <= 0)
@@ -524,11 +524,11 @@ polygon32(Imaging im, int n, Edge* e, int ink, int eofill) {
     return 0;
 }
 
-static inline int
-polygon32rgba(Imaging im, int n, Edge* e, int ink, int eofill) {
-    int i, j;
+static inline int32_t
+polygon32rgba(Imaging im, int32_t n, Edge* e, int32_t ink, int32_t eofill) {
+    int32_t i, j;
     float* xx;
-    int ymin, ymax;
+    int32_t ymin, ymax;
     float y;
 
     if (n <= 0)
@@ -584,7 +584,7 @@ polygon32rgba(Imaging im, int n, Edge* e, int ink, int eofill) {
 }
 
 static inline void
-add_edge(Edge* e, int x0, int y0, int x1, int y1) {
+add_edge(Edge* e, int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
     /* printf("edge %d %d %d %d\n", x0, y0, x1, y1); */
 
     if (x0 <= x1)
@@ -613,10 +613,10 @@ add_edge(Edge* e, int x0, int y0, int x1, int y1) {
 }
 
 typedef struct {
-    void (*point)(Imaging im, int x, int y, int ink);
-    void (*hline)(Imaging im, int x0, int y0, int x1, int ink);
-    void (*line)(Imaging im, int x0, int y0, int x1, int y1, int ink);
-    int (*polygon)(Imaging im, int n, Edge* e, int ink, int eofill);
+    void (*point)(Imaging im, int32_t x, int32_t y, int32_t ink);
+    void (*hline)(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t ink);
+    void (*line)(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t ink);
+    int32_t (*polygon)(Imaging im, int32_t n, Edge* e, int32_t ink, int32_t eofill);
 } DRAW;
 
 DRAW draw8 = {point8, hline8, line8, polygon8};
@@ -636,7 +636,7 @@ DRAW draw32rgba = {point32rgba, hline32rgba, line32rgba, polygon32rgba};
         ink = INK32(ink_);                   \
     }
 
-int ImagingDrawPoint(Imaging im, int x0, int y0, const void* ink_, int op) {
+int32_t ImagingDrawPoint(Imaging im, int32_t x0, int32_t y0, const void* ink_, int32_t op) {
     DRAW* draw;
     INT32 ink;
 
@@ -647,8 +647,8 @@ int ImagingDrawPoint(Imaging im, int x0, int y0, const void* ink_, int op) {
     return 0;
 }
 
-int ImagingDrawLine(Imaging im, int x0, int y0, int x1, int y1, const void* ink_,
-                    int op) {
+int32_t ImagingDrawLine(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t y1, const void* ink_,
+                        int32_t op) {
     DRAW* draw;
     INT32 ink;
 
@@ -659,14 +659,14 @@ int ImagingDrawLine(Imaging im, int x0, int y0, int x1, int y1, const void* ink_
     return 0;
 }
 
-int ImagingDrawWideLine(Imaging im, int x0, int y0, int x1, int y1,
-                        const void* ink_, int width, int op) {
+int32_t ImagingDrawWideLine(Imaging im, int32_t x0, int32_t y0, int32_t x1, int32_t y1,
+                            const void* ink_, int32_t width, int32_t op) {
     DRAW* draw;
     INT32 ink;
 
     Edge e[4];
 
-    int dx, dy;
+    int32_t dx, dy;
     double d;
 
     DRAWINIT();
@@ -721,10 +721,10 @@ struct ImagingOutlineInstance {
 
     float x, y;
 
-    int count;
+    int32_t count;
     Edge* edges;
 
-    int size;
+    int32_t size;
 };
 
 void ImagingOutlineDelete(ImagingOutline outline) {
@@ -738,7 +738,7 @@ void ImagingOutlineDelete(ImagingOutline outline) {
 }
 
 static Edge*
-allocate(ImagingOutline outline, int extra) {
+allocate(ImagingOutline outline, int32_t extra) {
     Edge* e;
 
     if (outline->count + extra > outline->size) {
@@ -760,14 +760,14 @@ allocate(ImagingOutline outline, int extra) {
     return e;
 }
 
-int ImagingOutlineMove(ImagingOutline outline, float x0, float y0) {
+int32_t ImagingOutlineMove(ImagingOutline outline, float x0, float y0) {
     outline->x = outline->x0 = x0;
     outline->y = outline->y0 = y0;
 
     return 0;
 }
 
-int ImagingOutlineLine(ImagingOutline outline, float x1, float y1) {
+int32_t ImagingOutlineLine(ImagingOutline outline, float x1, float y1) {
     Edge* e;
 
     e = allocate(outline, 1);
@@ -782,10 +782,10 @@ int ImagingOutlineLine(ImagingOutline outline, float x1, float y1) {
     return 0;
 }
 
-int ImagingOutlineCurve(ImagingOutline outline, float x1, float y1,
-                        float x2, float y2, float x3, float y3) {
+int32_t ImagingOutlineCurve(ImagingOutline outline, float x1, float y1,
+                            float x2, float y2, float x3, float y3) {
     Edge* e;
-    int i;
+    int32_t i;
     float xo, yo;
 
 #define STEPS 32
@@ -823,8 +823,8 @@ int ImagingOutlineCurve(ImagingOutline outline, float x1, float y1,
     return 0;
 }
 
-int ImagingOutlineCurve2(ImagingOutline outline, float cx, float cy,
-                         float x3, float y3) {
+int32_t ImagingOutlineCurve2(ImagingOutline outline, float cx, float cy,
+                             float x3, float y3) {
     /* add bezier curve based on three control points (as
        in the Flash file format) */
 
@@ -835,14 +835,14 @@ int ImagingOutlineCurve2(ImagingOutline outline, float cx, float cy,
         x3, y3);
 }
 
-int ImagingOutlineClose(ImagingOutline outline) {
+int32_t ImagingOutlineClose(ImagingOutline outline) {
     if (outline->x == outline->x0 && outline->y == outline->y0)
         return 0;
     return ImagingOutlineLine(outline, outline->x0, outline->y0);
 }
 
-int ImagingDrawOutline(Imaging im, ImagingOutline outline, const void* ink_,
-                       int fill, int op) {
+int32_t ImagingDrawOutline(Imaging im, ImagingOutline outline, const void* ink_,
+                           int32_t fill, int32_t op) {
     DRAW* draw;
     INT32 ink;
 

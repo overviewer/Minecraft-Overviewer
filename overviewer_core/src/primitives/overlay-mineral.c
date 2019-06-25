@@ -26,8 +26,8 @@ typedef struct {
 } RenderPrimitiveMineral;
 
 struct MineralColor {
-    unsigned char blockid;
-    unsigned char r, g, b;
+    uint8_t blockid;
+    uint8_t r, g, b;
 };
 
 /* put more valuable ores first -- they take precedence */
@@ -48,18 +48,18 @@ static struct MineralColor default_minerals[] = {
     {0, 0, 0, 0}};
 
 static void get_color(void* data, RenderState* state,
-                      unsigned char* r, unsigned char* g, unsigned char* b, unsigned char* a) {
+                      uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) {
 
-    int x = state->x, z = state->z, y_max, y;
-    int max_i = -1;
+    int32_t x = state->x, z = state->z, y_max, y;
+    int32_t max_i = -1;
     RenderPrimitiveMineral* self = (RenderPrimitiveMineral*)data;
     struct MineralColor* minerals = (struct MineralColor*)(self->minerals);
     *a = 0;
 
     y_max = state->y + 1;
     for (y = state->chunky * -16; y <= y_max; y++) {
-        int i, tmp;
-        unsigned short blockid = get_data(state, BLOCKS, x, y, z);
+        int32_t i, tmp;
+        mc_block_t blockid = get_data(state, BLOCKS, x, y, z);
 
         for (i = 0; (max_i == -1 || i < max_i) && minerals[i].blockid != block_air; i++) {
             if (minerals[i].blockid == blockid) {
@@ -77,13 +77,13 @@ static void get_color(void* data, RenderState* state,
     }
 }
 
-static int
+static int32_t
 overlay_mineral_start(void* data, RenderState* state, PyObject* support) {
     PyObject* opt;
     RenderPrimitiveMineral* self;
 
     /* first, chain up */
-    int ret = primitive_overlay.start(data, state, support);
+    int32_t ret = primitive_overlay.start(data, state, support);
     if (ret != 0)
         return ret;
 

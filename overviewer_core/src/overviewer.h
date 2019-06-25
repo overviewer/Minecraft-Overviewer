@@ -33,6 +33,9 @@
 // and want to force users to rebuild
 #define OVERVIEWER_EXTENSION_VERSION 65
 
+#include <stdbool.h>
+#include <stdint.h>
+
 /* Python PIL, and numpy headers */
 #include <Imaging.h>
 #include <Python.h>
@@ -40,33 +43,34 @@
 /* Fix Pillow on mingw-w64 which includes windows.h in Imaging.h */
 #undef TRANSPARENT
 /* Utility macros */
+#include "mc_id.h"
 #include "utils.h"
 
 /* macro for getting a value out of various numpy arrays the 3D arrays have
    interesting, swizzled coordinates because minecraft (anvil) stores blocks
    in y/z/x order for 3D, z/x order for 2D */
-#define getArrayByte3D(array, x, y, z) (*(unsigned char*)(PyArray_GETPTR3((array), (y), (z), (x))))
-#define getArrayShort3D(array, x, y, z) (*(unsigned short*)(PyArray_GETPTR3((array), (y), (z), (x))))
-#define getArrayByte2D(array, x, y) (*(unsigned char*)(PyArray_GETPTR2((array), (y), (x))))
+#define getArrayByte3D(array, x, y, z) (*(uint8_t*)(PyArray_GETPTR3((array), (y), (z), (x))))
+#define getArrayShort3D(array, x, y, z) (*(uint16_t*)(PyArray_GETPTR3((array), (y), (z), (x))))
+#define getArrayByte2D(array, x, y) (*(uint8_t*)(PyArray_GETPTR2((array), (y), (x))))
 
 /* in composite.c */
 Imaging imaging_python_to_c(PyObject* obj);
 PyObject* alpha_over(PyObject* dest, PyObject* src, PyObject* mask,
-                     int dx, int dy, int xsize, int ysize);
+                     int32_t dx, int32_t dy, int32_t xsize, int32_t ysize);
 PyObject* alpha_over_full(PyObject* dest, PyObject* src, PyObject* mask, float overall_alpha,
-                          int dx, int dy, int xsize, int ysize);
+                          int32_t dx, int32_t dy, int32_t xsize, int32_t ysize);
 PyObject* alpha_over_wrap(PyObject* self, PyObject* args);
-PyObject* tint_with_mask(PyObject* dest, unsigned char sr, unsigned char sg,
-                         unsigned char sb, unsigned char sa,
-                         PyObject* mask, int dx, int dy, int xsize, int ysize);
-PyObject* draw_triangle(PyObject* dest, int inclusive,
-                        int x0, int y0,
-                        unsigned char r0, unsigned char g0, unsigned char b0,
-                        int x1, int y1,
-                        unsigned char r1, unsigned char g1, unsigned char b1,
-                        int x2, int y2,
-                        unsigned char r2, unsigned char g2, unsigned char b2,
-                        int tux, int tuy, int* touchups, unsigned int num_touchups);
+PyObject* tint_with_mask(PyObject* dest, uint8_t sr, uint8_t sg,
+                         uint8_t sb, uint8_t sa,
+                         PyObject* mask, int32_t dx, int32_t dy, int32_t xsize, int32_t ysize);
+PyObject* draw_triangle(PyObject* dest, int32_t inclusive,
+                        int32_t x0, int32_t y0,
+                        uint8_t r0, uint8_t g0, uint8_t b0,
+                        int32_t x1, int32_t y1,
+                        uint8_t r1, uint8_t g1, uint8_t b1,
+                        int32_t x2, int32_t y2,
+                        uint8_t r2, uint8_t g2, uint8_t b2,
+                        int32_t tux, int32_t tuy, int* touchups, uint32_t num_touchups);
 PyObject* resize_half(PyObject* dest, PyObject* src);
 PyObject* resize_half_wrap(PyObject* self, PyObject* args);
 
@@ -77,7 +81,7 @@ typedef struct _RenderMode RenderMode;
 #define SECTIONS_PER_CHUNK 16
 typedef struct {
     /* whether this chunk is loaded: use load_chunk to load */
-    int loaded;
+    int32_t loaded;
     /* chunk biome array */
     PyArrayObject* biomes;
     /* all the sections in a given chunk */
@@ -90,11 +94,11 @@ typedef struct {
     /* the regionset object, and chunk coords */
     PyObject* world;
     PyObject* regionset;
-    int chunkx, chunky, chunkz;
+    int32_t chunkx, chunky, chunkz;
 
     /* the tile image and destination */
     PyObject* img;
-    int imgx, imgy;
+    int32_t imgx, imgy;
 
     /* the current render mode in use */
     RenderMode* rendermode;
@@ -103,10 +107,10 @@ typedef struct {
     PyObject* textures;
 
     /* the block position and type, and the block array */
-    int x, y, z;
-    unsigned short block;
-    unsigned char block_data;
-    unsigned short block_pdata;
+    int32_t x, y, z;
+    mc_block_t block;
+    uint8_t block_data;
+    uint16_t block_pdata;
 
     /* useful information about this, and neighboring, chunks */
     PyArrayObject* blockdatas;
@@ -117,7 +121,7 @@ typedef struct {
 } RenderState;
 PyObject* init_chunk_render(void);
 /* returns true on error, x,z relative */
-int load_chunk(RenderState* state, int x, int z, unsigned char required);
+int32_t load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required);
 PyObject* chunk_render(PyObject* self, PyObject* args);
 typedef enum {
     KNOWN,
@@ -129,11 +133,11 @@ typedef enum {
 } BlockProperty;
 /* globals set in init_chunk_render, here because they're used
    in block_has_property */
-extern unsigned int max_blockid;
-extern unsigned int max_data;
-extern unsigned char* block_properties;
-static inline int
-block_has_property(unsigned short b, BlockProperty prop) {
+extern uint32_t max_blockid;
+extern uint32_t max_data;
+extern uint8_t* block_properties;
+static inline bool
+block_has_property(mc_block_t b, BlockProperty prop) {
     if (b >= max_blockid || !(block_properties[b] & (1 << KNOWN))) {
         /* block is unknown, return defaults */
         if (prop == TRANSPARENT)
@@ -154,10 +158,10 @@ typedef enum {
     SKYLIGHT,
     BIOMES,
 } DataType;
-static inline unsigned int get_data(RenderState* state, DataType type, int x, int y, int z) {
-    int chunkx = 1, chunky = state->chunky, chunkz = 1;
+static inline uint32_t get_data(RenderState* state, DataType type, int32_t x, int32_t y, int32_t z) {
+    int32_t chunkx = 1, chunky = state->chunky, chunkz = 1;
     PyArrayObject* data_array = NULL;
-    unsigned int def = 0;
+    uint32_t def = 0;
     if (type == SKYLIGHT)
         def = 15;
 
@@ -224,7 +228,7 @@ static inline unsigned int get_data(RenderState* state, DataType type, int x, in
 
 /* in endian.c */
 void init_endian(void);
-unsigned short big_endian_ushort(unsigned short in);
-unsigned int big_endian_uint(unsigned int in);
+uint16_t big_endian_ushort(uint16_t in);
+uint32_t big_endian_uint(uint32_t in);
 
 #endif /* __OVERVIEWER_H_INCLUDED__ */

@@ -21,14 +21,14 @@
 #include "biomes.h"
 
 typedef struct {
-    int use_biomes;
+    int32_t use_biomes;
     /* grasscolor and foliagecolor lookup tables */
     PyObject *grasscolor, *foliagecolor, *watercolor;
     /* biome-compatible grass/leaf textures */
     PyObject* grass_texture;
 } PrimitiveBase;
 
-static int
+static int32_t
 base_start(void* data, RenderState* state, PyObject* support) {
     PrimitiveBase* self = (PrimitiveBase*)data;
 
@@ -56,8 +56,8 @@ base_finish(void* data, RenderState* state) {
     Py_DECREF(self->grass_texture);
 }
 
-static int
-base_occluded(void* data, RenderState* state, int x, int y, int z) {
+static int32_t
+base_occluded(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     if ((x != 0) && (y != 15) && (z != 15) &&
         !render_mode_hidden(state->rendermode, x - 1, y, z) &&
         !render_mode_hidden(state->rendermode, x, y, z + 1) &&
@@ -76,8 +76,8 @@ base_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObjec
     PrimitiveBase* self = (PrimitiveBase*)data;
 
     /* in order to detect top parts of doublePlant grass & ferns */
-    unsigned short below_block = get_data(state, BLOCKS, state->x, state->y - 1, state->z);
-    unsigned char below_data = get_data(state, DATA, state->x, state->y - 1, state->z);
+    mc_block_t below_block = get_data(state, BLOCKS, state->x, state->y - 1, state->z);
+    uint8_t below_data = get_data(state, DATA, state->x, state->y - 1, state->z);
 
     /* draw the block! */
     alpha_over(state->img, src, mask, state->imgx, state->imgy, 0, 0);
@@ -108,9 +108,9 @@ base_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObjec
         (state->block == block_double_plant && below_block == block_double_plant && (below_data == 2 || below_data == 3))) {
         /* do the biome stuff! */
         PyObject* facemask = mask;
-        unsigned char r = 255, g = 255, b = 255;
+        uint8_t r = 255, g = 255, b = 255;
         PyObject* color_table = NULL;
-        unsigned char flip_xy = 0;
+        uint8_t flip_xy = 0;
 
         if (state->block == block_grass) {
             /* grass needs a special facemask */
@@ -130,12 +130,12 @@ base_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObjec
         }
 
         if (color_table) {
-            unsigned char biome;
-            int dx, dz;
-            unsigned char tablex, tabley;
+            uint8_t biome;
+            int32_t dx, dz;
+            uint8_t tablex, tabley;
             float temp = 0.0, rain = 0.0;
-            unsigned int multr = 0, multg = 0, multb = 0;
-            int tmp;
+            uint32_t multr = 0, multg = 0, multb = 0;
+            int32_t tmp;
             PyObject* color = NULL;
 
             if (self->use_biomes) {
@@ -184,7 +184,7 @@ base_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObjec
             tablex = 255 - (255 * temp);
             tabley = 255 - (255 * rain);
             if (flip_xy) {
-                unsigned char tmp = 255 - tablex;
+                uint8_t tmp = 255 - tablex;
                 tablex = 255 - tabley;
                 tabley = tmp;
             }

@@ -23,7 +23,7 @@ typedef struct {
     PyObject* depth_colors;
 } RenderPrimitiveDepthTinting;
 
-static int
+static int32_t
 depth_tinting_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveDepthTinting* self;
     self = (RenderPrimitiveDepthTinting*)data;
@@ -46,7 +46,7 @@ depth_tinting_finish(void* data, RenderState* state) {
 static void
 depth_tinting_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
     RenderPrimitiveDepthTinting* self;
-    int y, r, g, b;
+    int32_t y, r, g, b;
     self = (RenderPrimitiveDepthTinting*)data;
 
     y = state->chunky * 16 + state->y;

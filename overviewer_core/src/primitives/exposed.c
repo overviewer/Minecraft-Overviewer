@@ -18,10 +18,10 @@
 #include "../overviewer.h"
 
 typedef struct {
-    unsigned int mode; /* 0 = exposed only, 1 = unexposed only */
+    uint32_t mode; /* 0 = exposed only, 1 = unexposed only */
 } PrimitiveExposed;
 
-static int
+static int32_t
 exposed_start(void* data, RenderState* state, PyObject* support) {
     PrimitiveExposed* self = (PrimitiveExposed*)data;
 
@@ -31,19 +31,19 @@ exposed_start(void* data, RenderState* state, PyObject* support) {
     return 0;
 }
 
-static int
-exposed_hidden(void* data, RenderState* state, int x, int y, int z) {
+static int32_t
+exposed_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     PrimitiveExposed* self = (PrimitiveExposed*)data;
 
     /* Unset these flags if seeming exposure from any of these directions would
      * be due to not having data there.
      */
-    int validMinusX = 1;
-    int validPlusX = 1;
-    int validMinusY = 1;
-    int validPlusY = 1;
-    int validMinusZ = 1;
-    int validPlusZ = 1;
+    int32_t validMinusX = 1;
+    int32_t validPlusX = 1;
+    int32_t validMinusY = 1;
+    int32_t validPlusY = 1;
+    int32_t validMinusZ = 1;
+    int32_t validPlusZ = 1;
 
     /* special handling for section boundaries */
     /* If the neighboring section has no block data, ignore exposure from that

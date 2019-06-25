@@ -19,11 +19,11 @@
 #include "../overviewer.h"
 
 typedef struct {
-    int only_lit;
+    int32_t only_lit;
 } RenderPrimitiveCave;
 
-static inline int
-touches_light(RenderState* state, DataType type, unsigned int x, unsigned int y, unsigned int z) {
+static inline int32_t
+touches_light(RenderState* state, DataType type, uint32_t x, uint32_t y, uint32_t z) {
     if (get_data(state, type, x, y + 1, z))
         return 1;
 
@@ -38,8 +38,8 @@ touches_light(RenderState* state, DataType type, unsigned int x, unsigned int y,
     return 0;
 }
 
-static int
-cave_occluded(void* data, RenderState* state, int x, int y, int z) {
+static int32_t
+cave_occluded(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     /* check for normal occlusion */
     /* use ajacent chunks, if not you get blocks spreaded in chunk edges */
 
@@ -60,10 +60,10 @@ cave_occluded(void* data, RenderState* state, int x, int y, int z) {
     return 0;
 }
 
-static int
-cave_hidden(void* data, RenderState* state, int x, int y, int z) {
+static int32_t
+cave_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     RenderPrimitiveCave* self;
-    int dy = 0;
+    int32_t dy = 0;
     self = (RenderPrimitiveCave*)data;
 
     /* check if the block is touching skylight */
@@ -102,7 +102,7 @@ cave_hidden(void* data, RenderState* state, int x, int y, int z) {
     return cave_occluded(data, state, x, y, z);
 }
 
-static int
+static int32_t
 cave_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveCave* self;
     self = (RenderPrimitiveCave*)data;

@@ -18,11 +18,11 @@
 #include "../overviewer.h"
 
 typedef struct {
-    unsigned int min;
-    unsigned int max;
+    uint32_t min;
+    uint32_t max;
 } PrimitiveDepth;
 
-static int
+static int32_t
 depth_start(void* data, RenderState* state, PyObject* support) {
     PrimitiveDepth* self = (PrimitiveDepth*)data;
 
@@ -34,8 +34,8 @@ depth_start(void* data, RenderState* state, PyObject* support) {
     return 0;
 }
 
-static int
-depth_hidden(void* data, RenderState* state, int x, int y, int z) {
+static int32_t
+depth_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     PrimitiveDepth* self = (PrimitiveDepth*)data;
     y += 16 * state->chunky;
     if (y > self->max || y < self->min) {
