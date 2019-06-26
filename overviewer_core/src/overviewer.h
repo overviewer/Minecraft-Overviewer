@@ -70,7 +70,7 @@ PyObject* draw_triangle(PyObject* dest, int32_t inclusive,
                         uint8_t r1, uint8_t g1, uint8_t b1,
                         int32_t x2, int32_t y2,
                         uint8_t r2, uint8_t g2, uint8_t b2,
-                        int32_t tux, int32_t tuy, int* touchups, uint32_t num_touchups);
+                        int32_t tux, int32_t tuy, int32_t* touchups, uint32_t num_touchups);
 PyObject* resize_half(PyObject* dest, PyObject* src);
 PyObject* resize_half_wrap(PyObject* self, PyObject* args);
 

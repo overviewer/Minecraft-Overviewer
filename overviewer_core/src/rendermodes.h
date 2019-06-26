@@ -55,10 +55,10 @@ typedef struct {
     bool (*start)(void*, RenderState*, PyObject*);
     void (*finish)(void*, RenderState*);
     /* returns true to skip rendering this block because it's not visible */
-    bool (*occluded)(void*, RenderState*, int, int, int);
+    bool (*occluded)(void*, RenderState*, int32_t, int32_t, int32_t);
     /* returns true to skip rendering this block because the user doesn't
      * want it visible */
-    bool (*hidden)(void*, RenderState*, int, int, int);
+    bool (*hidden)(void*, RenderState*, int32_t, int32_t, int32_t);
     /* last two arguments are img and mask, from texture lookup */
     void (*draw)(void*, RenderState*, PyObject*, PyObject*, PyObject*);
 } RenderPrimitiveInterface;

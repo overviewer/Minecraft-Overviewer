@@ -28,7 +28,7 @@ static int32_t endianness = UNKNOWN_ENDIAN;
 void init_endian(void) {
     /* figure out what our endianness is! */
     int16_t word = 0x0001;
-    char* byte = (char*)(&word);
+    uint8_t* byte = (uint8_t*)(&word);
     endianness = byte[0] ? LITTLE_ENDIAN : BIG_ENDIAN;
 }
 

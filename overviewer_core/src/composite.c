@@ -56,7 +56,9 @@ imaging_python_to_c(PyObject* obj) {
    in these composite functions -- even handles auto-sizing to src! */
 static inline void
 setup_source_destination(Imaging src, Imaging dest,
-                         int* sx, int* sy, int* dx, int* dy, int* xsize, int* ysize) {
+                         int32_t* sx, int32_t* sy,
+                         int32_t* dx, int32_t* dy,
+                         int32_t* xsize, int32_t* ysize) {
     /* handle negative/zero sizes appropriately */
     if (*xsize <= 0 || *ysize <= 0) {
         *xsize = src->xsize;
@@ -275,9 +277,11 @@ alpha_over_wrap(PyObject* self, PyObject* args) {
  * also, it multiplies instead of doing an over operation
  */
 PyObject*
-tint_with_mask(PyObject* dest, uint8_t sr, uint8_t sg,
-               uint8_t sb, uint8_t sa,
-               PyObject* mask, int32_t dx, int32_t dy, int32_t xsize, int32_t ysize) {
+tint_with_mask(PyObject* dest,
+               uint8_t sr, uint8_t sg, uint8_t sb, uint8_t sa,
+               PyObject* mask,
+               int32_t dx, int32_t dy,
+               int32_t xsize, int32_t ysize) {
     /* libImaging handles */
     Imaging imDest, imMask;
     /* cached blend properties */
@@ -378,7 +382,8 @@ draw_triangle(PyObject* dest, int32_t inclusive,
               uint8_t r1, uint8_t g1, uint8_t b1,
               int32_t x2, int32_t y2,
               uint8_t r2, uint8_t g2, uint8_t b2,
-              int32_t tux, int32_t tuy, int* touchups, uint32_t num_touchups) {
+              int32_t tux, int32_t tuy,
+              int32_t* touchups, uint32_t num_touchups) {
 
     /* destination image */
     Imaging imDest;
