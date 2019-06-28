@@ -230,7 +230,7 @@ class PlayerDict(dict):
         if os.path.exists(cache_file):
             try:
                 with closing(gzip.GzipFile(cache_file)) as gz:
-                    cls.uuid_cache = json.load(gz)
+                    cls.uuid_cache = json.loads(gz.read().decode("utf-8"))
                     logging.info("Loaded UUID cache from %r with %d entries.",
                                  cache_file, len(cls.uuid_cache.keys()))
             except (ValueError, IOError):
@@ -279,7 +279,7 @@ class PlayerDict(dict):
             pass
 
         try:
-            profile = json.loads(urllib.request.urlopen(UUID_LOOKUP_URL + sname).read())
+            profile = json.loads(urllib.request.urlopen(UUID_LOOKUP_URL + sname).read().decode("utf-8"))
             if 'name' in profile:
                 profile['retrievedAt'] = time.mktime(time.localtime())
                 PlayerDict.uuid_cache[sname] = profile
