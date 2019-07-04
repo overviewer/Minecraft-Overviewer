@@ -276,7 +276,7 @@ class Textures(object):
             # method.
             versions = []
 
-        most_recent_version = [0,0,0]
+        available_versions = []
         for version in versions:
             # Look for the latest non-snapshot that is at least 1.8. This
             # version is only compatible with >=1.8, and we cannot in general
@@ -294,11 +294,14 @@ class Textures(object):
             if versionparts < [1,8]:
                 continue
 
-            if versionparts > most_recent_version:
-                most_recent_version = versionparts
+            available_versions.append(versionparts)
 
-        if most_recent_version != [0,0,0]:
-            if verbose: logging.info("Most recent version >=1.8.0: {0}. Searching it for the file...".format(most_recent_version))
+        available_versions.sort(reverse=True)
+        if not available_versions:
+            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.8.0")
+        while(available_versions):
+            most_recent_version = available_versions.pop(0)
+            if verbose: logging.info("Trying {0}. Searching it for the file...".format(".".join(str(x) for x in most_recent_version)))
 
             jarname = ".".join(str(x) for x in most_recent_version)
             jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
@@ -315,8 +318,6 @@ class Textures(object):
                         pass
 
             if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
-        else:
-            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.8.0")
             
         # Last ditch effort: look for the file is stored in with the overviewer
         # installation. We include a few files that aren't included with Minecraft
