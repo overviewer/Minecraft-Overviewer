@@ -151,6 +151,7 @@ class Textures(object):
         """Searches for the given file and returns an open handle to it.
         This searches the following locations in this order:
         
+        * In an already open resource pack or client jar file
         * In the directory textures_path given in the initializer
         * In the resource pack given by textures_path
         * The program dir (same dir as overviewer.py) for extracted textures
@@ -167,58 +168,40 @@ class Textures(object):
 
         * The overviewer_core/data/textures dir
         
-        In all of these, files are searched for in '.', 'anim', 'misc/', and
-        'environment/'.
-        
         """
         if verbose: logging.info("Starting search for {0}".format(filename))
 
-        # a list of subdirectories to search for a given file,
-        # after the obvious '.'
-        search_dirs = ['anim', 'misc', 'environment', 'item', 'item/chests', 'entity', 'entity/chest']
-        search_zip_paths = [filename,] + [d + '/' + filename for d in search_dirs]
-        def search_dir(base):
-            """Search the given base dir for filename, in search_dirs."""
-            for path in [os.path.join(base, d, filename) for d in ['',] + search_dirs]:
-                if verbose: logging.info('filename: ' + filename + ' ; path: ' + path)
-                if os.path.isfile(path):
-                    return path
-
-            return None
-        if verbose: logging.info('search_zip_paths: ' +  ', '.join(search_zip_paths))
+        # we've sucessfully loaded something from here before, so let's quickly try
+        # this before searching again
+        if self.jar is not None:
+            try:
+                self.jar.getinfo(filename)
+                if verbose: logging.info("Found (cached) %s in '%s'", filename, self.jarpath)
+                return self.jar.open(filename)
+            except (KeyError, IOError) as e:
+                pass
 
         # A texture path was given on the command line. Search this location
         # for the file first.
         if self.find_file_local_path:
             if os.path.isdir(self.find_file_local_path):
-                path = search_dir(self.find_file_local_path)
-                if path:
-                    if verbose: logging.info("Found %s in '%s'", filename, path)
-                    return open(path, mode)
+                full_path = os.path.join(self.find_file_local_path, filename)
+                if os.path.isfile(full_path):
+                        if verbose: logging.info("Found %s in '%s'", filename, full_path)
+                        return open(full_path, mode)
             elif os.path.isfile(self.find_file_local_path):
                 # Must be a resource pack. Look for the requested file within
                 # it.
                 try:
                     pack = zipfile.ZipFile(self.find_file_local_path)
-                    for packfilename in search_zip_paths:
-                        try:
-                            # pack.getinfo() will raise KeyError if the file is
-                            # not found.
-                            pack.getinfo(packfilename)
-                            if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
-                            return pack.open(packfilename)
-                        except (KeyError, IOError):
-                            pass
-                        
-                        try:
-                            # 2nd try with completed path.
-                            packfilename = 'assets/minecraft/textures/' + packfilename
-                            pack.getinfo(packfilename)
-                            if verbose: logging.info("Found %s in '%s'", packfilename, self.find_file_local_path)
-                            return pack.open(packfilename)
-                        except (KeyError, IOError):
-                            pass
-                except (zipfile.BadZipfile, IOError):
+                    # pack.getinfo() will raise KeyError if the file is
+                    # not found.
+                    pack.getinfo(filename)
+                    if verbose: logging.info("Found %s in '%s'", filename,
+                                             self.find_file_local_path)
+                    self.jar, self.jarpath = pack, self.find_file_local_path
+                    return pack.open(filename)
+                except (zipfile.BadZipfile, KeyError, IOError):
                     pass
 
         # If we haven't returned at this point, then the requested file was NOT
@@ -228,30 +211,19 @@ class Textures(object):
 
         # Look in the location of the overviewer executable for the given path
         programdir = util.get_program_path()
-        path = search_dir(programdir)
-        if path:
+        path = os.path.join(programdir, filename)
+        if os.path.isfile(path):
             if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
 
         if sys.platform.startswith("darwin"):
-            path = search_dir("/Applications/Minecraft")
-            if path:
+            path = os.path.join("/Applications/Minecraft", filename)
+            if os.path.isfile(path):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
         if verbose: logging.info("Did not find the file in overviewer executable directory")
         if verbose: logging.info("Looking for installed minecraft jar files...")
-
-        # we've sucessfully loaded something from here before, so let's quickly try
-        # this before searching again
-        if self.jar is not None:
-            for jarfilename in search_zip_paths:
-                try:
-                    self.jar.getinfo(jarfilename)
-                    if verbose: logging.info("Found (cached) %s in '%s'", jarfilename, self.jarpath)
-                    return self.jar.open(jarfilename)
-                except (KeyError, IOError) as e:
-                    pass
 
         # Find an installed minecraft client jar and look in it for the texture
         # file we need.
@@ -308,14 +280,13 @@ class Textures(object):
 
             if os.path.isfile(jarpath):
                 jar = zipfile.ZipFile(jarpath)
-                for jarfilename in search_zip_paths:
-                    try:
-                        jar.getinfo(jarfilename)
-                        if verbose: logging.info("Found %s in '%s'", jarfilename, jarpath)
-                        self.jar, self.jarpath = jar, jarpath
-                        return jar.open(jarfilename)
-                    except (KeyError, IOError) as e:
-                        pass
+                try:
+                    jar.getinfo(filename)
+                    if verbose: logging.info("Found %s in '%s'", filename, jarpath)
+                    self.jar, self.jarpath = jar, jarpath
+                    return jar.open(filename)
+                except (KeyError, IOError) as e:
+                    pass
 
             if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
             
@@ -326,14 +297,14 @@ class Textures(object):
         # believe that's not true, but we still have a few files distributed
         # with overviewer.
         if verbose: logging.info("Looking for texture in overviewer_core/data/textures")
-        path = search_dir(os.path.join(programdir, "overviewer_core", "data", "textures"))
-        if path:
+        path = os.path.join(programdir, "overviewer_core", "data", "textures", filename)
+        if os.path.isfile(path):
             if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
         elif hasattr(sys, "frozen") or imp.is_frozen("__main__"):
             # windows special case, when the package dir doesn't exist
-            path = search_dir(os.path.join(programdir, "textures"))
-            if path:
+            path = os.path.join(programdir, "textures", filename)
+            if os.path.isfile(path):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
@@ -380,67 +351,40 @@ class Textures(object):
 
 
     def load_water(self):
-        """Special-case function for loading water, handles
-        MCPatcher-compliant custom animated water."""
+        """Special-case function for loading water."""
         watertexture = getattr(self, "watertexture", None)
         if watertexture:
             return watertexture
-        try:
-            # try the MCPatcher case first
-            watertexture = self.load_image("custom_water_still.png")
-            watertexture = watertexture.crop((0, 0, watertexture.size[0], watertexture.size[0]))
-        except TextureException:
-            watertexture = self.load_image_texture("assets/minecraft/textures/block/water_still.png")
+        watertexture = self.load_image_texture("assets/minecraft/textures/block/water_still.png")
         self.watertexture = watertexture
         return watertexture
 
     def load_lava(self):
-        """Special-case function for loading lava, handles
-        MCPatcher-compliant custom animated lava."""
+        """Special-case function for loading lava."""
         lavatexture = getattr(self, "lavatexture", None)
         if lavatexture:
             return lavatexture
-        try:
-            # try the MCPatcher lava first, in case it's present
-            lavatexture = self.load_image("custom_lava_still.png")
-            lavatexture = lavatexture.crop((0, 0, lavatexture.size[0], lavatexture.size[0]))
-        except TextureException:
-            lavatexture = self.load_image_texture("assets/minecraft/textures/block/lava_still.png")
+        lavatexture = self.load_image_texture("assets/minecraft/textures/block/lava_still.png")
         self.lavatexture = lavatexture
         return lavatexture
     
     def load_fire(self):
-        """Special-case function for loading fire, handles
-        MCPatcher-compliant custom animated fire."""
+        """Special-case function for loading fire."""
         firetexture = getattr(self, "firetexture", None)
         if firetexture:
             return firetexture
-        try:
-            # try the MCPatcher case first
-            firetextureNS = self.load_image("custom_fire_n_s.png")
-            firetextureNS = firetextureNS.crop((0, 0, firetextureNS.size[0], firetextureNS.size[0]))
-            firetextureEW = self.load_image("custom_fire_e_w.png")
-            firetextureEW = firetextureEW.crop((0, 0, firetextureEW.size[0], firetextureEW.size[0]))
-            firetexture = (firetextureNS,firetextureEW)
-        except TextureException:
-            fireNS = self.load_image_texture("assets/minecraft/textures/block/fire_0.png")
-            fireEW = self.load_image_texture("assets/minecraft/textures/block/fire_1.png")
-            firetexture = (fireNS, fireEW)
+        fireNS = self.load_image_texture("assets/minecraft/textures/block/fire_0.png")
+        fireEW = self.load_image_texture("assets/minecraft/textures/block/fire_1.png")
+        firetexture = (fireNS, fireEW)
         self.firetexture = firetexture
         return firetexture
     
     def load_portal(self):
-        """Special-case function for loading portal, handles
-        MCPatcher-compliant custom animated portal."""
+        """Special-case function for loading portal."""
         portaltexture = getattr(self, "portaltexture", None)
         if portaltexture:
             return portaltexture
-        try:
-            # try the MCPatcher case first
-            portaltexture = self.load_image("custom_portal.png")
-            portaltexture = portaltexture.crop((0, 0, portaltexture.size[0], portaltexture.size[1]))
-        except TextureException:
-            portaltexture = self.load_image_texture("assets/minecraft/textures/block/nether_portal.png")
+        portaltexture = self.load_image_texture("assets/minecraft/textures/block/nether_portal.png")
         self.portaltexture = portaltexture
         return portaltexture
     
@@ -459,13 +403,13 @@ class Textures(object):
     def load_grass_color(self):
         """Helper function to load the grass color texture."""
         if not hasattr(self, "grasscolor"):
-            self.grasscolor = list(self.load_image("grass.png").getdata())
+            self.grasscolor = list(self.load_image("assets/minecraft/textures/colormap/grass.png").getdata())
         return self.grasscolor
 
     def load_foliage_color(self):
         """Helper function to load the foliage color texture."""
         if not hasattr(self, "foliagecolor"):
-            self.foliagecolor = list(self.load_image("foliage.png").getdata())
+            self.foliagecolor = list(self.load_image("assets/minecraft/textures/colormap/foliage.png").getdata())
         return self.foliagecolor
 
     #I guess "watercolor" is wrong. But I can't correct as my texture pack don't define water color.
@@ -2091,12 +2035,12 @@ def chests(self, blockid, data):
         # ancilData = 2,3,4,5 are used for this blockids
     
     if data & 24 == 0:
-        if blockid == 130: t = self.load_image("ender.png")
+        if blockid == 130: t = self.load_image("assets/minecraft/textures/entity/chest/ender.png")
         else:
             try:
-                t = self.load_image("normal.png")
+                t = self.load_image("assets/minecraft/textures/entity/chest/normal.png")
             except (TextureException, IOError):
-                t = self.load_image("chest.png")
+                t = self.load_image("assets/minecraft/textures/entity/chest/chest.png")
 
         # the textures is no longer in terrain.png, get it from
         # item/chest.png and get by cropping all the needed stuff
@@ -2151,7 +2095,7 @@ def chests(self, blockid, data):
         # large chest
         # the textures is no longer in terrain.png, get it from 
         # item/chest.png and get all the needed stuff
-        t = self.load_image("normal_double.png")
+        t = self.load_image("assets/minecraft/textures/entity/chest/normal_double.png")
         if t.size != (128,64): t = t.resize((128,64), Image.ANTIALIAS)
         # top
         top = t.crop((14,0,44,14))
