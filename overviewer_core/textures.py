@@ -357,10 +357,21 @@ class Textures(object):
     def load_image(self, filename):
         """Returns an image object"""
 
-        if filename in self.texture_cache:
-            return self.texture_cache[filename]
+        try:
+            img = self.texture_cache[filename]
+            if isinstance(img, Exception):  # Did we cache an exception?
+                raise img                   # Okay then, raise it.
+            return img
+        except KeyError:
+            pass
         
-        fileobj = self.find_file(filename)
+        try:
+            fileobj = self.find_file(filename)
+        except (TextureException, IOError) as e:
+            # We cache when our good friend find_file can't find
+            # a texture, so that we do not repeatedly search for it.
+            self.texture_cache[filename] = e
+            raise e
         buffer = BytesIO(fileobj.read())
         img = Image.open(buffer).convert("RGBA")
         self.texture_cache[filename] = img
