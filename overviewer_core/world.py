@@ -134,7 +134,7 @@ class World(object):
             if mcas:
                 # construct a regionset object for this
                 rel = os.path.relpath(root, self.worlddir)
-                if rel != "poi":
+                if os.path.basename(rel) != "poi":
                     rset = RegionSet(root, rel)
                     if root == os.path.join(self.worlddir, "region"):
                         self.regionsets.insert(0, rset)
