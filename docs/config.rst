@@ -951,6 +951,16 @@ Other HTML/JS output options
 
     **Default:** ``#1a1a1a``
 
+``center``
+    This is allows you to specify a list or a tuple of Minecraft world coordinates
+    that should be used as the map's default center, e.g. ``[800, 64, -334]``.
+
+    You may also specify only two coordinates, in case they will be interpreted as
+    X and Z coordinates, and Y is assumed to be ``64`` (sea level).
+
+    **Default:** The coordinates of your spawn, or ``[0, 64, 0]`` if the regionset
+    has no spawn.
+
 Map update behavior
 ~~~~~~~~~~~~~~~~~~~
 

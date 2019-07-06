@@ -422,8 +422,8 @@ overviewer.util = {
             myLayer["tileSetConfig"] = obj;
 
 
-            if (typeof(obj.spawn) == "object") {
-                var latlng = overviewer.util.fromWorldToLatLng(obj.spawn[0], obj.spawn[1], obj.spawn[2], obj);
+            if (typeof(obj.center) == "object") {
+                var latlng = overviewer.util.fromWorldToLatLng(obj.center[0], obj.center[1], obj.center[2], obj);
                 overviewer.collections.centers[obj.world] = [ latlng, obj.defaultZoom ];
             } else {
                 overviewer.collections.centers[obj.world] = [ [0, 0], obj.defaultZoom ];

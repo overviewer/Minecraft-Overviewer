@@ -308,6 +308,20 @@ def validateManualPOIs(d):
     return d
 
 
+def validateCoords(c):
+    if not isinstance(c, (list, tuple)):
+        raise ValidationException("Your coordinates '{}' are not a list or a tuple.".format(c))
+    if len(c) not in [2, 3]:
+        raise ValidationException("'{}' is not a valid list or tuple of coordinates, "
+                                  "because we expect either 2 or 3 elements.".format(c))
+    if len(c) == 2:
+        x, z = [validateInt(i) for i in c]
+        y = 64
+    else:
+        x, y, z = [validateInt(i) for i in c]
+    return (x, y, z)
+
+
 def make_dictValidator(keyvalidator, valuevalidator):
     """Compose and return a dict validator -- a validator that validates each
     key and value in a dictionary.

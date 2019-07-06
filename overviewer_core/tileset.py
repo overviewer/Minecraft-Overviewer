@@ -589,7 +589,9 @@ class TileSet(object):
             imgextension=self.imgextension,
             isOverlay=isOverlay,
             poititle=self.options.get("poititle"),
-            showlocationmarker=self.options.get("showlocationmarker")
+            showlocationmarker=self.options.get("showlocationmarker"),
+            center=(self.options.get("center") or self.options.get("spawn")
+                    or [0, 64, 0])
         )
         d['maxZoom'] = self.options.get('maxzoom', self.treedepth)
         if d['maxZoom'] < 0:

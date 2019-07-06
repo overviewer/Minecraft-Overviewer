@@ -555,7 +555,7 @@ def main():
             "name", "imgformat", "renderchecks", "rerenderprob", "bgcolor", "defaultzoom",
             "imgquality", "imglossless", "optimizeimg", "rendermode", "worldname_orig", "title",
             "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom",
-            "showlocationmarker", "minzoom"])
+            "showlocationmarker", "minzoom", "center"])
         tileSetOpts.update({"spawn": w.find_true_spawn()})  # TODO find a better way to do this
         for rset in rsets:
             tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)

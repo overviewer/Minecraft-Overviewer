@@ -93,6 +93,7 @@ renders = Setting(required=True, default=OrderedDict(),
             "minzoom": Setting(required=False, validator=validateInt, default=0),
             "manualpois": Setting(required=False, validator=validateManualPOIs, default=[]),
             "showlocationmarker": Setting(required=False, validator=validateBool, default=True),
+            "center": Setting(required=False, validator=validateCoords, default=None),
             # Remove this eventually (once people update their configs)
             "worldname": Setting(required=False, default=None,
                 validator=error("The option 'worldname' is now called 'world'. Please update your config files")),
