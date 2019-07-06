@@ -50,10 +50,10 @@ static void
 base_finish(void* data, RenderState* state) {
     PrimitiveBase* self = (PrimitiveBase*)data;
 
-    Py_DECREF(self->foliagecolor);
-    Py_DECREF(self->grasscolor);
-    Py_DECREF(self->watercolor);
-    Py_DECREF(self->grass_texture);
+    Py_XDECREF(self->foliagecolor);
+    Py_XDECREF(self->grasscolor);
+    Py_XDECREF(self->watercolor);
+    Py_XDECREF(self->grass_texture);
 }
 
 static int
