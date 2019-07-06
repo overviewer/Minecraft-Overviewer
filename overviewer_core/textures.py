@@ -86,8 +86,8 @@ class Textures(object):
         self.texture_cache = {}
 
         # once we find a jarfile that contains a texture, we cache the ZipFile object here
-        self.jar = None
-        self.jarpath = ""
+        self.jars = []
+        self.jarpaths = []
     
     ##
     ## pickle support
@@ -101,7 +101,7 @@ class Textures(object):
                 del attributes[attr]
             except KeyError:
                 pass
-        attributes['jar'] = None
+        attributes['jars'] = []
         return attributes
     def __setstate__(self, attrs):
         # regenerate textures, if needed
@@ -116,6 +116,17 @@ class Textures(object):
     ##
     
     def generate(self):
+        # Make sure we have the foliage/grasscolor images available
+        try:
+            self.load_foliage_color()
+            self.load_grass_color()
+        except TextureException as e:
+            logging.error(
+                "Your system is missing either assets/minecraft/textures/colormap/foliage.png "
+                "or assets/minecraft/textures/colormap/grass.png. Either complement your "
+                "resource pack with these texture files, or install the vanilla Minecraft "
+                "client to use as a fallback.")
+            raise e
         
         # generate biome grass mask
         self.biome_grass_texture = self.build_block(self.load_image_texture("assets/minecraft/textures/block/grass_block_top.png"), self.load_image_texture("assets/minecraft/textures/block/grass_block_side_overlay.png"))
@@ -173,13 +184,19 @@ class Textures(object):
 
         # we've sucessfully loaded something from here before, so let's quickly try
         # this before searching again
-        if self.jar is not None:
-            try:
-                self.jar.getinfo(filename)
-                if verbose: logging.info("Found (cached) %s in '%s'", filename, self.jarpath)
-                return self.jar.open(filename)
-            except (KeyError, IOError) as e:
-                pass
+        # We might already know some jarpaths from other processes though.
+        if len(self.jarpaths) > len(self.jars):
+            for p in self.jarpaths:
+                self.jars.append(zipfile.ZipFile(p))
+        if len(self.jars) > 0:
+            for jar_num, jar in enumerate(self.jars):
+                try:
+                    jar.getinfo(filename)
+                    if verbose: logging.info("Found (cached) %s in '%s'", filename,
+                                             self.jarpaths[jar_num])
+                    return jar.open(filename)
+                except (KeyError, IOError) as e:
+                    pass
 
         # A texture path was given on the command line. Search this location
         # for the file first.
@@ -199,7 +216,8 @@ class Textures(object):
                     pack.getinfo(filename)
                     if verbose: logging.info("Found %s in '%s'", filename,
                                              self.find_file_local_path)
-                    self.jar, self.jarpath = pack, self.find_file_local_path
+                    self.jars.append(pack)
+                    self.jarpaths.append(self.find_file_local_path)
                     return pack.open(filename)
                 except (zipfile.BadZipfile, KeyError, IOError):
                     pass
@@ -283,7 +301,8 @@ class Textures(object):
                 try:
                     jar.getinfo(filename)
                     if verbose: logging.info("Found %s in '%s'", filename, jarpath)
-                    self.jar, self.jarpath = jar, jarpath
+                    self.jars.append(jar)
+                    self.jarpaths.append(jarpath)
                     return jar.open(filename)
                 except (KeyError, IOError) as e:
                     pass
