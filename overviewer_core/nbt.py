@@ -203,7 +203,7 @@ class NBTFileReader(object):
             name = self._read_tag_string()
             payload = self._read_tag_compound()
             return (name, payload)
-        except (struct.error, ValueError, TypeError) as e:
+        except (struct.error, ValueError, TypeError, EOFError) as e:
             raise CorruptNBTError("could not parse nbt: %s" % (str(e),))
 
 
