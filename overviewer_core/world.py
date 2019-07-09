@@ -1177,8 +1177,8 @@ class RegionSet(object):
         blocks = numpy.empty((4096,), dtype=numpy.uint16)
         data = numpy.empty((4096,), dtype=numpy.uint8)
         block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
-        blocks[::1] = translated_blocks[block_states]
-        data[::1] = translated_data[block_states]
+        blocks[:] = translated_blocks[block_states]
+        data[:] = translated_data[block_states]
 
         # Turn the Data array into a 16x16x16 matrix, same as SkyLight
         blocks  = blocks.reshape((16, 16, 16))
