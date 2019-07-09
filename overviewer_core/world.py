@@ -1174,8 +1174,8 @@ class RegionSet(object):
                 pass    # We already have initialised arrays with 0 (= air)
 
         # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
-        blocks = numpy.zeros((4096,), dtype=numpy.uint16)
-        data = numpy.zeros((4096,), dtype=numpy.uint8)
+        blocks = numpy.empty((4096,), dtype=numpy.uint16)
+        data = numpy.empty((4096,), dtype=numpy.uint8)
         block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
         blocks[::1] = translated_blocks[block_states]
         data[::1] = translated_data[block_states]
