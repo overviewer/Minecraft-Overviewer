@@ -13,6 +13,7 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import sys
 import imp
 import os
@@ -86,8 +87,7 @@ class Textures(object):
         self.texture_cache = {}
 
         # once we find a jarfile that contains a texture, we cache the ZipFile object here
-        self.jars = []
-        self.jarpaths = []
+        self.jars = OrderedDict()
     
     ##
     ## pickle support
@@ -101,7 +101,7 @@ class Textures(object):
                 del attributes[attr]
             except KeyError:
                 pass
-        attributes['jars'] = []
+        attributes['jars'] = OrderedDict()
         return attributes
     def __setstate__(self, attrs):
         # regenerate textures, if needed
@@ -162,8 +162,8 @@ class Textures(object):
         """Searches for the given file and returns an open handle to it.
         This searches the following locations in this order:
         
+        * In the directory textures_path given in the initializer if not already open
         * In an already open resource pack or client jar file
-        * In the directory textures_path given in the initializer
         * In the resource pack given by textures_path
         * The program dir (same dir as overviewer.py) for extracted textures
         * On Darwin, in /Applications/Minecraft for extracted textures
@@ -182,31 +182,11 @@ class Textures(object):
         """
         if verbose: logging.info("Starting search for {0}".format(filename))
 
-        # we've sucessfully loaded something from here before, so let's quickly try
-        # this before searching again
-        # We might already know some jarpaths from other processes though.
-        if len(self.jarpaths) > len(self.jars):
-            for p in self.jarpaths:
-                self.jars.append(zipfile.ZipFile(p))
-        if len(self.jars) > 0:
-            for jar_num, jar in enumerate(self.jars):
-                try:
-                    jar.getinfo(filename)
-                    if verbose: logging.info("Found (cached) %s in '%s'", filename,
-                                             self.jarpaths[jar_num])
-                    return jar.open(filename)
-                except (KeyError, IOError) as e:
-                    pass
-
         # A texture path was given on the command line. Search this location
         # for the file first.
         if self.find_file_local_path:
-            if os.path.isdir(self.find_file_local_path):
-                full_path = os.path.join(self.find_file_local_path, filename)
-                if os.path.isfile(full_path):
-                        if verbose: logging.info("Found %s in '%s'", filename, full_path)
-                        return open(full_path, mode)
-            elif os.path.isfile(self.find_file_local_path):
+            if (self.find_file_local_path not in self.jars
+                and os.path.isfile(self.find_file_local_path)):
                 # Must be a resource pack. Look for the requested file within
                 # it.
                 try:
@@ -216,10 +196,28 @@ class Textures(object):
                     pack.getinfo(filename)
                     if verbose: logging.info("Found %s in '%s'", filename,
                                              self.find_file_local_path)
-                    self.jars.append(pack)
-                    self.jarpaths.append(self.find_file_local_path)
+                    self.jars[self.find_file_local_path] = pack
+                    # ok cool now move this to the start so we pick it first
+                    self.jars.move_to_end(self.find_file_local_path, last=False)
                     return pack.open(filename)
                 except (zipfile.BadZipfile, KeyError, IOError):
+                    pass
+            elif os.path.isdir(self.find_file_local_path):
+                full_path = os.path.join(self.find_file_local_path, filename)
+                if os.path.isfile(full_path):
+                        if verbose: logging.info("Found %s in '%s'", filename, full_path)
+                        return open(full_path, mode)
+
+        # We already have some jars open, better use them.
+        if len(self.jars) > 0:
+            for jarpath in self.jars:
+                try:
+                    jar = self.jars[jarpath]
+                    jar.getinfo(filename)
+                    if verbose: logging.info("Found (cached) %s in '%s'", filename,
+                                             jarpath)
+                    return jar.open(filename)
+                except (KeyError, IOError) as e:
                     pass
 
         # If we haven't returned at this point, then the requested file was NOT
@@ -301,8 +299,7 @@ class Textures(object):
                 try:
                     jar.getinfo(filename)
                     if verbose: logging.info("Found %s in '%s'", filename, jarpath)
-                    self.jars.append(jar)
-                    self.jarpaths.append(jarpath)
+                    self.jars[jarpath] = jar
                     return jar.open(filename)
                 except (KeyError, IOError) as e:
                     pass
