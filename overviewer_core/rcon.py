@@ -37,10 +37,11 @@ class RConConnection():
 
     def send(self, t, payload):
         self.rid = self.rid + 1
+        pld_enc = payload.encode("utf-8")
         header = struct.pack("<iii",
-                             len(payload) + 4 + 4 + 2,  # rid, type and padding
+                             len(pld_enc) + 4 + 4 + 2,  # rid, type and padding
                              self.rid, t)
-        data = header + payload + '\x00\x00'
+        data = header + pld_enc + b'\x00\x00'
         self.sock.send(data)
 
         toread = select.select([self.sock], [], [], 30)
@@ -51,6 +52,9 @@ class RConConnection():
         try:
             res_len, res_id, res_type = \
                 struct.unpack("<iii", self.sock.recv(12, socket.MSG_WAITALL))
+            if res_len < 0:
+                raise Exception("Response length is {}.".format(res_len))
+
         except Exception as e:
             raise RConException(self.rid,
                                 "RCon protocol error. Are you sure you're "
