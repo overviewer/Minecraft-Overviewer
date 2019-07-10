@@ -18,8 +18,8 @@
 #include "../overviewer.h"
 
 typedef struct {
-    uint32_t min;
-    uint32_t max;
+    int32_t min;
+    int32_t max;
 } PrimitiveDepth;
 
 static bool

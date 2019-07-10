@@ -146,7 +146,7 @@ overlay_biomes_start(void* data, RenderState* state, PyObject* support) {
         for (i = 0; i < biomes_size; i++) {
             PyObject* biome = PyList_GET_ITEM(opt, i);
             char* tmpname = NULL;
-            int32_t j = 0;
+            uint32_t j = 0;
 
             if (!PyArg_ParseTuple(biome, "s(bbb)", &tmpname, &(biomes[i].r), &(biomes[i].g), &(biomes[i].b))) {
                 free(biomes);
