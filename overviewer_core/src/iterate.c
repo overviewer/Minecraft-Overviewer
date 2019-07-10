@@ -21,9 +21,9 @@
 
 static PyObject* textures = NULL;
 
-unsigned int max_blockid = 0;
-unsigned int max_data = 0;
-unsigned char* block_properties = NULL;
+uint32_t max_blockid = 0;
+uint32_t max_data = 0;
+uint8_t* block_properties = NULL;
 
 static PyObject* known_blocks = NULL;
 static PyObject* transparent_blocks = NULL;
@@ -35,7 +35,7 @@ static PyObject* nodata_blocks = NULL;
 PyObject* init_chunk_render(void) {
 
     PyObject* tmp = NULL;
-    unsigned int i;
+    uint32_t i;
 
     /* this function only needs to be called once, anything more should be
      * ignored */
@@ -80,7 +80,7 @@ PyObject* init_chunk_render(void) {
     if (!nodata_blocks)
         return NULL;
 
-    block_properties = calloc(max_blockid, sizeof(unsigned char));
+    block_properties = calloc(max_blockid, sizeof(uint8_t));
     for (i = 0; i < max_blockid; i++) {
         PyObject* block = PyLong_FromLong(i);
 
@@ -104,7 +104,7 @@ PyObject* init_chunk_render(void) {
 }
 
 /* helper for load_chunk, loads a section into a chunk */
-static inline void load_chunk_section(ChunkData* dest, int i, PyObject* section) {
+static inline void load_chunk_section(ChunkData* dest, int32_t i, PyObject* section) {
     dest->sections[i].blocks = (PyArrayObject*)PyDict_GetItemString(section, "Blocks");
     dest->sections[i].data = (PyArrayObject*)PyDict_GetItemString(section, "Data");
     dest->sections[i].skylight = (PyArrayObject*)PyDict_GetItemString(section, "SkyLight");
@@ -121,14 +121,14 @@ static inline void load_chunk_section(ChunkData* dest, int i, PyObject* section)
  * if required is true, failure to load the chunk will raise a python
  * exception and return true.
  */
-int load_chunk(RenderState* state, int x, int z, unsigned char required) {
+bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
     ChunkData* dest = &(state->chunks[1 + x][1 + z]);
-    int i;
+    int32_t i;
     PyObject* chunk = NULL;
     PyObject* sections = NULL;
 
     if (dest->loaded)
-        return 0;
+        return false;
 
     /* set up reasonable defaults */
     dest->biomes = NULL;
@@ -150,7 +150,7 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
         if (!required) {
             PyErr_Clear();
         }
-        return 1;
+        return true;
     }
 
     sections = PyDict_GetItemString(chunk, "Sections");
@@ -163,7 +163,7 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
         if (!required) {
             PyErr_Clear();
         }
-        return 1;
+        return true;
     }
 
     dest->biomes = (PyArrayObject*)PyDict_GetItemString(chunk, "Biomes");
@@ -171,7 +171,7 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
 
     for (i = 0; i < PySequence_Fast_GET_SIZE(sections); i++) {
         PyObject* ycoord = NULL;
-        int sectiony = 0;
+        int32_t sectiony = 0;
         PyObject* section = PySequence_Fast_GET_ITEM(sections, i);
         ycoord = PyDict_GetItemString(section, "Y");
         if (!ycoord)
@@ -184,13 +184,13 @@ int load_chunk(RenderState* state, int x, int z, unsigned char required) {
     Py_DECREF(sections);
     Py_DECREF(chunk);
 
-    return 0;
+    return false;
 }
 
 /* helper to unload all loaded chunks */
 static void
 unload_all_chunks(RenderState* state) {
-    unsigned int i, j, k;
+    uint32_t i, j, k;
     for (i = 0; i < 3; i++) {
         for (j = 0; j < 3; j++) {
             if (state->chunks[i][j].loaded) {
@@ -207,8 +207,8 @@ unload_all_chunks(RenderState* state) {
     }
 }
 
-unsigned short
-check_adjacent_blocks(RenderState* state, int x, int y, int z, unsigned short blockid) {
+uint16_t
+check_adjacent_blocks(RenderState* state, int32_t x, int32_t y, int32_t z, mc_block_t blockid) {
     /*
      * Generates a pseudo ancillary data for blocks that depend of 
      * what are surrounded and don't have ancillary data. This 
@@ -225,7 +225,7 @@ check_adjacent_blocks(RenderState* state, int x, int y, int z, unsigned short bl
      * blockid in the side of the +x direction.
      */
 
-    unsigned char pdata = 0;
+    uint8_t pdata = 0;
 
     if (get_data(state, BLOCKS, x + 1, y, z) == blockid) {
         pdata = pdata | (1 << 3);
@@ -243,14 +243,14 @@ check_adjacent_blocks(RenderState* state, int x, int y, int z, unsigned short bl
     return pdata;
 }
 
-unsigned short
-generate_pseudo_data(RenderState* state, unsigned short ancilData) {
+uint16_t
+generate_pseudo_data(RenderState* state, uint16_t ancilData) {
     /*
      * Generates a fake ancillary data for blocks that are drawn 
      * depending on what are surrounded.
      */
-    int x = state->x, y = state->y, z = state->z;
-    unsigned short data = 0;
+    int32_t x = state->x, y = state->y, z = state->z;
+    uint16_t data = 0;
 
     if (state->block == block_grass) { /* grass */
         /* return 0x10 if grass is covered in snow */
@@ -265,8 +265,8 @@ generate_pseudo_data(RenderState* state, unsigned short ancilData) {
         return data;
     } else if (block_class_is_subset(state->block, (mc_block_t[]){block_glass, block_ice, block_stained_glass}, 3)) { /* glass and ice and stained glass*/
         /* an aditional bit for top is added to the 4 bits of check_adjacent_blocks
-         * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an unsigned char, 
-         * forcing us to use an unsigned short to hold 16 bits of pseudo ancil data
+         * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an uint8_t, 
+         * forcing us to use an uint16_t to hold 16 bits of pseudo ancil data
          * */
         if ((get_data(state, BLOCKS, x, y + 1, z) == 20) || (get_data(state, BLOCKS, x, y + 1, z) == 95)) {
             data = 0;
@@ -285,7 +285,7 @@ generate_pseudo_data(RenderState* state, unsigned short ancilData) {
         /* three addiotional bit are added, one for on/off state, and
          * another two for going-up redstone wire in the same block
          * (connection with the level y+1) */
-        unsigned char above_level_data = 0, same_level_data = 0, below_level_data = 0, possibly_connected = 0, final_data = 0;
+        uint8_t above_level_data = 0, same_level_data = 0, below_level_data = 0, possibly_connected = 0, final_data = 0;
 
         /* check for air in y+1, no air = no connection with upper level */
         if (get_data(state, BLOCKS, x, y + 1, z) == 0) {
@@ -324,7 +324,7 @@ generate_pseudo_data(RenderState* state, unsigned short ancilData) {
           * and which half of the chest it is: bit 0x10 = second half
           *                                    bit 0x8 = first half */
 
-        unsigned char chest_data = 0, final_data = 0;
+        uint8_t chest_data = 0, final_data = 0;
 
         /* search for adjacent chests of the same type */
         chest_data = check_adjacent_blocks(state, x, y, z, state->block);
@@ -369,10 +369,10 @@ generate_pseudo_data(RenderState* state, unsigned short ancilData) {
         /* use bottom block data format plus one bit for top/down
          * block (0x8) and one bit for hinge position (0x10)
          */
-        unsigned char data = 0;
+        uint8_t data = 0;
         if ((ancilData & 0x8) == 0x8) {
             /* top door block */
-            unsigned char b_data = get_data(state, DATA, x, y - 1, z);
+            uint8_t b_data = get_data(state, DATA, x, y - 1, z);
             if ((ancilData & 0x1) == 0x1) {
                 /* hinge on the left */
                 data = b_data | 0x8 | 0x10;
@@ -381,7 +381,7 @@ generate_pseudo_data(RenderState* state, unsigned short ancilData) {
             }
         } else {
             /* bottom door block */
-            unsigned char t_data = get_data(state, DATA, x, y + 1, z);
+            uint8_t t_data = get_data(state, DATA, x, y + 1, z);
             if ((t_data & 0x1) == 0x1) {
                 /* hinge on the left */
                 data = ancilData | 0x10;
@@ -398,8 +398,8 @@ generate_pseudo_data(RenderState* state, unsigned short ancilData) {
             return check_adjacent_blocks(state, x, y, z, state->block);
         }
     } else if (state->block == block_waterlily) {
-        int wx, wz, wy, rotation;
-        long pr;
+        int32_t wx, wz, wy, rotation;
+        int64_t pr;
         /* calculate the global block coordinates of this position */
         wx = (state->chunkx * 16) + x;
         wz = (state->chunkz * 16) + z;
@@ -426,10 +426,10 @@ generate_pseudo_data(RenderState* state, unsigned short ancilData) {
          */
 
         /* keep track of whether neighbors are stairs, and their data */
-        unsigned char stairs_base[8];
-        unsigned char neigh_base[8];
-        unsigned char* stairs = stairs_base;
-        unsigned char* neigh = neigh_base;
+        uint8_t stairs_base[8];
+        uint8_t neigh_base[8];
+        uint8_t* stairs = stairs_base;
+        uint8_t* neigh = neigh_base;
 
         /* amount to rotate/roll to get to east, west, south, north */
         size_t rotations[] = {0, 2, 3, 1};
@@ -437,25 +437,25 @@ generate_pseudo_data(RenderState* state, unsigned short ancilData) {
         /* masks for the filled (ridge) stair quarters: */
         /* Example: the ridge for an east-ascending stair are the two east quarters */
         /*                  ascending: east  west south north */
-        unsigned char ridge_mask[] = {0x30, 0x48, 0x60, 0x18};
+        uint8_t ridge_mask[] = {0x30, 0x48, 0x60, 0x18};
 
         /* masks for the open (trench) stair quarters: */
-        unsigned char trench_mask[] = {0x48, 0x30, 0x18, 0x60};
+        uint8_t trench_mask[] = {0x48, 0x30, 0x18, 0x60};
 
         /* boat analogy! up the stairs is toward the bow of the boat */
         /* masks for port and starboard, i.e. left and right sides while ascending: */
-        unsigned char port_mask[] = {0x18, 0x60, 0x30, 0x48};
-        unsigned char starboard_mask[] = {0x60, 0x18, 0x48, 0x30};
+        uint8_t port_mask[] = {0x18, 0x60, 0x30, 0x48};
+        uint8_t starboard_mask[] = {0x60, 0x18, 0x48, 0x30};
 
         /* we may need to lock some quarters into place depending on neighbors */
-        unsigned char lock_mask = 0;
+        uint8_t lock_mask = 0;
 
-        unsigned char repair_rot[] = {0, 1, 2, 3, 2, 3, 1, 0, 1, 0, 3, 2, 3, 2, 0, 1};
+        uint8_t repair_rot[] = {0, 1, 2, 3, 2, 3, 1, 0, 1, 0, 3, 2, 3, 2, 0, 1};
 
         /* need to get northdirection of the render */
         /* TODO: get this just once? store in state? */
         PyObject* texrot;
-        int northdir;
+        int32_t northdir;
         texrot = PyObject_GetAttrString(state->textures, "rotation");
         northdir = PyLong_AsLong(texrot);
 
@@ -540,10 +540,10 @@ chunk_render(PyObject* self, PyObject* args) {
     PyObject* modeobj;
     PyObject* blockmap;
 
-    int xoff, yoff;
+    int32_t xoff, yoff;
 
     PyObject *imgsize, *imgsize0_py, *imgsize1_py;
-    int imgsize0, imgsize1;
+    int32_t imgsize0, imgsize1;
 
     PyArrayObject* blocks_py;
     PyArrayObject* left_blocks_py;
@@ -553,7 +553,7 @@ chunk_render(PyObject* self, PyObject* args) {
 
     RenderMode* rendermode;
 
-    int i, j;
+    int32_t i, j;
 
     PyObject* t = NULL;
 
@@ -629,7 +629,7 @@ chunk_render(PyObject* self, PyObject* args) {
             state.imgy = yoff - state.x * 6 + state.z * 6 + 16 * 12 + 15 * 6;
 
             for (state.y = 0; state.y < 16; state.y++) {
-                unsigned short ancilData;
+                uint16_t ancilData;
 
                 state.imgy -= 12;
                 /* get blockid */
@@ -687,8 +687,8 @@ chunk_render(PyObject* self, PyObject* args) {
                 /* if we found a proper texture, render it! */
                 if (t != NULL && t != Py_None) {
                     PyObject *src, *mask, *mask_light;
-                    int do_rand = (state.block == block_tallgrass /*|| state.block == block_red_flower || state.block == block_double_plant*/);
-                    int randx = 0, randy = 0;
+                    int32_t do_rand = (state.block == block_tallgrass /*|| state.block == block_red_flower || state.block == block_double_plant*/);
+                    int32_t randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 0);
                     mask_light = PyTuple_GetItem(t, 1);

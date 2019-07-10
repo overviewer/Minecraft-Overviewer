@@ -22,35 +22,35 @@
 
 static void
 walk_chunk(RenderState* state, RenderPrimitiveNether* data) {
-    int x, y, z;
-    int id;
+    int32_t x, y, z;
+    mc_block_t blockid;
 
     for (x = -1; x < WIDTH + 1; x++) {
         for (z = -1; z < DEPTH + 1; z++) {
-            id = get_data(state, BLOCKS, x, NETHER_ROOF - (state->chunky * 16), z);
-            if (id == block_bedrock) {
-                data->remove_block[x + 1][NETHER_ROOF][z + 1] = 1;
-                id = get_data(state, BLOCKS, x, (NETHER_ROOF + 1) - (state->chunky * 16), z);
-                if (id == block_brown_mushroom || id == block_red_mushroom)
-                    data->remove_block[x + 1][NETHER_ROOF + 1][z + 1] = 1;
+            blockid = get_data(state, BLOCKS, x, NETHER_ROOF - (state->chunky * 16), z);
+            if (blockid == block_bedrock) {
+                data->remove_block[x + 1][NETHER_ROOF][z + 1] = true;
+                blockid = get_data(state, BLOCKS, x, (NETHER_ROOF + 1) - (state->chunky * 16), z);
+                if (blockid == block_brown_mushroom || blockid == block_red_mushroom)
+                    data->remove_block[x + 1][NETHER_ROOF + 1][z + 1] = true;
             }
 
             for (y = NETHER_ROOF - 1; y >= 0; y--) {
-                id = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
-                if (block_class_is_subset(id, (mc_block_t[]){block_bedrock, block_netherrack, block_quartz_ore, block_lava}, 4))
-                    data->remove_block[x + 1][y][z + 1] = 1;
+                blockid = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
+                if (block_class_is_subset(blockid, (mc_block_t[]){block_bedrock, block_netherrack, block_quartz_ore, block_lava}, 4))
+                    data->remove_block[x + 1][y][z + 1] = true;
                 else
                     break;
             }
         }
     }
-    data->walked_chunk = 1;
+    data->walked_chunk = true;
 }
 
-static int
-nether_hidden(void* data, RenderState* state, int x, int y, int z) {
+static bool
+nether_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     RenderPrimitiveNether* self;
-    int real_y;
+    int32_t real_y;
 
     self = (RenderPrimitiveNether*)data;
 

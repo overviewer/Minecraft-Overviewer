@@ -19,7 +19,7 @@
 #include "../mc_id.h"
 
 static void get_color(void* data, RenderState* state,
-                      unsigned char* r, unsigned char* g, unsigned char* b, unsigned char* a) {
+                      uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) {
     RenderPrimitiveOverlay* self = (RenderPrimitiveOverlay*)data;
 
     *r = self->color->r;
@@ -28,7 +28,7 @@ static void get_color(void* data, RenderState* state,
     *a = self->color->a;
 }
 
-static int
+static int32_t
 overlay_start(void* data, RenderState* state, PyObject* support) {
     PyObject* opt = NULL;
     OverlayColor* color = NULL;
@@ -41,7 +41,7 @@ overlay_start(void* data, RenderState* state, PyObject* support) {
     color = self->color = calloc(1, sizeof(OverlayColor));
 
     if (color == NULL) {
-        return 1;
+        return true;
     }
 
     self->default_color.r = 200;
@@ -58,12 +58,12 @@ overlay_start(void* data, RenderState* state, PyObject* support) {
         if (render_mode_parse_option(support, "overlay_color", "O", &(opt))) {
             // If it is an object, check to see if it is None, if it is, use the default.
             if (opt && opt != Py_None) {
-                return 1;
+                return true;
             }
         }
     }
 
-    return 0;
+    return false;
 }
 
 static void
@@ -80,11 +80,11 @@ overlay_finish(void* data, RenderState* state) {
 
 void overlay_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
     RenderPrimitiveOverlay* self = (RenderPrimitiveOverlay*)data;
-    unsigned char r, g, b, a;
-    unsigned short top_block;
+    uint8_t r, g, b, a;
+    mc_block_t top_block;
 
     // exactly analogous to edge-line code for these special blocks
-    int increment = 0;
+    int32_t increment = 0;
     if (state->block == block_stone_slab) // half-step
         increment = 6;
     else if (state->block == block_snow_layer) // snow

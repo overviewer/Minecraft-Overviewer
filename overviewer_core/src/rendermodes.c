@@ -33,7 +33,7 @@
 RenderPrimitive* render_primitive_create(PyObject* prim, RenderState* state) {
     RenderPrimitive* ret = NULL;
     RenderPrimitiveInterface* iface = NULL;
-    unsigned int i;
+    uint32_t i;
     PyObject* pyname;
     const char* name;
 
@@ -82,7 +82,7 @@ RenderPrimitive* render_primitive_create(PyObject* prim, RenderState* state) {
 RenderMode* render_mode_create(PyObject* mode, RenderState* state) {
     RenderMode* ret = NULL;
     PyObject* mode_fast = NULL;
-    unsigned int i;
+    uint32_t i;
 
     mode_fast = PySequence_Fast(mode, "Mode is not a sequence type");
     if (!mode_fast)
@@ -109,7 +109,7 @@ RenderMode* render_mode_create(PyObject* mode, RenderState* state) {
 }
 
 void render_mode_destroy(RenderMode* self) {
-    unsigned int i;
+    uint32_t i;
 
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive* prim = self->primitives[i];
@@ -129,9 +129,9 @@ void render_mode_destroy(RenderMode* self) {
     free(self);
 }
 
-int render_mode_occluded(RenderMode* self, int x, int y, int z) {
-    unsigned int i;
-    int occluded = 0;
+bool render_mode_occluded(RenderMode* self, int32_t x, int32_t y, int32_t z) {
+    uint32_t i;
+    bool occluded = false;
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive* prim = self->primitives[i];
         if (prim->iface->occluded) {
@@ -144,9 +144,9 @@ int render_mode_occluded(RenderMode* self, int x, int y, int z) {
     return occluded;
 }
 
-int render_mode_hidden(RenderMode* self, int x, int y, int z) {
-    unsigned int i;
-    int hidden = 0;
+bool render_mode_hidden(RenderMode* self, int32_t x, int32_t y, int32_t z) {
+    uint32_t i;
+    bool hidden = false;
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive* prim = self->primitives[i];
         if (prim->iface->hidden) {
@@ -160,7 +160,7 @@ int render_mode_hidden(RenderMode* self, int x, int y, int z) {
 }
 
 void render_mode_draw(RenderMode* self, PyObject* img, PyObject* mask, PyObject* mask_light) {
-    unsigned int i;
+    uint32_t i;
     for (i = 0; i < self->num_primitives; i++) {
         RenderPrimitive* prim = self->primitives[i];
         if (prim->iface->draw) {
@@ -170,22 +170,22 @@ void render_mode_draw(RenderMode* self, PyObject* img, PyObject* mask, PyObject*
 }
 
 /* options parse helper */
-int render_mode_parse_option(PyObject* support, const char* name, const char* format, ...) {
+bool render_mode_parse_option(PyObject* support, const char* name, const char* format, ...) {
     va_list ap;
     PyObject *item, *dict;
-    int ret;
+    bool ret;
 
     if (support == NULL || name == NULL)
-        return 0;
+        return false;
 
     dict = PyObject_GetAttrString(support, "option_values");
     if (!dict)
-        return 0;
+        return false;
 
     item = PyDict_GetItemString(dict, name);
     if (item == NULL) {
         Py_DECREF(dict);
-        return 0;
+        return false;
     };
 
     /* make sure the item we're parsing is a tuple

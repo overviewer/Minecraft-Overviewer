@@ -17,13 +17,13 @@
 
 #include "../overviewer.h"
 
-static int
+static bool
 no_fluids_start(void* data, RenderState* state, PyObject* support) {
-    return 0;
+    return false;
 }
 
-static int
-no_fluids_hidden(void* data, RenderState* state, int x, int y, int z) {
+static bool
+no_fluids_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     return block_has_property(state->block, FLUID);
 }
 

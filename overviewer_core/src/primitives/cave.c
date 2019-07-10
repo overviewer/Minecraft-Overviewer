@@ -19,60 +19,59 @@
 #include "../overviewer.h"
 
 typedef struct {
-    int only_lit;
+    int32_t only_lit;
 } RenderPrimitiveCave;
 
-static inline int
-touches_light(RenderState* state, DataType type, unsigned int x, unsigned int y, unsigned int z) {
+static inline bool
+touches_light(RenderState* state, DataType type, uint32_t x, uint32_t y, uint32_t z) {
     if (get_data(state, type, x, y + 1, z))
-        return 1;
-
+        return true;
     if (get_data(state, type, x + 1, y, z))
-        return 1;
+        return true;
     if (get_data(state, type, x - 1, y, z))
-        return 1;
+        return true;
     if (get_data(state, type, x, y, z + 1))
-        return 1;
+        return true;
     if (get_data(state, type, x, y, z - 1))
-        return 1;
-    return 0;
+        return true;
+    return false;
 }
 
-static int
-cave_occluded(void* data, RenderState* state, int x, int y, int z) {
+static bool
+cave_occluded(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     /* check for normal occlusion */
     /* use ajacent chunks, if not you get blocks spreaded in chunk edges */
 
     if (!is_known_transparent(get_data(state, BLOCKS, x - 1, y, z)) &&
         !is_known_transparent(get_data(state, BLOCKS, x, y, z + 1)) &&
         !is_known_transparent(get_data(state, BLOCKS, x, y + 1, z))) {
-        return 1;
+        return true;
     }
 
     /* special handling for section boundaries */
     if (x == 0 && (!(state->chunks[0][1].loaded) || state->chunks[0][1].sections[state->chunky].blocks == NULL))
-        return 1;
+        return true;
     if (y == 15 && (state->chunky + 1 >= SECTIONS_PER_CHUNK || state->chunks[1][1].sections[state->chunky + 1].blocks == NULL))
-        return 1;
+        return true;
     if (z == 15 && (!(state->chunks[1][2].loaded) || state->chunks[1][2].sections[state->chunky].blocks == NULL))
-        return 1;
+        return true;
 
-    return 0;
+    return false;
 }
 
-static int
-cave_hidden(void* data, RenderState* state, int x, int y, int z) {
+static bool
+cave_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     RenderPrimitiveCave* self;
-    int dy = 0;
+    int32_t dy = 0;
     self = (RenderPrimitiveCave*)data;
 
     /* check if the block is touching skylight */
     if (touches_light(state, SKYLIGHT, x, y, z)) {
-        return 1;
+        return true;
     }
 
     if (self->only_lit && !touches_light(state, BLOCKLIGHT, x, y, z)) {
-        return 1;
+        return true;
     }
 
     /* check for lakes and seas and don't render them
@@ -85,7 +84,7 @@ cave_hidden(void* data, RenderState* state, int x, int y, int z) {
         for (dy = y + 1; dy < (SECTIONS_PER_CHUNK - state->chunky) * 16; dy++) {
             /* go up and check for skylight */
             if (get_data(state, SKYLIGHT, x, dy, z) != 0) {
-                return 1;
+                return true;
             }
             if (get_data(state, BLOCKS, x, dy, z) != 9) {
                 /* we are out of the water! and there's no skylight
@@ -102,15 +101,15 @@ cave_hidden(void* data, RenderState* state, int x, int y, int z) {
     return cave_occluded(data, state, x, y, z);
 }
 
-static int
+static bool
 cave_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveCave* self;
     self = (RenderPrimitiveCave*)data;
 
     if (!render_mode_parse_option(support, "only_lit", "i", &(self->only_lit)))
-        return 1;
+        return true;
 
-    return 0;
+    return false;
 }
 
 RenderPrimitiveInterface primitive_cave = {

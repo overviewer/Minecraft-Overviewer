@@ -18,7 +18,7 @@
 #include "../overviewer.h"
 
 typedef struct {
-    unsigned char r, g, b, a;
+    uint8_t r, g, b, a;
 } OverlayColor;
 
 typedef struct {
@@ -33,7 +33,7 @@ typedef struct {
        overlay alpha and color
        last four vars are r, g, b, a out */
     void (*get_color)(void*, RenderState*,
-                      unsigned char*, unsigned char*, unsigned char*, unsigned char*);
+                      uint8_t*, uint8_t*, uint8_t*, uint8_t*);
 } RenderPrimitiveOverlay;
 extern RenderPrimitiveInterface primitive_overlay;
 

@@ -26,8 +26,8 @@ typedef struct {
 } RenderPrimitiveMineral;
 
 struct MineralColor {
-    unsigned char blockid;
-    unsigned char r, g, b;
+    mc_block_t block;
+    uint8_t r, g, b;
 };
 
 /* put more valuable ores first -- they take precedence */
@@ -48,21 +48,21 @@ static struct MineralColor default_minerals[] = {
     {0, 0, 0, 0}};
 
 static void get_color(void* data, RenderState* state,
-                      unsigned char* r, unsigned char* g, unsigned char* b, unsigned char* a) {
+                      uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a) {
 
-    int x = state->x, z = state->z, y_max, y;
-    int max_i = -1;
+    int32_t x = state->x, z = state->z, y_max, y;
+    int32_t max_i = -1;
     RenderPrimitiveMineral* self = (RenderPrimitiveMineral*)data;
     struct MineralColor* minerals = (struct MineralColor*)(self->minerals);
     *a = 0;
 
     y_max = state->y + 1;
     for (y = state->chunky * -16; y <= y_max; y++) {
-        int i, tmp;
-        unsigned short blockid = get_data(state, BLOCKS, x, y, z);
+        int32_t i, tmp;
+        mc_block_t block = get_data(state, BLOCKS, x, y, z);
 
-        for (i = 0; (max_i == -1 || i < max_i) && minerals[i].blockid != block_air; i++) {
-            if (minerals[i].blockid == blockid) {
+        for (i = 0; (max_i == -1 || i < max_i) && minerals[i].block != block_air; i++) {
+            if (minerals[i].block == block) {
                 *r = minerals[i].r;
                 *g = minerals[i].g;
                 *b = minerals[i].b;
@@ -77,14 +77,14 @@ static void get_color(void* data, RenderState* state,
     }
 }
 
-static int
+static bool
 overlay_mineral_start(void* data, RenderState* state, PyObject* support) {
     PyObject* opt;
     RenderPrimitiveMineral* self;
 
     /* first, chain up */
-    int ret = primitive_overlay.start(data, state, support);
-    if (ret != 0)
+    bool ret = primitive_overlay.start(data, state, support);
+    if (ret != false)
         return ret;
 
     /* now do custom initializations */
@@ -92,7 +92,7 @@ overlay_mineral_start(void* data, RenderState* state, PyObject* support) {
 
     // opt is a borrowed reference.  do not deref
     if (!render_mode_parse_option(support, "minerals", "O", &(opt)))
-        return 1;
+        return true;
     if (opt && opt != Py_None) {
         struct MineralColor* minerals = NULL;
         Py_ssize_t minerals_size = 0, i;
@@ -100,21 +100,21 @@ overlay_mineral_start(void* data, RenderState* state, PyObject* support) {
 
         if (!PyList_Check(opt)) {
             PyErr_SetString(PyExc_TypeError, "'minerals' must be a list");
-            return 1;
+            return true;
         }
 
         minerals_size = PyList_GET_SIZE(opt);
         minerals = self->minerals = calloc(minerals_size + 1, sizeof(struct MineralColor));
         if (minerals == NULL) {
-            return 1;
+            return true;
         }
 
         for (i = 0; i < minerals_size; i++) {
             PyObject* mineral = PyList_GET_ITEM(opt, i);
-            if (!PyArg_ParseTuple(mineral, "b(bbb)", &(minerals[i].blockid), &(minerals[i].r), &(minerals[i].g), &(minerals[i].b))) {
+            if (!PyArg_ParseTuple(mineral, "b(bbb)", &(minerals[i].block), &(minerals[i].r), &(minerals[i].g), &(minerals[i].b))) {
                 free(minerals);
                 self->minerals = NULL;
-                return 1;
+                return true;
             }
         }
     } else {
@@ -124,7 +124,7 @@ overlay_mineral_start(void* data, RenderState* state, PyObject* support) {
     /* setup custom color */
     self->parent.get_color = get_color;
 
-    return 0;
+    return false;
 }
 
 static void

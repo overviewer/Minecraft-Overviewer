@@ -29,29 +29,29 @@ typedef struct {
 /* structure representing one corner of a face (see below) */
 struct SmoothLightingCorner {
     /* where this corner shows up on each block texture */
-    int imgx, imgy;
+    int32_t imgx, imgy;
 
     /* the two block offsets that (together) determine the 4 blocks to use */
-    int dx1, dy1, dz1;
-    int dx2, dy2, dz2;
+    int32_t dx1, dy1, dz1;
+    int32_t dx2, dy2, dz2;
 };
 
 /* structure for rule table handling lighting */
 struct SmoothLightingFace {
     /* offset from current coordinate to the block this face points towards
        used for occlusion calculations, and as a base for later */
-    int dx, dy, dz;
+    int32_t dx, dy, dz;
 
     /* the points that form the corners of this face */
     struct SmoothLightingCorner corners[4];
 
     /* pairs of (x,y) in order, as touch-up points, or NULL for none */
     int* touch_up_points;
-    unsigned int num_touch_up_points;
+    uint32_t num_touch_up_points;
 };
 
 /* top face touchups, pulled from textures.py (_build_block) */
-static int top_touchups[] = {1, 5, 3, 4, 5, 3, 7, 2, 9, 1, 11, 0};
+static int32_t top_touchups[] = {1, 5, 3, 4, 5, 3, 7, 2, 9, 1, 11, 0};
 
 /* the lighting face rule list! */
 static struct SmoothLightingFace lighting_rules[] = {
@@ -110,17 +110,17 @@ enum {
 
 static void
 do_shading_with_rule(RenderPrimitiveSmoothLighting* self, RenderState* state, struct SmoothLightingFace face) {
-    int i;
+    int32_t i;
     RenderPrimitiveLighting* lighting = (RenderPrimitiveLighting*)self;
-    int x = state->imgx, y = state->imgy;
+    int32_t x = state->imgx, y = state->imgy;
     struct SmoothLightingCorner* pts = face.corners;
     float comp_shade_strength = 1.0 - lighting->strength;
-    unsigned char pts_r[4] = {0, 0, 0, 0};
-    unsigned char pts_g[4] = {0, 0, 0, 0};
-    unsigned char pts_b[4] = {0, 0, 0, 0};
-    int cx = state->x + face.dx;
-    int cy = state->y + face.dy;
-    int cz = state->z + face.dz;
+    uint8_t pts_r[4] = {0, 0, 0, 0};
+    uint8_t pts_g[4] = {0, 0, 0, 0};
+    uint8_t pts_b[4] = {0, 0, 0, 0};
+    int32_t cx = state->x + face.dx;
+    int32_t cy = state->y + face.dy;
+    int32_t cz = state->z + face.dz;
 
     /* first, check for occlusion if the block is in the local chunk */
     if (lighting_is_face_occluded(state, 0, cx, cy, cz))
@@ -128,8 +128,8 @@ do_shading_with_rule(RenderPrimitiveSmoothLighting* self, RenderState* state, st
 
     /* calculate the lighting colors for each point */
     for (i = 0; i < 4; i++) {
-        unsigned char r, g, b;
-        unsigned int rgather = 0, ggather = 0, bgather = 0;
+        uint8_t r, g, b;
+        uint32_t rgather = 0, ggather = 0, bgather = 0;
 
         get_lighting_color(lighting, state, cx, cy, cz,
                            &r, &g, &b);
@@ -181,13 +181,13 @@ do_shading_with_rule(RenderPrimitiveSmoothLighting* self, RenderState* state, st
                   x, y, NULL, 0);
 }
 
-static int
+static bool
 smooth_lighting_start(void* data, RenderState* state, PyObject* support) {
     /* first, chain up */
-    int ret = primitive_lighting.start(data, state, support);
-    if (ret != 0)
+    bool ret = primitive_lighting.start(data, state, support);
+    if (ret != false)
         return ret;
-    return 0;
+    return false;
 }
 
 static void
@@ -198,9 +198,9 @@ smooth_lighting_finish(void* data, RenderState* state) {
 
 static void
 smooth_lighting_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
-    int light_top = 1;
-    int light_left = 1;
-    int light_right = 1;
+    bool light_top   = true;
+    bool light_left  = true;
+    bool light_right = true;
     RenderPrimitiveSmoothLighting* self = (RenderPrimitiveSmoothLighting*)data;
 
     /* special case for leaves, water 8, water 9, ice 79
@@ -216,11 +216,11 @@ smooth_lighting_draw(void* data, RenderState* state, PyObject* src, PyObject* ma
     /* special code for water */
     if (state->block == block_water) {
         if (!(state->block_pdata & (1 << 4)))
-            light_top = 0;
+            light_top = false;
         if (!(state->block_pdata & (1 << 1)))
-            light_left = 0;
+            light_left = false;
         if (!(state->block_pdata & (1 << 2)))
-            light_right = 0;
+            light_right = false;
     }
 
     if (light_top)

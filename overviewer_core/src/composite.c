@@ -56,7 +56,9 @@ imaging_python_to_c(PyObject* obj) {
    in these composite functions -- even handles auto-sizing to src! */
 static inline void
 setup_source_destination(Imaging src, Imaging dest,
-                         int* sx, int* sy, int* dx, int* dy, int* xsize, int* ysize) {
+                         int32_t* sx, int32_t* sy,
+                         int32_t* dx, int32_t* dy,
+                         int32_t* xsize, int32_t* ysize) {
     /* handle negative/zero sizes appropriately */
     if (*xsize <= 0 || *ysize <= 0) {
         *xsize = src->xsize;
@@ -92,7 +94,7 @@ setup_source_destination(Imaging src, Imaging dest,
 
 /* convenience alpha_over with 1.0 as overall_alpha */
 inline PyObject* alpha_over(PyObject* dest, PyObject* src, PyObject* mask,
-                            int dx, int dy, int xsize, int ysize) {
+                            int32_t dx, int32_t dy, int32_t xsize, int32_t ysize) {
     return alpha_over_full(dest, src, mask, 1.0f, dx, dy, xsize, ysize);
 }
 
@@ -103,17 +105,17 @@ inline PyObject* alpha_over(PyObject* dest, PyObject* src, PyObject* mask,
  */
 inline PyObject*
 alpha_over_full(PyObject* dest, PyObject* src, PyObject* mask, float overall_alpha,
-                int dx, int dy, int xsize, int ysize) {
+                int32_t dx, int32_t dy, int32_t xsize, int32_t ysize) {
     /* libImaging handles */
     Imaging imDest, imSrc, imMask;
     /* cached blend properties */
-    int src_has_alpha, mask_offset, mask_stride;
+    int32_t src_has_alpha, mask_offset, mask_stride;
     /* source position */
-    int sx, sy;
+    int32_t sx, sy;
     /* iteration variables */
-    unsigned int x, y, i;
+    uint32_t x, y, i;
     /* temporary calculation variables */
-    int tmp1, tmp2, tmp3;
+    int32_t tmp1, tmp2, tmp3;
     /* integer [0, 255] version of overall_alpha */
     UINT8 overall_alpha_int = 255 * overall_alpha;
 
@@ -202,7 +204,7 @@ alpha_over_full(PyObject* dest, PyObject* src, PyObject* mask, float overall_alp
                 in += 3;
             } else {
                 /* general case */
-                int alpha = in_alpha + OV_MULDIV255(*outmask, 255 - in_alpha, tmp1);
+                int32_t alpha = in_alpha + OV_MULDIV255(*outmask, 255 - in_alpha, tmp1);
                 for (i = 0; i < 3; i++) {
                     /* general case */
                     *out = OV_MULDIV255(*in, in_alpha, tmp1) +
@@ -233,7 +235,7 @@ alpha_over_wrap(PyObject* self, PyObject* args) {
     /* raw input python variables */
     PyObject *dest, *src, *pos = NULL, *mask = NULL;
     /* destination position and size */
-    int dx, dy, xsize, ysize;
+    int32_t dx, dy, xsize, ysize;
     /* return value: dest image on success */
     PyObject* ret;
 
@@ -275,19 +277,21 @@ alpha_over_wrap(PyObject* self, PyObject* args) {
  * also, it multiplies instead of doing an over operation
  */
 PyObject*
-tint_with_mask(PyObject* dest, unsigned char sr, unsigned char sg,
-               unsigned char sb, unsigned char sa,
-               PyObject* mask, int dx, int dy, int xsize, int ysize) {
+tint_with_mask(PyObject* dest,
+               uint8_t sr, uint8_t sg, uint8_t sb, uint8_t sa,
+               PyObject* mask,
+               int32_t dx, int32_t dy,
+               int32_t xsize, int32_t ysize) {
     /* libImaging handles */
     Imaging imDest, imMask;
     /* cached blend properties */
-    int mask_offset, mask_stride;
+    int32_t mask_offset, mask_stride;
     /* source position */
-    int sx, sy;
+    int32_t sx, sy;
     /* iteration variables */
-    unsigned int x, y;
+    uint32_t x, y;
     /* temporary calculation variables */
-    int tmp1, tmp2;
+    int32_t tmp1, tmp2;
 
     imDest = imaging_python_to_c(dest);
     imMask = imaging_python_to_c(mask);
@@ -371,29 +375,30 @@ tint_with_mask(PyObject* dest, unsigned char sr, unsigned char sg,
  *  http://www.gidforums.com/t-20838.html )
  */
 PyObject*
-draw_triangle(PyObject* dest, int inclusive,
-              int x0, int y0,
-              unsigned char r0, unsigned char g0, unsigned char b0,
-              int x1, int y1,
-              unsigned char r1, unsigned char g1, unsigned char b1,
-              int x2, int y2,
-              unsigned char r2, unsigned char g2, unsigned char b2,
-              int tux, int tuy, int* touchups, unsigned int num_touchups) {
+draw_triangle(PyObject* dest, int32_t inclusive,
+              int32_t x0, int32_t y0,
+              uint8_t r0, uint8_t g0, uint8_t b0,
+              int32_t x1, int32_t y1,
+              uint8_t r1, uint8_t g1, uint8_t b1,
+              int32_t x2, int32_t y2,
+              uint8_t r2, uint8_t g2, uint8_t b2,
+              int32_t tux, int32_t tuy,
+              int32_t* touchups, uint32_t num_touchups) {
 
     /* destination image */
     Imaging imDest;
     /* ranges of pixels that are affected */
-    int xmin, xmax, ymin, ymax;
+    int32_t xmin, xmax, ymin, ymax;
     /* constant coefficients for alpha, beta, gamma */
-    int a12, a20, a01;
-    int b12, b20, b01;
-    int c12, c20, c01;
+    int32_t a12, a20, a01;
+    int32_t b12, b20, b01;
+    int32_t c12, c20, c01;
     /* constant normalizers for alpha, beta, gamma */
     float alpha_norm, beta_norm, gamma_norm;
     /* temporary variables */
-    int tmp;
+    int32_t tmp;
     /* iteration variables */
-    int x, y;
+    int32_t x, y;
 
     imDest = imaging_python_to_c(dest);
     if (!imDest)
@@ -445,9 +450,9 @@ draw_triangle(PyObject* dest, int inclusive,
 
             if (alpha >= 0 && beta >= 0 && gamma >= 0 &&
                 (inclusive || (alpha * beta * gamma > 0))) {
-                unsigned int r = alpha * r0 + beta * r1 + gamma * r2;
-                unsigned int g = alpha * g0 + beta * g1 + gamma * g2;
-                unsigned int b = alpha * b0 + beta * b1 + gamma * b2;
+                uint32_t r = alpha * r0 + beta * r1 + gamma * r2;
+                uint32_t g = alpha * g0 + beta * g1 + gamma * g2;
+                uint32_t b = alpha * b0 + beta * b1 + gamma * b2;
 
                 *out = OV_MULDIV255(*out, r, tmp);
                 out++;
@@ -467,7 +472,7 @@ draw_triangle(PyObject* dest, int inclusive,
 
     while (num_touchups > 0) {
         float alpha, beta, gamma;
-        unsigned int r, g, b;
+        uint32_t r, g, b;
         UINT8* out;
 
         x = touchups[0] + tux;
@@ -506,13 +511,13 @@ resize_half(PyObject* dest, PyObject* src) {
     /* libImaging handles */
     Imaging imDest, imSrc;
     /* alpha properties */
-    int src_has_alpha, dest_has_alpha;
+    int32_t src_has_alpha, dest_has_alpha;
     /* iteration variables */
-    unsigned int x, y;
+    uint32_t x, y;
     /* temp color variables */
-    unsigned int r, g, b, a;
+    uint32_t r, g, b, a;
     /* size values for source and destination */
-    int src_width, src_height, dest_width, dest_height;
+    int32_t src_width, src_height, dest_width, dest_height;
 
     imDest = imaging_python_to_c(dest);
     imSrc = imaging_python_to_c(src);

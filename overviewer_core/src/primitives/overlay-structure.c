@@ -18,38 +18,35 @@
 #include "../mc_id.h"
 #include "overlay.h"
 
-typedef enum { false,
-               true } bool;
-
 typedef struct {
     /* inherits from overlay */
     RenderPrimitiveOverlay parent;
     void* structures;
-    int numcolors;
+    int32_t numcolors;
 } RenderPrimitiveStructure;
 
 struct Condition {
-    int relx, rely, relz;
-    unsigned short block;
+    int32_t relx, rely, relz;
+    mc_block_t block;
 };
 
 struct Color {
-    int numconds;
+    int32_t numconds;
     struct Condition* conditions;
-    unsigned char r, g, b, a;
+    uint8_t r, g, b, a;
 };
 
 static void get_color(void* data,
                       RenderState* state,
-                      unsigned char* r,
-                      unsigned char* g,
-                      unsigned char* b,
-                      unsigned char* a) {
+                      uint8_t* r,
+                      uint8_t* g,
+                      uint8_t* b,
+                      uint8_t* a) {
     /**
      * Calculate the color at the current position and store the values to r,g,b,a.
      **/
     RenderPrimitiveStructure* self = (RenderPrimitiveStructure*)data;
-    int x = state->x, z = state->z, y_max, y, col, cond;
+    int32_t x = state->x, z = state->z, y_max, y, col, cond;
     struct Color* structures = (struct Color*)(self->structures);
     struct Condition* c = NULL;
     bool all = true;
@@ -86,7 +83,7 @@ static void get_color(void* data,
     return;
 }
 
-static int overlay_structure_start(void* data, RenderState* state, PyObject* support) {
+static bool overlay_structure_start(void* data, RenderState* state, PyObject* support) {
     /**
      * Initializing the search for structures by parsing the arguments and storing them into
      * appropriate structures. If no arguments are passed create and use default values.
@@ -95,8 +92,8 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
     RenderPrimitiveStructure* self;
 
     /* first, chain up */
-    int ret = primitive_overlay.start(data, state, support);
-    if (ret != 0)
+    bool ret = primitive_overlay.start(data, state, support);
+    if (ret != false)
         return ret;
 
     /* now do custom initializations */
@@ -105,7 +102,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
     // opt is a borrowed reference.  do not deref
     // store the structures python object into opt.
     if (!render_mode_parse_option(support, "structures", "O", &(opt)))
-        return 1;
+        return true;
 
     /**
      * Check if a sane option was passed.
@@ -119,7 +116,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
         opt = PySequence_Fast(opt, "expected a sequence");
         if (!opt) {
             PyErr_SetString(PyExc_TypeError, "'structures' must be a a sequence");
-            return 1;
+            return true;
         }
 
         structures_size = PySequence_Fast_GET_SIZE(opt);
@@ -128,7 +125,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
         self->numcolors = structures_size;
         if (structures == NULL) {
             PyErr_SetString(PyExc_MemoryError, "failed to allocate memory");
-            return 1;
+            return true;
         }
 
         /**
@@ -147,7 +144,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
                     // Exception set automatically
                     free(structures);
                     self->structures = NULL;
-                    return 1;
+                    return true;
                 }
 
                 // Parse colorpy into a c-struct.
@@ -158,7 +155,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
                                       &structures[i].a)) {
                     free(structures);
                     self->structures = NULL;
-                    return 1;
+                    return true;
                 }
 
                 // Convert condspy to a fast sequence
@@ -166,7 +163,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
                 if (condspy == NULL) {
                     free(structures);
                     self->structures = NULL;
-                    return 1;
+                    return true;
                 }
 
                 // get the number of conditions.
@@ -179,7 +176,7 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
                     PyErr_SetString(PyExc_MemoryError, "failed to allocate memory");
                     free(structures);
                     self->structures = NULL;
-                    return 1;
+                    return true;
                 }
 
                 // iterate over all the conditions and read them.
@@ -190,13 +187,13 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
                                           &cond[n].rely,
                                           &cond[n].relz,
                                           &cond[n].block)) {
-                        int x = 0;
+                        int32_t x = 0;
                         for (x = 0; x < structures_size; x++) {
                             free(structures[x].conditions);
                         }
                         free(structures);
                         self->structures = NULL;
-                        return 1;
+                        return true;
                     }
                 }
             }
@@ -206,13 +203,13 @@ static int overlay_structure_start(void* data, RenderState* state, PyObject* sup
     /* setup custom color */
     self->parent.get_color = get_color;
 
-    return 0;
+    return false;
 }
 
 static void overlay_structure_finish(void* data, RenderState* state) {
     /* first free all *our* stuff */
     RenderPrimitiveStructure* self = (RenderPrimitiveStructure*)data;
-    int i = 0;
+    int32_t i = 0;
 
     if (self->structures) {
         // freeing the nested structure

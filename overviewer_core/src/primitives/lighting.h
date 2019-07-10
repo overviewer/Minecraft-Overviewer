@@ -26,21 +26,21 @@ typedef struct {
 
     /* can be overridden in derived rendermodes to control lighting
        arguments are data, skylight, blocklight, return RGB */
-    void (*calculate_light_color)(void*, unsigned char, unsigned char, unsigned char*, unsigned char*, unsigned char*);
+    void (*calculate_light_color)(void*, uint8_t, uint8_t, uint8_t*, uint8_t*, uint8_t*);
 
     /* can be set to 0 in derived modes to indicate that lighting the chunk
      * sides is actually important. Right now, this is used in cave mode
      */
-    int skip_sides;
+    bool skip_sides;
 
     float strength;
-    int color;
-    int night;
+    int32_t color;
+    int32_t night;
 } RenderPrimitiveLighting;
 
 /* exposed so that smooth-lighting can use them */
 extern RenderPrimitiveInterface primitive_lighting;
-int lighting_is_face_occluded(RenderState* state, int skip_sides, int x, int y, int z);
+bool lighting_is_face_occluded(RenderState* state, bool skip_sides, int32_t x, int32_t y, int32_t z);
 void get_lighting_color(RenderPrimitiveLighting* self, RenderState* state,
-                        int x, int y, int z,
-                        unsigned char* r, unsigned char* g, unsigned char* b);
+                        int32_t x, int32_t y, int32_t z,
+                        uint8_t* r, uint8_t* g, uint8_t* b);

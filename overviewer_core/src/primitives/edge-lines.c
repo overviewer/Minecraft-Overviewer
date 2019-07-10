@@ -23,12 +23,12 @@ typedef struct {
     float opacity;
 } PrimitiveEdgeLines;
 
-static int
+static bool
 edge_lines_start(void* data, RenderState* state, PyObject* support) {
     PrimitiveEdgeLines* self = (PrimitiveEdgeLines*)data;
     if (!render_mode_parse_option(support, "opacity", "f", &(self->opacity)))
-        return 1;
-    return 0;
+        return true;
+    return false;
 }
 
 static void
@@ -38,11 +38,11 @@ edge_lines_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, P
     /* Draw some edge lines! */
     if (block_class_is_subset(state->block, (mc_block_t[]){block_stone_slab, block_snow_layer}, 2) || !is_transparent(state->block)) {
         Imaging img_i = imaging_python_to_c(state->img);
-        unsigned char ink[] = {0, 0, 0, 255 * self->opacity};
-        unsigned short side_block;
-        int x = state->x, y = state->y, z = state->z;
+        uint8_t ink[] = {0, 0, 0, 255 * self->opacity};
+        mc_block_t side_block;
+        int32_t x = state->x, y = state->y, z = state->z;
 
-        int increment = 0;
+        int32_t increment = 0;
         if (block_class_is_subset(state->block, (mc_block_t[]){block_wooden_slab, block_stone_slab}, 2) && ((state->block_data & 0x8) == 0)) // half-steps BUT no upsidown half-steps
             increment = 6;
         else if (block_class_is_subset(state->block, (mc_block_t[]){block_snow_layer, block_unpowered_repeater, block_powered_repeater}, 3)) // snow, redstone repeaters (on and off)
