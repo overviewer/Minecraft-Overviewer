@@ -198,8 +198,8 @@ smooth_lighting_finish(void* data, RenderState* state) {
 
 static void
 smooth_lighting_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, PyObject* mask_light) {
-    bool light_top   = true;
-    bool light_left  = true;
+    bool light_top = true;
+    bool light_left = true;
     bool light_right = true;
     RenderPrimitiveSmoothLighting* self = (RenderPrimitiveSmoothLighting*)data;
 

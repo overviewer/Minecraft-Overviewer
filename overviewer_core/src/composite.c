@@ -114,7 +114,7 @@ alpha_over_full(PyObject* dest, PyObject* src, PyObject* mask, float overall_alp
     int32_t sx, sy;
     /* iteration variables */
     int32_t x, y;
-	uint32_t i;
+    uint32_t i;
     /* temporary calculation variables */
     int32_t tmp1, tmp2, tmp3;
     /* integer [0, 255] version of overall_alpha */
