@@ -504,6 +504,13 @@ def main():
             logging.warn("Sorry, you requested dimension '%s' for the render '%s', but I couldn't "
                          "find it.", render['dimension'][0], rname)
             continue
+        # List of regionsets that should be handled
+        rsets = []
+        if "crop" in render:
+            for zone in render['crop']:
+                rsets.append(world.CroppedRegionSet(rset, *zone))
+        else:
+            rsets.append(rset)
 
         # find filters for this render
         for f in render['markers']:
@@ -512,7 +519,8 @@ def main():
                     + hex(hash(rname))[-4:])
 
             # add it to the list of filters
-            filters.add((name, f['name'], f['filterFunction'], rset, worldpath, rname))
+            for rset in rsets:
+                filters.add((name, f['name'], f['filterFunction'], rset, worldpath, rname))
 
             # add an entry in the menu to show markers found by this filter
             group = dict(
