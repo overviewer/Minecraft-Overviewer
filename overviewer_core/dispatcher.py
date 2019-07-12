@@ -261,6 +261,8 @@ class MultiprocessingDispatcherProcess(multiprocessing.Process):
                 self.result_queue.put(result, False)
             except queue.Empty:
                 pass
+            except KeyboardInterrupt:
+                return
 
 class MultiprocessingDispatcher(Dispatcher):
     """A subclass of Dispatcher that spawns worker processes and

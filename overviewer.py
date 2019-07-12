@@ -659,3 +659,6 @@ See http://docs.overviewer.org/en/latest/index.html#help
 
 This is the error that occurred:""")
         util.nice_exit(1)
+    except KeyboardInterrupt:
+        logging.info("Interrupted by user. Aborting.")
+        util.nice_exit(2)
