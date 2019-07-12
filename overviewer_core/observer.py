@@ -463,9 +463,12 @@ class RConObserver(Observer):
             self.last_update = current_value
 
     def _need_update(self):
-        return(self.get_percentage() -
-               (self.last_update * 100.0 / self.get_max_value())
-               >= self.pct_interval)
+        if self.get_max_value() > 0:
+            return(self.get_percentage() -
+                (self.last_update * 100.0 / self.get_max_value())
+                >= self.pct_interval)
+        else:
+            return True
 
     def _send_output(self, output):
         self.conn.command("say", output)
