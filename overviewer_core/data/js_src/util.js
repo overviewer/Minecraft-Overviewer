@@ -430,7 +430,8 @@ overviewer.util = {
             overviewer.worldCtrl.onChange({target: {value: overviewer.current_world}});
         }
 
-
+        overviewer.util.runReadyQueue();
+        overviewer.util.isReady = true;
     },
 
     'injectMarkerScript': function(url) {
