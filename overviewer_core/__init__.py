@@ -2,8 +2,6 @@
 # Code to check to make sure c_overviewer is built and working
 #
 
-from __future__ import print_function
-
 import os.path
 import os
 import platform
@@ -11,6 +9,7 @@ import traceback
 import sys
 
 from . import util
+
 
 def check_c_overviewer():
     """Check to make sure c_overviewer works and is up-to-date. Prints
@@ -24,15 +23,16 @@ def check_c_overviewer():
     except ImportError:
         if os.environ.get("OVERVIEWER_DEBUG_IMPORT") == "1":
             traceback.print_exc()
-        ## if this is a frozen windows package, the following error messages about
-        ## building the c_overviewer extension are not appropriate
+        # if this is a frozen windows package, the following error messages about
+        # building the c_overviewer extension are not appropriate
         if hasattr(sys, "frozen") and platform.system() == 'Windows':
             print("Something has gone wrong importing the c_overviewer extension. Please make sure "
                   "the 2008 and 2010 redistributable packages from Microsoft are installed.")
             return 1
 
-        ## try to find the build extension
-        ext = os.path.join(root_dir, "overviewer_core", "c_overviewer.%s" % ("pyd" if platform.system() == "Windows" else "so"))
+        # try to find the build extension
+        ext = os.path.join(root_dir, "overviewer_core", "c_overviewer.{}"
+                           .format("pyd" if platform.system() == "Windows" else "so"))
         if os.path.exists(ext):
             traceback.print_exc()
             print()
@@ -49,7 +49,7 @@ def check_c_overviewer():
     #
 
     if hasattr(sys, "frozen"):
-        pass # we don't bother with a compat test since it should always be in sync
+        pass    # we don't bother with a compat test since it should always be in sync
     elif "extension_version" in dir(c_overviewer):
         # check to make sure the binary matches the headers
         if os.path.exists(os.path.join(root_dir, "overviewer_core", "src", "overviewer.h")):
@@ -65,9 +65,10 @@ def check_c_overviewer():
     else:
         print("Please rebuild your c_overviewer module. It is out of date!")
         return 1
-    
+
     # all good!
     return 0
+
 
 # only check the module if we're not setup.py
 if not sys.argv[0].endswith("setup.py"):
