@@ -20,52 +20,53 @@ the ability to be intercepted, which lets Dispatchers re-route signals
 back to the main process.
 """
 
+
 class Signal(object):
     """A mechanism for registering functions to be called whenever
     some specified event happens. This object is designed to work with
     Dispatcher so that functions can register to always run in the
     main Python instance."""
-    
+
     # a global list of registered signals, indexed by name
     # this is used by JobManagers to register and relay signals
     signals = {}
-    
+
     def __init__(self, namespace, name):
         """Creates a signal. Namespace and name should be the name of
         the class this signal is for, and the name of the signal. They
         are used to create a globally-unique name."""
-        
+
         self.namespace = namespace
         self.name = name
         self.fullname = namespace + '.' + name
         self.interceptor = None
         self.local_functions = []
         self.functions = []
-        
+
         # register this signal
         self.signals[self.fullname] = self
-    
+
     def register(self, func):
         """Register a function to be called when this signal is
         emitted. Functions registered in this way will always run in
         the main Python instance."""
         self.functions.append(func)
         return func
-    
+
     def register_local(self, func):
         """Register a function to be called when this signal is
         emitted. Functions registered in this way will always run in
         the Python instance in which they were emitted."""
         self.local_functions.append(func)
         return func
-    
+
     def set_interceptor(self, func):
         """Sets an interceptor function. This function is called
         instead of all the non-locally registered functions if it is
         present, and should be used by JobManagers to intercept signal
         emissions."""
         self.interceptor = func
-        
+
     def emit(self, *args, **kwargs):
         """Emits the signal with the given arguments. For convenience,
         you can also call the signal object directly.
@@ -77,7 +78,7 @@ class Signal(object):
             return
         for func in self.functions:
             func(*args, **kwargs)
-    
+
     def emit_intercepted(self, *args, **kwargs):
         """Re-emits an intercepted signal, and finishes the work that
         would have been done during the original emission. This should
@@ -85,14 +86,15 @@ class Signal(object):
         worker Python instances."""
         for func in self.functions:
             func(*args, **kwargs)
-    
+
     # convenience
     def __call__(self, *args, **kwargs):
         self.emit(*args, **kwargs)
-    
+
     # force pickled signals to redirect to existing signals
     def __getstate__(self):
         return self.fullname
+
     def __setstate__(self, fullname):
         for attr in dir(self.signals[fullname]):
             if attr.startswith('_'):
