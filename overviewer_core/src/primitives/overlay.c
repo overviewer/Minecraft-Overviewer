@@ -28,7 +28,7 @@ static void get_color(void* data, RenderState* state,
     *a = self->color->a;
 }
 
-static int32_t
+static bool
 overlay_start(void* data, RenderState* state, PyObject* support) {
     PyObject* opt = NULL;
     OverlayColor* color = NULL;

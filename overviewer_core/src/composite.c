@@ -113,7 +113,8 @@ alpha_over_full(PyObject* dest, PyObject* src, PyObject* mask, float overall_alp
     /* source position */
     int32_t sx, sy;
     /* iteration variables */
-    uint32_t x, y, i;
+    int32_t x, y;
+    uint32_t i;
     /* temporary calculation variables */
     int32_t tmp1, tmp2, tmp3;
     /* integer [0, 255] version of overall_alpha */
@@ -289,7 +290,7 @@ tint_with_mask(PyObject* dest,
     /* source position */
     int32_t sx, sy;
     /* iteration variables */
-    uint32_t x, y;
+    int32_t x, y;
     /* temporary calculation variables */
     int32_t tmp1, tmp2;
 
@@ -517,7 +518,7 @@ resize_half(PyObject* dest, PyObject* src) {
     /* temp color variables */
     uint32_t r, g, b, a;
     /* size values for source and destination */
-    int32_t src_width, src_height, dest_width, dest_height;
+    uint32_t src_width, src_height, dest_width, dest_height;
 
     imDest = imaging_python_to_c(dest);
     imSrc = imaging_python_to_c(src);

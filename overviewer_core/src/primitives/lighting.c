@@ -241,7 +241,7 @@ do_shading_with_mask(RenderPrimitiveLighting* self, RenderState* state,
     tint_with_mask(state->img, r, g, b, 255, mask, state->imgx, state->imgy, 0, 0);
 }
 
-static int32_t
+static bool
 lighting_start(void* data, RenderState* state, PyObject* support) {
     RenderPrimitiveLighting* self;
     self = (RenderPrimitiveLighting*)data;
