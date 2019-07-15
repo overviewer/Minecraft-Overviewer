@@ -1891,8 +1891,9 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, red sandstone and (dark) prismarine stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203,11337,11338,11339], data=list(range(128)), transparent=True, solid=True, nospawn=True)
+# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, red sandstone, (dark) prismarine, mossy brick and mossy cobblestone stairs.
+@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203,11337,11338,11339,
+                   11370, 11371], data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1905,40 +1906,29 @@ def stairs(self, blockid, data):
     numpy.roll(quarters, [0,1,3,2][self.rotation])
     nw,ne,se,sw = quarters
 
-    if blockid == 53: # wooden
-        texture = self.load_image_texture("assets/minecraft/textures/block/oak_planks.png").copy()
-    elif blockid == 67: # cobblestone
-        texture = self.load_image_texture("assets/minecraft/textures/block/cobblestone.png").copy()
-    elif blockid == 108: # red brick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/bricks.png").copy()
-    elif blockid == 109: # stone brick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/stone_bricks.png").copy()
-    elif blockid == 114: # netherbrick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/nether_bricks.png").copy()
-    elif blockid == 128: # sandstone stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/sandstone.png").copy()
-    elif blockid == 134: # spruce wood stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/spruce_planks.png").copy()
-    elif blockid == 135: # birch wood  stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/birch_planks.png").copy()
-    elif blockid == 136: # jungle good stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/jungle_planks.png").copy()
-    elif blockid == 156: # quartz block stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/quartz_block_side.png").copy()
-    elif blockid == 163: # acacia wood stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
-    elif blockid == 164: # dark oak stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png").copy()
-    elif blockid == 180: # red sandstone stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/red_sandstone.png").copy()
-    elif blockid == 203: # purpur stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/purpur_block.png").copy()
-    elif blockid == 11337: # prismarine stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/prismarine.png").copy()
-    elif blockid == 11338: # dark prismarine stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/dark_prismarine.png").copy()
-    elif blockid == 11339: # prismarine brick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/block/prismarine_bricks.png").copy()
+    stair_id_to_tex = {
+        53: "assets/minecraft/textures/block/oak_planks.png",
+        67: "assets/minecraft/textures/block/cobblestone.png",
+        108: "assets/minecraft/textures/block/bricks.png",
+        109: "assets/minecraft/textures/block/stone_bricks.png",
+        114: "assets/minecraft/textures/block/nether_bricks.png",
+        128: "assets/minecraft/textures/block/sandstone.png",
+        134: "assets/minecraft/textures/block/spruce_planks.png",
+        135: "assets/minecraft/textures/block/birch_planks.png",
+        136: "assets/minecraft/textures/block/jungle_planks.png",
+        156: "assets/minecraft/textures/block/quartz_block_side.png",
+        163: "assets/minecraft/textures/block/acacia_planks.png",
+        164: "assets/minecraft/textures/block/dark_oak_planks.png",
+        180: "assets/minecraft/textures/block/red_sandstone.png",
+        203: "assets/minecraft/textures/block/purpur_block.png",
+        11337: "assets/minecraft/textures/block/prismarine.png",
+        11338: "assets/minecraft/textures/block/dark_prismarine.png",
+        11339: "assets/minecraft/textures/block/prismarine_bricks.png",
+        11370: "assets/minecraft/textures/block/mossy_stone_bricks.png",
+        11371: "assets/minecraft/textures/block/mossy_cobblestone.png",
+    }
+
+    texture = self.load_image_texture(stair_id_to_tex[blockid]).copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()
@@ -4311,13 +4301,16 @@ def beacon(self, blockid, data):
     
     return img
 
-# cobblestone and mossy cobblestone walls, chorus plants
+# cobblestone and mossy cobblestone walls, chorus plants, mossy stone brick walls
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=[139, 199], data=list(range(32)), transparent=True, nospawn=True)
+@material(blockid=[139, 199, 11372], data=list(range(32)), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
     # chorus plants
     if blockid == 199:
         t = self.load_image_texture("assets/minecraft/textures/block/chorus_plant.png").copy()
+    # mossy stone bricks
+    elif blockid == 11372:
+        t = self.load_image_texture("assets/minecraft/textures/block/mossy_stone_bricks.png").copy()
     # no rotation, uses pseudo data
     elif data & 0b10000 == 0:
         # cobblestone

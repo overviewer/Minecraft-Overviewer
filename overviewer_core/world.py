@@ -799,13 +799,15 @@ class RegionSet(object):
             "minecraft:fletching_table": (11359, 0),
             "minecraft:cartography_table": (11360, 0),
             "minecraft:smithing_table": (11361, 0),
-
             "minecraft:blast_furnace": (11362, 0),
             "minecraft:smoker": (11364, 0),
             "minecraft:lectern": (11366, 0),
             "minecraft:loom": (11367, 0),
             "minecraft:stonecutter": (11368, 0),
-            "minecraft:grindstone": (11369, 0)
+            "minecraft:grindstone": (11369, 0),
+            "minecraft:mossy_stone_brick_stairs": (11370, 0),
+            "minecraft:mossy_cobblestone_stairs": (11371, 0),
+            "minecraft:mossy_stone_brick_wall": (11372, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',

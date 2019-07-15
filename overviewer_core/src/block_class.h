@@ -46,4 +46,7 @@ extern const size_t block_class_ancil_len;
 extern const mc_block_t block_class_alt_height[];
 extern const size_t block_class_alt_height_len;
 
+extern const mc_block_t block_class_wall[];
+extern const size_t block_class_wall_len;
+
 #endif

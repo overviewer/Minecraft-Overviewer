@@ -290,6 +290,9 @@ enum mc_block_id {
     block_loom = 11367,
     block_stonecutter = 11368,
     block_grindstone = 11369,
+    block_mossy_stone_brick_stairs = 11370,
+    block_mossy_cobblestone_stairs = 11371,
+    block_mossy_stone_brick_wall = 11372,
 };
 
 typedef uint16_t mc_block_t;
