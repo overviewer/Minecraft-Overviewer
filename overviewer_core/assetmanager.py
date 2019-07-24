@@ -13,12 +13,11 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
-import os
 import codecs
-import locale
-import time
+import json
 import logging
+import os
+import time
 import traceback
 
 from PIL import Image
@@ -28,7 +27,7 @@ from . import util
 from .files import FileReplacer, mirror_dir, get_fs_caps
 
 
-class AssetManager(object):
+class AssetManager:
     """\
 These objects provide an interface to metadata and persistent data, and at the
 same time, controls the generated javascript files in the output directory.
@@ -136,7 +135,7 @@ top-level directory.
             'mapType': True,
             'overlays': True,
             'coordsBox': True,
-            }
+        }
 
         dump['tilesets'] = []
 
@@ -144,10 +143,11 @@ top-level directory.
             dump['tilesets'].append(get_data(tileset))
 
             # write a blank image
-            blank = Image.new("RGBA", (1,1), tileset.options.get('bgcolor'))
+            blank = Image.new("RGBA", (1, 1), tileset.options.get('bgcolor'))
             if tileset.options.get('imgformat') != 'png':
                 blank = blank.convert("RGB")
-            blank.save(os.path.join(self.outputdir, tileset.options.get('name'), "blank." + tileset.options.get('imgformat')))
+            blank.save(os.path.join(self.outputdir, tileset.options.get('name'),
+                                    "blank." + tileset.options.get('imgformat')))
 
         # write out config
         jsondump = json.dumps(dump, indent=4)
