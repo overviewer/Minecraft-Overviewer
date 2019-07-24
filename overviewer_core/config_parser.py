@@ -33,8 +33,9 @@ class MultiWorldParser:
         # This maps setting names to their values as given in
         # settingsDefinition.py
         self._settings = {}
-        for settingname in dir(settingsDefinition):
-            setting = getattr(settingsDefinition, settingname)
+        default_conf = settingsDefinition.get_default_config()
+        for settingname in default_conf:
+            setting = default_conf[settingname]
             if not isinstance(setting, settingsValidators.Setting):
                 continue
 
@@ -79,7 +80,6 @@ class MultiWorldParser:
         # The global environment should be the rendermode module, so the config
         # file has access to those resources.
         from . import rendermodes
-
         try:
             with open(settings_file, "rb") as settings_file_handle:
                 exec(compile(settings_file_handle.read(), settings_file, 'exec'),

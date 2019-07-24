@@ -63,7 +63,11 @@ class SettingsTest(unittest.TestCase):
                 }),
             ]))
         self.s.set_config_item("outputdir", "/tmp/fictional/outputdir")
-        self.assertEqual(fromfile.get_validated_config(), self.s.get_validated_config())
+        first = fromfile.get_validated_config()
+        del first["observer"]
+        second = self.s.get_validated_config()
+        del second["observer"]
+        self.assertEqual(first, second)
 
     def test_rendermode_string(self):
         self.s.set_config_item("worlds", {

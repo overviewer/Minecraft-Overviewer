@@ -14,13 +14,14 @@ install:
   - pip install -q pillow
   - pip install -q numpy
   - pip install -q networkx
+  - pip install -q pytest
   - python3 setup.py build
 before_script:
   - git clone git://github.com/overviewer/Minecraft-Overviewer-Addons.git ~/mcoa/
   - mkdir -p ~/.minecraft/versions/${MC_VERSION}/
   - wget -N https://overviewer.org/textures/${MC_VERSION} -O ~/.minecraft/versions/${MC_VERSION}/${MC_VERSION}.jar
 script:
-  - PYTHONPATH=. python3 test/test_all.py
+  - pytest
   - python3 overviewer.py ~/mcoa/exmaple ~/test-output --rendermodes=smooth-lighting -p1
 notifications:
   email: false
