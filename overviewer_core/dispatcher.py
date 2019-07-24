@@ -13,14 +13,16 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-from . import util
 import multiprocessing
 import multiprocessing.managers
 import queue
 import time
+
+from . import util
 from .signals import Signal
 
-class Dispatcher(object):
+
+class Dispatcher:
     """This class coordinates the work of all the TileSet objects
     among one worker process. By subclassing this class and
     implementing setup_tilesets(), dispatch(), and close(), it is
@@ -79,7 +81,7 @@ class Dispatcher(object):
                 observer.add(self._dispatch_jobs())
 
             # after each phase, wait for the work to finish
-            while len(self._pending_jobs) > 0 or len(self._running_jobs) > 0:
+            while self._pending_jobs or self._running_jobs:
                 observer.add(self._dispatch_jobs())
 
             observer.finish()
@@ -108,7 +110,7 @@ class Dispatcher(object):
 
         # make sure to at least get finished jobs, even if we don't
         # submit any new ones...
-        if len(dispatched_jobs) == 0:
+        if not dispatched_jobs:
             finished_jobs += self.dispatch(None, None)
 
         # clean out the appropriate lists
@@ -139,10 +141,11 @@ class Dispatcher(object):
         that have completed since the last call. If tileset is None,
         then returning completed jobs is all this function should do.
         """
-        if not tileset is None:
+        if tileset is not None:
             tileset.do_work(workitem)
-            return [(tileset, workitem),]
+            return [(tileset, workitem)]
         return []
+
 
 class MultiprocessingDispatcherManager(multiprocessing.managers.BaseManager):
     """This multiprocessing manager is responsible for giving worker
@@ -151,10 +154,13 @@ class MultiprocessingDispatcherManager(multiprocessing.managers.BaseManager):
     """
     def _get_job_queue(self):
         return self.job_queue
+
     def _get_results_queue(self):
         return self.result_queue
+
     def _get_signal_queue(self):
         return self.signal_queue
+
     def _get_tileset_data(self):
         return self.tileset_data
 
@@ -170,7 +176,8 @@ class MultiprocessingDispatcherManager(multiprocessing.managers.BaseManager):
         self.register("get_job_queue", callable=self._get_job_queue)
         self.register("get_result_queue", callable=self._get_results_queue)
         self.register("get_signal_queue", callable=self._get_signal_queue)
-        self.register("get_tileset_data", callable=self._get_tileset_data, proxytype=multiprocessing.managers.ListProxy)
+        self.register("get_tileset_data", callable=self._get_tileset_data,
+                      proxytype=multiprocessing.managers.ListProxy)
 
         super(MultiprocessingDispatcherManager, self).__init__(address=address, authkey=authkey)
 
@@ -243,7 +250,7 @@ class MultiprocessingDispatcherProcess(multiprocessing.Process):
         while True:
             try:
                 job = self.job_queue.get(True, timeout)
-                if job == None:
+                if job is None:
                     # this is a end-of-jobs sentinel
                     return
 
@@ -263,6 +270,7 @@ class MultiprocessingDispatcherProcess(multiprocessing.Process):
                 pass
             except KeyboardInterrupt:
                 return
+
 
 class MultiprocessingDispatcher(Dispatcher):
     """A subclass of Dispatcher that spawns worker processes and
@@ -344,7 +352,7 @@ class MultiprocessingDispatcher(Dispatcher):
                 try:
                     result = self.result_queue.get(False)
 
-                    if result != None:
+                    if result is not None:
                         # completed job
                         ti, workitem, ret = result
                         finished_jobs.append((self.manager.tilesets[ti], workitem))
