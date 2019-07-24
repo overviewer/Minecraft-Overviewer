@@ -231,7 +231,7 @@ class JSObserver(Observer):
         self.last_update = -11
         self.last_update_time = -1
         self._current_value = -1
-        self.minrefresh = 1000*minrefresh
+        self.minrefresh = 1000 * minrefresh
         self.json = dict()
 
         # function to print formatted eta
@@ -464,9 +464,8 @@ class RConObserver(Observer):
 
     def _need_update(self):
         if self.get_max_value() > 0:
-            return(self.get_percentage() -
-                (self.last_update * 100.0 / self.get_max_value())
-                >= self.pct_interval)
+            return(self.get_percentage() - (self.last_update * 100.0 / self.get_max_value())
+                   >= self.pct_interval)
         else:
             return True
 
