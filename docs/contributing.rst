@@ -86,7 +86,7 @@ Let's take a closer look at the ``overviewer_core/`` directory:
 * ``cache.py`` implements a Least-Recently-Used (LRU) cache, which is used for
   caching chunks in memory as the rendering happens.
 
-* ``configParser.py`` contains some code that sets up how the config is parsed,
+* ``config_parser.py`` contains some code that sets up how the config is parsed,
   but is not really involved in the definitions of individual settings therein.
 
 * ``dispatcher.py`` is the code that sets up multiprocessing, so Overviewer can

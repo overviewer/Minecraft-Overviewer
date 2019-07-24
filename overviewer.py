@@ -39,7 +39,7 @@ from overviewer_core import util
 from overviewer_core import logger
 from overviewer_core import textures
 from overviewer_core import optimizeimages, world
-from overviewer_core import configParser, tileset, assetmanager, dispatcher
+from overviewer_core import config_parser, tileset, assetmanager, dispatcher
 from overviewer_core import cache
 from overviewer_core import observer
 from overviewer_core.nbt import CorruptNBTError
@@ -291,7 +291,7 @@ def main():
     #########################################################################
     # These two halfs of this if statement unify config-file mode and
     # command-line mode.
-    mw_parser = configParser.MultiWorldParser()
+    mw_parser = config_parser.MultiWorldParser()
 
     if not args.config:
         # No config file mode.
@@ -326,7 +326,7 @@ def main():
         # Parse the config file
         try:
             mw_parser.parse(os.path.expanduser(args.config))
-        except configParser.MissingConfigException as e:
+        except config_parser.MissingConfigException as e:
             # this isn't a "bug", so don't print scary traceback
             logging.error(str(e))
             util.nice_exit(1)

@@ -31,7 +31,7 @@ from contextlib import closing
 from multiprocessing import Pool
 from argparse import ArgumentParser
 
-from overviewer_core import configParser, logger, nbt, world
+from overviewer_core import config_parser, logger, nbt, world
 from overviewer_core.files import FileReplacer, get_fs_caps
 
 UUID_LOOKUP_URL = 'https://sessionserver.mojang.com/session/minecraft/profile/'
@@ -96,7 +96,7 @@ bucketChunkFuncs = {}
 def initBucketChunks(config_path):
     global bucketChunkFuncs
 
-    mw_parser = configParser.MultiWorldParser()
+    mw_parser = config_parser.MultiWorldParser()
     mw_parser.parse(config_path)
     # ought not to fail since we already did it once
     config = mw_parser.get_validated_config()
@@ -460,10 +460,10 @@ def main():
         logger.configure(logging.WARN, False)
 
     # Parse the config file
-    mw_parser = configParser.MultiWorldParser()
+    mw_parser = config_parser.MultiWorldParser()
     try:
         mw_parser.parse(args.config)
-    except configParser.MissingConfigException:
+    except config_parser.MissingConfigException:
         parser.error("The configuration file '{}' does not exist.".format(args.config))
     try:
         config = mw_parser.get_validated_config()
