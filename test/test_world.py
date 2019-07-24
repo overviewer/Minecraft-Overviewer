@@ -5,6 +5,7 @@ import os
 from overviewer_core import world
 
 class ExampleWorldTest(unittest.TestCase):
+    @unittest.skip("Broken old garbage, find a newer world")
     def test_basic(self):
         "Basic test of the world constructor and regionset constructor"
         if not os.path.exists("test/data/worlds/exmaple"):
