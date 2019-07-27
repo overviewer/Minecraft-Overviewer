@@ -1871,6 +1871,62 @@ def torches(self, blockid, data):
         
     return img
 
+# lantern
+@material(blockid=11373, data=[0, 1], transparent=True)
+def lantern(self, blockid, data):
+    # get the  multipart texture of the lantern
+    inputtexture = self.load_image_texture("assets/minecraft/textures/block/lantern.png")
+
+    # # now create a textures, using the parts defined in lantern.json
+
+    # JSON data for sides
+    # from": [ 5,  1,  5 ],
+    #  "to": [11,  8, 11 ],
+    # { "uv": [ 0, 2, 6,  9 ], "texture": "#all" }
+
+    side_crop = inputtexture.crop((0, 2, 6, 9))
+    side_slice = side_crop.copy()
+    side_texture = Image.new("RGBA", (16, 16), self.bgcolor)
+    side_texture.paste(side_slice,(5, 8))
+
+    # JSON data for top
+    # { "uv": [  0, 9,  6, 15 ], "texture": "#all" }
+    top_crop = inputtexture.crop((0, 9, 6, 15))
+    top_slice = top_crop.copy()
+    top_texture = Image.new("RGBA", (16, 16), self.bgcolor)
+    top_texture.paste(top_slice,(5, 5))
+
+    # mimic parts of build_full_block, to get an object smaller than a block 
+    # build_full_block(self, top, side1, side2, side3, side4, bottom=None):
+    # a non transparent block uses top, side 3 and side 4.
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    # prepare the side textures
+    # side3
+    side3 = self.transform_image_side(side_texture)
+    # Darken this side
+    sidealpha = side3.split()[3]
+    side3 = ImageEnhance.Brightness(side3).enhance(0.9)
+    side3.putalpha(sidealpha)
+    # place the transformed texture
+    hangoff = 0
+    if data == 1:
+        hangoff = 8
+    xoff = 4
+    yoff =- hangoff
+    alpha_over(img, side3, (xoff+0, yoff+6), side3)
+    # side4
+    side4 = self.transform_image_side(side_texture)
+    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+    # Darken this side
+    sidealpha = side4.split()[3]
+    side4 = ImageEnhance.Brightness(side4).enhance(0.8)
+    side4.putalpha(sidealpha)
+    alpha_over(img, side4, (12-xoff, yoff+6), side4)
+    # top
+    top = self.transform_image_top(top_texture)
+    alpha_over(img, top, (0, 8-hangoff), top)
+    return img
+
 # fire
 @material(blockid=51, data=list(range(16)), transparent=True)
 def fire(self, blockid, data):
