@@ -128,12 +128,19 @@ Linux
 You will need the gcc compiler and a working build environment. On Ubuntu and
 Debian, this can be done by installing the ``build-essential`` package.
 
-You will need the following packages (at least):
+You will need the following packages on Debian-derived distributions (e.g. Ubuntu):
 
-* python3-imaging or python3-pillow
-* python3-imaging-dev or python3-pillow-dev
+* python3-pil or python3-pillow (the latter is usually aliased to the former)
 * python3-dev
 * python3-numpy
+
+.. note::
+    If you choose to install pillow through pip instead of your distribution's package
+    manager, you won't get the pillow headers which Overviewer requires to build its C
+    extension. In that case, you should manually download the header files specific to
+    the version of pillow you installed, and point at them with the ``PIL_INCLUDE_DIR``
+    environment variable. A version mismatch between the installed pillow library and
+    the headers can lead to segfaults while running Overviewer due to an ABI mismatch.
 
 Then to build::
 
