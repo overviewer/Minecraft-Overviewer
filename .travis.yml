@@ -1,5 +1,5 @@
 language: python
-dist: bionic
+dist: xenial
 python:
   - "3.5"
   - "3.6"
