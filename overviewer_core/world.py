@@ -868,7 +868,7 @@ class RegionSet(object):
                 data += 4
         elif key.endswith('rail'):
             shape = palette_entry['Properties']['shape']
-            data = {'north_south':0, 'east_west': 1, 'ascending_east': 2, 'ascending_west': 3, 'ascending_north': 4, 'ascending_south': 5, 'south_west': 6, 'south_east': 7, 'north_east': 8, 'north_west': 9}[shape]
+            data = {'north_south':0, 'east_west': 1, 'ascending_east': 2, 'ascending_west': 3, 'ascending_north': 4, 'ascending_south': 5, 'south_east': 6, 'south_west': 7, 'north_west': 8, 'north_east': 9}[shape]
             if key == 'minecraft:powered_rail' and palette_entry['Properties']['powered'] == 'true':
                 data |= 8
         elif key in ['minecraft:comparator', 'minecraft:repeater']:
