@@ -73,7 +73,7 @@ class Observer(object):
     def get_percentage(self):
         """Get the current progress percentage. Assumes 100% if max_value is 0
         """
-        if self.get_max_value() is 0:
+        if self.get_max_value() == 0:
             return 100.0
         else:
             return self.get_current_value() * 100.0 / self.get_max_value()
@@ -349,7 +349,7 @@ class JSObserver(Observer):
     def get_percentage(self):
         """Get the current progress percentage. Assumes 100% if max_value is 0
         """
-        if self.get_max_value() is 0:
+        if self.get_max_value() == 0:
             return 100.0
         else:
             return self.get_current_value() * 100.0 / self.get_max_value()
