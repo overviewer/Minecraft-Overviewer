@@ -609,20 +609,20 @@ Rendering
 
         renders['day'] = {
             'world': 'exmaple',
-	    'dimension': 'overworld',
+            'dimension': 'overworld',
             'rendermode': 'smooth_lighting',
             'title': "Daytime Render",
         }
         renders['night'] = {
             'world': 'exmaple',
-	    'dimension': 'overworld',
+            'dimension': 'overworld',
             'rendermode': 'night',
             'title': "Night Render",
         }
 
         renders['biomeover'] = {
             'world': 'exmaple',
-	    'dimension': 'overworld',
+            'dimension': 'overworld',
             'rendermode': [ClearBase(), BiomeOverlay()],
             'title': "Biome Coloring Overlay",
             'overlay': ['day']
