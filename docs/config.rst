@@ -594,6 +594,12 @@ Rendering
     called "night".  You want to create a Biome Overlay to be displayed on top
     of the "day" render.  Your config file might look like this:
 
+    .. note::
+
+        When 'overlay' is used the ``imgformat`` must be set to a transparent
+	image format like ``"png"``. Otherwise the overlay is rendered without
+	transparency and the render underneath will not show.
+
     ::
 
         outputdir = "output_dir"
@@ -603,17 +609,20 @@ Rendering
 
         renders['day'] = {
             'world': 'exmaple',
+	    'dimension': 'overworld',
             'rendermode': 'smooth_lighting',
             'title': "Daytime Render",
         }
         renders['night'] = {
             'world': 'exmaple',
+	    'dimension': 'overworld',
             'rendermode': 'night',
             'title': "Night Render",
         }
 
         renders['biomeover'] = {
             'world': 'exmaple',
+	    'dimension': 'overworld',
             'rendermode': [ClearBase(), BiomeOverlay()],
             'title': "Biome Coloring Overlay",
             'overlay': ['day']
