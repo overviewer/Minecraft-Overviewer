@@ -42,3 +42,4 @@ overviewer_core/src/primitives.h
 /.vs/Minecraft-Overviewer/v15/.suo
 /.vs
 .vscode
+ImagingUtils.h

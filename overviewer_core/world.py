@@ -808,6 +808,7 @@ class RegionSet(object):
             "minecraft:mossy_stone_brick_stairs": (11370, 0),
             "minecraft:mossy_cobblestone_stairs": (11371, 0),
             "minecraft:mossy_stone_brick_wall": (11372, 0),
+            "minecraft:lantern": (11373, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -1081,6 +1082,11 @@ class RegionSet(object):
         elif key in ['minecraft:beetroots', 'minecraft:melon_stem', 'minecraft:wheat',
                      'minecraft:pumpkin_stem', 'minecraft:potatoes', 'minecraft:carrots']:
             data = palette_entry['Properties']['age']
+        elif key == 'minecraft:lantern':
+            if palette_entry['Properties']['hanging'] == 'true':
+                data = 1
+            else:
+                data = 0
         return (block, data)
 
     def get_type(self):
