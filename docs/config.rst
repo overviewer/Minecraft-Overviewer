@@ -596,9 +596,9 @@ Rendering
 
     .. note::
 
-        When 'overlay' is used the ``imgformat`` must be set to a transparent
-	image format like ``"png"``. Otherwise the overlay is rendered without
-	transparency and the render underneath will not show.
+        When 'overlay' is used the ``imgformat`` must be set to a transparent image
+        format like ``"png"``. Otherwise the overlay is rendered without transparency
+        and the render underneath will not show.
 
     ::
 
