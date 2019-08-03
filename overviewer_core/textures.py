@@ -1703,8 +1703,8 @@ def slabs(self, blockid, data):
 
     if blockid == 44 or blockid == 43:
         if texture== 0: # stone slab
-            top = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png")
-            side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png")
+            top = self.load_image_texture("assets/minecraft/textures/block/stone.png")
+            side = self.load_image_texture("assets/minecraft/textures/block/stone.png")
         elif texture== 1: # sandstone slab
             top = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png")
             side = self.load_image_texture("assets/minecraft/textures/block/sandstone.png")
@@ -1947,9 +1947,12 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, red sandstone, (dark) prismarine, mossy brick and mossy cobblestone stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203,11337,11338,11339,
-                   11370, 11371, 11374], data=list(range(128)), transparent=True, solid=True, nospawn=True)
+# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch,
+# jungle, quartz, red sandstone, (dark) prismarine, mossy brick and mossy cobblestone, stone smooth_quartz
+# polished_granite polished_andesite polished_diorite granite diorite andesite end_stone_bricks red_nether_brick stairs
+@material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 11337, 11338, 11339,
+          11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379, 11380, 11381, 11382, 11383, 11384], 
+          data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1983,6 +1986,16 @@ def stairs(self, blockid, data):
         11370: "assets/minecraft/textures/block/mossy_stone_bricks.png",
         11371: "assets/minecraft/textures/block/mossy_cobblestone.png",
         11374: "assets/minecraft/textures/block/sandstone_top.png",
+        11375: "assets/minecraft/textures/block/quartz_block_side.png",
+        11376: "assets/minecraft/textures/block/polished_granite.png",
+        11377: "assets/minecraft/textures/block/polished_diorite.png",
+        11378: "assets/minecraft/textures/block/polished_andesite.png",
+        11379: "assets/minecraft/textures/block/stone.png",
+        11380: "assets/minecraft/textures/block/granite.png",
+        11381: "assets/minecraft/textures/block/diorite.png",
+        11382: "assets/minecraft/textures/block/andesite.png",
+        11383: "assets/minecraft/textures/block/end_stone_bricks.png",
+        11384: "assets/minecraft/textures/block/red_nether_bricks.png",
     }
 
     texture = self.load_image_texture(stair_id_to_tex[blockid]).copy()
@@ -1993,13 +2006,16 @@ def stairs(self, blockid, data):
     inside_r = texture.copy()
 
     # sandstone, red sandstone, and quartz stairs have special top texture
-    if blockid == 128:
-        texture = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png").copy()
-    elif blockid == 156:
-        texture = self.load_image_texture("assets/minecraft/textures/block/quartz_block_top.png").copy()
-    elif blockid == 180:
-        texture = self.load_image_texture("assets/minecraft/textures/block/red_sandstone_top.png").copy()
+    special_tops = {
+        128: "assets/minecraft/textures/block/sandstone_top.png",
+        156: "assets/minecraft/textures/block/quartz_block_top.png",
+        180: "assets/minecraft/textures/block/red_sandstone_top.png",
+        11375: "assets/minecraft/textures/block/quartz_block_top.png",
+    }
 
+    if blockid in special_tops:
+        texture = self.load_image_texture(special_tops[blockid]).copy()
+ 
 
     slab_top = texture.copy()
 

@@ -70,7 +70,7 @@ enum mc_block_id {
     block_wooden_door = 64,
     block_ladder = 65,
     block_rail = 66,
-    block_stone_stairs = 67,
+    block_cobblestone_stairs = 67,
     block_wall_sign = 68,
     block_lever = 69,
     block_stone_pressure_plate = 70,
@@ -295,6 +295,16 @@ enum mc_block_id {
     block_mossy_stone_brick_wall = 11372,
     block_lantern = 11373,
     block_smooth_sandstone_stairs = 11374,
+    block_smooth_quartz_stairs = 11375,
+    block_polished_granite_stairs = 11376,
+    block_polished_diorite_stairs = 11377,
+    block_polished_andesite_stairs = 11378,
+    block_stone_stairs = 11379,
+    block_granite_stairs = 11380,
+    block_diorite_stairs = 11381,
+    block_andesite_stairs = 11382,
+    block_end_stone_brick_stairs = 11383,
+    block_red_nether_brick_stairs = 11384,
 };
 
 typedef uint16_t mc_block_t;
