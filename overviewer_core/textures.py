@@ -1949,7 +1949,7 @@ block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", trans
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle, quartz, red sandstone, (dark) prismarine, mossy brick and mossy cobblestone stairs.
 @material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164,180,203,11337,11338,11339,
-                   11370, 11371], data=list(range(128)), transparent=True, solid=True, nospawn=True)
+                   11370, 11371, 11374], data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
     upside_down = data & 0x4
@@ -1982,6 +1982,7 @@ def stairs(self, blockid, data):
         11339: "assets/minecraft/textures/block/prismarine_bricks.png",
         11370: "assets/minecraft/textures/block/mossy_stone_bricks.png",
         11371: "assets/minecraft/textures/block/mossy_cobblestone.png",
+        11374: "assets/minecraft/textures/block/sandstone_top.png",
     }
 
     texture = self.load_image_texture(stair_id_to_tex[blockid]).copy()

@@ -809,6 +809,7 @@ class RegionSet(object):
             "minecraft:mossy_cobblestone_stairs": (11371, 0),
             "minecraft:mossy_stone_brick_wall": (11372, 0),
             "minecraft:lantern": (11373, 0),
+            "minecraft:smooth_sandstone_stairs": (11374, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
