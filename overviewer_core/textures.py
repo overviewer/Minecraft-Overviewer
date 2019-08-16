@@ -2488,7 +2488,7 @@ def signpost(self, blockid, data):
     elif self.rotation == 3:
         data = (data + 12) % 16
 
-    # When this first define is for blockid == 63 or blockid == 11401
+    # This first define is for blockid == 63 or blockid == 11401
     texture_path = "assets/minecraft/textures/block/oak_planks.png"
     texture_stick_path = "assets/minecraft/textures/block/oak_log.png"
     if blockid == 11402:
@@ -2763,7 +2763,7 @@ def wall_sign(self, blockid, data): # wall sign
         elif data == 4: data = 3
         elif data == 5: data = 2
     
-    # When this first define is for blockid == 68 or blockid == 11406
+    # This first define is for blockid == 68 or blockid == 11406
     texture_path = "assets/minecraft/textures/block/oak_planks.png"
     if blockid == 11408:
         texture_path = "assets/minecraft/textures/block/spruce_planks.png"
