@@ -970,7 +970,7 @@ def wooden_planks(self, blockid, data):
     if data == 5: # dark oak
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"),self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"))
 
-@material(blockid=6, data=list(range(19)), transparent=True)
+@material(blockid=6, data=list(range(16)), transparent=True)
 def saplings(self, blockid, data):
     # usual saplings
     tex = self.load_image_texture("assets/minecraft/textures/block/oak_sapling.png")
