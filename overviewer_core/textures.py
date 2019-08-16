@@ -2487,25 +2487,18 @@ def signpost(self, blockid, data):
         data = (data + 8) % 16
     elif self.rotation == 3:
         data = (data + 12) % 16
-
-    # This first define is for blockid == 63 or blockid == 11401
-    texture_path = "assets/minecraft/textures/block/oak_planks.png"
-    texture_stick_path = "assets/minecraft/textures/block/oak_log.png"
-    if blockid == 11402:
-        texture_path = "assets/minecraft/textures/block/spruce_planks.png"
-        texture_stick_path = "assets/minecraft/textures/block/spruce_log.png"
-    elif blockid == 11403:
-        texture_path = "assets/minecraft/textures/block/birch_planks.png"
-        texture_stick_path = "assets/minecraft/textures/block/birch_log.png"
-    elif blockid == 11404:
-        texture_path = "assets/minecraft/textures/block/jungle_planks.png"
-        texture_stick_path = "assets/minecraft/textures/block/jungle_log.png"
-    elif blockid == 11405:
-        texture_path = "assets/minecraft/textures/block/acacia_planks.png"
-        texture_stick_path = "assets/minecraft/textures/block/acacia_log.png"
-    elif blockid == 11406:
-        texture_path = "assets/minecraft/textures/block/dark_oak_planks.png"
-        texture_stick_path = "assets/minecraft/textures/block/dark_oak_log.png"
+    
+    sign_texture = {
+        # (texture on sign, texture on stick)
+        63: ("oak_planks.png", "oak_log.png"),
+        11401: ("oak_planks.png", "oak_log.png"),
+        11402: ("spruce_planks.png", "spruce_log.png"),
+        11403: ("birch_planks.png", "birch_log.png"),
+        11404: ("jungle_planks.png", "jungle_log.png"),
+        11405: ("acacia_planks.png", "acacia_log.png"),
+        11406: ("dark_oak_planks.png", "dark_oak_log.png"),
+    }
+    texture_path, texture_stick_path = ["assets/minecraft/textures/block/" + x for x in sign_texture[blockid]]
     
     texture = self.load_image_texture(texture_path).copy()
     
@@ -2763,19 +2756,16 @@ def wall_sign(self, blockid, data): # wall sign
         elif data == 4: data = 3
         elif data == 5: data = 2
     
-    # This first define is for blockid == 68 or blockid == 11406
-    texture_path = "assets/minecraft/textures/block/oak_planks.png"
-    if blockid == 11408:
-        texture_path = "assets/minecraft/textures/block/spruce_planks.png"
-    elif blockid == 11409:
-        texture_path = "assets/minecraft/textures/block/birch_planks.png"
-    elif blockid == 11410:
-        texture_path = "assets/minecraft/textures/block/jungle_planks.png"
-    elif blockid == 11411:
-        texture_path = "assets/minecraft/textures/block/acacia_planks.png"
-    elif blockid == 11412:
-        texture_path = "assets/minecraft/textures/block/dark_oak_planks.png"
-    
+    sign_texture = {
+        68: "oak_planks.png",
+        11407: "oak_planks.png",
+        11408: "spruce_planks.png",
+        11409: "birch_planks.png",
+        11410: "jungle_planks.png",
+        11411: "acacia_planks.png",
+        11412: "dark_oak_planks.png",
+    }
+    texture_path = "assets/minecraft/textures/block/" + sign_texture[blockid]
     texture = self.load_image_texture(texture_path).copy()
     # cut the planks to the size of a signpost
     ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
