@@ -320,6 +320,7 @@ class RegionSet(object):
             'minecraft:jungle_sapling': (6, 3),
             'minecraft:acacia_sapling': (6, 4),
             'minecraft:dark_oak_sapling': (6, 5),
+            'minecraft:bamboo_sapling': (6, 6),
             'minecraft:bedrock': (7, 0),
             'minecraft:water': (8, 0),
             'minecraft:lava': (10, 0),

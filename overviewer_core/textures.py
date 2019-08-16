@@ -970,21 +970,23 @@ def wooden_planks(self, blockid, data):
     if data == 5: # dark oak
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"),self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"))
 
-@material(blockid=6, data=list(range(16)), transparent=True)
+@material(blockid=6, data=list(range(19)), transparent=True)
 def saplings(self, blockid, data):
     # usual saplings
     tex = self.load_image_texture("assets/minecraft/textures/block/oak_sapling.png")
     
-    if data & 0x3 == 1: # spruce sapling
+    if data == 1: # spruce sapling
         tex = self.load_image_texture("assets/minecraft/textures/block/spruce_sapling.png")
-    elif data & 0x3 == 2: # birch sapling
+    elif data == 2: # birch sapling
         tex = self.load_image_texture("assets/minecraft/textures/block/birch_sapling.png")
-    elif data & 0x3 == 3: # jungle sapling
+    elif data == 3: # jungle sapling
         tex = self.load_image_texture("assets/minecraft/textures/block/jungle_sapling.png")
-    elif data & 0x3 == 4: # acacia sapling
+    elif data == 4: # acacia sapling
         tex = self.load_image_texture("assets/minecraft/textures/block/acacia_sapling.png")
-    elif data & 0x3 == 5: # dark oak/roofed oak/big oak sapling
+    elif data == 5: # dark oak/roofed oak/big oak sapling
         tex = self.load_image_texture("assets/minecraft/textures/block/dark_oak_sapling.png")
+    elif data == 6: # bamboo sapling
+        tex = self.load_image_texture("assets/minecraft/textures/block/bamboo_stage0.png")
     return self.build_sprite(tex)
 
 # bedrock
