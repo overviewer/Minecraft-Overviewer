@@ -20,7 +20,7 @@ Filter Functions
 ----------------
 
 A filter function is a python function that is used to figure out if a given POI
-should be part of a markerSet of not, and to control how it is displayed.  
+should be part of a markerSet or not, and to control how it is displayed.  
 The function should accept one argument (a dictionary, also know as an associative
 array), and return a string representing the text to be displayed.  For example::
 
