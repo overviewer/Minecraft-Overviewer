@@ -432,11 +432,23 @@ class RegionSet(object):
             'minecraft:farmland': (60, 0),
             'minecraft:furnace': (61, 0),
             'minecraft:sign': (63, 0),
+            'minecraft:oak_sign': (11401, 0),
+            'minecraft:spruce_sign': (11402, 0),
+            'minecraft:birch_sign': (11403, 0),
+            'minecraft:jungle_sign': (11404, 0),
+            'minecraft:acacia_sign': (11405, 0),
+            'minecraft:dark_oak_sign': (11406, 0),
             'minecraft:oak_door': (64, 0),
             'minecraft:ladder': (65, 0),
             'minecraft:rail': (66, 0),
             'minecraft:cobblestone_stairs': (67, 0),
             'minecraft:wall_sign': (68, 0),
+            'minecraft:oak_wall_sign': (11407, 0),
+            'minecraft:spruce_wall_sign': (11408, 0),
+            'minecraft:birch_wall_sign': (11409, 0),
+            'minecraft:jungle_wall_sign': (11410, 0),
+            'minecraft:acacia_wall_sign': (11411, 0),
+            'minecraft:dark_oak_wall_sign': (11412, 0),
             'minecraft:lever': (69, 0),
             'minecraft:stone_pressure_plate': (70, 0),
             'minecraft:iron_door': (71, 0),
@@ -1051,15 +1063,16 @@ class RegionSet(object):
             if facing == 'west':  data += 1
             if facing == 'north': data += 2
             if facing == 'east':  data += 3
-        elif key == 'minecraft:sign':
-            p = palette_entry['Properties']
-            data = p['rotation']
-        elif key == 'minecraft:wall_sign':
-            facing = palette_entry['Properties']['facing']
-            if   facing == 'north': data = 2
-            elif facing == 'west':  data = 4
-            elif facing == 'south': data = 3
-            elif facing == 'east':  data = 5
+        elif key.endswith('sign'):
+            if key.endswith('wall_sign'):
+                facing = palette_entry['Properties']['facing']
+                if   facing == 'north': data = 2
+                elif facing == 'west':  data = 4
+                elif facing == 'south': data = 3
+                elif facing == 'east':  data = 5
+            else:
+                p = palette_entry['Properties']
+                data = p['rotation']
         elif key.endswith('_fence'):
             p = palette_entry['Properties']
             if p['north'] == 'true': data |= 1

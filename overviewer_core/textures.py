@@ -2493,7 +2493,7 @@ def farmland(self, blockid, data):
 
 
 # signposts
-@material(blockid=63, data=list(range(16)), transparent=True)
+@material(blockid=[63,11401,11402,11403,11404,11405,11406], data=list(range(16)), transparent=True)
 def signpost(self, blockid, data):
 
     # first rotations
@@ -2503,8 +2503,21 @@ def signpost(self, blockid, data):
         data = (data + 8) % 16
     elif self.rotation == 3:
         data = (data + 12) % 16
-
-    texture = self.load_image_texture("assets/minecraft/textures/block/oak_planks.png").copy()
+    
+    sign_texture = {
+        # (texture on sign, texture on stick)
+        63: ("oak_planks.png", "oak_log.png"),
+        11401: ("oak_planks.png", "oak_log.png"),
+        11402: ("spruce_planks.png", "spruce_log.png"),
+        11403: ("birch_planks.png", "birch_log.png"),
+        11404: ("jungle_planks.png", "jungle_log.png"),
+        11405: ("acacia_planks.png", "acacia_log.png"),
+        11406: ("dark_oak_planks.png", "dark_oak_log.png"),
+    }
+    texture_path, texture_stick_path = ["assets/minecraft/textures/block/" + x for x in sign_texture[blockid]]
+    
+    texture = self.load_image_texture(texture_path).copy()
+    
     # cut the planks to the size of a signpost
     ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 
@@ -2517,7 +2530,7 @@ def signpost(self, blockid, data):
             texture.putpixel((x,y),(0,0,0,255))
 
     # Minecraft uses wood texture for the signpost stick
-    texture_stick = self.load_image_texture("assets/minecraft/textures/block/oak_log.png")
+    texture_stick = self.load_image_texture(texture_stick_path)
     texture_stick = texture_stick.resize((12,12), Image.ANTIALIAS)
     ImageDraw.Draw(texture_stick).rectangle((2,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
 
@@ -2739,7 +2752,7 @@ def ladder(self, blockid, data):
 
 
 # wall signs
-@material(blockid=68, data=[2, 3, 4, 5], transparent=True)
+@material(blockid=[68,11407,11408,11409,11410,11411,11412], data=[2, 3, 4, 5], transparent=True)
 def wall_sign(self, blockid, data): # wall sign
 
     # first rotations
@@ -2758,8 +2771,18 @@ def wall_sign(self, blockid, data): # wall sign
         elif data == 3: data = 5
         elif data == 4: data = 3
         elif data == 5: data = 2
-
-    texture = self.load_image_texture("assets/minecraft/textures/block/oak_planks.png").copy()
+    
+    sign_texture = {
+        68: "oak_planks.png",
+        11407: "oak_planks.png",
+        11408: "spruce_planks.png",
+        11409: "birch_planks.png",
+        11410: "jungle_planks.png",
+        11411: "acacia_planks.png",
+        11412: "dark_oak_planks.png",
+    }
+    texture_path = "assets/minecraft/textures/block/" + sign_texture[blockid]
+    texture = self.load_image_texture(texture_path).copy()
     # cut the planks to the size of a signpost
     ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
 

@@ -305,6 +305,18 @@ enum mc_block_id {
     block_andesite_stairs = 11382,
     block_end_stone_brick_stairs = 11383,
     block_red_nether_brick_stairs = 11384,
+    block_oak_sign = 11401,
+    block_spruce_sign = 11402,
+    block_birch_sign = 11403,
+    block_jungle_sign = 11404,
+    block_acacia_sign = 11405,
+    block_dark_oak_sign = 11406,
+    block_oak_wall_sign = 11407,
+    block_spruce_wall_sign = 11408,
+    block_birch_wall_sign = 11409,
+    block_jungle_wall_sign = 11410,
+    block_acacia_wall_sign = 11411,
+    block_dark_oak_wall_sign = 11412,
 };
 
 typedef uint16_t mc_block_t;
