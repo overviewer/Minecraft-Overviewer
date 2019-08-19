@@ -435,7 +435,6 @@ class RegionSet(object):
             'minecraft:oak_door': (64, 0),
             'minecraft:ladder': (65, 0),
             'minecraft:rail': (66, 0),
-            'minecraft:stone_stairs': (67, 0),
             'minecraft:cobblestone_stairs': (67, 0),
             'minecraft:wall_sign': (68, 0),
             'minecraft:lever': (69, 0),
@@ -810,6 +809,16 @@ class RegionSet(object):
             "minecraft:mossy_stone_brick_wall": (11372, 0),
             "minecraft:lantern": (11373, 0),
             "minecraft:smooth_sandstone_stairs": (11374, 0),
+            'minecraft:smooth_quartz_stairs': (11375, 0),
+            'minecraft:polished_granite_stairs': (11376, 0),
+            'minecraft:polished_diorite_stairs': (11377, 0),
+            'minecraft:polished_andesite_stairs': (11378, 0),
+            'minecraft:stone_stairs': (11379, 0),
+            'minecraft:granite_stairs': (11380, 0),
+            'minecraft:diorite_stairs': (11381, 0),
+            'minecraft:andesite_stairs': (11382, 0),
+            'minecraft:end_stone_brick_stairs': (11383, 0),
+            'minecraft:red_nether_brick_stairs': (11384, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -900,7 +909,7 @@ class RegionSet(object):
                     if key == 'minecraft:stone_brick_slab':
                         block = 98
                     elif key == 'minecraft:stone_slab':
-                        block = 43      # block_double_stone_slab
+                        block = 1      # stone data 0
                     elif key == 'minecraft:cobblestone_slab':
                         block = 4       # cobblestone
                     elif key == 'minecraft:sandstone_slab':
