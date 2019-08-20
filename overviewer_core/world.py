@@ -524,8 +524,6 @@ class RegionSet(object):
             'minecraft:jungle_stairs': (136, 0),
             'minecraft:command_block': (137, 0),
             'minecraft:beacon': (138, 0),
-            'minecraft:cobblestone_wall': (139, 0),
-            'minecraft:mossy_cobblestone_wall': (139, 1),
             'minecraft:flower_pot': (140, 0),
             'minecraft:potted_poppy': (140, 0),  # Pots not rendering
             'minecraft:potted_blue_orchid': (140, 0),
@@ -813,7 +811,6 @@ class RegionSet(object):
             "minecraft:grindstone": (11369, 0),
             "minecraft:mossy_stone_brick_stairs": (11370, 0),
             "minecraft:mossy_cobblestone_stairs": (11371, 0),
-            "minecraft:mossy_stone_brick_wall": (11372, 0),
             "minecraft:lantern": (11373, 0),
             "minecraft:smooth_sandstone_stairs": (11374, 0),
             'minecraft:smooth_quartz_stairs': (11375, 0),
@@ -833,6 +830,22 @@ class RegionSet(object):
             'minecraft:acacia_sapling': (11389, 0),
             'minecraft:dark_oak_sapling': (11390, 0),
             'minecraft:bamboo_sapling': (11413, 0),
+            # adding a gap in the numbering of walls to keep them all
+            # in one numbering block starting at 21000
+            'minecraft:andesite_wall': (21000, 0),
+            'minecraft:brick_wall': (21001, 0),
+            'minecraft:cobblestone_wall': (21002, 0),
+            'minecraft:diorite_wall': (21003, 0),
+            'minecraft:end_stone_brick_wall': (21004, 0),
+            'minecraft:granite_wall': (21005, 0),
+            'minecraft:mossy_cobblestone_wall': (21006, 0),
+            'minecraft:mossy_stone_brick_wall': (21007, 0),
+            'minecraft:nether_brick_wall': (21008, 0),
+            'minecraft:prismarine_wall': (21009, 0),
+            'minecraft:red_nether_brick_wall': (21010, 0),
+            'minecraft:red_sandstone_wall': (21011, 0),
+            'minecraft:sandstone_wall': (21012, 0),
+            'minecraft:stone_brick_wall': (21013, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',

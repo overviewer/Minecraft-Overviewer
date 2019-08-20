@@ -171,8 +171,20 @@ const mc_block_t block_class_ancil[] = {
     block_glass_pane,
     block_waterlily,
     block_nether_brick_fence,
+    block_andesite_wall,
+    block_brick_wall,
     block_cobblestone_wall,
+    block_diorite_wall,
+    block_end_stone_brick_wall,
+    block_granite_wall,
+    block_mossy_cobblestone_wall,
     block_mossy_stone_brick_wall,
+    block_nether_brick_wall,
+    block_prismarine_wall,
+    block_red_nether_brick_wall,
+    block_red_sandstone_wall,
+    block_sandstone_wall,
+    block_stone_brick_wall,
     block_double_plant,
     block_stained_glass_pane,
     block_stained_glass,
@@ -241,6 +253,18 @@ const mc_block_t block_class_alt_height[] = {
 const size_t block_class_alt_height_len = COUNT_OF(block_class_alt_height);
 
 const mc_block_t block_class_wall[] = {
+    block_andesite_wall,
+    block_brick_wall,
     block_cobblestone_wall,
-    block_mossy_stone_brick_wall};
+    block_diorite_wall,
+    block_end_stone_brick_wall,
+    block_granite_wall,
+    block_mossy_cobblestone_wall,
+    block_mossy_stone_brick_wall,
+    block_nether_brick_wall,
+    block_prismarine_wall,
+    block_red_nether_brick_wall,
+    block_red_sandstone_wall,
+    block_sandstone_wall,
+    block_stone_brick_wall};
 const size_t block_class_wall_len = COUNT_OF(block_class_wall);

@@ -4407,21 +4407,26 @@ def beacon(self, blockid, data):
 
 # cobblestone and mossy cobblestone walls, chorus plants, mossy stone brick walls
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=[139, 199, 11372], data=list(range(32)), transparent=True, nospawn=True)
+@material(blockid=[199, *range(21000,21013+1)], data=list(range(32)), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
-    # chorus plants
-    if blockid == 199:
-        t = self.load_image_texture("assets/minecraft/textures/block/chorus_plant.png").copy()
-    # mossy stone bricks
-    elif blockid == 11372:
-        t = self.load_image_texture("assets/minecraft/textures/block/mossy_stone_bricks.png").copy()
-    # no rotation, uses pseudo data
-    elif data & 0b10000 == 0:
-        # cobblestone
-        t = self.load_image_texture("assets/minecraft/textures/block/cobblestone.png").copy()
-    else:
-        # mossy cobblestone
-        t = self.load_image_texture("assets/minecraft/textures/block/mossy_cobblestone.png").copy()
+    walls_id_to_tex = {
+          199: "assets/minecraft/textures/block/chorus_plant.png", # chorus plants
+        21000: "assets/minecraft/textures/block/andesite.png",
+        21001: "assets/minecraft/textures/block/bricks.png",
+        21002: "assets/minecraft/textures/block/cobblestone.png",
+        21003: "assets/minecraft/textures/block/diorite.png",
+        21004: "assets/minecraft/textures/block/end_stone_bricks.png",
+        21005: "assets/minecraft/textures/block/granite.png",
+        21006: "assets/minecraft/textures/block/mossy_cobblestone.png",
+        21007: "assets/minecraft/textures/block/mossy_stone_bricks.png",
+        21008: "assets/minecraft/textures/block/nether_bricks.png",
+        21009: "assets/minecraft/textures/block/prismarine.png",
+        21010: "assets/minecraft/textures/block/red_nether_bricks.png",
+        21011: "assets/minecraft/textures/block/red_sandstone.png",
+        21012: "assets/minecraft/textures/block/sandstone.png",
+        21013: "assets/minecraft/textures/block/stone_bricks.png"
+    }
+    t = self.load_image_texture(walls_id_to_tex[blockid]).copy()
 
     wall_pole_top = t.copy()
     wall_pole_side = t.copy()

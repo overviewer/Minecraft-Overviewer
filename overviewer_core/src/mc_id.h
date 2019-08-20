@@ -142,7 +142,6 @@ enum mc_block_id {
     block_jungle_stairs = 136,
     block_command_block = 137,
     block_beacon = 138,
-    block_cobblestone_wall = 139,
     block_flower_pot = 140,
     block_carrots = 141,
     block_potatoes = 142,
@@ -292,7 +291,6 @@ enum mc_block_id {
     block_grindstone = 11369,
     block_mossy_stone_brick_stairs = 11370,
     block_mossy_cobblestone_stairs = 11371,
-    block_mossy_stone_brick_wall = 11372,
     block_lantern = 11373,
     block_smooth_sandstone_stairs = 11374,
     block_smooth_quartz_stairs = 11375,
@@ -324,6 +322,22 @@ enum mc_block_id {
     block_acacia_wall_sign = 11411,
     block_dark_oak_wall_sign = 11412,
     block_bamboo_sapling = 11413,
+    //  adding a gap in the numbering of walls to keep them all
+    // in one numbering block starting at 21000
+    block_andesite_wall = 21000,
+    block_brick_wall = 21001,
+    block_cobblestone_wall = 21002,
+    block_diorite_wall = 21003,
+    block_end_stone_brick_wall = 21004,
+    block_granite_wall = 21005,
+    block_mossy_cobblestone_wall = 21006,
+    block_mossy_stone_brick_wall = 21007,
+    block_nether_brick_wall = 21008,
+    block_prismarine_wall = 21009,
+    block_red_nether_brick_wall = 21010,
+    block_red_sandstone_wall = 21011,
+    block_sandstone_wall = 21012,
+    block_stone_brick_wall = 21013
 };
 
 typedef uint16_t mc_block_t;
