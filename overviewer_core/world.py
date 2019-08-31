@@ -830,6 +830,7 @@ class RegionSet(object):
             'minecraft:acacia_sapling': (11389, 0),
             'minecraft:dark_oak_sapling': (11390, 0),
             'minecraft:bamboo_sapling': (11413, 0),
+            'minecraft:scaffolding': (11414, 0),
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
