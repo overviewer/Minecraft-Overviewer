@@ -317,6 +317,7 @@ enum mc_block_id {
     block_jungle_wall_sign = 11410,
     block_acacia_wall_sign = 11411,
     block_dark_oak_wall_sign = 11412,
+    block_scaffolding = 11413,
 };
 
 typedef uint16_t mc_block_t;

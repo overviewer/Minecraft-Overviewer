@@ -831,6 +831,7 @@ class RegionSet(object):
             'minecraft:andesite_stairs': (11382, 0),
             'minecraft:end_stone_brick_stairs': (11383, 0),
             'minecraft:red_nether_brick_stairs': (11384, 0),
+            'minecraft:scaffolding': (11413, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
