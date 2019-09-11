@@ -489,7 +489,7 @@ class TileSet(object):
                 # We don't use os.fdopen() because this fd may be shared by
                 # many tileset objects, and as soon as this method exists the
                 # file object may be garbage collected, closing the file.
-                os.write(fd, imgpath + "\n")
+                os.write(fd, (imgpath + "\n").encode())
 
         # See note at the top of this file about the rendercheck modes for an
         # explanation of what this method does in different situations.
