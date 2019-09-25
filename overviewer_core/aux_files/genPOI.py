@@ -418,18 +418,36 @@ def create_marker_from_filter_result(poi, result):
         else:   # ...otherwise default to display text.
             d['hovertext'] = result['text']
 
-        if 'polyline' in result and hasattr(result['polyline'], '__iter__'):
-            d['polyline'] = []
-            for point in result['polyline']:
-                # point.copy() would work, but this validates better
-                d['polyline'].append(dict(x=point['x'], y=point['y'], z=point['z']))
-            if isinstance(result['color'], str):
-                d['strokeColor'] = result['color']
+        if "icon" in result:
+            d["icon"] = result['icon']
+        if "createInfoWindow" in result:
+            d["createInfoWindow"] = result['createInfoWindow']
 
-            if "icon" in result:
-                d["icon"] = result['icon']
-            if "createInfoWindow" in result:
-                d["createInfoWindow"] = result['createInfoWindow']
+        # Polylines and polygons
+        if ('polyline' in result and hasattr(result['polyline'], '__iter__')) or \
+            'polygon' in result and hasattr(result['polygon'], '__iter__'):
+            # If the points form a line or closed shape
+            d['isLine'] = 'polyline' in result
+            # Collect points
+            d['points'] = []
+            for point in (result['polyline'] if d['isLine'] else result['polygon']):
+                d['points'].append(dict(x=point['x'], y=point['y'], z=point['z']))
+
+            # Options and default values
+            if 'color' in result:
+                d['strokeColor'] = result['color']
+            else:
+                d['strokeColor'] = 'red'
+
+            if 'fill' in result:
+                d['fill'] = result['fill']
+            else:
+                d['fill'] = not d['isLine'] # fill polygons by default
+
+            if 'weight' in result:
+                d['strokeWeight'] = result['weight']
+            else:
+                d['strokeWeight'] = 2
     else:
         raise ValueError("Got an %s as result for POI with id %s"
                          % (type(result).__name__, poi['id']))
