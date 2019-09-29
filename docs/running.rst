@@ -277,7 +277,7 @@ If you want or need to provide your own textures, you have several options:
   If that's too confusing for you, then just take this single line and paste it into
   a terminal to get 1.14 textures::
 
-    wget https://overviewer.org/textures/1.14 -O ~/.minecraft/versions/1.14/1.14.jar
+    mkdirp ~/.minecraft/versions/1.14 && wget https://overviewer.org/textures/1.14 -O ~/.minecraft/versions/1.14/1.14.jar
 
 * You can also just run the launcher to install the client.
 
