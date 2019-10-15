@@ -828,6 +828,7 @@ class RegionSet(object):
             'minecraft:andesite_stairs': (11382, 0),
             'minecraft:end_stone_brick_stairs': (11383, 0),
             'minecraft:red_nether_brick_stairs': (11384, 0),
+            'minecraft:scaffolding': (11413, 0),            
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
@@ -1352,7 +1353,7 @@ class RegionSet(object):
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
         if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk",
-                                                "mobs_spawned", ""):
+                                                "mobs_spawned", "spawn", ""):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array

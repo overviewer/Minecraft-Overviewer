@@ -315,6 +315,7 @@ enum mc_block_id {
     block_jungle_wall_sign = 11410,
     block_acacia_wall_sign = 11411,
     block_dark_oak_wall_sign = 11412,
+    block_scaffolding = 11413,
     //  adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 21000
     block_andesite_wall = 21000,
