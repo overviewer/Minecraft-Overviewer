@@ -987,6 +987,14 @@ def saplings(self, blockid, data):
         tex = self.load_image_texture("assets/minecraft/textures/block/dark_oak_sapling.png")
     return self.build_sprite(tex)
 
+sprite(blockid=11385, imagename="assets/minecraft/textures/block/oak_sapling.png")
+sprite(blockid=11386, imagename="assets/minecraft/textures/block/spruce_sapling.png")
+sprite(blockid=11387, imagename="assets/minecraft/textures/block/birch_sapling.png")
+sprite(blockid=11388, imagename="assets/minecraft/textures/block/jungle_sapling.png")
+sprite(blockid=11389, imagename="assets/minecraft/textures/block/acacia_sapling.png")
+sprite(blockid=11390, imagename="assets/minecraft/textures/block/dark_oak_sapling.png")
+sprite(blockid=11413, imagename="assets/minecraft/textures/block/bamboo_stage0.png")
+
 # bedrock
 block(blockid=7, top_image="assets/minecraft/textures/block/bedrock.png")
 
