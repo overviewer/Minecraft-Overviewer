@@ -758,11 +758,9 @@ overviewer.util = {
             zoom = ovconf.minZoom;
 
         // build a fake event for the world switcher control
+        overviewer.current_layer[world_name] = target_layer;
         overviewer.worldCtrl.onChange({target: {value: world_name}});
         overviewer.worldCtrl.select.value = world_name;
-        if  (!overviewer.map.hasLayer(target_layer)) {
-            overviewer.map.addLayer(target_layer);
-        }
 
         overviewer.map.setView(latlngcoords, zoom);
 
