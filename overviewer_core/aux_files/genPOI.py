@@ -233,7 +233,7 @@ class PlayerDict(dict):
                     cls.uuid_cache = json.loads(gz.read().decode("utf-8"))
                     logging.info("Loaded UUID cache from %r with %d entries.",
                                  cache_file, len(cls.uuid_cache.keys()))
-            except (ValueError, IOError):
+            except (ValueError, IOError, EOFError):
                 logging.warning("Failed to load UUID cache -- it might be corrupt.")
                 cls.uuid_cache = {}
                 corrupted_cache = cache_file + ".corrupted." + datetime.datetime.now().isoformat()
