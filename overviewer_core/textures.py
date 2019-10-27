@@ -5083,4 +5083,4 @@ def sandstone(self, blockid, data):
     return self.build_block(top, self.load_image_texture("assets/minecraft/textures/block/dried_kelp_side.png"))
 
 # scaffolding
-block(blockid=11413, top_image="assets/minecraft/textures/block/scaffolding_top.png", side_image="assets/minecraft/textures/block/scaffolding_side.png", solid=False, transparent=True)
+block(blockid=11414, top_image="assets/minecraft/textures/block/scaffolding_top.png", side_image="assets/minecraft/textures/block/scaffolding_side.png", solid=False, transparent=True)
