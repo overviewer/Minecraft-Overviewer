@@ -183,6 +183,7 @@ enum mc_block_id {
     block_daylight_detector_inverted = 178,
     block_red_sandstone = 179,
     block_red_sandstone_stairs = 180,
+    block_smooth_red_sandstone_stairs = 11415,
     block_double_stone_slab2 = 181,
     block_stone_slab2 = 182,
     block_spruce_fence_gate = 183,
