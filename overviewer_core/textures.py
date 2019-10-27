@@ -1958,8 +1958,9 @@ block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", trans
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch,
 # jungle, quartz, red sandstone, (dark) prismarine, mossy brick and mossy cobblestone, stone smooth_quartz
 # polished_granite polished_andesite polished_diorite granite diorite andesite end_stone_bricks red_nether_brick stairs
+# smooth_red_sandstone_stairs
 @material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 11337, 11338, 11339,
-          11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379, 11380, 11381, 11382, 11383, 11384], 
+          11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379, 11380, 11381, 11382, 11383, 11384, 11415], 
           data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
@@ -2004,6 +2005,7 @@ def stairs(self, blockid, data):
         11382: "assets/minecraft/textures/block/andesite.png",
         11383: "assets/minecraft/textures/block/end_stone_bricks.png",
         11384: "assets/minecraft/textures/block/red_nether_bricks.png",
+        11415: "assets/minecraft/textures/block/red_sandstone_top.png",
     }
 
     texture = self.load_image_texture(stair_id_to_tex[blockid]).copy()
@@ -4407,21 +4409,26 @@ def beacon(self, blockid, data):
 
 # cobblestone and mossy cobblestone walls, chorus plants, mossy stone brick walls
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=[139, 199, 11372], data=list(range(32)), transparent=True, nospawn=True)
+@material(blockid=[199, *range(21000,21013+1)], data=list(range(32)), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
-    # chorus plants
-    if blockid == 199:
-        t = self.load_image_texture("assets/minecraft/textures/block/chorus_plant.png").copy()
-    # mossy stone bricks
-    elif blockid == 11372:
-        t = self.load_image_texture("assets/minecraft/textures/block/mossy_stone_bricks.png").copy()
-    # no rotation, uses pseudo data
-    elif data & 0b10000 == 0:
-        # cobblestone
-        t = self.load_image_texture("assets/minecraft/textures/block/cobblestone.png").copy()
-    else:
-        # mossy cobblestone
-        t = self.load_image_texture("assets/minecraft/textures/block/mossy_cobblestone.png").copy()
+    walls_id_to_tex = {
+          199: "assets/minecraft/textures/block/chorus_plant.png", # chorus plants
+        21000: "assets/minecraft/textures/block/andesite.png",
+        21001: "assets/minecraft/textures/block/bricks.png",
+        21002: "assets/minecraft/textures/block/cobblestone.png",
+        21003: "assets/minecraft/textures/block/diorite.png",
+        21004: "assets/minecraft/textures/block/end_stone_bricks.png",
+        21005: "assets/minecraft/textures/block/granite.png",
+        21006: "assets/minecraft/textures/block/mossy_cobblestone.png",
+        21007: "assets/minecraft/textures/block/mossy_stone_bricks.png",
+        21008: "assets/minecraft/textures/block/nether_bricks.png",
+        21009: "assets/minecraft/textures/block/prismarine.png",
+        21010: "assets/minecraft/textures/block/red_nether_bricks.png",
+        21011: "assets/minecraft/textures/block/red_sandstone.png",
+        21012: "assets/minecraft/textures/block/sandstone.png",
+        21013: "assets/minecraft/textures/block/stone_bricks.png"
+    }
+    t = self.load_image_texture(walls_id_to_tex[blockid]).copy()
 
     wall_pole_top = t.copy()
     wall_pole_side = t.copy()
@@ -5076,3 +5083,6 @@ def glazed_terracotta(self, blockid, data):
 def sandstone(self, blockid, data):
     top = self.load_image_texture("assets/minecraft/textures/block/dried_kelp_top.png")
     return self.build_block(top, self.load_image_texture("assets/minecraft/textures/block/dried_kelp_side.png"))
+
+# scaffolding
+block(blockid=11414, top_image="assets/minecraft/textures/block/scaffolding_top.png", side_image="assets/minecraft/textures/block/scaffolding_side.png", solid=False, transparent=True)
