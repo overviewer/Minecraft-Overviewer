@@ -1935,6 +1935,33 @@ def lantern(self, blockid, data):
     alpha_over(img, top, (0, 8-hangoff), top)
     return img
 
+
+# composter
+@material(blockid=11416, data=list(range(9)), transparent=True)
+def composter(self, blockid, data):
+    side = self.load_image_texture("assets/minecraft/textures/block/composter_side.png")
+    top = self.load_image_texture("assets/minecraft/textures/block/composter_top.png")
+    # bottom = self.load_image_texture("assets/minecraft/textures/block/composter_bottom.png")
+
+    if data == 0:  # empty
+        return self.build_full_block(top, side, side, side, side)
+
+    if data == 8:
+        compost = self.transform_image_top(
+            self.load_image_texture("assets/minecraft/textures/block/composter_ready.png"))
+    else:
+        compost = self.transform_image_top(
+            self.load_image_texture("assets/minecraft/textures/block/composter_compost.png"))
+
+    nudge = {1: (0, 9), 2: (0, 8), 3: (0, 7), 4: (0, 6), 5: (0, 4), 6: (0, 2), 7: (0, 0), 8: (0, 0)}
+
+    img = self.build_full_block(None, side, side, None, None)
+    alpha_over(img, compost, nudge[data], compost)
+    img2 = self.build_full_block(top, None, None, side, side)
+    alpha_over(img, img2, (0, 0), img2)
+
+    return img
+
 # fire
 @material(blockid=51, data=list(range(16)), transparent=True)
 def fire(self, blockid, data):
