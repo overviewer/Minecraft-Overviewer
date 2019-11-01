@@ -1935,6 +1935,65 @@ def lantern(self, blockid, data):
     alpha_over(img, top, (0, 8-hangoff), top)
     return img
 
+# bamboo
+@material(blockid=11416, data=[0], transparent=True)
+def bamboo(self, blockid, data):
+    # get the  multipart texture of the lantern
+    inputtexture = self.load_image_texture("assets/minecraft/textures/block/bamboo_stalk.png")
+
+    # # now create a textures, using the parts defined in bamboo1_age0.json
+        # {   "from": [ 7, 0, 7 ],
+        #     "to": [ 9, 16, 9 ],
+        #     "faces": {
+        #         "down":  { "uv": [ 13, 4, 15, 6 ], "texture": "#all", "cullface": "down" },
+        #         "up":    { "uv": [ 13, 0, 15, 2], "texture": "#all", "cullface": "up" },
+        #         "north": { "uv": [ 0, 0, 2, 16 ], "texture": "#all" },
+        #         "south": { "uv": [ 0, 0, 2, 16 ], "texture": "#all" },
+        #         "west":  { "uv": [  0, 0, 2, 16 ], "texture": "#all" },
+        #         "east":  { "uv": [  0, 0, 2, 16 ], "texture": "#all" }
+        #     }
+        # }
+
+    side_crop = inputtexture.crop((0, 0, 3, 16))
+    side_slice = side_crop.copy()
+    side_texture = Image.new("RGBA", (16, 16), self.bgcolor)
+    side_texture.paste(side_slice,(0, 0))
+
+    # JSON data for top
+    # "up":    { "uv": [ 13, 0, 15, 2], "texture": "#all", "cullface": "up" },
+    top_crop = inputtexture.crop((13, 0, 16, 3))
+    top_slice = top_crop.copy()
+    top_texture = Image.new("RGBA", (16, 16), self.bgcolor)
+    top_texture.paste(top_slice,(5, 5))
+
+    # mimic parts of build_full_block, to get an object smaller than a block 
+    # build_full_block(self, top, side1, side2, side3, side4, bottom=None):
+    # a non transparent block uses top, side 3 and side 4.
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    # prepare the side textures
+    # side3
+    side3 = self.transform_image_side(side_texture)
+    # Darken this side
+    sidealpha = side3.split()[3]
+    side3 = ImageEnhance.Brightness(side3).enhance(0.9)
+    side3.putalpha(sidealpha)
+    # place the transformed texture
+    xoff = 3
+    yoff = 0
+    alpha_over(img, side3, (4+xoff, yoff), side3)
+    # side4
+    side4 = self.transform_image_side(side_texture)
+    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+    # Darken this side
+    sidealpha = side4.split()[3]
+    side4 = ImageEnhance.Brightness(side4).enhance(0.8)
+    side4.putalpha(sidealpha)
+    alpha_over(img, side4, (-4+xoff, yoff), side4)
+    # top
+    top = self.transform_image_top(top_texture)
+    alpha_over(img, top, (-4+xoff, -5), top)
+    return img
+
 # fire
 @material(blockid=51, data=list(range(16)), transparent=True)
 def fire(self, blockid, data):

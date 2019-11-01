@@ -832,6 +832,7 @@ class RegionSet(object):
             'minecraft:bamboo_sapling': (11413, 0),
             'minecraft:scaffolding': (11414, 0),
             "minecraft:smooth_red_sandstone_stairs": (11415, 0),
+            'minecraft:bamboo': (11416, 0),
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
