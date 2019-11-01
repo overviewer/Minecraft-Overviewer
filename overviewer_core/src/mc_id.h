@@ -325,6 +325,7 @@ enum mc_block_id {
     block_bamboo_sapling = 11413,
     block_scaffolding = 11414,
     block_bamboo = 11416,
+    block_composter = 11417,
     //  adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 21000
     block_andesite_wall = 21000,
