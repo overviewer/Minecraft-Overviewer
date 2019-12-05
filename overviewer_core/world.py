@@ -832,6 +832,8 @@ class RegionSet(object):
             'minecraft:bamboo_sapling': (11413, 0),
             'minecraft:scaffolding': (11414, 0),
             "minecraft:smooth_red_sandstone_stairs": (11415, 0),
+            'minecraft:bamboo': (11416, 0),
+            "minecraft:composter": (11417, 0),
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
@@ -1127,6 +1129,8 @@ class RegionSet(object):
                 data = 1
             else:
                 data = 0
+        elif key == "minecraft:composter":
+            data = palette_entry['Properties']['level']
         return (block, data)
 
     def get_type(self):
