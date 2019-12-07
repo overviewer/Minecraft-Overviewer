@@ -1189,7 +1189,7 @@ class RegionSet(object):
             result[4::8] = ((b[4::7] & 0x07) << 4) | ((b[3::7] & 0xf0) >> 4)
             result[5::8] = ((b[5::7] & 0x03) << 5) | ((b[4::7] & 0xf8) >> 3)
             result[6::8] = ((b[6::7] & 0x01) << 6) | ((b[5::7] & 0xfc) >> 2)
-            result[7::8] =  (b[6::7] & 0xfc) >> 1
+            result[7::8] =  (b[6::7] & 0xfe) >> 1
         # bits_per_value == 8 is handled above
         elif bits_per_value == 9:
             result[0::8] = ((b[1::9] & 0x01) << 8) |   b[0::9]
