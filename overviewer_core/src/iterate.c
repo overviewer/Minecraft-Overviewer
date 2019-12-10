@@ -109,10 +109,12 @@ static inline void load_chunk_section(ChunkData* dest, int32_t i, PyObject* sect
     dest->sections[i].data = (PyArrayObject*)PyDict_GetItemString(section, "Data");
     dest->sections[i].skylight = (PyArrayObject*)PyDict_GetItemString(section, "SkyLight");
     dest->sections[i].blocklight = (PyArrayObject*)PyDict_GetItemString(section, "BlockLight");
+    dest->sections[i].biomes = (PyArrayObject*)PyDict_GetItemString(section, "Biomes");
     Py_INCREF(dest->sections[i].blocks);
     Py_INCREF(dest->sections[i].data);
     Py_INCREF(dest->sections[i].skylight);
     Py_INCREF(dest->sections[i].blocklight);
+    Py_INCREF(dest->sections[i].biomes);
 }
 
 /* loads the given chunk into the chunks[] array in the state
@@ -130,13 +132,12 @@ bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
     if (dest->loaded)
         return false;
 
-    /* set up reasonable defaults */
-    dest->biomes = NULL;
     for (i = 0; i < SECTIONS_PER_CHUNK; i++) {
         dest->sections[i].blocks = NULL;
         dest->sections[i].data = NULL;
         dest->sections[i].skylight = NULL;
         dest->sections[i].blocklight = NULL;
+        dest->sections[i].biomes = NULL;
     }
     dest->loaded = 1;
 
@@ -166,8 +167,6 @@ bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
         return true;
     }
 
-    dest->biomes = (PyArrayObject*)PyDict_GetItemString(chunk, "Biomes");
-    Py_INCREF(dest->biomes);
 
     for (i = 0; i < PySequence_Fast_GET_SIZE(sections); i++) {
         PyObject* ycoord = NULL;
@@ -194,12 +193,12 @@ unload_all_chunks(RenderState* state) {
     for (i = 0; i < 3; i++) {
         for (j = 0; j < 3; j++) {
             if (state->chunks[i][j].loaded) {
-                Py_XDECREF(state->chunks[i][j].biomes);
                 for (k = 0; k < SECTIONS_PER_CHUNK; k++) {
                     Py_XDECREF(state->chunks[i][j].sections[k].blocks);
                     Py_XDECREF(state->chunks[i][j].sections[k].data);
                     Py_XDECREF(state->chunks[i][j].sections[k].skylight);
                     Py_XDECREF(state->chunks[i][j].sections[k].blocklight);
+                    Py_XDECREF(state->chunks[i][j].sections[k].biomes);
                 }
                 state->chunks[i][j].loaded = 0;
             }

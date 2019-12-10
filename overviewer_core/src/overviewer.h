@@ -31,7 +31,7 @@
 
 // increment this value if you've made a change to the c extesion
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 77
+#define OVERVIEWER_EXTENSION_VERSION 78
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -87,7 +87,7 @@ typedef struct {
     /* all the sections in a given chunk */
     struct {
         /* all there is to know about each section */
-        PyArrayObject *blocks, *data, *skylight, *blocklight;
+        PyArrayObject *blocks, *data, *skylight, *blocklight, *biomes;
     } sections[SECTIONS_PER_CHUNK];
 } ChunkData;
 typedef struct {
@@ -210,7 +210,7 @@ static inline uint32_t get_data(RenderState* state, DataType type, int32_t x, in
         data_array = state->chunks[chunkx][chunkz].sections[chunky].skylight;
         break;
     case BIOMES:
-        data_array = state->chunks[chunkx][chunkz].biomes;
+        data_array = state->chunks[chunkx][chunkz].sections[chunky].biomes;
     };
 
     if (data_array == NULL)
