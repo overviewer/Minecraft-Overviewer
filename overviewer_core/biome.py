@@ -32,9 +32,7 @@ class BiomeDispensary:
                 self.biomes[i] = biome_array[i * 256:(i + 1) * 256].reshape((16, 16))
 
     def get_biome(self, y_level):
-        if y_level < 0:
-            return None
-        if self.biome_len == 256:
+        if self.biome_len == 256 or y_level < 0:
             return self.biomes[0]
         else:
             return self.biomes[y_level // 4]
