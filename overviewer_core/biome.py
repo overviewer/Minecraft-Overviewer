@@ -35,4 +35,7 @@ class BiomeDispensary:
         if self.biome_len == 256 or y_level < 0:
             return self.biomes[0]
         else:
-            return self.biomes[y_level // 4]
+            # We clamp the value to a max of 3 here because apparently Y=16
+            # also exists, and while I don't know what biome level Mojang uses for
+            # that, the highest one is probably a good bet.
+            return self.biomes[min(y_level // 4, 3)]
