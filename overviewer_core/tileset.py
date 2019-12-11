@@ -15,7 +15,6 @@
 
 import errno
 import functools
-import itertools
 import logging
 import os
 import os.path

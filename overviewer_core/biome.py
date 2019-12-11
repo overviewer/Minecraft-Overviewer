@@ -14,8 +14,6 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import numpy
-
 class BiomeDispensary:
     """Turns biome arrays of either 256 or 1024 integer values into 16x16 2d arrays,
     which can then be retrieved for any Y level with get_biome.

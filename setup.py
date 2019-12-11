@@ -16,8 +16,6 @@ from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
-from distutils.cmd import Command
-from distutils.dir_util import remove_tree
 from distutils.sysconfig import get_python_inc
 from distutils import log
 import os, os.path

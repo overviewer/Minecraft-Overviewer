@@ -17,7 +17,6 @@
 
 from __future__ import print_function
 
-import platform
 import sys
 
 # quick version check
@@ -28,7 +27,6 @@ if sys.version_info[0] == 2 or (sys.version_info[0] == 3 and sys.version_info[1]
 import os
 import os.path
 import re
-import subprocess
 import multiprocessing
 import time
 import logging
@@ -38,10 +36,9 @@ from collections import OrderedDict
 from overviewer_core import util
 from overviewer_core import logger
 from overviewer_core import textures
-from overviewer_core import optimizeimages, world
+from overviewer_core import world
 from overviewer_core import config_parser, tileset, assetmanager, dispatcher
 from overviewer_core import cache
-from overviewer_core import observer
 from overviewer_core.nbt import CorruptNBTError
 
 helptext = """
