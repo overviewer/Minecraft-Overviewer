@@ -212,8 +212,8 @@ class CustomClean(clean):
                         os.remove(fname)
 
                 except OSError:
-                    log.warn("'%s' could not be cleaned -- permission denied",
-                             fname)
+                    log.warning("'%s' could not be cleaned -- permission denied",
+                                fname)
             else:
                 log.debug("'%s' does not exist -- can't clean it",
                           fname)
@@ -223,7 +223,7 @@ class CustomClean(clean):
             for f in files:
                 if f.endswith(".pyc"):
                     if self.dry_run:
-                        log.warn("Would remove %s", os.path.join(root,f))
+                        log.warning("Would remove %s", os.path.join(root,f))
                     else:
                         os.remove(os.path.join(root, f))
 

@@ -501,8 +501,8 @@ def main():
         # get the regionset for this dimension
         rset = w.get_regionset(render['dimension'][1])
         if rset is None:    # indicates no such dimension was found:
-            logging.warn("Sorry, you requested dimension '%s' for the render '%s', but I couldn't "
-                         "find it.", render['dimension'][0], rname)
+            logging.warning("Sorry, you requested dimension '%s' for the render '%s', but I "
+                            "couldn't find it.", render['dimension'][0], rname)
             continue
         # List of regionsets that should be handled
         rsets = []

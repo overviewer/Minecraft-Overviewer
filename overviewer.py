@@ -513,7 +513,7 @@ def main():
                           "files in the world directory?")
             return 1
         if rset is None:    # indicates no such dimension was found
-            logging.warn("Sorry, you requested dimension '%s' for %s, but I couldn't find it.",
+            logging.warning("Sorry, you requested dimension '%s' for %s, but I couldn't find it.",
                          render['dimension'][0], render_name)
             continue
 
