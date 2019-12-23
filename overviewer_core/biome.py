@@ -25,11 +25,11 @@ class BiomeDispensary:
         if self.biome_len == 256:
             self.biomes = [biome_array.reshape((16, 16))]
         elif self.biome_len == 1024:
-            self.biomes = [None] * 4
+            self.biomes = [None] * 16
             # Each value in the biome array actually stands for 4 blocks, so we take the
             # Kronecker product of it to "scale" it into its full size of 4096 entries
             krond = numpy.kron(biome_array, numpy.ones((4)))
-            for i in range(0, 4):
+            for i in range(0, 16):
                 # Now we can divide it into 16x16 slices
                 self.biomes[i] = krond[i * 256:(i + 1) * 256].reshape((16, 16))
 
@@ -38,7 +38,7 @@ class BiomeDispensary:
         if self.biome_len == 256 or y_level < 0:
             return self.biomes[0]
         else:
-            # We clamp the value to a max of 3 here because apparently Y=16
+            # We clamp the value to a max of 15 here because apparently Y=16
             # also exists, and while I don't know what biome level Mojang uses for
             # that, the highest one is probably a good bet.
-            return self.biomes[min(y_level // 4, 3)]
+            return self.biomes[min(y_level, 15)]
