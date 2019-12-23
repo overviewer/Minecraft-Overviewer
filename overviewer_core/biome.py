@@ -26,10 +26,13 @@ class BiomeDispensary:
             self.biomes = [biome_array.reshape((16, 16))]
         elif self.biome_len == 1024:
             self.biomes = [None] * 4
+            # Each value in the biome array actually stands for 4 blocks, so we take the
+            # Kronecker product of it to "scale" it into its full size of 4096 entries
+            krond = numpy.kron(biome_array, numpy.ones((4)))
             for i in range(0, 4):
-                # Map 256 values of the array to each self.biomes entry, resulting
-                # in 4 entries
-                self.biomes[i] = biome_array[i * 256:(i + 1) * 256].reshape((16, 16))
+                # Now we can divide it into 16x16 slices
+                self.biomes[i] = krond[i * 256:(i + 1) * 256].reshape((16, 16))
+
 
     def get_biome(self, y_level):
         if self.biome_len == 256 or y_level < 0:
