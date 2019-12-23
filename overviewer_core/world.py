@@ -1110,12 +1110,13 @@ class RegionSet(object):
         elif key.endswith('_door'):
             p = palette_entry['Properties']
             if p['hinge'] == 'left': data |= 0x10
+            if p['open'] == 'true': data |= 0x04
             if p['half'] == 'upper': data |= 0x08
             data |= {
-                'north': 0x01,
-                'west':  0x04,
-                'south': 0x03,
-                'east':  0x02,
+                'north': 0x03,
+                'west':  0x02,
+                'south': 0x01,
+                'east':  0x00,
                }[p['facing']]
         elif key.endswith('_trapdoor'):
             p = palette_entry['Properties']
