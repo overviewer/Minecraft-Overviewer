@@ -14,31 +14,17 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
-import numpy
 
-class BiomeDispensary:
-    """Turns biome arrays of either 256 or 1024 integer values into 16x16 2d arrays,
-    which can then be retrieved for any Y level with get_biome.
-    """
-    def __init__(self, biome_array):
-        self.biome_len = len(biome_array)
-        if self.biome_len == 256:
-            self.biomes = [biome_array.reshape((16, 16))]
-        elif self.biome_len == 1024:
-            self.biomes = [None] * 16
-            # Each value in the biome array actually stands for 4 blocks, so we take the
-            # Kronecker product of it to "scale" it into its full size of 4096 entries
-            krond = numpy.kron(biome_array, numpy.ones((4)))
-            for i in range(0, 16):
-                # Now we can divide it into 16x16 slices
-                self.biomes[i] = krond[i * 256:(i + 1) * 256].reshape((16, 16))
-
-
-    def get_biome(self, y_level):
-        if self.biome_len == 256 or y_level < 0:
-            return self.biomes[0]
-        else:
-            # We clamp the value to a max of 15 here because apparently Y=16
-            # also exists, and while I don't know what biome level Mojang uses for
-            # that, the highest one is probably a good bet.
-            return self.biomes[min(y_level, 15)]
+def reshape_biome_data(biome_array):
+    biome_len = len(biome_array)
+    if biome_len == 256:
+        return biome_array.reshape((16, 16))
+    elif biome_len == 1024:
+        # Ok here's the big brain explanation:
+        # Minecraft's new biomes have a resolution of 4x4x4 blocks.
+        # This means for a 16x256x16 chunk column we get 64 times for the vertical,
+        # and 4x4 values for the horizontals.
+        # Minecraft Wiki says some dumb thing about how "oh it's ordered by Z, then X, then Y",
+        # but they appear to either be wrong or have explained it with the eloquence of a
+        # caveman.
+        return biome_array.reshape((4, 64, 4))

@@ -26,7 +26,7 @@ import numpy
 
 from . import nbt
 from . import cache
-from .biome import BiomeDispensary
+from .biome import reshape_biome_data
 
 """
 This module has routines for extracting information about available worlds
@@ -1372,15 +1372,14 @@ class RegionSet(object):
                 biomes = numpy.frombuffer(biomes, dtype=numpy.uint8)
             else:
                 biomes = numpy.asarray(biomes)
-            #biomes = biomes.reshape((16,16))
-            biome_giver = BiomeDispensary(biomes)
+            biomes = reshape_biome_data(biomes)
         else:
             # Worlds converted by Jeb's program may be missing the Biomes key.
             # Additionally, 19w09a worlds have an empty array as biomes key
             # in some cases.
-            #biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
-            biome_giver = BiomeDispensary(numpy.zeros(256, dtype=numpy.uint8))
-        #chunk_data['Biomes'] = biomes
+            biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
+        chunk_data['Biomes'] = biomes
+        chunk_data['NewBiomes'] = (len(biomes.shape) == 3)
 
         unrecognized_block_types = {}
         for section in chunk_data['Sections']:
@@ -1388,7 +1387,6 @@ class RegionSet(object):
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
             try:
-                section['Biomes'] = biome_giver.get_biome(section["Y"])
                 if 'SkyLight' in section:
                     skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
                     skylight = skylight.reshape((16,16,8))
@@ -1612,9 +1610,6 @@ class RotatedRegionSet(RegionSetWrapper):
         for section in chunk_data['Sections']:
             section = dict(section)
             newsections.append(section)
-            biomes = numpy.swapaxes(section['Biomes'], 0, 1)
-            biomes = numpy.rot90(biomes, self.north_dir)
-            section['Biomes'] = numpy.swapaxes(biomes, 0, 1)
             for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight']:
                 array = section[arrayname]
                 # Since the anvil change, arrays are arranged with axes Y,Z,X
@@ -1626,7 +1621,15 @@ class RotatedRegionSet(RegionSetWrapper):
                 section[arrayname] = array
         chunk_data['Sections'] = newsections
 
-        # same as above, for biomes (Z/X indexed)
+        if chunk_data['NewBiomes']:
+            array = numpy.swapaxes(chunk_data['Biomes'], 0, 2)
+            array = numpy.rot90(array, self.north_dir)
+            chunk_data['Biomes'] = numpy.swapaxes(array, 0, 2)
+        else:
+            # same as above, for biomes (Z/X indexed)
+            biomes = numpy.swapaxes(chunk_data['Biomes'], 0, 1)
+            biomes = numpy.rot90(biomes, self.north_dir)
+            chunk_data['Biomes'] = numpy.swapaxes(biomes, 0, 1)
         return chunk_data
 
     def get_chunk_mtime(self, x, z):
