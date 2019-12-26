@@ -5170,3 +5170,68 @@ def sandstone(self, blockid, data):
 
 # scaffolding
 block(blockid=11414, top_image="assets/minecraft/textures/block/scaffolding_top.png", side_image="assets/minecraft/textures/block/scaffolding_side.png", solid=False, transparent=True)
+
+# beehive and bee_nest
+@material(blockid=[11501, 11502], data=list(range(8)), solid=True)
+def beehivenest(self, blockid, data):    
+    if blockid == 11501: #beehive
+        t_top = self.load_image("assets/minecraft/textures/block/beehive_end.png")
+        t_side = self.load_image("assets/minecraft/textures/block/beehive_side.png")
+        t_front = self.load_image("assets/minecraft/textures/block/beehive_front.png")
+        t_front_honey = self.load_image("assets/minecraft/textures/block/beehive_front_honey.png")
+    elif blockid == 11502: #bee_nest
+        t_top = self.load_image("assets/minecraft/textures/block/bee_nest_top.png")
+        t_side = self.load_image("assets/minecraft/textures/block/bee_nest_side.png")
+        t_front = self.load_image("assets/minecraft/textures/block/bee_nest_front.png")
+        t_front_honey = self.load_image("assets/minecraft/textures/block/bee_nest_front_honey.png")
+
+    if data >= 4:
+        front = t_front_honey
+    else:
+        front = t_front
+
+    if self.rotation == 0: # rendering north upper-left
+        if data == 0 or data == 4: # south
+            return self.build_full_block(t_top, t_side, t_side, t_side, front)
+        elif data == 1 or data == 5: # west
+            return self.build_full_block(t_top, t_side, t_side, front, t_side)
+        elif data == 2 or data == 6: # north
+            return self.build_full_block(t_top, t_side, front, t_side, t_side)
+        elif data == 3 or data == 7: # east
+            return self.build_full_block(t_top, front, t_side, t_side, t_side)
+
+    elif self.rotation == 1: # north upper-right
+        if data == 0 or data == 4: # south
+            return self.build_full_block(t_top, t_side, t_side, front, t_side)
+        elif data == 1 or data == 5: # west
+            return self.build_full_block(t_top, t_side, front, t_side, t_side)
+        elif data == 2 or data == 6: # north
+            return self.build_full_block(t_top, front, t_side, t_side, t_side)
+        elif data == 3 or data == 7: # east
+            return self.build_full_block(t_top, t_side, t_side, t_side, front)            
+
+    elif self.rotation == 2: # north lower-right
+        if data == 0 or data == 4: # south
+            return self.build_full_block(t_top, t_side, front, t_side, t_side)
+        elif data == 1 or data == 5: # west
+            return self.build_full_block(t_top, front, t_side, t_side, t_side)
+        elif data == 2 or data == 6: # north
+            return self.build_full_block(t_top, t_side, t_side, t_side, front)
+        elif data == 3 or data == 7: # east
+            return self.build_full_block(t_top, t_side, t_side, front, t_side)
+            
+    elif self.rotation == 3: # north lower-left
+        if data == 0 or data == 4: # south
+            return self.build_full_block(t_top, front, t_side, t_side, t_side)
+        elif data == 1 or data == 5: # west
+            return self.build_full_block(t_top, t_side, t_side, t_side, front)
+        elif data == 2 or data == 6: # north
+            return self.build_full_block(t_top, t_side, t_side, front, t_side)
+        elif data == 3 or data == 7: # east
+            return self.build_full_block(t_top, t_side, front, t_side, t_side)
+
+# honeycomb_block
+block(blockid=11503, top_image="assets/minecraft/textures/block/honeycomb_block.png")
+
+# honey_block
+block(blockid=11504, top_image="assets/minecraft/textures/block/honey_block_top.png", side_image="assets/minecraft/textures/block/honey_block_side.png")

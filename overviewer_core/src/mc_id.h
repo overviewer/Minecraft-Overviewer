@@ -326,6 +326,11 @@ enum mc_block_id {
     block_scaffolding = 11414,
     block_bamboo = 11416,
     block_composter = 11417,
+    // 1.15 blocks below
+    block_beehive = 11501,
+    block_bee_nest = 11502,
+    block_honeycomb_block = 11503,
+    block_honey_block = 11504,
     //  adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 21000
     block_andesite_wall = 21000,
