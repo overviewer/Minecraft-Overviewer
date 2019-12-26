@@ -835,6 +835,11 @@ class RegionSet(object):
             "minecraft:smooth_red_sandstone_stairs": (11415, 0),
             'minecraft:bamboo': (11416, 0),
             "minecraft:composter": (11417, 0),
+            # 1.15 blocks below
+            'minecraft:beehive': (11501, 0),
+            'minecraft:bee_nest': (11502, 0),
+            'minecraft:honeycomb_block': (11503, 0),
+            'minecraft:honey_block': (11504, 0),
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
