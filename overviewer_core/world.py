@@ -1022,6 +1022,12 @@ class RegionSet(object):
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
+        elif key in ['minecraft:beehive', 'minecraft:bee_nest']:
+            facing = palette_entry['Properties']['facing']
+            honey_level = int(palette_entry['Properties']['honey_level'])
+            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
+            if honey_level == 5:
+                data = {'south': 4, 'west': 5, 'north': 6, 'east': 7}[facing]
         elif key.endswith('_button'):
             facing = palette_entry['Properties']['facing']
             face   = palette_entry['Properties']['face']
