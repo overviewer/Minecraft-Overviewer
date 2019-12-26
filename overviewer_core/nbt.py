@@ -167,9 +167,9 @@ class NBTFileReader(object):
         length = self._uint.unpack(self._file.read(4))[0]
 
         read_method = self._read_tagmap[tagid]
-        l = []
-        for _ in range(length):
-            l.append(read_method())
+        l = [None] * length
+        for i in range(length):
+            l[i] = read_method()
         return l
 
     def _read_tag_compound(self):
