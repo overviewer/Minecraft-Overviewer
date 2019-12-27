@@ -447,6 +447,9 @@ def main():
     parser = ArgumentParser(prog=prog_name)
     parser.add_argument("-c", "--config", dest="config", action="store", required=True,
                         help="Specify the config file to use.")
+    parser.add_argument("-p", "--processes", dest="procs", action="store", type=int,
+                        help="The number of local worker processes to spawn. Defaults to the "
+                        "number of CPU cores your computer has.")
     parser.add_argument("-q", "--quiet", dest="quiet", action="count",
                         help="Reduce logging output")
     parser.add_argument("--skip-scan", dest="skipscan", action="store_true",
@@ -465,6 +468,8 @@ def main():
         mw_parser.parse(args.config)
     except config_parser.MissingConfigException:
         parser.error("The configuration file '{}' does not exist.".format(args.config))
+    if args.procs:
+        mw_parser.set_config_item("processes", args.procs)
     try:
         config = mw_parser.get_validated_config()
     except Exception:
