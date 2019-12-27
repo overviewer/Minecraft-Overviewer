@@ -2183,6 +2183,14 @@ def stairs(self, blockid, data):
 def chests(self, blockid, data):
     # the first 3 bits are the orientation as stored in minecraft, 
     # bits 0x8 and 0x10 indicate which half of the double chest is it.
+
+    # This is an annoying little check, but when normal_left.png exists we are using 1.15 textures
+    # which are different from 1.14 and before.
+    try:
+        t = self.load_image("assets/minecraft/textures/entity/chest/normal_left.png")
+        is115 = True
+    except (TextureException, IOError):
+        is115 = False
     
     # first, do the rotation if needed
     orientation_data = data & 7
@@ -2215,103 +2223,162 @@ def chests(self, blockid, data):
             except (TextureException, IOError):
                 t = self.load_image("assets/minecraft/textures/entity/chest/chest.png")
 
+        if is115:
+            t = ImageOps.flip(t) # for some reason the 1.15 images are upside down
+
         # the textures is no longer in terrain.png, get it from
         # item/chest.png and get by cropping all the needed stuff
         if t.size != (64,64): t = t.resize((64,64), Image.ANTIALIAS)
         # top
-        top = t.crop((14,0,28,14))
+        top = t.crop((28,50,42,64)) if is115 else t.crop((14,0,28,14))
         top.load() # every crop need a load, crop is a lazy operation
                    # see PIL manual
         img = Image.new("RGBA", (16,16), self.bgcolor)
         alpha_over(img,top,(1,1))
         top = img
         # front
-        front_top = t.crop((14,14,28,19))
+        front_top = t.crop((42,45,56,50)) if is115 else t.crop((14,14,28,19))
         front_top.load()
-        front_bottom = t.crop((14,34,28,43))
+        front_bottom = t.crop((42,21,56,31)) if is115 else t.crop((14,34,28,43))
         front_bottom.load()
-        front_lock = t.crop((1,0,3,4))
+        front_lock = t.crop((1,59,3,63)) if is115 else t.crop((1,0,3,4))
         front_lock.load()
         front = Image.new("RGBA", (16,16), self.bgcolor)
         alpha_over(front,front_top, (1,1))
-        alpha_over(front,front_bottom, (1,6))
+        alpha_over(front,front_bottom, (1,5))
         alpha_over(front,front_lock, (7,3))
         # left side
         # left side, right side, and back are esentially the same for
         # the default texture, we take it anyway just in case other
         # textures make use of it.
-        side_l_top = t.crop((0,14,14,19))
+        side_l_top = t.crop((14,45,28,50)) if is115 else t.crop((0,14,14,19))
         side_l_top.load()
-        side_l_bottom = t.crop((0,34,14,43))
+        side_l_bottom = t.crop((14,21,28,31)) if is115 else t.crop((0,34,14,43))
         side_l_bottom.load()
         side_l = Image.new("RGBA", (16,16), self.bgcolor)
         alpha_over(side_l,side_l_top, (1,1))
-        alpha_over(side_l,side_l_bottom, (1,6))
+        alpha_over(side_l,side_l_bottom, (1,5))
         # right side
-        side_r_top = t.crop((28,14,43,20))
+        side_r_top = t.crop((28,45,42,50)) if is115 else t.crop((28,14,43,20))
         side_r_top.load()
-        side_r_bottom = t.crop((28,33,42,43))
+        side_r_bottom = t.crop((28,21,42,31)) if is115 else t.crop((28,33,42,43))
         side_r_bottom.load()
         side_r = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(side_r,side_l_top, (1,1))
-        alpha_over(side_r,side_l_bottom, (1,6))
+        alpha_over(side_r,side_r_top, (1,1))
+        alpha_over(side_r,side_r_bottom, (1,5))
         # back
-        back_top = t.crop((42,14,56,18))
+        back_top = t.crop((0,45,14,50)) if is115 else t.crop((42,14,56,18))
         back_top.load()
-        back_bottom = t.crop((42,33,56,43))
+        back_bottom = t.crop((0,21,14,31)) if is115 else t.crop((42,33,56,43))
         back_bottom.load()
         back = Image.new("RGBA", (16,16), self.bgcolor)
-        alpha_over(back,side_l_top, (1,1))
-        alpha_over(back,side_l_bottom, (1,6))
+        alpha_over(back,back_top, (1,1))
+        alpha_over(back,back_bottom, (1,5))
 
     else:
         # large chest
         # the textures is no longer in terrain.png, get it from 
         # item/chest.png and get all the needed stuff
-        t = self.load_image("assets/minecraft/textures/entity/chest/normal_double.png")
-        if t.size != (128,64): t = t.resize((128,64), Image.ANTIALIAS)
-        # top
-        top = t.crop((14,0,44,14))
-        top.load()
-        img = Image.new("RGBA", (32,16), self.bgcolor)
-        alpha_over(img,top,(1,1))
-        top = img
-        # front
-        front_top = t.crop((14,14,44,18))
-        front_top.load()
-        front_bottom = t.crop((14,33,44,43))
-        front_bottom.load()
-        front_lock = t.crop((1,0,3,5))
-        front_lock.load()
-        front = Image.new("RGBA", (32,16), self.bgcolor)
-        alpha_over(front,front_top,(1,1))
-        alpha_over(front,front_bottom,(1,5))
-        alpha_over(front,front_lock,(15,3))
+        if is115:
+            t_left = self.load_image("assets/minecraft/textures/entity/chest/normal_left.png")
+            t_right = self.load_image("assets/minecraft/textures/entity/chest/normal_right.png")
+            # for some reason the 1.15 images are upside down
+            t_left = ImageOps.flip(t_left)
+            t_right = ImageOps.flip(t_right)
+
+            # Top
+            top_left = t_right.crop((29,50,44,64))
+            top_left.load()
+            top_right = t_left.crop((29,50,44,64))
+            top_right.load()
+
+            top = Image.new("RGBA", (32,16), self.bgcolor)
+            alpha_over(top,top_left,(1,1))
+            alpha_over(top,top_right,(16,1))
+
+            # Front
+            front_top_left = t_left.crop((43,45,58,50))
+            front_top_left.load()
+            front_top_right = t_right.crop((43,45,58,50))
+            front_top_right.load()
+
+            front_bottom_left = t_left.crop((43,21,58,31))
+            front_bottom_left.load()
+            front_bottom_right = t_right.crop((43,21,58,31))
+            front_bottom_right.load()
+
+            front_lock = t_left.crop((1,59,3,63))
+            front_lock.load()
+
+            front = Image.new("RGBA", (32,16), self.bgcolor)
+            alpha_over(front,front_top_left,(1,1))
+            alpha_over(front,front_top_right,(16,1))
+            alpha_over(front,front_bottom_left,(1,5))
+            alpha_over(front,front_bottom_right,(16,5))
+            alpha_over(front,front_lock,(15,3))
+
+            # Back
+            back_top_left = t_right.crop((14,45,29,50))
+            back_top_left.load()
+            back_top_right = t_left.crop((14,45,29,50))
+            back_top_right.load()
+
+            back_bottom_left = t_right.crop((14,21,29,31))
+            back_bottom_left.load()
+            back_bottom_right = t_left.crop((14,21,29,31))
+            back_bottom_right.load()
+
+            back = Image.new("RGBA", (32,16), self.bgcolor)
+            alpha_over(back,back_top_left,(1,1))
+            alpha_over(back,back_top_right,(16,1))
+            alpha_over(back,back_bottom_left,(1,5))
+            alpha_over(back,back_bottom_right,(16,5))
+        else:
+            t = self.load_image("assets/minecraft/textures/entity/chest/normal_double.png")
+            if t.size != (128,64): t = t.resize((128,64), Image.ANTIALIAS)
+        
+            # top
+            top = t.crop((14,0,44,14))
+            top.load()
+            img = Image.new("RGBA", (32,16), self.bgcolor)
+            alpha_over(img,top,(1,1))
+            top = img
+            # front
+            front_top = t.crop((14,14,44,18))
+            front_top.load()
+            front_bottom = t.crop((14,33,44,43))
+            front_bottom.load()
+            front_lock = t.crop((1,0,3,5))
+            front_lock.load()
+            front = Image.new("RGBA", (32,16), self.bgcolor)
+            alpha_over(front,front_top,(1,1))
+            alpha_over(front,front_bottom,(1,5))
+            alpha_over(front,front_lock,(15,3))
+            # back
+            back_top = t.crop((58,14,88,18))
+            back_top.load()
+            back_bottom = t.crop((58,33,88,43))
+            back_bottom.load()
+            back = Image.new("RGBA", (32,16), self.bgcolor)
+            alpha_over(back,back_top,(1,1))
+            alpha_over(back,back_bottom,(1,5))
+        
         # left side
-        side_l_top = t.crop((0,14,14,18))
+        side_l_top = t_left.crop((29,45,43,50)) if is115 else t.crop((0,14,14,18))
         side_l_top.load()
-        side_l_bottom = t.crop((0,33,14,43))
+        side_l_bottom = t_left.crop((29,21,43,31)) if is115 else t.crop((0,33,14,43))
         side_l_bottom.load()
         side_l = Image.new("RGBA", (16,16), self.bgcolor)
         alpha_over(side_l,side_l_top, (1,1))
         alpha_over(side_l,side_l_bottom,(1,5))
         # right side
-        side_r_top = t.crop((44,14,58,18))
+        side_r_top = t_right.crop((0,45,14,50)) if is115 else t.crop((44,14,58,18))
         side_r_top.load()
-        side_r_bottom = t.crop((44,33,58,43))
+        side_r_bottom = t_right.crop((0,21,14,31)) if is115 else t.crop((44,33,58,43))
         side_r_bottom.load()
         side_r = Image.new("RGBA", (16,16), self.bgcolor)
         alpha_over(side_r,side_r_top, (1,1))
-        alpha_over(side_r,side_r_bottom,(1,5))
-        # back
-        back_top = t.crop((58,14,88,18))
-        back_top.load()
-        back_bottom = t.crop((58,33,88,43))
-        back_bottom.load()
-        back = Image.new("RGBA", (32,16), self.bgcolor)
-        alpha_over(back,back_top,(1,1))
-        alpha_over(back,back_bottom,(1,5))
-        
+        alpha_over(side_r,side_r_bottom,(1,5))        
 
         if data & 24 == 8: # double chest, first half
             top = top.crop((0,0,16,16))
