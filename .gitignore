@@ -6,8 +6,6 @@ docs/_build/
 Minecraft_Overviewer.egg-info
 terrain.png
 cachedir*
-debug_config.py
-out/
 
 #MCPatcher HD texture files
 custom_*.png
