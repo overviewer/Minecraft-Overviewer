@@ -278,7 +278,7 @@ If you want or need to provide your own textures, you have several options:
     wget https://overviewer.org/textures/${VERSION} -O ~/.minecraft/versions/${VERSION}/${VERSION}.jar
 
   If that's too confusing for you, then just take this single line and paste it into
-  a terminal to get 1.14 textures::
+  a terminal to get 1.15 textures::
 
     wget https://overviewer.org/textures/1.15 -O ~/.minecraft/versions/1.15/1.15.jar
 
