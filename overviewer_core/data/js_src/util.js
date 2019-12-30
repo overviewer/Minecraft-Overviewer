@@ -382,14 +382,21 @@ overviewer.util = {
                         var marker_group = new L.layerGroup();
                         var marker_entry = markers[obj.path][mkidx];
                         L.Util.setOptions(marker_group, {default_checked: marker_entry.checked});
-                        var icon =  L.divIcon({html: `<img class="ov-marker" src="${marker_entry.icon}">`});
+                        var icon_style = "margin-left: -16px; margin-top: -37px";
+                        var icon =  L.divIcon({html: `<img class="ov-marker" src="${marker_entry.icon}" style="${icon_style}">`,
+                                               iconAnchor: [0, 10],
+                                               popupAnchor: [0, -42],
+                                              });
 
                         for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
                             var db = markersDB[marker_entry.groupName].raw[dbidx];
                             var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
                             var m_icon;
                             if (db.icon != undefined) {
-                                m_icon = L.divIcon({html: `<img class="ov-marker" src="${db.icon}">`});
+                                m_icon = L.divIcon({html: `<img class="ov-marker" src="${db.icon}" style="${icon_style}">`,
+                                                    iconAnchor: [0, 10],
+                                                    popupAnchor: [0, -42],
+                                                   });
                             } else {
                                 m_icon = icon;
                             }
