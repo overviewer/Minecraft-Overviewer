@@ -239,8 +239,8 @@ class MCRFileReader(object):
         file, as (x, z) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
 
-        for x in range(32):
-            for z in range(32):
+        for x in range(1000):
+            for z in range(1000):
                 if (self.chunk_exists(x, z)):
                     yield (x, z)
 
@@ -249,14 +249,14 @@ class MCRFileReader(object):
         chunk doesn't exist, this number may be nonsense. Like
         load_chunk(), this will wrap x and z into the range [0, 31].
         """
-        x = x % 32
-        z = z % 32
+        # x = x % 32
+        # z = z % 32
         return time.time()
 
     def chunk_exists(self, x, z):
         """Determines if a chunk exists."""
-        x = x % 32
-        z = z % 32
+        # x = x % 32
+        # z = z % 32
 
         try:
           self._file.getChunk(x, z)
@@ -272,8 +272,8 @@ class MCRFileReader(object):
         modulo'd into this range (x % 32, etc.) This is so you can
         provide chunk coordinates in global coordinates, and still
         have the chunks load out of regions properly."""
-        x = x % 32
-        z = z % 32
+        # x = x % 32
+        # z = z % 32
 
         return self._file.getChunk(x, z)
 

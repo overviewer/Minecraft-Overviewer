@@ -874,8 +874,16 @@ class RegionSet(object):
                          )
         prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
 
-        key = palette_entry['Name']
-        (block, data) = self._blockmap[key]
+        key = palette_entry.name
+
+        try:
+            (block, data) = self._blockmap[key]
+            return (block, data)
+
+        except KeyError:
+            (block, data) = self._blockmap['minecraft:bedrock']
+            return (block, data)
+
         if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
             if palette_entry['Properties']['lit'] == 'true':
                 block += 1
@@ -1204,27 +1212,19 @@ class RegionSet(object):
         return result
 
     def _get_blockdata_Bedrock(self, section):
-        # Translate each entry in the palette to a 1.2-era (block, data) int pair.
-        num_palette_entries = len(section['Palette'])
-        translated_blocks = numpy.zeros((num_palette_entries,), dtype=numpy.uint16) # block IDs
-        translated_data = numpy.zeros((num_palette_entries,), dtype=numpy.uint8) # block data
-        for i in range(num_palette_entries):
-            key = section['Palette'][i]
-            try:
-                translated_blocks[i], translated_data[i] = self._get_block(key)
-            except KeyError:
-                pass    # We already have initialised arrays with 0 (= air)
-
-        # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
         blocks = numpy.empty((4096,), dtype=numpy.uint16)
         data = numpy.empty((4096,), dtype=numpy.uint8)
-        block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
-        blocks[:] = translated_blocks[block_states]
-        data[:] = translated_data[block_states]
 
-        # Turn the Data array into a 16x16x16 matrix, same as SkyLight
         blocks  = blocks.reshape((16, 16, 16))
         data = data.reshape((16, 16, 16))
+
+        for x in range(16):
+            for y in range(16):
+                for z in range(16):
+                    key = section['Blocks'][0][x][y][z]
+                    newBlock, newData = self._get_block(key)
+                    blocks[x][y][z] = newBlock
+                    data[x][y][z] = newData
 
         return (blocks, data)
 
@@ -1387,11 +1387,17 @@ class RegionSet(object):
         chunk_data['NewBiomes'] = (len(biomes.shape) == 3)
 
         unrecognized_block_types = {}
-        for section in chunk_data['Sections']:
 
-            bedrockBlocks = section.blocks
-            section = {}
-            section['Blocks'] = bedrockBlocks
+        for i in range(len(chunk_data['Sections'])):
+
+            section = chunk_data['Sections'][i]
+
+            if section != None and hasattr(section, 'blocks'):
+                bedrockBlocks = section.blocks
+                section = {}
+                section['Blocks'] = bedrockBlocks
+            else:
+                section = {}
 
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
@@ -1425,6 +1431,8 @@ class RegionSet(object):
                     blocks = numpy.zeros((16,16,16), dtype=numpy.uint16)
                     data = numpy.zeros((16,16,16), dtype=numpy.uint8)
                 (section['Blocks'], section['Data']) = (blocks, data)
+
+                chunk_data['Sections'][i] = section
 
             except ValueError:
                 # iv'e seen at least 1 case where numpy raises a value error during the reshapes.  i'm not
@@ -1605,7 +1613,6 @@ class RotatedRegionSet(RegionSetWrapper):
         chunk_data = dict(super(RotatedRegionSet, self).get_chunk(x,z))
         newsections = []
         for section in chunk_data['Sections']:
-            section = dict(section)
             newsections.append(section)
             for arrayname in ['Blocks', 'Data', 'SkyLight', 'BlockLight']:
                 array = section[arrayname]
