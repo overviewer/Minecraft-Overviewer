@@ -18,7 +18,8 @@ import gzip
 from io import BytesIO
 import struct
 import zlib
-
+import time
+from . import bedrock
 
 # decorator that turns the first argument from a string into an open file
 # handle
@@ -40,7 +41,6 @@ def load(fileobj):
     return NBTFileReader(fileobj).read_all()
 
 
-@_file_loader
 def load_region(fileobj):
     """Reads in the given file as a MCR region, and returns an object
     for accessing the chunks inside."""
@@ -223,20 +223,7 @@ class MCRFileReader(object):
     def __init__(self, fileobj):
         """This creates a region object from the given file-like
         object. Chances are you want to use load_region instead."""
-        self._file = fileobj
-
-        # read in the location table
-        location_data = self._file.read(4096)
-        if not len(location_data) == 4096:
-            raise CorruptRegionError("invalid location table")
-        # read in the timestamp table
-        timestamp_data = self._file.read(4096)
-        if not len(timestamp_data) == 4096:
-            raise CorruptRegionError("invalid timestamp table")
-
-        # turn this data into a useful list
-        self._locations = self._location_table_format.unpack(location_data)
-        self._timestamps = self._timestamp_table_format.unpack(timestamp_data)
+        self._file = bedrock.World(fileobj)
 
     def close(self):
         """Close the region file and free any resources associated
@@ -254,7 +241,7 @@ class MCRFileReader(object):
 
         for x in range(32):
             for z in range(32):
-                if self._locations[int(x + z * 32)] >> 8 != 0:
+                if (self.chunk_exists(x, z)):
                     yield (x, z)
 
     def get_chunk_timestamp(self, x, z):
@@ -264,13 +251,19 @@ class MCRFileReader(object):
         """
         x = x % 32
         z = z % 32
-        return self._timestamps[int(x + z * 32)]
+        return time.time()
 
     def chunk_exists(self, x, z):
         """Determines if a chunk exists."""
         x = x % 32
         z = z % 32
-        return self._locations[int(x + z * 32)] >> 8 != 0
+
+        try:
+          self._file.getChunk(x, z)
+        except KeyError:
+          return False
+        
+        return True
 
     def load_chunk(self, x, z):
         """Return a (name, data) tuple for the given chunk, or
@@ -281,42 +274,8 @@ class MCRFileReader(object):
         have the chunks load out of regions properly."""
         x = x % 32
         z = z % 32
-        location = self._locations[int(x + z * 32)]
-        offset = (location >> 8) * 4096
-        sectors = location & 0xff
 
-        if offset == 0:
-            return None
-
-        # seek to the data
-        self._file.seek(offset)
-
-        # read in the chunk data header
-        header = self._file.read(5)
-        if len(header) != 5:
-            raise CorruptChunkError("chunk header is invalid")
-        data_length, compression = self._chunk_header_format.unpack(header)
-
-        # figure out the compression
-        is_gzip = True
-        if compression == 1:
-            # gzip -- not used by the official client, but trivial to
-            # support here so...
-            is_gzip = True
-        elif compression == 2:
-            # deflate -- pure zlib stream
-            is_gzip = False
-        else:
-            # unsupported!
-            raise CorruptRegionError("unsupported chunk compression type: %i "
-                                     "(should be 1 or 2)" % (compression,))
-
-        # turn the rest of the data into a BytesIO object
-        # (using data_length - 1, as we already read 1 byte for compression)
-        data = self._file.read(data_length - 1)
-        if len(data) != data_length - 1:
-            raise CorruptRegionError("chunk length is invalid")
-        data = BytesIO(data)
+        return self._file.getChunk(x, z)
 
         try:
             return NBTFileReader(data, is_gzip=is_gzip).read_all()

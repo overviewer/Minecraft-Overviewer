@@ -99,48 +99,14 @@ class World(object):
         if not os.path.exists(os.path.join(self.worlddir, "level.dat")):
             raise ValueError("level.dat not found in %s" % self.worlddir)
 
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-        # it seems that reading a level.dat file is unstable, particularly with respect
-        # to the spawnX,Y,Z variables.  So we'll try a few times to get a good reading
-        # empirically, it seems that 0,50,0 is a "bad" reading
-        # update: 0,50,0 is the default spawn, and may be valid is some cases
-        # more info is needed
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-
-
-        # Hard-code this to only work with format version 19133, "Anvil"
-        if not ('version' in data and data['version'] == 19133):
-            if 'version' in data and data['version'] == 0:
-                logging.debug("Note: Allowing a version of zero in level.dat!")
-                ## XXX temporary fix for #1194
-            else:
-                raise UnsupportedVersion(
-                    ("Sorry, This version of Minecraft-Overviewer only works "
-                     "with the 'Anvil' chunk format\n"
-                     "World at %s is not compatible with Overviewer")
-                    % self.worlddir)
-
-        # This isn't much data, around 15 keys and values for vanilla worlds.
-        self.leveldat = data
-
 
         # Scan worlddir to try to identify all region sets. Since different
         # server mods like to arrange regions differently and there does not
         # seem to be any set standard on what dimensions are in each world,
         # just scan the directory heirarchy to find a directory with .mca
         # files.
-        for root, dirs, files in os.walk(self.worlddir, followlinks=True):
-            # any .mcr files in this directory?
-            mcas = [x for x in files if x.endswith(".mca")]
-            if mcas:
-                # construct a regionset object for this
-                rel = os.path.relpath(root, self.worlddir)
-                if os.path.basename(rel) != "poi":
-                    rset = RegionSet(root, rel)
-                    if root == os.path.join(self.worlddir, "region"):
-                        self.regionsets.insert(0, rset)
-                    else:
-                        self.regionsets.append(rset)
+        rset = RegionSet(self.worlddir, "/")
+        self.regionsets.insert(0, rset)
 
         # TODO move a lot of the following code into the RegionSet
 
@@ -148,14 +114,14 @@ class World(object):
         try:
             # level.dat should have the LevelName attribute so we'll use that
             self.name = data['LevelName']
-        except KeyError:
+        except:
             # but very old ones might not? so we'll just go with the world dir name if they don't
             self.name = os.path.basename(os.path.realpath(self.worlddir))
 
         try:
             # level.dat also has a RandomSeed attribute
             self.seed = data['RandomSeed']
-        except KeyError:
+        except:
             self.seed = 0 # oh well
 
         # TODO figure out where to handle regionlists
@@ -179,6 +145,8 @@ class World(object):
         return dict(self.data)
 
     def find_true_spawn(self):
+        return (0, 0, 0)
+	
         """Returns the spawn point for this world. Since there is one spawn
         point for a world across all dimensions (RegionSets), this method makes
         sense as a member of the World class.
@@ -276,6 +244,8 @@ class RegionSet(object):
         else:
             logging.warning("Unknown region type in %r", regiondir)
             self.type = "__unknown"
+        
+        self.type = None
 
         logging.debug("Scanning regions.  Type is %r" % self.type)
 
@@ -1514,17 +1484,7 @@ class RegionSet(object):
         coordinates
 
         Returns (regionx, regiony, filename)"""
-
-        logging.debug("regiondir is %s, has type %r", self.regiondir, self.type)
-
-        for f in os.listdir(self.regiondir):
-            if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
-                p = f.split(".")
-                x = int(p[1])
-                y = int(p[2])
-                if abs(x) > 500000 or abs(y) > 500000:
-                    logging.warning("Holy shit what is up with region file %s !?" % f)
-                yield (x, y, os.path.join(self.regiondir, f))
+        yield (0, 0, self.regiondir)
 
 class RegionSetWrapper(object):
     """This is the base class for all "wrappers" of RegionSet objects. A
