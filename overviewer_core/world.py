@@ -1203,6 +1203,31 @@ class RegionSet(object):
 
         return result
 
+    def _get_blockdata_Bedrock(self, section):
+        # Translate each entry in the palette to a 1.2-era (block, data) int pair.
+        num_palette_entries = len(section['Palette'])
+        translated_blocks = numpy.zeros((num_palette_entries,), dtype=numpy.uint16) # block IDs
+        translated_data = numpy.zeros((num_palette_entries,), dtype=numpy.uint8) # block data
+        for i in range(num_palette_entries):
+            key = section['Palette'][i]
+            try:
+                translated_blocks[i], translated_data[i] = self._get_block(key)
+            except KeyError:
+                pass    # We already have initialised arrays with 0 (= air)
+
+        # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
+        blocks = numpy.empty((4096,), dtype=numpy.uint16)
+        data = numpy.empty((4096,), dtype=numpy.uint8)
+        block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
+        blocks[:] = translated_blocks[block_states]
+        data[:] = translated_data[block_states]
+
+        # Turn the Data array into a 16x16x16 matrix, same as SkyLight
+        blocks  = blocks.reshape((16, 16, 16))
+        data = data.reshape((16, 16, 16))
+
+        return (blocks, data)
+
     def _get_blockdata_v113(self, section, unrecognized_block_types):
         # Translate each entry in the palette to a 1.2-era (block, data) int pair.
         num_palette_entries = len(section['Palette'])
@@ -1329,8 +1354,10 @@ class RegionSet(object):
         if data is None:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
-        level = data[1]['Level']
-        chunk_data = level
+        chunk_data = {}
+
+        chunk_data['Biomes'] = data.biomes
+        chunk_data['Sections'] = data.subchunks
 
         # From the interior of a map to the edge, a chunk's status may be one of:
         # - postprocessed (interior, or next to fullchunk)
@@ -1342,9 +1369,6 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
-        if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk",
-                                                "mobs_spawned", "spawn", ""):
-            raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array
         if 'Biomes' in chunk_data and len(chunk_data['Biomes']) > 0:
@@ -1364,6 +1388,10 @@ class RegionSet(object):
 
         unrecognized_block_types = {}
         for section in chunk_data['Sections']:
+
+            bedrockBlocks = section.blocks
+            section = {}
+            section['Blocks'] = bedrockBlocks
 
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
@@ -1391,10 +1419,8 @@ class RegionSet(object):
                 del blocklight
                 section['BlockLight'] = blocklight_expanded
 
-                if 'Palette' in section:
-                    (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types)
-                elif 'Data' in section:
-                    (blocks, data) = self._get_blockdata_v112(section)
+                if 'Blocks' in section:
+                    (blocks, data) = self._get_blockdata_Bedrock(section)
                 else:   # Special case introduced with 1.14
                     blocks = numpy.zeros((16,16,16), dtype=numpy.uint16)
                     data = numpy.zeros((16,16,16), dtype=numpy.uint8)
