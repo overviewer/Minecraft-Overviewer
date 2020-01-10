@@ -1406,7 +1406,7 @@ class RegionSet(object):
                     skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
                     skylight = skylight.reshape((16,16,8))
                 else:   # Special case introduced with 1.14
-                    skylight = numpy.zeros((16,16,8), dtype=numpy.uint8)
+                    skylight = numpy.full((16,16,8), 255, dtype=numpy.uint8)
                 skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
                 skylight_expanded[:,:,::2] = skylight & 0x0F
                 skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
@@ -1418,7 +1418,7 @@ class RegionSet(object):
                     blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
                     blocklight = blocklight.reshape((16,16,8))
                 else:   # Special case introduced with 1.14
-                    blocklight = numpy.zeros((16,16,8), dtype=numpy.uint8)
+                    blocklight = numpy.full((16,16,8), 255, dtype=numpy.uint8)
                 blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
                 blocklight_expanded[:,:,::2] = blocklight & 0x0F
                 blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
@@ -1510,7 +1510,7 @@ class RegionSet(object):
         Coords can be either be global chunk coords, or local to a region
 
         """
-        (regionfile,filemtime) = self.regionfiles.get((chunkX//32, chunkY//32),(None, None))
+        (regionfile,filemtime) = self.regionfiles[(0, 0)]
         return regionfile
 
     def _iterate_regionfiles(self):
