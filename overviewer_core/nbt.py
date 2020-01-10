@@ -239,10 +239,9 @@ class MCRFileReader(object):
         file, as (x, z) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
 
-        for x in range(1000):
-            for z in range(1000):
-                if (self.chunk_exists(x, z)):
-                    yield (x, z)
+        for key in self._file.iterKeys():
+            if (len(key[0]) == 9 and key[0][8] == ord("v")):
+                yield struct.unpack_from("<ii", key[0])
 
     def get_chunk_timestamp(self, x, z):
         """Return the given chunk's modification time. If the given
