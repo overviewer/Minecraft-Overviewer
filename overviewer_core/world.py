@@ -1212,6 +1212,7 @@ class RegionSet(object):
         return result
 
     def _get_blockdata_Bedrock(self, section):
+        # TODO: I'm not sure if this function works appropriately
         blocks = numpy.empty((4096,), dtype=numpy.uint16)
         data = numpy.empty((4096,), dtype=numpy.uint8)
 
@@ -1356,6 +1357,7 @@ class RegionSet(object):
 
         chunk_data = {}
 
+        # I don't know if Bedrock biomes data is in the same format as Anvil
         chunk_data['Biomes'] = data.biomes
         chunk_data['Sections'] = data.subchunks
 
@@ -1510,6 +1512,8 @@ class RegionSet(object):
         Coords can be either be global chunk coords, or local to a region
 
         """
+
+        # No region files in Bedrock, everything is in the same leveldb database
         (regionfile,filemtime) = self.regionfiles[(0, 0)]
         return regionfile
 
@@ -1518,6 +1522,8 @@ class RegionSet(object):
         coordinates
 
         Returns (regionx, regiony, filename)"""
+
+        # No region files in Bedrock, everything is in the same leveldb database
         yield (0, 0, self.regiondir)
 
 class RegionSetWrapper(object):

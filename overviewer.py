@@ -128,7 +128,7 @@ def main():
     # Log level options:
     parser.add_argument("-q", "--quiet", dest="quiet", action="count", default=0,
                         help="Print less output. You can specify this option multiple times.")
-    parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=1,
+    parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0,
                         help="Print more output. You can specify this option multiple times.")
     parser.add_argument("--simple-output", dest="simple", action="store_true", default=False,
                         help="Use a simple output format, with no colors or progress bars.")

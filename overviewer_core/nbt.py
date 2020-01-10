@@ -240,6 +240,8 @@ class MCRFileReader(object):
         provide these coordinates to load_chunk()."""
 
         for key in self._file.iterKeys():
+            # More info: see 'Chunk key format'
+            # https://minecraft.gamepedia.com/Bedrock_Edition_level_format
             if (len(key[0]) == 9 and key[0][8] == ord("v")):
                 yield struct.unpack_from("<ii", key[0])
 
@@ -248,14 +250,15 @@ class MCRFileReader(object):
         chunk doesn't exist, this number may be nonsense. Like
         load_chunk(), this will wrap x and z into the range [0, 31].
         """
-        # x = x % 32
-        # z = z % 32
+
+        # TODO: Find chunk timestamps in Bedrock's leveldb database
+        # For now, just use current time
+        # For other data keys for each chunk coordinate:
+        # https://minecraft.gamepedia.com/Bedrock_Edition_level_format
         return time.time()
 
     def chunk_exists(self, x, z):
         """Determines if a chunk exists."""
-        # x = x % 32
-        # z = z % 32
 
         try:
           self._file.getChunk(x, z)
@@ -271,8 +274,6 @@ class MCRFileReader(object):
         modulo'd into this range (x % 32, etc.) This is so you can
         provide chunk coordinates in global coordinates, and still
         have the chunks load out of regions properly."""
-        # x = x % 32
-        # z = z % 32
 
         return self._file.getChunk(x, z)
 
