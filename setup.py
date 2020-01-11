@@ -55,10 +55,22 @@ if curdir:
 
 # now, setup the keyword arguments for setup
 # (because we don't know until runtime if py2exe/py2app is available)
-setup_kwargs = {}
-setup_kwargs['ext_modules'] = []
-setup_kwargs['cmdclass'] = {}
-setup_kwargs['options'] = {}
+setup_kwargs = dict({
+    'name': 'Minecraft-Overviewer',
+    'url': 'http://overviewer.org/',
+    'version': util.findGitVersion(),
+    'author': 'Andrew Brown',
+    'author_email': 'brownan@gmail.com',
+    'description': 'Generates large resolution images of a Minecraft map.',
+    'long_description': open('README.rst', 'r').read(),
+    'license': open('COPYING.txt', 'r').read(),
+
+    'ext_modules': [],
+    'cmdclass': {},
+    'options': {},
+    'install_requires': ['numpy', 'pillow']
+})
+
 #
 # metadata
 #
