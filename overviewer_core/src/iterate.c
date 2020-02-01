@@ -316,43 +316,6 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         }
         return final_data;
 
-    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_chest, block_trapped_chest}, 2)) {
-        /* Orientation is given by ancilData, pseudo data needed to 
-         * choose from single or double chest and the correct half of
-         * the chest. */
-
-        /* Add two bits to ancilData to store single or double chest 
-          * and which half of the chest it is: bit 0x10 = second half
-          *                                    bit 0x8 = first half */
-
-        uint8_t chest_data = 0, final_data = 0;
-
-        /* search for adjacent chests of the same type */
-        chest_data = check_adjacent_blocks(state, x, y, z, state->block);
-
-        if (chest_data == 1) { /* another chest in the upper-left */
-            final_data = final_data | 0x10 | ancilData;
-
-        } else if (chest_data == 2) { /* in the bottom-left */
-            final_data = final_data | 0x8 | ancilData;
-
-        } else if (chest_data == 4) { /*in the bottom-right */
-            final_data = final_data | 0x8 | ancilData;
-
-        } else if (chest_data == 8) { /*in the upper-right */
-            final_data = final_data | 0x10 | ancilData;
-
-        } else if (chest_data == 0) {
-            /* Single chest, determine the orientation */
-            final_data = ancilData;
-
-        } else {
-            /* more than one adjacent chests! That shouldn't be 
-             * possible! render as normal chest */
-            return 0;
-        }
-        return final_data;
-
     } else if (block_class_is_subset(state->block, (mc_block_t[]){block_iron_bars, block_glass_pane, block_stained_glass_pane}, 3)) {
         /* iron bars and glass panes:
          * they seem to stick to almost everything but air,

@@ -1022,6 +1022,10 @@ class RegionSet(object):
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
+            if key in ['minecraft:chest', 'minecraft:trapped_chest']:
+                # type property should exist, but default to 'single' just in case
+                chest_type = palette_entry['Properties'].get('type', 'single')
+                data |= {'left': 0x8, 'right': 0x10, 'single': 0x0}[chest_type]
         elif key in ['minecraft:beehive', 'minecraft:bee_nest']:
             facing = palette_entry['Properties']['facing']
             honey_level = int(palette_entry['Properties']['honey_level'])
