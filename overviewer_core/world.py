@@ -835,6 +835,7 @@ class RegionSet(object):
             "minecraft:smooth_red_sandstone_stairs": (11415, 0),
             'minecraft:bamboo': (11416, 0),
             "minecraft:composter": (11417, 0),
+            "minecraft:barrel": (11418, 0),
             # 1.15 blocks below
             'minecraft:beehive': (11501, 0),
             'minecraft:bee_nest': (11502, 0),
@@ -1144,6 +1145,12 @@ class RegionSet(object):
                 data = 0
         elif key == "minecraft:composter":
             data = palette_entry['Properties']['level']
+        elif key == "minecraft:barrel":
+            facing_data = {'up': 0, 'down': 1, 'south': 2, 'east': 3, 'north': 4, 'west': 5}
+            data = (
+                (facing_data[palette_entry['Properties']['facing']] << 1) +
+                (1 if palette_entry['Properties']['open'] == 'true' else 0)
+            )
         return (block, data)
 
     def get_type(self):

@@ -5263,3 +5263,30 @@ block(blockid=11503, top_image="assets/minecraft/textures/block/honeycomb_block.
 
 # honey_block
 block(blockid=11504, top_image="assets/minecraft/textures/block/honey_block_top.png", side_image="assets/minecraft/textures/block/honey_block_side.png")
+
+
+# Barrel
+@material(blockid=11418, data=list(range(12)), solid=True)
+def barrel(self, blockid, data):
+    t_bottom = self.load_image("assets/minecraft/textures/block/barrel_bottom.png")
+    t_side = self.load_image("assets/minecraft/textures/block/barrel_side.png")
+
+    if data & 0x01:
+        t_top = self.load_image("assets/minecraft/textures/block/barrel_top_open.png")
+    else:
+        t_top = self.load_image("assets/minecraft/textures/block/barrel_top.png")
+    data = data >> 1
+
+    if data == 0:       # up
+        return self.build_full_block(t_top, None, None, t_side, t_side)
+    elif data == 1:     # down
+        t_side = t_side.rotate(180)
+        return self.build_full_block(t_bottom, None, None, t_side, t_side)
+    elif data == 2:     # south
+        return self.build_full_block(t_side.rotate(180), None, None, t_side.rotate(270), t_top)
+    elif data == 3:     # east
+        return self.build_full_block(t_side.rotate(270), None, None, t_bottom, t_side.rotate(90))
+    elif data == 4:     # north
+        return self.build_full_block(t_side, None, None, t_side.rotate(90), t_bottom)
+    else:               # west
+        return self.build_full_block(t_side.rotate(90), None, None, t_top, t_side.rotate(270))
