@@ -1547,9 +1547,24 @@ class RegionSetWrapper(object):
         itertools.groupby, which needs sorted keys, and Python 2 somehow
         just sorted objects like ???????? how????? why?????
         """
-        if isinstance(other, RegionSetWrapper):
-            other = other._r
-        return self._r.regiondir < other.regiondir
+        return self.regiondir < other.regiondir
+
+    @property
+    def regiondir(self):
+        """
+        RegionSetWrapper are wrappers around a RegionSet and thus should have all variables the RegionSet has.
+
+        Reason for addition: Issue #1706
+        The __lt__ check in RegionSet did not check if it is a RegionSetWrapper Instance
+        """
+        return self._r.regiondir
+
+    @regiondir.setter
+    def regiondir(self, value):
+        """
+        For completeness adding the setter to the property
+        """
+        self._r.regiondir = value
 
     def get_type(self):
         return self._r.get_type()
