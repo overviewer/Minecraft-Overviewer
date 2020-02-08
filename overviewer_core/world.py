@@ -346,22 +346,6 @@ class RegionSet(object):
             'minecraft:cut_sandstone': (24, 2),
             'minecraft:chiseled_sandstone': (24, 3),
             'minecraft:note_block': (25, 0),
-            'minecraft:white_bed': (26, 0),
-            'minecraft:orange_bed': (26, 0),
-            'minecraft:magenta_bed': (26, 0),
-            'minecraft:light_blue_bed': (26, 0),
-            'minecraft:yellow_bed': (26, 0),
-            'minecraft:lime_bed': (26, 0),
-            'minecraft:pink_bed': (26, 0),
-            'minecraft:gray_bed': (26, 0),
-            'minecraft:light_gray_bed': (26, 0),
-            'minecraft:cyan_bed': (26, 0),
-            'minecraft:purple_bed': (26, 0),
-            'minecraft:blue_bed': (26, 0),
-            'minecraft:brown_bed': (26, 0),
-            'minecraft:green_bed': (26, 0),
-            'minecraft:red_bed': (26, 0),
-            'minecraft:black_bed': (26, 0),
             'minecraft:powered_rail': (27, 0),
             'minecraft:detector_rail': (28, 0),
             'minecraft:sticky_piston': (29, 0),
@@ -870,13 +854,14 @@ class RegionSet(object):
                 'light_gray',   'cyan',  'purple',       'blue',
                      'brown',  'green',     'red',      'black']
         for i in range(len(colors)):
+            # For beds: bits 1-2 indicate facing, bit 3 occupancy, bit 4 foot (0) or head (1)
+            self._blockmap['minecraft:%s_bed'                % colors[i]] = (26, i << 4)
             self._blockmap['minecraft:%s_stained_glass'      % colors[i]] = (95, i)
             self._blockmap['minecraft:%s_stained_glass_pane' % colors[i]] = (160, i)
-            self._blockmap['minecraft:%s_banner'             % colors[i]] = (176, i) #not rendering
-            self._blockmap['minecraft:%s_wall_banner'        % colors[i]] = (177, i) #not rendering
+            self._blockmap['minecraft:%s_banner'             % colors[i]] = (176, i)  # not rendering
+            self._blockmap['minecraft:%s_wall_banner'        % colors[i]] = (177, i)  # not rendering
             self._blockmap['minecraft:%s_concrete'           % colors[i]] = (251, i)
             self._blockmap['minecraft:%s_concrete_powder'    % colors[i]] = (252, i)
-
 
     # Re-initialize upon unpickling
     def __getstate__(self):
@@ -1155,6 +1140,12 @@ class RegionSet(object):
                 (facing_data[palette_entry['Properties']['facing']] << 1) +
                 (1 if palette_entry['Properties']['open'] == 'true' else 0)
             )
+        elif key.endswith('_bed'):
+            facing = palette_entry['Properties']['facing']
+            data |= {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
+            if palette_entry['Properties'].get('part', 'foot') == 'head':
+                data |= 8
+
         return (block, data)
 
     def get_type(self):
