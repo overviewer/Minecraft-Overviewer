@@ -1488,168 +1488,149 @@ def rails(self, blockid, data):
         
     return img
 
+
 # sticky and normal piston body
-@material(blockid=[29, 33], data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, solid=True, nospawn=True)
+@material(blockid=[29, 33], data=[0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13],
+          transparent=True, solid=True, nospawn=True)
 def piston(self, blockid, data):
     # first, rotation
     # Masked to not clobber block head/foot info
-    if self.rotation == 1:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-    elif self.rotation == 2:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-    elif self.rotation == 3:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 2
-    
-    if blockid == 29: # sticky
+    if self.rotation in [1, 2, 3] and (data & 0b111) in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = (data & 0b1000) | rotation_map[self.rotation][data & 0b111]
+
+    if blockid == 29:  # sticky
         piston_t = self.load_image_texture("assets/minecraft/textures/block/piston_top_sticky.png").copy()
-    else: # normal
+    else:  # normal
         piston_t = self.load_image_texture("assets/minecraft/textures/block/piston_top.png").copy()
-        
+
     # other textures
     side_t = self.load_image_texture("assets/minecraft/textures/block/piston_side.png").copy()
     back_t = self.load_image_texture("assets/minecraft/textures/block/piston_bottom.png").copy()
     interior_t = self.load_image_texture("assets/minecraft/textures/block/piston_inner.png").copy()
-    
-    if data & 0x08 == 0x08: # pushed out, non full blocks, tricky stuff
+
+    if data & 0x08 == 0x08:  # pushed out, non full blocks, tricky stuff
         # remove piston texture from piston body
-        ImageDraw.Draw(side_t).rectangle((0, 0,16,3),outline=(0,0,0,0),fill=(0,0,0,0))
-        
-        if data & 0x07 == 0x0: # down
+        ImageDraw.Draw(side_t).rectangle((0, 0, 16, 3), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+
+        if data & 0x07 == 0x0:    # down
             side_t = side_t.rotate(180)
-            img = self.build_full_block(back_t ,None ,None ,side_t, side_t)
-            
-        elif data & 0x07 == 0x1: # up
-            img = self.build_full_block((interior_t, 4) ,None ,None ,side_t, side_t)
-            
-        elif data & 0x07 == 0x2: # east
-            img = self.build_full_block(side_t , None, None ,side_t.rotate(90), back_t)
-            
-        elif data & 0x07 == 0x3: # west
-            img = self.build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), None)
+            img = self.build_full_block(back_t, None, None, side_t, side_t)
+        elif data & 0x07 == 0x1:  # up
+            img = self.build_full_block((interior_t, 4), None, None, side_t, side_t)
+        elif data & 0x07 == 0x2:  # north
+            img = self.build_full_block(side_t, None, None, side_t.rotate(90), back_t)
+        elif data & 0x07 == 0x3:  # south
+            img = self.build_full_block(side_t.rotate(180), None, None, side_t.rotate(270), None)
             temp = self.transform_image_side(interior_t)
             temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
-            alpha_over(img, temp, (9,5), temp)
-            
-        elif data & 0x07 == 0x4: # north
-            img = self.build_full_block(side_t.rotate(90) ,None ,None , None, side_t.rotate(270))
+            alpha_over(img, temp, (9, 4), temp)
+        elif data & 0x07 == 0x4:  # west
+            img = self.build_full_block(side_t.rotate(90), None, None, None, side_t.rotate(270))
             temp = self.transform_image_side(interior_t)
-            alpha_over(img, temp, (3,5), temp)
-            
-        elif data & 0x07 == 0x5: # south
-            img = self.build_full_block(side_t.rotate(270) ,None , None ,back_t, side_t.rotate(90))
+            alpha_over(img, temp, (3, 4), temp)
+        elif data & 0x07 == 0x5:  # east
+            img = self.build_full_block(side_t.rotate(270), None, None, back_t, side_t.rotate(90))
 
-    else: # pushed in, normal full blocks, easy stuff
-        if data & 0x07 == 0x0: # down
+    else:  # pushed in, normal full blocks, easy stuff
+        if data & 0x07 == 0x0:    # down
             side_t = side_t.rotate(180)
-            img = self.build_full_block(back_t ,None ,None ,side_t, side_t)
-        elif data & 0x07 == 0x1: # up
-            img = self.build_full_block(piston_t ,None ,None ,side_t, side_t)
-        elif data & 0x07 == 0x2: # east 
-            img = self.build_full_block(side_t ,None ,None ,side_t.rotate(90), back_t)
-        elif data & 0x07 == 0x3: # west
-            img = self.build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
-        elif data & 0x07 == 0x4: # north
-            img = self.build_full_block(side_t.rotate(90) ,None ,None ,piston_t, side_t.rotate(270))
-        elif data & 0x07 == 0x5: # south
-            img = self.build_full_block(side_t.rotate(270) ,None ,None ,back_t, side_t.rotate(90))
-            
+            img = self.build_full_block(back_t, None, None, side_t, side_t)
+        elif data & 0x07 == 0x1:  # up
+            img = self.build_full_block(piston_t, None, None, side_t, side_t)
+        elif data & 0x07 == 0x2:  # north
+            img = self.build_full_block(side_t, None, None, side_t.rotate(90), back_t)
+        elif data & 0x07 == 0x3:  # south
+            img = self.build_full_block(side_t.rotate(180), None, None, side_t.rotate(270), piston_t)
+        elif data & 0x07 == 0x4:  # west
+            img = self.build_full_block(side_t.rotate(90), None, None, piston_t, side_t.rotate(270))
+        elif data & 0x07 == 0x5:  # east
+            img = self.build_full_block(side_t.rotate(270), None, None, back_t, side_t.rotate(90))
+
     return img
 
+
 # sticky and normal piston shaft
-@material(blockid=34, data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, nospawn=True)
+@material(blockid=34, data=[0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13], transparent=True, nospawn=True)
 def piston_extension(self, blockid, data):
     # first, rotation
     # Masked to not clobber block head/foot info
-    if self.rotation == 1:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-    elif self.rotation == 2:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-    elif self.rotation == 3:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 2
-    
-    if (data & 0x8) == 0x8: # sticky
+    if self.rotation in [1, 2, 3] and (data & 0b111) in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = (data & 0b1000) | rotation_map[self.rotation][data & 0b111]
+
+    if data & 0x8 == 0x8:  # sticky
         piston_t = self.load_image_texture("assets/minecraft/textures/block/piston_top_sticky.png").copy()
-    else: # normal
+    else:  # normal
         piston_t = self.load_image_texture("assets/minecraft/textures/block/piston_top.png").copy()
-    
+
     # other textures
     side_t = self.load_image_texture("assets/minecraft/textures/block/piston_side.png").copy()
     back_t = self.load_image_texture("assets/minecraft/textures/block/piston_top.png").copy()
     # crop piston body
-    ImageDraw.Draw(side_t).rectangle((0, 4,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
-    
+    ImageDraw.Draw(side_t).rectangle((0, 4, 16, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+
     # generate the horizontal piston extension stick
-    h_stick = Image.new("RGBA", (24,24), self.bgcolor)
+    h_stick = Image.new("RGBA", (24, 24), self.bgcolor)
     temp = self.transform_image_side(side_t)
-    alpha_over(h_stick, temp, (1,7), temp)
+    alpha_over(h_stick, temp, (1, 7), temp)
     temp = self.transform_image_top(side_t.rotate(90))
-    alpha_over(h_stick, temp, (1,1), temp)
+    alpha_over(h_stick, temp, (1, 1), temp)
     # Darken it
     sidealpha = h_stick.split()[3]
     h_stick = ImageEnhance.Brightness(h_stick).enhance(0.85)
     h_stick.putalpha(sidealpha)
-    
+
     # generate the vertical piston extension stick
-    v_stick = Image.new("RGBA", (24,24), self.bgcolor)
+    v_stick = Image.new("RGBA", (24, 24), self.bgcolor)
     temp = self.transform_image_side(side_t.rotate(90))
-    alpha_over(v_stick, temp, (12,6), temp)
+    alpha_over(v_stick, temp, (12, 6), temp)
     temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
-    alpha_over(v_stick, temp, (1,6), temp)
+    alpha_over(v_stick, temp, (1, 6), temp)
     # Darken it
     sidealpha = v_stick.split()[3]
     v_stick = ImageEnhance.Brightness(v_stick).enhance(0.85)
     v_stick.putalpha(sidealpha)
-    
+
     # Piston orientation is stored in the 3 first bits
-    if data & 0x07 == 0x0: # down
+    if data & 0x07 == 0x0:    # down
         side_t = side_t.rotate(180)
-        img = self.build_full_block((back_t, 12) ,None ,None ,side_t, side_t)
-        alpha_over(img, v_stick, (0,-3), v_stick)
-    elif data & 0x07 == 0x1: # up
-        img = Image.new("RGBA", (24,24), self.bgcolor)
-        img2 = self.build_full_block(piston_t ,None ,None ,side_t, side_t)
-        alpha_over(img, v_stick, (0,4), v_stick)
-        alpha_over(img, img2, (0,0), img2)
-    elif data & 0x07 == 0x2: # east 
-        img = self.build_full_block(side_t ,None ,None ,side_t.rotate(90), None)
+        img = self.build_full_block((back_t, 12), None, None, side_t, side_t)
+        alpha_over(img, v_stick, (0, -3), v_stick)
+    elif data & 0x07 == 0x1:  # up
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        img2 = self.build_full_block(piston_t, None, None, side_t, side_t)
+        alpha_over(img, v_stick, (0, 4), v_stick)
+        alpha_over(img, img2, (0, 0), img2)
+    elif data & 0x07 == 0x2:  # north
+        img = self.build_full_block(side_t, None, None, side_t.rotate(90), None)
         temp = self.transform_image_side(back_t).transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(img, temp, (2,2), temp)
-        alpha_over(img, h_stick, (6,3), h_stick)
-    elif data & 0x07 == 0x3: # west
-        img = Image.new("RGBA", (24,24), self.bgcolor)
-        img2 = self.build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
-        alpha_over(img, h_stick, (0,0), h_stick)
-        alpha_over(img, img2, (0,0), img2)            
-    elif data & 0x07 == 0x4: # north
-        img = self.build_full_block(side_t.rotate(90) ,None ,None , piston_t, side_t.rotate(270))
-        alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (0,0), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
-    elif data & 0x07 == 0x5: # south
-        img = Image.new("RGBA", (24,24), self.bgcolor)
-        img2 = self.build_full_block(side_t.rotate(270) ,None ,None ,None, side_t.rotate(90))
+        alpha_over(img, temp, (2, 2), temp)
+        alpha_over(img, h_stick, (6, 3), h_stick)
+    elif data & 0x07 == 0x3:  # south
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        img2 = self.build_full_block(side_t.rotate(180), None, None, side_t.rotate(270), piston_t)
+        alpha_over(img, h_stick, (0, 0), h_stick)
+        alpha_over(img, img2, (0, 0), img2)
+    elif data & 0x07 == 0x4:  # west
+        img = self.build_full_block(side_t.rotate(90), None, None, piston_t, side_t.rotate(270))
+        h_stick = h_stick.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, h_stick, (0, 0), h_stick)
+    elif data & 0x07 == 0x5:  # east
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        img2 = self.build_full_block(side_t.rotate(270), None, None, None, side_t.rotate(90))
+        h_stick = h_stick.transpose(Image.FLIP_LEFT_RIGHT)
         temp = self.transform_image_side(back_t)
-        alpha_over(img2, temp, (10,2), temp)
-        alpha_over(img, img2, (0,0), img2)
-        alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (-3,2), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
-        
+        alpha_over(img2, temp, (10, 2), temp)
+        alpha_over(img, img2, (0, 0), img2)
+        alpha_over(img, h_stick, (-3, 2), h_stick)
+
     return img
+
 
 # cobweb
 sprite(blockid=30, imagename="assets/minecraft/textures/block/cobweb.png", nospawn=True)

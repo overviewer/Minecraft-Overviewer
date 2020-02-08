@@ -1029,9 +1029,14 @@ class RegionSet(object):
                 data = {'east': 6, 'west': 6, 'south': 5, 'north': 5}[facing]
         elif key == 'minecraft:nether_wart':
             data = int(palette_entry['Properties']['age'])
-        elif key.endswith('shulker_box') or key.endswith('piston') or key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser']:
-            facing = palette_entry['Properties']['facing']
-            data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
+        elif (key.endswith('shulker_box') or key.endswith('piston') or
+              key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser',
+                      'minecraft:piston_head']):
+            p = palette_entry['Properties']
+            data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[p['facing']]
+            if ((key.endswith('piston') and p.get('extended', 'false') == 'true') or
+                (key == 'minecraft:piston_head' and p.get('type', 'normal') == 'sticky')):
+                data |= 0x08
         elif key.endswith('_log') or key.endswith('_wood') or key == 'minecraft:bone_block':
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
