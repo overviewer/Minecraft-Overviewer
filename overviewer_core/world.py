@@ -1158,6 +1158,9 @@ class RegionSet(object):
                 data |= 4
         elif key == 'minecraft:cauldron':
             data = int(palette_entry['Properties'].get('level', '0'))
+        elif key == 'minecraft:structure_block':
+            block_mode = palette_entry['Properties'].get('mode', 'save')
+            data = {'save': 0, 'load': 1, 'corner': 2, 'data': 3}.get(block_mode, 0)
 
         return (block, data)
 
