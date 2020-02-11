@@ -148,12 +148,12 @@ class LoggingObserver(Observer):
 
     def _need_update(self):
         cur_val = self.get_current_value()
-        if cur_val < 100:
-            return cur_val - self.last_update > 10
-        elif cur_val < 500:
-            return cur_val - self.last_update > 50
+        if cur_val <= 100:
+            return cur_val - self.last_update >= 10
+        elif cur_val <= 500:
+            return cur_val - self.last_update >= 50
         else:
-            return cur_val - self.last_update > 100
+            return cur_val - self.last_update >= 100
 
 
 default_widgets = [
