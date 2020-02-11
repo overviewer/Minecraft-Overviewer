@@ -2341,7 +2341,8 @@ def chests(self, blockid, data):
         alpha_over(side_r, side_r_top, (1, 1))
         alpha_over(side_r, side_r_bottom, (1, 5))
 
-        if data & 24 == 8: # double chest, first half
+        # double chest, left half
+        if ((data & 24 == 8 and data & 7 in [3, 5]) or (data & 24 == 16 and data & 7 in [2, 4])):
             top = top.crop((0, 0, 16, 16))
             top.load()
             front = front.crop((0, 0, 16, 16))
@@ -2350,7 +2351,8 @@ def chests(self, blockid, data):
             back.load()
             #~ side = side_l
 
-        elif data & 24 == 16: # double, second half
+        # double chest, right half
+        elif ((data & 24 == 16 and data & 7 in [3, 5]) or (data & 24 == 8 and data & 7 in [2, 4])):
             top = top.crop((16, 0, 32, 16))
             top.load()
             front = front.crop((16, 0, 32, 16))
