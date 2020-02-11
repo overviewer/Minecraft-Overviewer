@@ -318,7 +318,7 @@ class RegionSet(object):
             'minecraft:sapling': (6, 0),
             'minecraft:bedrock': (7, 0),
             'minecraft:water': (8, 0),
-            'minecraft:lava': (10, 0),
+            'minecraft:lava': (11, 0),
             'minecraft:sand': (12, 0),
             'minecraft:red_sand': (12, 1),
             'minecraft:gravel': (13, 0),
