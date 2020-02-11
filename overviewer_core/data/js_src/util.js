@@ -142,8 +142,11 @@ overviewer.util = {
 
 
                 // save current view for the current_world
-                overviewer.collections.centers[overviewer.current_world][0] = overviewer.map.getCenter();
-                overviewer.collections.centers[overviewer.current_world][1] = overviewer.map.getZoom();
+                let current_center = [overviewer.map.getCenter(), overviewer.map.getZoom()];
+                let current_layer = overviewer.current_layer[overviewer.current_world] ||
+                    Object.values(overviewer.collections.mapTypes[overviewer.current_world])[0];
+                let layer_name = current_layer.tileSetConfig.path;
+                overviewer.collections.centers[overviewer.current_world][layer_name] = current_center;
 
                 overviewer.layerCtrl.remove();
 
@@ -190,17 +193,15 @@ overviewer.util = {
                     }
                 }
 
-                var center = overviewer.collections.centers[selected_world];
+                let selected_layer_name = overviewer.collections.mapTypes[selected_world] && overviewer.current_layer[selected_world] ?
+                    overviewer.current_layer[selected_world].tileSetConfig.path :
+                    Object.keys(overviewer.collections.mapTypes[selected_world])[0];
+
+                let center = overviewer.collections.centers[selected_world][selected_layer_name];
                 overviewer.map.setView(center[0], center[1]);
 
                 overviewer.current_world = selected_world;
-
-                if (overviewer.collections.mapTypes[selected_world] && overviewer.current_layer[selected_world]) {
-                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][overviewer.current_layer[selected_world].tileSetConfig.path]);
-                } else {
-                    var tset_name = Object.keys(overviewer.collections.mapTypes[selected_world])[0]
-                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][tset_name]);
-                }
+                overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][selected_layer_name]);
             },
             onAdd: function() {
                 console.log("onAdd mycontrol");
@@ -406,12 +407,15 @@ overviewer.util = {
 
             myLayer["tileSetConfig"] = obj;
 
+            if (!overviewer.collections.centers[obj.world]) {
+                overviewer.collections.centers[obj.world] = {};
+            }
 
             if (typeof(obj.center) == "object") {
                 var latlng = overviewer.util.fromWorldToLatLng(obj.center[0], obj.center[1], obj.center[2], obj);
-                overviewer.collections.centers[obj.world] = [ latlng, obj.defaultZoom ];
+                overviewer.collections.centers[obj.world][obj.path] = [ latlng, obj.defaultZoom ];
             } else {
-                overviewer.collections.centers[obj.world] = [ [0, 0], obj.defaultZoom ];
+                overviewer.collections.centers[obj.world][obj.path] = [ [0, 0], obj.defaultZoom ];
             }
 
         });
@@ -423,7 +427,8 @@ overviewer.util = {
             .addTo(overviewer.map);
         overviewer.current_world = overviewerConfig.worlds[0];
 
-        let center = overviewer.collections.centers[overviewer.current_world];
+        let default_layer_name = Object.keys(overviewer.collections.mapTypes[overviewer.current_world])[0];
+        let center = overviewer.collections.centers[overviewer.current_world][default_layer_name];
         overviewer.map.setView(center[0], center[1]);
 
         if (!overviewer.util.initHash()) {
