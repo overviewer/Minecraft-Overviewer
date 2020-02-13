@@ -318,7 +318,7 @@ class RegionSet(object):
             'minecraft:sapling': (6, 0),
             'minecraft:bedrock': (7, 0),
             'minecraft:water': (8, 0),
-            'minecraft:lava': (10, 0),
+            'minecraft:lava': (11, 0),
             'minecraft:sand': (12, 0),
             'minecraft:red_sand': (12, 1),
             'minecraft:gravel': (13, 0),
@@ -1022,6 +1022,10 @@ class RegionSet(object):
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
+            if key in ['minecraft:chest', 'minecraft:trapped_chest']:
+                # type property should exist, but default to 'single' just in case
+                chest_type = palette_entry['Properties'].get('type', 'single')
+                data |= {'left': 0x8, 'right': 0x10, 'single': 0x0}[chest_type]
         elif key in ['minecraft:beehive', 'minecraft:bee_nest']:
             facing = palette_entry['Properties']['facing']
             honey_level = int(palette_entry['Properties']['honey_level'])
@@ -1547,9 +1551,24 @@ class RegionSetWrapper(object):
         itertools.groupby, which needs sorted keys, and Python 2 somehow
         just sorted objects like ???????? how????? why?????
         """
-        if isinstance(other, RegionSetWrapper):
-            other = other._r
-        return self._r.regiondir < other.regiondir
+        return self.regiondir < other.regiondir
+
+    @property
+    def regiondir(self):
+        """
+        RegionSetWrapper are wrappers around a RegionSet and thus should have all variables the RegionSet has.
+
+        Reason for addition: Issue #1706
+        The __lt__ check in RegionSet did not check if it is a RegionSetWrapper Instance
+        """
+        return self._r.regiondir
+
+    @regiondir.setter
+    def regiondir(self, value):
+        """
+        For completeness adding the setter to the property
+        """
+        self._r.regiondir = value
 
     def get_type(self):
         return self._r.get_type()

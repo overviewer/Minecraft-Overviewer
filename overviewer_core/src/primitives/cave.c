@@ -63,6 +63,8 @@ static bool
 cave_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     RenderPrimitiveCave* self;
     int32_t dy = 0;
+    uint16_t blockID;
+    uint32_t blockUpID;
     self = (RenderPrimitiveCave*)data;
 
     /* check if the block is touching skylight */
@@ -78,15 +80,17 @@ cave_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
      * at this point of the code the block has no skylight
      * but a deep sea can be completely dark
      */
-    if ((getArrayShort3D(state->blocks, x, y, z) == 9) ||
-        (get_data(state, BLOCKS, x, y + 1, z) == 9)) {
 
+    blockID = getArrayShort3D(state->blocks, x, y, z);
+    blockUpID = get_data(state, BLOCKS, x, y + 1, z);
+    if (blockID == 9 || blockID == 8 || blockUpID == 9 || blockUpID == 8) {
         for (dy = y + 1; dy < (SECTIONS_PER_CHUNK - state->chunky) * 16; dy++) {
             /* go up and check for skylight */
             if (get_data(state, SKYLIGHT, x, dy, z) != 0) {
                 return true;
             }
-            if (get_data(state, BLOCKS, x, dy, z) != 9) {
+            blockUpID = get_data(state, BLOCKS, x, dy, z);
+            if (blockUpID != 8 && blockUpID != 9) {
                 /* we are out of the water! and there's no skylight
                  * , i.e. is a cave lake or something similar */
                 break;

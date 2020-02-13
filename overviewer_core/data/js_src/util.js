@@ -142,8 +142,11 @@ overviewer.util = {
 
 
                 // save current view for the current_world
-                overviewer.collections.centers[overviewer.current_world][0] = overviewer.map.getCenter();
-                overviewer.collections.centers[overviewer.current_world][1] = overviewer.map.getZoom();
+                let current_center = [overviewer.map.getCenter(), overviewer.map.getZoom()];
+                let current_layer = overviewer.current_layer[overviewer.current_world] ||
+                    Object.values(overviewer.collections.mapTypes[overviewer.current_world])[0];
+                let layer_name = current_layer.tileSetConfig.path;
+                overviewer.collections.centers[overviewer.current_world][layer_name] = current_center;
 
                 overviewer.layerCtrl.remove();
 
@@ -190,17 +193,15 @@ overviewer.util = {
                     }
                 }
 
-                var center = overviewer.collections.centers[selected_world];
+                let selected_layer_name = overviewer.collections.mapTypes[selected_world] && overviewer.current_layer[selected_world] ?
+                    overviewer.current_layer[selected_world].tileSetConfig.path :
+                    Object.keys(overviewer.collections.mapTypes[selected_world])[0];
+
+                let center = overviewer.collections.centers[selected_world][selected_layer_name];
                 overviewer.map.setView(center[0], center[1]);
 
                 overviewer.current_world = selected_world;
-
-                if (overviewer.collections.mapTypes[selected_world] && overviewer.current_layer[selected_world]) {
-                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][overviewer.current_layer[selected_world].tileSetConfig.path]);
-                } else {
-                    var tset_name = Object.keys(overviewer.collections.mapTypes[selected_world])[0]
-                    overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][tset_name]);
-                }
+                overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][selected_layer_name]);
             },
             onAdd: function() {
                 console.log("onAdd mycontrol");
@@ -378,27 +379,48 @@ overviewer.util = {
                     console.log("this tileset has markers:", obj);
                     obj.marker_groups = {};
 
+                    // For every group of markers
                     for (var mkidx = 0; mkidx < markers[obj.path].length; mkidx++) {
+                        // Create a Leaflet layer group
                         var marker_group = new L.layerGroup();
                         var marker_entry = markers[obj.path][mkidx];
                         L.Util.setOptions(marker_group, {default_checked: marker_entry.checked});
                         var icon =  L.divIcon({html: `<img class="ov-marker" src="${marker_entry.icon}">`});
 
+                        // For every marker in group
                         for (var dbidx = 0; dbidx < markersDB[marker_entry.groupName].raw.length; dbidx++) {
-                            var db = markersDB[marker_entry.groupName].raw[dbidx];
-                            var latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
-                            var m_icon;
-                            if (db.icon != undefined) {
-                                m_icon = L.divIcon({html: `<img class="ov-marker" src="${db.icon}">`});
+                            let db = markersDB[marker_entry.groupName].raw[dbidx];
+                            var layerObj = undefined;
+
+                            // Shape or marker?
+                            if ('points' in db) {
+                                // Convert all coords
+                                plLatLng = db['points'].map(function(p) {
+                                    return overviewer.util.fromWorldToLatLng(p.x, p.y, p.z, obj);
+                                });
+                                options = {
+                                    color: db['strokeColor'],
+                                    weight: db['strokeWeight'],
+                                    fill: db['fill']
+                                };
+                                layerObj = db['isLine'] ? L.polyline(plLatLng, options) : L.polygon(plLatLng, options);
+                                // TODO: add other config options (fill color, fill opacity)
                             } else {
-                                m_icon = icon;
+                                // Convert coords
+                                let latlng = overviewer.util.fromWorldToLatLng(db.x, db.y, db.z, obj);
+                                // Set icon and use default icon if not specified
+                                let m_icon = L.divIcon({html: `<img class="ov-marker" src="${db.icon == undefined ? marker_entry.icon : db.icon}">`});
+                                // Create marker
+                                layerObj = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
                             }
-                            let new_marker = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
+                            // Add popup to marker
                             if (marker_entry.createInfoWindow) {
-                                new_marker.bindPopup(db.text);
+                                layerObj.bindPopup(db.text);
                             }
-                            marker_group.addLayer(new_marker);
+                            // Add the polyline or marker to the layer
+                            marker_group.addLayer(layerObj);
                         }
+                        // Save marker group
                         obj.marker_groups[marker_entry.displayName] = marker_group;
                     }
                 }
@@ -406,12 +428,15 @@ overviewer.util = {
 
             myLayer["tileSetConfig"] = obj;
 
+            if (!overviewer.collections.centers[obj.world]) {
+                overviewer.collections.centers[obj.world] = {};
+            }
 
             if (typeof(obj.center) == "object") {
                 var latlng = overviewer.util.fromWorldToLatLng(obj.center[0], obj.center[1], obj.center[2], obj);
-                overviewer.collections.centers[obj.world] = [ latlng, obj.defaultZoom ];
+                overviewer.collections.centers[obj.world][obj.path] = [ latlng, obj.defaultZoom ];
             } else {
-                overviewer.collections.centers[obj.world] = [ [0, 0], obj.defaultZoom ];
+                overviewer.collections.centers[obj.world][obj.path] = [ [0, 0], obj.defaultZoom ];
             }
 
         });
@@ -423,7 +448,8 @@ overviewer.util = {
             .addTo(overviewer.map);
         overviewer.current_world = overviewerConfig.worlds[0];
 
-        let center = overviewer.collections.centers[overviewer.current_world];
+        let default_layer_name = Object.keys(overviewer.collections.mapTypes[overviewer.current_world])[0];
+        let center = overviewer.collections.centers[overviewer.current_world][default_layer_name];
         overviewer.map.setView(center[0], center[1]);
 
         if (!overviewer.util.initHash()) {
