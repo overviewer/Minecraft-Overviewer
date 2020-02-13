@@ -3876,87 +3876,44 @@ def stone_brick(self, blockid, data):
 
     return img
 
-# huge brown and red mushroom
-@material(blockid=[99,100], data= list(range(11)) + [14,15], solid=True)
+
+# huge brown/red mushrooms, and mushroom stems
+@material(blockid=[99, 100, 139], data=list(range(64)), solid=True)
 def huge_mushroom(self, blockid, data):
-    # rotation
-    if self.rotation == 1:
-        if data == 1: data = 3
-        elif data == 2: data = 6
-        elif data == 3: data = 9
-        elif data == 4: data = 2
-        elif data == 6: data = 8
-        elif data == 7: data = 1
-        elif data == 8: data = 4
-        elif data == 9: data = 7
-    elif self.rotation == 2:
-        if data == 1: data = 9
-        elif data == 2: data = 8
-        elif data == 3: data = 7
-        elif data == 4: data = 6
-        elif data == 6: data = 4
-        elif data == 7: data = 3
-        elif data == 8: data = 2
-        elif data == 9: data = 1
-    elif self.rotation == 3:
-        if data == 1: data = 7
-        elif data == 2: data = 4
-        elif data == 3: data = 1
-        elif data == 4: data = 2
-        elif data == 6: data = 8
-        elif data == 7: data = 9
-        elif data == 8: data = 6
-        elif data == 9: data = 3
+    # Re-arrange the bits in data based on self.rotation
+    # rotation  bit: 654321
+    #        0       DUENWS
+    #        1       DUNWSE
+    #        2       DUWSEN
+    #        3       DUSENW
+    if self.rotation in [1, 2, 3]:
+        bit_map = {1: [6, 5, 3, 2, 1, 4],
+                   2: [6, 5, 2, 1, 4, 3],
+                   3: [6, 5, 1, 4, 3, 2]}
+        new_data = 0
+
+        # Add the ith bit to new_data then shift left one at a time,
+        # re-ordering data's bits in the order specified in bit_map
+        for i in bit_map[self.rotation]:
+            new_data = new_data << 1
+            new_data |= (data >> (i - 1)) & 1
+        data = new_data
 
     # texture generation
-    if blockid == 99: # brown
-        cap = self.load_image_texture("assets/minecraft/textures/block/brown_mushroom_block.png")
-    else: # red
-        cap = self.load_image_texture("assets/minecraft/textures/block/red_mushroom_block.png")
-
-    stem = self.load_image_texture("assets/minecraft/textures/block/mushroom_stem.png")
+    texture_map = {99:  "brown_mushroom_block",
+                   100: "red_mushroom_block",
+                   139: "mushroom_stem"}
+    cap =  self.load_image_texture("assets/minecraft/textures/block/%s.png" % texture_map[blockid])
     porous = self.load_image_texture("assets/minecraft/textures/block/mushroom_block_inside.png")
-    
-    if data == 0: # fleshy piece
-        img = self.build_full_block(porous, None, None, porous, porous)
 
-    if data == 1: # north-east corner
-        img = self.build_full_block(cap, None, None, cap, porous)
+    # Faces visible after amending data for rotation are: up, West, and South
+    side_up    = cap if data & 0b010000 else porous  # Up
+    side_west  = cap if data & 0b000010 else porous  # West
+    side_south = cap if data & 0b000001 else porous  # South
+    side_south = side_south.transpose(Image.FLIP_LEFT_RIGHT)
 
-    if data == 2: # east side
-        img = self.build_full_block(cap, None, None, porous, cap)
+    return self.build_full_block(side_up, None, None, side_west, side_south)
 
-    if data == 3: # south-east corner
-        img = self.build_full_block(cap, None, None, porous, cap)
-
-    if data == 4: # north side
-        img = self.build_full_block(cap, None, None, cap, porous)
-
-    if data == 5: # top piece
-        img = self.build_full_block(cap, None, None, porous, porous)
-
-    if data == 6: # south side
-        img = self.build_full_block(cap, None, None, cap, porous)
-
-    if data == 7: # north-west corner
-        img = self.build_full_block(cap, None, None, cap, cap)
-
-    if data == 8: # west side
-        img = self.build_full_block(cap, None, None, porous, cap)
-
-    if data == 9: # south-west corner
-        img = self.build_full_block(cap, None, None, porous, cap)
-
-    if data == 10: # stem
-        img = self.build_full_block(porous, None, None, stem, stem)
-
-    if data == 14: # all cap
-        img = self.build_block(cap,cap)
-
-    if data == 15: # all stem
-        img = self.build_block(stem,stem)
-
-    return img
 
 # iron bars and glass pane
 # TODO glass pane is not a sprite, it has a texture for the side,
@@ -4030,48 +3987,41 @@ def stem(self, blockid, data):
         # tint the data value 7
         img = self.tint_texture(img, (211,169,116))
     return img
-    
+
 
 # vines
-@material(blockid=106, data=list(range(16)), transparent=True)
+@material(blockid=106, data=list(range(32)), transparent=True, solid=False, nospawn=True)
 def vines(self, blockid, data):
-    # rotation
-    # vines data is bit coded. decode it first.
-    # NOTE: the directions used in this function are the new ones used
-    # in minecraft 1.0.0, no the ones used by overviewer 
-    # (i.e. north is top-left by defalut)
+    # Re-arrange the bits in data based on self.rotation
+    # rotation  bit: 54321
+    #        0       UENWS
+    #        1       UNWSE
+    #        2       UWSEN
+    #        3       USENW
+    if self.rotation in [1, 2, 3]:
+        bit_map = {1: [5, 3, 2, 1, 4],
+                   2: [5, 2, 1, 4, 3],
+                   3: [5, 1, 4, 3, 2]}
+        new_data = 0
 
-    # rotate the data by bitwise shift
-    shifts = 0
-    if self.rotation == 1:
-        shifts = 1
-    elif self.rotation == 2:
-        shifts = 2
-    elif self.rotation == 3:
-        shifts = 3
-    
-    for i in range(shifts):
-        data = data * 2
-        if data & 16:
-            data = (data - 16) | 1
+        # Add the ith bit to new_data then shift left one at a time,
+        # re-ordering data's bits in the order specified in bit_map
+        for i in bit_map[self.rotation]:
+            new_data = new_data << 1
+            new_data |= (data >> (i - 1)) & 1
+        data = new_data
 
     # decode data and prepare textures
     raw_texture = self.load_image_texture("assets/minecraft/textures/block/vine.png")
-    s = w = n = e = None
 
-    if data & 1: # south
-        s = raw_texture
-    if data & 2: # west
-        w = raw_texture
-    if data & 4: # north
-        n = raw_texture
-    if data & 8: # east
-        e = raw_texture
+    side_up    = raw_texture if data & 0b10000 else None  # Up
+    side_east  = raw_texture if data & 0b01000 else None  # East
+    side_north = raw_texture if data & 0b00100 else None  # North
+    side_west  = raw_texture if data & 0b00010 else None  # West
+    side_south = raw_texture if data & 0b00001 else None  # South
 
-    # texture generation
-    img = self.build_full_block(None, n, e, w, s)
+    return self.build_full_block(side_up, side_north, side_east, side_west, side_south)
 
-    return img
 
 # fence gates
 @material(blockid=[107, 183, 184, 185, 186, 187], data=list(range(8)), transparent=True, nospawn=True)

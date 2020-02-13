@@ -142,6 +142,7 @@ enum mc_block_id {
     block_jungle_stairs = 136,
     block_command_block = 137,
     block_beacon = 138,
+    block_mushroom_stem = 139,
     block_flower_pot = 140,
     block_carrots = 141,
     block_potatoes = 142,
