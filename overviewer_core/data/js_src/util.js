@@ -404,6 +404,9 @@ overviewer.util = {
                                     fill: db['fill']
                                 };
                                 layerObj = db['isLine'] ? L.polyline(plLatLng, options) : L.polygon(plLatLng, options);
+                                if (db['hovertext']) {
+                                    layerObj.bindTooltip(db['hovertext'], {sticky: true});
+                                }
                                 // TODO: add other config options (fill color, fill opacity)
                             } else {
                                 // Convert coords
@@ -414,7 +417,7 @@ overviewer.util = {
                                 layerObj = new L.marker(latlng, {icon: m_icon, title: db.hovertext});
                             }
                             // Add popup to marker
-                            if (marker_entry.createInfoWindow) {
+                            if (marker_entry.createInfoWindow && db.text) {
                                 layerObj.bindPopup(db.text);
                             }
                             // Add the polyline or marker to the layer

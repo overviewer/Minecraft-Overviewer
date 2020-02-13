@@ -410,13 +410,14 @@ def create_marker_from_filter_result(poi, result):
         d.update(dict(text=result[1], hovertext=result[0]))
     # Dict support to allow more flexible things in the future as well as polylines on the map.
     elif isinstance(result, dict):
-        d['text'] = result['text']
+        if 'text' in result:
+            d['text'] = result['text']
 
         # Use custom hovertext if provided...
         if 'hovertext' in result:
             d['hovertext'] = str(result['hovertext'])
         else:   # ...otherwise default to display text.
-            d['hovertext'] = result['text']
+            d['hovertext'] = result.get('text', '')
 
         if "icon" in result:
             d["icon"] = result['icon']
