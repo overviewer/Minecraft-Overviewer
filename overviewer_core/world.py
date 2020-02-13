@@ -906,10 +906,12 @@ class RegionSet(object):
             if key == 'minecraft:powered_rail' and palette_entry['Properties']['powered'] == 'true':
                 data |= 8
         elif key in ['minecraft:comparator', 'minecraft:repeater']:
+            # Bits 1-2 indicates facing, bits 3-4 indicates delay
             if palette_entry['Properties']['powered'] == 'true':
                 block += 1
             facing = palette_entry['Properties']['facing']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
+            data |= (int(palette_entry['Properties'].get('delay', '1')) - 1) << 2
         elif key == 'minecraft:daylight_detector':
             if palette_entry['Properties']['inverted'] == 'true':
                 block = 178
