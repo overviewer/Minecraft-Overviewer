@@ -683,7 +683,7 @@ class Textures(object):
         you use an increment of 8, it will draw a half-block.
 
         NOTE: this method uses the bottom of the texture image (as done in 
-        minecraft with beds and cackes)
+        minecraft with beds and cakes)
 
         """
 
@@ -3451,22 +3451,22 @@ def portal(self, blockid, data):
 
     return img
 
+
 # cake!
-@material(blockid=92, data=list(range(6)), transparent=True, nospawn=True)
+@material(blockid=92, data=list(range(7)), transparent=True, nospawn=True)
 def cake(self, blockid, data):
-    
     # cake textures
     top = self.load_image_texture("assets/minecraft/textures/block/cake_top.png").copy()
     side = self.load_image_texture("assets/minecraft/textures/block/cake_side.png").copy()
     fullside = side.copy()
     inside = self.load_image_texture("assets/minecraft/textures/block/cake_inner.png")
-    
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    if data == 0: # unbitten cake
+
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    if data == 0:  # unbitten cake
         top = self.transform_image_top(top)
         side = self.transform_image_side(side)
         otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-        
+
         # darken sides slightly
         sidealpha = side.split()[3]
         side = ImageEnhance.Brightness(side).enhance(0.9)
@@ -3474,28 +3474,32 @@ def cake(self, blockid, data):
         othersidealpha = otherside.split()[3]
         otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
         otherside.putalpha(othersidealpha)
-        
+
         # composite the cake
-        alpha_over(img, side, (1,6), side)
-        alpha_over(img, otherside, (11,7), otherside) # workaround, fixes a hole
-        alpha_over(img, otherside, (12,6), otherside)
-        alpha_over(img, top, (0,6), top)
-    
+        alpha_over(img, side, (1, 6), side)
+        alpha_over(img, otherside, (11, 5), otherside)  # workaround, fixes a hole
+        alpha_over(img, otherside, (12, 6), otherside)
+        alpha_over(img, top, (0, 6), top)
+
     else:
         # cut the textures for a bitten cake
-        coord = int(16./6.*data)
-        ImageDraw.Draw(side).rectangle((16 - coord,0,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(top).rectangle((0,0,coord,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        bite_width = int(14 / 7)  # Cake is 14px wide with 7 slices
+        coord = 1 + bite_width * data
+        ImageDraw.Draw(side).rectangle((16 - coord, 0, 16, 16), outline=(0, 0, 0, 0),
+                                       fill=(0, 0, 0, 0))
+        ImageDraw.Draw(top).rectangle((0, 0, coord - 1, 16), outline=(0, 0, 0, 0),
+                                      fill=(0, 0, 0, 0))
 
         # the bitten part of the cake always points to the west
         # composite the cake for every north orientation
-        if self.rotation == 0: # north top-left
+        if self.rotation == 0:  # north top-left
             # create right side
             rs = self.transform_image_side(side).transpose(Image.FLIP_LEFT_RIGHT)
             # create bitten side and its coords
-            deltax = 2*data
-            deltay = -1*data
-            if data == 3: deltax += 1 # special case fixing pixel holes
+            deltax = bite_width * data
+            deltay = -1 * data
+            if data in [3, 4, 5, 6]:
+                deltax -= 1
             ls = self.transform_image_side(inside)
             # create top side
             t = self.transform_image_top(top)
@@ -3507,11 +3511,11 @@ def cake(self, blockid, data):
             rs = ImageEnhance.Brightness(rs).enhance(0.8)
             rs.putalpha(othersidealpha)
             # compose the cake
-            alpha_over(img, rs, (12,6), rs)
-            alpha_over(img, ls, (1 + deltax,6 + deltay), ls)
-            alpha_over(img, t, (0,6), t)
+            alpha_over(img, rs, (12, 6), rs)
+            alpha_over(img, ls, (1 + deltax, 6 + deltay), ls)
+            alpha_over(img, t, (1, 6), t)
 
-        elif self.rotation == 1: # north top-right
+        elif self.rotation == 1:  # north top-right
             # bitten side not shown
             # create left side
             ls = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT))
@@ -3527,18 +3531,19 @@ def cake(self, blockid, data):
             rs = ImageEnhance.Brightness(rs).enhance(0.8)
             rs.putalpha(othersidealpha)
             # compose the cake
-            alpha_over(img, ls, (2,6), ls)
-            alpha_over(img, t, (0,6), t)
-            alpha_over(img, rs, (12,6), rs)
+            alpha_over(img, ls, (2, 6), ls)
+            alpha_over(img, t, (1, 6), t)
+            alpha_over(img, rs, (12, 6), rs)
 
-        elif self.rotation == 2: # north bottom-right
+        elif self.rotation == 2:  # north bottom-right
             # bitten side not shown
             # left side
             ls = self.transform_image_side(fullside)
             # top
             t = self.transform_image_top(top.rotate(180))
             # right side
-            rs = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
+            rs = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT))
+            rs = rs.transpose(Image.FLIP_LEFT_RIGHT)
             # darken sides slightly
             sidealpha = ls.split()[3]
             ls = ImageEnhance.Brightness(ls).enhance(0.9)
@@ -3547,19 +3552,20 @@ def cake(self, blockid, data):
             rs = ImageEnhance.Brightness(rs).enhance(0.8)
             rs.putalpha(othersidealpha)
             # compose the cake
-            alpha_over(img, ls, (2,6), ls)
-            alpha_over(img, t, (1,6), t)
-            alpha_over(img, rs, (12,6), rs)
+            alpha_over(img, ls, (2, 6), ls)
+            alpha_over(img, t, (1, 6), t)
+            alpha_over(img, rs, (12, 6), rs)
 
-        elif self.rotation == 3: # north bottom-left
+        elif self.rotation == 3:  # north bottom-left
             # create left side
             ls = self.transform_image_side(side)
             # create top
             t = self.transform_image_top(top.rotate(90))
             # create right side and its coords
-            deltax = 12-2*data
-            deltay = -1*data
-            if data == 3: deltax += -1 # special case fixing pixel holes
+            deltax = 12 - bite_width * data
+            deltay = -1 * data
+            if data in [3, 4, 5, 6]:
+                deltax += 1
             rs = self.transform_image_side(inside).transpose(Image.FLIP_LEFT_RIGHT)
             # darken sides slightly
             sidealpha = ls.split()[3]
@@ -3569,11 +3575,12 @@ def cake(self, blockid, data):
             rs = ImageEnhance.Brightness(rs).enhance(0.8)
             rs.putalpha(othersidealpha)
             # compose the cake
-            alpha_over(img, ls, (2,6), ls)
-            alpha_over(img, t, (1,6), t)
-            alpha_over(img, rs, (1 + deltax,6 + deltay), rs)
+            alpha_over(img, ls, (2, 6), ls)
+            alpha_over(img, t, (1, 6), t)
+            alpha_over(img, rs, (1 + deltax, 6 + deltay), rs)
 
     return img
+
 
 # redstone repeaters ON and OFF
 @material(blockid=[93,94], data=list(range(16)), transparent=True, nospawn=True)
