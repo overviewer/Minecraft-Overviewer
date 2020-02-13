@@ -89,7 +89,8 @@ cave_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
             if (get_data(state, SKYLIGHT, x, dy, z) != 0) {
                 return true;
             }
-            if (get_data(state, BLOCKS, x, dy, z) != 8 && get_data(state, BLOCKS, x, dy, z) != 9) {
+            blockUpID = get_data(state, BLOCKS, x, dy, z);
+            if (blockUpID != 8 && blockUpID != 9) {
                 /* we are out of the water! and there's no skylight
                  * , i.e. is a cave lake or something similar */
                 break;
