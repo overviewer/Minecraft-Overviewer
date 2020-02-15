@@ -943,18 +943,20 @@ def grass(self, blockid, data):
         alpha_over(img, self.biome_grass_texture, (0, 0), self.biome_grass_texture)
     return img
 
+
 # dirt
 @material(blockid=3, data=list(range(3)), solid=True)
 def dirt_blocks(self, blockid, data):
-    side_img = self.load_image_texture("assets/minecraft/textures/block/dirt.png")
-    if data == 0: # normal
-        img =  self.build_block(self.load_image_texture("assets/minecraft/textures/block/dirt.png"), side_img)
-    if data == 1: # grassless
-        img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/dirt.png"), side_img)
-    if data == 2: # podzol
-        side_img = self.load_image_texture("assets/minecraft/textures/block/podzol_side.png")
-        img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/podzol_top.png"), side_img)
-    return img
+    texture_map = [{"top": "dirt",        "side": "dirt"},         # Normal
+                   {"top": "coarse_dirt", "side": "coarse_dirt"},  # Coarse
+                   {"top": "podzol_top",  "side": "podzol_side"}]  # Podzol
+    top_img = self.load_image_texture("assets/minecraft/textures/block/%s.png"
+                                      % texture_map[data]["top"])
+    side_img = self.load_image_texture("assets/minecraft/textures/block/%s.png"
+                                       % texture_map[data]["side"])
+
+    return self.build_block(top_img, side_img)
+
 
 # cobblestone
 block(blockid=4, top_image="assets/minecraft/textures/block/cobblestone.png")
