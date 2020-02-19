@@ -94,13 +94,8 @@ class Textures(object):
     ##
     
     def __getstate__(self):
-        # we must get rid of the huge image lists, and other images
         attributes = self.__dict__.copy()
-        for attr in ['blockmap', 'biome_grass_texture', 'watertexture', 'lavatexture', 'firetexture', 'portaltexture', 'lightcolor', 'grasscolor', 'foliagecolor', 'watercolor', 'texture_cache']:
-            try:
-                del attributes[attr]
-            except KeyError:
-                pass
+        # Get rid of the jar list because file objects aren't pickleable like that
         attributes['jars'] = OrderedDict()
         return attributes
     def __setstate__(self, attrs):
@@ -108,7 +103,7 @@ class Textures(object):
         for attr, val in list(attrs.items()):
             setattr(self, attr, val)
         self.texture_cache = {}
-        if self.generated:
+        if not self.generated:
             self.generate()
     
     ##
