@@ -655,22 +655,6 @@ class RegionSet(object):
             'minecraft:red_nether_bricks': (215, 0),
             'minecraft:bone_block': (216, 0),
             'minecraft:observer': (218, 0),
-            'minecraft:white_glazed_terracotta': (235, 0),
-            'minecraft:orange_glazed_terracotta': (236, 0),
-            'minecraft:magenta_glazed_terracotta': (237, 0),
-            'minecraft:light_blue_glazed_terracotta': (238, 0),
-            'minecraft:yellow_glazed_terracotta': (239, 0),
-            'minecraft:lime_glazed_terracotta': (240, 0),
-            'minecraft:pink_glazed_terracotta': (241, 0),
-            'minecraft:gray_glazed_terracotta': (242, 0),
-            'minecraft:light_gray_glazed_terracotta': (243, 0),
-            'minecraft:cyan_glazed_terracotta': (244, 0),
-            'minecraft:purple_glazed_terracotta': (245, 0),
-            'minecraft:blue_glazed_terracotta': (246, 0),
-            'minecraft:brown_glazed_terracotta': (247, 0),
-            'minecraft:green_glazed_terracotta': (248, 0),
-            'minecraft:red_glazed_terracotta': (249, 0),
-            'minecraft:black_glazed_terracotta': (250, 0),
 
             'minecraft:structure_block': (255, 0),
             'minecraft:jigsaw': (256, 0),
@@ -846,6 +830,7 @@ class RegionSet(object):
             self._blockmap['minecraft:%s_banner'             % colors[i]] = (176, i)  # not rendering
             self._blockmap['minecraft:%s_wall_banner'        % colors[i]] = (177, i)  # not rendering
             self._blockmap['minecraft:%s_shulker_box'        % colors[i]] = (219 + i, 0)
+            self._blockmap['minecraft:%s_glazed_terracotta'  % colors[i]] = (235 + i, 0)
             self._blockmap['minecraft:%s_concrete'           % colors[i]] = (251, i)
             self._blockmap['minecraft:%s_concrete_powder'    % colors[i]] = (252, i)
 
@@ -1050,7 +1035,8 @@ class RegionSet(object):
                 data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
             else:
                 data = 5
-        elif key in ['minecraft:carved_pumpkin', 'minecraft:jack_o_lantern'] or key.endswith('glazed_terracotta'):
+        elif (key in ['minecraft:carved_pumpkin', 'minecraft:jack_o_lantern'] or
+              key.endswith('glazed_terracotta')):
             facing = palette_entry['Properties']['facing']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
         elif key in ['minecraft:vine', 'minecraft:brown_mushroom_block',

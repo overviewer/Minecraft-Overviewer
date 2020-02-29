@@ -5096,59 +5096,30 @@ def concrete(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_concrete_powder.png" % color_map[data])
     return self.build_block(texture, texture)
 
+
 # Glazed Terracotta
-@material(blockid=list(range(235,251)), data=list(range(8)), solid=True)
+@material(blockid=list(range(235, 251)), data=list(range(4)), solid=True)
 def glazed_terracotta(self, blockid, data):
-    texture = self.load_image_texture("assets/minecraft/textures/block/%s_glazed_terracotta.png" % color_map[blockid - 235])
-    glazed_terracotta_orientation = data & 3
-    
-    # Glazed Terracotta rotations are need seperate handling for each render direction
+    # Do rotation
+    data = (self.rotation + data) % 4
 
-    if self.rotation == 0: # rendering north upper-left
-        # choose orientation and paste textures
-        if glazed_terracotta_orientation == 0: # south / Player was facing North
-            return self.build_block(texture, texture)
-        elif glazed_terracotta_orientation == 1: # west / Player was facing east
-            return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
-        elif glazed_terracotta_orientation == 2: # North / Player was facing South
-            return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-        elif glazed_terracotta_orientation == 3: # east / Player was facing west
-            return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270), texture.rotate(90))
+    texture = self.load_image_texture("assets/minecraft/textures/block/%s_glazed_terracotta.png" %
+                                      color_map[blockid - 235]).copy()
+    texture_side4 = texture.transpose(Image.FLIP_LEFT_RIGHT)
 
-    elif self.rotation == 1: # north upper-right
-        # choose orientation and paste textures
-        if glazed_terracotta_orientation == 0: # south / Player was facing North
-            return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
-        elif glazed_terracotta_orientation == 1: # west / Player was facing east
-            return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-        elif glazed_terracotta_orientation == 2: # North / Player was facing South
-            return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270), texture.rotate(90))
-        elif glazed_terracotta_orientation == 3: # east / Player was facing west
-            return self.build_block(texture, texture)
-            
+    if data == 0:    # South
+        return self.build_full_block(texture, None, None, texture, texture_side4.rotate(270))
+    elif data == 1:  # West
+        return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90),
+                                     texture_side4.rotate(180))
+    elif data == 2:  # North
+        return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180),
+                                     texture_side4.rotate(90))
+    elif data == 3:  # East
+        return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270),
+                                     texture_side4)
 
-    elif self.rotation == 2: # north lower-right
-        # choose orientation and paste textures
-        if glazed_terracotta_orientation == 0: # south / Player was facing North
-            return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-        elif glazed_terracotta_orientation == 1: # west / Player was facing east
-            return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270), texture.rotate(90))
-        elif glazed_terracotta_orientation == 2: # North / Player was facing South
-            return self.build_block(texture, texture)
-        elif glazed_terracotta_orientation == 3: # east / Player was facing west
-            return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
-            
-    elif self.rotation == 3: # north lower-left
-        # choose orientation and paste textures
-        if glazed_terracotta_orientation == 0: # south / Player was facing North
-            return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270), texture.rotate(90))
-        elif glazed_terracotta_orientation == 1: # west / Player was facing east
-            return self.build_block(texture, texture)
-        elif glazed_terracotta_orientation == 2: # North / Player was facing South
-            return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
-        elif glazed_terracotta_orientation == 3: # east / Player was facing west
-            return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-    
+
 # dried kelp block
 @material(blockid=11331, data=[0], solid=True)
 def sandstone(self, blockid, data):
