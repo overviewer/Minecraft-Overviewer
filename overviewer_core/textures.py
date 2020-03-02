@@ -804,6 +804,107 @@ class Textures(object):
             return None
         return (img, self.generate_opaque_mask(img))
 
+
+##
+## Banner Rendering
+##
+# Source: https://minecraft.gamepedia.com/Formatting_codes
+banner_color_palette = [
+    (0xd0, 0xd6, 0xd7),
+    (0xe1, 0x61, 0x00),
+    (0xaa, 0x2d, 0xa0),
+    (0x1f, 0x8a, 0xc8),
+    (0xf2, 0xb1, 0x0e),
+    (0x5e, 0xaa, 0x11),
+    (0xd7, 0x65, 0x90),
+    (0x34, 0x38, 0x3c),
+    (0x7e, 0x7e, 0x74),
+    (0x0e, 0x78, 0x89),
+    (0x64, 0x1a, 0x9d),
+    (0x29, 0x2b, 0x90),
+    (0x60, 0x3a, 0x1a),
+    (0x48, 0x5b, 0x20),
+    (0x8f, 0x1b, 0x1b),
+    (0x02, 0x03, 0x06),
+]
+banner_patterns = {
+    # Important: The left half is the front of the banner
+    "bs": "stripe_bottom",
+    "ts": "stripe_top",
+    "ls": "stripe_left",
+    "rs": "stripe_right",
+    "cs": "stripe_center",
+    "ms": "stripe_middle",
+    "drs": "stripe_downright",
+    "dls": "stripe_downleft",
+    "ss": "small_stripes",
+    "cr": "cross",
+    "sc": "straight_cross",
+    "ld": "diagonal_left",
+    "rud": "diagonal_right",
+    "lud": "diagonal_up_left",
+    "rd": "diagonal_up_right",
+    "vh": "half_vertical",
+    "vhr": "half_vertical_right",
+    "hh": "half_horizontal",
+    "hhb": "half_horizontal_bottom",
+    "bl": "square_bottom_left",
+    "br": "square_bottom_right",
+    "tl": "square_top_left",
+    "tr": "square_top_right",
+    "bt": "triangle_bottom",
+    "tt": "triangle_top",
+    "bts": "triangles_bottom",
+    "tts": "triangles_top",
+    "mc": "circle",
+    "mr": "rhombus",
+    "bo": "border",
+    "cbo": "curly_border",
+    "bri": "bricks",
+    "gra": "gradient",
+    "gru": "gradient_up",
+    "cre": "creeper",
+    "sku": "skull",
+    "flo": "flower",
+    "moj": "mojang",
+    "glb": "globe",
+}
+
+
+def apply_color(img: Image, color: tuple) -> Image:
+    rf, gf, bf = (c / 256 for c in color)
+    r, g, b, alpha = img.split()
+    r = r.point(lambda i: i * rf)
+    g = g.point(lambda i: i * gf)
+    b = b.point(lambda i: i * bf)
+    return Image.merge("RGBA", (r, g, b, alpha))
+
+
+def render_banner(self: Textures, base_color_id: int, entity_nbt, backside=False):
+    """
+    'keepPacked': 0,
+    'x': 186,
+    'y': 68,
+    'z': -250,
+    'id': 'minecraft:banner',
+    'Patterns': [
+        {'Pattern': 'cre', 'Color': 14},
+        {'Pattern': 'gra', 'Color': 0}
+    ]
+    """
+    texture_crop = (21, 1, 41, 41) if backside else (1, 1, 21, 41)
+
+    img = Image.new("RGB", (20, 40))
+    # Apply base pattern and color
+    base_pattern = self.load_image('assets/minecraft/textures/entity/banner/base.png')
+    img.paste(apply_color(base_pattern.crop(texture_crop), banner_color_palette[base_color_id]))
+    for p in entity_nbt["Patterns"]:
+        pattern = self.load_image('assets/minecraft/textures/entity/banner/%s.png' % banner_patterns[p["Pattern"]])
+        colored_pattern = apply_color(pattern.crop(texture_crop), banner_color_palette[p["Color"]])
+        img.paste(colored_pattern, (0, 0), colored_pattern)
+
+    return img
+
 ##
 ## The other big one: @material and associated framework
 ##
