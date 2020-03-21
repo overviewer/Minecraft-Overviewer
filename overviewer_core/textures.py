@@ -2523,14 +2523,143 @@ def smithing_table(self, blockid, data):
     img = self.build_full_block(top, None, None, side3, side4, None)
     return img
 
-@material(blockid=11366, solid=True, nodata=True)
-def lectern(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/lectern_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/lectern_sides.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/lectern_front.png")
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
+@material(blockid=11366, data=list(range(8)), transparent=True, solid=True, nospawn=True)
+def lectern(self, blockid, data):
+    # Do rotation, mask to not clobber book data
+    data = data & 0b100 | ((self.rotation + (data & 0b11)) % 4)
+
+    # Load textures
+    base_raw_t = self.load_image_texture("assets/minecraft/textures/block/lectern_base.png")
+    front_raw_t = self.load_image_texture("assets/minecraft/textures/block/lectern_front.png")
+    side_raw_t = self.load_image_texture("assets/minecraft/textures/block/lectern_sides.png")
+    top_raw_t = self.load_image_texture("assets/minecraft/textures/block/lectern_top.png")
+
+    def create_tile(img_src, coord_crop, coord_paste, rot):
+        # Takes an image, crops a region, optionally rotates the
+        #   texture, then finally pastes it onto a 16x16 image
+        img_out = Image.new("RGBA", (16, 16), self.bgcolor)
+        img_in = img_src.crop(coord_crop)
+        if rot != 0:
+            img_in = img_in.rotate(rot, expand=True)
+        img_out.paste(img_in, coord_paste)
+        return img_out
+
+    def darken_image(img_src, darken_value):
+        # Takes an image & alters the brightness, leaving alpha intact
+        alpha = img_src.split()[3]
+        img_out = ImageEnhance.Brightness(img_src).enhance(darken_value)
+        img_out.putalpha(alpha)
+        return img_out
+
+    # Generate base
+    base_top_t = base_raw_t.rotate([0, 270, 180, 90][data & 0b11])
+    # Front & side textures are one pixel taller than they should be
+    #   pre-transformation as otherwise the topmost row of pixels
+    #   post-transformation are rather transparent, which results in
+    #   a visible gap between the base's sides & top
+    base_front_t = create_tile(base_raw_t, (0, 13, 16, 16), (0, 13), 0)
+    base_side_t = create_tile(base_raw_t, (0, 5, 16, 8), (0, 13), 0)
+    base_side3_t = base_front_t if data & 0b11 == 1 else base_side_t
+    base_side4_t = base_front_t if data & 0b11 == 0 else base_side_t
+    img = self.build_full_block((base_top_t, 14), None, None, base_side3_t, base_side4_t, None)
+
+    # Generate central pillar
+    side_flip_t = side_raw_t.transpose(Image.FLIP_LEFT_RIGHT)
+    # Define parameters used to obtain the texture for each side
+    pillar_param = [{'img': front_raw_t, 'crop': (8, 4, 16, 16), 'paste': (4, 2), 'rot': 0},    # South
+                    {'img': side_raw_t,  'crop': (2, 8, 15, 16), 'paste': (4, 1), 'rot': 270},  # West
+                    {'img': front_raw_t, 'crop': (0, 4,  8, 13), 'paste': (4, 5), 'rot': 0},    # North
+                    {'img': side_flip_t, 'crop': (2, 8, 15, 16), 'paste': (4, 1), 'rot': 90}]   # East
+    # Determine which sides are rendered
+    pillar_side = [pillar_param[(3 - (data & 0b11)) % 4], pillar_param[(2 - (data & 0b11)) % 4]]
+
+    pillar_side3_t = create_tile(pillar_side[0]['img'], pillar_side[0]['crop'],
+                                 pillar_side[0]['paste'], pillar_side[0]['rot'])
+    pillar_side4_t = create_tile(pillar_side[1]['img'], pillar_side[1]['crop'],
+                                 pillar_side[1]['paste'], pillar_side[1]['rot'])
+    pillar_side4_t = pillar_side4_t.transpose(Image.FLIP_LEFT_RIGHT)
+    pillar_side3_t = self.transform_image_side(pillar_side3_t)
+    pillar_side3_t = darken_image(pillar_side3_t, 0.9)
+    pillar_side4_t = self.transform_image_side(pillar_side4_t).transpose(Image.FLIP_LEFT_RIGHT)
+    pillar_side4_t = darken_image(pillar_side4_t, 0.8)
+    alpha_over(img, pillar_side3_t, (3, 4), pillar_side3_t)
+    alpha_over(img, pillar_side4_t, (9, 4), pillar_side4_t)
+
+    # Generate stand
+    if (data & 0b11) in [0, 1]:  # South, West
+        stand_side3_t = create_tile(side_raw_t, (0, 0, 16, 4), (0, 4), 0)
+        stand_side4_t = create_tile(side_raw_t, (0, 4, 13, 8), (0, 0), -22.5)
+    else:  # North, East
+        stand_side3_t = create_tile(side_raw_t, (0, 4, 16, 8), (0, 0), 0)
+        stand_side4_t = create_tile(side_raw_t, (0, 4, 13, 8), (0, 0), 22.5)
+
+    stand_side3_t = self.transform_image_angle(stand_side3_t, math.radians(22.5))
+    stand_side3_t = darken_image(stand_side3_t, 0.9)
+    stand_side4_t = self.transform_image_side(stand_side4_t).transpose(Image.FLIP_LEFT_RIGHT)
+    stand_side4_t = darken_image(stand_side4_t, 0.8)
+    stand_top_t = create_tile(top_raw_t, (0, 1, 16, 14), (0, 1), 0)
+    if data & 0b100:
+        # Lectern has a book, modify the stand top texture
+        book_raw_t = self.load_image("assets/minecraft/textures/entity/enchanting_table_book.png")
+        book_t = Image.new("RGBA", (14, 10), self.bgcolor)
+        book_part_t = book_raw_t.crop((0, 0, 7, 10))  # Left cover
+        alpha_over(stand_top_t, book_part_t, (1, 3), book_part_t)
+        book_part_t = book_raw_t.crop((15, 0, 22, 10))  # Right cover
+        alpha_over(stand_top_t, book_part_t, (8, 3))
+        book_part_t = book_raw_t.crop((24, 10, 29, 18)).rotate(180)  # Left page
+        alpha_over(stand_top_t, book_part_t, (3, 4), book_part_t)
+        book_part_t = book_raw_t.crop((29, 10, 34, 18)).rotate(180)  # Right page
+        alpha_over(stand_top_t, book_part_t, (8, 4), book_part_t)
+
+    # Perform affine transformation
+    transform_matrix = numpy.matrix(numpy.identity(3))
+    if (data & 0b11) in [0, 1]:  # South, West
+        # Translate: 8 -X, 8 -Y
+        transform_matrix *= numpy.matrix([[1, 0, 8], [0, 1, 8], [0, 0, 1]])
+        # Rotate 40 degrees clockwise
+        tc = math.cos(math.radians(40))
+        ts = math.sin(math.radians(40))
+        transform_matrix *= numpy.matrix([[tc, ts, 0], [-ts, tc, 0], [0, 0, 1]])
+        # Shear in the Y direction
+        tt = math.tan(math.radians(10))
+        transform_matrix *= numpy.matrix([[1, 0, 0], [tt, 1, 0], [0, 0, 1]])
+        # Scale to 70% height & 110% width
+        transform_matrix *= numpy.matrix([[1 / 1.1, 0, 0], [0, 1 / 0.7, 0], [0, 0, 1]])
+        # Translate: 12 +X, 8 +Y
+        transform_matrix *= numpy.matrix([[1, 0, -12], [0, 1, -8], [0, 0, 1]])
+    else:  # North, East
+        # Translate: 8 -X, 8 -Y
+        transform_matrix *= numpy.matrix([[1, 0, 8], [0, 1, 8], [0, 0, 1]])
+        # Shear in the X direction
+        tt = math.tan(math.radians(25))
+        transform_matrix *= numpy.matrix([[1, tt, 0], [0, 1, 0], [0, 0, 1]])
+        # Scale to 80% height
+        transform_matrix *= numpy.matrix([[1, 0, 0], [0, 1 / 0.8, 0], [0, 0, 1]])
+        # Rotate 220 degrees clockwise
+        tc = math.cos(math.radians(40 + 180))
+        ts = math.sin(math.radians(40 + 180))
+        transform_matrix *= numpy.matrix([[tc, ts, 0], [-ts, tc, 0], [0, 0, 1]])
+        # Scale to 60% height
+        transform_matrix *= numpy.matrix([[1, 0, 0], [0, 1 / 0.6, 0], [0, 0, 1]])
+        # Translate: +13 X, +7 Y
+        transform_matrix *= numpy.matrix([[1, 0, -13], [0, 1, -7], [0, 0, 1]])
+
+    transform_matrix = numpy.array(transform_matrix)[:2, :].ravel().tolist()
+    stand_top_t = stand_top_t.transform((24, 24), Image.AFFINE, transform_matrix)
+
+    img_stand = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(img_stand, stand_side3_t, (-4, 2), stand_side3_t)  # Fix some holes
+    alpha_over(img_stand, stand_side3_t, (-3, 3), stand_side3_t)
+    alpha_over(img_stand, stand_side4_t, (12, 5), stand_side4_t)
+    alpha_over(img_stand, stand_top_t, (0, 0), stand_top_t)
+    # Flip the stand if North or South facing
+    if (data & 0b11) in [0, 2]:
+        img_stand = img_stand.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(img, img_stand, (0, -2), img_stand)
+
     return img
+
 
 @material(blockid=11367, solid=True, nodata=True)
 def loom(self, blockid, data):

@@ -1142,6 +1142,11 @@ class RegionSet(object):
             p = palette_entry['Properties']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
             data |= {'floor': 0, 'wall': 4, 'ceiling': 8}[p['face']]
+        elif key == 'minecraft:lectern':
+            p = palette_entry['Properties']
+            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
+            if p['has_book'] == 'true':
+                data |= 4
 
         return (block, data)
 
