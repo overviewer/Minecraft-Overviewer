@@ -3622,10 +3622,7 @@ def repeater(self, blockid, data):
     top = self.load_image_texture("assets/minecraft/textures/block/repeater.png") if blockid == 93 else self.load_image_texture("assets/minecraft/textures/block/repeater_on.png")
     side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png")
     increment = 13
-    
-    if (data & 0x3) == 0: # pointing east
-        pass
-    
+
     if (data & 0x3) == 1: # pointing south
         top = top.rotate(270)
 
