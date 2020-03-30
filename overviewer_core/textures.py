@@ -353,14 +353,19 @@ class Textures(object):
             pass
         
         try:
-            fileobj = self.find_file(filename)
+            fileobj = self.find_file(filename, verbose=logging.getLogger().isEnabledFor(logging.DEBUG))
         except (TextureException, IOError) as e:
             # We cache when our good friend find_file can't find
             # a texture, so that we do not repeatedly search for it.
             self.texture_cache[filename] = e
             raise e
         buffer = BytesIO(fileobj.read())
-        img = Image.open(buffer).convert("RGBA")
+        try:
+            img = Image.open(buffer).convert("RGBA")
+        except IOError:
+            raise TextureException("The texture {} appears to be corrupted. Please fix it. Run "
+                                   "Overviewer in verbose mode (-v) to find out where I loaded "
+                                   "that file from.".format(filename))
         self.texture_cache[filename] = img
         return img
 
