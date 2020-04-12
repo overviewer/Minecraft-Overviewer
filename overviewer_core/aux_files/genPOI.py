@@ -598,11 +598,11 @@ def main():
 
     with open(os.path.join(destdir, "markersDB.js"), "w") as output:
         output.write("var markersDB=")
-        json.dump(markers, output, indent=2)
+        json.dump(markers, output, sort_keys=True, indent=2)
         output.write(";\n")
     with open(os.path.join(destdir, "markers.js"), "w") as output:
         output.write("var markers=")
-        json.dump(marker_groups, output, indent=2)
+        json.dump(marker_groups, output, sort_keys=True, indent=2)
         output.write(";\n")
     with open(os.path.join(destdir, "baseMarkers.js"), "w") as output:
         output.write("overviewer.util.injectMarkerScript('markersDB.js');\n")
