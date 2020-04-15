@@ -142,7 +142,7 @@ def parseBucketChunks(task_tuple):
         if i == 250:
             i = 0
             cnt = 250 + cnt
-            logging.info("Found %d markers in thread %d so far at %d chunks.",
+            logging.debug("Found %d markers in thread %d so far at %d chunks.",
                          sum(len(v) for v in markers.values()), pid, cnt)
 
     return markers
