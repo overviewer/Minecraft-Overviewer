@@ -881,13 +881,6 @@ class RegionSet(object):
     def __repr__(self):
         return "<RegionSet regiondir=%r>" % self.regiondir
 
-    def __lt__(self, other):
-        """This garbage is only needed because genPOI wants to use
-        itertools.groupby, which needs sorted keys, and Python 2 somehow
-        just sorted objects like ???????? how????? why?????
-        """
-        return self.regiondir < other.regiondir
-
     def _get_block(self, palette_entry):
         wood_slabs = ('minecraft:oak_slab','minecraft:spruce_slab','minecraft:birch_slab','minecraft:jungle_slab',
                         'minecraft:acacia_slab','minecraft:dark_oak_slab','minecraft:petrified_oak_slab')
@@ -1552,13 +1545,6 @@ class RegionSetWrapper(object):
     """
     def __init__(self, rsetobj):
         self._r = rsetobj
-
-    def __lt__(self, other):
-        """This garbage is only needed because genPOI wants to use
-        itertools.groupby, which needs sorted keys, and Python 2 somehow
-        just sorted objects like ???????? how????? why?????
-        """
-        return self.regiondir < other.regiondir
 
     @property
     def regiondir(self):
