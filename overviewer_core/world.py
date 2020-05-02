@@ -1155,6 +1155,8 @@ class RegionSet(object):
             data |= {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
             if palette_entry['Properties'].get('eye', 'false') == 'true':
                 data |= 4
+        elif key == 'minecraft:cauldron':
+            data = int(palette_entry['Properties'].get('level', '0'))
 
         return (block, data)
 
