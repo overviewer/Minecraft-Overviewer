@@ -1150,6 +1150,11 @@ class RegionSet(object):
             data |= {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
             if palette_entry['Properties'].get('part', 'foot') == 'head':
                 data |= 8
+        elif key == 'minecraft:end_portal_frame':
+            facing = palette_entry['Properties']['facing']
+            data |= {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
+            if palette_entry['Properties'].get('eye', 'false') == 'true':
+                data |= 4
 
         return (block, data)
 
