@@ -4940,44 +4940,34 @@ def boneblock(self, blockid, data):
     elif boneblock_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
+
 # observer
-@material(blockid=218, data=list(range(6)), solid=True, nospawn=True)
+@material(blockid=218, data=[0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13], solid=True, nospawn=True)
 def observer(self, blockid, data):
-    # first, do the rotation if needed
-    if self.rotation == 1:
-        if data == 2: data = 5
-        elif data == 3: data = 4
-        elif data == 4: data = 2
-        elif data == 5: data = 3
-    elif self.rotation == 2:
-        if data == 2: data = 3
-        elif data == 3: data = 2
-        elif data == 4: data = 5
-        elif data == 5: data = 4
-    elif self.rotation == 3:
-        if data == 2: data = 4
-        elif data == 3: data = 5
-        elif data == 4: data = 3
-        elif data == 5: data = 2
+    # Do rotation
+    if self.rotation in [1, 2, 3] and (data & 0b111) in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = (data & 0b1000) | rotation_map[self.rotation][data & 0b111]
 
-    front = self.load_image_texture("assets/minecraft/textures/block/observer_front.png").copy()
-    side = self.load_image_texture("assets/minecraft/textures/block/observer_side.png").copy()
-    back = self.load_image_texture("assets/minecraft/textures/block/observer_back.png").copy()
-    top = self.load_image_texture("assets/minecraft/textures/block/observer_top.png").copy()
+    front = self.load_image_texture("assets/minecraft/textures/block/observer_front.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/observer_side.png")
+    top = self.load_image_texture("assets/minecraft/textures/block/observer_top.png")
+    file_name_back = "observer_back_on" if data & 0b1000 else "observer_back"
+    back = self.load_image_texture("assets/minecraft/textures/block/%s.png" % file_name_back)
 
-    if data == 0: # down
-        side = side.rotate(90)
-        img = self.build_full_block(back, None, None, side, top)
-    elif data == 1: # up
-        side = side.rotate(90)
-        img = self.build_full_block(front.rotate(180), None, None, side, top.rotate(180))
-    elif data == 2: # east
+    if data & 0b0111 == 0:    # Down
+        img = self.build_full_block(back, None, None, side.rotate(90), top)
+    elif data & 0b0111 == 1:  # Up
+        img = self.build_full_block(front.rotate(180), None, None, side.rotate(90), top.rotate(180))
+    elif data & 0b0111 == 2:  # East
         img = self.build_full_block(top.rotate(180), None, None, side, back)
-    elif data == 3: # west
+    elif data & 0b0111 == 3:  # West
         img = self.build_full_block(top, None, None, side, front)
-    elif data == 4: # north
+    elif data & 0b0111 == 4:  # North
         img = self.build_full_block(top.rotate(270), None, None, front, side)
-    elif data == 5: # south
+    elif data & 0b0111 == 5:  # South
         img = self.build_full_block(top.rotate(90), None, None, back, side)
 
     return img

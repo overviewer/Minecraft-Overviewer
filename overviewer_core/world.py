@@ -1027,7 +1027,8 @@ class RegionSet(object):
             p = palette_entry['Properties']
             data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[p['facing']]
             if ((key.endswith('piston') and p.get('extended', 'false') == 'true') or
-                (key == 'minecraft:piston_head' and p.get('type', 'normal') == 'sticky')):
+                (key == 'minecraft:piston_head' and p.get('type', 'normal') == 'sticky') or
+                (key == 'minecraft:observer' and p.get('powered', 'false') == 'true')):
                 data |= 0x08
         elif key.endswith('_log') or key.endswith('_wood') or key == 'minecraft:bone_block':
             axis = palette_entry['Properties']['axis']
