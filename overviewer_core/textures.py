@@ -4982,30 +4982,25 @@ def observer(self, blockid, data):
 
     return img
 
-# shulker box
-@material(blockid=list(range(219,235)), data=list(range(6)), solid=True, nospawn=True)
-def shulker_box(self, blockid, data):
-    # first, do the rotation if needed
-    data = data & 7
-    if self.rotation == 1:
-        if data == 2: data = 5
-        elif data == 3: data = 4
-        elif data == 4: data = 2
-        elif data == 5: data = 3
-    elif self.rotation == 2:
-        if data == 2: data = 3
-        elif data == 3: data = 2
-        elif data == 4: data = 5
-        elif data == 5: data = 4
-    elif self.rotation == 3:
-        if data == 2: data = 4
-        elif data == 3: data = 5
-        elif data == 4: data = 3
-        elif data == 5: data = 2
 
-    color = color_map[blockid - 219]
-    shulker_t = self.load_image_texture("assets/minecraft/textures/entity/shulker/shulker_%s.png" % color).copy()
-    w,h = shulker_t.size
+# shulker box
+@material(blockid=list(range(219, 235)) + [257], data=list(range(6)), solid=True, nospawn=True)
+def shulker_box(self, blockid, data):
+    # Do rotation
+    if self.rotation in [1, 2, 3] and data in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = rotation_map[self.rotation][data]
+
+    if blockid == 257:
+        # Uncolored shulker box
+        file_name = "shulker.png"
+    else:
+        file_name = "shulker_%s.png" % color_map[blockid - 219]
+
+    shulker_t = self.load_image("assets/minecraft/textures/entity/shulker/%s" % file_name).copy()
+    w, h = shulker_t.size
     res = w // 4
     # Cut out the parts of the shulker texture we need for the box
     top = shulker_t.crop((res, 0, res * 2, res))
@@ -5016,21 +5011,22 @@ def shulker_box(self, blockid, data):
     side.paste(side_top, (0, 0), side_top)
     side.paste(side_bottom, (0, res // 2), side_bottom)
 
-    if data == 0: # down
+    if data == 0:    # down
         side = side.rotate(180)
         img = self.build_full_block(bottom, None, None, side, side)
-    elif data == 1: # up
+    elif data == 1:  # up
         img = self.build_full_block(top, None, None, side, side)
-    elif data == 2: # east
+    elif data == 2:  # east
         img = self.build_full_block(side, None, None, side.rotate(90), bottom)
-    elif data == 3: # west
+    elif data == 3:  # west
         img = self.build_full_block(side.rotate(180), None, None, side.rotate(270), top)
-    elif data == 4: # north
+    elif data == 4:  # north
         img = self.build_full_block(side.rotate(90), None, None, top, side.rotate(270))
-    elif data == 5: # south
+    elif data == 5:  # south
         img = self.build_full_block(side.rotate(270), None, None, bottom, side.rotate(90))
 
     return img
+
 
 # structure block
 @material(blockid=255, data=list(range(4)), solid=True)
