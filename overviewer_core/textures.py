@@ -2549,12 +2549,100 @@ def stonecutter(self, blockid, data):
     img = self.build_full_block(top, None, None, side3, side4, None)
     return img
 
-@material(blockid=11369, solid=True, nodata=True)
-def grindstone(self, blockid, data):
-    top = side3 = side4 = self.load_image_texture("assets/minecraft/textures/block/grindstone_side.png")
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
+@material(blockid=11369, data=list(range(12)), transparent=True, solid=True, nospawn=True)
+def grindstone(self, blockid, data):
+    # Do rotation, mask to not clobber mounting info
+    data = data & 0b1100 | ((self.rotation + (data & 0b11)) % 4)
+
+    # Load textures
+    side_raw_t = self.load_image_texture("assets/minecraft/textures/block/grindstone_side.png").copy()
+    round_raw_t = self.load_image_texture("assets/minecraft/textures/block/grindstone_round.png").copy()
+    pivot_raw_t = self.load_image_texture("assets/minecraft/textures/block/grindstone_pivot.png").copy()
+    leg_raw_t = self.load_image_texture("assets/minecraft/textures/block/dark_oak_log.png").copy()
+
+    def create_tile(img_src, coord_crop, coord_paste,  scale):
+        # Takes an image, crops a region, optionally scales the
+        #   texture, then finally pastes it onto a 16x16 image
+        img_out = Image.new("RGBA", (16, 16), self.bgcolor)
+        img_in = img_src.crop(coord_crop)
+        if scale >= 0 and scale != 1:
+            w, h = img_in.size
+            img_in = img_in.resize((int(w * scale), int(h * scale)), Image.NEAREST)
+        img_out.paste(img_in, coord_paste)
+        return img_out
+
+    # Set variables defining positions of various parts
+    wall_mounted = bool(data & 0b0100)
+    rot_leg = [0, 270, 0][data >> 2]
+    if wall_mounted:
+        pos_leg = (32, 28) if data & 0b11 in [2, 3] else (10, 18)
+        coord_leg = [(0, 0), (-10, -1), (2, 3)]
+        offset_final = [(2, 1), (-2, 1), (-2, -1), (2, -1)][data & 0b11]
+    else:
+        pos_leg = [(22, 31), (22, 9)][data >> 3]
+        coord_leg = [(0, 0), (-1, 2), (-2, -3)]
+        offset_final = (0, 2 * (data >> 2) - 1)
+
+    # Create parts
+    # Scale up small parts like pivot & leg to avoid ugly results
+    #   when shearing & combining parts, then scale down to original
+    #   size just before final image composition
+    scale_factor = 2
+    side_t = create_tile(side_raw_t, (0, 0, 12, 12), (2, 0), 1)
+    round_ud_t = create_tile(round_raw_t, (0, 0, 8, 12), (4, 2), 1)
+    round_lr_t = create_tile(round_raw_t, (0, 0, 8, 12), (4, 0), 1)
+    pivot_outer_t = create_tile(pivot_raw_t, (0, 0, 6, 6), (2, 2), scale_factor)
+    pivot_lr_t = create_tile(pivot_raw_t, (6, 0, 8, 6), (2, 2), scale_factor)
+    pivot_ud_t = create_tile(pivot_raw_t, (8, 0, 10, 6), (2, 2), scale_factor)
+    leg_outer_t = create_tile(leg_raw_t, (6, 9, 10, 16), (2, 2), scale_factor).rotate(rot_leg)
+    leg_lr_t = create_tile(leg_raw_t, (12, 9, 14, 16), (2, 2), scale_factor).rotate(rot_leg)
+    leg_ud_t = create_tile(leg_raw_t, (2, 6, 4, 10), (2, 2), scale_factor)
+
+    # Transform to block sides & tops
+    side_t = self.transform_image_side(side_t)
+    round_ud_t = self.transform_image_top(round_ud_t)
+    round_lr_t = self.transform_image_side(round_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+    pivot_outer_t = self.transform_image_side(pivot_outer_t)
+    pivot_lr_t = self.transform_image_side(pivot_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+    pivot_ud_t = self.transform_image_top(pivot_ud_t)
+    leg_outer_t = self.transform_image_side(leg_outer_t)
+    if wall_mounted:
+        leg_lr_t = self.transform_image_top(leg_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+        leg_ud_t = self.transform_image_side(leg_ud_t).transpose(Image.FLIP_LEFT_RIGHT)
+    else:
+        leg_lr_t = self.transform_image_side(leg_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+        leg_ud_t = self.transform_image_top(leg_ud_t)
+
+    # Compose leg texture
+    img_leg = Image.new("RGBA", (24 * scale_factor, 24 * scale_factor), self.bgcolor)
+    alpha_over(img_leg, leg_outer_t, coord_leg[0], leg_outer_t)
+    alpha_over(img_leg, leg_lr_t, coord_leg[1], leg_lr_t)
+    alpha_over(img_leg, leg_ud_t, coord_leg[2], leg_ud_t)
+
+    # Compose pivot texture (& combine with leg)
+    img_pivot = Image.new("RGBA", (24 * scale_factor, 24 * scale_factor), self.bgcolor)
+    alpha_over(img_pivot, pivot_ud_t, (20, 18), pivot_ud_t)
+    alpha_over(img_pivot, pivot_lr_t, (23, 24), pivot_lr_t)  # Fix gaps between face edges
+    alpha_over(img_pivot, pivot_lr_t, (24, 24), pivot_lr_t)
+    alpha_over(img_pivot, img_leg, pos_leg, img_leg)
+    alpha_over(img_pivot, pivot_outer_t, (21, 21), pivot_outer_t)
+    img_pivot = img_pivot.resize((24, 24), Image.LANCZOS)
+
+    # Combine leg, side, round & pivot
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    img_final = img.copy()
+    alpha_over(img, img_pivot, (1, -5), img_pivot)
+    alpha_over(img, round_ud_t, (0, 2), round_ud_t)  # Fix gaps between face edges
+    alpha_over(img, side_t, (3, 6), side_t)
+    alpha_over(img, round_ud_t, (0, 1), round_ud_t)
+    alpha_over(img, round_lr_t, (10, 6), round_lr_t)
+    alpha_over(img, img_pivot, (-5, -1), img_pivot)
+    if (data & 0b11) in [1, 3]:
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(img_final, img, offset_final, img)
+
+    return img_final
 
 
 # crops with 8 data values (like wheat)

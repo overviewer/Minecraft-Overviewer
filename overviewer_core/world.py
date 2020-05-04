@@ -1137,6 +1137,10 @@ class RegionSet(object):
         elif key == 'minecraft:farmland':
             # A moisture level of 7 has a different texture from other farmland
             data = 1 if palette_entry['Properties'].get('moisture', '0') == '7' else 0
+        elif key == 'minecraft:grindstone':
+            p = palette_entry['Properties']
+            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
+            data |= {'floor': 0, 'wall': 4, 'ceiling': 8}[p['face']]
 
         return (block, data)
 
