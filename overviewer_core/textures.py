@@ -2541,12 +2541,29 @@ def loom(self, blockid, data):
     img = self.build_full_block(top, None, None, side3, side4, None)
     return img
 
-@material(blockid=11368, solid=True, nodata=True)
-def stonecutter(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/stonecutter_top.png")
-    side3 = side4 = self.load_image_texture("assets/minecraft/textures/block/stonecutter_side.png")
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
+@material(blockid=11368, data=list(range(4)), transparent=True, solid=True, nospawn=True)
+def stonecutter(self, blockid, data):
+    # Do rotation
+    data = (self.rotation + data) % 4
+
+    top_t = self.load_image_texture("assets/minecraft/textures/block/stonecutter_top.png").copy()
+    side_t = self.load_image_texture("assets/minecraft/textures/block/stonecutter_side.png")
+    # Stonecutter saw texture contains multiple tiles, since it's
+    #   16px wide rely on load_image_texture() to crop appropriately
+    blade_t = self.load_image_texture("assets/minecraft/textures/block/stonecutter_saw.png").copy()
+
+    top_t = top_t.rotate([180, 90, 0, 270][data])
+    img = self.build_full_block((top_t, 7), None, None, side_t, side_t, None)
+
+    # Add saw blade
+    if data in [0, 2]:
+        blade_t = blade_t.transpose(Image.FLIP_LEFT_RIGHT)
+    blade_t = self.transform_image_side(blade_t)
+    if data in [0, 2]:
+        blade_t = blade_t.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(img, blade_t, (6, -4), blade_t)
+
     return img
 
 
