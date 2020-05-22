@@ -23,6 +23,7 @@ import re
 import locale
 
 import numpy
+import math
 
 from . import nbt
 from . import cache
@@ -1245,9 +1246,7 @@ class RegionSet(object):
         return result
     
     def _packed_longarray_to_shorts_v116(self, long_array, n, num_palette):
-        bits_per_value = 4
-        while (1 << bits_per_value) < num_palette:
-            bits_per_value += 1
+        bits_per_value = max(4, math.ceil(math.log2(num_palette)))
 
         b = numpy.asarray(long_array, dtype=numpy.uint64)
         result = numpy.zeros((n,), dtype=numpy.uint16)
@@ -1256,7 +1255,6 @@ class RegionSet(object):
 
         for i in range(shorts_per_long):
             j = (n + shorts_per_long - 1 - i) // shorts_per_long
-            #assert j == len(result[i::shorts_per_long])
             result[i::shorts_per_long] = (b[:j] >> (bits_per_value * i)) & mask
         
         return result
@@ -1391,7 +1389,7 @@ class RegionSet(object):
         chunk_data = level
 
         longarray_unpacker = self._packed_longarray_to_shorts
-        if 'DataVersion' in data[1] and data[1]['DataVersion'] >= 2529:
+        if data[1].get('DataVersion', 0) >= 2529:
             # starting with 1.16 snapshot 20w17a, block states are packed differently
             longarray_unpacker = self._packed_longarray_to_shorts_v116
 
