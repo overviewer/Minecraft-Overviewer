@@ -23,6 +23,7 @@ import re
 import locale
 
 import numpy
+import math
 
 from . import nbt
 from . import cache
@@ -1177,7 +1178,7 @@ class RegionSet(object):
             self.regioncache[regionfilename] = region
             return region
 
-    def _packed_longarray_to_shorts(self, long_array, n):
+    def _packed_longarray_to_shorts(self, long_array, n, num_palette):
         bits_per_value = (len(long_array) * 64) / n
         if bits_per_value < 4 or 12 < bits_per_value:
             raise nbt.CorruptChunkError()
@@ -1243,8 +1244,22 @@ class RegionSet(object):
             result[1::2] = ( b[2::3]         << 4) | ((b[1::3] & 0xf0) >> 4)
 
         return result
+    
+    def _packed_longarray_to_shorts_v116(self, long_array, n, num_palette):
+        bits_per_value = max(4, math.ceil(math.log2(num_palette)))
 
-    def _get_blockdata_v113(self, section, unrecognized_block_types):
+        b = numpy.asarray(long_array, dtype=numpy.uint64)
+        result = numpy.zeros((n,), dtype=numpy.uint16)
+        shorts_per_long = 64 // bits_per_value
+        mask = (1 << bits_per_value) - 1
+
+        for i in range(shorts_per_long):
+            j = (n + shorts_per_long - 1 - i) // shorts_per_long
+            result[i::shorts_per_long] = (b[:j] >> (bits_per_value * i)) & mask
+        
+        return result
+
+    def _get_blockdata_v113(self, section, unrecognized_block_types, longarray_unpacker):
         # Translate each entry in the palette to a 1.2-era (block, data) int pair.
         num_palette_entries = len(section['Palette'])
         translated_blocks = numpy.zeros((num_palette_entries,), dtype=numpy.uint16) # block IDs
@@ -1259,7 +1274,7 @@ class RegionSet(object):
         # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
         blocks = numpy.empty((4096,), dtype=numpy.uint16)
         data = numpy.empty((4096,), dtype=numpy.uint8)
-        block_states = self._packed_longarray_to_shorts(section['BlockStates'], 4096)
+        block_states = longarray_unpacker(section['BlockStates'], 4096, num_palette_entries)
         blocks[:] = translated_blocks[block_states]
         data[:] = translated_data[block_states]
 
@@ -1373,6 +1388,11 @@ class RegionSet(object):
         level = data[1]['Level']
         chunk_data = level
 
+        longarray_unpacker = self._packed_longarray_to_shorts
+        if data[1].get('DataVersion', 0) >= 2529:
+            # starting with 1.16 snapshot 20w17a, block states are packed differently
+            longarray_unpacker = self._packed_longarray_to_shorts_v116
+
         # From the interior of a map to the edge, a chunk's status may be one of:
         # - postprocessed (interior, or next to fullchunk)
         # - fullchunk (next to decorated)
@@ -1433,7 +1453,7 @@ class RegionSet(object):
                 section['BlockLight'] = blocklight_expanded
 
                 if 'Palette' in section:
-                    (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types)
+                    (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types, longarray_unpacker)
                 elif 'Data' in section:
                     (blocks, data) = self._get_blockdata_v112(section)
                 else:   # Special case introduced with 1.14
