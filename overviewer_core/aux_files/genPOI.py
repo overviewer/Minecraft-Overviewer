@@ -142,7 +142,7 @@ def parseBucketChunks(task_tuple):
         if i == 250:
             i = 0
             cnt = 250 + cnt
-            logging.info("Found %d markers in thread %d so far at %d chunks.",
+            logging.debug("Found %d markers in thread %d so far at %d chunks.",
                          sum(len(v) for v in markers.values()), pid, cnt)
 
     return markers
@@ -502,6 +502,8 @@ def main():
     filters = set()
     marker_groups = defaultdict(list)
 
+    logging.info("Searching renders: %s", list(config['renders']))
+
     # collect all filters and get regionsets
     for rname, render in config['renders'].items():
         # Convert render['world'] to the world path, and store the original
@@ -559,14 +561,15 @@ def main():
     markers = dict((name, dict(created=False, raw=[], name=filter_name))
                    for name, filter_name, __, __, __, __ in filters)
 
+    all_rsets = set(map(lambda f : f[3], filters))
+    logging.info("Will search %s region sets using %s filters", len(all_rsets), len(filters))
+
     # apply filters to regionsets
     if not args.skipscan:
-        # group filters by rset
-        def keyfunc(x):
-            return x[3]
-        sfilters = sorted(filters, key=keyfunc)
-        for rset, rset_filters in itertools.groupby(sfilters, keyfunc):
-            handleEntities(rset, config, args.config, list(rset_filters), markers)
+        for rset in all_rsets:
+            rset_filters = list(filter(lambda f : f[3] == rset, filters))
+            logging.info("Calling handleEntities for %s with %s filters", rset, len(rset_filters))
+            handleEntities(rset, config, args.config, rset_filters, markers)
 
     # apply filters to players
     if not args.skipplayers:
