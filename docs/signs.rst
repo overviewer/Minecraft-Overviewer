@@ -55,6 +55,17 @@ be used as the hover text, the second will be used as the info window content::
         if poi['id'] == "Chest" or poi['id'] == 'minecraft:chest':
             return ("Chest", "Chest with %d items" % len(poi.get('Items', [])))
 
+Additionally, you can filter based on other Block Entity data by including references to other
+Minecraft Block Entity fields. For instance, you can filter out world-generated lootable chests
+that have not yet been opened by players by filtering out chests that still have loot tables::
+
+    def chestFilter(poi):
+        if poi['id'] == "Chest" or poi['id'] == 'minecraft:chest':
+            if "LootTable" in poi:
+                return None
+            else:
+                return ("Chest", "Chest with %d items" % len(poi.get('Items', [])))
+
 Because of the way the config file is loaded, if you need to import a function or module
 for use in your filter function, you need to explicitly load it into the global namespace::
 
