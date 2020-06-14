@@ -387,7 +387,7 @@ class RegionSet(object):
             'minecraft:green_wool': (35, 13),
             'minecraft:red_wool': (35, 14),
             'minecraft:black_wool': (35, 15),
-
+            # Flowers
             'minecraft:poppy': (38, 0),
             'minecraft:blue_orchid': (38, 1),
             'minecraft:allium': (38, 2),
@@ -398,6 +398,10 @@ class RegionSet(object):
             'minecraft:pink_tulip': (38, 7),
             'minecraft:oxeye_daisy': (38, 8),
             'minecraft:dandelion': (38, 9),
+            "minecraft:wither_rose": (38, 10),
+            "minecraft:cornflower": (38, 11),
+            "minecraft:lily_of_the_valley": (38, 12),
+
             'minecraft:brown_mushroom': (39, 0),
             'minecraft:red_mushroom': (40, 0),
             'minecraft:gold_block': (41, 0),
@@ -842,6 +846,7 @@ class RegionSet(object):
             'minecraft:bee_nest': (11502, 0),
             'minecraft:honeycomb_block': (11503, 0),
             'minecraft:honey_block': (11504, 0),
+            'minecraft:sweet_berry_bush': (11505, 0),
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
@@ -1134,7 +1139,8 @@ class RegionSet(object):
             if p['open'] == 'true': data |= 0x04
             if p['half'] == 'top': data |= 0x08
         elif key in ['minecraft:beetroots', 'minecraft:melon_stem', 'minecraft:wheat',
-                     'minecraft:pumpkin_stem', 'minecraft:potatoes', 'minecraft:carrots']:
+                     'minecraft:pumpkin_stem', 'minecraft:potatoes', 'minecraft:carrots',
+                     'minecraft:sweet_berry_bush']:
             data = palette_entry['Properties']['age']
         elif key == 'minecraft:lantern':
             if palette_entry['Properties']['hanging'] == 'true':
