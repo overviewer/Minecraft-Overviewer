@@ -2482,48 +2482,39 @@ block(blockid=56, top_image="assets/minecraft/textures/block/diamond_ore.png")
 # diamond block
 block(blockid=57, top_image="assets/minecraft/textures/block/diamond_block.png")
 
-# crafting table
-# needs two different sides
-@material(blockid=58, solid=True, nodata=True)
-def crafting_table(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/crafting_table_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/crafting_table_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/crafting_table_front.png")
-    
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
 
-# fletching table
-@material(blockid=11359, solid=True, nodata=True)
-def fletching_table(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/fletching_table_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/fletching_table_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/fletching_table_front.png")
+# Table blocks with no facing or other properties where sides are not all the same
+# Includes: Crafting table, fletching table, cartography table, smithing table
+@material(blockid=[58, 11359, 11360, 11361], solid=True, nodata=True)
+def block_table(self, blockid, data):
+    block_name = {58:    "crafting_table",
+                  11359: "fletching_table",
+                  11360: "cartography_table",
+                  11361: "smithing_table"}[blockid]
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
+    # Top texture doesn't vary with self.rotation, but texture rotation does
+    top_tex = block_name + "_top"
+    top_rot = [0, 270, 180, 90][self.rotation]
 
-# cartography table
-@material(blockid=11360, solid=True, nodata=True)
-def cartography_table(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/cartography_table_top.png")
-    side1 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side3.png")
-    side2 = side1
-    side3 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side2.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side1.png").transpose(Image.FLIP_LEFT_RIGHT)
+    # List of side textures from side 1 to 4 for each blockid
+    side_tex_map = {58:    ["front", "side", "front", "side"],
+                    11359: ["front", "side", "side", "front"],
+                    11360: ["side3", "side3", "side2", "side1"],
+                    11361: ["front", "side", "side", "front"]}[blockid]
+    # Determine which side textures to use
+    side3_id = [2, 3, 1, 0][self.rotation]
+    side4_id = [3, 1, 0, 2][self.rotation]
+    side3_tex = block_name + "_" + side_tex_map[side3_id]
+    side4_tex = block_name + "_" + side_tex_map[side4_id]
 
-    img = self.build_full_block(top, side1, side2, side3, side4, None)
-    return img
+    tex_path = "assets/minecraft/textures/block"
+    top = self.load_image_texture("{}/{}.png".format(tex_path, top_tex)).copy()
+    side3 = self.load_image_texture("{}/{}.png".format(tex_path, side3_tex))
+    side4 = self.load_image_texture("{}/{}.png".format(tex_path, side4_tex)).copy()
+    top = top.rotate(top_rot)
+    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
 
-# smithing table
-@material(blockid=11361, solid=True, nodata=True)
-def smithing_table(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/smithing_table_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/smithing_table_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/smithing_table_front.png")
-
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
+    return self.build_full_block(top, None, None, side3, side4, None)
 
 
 @material(blockid=11366, data=list(range(8)), transparent=True, solid=True, nospawn=True)
