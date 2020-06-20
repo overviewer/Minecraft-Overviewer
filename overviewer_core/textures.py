@@ -2654,14 +2654,23 @@ def lectern(self, blockid, data):
     return img
 
 
-@material(blockid=11367, solid=True, nodata=True)
+@material(blockid=11367, data=list(range(4)), solid=True)
 def loom(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/loom_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/loom_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/loom_front.png")
+    # Do rotation
+    data = (self.rotation + data) % 4
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
+    top_rot = [180, 90, 0, 270][data]
+    side3_tex = "front" if data == 1 else "side"
+    side4_tex = "front" if data == 0 else "side"
+
+    tex_path = "assets/minecraft/textures/block"
+    top = self.load_image_texture("{}/loom_top.png".format(tex_path)).copy()
+    side3 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side3_tex))
+    side4 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side4_tex)).copy()
+    top = top.rotate(top_rot)
+    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+
+    return self.build_full_block(top, None, None, side3, side4, None)
 
 
 @material(blockid=11368, data=list(range(4)), transparent=True, solid=True, nospawn=True)
