@@ -690,6 +690,7 @@ class RegionSet(object):
             'minecraft:black_glazed_terracotta': (250, 0),
 
             'minecraft:structure_block': (255, 0),
+            'minecraft:jigsaw': (256, 0),
 
             'minecraft:armor_stand': (416, 0),  # not rendering
 
@@ -1031,7 +1032,7 @@ class RegionSet(object):
             data = int(palette_entry['Properties']['age'])
         elif (key.endswith('shulker_box') or key.endswith('piston') or
               key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser',
-                      'minecraft:piston_head']):
+                      'minecraft:piston_head', 'minecraft:jigsaw']):
             p = palette_entry['Properties']
             data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[p['facing']]
             if ((key.endswith('piston') and p.get('extended', 'false') == 'true') or

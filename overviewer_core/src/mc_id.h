@@ -257,6 +257,7 @@ enum mc_block_id {
     block_concrete = 251,
     block_concrete_powder = 252,
     block_structure_block = 255,
+    block_jigsaw = 256,
     block_prismarine_stairs = 11337,
     block_dark_prismarine_stairs = 11338,
     block_prismarine_brick_stairs = 11339,

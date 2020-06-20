@@ -5090,7 +5090,40 @@ def structure_block(self, blockid, data):
         img = self.load_image_texture("assets/minecraft/textures/block/structure_block_data.png")
     return self.build_block(img, img)
 
-# beetroots(207), berry bushes(11505)
+
+# Jigsaw block
+@material(blockid=256, data=list(range(6)), solid=True)
+def jigsaw_block(self, blockid, data):
+    # Do rotation
+    if self.rotation in [1, 2, 3] and data in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = rotation_map[self.rotation][data]
+
+    top = self.load_image_texture("assets/minecraft/textures/block/jigsaw_top.png")
+    bottom = self.load_image_texture("assets/minecraft/textures/block/jigsaw_bottom.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/jigsaw_side.png")
+
+    if data == 0:    # Down
+        img = self.build_full_block(bottom.rotate(self.rotation * 90), None, None,
+                                    side.rotate(180), side.rotate(180))
+    elif data == 1:  # Up
+        img = self.build_full_block(top.rotate(self.rotation * 90), None, None, side, side)
+    elif data == 2:  # North
+        img = self.build_full_block(side, None, None, side.rotate(90), bottom.rotate(180))
+    elif data == 3:  # South
+        img = self.build_full_block(side.rotate(180), None, None, side.rotate(270), top.rotate(270))
+    elif data == 4:  # West
+        img = self.build_full_block(side.rotate(90), None, None, top.rotate(180), side.rotate(270))
+    elif data == 5:  # East
+        img = self.build_full_block(side.rotate(270), None, None, bottom.rotate(180),
+                                    side.rotate(90))
+
+    return img
+
+
+# beetroots(207), berry bushes (11505)
 @material(blockid=[207, 11505], data=list(range(4)), transparent=True, nospawn=True)
 def crops(self, blockid, data):
 
