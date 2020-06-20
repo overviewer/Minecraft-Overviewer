@@ -801,6 +801,7 @@ class RegionSet(object):
             'minecraft:honey_block': (11504, 0),
             'minecraft:sweet_berry_bush': (11505, 0),
             'minecraft:campfire': (11506, 0),
+            'minecraft:bell': (11507, 0),
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
@@ -1139,20 +1140,21 @@ class RegionSet(object):
         elif key == 'minecraft:farmland':
             # A moisture level of 7 has a different texture from other farmland
             data = 1 if palette_entry['Properties'].get('moisture', '0') == '7' else 0
-        elif key == 'minecraft:grindstone':
+        elif key in ['minecraft:grindstone', 'minecraft:lectern', 'minecraft:campfire',
+                     'minecraft:bell']:
             p = palette_entry['Properties']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
-            data |= {'floor': 0, 'wall': 4, 'ceiling': 8}[p['face']]
-        elif key == 'minecraft:lectern':
-            p = palette_entry['Properties']
-            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
-            if p['has_book'] == 'true':
-                data |= 4
-        elif key == 'minecraft:campfire':
-            p = palette_entry['Properties']
-            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
-            if p['lit'] == 'true':
-                data |= 4
+            if key == 'minecraft:grindstone':
+                data |= {'floor': 0, 'wall': 4, 'ceiling': 8}[p['face']]
+            elif key == 'minecraft:lectern':
+                if p['has_book'] == 'true':
+                    data |= 4
+            elif key == 'minecraft:campfire':
+                if p['lit'] == 'true':
+                    data |= 4
+            elif key == 'minecraft:bell':
+                data |= {'floor': 0, 'ceiling': 4, 'single_wall': 8,
+                         'double_wall': 12}[p['attachment']]
 
         return (block, data)
 

@@ -5548,3 +5548,136 @@ def campfire(self, blockid, data):
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
 
     return img
+
+
+# Bell
+@material(blockid=11507, data=list(range(16)), solid=True, transparent=True, nospawn=True)
+def bell(self, blockid, data):
+    # Do rotation, mask to not clobber attachment data
+    data = data & 0b1100 | ((self.rotation + (data & 0b11)) % 4)
+
+    # Load textures
+    bell_raw_t = self.load_image("assets/minecraft/textures/entity/bell/bell_body.png")
+    bar_raw_t = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png")
+    post_raw_t = self.load_image_texture("assets/minecraft/textures/block/stone.png")
+
+    def create_tile(img_src, coord_crop, coord_paste, rot):
+        # Takes an image, crops a region, optionally rotates the
+        #   texture, then finally pastes it onto a 16x16 image
+        img_out = Image.new("RGBA", (16, 16), self.bgcolor)
+        img_in = img_src.crop(coord_crop)
+        if rot != 0:
+            img_in = img_in.rotate(rot, expand=True)
+        img_out.paste(img_in, coord_paste)
+        return img_out
+
+    # 0 = floor, 1 = ceiling, 2 = single wall, 3 = double wall
+    bell_type = (data & 0b1100) >> 2
+    # Should the bar/post texture be flipped? Yes if either:
+    #   - Attached to floor and East or West facing
+    #   - Not attached to floor and North or South facing
+    flip_part = ((bell_type == 0 and data & 0b11 in [1, 3]) or
+                 (bell_type != 0 and data & 0b11 in [0, 2]))
+
+    # Generate bell
+    # Bell side textures varies based on self.rotation
+    bell_sides_idx = [(0 - self.rotation) % 4, (3 - self.rotation) % 4]
+    # Upper sides
+    bell_coord = [x * 6 for x in bell_sides_idx]
+    bell_ul_t = create_tile(bell_raw_t, (bell_coord[0], 6, bell_coord[0] + 6, 13), (5, 4), 180)
+    bell_ur_t = create_tile(bell_raw_t, (bell_coord[1], 6, bell_coord[1] + 6, 13), (5, 4), 180)
+    bell_ul_t = self.transform_image_side(bell_ul_t)
+    bell_ur_t = self.transform_image_side(bell_ur_t.transpose(Image.FLIP_LEFT_RIGHT))
+    bell_ur_t = bell_ur_t.transpose(Image.FLIP_LEFT_RIGHT)
+    # Lower sides
+    bell_coord = [x * 8 for x in bell_sides_idx]
+    bell_ll_t = create_tile(bell_raw_t, (bell_coord[0], 21, bell_coord[0] + 8, 23), (4, 11), 180)
+    bell_lr_t = create_tile(bell_raw_t, (bell_coord[1], 21, bell_coord[1] + 8, 23), (4, 11), 180)
+    bell_ll_t = self.transform_image_side(bell_ll_t)
+    bell_lr_t = self.transform_image_side(bell_lr_t.transpose(Image.FLIP_LEFT_RIGHT))
+    bell_lr_t = bell_lr_t.transpose(Image.FLIP_LEFT_RIGHT)
+    # Upper top
+    top_rot = (180 + self.rotation * 90) % 360
+    bell_ut_t = create_tile(bell_raw_t, (6, 0, 12, 6), (5, 5), top_rot)
+    bell_ut_t = self.transform_image_top(bell_ut_t)
+    # Lower top
+    bell_lt_t = create_tile(bell_raw_t, (8, 13, 16, 21), (4, 4), top_rot)
+    bell_lt_t = self.transform_image_top(bell_lt_t)
+
+    bell_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(bell_t, bell_lt_t, (0, 8), bell_lt_t)
+    alpha_over(bell_t, bell_ll_t, (3, 4), bell_ll_t)
+    alpha_over(bell_t, bell_lr_t, (9, 4), bell_lr_t)
+    alpha_over(bell_t, bell_ut_t, (0, 3), bell_ut_t)
+    alpha_over(bell_t, bell_ul_t, (4, 4), bell_ul_t)
+    alpha_over(bell_t, bell_ur_t, (8, 4), bell_ur_t)
+
+    # Generate bar
+    if bell_type == 1:  # Ceiling
+        # bar_coord:  Left          Right         Top
+        bar_coord = [(4, 2, 6, 5), (6, 2, 8, 5), (1, 3, 3, 5)]
+        bar_tile_pos = [(7, 1), (7, 1), (7, 7)]
+        bar_over_pos = [(6, 3), (7, 2), (0, 0)]
+    else:  # Floor, single wall, double wall
+        # Note: For a single wall bell, the position of the bar
+        #   varies based on facing
+        if bell_type == 2 and data & 0b11 in [2, 3]:  # Single wall, North/East facing
+            bar_x_sw = 3
+            bar_l_pos_sw = (6, 7)
+        else:
+            bar_x_sw = 0
+            bar_l_pos_sw = (4, 8)
+        bar_x = [2, None, bar_x_sw, 0][bell_type]
+        bar_len = [12, None, 13, 16][bell_type]
+        bar_l_pos = [(6, 7), None, bar_l_pos_sw, (4, 8)][bell_type]
+        bar_long_coord = (bar_x, 3, bar_x + bar_len, 5)
+
+        bar_coord = [(5, 4, 7, 6), bar_long_coord, bar_long_coord]
+        bar_tile_pos = [(2, 1), (bar_x, 1), (bar_x, 7)]
+        bar_over_pos = [bar_l_pos, (7, 3), (0, 1)]
+
+    bar_l_t = create_tile(bar_raw_t, bar_coord[0], bar_tile_pos[0], 0)
+    bar_r_t = create_tile(bar_raw_t, bar_coord[1], bar_tile_pos[1], 0)
+    bar_t_t = create_tile(bar_raw_t, bar_coord[2], bar_tile_pos[2], 0)
+    bar_l_t = self.transform_image_side(bar_l_t)
+    bar_r_t = self.transform_image_side(bar_r_t.transpose(Image.FLIP_LEFT_RIGHT))
+    bar_r_t = bar_r_t.transpose(Image.FLIP_LEFT_RIGHT)
+    bar_t_t = self.transform_image_top(bar_t_t)
+
+    bar_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(bar_t, bar_t_t, bar_over_pos[2], bar_t_t)
+    alpha_over(bar_t, bar_l_t, bar_over_pos[0], bar_l_t)
+    alpha_over(bar_t, bar_r_t, bar_over_pos[1], bar_r_t)
+    if flip_part:
+        bar_t = bar_t.transpose(Image.FLIP_LEFT_RIGHT)
+
+    # Generate post, only applies to floor attached bell
+    if bell_type == 0:
+        post_l_t = create_tile(post_raw_t, (0, 1, 4, 16), (6,  1), 0)
+        post_r_t = create_tile(post_raw_t, (0, 1, 2, 16), (14, 1), 0)
+        post_t_t = create_tile(post_raw_t, (0, 0, 2,  4), (14, 6), 0)
+        post_l_t = self.transform_image_side(post_l_t)
+        post_r_t = self.transform_image_side(post_r_t.transpose(Image.FLIP_LEFT_RIGHT))
+        post_r_t = post_r_t.transpose(Image.FLIP_LEFT_RIGHT)
+        post_t_t = self.transform_image_top(post_t_t)
+
+        post_back_t = Image.new("RGBA", (24, 24), self.bgcolor)
+        post_front_t = Image.new("RGBA", (24, 24), self.bgcolor)
+        alpha_over(post_back_t, post_t_t, (0, 1), post_t_t)
+        alpha_over(post_back_t, post_l_t, (10, 0), post_l_t)
+        alpha_over(post_back_t, post_r_t, (7, 3), post_r_t)
+        alpha_over(post_back_t, post_r_t, (6, 3), post_r_t)  # Fix some holes
+        alpha_over(post_front_t, post_back_t, (-10, 5), post_back_t)
+        if flip_part:
+            post_back_t = post_back_t.transpose(Image.FLIP_LEFT_RIGHT)
+            post_front_t = post_front_t.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    if bell_type == 0:
+        alpha_over(img, post_back_t, (0, 0), post_back_t)
+    alpha_over(img, bell_t, (0, 0), bell_t)
+    alpha_over(img, bar_t, (0, 0), bar_t)
+    if bell_type == 0:
+        alpha_over(img, post_front_t, (0, 0), post_front_t)
+
+    return img
