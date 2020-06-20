@@ -335,6 +335,7 @@ enum mc_block_id {
     block_honeycomb_block = 11503,
     block_honey_block = 11504,
     block_sweet_berry_bush = 11505,
+    block_campfire = 11506,
     //  adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 21000
     block_andesite_wall = 21000,

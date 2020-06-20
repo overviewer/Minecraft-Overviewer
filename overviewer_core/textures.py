@@ -5455,3 +5455,96 @@ def barrel(self, blockid, data):
         return self.build_full_block(t_side, None, None, t_side.rotate(90), t_bottom)
     else:               # west
         return self.build_full_block(t_side.rotate(90), None, None, t_top, t_side.rotate(270))
+
+
+# Campfire
+@material(blockid=11506, data=list(range(8)), solid=True, transparent=True, nospawn=True)
+def campfire(self, blockid, data):
+    # Do rotation, mask to not clobber lit data
+    data = data & 0b100 | ((self.rotation + (data & 0b11)) % 4)
+
+    # Load textures
+    # Fire & lit log textures contain multiple tiles, since both are
+    #   16px wide rely on load_image_texture() to crop appropriately
+    fire_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_fire.png")
+    log_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_log.png")
+    log_lit_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_log_lit.png")
+
+    def create_tile(img_src, coord_crop, coord_paste, rot):
+        # Takes an image, crops a region, optionally rotates the
+        #   texture, then finally pastes it onto a 16x16 image
+        img_out = Image.new("RGBA", (16, 16), self.bgcolor)
+        img_in = img_src.crop(coord_crop)
+        if rot != 0:
+            img_in = img_in.rotate(rot, expand=True)
+        img_out.paste(img_in, coord_paste)
+        return img_out
+
+    # Generate bottom
+    bottom_t = log_lit_raw_t if data & 0b100 else log_raw_t
+    bottom_t = create_tile(bottom_t, (0, 8, 16, 14), (0, 5), 0)
+    bottom_t = self.transform_image_top(bottom_t)
+
+    # Generate two variants of a log: one with a lit side, one without
+    log_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    log_end_t = create_tile(log_raw_t, (0, 4, 4, 8), (12, 6), 0)
+    log_side_t = create_tile(log_raw_t, (0, 0, 16, 4), (0, 6), 0)
+    log_side_lit_t = create_tile(log_lit_raw_t, (0, 0, 16, 4), (0, 6), 0)
+
+    log_end_t = self.transform_image_side(log_end_t)
+    log_top_t = self.transform_image_top(log_side_t)
+    log_side_t = self.transform_image_side(log_side_t).transpose(Image.FLIP_LEFT_RIGHT)
+    log_side_lit_t = self.transform_image_side(log_side_lit_t).transpose(Image.FLIP_LEFT_RIGHT)
+
+    alpha_over(log_t, log_top_t, (-2, 2), log_top_t)  # Fix some holes at the edges
+    alpha_over(log_t, log_top_t, (-2, 1), log_top_t)
+    log_lit_t = log_t.copy()
+
+    # Unlit log
+    alpha_over(log_t, log_side_t, (5, 0), log_side_t)
+    alpha_over(log_t, log_end_t, (-7, 0), log_end_t)
+
+    # Lit log. For unlit fires, just reference the unlit log texture
+    if data & 0b100:
+        alpha_over(log_lit_t, log_side_lit_t, (5, 0), log_side_lit_t)
+        alpha_over(log_lit_t, log_end_t, (-7, 0), log_end_t)
+    else:
+        log_lit_t = log_t
+
+    # Log parts. Because fire needs to be in the middle of the logs,
+    #   split the logs into two parts: Those appearing behind the fire
+    #   and those appearing in front of the fire
+    logs_back_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    logs_front_t = Image.new("RGBA", (24, 24), self.bgcolor)
+
+    # Back logs
+    alpha_over(logs_back_t, log_lit_t, (-1, 7), log_lit_t)
+    log_tmp_t = logs_back_t.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(logs_back_t, log_tmp_t, (1, -3), log_tmp_t)
+
+    # Front logs
+    alpha_over(logs_front_t, log_t, (7, 10), log_t)
+    # Due to the awkward drawing order, take a small part of the back
+    #   logs that need to be drawn on top of the front logs despite
+    #   the front logs being drawn last
+    ImageDraw.Draw(log_tmp_t).rectangle((0, 0, 18, 24), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    alpha_over(logs_front_t, log_tmp_t, (1, -3), log_tmp_t)
+    log_tmp_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(log_tmp_t, log_lit_t, (7, 10), log_lit_t)
+    log_tmp_t = log_tmp_t.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(logs_front_t, log_tmp_t, (1, -3), log_tmp_t)
+
+    # Compose final image
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(img, bottom_t, (0, 12), bottom_t)
+    alpha_over(img, logs_back_t, (0, 0), logs_back_t)
+    if data & 0b100:
+        fire_t = fire_raw_t.copy()
+        if data & 0b11 in [0, 2]:  # North, South
+            fire_t = fire_t.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, fire_t, (4, 4), fire_t)
+    alpha_over(img, logs_front_t, (0, 0), logs_front_t)
+    if data & 0b11 in [0, 2]:  # North, South
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+
+    return img

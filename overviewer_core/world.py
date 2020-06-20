@@ -800,6 +800,7 @@ class RegionSet(object):
             'minecraft:honeycomb_block': (11503, 0),
             'minecraft:honey_block': (11504, 0),
             'minecraft:sweet_berry_bush': (11505, 0),
+            'minecraft:campfire': (11506, 0),
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
@@ -1146,6 +1147,11 @@ class RegionSet(object):
             p = palette_entry['Properties']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
             if p['has_book'] == 'true':
+                data |= 4
+        elif key == 'minecraft:campfire':
+            p = palette_entry['Properties']
+            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
+            if p['lit'] == 'true':
                 data |= 4
 
         return (block, data)
