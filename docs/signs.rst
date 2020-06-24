@@ -156,7 +156,7 @@ Here is a more complex example where not every marker of a certain id has a cert
                         'y':85,
                         'z':-234,
                         'name':'Bar'}],
-        'markers': [dict(name="Towns", filterFunction=townFilter, icon="icons/marker_town.png")],
+        'markers': [dict(name="Towns", filterFunction=townFilter, icon="markers/marker_town.png")],
         ### Note: The 'icon' parameter allows you to specify a custom icon, as per
         ###       standard markers. This icon must exist in the same folder as your
         ###       custom webassets or in the same folder as the generated index.html
@@ -271,7 +271,7 @@ Marker Icons Overviewer ships by default
 ========================================
 
 Overviewer comes with multiple small icons that you can use for your markers.
-You can find them in the ``overviewer_core/data/web_assets/icons`` directory.
+You can find them in the ``overviewer_core/data/web_assets/markers`` directory.
 
 If you want to make your own in the same style, you can use the provided
 ``marker_base_plain.svg`` and ``marker_base_plain_red.svg`` as template, with

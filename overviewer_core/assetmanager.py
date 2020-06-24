@@ -98,10 +98,10 @@ top-level directory.
             'defaultMarker':    'signpost.png',
             'signMarker':       'signpost_icon.png',
             'bedMarker':        'bed.png',
-            'spawnMarker':      'icons/marker_home.png',
-            'spawnMarker2x':    'icons/marker_home_2x.png',
-            'queryMarker':      'icons/marker_location.png',
-            'queryMarker2x':    'icons/marker_location_2x.png'
+            'spawnMarker':      'markers/marker_home.png',
+            'spawnMarker2x':    'markers/marker_home_2x.png',
+            'queryMarker':      'markers/marker_location.png',
+            'queryMarker2x':    'markers/marker_location_2x.png'
         }
         dump['CONST']['mapDivId'] = 'mcmap'
         dump['CONST']['UPPERLEFT'] = world.UPPER_LEFT
@@ -174,6 +174,14 @@ top-level directory.
             mirror_dir(self.custom_assets_dir, self.outputdir, capabilities=self.fs_caps,
                        force_writable=True)
 
+        # symlink old icons dir because apache sux
+        if (os.name == "posix" and os.symlink in os.supports_dir_fd and
+            not os.path.islink(os.path.join(self.outputdir, "icons"))):
+            od_fd = os.open(self.outputdir, os.O_DIRECTORY)
+            try:
+                os.symlink("markers", "icons", target_is_directory=True, dir_fd=od_fd)
+            finally:
+                os.close(od_fd)
         # write a dummy baseMarkers.js if none exists
         basemarkers_path = os.path.join(self.outputdir, "baseMarkers.js")
         if not os.path.exists(basemarkers_path):
