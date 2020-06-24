@@ -175,8 +175,9 @@ top-level directory.
                        force_writable=True)
 
         # symlink old icons dir because apache sux
+        iconsdir = os.path.join(self.outputdir, "icons")
         if (os.name == "posix" and os.symlink in os.supports_dir_fd and
-            not os.path.islink(os.path.join(self.outputdir, "icons"))):
+            not os.path.islink(iconsdir) and not os.path.isdir(iconsdir)):
             od_fd = os.open(self.outputdir, os.O_DIRECTORY)
             try:
                 os.symlink("markers", "icons", target_is_directory=True, dir_fd=od_fd)
