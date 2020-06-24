@@ -343,25 +343,9 @@ class RegionSet(object):
             'minecraft:lapis_block': (22, 0),
             'minecraft:dispenser': (23, 0),
             'minecraft:sandstone': (24, 0),
+            'minecraft:chiseled_sandstone': (24, 1),
             'minecraft:cut_sandstone': (24, 2),
-            'minecraft:chiseled_sandstone': (24, 3),
             'minecraft:note_block': (25, 0),
-            'minecraft:white_bed': (26, 0),
-            'minecraft:orange_bed': (26, 0),
-            'minecraft:magenta_bed': (26, 0),
-            'minecraft:light_blue_bed': (26, 0),
-            'minecraft:yellow_bed': (26, 0),
-            'minecraft:lime_bed': (26, 0),
-            'minecraft:pink_bed': (26, 0),
-            'minecraft:gray_bed': (26, 0),
-            'minecraft:light_gray_bed': (26, 0),
-            'minecraft:cyan_bed': (26, 0),
-            'minecraft:purple_bed': (26, 0),
-            'minecraft:blue_bed': (26, 0),
-            'minecraft:brown_bed': (26, 0),
-            'minecraft:green_bed': (26, 0),
-            'minecraft:red_bed': (26, 0),
-            'minecraft:black_bed': (26, 0),
             'minecraft:powered_rail': (27, 0),
             'minecraft:detector_rail': (28, 0),
             'minecraft:sticky_piston': (29, 0),
@@ -486,7 +470,6 @@ class RegionSet(object):
             'minecraft:infested_chiseled_stone_bricks': (98, 3),
             'minecraft:brown_mushroom_block': (99, 0),
             'minecraft:red_mushroom_block': (100, 0),
-            'minecraft:mushroom_stem': (100,10),
             'minecraft:iron_bars': (101, 0),
             'minecraft:glass_pane': (102, 0),
             'minecraft:melon': (103,0),
@@ -530,6 +513,7 @@ class RegionSet(object):
             'minecraft:jungle_stairs': (136, 0),
             'minecraft:command_block': (137, 0),
             'minecraft:beacon': (138, 0),
+            'minecraft:mushroom_stem': (139, 0),
             'minecraft:flower_pot': (140, 0),
             'minecraft:potted_poppy': (140, 0),  # Pots not rendering
             'minecraft:potted_blue_orchid': (140, 0),
@@ -634,8 +618,8 @@ class RegionSet(object):
             'minecraft:standing_banner': (176, 0),
             'minecraft:wall_banner': (177, 0),
             'minecraft:red_sandstone': (179, 0),
+            'minecraft:chiseled_red_sandstone': (179, 1),
             'minecraft:cut_red_sandstone': (179, 2),
-            'minecraft:chiseled_red_sandstone': (179, 3),
             'minecraft:red_sandstone_stairs': (180, 0),
             'minecraft:red_sandstone_slab': (182,0),
             'minecraft:spruce_fence_gate': (183, 0),
@@ -671,41 +655,10 @@ class RegionSet(object):
             'minecraft:red_nether_bricks': (215, 0),
             'minecraft:bone_block': (216, 0),
             'minecraft:observer': (218, 0),
-            'minecraft:white_shulker_box': (219, 0),
-            'minecraft:orange_shulker_box': (220, 0),
-            'minecraft:magenta_shulker_box': (221, 0),
-            'minecraft:light_blue_shulker_box': (222, 0),
-            'minecraft:yellow_shulker_box': (223, 0),
-            'minecraft:lime_shulker_box': (224, 0),
-            'minecraft:pink_shulker_box': (225, 0),
-            'minecraft:gray_shulker_box': (226, 0),
-            'minecraft:light_gray_shulker_box': (227, 0),
-            'minecraft:cyan_shulker_box': (228, 0),
-            'minecraft:shulker_box': (229, 0),  # wrong color
-            'minecraft:purple_shulker_box': (229, 0),
-            'minecraft:blue_shulker_box': (230, 0),
-            'minecraft:brown_shulker_box': (231, 0),
-            'minecraft:green_shulker_box': (232, 0),
-            'minecraft:red_shulker_box': (233, 0),
-            'minecraft:black_shulker_box': (234, 0),
-            'minecraft:white_glazed_terracotta': (235, 0),
-            'minecraft:orange_glazed_terracotta': (236, 0),
-            'minecraft:magenta_glazed_terracotta': (237, 0),
-            'minecraft:light_blue_glazed_terracotta': (238, 0),
-            'minecraft:yellow_glazed_terracotta': (239, 0),
-            'minecraft:lime_glazed_terracotta': (240, 0),
-            'minecraft:pink_glazed_terracotta': (241, 0),
-            'minecraft:gray_glazed_terracotta': (242, 0),
-            'minecraft:light_gray_glazed_terracotta': (243, 0),
-            'minecraft:cyan_glazed_terracotta': (244, 0),
-            'minecraft:purple_glazed_terracotta': (245, 0),
-            'minecraft:blue_glazed_terracotta': (246, 0),
-            'minecraft:brown_glazed_terracotta': (247, 0),
-            'minecraft:green_glazed_terracotta': (248, 0),
-            'minecraft:red_glazed_terracotta': (249, 0),
-            'minecraft:black_glazed_terracotta': (250, 0),
 
             'minecraft:structure_block': (255, 0),
+            'minecraft:jigsaw': (256, 0),
+            'minecraft:shulker_box': (257, 0),
 
             'minecraft:armor_stand': (416, 0),  # not rendering
 
@@ -847,6 +800,8 @@ class RegionSet(object):
             'minecraft:honeycomb_block': (11503, 0),
             'minecraft:honey_block': (11504, 0),
             'minecraft:sweet_berry_bush': (11505, 0),
+            'minecraft:campfire': (11506, 0),
+            'minecraft:bell': (11507, 0),
             # adding a gap in the numbering of walls to keep them all
             # in one numbering block starting at 21000
             'minecraft:andesite_wall': (21000, 0),
@@ -870,13 +825,16 @@ class RegionSet(object):
                 'light_gray',   'cyan',  'purple',       'blue',
                      'brown',  'green',     'red',      'black']
         for i in range(len(colors)):
+            # For beds: bits 1-2 indicate facing, bit 3 occupancy, bit 4 foot (0) or head (1)
+            self._blockmap['minecraft:%s_bed'                % colors[i]] = (26, i << 4)
             self._blockmap['minecraft:%s_stained_glass'      % colors[i]] = (95, i)
             self._blockmap['minecraft:%s_stained_glass_pane' % colors[i]] = (160, i)
-            self._blockmap['minecraft:%s_banner'             % colors[i]] = (176, i) #not rendering
-            self._blockmap['minecraft:%s_wall_banner'        % colors[i]] = (177, i) #not rendering
+            self._blockmap['minecraft:%s_banner'             % colors[i]] = (176, i)  # not rendering
+            self._blockmap['minecraft:%s_wall_banner'        % colors[i]] = (177, i)  # not rendering
+            self._blockmap['minecraft:%s_shulker_box'        % colors[i]] = (219 + i, 0)
+            self._blockmap['minecraft:%s_glazed_terracotta'  % colors[i]] = (235 + i, 0)
             self._blockmap['minecraft:%s_concrete'           % colors[i]] = (251, i)
             self._blockmap['minecraft:%s_concrete_powder'    % colors[i]] = (252, i)
-
 
     # Re-initialize upon unpickling
     def __getstate__(self):
@@ -920,10 +878,12 @@ class RegionSet(object):
             if key == 'minecraft:powered_rail' and palette_entry['Properties']['powered'] == 'true':
                 data |= 8
         elif key in ['minecraft:comparator', 'minecraft:repeater']:
+            # Bits 1-2 indicates facing, bits 3-4 indicates delay
             if palette_entry['Properties']['powered'] == 'true':
                 block += 1
             facing = palette_entry['Properties']['facing']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
+            data |= (int(palette_entry['Properties'].get('delay', '1')) - 1) << 2
         elif key == 'minecraft:daylight_detector':
             if palette_entry['Properties']['inverted'] == 'true':
                 block = 178
@@ -1019,13 +979,17 @@ class RegionSet(object):
                     elif key == 'minecraft:dark_prismarine_slab':
                         data = 2
 
-        elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest', 'minecraft:trapped_chest', 'minecraft:furnace']:
+        elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest',
+                     'minecraft:trapped_chest', 'minecraft:furnace',
+                     'minecraft:blast_furnace', 'minecraft:smoker']:
             facing = palette_entry['Properties']['facing']
             data = {'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
             if key in ['minecraft:chest', 'minecraft:trapped_chest']:
                 # type property should exist, but default to 'single' just in case
                 chest_type = palette_entry['Properties'].get('type', 'single')
                 data |= {'left': 0x8, 'right': 0x10, 'single': 0x0}[chest_type]
+            elif key in ['minecraft:furnace', 'minecraft:blast_furnace', 'minecraft:smoker']:
+                data |= 8 if palette_entry['Properties'].get('lit', 'false') == 'true' else 0
         elif key in ['minecraft:beehive', 'minecraft:bee_nest']:
             facing = palette_entry['Properties']['facing']
             honey_level = int(palette_entry['Properties']['honey_level'])
@@ -1044,9 +1008,15 @@ class RegionSet(object):
                 data = {'east': 6, 'west': 6, 'south': 5, 'north': 5}[facing]
         elif key == 'minecraft:nether_wart':
             data = int(palette_entry['Properties']['age'])
-        elif key.endswith('shulker_box') or key.endswith('piston') or key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser']:
-            facing = palette_entry['Properties']['facing']
-            data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[facing]
+        elif (key.endswith('shulker_box') or key.endswith('piston') or
+              key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser',
+                      'minecraft:piston_head', 'minecraft:jigsaw']):
+            p = palette_entry['Properties']
+            data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[p['facing']]
+            if ((key.endswith('piston') and p.get('extended', 'false') == 'true') or
+                (key == 'minecraft:piston_head' and p.get('type', 'normal') == 'sticky') or
+                (key == 'minecraft:observer' and p.get('powered', 'false') == 'true')):
+                data |= 0x08
         elif key.endswith('_log') or key.endswith('_wood') or key == 'minecraft:bone_block':
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
@@ -1067,32 +1037,27 @@ class RegionSet(object):
                 data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
             else:
                 data = 5
-        elif key in ['minecraft:brown_mushroom_block','minecraft:red_mushroom_block']:
-            p = palette_entry['Properties']
-            if p['up'] == 'true': data = 5
-            else: data = 0
-            if p['north'] == 'true':
-               if p['south'] == 'true': data = 14
-               elif p['east'] == 'true': data = 3
-               elif p['west'] == 'true': data = 1
-               else: data = 2
-            elif p['east'] == 'true':
-               if p['west'] == 'true': data = 14
-               elif p['south'] == 'true': data = 9
-               else: data = 6
-            elif p['south'] == 'true':
-               if p['west'] == 'true': data = 7
-               else: data = 8
-            elif p['west'] == 'true': data = 4
-        elif key in ['minecraft:carved_pumpkin', 'minecraft:jack_o_lantern'] or key.endswith('glazed_terracotta'):
+        elif (key in ['minecraft:carved_pumpkin', 'minecraft:jack_o_lantern',
+                      'minecraft:stonecutter', 'minecraft:loom'] or
+              key.endswith('glazed_terracotta')):
             facing = palette_entry['Properties']['facing']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
-        elif key == 'minecraft:vine':
+        elif key in ['minecraft:vine', 'minecraft:brown_mushroom_block',
+                     'minecraft:red_mushroom_block', 'minecraft:mushroom_stem']:
             p = palette_entry['Properties']
-            if p['south'] == 'true': data |= 1
-            if p['west']  == 'true': data |= 2
-            if p['north'] == 'true': data |= 4
-            if p['east']  == 'true': data |= 8
+            if p['south'] == 'true':
+                data |= 1
+            if p['west']  == 'true':
+                data |= 2
+            if p['north'] == 'true':
+                data |= 4
+            if p['east']  == 'true':
+                data |= 8
+            if p['up']    == 'true':
+                data |= 16
+            # Not all blocks here have the down property, so use dict.get() to avoid errors
+            if p.get('down', 'false') == 'true':
+                data |= 32
         elif key.endswith('anvil'):
             facing = palette_entry['Properties']['facing']
             if facing == 'west':  data += 1
@@ -1155,6 +1120,42 @@ class RegionSet(object):
                 (facing_data[palette_entry['Properties']['facing']] << 1) +
                 (1 if palette_entry['Properties']['open'] == 'true' else 0)
             )
+        elif key.endswith('_bed'):
+            facing = palette_entry['Properties']['facing']
+            data |= {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
+            if palette_entry['Properties'].get('part', 'foot') == 'head':
+                data |= 8
+        elif key == 'minecraft:end_portal_frame':
+            facing = palette_entry['Properties']['facing']
+            data |= {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
+            if palette_entry['Properties'].get('eye', 'false') == 'true':
+                data |= 4
+        elif key == 'minecraft:cauldron':
+            data = int(palette_entry['Properties'].get('level', '0'))
+        elif key == 'minecraft:structure_block':
+            block_mode = palette_entry['Properties'].get('mode', 'save')
+            data = {'save': 0, 'load': 1, 'corner': 2, 'data': 3}.get(block_mode, 0)
+        elif key == 'minecraft:cake':
+            data = int(palette_entry['Properties'].get('bites', '0'))
+        elif key == 'minecraft:farmland':
+            # A moisture level of 7 has a different texture from other farmland
+            data = 1 if palette_entry['Properties'].get('moisture', '0') == '7' else 0
+        elif key in ['minecraft:grindstone', 'minecraft:lectern', 'minecraft:campfire',
+                     'minecraft:bell']:
+            p = palette_entry['Properties']
+            data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
+            if key == 'minecraft:grindstone':
+                data |= {'floor': 0, 'wall': 4, 'ceiling': 8}[p['face']]
+            elif key == 'minecraft:lectern':
+                if p['has_book'] == 'true':
+                    data |= 4
+            elif key == 'minecraft:campfire':
+                if p['lit'] == 'true':
+                    data |= 4
+            elif key == 'minecraft:bell':
+                data |= {'floor': 0, 'ceiling': 4, 'single_wall': 8,
+                         'double_wall': 12}[p['attachment']]
+
         return (block, data)
 
     def get_type(self):

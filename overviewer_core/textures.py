@@ -683,7 +683,7 @@ class Textures(object):
         you use an increment of 8, it will draw a half-block.
 
         NOTE: this method uses the bottom of the texture image (as done in 
-        minecraft with beds and cackes)
+        minecraft with beds and cakes)
 
         """
 
@@ -943,18 +943,20 @@ def grass(self, blockid, data):
         alpha_over(img, self.biome_grass_texture, (0, 0), self.biome_grass_texture)
     return img
 
+
 # dirt
 @material(blockid=3, data=list(range(3)), solid=True)
 def dirt_blocks(self, blockid, data):
-    side_img = self.load_image_texture("assets/minecraft/textures/block/dirt.png")
-    if data == 0: # normal
-        img =  self.build_block(self.load_image_texture("assets/minecraft/textures/block/dirt.png"), side_img)
-    if data == 1: # grassless
-        img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/dirt.png"), side_img)
-    if data == 2: # podzol
-        side_img = self.load_image_texture("assets/minecraft/textures/block/podzol_side.png")
-        img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/podzol_top.png"), side_img)
-    return img
+    texture_map = [{"top": "dirt",        "side": "dirt"},         # Normal
+                   {"top": "coarse_dirt", "side": "coarse_dirt"},  # Coarse
+                   {"top": "podzol_top",  "side": "podzol_side"}]  # Podzol
+    top_img = self.load_image_texture("assets/minecraft/textures/block/%s.png"
+                                      % texture_map[data]["top"])
+    side_img = self.load_image_texture("assets/minecraft/textures/block/%s.png"
+                                       % texture_map[data]["side"])
+
+    return self.build_block(top_img, side_img)
+
 
 # cobblestone
 block(blockid=4, top_image="assets/minecraft/textures/block/cobblestone.png")
@@ -1214,53 +1216,68 @@ block(blockid=21, top_image="assets/minecraft/textures/block/lapis_ore.png")
 # lapis lazuli block
 block(blockid=22, top_image="assets/minecraft/textures/block/lapis_block.png")
 
-# dispensers, dropper, furnaces, and burning furnaces
-@material(blockid=[23, 61, 62, 158], data=list(range(6)), solid=True)
+
+# dispenser, dropper, furnace, blast furnace, and smoker
+@material(blockid=[23, 61, 158, 11362, 11364], data=list(range(14)), solid=True)
 def furnaces(self, blockid, data):
     # first, do the rotation if needed
-    if self.rotation == 1:
-        if data == 2: data = 5
-        elif data == 3: data = 4
-        elif data == 4: data = 2
-        elif data == 5: data = 3
-    elif self.rotation == 2:
-        if data == 2: data = 3
-        elif data == 3: data = 2
-        elif data == 4: data = 5
-        elif data == 5: data = 4
-    elif self.rotation == 3:
-        if data == 2: data = 4
-        elif data == 3: data = 5
-        elif data == 4: data = 3
-        elif data == 5: data = 2
-    
-    top = self.load_image_texture("assets/minecraft/textures/block/furnace_top.png")
-    side = self.load_image_texture("assets/minecraft/textures/block/furnace_side.png")
-    
-    if blockid == 61:
-        front = self.load_image_texture("assets/minecraft/textures/block/furnace_front.png")
-    elif blockid == 62:
-        front = self.load_image_texture("assets/minecraft/textures/block/furnace_front_on.png")
-    elif blockid == 23:
-        front = self.load_image_texture("assets/minecraft/textures/block/dispenser_front.png")
-        if data == 0: # dispenser pointing down
-            return self.build_block(top, top)
-        elif data == 1: # dispenser pointing up
-            dispenser_top = self.load_image_texture("assets/minecraft/textures/block/dispenser_front_vertical.png")
-            return self.build_block(dispenser_top, top)
-    elif blockid == 158:
-        front = self.load_image_texture("assets/minecraft/textures/block/dropper_front.png")
-        if data == 0: # dropper pointing down
-            return self.build_block(top, top)
-        elif data == 1: # dispenser pointing up
-            dropper_top = self.load_image_texture("assets/minecraft/textures/block/dropper_front_vertical.png")
-            return self.build_block(dropper_top, top)
-    
-    if data == 3: # pointing west
+    # Masked as bit 4 indicates whether the block is lit/triggered or not
+    if self.rotation in [1, 2, 3] and data & 0b111 in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = data & 0b1000 | rotation_map[self.rotation][data & 0b111]
+
+    # Rotation angles for top texture using data & 0b111 as an index
+    top_rotation_map = [0, 0, 180, 0, 270, 90, 0, 0]
+
+                   # Dispenser
+    texture_map = {23:    {'top': 'furnace_top', 'side': 'furnace_side',
+                           'front': 'dispenser_front', 'top_vert': 'dispenser_front_vertical'},
+                   # Furnace
+                   61:    {'top': 'furnace_top', 'side': 'furnace_side',
+                           'front': 'furnace_front', 'front_on': 'furnace_front_on'},
+                   # Dropper
+                   158:   {'top': 'furnace_top', 'side': 'furnace_side',
+                           'front': 'dropper_front', 'top_vert': 'dropper_front_vertical'},
+                   # Blast furance
+                   11362: {'top': 'blast_furnace_top', 'side': 'blast_furnace_side',
+                           'front': 'blast_furnace_front', 'front_on': 'blast_furnace_front_on'},
+                   # Smoker
+                   11364: {'top': 'smoker_top', 'side': 'smoker_side',
+                           'front': 'smoker_front', 'front_on': 'smoker_front_on'}}
+
+    if data & 0b111 in [0, 1] and 'top_vert' in texture_map[blockid]:
+        # Block has a special top texture when it faces up/down
+        # This also affects which texture is used for the sides/front
+        top_name = 'top_vert' if data & 0b111 == 1 else 'top'
+        side_name = 'top'
+        front_name = 'top'
+    else:
+        top_name = 'top'
+        side_name = 'side'
+        # Use block's lit/on front texture if it is defined & bit 4 is set
+        # Note: Some front_on texture images have multiple frames,
+        #       but load_image_texture() crops this appropriately
+        #       as long as the image width is 16px
+        if data & 0b1000 == 8 and 'front_on' in texture_map[blockid]:
+            front_name = 'front_on'
+        else:
+            front_name = 'front'
+
+    top = self.load_image_texture("assets/minecraft/textures/block/%s.png" %
+                                  texture_map[blockid][top_name]).copy()
+    top = top.rotate(top_rotation_map[data & 0b111])
+    side = self.load_image_texture("assets/minecraft/textures/block/%s.png" %
+                                   texture_map[blockid][side_name])
+    front = self.load_image_texture("assets/minecraft/textures/block/%s.png" %
+                                    texture_map[blockid][front_name])
+
+    if data & 0b111 == 3:  # pointing west
         return self.build_full_block(top, None, None, side, front)
-    elif data == 4: # pointing north
+    elif data & 0b111 == 4:  # pointing north
         return self.build_full_block(top, None, None, front, side)
-    else: # in any other direction the front can't be seen
+    else:  # in any other direction the front can't be seen
         return self.build_full_block(top, None, None, side, side)
 
 # sandstone
@@ -1289,88 +1306,80 @@ def sandstone(self, blockid, data):
 # note block
 block(blockid=25, top_image="assets/minecraft/textures/block/note_block.png")
 
-@material(blockid=26, data=list(range(12)), transparent=True, nospawn=True)
+# Bed
+@material(blockid=26, data=list(range(256)), transparent=True, nospawn=True)
 def bed(self, blockid, data):
+    # Bits 1-2   Rotation
+    # Bit 3      Occupancy, no impact on appearance
+    # Bit 4      Foot/Head of bed (0 = foot, 1 = head)
+    # Bits 5-8   Color
+
     # first get rotation done
-    # Masked to not clobber block head/foot info
-    if self.rotation == 1:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 1
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 2
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-    elif self.rotation == 2:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 2
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 0
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-    elif self.rotation == 3:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 0
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 1
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 2
-    
-    bed_texture = self.load_image("assets/minecraft/textures/entity/bed/red.png") # FIXME: do tile entity colours
+    # Masked to not clobber block head/foot & color info
+    data = data & 0b11111100 | ((self.rotation + (data & 0b11)) % 4)
+
+    bed_texture = self.load_image("assets/minecraft/textures/entity/bed/%s.png" % color_map[data >> 4])
     increment = 8
     left_face = None
     right_face = None
     top_face = None
-    if data & 0x8 == 0x8: # head of the bed
-        top = bed_texture.copy().crop((6,6,22,22))
+    if data & 0x8 == 0x8:  # head of the bed
+        top = bed_texture.copy().crop((6, 6, 22, 22))
 
         # Composing the side
-        side = Image.new("RGBA", (16,16))
-        side_part1 = bed_texture.copy().crop((0,6,6,22)).rotate(90, expand=True)
+        side = Image.new("RGBA", (16, 16), self.bgcolor)
+        side_part1 = bed_texture.copy().crop((0, 6, 6, 22)).rotate(90, expand=True)
         # foot of the bed
-        side_part2 = bed_texture.copy().crop((53,3,56,6))
+        side_part2 = bed_texture.copy().crop((53, 3, 56, 6))
         side_part2_f = side_part2.transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(side, side_part1, (0,7), side_part1)
-        alpha_over(side, side_part2, (0,13), side_part2)
+        alpha_over(side, side_part1, (0, 7), side_part1)
+        alpha_over(side, side_part2, (0, 13), side_part2)
 
-        end = Image.new("RGBA", (16,16))
-        end_part = bed_texture.copy().crop((6,0,22,6)).rotate(180)
-        alpha_over(end, end_part, (0,7), end_part)
-        alpha_over(end, side_part2, (0,13), side_part2)
-        alpha_over(end, side_part2_f, (13,13), side_part2_f)
-        if data & 0x00 == 0x00: # South
+        end = Image.new("RGBA", (16, 16), self.bgcolor)
+        end_part = bed_texture.copy().crop((6, 0, 22, 6)).rotate(180)
+        alpha_over(end, end_part, (0, 7), end_part)
+        alpha_over(end, side_part2, (0, 13), side_part2)
+        alpha_over(end, side_part2_f, (13, 13), side_part2_f)
+        if data & 0x03 == 0x00:    # South
             top_face = top.rotate(180)
             left_face = side.transpose(Image.FLIP_LEFT_RIGHT)
             right_face = end
-        if data & 0x01 == 0x01: # West
+        elif data & 0x03 == 0x01:  # West
             top_face = top.rotate(90)
             left_face = end
             right_face = side.transpose(Image.FLIP_LEFT_RIGHT)
-        if data & 0x02 == 0x02: # North
+        elif data & 0x03 == 0x02:  # North
             top_face = top
             left_face = side
-        if data & 0x03 == 0x03: # East
+        elif data & 0x03 == 0x03:  # East
             top_face = top.rotate(270)
             right_face = side
-    
-    else: # foot of the bed
-        top = bed_texture.copy().crop((6,28,22,44))
-        side = Image.new("RGBA", (16,16))
-        side_part1 = bed_texture.copy().crop((0,28,6,44)).rotate(90, expand=True)
-        side_part2 = bed_texture.copy().crop((53,3,56,6))
-        side_part2_f = side_part2.transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(side, side_part1, (0,7), side_part1)
-        alpha_over(side, side_part2, (13,13), side_part2)
 
-        end = Image.new("RGBA", (16,16))
-        end_part = bed_texture.copy().crop((22,22,38,28)).rotate(180)
-        alpha_over(end, end_part, (0,7), end_part)
-        alpha_over(end, side_part2, (0,13), side_part2)
-        alpha_over(end, side_part2_f, (13,13), side_part2_f)
-        if data & 0x00 == 0x00: # South
+    else:  # foot of the bed
+        top = bed_texture.copy().crop((6, 28, 22, 44))
+        side = Image.new("RGBA", (16, 16), self.bgcolor)
+        side_part1 = bed_texture.copy().crop((0, 28, 6, 44)).rotate(90, expand=True)
+        side_part2 = bed_texture.copy().crop((53, 3, 56, 6))
+        side_part2_f = side_part2.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(side, side_part1, (0, 7), side_part1)
+        alpha_over(side, side_part2, (13, 13), side_part2)
+
+        end = Image.new("RGBA", (16, 16), self.bgcolor)
+        end_part = bed_texture.copy().crop((22, 22, 38, 28)).rotate(180)
+        alpha_over(end, end_part, (0, 7), end_part)
+        alpha_over(end, side_part2, (0, 13), side_part2)
+        alpha_over(end, side_part2_f, (13, 13), side_part2_f)
+        if data & 0x03 == 0x00:    # South
             top_face = top.rotate(180)
             left_face = side.transpose(Image.FLIP_LEFT_RIGHT)
-        if data & 0x01 == 0x01: # West
+        elif data & 0x03 == 0x01:  # West
             top_face = top.rotate(90)
             right_face = side.transpose(Image.FLIP_LEFT_RIGHT)
-        if data & 0x02 == 0x02: # North
+        elif data & 0x03 == 0x02:  # North
             top_face = top
             left_face = side
             right_face = end
-        if data & 0x03 == 0x03: # East
+        elif data & 0x03 == 0x03:  # East
             top_face = top.rotate(270)
             left_face = end
             right_face = side
@@ -1496,168 +1505,149 @@ def rails(self, blockid, data):
         
     return img
 
+
 # sticky and normal piston body
-@material(blockid=[29, 33], data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, solid=True, nospawn=True)
+@material(blockid=[29, 33], data=[0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13],
+          transparent=True, solid=True, nospawn=True)
 def piston(self, blockid, data):
     # first, rotation
     # Masked to not clobber block head/foot info
-    if self.rotation == 1:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-    elif self.rotation == 2:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-    elif self.rotation == 3:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 2
-    
-    if blockid == 29: # sticky
+    if self.rotation in [1, 2, 3] and (data & 0b111) in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = (data & 0b1000) | rotation_map[self.rotation][data & 0b111]
+
+    if blockid == 29:  # sticky
         piston_t = self.load_image_texture("assets/minecraft/textures/block/piston_top_sticky.png").copy()
-    else: # normal
+    else:  # normal
         piston_t = self.load_image_texture("assets/minecraft/textures/block/piston_top.png").copy()
-        
+
     # other textures
     side_t = self.load_image_texture("assets/minecraft/textures/block/piston_side.png").copy()
     back_t = self.load_image_texture("assets/minecraft/textures/block/piston_bottom.png").copy()
     interior_t = self.load_image_texture("assets/minecraft/textures/block/piston_inner.png").copy()
-    
-    if data & 0x08 == 0x08: # pushed out, non full blocks, tricky stuff
+
+    if data & 0x08 == 0x08:  # pushed out, non full blocks, tricky stuff
         # remove piston texture from piston body
-        ImageDraw.Draw(side_t).rectangle((0, 0,16,3),outline=(0,0,0,0),fill=(0,0,0,0))
-        
-        if data & 0x07 == 0x0: # down
+        ImageDraw.Draw(side_t).rectangle((0, 0, 16, 3), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+
+        if data & 0x07 == 0x0:    # down
             side_t = side_t.rotate(180)
-            img = self.build_full_block(back_t ,None ,None ,side_t, side_t)
-            
-        elif data & 0x07 == 0x1: # up
-            img = self.build_full_block((interior_t, 4) ,None ,None ,side_t, side_t)
-            
-        elif data & 0x07 == 0x2: # east
-            img = self.build_full_block(side_t , None, None ,side_t.rotate(90), back_t)
-            
-        elif data & 0x07 == 0x3: # west
-            img = self.build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), None)
+            img = self.build_full_block(back_t, None, None, side_t, side_t)
+        elif data & 0x07 == 0x1:  # up
+            img = self.build_full_block((interior_t, 4), None, None, side_t, side_t)
+        elif data & 0x07 == 0x2:  # north
+            img = self.build_full_block(side_t, None, None, side_t.rotate(90), back_t)
+        elif data & 0x07 == 0x3:  # south
+            img = self.build_full_block(side_t.rotate(180), None, None, side_t.rotate(270), None)
             temp = self.transform_image_side(interior_t)
             temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
-            alpha_over(img, temp, (9,5), temp)
-            
-        elif data & 0x07 == 0x4: # north
-            img = self.build_full_block(side_t.rotate(90) ,None ,None , None, side_t.rotate(270))
+            alpha_over(img, temp, (9, 4), temp)
+        elif data & 0x07 == 0x4:  # west
+            img = self.build_full_block(side_t.rotate(90), None, None, None, side_t.rotate(270))
             temp = self.transform_image_side(interior_t)
-            alpha_over(img, temp, (3,5), temp)
-            
-        elif data & 0x07 == 0x5: # south
-            img = self.build_full_block(side_t.rotate(270) ,None , None ,back_t, side_t.rotate(90))
+            alpha_over(img, temp, (3, 4), temp)
+        elif data & 0x07 == 0x5:  # east
+            img = self.build_full_block(side_t.rotate(270), None, None, back_t, side_t.rotate(90))
 
-    else: # pushed in, normal full blocks, easy stuff
-        if data & 0x07 == 0x0: # down
+    else:  # pushed in, normal full blocks, easy stuff
+        if data & 0x07 == 0x0:    # down
             side_t = side_t.rotate(180)
-            img = self.build_full_block(back_t ,None ,None ,side_t, side_t)
-        elif data & 0x07 == 0x1: # up
-            img = self.build_full_block(piston_t ,None ,None ,side_t, side_t)
-        elif data & 0x07 == 0x2: # east 
-            img = self.build_full_block(side_t ,None ,None ,side_t.rotate(90), back_t)
-        elif data & 0x07 == 0x3: # west
-            img = self.build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
-        elif data & 0x07 == 0x4: # north
-            img = self.build_full_block(side_t.rotate(90) ,None ,None ,piston_t, side_t.rotate(270))
-        elif data & 0x07 == 0x5: # south
-            img = self.build_full_block(side_t.rotate(270) ,None ,None ,back_t, side_t.rotate(90))
-            
+            img = self.build_full_block(back_t, None, None, side_t, side_t)
+        elif data & 0x07 == 0x1:  # up
+            img = self.build_full_block(piston_t, None, None, side_t, side_t)
+        elif data & 0x07 == 0x2:  # north
+            img = self.build_full_block(side_t, None, None, side_t.rotate(90), back_t)
+        elif data & 0x07 == 0x3:  # south
+            img = self.build_full_block(side_t.rotate(180), None, None, side_t.rotate(270), piston_t)
+        elif data & 0x07 == 0x4:  # west
+            img = self.build_full_block(side_t.rotate(90), None, None, piston_t, side_t.rotate(270))
+        elif data & 0x07 == 0x5:  # east
+            img = self.build_full_block(side_t.rotate(270), None, None, back_t, side_t.rotate(90))
+
     return img
 
+
 # sticky and normal piston shaft
-@material(blockid=34, data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, nospawn=True)
+@material(blockid=34, data=[0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13], transparent=True, nospawn=True)
 def piston_extension(self, blockid, data):
     # first, rotation
     # Masked to not clobber block head/foot info
-    if self.rotation == 1:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-    elif self.rotation == 2:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-    elif self.rotation == 3:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 2
-    
-    if (data & 0x8) == 0x8: # sticky
+    if self.rotation in [1, 2, 3] and (data & 0b111) in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = (data & 0b1000) | rotation_map[self.rotation][data & 0b111]
+
+    if data & 0x8 == 0x8:  # sticky
         piston_t = self.load_image_texture("assets/minecraft/textures/block/piston_top_sticky.png").copy()
-    else: # normal
+    else:  # normal
         piston_t = self.load_image_texture("assets/minecraft/textures/block/piston_top.png").copy()
-    
+
     # other textures
     side_t = self.load_image_texture("assets/minecraft/textures/block/piston_side.png").copy()
     back_t = self.load_image_texture("assets/minecraft/textures/block/piston_top.png").copy()
     # crop piston body
-    ImageDraw.Draw(side_t).rectangle((0, 4,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
-    
+    ImageDraw.Draw(side_t).rectangle((0, 4, 16, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+
     # generate the horizontal piston extension stick
-    h_stick = Image.new("RGBA", (24,24), self.bgcolor)
+    h_stick = Image.new("RGBA", (24, 24), self.bgcolor)
     temp = self.transform_image_side(side_t)
-    alpha_over(h_stick, temp, (1,7), temp)
+    alpha_over(h_stick, temp, (1, 7), temp)
     temp = self.transform_image_top(side_t.rotate(90))
-    alpha_over(h_stick, temp, (1,1), temp)
+    alpha_over(h_stick, temp, (1, 1), temp)
     # Darken it
     sidealpha = h_stick.split()[3]
     h_stick = ImageEnhance.Brightness(h_stick).enhance(0.85)
     h_stick.putalpha(sidealpha)
-    
+
     # generate the vertical piston extension stick
-    v_stick = Image.new("RGBA", (24,24), self.bgcolor)
+    v_stick = Image.new("RGBA", (24, 24), self.bgcolor)
     temp = self.transform_image_side(side_t.rotate(90))
-    alpha_over(v_stick, temp, (12,6), temp)
+    alpha_over(v_stick, temp, (12, 6), temp)
     temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
-    alpha_over(v_stick, temp, (1,6), temp)
+    alpha_over(v_stick, temp, (1, 6), temp)
     # Darken it
     sidealpha = v_stick.split()[3]
     v_stick = ImageEnhance.Brightness(v_stick).enhance(0.85)
     v_stick.putalpha(sidealpha)
-    
+
     # Piston orientation is stored in the 3 first bits
-    if data & 0x07 == 0x0: # down
+    if data & 0x07 == 0x0:    # down
         side_t = side_t.rotate(180)
-        img = self.build_full_block((back_t, 12) ,None ,None ,side_t, side_t)
-        alpha_over(img, v_stick, (0,-3), v_stick)
-    elif data & 0x07 == 0x1: # up
-        img = Image.new("RGBA", (24,24), self.bgcolor)
-        img2 = self.build_full_block(piston_t ,None ,None ,side_t, side_t)
-        alpha_over(img, v_stick, (0,4), v_stick)
-        alpha_over(img, img2, (0,0), img2)
-    elif data & 0x07 == 0x2: # east 
-        img = self.build_full_block(side_t ,None ,None ,side_t.rotate(90), None)
+        img = self.build_full_block((back_t, 12), None, None, side_t, side_t)
+        alpha_over(img, v_stick, (0, -3), v_stick)
+    elif data & 0x07 == 0x1:  # up
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        img2 = self.build_full_block(piston_t, None, None, side_t, side_t)
+        alpha_over(img, v_stick, (0, 4), v_stick)
+        alpha_over(img, img2, (0, 0), img2)
+    elif data & 0x07 == 0x2:  # north
+        img = self.build_full_block(side_t, None, None, side_t.rotate(90), None)
         temp = self.transform_image_side(back_t).transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(img, temp, (2,2), temp)
-        alpha_over(img, h_stick, (6,3), h_stick)
-    elif data & 0x07 == 0x3: # west
-        img = Image.new("RGBA", (24,24), self.bgcolor)
-        img2 = self.build_full_block(side_t.rotate(180) ,None ,None ,side_t.rotate(270), piston_t)
-        alpha_over(img, h_stick, (0,0), h_stick)
-        alpha_over(img, img2, (0,0), img2)            
-    elif data & 0x07 == 0x4: # north
-        img = self.build_full_block(side_t.rotate(90) ,None ,None , piston_t, side_t.rotate(270))
-        alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (0,0), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
-    elif data & 0x07 == 0x5: # south
-        img = Image.new("RGBA", (24,24), self.bgcolor)
-        img2 = self.build_full_block(side_t.rotate(270) ,None ,None ,None, side_t.rotate(90))
+        alpha_over(img, temp, (2, 2), temp)
+        alpha_over(img, h_stick, (6, 3), h_stick)
+    elif data & 0x07 == 0x3:  # south
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        img2 = self.build_full_block(side_t.rotate(180), None, None, side_t.rotate(270), piston_t)
+        alpha_over(img, h_stick, (0, 0), h_stick)
+        alpha_over(img, img2, (0, 0), img2)
+    elif data & 0x07 == 0x4:  # west
+        img = self.build_full_block(side_t.rotate(90), None, None, piston_t, side_t.rotate(270))
+        h_stick = h_stick.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, h_stick, (0, 0), h_stick)
+    elif data & 0x07 == 0x5:  # east
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        img2 = self.build_full_block(side_t.rotate(270), None, None, None, side_t.rotate(90))
+        h_stick = h_stick.transpose(Image.FLIP_LEFT_RIGHT)
         temp = self.transform_image_side(back_t)
-        alpha_over(img2, temp, (10,2), temp)
-        alpha_over(img, img2, (0,0), img2)
-        alpha_over(img, h_stick.transpose(Image.FLIP_LEFT_RIGHT), (-3,2), h_stick.transpose(Image.FLIP_LEFT_RIGHT))
-        
+        alpha_over(img2, temp, (10, 2), temp)
+        alpha_over(img, img2, (0, 0), img2)
+        alpha_over(img, h_stick, (-3, 2), h_stick)
+
     return img
+
 
 # cobweb
 sprite(blockid=30, imagename="assets/minecraft/textures/block/cobweb.png", nospawn=True)
@@ -2492,99 +2482,315 @@ block(blockid=56, top_image="assets/minecraft/textures/block/diamond_ore.png")
 # diamond block
 block(blockid=57, top_image="assets/minecraft/textures/block/diamond_block.png")
 
-# crafting table
-# needs two different sides
-@material(blockid=58, solid=True, nodata=True)
-def crafting_table(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/crafting_table_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/crafting_table_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/crafting_table_front.png")
-    
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
 
-# fletching table
-@material(blockid=11359, solid=True, nodata=True)
-def fletching_table(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/fletching_table_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/fletching_table_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/fletching_table_front.png")
+# Table blocks with no facing or other properties where sides are not all the same
+# Includes: Crafting table, fletching table, cartography table, smithing table
+@material(blockid=[58, 11359, 11360, 11361], solid=True, nodata=True)
+def block_table(self, blockid, data):
+    block_name = {58:    "crafting_table",
+                  11359: "fletching_table",
+                  11360: "cartography_table",
+                  11361: "smithing_table"}[blockid]
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
+    # Top texture doesn't vary with self.rotation, but texture rotation does
+    top_tex = block_name + "_top"
+    top_rot = [0, 270, 180, 90][self.rotation]
 
-# cartography table
-@material(blockid=11360, solid=True, nodata=True)
-def cartography_table(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/cartography_table_top.png")
-    side1 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side3.png")
-    side2 = side1
-    side3 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side2.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/cartography_table_side1.png").transpose(Image.FLIP_LEFT_RIGHT)
+    # List of side textures from side 1 to 4 for each blockid
+    side_tex_map = {58:    ["front", "side", "front", "side"],
+                    11359: ["front", "side", "side", "front"],
+                    11360: ["side3", "side3", "side2", "side1"],
+                    11361: ["front", "side", "side", "front"]}[blockid]
+    # Determine which side textures to use
+    side3_id = [2, 3, 1, 0][self.rotation]
+    side4_id = [3, 1, 0, 2][self.rotation]
+    side3_tex = block_name + "_" + side_tex_map[side3_id]
+    side4_tex = block_name + "_" + side_tex_map[side4_id]
 
-    img = self.build_full_block(top, side1, side2, side3, side4, None)
-    return img
+    tex_path = "assets/minecraft/textures/block"
+    top = self.load_image_texture("{}/{}.png".format(tex_path, top_tex)).copy()
+    side3 = self.load_image_texture("{}/{}.png".format(tex_path, side3_tex))
+    side4 = self.load_image_texture("{}/{}.png".format(tex_path, side4_tex)).copy()
+    top = top.rotate(top_rot)
+    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
 
-# smithing table
-@material(blockid=11361, solid=True, nodata=True)
-def smithing_table(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/smithing_table_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/smithing_table_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/smithing_table_front.png")
+    return self.build_full_block(top, None, None, side3, side4, None)
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
 
-@material(blockid=11362, solid=True, nodata=True)
-def blast_furnace(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/blast_furnace_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/blast_furnace_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/blast_furnace_front.png")
-
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
-
-@material(blockid=11364, solid=True, nodata=True)
-def smoker(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/smoker_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/smoker_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/smoker_front.png")
-
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
-
-@material(blockid=11366, solid=True, nodata=True)
+@material(blockid=11366, data=list(range(8)), transparent=True, solid=True, nospawn=True)
 def lectern(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/lectern_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/lectern_sides.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/lectern_front.png")
+    # Do rotation, mask to not clobber book data
+    data = data & 0b100 | ((self.rotation + (data & 0b11)) % 4)
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
+    # Load textures
+    base_raw_t = self.load_image_texture("assets/minecraft/textures/block/lectern_base.png")
+    front_raw_t = self.load_image_texture("assets/minecraft/textures/block/lectern_front.png")
+    side_raw_t = self.load_image_texture("assets/minecraft/textures/block/lectern_sides.png")
+    top_raw_t = self.load_image_texture("assets/minecraft/textures/block/lectern_top.png")
+
+    def create_tile(img_src, coord_crop, coord_paste, rot):
+        # Takes an image, crops a region, optionally rotates the
+        #   texture, then finally pastes it onto a 16x16 image
+        img_out = Image.new("RGBA", (16, 16), self.bgcolor)
+        img_in = img_src.crop(coord_crop)
+        if rot != 0:
+            img_in = img_in.rotate(rot, expand=True)
+        img_out.paste(img_in, coord_paste)
+        return img_out
+
+    def darken_image(img_src, darken_value):
+        # Takes an image & alters the brightness, leaving alpha intact
+        alpha = img_src.split()[3]
+        img_out = ImageEnhance.Brightness(img_src).enhance(darken_value)
+        img_out.putalpha(alpha)
+        return img_out
+
+    # Generate base
+    base_top_t = base_raw_t.rotate([0, 270, 180, 90][data & 0b11])
+    # Front & side textures are one pixel taller than they should be
+    #   pre-transformation as otherwise the topmost row of pixels
+    #   post-transformation are rather transparent, which results in
+    #   a visible gap between the base's sides & top
+    base_front_t = create_tile(base_raw_t, (0, 13, 16, 16), (0, 13), 0)
+    base_side_t = create_tile(base_raw_t, (0, 5, 16, 8), (0, 13), 0)
+    base_side3_t = base_front_t if data & 0b11 == 1 else base_side_t
+    base_side4_t = base_front_t if data & 0b11 == 0 else base_side_t
+    img = self.build_full_block((base_top_t, 14), None, None, base_side3_t, base_side4_t, None)
+
+    # Generate central pillar
+    side_flip_t = side_raw_t.transpose(Image.FLIP_LEFT_RIGHT)
+    # Define parameters used to obtain the texture for each side
+    pillar_param = [{'img': front_raw_t, 'crop': (8, 4, 16, 16), 'paste': (4, 2), 'rot': 0},    # South
+                    {'img': side_raw_t,  'crop': (2, 8, 15, 16), 'paste': (4, 1), 'rot': 270},  # West
+                    {'img': front_raw_t, 'crop': (0, 4,  8, 13), 'paste': (4, 5), 'rot': 0},    # North
+                    {'img': side_flip_t, 'crop': (2, 8, 15, 16), 'paste': (4, 1), 'rot': 90}]   # East
+    # Determine which sides are rendered
+    pillar_side = [pillar_param[(3 - (data & 0b11)) % 4], pillar_param[(2 - (data & 0b11)) % 4]]
+
+    pillar_side3_t = create_tile(pillar_side[0]['img'], pillar_side[0]['crop'],
+                                 pillar_side[0]['paste'], pillar_side[0]['rot'])
+    pillar_side4_t = create_tile(pillar_side[1]['img'], pillar_side[1]['crop'],
+                                 pillar_side[1]['paste'], pillar_side[1]['rot'])
+    pillar_side4_t = pillar_side4_t.transpose(Image.FLIP_LEFT_RIGHT)
+    pillar_side3_t = self.transform_image_side(pillar_side3_t)
+    pillar_side3_t = darken_image(pillar_side3_t, 0.9)
+    pillar_side4_t = self.transform_image_side(pillar_side4_t).transpose(Image.FLIP_LEFT_RIGHT)
+    pillar_side4_t = darken_image(pillar_side4_t, 0.8)
+    alpha_over(img, pillar_side3_t, (3, 4), pillar_side3_t)
+    alpha_over(img, pillar_side4_t, (9, 4), pillar_side4_t)
+
+    # Generate stand
+    if (data & 0b11) in [0, 1]:  # South, West
+        stand_side3_t = create_tile(side_raw_t, (0, 0, 16, 4), (0, 4), 0)
+        stand_side4_t = create_tile(side_raw_t, (0, 4, 13, 8), (0, 0), -22.5)
+    else:  # North, East
+        stand_side3_t = create_tile(side_raw_t, (0, 4, 16, 8), (0, 0), 0)
+        stand_side4_t = create_tile(side_raw_t, (0, 4, 13, 8), (0, 0), 22.5)
+
+    stand_side3_t = self.transform_image_angle(stand_side3_t, math.radians(22.5))
+    stand_side3_t = darken_image(stand_side3_t, 0.9)
+    stand_side4_t = self.transform_image_side(stand_side4_t).transpose(Image.FLIP_LEFT_RIGHT)
+    stand_side4_t = darken_image(stand_side4_t, 0.8)
+    stand_top_t = create_tile(top_raw_t, (0, 1, 16, 14), (0, 1), 0)
+    if data & 0b100:
+        # Lectern has a book, modify the stand top texture
+        book_raw_t = self.load_image("assets/minecraft/textures/entity/enchanting_table_book.png")
+        book_t = Image.new("RGBA", (14, 10), self.bgcolor)
+        book_part_t = book_raw_t.crop((0, 0, 7, 10))  # Left cover
+        alpha_over(stand_top_t, book_part_t, (1, 3), book_part_t)
+        book_part_t = book_raw_t.crop((15, 0, 22, 10))  # Right cover
+        alpha_over(stand_top_t, book_part_t, (8, 3))
+        book_part_t = book_raw_t.crop((24, 10, 29, 18)).rotate(180)  # Left page
+        alpha_over(stand_top_t, book_part_t, (3, 4), book_part_t)
+        book_part_t = book_raw_t.crop((29, 10, 34, 18)).rotate(180)  # Right page
+        alpha_over(stand_top_t, book_part_t, (8, 4), book_part_t)
+
+    # Perform affine transformation
+    transform_matrix = numpy.matrix(numpy.identity(3))
+    if (data & 0b11) in [0, 1]:  # South, West
+        # Translate: 8 -X, 8 -Y
+        transform_matrix *= numpy.matrix([[1, 0, 8], [0, 1, 8], [0, 0, 1]])
+        # Rotate 40 degrees clockwise
+        tc = math.cos(math.radians(40))
+        ts = math.sin(math.radians(40))
+        transform_matrix *= numpy.matrix([[tc, ts, 0], [-ts, tc, 0], [0, 0, 1]])
+        # Shear in the Y direction
+        tt = math.tan(math.radians(10))
+        transform_matrix *= numpy.matrix([[1, 0, 0], [tt, 1, 0], [0, 0, 1]])
+        # Scale to 70% height & 110% width
+        transform_matrix *= numpy.matrix([[1 / 1.1, 0, 0], [0, 1 / 0.7, 0], [0, 0, 1]])
+        # Translate: 12 +X, 8 +Y
+        transform_matrix *= numpy.matrix([[1, 0, -12], [0, 1, -8], [0, 0, 1]])
+    else:  # North, East
+        # Translate: 8 -X, 8 -Y
+        transform_matrix *= numpy.matrix([[1, 0, 8], [0, 1, 8], [0, 0, 1]])
+        # Shear in the X direction
+        tt = math.tan(math.radians(25))
+        transform_matrix *= numpy.matrix([[1, tt, 0], [0, 1, 0], [0, 0, 1]])
+        # Scale to 80% height
+        transform_matrix *= numpy.matrix([[1, 0, 0], [0, 1 / 0.8, 0], [0, 0, 1]])
+        # Rotate 220 degrees clockwise
+        tc = math.cos(math.radians(40 + 180))
+        ts = math.sin(math.radians(40 + 180))
+        transform_matrix *= numpy.matrix([[tc, ts, 0], [-ts, tc, 0], [0, 0, 1]])
+        # Scale to 60% height
+        transform_matrix *= numpy.matrix([[1, 0, 0], [0, 1 / 0.6, 0], [0, 0, 1]])
+        # Translate: +13 X, +7 Y
+        transform_matrix *= numpy.matrix([[1, 0, -13], [0, 1, -7], [0, 0, 1]])
+
+    transform_matrix = numpy.array(transform_matrix)[:2, :].ravel().tolist()
+    stand_top_t = stand_top_t.transform((24, 24), Image.AFFINE, transform_matrix)
+
+    img_stand = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(img_stand, stand_side3_t, (-4, 2), stand_side3_t)  # Fix some holes
+    alpha_over(img_stand, stand_side3_t, (-3, 3), stand_side3_t)
+    alpha_over(img_stand, stand_side4_t, (12, 5), stand_side4_t)
+    alpha_over(img_stand, stand_top_t, (0, 0), stand_top_t)
+    # Flip the stand if North or South facing
+    if (data & 0b11) in [0, 2]:
+        img_stand = img_stand.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(img, img_stand, (0, -2), img_stand)
+
     return img
 
-@material(blockid=11367, solid=True, nodata=True)
+
+@material(blockid=11367, data=list(range(4)), solid=True)
 def loom(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/loom_top.png")
-    side3 = self.load_image_texture("assets/minecraft/textures/block/loom_side.png")
-    side4 = self.load_image_texture("assets/minecraft/textures/block/loom_front.png")
+    # Do rotation
+    data = (self.rotation + data) % 4
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
+    top_rot = [180, 90, 0, 270][data]
+    side3_tex = "front" if data == 1 else "side"
+    side4_tex = "front" if data == 0 else "side"
 
-@material(blockid=11368, solid=True, nodata=True)
+    tex_path = "assets/minecraft/textures/block"
+    top = self.load_image_texture("{}/loom_top.png".format(tex_path)).copy()
+    side3 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side3_tex))
+    side4 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side4_tex)).copy()
+    top = top.rotate(top_rot)
+    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+
+    return self.build_full_block(top, None, None, side3, side4, None)
+
+
+@material(blockid=11368, data=list(range(4)), transparent=True, solid=True, nospawn=True)
 def stonecutter(self, blockid, data):
-    top = self.load_image_texture("assets/minecraft/textures/block/stonecutter_top.png")
-    side3 = side4 = self.load_image_texture("assets/minecraft/textures/block/stonecutter_side.png")
+    # Do rotation
+    data = (self.rotation + data) % 4
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
+    top_t = self.load_image_texture("assets/minecraft/textures/block/stonecutter_top.png").copy()
+    side_t = self.load_image_texture("assets/minecraft/textures/block/stonecutter_side.png")
+    # Stonecutter saw texture contains multiple tiles, since it's
+    #   16px wide rely on load_image_texture() to crop appropriately
+    blade_t = self.load_image_texture("assets/minecraft/textures/block/stonecutter_saw.png").copy()
+
+    top_t = top_t.rotate([180, 90, 0, 270][data])
+    img = self.build_full_block((top_t, 7), None, None, side_t, side_t, None)
+
+    # Add saw blade
+    if data in [0, 2]:
+        blade_t = blade_t.transpose(Image.FLIP_LEFT_RIGHT)
+    blade_t = self.transform_image_side(blade_t)
+    if data in [0, 2]:
+        blade_t = blade_t.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(img, blade_t, (6, -4), blade_t)
+
     return img
 
-@material(blockid=11369, solid=True, nodata=True)
+
+@material(blockid=11369, data=list(range(12)), transparent=True, solid=True, nospawn=True)
 def grindstone(self, blockid, data):
-    top = side3 = side4 = self.load_image_texture("assets/minecraft/textures/block/grindstone_side.png")
+    # Do rotation, mask to not clobber mounting info
+    data = data & 0b1100 | ((self.rotation + (data & 0b11)) % 4)
 
-    img = self.build_full_block(top, None, None, side3, side4, None)
-    return img
+    # Load textures
+    side_raw_t = self.load_image_texture("assets/minecraft/textures/block/grindstone_side.png").copy()
+    round_raw_t = self.load_image_texture("assets/minecraft/textures/block/grindstone_round.png").copy()
+    pivot_raw_t = self.load_image_texture("assets/minecraft/textures/block/grindstone_pivot.png").copy()
+    leg_raw_t = self.load_image_texture("assets/minecraft/textures/block/dark_oak_log.png").copy()
+
+    def create_tile(img_src, coord_crop, coord_paste,  scale):
+        # Takes an image, crops a region, optionally scales the
+        #   texture, then finally pastes it onto a 16x16 image
+        img_out = Image.new("RGBA", (16, 16), self.bgcolor)
+        img_in = img_src.crop(coord_crop)
+        if scale >= 0 and scale != 1:
+            w, h = img_in.size
+            img_in = img_in.resize((int(w * scale), int(h * scale)), Image.NEAREST)
+        img_out.paste(img_in, coord_paste)
+        return img_out
+
+    # Set variables defining positions of various parts
+    wall_mounted = bool(data & 0b0100)
+    rot_leg = [0, 270, 0][data >> 2]
+    if wall_mounted:
+        pos_leg = (32, 28) if data & 0b11 in [2, 3] else (10, 18)
+        coord_leg = [(0, 0), (-10, -1), (2, 3)]
+        offset_final = [(2, 1), (-2, 1), (-2, -1), (2, -1)][data & 0b11]
+    else:
+        pos_leg = [(22, 31), (22, 9)][data >> 3]
+        coord_leg = [(0, 0), (-1, 2), (-2, -3)]
+        offset_final = (0, 2 * (data >> 2) - 1)
+
+    # Create parts
+    # Scale up small parts like pivot & leg to avoid ugly results
+    #   when shearing & combining parts, then scale down to original
+    #   size just before final image composition
+    scale_factor = 2
+    side_t = create_tile(side_raw_t, (0, 0, 12, 12), (2, 0), 1)
+    round_ud_t = create_tile(round_raw_t, (0, 0, 8, 12), (4, 2), 1)
+    round_lr_t = create_tile(round_raw_t, (0, 0, 8, 12), (4, 0), 1)
+    pivot_outer_t = create_tile(pivot_raw_t, (0, 0, 6, 6), (2, 2), scale_factor)
+    pivot_lr_t = create_tile(pivot_raw_t, (6, 0, 8, 6), (2, 2), scale_factor)
+    pivot_ud_t = create_tile(pivot_raw_t, (8, 0, 10, 6), (2, 2), scale_factor)
+    leg_outer_t = create_tile(leg_raw_t, (6, 9, 10, 16), (2, 2), scale_factor).rotate(rot_leg)
+    leg_lr_t = create_tile(leg_raw_t, (12, 9, 14, 16), (2, 2), scale_factor).rotate(rot_leg)
+    leg_ud_t = create_tile(leg_raw_t, (2, 6, 4, 10), (2, 2), scale_factor)
+
+    # Transform to block sides & tops
+    side_t = self.transform_image_side(side_t)
+    round_ud_t = self.transform_image_top(round_ud_t)
+    round_lr_t = self.transform_image_side(round_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+    pivot_outer_t = self.transform_image_side(pivot_outer_t)
+    pivot_lr_t = self.transform_image_side(pivot_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+    pivot_ud_t = self.transform_image_top(pivot_ud_t)
+    leg_outer_t = self.transform_image_side(leg_outer_t)
+    if wall_mounted:
+        leg_lr_t = self.transform_image_top(leg_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+        leg_ud_t = self.transform_image_side(leg_ud_t).transpose(Image.FLIP_LEFT_RIGHT)
+    else:
+        leg_lr_t = self.transform_image_side(leg_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+        leg_ud_t = self.transform_image_top(leg_ud_t)
+
+    # Compose leg texture
+    img_leg = Image.new("RGBA", (24 * scale_factor, 24 * scale_factor), self.bgcolor)
+    alpha_over(img_leg, leg_outer_t, coord_leg[0], leg_outer_t)
+    alpha_over(img_leg, leg_lr_t, coord_leg[1], leg_lr_t)
+    alpha_over(img_leg, leg_ud_t, coord_leg[2], leg_ud_t)
+
+    # Compose pivot texture (& combine with leg)
+    img_pivot = Image.new("RGBA", (24 * scale_factor, 24 * scale_factor), self.bgcolor)
+    alpha_over(img_pivot, pivot_ud_t, (20, 18), pivot_ud_t)
+    alpha_over(img_pivot, pivot_lr_t, (23, 24), pivot_lr_t)  # Fix gaps between face edges
+    alpha_over(img_pivot, pivot_lr_t, (24, 24), pivot_lr_t)
+    alpha_over(img_pivot, img_leg, pos_leg, img_leg)
+    alpha_over(img_pivot, pivot_outer_t, (21, 21), pivot_outer_t)
+    img_pivot = img_pivot.resize((24, 24), Image.LANCZOS)
+
+    # Combine leg, side, round & pivot
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    img_final = img.copy()
+    alpha_over(img, img_pivot, (1, -5), img_pivot)
+    alpha_over(img, round_ud_t, (0, 2), round_ud_t)  # Fix gaps between face edges
+    alpha_over(img, side_t, (3, 6), side_t)
+    alpha_over(img, round_ud_t, (0, 1), round_ud_t)
+    alpha_over(img, round_lr_t, (10, 6), round_lr_t)
+    alpha_over(img, img_pivot, (-5, -1), img_pivot)
+    if (data & 0b11) in [1, 3]:
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(img_final, img, offset_final, img)
+
+    return img_final
 
 
 # crops with 8 data values (like wheat)
@@ -2601,24 +2807,25 @@ def crops8(self, blockid, data):
     alpha_over(img, crop3, (6,3), crop3)
     return img
 
+
 # farmland and grass path (15/16 blocks)
-@material(blockid=[60,208], data=list(range(9)), solid=True)
+@material(blockid=[60, 208], data=list(range(2)), solid=True, transparent=True, nospawn=True)
 def farmland(self, blockid, data):
     if blockid == 60:
-        side = self.load_image_texture("assets/minecraft/textures/block/dirt.png")
-        top = self.load_image_texture("assets/minecraft/textures/block/farmland_moist.png")
+        side = self.load_image_texture("assets/minecraft/textures/block/dirt.png").copy()
         if data == 0:
             top = self.load_image_texture("assets/minecraft/textures/block/farmland.png")
+        else:
+            top = self.load_image_texture("assets/minecraft/textures/block/farmland_moist.png")
         # dirt.png is 16 pixels tall, so we need to crop it before building full block
         side = side.crop((0, 1, 16, 16))
-        return self.build_full_block((top, 1), side, side, side, side)
-			
     else:
         top = self.load_image_texture("assets/minecraft/textures/block/grass_path_top.png")
         side = self.load_image_texture("assets/minecraft/textures/block/grass_path_side.png")
         # side already has 1 transparent pixel at the top, so it doesn't need to be modified
         # just shift the top image down 1 pixel
-        return self.build_full_block((top, 1), side, side, side, side)
+
+    return self.build_full_block((top, 1), side, side, side, side)
 
 
 # signposts
@@ -3478,22 +3685,22 @@ def portal(self, blockid, data):
 
     return img
 
+
 # cake!
-@material(blockid=92, data=list(range(6)), transparent=True, nospawn=True)
+@material(blockid=92, data=list(range(7)), transparent=True, nospawn=True)
 def cake(self, blockid, data):
-    
     # cake textures
     top = self.load_image_texture("assets/minecraft/textures/block/cake_top.png").copy()
     side = self.load_image_texture("assets/minecraft/textures/block/cake_side.png").copy()
     fullside = side.copy()
     inside = self.load_image_texture("assets/minecraft/textures/block/cake_inner.png")
-    
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    if data == 0: # unbitten cake
+
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    if data == 0:  # unbitten cake
         top = self.transform_image_top(top)
         side = self.transform_image_side(side)
         otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-        
+
         # darken sides slightly
         sidealpha = side.split()[3]
         side = ImageEnhance.Brightness(side).enhance(0.9)
@@ -3501,28 +3708,32 @@ def cake(self, blockid, data):
         othersidealpha = otherside.split()[3]
         otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
         otherside.putalpha(othersidealpha)
-        
+
         # composite the cake
-        alpha_over(img, side, (1,6), side)
-        alpha_over(img, otherside, (11,7), otherside) # workaround, fixes a hole
-        alpha_over(img, otherside, (12,6), otherside)
-        alpha_over(img, top, (0,6), top)
-    
+        alpha_over(img, side, (1, 6), side)
+        alpha_over(img, otherside, (11, 5), otherside)  # workaround, fixes a hole
+        alpha_over(img, otherside, (12, 6), otherside)
+        alpha_over(img, top, (0, 6), top)
+
     else:
         # cut the textures for a bitten cake
-        coord = int(16./6.*data)
-        ImageDraw.Draw(side).rectangle((16 - coord,0,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(top).rectangle((0,0,coord,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        bite_width = int(14 / 7)  # Cake is 14px wide with 7 slices
+        coord = 1 + bite_width * data
+        ImageDraw.Draw(side).rectangle((16 - coord, 0, 16, 16), outline=(0, 0, 0, 0),
+                                       fill=(0, 0, 0, 0))
+        ImageDraw.Draw(top).rectangle((0, 0, coord - 1, 16), outline=(0, 0, 0, 0),
+                                      fill=(0, 0, 0, 0))
 
         # the bitten part of the cake always points to the west
         # composite the cake for every north orientation
-        if self.rotation == 0: # north top-left
+        if self.rotation == 0:  # north top-left
             # create right side
             rs = self.transform_image_side(side).transpose(Image.FLIP_LEFT_RIGHT)
             # create bitten side and its coords
-            deltax = 2*data
-            deltay = -1*data
-            if data == 3: deltax += 1 # special case fixing pixel holes
+            deltax = bite_width * data
+            deltay = -1 * data
+            if data in [3, 4, 5, 6]:
+                deltax -= 1
             ls = self.transform_image_side(inside)
             # create top side
             t = self.transform_image_top(top)
@@ -3534,11 +3745,11 @@ def cake(self, blockid, data):
             rs = ImageEnhance.Brightness(rs).enhance(0.8)
             rs.putalpha(othersidealpha)
             # compose the cake
-            alpha_over(img, rs, (12,6), rs)
-            alpha_over(img, ls, (1 + deltax,6 + deltay), ls)
-            alpha_over(img, t, (0,6), t)
+            alpha_over(img, rs, (12, 6), rs)
+            alpha_over(img, ls, (1 + deltax, 6 + deltay), ls)
+            alpha_over(img, t, (1, 6), t)
 
-        elif self.rotation == 1: # north top-right
+        elif self.rotation == 1:  # north top-right
             # bitten side not shown
             # create left side
             ls = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT))
@@ -3554,18 +3765,19 @@ def cake(self, blockid, data):
             rs = ImageEnhance.Brightness(rs).enhance(0.8)
             rs.putalpha(othersidealpha)
             # compose the cake
-            alpha_over(img, ls, (2,6), ls)
-            alpha_over(img, t, (0,6), t)
-            alpha_over(img, rs, (12,6), rs)
+            alpha_over(img, ls, (2, 6), ls)
+            alpha_over(img, t, (1, 6), t)
+            alpha_over(img, rs, (12, 6), rs)
 
-        elif self.rotation == 2: # north bottom-right
+        elif self.rotation == 2:  # north bottom-right
             # bitten side not shown
             # left side
             ls = self.transform_image_side(fullside)
             # top
             t = self.transform_image_top(top.rotate(180))
             # right side
-            rs = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT)).transpose(Image.FLIP_LEFT_RIGHT)
+            rs = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT))
+            rs = rs.transpose(Image.FLIP_LEFT_RIGHT)
             # darken sides slightly
             sidealpha = ls.split()[3]
             ls = ImageEnhance.Brightness(ls).enhance(0.9)
@@ -3574,19 +3786,20 @@ def cake(self, blockid, data):
             rs = ImageEnhance.Brightness(rs).enhance(0.8)
             rs.putalpha(othersidealpha)
             # compose the cake
-            alpha_over(img, ls, (2,6), ls)
-            alpha_over(img, t, (1,6), t)
-            alpha_over(img, rs, (12,6), rs)
+            alpha_over(img, ls, (2, 6), ls)
+            alpha_over(img, t, (1, 6), t)
+            alpha_over(img, rs, (12, 6), rs)
 
-        elif self.rotation == 3: # north bottom-left
+        elif self.rotation == 3:  # north bottom-left
             # create left side
             ls = self.transform_image_side(side)
             # create top
             t = self.transform_image_top(top.rotate(90))
             # create right side and its coords
-            deltax = 12-2*data
-            deltay = -1*data
-            if data == 3: deltax += -1 # special case fixing pixel holes
+            deltax = 12 - bite_width * data
+            deltay = -1 * data
+            if data in [3, 4, 5, 6]:
+                deltax += 1
             rs = self.transform_image_side(inside).transpose(Image.FLIP_LEFT_RIGHT)
             # darken sides slightly
             sidealpha = ls.split()[3]
@@ -3596,11 +3809,12 @@ def cake(self, blockid, data):
             rs = ImageEnhance.Brightness(rs).enhance(0.8)
             rs.putalpha(othersidealpha)
             # compose the cake
-            alpha_over(img, ls, (2,6), ls)
-            alpha_over(img, t, (1,6), t)
-            alpha_over(img, rs, (1 + deltax,6 + deltay), rs)
+            alpha_over(img, ls, (2, 6), ls)
+            alpha_over(img, t, (1, 6), t)
+            alpha_over(img, rs, (1 + deltax, 6 + deltay), rs)
 
     return img
+
 
 # redstone repeaters ON and OFF
 @material(blockid=[93,94], data=list(range(16)), transparent=True, nospawn=True)
@@ -3898,87 +4112,44 @@ def stone_brick(self, blockid, data):
 
     return img
 
-# huge brown and red mushroom
-@material(blockid=[99,100], data= list(range(11)) + [14,15], solid=True)
+
+# huge brown/red mushrooms, and mushroom stems
+@material(blockid=[99, 100, 139], data=list(range(64)), solid=True)
 def huge_mushroom(self, blockid, data):
-    # rotation
-    if self.rotation == 1:
-        if data == 1: data = 3
-        elif data == 2: data = 6
-        elif data == 3: data = 9
-        elif data == 4: data = 2
-        elif data == 6: data = 8
-        elif data == 7: data = 1
-        elif data == 8: data = 4
-        elif data == 9: data = 7
-    elif self.rotation == 2:
-        if data == 1: data = 9
-        elif data == 2: data = 8
-        elif data == 3: data = 7
-        elif data == 4: data = 6
-        elif data == 6: data = 4
-        elif data == 7: data = 3
-        elif data == 8: data = 2
-        elif data == 9: data = 1
-    elif self.rotation == 3:
-        if data == 1: data = 7
-        elif data == 2: data = 4
-        elif data == 3: data = 1
-        elif data == 4: data = 2
-        elif data == 6: data = 8
-        elif data == 7: data = 9
-        elif data == 8: data = 6
-        elif data == 9: data = 3
+    # Re-arrange the bits in data based on self.rotation
+    # rotation  bit: 654321
+    #        0       DUENWS
+    #        1       DUNWSE
+    #        2       DUWSEN
+    #        3       DUSENW
+    if self.rotation in [1, 2, 3]:
+        bit_map = {1: [6, 5, 3, 2, 1, 4],
+                   2: [6, 5, 2, 1, 4, 3],
+                   3: [6, 5, 1, 4, 3, 2]}
+        new_data = 0
+
+        # Add the ith bit to new_data then shift left one at a time,
+        # re-ordering data's bits in the order specified in bit_map
+        for i in bit_map[self.rotation]:
+            new_data = new_data << 1
+            new_data |= (data >> (i - 1)) & 1
+        data = new_data
 
     # texture generation
-    if blockid == 99: # brown
-        cap = self.load_image_texture("assets/minecraft/textures/block/brown_mushroom_block.png")
-    else: # red
-        cap = self.load_image_texture("assets/minecraft/textures/block/red_mushroom_block.png")
-
-    stem = self.load_image_texture("assets/minecraft/textures/block/mushroom_stem.png")
+    texture_map = {99:  "brown_mushroom_block",
+                   100: "red_mushroom_block",
+                   139: "mushroom_stem"}
+    cap =  self.load_image_texture("assets/minecraft/textures/block/%s.png" % texture_map[blockid])
     porous = self.load_image_texture("assets/minecraft/textures/block/mushroom_block_inside.png")
-    
-    if data == 0: # fleshy piece
-        img = self.build_full_block(porous, None, None, porous, porous)
 
-    if data == 1: # north-east corner
-        img = self.build_full_block(cap, None, None, cap, porous)
+    # Faces visible after amending data for rotation are: up, West, and South
+    side_up    = cap if data & 0b010000 else porous  # Up
+    side_west  = cap if data & 0b000010 else porous  # West
+    side_south = cap if data & 0b000001 else porous  # South
+    side_south = side_south.transpose(Image.FLIP_LEFT_RIGHT)
 
-    if data == 2: # east side
-        img = self.build_full_block(cap, None, None, porous, cap)
+    return self.build_full_block(side_up, None, None, side_west, side_south)
 
-    if data == 3: # south-east corner
-        img = self.build_full_block(cap, None, None, porous, cap)
-
-    if data == 4: # north side
-        img = self.build_full_block(cap, None, None, cap, porous)
-
-    if data == 5: # top piece
-        img = self.build_full_block(cap, None, None, porous, porous)
-
-    if data == 6: # south side
-        img = self.build_full_block(cap, None, None, cap, porous)
-
-    if data == 7: # north-west corner
-        img = self.build_full_block(cap, None, None, cap, cap)
-
-    if data == 8: # west side
-        img = self.build_full_block(cap, None, None, porous, cap)
-
-    if data == 9: # south-west corner
-        img = self.build_full_block(cap, None, None, porous, cap)
-
-    if data == 10: # stem
-        img = self.build_full_block(porous, None, None, stem, stem)
-
-    if data == 14: # all cap
-        img = self.build_block(cap,cap)
-
-    if data == 15: # all stem
-        img = self.build_block(stem,stem)
-
-    return img
 
 # iron bars and glass pane
 # TODO glass pane is not a sprite, it has a texture for the side,
@@ -4052,48 +4223,41 @@ def stem(self, blockid, data):
         # tint the data value 7
         img = self.tint_texture(img, (211,169,116))
     return img
-    
+
 
 # vines
-@material(blockid=106, data=list(range(16)), transparent=True)
+@material(blockid=106, data=list(range(32)), transparent=True, solid=False, nospawn=True)
 def vines(self, blockid, data):
-    # rotation
-    # vines data is bit coded. decode it first.
-    # NOTE: the directions used in this function are the new ones used
-    # in minecraft 1.0.0, no the ones used by overviewer 
-    # (i.e. north is top-left by defalut)
+    # Re-arrange the bits in data based on self.rotation
+    # rotation  bit: 54321
+    #        0       UENWS
+    #        1       UNWSE
+    #        2       UWSEN
+    #        3       USENW
+    if self.rotation in [1, 2, 3]:
+        bit_map = {1: [5, 3, 2, 1, 4],
+                   2: [5, 2, 1, 4, 3],
+                   3: [5, 1, 4, 3, 2]}
+        new_data = 0
 
-    # rotate the data by bitwise shift
-    shifts = 0
-    if self.rotation == 1:
-        shifts = 1
-    elif self.rotation == 2:
-        shifts = 2
-    elif self.rotation == 3:
-        shifts = 3
-    
-    for i in range(shifts):
-        data = data * 2
-        if data & 16:
-            data = (data - 16) | 1
+        # Add the ith bit to new_data then shift left one at a time,
+        # re-ordering data's bits in the order specified in bit_map
+        for i in bit_map[self.rotation]:
+            new_data = new_data << 1
+            new_data |= (data >> (i - 1)) & 1
+        data = new_data
 
     # decode data and prepare textures
     raw_texture = self.load_image_texture("assets/minecraft/textures/block/vine.png")
-    s = w = n = e = None
 
-    if data & 1: # south
-        s = raw_texture
-    if data & 2: # west
-        w = raw_texture
-    if data & 4: # north
-        n = raw_texture
-    if data & 8: # east
-        e = raw_texture
+    side_up    = raw_texture if data & 0b10000 else None  # Up
+    side_east  = raw_texture if data & 0b01000 else None  # East
+    side_north = raw_texture if data & 0b00100 else None  # North
+    side_west  = raw_texture if data & 0b00010 else None  # West
+    side_south = raw_texture if data & 0b00001 else None  # South
 
-    # texture generation
-    img = self.build_full_block(None, n, e, w, s)
+    return self.build_full_block(side_up, side_north, side_east, side_west, side_south)
 
-    return img
 
 # fence gates
 @material(blockid=[107, 183, 184, 185, 186, 187], data=list(range(8)), transparent=True, nospawn=True)
@@ -4254,32 +4418,28 @@ def brewing_stand(self, blockid, data):
     alpha_over(img,stand,(0,-2))
     return img
 
+
 # cauldron
-@material(blockid=118, data=list(range(4)), transparent=True)
+@material(blockid=118, data=list(range(4)), transparent=True, solid=True, nospawn=True)
 def cauldron(self, blockid, data):
-    side = self.load_image_texture("assets/minecraft/textures/block/cauldron_side.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/cauldron_side.png").copy()
     top = self.load_image_texture("assets/minecraft/textures/block/cauldron_top.png")
     bottom = self.load_image_texture("assets/minecraft/textures/block/cauldron_inner.png")
-    water = self.transform_image_top(self.load_water())
-    if data == 0: # empty
+    water = self.transform_image_top(self.load_image_texture("water.png"))
+    # Side texture isn't transparent between the feet, so adjust the texture
+    ImageDraw.Draw(side).rectangle((5, 14, 11, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+
+    if data == 0:  # Empty
         img = self.build_full_block(top, side, side, side, side)
-    if data == 1: # 1/3 filled
-        img = self.build_full_block(None , side, side, None, None)
-        alpha_over(img, water, (0,8), water)
-        img2 = self.build_full_block(top , None, None, side, side)
-        alpha_over(img, img2, (0,0), img2)
-    if data == 2: # 2/3 filled
-        img = self.build_full_block(None , side, side, None, None)
-        alpha_over(img, water, (0,4), water)
-        img2 = self.build_full_block(top , None, None, side, side)
-        alpha_over(img, img2, (0,0), img2)
-    if data == 3: # 3/3 filled
-        img = self.build_full_block(None , side, side, None, None)
-        alpha_over(img, water, (0,0), water)
-        img2 = self.build_full_block(top , None, None, side, side)
-        alpha_over(img, img2, (0,0), img2)
+    else:  # Part or fully filled
+        # Is filled in increments of a third, with data indicating how many thirds are filled
+        img = self.build_full_block(None, side, side, None, None)
+        alpha_over(img, water, (0, 12 - data * 4), water)
+        img2 = self.build_full_block(top, None, None, side, side)
+        alpha_over(img, img2, (0, 0), img2)
 
     return img
+
 
 # end portal and end_gateway
 @material(blockid=[119,209], transparent=True, nodata=True)
@@ -4300,31 +4460,34 @@ def end_portal(self, blockid, data):
 
     return img
 
+
 # end portal frame (data range 8 to get all orientations of filled)
-@material(blockid=120, data=list(range(8)), transparent=True)
+@material(blockid=120, data=list(range(8)), transparent=True, solid=True, nospawn=True)
 def end_portal_frame(self, blockid, data):
-    # The bottom 2 bits are oritation info but seems there is no
-    # graphical difference between orientations
-    top = self.load_image_texture("assets/minecraft/textures/block/end_portal_frame_top.png")
-    eye_t = self.load_image_texture("assets/minecraft/textures/block/end_portal_frame_eye.png")
+    # Do rotation, only seems to affect ender eye & top of frame
+    data = data & 0b100 | ((self.rotation + (data & 0b11)) % 4)
+
+    top = self.load_image_texture("assets/minecraft/textures/block/end_portal_frame_top.png").copy()
+    top = top.rotate((data % 4) * 90)
     side = self.load_image_texture("assets/minecraft/textures/block/end_portal_frame_side.png")
     img = self.build_full_block((top, 4), None, None, side, side)
-    if data & 0x4 == 0x4: # ender eye on it
+    if data & 0x4 == 0x4:  # ender eye on it
         # generate the eye
         eye_t = self.load_image_texture("assets/minecraft/textures/block/end_portal_frame_eye.png").copy()
-        eye_t_s = self.load_image_texture("assets/minecraft/textures/block/end_portal_frame_eye.png").copy()
+        eye_t_s = eye_t.copy()
         # cut out from the texture the side and the top of the eye
-        ImageDraw.Draw(eye_t).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(eye_t_s).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-        # trnasform images and paste
-        eye = self.transform_image_top(eye_t)
+        ImageDraw.Draw(eye_t).rectangle((0, 0, 15, 4), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        ImageDraw.Draw(eye_t_s).rectangle((0, 4, 15, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        # transform images and paste
+        eye = self.transform_image_top(eye_t.rotate((data % 4) * 90))
         eye_s = self.transform_image_side(eye_t_s)
         eye_os = eye_s.transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(img, eye_s, (5,5), eye_s)
-        alpha_over(img, eye_os, (9,5), eye_os)
-        alpha_over(img, eye, (0,0), eye)
+        alpha_over(img, eye_s, (5, 5), eye_s)
+        alpha_over(img, eye_os, (9, 5), eye_os)
+        alpha_over(img, eye, (0, 0), eye)
 
     return img
+
 
 # end stone
 block(blockid=121, top_image="assets/minecraft/textures/block/end_stone.png")
@@ -4692,13 +4855,13 @@ def crops4(self, blockid, data):
     alpha_over(img, crop3, (6,3), crop3)
     return img
 
+
 # anvils
-@material(blockid=145, data=list(range(12)), transparent=True)
+@material(blockid=145, data=list(range(12)), transparent=True, nospawn=True)
 def anvil(self, blockid, data):
-    
     # anvils only have two orientations, invert it for rotations 1 and 3
     orientation = data & 0x1
-    if self.rotation in (1,3):
+    if self.rotation in (1, 3):
         if orientation == 1:
             orientation = 0
         else:
@@ -4706,45 +4869,45 @@ def anvil(self, blockid, data):
 
     # get the correct textures
     # the bits 0x4 and 0x8 determine how damaged is the anvil
-    if (data & 0xc) == 0: # non damaged anvil
+    if (data & 0xc) == 0:  # non damaged anvil
         top = self.load_image_texture("assets/minecraft/textures/block/anvil_top.png")
-    elif (data & 0xc) == 0x4: # slightly damaged
+    elif (data & 0xc) == 0x4:  # slightly damaged
         top = self.load_image_texture("assets/minecraft/textures/block/chipped_anvil_top.png")
-    elif (data & 0xc) == 0x8: # very damaged
+    elif (data & 0xc) == 0x8:  # very damaged
         top = self.load_image_texture("assets/minecraft/textures/block/damaged_anvil_top.png")
     # everything else use this texture
     big_side = self.load_image_texture("assets/minecraft/textures/block/anvil.png").copy()
     small_side = self.load_image_texture("assets/minecraft/textures/block/anvil.png").copy()
     base = self.load_image_texture("assets/minecraft/textures/block/anvil.png").copy()
     small_base = self.load_image_texture("assets/minecraft/textures/block/anvil.png").copy()
-    
+
     # cut needed patterns
-    ImageDraw.Draw(big_side).rectangle((0,8,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(small_side).rectangle((0,0,2,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(small_side).rectangle((13,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(small_side).rectangle((0,8,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(base).rectangle((0,0,15,15),outline=(0,0,0,0))
-    ImageDraw.Draw(base).rectangle((1,1,14,14),outline=(0,0,0,0))
-    ImageDraw.Draw(small_base).rectangle((0,0,15,15),outline=(0,0,0,0))
-    ImageDraw.Draw(small_base).rectangle((1,1,14,14),outline=(0,0,0,0))
-    ImageDraw.Draw(small_base).rectangle((2,2,13,13),outline=(0,0,0,0))
-    ImageDraw.Draw(small_base).rectangle((3,3,12,12),outline=(0,0,0,0))
-    
+    ImageDraw.Draw(big_side).rectangle((0, 8, 15, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    ImageDraw.Draw(small_side).rectangle((0, 0, 2, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    ImageDraw.Draw(small_side).rectangle((13, 0, 15, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    ImageDraw.Draw(small_side).rectangle((0, 8, 15, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    ImageDraw.Draw(base).rectangle((0, 0, 15, 15), outline=(0, 0, 0, 0))
+    ImageDraw.Draw(base).rectangle((1, 1, 14, 14), outline=(0, 0, 0, 0))
+    ImageDraw.Draw(small_base).rectangle((0, 0, 15, 15), outline=(0, 0, 0, 0))
+    ImageDraw.Draw(small_base).rectangle((1, 1, 14, 14), outline=(0, 0, 0, 0))
+    ImageDraw.Draw(small_base).rectangle((2, 2, 13, 13), outline=(0, 0, 0, 0))
+    ImageDraw.Draw(small_base).rectangle((3, 3, 12, 12), outline=(0, 0, 0, 0))
+
     # check orientation and compose the anvil
-    if orientation == 1: # bottom-left top-right
+    if orientation == 1:  # bottom-left top-right
         top = top.rotate(90)
         left_side = small_side
-        left_pos = (1,7)
+        left_pos = (1, 6)
         right_side = big_side
-        right_pos = (10,5)
-    else: # top-left bottom-right
+        right_pos = (10, 5)
+    else:  # top-left bottom-right
         right_side = small_side
-        right_pos = (12,7)
+        right_pos = (12, 6)
         left_side = big_side
-        left_pos = (3,5)
-    
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    
+        left_pos = (3, 5)
+
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+
     # darken sides
     alpha = big_side.split()[3]
     big_side = ImageEnhance.Brightness(big_side).enhance(0.8)
@@ -4755,26 +4918,27 @@ def anvil(self, blockid, data):
     alpha = base.split()[3]
     base_d = ImageEnhance.Brightness(base).enhance(0.8)
     base_d.putalpha(alpha)
-    
+
     # compose
     base = self.transform_image_top(base)
     base_d = self.transform_image_top(base_d)
     small_base = self.transform_image_top(small_base)
     top = self.transform_image_top(top)
-    
-    alpha_over(img, base_d, (0,12), base_d)
-    alpha_over(img, base_d, (0,11), base_d)
-    alpha_over(img, base_d, (0,10), base_d)
-    alpha_over(img, small_base, (0,10), small_base)
-    
-    alpha_over(img, top, (0,0), top)
-    
+
+    alpha_over(img, base_d, (0, 12), base_d)
+    alpha_over(img, base_d, (0, 11), base_d)
+    alpha_over(img, base_d, (0, 10), base_d)
+    alpha_over(img, small_base, (0, 10), small_base)
+
+    alpha_over(img, top, (0, 1), top)  # Fix gap between block edges
+    alpha_over(img, top, (0, 0), top)
+
     left_side = self.transform_image_side(left_side)
     right_side = self.transform_image_side(right_side).transpose(Image.FLIP_LEFT_RIGHT)
-    
+
     alpha_over(img, left_side, left_pos, left_side)
     alpha_over(img, right_side, right_pos, right_side)
-    
+
     return img
 
 
@@ -5013,72 +5177,57 @@ def boneblock(self, blockid, data):
     elif boneblock_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
+
 # observer
-@material(blockid=218, data=list(range(6)), solid=True, nospawn=True)
+@material(blockid=218, data=[0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13], solid=True, nospawn=True)
 def observer(self, blockid, data):
-    # first, do the rotation if needed
-    if self.rotation == 1:
-        if data == 2: data = 5
-        elif data == 3: data = 4
-        elif data == 4: data = 2
-        elif data == 5: data = 3
-    elif self.rotation == 2:
-        if data == 2: data = 3
-        elif data == 3: data = 2
-        elif data == 4: data = 5
-        elif data == 5: data = 4
-    elif self.rotation == 3:
-        if data == 2: data = 4
-        elif data == 3: data = 5
-        elif data == 4: data = 3
-        elif data == 5: data = 2
+    # Do rotation
+    if self.rotation in [1, 2, 3] and (data & 0b111) in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = (data & 0b1000) | rotation_map[self.rotation][data & 0b111]
 
-    front = self.load_image_texture("assets/minecraft/textures/block/observer_front.png").copy()
-    side = self.load_image_texture("assets/minecraft/textures/block/observer_side.png").copy()
-    back = self.load_image_texture("assets/minecraft/textures/block/observer_back.png").copy()
-    top = self.load_image_texture("assets/minecraft/textures/block/observer_top.png").copy()
+    front = self.load_image_texture("assets/minecraft/textures/block/observer_front.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/observer_side.png")
+    top = self.load_image_texture("assets/minecraft/textures/block/observer_top.png")
+    file_name_back = "observer_back_on" if data & 0b1000 else "observer_back"
+    back = self.load_image_texture("assets/minecraft/textures/block/%s.png" % file_name_back)
 
-    if data == 0: # down
-        side = side.rotate(90)
-        img = self.build_full_block(back, None, None, side, top)
-    elif data == 1: # up
-        side = side.rotate(90)
-        img = self.build_full_block(front.rotate(180), None, None, side, top.rotate(180))
-    elif data == 2: # east
+    if data & 0b0111 == 0:    # Down
+        img = self.build_full_block(back, None, None, side.rotate(90), top)
+    elif data & 0b0111 == 1:  # Up
+        img = self.build_full_block(front.rotate(180), None, None, side.rotate(90), top.rotate(180))
+    elif data & 0b0111 == 2:  # East
         img = self.build_full_block(top.rotate(180), None, None, side, back)
-    elif data == 3: # west
+    elif data & 0b0111 == 3:  # West
         img = self.build_full_block(top, None, None, side, front)
-    elif data == 4: # north
+    elif data & 0b0111 == 4:  # North
         img = self.build_full_block(top.rotate(270), None, None, front, side)
-    elif data == 5: # south
+    elif data & 0b0111 == 5:  # South
         img = self.build_full_block(top.rotate(90), None, None, back, side)
 
     return img
 
-# shulker box
-@material(blockid=list(range(219,235)), data=list(range(6)), solid=True, nospawn=True)
-def shulker_box(self, blockid, data):
-    # first, do the rotation if needed
-    data = data & 7
-    if self.rotation == 1:
-        if data == 2: data = 5
-        elif data == 3: data = 4
-        elif data == 4: data = 2
-        elif data == 5: data = 3
-    elif self.rotation == 2:
-        if data == 2: data = 3
-        elif data == 3: data = 2
-        elif data == 4: data = 5
-        elif data == 5: data = 4
-    elif self.rotation == 3:
-        if data == 2: data = 4
-        elif data == 3: data = 5
-        elif data == 4: data = 3
-        elif data == 5: data = 2
 
-    color = color_map[blockid - 219]
-    shulker_t = self.load_image_texture("assets/minecraft/textures/entity/shulker/shulker_%s.png" % color).copy()
-    w,h = shulker_t.size
+# shulker box
+@material(blockid=list(range(219, 235)) + [257], data=list(range(6)), solid=True, nospawn=True)
+def shulker_box(self, blockid, data):
+    # Do rotation
+    if self.rotation in [1, 2, 3] and data in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = rotation_map[self.rotation][data]
+
+    if blockid == 257:
+        # Uncolored shulker box
+        file_name = "shulker.png"
+    else:
+        file_name = "shulker_%s.png" % color_map[blockid - 219]
+
+    shulker_t = self.load_image("assets/minecraft/textures/entity/shulker/%s" % file_name).copy()
+    w, h = shulker_t.size
     res = w // 4
     # Cut out the parts of the shulker texture we need for the box
     top = shulker_t.crop((res, 0, res * 2, res))
@@ -5089,21 +5238,22 @@ def shulker_box(self, blockid, data):
     side.paste(side_top, (0, 0), side_top)
     side.paste(side_bottom, (0, res // 2), side_bottom)
 
-    if data == 0: # down
+    if data == 0:    # down
         side = side.rotate(180)
         img = self.build_full_block(bottom, None, None, side, side)
-    elif data == 1: # up
+    elif data == 1:  # up
         img = self.build_full_block(top, None, None, side, side)
-    elif data == 2: # east
+    elif data == 2:  # east
         img = self.build_full_block(side, None, None, side.rotate(90), bottom)
-    elif data == 3: # west
+    elif data == 3:  # west
         img = self.build_full_block(side.rotate(180), None, None, side.rotate(270), top)
-    elif data == 4: # north
+    elif data == 4:  # north
         img = self.build_full_block(side.rotate(90), None, None, top, side.rotate(270))
-    elif data == 5: # south
+    elif data == 5:  # south
         img = self.build_full_block(side.rotate(270), None, None, bottom, side.rotate(90))
 
     return img
+
 
 # structure block
 @material(blockid=255, data=list(range(4)), solid=True)
@@ -5118,7 +5268,40 @@ def structure_block(self, blockid, data):
         img = self.load_image_texture("assets/minecraft/textures/block/structure_block_data.png")
     return self.build_block(img, img)
 
-# beetroots(207), berry bushes(11505)
+
+# Jigsaw block
+@material(blockid=256, data=list(range(6)), solid=True)
+def jigsaw_block(self, blockid, data):
+    # Do rotation
+    if self.rotation in [1, 2, 3] and data in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = rotation_map[self.rotation][data]
+
+    top = self.load_image_texture("assets/minecraft/textures/block/jigsaw_top.png")
+    bottom = self.load_image_texture("assets/minecraft/textures/block/jigsaw_bottom.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/jigsaw_side.png")
+
+    if data == 0:    # Down
+        img = self.build_full_block(bottom.rotate(self.rotation * 90), None, None,
+                                    side.rotate(180), side.rotate(180))
+    elif data == 1:  # Up
+        img = self.build_full_block(top.rotate(self.rotation * 90), None, None, side, side)
+    elif data == 2:  # North
+        img = self.build_full_block(side, None, None, side.rotate(90), bottom.rotate(180))
+    elif data == 3:  # South
+        img = self.build_full_block(side.rotate(180), None, None, side.rotate(270), top.rotate(270))
+    elif data == 4:  # West
+        img = self.build_full_block(side.rotate(90), None, None, top.rotate(180), side.rotate(270))
+    elif data == 5:  # East
+        img = self.build_full_block(side.rotate(270), None, None, bottom.rotate(180),
+                                    side.rotate(90))
+
+    return img
+
+
+# beetroots(207), berry bushes (11505)
 @material(blockid=[207, 11505], data=list(range(4)), transparent=True, nospawn=True)
 def crops(self, blockid, data):
 
@@ -5150,59 +5333,30 @@ def concrete(self, blockid, data):
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_concrete_powder.png" % color_map[data])
     return self.build_block(texture, texture)
 
+
 # Glazed Terracotta
-@material(blockid=list(range(235,251)), data=list(range(8)), solid=True)
+@material(blockid=list(range(235, 251)), data=list(range(4)), solid=True)
 def glazed_terracotta(self, blockid, data):
-    texture = self.load_image_texture("assets/minecraft/textures/block/%s_glazed_terracotta.png" % color_map[blockid - 235])
-    glazed_terracotta_orientation = data & 3
-    
-    # Glazed Terracotta rotations are need seperate handling for each render direction
+    # Do rotation
+    data = (self.rotation + data) % 4
 
-    if self.rotation == 0: # rendering north upper-left
-        # choose orientation and paste textures
-        if glazed_terracotta_orientation == 0: # south / Player was facing North
-            return self.build_block(texture, texture)
-        elif glazed_terracotta_orientation == 1: # west / Player was facing east
-            return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
-        elif glazed_terracotta_orientation == 2: # North / Player was facing South
-            return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-        elif glazed_terracotta_orientation == 3: # east / Player was facing west
-            return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270), texture.rotate(90))
+    texture = self.load_image_texture("assets/minecraft/textures/block/%s_glazed_terracotta.png" %
+                                      color_map[blockid - 235]).copy()
+    texture_side4 = texture.transpose(Image.FLIP_LEFT_RIGHT)
 
-    elif self.rotation == 1: # north upper-right
-        # choose orientation and paste textures
-        if glazed_terracotta_orientation == 0: # south / Player was facing North
-            return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
-        elif glazed_terracotta_orientation == 1: # west / Player was facing east
-            return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-        elif glazed_terracotta_orientation == 2: # North / Player was facing South
-            return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270), texture.rotate(90))
-        elif glazed_terracotta_orientation == 3: # east / Player was facing west
-            return self.build_block(texture, texture)
-            
+    if data == 0:    # South
+        return self.build_full_block(texture, None, None, texture, texture_side4.rotate(270))
+    elif data == 1:  # West
+        return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90),
+                                     texture_side4.rotate(180))
+    elif data == 2:  # North
+        return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180),
+                                     texture_side4.rotate(90))
+    elif data == 3:  # East
+        return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270),
+                                     texture_side4)
 
-    elif self.rotation == 2: # north lower-right
-        # choose orientation and paste textures
-        if glazed_terracotta_orientation == 0: # south / Player was facing North
-            return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-        elif glazed_terracotta_orientation == 1: # west / Player was facing east
-            return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270), texture.rotate(90))
-        elif glazed_terracotta_orientation == 2: # North / Player was facing South
-            return self.build_block(texture, texture)
-        elif glazed_terracotta_orientation == 3: # east / Player was facing west
-            return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
-            
-    elif self.rotation == 3: # north lower-left
-        # choose orientation and paste textures
-        if glazed_terracotta_orientation == 0: # south / Player was facing North
-            return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270), texture.rotate(90))
-        elif glazed_terracotta_orientation == 1: # west / Player was facing east
-            return self.build_block(texture, texture)
-        elif glazed_terracotta_orientation == 2: # North / Player was facing South
-            return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90), texture.rotate(270))
-        elif glazed_terracotta_orientation == 3: # east / Player was facing west
-            return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180), texture.rotate(180))
-    
+
 # dried kelp block
 @material(blockid=11331, data=[0], solid=True)
 def sandstone(self, blockid, data):
@@ -5303,3 +5457,229 @@ def barrel(self, blockid, data):
         return self.build_full_block(t_side, None, None, t_side.rotate(90), t_bottom)
     else:               # west
         return self.build_full_block(t_side.rotate(90), None, None, t_top, t_side.rotate(270))
+
+
+# Campfire
+@material(blockid=11506, data=list(range(8)), solid=True, transparent=True, nospawn=True)
+def campfire(self, blockid, data):
+    # Do rotation, mask to not clobber lit data
+    data = data & 0b100 | ((self.rotation + (data & 0b11)) % 4)
+
+    # Load textures
+    # Fire & lit log textures contain multiple tiles, since both are
+    #   16px wide rely on load_image_texture() to crop appropriately
+    fire_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_fire.png")
+    log_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_log.png")
+    log_lit_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_log_lit.png")
+
+    def create_tile(img_src, coord_crop, coord_paste, rot):
+        # Takes an image, crops a region, optionally rotates the
+        #   texture, then finally pastes it onto a 16x16 image
+        img_out = Image.new("RGBA", (16, 16), self.bgcolor)
+        img_in = img_src.crop(coord_crop)
+        if rot != 0:
+            img_in = img_in.rotate(rot, expand=True)
+        img_out.paste(img_in, coord_paste)
+        return img_out
+
+    # Generate bottom
+    bottom_t = log_lit_raw_t if data & 0b100 else log_raw_t
+    bottom_t = create_tile(bottom_t, (0, 8, 16, 14), (0, 5), 0)
+    bottom_t = self.transform_image_top(bottom_t)
+
+    # Generate two variants of a log: one with a lit side, one without
+    log_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    log_end_t = create_tile(log_raw_t, (0, 4, 4, 8), (12, 6), 0)
+    log_side_t = create_tile(log_raw_t, (0, 0, 16, 4), (0, 6), 0)
+    log_side_lit_t = create_tile(log_lit_raw_t, (0, 0, 16, 4), (0, 6), 0)
+
+    log_end_t = self.transform_image_side(log_end_t)
+    log_top_t = self.transform_image_top(log_side_t)
+    log_side_t = self.transform_image_side(log_side_t).transpose(Image.FLIP_LEFT_RIGHT)
+    log_side_lit_t = self.transform_image_side(log_side_lit_t).transpose(Image.FLIP_LEFT_RIGHT)
+
+    alpha_over(log_t, log_top_t, (-2, 2), log_top_t)  # Fix some holes at the edges
+    alpha_over(log_t, log_top_t, (-2, 1), log_top_t)
+    log_lit_t = log_t.copy()
+
+    # Unlit log
+    alpha_over(log_t, log_side_t, (5, 0), log_side_t)
+    alpha_over(log_t, log_end_t, (-7, 0), log_end_t)
+
+    # Lit log. For unlit fires, just reference the unlit log texture
+    if data & 0b100:
+        alpha_over(log_lit_t, log_side_lit_t, (5, 0), log_side_lit_t)
+        alpha_over(log_lit_t, log_end_t, (-7, 0), log_end_t)
+    else:
+        log_lit_t = log_t
+
+    # Log parts. Because fire needs to be in the middle of the logs,
+    #   split the logs into two parts: Those appearing behind the fire
+    #   and those appearing in front of the fire
+    logs_back_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    logs_front_t = Image.new("RGBA", (24, 24), self.bgcolor)
+
+    # Back logs
+    alpha_over(logs_back_t, log_lit_t, (-1, 7), log_lit_t)
+    log_tmp_t = logs_back_t.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(logs_back_t, log_tmp_t, (1, -3), log_tmp_t)
+
+    # Front logs
+    alpha_over(logs_front_t, log_t, (7, 10), log_t)
+    # Due to the awkward drawing order, take a small part of the back
+    #   logs that need to be drawn on top of the front logs despite
+    #   the front logs being drawn last
+    ImageDraw.Draw(log_tmp_t).rectangle((0, 0, 18, 24), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    alpha_over(logs_front_t, log_tmp_t, (1, -3), log_tmp_t)
+    log_tmp_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(log_tmp_t, log_lit_t, (7, 10), log_lit_t)
+    log_tmp_t = log_tmp_t.transpose(Image.FLIP_LEFT_RIGHT)
+    alpha_over(logs_front_t, log_tmp_t, (1, -3), log_tmp_t)
+
+    # Compose final image
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(img, bottom_t, (0, 12), bottom_t)
+    alpha_over(img, logs_back_t, (0, 0), logs_back_t)
+    if data & 0b100:
+        fire_t = fire_raw_t.copy()
+        if data & 0b11 in [0, 2]:  # North, South
+            fire_t = fire_t.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, fire_t, (4, 4), fire_t)
+    alpha_over(img, logs_front_t, (0, 0), logs_front_t)
+    if data & 0b11 in [0, 2]:  # North, South
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+
+    return img
+
+
+# Bell
+@material(blockid=11507, data=list(range(16)), solid=True, transparent=True, nospawn=True)
+def bell(self, blockid, data):
+    # Do rotation, mask to not clobber attachment data
+    data = data & 0b1100 | ((self.rotation + (data & 0b11)) % 4)
+
+    # Load textures
+    bell_raw_t = self.load_image("assets/minecraft/textures/entity/bell/bell_body.png")
+    bar_raw_t = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png")
+    post_raw_t = self.load_image_texture("assets/minecraft/textures/block/stone.png")
+
+    def create_tile(img_src, coord_crop, coord_paste, rot):
+        # Takes an image, crops a region, optionally rotates the
+        #   texture, then finally pastes it onto a 16x16 image
+        img_out = Image.new("RGBA", (16, 16), self.bgcolor)
+        img_in = img_src.crop(coord_crop)
+        if rot != 0:
+            img_in = img_in.rotate(rot, expand=True)
+        img_out.paste(img_in, coord_paste)
+        return img_out
+
+    # 0 = floor, 1 = ceiling, 2 = single wall, 3 = double wall
+    bell_type = (data & 0b1100) >> 2
+    # Should the bar/post texture be flipped? Yes if either:
+    #   - Attached to floor and East or West facing
+    #   - Not attached to floor and North or South facing
+    flip_part = ((bell_type == 0 and data & 0b11 in [1, 3]) or
+                 (bell_type != 0 and data & 0b11 in [0, 2]))
+
+    # Generate bell
+    # Bell side textures varies based on self.rotation
+    bell_sides_idx = [(0 - self.rotation) % 4, (3 - self.rotation) % 4]
+    # Upper sides
+    bell_coord = [x * 6 for x in bell_sides_idx]
+    bell_ul_t = create_tile(bell_raw_t, (bell_coord[0], 6, bell_coord[0] + 6, 13), (5, 4), 180)
+    bell_ur_t = create_tile(bell_raw_t, (bell_coord[1], 6, bell_coord[1] + 6, 13), (5, 4), 180)
+    bell_ul_t = self.transform_image_side(bell_ul_t)
+    bell_ur_t = self.transform_image_side(bell_ur_t.transpose(Image.FLIP_LEFT_RIGHT))
+    bell_ur_t = bell_ur_t.transpose(Image.FLIP_LEFT_RIGHT)
+    # Lower sides
+    bell_coord = [x * 8 for x in bell_sides_idx]
+    bell_ll_t = create_tile(bell_raw_t, (bell_coord[0], 21, bell_coord[0] + 8, 23), (4, 11), 180)
+    bell_lr_t = create_tile(bell_raw_t, (bell_coord[1], 21, bell_coord[1] + 8, 23), (4, 11), 180)
+    bell_ll_t = self.transform_image_side(bell_ll_t)
+    bell_lr_t = self.transform_image_side(bell_lr_t.transpose(Image.FLIP_LEFT_RIGHT))
+    bell_lr_t = bell_lr_t.transpose(Image.FLIP_LEFT_RIGHT)
+    # Upper top
+    top_rot = (180 + self.rotation * 90) % 360
+    bell_ut_t = create_tile(bell_raw_t, (6, 0, 12, 6), (5, 5), top_rot)
+    bell_ut_t = self.transform_image_top(bell_ut_t)
+    # Lower top
+    bell_lt_t = create_tile(bell_raw_t, (8, 13, 16, 21), (4, 4), top_rot)
+    bell_lt_t = self.transform_image_top(bell_lt_t)
+
+    bell_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(bell_t, bell_lt_t, (0, 8), bell_lt_t)
+    alpha_over(bell_t, bell_ll_t, (3, 4), bell_ll_t)
+    alpha_over(bell_t, bell_lr_t, (9, 4), bell_lr_t)
+    alpha_over(bell_t, bell_ut_t, (0, 3), bell_ut_t)
+    alpha_over(bell_t, bell_ul_t, (4, 4), bell_ul_t)
+    alpha_over(bell_t, bell_ur_t, (8, 4), bell_ur_t)
+
+    # Generate bar
+    if bell_type == 1:  # Ceiling
+        # bar_coord:  Left          Right         Top
+        bar_coord = [(4, 2, 6, 5), (6, 2, 8, 5), (1, 3, 3, 5)]
+        bar_tile_pos = [(7, 1), (7, 1), (7, 7)]
+        bar_over_pos = [(6, 3), (7, 2), (0, 0)]
+    else:  # Floor, single wall, double wall
+        # Note: For a single wall bell, the position of the bar
+        #   varies based on facing
+        if bell_type == 2 and data & 0b11 in [2, 3]:  # Single wall, North/East facing
+            bar_x_sw = 3
+            bar_l_pos_sw = (6, 7)
+        else:
+            bar_x_sw = 0
+            bar_l_pos_sw = (4, 8)
+        bar_x = [2, None, bar_x_sw, 0][bell_type]
+        bar_len = [12, None, 13, 16][bell_type]
+        bar_l_pos = [(6, 7), None, bar_l_pos_sw, (4, 8)][bell_type]
+        bar_long_coord = (bar_x, 3, bar_x + bar_len, 5)
+
+        bar_coord = [(5, 4, 7, 6), bar_long_coord, bar_long_coord]
+        bar_tile_pos = [(2, 1), (bar_x, 1), (bar_x, 7)]
+        bar_over_pos = [bar_l_pos, (7, 3), (0, 1)]
+
+    bar_l_t = create_tile(bar_raw_t, bar_coord[0], bar_tile_pos[0], 0)
+    bar_r_t = create_tile(bar_raw_t, bar_coord[1], bar_tile_pos[1], 0)
+    bar_t_t = create_tile(bar_raw_t, bar_coord[2], bar_tile_pos[2], 0)
+    bar_l_t = self.transform_image_side(bar_l_t)
+    bar_r_t = self.transform_image_side(bar_r_t.transpose(Image.FLIP_LEFT_RIGHT))
+    bar_r_t = bar_r_t.transpose(Image.FLIP_LEFT_RIGHT)
+    bar_t_t = self.transform_image_top(bar_t_t)
+
+    bar_t = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(bar_t, bar_t_t, bar_over_pos[2], bar_t_t)
+    alpha_over(bar_t, bar_l_t, bar_over_pos[0], bar_l_t)
+    alpha_over(bar_t, bar_r_t, bar_over_pos[1], bar_r_t)
+    if flip_part:
+        bar_t = bar_t.transpose(Image.FLIP_LEFT_RIGHT)
+
+    # Generate post, only applies to floor attached bell
+    if bell_type == 0:
+        post_l_t = create_tile(post_raw_t, (0, 1, 4, 16), (6,  1), 0)
+        post_r_t = create_tile(post_raw_t, (0, 1, 2, 16), (14, 1), 0)
+        post_t_t = create_tile(post_raw_t, (0, 0, 2,  4), (14, 6), 0)
+        post_l_t = self.transform_image_side(post_l_t)
+        post_r_t = self.transform_image_side(post_r_t.transpose(Image.FLIP_LEFT_RIGHT))
+        post_r_t = post_r_t.transpose(Image.FLIP_LEFT_RIGHT)
+        post_t_t = self.transform_image_top(post_t_t)
+
+        post_back_t = Image.new("RGBA", (24, 24), self.bgcolor)
+        post_front_t = Image.new("RGBA", (24, 24), self.bgcolor)
+        alpha_over(post_back_t, post_t_t, (0, 1), post_t_t)
+        alpha_over(post_back_t, post_l_t, (10, 0), post_l_t)
+        alpha_over(post_back_t, post_r_t, (7, 3), post_r_t)
+        alpha_over(post_back_t, post_r_t, (6, 3), post_r_t)  # Fix some holes
+        alpha_over(post_front_t, post_back_t, (-10, 5), post_back_t)
+        if flip_part:
+            post_back_t = post_back_t.transpose(Image.FLIP_LEFT_RIGHT)
+            post_front_t = post_front_t.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+    if bell_type == 0:
+        alpha_over(img, post_back_t, (0, 0), post_back_t)
+    alpha_over(img, bell_t, (0, 0), bell_t)
+    alpha_over(img, bar_t, (0, 0), bar_t)
+    if bell_type == 0:
+        alpha_over(img, post_front_t, (0, 0), post_front_t)
+
+    return img

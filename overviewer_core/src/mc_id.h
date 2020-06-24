@@ -142,6 +142,7 @@ enum mc_block_id {
     block_jungle_stairs = 136,
     block_command_block = 137,
     block_beacon = 138,
+    block_mushroom_stem = 139,
     block_flower_pot = 140,
     block_carrots = 141,
     block_potatoes = 142,
@@ -257,6 +258,8 @@ enum mc_block_id {
     block_concrete = 251,
     block_concrete_powder = 252,
     block_structure_block = 255,
+    block_jigsaw = 256,
+    block_shulker_box = 257,
     block_prismarine_stairs = 11337,
     block_dark_prismarine_stairs = 11338,
     block_prismarine_brick_stairs = 11339,
@@ -332,6 +335,8 @@ enum mc_block_id {
     block_honeycomb_block = 11503,
     block_honey_block = 11504,
     block_sweet_berry_bush = 11505,
+    block_campfire = 11506,
+    block_bell = 11507,
     //  adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 21000
     block_andesite_wall = 21000,
