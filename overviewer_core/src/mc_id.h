@@ -265,6 +265,8 @@ enum mc_block_id {
     block_basalt = 1001,
     block_polished_basalt = 1002,
     block_soul_campfire = 1003,
+    block_blackstone = 1004,
+    block_netherite_block = 1005,
 
     block_prismarine_stairs = 11337,
     block_dark_prismarine_stairs = 11338,

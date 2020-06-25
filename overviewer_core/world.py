@@ -691,6 +691,8 @@ class RegionSet(object):
             'minecraft:basalt':         (1001, 0),
             'minecraft:polished_basalt':  (1002, 0),
             'minecraft:soul_campfire':  (1003, 0),
+            'minecraft:blackstone':  (1004, 0),
+            'minecraft:netherite_block':  (1005, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),

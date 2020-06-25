@@ -5705,3 +5705,11 @@ def basalt(self, blockid, data):
         return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
     elif data == 2: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
+
+
+# Blackstone block
+block(blockid=[1004], top_image="assets/minecraft/textures/block/blackstone_top.png",
+      side_image="assets/minecraft/textures/block/blackstone.png")
+
+# Netherite
+block(blockid=[1005], top_image="assets/minecraft/textures/block/netherite_block.png")
