@@ -1355,12 +1355,11 @@ class RegionSet(object):
             except nbt.CorruptionError as e:
                 tries -= 1
                 if tries > 0:
-                    # Flush the region cache to possibly read a new region file
-                    # header
-                    logging.debug("Encountered a corrupt chunk at %s,%s. Flushing cache and retrying", x, z)
-                    #logging.debug("Error was:", exc_info=1)
+                    # Flush the region cache to possibly read a new region file header
+                    logging.debug("Encountered a corrupt chunk or read error at %s,%s. "
+                                  "Flushing cache and retrying", x, z)
                     del self.regioncache[regionfile]
-                    time.sleep(0.5)
+                    time.sleep(0.25)
                     continue
                 else:
                     logging.warning("The following was encountered while reading from %s:", self.regiondir)

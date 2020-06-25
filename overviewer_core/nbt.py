@@ -292,7 +292,10 @@ class MCRFileReader(object):
         self._file.seek(offset)
 
         # read in the chunk data header
-        header = self._file.read(5)
+        try:
+            header = self._file.read(5)
+        except OSError as e:
+            raise CorruptChunkError("An OSError occurred: {}".format(e.strerror))
         if len(header) != 5:
             raise CorruptChunkError("chunk header is invalid")
         data_length, compression = self._chunk_header_format.unpack(header)
