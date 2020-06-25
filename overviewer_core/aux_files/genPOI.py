@@ -369,7 +369,7 @@ def handlePlayers(worldpath, filters, markers):
 
             read_dim = data.get("Dimension", "minecraft:overworld")
             if type(read_dim) == int:
-                DIMENSION_INT_TO_STR.get(read_dim, "minecraft:overworld")
+                read_dim = DIMENSION_INT_TO_STR.get(read_dim, "minecraft:overworld")
 
             if read_dim == dimension:
                 result = filter_function(data)
