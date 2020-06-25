@@ -37,6 +37,13 @@ from overviewer_core.files import FileReplacer, get_fs_caps
 UUID_LOOKUP_URL = 'https://sessionserver.mojang.com/session/minecraft/profile/'
 
 
+DIMENSION_INT_TO_STR = {
+    0: "minecraft:overworld",
+    -1: "minecraft:the_nether",
+    1: "minecraft:the_end"
+}
+
+
 def replaceBads(s):
     "Replaces bad characters with good characters!"
     bads = [" ", "(", ")"]
@@ -356,14 +363,19 @@ def handlePlayers(worldpath, filters, markers):
                 dimension = int(re.match(r"^DIM(_MYST)?(-?\d+)$", rset.get_type()).group(2))
             else:
                 dimension = 0
+            dimension = DIMENSION_INT_TO_STR.get(dimension, "minecraft:overworld")
 
-            if data.get('Dimension', 0) == dimension:
+            read_dim = data.get("Dimension", "minecraft:overworld")
+            if type(read_dim) == int:
+                DIMENSION_INT_TO_STR.get(read_dim, "minecraft:overworld")
+
+            if read_dim == dimension:
                 result = filter_function(data)
                 if result:
                     d = create_marker_from_filter_result(data, result)
                     markers[name]['raw'].append(d)
 
-            if dimension == 0 and "SpawnX" in data:
+            if dimension == "minecraft:overworld" and "SpawnX" in data:
                 result = filter_function(spawn)
                 if result:
                     d = create_marker_from_filter_result(spawn, result)
