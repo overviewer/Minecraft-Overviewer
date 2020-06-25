@@ -288,7 +288,10 @@ class RegionSet(object):
 
         for x, y, regionfile in self._iterate_regionfiles():
             # regionfile is a pathname
-            self.regionfiles[(x,y)] = (regionfile, os.path.getmtime(regionfile))
+            if os.path.getsize(regionfile) != 0:
+                self.regionfiles[(x,y)] = (regionfile, os.path.getmtime(regionfile))
+            else:
+                logging.debug("Skipping zero-size region file {}".format(regionfile))
 
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
