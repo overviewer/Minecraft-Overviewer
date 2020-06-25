@@ -686,6 +686,12 @@ class RegionSet(object):
             'minecraft:tube_coral_fan': (8, 0),
             'minecraft:tube_coral_wall_fan': (8, 0),
 
+            # Some 1.16 stuff that I'll arbitrarily shove in here due to ID bloat
+            'minecraft:ancient_debris': (1000, 0),
+            'minecraft:basalt':         (1001, 0),
+            'minecraft:polished_basalt':  (1002, 0),
+            'minecraft:soul_campfire':  (1003, 0),
+
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
             'minecraft:spruce_pressure_plate': (11301, 0),
@@ -1029,6 +1035,9 @@ class RegionSet(object):
                 data = 3
             if axis == 'z':
                 data = 4
+        elif key == 'minecraft:basalt' or key == 'minecraft:polished_basalt':
+            axis = palette_entry['Properties']['axis']
+            data = {'y': 0, 'x': 1, 'z': 2}[axis]
         elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch']:
             if key.startswith('minecraft:redstone_') and palette_entry['Properties']['lit'] == 'true':
                 block += 1
@@ -1141,7 +1150,7 @@ class RegionSet(object):
             # A moisture level of 7 has a different texture from other farmland
             data = 1 if palette_entry['Properties'].get('moisture', '0') == '7' else 0
         elif key in ['minecraft:grindstone', 'minecraft:lectern', 'minecraft:campfire',
-                     'minecraft:bell']:
+                     'minecraft:bell', 'minecraft:soul_campfire']:
             p = palette_entry['Properties']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
             if key == 'minecraft:grindstone':
@@ -1149,7 +1158,7 @@ class RegionSet(object):
             elif key == 'minecraft:lectern':
                 if p['has_book'] == 'true':
                     data |= 4
-            elif key == 'minecraft:campfire':
+            elif key == 'minecraft:campfire' or key == 'minecraft:soul_campfire':
                 if p['lit'] == 'true':
                     data |= 4
             elif key == 'minecraft:bell':

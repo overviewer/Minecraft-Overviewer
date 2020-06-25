@@ -6,7 +6,7 @@ python:
   - "3.7"
   - "3.8"
 env:
-  - MC_VERSION=1.15
+  - MC_VERSION=1.16.1
 before_install:
   - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/src/libImaging/Imaging.h
   - wget https://raw.githubusercontent.com/python-pillow/Pillow/master/src/libImaging/ImagingUtils.h

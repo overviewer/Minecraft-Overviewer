@@ -260,6 +260,12 @@ enum mc_block_id {
     block_structure_block = 255,
     block_jigsaw = 256,
     block_shulker_box = 257,
+    // 1.16 stuff
+    block_ancient_debris = 1000,
+    block_basalt = 1001,
+    block_polished_basalt = 1002,
+    block_soul_campfire = 1003,
+
     block_prismarine_stairs = 11337,
     block_dark_prismarine_stairs = 11338,
     block_prismarine_brick_stairs = 11339,

@@ -324,7 +324,7 @@ class Textures(object):
                 if verbose: logging.info("Found %s in '%s'", filename, path)
                 return open(path, mode)
 
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.15-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.16-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
@@ -5459,18 +5459,21 @@ def barrel(self, blockid, data):
         return self.build_full_block(t_side.rotate(90), None, None, t_top, t_side.rotate(270))
 
 
-# Campfire
-@material(blockid=11506, data=list(range(8)), solid=True, transparent=True, nospawn=True)
+# Campfire (11506) and soul campfire (1003)
+@material(blockid=[11506, 1003], data=list(range(8)), solid=True, transparent=True, nospawn=True)
 def campfire(self, blockid, data):
     # Do rotation, mask to not clobber lit data
     data = data & 0b100 | ((self.rotation + (data & 0b11)) % 4)
+    block_name = "campfire" if blockid == 11506 else "soul_campfire"
 
     # Load textures
     # Fire & lit log textures contain multiple tiles, since both are
     #   16px wide rely on load_image_texture() to crop appropriately
-    fire_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_fire.png")
+    fire_raw_t = self.load_image_texture("assets/minecraft/textures/block/" + block_name
+                                         + "_fire.png")
     log_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_log.png")
-    log_lit_raw_t = self.load_image_texture("assets/minecraft/textures/block/campfire_log_lit.png")
+    log_lit_raw_t = self.load_image_texture("assets/minecraft/textures/block/" + block_name
+                                            + "_log_lit.png")
 
     def create_tile(img_src, coord_crop, coord_paste, rot):
         # Takes an image, crops a region, optionally rotates the
@@ -5683,3 +5686,22 @@ def bell(self, blockid, data):
         alpha_over(img, post_front_t, (0, 0), post_front_t)
 
     return img
+
+
+# Ancient Debris
+block(blockid=[1000], top_image="assets/minecraft/textures/block/ancient_debris_top.png",
+      side_image="assets/minecraft/textures/block/ancient_debris_side.png")
+
+
+# Basalt
+@material(blockid=[1001, 1002], data=list(range(3)), solid=True)
+def basalt(self, blockid, data):
+    block_name = "polished_basalt" if blockid == 1002 else "basalt"
+    top = self.load_image_texture("assets/minecraft/textures/block/" + block_name + "_top.png")
+    side = self.load_image_texture("assets/minecraft/textures/block/" + block_name + "_side.png")
+    if data == 0:
+        return self.build_block(top, side)
+    elif data == 1: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif data == 2: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
