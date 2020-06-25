@@ -1428,16 +1428,22 @@ class RegionSet(object):
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
             try:
-                if 'SkyLight' in section:
-                    skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
-                    skylight = skylight.reshape((16,16,8))
-                else:   # Special case introduced with 1.14
-                    skylight = numpy.zeros((16,16,8), dtype=numpy.uint8)
-                skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-                skylight_expanded[:,:,::2] = skylight & 0x0F
-                skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
-                del skylight
-                section['SkyLight'] = skylight_expanded
+                # Sometimes, Minecraft loves generating chunks with no light info.
+                # These mostly appear to have those two properties, and in this case
+                # we default to full-bright as it's less jarring to look at than all-black.
+                if chunk_data.get("Status", "") == "spawn" and 'Lights' in chunk_data:
+                    section['SkyLight'] = numpy.full((16,16,16), 255, dtype=numpy.uint8)
+                else:
+                    if 'SkyLight' in section:
+                        skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
+                        skylight = skylight.reshape((16,16,8))
+                    else:   # Special case introduced with 1.14
+                        skylight = numpy.zeros((16,16,8), dtype=numpy.uint8)
+                    skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+                    skylight_expanded[:,:,::2] = skylight & 0x0F
+                    skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
+                    del skylight
+                    section['SkyLight'] = skylight_expanded
 
                 # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
                 if 'BlockLight' in section:
