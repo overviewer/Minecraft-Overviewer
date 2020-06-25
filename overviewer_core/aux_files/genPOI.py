@@ -150,7 +150,7 @@ def parseBucketChunks(task_tuple):
             i = 0
             cnt = 250 + cnt
             logging.debug("Found %d markers in thread %d so far at %d chunks.",
-                         sum(len(v) for v in markers.values()), pid, cnt)
+                          sum(len(v) for v in markers.values()), pid, cnt)
 
     return markers
 
@@ -286,7 +286,9 @@ class PlayerDict(dict):
             pass
 
         try:
-            profile = json.loads(urllib.request.urlopen(UUID_LOOKUP_URL + sname).read().decode("utf-8"))
+            profile = json.loads(
+                urllib.request.urlopen(UUID_LOOKUP_URL + sname).read().decode("utf-8")
+            )
             if 'name' in profile:
                 profile['retrievedAt'] = time.mktime(time.localtime())
                 PlayerDict.uuid_cache[sname] = profile
@@ -437,8 +439,8 @@ def create_marker_from_filter_result(poi, result):
             d["createInfoWindow"] = result['createInfoWindow']
 
         # Polylines and polygons
-        if ('polyline' in result and hasattr(result['polyline'], '__iter__')) or \
-            'polygon' in result and hasattr(result['polygon'], '__iter__'):
+        if (('polyline' in result and hasattr(result['polyline'], '__iter__')) or
+            'polygon' in result and hasattr(result['polygon'], '__iter__')):
             # If the points form a line or closed shape
             d['isLine'] = 'polyline' in result
             # Collect points
@@ -455,7 +457,7 @@ def create_marker_from_filter_result(poi, result):
             if 'fill' in result:
                 d['fill'] = result['fill']
             else:
-                d['fill'] = not d['isLine'] # fill polygons by default
+                d['fill'] = not d['isLine']     # fill polygons by default
 
             if 'weight' in result:
                 d['strokeWeight'] = result['weight']
@@ -573,13 +575,13 @@ def main():
     markers = dict((name, dict(created=False, raw=[], name=filter_name))
                    for name, filter_name, __, __, __, __ in filters)
 
-    all_rsets = set(map(lambda f : f[3], filters))
+    all_rsets = set(map(lambda f: f[3], filters))
     logging.info("Will search %s region sets using %s filters", len(all_rsets), len(filters))
 
     # apply filters to regionsets
     if not args.skipscan:
         for rset in all_rsets:
-            rset_filters = list(filter(lambda f : f[3] == rset, filters))
+            rset_filters = list(filter(lambda f: f[3] == rset, filters))
             logging.info("Calling handleEntities for %s with %s filters", rset, len(rset_filters))
             handleEntities(rset, config, args.config, rset_filters, markers)
 
