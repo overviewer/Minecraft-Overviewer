@@ -180,6 +180,12 @@ div.worldcontrol select {
     margin-top:-50%;
 }
 
+.ov-marker-legend {
+    height: 1.5rem;
+    float: right;
+    clear: right;
+}
+
 .leaflet-div-icon {
     background: 0;
     border: 0;

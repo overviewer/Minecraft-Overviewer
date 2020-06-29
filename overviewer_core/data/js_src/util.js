@@ -424,7 +424,9 @@ overviewer.util = {
                             marker_group.addLayer(layerObj);
                         }
                         // Save marker group
-                        obj.marker_groups[marker_entry.displayName] = marker_group;
+                        var layer_name_html = marker_entry.displayName +
+                            '<img class="ov-marker-legend" src="' + marker_entry.icon + '"></img>';
+                        obj.marker_groups[layer_name_html] = marker_group;
                     }
                 }
             }
