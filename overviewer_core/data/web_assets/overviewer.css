@@ -181,9 +181,10 @@ div.worldcontrol select {
 }
 
 .ov-marker-legend {
-    height: 1.5rem;
+    height: 1.5em;
     float: right;
     clear: right;
+    margin-left: 20px;
 }
 
 .leaflet-div-icon {
