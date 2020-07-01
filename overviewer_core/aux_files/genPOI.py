@@ -568,7 +568,8 @@ def main():
                 displayName=f['name'],
                 icon=f.get('icon', 'signpost_icon.png'),
                 createInfoWindow=f.get('createInfoWindow', True),
-                checked=f.get('checked', False))
+                checked=f.get('checked', False),
+                showIconInLegend=f.get('showIconInLegend', False))
             marker_groups[rname].append(group)
 
     # initialize the structure for the markers
