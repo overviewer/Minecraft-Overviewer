@@ -28,6 +28,11 @@ array), and return a string representing the text to be displayed.  For example:
         if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
             return "\n".join([poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']])
 
+.. note::
+    This example is intended as a teaching aid and does not escape HTML,
+    so if you are concerned that your Minecraft players will put HTML/JS into
+    their signs, see below for a version that does do escaping.
+
 If a POI doesn't match, the filter can return None (which is the default if a python 
 functions runs off the end without an explicit 'return').
 
@@ -70,10 +75,10 @@ Because of the way the config file is loaded, if you need to import a function o
 for use in your filter function, you need to explicitly load it into the global namespace::
 
     global escape
-    from cgi import escape
+    from html import escape
     def signFilter(poi):
         if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
-            return "\n".join(map(escape, [poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']]))
+            return escape("\n".join([poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']]))
 
 Since writing these filters can be a little tedious, a set of predefined filters
 functions are provided.  See the :ref:`predefined_filter_functions` section for
