@@ -135,12 +135,17 @@ You will need the following packages on Debian-derived distributions (e.g. Ubunt
 * python3-numpy
 
 .. note::
-    If you choose to install pillow through pip instead of your distribution's package
-    manager, you won't get the pillow headers which Overviewer requires to build its C
-    extension. In that case, you should manually download the header files specific to
+    Certain pillow headers, which Overviewer requires to build its C extension, are not included in the Overviewer source.
+    You need to manually download the header files specific to
     the version of pillow you installed, and point at them with the ``PIL_INCLUDE_DIR``
     environment variable. A version mismatch between the installed pillow library and
     the headers can lead to segfaults while running Overviewer due to an ABI mismatch.
+
+    The following header files are required and can be downloaded from https://github.com/python-pillow/Pillow/tree/master/src/libImaging.
+
+    - ``Imaging.h``
+    - ``ImPlatform.h``
+    - ``ImagingUtils.h``
 
 Then to build::
 
