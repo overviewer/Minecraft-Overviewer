@@ -696,6 +696,29 @@ class RegionSet(object):
             'minecraft:soul_campfire':  (1003, 0),
             'minecraft:blackstone':  (1004, 0),
             'minecraft:netherite_block':  (1005, 0),
+            'minecraft:warped_nylium':  (1006, 0),
+            'minecraft:crimson_nylium':  (1007, 0),
+            # Nether logs aka stem
+            'minecraft:warped_stem':  (1008, 0),
+            'minecraft:stripped_warped_stem':  (1008, 1),
+            'minecraft:crimson_stem':  (1008, 2),
+            'minecraft:stripped_crimson_stem':  (1008, 3),
+            # hyphae
+            'minecraft:warped_hyphae':  (1009, 0),
+            'minecraft:stripped_warped_hyphae':  (1009, 1),
+            'minecraft:crimson_hyphae':  (1009, 2),
+            'minecraft:stripped_crimson_hyphae':  (1009, 3),
+            # nether biomes
+            'minecraft:warped_wart_block': (1010, 0),
+            'minecraft:shroomlight': (1011, 0),
+            'minecraft:twisting_vines': (1012, 0),
+            'minecraft:twisting_vines_plant': (1013, 0),
+            'minecraft:weeping_vines': (1014, 0),
+            'minecraft:weeping_vines_plant': (1015, 0),
+            'minecraft:warped_fungus': (1016, 0),
+            'minecraft:crimson_fungus': (1017, 0),
+            'minecraft:warped_roots': (1018, 0),
+            'minecraft:crimson_roots': (1019, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
@@ -1027,7 +1050,8 @@ class RegionSet(object):
                 (key == 'minecraft:piston_head' and p.get('type', 'normal') == 'sticky') or
                 (key == 'minecraft:observer' and p.get('powered', 'false') == 'true')):
                 data |= 0x08
-        elif key.endswith('_log') or key.endswith('_wood') or key == 'minecraft:bone_block':
+        elif (key.endswith('_log') or key.endswith('_wood') or
+              key == 'minecraft:bone_block' or key.endswith('_stem')):
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
                 data |= 4
