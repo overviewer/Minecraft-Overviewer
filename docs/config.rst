@@ -1248,6 +1248,29 @@ BiomeOverlay
 
             BiomeOverlay(biomes=[("Forest", (0, 255, 0)), ("Desert", (255, 0, 0))])
 
+HeatmapOverlay
+    Color the map according to when a chunk was last visited. The color for Timestamps 
+    between t_invisible and t_full will be interpolated between 0 and 255.
+    This RenderPrimitive might require use of the forcerender option. 
+    Otherwise the Overlay might not get updated for not visited chunks (resulting in them
+    always being the brightest color, as if recently visited).
+
+    **Options**
+    
+    t_invisible
+        The timestamp when the overlay will get invisible. The default is 30 days ago.
+    
+    t_now
+        The timestamp when the overlay will be fully visible. The default is today.
+    
+    Example::
+
+        HeatmapOverlay(
+            t_invisible=int((t_now - timedelta(days=2)).timestamp()),
+            t_full=int(t_now.timestamp()),
+        )
+
+
 Defining Custom Rendermodes
 ---------------------------
 
