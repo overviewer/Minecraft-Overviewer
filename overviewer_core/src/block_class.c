@@ -58,6 +58,13 @@ bool block_class_is_subset(
     return false;
 }
 
+bool block_class_is_wall(mc_block_t block) {
+    mc_block_t mask = 0b11111111;
+    mc_block_t prefix = 0b111 << 8;     // 1792 is the starting offset
+    // if the xor zeroes all bits, the prefix must've matched.
+    return (block & ~mask) ^ prefix == 0;
+}
+
 const mc_block_t block_class_stair[] = {
     block_oak_stairs,
     block_brick_stairs,
@@ -252,20 +259,3 @@ const mc_block_t block_class_alt_height[] = {
     block_purpur_slab,
     block_wooden_slab};
 const size_t block_class_alt_height_len = COUNT_OF(block_class_alt_height);
-
-const mc_block_t block_class_wall[] = {
-    block_andesite_wall,
-    block_brick_wall,
-    block_cobblestone_wall,
-    block_diorite_wall,
-    block_end_stone_brick_wall,
-    block_granite_wall,
-    block_mossy_cobblestone_wall,
-    block_mossy_stone_brick_wall,
-    block_nether_brick_wall,
-    block_prismarine_wall,
-    block_red_nether_brick_wall,
-    block_red_sandstone_wall,
-    block_sandstone_wall,
-    block_stone_brick_wall};
-const size_t block_class_wall_len = COUNT_OF(block_class_wall);

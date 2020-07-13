@@ -268,6 +268,26 @@ enum mc_block_id {
     block_blackstone = 1004,
     block_netherite_block = 1005,
 
+    // adding a gap in the numbering of walls to keep them all
+    // in one numbering block starting at 1792
+    // all blocks between 1792 and 2047 are considered walls
+    // this is because our check looks for the prefix 0b11100000000
+    block_andesite_wall = 1792,
+    block_brick_wall = 1793,
+    block_cobblestone_wall = 1794,
+    block_diorite_wall = 1795,
+    block_end_stone_brick_wall = 1796,
+    block_granite_wall = 1797,
+    block_mossy_cobblestone_wall = 1798,
+    block_mossy_stone_brick_wall = 1799,
+    block_nether_brick_wall = 1800,
+    block_prismarine_wall = 1801,
+    block_red_nether_brick_wall = 1802,
+    block_red_sandstone_wall = 1803,
+    block_sandstone_wall = 1804,
+    block_stone_brick_wall = 1805,
+    // end of walls
+
     block_prismarine_stairs = 11337,
     block_dark_prismarine_stairs = 11338,
     block_prismarine_brick_stairs = 11339,
@@ -344,23 +364,7 @@ enum mc_block_id {
     block_honey_block = 11504,
     block_sweet_berry_bush = 11505,
     block_campfire = 11506,
-    block_bell = 11507,
-    //  adding a gap in the numbering of walls to keep them all
-    // in one numbering block starting at 21000
-    block_andesite_wall = 21000,
-    block_brick_wall = 21001,
-    block_cobblestone_wall = 21002,
-    block_diorite_wall = 21003,
-    block_end_stone_brick_wall = 21004,
-    block_granite_wall = 21005,
-    block_mossy_cobblestone_wall = 21006,
-    block_mossy_stone_brick_wall = 21007,
-    block_nether_brick_wall = 21008,
-    block_prismarine_wall = 21009,
-    block_red_nether_brick_wall = 21010,
-    block_red_sandstone_wall = 21011,
-    block_sandstone_wall = 21012,
-    block_stone_brick_wall = 21013
+    block_bell = 11507
 };
 
 typedef uint16_t mc_block_t;
