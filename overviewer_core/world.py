@@ -1246,7 +1246,7 @@ class RegionSet(object):
         return result
     
     def _packed_longarray_to_shorts_v116(self, long_array, n, num_palette):
-        bits_per_value = max(4, math.ceil(math.log2(num_palette)))
+        bits_per_value = max(4, (len(long_array) * 64) // n)
 
         b = numpy.asarray(long_array, dtype=numpy.uint64)
         result = numpy.zeros((n,), dtype=numpy.uint16)
@@ -1262,11 +1262,8 @@ class RegionSet(object):
     def _get_blockdata_v113(self, section, unrecognized_block_types, longarray_unpacker):
         # Translate each entry in the palette to a 1.2-era (block, data) int pair.
         num_palette_entries = len(section['Palette'])
-        # Due to Minecraft bugginess, we extend this array to contain zeroes all the way to the
-        # maximum palette index Minecraft can request in Minecraft 1.16
-        next_pwr_two = 1 << math.ceil(math.log2(num_palette_entries))
-        translated_blocks = numpy.zeros((next_pwr_two,), dtype=numpy.uint16) # block IDs
-        translated_data = numpy.zeros((next_pwr_two,), dtype=numpy.uint8) # block data
+        translated_blocks = numpy.zeros((num_palette_entries,), dtype=numpy.uint16) # block IDs
+        translated_data = numpy.zeros((num_palette_entries,), dtype=numpy.uint8) # block data
         for i in range(num_palette_entries):
             key = section['Palette'][i]
             try:
