@@ -124,7 +124,7 @@ top-level directory.
 
         dump['worlds'] = worlds
         dump['map'] = dict()
-        dump['map']['debug'] = True
+        dump['map']['debug'] = False
         dump['map']['cacheTag'] = str(int(time.time()))
         dump['map']['north_direction'] = 'lower-left'   # only temporary
         dump['map']['controls'] = {

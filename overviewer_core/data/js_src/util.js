@@ -136,8 +136,8 @@ overviewer.util = {
                 this.select.appendChild(option);
             },
             onChange: function(ev) {
-                console.log(ev.target);
-                console.log(ev.target.value);
+                overviewer.util.debug(ev.target);
+                overviewer.util.debug(ev.target.value);
                 var selected_world = ev.target.value;
 
 
@@ -204,8 +204,6 @@ overviewer.util = {
                 overviewer.map.addLayer(overviewer.collections.mapTypes[selected_world][selected_layer_name]);
             },
             onAdd: function() {
-                console.log("onAdd mycontrol");
-
                 return this.container
             }
         });
@@ -290,7 +288,7 @@ overviewer.util = {
 
             // reset the markers control with the markers for this layer
             if (ovconf.marker_groups) {
-                console.log("markers for", ovconf.marker_groups);
+                overviewer.util.debug("markers for", ovconf.marker_groups);
                 ovconf.markerCtrl = L.control.layers(
                         [],
                         ovconf.marker_groups, {collapsed: false}).addTo(overviewer.map);
@@ -376,7 +374,7 @@ overviewer.util = {
             if (overviewer.collections.haveSigns == true) {
                 // if there are markers for this tileset, create them now
                 if ((typeof markers !== 'undefined') && (obj.path in markers)) {
-                    console.log("this tileset has markers:", obj);
+                    overviewer.util.debug("this tileset has markers:", obj);
                     obj.marker_groups = {};
 
                     // For every group of markers
@@ -538,9 +536,9 @@ overviewer.util = {
      *
      * @param string msg
      */
-    'debug': function(msg) {
+    'debug': function(...args) {
         if (overviewerConfig.map.debug) {
-            console.log(msg);
+            console.log(...args);
         }
     },
     /**
