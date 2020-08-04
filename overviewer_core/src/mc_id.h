@@ -279,7 +279,8 @@ enum mc_block_id {
     block_crimson_fungus = 1017,
     block_warped_roots = 1018,
     block_crimson_roots = 1019,
-
+    block_soul_soil = 1020,
+    block_nether_gold_ore = 1021,
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls

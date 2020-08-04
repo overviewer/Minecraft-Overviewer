@@ -719,6 +719,8 @@ class RegionSet(object):
             'minecraft:crimson_fungus': (1017, 0),
             'minecraft:warped_roots': (1018, 0),
             'minecraft:crimson_roots': (1019, 0),
+            'minecraft:soul_soil': (1020, 0),
+            'minecraft:nether_gold_ore': (1021, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),

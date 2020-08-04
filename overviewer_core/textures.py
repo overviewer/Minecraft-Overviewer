@@ -4407,6 +4407,12 @@ block(blockid=110, top_image="assets/minecraft/textures/block/mycelium_top.png",
 # warped_nylium & crimson_nylium
 block(blockid=1006, top_image="assets/minecraft/textures/block/warped_nylium.png", side_image="assets/minecraft/textures/block/warped_nylium_side.png")
 block(blockid=1007, top_image="assets/minecraft/textures/block/crimson_nylium.png", side_image="assets/minecraft/textures/block/crimson_nylium_side.png")
+# soul soil
+soul_soil_texture="assets/minecraft/textures/block/soul_soil.png"
+block(blockid=1020, top_image=soul_soil_texture, side_image=soul_soil_texture)
+# nether gold ore
+nether_gold_texture="assets/minecraft/textures/block/nether_gold_ore.png"
+block(blockid=1021, top_image=nether_gold_texture, side_image=nether_gold_texture)
 
 # lilypad
 # At the moment of writing this lilypads has no ancil data and their
