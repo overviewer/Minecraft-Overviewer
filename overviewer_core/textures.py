@@ -1077,7 +1077,8 @@ block(blockid=15, top_image="assets/minecraft/textures/block/iron_ore.png")
 # coal ore
 block(blockid=16, top_image="assets/minecraft/textures/block/coal_ore.png")
 
-@material(blockid=[17,162,11306,11307,11308,11309,11310,11311], data=list(range(12)), solid=True)
+@material(blockid=[17, 162, 11306, 11307, 11308, 11309, 11310, 11311, 1008, 1009], 
+          data=list(range(12)), solid=True)
 def wood(self, blockid, data):
     # extract orientation and wood type frorm data bits
     wood_type = data & 3
@@ -1171,6 +1172,32 @@ def wood(self, blockid, data):
             side = top
         if wood_type == 3: # jungle wood
             top = self.load_image_texture("assets/minecraft/textures/block/stripped_jungle_log.png")
+            side = top
+    if blockid == 1008: # nether logs aka stem
+        if wood_type == 0: # warped_stem
+            top = self.load_image_texture("assets/minecraft/textures/block/warped_stem_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/block/warped_stem.png")
+        if wood_type == 1: # stripped_warped_stem
+            top = self.load_image_texture("assets/minecraft/textures/block/warped_stem_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/block/stripped_warped_stem.png")
+        if wood_type == 2: # crimson_stem
+            top = self.load_image_texture("assets/minecraft/textures/block/crimson_stem_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/block/crimson_stem.png")
+        if wood_type == 3: # crimson_stem
+            top = self.load_image_texture("assets/minecraft/textures/block/crimson_stem_top.png")
+            side = self.load_image_texture("assets/minecraft/textures/block/stripped_crimson_stem.png")
+    if blockid == 1009: # nether hyphae
+        if wood_type == 0: # warped_hyphae
+            top = self.load_image_texture("assets/minecraft/textures/block/warped_stem.png")
+            side = top
+        if wood_type == 1: # stripped_warped_hyphae
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_warped_stem.png")
+            side = top
+        if wood_type == 2: # crimson_hyphae
+            top = self.load_image_texture("assets/minecraft/textures/block/crimson_stem.png")
+            side = top
+        if wood_type == 3: # stripped_crimson_hyphae
+            top = self.load_image_texture("assets/minecraft/textures/block/stripped_crimson_stem.png")
             side = top
     elif blockid == 11311: # stripped acacia/dark wood:
         if wood_type == 0: # acacia
@@ -1688,6 +1715,15 @@ def flower(self, blockid, data):
 sprite(blockid=39, imagename="assets/minecraft/textures/block/brown_mushroom.png")
 # red mushroom
 sprite(blockid=40, imagename="assets/minecraft/textures/block/red_mushroom.png")
+# warped fungus
+sprite(blockid=1016, imagename="assets/minecraft/textures/block/warped_fungus.png")
+# crimson fungus
+sprite(blockid=1017, imagename="assets/minecraft/textures/block/crimson_fungus.png")
+# warped roots
+sprite(blockid=1018, imagename="assets/minecraft/textures/block/warped_roots.png")
+# crimson roots
+sprite(blockid=1019, imagename="assets/minecraft/textures/block/crimson_roots.png")
+
 # block of gold
 block(blockid=41, top_image="assets/minecraft/textures/block/gold_block.png")
 # block of iron
@@ -3666,6 +3702,8 @@ block(blockid=88, top_image="assets/minecraft/textures/block/soul_sand.png")
 
 # glowstone
 block(blockid=89, top_image="assets/minecraft/textures/block/glowstone.png")
+# shroomlight
+block(blockid=1011, top_image="assets/minecraft/textures/block/shroomlight.png")
 
 # portal
 @material(blockid=90, data=[1, 2, 4, 5, 8, 10], transparent=True)
@@ -4225,6 +4263,12 @@ def stem(self, blockid, data):
     return img
 
 
+# nether vines
+billboard(blockid=1012, imagename="assets/minecraft/textures/block/twisting_vines.png")
+billboard(blockid=1013, imagename="assets/minecraft/textures/block/twisting_vines_plant.png")
+billboard(blockid=1014, imagename="assets/minecraft/textures/block/weeping_vines.png")
+billboard(blockid=1015, imagename="assets/minecraft/textures/block/weeping_vines_plant.png")
+
 # vines
 @material(blockid=106, data=list(range(32)), transparent=True, solid=False, nospawn=True)
 def vines(self, blockid, data):
@@ -4234,6 +4278,7 @@ def vines(self, blockid, data):
     #        1       UNWSE
     #        2       UWSEN
     #        3       USENW
+
     if self.rotation in [1, 2, 3]:
         bit_map = {1: [5, 3, 2, 1, 4],
                    2: [5, 2, 1, 4, 3],
@@ -4359,6 +4404,15 @@ def fence_gate(self, blockid, data):
 
 # mycelium
 block(blockid=110, top_image="assets/minecraft/textures/block/mycelium_top.png", side_image="assets/minecraft/textures/block/mycelium_side.png")
+# warped_nylium & crimson_nylium
+block(blockid=1006, top_image="assets/minecraft/textures/block/warped_nylium.png", side_image="assets/minecraft/textures/block/warped_nylium_side.png")
+block(blockid=1007, top_image="assets/minecraft/textures/block/crimson_nylium.png", side_image="assets/minecraft/textures/block/crimson_nylium_side.png")
+# soul soil
+soul_soil_texture="assets/minecraft/textures/block/soul_soil.png"
+block(blockid=1020, top_image=soul_soil_texture, side_image=soul_soil_texture)
+# nether gold ore
+nether_gold_texture="assets/minecraft/textures/block/nether_gold_ore.png"
+block(blockid=1021, top_image=nether_gold_texture, side_image=nether_gold_texture)
 
 # lilypad
 # At the moment of writing this lilypads has no ancil data and their
@@ -5151,6 +5205,8 @@ block(blockid=213, top_image="assets/minecraft/textures/block/magma.png")
 
 # nether wart block
 block(blockid=214, top_image="assets/minecraft/textures/block/nether_wart_block.png")
+# warped wart block
+block(blockid=1010, top_image="assets/minecraft/textures/block/warped_wart_block.png")
 
 # red nether brick
 block(blockid=215, top_image="assets/minecraft/textures/block/red_nether_bricks.png")

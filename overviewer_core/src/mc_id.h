@@ -267,7 +267,20 @@ enum mc_block_id {
     block_soul_campfire = 1003,
     block_blackstone = 1004,
     block_netherite_block = 1005,
-
+    block_warped_nylium = 1006,
+    block_crimson_nylium = 1007,
+    block_warped_wart_block = 1010,
+    block_shroomlight = 1011,
+    block_twisting_vines = 1012,
+    block_twisting_vines_plant = 1013,
+    block_weeping_vines = 1014,
+    block_weeping_vines_plant = 1015,
+    block_warped_fungus = 1016,
+    block_crimson_fungus = 1017,
+    block_warped_roots = 1018,
+    block_crimson_roots = 1019,
+    block_soul_soil = 1020,
+    block_nether_gold_ore = 1021,
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls
