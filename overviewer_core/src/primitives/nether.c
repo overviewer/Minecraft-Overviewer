@@ -37,7 +37,7 @@ walk_chunk(RenderState* state, RenderPrimitiveNether* data) {
 
             for (y = NETHER_ROOF - 1; y >= 0; y--) {
                 blockid = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
-                if (block_class_is_subset(blockid, (mc_block_t[]){block_bedrock, block_netherrack, block_quartz_ore, block_lava}, 4))
+                if (block_class_is_subset(blockid, block_class_nether_roof, block_class_nether_roof_len))
                     data->remove_block[x + 1][y][z + 1] = true;
                 else
                     break;

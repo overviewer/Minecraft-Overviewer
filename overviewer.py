@@ -239,6 +239,9 @@ def main():
             f = tex.find_file("assets/minecraft/textures/block/grass_block_top.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/block/diamond_ore.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/block/acacia_planks.png", verbose=True)
+            # 1.16
+            f = tex.find_file("assets/minecraft/textures/block/ancient_debris_top.png",
+                              verbose=True)
         except IOError:
             logging.error("Could not find any texture files.")
             return 1

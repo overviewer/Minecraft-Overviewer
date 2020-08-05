@@ -273,14 +273,14 @@ If you want or need to provide your own textures, you have several options:
 
   ::
 
-    VERSION=1.15
+    VERSION=1.16.1
     mkdir -p ~/.minecraft/versions/${VERSION}/
     wget https://overviewer.org/textures/${VERSION} -O ~/.minecraft/versions/${VERSION}/${VERSION}.jar
 
   If that's too confusing for you, then just take this single line and paste it into
-  a terminal to get 1.15 textures::
+  a terminal to get 1.16 textures::
 
-    wget https://overviewer.org/textures/1.15 -O ~/.minecraft/versions/1.15/1.15.jar
+    wget https://overviewer.org/textures/1.16.1 -O ~/.minecraft/versions/1.16.1/1.16.1.jar
 
 * You can also just run the launcher to install the client.
 

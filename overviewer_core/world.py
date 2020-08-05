@@ -288,7 +288,10 @@ class RegionSet(object):
 
         for x, y, regionfile in self._iterate_regionfiles():
             # regionfile is a pathname
-            self.regionfiles[(x,y)] = (regionfile, os.path.getmtime(regionfile))
+            if os.path.getsize(regionfile) != 0:
+                self.regionfiles[(x,y)] = (regionfile, os.path.getmtime(regionfile))
+            else:
+                logging.debug("Skipping zero-size region file {}".format(regionfile))
 
         self.empty_chunk = [None,None]
         logging.debug("Done scanning regions")
@@ -686,6 +689,39 @@ class RegionSet(object):
             'minecraft:tube_coral_fan': (8, 0),
             'minecraft:tube_coral_wall_fan': (8, 0),
 
+            # Some 1.16 stuff that I'll arbitrarily shove in here due to ID bloat
+            'minecraft:ancient_debris': (1000, 0),
+            'minecraft:basalt':         (1001, 0),
+            'minecraft:polished_basalt':  (1002, 0),
+            'minecraft:soul_campfire':  (1003, 0),
+            'minecraft:blackstone':  (1004, 0),
+            'minecraft:netherite_block':  (1005, 0),
+            'minecraft:warped_nylium':  (1006, 0),
+            'minecraft:crimson_nylium':  (1007, 0),
+            # Nether logs aka stem
+            'minecraft:warped_stem':  (1008, 0),
+            'minecraft:stripped_warped_stem':  (1008, 1),
+            'minecraft:crimson_stem':  (1008, 2),
+            'minecraft:stripped_crimson_stem':  (1008, 3),
+            # hyphae
+            'minecraft:warped_hyphae':  (1009, 0),
+            'minecraft:stripped_warped_hyphae':  (1009, 1),
+            'minecraft:crimson_hyphae':  (1009, 2),
+            'minecraft:stripped_crimson_hyphae':  (1009, 3),
+            # nether biomes
+            'minecraft:warped_wart_block': (1010, 0),
+            'minecraft:shroomlight': (1011, 0),
+            'minecraft:twisting_vines': (1012, 0),
+            'minecraft:twisting_vines_plant': (1013, 0),
+            'minecraft:weeping_vines': (1014, 0),
+            'minecraft:weeping_vines_plant': (1015, 0),
+            'minecraft:warped_fungus': (1016, 0),
+            'minecraft:crimson_fungus': (1017, 0),
+            'minecraft:warped_roots': (1018, 0),
+            'minecraft:crimson_roots': (1019, 0),
+            'minecraft:soul_soil': (1020, 0),
+            'minecraft:nether_gold_ore': (1021, 0),
+
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
             'minecraft:spruce_pressure_plate': (11301, 0),
@@ -803,21 +839,20 @@ class RegionSet(object):
             'minecraft:campfire': (11506, 0),
             'minecraft:bell': (11507, 0),
             # adding a gap in the numbering of walls to keep them all
-            # in one numbering block starting at 21000
-            'minecraft:andesite_wall': (21000, 0),
-            'minecraft:brick_wall': (21001, 0),
-            'minecraft:cobblestone_wall': (21002, 0),
-            'minecraft:diorite_wall': (21003, 0),
-            'minecraft:end_stone_brick_wall': (21004, 0),
-            'minecraft:granite_wall': (21005, 0),
-            'minecraft:mossy_cobblestone_wall': (21006, 0),
-            'minecraft:mossy_stone_brick_wall': (21007, 0),
-            'minecraft:nether_brick_wall': (21008, 0),
-            'minecraft:prismarine_wall': (21009, 0),
-            'minecraft:red_nether_brick_wall': (21010, 0),
-            'minecraft:red_sandstone_wall': (21011, 0),
-            'minecraft:sandstone_wall': (21012, 0),
-            'minecraft:stone_brick_wall': (21013, 0),
+            'minecraft:andesite_wall': (1792, 0),
+            'minecraft:brick_wall': (1793, 0),
+            'minecraft:cobblestone_wall': (1794, 0),
+            'minecraft:diorite_wall': (1795, 0),
+            'minecraft:end_stone_brick_wall': (1796, 0),
+            'minecraft:granite_wall': (1797, 0),
+            'minecraft:mossy_cobblestone_wall': (1798, 0),
+            'minecraft:mossy_stone_brick_wall': (1799, 0),
+            'minecraft:nether_brick_wall': (1800, 0),
+            'minecraft:prismarine_wall': (1801, 0),
+            'minecraft:red_nether_brick_wall': (1802, 0),
+            'minecraft:red_sandstone_wall': (1803, 0),
+            'minecraft:sandstone_wall': (1804, 0),
+            'minecraft:stone_brick_wall': (1805, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -1017,7 +1052,8 @@ class RegionSet(object):
                 (key == 'minecraft:piston_head' and p.get('type', 'normal') == 'sticky') or
                 (key == 'minecraft:observer' and p.get('powered', 'false') == 'true')):
                 data |= 0x08
-        elif key.endswith('_log') or key.endswith('_wood') or key == 'minecraft:bone_block':
+        elif (key.endswith('_log') or key.endswith('_wood') or
+              key == 'minecraft:bone_block' or key.endswith('_stem')):
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
                 data |= 4
@@ -1029,6 +1065,9 @@ class RegionSet(object):
                 data = 3
             if axis == 'z':
                 data = 4
+        elif key == 'minecraft:basalt' or key == 'minecraft:polished_basalt':
+            axis = palette_entry['Properties']['axis']
+            data = {'y': 0, 'x': 1, 'z': 2}[axis]
         elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch']:
             if key.startswith('minecraft:redstone_') and palette_entry['Properties']['lit'] == 'true':
                 block += 1
@@ -1141,7 +1180,7 @@ class RegionSet(object):
             # A moisture level of 7 has a different texture from other farmland
             data = 1 if palette_entry['Properties'].get('moisture', '0') == '7' else 0
         elif key in ['minecraft:grindstone', 'minecraft:lectern', 'minecraft:campfire',
-                     'minecraft:bell']:
+                     'minecraft:bell', 'minecraft:soul_campfire']:
             p = palette_entry['Properties']
             data = {'south': 0, 'west': 1, 'north': 2, 'east': 3}[p['facing']]
             if key == 'minecraft:grindstone':
@@ -1149,7 +1188,7 @@ class RegionSet(object):
             elif key == 'minecraft:lectern':
                 if p['has_book'] == 'true':
                     data |= 4
-            elif key == 'minecraft:campfire':
+            elif key == 'minecraft:campfire' or key == 'minecraft:soul_campfire':
                 if p['lit'] == 'true':
                     data |= 4
             elif key == 'minecraft:bell':
