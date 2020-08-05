@@ -259,3 +259,15 @@ const mc_block_t block_class_alt_height[] = {
     block_purpur_slab,
     block_wooden_slab};
 const size_t block_class_alt_height_len = COUNT_OF(block_class_alt_height);
+
+const mc_block_t block_class_nether_roof[] = {
+    block_bedrock,
+    block_netherrack,
+    block_quartz_ore,
+    block_lava,
+    block_soul_sand,
+    block_basalt,
+    block_blackstone,
+    block_soul_soil,
+    block_nether_gold_ore};
+const size_t block_class_nether_roof_len = COUNT_OF(block_class_nether_roof);
