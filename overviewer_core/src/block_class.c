@@ -62,7 +62,7 @@ bool block_class_is_wall(mc_block_t block) {
     mc_block_t mask = 0b11111111;
     mc_block_t prefix = 0b111 << 8;     // 1792 is the starting offset
     // if the xor zeroes all bits, the prefix must've matched.
-    return (block & ~mask) ^ prefix == 0;
+    return ((block & ~mask) ^ prefix) == 0;
 }
 
 const mc_block_t block_class_stair[] = {

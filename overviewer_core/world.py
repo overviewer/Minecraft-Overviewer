@@ -1053,7 +1053,9 @@ class RegionSet(object):
                 (key == 'minecraft:observer' and p.get('powered', 'false') == 'true')):
                 data |= 0x08
         elif (key.endswith('_log') or key.endswith('_wood') or
-              key == 'minecraft:bone_block' or key.endswith('_stem')):
+              key in ['minecraft:bone_block', 'minecraft:warped_stem',
+                      'minecraft:stripped_warped_stem', 'minecraft:crimson_stem',
+                      'minecraft:stripped_crimson_stem']):
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
                 data |= 4
