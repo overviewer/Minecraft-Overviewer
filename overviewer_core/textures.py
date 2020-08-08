@@ -1136,9 +1136,9 @@ def wood(self, blockid, data):
         },
         1008: {
             0: ("warped_stem_top.png", "warped_stem.png"),
-            1: ("warped_stem_top.png", "stripped_warped_stem.png"),
+            1: ("stripped_warped_stem_top.png", "stripped_warped_stem.png"),
             2: ("crimson_stem_top.png", "crimson_stem.png"),
-            3: ("crimson_stem_top.png", "stripped_crimson_stem.png"),
+            3: ("stripped_crimson_stem_top.png", "stripped_crimson_stem.png"),
         },
         1009: {
             0: ("warped_stem.png", None),
