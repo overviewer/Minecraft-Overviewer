@@ -2005,12 +2005,11 @@ def fire(self, blockid, data):
 # monster spawner
 block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", transparent=True)
 
-# wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch,
-# jungle, quartz, red sandstone, (dark) prismarine, mossy brick and mossy cobblestone, stone smooth_quartz
-# polished_granite polished_andesite polished_diorite granite diorite andesite end_stone_bricks red_nether_brick stairs
-# smooth_red_sandstone_stairs
-@material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 11337, 11338, 11339,
-          11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379, 11380, 11381, 11382, 11383, 11384, 11415], 
+
+# Stairs of all types
+@material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 1030, 1031,
+          1032, 1041, 1052, 11337, 11338, 11339, 11370, 11371, 11374, 11375, 11376, 11377, 11378,
+          11379, 11380, 11381, 11382, 11383, 11384, 11415],
           data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
@@ -2021,44 +2020,49 @@ def stairs(self, blockid, data):
     quarters = [data & 0x8, data & 0x10, data & 0x20, data & 0x40]
 
     # rotate the quarters so we can pretend northdirection is always upper-left
-    numpy.roll(quarters, [0,1,3,2][self.rotation])
-    nw,ne,se,sw = quarters
+    numpy.roll(quarters, [0, 1, 3, 2][self.rotation])
+    nw, ne, se, sw = quarters
 
     stair_id_to_tex = {
-        53: "assets/minecraft/textures/block/oak_planks.png",
-        67: "assets/minecraft/textures/block/cobblestone.png",
-        108: "assets/minecraft/textures/block/bricks.png",
-        109: "assets/minecraft/textures/block/stone_bricks.png",
-        114: "assets/minecraft/textures/block/nether_bricks.png",
-        128: "assets/minecraft/textures/block/sandstone.png",
-        134: "assets/minecraft/textures/block/spruce_planks.png",
-        135: "assets/minecraft/textures/block/birch_planks.png",
-        136: "assets/minecraft/textures/block/jungle_planks.png",
-        156: "assets/minecraft/textures/block/quartz_block_side.png",
-        163: "assets/minecraft/textures/block/acacia_planks.png",
-        164: "assets/minecraft/textures/block/dark_oak_planks.png",
-        180: "assets/minecraft/textures/block/red_sandstone.png",
-        203: "assets/minecraft/textures/block/purpur_block.png",
-        11337: "assets/minecraft/textures/block/prismarine.png",
-        11338: "assets/minecraft/textures/block/dark_prismarine.png",
-        11339: "assets/minecraft/textures/block/prismarine_bricks.png",
-        11370: "assets/minecraft/textures/block/mossy_stone_bricks.png",
-        11371: "assets/minecraft/textures/block/mossy_cobblestone.png",
-        11374: "assets/minecraft/textures/block/sandstone_top.png",
-        11375: "assets/minecraft/textures/block/quartz_block_side.png",
-        11376: "assets/minecraft/textures/block/polished_granite.png",
-        11377: "assets/minecraft/textures/block/polished_diorite.png",
-        11378: "assets/minecraft/textures/block/polished_andesite.png",
-        11379: "assets/minecraft/textures/block/stone.png",
-        11380: "assets/minecraft/textures/block/granite.png",
-        11381: "assets/minecraft/textures/block/diorite.png",
-        11382: "assets/minecraft/textures/block/andesite.png",
-        11383: "assets/minecraft/textures/block/end_stone_bricks.png",
-        11384: "assets/minecraft/textures/block/red_nether_bricks.png",
-        11415: "assets/minecraft/textures/block/red_sandstone_top.png",
+        53: "oak_planks.png",
+        67: "cobblestone.png",
+        108: "bricks.png",
+        109: "stone_bricks.png",
+        114: "nether_bricks.png",
+        128: "sandstone.png",
+        134: "spruce_planks.png",
+        135: "birch_planks.png",
+        136: "jungle_planks.png",
+        156: "quartz_block_side.png",
+        163: "acacia_planks.png",
+        164: "dark_oak_planks.png",
+        180: "red_sandstone.png",
+        203: "purpur_block.png",
+        1030: "blackstone.png",
+        1031: "polished_blackstone.png",
+        1032: "polished_blackstone_bricks.png",
+        1041: "crimson_planks.png",
+        1052: "warped_planks.png",
+        11337: "prismarine.png",
+        11338: "dark_prismarine.png",
+        11339: "prismarine_bricks.png",
+        11370: "mossy_stone_bricks.png",
+        11371: "mossy_cobblestone.png",
+        11374: "sandstone_top.png",
+        11375: "quartz_block_side.png",
+        11376: "polished_granite.png",
+        11377: "polished_diorite.png",
+        11378: "polished_andesite.png",
+        11379: "stone.png",
+        11380: "granite.png",
+        11381: "diorite.png",
+        11382: "andesite.png",
+        11383: "end_stone_bricks.png",
+        11384: "red_nether_bricks.png",
+        11415: "red_sandstone_top.png",
     }
 
-    texture = self.load_image_texture(stair_id_to_tex[blockid]).copy()
+    texture = self.load_image_texture(BLOCKTEX + stair_id_to_tex[blockid]).copy()
 
     outside_l = texture.copy()
     outside_r = texture.copy()
@@ -2067,50 +2071,50 @@ def stairs(self, blockid, data):
 
     # sandstone, red sandstone, and quartz stairs have special top texture
     special_tops = {
-        128: "assets/minecraft/textures/block/sandstone_top.png",
-        156: "assets/minecraft/textures/block/quartz_block_top.png",
-        180: "assets/minecraft/textures/block/red_sandstone_top.png",
-        11375: "assets/minecraft/textures/block/quartz_block_top.png",
+        128: "sandstone_top.png",
+        156: "quartz_block_top.png",
+        180: "red_sandstone_top.png",
+        1030: "blackstone_top.png",
+        11375: "quartz_block_top.png",
     }
 
     if blockid in special_tops:
-        texture = self.load_image_texture(special_tops[blockid]).copy()
- 
+        texture = self.load_image_texture(BLOCKTEX + special_tops[blockid]).copy()
 
     slab_top = texture.copy()
 
     push = 8 if upside_down else 0
 
-    def rect(tex,coords):
-        ImageDraw.Draw(tex).rectangle(coords,outline=(0,0,0,0),fill=(0,0,0,0))
+    def rect(tex, coords):
+        ImageDraw.Draw(tex).rectangle(coords, outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
 
     # cut out top or bottom half from inner surfaces
-    rect(inside_l, (0,8-push,15,15-push))
-    rect(inside_r, (0,8-push,15,15-push))
+    rect(inside_l, (0, 8 - push, 15, 15 - push))
+    rect(inside_r, (0, 8 - push, 15, 15 - push))
 
     # cut out missing or obstructed quarters from each surface
     if not nw:
-        rect(outside_l, (0,push,7,7+push))
-        rect(texture, (0,0,7,7))
+        rect(outside_l, (0, push, 7, 7 + push))
+        rect(texture, (0, 0, 7, 7))
     if not nw or sw:
-        rect(inside_r, (8,push,15,7+push)) # will be flipped
+        rect(inside_r, (8, push, 15, 7 + push))  # will be flipped
     if not ne:
-        rect(texture, (8,0,15,7))
+        rect(texture, (8, 0, 15, 7))
     if not ne or nw:
-        rect(inside_l, (0,push,7,7+push))
+        rect(inside_l, (0, push, 7, 7 + push))
     if not ne or se:
-        rect(inside_r, (0,push,7,7+push)) # will be flipped
+        rect(inside_r, (0, push, 7, 7 + push))  # will be flipped
     if not se:
-        rect(outside_r, (0,push,7,7+push)) # will be flipped
-        rect(texture, (8,8,15,15))
+        rect(outside_r, (0, push, 7, 7 + push))  # will be flipped
+        rect(texture, (8, 8, 15, 15))
     if not se or sw:
-        rect(inside_l, (8,push,15,7+push))
+        rect(inside_l, (8, push, 15, 7 + push))
     if not sw:
-        rect(outside_l, (8,push,15,7+push))
-        rect(outside_r, (8,push,15,7+push)) # will be flipped
-        rect(texture, (0,8,7,15))
+        rect(outside_l, (8, push, 15, 7 + push))
+        rect(outside_r, (8, push, 15, 7 + push))  # will be flipped
+        rect(texture, (0, 8, 7, 15))
 
-    img = Image.new("RGBA", (24,24), self.bgcolor)
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
 
     if upside_down:
         # top should have no cut-outs after all
@@ -2118,7 +2122,7 @@ def stairs(self, blockid, data):
     else:
         # render the slab-level surface
         slab_top = self.transform_image_top(slab_top)
-        alpha_over(img, slab_top, (0,6))
+        alpha_over(img, slab_top, (0, 6))
 
     # render inner left surface
     inside_l = self.transform_image_side(inside_l)
@@ -2127,7 +2131,7 @@ def stairs(self, blockid, data):
     # darken it a bit more than usual, looks better
     inside_l = ImageEnhance.Brightness(inside_l).enhance(0.8)
     inside_l.putalpha(sidealpha)
-    alpha_over(img, inside_l, (6,3))
+    alpha_over(img, inside_l, (6, 3))
 
     # render inner right surface
     inside_r = self.transform_image_side(inside_r).transpose(Image.FLIP_LEFT_RIGHT)
@@ -2136,12 +2140,13 @@ def stairs(self, blockid, data):
     # darken it a bit more than usual, looks better
     inside_r = ImageEnhance.Brightness(inside_r).enhance(0.7)
     inside_r.putalpha(sidealpha)
-    alpha_over(img, inside_r, (6,3))
+    alpha_over(img, inside_r, (6, 3))
 
     # render outer surfaces
     alpha_over(img, self.build_full_block(texture, None, None, outside_l, outside_r))
 
     return img
+
 
 # normal, locked (used in april's fool day), ender and trapped chest
 # NOTE:  locked chest used to be id95 (which is now stained glass)
