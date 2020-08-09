@@ -3321,102 +3321,95 @@ def pressure_plate(self, blockid, data):
 # normal and glowing redstone ore
 block(blockid=[73, 74], top_image="assets/minecraft/textures/block/redstone_ore.png")
 
-# stone a wood buttons
-@material(blockid=(77,143,11326,11327,11328,11329,11330), data=list(range(16)), transparent=True)
+
+# stone and wood buttons
+@material(blockid=[77, 143, 1034, 1042, 1053, 11326, 11327, 11328, 11329, 11330],
+          data=[x for x in list(range(16)) if x & 0x07 != 7], transparent=True)
 def buttons(self, blockid, data):
 
     # 0x8 is set if the button is pressed mask this info and render
     # it as unpressed
     data = data & 0x7
 
-    if self.rotation == 1:
-        if data == 1: data = 3
-        elif data == 2: data = 4
-        elif data == 3: data = 2
-        elif data == 4: data = 1
-        elif data == 5: data = 6
-        elif data == 6: data = 5
-    elif self.rotation == 2:
-        if data == 1: data = 2
-        elif data == 2: data = 1
-        elif data == 3: data = 4
-        elif data == 4: data = 3
-    elif self.rotation == 3:
-        if data == 1: data = 4
-        elif data == 2: data = 3
-        elif data == 3: data = 1
-        elif data == 4: data = 2
-        elif data == 5: data = 6
-        elif data == 6: data = 5
+    if self.rotation in [1, 2, 3]:
+        rotation_map = {1: [0, 3, 4, 2, 1, 6, 5],
+                        2: [0, 2, 1, 4, 3, 5, 6],
+                        3: [0, 4, 3, 1, 2, 6, 5]}
+        data = rotation_map[self.rotation][data]
 
-    texturepath = {77:"assets/minecraft/textures/block/stone.png",
-                   143:"assets/minecraft/textures/block/oak_planks.png",
-                   11326:"assets/minecraft/textures/block/spruce_planks.png",
-                   11327:"assets/minecraft/textures/block/birch_planks.png",
-                   11328:"assets/minecraft/textures/block/jungle_planks.png",
-                   11329:"assets/minecraft/textures/block/acacia_planks.png",
-                   11330:"assets/minecraft/textures/block/dark_oak_planks.png"
-                  }[blockid]
-    t = self.load_image_texture(texturepath).copy()
+    tex_f = {
+        77: "stone.png",
+        143: "oak_planks.png",
+        1034: "polished_blackstone.png",
+        1042: "crimson_planks.png",
+        1053: "warped_planks.png",
+        11326: "spruce_planks.png",
+        11327: "birch_planks.png",
+        11328: "jungle_planks.png",
+        11329: "acacia_planks.png",
+        11330: "dark_oak_planks.png"
+    }[blockid]
+    t = self.load_image_texture(BLOCKTEX + tex_f).copy()
 
     # generate the texture for the button
-    ImageDraw.Draw(t).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(t).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(t).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(t).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(t).rectangle((0, 0, 15, 5), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    ImageDraw.Draw(t).rectangle((0, 10, 15, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    ImageDraw.Draw(t).rectangle((0, 0, 4, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    ImageDraw.Draw(t).rectangle((11, 0, 15, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
 
-    img = Image.new("RGBA", (24,24), self.bgcolor)
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
 
     if data < 5:
         button = self.transform_image_side(t)
 
-        if data == 1: # facing SOUTH
+        if data == 1:  # facing SOUTH
             # buttons can't be placed in transparent blocks, so this
             # direction can't be seen
             return None
 
-        elif data == 2: # facing NORTH
+        elif data == 2:  # facing NORTH
             # paste it twice with different brightness to make a 3D effect
-            alpha_over(img, button, (12,-1), button)
+            alpha_over(img, button, (12, -1), button)
 
             alpha = button.split()[3]
             button = ImageEnhance.Brightness(button).enhance(0.9)
             button.putalpha(alpha)
 
-            alpha_over(img, button, (11,0), button)
+            alpha_over(img, button, (11, 0), button)
 
-        elif data == 3: # facing WEST
+        elif data == 3:  # facing WEST
             # paste it twice with different brightness to make a 3D effect
             button = button.transpose(Image.FLIP_LEFT_RIGHT)
-            alpha_over(img, button, (0,-1), button)
+            alpha_over(img, button, (0, -1), button)
 
             alpha = button.split()[3]
             button = ImageEnhance.Brightness(button).enhance(0.9)
             button.putalpha(alpha)
 
-            alpha_over(img, button, (1,0), button)
+            alpha_over(img, button, (1, 0), button)
 
-        elif data == 4: # facing EAST
+        elif data == 4:  # facing EAST
             # buttons can't be placed in transparent blocks, so this
             # direction can't be seen
             return None
 
     else:
-        if data == 5: # long axis east-west
+        if data == 5:  # long axis east-west
             button = self.transform_image_top(t)
-        else: # long axis north-south
+        else:  # long axis north-south
             button = self.transform_image_top(t.rotate(90))
 
         # paste it twice with different brightness to make a 3D effect
-        alpha_over(img, button, (0,12), button)
+        alpha_over(img, button, (0, 12), button)
 
         alpha = button.split()[3]
         button = ImageEnhance.Brightness(button).enhance(0.9)
         button.putalpha(alpha)
 
-        alpha_over(img, button, (0,11), button)
+        alpha_over(img, button, (0, 11), button)
 
     return img
+
 
 # snow
 @material(blockid=78, data=list(range(16)), transparent=True, solid=True)
