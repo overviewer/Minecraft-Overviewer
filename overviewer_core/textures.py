@@ -3996,64 +3996,58 @@ def comparator(self, blockid, data):
     alpha_over(img, back_torch, torch[0], back_torch) 
     alpha_over(img, back_torch, torch[1], back_torch) 
     return img
-    
-    
-# trapdoor
-# the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=[96,167,11332,11333,11334,11335,11336], data=list(range(16)), transparent=True, nospawn=True)
-def trapdoor(self, blockid, data):
 
+
+# trapdoor
+# the trapdoor looks like a sprite when opened, that's not good
+@material(blockid=[96, 167, 1040, 1051, 11332, 11333, 11334, 11335, 11336], data=list(range(16)),
+          transparent=True, nospawn=True)
+def trapdoor(self, blockid, data):
     # rotation
     # Masked to not clobber opened/closed info
-    if self.rotation == 1:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 2
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 0
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-    elif self.rotation == 2:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 1
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 0
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 2
-    elif self.rotation == 3:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 2
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 1
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+    if self.rotation in [1, 2, 3]:
+        rotation_map = {1: [3, 2, 0, 1],
+                        2: [1, 0, 3, 2],
+                        3: [2, 3, 1, 0]}
+        data = data & 0b1100 | rotation_map[self.rotation][data & 0b11]
 
     # texture generation
-    texturepath = {96:"assets/minecraft/textures/block/oak_trapdoor.png",
-                   167:"assets/minecraft/textures/block/iron_trapdoor.png",
-                   11332:"assets/minecraft/textures/block/spruce_trapdoor.png",
-                   11333:"assets/minecraft/textures/block/birch_trapdoor.png",
-                   11334:"assets/minecraft/textures/block/jungle_trapdoor.png",
-                   11335:"assets/minecraft/textures/block/acacia_trapdoor.png",
-                   11336:"assets/minecraft/textures/block/dark_oak_trapdoor.png"
-                  }[blockid]
+    tex_f = {
+        96: "oak_trapdoor.png",
+        167: "iron_trapdoor.png",
+        1040: "crimson_trapdoor.png",
+        1051: "warped_trapdoor.png",
+        11332: "spruce_trapdoor.png",
+        11333: "birch_trapdoor.png",
+        11334: "jungle_trapdoor.png",
+        11335: "acacia_trapdoor.png",
+        11336: "dark_oak_trapdoor.png"
+    }[blockid]
+    texture = self.load_image_texture(BLOCKTEX + tex_f)
 
-    if data & 0x4 == 0x4: # opened trapdoor
-        if data & 0x08 == 0x08: texture = self.load_image_texture(texturepath).transpose(Image.FLIP_TOP_BOTTOM)
-        else: texture = self.load_image_texture(texturepath)
+    if data & 0x4 == 0x4:  # opened trapdoor
+        if data & 0x08 == 0x08:
+            texture = texture.transpose(Image.FLIP_TOP_BOTTOM)
 
-        if data & 0x3 == 0: # west
+        if data & 0x3 == 0:  # west
             img = self.build_full_block(None, None, None, None, texture)
-        if data & 0x3 == 1: # east
+        if data & 0x3 == 1:  # east
             img = self.build_full_block(None, texture, None, None, None)
-        if data & 0x3 == 2: # south
+        if data & 0x3 == 2:  # south
             img = self.build_full_block(None, None, texture, None, None)
-        if data & 0x3 == 3: # north
+        if data & 0x3 == 3:  # north
             img = self.build_full_block(None, None, None, texture, None)
 
-    elif data & 0x4 == 0: # closed trapdoor
-        texture = self.load_image_texture(texturepath)
-        if data & 0x8 == 0x8: # is a top trapdoor
-            img = Image.new("RGBA", (24,24), self.bgcolor)
-            t = self.build_full_block((texture, 12), None, None, texture, texture)
-            alpha_over(img, t, (0,-9),t)
-        else: # is a bottom trapdoor
-            img = self.build_full_block((texture, 12), None, None, texture, texture)
-    
+    else:  # closed trapdoor
+        t = self.build_full_block((texture, 12), None, None, texture, texture)
+        if data & 0x8 == 0x8:  # is a top trapdoor
+            img = Image.new("RGBA", (24, 24), self.bgcolor)
+            alpha_over(img, t, (0, -9), t)
+        else:  # is a bottom trapdoor
+            img = t
+
     return img
+
 
 # block with hidden silverfish (stone, cobblestone and stone brick)
 @material(blockid=97, data=list(range(3)), solid=True)
