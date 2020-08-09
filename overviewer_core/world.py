@@ -1179,6 +1179,15 @@ class RegionSet(object):
             elif key == 'minecraft:bell':
                 data |= {'floor': 0, 'ceiling': 4, 'single_wall': 8,
                          'double_wall': 12}[p['attachment']]
+        elif key.endswith('_pressure_plate'):
+            p = palette_entry['Properties']
+            if 'powered' in p:
+                # Stone & wooden pressure plates use the 'powered' property, a true/false value
+                data = 1 if p['powered'] == 'true' else 0
+            elif 'power' in p:
+                # Weighted pressure plates use the 'power' property, where a non-zero value
+                #   indicates the plate is depressed
+                data = 1 if p['power'] != '0' else 0
 
         return (block, data)
 

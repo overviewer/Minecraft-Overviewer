@@ -3268,43 +3268,50 @@ def levers(self, blockid, data):
 
     return img
 
+
 # wooden and stone pressure plates, and weighted pressure plates
-@material(blockid=[70, 72,147,148,11301,11302,11303,11304,11305], data=[0,1], transparent=True)
+@material(blockid=[70, 72, 147, 148, 1033, 1037, 1048, 11301, 11302, 11303, 11304, 11305],
+          data=[0, 1], transparent=True, nospawn=True, solid=False)
 def pressure_plate(self, blockid, data):
-    texture_name = {70:"assets/minecraft/textures/block/stone.png",              # stone
-                    72:"assets/minecraft/textures/block/oak_planks.png",         # oak
-                    11301:"assets/minecraft/textures/block/spruce_planks.png",   # spruce
-                    11302:"assets/minecraft/textures/block/birch_planks.png",    # birch
-                    11303:"assets/minecraft/textures/block/jungle_planks.png",   # jungle
-                    11304:"assets/minecraft/textures/block/acacia_planks.png",   # acacia
-                    11305:"assets/minecraft/textures/block/dark_oak_planks.png", # dark oak
-                    147:"assets/minecraft/textures/block/gold_block.png",        # light golden
-                    148:"assets/minecraft/textures/block/iron_block.png",        # heavy iron
-                   }[blockid]
-    t = self.load_image_texture(texture_name).copy()
-    
+    texture_name = {
+        70: "stone.png",                  # stone
+        72: "oak_planks.png",             # oak
+        147: "gold_block.png",            # light golden
+        148: "iron_block.png",            # heavy iron
+        1033: "polished_blackstone.png",  # polished blackstone
+        1037: "crimson_planks.png",       # crimson
+        1048: "warped_planks.png",        # warped
+        11301: "spruce_planks.png",       # spruce
+        11302: "birch_planks.png",        # birch
+        11303: "jungle_planks.png",       # jungle
+        11304: "acacia_planks.png",       # acacia
+        11305: "dark_oak_planks.png",     # dark oak
+    }[blockid]
+    t = self.load_image_texture(BLOCKTEX + texture_name).copy()
+
     # cut out the outside border, pressure plates are smaller
     # than a normal block
-    ImageDraw.Draw(t).rectangle((0,0,15,15),outline=(0,0,0,0))
-    
-    # create the textures and a darker version to make a 3d by 
+    ImageDraw.Draw(t).rectangle((0, 0, 15, 15), outline=(0, 0, 0, 0))
+
+    # create the textures and a darker version to make a 3d by
     # pasting them with an offstet of 1 pixel
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+
     top = self.transform_image_top(t)
-    
+
     alpha = top.split()[3]
     topd = ImageEnhance.Brightness(top).enhance(0.8)
     topd.putalpha(alpha)
-    
-    #show it 3d or 2d if unpressed or pressed
+
+    # show it 3d or 2d if unpressed or pressed
     if data == 0:
-        alpha_over(img,topd, (0,12),topd)
-        alpha_over(img,top, (0,11),top)
+        alpha_over(img, topd, (0, 12), topd)
+        alpha_over(img, top, (0, 11), top)
     elif data == 1:
-        alpha_over(img,top, (0,12),top)
-    
+        alpha_over(img, top, (0, 12), top)
+
     return img
+
 
 # normal and glowing redstone ore
 block(blockid=[73, 74], top_image="assets/minecraft/textures/block/redstone_ore.png")
