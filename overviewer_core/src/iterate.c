@@ -245,6 +245,33 @@ check_adjacent_blocks(RenderState* state, int32_t x, int32_t y, int32_t z, mc_bl
 }
 
 uint16_t
+check_adjacent_block_list(RenderState* state, int32_t x, int32_t y, int32_t z,
+                          const mc_block_t block_list[], size_t block_list_len) {
+    /*
+     * Like check_adjacent_blocks(), but takes a list of blocks.
+     * Useful for blocks such as fences, where a variety
+     * of adjacent blocks need to be checked.
+     */
+
+    uint8_t pdata = 0;
+
+    if (block_class_is_subset(get_data(state, BLOCKS, x + 1, y, z), block_list, block_list_len)) {
+        pdata = pdata | (1 << 3);
+    }
+    if (block_class_is_subset(get_data(state, BLOCKS, x, y, z + 1), block_list, block_list_len)) {
+        pdata = pdata | (1 << 2);
+    }
+    if (block_class_is_subset(get_data(state, BLOCKS, x - 1, y, z), block_list, block_list_len)) {
+        pdata = pdata | (1 << 1);
+    }
+    if (block_class_is_subset(get_data(state, BLOCKS, x, y, z - 1), block_list, block_list_len)) {
+        pdata = pdata | (1 << 0);
+    }
+
+    return pdata;
+}
+
+uint16_t
 generate_pseudo_data(RenderState* state, uint16_t ancilData) {
     /*
      * Generates a fake ancillary data for blocks that are drawn 
@@ -277,13 +304,18 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
     } else if (block_class_is_subset(state->block, block_class_fence, block_class_fence_len)) { /* fences */
-        /* check for fences AND fence gates */
-        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, block_fence_gate) |
-               check_adjacent_blocks(state, x, y, z, block_fence_gate) | check_adjacent_blocks(state, x, y, z, block_birch_fence_gate) | check_adjacent_blocks(state, x, y, z, block_jungle_fence_gate) |
-               check_adjacent_blocks(state, x, y, z, block_dark_oak_fence_gate) | check_adjacent_blocks(state, x, y, z, block_acacia_fence_gate);
-
+        /* Nether fences connect to all fence gates but only other Nether fences */
+        if (state->block == block_nether_brick_fence) {
+            return check_adjacent_blocks(state, x, y, z, state->block) |
+                   check_adjacent_block_list(state, x, y, z, block_class_fence_gate, block_class_fence_gate_len);
+        } else {
+            /* All other fences connect to all fences & fence gates except for Nether fences */
+            return (check_adjacent_block_list(state, x, y, z, block_class_fence, block_class_fence_len) ^
+                    check_adjacent_blocks(state, x, y, z, block_nether_brick_fence)) |
+                    check_adjacent_block_list(state, x, y, z, block_class_fence_gate, block_class_fence_gate_len);
+        }
     } else if (state->block == block_redstone_wire) { /* redstone */
-        /* three addiotional bit are added, one for on/off state, and
+        /* three additional bits are added, one for on/off state, and
          * another two for going-up redstone wire in the same block
          * (connection with the level y+1) */
         uint8_t above_level_data = 0, same_level_data = 0, below_level_data = 0, possibly_connected = 0, final_data = 0;
@@ -325,8 +357,8 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         data = (check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f);
         return (data << 4) | (ancilData & 0xf);
 
-    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_portal, block_nether_brick_fence}, 2)) {
-        /* portal and nether brick fences */
+    } else if (state->block == block_portal) {
+        /* portal */
         return check_adjacent_blocks(state, x, y, z, state->block);
 
     } else if (block_class_is_subset(state->block, block_class_door, block_class_door_len)) {
