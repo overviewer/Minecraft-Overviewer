@@ -281,6 +281,20 @@ enum mc_block_id {
     block_crimson_roots = 1019,
     block_soul_soil = 1020,
     block_nether_gold_ore = 1021,
+    // Solid Nether stone blocks
+    block_polished_blackstone = 1022,
+    block_chiseled_polished_blackstone = 1023,
+    block_gilded_blackstone = 1024,
+    block_cracked_polished_blackstone_bricks = 1025,
+    block_polished_blackstone_bricks = 1026,
+    // Nether stone stairs
+    block_blackstone_stairs = 1030,
+    block_polished_blackstone_stairs = 1031,
+    block_polished_blackstone_brick_stairs = 1032,
+    // nether redstone blocks
+    block_polished_blackstone_pressure_plate = 1033,
+    block_polished_blackstone_button = 1034,
+
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls
@@ -299,6 +313,9 @@ enum mc_block_id {
     block_red_sandstone_wall = 1803,
     block_sandstone_wall = 1804,
     block_stone_brick_wall = 1805,
+    block_blackstone_wall = 1806,
+    block_polished_blackstone_wall = 1807,
+    block_polished_blackstone_brick_wall = 1808,
     // end of walls
 
     block_prismarine_stairs = 11337,
@@ -319,6 +336,9 @@ enum mc_block_id {
     block_smooth_red_sandstone_slab = 11352,
     block_cut_red_sandstone_slab = 11353,
     block_end_stone_brick_slab = 11354,
+    block_blackstone_slab = 1027,
+    block_polished_blackstone_slab = 1028,
+    block_polished_blackstone_brick_slab = 1029,
     block_mossy_cobblestone_slab = 11355,
     block_mossy_stone_brick_slab = 11356,
     block_smooth_quartz_slab = 11357,

@@ -721,6 +721,23 @@ class RegionSet(object):
             'minecraft:crimson_roots': (1019, 0),
             'minecraft:soul_soil': (1020, 0),
             'minecraft:nether_gold_ore': (1021, 0),
+            # Solid Nether stone blocks
+            'minecraft:polished_blackstone': (1022, 0),
+            'minecraft:chiseled_polished_blackstone': (1023, 0),
+            'minecraft:gilded_blackstone': (1024, 0),
+            'minecraft:cracked_polished_blackstone_bricks': (1025, 0),
+            'minecraft:polished_blackstone_bricks': (1026, 0),
+            # Nether slabs
+            'minecraft:blackstone_slab': (1027, 0),
+            'minecraft:polished_blackstone_slab': (1028, 0),
+            'minecraft:polished_blackstone_brick_slab': (1029, 0),
+            # Nether stairs
+            'minecraft:blackstone_stairs': (1030, 0),
+            'minecraft:polished_blackstone_stairs': (1031, 0),
+            'minecraft:polished_blackstone_brick_stairs': (1032, 0),
+            # nether redstone blocks
+            'minecraft:polished_blackstone_pressure_plate': (1033, 0),
+            'minecraft:polished_blackstone_button': (1034,0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
@@ -839,6 +856,7 @@ class RegionSet(object):
             'minecraft:campfire': (11506, 0),
             'minecraft:bell': (11507, 0),
             # adding a gap in the numbering of walls to keep them all
+            # blocks >= 1792 and <= 2047 are considered walls
             'minecraft:andesite_wall': (1792, 0),
             'minecraft:brick_wall': (1793, 0),
             'minecraft:cobblestone_wall': (1794, 0),
@@ -853,6 +871,9 @@ class RegionSet(object):
             'minecraft:red_sandstone_wall': (1803, 0),
             'minecraft:sandstone_wall': (1804, 0),
             'minecraft:stone_brick_wall': (1805, 0),
+            'minecraft:blackstone_wall': (1806, 0),
+            'minecraft:polished_blackstone_wall': (1807, 0),
+            'minecraft:polished_blackstone_brick_wall': (1808, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -893,8 +914,11 @@ class RegionSet(object):
                         'minecraft:cut_sandstone_slab','minecraft:smooth_red_sandstone_slab',
                         'minecraft:cut_red_sandstone_slab','minecraft:end_stone_brick_slab',
                         'minecraft:mossy_cobblestone_slab','minecraft:mossy_stone_brick_slab',
-                        'minecraft:smooth_quartz_slab','minecraft:smooth_stone_slab'
+                        'minecraft:smooth_quartz_slab','minecraft:smooth_stone_slab',
+                        'minecraft:blackstone_slab','minecraft:polished_blackstone_slab',
+                        'minecraft:polished_blackstone_brick_slab'
                          )
+
         prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
 
         key = palette_entry['Name']
@@ -1004,6 +1028,15 @@ class RegionSet(object):
                     elif key == 'minecraft:smooth_stone_slab':
                         block = 11313   # minecraft:smooth_stone
                         data  = 0
+                    elif key == 'minecraft:blackstone_slab':
+                        block = 1004   # blackstone
+                        data = 0
+                    elif key == 'minecraft:polished_blackstone_slab':
+                        block = 1022   # polished_blackstone
+                        data = 0
+                    elif key == 'minecraft:polished_blackstone_brick_slab':
+                        block = 1026   # polished_blackstone_bricks
+                        data = 0
 
                 elif key in  prismarine_slabs:
                     block = 168         # minecraft:prismarine variants
