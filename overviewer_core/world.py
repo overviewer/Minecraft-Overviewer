@@ -932,22 +932,6 @@ class RegionSet(object):
         return "<RegionSet regiondir=%r>" % self.regiondir
 
     def _get_block(self, palette_entry):
-        wood_slabs = ('minecraft:oak_slab','minecraft:spruce_slab','minecraft:birch_slab','minecraft:jungle_slab',
-                        'minecraft:acacia_slab','minecraft:dark_oak_slab','minecraft:petrified_oak_slab')
-        stone_slabs = ('minecraft:stone_slab', 'minecraft:sandstone_slab','minecraft:red_sandstone_slab',
-                        'minecraft:cobblestone_slab', 'minecraft:brick_slab','minecraft:purpur_slab',
-                        'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
-                        'minecraft:quartz_slab', "minecraft:andesite_slab", 'minecraft:diorite_slab',
-                        'minecraft:granite_slab', 'minecraft:polished_andesite_slab',
-                        'minecraft:polished_diorite_slab','minecraft:polished_granite_slab',
-                        'minecraft:red_nether_brick_slab','minecraft:smooth_sandstone_slab',
-                        'minecraft:cut_sandstone_slab','minecraft:smooth_red_sandstone_slab',
-                        'minecraft:cut_red_sandstone_slab','minecraft:end_stone_brick_slab',
-                        'minecraft:mossy_cobblestone_slab','minecraft:mossy_stone_brick_slab',
-                        'minecraft:smooth_quartz_slab','minecraft:smooth_stone_slab'
-                         )
-        prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
-
         key = palette_entry['Name']
         (block, data) = self._blockmap[key]
         if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
@@ -981,90 +965,39 @@ class RegionSet(object):
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
-        elif key in wood_slabs + stone_slabs + prismarine_slabs:
-        # handle double slabs 
+        elif key.endswith('_slab'):
             if palette_entry['Properties']['type'] == 'top':
                 data |= 0x08
             elif palette_entry['Properties']['type'] == 'double':
-                if key in wood_slabs:
-                    block = 125         # block_double_wooden_slab
-                elif key in stone_slabs:
-                    if key == 'minecraft:stone_brick_slab':
-                        block = 98
-                    elif key == 'minecraft:stone_slab':
-                        block = 1      # stone data 0
-                    elif key == 'minecraft:cobblestone_slab':
-                        block = 4       # cobblestone
-                    elif key == 'minecraft:sandstone_slab':
-                        block = 24      # minecraft:sandstone
-                    elif key == 'minecraft:red_sandstone_slab':
-                        block = 179     # minecraft:red_sandstone
-                    elif key == 'minecraft:nether_brick_slab':
-                        block = 112     # minecraft:nether_bricks
-                    elif key == 'minecraft:quartz_slab':
-                        block = 155     # minecraft:quartz_block
-                    elif key == 'minecraft:brick_slab':
-                        block = 45      # minecraft:bricks
-                    elif key == 'minecraft:purpur_slab':
-                        block = 201     # minecraft:purpur_block
-                    elif key == 'minecraft:andesite_slab':
-                        block = 1   # minecraft:andesite
-                        data  = 5
-                    elif key == 'minecraft:diorite_slab':
-                        block = 1   # minecraft:diorite
-                        data  = 3
-                    elif key == 'minecraft:granite_slab':
-                        block = 1   # minecraft:granite
-                        data  = 1
-                    elif key == 'minecraft:polished_andesite_slab':
-                        block = 1   # minecraft: polished_andesite
-                        data  = 6
-                    elif key == 'minecraft:polished_diorite_slab':
-                        block = 1   # minecraft: polished_diorite
-                        data  = 4
-                    elif key == 'minecraft:polished_granite_slab':
-                        block = 1   # minecraft: polished_granite
-                        data  = 2
-                    elif key == 'minecraft:red_nether_brick_slab':
-                        block = 215   # minecraft: red_nether_brick
-                        data  = 0
-                    elif key == 'minecraft:smooth_sandstone_slab':
-                        block = 11314   # minecraft: smooth_sandstone
-                        data  = 0
-                    elif key == 'minecraft:cut_sandstone_slab':
-                        block = 24   # minecraft: cut_sandstone
-                        data  = 2
-                    elif key == 'minecraft:smooth_red_sandstone_slab':
-                        block = 11315   # minecraft: smooth_red_sandstone
-                        data  = 0
-                    elif key == 'minecraft:cut_red_sandstone_slab':
-                        block = 179   # minecraft: cut_red_sandstone
-                        data  = 2
-                    elif key == 'minecraft:end_stone_brick_slab':
-                        block = 206   # minecraft:end_stone_bricks
-                        data  = 0
-                    elif key == 'minecraft:mossy_cobblestone_slab':
-                        block = 48   # minecraft:mossy_cobblestone
-                        data  = 0
-                    elif key == 'minecraft:mossy_stone_brick_slab':
-                        block = 98   # minecraft:mossy_stone_bricks
-                        data  = 1
-                    elif key == 'minecraft:smooth_quartz_slab':
-                        block = 155   # minecraft:smooth_quartz
-                        data  = 0
-                    elif key == 'minecraft:smooth_stone_slab':
-                        block = 11313   # minecraft:smooth_stone
-                        data  = 0
-
-                elif key in  prismarine_slabs:
-                    block = 168         # minecraft:prismarine variants
-                    if key == 'minecraft:prismarine_slab':
-                        data = 0
-                    elif key == 'minecraft:prismarine_brick_slab':
-                        data = 1
-                    elif key == 'minecraft:dark_prismarine_slab':
-                        data = 2
-
+                # Block ID varies between single & double slabs in pre-1.13 worlds, slabs that
+                #   existed at this time have their double slab block & data values defined below
+                block_remap = {
+                    'minecraft:oak_slab': (125, 0),
+                    'minecraft:spruce_slab': (125, 1),
+                    'minecraft:birch_slab': (125, 2),
+                    'minecraft:jungle_slab': (125, 3),
+                    'minecraft:acacia_slab': (125, 4),
+                    'minecraft:dark_oak_slab': (125, 5),
+                    'minecraft:petrified_oak_slab': (125, 0),
+                    'minecraft:stone_slab': (43, 0),
+                    'minecraft:sandstone_slab': (43, 1),
+                    'minecraft:cobblestone_slab': (43, 3),
+                    'minecraft:brick_slab': (43, 4),
+                    'minecraft:stone_brick_slab': (43, 5),
+                    'minecraft:nether_brick_slab': (43, 6),
+                    'minecraft:quartz_slab': (43, 7),
+                    'minecraft:red_sandstone_slab': (181, 0),
+                    'minecraft:purpur_slab': (181, 1),
+                    'minecraft:prismarine_slab': (181, 2),
+                    'minecraft:prismarine_brick_slab': (181, 3),
+                    'minecraft:dark_prismarine_slab': (181, 4)
+                }
+                if key in block_remap:
+                    # Pre-1.13 slabs
+                    block, data = block_remap[key]
+                else:
+                    # Slabs introduced in 1.13 and later, use 0x04 to indicate double slabs
+                    data |= 0x04
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest',
                      'minecraft:trapped_chest', 'minecraft:furnace',
                      'minecraft:blast_furnace', 'minecraft:smoker']:

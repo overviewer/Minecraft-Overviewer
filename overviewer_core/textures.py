@@ -1673,105 +1673,101 @@ block(blockid=41, top_image="assets/minecraft/textures/block/gold_block.png")
 # block of iron
 block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 
-# double slabs and slabs
-# these wooden slabs are unobtainable without cheating, they are still
-# here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
-@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340,11359)), data=list(range(16)),
-          transparent=[44, 182, 205] + list(range(11340,11359)), solid=True)
+
+# Double slabs and slabs
+@material(blockid=[43, 44, 125, 126, 181, 182, 205, 1027, 1028, 1029, 1036, 1047] +
+          list(range(11340, 11359)), data=list(range(16)), transparent=[44, 126, 182, 205, 1027,
+          1028, 1029, 1036, 1047] + list(range(11340, 11359)), solid=True)
 def slabs(self, blockid, data):
-    if blockid == 44 or blockid == 182: 
-        texture = data & 7
-    else: # data > 8 are special double slabs
-        texture = data
-
-    if blockid == 44 or blockid == 43:
-        if texture== 0: # stone slab
-            top = self.load_image_texture("assets/minecraft/textures/block/stone.png")
-            side = self.load_image_texture("assets/minecraft/textures/block/stone.png")
-        elif texture== 1: # sandstone slab
-            top = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/block/sandstone.png")
-        elif texture== 2: # wooden slab
-            top = side = self.load_image_texture("assets/minecraft/textures/block/oak_planks.png")
-        elif texture== 3: # cobblestone slab
-            top = side = self.load_image_texture("assets/minecraft/textures/block/cobblestone.png")
-        elif texture== 4: # brick
-            top = side = self.load_image_texture("assets/minecraft/textures/block/bricks.png")
-        elif texture== 5: # stone brick
-            top = side = self.load_image_texture("assets/minecraft/textures/block/stone_bricks.png")
-        elif texture== 6: # nether brick slab
-            top = side = self.load_image_texture("assets/minecraft/textures/block/nether_bricks.png")
-        elif texture== 7: #quartz        
-            top = side = self.load_image_texture("assets/minecraft/textures/block/quartz_block_side.png")
-        elif texture== 8: # special stone double slab with top texture only
-            top = side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png")
-        elif texture== 9: # special sandstone double slab with top texture only
-            top = side = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png")
-        else:
+    # Blocks 43, 44, 125, 126, 181, 182, 205 were introduced pre-1.13. For backwards
+    # compatibility 43, 125, 181 are double slabs.
+    # All other blocks are 1.13 & later, where a double slab is indicated by bit 0x04
+    if blockid in [43, 44, 125, 126, 181, 182, 205]:
+        is_full_block = blockid in [43, 125, 181]
+        # Modify blockid & data for texture lookup purposes
+        tex_blockid = blockid + 1 if is_full_block else blockid
+        tex_data = data % 0x08  # Texture doesn't depend on slab position
+    else:
+        is_full_block = bool(data & 0x04)
+        tex_blockid = blockid
+        if data not in [0, 4, 8]:
             return None
 
-    elif blockid == 182: # single red sandstone slab
-        if texture == 0:
-            top = self.load_image_texture("assets/minecraft/textures/block/red_sandstone_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/block/red_sandstone.png")
-        else:
-            return None
+    # Dictionary of tex_blockid : { tex_data : (top, side) }
+    # Blocks where data doesn't affect texture can be shortened: tex_blockid : (top, side)
+    slab_tex = {
+        44: {
+            0: ("stone.png", None),
+            1: ("sandstone_top.png", "sandstone.png"),
+            2: ("oak_planks.png", None),
+            3: ("cobblestone.png", None),
+            4: ("bricks.png", None),
+            5: ("stone_bricks.png", None),
+            6: ("nether_bricks.png", None),
+            7: ("quartz_block_top.png", "quartz_block_side.png")
+        },
+        126: {
+            0: ("oak_planks.png", None),
+            1: ("spruce_planks.png", None),
+            2: ("birch_planks.png", None),
+            3: ("jungle_planks.png", None),
+            4: ("acacia_planks.png", None),
+            5: ("dark_oak_planks.png", None)
+        },
+        182: {
+            0: ("red_sandstone_top.png", "red_sandstone.png"),
+            1: ("purpur_block.png", None),
+            2: ("prismarine.png", None),
+            3: ("prismarine_bricks.png", None),
+            4: ("dark_prismarine.png", None)
+        },
+        205: ("purpur_block.png", None),
+        1027: ("blackstone_top.png", "blackstone.png"),
+        1028: ("polished_blackstone.png", None),
+        1029: ("polished_blackstone_bricks.png", None),
+        1036: ("crimson_planks.png", None),
+        1047: ("warped_planks.png", None),
+        11340: ("prismarine.png", None),
+        11341: ("dark_prismarine.png", None),
+        11342: ("prismarine_bricks.png", None),
+        11343: ("andesite.png", None),
+        11344: ("diorite.png", None),
+        11345: ("granite.png", None),
+        11346: ("polished_andesite.png", None),
+        11347: ("polished_diorite.png", None),
+        11348: ("polished_granite.png", None),
+        11349: ("red_nether_bricks.png", None),
+        11350: ("sandstone_top.png", None),
+        11351: ("sandstone_top.png", "cut_sandstone.png"),
+        11352: ("red_sandstone_top.png", None),
+        11353: ("red_sandstone_top.png", "cut_red_sandstone.png"),
+        11354: ("end_stone_bricks.png", None),
+        11355: ("mossy_cobblestone.png", None),
+        11356: ("mossy_stone_bricks.png", None),
+        11357: ("quartz_block_bottom.png", None),
+        11358: ("smooth_stone.png", "smooth_stone_slab_side.png")
+    }
 
-    elif blockid == 181: # double red sandstone slab
-        if texture == 0: # red sandstone
-            top = self.load_image_texture("assets/minecraft/textures/block/red_sandstone_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/block/red_sandstone.png")
-        elif texture == 8: # 'full' red sandstone (smooth)
-            top = side = self.load_image_texture("assets/minecraft/textures/block/red_sandstone_top.png");
-        else:
-            return None
-    elif blockid == 204 or blockid == 205: # purpur slab (single=205 double=204)
-        top = side = self.load_image_texture("assets/minecraft/textures/block/purpur_block.png");
+    block_tex = slab_tex[tex_blockid]
+    if type(block_tex) is dict:
+        top_f, side_f = block_tex.get(tex_data, (None, None))
+    else:
+        top_f, side_f = block_tex
 
-    elif blockid == 11340: # prismarine slabs
-        top = side = self.load_image_texture("assets/minecraft/textures/block/prismarine.png").copy()
-    elif blockid == 11341: # dark prismarine slabs
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/dark_prismarine.png").copy()
-    elif blockid == 11342: #  prismarine brick slabs
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/prismarine_bricks.png").copy()
-    elif blockid == 11343: #  andesite slabs
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/andesite.png").copy()
-    elif blockid == 11344: #  diorite slabs
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/diorite.png").copy()
-    elif blockid == 11345: #  granite slabs
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/granite.png").copy()
-    elif blockid == 11346: #  polished andesite slabs
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_andesite.png").copy()
-    elif blockid == 11347: #  polished diorite slabs
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_diorite.png").copy()
-    elif blockid == 11348: #  polished granite slabs
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_granite.png").copy()
-    elif blockid == 11349: #  red nether brick slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/red_nether_bricks.png").copy()
-    elif blockid == 11350: #  smooth sandstone slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/sandstone_top.png").copy()
-    elif blockid == 11351: #  cut sandstone slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/cut_sandstone.png").copy()
-    elif blockid == 11352: #  smooth red sandstone slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/red_sandstone_top.png").copy()
-    elif blockid == 11353: #  cut red sandstone slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/cut_red_sandstone.png").copy()
-    elif blockid == 11354: #  end_stone_brick_slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/end_stone_bricks.png").copy()
-    elif blockid == 11355: #  mossy_cobblestone_slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/mossy_cobblestone.png").copy()
-    elif blockid == 11356: #  mossy_stone_brick_slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/mossy_stone_bricks.png").copy()
-    elif blockid == 11357: #  smooth_quartz_slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/quartz_block_bottom.png").copy()
-    elif blockid == 11358: #  smooth_stone_slab
-        top  = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png").copy()
-        side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png").copy()
+    if top_f is None:
+        # No texture defined for given block/data value combination
+        return None
+    elif side_f is None:
+        side_f = top_f
 
-    if blockid == 43 or blockid == 181 or blockid == 204: # double slab
-        return self.build_block(top, side)
-    
-    return self.build_slab_block(top, side, data & 8 == 8);
+    top_t = self.load_image_texture(BLOCKTEX + top_f)
+    side_t = self.load_image_texture(BLOCKTEX + side_f)
+
+    if is_full_block:
+        return self.build_block(top_t, side_t)
+    else:
+        return self.build_slab_block(top_t, side_t, bool(data & 0x08))
+
 
 # brick block
 block(blockid=45, top_image="assets/minecraft/textures/block/bricks.png")
@@ -4525,32 +4521,6 @@ def daylight_sensor(self, blockid, data):
     
     return img
 
-
-# wooden double and normal slabs
-# these are the new wooden slabs, blockids 43 44 still have wooden
-# slabs, but those are unobtainable without cheating
-@material(blockid=[125, 126], data=list(range(16)), transparent=(44,), solid=True)
-def wooden_slabs(self, blockid, data):
-    texture = data & 7
-    if texture== 0: # oak 
-        top = side = self.load_image_texture("assets/minecraft/textures/block/oak_planks.png")
-    elif texture== 1: # spruce
-        top = side = self.load_image_texture("assets/minecraft/textures/block/spruce_planks.png")
-    elif texture== 2: # birch
-        top = side = self.load_image_texture("assets/minecraft/textures/block/birch_planks.png")
-    elif texture== 3: # jungle
-        top = side = self.load_image_texture("assets/minecraft/textures/block/jungle_planks.png")
-    elif texture== 4: # acacia
-        top = side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png")
-    elif texture== 5: # dark wood
-        top = side = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png")
-    else:
-        return None
-    
-    if blockid == 125: # double slab
-        return self.build_block(top, side)
-    
-    return self.build_slab_block(top, side, data & 8 == 8);
 
 # emerald ore
 block(blockid=129, top_image="assets/minecraft/textures/block/emerald_ore.png")

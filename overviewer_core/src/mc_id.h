@@ -208,7 +208,6 @@ enum mc_block_id {
     block_purpur_block = 201,
     block_purpur_pillar = 202,
     block_purpur_stairs = 203,
-    block_purpur_double_slab = 204,
     block_purpur_slab = 205,
     block_end_bricks = 206,
     block_beetroots = 207,
