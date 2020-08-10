@@ -387,12 +387,25 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         }
         return data;
     } else if (block_class_is_wall(state->block)) {
-        /* check for walls and add one bit with the type of wall (mossy or cobblestone)*/
-        if (ancilData == 0x1) {
-            return check_adjacent_blocks(state, x, y, z, state->block) | 0x10;
-        } else {
-            return check_adjacent_blocks(state, x, y, z, state->block);
+        /* check for walls and add one bit with the type of wall (mossy or cobblestone) */
+        uint8_t data = 0;
+        
+        if (block_class_is_wall(get_data(state, BLOCKS, x + 1, y, z))) {
+            data = data | (1 << 3);
         }
+        if (block_class_is_wall(get_data(state, BLOCKS, x, y, z + 1))) {
+            data = data | (1 << 2);
+        }
+        if (block_class_is_wall(get_data(state, BLOCKS, x - 1, y, z))) {
+            data = data | (1 << 1);
+        }
+        if (block_class_is_wall(get_data(state, BLOCKS, x, y, z - 1))) {
+            data = data | (1 << 0);
+        }
+        if (ancilData == 0x1) {
+            data = data | 0x10;
+        }
+        return data;
     } else if (state->block == block_waterlily) {
         int32_t wx, wz, wy, rotation;
         int64_t pr;

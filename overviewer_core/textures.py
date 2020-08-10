@@ -4530,28 +4530,33 @@ def beacon(self, blockid, data):
     
     return img
 
-# cobblestone and mossy cobblestone walls, chorus plants, mossy stone brick walls
+
+# Walls and chorus plant
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=[199]+list(range(1792, 1805 + 1)), data=list(range(32)), transparent=True, nospawn=True)
+@material(blockid=[199] + list(range(1792, 1808 + 1)), data=list(range(32)),
+          transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
     walls_id_to_tex = {
-          199: "assets/minecraft/textures/block/chorus_plant.png", # chorus plants
-        1792: "assets/minecraft/textures/block/andesite.png",
-        1793: "assets/minecraft/textures/block/bricks.png",
-        1794: "assets/minecraft/textures/block/cobblestone.png",
-        1795: "assets/minecraft/textures/block/diorite.png",
-        1796: "assets/minecraft/textures/block/end_stone_bricks.png",
-        1797: "assets/minecraft/textures/block/granite.png",
-        1798: "assets/minecraft/textures/block/mossy_cobblestone.png",
-        1799: "assets/minecraft/textures/block/mossy_stone_bricks.png",
-        1800: "assets/minecraft/textures/block/nether_bricks.png",
-        1801: "assets/minecraft/textures/block/prismarine.png",
-        1802: "assets/minecraft/textures/block/red_nether_bricks.png",
-        1803: "assets/minecraft/textures/block/red_sandstone.png",
-        1804: "assets/minecraft/textures/block/sandstone.png",
-        1805: "assets/minecraft/textures/block/stone_bricks.png"
+        199: "chorus_plant.png",  # chorus plants
+        1792: "andesite.png",
+        1793: "bricks.png",
+        1794: "cobblestone.png",
+        1795: "diorite.png",
+        1796: "end_stone_bricks.png",
+        1797: "granite.png",
+        1798: "mossy_cobblestone.png",
+        1799: "mossy_stone_bricks.png",
+        1800: "nether_bricks.png",
+        1801: "prismarine.png",
+        1802: "red_nether_bricks.png",
+        1803: "red_sandstone.png",
+        1804: "sandstone.png",
+        1805: "stone_bricks.png",
+        1806: "blackstone.png",
+        1807: "polished_blackstone.png",
+        1808: "polished_blackstone_bricks.png"
     }
-    t = self.load_image_texture(walls_id_to_tex[blockid]).copy()
+    t = self.load_image_texture(BLOCKTEX + walls_id_to_tex[blockid]).copy()
 
     wall_pole_top = t.copy()
     wall_pole_side = t.copy()
@@ -4561,14 +4566,16 @@ def cobblestone_wall(self, blockid, data):
     wall_side_top_full = t.copy()
     wall_side_full = t.copy()
 
-    # generate the textures of the wall
-    ImageDraw.Draw(wall_pole_top).rectangle((0,0,3,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_pole_top).rectangle((12,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_pole_top).rectangle((0,0,15,3),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_pole_top).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    def drawrect(img, coord):
+        ImageDraw.Draw(img).rectangle(coord, outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
 
-    ImageDraw.Draw(wall_pole_side).rectangle((0,0,3,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_pole_side).rectangle((12,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    # generate the textures of the wall
+    drawrect(wall_pole_top, (0, 0, 3, 15))
+    drawrect(wall_pole_top, (12, 0, 15, 15))
+    drawrect(wall_pole_top, (0, 0, 15, 3))
+    drawrect(wall_pole_top, (0, 12, 15, 15))
+    drawrect(wall_pole_side, (0, 0, 3, 15))
+    drawrect(wall_pole_side, (12, 0, 15, 15))
 
     # Create the sides and the top of the pole
     wall_pole_side = self.transform_image_side(wall_pole_side)
@@ -4586,24 +4593,24 @@ def cobblestone_wall(self, blockid, data):
     wall_pole_other_side.putalpha(othersidealpha)
 
     # Compose the wall pole
-    wall_pole = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(wall_pole,wall_pole_side, (3,4),wall_pole_side)
-    alpha_over(wall_pole,wall_pole_other_side, (9,4),wall_pole_other_side)
-    alpha_over(wall_pole,wall_pole_top, (0,0),wall_pole_top)
+    wall_pole = Image.new("RGBA", (24, 24), self.bgcolor)
+    alpha_over(wall_pole, wall_pole_side, (3, 4), wall_pole_side)
+    alpha_over(wall_pole, wall_pole_other_side, (9, 4), wall_pole_other_side)
+    alpha_over(wall_pole, wall_pole_top, (0, 0), wall_pole_top)
 
     # create the sides and the top of a wall attached to a pole
-    ImageDraw.Draw(wall_side).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    drawrect(wall_side, (0, 0, 15, 2))
+    drawrect(wall_side, (0, 0, 11, 15))
+    drawrect(wall_side_top, (0, 0, 11, 15))
+    drawrect(wall_side_top, (0, 0, 15, 4))
+    drawrect(wall_side_top, (0, 11, 15, 15))
+
     # full version, without pole
-    ImageDraw.Draw(wall_side_full).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top_full).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top_full).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    drawrect(wall_side_full, (0, 0, 15, 2))
+    drawrect(wall_side_top_full, (0, 4, 15, 15))
 
     # compose the sides of a wall atached to a pole
-    tmp = Image.new("RGBA", (24,24), self.bgcolor)
+    tmp = Image.new("RGBA", (24, 24), self.bgcolor)
     wall_side = self.transform_image_side(wall_side)
     wall_side_top = self.transform_image_top(wall_side_top)
 
@@ -4614,13 +4621,13 @@ def cobblestone_wall(self, blockid, data):
     wall_side = ImageEnhance.Brightness(wall_side).enhance(0.7)
     wall_side.putalpha(sidealpha)
 
-    alpha_over(tmp,wall_side, (0,0),wall_side)
-    alpha_over(tmp,wall_side_top, (-5,3),wall_side_top)
+    alpha_over(tmp, wall_side, (0, 0), wall_side)
+    alpha_over(tmp, wall_side_top, (-5, 3), wall_side_top)
     wall_side = tmp
     wall_other_side = wall_side.transpose(Image.FLIP_LEFT_RIGHT)
 
     # compose the sides of the full wall
-    tmp = Image.new("RGBA", (24,24), self.bgcolor)
+    tmp = Image.new("RGBA", (24, 24), self.bgcolor)
     wall_side_full = self.transform_image_side(wall_side_full)
     wall_side_top_full = self.transform_image_top(wall_side_top_full.rotate(90))
 
@@ -4631,44 +4638,45 @@ def cobblestone_wall(self, blockid, data):
     wall_side_full = ImageEnhance.Brightness(wall_side_full).enhance(0.7)
     wall_side_full.putalpha(sidealpha)
 
-    alpha_over(tmp,wall_side_full, (4,0),wall_side_full)
-    alpha_over(tmp,wall_side_top_full, (3,-4),wall_side_top_full)
+    alpha_over(tmp, wall_side_full, (4, 0), wall_side_full)
+    alpha_over(tmp, wall_side_top_full, (3, -4), wall_side_top_full)
     wall_side_full = tmp
     wall_other_side_full = wall_side_full.transpose(Image.FLIP_LEFT_RIGHT)
 
     # Create img to compose the wall
-    img = Image.new("RGBA", (24,24), self.bgcolor)
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
 
     # Position wall imgs around the wall bit stick
-    pos_top_left = (-5,-2)
-    pos_bottom_left = (-8,4)
-    pos_top_right = (5,-3)
-    pos_bottom_right = (7,4)
-    
+    pos_top_left = (-5, -2)
+    pos_bottom_left = (-8, 4)
+    pos_top_right = (5, -3)
+    pos_bottom_right = (7, 4)
+
     # +x axis points top right direction
     # +y axis points bottom right direction
     # There are two special cases for wall without pole.
-    # Normal case: 
-    # First compose the walls in the back of the image, 
+    # Normal case:
+    # First compose the walls in the back of the image,
     # then the pole and then the walls in the front.
     if (data == 0b1010) or (data == 0b11010):
-        alpha_over(img, wall_other_side_full,(0,2), wall_other_side_full)
+        alpha_over(img, wall_other_side_full, (0, 2), wall_other_side_full)
     elif (data == 0b0101) or (data == 0b10101):
-        alpha_over(img, wall_side_full,(0,2), wall_side_full)
+        alpha_over(img, wall_side_full, (0, 2), wall_side_full)
     else:
         if (data & 0b0001) == 1:
-            alpha_over(img,wall_side, pos_top_left,wall_side)                # top left
+            alpha_over(img, wall_side, pos_top_left, wall_side)                 # top left
         if (data & 0b1000) == 8:
-            alpha_over(img,wall_other_side, pos_top_right,wall_other_side)    # top right
+            alpha_over(img, wall_other_side, pos_top_right, wall_other_side)    # top right
 
-        alpha_over(img,wall_pole,(0,0),wall_pole)
-            
+        alpha_over(img, wall_pole, (0, 0), wall_pole)
+
         if (data & 0b0010) == 2:
-            alpha_over(img,wall_other_side, pos_bottom_left,wall_other_side)      # bottom left    
+            alpha_over(img, wall_other_side, pos_bottom_left, wall_other_side)  # bottom left
         if (data & 0b0100) == 4:
-            alpha_over(img,wall_side, pos_bottom_right,wall_side)                  # bottom right
-    
+            alpha_over(img, wall_side, pos_bottom_right, wall_side)             # bottom right
+
     return img
+
 
 # carrots, potatoes
 @material(blockid=[141,142], data=list(range(8)), transparent=True, nospawn=True)
