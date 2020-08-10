@@ -5607,6 +5607,20 @@ block(blockid=[1062], top_image=BLOCKTEX + "target_top.png",
       side_image=BLOCKTEX + "target_side.png")
 
 
+# Respawn anchor
+@material(blockid=[1063], data=list(range(5)), solid=True)
+def respawn_anchor(self, blockid, data):
+    # Only top texture requires rotation
+    top_rot = [0, 270, 180, 90][self.rotation]
+    top_f = "respawn_anchor_top_off.png" if data == 0 else "respawn_anchor_top.png"
+    side_f = "respawn_anchor_side" + str(data) + ".png"
+
+    top_t = self.load_image_texture(BLOCKTEX + top_f)
+    side_t = self.load_image_texture(BLOCKTEX + side_f)
+
+    return self.build_block(top_t.rotate(top_rot), side_t)
+
+
 # Soul fire
 @material(blockid=[1066], solid=False, transparent=True, nodata=True)
 def soul_fire(self, blockid, data):

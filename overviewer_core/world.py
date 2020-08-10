@@ -1188,6 +1188,8 @@ class RegionSet(object):
                 # Weighted pressure plates use the 'power' property, where a non-zero value
                 #   indicates the plate is depressed
                 data = 1 if p['power'] != '0' else 0
+        elif key == 'minecraft:respawn_anchor':
+            data = int(palette_entry['Properties']['charges'])
 
         return (block, data)
 
