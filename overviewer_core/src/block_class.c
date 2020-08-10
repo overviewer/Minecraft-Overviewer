@@ -96,7 +96,12 @@ const mc_block_t block_class_stair[] = {
     block_end_stone_brick_stairs,
     block_red_nether_brick_stairs,
     block_mossy_stone_brick_stairs,
-    block_smooth_sandstone_stairs};
+    block_smooth_sandstone_stairs,
+    block_crimson_stairs,
+    block_warped_stairs,
+    block_blackstone_stairs,
+    block_polished_blackstone_brick_stairs,
+    block_polished_blackstone_stairs};
 const size_t block_class_stair_len = COUNT_OF(block_class_stair);
 
 const mc_block_t block_class_door[] = {
@@ -106,7 +111,9 @@ const mc_block_t block_class_door[] = {
     block_birch_door,
     block_jungle_door,
     block_acacia_door,
-    block_dark_oak_door};
+    block_dark_oak_door,
+    block_crimson_door,
+    block_warped_door};
 const size_t block_class_door_len = COUNT_OF(block_class_door);
 
 const mc_block_t block_class_fence[] = {
@@ -116,7 +123,9 @@ const mc_block_t block_class_fence[] = {
     block_birch_fence,
     block_jungle_fence,
     block_dark_oak_fence,
-    block_acacia_fence};
+    block_acacia_fence,
+    block_crimson_fence,
+    block_warped_fence};
 const size_t block_class_fence_len = COUNT_OF(block_class_fence);
 
 const mc_block_t block_class_fence_gate[] = {
@@ -125,7 +134,9 @@ const mc_block_t block_class_fence_gate[] = {
     block_birch_fence_gate,
     block_jungle_fence_gate,
     block_dark_oak_fence_gate,
-    block_acacia_fence_gate};
+    block_acacia_fence_gate,
+    block_crimson_fence_gate,
+    block_warped_fence_gate};
 const size_t block_class_fence_gate_len = COUNT_OF(block_class_fence_gate);
 
 const mc_block_t block_class_ancil[] = {
@@ -136,6 +147,8 @@ const mc_block_t block_class_ancil[] = {
     block_jungle_door,
     block_acacia_door,
     block_dark_oak_door,
+    block_crimson_door,
+    block_warped_door,
     block_oak_stairs,
     block_brick_stairs,
     block_stone_brick_stairs,
@@ -167,6 +180,11 @@ const mc_block_t block_class_ancil[] = {
     block_end_stone_brick_stairs,
     block_red_nether_brick_stairs,
     block_smooth_sandstone_stairs,
+    block_crimson_stairs,
+    block_warped_stairs,
+    block_blackstone_stairs,
+    block_polished_blackstone_brick_stairs,
+    block_polished_blackstone_stairs,
     block_grass,
     block_flowing_water,
     block_water,
@@ -178,7 +196,6 @@ const mc_block_t block_class_ancil[] = {
     block_iron_bars,
     block_glass_pane,
     block_waterlily,
-    block_nether_brick_fence,
     block_andesite_wall,
     block_brick_wall,
     block_cobblestone_wall,
@@ -193,6 +210,9 @@ const mc_block_t block_class_ancil[] = {
     block_red_sandstone_wall,
     block_sandstone_wall,
     block_stone_brick_wall,
+    block_blackstone_wall,
+    block_polished_blackstone_brick_wall,
+    block_polished_blackstone_wall,
     block_double_plant,
     block_stained_glass_pane,
     block_stained_glass,
@@ -200,7 +220,10 @@ const mc_block_t block_class_ancil[] = {
     block_birch_fence,
     block_jungle_fence,
     block_dark_oak_fence,
-    block_acacia_fence};
+    block_acacia_fence,
+    block_nether_brick_fence,
+    block_crimson_fence,
+    block_warped_fence};
 const size_t block_class_ancil_len = COUNT_OF(block_class_ancil);
 
 const mc_block_t block_class_alt_height[] = {
@@ -235,6 +258,10 @@ const mc_block_t block_class_alt_height[] = {
     block_end_stone_brick_stairs,
     block_red_nether_brick_stairs,
     block_smooth_sandstone_stairs,
+    block_crimson_stairs,
+    block_warped_stairs,
+    block_polished_blackstone_brick_stairs,
+    block_polished_blackstone_stairs,
     block_prismarine_slab,
     block_dark_prismarine_slab,
     block_prismarine_brick_slab,
@@ -257,7 +284,12 @@ const mc_block_t block_class_alt_height[] = {
     block_stone_slab2,
     block_purpur_stairs,
     block_purpur_slab,
-    block_wooden_slab};
+    block_wooden_slab,
+    block_crimson_slab,
+    block_warped_slab,
+    block_blackstone_slab,
+    block_polished_blackstone_brick_slab,
+    block_polished_blackstone_slab};
 const size_t block_class_alt_height_len = COUNT_OF(block_class_alt_height);
 
 const mc_block_t block_class_nether_roof[] = {
