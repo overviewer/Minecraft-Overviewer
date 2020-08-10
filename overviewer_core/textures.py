@@ -1784,81 +1784,75 @@ block(blockid=48, top_image="assets/minecraft/textures/block/mossy_cobblestone.p
 # obsidian
 block(blockid=49, top_image="assets/minecraft/textures/block/obsidian.png")
 
-# torch, redstone torch (off), redstone torch(on)
-@material(blockid=[50, 75, 76], data=[1, 2, 3, 4, 5], transparent=True)
+
+# torch (50), redstone torch (off) (75), redstone torch(on) (76), soul torch (1067)
+@material(blockid=[50, 75, 76, 1067], data=[1, 2, 3, 4, 5], transparent=True)
 def torches(self, blockid, data):
     # first, rotations
-    if self.rotation == 1:
-        if data == 1: data = 3
-        elif data == 2: data = 4
-        elif data == 3: data = 2
-        elif data == 4: data = 1
-    elif self.rotation == 2:
-        if data == 1: data = 2
-        elif data == 2: data = 1
-        elif data == 3: data = 4
-        elif data == 4: data = 3
-    elif self.rotation == 3:
-        if data == 1: data = 4
-        elif data == 2: data = 3
-        elif data == 3: data = 1
-        elif data == 4: data = 2
-    
+    if self.rotation in [1, 2, 3] and data in [1, 2, 3, 4]:
+        rotation_map = {1: [3, 4, 2, 1],
+                        2: [2, 1, 4, 3],
+                        3: [4, 3, 1, 2]}
+        data = rotation_map[self.rotation][data - 1]
+
     # choose the proper texture
-    if blockid == 50: # torch
-        small = self.load_image_texture("assets/minecraft/textures/block/torch.png")
-    elif blockid == 75: # off redstone torch
-        small = self.load_image_texture("assets/minecraft/textures/block/redstone_torch_off.png")
-    else: # on redstone torch
-        small = self.load_image_texture("assets/minecraft/textures/block/redstone_torch.png")
-        
-    # compose a torch bigger than the normal
-    # (better for doing transformations)
-    torch = Image.new("RGBA", (16,16), self.bgcolor)
-    alpha_over(torch,small,(-4,-3))
-    alpha_over(torch,small,(-5,-2))
-    alpha_over(torch,small,(-3,-2))
-    
-    # angle of inclination of the texture
-    rotation = 15
-    
-    if data == 1: # pointing south
-        torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
-        img = self.build_full_block(None, None, None, torch, None, None)
-        
-    elif data == 2: # pointing north
-        torch = torch.rotate(rotation, Image.NEAREST)
-        img = self.build_full_block(None, None, torch, None, None, None)
-        
-    elif data == 3: # pointing west
-        torch = torch.rotate(rotation, Image.NEAREST)
-        img = self.build_full_block(None, torch, None, None, None, None)
-        
-    elif data == 4: # pointing east
-        torch = torch.rotate(-rotation, Image.NEAREST)
-        img = self.build_full_block(None, None, None, None, torch, None)
-        
-    elif data == 5: # standing on the floor
+    torch_tex = {
+        50: "torch.png",
+        75: "redstone_torch_off.png",
+        76: "redstone_torch.png",
+        1067: "soul_torch.png"
+    }
+    tex_f = torch_tex[blockid]
+    small = self.load_image_texture(BLOCKTEX + tex_f)
+
+    if data < 5:
+        # compose a torch bigger than the normal
+        # (better for doing transformations)
+        torch = Image.new("RGBA", (16, 16), self.bgcolor)
+        alpha_over(torch, small, (-4, -3))
+        alpha_over(torch, small, (-5, -2))
+        alpha_over(torch, small, (-3, -2))
+
+        # angle of inclination of the texture
+        rotation = 15
+        if data in [1, 4]:
+            rotation = -rotation
+        torch = torch.rotate(rotation, Image.NEAREST)  # nearest filter is more nitid.
+
+        if data == 1:    # pointing south
+            img = self.build_full_block(None, None, None, torch, None, None)
+        elif data == 2:  # pointing north
+            img = self.build_full_block(None, None, torch, None, None, None)
+        elif data == 3:  # pointing west
+            img = self.build_full_block(None, torch, None, None, None, None)
+        elif data == 4:  # pointing east
+            img = self.build_full_block(None, None, None, None, torch, None)
+    elif data == 5:  # standing on the floor
         # compose a "3d torch".
-        img = Image.new("RGBA", (24,24), self.bgcolor)
-        
-        small_crop = small.crop((2,2,14,14))
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+
+        small_crop = small.crop((2, 2, 14, 14))
         slice = small_crop.copy()
-        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
-        
-        alpha_over(img, slice, (7,5))
-        alpha_over(img, small_crop, (6,6))
-        alpha_over(img, small_crop, (7,6))
-        alpha_over(img, slice, (7,7))
-        
+        ImageDraw.Draw(slice).rectangle((6, 0, 12, 12), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        ImageDraw.Draw(slice).rectangle((0, 0, 4, 12), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+
+        alpha_over(img, slice, (7, 5))
+        alpha_over(img, small_crop, (6, 6))
+        alpha_over(img, small_crop, (7, 6))
+        alpha_over(img, slice, (7, 7))
+
     return img
 
-# lantern
-@material(blockid=11373, data=[0, 1], transparent=True)
+
+# Lantern (11373) and soul lantern (1065)
+@material(blockid=[1065, 11373], data=[0, 1], transparent=True, nospawn=True)
 def lantern(self, blockid, data):
     # get the  multipart texture of the lantern
-    inputtexture = self.load_image_texture("assets/minecraft/textures/block/lantern.png")
+    lantern_tex = {
+        1065:  "soul_lantern.png",
+        11373: "lantern.png"
+    }
+    inputtexture = self.load_image_texture(BLOCKTEX + lantern_tex[blockid])
 
     # # now create a textures, using the parts defined in lantern.json
 
@@ -1870,16 +1864,16 @@ def lantern(self, blockid, data):
     side_crop = inputtexture.crop((0, 2, 6, 9))
     side_slice = side_crop.copy()
     side_texture = Image.new("RGBA", (16, 16), self.bgcolor)
-    side_texture.paste(side_slice,(5, 8))
+    side_texture.paste(side_slice, (5, 8))
 
     # JSON data for top
     # { "uv": [  0, 9,  6, 15 ], "texture": "#all" }
     top_crop = inputtexture.crop((0, 9, 6, 15))
     top_slice = top_crop.copy()
     top_texture = Image.new("RGBA", (16, 16), self.bgcolor)
-    top_texture.paste(top_slice,(5, 5))
+    top_texture.paste(top_slice, (5, 5))
 
-    # mimic parts of build_full_block, to get an object smaller than a block 
+    # mimic parts of build_full_block, to get an object smaller than a block
     # build_full_block(self, top, side1, side2, side3, side4, bottom=None):
     # a non transparent block uses top, side 3 and side 4.
     img = Image.new("RGBA", (24, 24), self.bgcolor)
@@ -1895,8 +1889,8 @@ def lantern(self, blockid, data):
     if data == 1:
         hangoff = 8
     xoff = 4
-    yoff =- hangoff
-    alpha_over(img, side3, (xoff+0, yoff+6), side3)
+    yoff = -hangoff
+    alpha_over(img, side3, (xoff + 0, yoff + 6), side3)
     # side4
     side4 = self.transform_image_side(side_texture)
     side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
@@ -1904,11 +1898,12 @@ def lantern(self, blockid, data):
     sidealpha = side4.split()[3]
     side4 = ImageEnhance.Brightness(side4).enhance(0.8)
     side4.putalpha(sidealpha)
-    alpha_over(img, side4, (12-xoff, yoff+6), side4)
+    alpha_over(img, side4, (12 - xoff, yoff + 6), side4)
     # top
     top = self.transform_image_top(top_texture)
-    alpha_over(img, top, (0, 8-hangoff), top)
+    alpha_over(img, top, (0, 8 - hangoff), top)
     return img
+
 
 # bamboo
 @material(blockid=11416, transparent=True)
@@ -5751,6 +5746,17 @@ block(blockid=[1061], top_image=BLOCKTEX + "lodestone_top.png",
 # Target
 block(blockid=[1062], top_image=BLOCKTEX + "target_top.png",
       side_image=BLOCKTEX + "target_side.png")
+
+
+# Soul fire
+@material(blockid=[1066], solid=False, transparent=True, nodata=True)
+def soul_fire(self, blockid, data):
+    side_ns_t = self.load_image_texture(BLOCKTEX + "soul_fire_0.png")
+    side_ew_t = self.load_image_texture(BLOCKTEX + "soul_fire_1.png")
+    side_ew_t = side_ew_t.transpose(Image.FLIP_LEFT_RIGHT)
+
+    return self.build_full_block(None, side_ew_t, side_ns_t, side_ns_t, side_ew_t)
+
 
 # Nether sprouts
 sprite(blockid=[1068], imagename=BLOCKTEX + "nether_sprouts.png")

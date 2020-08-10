@@ -1121,14 +1121,13 @@ class RegionSet(object):
         elif key == 'minecraft:basalt' or key == 'minecraft:polished_basalt':
             axis = palette_entry['Properties']['axis']
             data = {'y': 0, 'x': 1, 'z': 2}[axis]
-        elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch']:
+        elif key in ['minecraft:redstone_torch', 'minecraft:redstone_wall_torch',
+                     'minecraft:wall_torch', 'minecraft:soul_wall_torch']:
             if key.startswith('minecraft:redstone_') and palette_entry['Properties']['lit'] == 'true':
                 block += 1
             if key.endswith('wall_torch'):
                 facing = palette_entry['Properties'].get('facing')
                 data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
-            else:
-                data = 5
         elif (key in ['minecraft:carved_pumpkin', 'minecraft:jack_o_lantern',
                       'minecraft:stonecutter', 'minecraft:loom'] or
               key.endswith('glazed_terracotta')):
@@ -1199,7 +1198,7 @@ class RegionSet(object):
                      'minecraft:pumpkin_stem', 'minecraft:potatoes', 'minecraft:carrots',
                      'minecraft:sweet_berry_bush']:
             data = palette_entry['Properties']['age']
-        elif key == 'minecraft:lantern':
+        elif key in ['minecraft:lantern', 'minecraft:soul_lantern']:
             if palette_entry['Properties']['hanging'] == 'true':
                 data = 1
             else:
