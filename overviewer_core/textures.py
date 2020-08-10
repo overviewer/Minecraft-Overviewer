@@ -5710,3 +5710,47 @@ block(blockid=[1004], top_image="assets/minecraft/textures/block/blackstone_top.
 
 # Netherite
 block(blockid=[1005], top_image="assets/minecraft/textures/block/netherite_block.png")
+
+# Polished blackstone
+block(blockid=[1022], top_image=BLOCKTEX + "polished_blackstone.png")
+
+# Chiseled polished blackstone
+block(blockid=[1023], top_image=BLOCKTEX + "chiseled_polished_blackstone.png")
+
+# Gilded blackstone
+block(blockid=[1024], top_image=BLOCKTEX + "gilded_blackstone.png")
+
+# Cracked polished blackstone bricks
+block(blockid=[1025], top_image=BLOCKTEX + "cracked_polished_blackstone_bricks.png")
+
+# Polished blackstone bricks
+block(blockid=[1026], top_image=BLOCKTEX + "polished_blackstone_bricks.png")
+
+# Crimson planks
+block(blockid=[1035], top_image=BLOCKTEX + "crimson_planks.png")
+
+# Warped planks
+block(blockid=[1046], top_image=BLOCKTEX + "warped_planks.png")
+
+# Chiseled nether bricks
+block(blockid=[1057], top_image=BLOCKTEX + "chiseled_nether_bricks.png")
+
+# Cracked nether bricks
+block(blockid=[1058], top_image=BLOCKTEX + "cracked_nether_bricks.png")
+
+# Quartz bricks
+block(blockid=[1059], top_image=BLOCKTEX + "quartz_bricks.png")
+
+# Crying obsidian
+block(blockid=[1060], top_image=BLOCKTEX + "crying_obsidian.png")
+
+# Lodestone
+block(blockid=[1061], top_image=BLOCKTEX + "lodestone_top.png",
+      side_image=BLOCKTEX + "lodestone_side.png")
+
+# Target
+block(blockid=[1062], top_image=BLOCKTEX + "target_top.png",
+      side_image=BLOCKTEX + "target_side.png")
+
+# Nether sprouts
+sprite(blockid=[1068], imagename=BLOCKTEX + "nether_sprouts.png")
