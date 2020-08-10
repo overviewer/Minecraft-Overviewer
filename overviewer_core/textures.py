@@ -2805,20 +2805,16 @@ def farmland(self, blockid, data):
 
 
 # signposts
-@material(blockid=[63,11401,11402,11403,11404,11405,11406], data=list(range(16)), transparent=True)
+@material(blockid=[63, 1044, 1055, 11401, 11402, 11403, 11404, 11405, 11406],
+          data=list(range(16)), transparent=True)
 def signpost(self, blockid, data):
+    data = (data + 4 * self.rotation) % 16
 
-    # first rotations
-    if self.rotation == 1:
-        data = (data + 4) % 16
-    elif self.rotation == 2:
-        data = (data + 8) % 16
-    elif self.rotation == 3:
-        data = (data + 12) % 16
-    
     sign_texture = {
         # (texture on sign, texture on stick)
         63: ("oak_planks.png", "oak_log.png"),
+        1044: ("crimson_planks.png", "crimson_stem.png"),
+        1055: ("warped_planks.png", "warped_stem.png"),
         11401: ("oak_planks.png", "oak_log.png"),
         11402: ("spruce_planks.png", "spruce_log.png"),
         11403: ("birch_planks.png", "birch_log.png"),
@@ -2826,46 +2822,47 @@ def signpost(self, blockid, data):
         11405: ("acacia_planks.png", "acacia_log.png"),
         11406: ("dark_oak_planks.png", "dark_oak_log.png"),
     }
-    texture_path, texture_stick_path = ["assets/minecraft/textures/block/" + x for x in sign_texture[blockid]]
-    
-    texture = self.load_image_texture(texture_path).copy()
-    
-    # cut the planks to the size of a signpost
-    ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    texture_path, texture_stick_path = [BLOCKTEX + x for x in sign_texture[blockid]]
 
-    # If the signpost is looking directly to the image, draw some 
+    texture = self.load_image_texture(texture_path).copy()
+
+    # cut the planks to the size of a signpost
+    ImageDraw.Draw(texture).rectangle((0, 12, 15, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+
+    # If the signpost is looking directly to the image, draw some
     # random dots, they will look as text.
-    if data in (0,1,2,3,4,5,15):
+    if data in (0, 1, 2, 3, 4, 5, 15):
         for i in range(15):
-            x = randint(4,11)
-            y = randint(3,7)
-            texture.putpixel((x,y),(0,0,0,255))
+            x = randint(4, 11)
+            y = randint(3, 7)
+            texture.putpixel((x, y), (0, 0, 0, 255))
 
     # Minecraft uses wood texture for the signpost stick
     texture_stick = self.load_image_texture(texture_stick_path)
-    texture_stick = texture_stick.resize((12,12), Image.ANTIALIAS)
-    ImageDraw.Draw(texture_stick).rectangle((2,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+    texture_stick = texture_stick.resize((12, 12), Image.ANTIALIAS)
+    ImageDraw.Draw(texture_stick).rectangle((2, 0, 12, 12), outline=(0, 0, 0, 0),
+                                            fill=(0, 0, 0, 0))
 
-    img = Image.new("RGBA", (24,24), self.bgcolor)
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
 
     #         W                N      ~90       E                   S        ~270
-    angles = (330.,345.,0.,15.,30.,55.,95.,120.,150.,165.,180.,195.,210.,230.,265.,310.)
-    angle = math.radians(angles[data])
+    angles = (330, 345, 0, 15, 30, 55, 95, 120, 150, 165, 180, 195, 210, 230, 265, 310)
+    angle = math.radians(float(angles[data]))
     post = self.transform_image_angle(texture, angle)
 
     # choose the position of the "3D effect"
     incrementx = 0
-    if data in (1,6,7,8,9,14):
+    if data in (1, 6, 7, 8, 9, 14):
         incrementx = -1
-    elif data in (3,4,5,11,12,13):
+    elif data in (3, 4, 5, 11, 12, 13):
         incrementx = +1
 
-    alpha_over(img, texture_stick,(11, 8),texture_stick)
+    alpha_over(img, texture_stick, (11, 8), texture_stick)
     # post2 is a brighter signpost pasted with a small shift,
     # gives to the signpost some 3D effect.
     post2 = ImageEnhance.Brightness(post).enhance(1.2)
-    alpha_over(img, post2,(incrementx, -3),post2)
-    alpha_over(img, post, (0,-2), post)
+    alpha_over(img, post2, (incrementx, -3), post2)
+    alpha_over(img, post, (0, -2), post)
 
     return img
 
@@ -2985,28 +2982,20 @@ def ladder(self, blockid, data):
 
 
 # wall signs
-@material(blockid=[68,11407,11408,11409,11410,11411,11412], data=[2, 3, 4, 5], transparent=True)
-def wall_sign(self, blockid, data): # wall sign
-
+@material(blockid=[68, 1045, 1056, 11407, 11408, 11409, 11410, 11411, 11412],
+          data=[2, 3, 4, 5], transparent=True)
+def wall_sign(self, blockid, data):
     # first rotations
-    if self.rotation == 1:
-        if data == 2: data = 5
-        elif data == 3: data = 4
-        elif data == 4: data = 2
-        elif data == 5: data = 3
-    elif self.rotation == 2:
-        if data == 2: data = 3
-        elif data == 3: data = 2
-        elif data == 4: data = 5
-        elif data == 5: data = 4
-    elif self.rotation == 3:
-        if data == 2: data = 4
-        elif data == 3: data = 5
-        elif data == 4: data = 3
-        elif data == 5: data = 2
-    
+    if self.rotation in [1, 2, 3] and data & 0b111 in [2, 3, 4, 5]:
+        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
+                        2: {2: 3, 3: 2, 4: 5, 5: 4},
+                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
+        data = rotation_map[self.rotation][data]
+
     sign_texture = {
         68: "oak_planks.png",
+        1045: "crimson_planks.png",
+        1056: "warped_planks.png",
         11407: "oak_planks.png",
         11408: "spruce_planks.png",
         11409: "birch_planks.png",
@@ -3014,22 +3003,21 @@ def wall_sign(self, blockid, data): # wall sign
         11411: "acacia_planks.png",
         11412: "dark_oak_planks.png",
     }
-    texture_path = "assets/minecraft/textures/block/" + sign_texture[blockid]
-    texture = self.load_image_texture(texture_path).copy()
+    texture = self.load_image_texture(BLOCKTEX + sign_texture[blockid]).copy()
     # cut the planks to the size of a signpost
-    ImageDraw.Draw(texture).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(texture).rectangle((0, 12, 15, 15), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
 
     # draw some random black dots, they will look as text
     """ don't draw text at the moment, they are used in blank for decoration
-    
+
     if data in (3,4):
         for i in range(15):
             x = randint(4,11)
             y = randint(3,7)
             texture.putpixel((x,y),(0,0,0,255))
     """
-    
-    img = Image.new("RGBA", (24,24), self.bgcolor)
+
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
 
     incrementx = 0
     if data == 2:  # east
@@ -3046,10 +3034,11 @@ def wall_sign(self, blockid, data): # wall sign
         sign = self.build_full_block(None, None, None, texture, None)
 
     sign2 = ImageEnhance.Brightness(sign).enhance(1.2)
-    alpha_over(img, sign2,(incrementx, 2),sign2)
-    alpha_over(img, sign, (0,3), sign)
+    alpha_over(img, sign2, (incrementx, 2), sign2)
+    alpha_over(img, sign, (0, 3), sign)
 
     return img
+
 
 # levers
 @material(blockid=69, data=list(range(16)), transparent=True)
