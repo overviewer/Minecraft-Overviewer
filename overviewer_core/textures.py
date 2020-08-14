@@ -964,7 +964,7 @@ def dirt_blocks(self, blockid, data):
 block(blockid=4, top_image="assets/minecraft/textures/block/cobblestone.png")
 
 # wooden planks
-@material(blockid=5, data=list(range(6)), solid=True)
+@material(blockid=5, data=list(range(8)), solid=True)
 def wooden_planks(self, blockid, data):
     if data == 0: # normal
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/oak_planks.png"), self.load_image_texture("assets/minecraft/textures/block/oak_planks.png"))
@@ -978,6 +978,10 @@ def wooden_planks(self, blockid, data):
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png"),self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png"))
     if data == 5: # dark oak
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"),self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"))
+    if data == 6: # crimson
+        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png"),self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png"))
+    if data == 7: # warped
+        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/warped_planks.png"),self.load_image_texture("assets/minecraft/textures/block/warped_planks.png"))
 
 @material(blockid=6, data=list(range(16)), transparent=True)
 def saplings(self, blockid, data):
@@ -1768,11 +1772,11 @@ def slabs(self, blockid, data):
         top  = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png").copy()
         side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png").copy()
     elif blockid == 1027: #  blackstone_slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/blackstone.png").copy()    
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/blackstone.png").copy()
     elif blockid == 1028: #  polished_blackstone_slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_blackstone.png").copy()    
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_blackstone.png").copy()
     elif blockid == 1029: #  polished_blackstone_brick_slab
-        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_blackstone_bricks.png").copy()    
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_blackstone_bricks.png").copy()
 
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
@@ -2021,12 +2025,13 @@ def fire(self, blockid, data):
 block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch,
-# jungle, quartz, red sandstone, (dark) prismarine, mossy brick and mossy cobblestone, stone smooth_quartz
+# jungle, quartz, red sandstone, purper_stairs, crimson_stairs, warped_stairs, (dark) prismarine,
+# mossy brick and mossy cobblestone, stone smooth_quartz
 # polished_granite polished_andesite polished_diorite granite diorite andesite end_stone_bricks red_nether_brick stairs
 # smooth_red_sandstone blackstone polished_blackstone polished_blackstone_brick
-@material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 11337, 11338, 11339,
+@material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 509, 510, 11337, 11338, 11339,
           11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379, 11380, 11381, 11382, 11383, 11384, 11415,
-          1030, 1031, 1032], 
+          1030, 1031, 1032],
           data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
@@ -2055,6 +2060,8 @@ def stairs(self, blockid, data):
         164: "assets/minecraft/textures/block/dark_oak_planks.png",
         180: "assets/minecraft/textures/block/red_sandstone.png",
         203: "assets/minecraft/textures/block/purpur_block.png",
+        509: "assets/minecraft/textures/block/crimson_planks.png",
+        510: "assets/minecraft/textures/block/warped_planks.png",
         11337: "assets/minecraft/textures/block/prismarine.png",
         11338: "assets/minecraft/textures/block/dark_prismarine.png",
         11339: "assets/minecraft/textures/block/prismarine_bricks.png",
@@ -2819,7 +2826,7 @@ def farmland(self, blockid, data):
 
 
 # signposts
-@material(blockid=[63,11401,11402,11403,11404,11405,11406], data=list(range(16)), transparent=True)
+@material(blockid=[63,11401,11402,11403,11404,11405,11406,12505,12506], data=list(range(16)), transparent=True)
 def signpost(self, blockid, data):
 
     # first rotations
@@ -2839,6 +2846,8 @@ def signpost(self, blockid, data):
         11404: ("jungle_planks.png", "jungle_log.png"),
         11405: ("acacia_planks.png", "acacia_log.png"),
         11406: ("dark_oak_planks.png", "dark_oak_log.png"),
+        12505: ("crimson_planks.png", "crimson_stem.png"),
+        12506: ("warped_planks.png", "warped_stem.png"),
     }
     texture_path, texture_stick_path = ["assets/minecraft/textures/block/" + x for x in sign_texture[blockid]]
     
@@ -2886,7 +2895,7 @@ def signpost(self, blockid, data):
 
 # wooden and iron door
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[64,71,193,194,195,196,197], data=list(range(32)), transparent=True)
+@material(blockid=[64,71,193,194,195,196,197, 499, 500], data=list(range(32)), transparent=True)
 def door(self, blockid, data):
     #Masked to not clobber block top/bottom & swung info
     if self.rotation == 1:
@@ -2920,6 +2929,10 @@ def door(self, blockid, data):
             raw_door = self.load_image_texture("assets/minecraft/textures/block/acacia_door_top.png")
         elif blockid == 197: # dark_oak door
             raw_door = self.load_image_texture("assets/minecraft/textures/block/dark_oak_door_top.png")
+        elif blockid == 499: # crimson door
+            raw_door = self.load_image_texture("assets/minecraft/textures/block/crimson_door_top.png")
+        elif blockid == 500: # warped door
+            raw_door = self.load_image_texture("assets/minecraft/textures/block/warped_door_top.png")
     else: # bottom of the door
         if blockid == 64:
             raw_door = self.load_image_texture("assets/minecraft/textures/block/oak_door_bottom.png")
@@ -2935,7 +2948,11 @@ def door(self, blockid, data):
             raw_door = self.load_image_texture("assets/minecraft/textures/block/acacia_door_bottom.png")
         elif blockid == 197: # dark_oak door
             raw_door = self.load_image_texture("assets/minecraft/textures/block/dark_oak_door_bottom.png")
-    
+        elif blockid == 499: # crimson door
+            raw_door = self.load_image_texture("assets/minecraft/textures/block/crimson_door_bottom.png")
+        elif blockid == 500: # warped door
+            raw_door = self.load_image_texture("assets/minecraft/textures/block/warped_door_bottom.png")
+
     # if you want to render all doors as closed, then force
     # force closed to be True
     if data & 0x4 == 0x4:
@@ -3078,7 +3095,7 @@ def ladder(self, blockid, data):
 
 
 # wall signs
-@material(blockid=[68,11407,11408,11409,11410,11411,11412], data=[2, 3, 4, 5], transparent=True)
+@material(blockid=[68,11407,11408,11409,11410,11411,11412,12507,12508], data=[2, 3, 4, 5], transparent=True)
 def wall_sign(self, blockid, data): # wall sign
 
     # first rotations
@@ -3106,6 +3123,8 @@ def wall_sign(self, blockid, data): # wall sign
         11410: "jungle_planks.png",
         11411: "acacia_planks.png",
         11412: "dark_oak_planks.png",
+        12507: "crimson_planks.png",
+        12508: "warped_planks.png",
     }
     texture_path = "assets/minecraft/textures/block/" + sign_texture[blockid]
     texture = self.load_image_texture(texture_path).copy()
@@ -3288,7 +3307,7 @@ def levers(self, blockid, data):
     return img
 
 # wooden and stone pressure plates, and weighted pressure plates
-@material(blockid=[70, 72,147,148,11301,11302,11303,11304,11305, 1033], data=[0,1], transparent=True)
+@material(blockid=[70, 72,147,148,11301,11302,11303,11304,11305, 1033,11517,11518], data=[0,1], transparent=True)
 def pressure_plate(self, blockid, data):
     texture_name = {70:"assets/minecraft/textures/block/stone.png",              # stone
                     72:"assets/minecraft/textures/block/oak_planks.png",         # oak
@@ -3297,6 +3316,8 @@ def pressure_plate(self, blockid, data):
                     11303:"assets/minecraft/textures/block/jungle_planks.png",   # jungle
                     11304:"assets/minecraft/textures/block/acacia_planks.png",   # acacia
                     11305:"assets/minecraft/textures/block/dark_oak_planks.png", # dark oak
+                    11517:"assets/minecraft/textures/block/crimson_planks.png",  # crimson
+                    11518:"assets/minecraft/textures/block/warped_planks.png",   # warped
                     147:"assets/minecraft/textures/block/gold_block.png",        # light golden
                     148:"assets/minecraft/textures/block/iron_block.png",        # heavy iron
                     1033:"assets/minecraft/textures/block/polished_blackstone.png"
@@ -3330,7 +3351,7 @@ def pressure_plate(self, blockid, data):
 block(blockid=[73, 74], top_image="assets/minecraft/textures/block/redstone_ore.png")
 
 # stone and wood buttons
-@material(blockid=(77, 143, 11326, 11327, 11328, 11329, 11330, 1034), data=list(range(16)), transparent=True)
+@material(blockid=(77,143,11326,11327,11328,11329,11330,1034,11515,11516), data=list(range(16)), transparent=True)
 def buttons(self, blockid, data):
 
     # 0x8 is set if the button is pressed mask this info and render
@@ -3364,7 +3385,9 @@ def buttons(self, blockid, data):
                    11328:"assets/minecraft/textures/block/jungle_planks.png",
                    11329:"assets/minecraft/textures/block/acacia_planks.png",
                    11330:"assets/minecraft/textures/block/dark_oak_planks.png",
-                   1034:"assets/minecraft/textures/block/polished_blackstone.png"
+                   1034:"assets/minecraft/textures/block/polished_blackstone.png",
+                   11515:"assets/minecraft/textures/block/crimson_planks.png",
+                   11516:"assets/minecraft/textures/block/warped_planks.png"
                   }[blockid]
     t = self.load_image_texture(texturepath).copy()
 
@@ -3495,7 +3518,7 @@ def jukebox(self, blockid, data):
 
 # nether and normal fences
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[85, 188, 189, 190, 191, 192, 113], data=list(range(16)), transparent=True, nospawn=True)
+@material(blockid=[85, 188, 189, 190, 191, 192, 113, 511, 512], data=list(range(16)), transparent=True, nospawn=True)
 def fence(self, blockid, data):
     # no need for rotations, it uses pseudo data.
     # create needed images for Big stick fence
@@ -3519,10 +3542,18 @@ def fence(self, blockid, data):
         fence_top = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png").copy()
         fence_small_side = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png").copy()
-    elif blockid == 192: # acacia oak fence
+    elif blockid == 192: # acacia fence
         fence_top = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
         fence_small_side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
+    elif blockid == 511: # crimson_fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+    elif blockid == 512: # warped fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
     else: # netherbrick fence
         fence_top = self.load_image_texture("assets/minecraft/textures/block/nether_bricks.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/block/nether_bricks.png").copy()
@@ -4021,7 +4052,7 @@ def comparator(self, blockid, data):
     
 # trapdoor
 # the trapdoor is looks like a sprite when opened, that's not good
-@material(blockid=[96,167,11332,11333,11334,11335,11336], data=list(range(16)), transparent=True, nospawn=True)
+@material(blockid=[96,167,11332,11333,11334,11335,11336,12501,12502], data=list(range(16)), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
 
     # rotation
@@ -4049,7 +4080,9 @@ def trapdoor(self, blockid, data):
                    11333:"assets/minecraft/textures/block/birch_trapdoor.png",
                    11334:"assets/minecraft/textures/block/jungle_trapdoor.png",
                    11335:"assets/minecraft/textures/block/acacia_trapdoor.png",
-                   11336:"assets/minecraft/textures/block/dark_oak_trapdoor.png"
+                   11336:"assets/minecraft/textures/block/dark_oak_trapdoor.png",
+                   12501:"assets/minecraft/textures/block/crimson_trapdoor.png",
+                   12502:"assets/minecraft/textures/block/warped_trapdoor.png",
                   }[blockid]
 
     if data & 0x4 == 0x4: # opened trapdoor
@@ -4260,7 +4293,7 @@ def vines(self, blockid, data):
 
 
 # fence gates
-@material(blockid=[107, 183, 184, 185, 186, 187], data=list(range(8)), transparent=True, nospawn=True)
+@material(blockid=[107, 183, 184, 185, 186, 187, 513, 514], data=list(range(8)), transparent=True, nospawn=True)
 def fence_gate(self, blockid, data):
 
     # rotation
@@ -4299,6 +4332,10 @@ def fence_gate(self, blockid, data):
         gate_side = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png").copy()
     elif blockid == 187: # Acacia
         gate_side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
+    elif blockid == 513: # Crimson
+        gate_side = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+    elif blockid == 514: # Warped
+        gate_side = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
     else:
         return None
 
@@ -4558,6 +4595,10 @@ def wooden_slabs(self, blockid, data):
         top = side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png")
     elif texture== 5: # dark wood
         top = side = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png")
+    elif texture== 6: # crimson
+        top = side = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png")
+    elif texture== 7: # warped
+        top = side = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png")
     else:
         return None
     
