@@ -753,7 +753,11 @@ class RegionSet(object):
             'minecraft:polished_blackstone_brick_stairs': (1032, 0),
             # nether redstone blocks
             'minecraft:polished_blackstone_pressure_plate': (1033, 0),
-            'minecraft:polished_blackstone_button': (1034,0),
+            'minecraft:polished_blackstone_button': (1034, 0),
+            # advanced nether blocks
+            'minecraft:crying_obsidian': (1035, 0),
+            'minecraft:lodestone': (1036, 0),
+            'minecraft:respawn_anchor': (1037, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),

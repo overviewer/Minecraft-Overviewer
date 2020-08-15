@@ -5773,3 +5773,7 @@ block(blockid=1023, top_image="assets/minecraft/textures/block/chiseled_polished
 block(blockid=1024, top_image="assets/minecraft/textures/block/gilded_blackstone.png")
 block(blockid=1025, top_image="assets/minecraft/textures/block/cracked_polished_blackstone_bricks.png")
 block(blockid=1026, top_image="assets/minecraft/textures/block/polished_blackstone_bricks.png")
+
+block(blockid=1035, top_image="assets/minecraft/textures/block/crying_obsidian.png")
+block(blockid=1036, top_image="assets/minecraft/textures/block/lodestone_top.png", side_image="assets/minecraft/textures/block/lodestone_side.png")
+block(blockid=1037, top_image="assets/minecraft/textures/block/respawn_anchor_top.png", side_image="assets/minecraft/textures/block/respawn_anchor_side1.png")
