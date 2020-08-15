@@ -214,6 +214,9 @@ const mc_block_t block_class_ancil[] = {
     block_blackstone_wall,
     block_polished_blackstone_wall,
     block_polished_blackstone_brick_wall,
+    block_crying_obsidian,
+    block_lodestone,
+    block_respawn_anchor,
     block_double_plant,
     block_stained_glass_pane,
     block_stained_glass,
@@ -301,5 +304,6 @@ const mc_block_t block_class_nether_roof[] = {
     block_basalt,
     block_blackstone,
     block_soul_soil,
-    block_nether_gold_ore};
+    block_nether_gold_ore,
+    block_ancient_debris};
 const size_t block_class_nether_roof_len = COUNT_OF(block_class_nether_roof);

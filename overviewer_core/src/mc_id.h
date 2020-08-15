@@ -302,6 +302,10 @@ enum mc_block_id {
     // nether redstone blocks
     block_polished_blackstone_pressure_plate = 1033,
     block_polished_blackstone_button = 1034,
+    // advanced nether blocks
+    block_crying_obsidian = 1035,
+    block_lodestone = 1036,
+    block_respawn_anchor = 1037,
 
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
