@@ -34,43 +34,43 @@ static struct BiomeColor default_biomes[] = {
     {0, 135, 106, 150},  /* Ocean */
     {1, 98, 238, 240},   /* Plains */
     {2, 227, 107, 0},    /* Desert */
-    {3, 255, 55, 55},    /* Extreme Hills */
+    {3, 255, 55, 55},    /* Mountains */
     {4, 10, 200, 200},   /* Forest */
     {5, 10, 100, 240},   /* Taiga */
-    {6, 200, 100, 100},  /* Swampland */
+    {6, 200, 100, 100},  /* Swamp */
     {7, 70, 170, 0},     /* River */
-    {8, 255, 0, 0},      /* Hell */
-    {9, 255, 255, 255},  /* Sky */
-    {10, 155, 55, 255},  /* FrozenOcean */
-    {11, 255, 55, 255},  /* FrozenRiver */
-    {12, 155, 255, 255}, /* Ice Plains */
-    {13, 205, 205, 255}, /* Ice Mountains */
-    {14, 255, 0, 155},   /* MushroomIsland */
-    {15, 255, 75, 175},  /* MushroomIslandShore */
+    {8, 255, 0, 0},      /* Nether Wastes */
+    {9, 255, 255, 255},  /* The End */
+    {10, 155, 55, 255},  /* Frozen Ocean */
+    {11, 255, 55, 255},  /* Frozen River */
+    {12, 155, 255, 255}, /* Snowy Tundra */
+    {13, 205, 205, 255}, /* Snowy Mountains */
+    {14, 255, 0, 155},   /* Mushroom Fields */
+    {15, 255, 75, 175},  /* Mushroom Field Shore */
     {16, 255, 255, 0},   /* Beach */
-    {17, 240, 155, 0},   /* DesertHills */
-    {18, 100, 200, 200}, /* ForestHills */
-    {19, 100, 100, 240}, /* TaigaHills */
-    {20, 255, 25, 15},   /* Extreme Hills Edge */
+    {17, 240, 155, 0},   /* Desert Hills */
+    {18, 100, 200, 200}, /* Wooded Hills */
+    {19, 100, 100, 240}, /* Taiga Hills */
+    {20, 255, 25, 15},   /* Mountain Edge */
     {21, 155, 155, 55},  /* Jungle */
     {22, 175, 255, 55},  /* Jungle Hills */
     {23, 135, 255, 55},  /* Jungle Edge */
     {24, 135, 106, 150}, /* Deep Ocean */
-    {25, 255, 25, 15},   /* Stone Beach */
-    {26, 155, 255, 255}, /* Cold Beach */
+    {25, 255, 25, 15},   /* Stone Shore */
+    {26, 155, 255, 255}, /* Snowy Beach */
     {27, 10, 200, 200},  /* Birch Forest */
-    {28, 10, 200, 200},  /* Birch Forest Edge */
-    {29, 10, 200, 200},  /* Roofed Forest */
-    {30, 155, 255, 255}, /* Cold Taiga */
-    {31, 155, 200, 255}, /* Cold Taiga Hills */
-    {32, 10, 100, 240},  /* Mega Taiga */
-    {33, 10, 100, 240},  /* Mega Taiga Hills*/
-    {34, 255, 55, 55},   /* Extreme Hills+ */
+    {28, 10, 200, 200},  /* Birch Forest Hills */
+    {29, 10, 200, 200},  /* Dark Forest */
+    {30, 155, 255, 255}, /* Snowy Taiga */
+    {31, 155, 200, 255}, /* Snowy Taiga Hills */
+    {32, 10, 100, 240},  /* Giant Tree Taiga */
+    {33, 10, 100, 240},  /* Giant Tree Taiga Hills */
+    {34, 255, 55, 55},   /* Wooded Mountains */
     {35, 227, 107, 0},   /* Savanna */
     {36, 227, 107, 0},   /* Savanna Plateau */
-    {37, 255, 100, 100}, /* Mesa */
-    {38, 255, 100, 100}, /* Mesa Plateau F */
-    {39, 255, 100, 100}, /* Mesa Plateau */
+    {37, 255, 100, 100}, /* Badlands */
+    {38, 255, 100, 100}, /* Wooded Badlands Plateau */
+    {39, 255, 100, 100}, /* Badlands Plateau */
 
     /* end of list marker */
     {255, 0, 0, 0}};
