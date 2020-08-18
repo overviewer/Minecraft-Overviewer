@@ -50,7 +50,7 @@ static Biome biome_table[] = {
     {"Taiga", 0.05, 0.8, 255, 255, 255},
     {"Swamp", 0.8, 0.9, 205, 128, 255},
     {"River", 0.5, 0.5, 255, 255, 255},
-    {"Nether", 2.0, 0.0, 255, 255, 255},
+    {"Nether Wastes", 2.0, 0.0, 255, 255, 255},
     {"The End", 0.5, 0.5, 255, 255, 255},
     /* 10 */
     {"Frozen Ocean", 0.0, 0.5, 255, 255, 255},
@@ -245,6 +245,11 @@ static Biome biome_table[] = {
     {"Modified Badlands Plateau", 0.0, 0.0, 255, 255, 255},
     {"Bamboo Jungle", 0.95, 0.8, 255, 255, 255},
     {"Bamboo Jungle Hills", 0.95, 0.8, 255, 255, 255},
+    /* 170 */
+    {"Soul Sand Valley", 2.0, 0.0, 255, 255, 255},
+    {"Crimson Forest", 2.0, 0.0, 255, 255, 255},
+    {"Warped Forest", 2.0, 0.0, 255, 255, 255},
+    {"Basalt Deltas", 2.0, 0.0, 255, 255, 255},
 };
 
 #define NUM_BIOMES (sizeof(biome_table) / sizeof(Biome))
