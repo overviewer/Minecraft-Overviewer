@@ -243,6 +243,8 @@ static Biome biome_table[] = {
     {"Eroded Badlands", 0.0, 0.0, 255, 255, 255},
     {"Modified Wooded Badlands Plateau", 0.0, 0.0, 255, 255, 255},
     {"Modified Badlands Plateau", 0.0, 0.0, 255, 255, 255},
+    {"Bamboo Jungle", 0.95, 0.8, 255, 255, 255},
+    {"Bamboo Jungle Hills", 0.95, 0.8, 255, 255, 255},
 };
 
 #define NUM_BIOMES (sizeof(biome_table) / sizeof(Biome))
