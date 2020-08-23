@@ -406,7 +406,18 @@ class Textures(object):
         firetexture = (fireNS, fireEW)
         self.firetexture = firetexture
         return firetexture
-    
+
+    def load_soul_fire(self):
+        """Special-case function for loading soul_fire."""
+        soul_firetexture = getattr(self, "soul_firetexture", None)
+        if soul_firetexture:
+            return soul_firetexture
+        fireNS = self.load_image_texture("assets/minecraft/textures/block/soul_fire_0.png")
+        fireEW = self.load_image_texture("assets/minecraft/textures/block/soul_fire_1.png")
+        soul_firetexture = (fireNS, fireEW)
+        self.soul_firetexture = soul_firetexture
+        return soul_firetexture
+
     def load_portal(self):
         """Special-case function for loading portal."""
         portaltexture = getattr(self, "portaltexture", None)
@@ -1799,8 +1810,8 @@ block(blockid=48, top_image="assets/minecraft/textures/block/mossy_cobblestone.p
 # obsidian
 block(blockid=49, top_image="assets/minecraft/textures/block/obsidian.png")
 
-# torch, redstone torch (off), redstone torch(on)
-@material(blockid=[50, 75, 76], data=[1, 2, 3, 4, 5], transparent=True)
+# torch, redstone torch (off), redstone torch(on), soul_torch
+@material(blockid=[50, 75, 76, 1039], data=[1, 2, 3, 4, 5], transparent=True)
 def torches(self, blockid, data):
     # first, rotations
     if self.rotation == 1:
@@ -1824,9 +1835,10 @@ def torches(self, blockid, data):
         small = self.load_image_texture("assets/minecraft/textures/block/torch.png")
     elif blockid == 75: # off redstone torch
         small = self.load_image_texture("assets/minecraft/textures/block/redstone_torch_off.png")
-    else: # on redstone torch
+    elif blockid == 76: # on redstone torch
         small = self.load_image_texture("assets/minecraft/textures/block/redstone_torch.png")
-        
+    elif blockid == 1039: # soul torch
+        small= self.load_image_texture("assets/minecraft/textures/block/soul_torch.png")
     # compose a torch bigger than the normal
     # (better for doing transformations)
     torch = Image.new("RGBA", (16,16), self.bgcolor)
@@ -1870,10 +1882,14 @@ def torches(self, blockid, data):
     return img
 
 # lantern
-@material(blockid=11373, data=[0, 1], transparent=True)
+@material(blockid=[11373, 1038], data=[0, 1], transparent=True)
 def lantern(self, blockid, data):
     # get the  multipart texture of the lantern
-    inputtexture = self.load_image_texture("assets/minecraft/textures/block/lantern.png")
+    if blockid == 11373:
+        inputtexture = self.load_image_texture("assets/minecraft/textures/block/lantern.png")
+    if blockid == 1038:
+        inputtexture = self.load_image_texture("assets/minecraft/textures/block/soul_lantern.png")
+
 
     # # now create a textures, using the parts defined in lantern.json
 
@@ -2009,12 +2025,18 @@ def composter(self, blockid, data):
     alpha_over(img, img2, (0, 0), img2)
     return img
 
-# fire
-@material(blockid=51, data=list(range(16)), transparent=True)
+# fire and soul_fire
+@material(blockid=[51, 1040], data=list(range(16)), transparent=True)
 def fire(self, blockid, data):
-    firetextures = self.load_fire()
-    side1 = self.transform_image_side(firetextures[0])
-    side2 = self.transform_image_side(firetextures[1]).transpose(Image.FLIP_LEFT_RIGHT)
+    if blockid == 51:
+        firetextures = self.load_fire()
+        side1 = self.transform_image_side(firetextures[0])
+        side2 = self.transform_image_side(firetextures[1]).transpose(Image.FLIP_LEFT_RIGHT)
+    elif blockid == 1040:
+        soul_firetextures = self.load_soul_fire()
+        side1 = self.transform_image_side(soul_firetextures[0])
+        side2 = self.transform_image_side(soul_firetextures[1]).transpose(Image.FLIP_LEFT_RIGHT)
+
     
     img = Image.new("RGBA", (24,24), self.bgcolor)
 
