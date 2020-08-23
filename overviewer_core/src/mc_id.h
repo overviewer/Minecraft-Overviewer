@@ -306,6 +306,10 @@ enum mc_block_id {
     block_crying_obsidian = 1035,
     block_lodestone = 1036,
     block_respawn_anchor = 1037,
+    // soul lightning
+    block_soul_lantern = 1038,
+    block_soul_torch = 1039,
+    block_soul_fire = 1040,
 
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792

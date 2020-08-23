@@ -758,6 +758,11 @@ class RegionSet(object):
             'minecraft:crying_obsidian': (1035, 0),
             'minecraft:lodestone': (1036, 0),
             'minecraft:respawn_anchor': (1037, 0),
+            # soul lightning
+            'minecraft:soul_lantern': (1038, 0),
+            'minecraft:soul_wall_torch': (1039, 0),
+            'minecraft:soul_torch': (1039, 5),
+            'minecraft:soul_fire': (1040, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
@@ -1129,7 +1134,8 @@ class RegionSet(object):
         elif key == 'minecraft:basalt' or key == 'minecraft:polished_basalt':
             axis = palette_entry['Properties']['axis']
             data = {'y': 0, 'x': 1, 'z': 2}[axis]
-        elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch']:
+        elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch',
+                    'minecraft:soul_torch', 'minecraft:soul_wall_torch']:
             if key.startswith('minecraft:redstone_') and palette_entry['Properties']['lit'] == 'true':
                 block += 1
             if key.endswith('wall_torch'):
@@ -1207,7 +1213,7 @@ class RegionSet(object):
                      'minecraft:pumpkin_stem', 'minecraft:potatoes', 'minecraft:carrots',
                      'minecraft:sweet_berry_bush']:
             data = palette_entry['Properties']['age']
-        elif key == 'minecraft:lantern':
+        elif key in ['minecraft:lantern', 'minecraft:soul_lantern']:
             if palette_entry['Properties']['hanging'] == 'true':
                 data = 1
             else:
