@@ -391,28 +391,6 @@ class Textures(object):
         self.lavatexture = lavatexture
         return lavatexture
     
-    def load_fire(self):
-        """Special-case function for loading fire."""
-        firetexture = getattr(self, "firetexture", None)
-        if firetexture:
-            return firetexture
-        fireNS = self.load_image_texture("assets/minecraft/textures/block/fire_0.png")
-        fireEW = self.load_image_texture("assets/minecraft/textures/block/fire_1.png")
-        firetexture = (fireNS, fireEW)
-        self.firetexture = firetexture
-        return firetexture
-
-    def load_soul_fire(self):
-        """Special-case function for loading soul_fire."""
-        soul_firetexture = getattr(self, "soul_firetexture", None)
-        if soul_firetexture:
-            return soul_firetexture
-        fireNS = self.load_image_texture("assets/minecraft/textures/block/soul_fire_0.png")
-        fireEW = self.load_image_texture("assets/minecraft/textures/block/soul_fire_1.png")
-        soul_firetexture = (fireNS, fireEW)
-        self.soul_firetexture = soul_firetexture
-        return soul_firetexture
-
     def load_portal(self):
         """Special-case function for loading portal."""
         portaltexture = getattr(self, "portaltexture", None)
@@ -2021,26 +1999,21 @@ def composter(self, blockid, data):
     return img
 
 # fire and soul_fire
-@material(blockid=[51, 1040], data=list(range(16)), transparent=True)
+@material(blockid=[51, 1040], transparent=True)
 def fire(self, blockid, data):
     if blockid == 51:
-        firetextures = self.load_fire()
-        side1 = self.transform_image_side(firetextures[0])
-        side2 = self.transform_image_side(firetextures[1]).transpose(Image.FLIP_LEFT_RIGHT)
+        textureNS = self.load_image_texture("assets/minecraft/textures/block/fire_0.png")
+        textureEW = self.load_image_texture("assets/minecraft/textures/block/fire_1.png")
     elif blockid == 1040:
-        soul_firetextures = self.load_soul_fire()
-        side1 = self.transform_image_side(soul_firetextures[0])
-        side2 = self.transform_image_side(soul_firetextures[1]).transpose(Image.FLIP_LEFT_RIGHT)
-
-    
+        textureNS = self.load_image_texture("assets/minecraft/textures/block/soul_fire_0.png")
+        textureEW = self.load_image_texture("assets/minecraft/textures/block/soul_fire_1.png")
+    side1 = self.transform_image_side(textureNS)
+    side2 = self.transform_image_side(textureEW).transpose(Image.FLIP_LEFT_RIGHT)
     img = Image.new("RGBA", (24,24), self.bgcolor)
-
     alpha_over(img, side1, (12,0), side1)
     alpha_over(img, side2, (0,0), side2)
-
     alpha_over(img, side1, (0,6), side1)
-    alpha_over(img, side2, (12,6), side2)
-    
+    alpha_over(img, side2, (12,6), side2)    
     return img
 
 # monster spawner
