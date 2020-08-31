@@ -301,5 +301,6 @@ const mc_block_t block_class_nether_roof[] = {
     block_basalt,
     block_blackstone,
     block_soul_soil,
-    block_nether_gold_ore};
+    block_nether_gold_ore,
+    block_ancient_debris};
 const size_t block_class_nether_roof_len = COUNT_OF(block_class_nether_roof);
