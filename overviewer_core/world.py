@@ -2034,42 +2034,38 @@ class RotatedRegionSet(RegionSetWrapper):
             yield x,z,mtime
 
 class CroppedRegionSet(RegionSetWrapper):
-    def __init__(self, rsetobj, xmin, zmin, xmax, zmax):
+    def __init__(self, rsetobj, cropzones):
         super(CroppedRegionSet, self).__init__(rsetobj)
-        self.xmin = xmin//16
-        self.xmax = xmax//16
-        self.zmin = zmin//16
-        self.zmax = zmax//16
+        newcropzones = []
+        for cz in cropzones:
+            # Crop zone format: (xmin, zmin, xmax, zmax)
+            newcropzones.append(tuple([x // 16 for x in cz]))
+        self.cropzones = newcropzones
+    
+    def chunk_in_cropzone(self, x, z):
+        # Determines if chunk at (x, z) is within one of the defined crop zones
+        for cz in self.cropzones:
+            if cz[0] <= x <= cz[2] and cz[1] <= z <= cz[3]:
+                return True
+        return False
 
-    def get_chunk(self,x,z):
-        if (
-                self.xmin <= x <= self.xmax and
-                self.zmin <= z <= self.zmax
-                ):
-            return super(CroppedRegionSet, self).get_chunk(x,z)
+    def get_chunk(self, x, z):
+        if self.chunk_in_cropzone(x, z):
+            return super(CroppedRegionSet, self).get_chunk(x, z)
         else:
             raise ChunkDoesntExist("This chunk is out of the requested bounds")
 
     def iterate_chunks(self):
-        return ((x,z,mtime) for (x,z,mtime) in super(CroppedRegionSet,self).iterate_chunks()
-                if
-                    self.xmin <= x <= self.xmax and
-                    self.zmin <= z <= self.zmax
-                )
+        return ((x, z, mtime) for (x, z ,mtime) in super(CroppedRegionSet,self).iterate_chunks()
+                if self.chunk_in_cropzone(x, z))
 
     def iterate_newer_chunks(self, filemtime):
-        return ((x,z,mtime) for (x,z,mtime) in super(CroppedRegionSet,self).iterate_newer_chunks(filemtime)
-                if
-                    self.xmin <= x <= self.xmax and
-                    self.zmin <= z <= self.zmax
-                )
+        return ((x, z, mtime) for (x, z, mtime) in super(CroppedRegionSet,self).iterate_newer_chunks(filemtime)
+                if self.chunk_in_cropzone(x, z))
 
     def get_chunk_mtime(self,x,z):
-        if (
-                self.xmin <= x <= self.xmax and
-                self.zmin <= z <= self.zmax
-                ):
-            return super(CroppedRegionSet, self).get_chunk_mtime(x,z)
+        if self.chunk_in_cropzone(x, z):
+            return super(CroppedRegionSet, self).get_chunk_mtime(x, z)
         else:
             return None
 
