@@ -2755,7 +2755,10 @@ def grindstone(self, blockid, data):
     alpha_over(img_pivot, pivot_lr_t, (24, 24), pivot_lr_t)
     alpha_over(img_pivot, img_leg, pos_leg, img_leg)
     alpha_over(img_pivot, pivot_outer_t, (21, 21), pivot_outer_t)
-    img_pivot = img_pivot.resize((24, 24), Image.LANCZOS)
+    if hasattr(Image, "LANCZOS"):   # workaround for older Pillow
+        img_pivot = img_pivot.resize((24, 24), Image.LANCZOS)
+    else:
+        img_pivot = img_pivot.resize((24, 24))
 
     # Combine leg, side, round & pivot
     img = Image.new("RGBA", (24, 24), self.bgcolor)
