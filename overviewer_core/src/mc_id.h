@@ -295,6 +295,7 @@ enum mc_block_id {
     block_gilded_blackstone = 1024,
     block_cracked_polished_blackstone_bricks = 1025,
     block_polished_blackstone_bricks = 1026,
+    block_quartz_bricks = 1041,
     // Nether stone stairs
     block_blackstone_stairs = 1030,
     block_polished_blackstone_stairs = 1031,
