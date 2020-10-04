@@ -763,6 +763,8 @@ class RegionSet(object):
             'minecraft:soul_wall_torch': (1039, 0),
             'minecraft:soul_torch': (1039, 5),
             'minecraft:soul_fire': (1040, 0),
+            # quartz bricks
+            'minecraft:quartz_bricks': (1041, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
