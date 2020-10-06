@@ -16,7 +16,7 @@ Get The Source
 ==============
 
 First step: download the platform-independent source! Either clone with Git
-(recommended if you know Git) or download the most recent snapshot
+(recommended if you know Git) or download the most recent snapshot:
 
 * Git URL to clone: ``git://github.com/overviewer/Minecraft-Overviewer.git``
 * `Download most recent tar archive <https://github.com/overviewer/Minecraft-Overviewer/tarball/master>`_
@@ -160,7 +160,7 @@ macOS
 
     sudo easy_install pip
 
-#. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same funcitonality)::
+#. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same functionality)::
 
     pip install Pillow
 
