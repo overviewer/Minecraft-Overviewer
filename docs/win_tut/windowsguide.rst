@@ -68,7 +68,7 @@ We're half way there!
     .. image:: location2.png
     
     Got the location? Good. We're going to *change directory* to that directory
-    with the command prompt. Bring the command prompot window back up. The
+    with the command prompt. Bring the command prompt window back up. The
     command we're going to use is called ``cd``, it stands for ... *change
     directory*!
 
@@ -188,7 +188,7 @@ to use your favorite pastebin site, if you'd like.
     .. image:: gist1.png
 
 * Third, click the 'Create Secret Gist' button.  A secret gist means that
-  only someone with the exact URL can view your gist
+  only someone with the exact URL can view your gist.
 
     .. image:: gist2.png
 

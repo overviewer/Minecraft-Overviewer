@@ -412,7 +412,7 @@ Custom web assets
 .. _customwebassets:
 
 ``customwebassets = "<path to custom web assets>"``
-    This option allows you to speciy a directory containing custom web assets
+    This option allows you to specify a directory containing custom web assets
     to be copied to the output directory. Any files in the custom web assets 
     directory overwrite the default files.
 
@@ -431,7 +431,7 @@ Custom web assets
 
 .. _renderdict:
 
-Render Dictonary Keys
+Render Dictionary Keys
 ---------------------
 
 The render dictionary is a dictionary mapping configuration key strings to

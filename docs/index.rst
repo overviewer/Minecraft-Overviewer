@@ -7,7 +7,7 @@ The Minecraft Overviewer
 ========================
 
 See also the `Github Homepage`_ and the `Updates Blog`_, and follow us on
-our `Twitter account`_
+our `Twitter account`_.
 
 .. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
 

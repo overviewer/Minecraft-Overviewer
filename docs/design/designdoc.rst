@@ -17,7 +17,7 @@ So let's get started!
 
 .. note::
 
-    This page is continually under construction
+    This page is continually under construction.
 
 .. contents::
 
@@ -103,7 +103,7 @@ The first step is rendering the block sprites from the textures. Each block is
 Textures come from files inside of a "textures" folder.  If the file is square (has equal width
 and height dimensions), it is scaled down to 16 x 16 pixels.  Non-square images are used with animated
 textures.  In this case, the first frame of the animated texture is used, and also scaled to a 16 by 16 image.
-In order to draw a cube out of the textuers, an `affine transformation`_ is applied to
+In order to draw a cube out of the textures, an `affine transformation`_ is applied to
 the images for the top and sides of the cube in order to transform it to the
 appropriate perspective.
 
@@ -472,7 +472,7 @@ the upside is that arbitrarily sized maps can be viewed.
 
 The Overviewer uses a tile size of 384 by 384 pixels. This is the same as the
 size of a chunk section and is no coincidence. Just considering the top face of
-a chunk, the 8 chunks directly below itget rendered into a tile in this
+a chunk, the 8 chunks directly below it get rendered into a tile in this
 configuration:
 
 .. image:: tilerendering/chunksintile.png
@@ -679,7 +679,7 @@ corners on a given face, and for all visible faces.
 The `ambient occlusion`_ effect so strongly associated with smooth
 lighting in-game is a side effect of this method. Since solid blocks
 have both light values set to 0, the lighting coefficient is very
-close to 0. For verticies in corners, at least 1 (or more) of the 4
+close to 0. For vertices in corners, at least 1 (or more) of the 4
 averaged lighting values is therefore 0, dragging the average down,
 and creating the "dark corners" effect.
 

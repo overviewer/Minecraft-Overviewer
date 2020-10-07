@@ -24,7 +24,7 @@ now uses Leaflet. All files which Overviewer needs are included in the output,
 so even if you have no internet connection, you will still be able to view the
 map without any issues.
 
-When my map expands, I see remnants of another zoom level
+When my map expands, I see remnants of another zoom level.
 ---------------------------------------------------------
 
 When your map expands ("Your map seems to have expanded beyond its previous
@@ -37,7 +37,7 @@ When you're copying the rendered map, you need to be sure files that *don't*
 exist in the source are *deleted* in the destination.
 
 Explanation: When Overviewer re-arranges tiles to make room for another zoom
-level, it moves some tiles tiles at a particular zoom level and places them at a
+level, it moves some tiles at a particular zoom level and places them at a
 higher zoom level. The tiles that used to be at that zoom level should no longer
 exist there, but if you're copying tiles, there is no mechanism to *delete*
 those files at the copy destination.
@@ -45,10 +45,10 @@ those files at the copy destination.
 If that explanation doesn't make full sense, then just know that you must do one
 of the following:
 
-* Render the tiles directly to the destination
+* Render the tiles directly to the destination.
 
 * Copy the tiles from the render destination in a way that deletes extra files,
-  such as using ``rsync`` with ``--delete``
+  such as using ``rsync`` with ``--delete``.
 
 * Erase and re-copy the files at the final destination when the map expands.
   Map expansions double the width and height of the map, so you will eventually
@@ -118,7 +118,7 @@ you run this command line; to simply append the output to the file, use two grea
 
 .. _cropping_faq:
 
-I've deleted some sections of my world but they still appear in the map
+I've deleted some sections of my world, but they still appear in the map.
 -----------------------------------------------------------------------
 Okay, so making edits to your world in e.g. worldedit has some caveats,
 especially regarding deleting sections of your world.
@@ -175,7 +175,7 @@ two ways.
    people explore near there, because that will force that part of the map to
    update.
 
-My map is zoomed out so far that it looks (almost) blank
+My map is zoomed out so far that it looks (almost) blank.
 --------------------------------------------------------
 
 We see this quite a bit, and seems to stem from a bug in the Minecraft terrain
@@ -201,9 +201,9 @@ to render all of your map, but instead to only render the specified region.
 
 As always, if you need assistance, come chat with us on :ref:`irc<help>`.
 
-.. [*] They could also have been triggered by an accidential teleport where the coordinates were typed in manually.
+.. [*] They could also have been triggered by an accidental teleport where the coordinates were typed in manually.
 
-I want to put manual POI definitions or other parts of my config into a seperate file
+I want to put manual POI definitions or other parts of my config into a separate file.
 -------------------------------------------------------------------------------------
 
 This can be achieved by creating a module and then importing it in

@@ -92,7 +92,7 @@ There are currently two special types of POIs.  They each have a special id:
 
 PlayerSpawn
   Used to indicate the spawn location of a player.  The player's name is set
-  in the ``EntityId`` key, and the location is in the x,y,z keys
+  in the ``EntityId`` key, and the location is in the x,y,z keys.
 
 Player
   Used to indicate the last known location of a player.  The player's name is set
@@ -209,7 +209,7 @@ The following keys are accepted in the marker dictionary:
 ``icon``
     Optional.  Specifies the icon to use for POIs in this group.  If omitted, it defaults
     to a signpost icon.  Note that each POI can have different icon by setting the key 'icon'
-    on the POI itself (this can be done by modifying the POI in the filter function.  See the
+    on the POI itself. (this can be done by modifying the POI in the filter function.  See the
     example above)
 
 ``createInfoWindow``
