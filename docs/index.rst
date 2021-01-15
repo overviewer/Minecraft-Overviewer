@@ -53,7 +53,7 @@ Documentation Contents
 Features
 ========
 
-* Renders high resolution images of your world, let's you "deep zoom" and see
+* Renders high resolution images of your world, lets you "deep zoom" and see
   details!
 
 * Gloriously awesome smooth lighting is here!
