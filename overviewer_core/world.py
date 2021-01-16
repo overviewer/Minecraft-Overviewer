@@ -855,8 +855,19 @@ class RegionSet(object):
             'minecraft:red_sandstone_wall': (1803, 0),
             'minecraft:sandstone_wall': (1804, 0),
             'minecraft:stone_brick_wall': (1805, 0),
+            # 1.16 extra
             'minecraft:crimson_slab': (11508, 0),
             'minecraft:warped_slab': (11509, 0),
+            'minecraft:crimson_pressure_plate': (11510, 0),
+            'minecraft:warped_pressure_plate': (11511, 0),
+            'minecraft:crimson_button': (11512, 0),
+            'minecraft:warped_button': (11513, 0),
+            'minecraft:crimson_fence': (11514, 0),
+            'minecraft:warped_fence': (11515, 0),
+            'minecraft:crimson_fence_gate': (11516, 0),
+            'minecraft:warped_fence_gate': (11517, 0),
+            'minecraft:crimson_stairs': (11518, 0),
+            'minecraft:warped_stairs': (11519, 0)
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',

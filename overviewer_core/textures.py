@@ -2033,7 +2033,7 @@ block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", trans
 # polished_granite polished_andesite polished_diorite granite diorite andesite end_stone_bricks red_nether_brick stairs
 # smooth_red_sandstone_stairs
 @material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 11337, 11338, 11339,
-          11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379, 11380, 11381, 11382, 11383, 11384, 11415], 
+          11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379, 11380, 11381, 11382, 11383, 11384, 11415, 11518, 11519], 
           data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
@@ -2079,6 +2079,8 @@ def stairs(self, blockid, data):
         11383: "assets/minecraft/textures/block/end_stone_bricks.png",
         11384: "assets/minecraft/textures/block/red_nether_bricks.png",
         11415: "assets/minecraft/textures/block/red_sandstone_top.png",
+        11518: "assets/minecraft/textures/block/crimson_planks.png",
+        11519: "assets/minecraft/textures/block/warped_planks.png"
     }
 
     texture = self.load_image_texture(stair_id_to_tex[blockid]).copy()
@@ -3295,7 +3297,7 @@ def levers(self, blockid, data):
     return img
 
 # wooden and stone pressure plates, and weighted pressure plates
-@material(blockid=[70, 72,147,148,11301,11302,11303,11304,11305], data=[0,1], transparent=True)
+@material(blockid=[70,72,147,148,11301,11302,11303,11304,11305,11510,11511], data=[0,1], transparent=True)
 def pressure_plate(self, blockid, data):
     texture_name = {70:"assets/minecraft/textures/block/stone.png",              # stone
                     72:"assets/minecraft/textures/block/oak_planks.png",         # oak
@@ -3304,8 +3306,10 @@ def pressure_plate(self, blockid, data):
                     11303:"assets/minecraft/textures/block/jungle_planks.png",   # jungle
                     11304:"assets/minecraft/textures/block/acacia_planks.png",   # acacia
                     11305:"assets/minecraft/textures/block/dark_oak_planks.png", # dark oak
+                    11510:"assets/minecraft/textures/block/crimson_planks.png",  # crimson
+                    11511:"assets/minecraft/textures/block/warped_planks.png",   # warped
                     147:"assets/minecraft/textures/block/gold_block.png",        # light golden
-                    148:"assets/minecraft/textures/block/iron_block.png",        # heavy iron
+                    148:"assets/minecraft/textures/block/iron_block.png"         # heavy iron
                    }[blockid]
     t = self.load_image_texture(texture_name).copy()
     
@@ -3336,7 +3340,7 @@ def pressure_plate(self, blockid, data):
 block(blockid=[73, 74], top_image="assets/minecraft/textures/block/redstone_ore.png")
 
 # stone a wood buttons
-@material(blockid=(77,143,11326,11327,11328,11329,11330), data=list(range(16)), transparent=True)
+@material(blockid=(77,143,11326,11327,11328,11329,11330,11512,11513), data=list(range(16)), transparent=True)
 def buttons(self, blockid, data):
 
     # 0x8 is set if the button is pressed mask this info and render
@@ -3369,7 +3373,9 @@ def buttons(self, blockid, data):
                    11327:"assets/minecraft/textures/block/birch_planks.png",
                    11328:"assets/minecraft/textures/block/jungle_planks.png",
                    11329:"assets/minecraft/textures/block/acacia_planks.png",
-                   11330:"assets/minecraft/textures/block/dark_oak_planks.png"
+                   11330:"assets/minecraft/textures/block/dark_oak_planks.png",
+                   11512:"assets/minecraft/textures/block/crimson_planks.png",
+                   11513:"assets/minecraft/textures/block/warped_planks.png"
                   }[blockid]
     t = self.load_image_texture(texturepath).copy()
 
@@ -3500,7 +3506,7 @@ def jukebox(self, blockid, data):
 
 # nether and normal fences
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[85, 188, 189, 190, 191, 192, 113], data=list(range(16)), transparent=True, nospawn=True)
+@material(blockid=[85, 188, 189, 190, 191, 192, 113, 11514, 11515], data=list(range(16)), transparent=True, nospawn=True)
 def fence(self, blockid, data):
     # no need for rotations, it uses pseudo data.
     # create needed images for Big stick fence
@@ -3528,6 +3534,14 @@ def fence(self, blockid, data):
         fence_top = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
         fence_small_side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
+    elif blockid == 11514: # crimson fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+    elif blockid == 11515: # warped fence
+        fence_top = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
+        fence_side = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
+        fence_small_side = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
     else: # netherbrick fence
         fence_top = self.load_image_texture("assets/minecraft/textures/block/nether_bricks.png").copy()
         fence_side = self.load_image_texture("assets/minecraft/textures/block/nether_bricks.png").copy()
@@ -4265,7 +4279,7 @@ def vines(self, blockid, data):
 
 
 # fence gates
-@material(blockid=[107, 183, 184, 185, 186, 187], data=list(range(8)), transparent=True, nospawn=True)
+@material(blockid=[107, 183, 184, 185, 186, 187, 11516, 11517], data=list(range(8)), transparent=True, nospawn=True)
 def fence_gate(self, blockid, data):
 
     # rotation
@@ -4304,6 +4318,10 @@ def fence_gate(self, blockid, data):
         gate_side = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png").copy()
     elif blockid == 187: # Acacia
         gate_side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png").copy()
+    elif blockid == 11516: # Crimson
+        gate_side = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+    elif blockid == 11517: # Warped
+        gate_side = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
     else:
         return None
 
