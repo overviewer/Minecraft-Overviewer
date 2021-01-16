@@ -319,6 +319,8 @@ class RegionSet(object):
             'minecraft:jungle_planks': (5, 3),
             'minecraft:acacia_planks': (5, 4),
             'minecraft:dark_oak_planks': (5, 5),
+            'minecraft:crimson_planks': (5, 6),
+            'minecraft:warped_planks': (5, 7),
             'minecraft:sapling': (6, 0),
             'minecraft:bedrock': (7, 0),
             'minecraft:water': (8, 0),
@@ -853,6 +855,8 @@ class RegionSet(object):
             'minecraft:red_sandstone_wall': (1803, 0),
             'minecraft:sandstone_wall': (1804, 0),
             'minecraft:stone_brick_wall': (1805, 0),
+            'minecraft:crimson_slab': (11508, 0),
+            'minecraft:warped_slab': (11509, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -882,7 +886,8 @@ class RegionSet(object):
 
     def _get_block(self, palette_entry):
         wood_slabs = ('minecraft:oak_slab','minecraft:spruce_slab','minecraft:birch_slab','minecraft:jungle_slab',
-                        'minecraft:acacia_slab','minecraft:dark_oak_slab','minecraft:petrified_oak_slab')
+                        'minecraft:acacia_slab','minecraft:dark_oak_slab','minecraft:petrified_oak_slab',
+                        'minecraft:crimson_slab','minecraft:warped_slab')
         stone_slabs = ('minecraft:stone_slab', 'minecraft:sandstone_slab','minecraft:red_sandstone_slab',
                         'minecraft:cobblestone_slab', 'minecraft:brick_slab','minecraft:purpur_slab',
                         'minecraft:stone_brick_slab', 'minecraft:nether_brick_slab',
@@ -937,6 +942,12 @@ class RegionSet(object):
             elif palette_entry['Properties']['type'] == 'double':
                 if key in wood_slabs:
                     block = 125         # block_double_wooden_slab
+                    if key == 'minecraft:crimson_slab':
+                        block = 5   # minecraft:crimson_planks
+                        data  = 6
+                    elif key == 'minecraft:warped_slab':
+                        block = 5   # minecraft:warped_planks
+                        data  = 7
                 elif key in stone_slabs:
                     if key == 'minecraft:stone_brick_slab':
                         block = 98

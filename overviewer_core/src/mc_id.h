@@ -377,7 +377,10 @@ enum mc_block_id {
     block_honey_block = 11504,
     block_sweet_berry_bush = 11505,
     block_campfire = 11506,
-    block_bell = 11507
+    block_bell = 11507,
+    // 1.16 blocks below
+    block_crimson_slab = 11508,
+    block_warped_slab = 11509
 };
 
 typedef uint16_t mc_block_t;

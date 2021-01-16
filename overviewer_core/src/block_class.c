@@ -249,6 +249,8 @@ const mc_block_t block_class_alt_height[] = {
     block_cut_sandstone_slab,
     block_smooth_red_sandstone_slab,
     block_cut_red_sandstone_slab,
+    block_crimson_slab,
+    block_warped_slab,
     block_end_stone_brick_slab,
     block_mossy_cobblestone_slab,
     block_mossy_stone_brick_slab,

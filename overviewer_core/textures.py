@@ -969,7 +969,7 @@ def dirt_blocks(self, blockid, data):
 block(blockid=4, top_image="assets/minecraft/textures/block/cobblestone.png")
 
 # wooden planks
-@material(blockid=5, data=list(range(6)), solid=True)
+@material(blockid=5, data=list(range(8)), solid=True)
 def wooden_planks(self, blockid, data):
     if data == 0: # normal
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/oak_planks.png"), self.load_image_texture("assets/minecraft/textures/block/oak_planks.png"))
@@ -983,6 +983,10 @@ def wooden_planks(self, blockid, data):
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png"),self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png"))
     if data == 5: # dark oak
         return self.build_block(self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"),self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"))
+    if data == 6: # crimson
+        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png"),self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png"))
+    if data == 7: # warped
+        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/warped_planks.png"),self.load_image_texture("assets/minecraft/textures/block/warped_planks.png"))
 
 @material(blockid=6, data=list(range(16)), transparent=True)
 def saplings(self, blockid, data):
@@ -1681,8 +1685,8 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
-@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340,11359)), data=list(range(16)),
-          transparent=[44, 182, 205] + list(range(11340,11359)), solid=True)
+@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340,11359)) + [11508, 11509], data=list(range(16)),
+          transparent=[44, 182, 205] + list(range(11340,11359)) + [11508, 11509], solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1700,13 +1704,13 @@ def slabs(self, blockid, data):
             top = side = self.load_image_texture("assets/minecraft/textures/block/oak_planks.png")
         elif texture== 3: # cobblestone slab
             top = side = self.load_image_texture("assets/minecraft/textures/block/cobblestone.png")
-        elif texture== 4: # brick
+        elif texture== 4: # brick slab
             top = side = self.load_image_texture("assets/minecraft/textures/block/bricks.png")
-        elif texture== 5: # stone brick
+        elif texture== 5: # stone brick slab
             top = side = self.load_image_texture("assets/minecraft/textures/block/stone_bricks.png")
         elif texture== 6: # nether brick slab
             top = side = self.load_image_texture("assets/minecraft/textures/block/nether_bricks.png")
-        elif texture== 7: #quartz        
+        elif texture== 7: # quartz slab
             top = side = self.load_image_texture("assets/minecraft/textures/block/quartz_block_side.png")
         elif texture== 8: # special stone double slab with top texture only
             top = side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png")
@@ -1772,6 +1776,11 @@ def slabs(self, blockid, data):
     elif blockid == 11358: #  smooth_stone_slab
         top  = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png").copy()
         side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png").copy()
+
+    elif blockid == 11508: #  crimson_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
+    elif blockid == 11509: #  warped_slab
+        top = side  = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
 
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
@@ -4557,6 +4566,11 @@ def wooden_slabs(self, blockid, data):
         top = side = self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png")
     elif texture== 5: # dark wood
         top = side = self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png")
+    elif texture== 6: # crimson
+        top = side = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png")
+    elif texture== 7: # warped
+        top = side = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png")
+
     else:
         return None
     
