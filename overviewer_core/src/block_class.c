@@ -147,7 +147,6 @@ const mc_block_t block_class_ancil[] = {
     block_jungle_door,
     block_acacia_door,
     block_dark_oak_door,
-    block_dark_oak_door,
     block_crimson_door,
     block_oak_stairs,
     block_brick_stairs,
