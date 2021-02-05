@@ -168,6 +168,8 @@ enum mc_block_id {
     block_log2 = 162,
     block_acacia_stairs = 163,
     block_dark_oak_stairs = 164,
+    block_crimson_stairs = 509,
+    block_warped_stairs = 510,
     block_slime = 165,
     block_barrier = 166,
     block_iron_trapdoor = 167,
@@ -192,15 +194,21 @@ enum mc_block_id {
     block_jungle_fence_gate = 185,
     block_dark_oak_fence_gate = 186,
     block_acacia_fence_gate = 187,
+    block_crimson_fence_gate = 513,
+    block_warped_fence_gate = 514,
     block_spruce_fence = 188,
     block_birch_fence = 189,
     block_jungle_fence = 190,
     block_dark_oak_fence = 191,
     block_acacia_fence = 192,
+    block_crimson_fence = 511,
+    block_warped_fence = 512,
     block_spruce_door = 193,
     block_birch_door = 194,
     block_jungle_door = 195,
     block_acacia_door = 196,
+    block_crimson_door = 499,
+    block_warped_door = 500,
     block_dark_oak_door = 197,
     block_end_rod = 198,
     block_chorus_plant = 199,
@@ -281,6 +289,29 @@ enum mc_block_id {
     block_crimson_roots = 1019,
     block_soul_soil = 1020,
     block_nether_gold_ore = 1021,
+    // Solid Nether stone blocks
+    block_polished_blackstone = 1022,
+    block_chiseled_polished_blackstone = 1023,
+    block_gilded_blackstone = 1024,
+    block_cracked_polished_blackstone_bricks = 1025,
+    block_polished_blackstone_bricks = 1026,
+    block_quartz_bricks = 1041,
+    // Nether stone stairs
+    block_blackstone_stairs = 1030,
+    block_polished_blackstone_stairs = 1031,
+    block_polished_blackstone_brick_stairs = 1032,
+    // nether redstone blocks
+    block_polished_blackstone_pressure_plate = 1033,
+    block_polished_blackstone_button = 1034,
+    // advanced nether blocks
+    block_crying_obsidian = 1035,
+    block_lodestone = 1036,
+    block_respawn_anchor = 1037,
+    // soul lightning
+    block_soul_lantern = 1038,
+    block_soul_torch = 1039,
+    block_soul_fire = 1040,
+
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls
@@ -299,6 +330,9 @@ enum mc_block_id {
     block_red_sandstone_wall = 1803,
     block_sandstone_wall = 1804,
     block_stone_brick_wall = 1805,
+    block_blackstone_wall = 1806,
+    block_polished_blackstone_wall = 1807,
+    block_polished_blackstone_brick_wall = 1808,
     // end of walls
 
     block_prismarine_stairs = 11337,
@@ -319,6 +353,9 @@ enum mc_block_id {
     block_smooth_red_sandstone_slab = 11352,
     block_cut_red_sandstone_slab = 11353,
     block_end_stone_brick_slab = 11354,
+    block_blackstone_slab = 1027,
+    block_polished_blackstone_slab = 1028,
+    block_polished_blackstone_brick_slab = 1029,
     block_mossy_cobblestone_slab = 11355,
     block_mossy_stone_brick_slab = 11356,
     block_smooth_quartz_slab = 11357,
@@ -360,12 +397,16 @@ enum mc_block_id {
     block_jungle_sign = 11404,
     block_acacia_sign = 11405,
     block_dark_oak_sign = 11406,
+    block_crimson_sign = 12505,
+    block_warped_sign = 12506,
     block_oak_wall_sign = 11407,
     block_spruce_wall_sign = 11408,
     block_birch_wall_sign = 11409,
     block_jungle_wall_sign = 11410,
     block_acacia_wall_sign = 11411,
     block_dark_oak_wall_sign = 11412,
+    block_crimson_wall_sign = 12507,
+    block_warped_wall_sign = 12508,
     block_bamboo_sapling = 11413,
     block_scaffolding = 11414,
     block_bamboo = 11416,
@@ -559,6 +600,8 @@ enum mc_item_id {
     item_jungle_door = 429,
     item_acacia_door = 430,
     item_dark_oak_door = 431,
+    item_crimson_door = 755,
+    item_warped_door = 756,
     item_chorus_fruit = 432,
     item_popped_chorus_fruit = 433,
     item_beetroot = 434,
@@ -591,7 +634,7 @@ enum mc_item_id {
     item_record_strad = 2264,
     item_record_ward = 2265,
     item_record_11 = 2266,
-    item_record_wait = 2267
+    item_record_wait = 2267,
 };
 
 typedef uint16_t mc_item_t;
