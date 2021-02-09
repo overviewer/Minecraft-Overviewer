@@ -326,3 +326,33 @@ If this change causes problems, take a look at the
 :ref:`custom web assets<customwebassets>` option. This allows you to
 provide a custom index.html which loads the required Javascript libraries
 over HTTP.
+
+If you run into an "overlapping" issue
+--------------------------------------
+
+A common fault that happens when rendering with Minecraft Overviewer is the 
+"overlapping" of chunks, where they may appear in different areas and fly across
+the rendered map. This is caused by reading from the world while it's being 
+written to, as this messes with how Overviewer reads each chunk. If you come
+across this issue and are looking for a solution, try one of the following:
+
+* If using a server, you can try these in order: 
+   
+  * Send the `/save-off` command and then render your world. Once the render 
+    is complete, you can type `/save-on`. This method is proven to work time
+    after time but may fail once or twice.
+    
+  * Check for any other processes that might be writing to the world after you
+    run the `/save-off`. See if you can find out the name of the program and if 
+    it can be killed nicely. Most of the time, you can.
+    
+  * Copy the world to a new location. You can tell your players to not build 
+    during this time, if you need to. Obviously, this can make things difficult
+    if you are low on space, especially with pre-generated worlds.
+    
+  * Shut down the server as a last resort.
+  
+* If you're using a single-player world, you can either shut down Minecraft and any
+  apps using the world or copy the world to a new location.
+  
+Work is being done to identify a possible fix.
