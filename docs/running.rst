@@ -42,11 +42,6 @@ you want to render).
 
     overviewer.py /home/username/mcserver /home/username/mcmap
 
-A little note: If the world folder is in use by another program at the time of
-rendering, you'll see some unexpected results with chunks being in the wrong
-places. Before you begin, make sure that you aren't using the world, or copy
-the world to a different location.
-
 After you enter one of the commands, The Overviewer should start rendering your
 map. When the render is done, open up *index.html* using your web-browser of
 choice.  Pretty cool, huh? You can even upload this map to a web server to share
