@@ -48,7 +48,7 @@ bool block_class_is_subset(
             (uint16_t*)&block_class[i]);
         const uint16x8_t block_vec = vmovq_n_u16(block);
         const uint16x8_t block_cmp = vceqq_u16(block_vec, (uint16x8_t) block_class_vec);
-        if(vgetq_lane_s64((int64x2_t) block_cmp, 0) |
+        if(vgetq_lane_s64((int64x2_t) block_cmp, 0) +
            vgetq_lane_s64((int64x2_t) block_cmp, 1)) {
             return true;
         }
