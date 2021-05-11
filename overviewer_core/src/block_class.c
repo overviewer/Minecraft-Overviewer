@@ -21,6 +21,9 @@
 #if defined(__i386__) || defined(__x86_64__)
 #include <immintrin.h>
 #endif
+#if defined(__aarch64__)
+#include <arm_neon.h>
+#endif
 
 bool block_class_is_subset(
     mc_block_t block,
@@ -35,6 +38,18 @@ bool block_class_is_subset(
         const __m128i block_vec = _mm_set1_epi16(block);
         const __m128i block_cmp = _mm_cmpeq_epi16(block_vec, block_class_vec);
         if (_mm_movemask_epi8(block_cmp)) {
+            return true;
+        }
+    }
+#endif
+#if defined(__aarch64__)
+    for (; i / 8 < block_class_len / 8; i += 8) {
+        const uint16x8_t block_class_vec = vld1q_u16(
+            (uint16_t*)&block_class[i]);
+        const uint16x8_t block_vec = vmovq_n_u16(block);
+        const uint16x8_t block_cmp = vceqq_u16(block_vec, (uint16x8_t) block_class_vec);
+        if(vgetq_lane_s64((int64x2_t) block_cmp, 0) |
+           vgetq_lane_s64((int64x2_t) block_cmp, 1)) {
             return true;
         }
     }
