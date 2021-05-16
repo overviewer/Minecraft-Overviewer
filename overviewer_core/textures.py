@@ -3424,27 +3424,27 @@ def buttons(self, blockid, data):
     return img
 
 # snow
-@material(blockid=78, data=list(range(16)), transparent=True, solid=True)
+@material(blockid=78, data=list(range(1, 9)), transparent=True, solid=True)
 def snow(self, blockid, data):
     # still not rendered correctly: data other than 0
-    
+
     tex = self.load_image_texture("assets/minecraft/textures/block/snow.png")
-    
-    # make the side image, top 3/4 transparent
-    mask = tex.crop((0,12,16,16))
+
+    y = 16 - (data * 2)
+    mask = tex.crop((0, y, 16, 16))
     sidetex = Image.new(tex.mode, tex.size, self.bgcolor)
-    alpha_over(sidetex, mask, (0,12,16,16), mask)
-    
+    alpha_over(sidetex, mask, (0,y,16,16), mask)
+
     img = Image.new("RGBA", (24,24), self.bgcolor)
-    
+
     top = self.transform_image_top(tex)
     side = self.transform_image_side(sidetex)
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-    
-    alpha_over(img, side, (0,6), side)
-    alpha_over(img, otherside, (12,6), otherside)
-    alpha_over(img, top, (0,9), top)
-    
+
+    alpha_over(img, side, (0, 6), side)
+    alpha_over(img, otherside, (12, 6), otherside)
+    alpha_over(img, top, (0, 12 - int(12 / 8 * data)), top)
+
     return img
 
 # snow block
