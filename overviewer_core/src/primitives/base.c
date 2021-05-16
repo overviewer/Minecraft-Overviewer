@@ -61,11 +61,20 @@ base_occluded(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     if ((x != 0) && (y != 15) && (z != 15) &&
         !render_mode_hidden(state->rendermode, x - 1, y, z) &&
         !render_mode_hidden(state->rendermode, x, y, z + 1) &&
-        !render_mode_hidden(state->rendermode, x, y + 1, z) &&
-        !is_transparent(getArrayShort3D(state->blocks, x - 1, y, z)) &&
-        !is_transparent(getArrayShort3D(state->blocks, x, y, z + 1)) &&
-        !is_transparent(getArrayShort3D(state->blocks, x, y + 1, z))) {
-        return true;
+        !render_mode_hidden(state->rendermode, x, y + 1, z)) {
+
+        mc_block_t block1 = getArrayShort3D(state->blocks, x - 1, y, z);
+        mc_block_t block2 = getArrayShort3D(state->blocks, x, y, z + 1);
+        mc_block_t block3 = getArrayShort3D(state->blocks, x, y + 1, z);
+
+        if (!is_transparent(block1) &&
+            !is_transparent(block2) &&
+            !is_transparent(block3) &&
+            !block_class_is_subset(block1, block_class_alt_height, block_class_alt_height_len) &&
+            !block_class_is_subset(block2, block_class_alt_height, block_class_alt_height_len) &&
+            !block_class_is_subset(block3, block_class_alt_height, block_class_alt_height_len)) {
+            return true;
+        }
     }
 
     return false;
