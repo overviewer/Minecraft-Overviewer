@@ -4157,11 +4157,15 @@ def panes(self, blockid, data):
         t = self.load_image_texture("assets/minecraft/textures/block/glass.png")
     left = t.copy()
     right = t.copy()
+    center = t.copy()
 
     # generate the four small pieces of the glass pane
     ImageDraw.Draw(right).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(left).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    
+    ImageDraw.Draw(center).rectangle((0,0,6,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(center).rectangle((9,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    up_center = self.transform_image_side(center)
     up_left = self.transform_image_side(left)
     up_right = self.transform_image_side(right).transpose(Image.FLIP_TOP_BOTTOM)
     dw_right = self.transform_image_side(right)
@@ -4172,20 +4176,23 @@ def panes(self, blockid, data):
 
     # +x axis points top right direction
     # +y axis points bottom right direction
-    # First compose things in the back of the image, 
+    # First compose things in the back of the image,
     # then things in the front.
 
     # the lower 4 bits encode color, the upper 4 encode adjencies
     data = data >> 4
 
-    if (data & 0b0001) == 1 or data == 0:
-        alpha_over(img,up_left, (6,3),up_left)    # top left
-    if (data & 0b1000) == 8 or data == 0:
-        alpha_over(img,up_right, (6,3),up_right)  # top right
-    if (data & 0b0010) == 2 or data == 0:
-        alpha_over(img,dw_left, (6,3),dw_left)    # bottom left    
-    if (data & 0b0100) == 4 or data == 0:
-        alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
+    if data == 0:
+        alpha_over(img,up_center,(6,3),up_center) # center
+    else:
+        if (data & 0b0001) == 1:
+            alpha_over(img,up_left, (6,3),up_left)    # top left
+        if (data & 0b1000) == 8:
+            alpha_over(img,up_right, (6,3),up_right)  # top right
+        if (data & 0b0010) == 2:
+            alpha_over(img,dw_left, (6,3),dw_left)    # bottom left
+        if (data & 0b0100) == 4:
+            alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
 
     return img
 
