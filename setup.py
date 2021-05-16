@@ -213,11 +213,6 @@ if not os.path.exists(imaging_path):
 if os.path.exists(imaging_path):
     pil_include.append(imaging_path)
 
-if not pil_include:
-    print('ERROR: Could not find Python Imaging library')
-    print(BUILD_ERROR)
-    sys.exit(1)
-
 SRC_PATH = 'overviewer_core/src/'
 
 # used to figure out what files to compile
