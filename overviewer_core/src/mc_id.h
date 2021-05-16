@@ -281,6 +281,8 @@ enum mc_block_id {
     block_crimson_roots = 1019,
     block_soul_soil = 1020,
     block_nether_gold_ore = 1021,
+    block_crimson_slab = 1022,
+    block_warped_slab = 1023,
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls
@@ -377,10 +379,7 @@ enum mc_block_id {
     block_honey_block = 11504,
     block_sweet_berry_bush = 11505,
     block_campfire = 11506,
-    block_bell = 11507,
-    // 1.16 blocks below
-    block_crimson_slab = 11508,
-    block_warped_slab = 11509
+    block_bell = 11507
 };
 
 typedef uint16_t mc_block_t;

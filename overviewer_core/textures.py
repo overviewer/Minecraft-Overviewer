@@ -1685,8 +1685,8 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
-@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340,11359)) + [11508, 11509], data=list(range(16)),
-          transparent=[44, 182, 205] + list(range(11340,11359)) + [11508, 11509], solid=True)
+@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340,11359)) + [1022, 1023], data=list(range(16)),
+          transparent=[44, 182, 205] + list(range(11340,11359)) + [1022, 1023], solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1777,9 +1777,9 @@ def slabs(self, blockid, data):
         top  = self.load_image_texture("assets/minecraft/textures/block/smooth_stone.png").copy()
         side = self.load_image_texture("assets/minecraft/textures/block/smooth_stone_slab_side.png").copy()
 
-    elif blockid == 11508: #  crimson_slab
+    elif blockid == 1022: #  crimson_slab
         top = side  = self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png").copy()
-    elif blockid == 11509: #  warped_slab
+    elif blockid == 1023: #  warped_slab
         top = side  = self.load_image_texture("assets/minecraft/textures/block/warped_planks.png").copy()
 
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab

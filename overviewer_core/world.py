@@ -723,6 +723,8 @@ class RegionSet(object):
             'minecraft:crimson_roots': (1019, 0),
             'minecraft:soul_soil': (1020, 0),
             'minecraft:nether_gold_ore': (1021, 0),
+            'minecraft:crimson_slab': (1022, 0),
+            'minecraft:warped_slab': (1023, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
@@ -856,8 +858,6 @@ class RegionSet(object):
             'minecraft:sandstone_wall': (1804, 0),
             'minecraft:stone_brick_wall': (1805, 0),
             # 1.16 extra
-            'minecraft:crimson_slab': (11508, 0),
-            'minecraft:warped_slab': (11509, 0),
             'minecraft:crimson_pressure_plate': (11510, 0),
             'minecraft:warped_pressure_plate': (11511, 0),
             'minecraft:crimson_button': (11512, 0),
