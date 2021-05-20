@@ -280,7 +280,8 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         /* check for fences AND fence gates */
         return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, block_fence_gate) |
                check_adjacent_blocks(state, x, y, z, block_fence_gate) | check_adjacent_blocks(state, x, y, z, block_birch_fence_gate) | check_adjacent_blocks(state, x, y, z, block_jungle_fence_gate) |
-               check_adjacent_blocks(state, x, y, z, block_dark_oak_fence_gate) | check_adjacent_blocks(state, x, y, z, block_acacia_fence_gate);
+               check_adjacent_blocks(state, x, y, z, block_dark_oak_fence_gate) | check_adjacent_blocks(state, x, y, z, block_acacia_fence_gate)
+                | check_adjacent_blocks(state, x, y, z, block_crimson_fence_gate) | check_adjacent_blocks(state, x, y, z, block_warped_fence_gate);
 
     } else if (state->block == block_redstone_wire) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
