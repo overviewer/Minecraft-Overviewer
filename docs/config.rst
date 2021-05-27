@@ -1248,6 +1248,28 @@ BiomeOverlay
 
             BiomeOverlay(biomes=[("Forest", (0, 255, 0)), ("Desert", (255, 0, 0))])
 
+BoundsOverlay
+    Color the map according to a set of bounding boxes. With this boundaries of 
+    clans, land ownership, towns, etc. can be realized.
+
+    This Overlay colors according to a patterns that are specified as
+    multiple tuples of the form ``(minx, minz, maxx, maxz)``. So
+    by specifying ``(0, 0, 16, 16)`` all the blocks (inclusive) within the boundary
+    created by these coordinates will be colored. The color is then specified as ``(r, g, b, a)``. 
+
+    Example::
+
+        BoundsOverlay(bounds=[
+			(((0, 0, 16, 16),), (255, 160, 122, 255)),
+			(((17, 17, 23, 23),(24, 24, 40, 40)), (75, 0, 130, 255)),
+		   ])
+
+    In this example the blocks within (0, 0, 16, 16) will be red and
+    all blocks within both (17, 17, 23, 23) and (24, 24, 40, 40) will be blue.
+	
+    Note the trailing comma behind the tuple, this is required if only one bounding
+    box is given.
+	
 Defining Custom Rendermodes
 ---------------------------
 
