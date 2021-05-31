@@ -1215,7 +1215,7 @@ class RegionSet(object):
             if p['half'] == 'top': data |= 0x08
         elif key in ['minecraft:beetroots', 'minecraft:melon_stem', 'minecraft:wheat',
                      'minecraft:pumpkin_stem', 'minecraft:potatoes', 'minecraft:carrots',
-                     'minecraft:sweet_berry_bush']:
+                     'minecraft:sweet_berry_bush', 'minecraft:chorus_flower']:
             data = palette_entry['Properties']['age']
         elif key in ['minecraft:lantern', 'minecraft:soul_lantern']:
             if palette_entry['Properties']['hanging'] == 'true':
