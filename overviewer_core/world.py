@@ -656,7 +656,7 @@ class RegionSet(object):
             'minecraft:dark_oak_door': (197, 0),
             'minecraft:crimson_door': (499, 0),
             'minecraft:warped_door': (500, 0),
-            'minecraft:end_rod': (198, 0),  # not rendering
+            'minecraft:end_rod': (198, 0),
             'minecraft:chorus_plant': (199, 0),
             'minecraft:chorus_flower': (200, 0),
             'minecraft:purpur_block': (201, 0),
@@ -1113,7 +1113,7 @@ class RegionSet(object):
             data = int(palette_entry['Properties']['age'])
         elif (key.endswith('shulker_box') or key.endswith('piston') or
               key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser',
-                      'minecraft:piston_head', 'minecraft:jigsaw']):
+                      'minecraft:piston_head', 'minecraft:jigsaw', 'minecraft:end_rod']):
             p = palette_entry['Properties']
             data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[p['facing']]
             if ((key.endswith('piston') and p.get('extended', 'false') == 'true') or

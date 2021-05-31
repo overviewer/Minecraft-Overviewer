@@ -3453,6 +3453,86 @@ def buttons(self, blockid, data):
 
     return img
 
+# end rod
+@material(blockid=198, data=list(range(6)), transparent=True, solid=True)
+def end_rod(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/block/end_rod.png")
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+
+    mask = tex.crop((0, 0, 2, 15))
+    sidetex = Image.new(tex.mode, tex.size, self.bgcolor)
+    alpha_over(sidetex, mask, (14, 0), mask)
+
+    mask = tex.crop((2, 3, 6, 7))
+    bottom = Image.new(tex.mode, tex.size, self.bgcolor)
+    alpha_over(bottom, mask, (5, 6), mask)
+
+    if data == 1 or data == 0:
+        side = self.transform_image_side(sidetex)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        bottom = self.transform_image_top(bottom)
+
+        if data == 1: # up
+            mask = tex.crop((2, 0, 4, 2))
+            top = Image.new(tex.mode, tex.size, self.bgcolor)
+            alpha_over(top, mask, (7, 2), mask)
+            top = self.transform_image_top(top)
+
+            alpha_over(img, bottom, (0, 11), bottom)
+            alpha_over(img, side, (0, 0), side)
+            alpha_over(img, otherside, (11, 0), otherside)
+            alpha_over(img, top, (3, 1), top)
+        elif data == 0: # down
+            alpha_over(img, side, (0, 0), side)
+            alpha_over(img, otherside, (11, 0), otherside)
+            alpha_over(img, bottom, (0, 0), bottom)
+    else:
+        otherside = self.transform_image_top(sidetex)
+
+        sidetex = sidetex.rotate(90)
+        side = self.transform_image_side(sidetex)
+        bottom = self.transform_image_side(bottom)
+        bottom = bottom.transpose(Image.FLIP_LEFT_RIGHT)
+
+        def draw_south():
+            alpha_over(img, bottom, (0, 0), bottom)
+            alpha_over(img, side, (7, 8), side)
+            alpha_over(img, otherside, (-3, 9), otherside)
+
+        def draw_north():
+            alpha_over(img, side, (7, 8), side)
+            alpha_over(img, otherside, (-3, 9), otherside)
+            alpha_over(img, bottom, (12, 6), bottom)
+
+        def draw_west():
+            _bottom = bottom.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, _bottom, (13, 0), _bottom)
+            _side = side.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, _side, (7, 8), _side)
+            _otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, _otherside, (4, 9), _otherside)
+
+        def draw_east():
+            _side = side.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, _side, (7, 8), _side)
+            _otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, _otherside, (4, 9), _otherside)
+            _bottom = bottom.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, _bottom, (0, 6), _bottom)
+
+        draw_funcs = [ draw_south, draw_west, draw_north, draw_east ]
+
+        if data == 3: # south
+            draw_funcs[self.rotation]()
+        elif data == 2: # north
+            draw_funcs[(self.rotation + 2) % len(draw_funcs)]()
+        elif data == 4: # west
+            draw_funcs[(self.rotation + 1) % len(draw_funcs)]()
+        elif data == 5: # east
+            draw_funcs[(self.rotation + 3) % len(draw_funcs)]()
+
+    return img
+
 # snow
 @material(blockid=78, data=list(range(1, 9)), transparent=True, solid=True)
 def snow(self, blockid, data):
