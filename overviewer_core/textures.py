@@ -4509,8 +4509,19 @@ def lilypad(self, blockid, data):
 
     return self.build_full_block(None, None, None, None, None, t)
 
-# nether brick
-block(blockid=112, top_image="assets/minecraft/textures/block/nether_bricks.png")
+# nether bricks
+@material(blockid=112, data=list(range(3)), solid=True)
+def nether_bricks(self, blockid, data):
+    if data == 0: # normal
+        t = self.load_image_texture("assets/minecraft/textures/block/nether_bricks.png")
+    elif data == 1: # cracked
+        t = self.load_image_texture("assets/minecraft/textures/block/cracked_nether_bricks.png")
+    elif data == 2: # chiseled
+        t = self.load_image_texture("assets/minecraft/textures/block/chiseled_nether_bricks.png")
+
+    img = self.build_full_block(t, None, None, t, t)
+
+    return img
 
 # nether wart
 @material(blockid=115, data=list(range(4)), transparent=True)
