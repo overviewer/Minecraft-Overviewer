@@ -155,15 +155,18 @@ get_lighting_color(RenderPrimitiveLighting* self, RenderState* state,
 
     /* placeholders for later data arrays, coordinates */
     mc_block_t block;
-    uint8_t skylevel, blocklevel;
+    uint8_t skylevel, blocklevel, blockdata;
 
     block = get_data(state, BLOCKS, x, y, z);
     skylevel = get_data(state, SKYLIGHT, x, y, z);
     blocklevel = get_data(state, BLOCKLIGHT, x, y, z);
+    blockdata = get_data(state, DATA, x, y, z);
 
     /* special half-step handling, stairs handling */
     /* Anvil also needs to be here, blockid 145 */
-    if (block_class_is_subset(block, block_class_alt_height, block_class_alt_height_len) || block == block_anvil) {
+    /* Full height snow layers have skylevel=0 and blocklightlevel=0, fix them too */
+    if (block_class_is_subset(block, block_class_alt_height, block_class_alt_height_len) || block == block_anvil ||
+        (block == block_snow_layer && blockdata == 8)) {
         uint32_t upper_block;
 
         /* stairs and half-blocks take the skylevel from the upper block if it's transparent */
