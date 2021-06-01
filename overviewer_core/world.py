@@ -495,6 +495,8 @@ class RegionSet(object):
             'minecraft:mycelium': (110, 0),
             'minecraft:lily_pad': (111, 0),
             'minecraft:nether_bricks': (112, 0),
+            'minecraft:cracked_nether_bricks': (112, 1),
+            'minecraft:chiseled_nether_bricks': (112, 2),
             'minecraft:nether_brick_fence': (113, 0),
             'minecraft:nether_brick_stairs': (114, 0),
             'minecraft:nether_wart': (115, 0),
