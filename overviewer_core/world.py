@@ -882,6 +882,7 @@ class RegionSet(object):
             'minecraft:bamboo': (11416, 0),
             "minecraft:composter": (11417, 0),
             "minecraft:barrel": (11418, 0),
+            "minecraft:chain": (11419, 0),
             # 1.15 blocks below
             'minecraft:beehive': (11501, 0),
             'minecraft:bee_nest': (11502, 0),
@@ -1137,7 +1138,7 @@ class RegionSet(object):
                 data = 3
             if axis == 'z':
                 data = 4
-        elif key == 'minecraft:basalt' or key == 'minecraft:polished_basalt':
+        elif key in ['minecraft:basalt', 'minecraft:polished_basalt', 'minecraft:chain']:
             axis = palette_entry['Properties']['axis']
             data = {'y': 0, 'x': 1, 'z': 2}[axis]
         elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch',
