@@ -5862,6 +5862,44 @@ def basalt(self, blockid, data):
 block(blockid=[1004], top_image="assets/minecraft/textures/block/blackstone_top.png",
       side_image="assets/minecraft/textures/block/blackstone.png")
 
+
+# Chain
+@material(blockid=11419, data=list(range(3)), solid=True, transparent=True, nospawn=True)
+def chain(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/block/chain.png")
+    sidetex = Image.new(tex.mode, tex.size, self.bgcolor)
+    mask = tex.crop((0, 0, 6, 16))
+    alpha_over(sidetex, mask, (5, 0), mask)
+
+    if data == 0: # y
+        return self.build_sprite(sidetex)
+    else:
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        sidetex = sidetex.rotate(90)
+        side = self.transform_image_side(sidetex)
+        otherside = self.transform_image_top(sidetex)
+
+        def draw_x():
+            _side = side.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, _side, (6,3), _side)
+            alpha_over(img, otherside, (3,3), otherside)
+
+        def draw_z():
+            _otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, side, (6,3), side)
+            alpha_over(img, _otherside, (0,6), _otherside)
+
+        draw_funcs = [draw_x, draw_z]
+
+        if data == 1: # x
+            draw_funcs[self.rotation % len(draw_funcs)]()
+
+        elif data == 2: # z
+            draw_funcs[(self.rotation + 1) % len(draw_funcs)]()
+
+        return img
+
+
 # Netherite
 block(blockid=[1005], top_image="assets/minecraft/textures/block/netherite_block.png")
 # soul soil
