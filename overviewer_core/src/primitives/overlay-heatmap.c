@@ -40,11 +40,12 @@ static void get_color(void* data, RenderState* state,
 
     // Get the chunk modified time
     mtime_pyobj = PyObject_CallMethod(state->regionset, "get_chunk_mtime", "ii", state->chunkx, state->chunkz);
-    if (mtime_pyobj == NULL) {
+    if (mtime_pyobj == NULL || mtime_pyobj == Py_None) {
         *a = 0;
         return;
     }
     mtime = PyLong_AsLong(mtime_pyobj);
+    Py_XDECREF(mtime_pyobj);
 
     // Convert the time to a value in the range [0,255] based on t_invisible and delta_t
     _value_f = (mtime - self->t_invisible) / (float)self->delta_t;
