@@ -217,6 +217,8 @@ def handleEntities(rset, config, config_path, filters, markers):
 
         results = pool.map(parseBucketChunks, ((buck, rset, filters) for buck in buckets))
 
+        pool.close()
+        pool.join()
         logging.info("All the threads completed.")
 
         for marker_dict in results:
