@@ -513,7 +513,7 @@ def main():
             rset = w.get_regionset(render['dimension'][1])
         except IndexError:
             logging.error("Sorry, I can't find anything to render!  Are you sure there are .mca "
-                          "files in the world directory?")
+                          "files in the world directory of %s?" % render['world'])
             return 1
         if rset is None:    # indicates no such dimension was found
             logging.warning("Sorry, you requested dimension '%s' for %s, but I couldn't find it.",
