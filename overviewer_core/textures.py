@@ -5900,6 +5900,17 @@ def chain(self, blockid, data):
         return img
 
 
+# Respawn anchor
+@material(blockid=1037, data=list(range(5)), solid=True)
+def respawn_anchor(self, blockid, data):
+    top = self.load_image_texture("assets/minecraft/textures/block/respawn_anchor_top_off.png" if data ==
+                                  0 else "assets/minecraft/textures/block/respawn_anchor_top.png")
+    side = self.load_image_texture(
+        "assets/minecraft/textures/block/respawn_anchor_side%s.png" % (data))
+
+    return self.build_block(top, side)
+
+
 # Netherite
 block(blockid=[1005], top_image="assets/minecraft/textures/block/netherite_block.png")
 # soul soil
@@ -5915,5 +5926,4 @@ block(blockid=1026, top_image="assets/minecraft/textures/block/polished_blacksto
 
 block(blockid=1035, top_image="assets/minecraft/textures/block/crying_obsidian.png")
 block(blockid=1036, top_image="assets/minecraft/textures/block/lodestone_top.png", side_image="assets/minecraft/textures/block/lodestone_side.png")
-block(blockid=1037, top_image="assets/minecraft/textures/block/respawn_anchor_top.png", side_image="assets/minecraft/textures/block/respawn_anchor_side1.png")
 block(blockid=1041, top_image="assets/minecraft/textures/block/quartz_bricks.png")
