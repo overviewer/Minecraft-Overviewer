@@ -4303,16 +4303,30 @@ def panes(self, blockid, data):
     data = data >> 4
 
     if data == 0:
-        alpha_over(img,up_center,(6,3),up_center) # center
+        alpha_over(img, up_center, (6, 3), up_center) # center
     else:
+        def draw_top_left():
+            alpha_over(img, up_left, (6, 3), up_left)    # top left
+
+        def draw_top_right():
+            alpha_over(img, up_right, (6, 3), up_right)  # top right
+
+        def draw_bottom_right():
+            alpha_over(img, dw_right, (6, 3), dw_right)  # bottom right
+
+        def draw_bottom_left():
+            alpha_over(img, dw_left, (6, 3), dw_left)    # bottom left
+
+        draw_funcs = [draw_top_left, draw_top_right, draw_bottom_right, draw_bottom_left]
+
         if (data & 0b0001) == 1:
-            alpha_over(img,up_left, (6,3),up_left)    # top left
-        if (data & 0b1000) == 8:
-            alpha_over(img,up_right, (6,3),up_right)  # top right
+            draw_funcs[(self.rotation + 0) % len(draw_funcs)]()
         if (data & 0b0010) == 2:
-            alpha_over(img,dw_left, (6,3),dw_left)    # bottom left
+            draw_funcs[(self.rotation + 1) % len(draw_funcs)]()
         if (data & 0b0100) == 4:
-            alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
+            draw_funcs[(self.rotation + 2) % len(draw_funcs)]()
+        if (data & 0b1000) == 8:
+            draw_funcs[(self.rotation + 3) % len(draw_funcs)]()
 
     return img
 
