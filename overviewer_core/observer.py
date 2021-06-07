@@ -56,6 +56,9 @@ class Observer(object):
     def is_running(self):
         return self.is_started() and not self.is_finished()
 
+    def is_indeterminate(self):
+        return self._max_value is None
+
     def add(self, amount):
         """Shortcut to update by increments instead of absolute values. Zero
         amounts are ignored.
@@ -71,8 +74,12 @@ class Observer(object):
         return False
 
     def get_percentage(self):
-        """Get the current progress percentage. Assumes 100% if max_value is 0
+        """Get the current progress percentage. Assumes 100% if max_value is 0.
+        Returns 0% if we can't give an estimate.
         """
+        if self.is_indeterminate():
+            return 0.0
+
         if self.get_max_value() == 0:
             return 100.0
         else:
@@ -83,6 +90,10 @@ class Observer(object):
 
     def get_max_value(self):
         return self._max_value
+
+    def get_max_value_str(self):
+        return str(self._max_value or "unknown number of")
+
 
     def _set_max_value(self, max_value):
         self._max_value = max_value
@@ -109,6 +120,10 @@ class LoggingObserver(Observer):
                 self.update(self.maxval)
 
             def update(self, value):
+                # No progress bar to update if the tilset is indeterminate
+                if self.maxval is None:
+                    return
+
                 assert 0 <= value <= self.maxval
                 self.currval = value
                 if self.finished:
@@ -129,9 +144,14 @@ class LoggingObserver(Observer):
 
     def finish(self):
         self.fake.finish()
-        logging.info("Rendered %d of %d.  %d%% complete.  %s",
-                     self.get_max_value(), self.get_max_value(), 100.0,
-                     self.eta.update(self.fake))
+        if self.is_indeterminate():
+            # todo remove explicit check-tiles mode reference (ie by name)
+            logging.info("Rendered %d tiles in check-tiles mode. "
+                         "100%% complete.", self.get_current_value())
+        else:
+            logging.info("Rendered %d of %d.  %d%% complete.  %s",
+                         self.get_max_value(), self.get_max_value(), 100.0,
+                         self.eta.update(self.fake))
         super(LoggingObserver, self).finish()
 
     def update(self, current_value):
@@ -139,9 +159,13 @@ class LoggingObserver(Observer):
         self.fake.update(current_value)
 
         if self._need_update():
-            logging.info("Rendered %d of %d.  %d%% complete.  %s",
-                         self.get_current_value(), self.get_max_value(),
-                         self.get_percentage(), self.eta.update(self.fake))
+            if self.is_indeterminate():
+                logging.info("Rendered %d tiles in check-tiles mode.",
+                             self.get_current_value())
+            else:
+                logging.info("Rendered %d of %d.  %d%% complete.  %s",
+                             self.get_current_value(), self.get_max_value(),
+                             self.get_percentage(), self.eta.update(self.fake))
             self.last_update = current_value
             return True
         return False
@@ -176,12 +200,14 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
                  fd=sys.stderr):
         super(ProgressBarObserver, self).__init__(widgets=widgets,
                                                   term_width=term_width, fd=fd)
+        self._max_value = None
         self.last_update = 0 - (self.UPDATE_INTERVAL + 1)
 
     def start(self, max_value):
         self._set_max_value(max_value)
-        logging.info("Rendering %d total tiles." % max_value)
-        super(ProgressBarObserver, self).start()
+        logging.info("Rendering %s total tiles." % self.get_max_value_str())
+        if max_value:
+            super(ProgressBarObserver, self).start()
 
     def is_started(self):
         return self.start_time is not None
@@ -208,7 +234,7 @@ class ProgressBarObserver(progressbar.ProgressBar, Observer):
         return self.maxval
 
     def _set_max_value(self, max_value):
-        self.maxval = max_value
+        self.maxval = max_value or None
 
     def _need_update(self):
         return (self.get_current_value() - self.last_update
@@ -240,9 +266,9 @@ class JSObserver(Observer):
 
         if (not messages):
             self.messages = dict(
-                totalTiles="Rendering %d tiles",
+                totalTiles="Rendering %s tiles",
                 renderCompleted="Render completed in %02d:%02d:%02d",
-                renderProgress="Rendered %d of %d tiles (%d%% ETA:%s)")
+                renderProgress="Rendered %d of %s tiles (%d%% ETA:%s)")
         elif (isinstance(messages, dict)):
             if ('totalTiles' in messages
                     and 'renderCompleted' in messages
@@ -271,16 +297,13 @@ class JSObserver(Observer):
     def start(self, max_value):
         self.logfile.seek(0)
         self.logfile.truncate()
-        self.json["message"] = self.messages["totalTiles"] % (max_value)
+        self.json["message"] = self.messages["totalTiles"] % self.get_max_value_str()
         self.json["update"] = self.minrefresh
         self.json["messageTime"] = time.time()
         self.logfile.write(json.dumps(self.json).encode())
         self.logfile.flush()
         self.start_time = time.time()
         self._set_max_value(max_value)
-
-    def is_started(self):
-        return self.start_time is not None
 
     def finish(self):
         """Signals the end of the processes, should be called after the
@@ -303,19 +326,6 @@ class JSObserver(Observer):
         self.logfile.write(json.dumps(self.json).encode())
         self.logfile.close()
 
-    def is_finished(self):
-        return self.end_time is not None
-
-    def is_running(self):
-        return self.is_started() and not self.is_finished()
-
-    def add(self, amount):
-        """Shortcut to update by increments instead of absolute values. Zero
-        amounts are ignored.
-        """
-        if amount:
-            self.update(self.get_current_value() + amount)
-
     def update(self, current_value):
         """Set the progress value. Should be between 0 and max_value. Returns
         whether this update is actually displayed.
@@ -327,14 +337,14 @@ class JSObserver(Observer):
                           self.minrefresh) // 1
             self.logfile.seek(0)
             self.logfile.truncate()
-            if self.get_current_value():
+            if self.get_current_value() and self.get_max_value():
                 duration = time.time() - self.start_time
                 eta = self.format(duration * self.get_max_value() /
                                   self.get_current_value() - duration)
             else:
                 eta = "?"
             self.json["message"] = self.messages["renderProgress"] \
-                % (self.get_current_value(), self.get_max_value(),
+                % (self.get_current_value(), self.get_max_value_str(),
                    self.get_percentage(), str(eta))
             self.json["update"] = refresh
             self.json["messageTime"] = time.time()
@@ -344,23 +354,6 @@ class JSObserver(Observer):
             self.last_update = current_value
             return True
         return False
-
-    def get_percentage(self):
-        """Get the current progress percentage. Assumes 100% if max_value is 0
-        """
-        if self.get_max_value() == 0:
-            return 100.0
-        else:
-            return self.get_current_value() * 100.0 / self.get_max_value()
-
-    def get_current_value(self):
-        return self._current_value
-
-    def get_max_value(self):
-        return self._max_value
-
-    def _set_max_value(self, max_value):
-        self._max_value = max_value
 
     def _need_update(self):
         cur_val = self.get_current_value()

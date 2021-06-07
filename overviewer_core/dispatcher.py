@@ -65,6 +65,13 @@ class Dispatcher:
             # keep track of total jobs, and how many jobs are done
             total_jobs = 0
             for tileset, phases in zip(tilesetlist, num_phases):
+
+                # the tileset is rendering in check-tiles mode,
+                # so we don't know exactly how many jobs will be run
+                if tileset.config.get("render_in_progress", False):
+                    total_jobs = None
+                    break
+
                 if phase < phases:
                     jobs_for_tileset = tileset.get_phase_length(phase)
                     # if one is unknown, the total is unknown

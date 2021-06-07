@@ -345,14 +345,11 @@ class TileSet(object):
                 # The last render must have been interrupted. The default should be
                 # a check-tiles render then
                 logging.warning(
-                    "The last render for '%s' didn't finish. I'll be "
-                    "scanning all the tiles to make sure everything's up "
-                    "to date.",
+                    "The last render for %s didn't finish. All tiles will"
+                    "be checked to make sure everything's up to date. The "
+                    "total tile render count cannot be determined because"
+                    " of this. No ETA will be available as a result.",
                     self.options['name'])
-                logging.warning(
-                    "The total tile count will be (possibly "
-                    "wildly) inaccurate, because I don't know how many "
-                    "tiles need rendering. I'll be checking them as I go.")
                 if self.forcerendertime != 0:
                     logging.info(
                         "The unfinished render was a --forcerender. "
