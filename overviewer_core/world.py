@@ -973,6 +973,9 @@ class RegionSet(object):
 
         prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
 
+        colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan',
+                  'purple', 'blue', 'brown', 'green', 'red', 'black']
+
         key = palette_entry['Name']
         (block, data) = self._blockmap[key]
         if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
@@ -1284,6 +1287,17 @@ class RegionSet(object):
             elif key == 'minecraft:bell':
                 data |= {'floor': 0, 'ceiling': 4, 'single_wall': 8,
                          'double_wall': 12}[p['attachment']]
+        elif key in ['minecraft:iron_bars', 'minecraft:glass_pane'] or \
+                key in ['minecraft:%s_stained_glass_pane' % item for item in colors]:
+            p = palette_entry['Properties']
+            if p['north'] == 'true':
+                data |= (1 << 4)
+            if p['east'] == 'true':
+                data |= (2 << 4)
+            if p['south'] == 'true':
+                data |= (4 << 4)
+            if p['west'] == 'true':
+                data |= (8 << 4)
 
         return (block, data)
 
