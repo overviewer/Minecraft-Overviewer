@@ -1262,6 +1262,8 @@ class RegionSet(object):
             data |= {'south': 0, 'west': 1, 'north': 2, 'east': 3}[facing]
             if palette_entry['Properties'].get('eye', 'false') == 'true':
                 data |= 4
+        elif key == 'minecraft:respawn_anchor':
+            data = int(palette_entry['Properties']['charges'])
         elif key == 'minecraft:cauldron':
             data = int(palette_entry['Properties'].get('level', '0'))
         elif key == 'minecraft:structure_block':
