@@ -2820,8 +2820,8 @@ def farmland(self, blockid, data):
         # dirt.png is 16 pixels tall, so we need to crop it before building full block
         side = side.crop((0, 1, 16, 16))
     else:
-        top = self.load_image_texture("assets/minecraft/textures/block/grass_path_top.png")
-        side = self.load_image_texture("assets/minecraft/textures/block/grass_path_side.png")
+        top = self.load_image_texture("assets/minecraft/textures/block/dirt_path_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/block/dirt_path_side.png")
         # side already has 1 transparent pixel at the top, so it doesn't need to be modified
         # just shift the top image down 1 pixel
 
