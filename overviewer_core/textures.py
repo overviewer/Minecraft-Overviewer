@@ -5921,3 +5921,4 @@ block(blockid=1041, top_image="assets/minecraft/textures/block/quartz_bricks.png
 block(blockid=1042, top_image="assets/minecraft/textures/block/amethyst_block.png")
 block(blockid=1043, top_image="assets/minecraft/textures/block/raw_iron_block.png")
 block(blockid=1044, top_image="assets/minecraft/textures/block/raw_gold_block.png")
+block(blockid=1045, top_image="assets/minecraft/textures/block/budding_amethyst.png")

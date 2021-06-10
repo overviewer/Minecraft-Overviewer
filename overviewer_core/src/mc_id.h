@@ -316,6 +316,7 @@ enum mc_block_id {
     block_amethyst = 1042,
     block_raw_iron = 1043,
     block_raw_gold = 1044,
+    block_budding_amethyst = 1045,
 
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792

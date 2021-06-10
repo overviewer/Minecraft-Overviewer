@@ -774,6 +774,7 @@ class RegionSet(object):
             'minecraft:amethyst_block': (1042, 0),
             'minecraft:raw_iron_block': (1043, 0),
             'minecraft:raw_gold_block': (1044, 0),
+            'minecraft:budding_amethyst': (1045, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
