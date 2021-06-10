@@ -669,7 +669,7 @@ class RegionSet(object):
             'minecraft:purpur_slab': (205, 0),
             'minecraft:end_stone_bricks': (206, 0),
             'minecraft:beetroots': (207, 0),
-            'minecraft:grass_path': (208, 0),
+            'minecraft:dirt_path': (208, 0),
             'minecraft:repeating_command_block': (210, 0),
             'minecraft:chain_command_block': (211, 0),
             'minecraft:frosted_ice': (212, 0),

@@ -220,7 +220,7 @@ enum mc_block_id {
     block_purpur_slab = 205,
     block_end_bricks = 206,
     block_beetroots = 207,
-    block_grass_path = 208,
+    block_dirt_path = 208,
     block_end_gateway = 209,
     block_repeating_command_block = 210,
     block_chain_command_block = 211,
