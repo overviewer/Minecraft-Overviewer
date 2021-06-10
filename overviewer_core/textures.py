@@ -5917,3 +5917,7 @@ block(blockid=1035, top_image="assets/minecraft/textures/block/crying_obsidian.p
 block(blockid=1036, top_image="assets/minecraft/textures/block/lodestone_top.png", side_image="assets/minecraft/textures/block/lodestone_side.png")
 block(blockid=1037, top_image="assets/minecraft/textures/block/respawn_anchor_top.png", side_image="assets/minecraft/textures/block/respawn_anchor_side1.png")
 block(blockid=1041, top_image="assets/minecraft/textures/block/quartz_bricks.png")
+
+block(blockid=1042, top_image="assets/minecraft/textures/block/amethyst_block.png")
+block(blockid=1043, top_image="assets/minecraft/textures/block/raw_iron_block.png")
+block(blockid=1044, top_image="assets/minecraft/textures/block/raw_gold_block.png")

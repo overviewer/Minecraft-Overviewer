@@ -770,6 +770,11 @@ class RegionSet(object):
             # quartz bricks
             'minecraft:quartz_bricks': (1041, 0),
 
+            # 1.17 blocks go here
+            'minecraft:amethyst_block': (1042, 0),
+            'minecraft:raw_iron_block': (1043, 0),
+            'minecraft:raw_gold_block': (1044, 0),
+
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
             'minecraft:spruce_pressure_plate': (11301, 0),
