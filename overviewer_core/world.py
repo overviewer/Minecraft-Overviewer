@@ -274,8 +274,10 @@ class RegionSet(object):
         elif self.rel == "region":
             # this is the main world
             self.type = None
+        elif self.rel == "entities":
+            self.type = "entities"
         else:
-            logging.warning("Unknown region type in %r", regiondir)
+            logging.warning("Unknown region type in %r, rel %r", regiondir, self.rel)
             self.type = "__unknown"
 
         logging.debug("Scanning regions.  Type is %r" % self.type)
