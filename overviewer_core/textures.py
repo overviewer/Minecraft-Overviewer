@@ -5922,3 +5922,10 @@ block(blockid=1042, top_image="assets/minecraft/textures/block/amethyst_block.pn
 block(blockid=1043, top_image="assets/minecraft/textures/block/raw_iron_block.png")
 block(blockid=1044, top_image="assets/minecraft/textures/block/raw_gold_block.png")
 block(blockid=1045, top_image="assets/minecraft/textures/block/budding_amethyst.png")
+
+# You have entered the COPPER ZONE
+block(blockid=[1046, 1050], top_image="assets/minecraft/textures/block/copper_block.png")
+block(blockid=[1047, 1051], top_image="assets/minecraft/textures/block/exposed_copper.png")
+block(blockid=[1048, 1052], top_image="assets/minecraft/textures/block/weathered_copper.png")
+block(blockid=[1049, 1053], top_image="assets/minecraft/textures/block/oxidized_copper.png")
+# You are now leaving the COPPER ZONE

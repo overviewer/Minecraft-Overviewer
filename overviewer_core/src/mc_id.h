@@ -317,6 +317,14 @@ enum mc_block_id {
     block_raw_iron = 1043,
     block_raw_gold = 1044,
     block_budding_amethyst = 1045,
+    block_copper = 1046,
+    block_exposed_copper = 1047,
+    block_weathered_copper = 1048,
+    block_oxidized_copper = 1049,
+    block_waxed_copper = 1050,
+    block_waxed_exposed_copper = 1051,
+    block_waxed_weathered_copper = 1052,
+    block_waxed_oxidized_copper = 1053,
 
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792

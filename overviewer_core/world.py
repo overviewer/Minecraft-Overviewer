@@ -775,6 +775,14 @@ class RegionSet(object):
             'minecraft:raw_iron_block': (1043, 0),
             'minecraft:raw_gold_block': (1044, 0),
             'minecraft:budding_amethyst': (1045, 0),
+            'minecraft:copper_block':   (1046, 0),
+            'minecraft:exposed_copper':   (1047, 0),
+            'minecraft:weathered_copper':   (1048, 0),
+            'minecraft:oxidized_copper':   (1049, 0),
+            'minecraft:waxed_copper_block':   (1050, 0),
+            'minecraft:waxed_exposed_copper':   (1051, 0),
+            'minecraft:waxed_weathered_copper':   (1052, 0),
+            'minecraft:waxed_oxidized_copper':   (1053, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
