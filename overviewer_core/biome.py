@@ -34,4 +34,4 @@ def reshape_biome_data(biome_array):
     elif biome_len == 1536:
         return biome_array.reshape((4, 96, 4))
     else:
-        raise BiomeException(f"Can't reshape a biome of length {biome_len}")
+        raise BiomeException("Can't reshape a biome of length {}".format(biome_len))
