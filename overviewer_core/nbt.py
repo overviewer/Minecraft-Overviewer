@@ -219,12 +219,16 @@ class MCRFileReader(object):
     _location_table_format = struct.Struct(">1024I")
     _timestamp_table_format = struct.Struct(">1024i")
     _chunk_header_format = struct.Struct(">I B")
+    _preloaded = False
 
     def __init__(self, fileobj):
         """This creates a region object from the given file-like
         object. Chances are you want to use load_region instead."""
         self._file = fileobj
+        self.load_pre_data()
 
+    def load_pre_data(self):
+        self._file.seek(0)
         # read in the location table
         location_data = self._file.read(4096)
         if not len(location_data) == 4096:
@@ -245,6 +249,7 @@ class MCRFileReader(object):
         """
 
         self._file.close()
+        del self._file
         self._file = None
 
     def get_chunks(self):
@@ -272,6 +277,16 @@ class MCRFileReader(object):
         z = z % 32
         return self._locations[int(x + z * 32)] >> 8 != 0
 
+    def preload_chunks(self):
+        if not self._preloaded:
+            self._file.seek(0)
+            pl_data = BytesIO(self._file.read())
+            self._file.close()
+            self._file = pl_data
+            # re-read location, timestamps
+            self.load_pre_data()
+            self._preloaded = True
+
     def load_chunk(self, x, z):
         """Return a (name, data) tuple for the given chunk, or
         None if the given chunk doesn't exist in this region file. If
@@ -279,6 +294,7 @@ class MCRFileReader(object):
         modulo'd into this range (x % 32, etc.) This is so you can
         provide chunk coordinates in global coordinates, and still
         have the chunks load out of regions properly."""
+        self.preload_chunks()
         x = x % 32
         z = z % 32
         location = self._locations[int(x + z * 32)]
