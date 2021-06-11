@@ -784,6 +784,14 @@ class RegionSet(object):
             'minecraft:waxed_exposed_copper':   (1051, 0),
             'minecraft:waxed_weathered_copper':   (1052, 0),
             'minecraft:waxed_oxidized_copper':   (1053, 0),
+            'minecraft:cut_copper':   (1054, 0),
+            'minecraft:exposed_cut_copper':   (1055, 0),
+            'minecraft:weathered_cut_copper':   (1056, 0),
+            'minecraft:oxidized_cut_copper':   (1057, 0),
+            'minecraft:waxed_cut_copper':   (1058, 0),
+            'minecraft:waxed_exposed_cut_copper':   (1059, 0),
+            'minecraft:waxed_weathered_cut_copper':   (1060, 0),
+            'minecraft:waxed_oxidized_cut_copper':   (1061, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
