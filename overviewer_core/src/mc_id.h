@@ -335,6 +335,9 @@ enum mc_block_id {
     block_waxed_weathered_cut_copper = 1060,
     block_waxed_oxidized_cut_copper = 1061,
 
+    block_raw_copper = 1062,
+    block_copper_ore = 1063,
+
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls

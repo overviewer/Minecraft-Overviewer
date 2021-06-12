@@ -5957,4 +5957,7 @@ block(blockid=[1054, 1058], top_image="assets/minecraft/textures/block/cut_coppe
 block(blockid=[1055, 1059], top_image="assets/minecraft/textures/block/exposed_cut_copper.png")
 block(blockid=[1056, 1060], top_image="assets/minecraft/textures/block/weathered_cut_copper.png")
 block(blockid=[1057, 1061], top_image="assets/minecraft/textures/block/oxidized_cut_copper.png")
+
+block(blockid=1062, top_image="assets/minecraft/textures/block/raw_copper_block.png")
+block(blockid=1063, top_image="assets/minecraft/textures/block/copper_ore.png")
 # You are now leaving the COPPER ZONE
