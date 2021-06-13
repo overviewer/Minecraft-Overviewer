@@ -116,7 +116,15 @@ const mc_block_t block_class_stair[] = {
     block_smooth_sandstone_stairs,
     block_blackstone_stairs,
     block_polished_blackstone_stairs,
-    block_polished_blackstone_brick_stairs};
+    block_polished_blackstone_brick_stairs,
+    block_cut_copper_stairs,
+    block_exposed_cut_copper_stairs,
+    block_weathered_cut_copper_stairs,
+    block_oxidized_cut_copper_stairs,
+    block_waxed_cut_copper_stairs,
+    block_waxed_exposed_cut_copper_stairs,
+    block_waxed_weathered_cut_copper_stairs,
+    block_waxed_oxidized_cut_copper_stairs};
 const size_t block_class_stair_len = COUNT_OF(block_class_stair);
 
 const mc_block_t block_class_door[] = {
@@ -199,6 +207,14 @@ const mc_block_t block_class_ancil[] = {
     block_blackstone_stairs,
     block_polished_blackstone_stairs,
     block_polished_blackstone_brick_stairs,    
+    block_cut_copper_stairs,
+    block_exposed_cut_copper_stairs,
+    block_weathered_cut_copper_stairs,
+    block_oxidized_cut_copper_stairs,
+    block_waxed_cut_copper_stairs,
+    block_waxed_exposed_cut_copper_stairs,
+    block_waxed_weathered_cut_copper_stairs,
+    block_waxed_oxidized_cut_copper_stairs,
     block_grass,
     block_flowing_water,
     block_water,
