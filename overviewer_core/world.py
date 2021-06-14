@@ -802,6 +802,14 @@ class RegionSet(object):
             'minecraft:waxed_exposed_cut_copper_stairs': (1069, 0),
             'minecraft:waxed_weathered_cut_copper_stairs': (1070, 0),
             'minecraft:waxed_oxidized_cut_copper_stairs': (1071, 0),
+            'minecraft:cut_copper_slab': (1072, 0),
+            'minecraft:exposed_cut_copper_slab': (1073, 0),
+            'minecraft:weathered_cut_copper_slab': (1074, 0),
+            'minecraft:oxidized_cut_copper_slab': (1075, 0),
+            'minecraft:waxed_cut_copper_slab': (1076, 0),
+            'minecraft:waxed_exposed_cut_copper_slab': (1077, 0),
+            'minecraft:waxed_weathered_cut_copper_slab': (1078, 0),
+            'minecraft:waxed_oxidized_cut_copper_slab': (1079, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
@@ -991,6 +999,16 @@ class RegionSet(object):
                          )
 
         prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
+        copper_slabs = (
+            'minecraft:cut_copper_slab',
+            'minecraft:exposed_cut_copper_slab',
+            'minecraft:weathered_cut_copper_slab',
+            'minecraft:oxidized_cut_copper_slab',
+            'minecraft:waxed_cut_copper_slab',
+            'minecraft:waxed_exposed_cut_copper_slab',
+            'minecraft:waxed_weathered_cut_copper_slab',
+            'minecraft:waxed_oxidized_cut_copper_slab'
+        )
 
         colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan',
                   'purple', 'blue', 'brown', 'green', 'red', 'black']
@@ -1030,7 +1048,7 @@ class RegionSet(object):
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
-        elif key in wood_slabs + stone_slabs + prismarine_slabs:
+        elif key in wood_slabs + stone_slabs + prismarine_slabs + copper_slabs:
         # handle double slabs 
             if palette_entry['Properties']['type'] == 'top':
                 data |= 0x08
@@ -1122,6 +1140,9 @@ class RegionSet(object):
                         data = 1
                     elif key == 'minecraft:dark_prismarine_slab':
                         data = 2
+                elif key in copper_slabs:
+                    # dumb hack because I'm lazy but this function is horrid anyway
+                    block = block - 18
 
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest',
                      'minecraft:trapped_chest', 'minecraft:furnace',

@@ -348,6 +348,16 @@ enum mc_block_id {
     block_waxed_weathered_cut_copper_stairs = 1070,
     block_waxed_oxidized_cut_copper_stairs = 1071,
 
+    block_cut_copper_slab = 1072,
+    block_exposed_cut_copper_slab = 1073,
+    block_weathered_cut_copper_slab = 1074,
+    block_oxidized_cut_copper_slab = 1075,
+
+    block_waxed_cut_copper_slab = 1076,
+    block_waxed_exposed_cut_copper_slab = 1077,
+    block_waxed_weathered_cut_copper_slab = 1078,
+    block_waxed_oxidized_cut_copper_slab = 1079,
+
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls

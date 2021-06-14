@@ -1674,8 +1674,10 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
-@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340,11359)) + list(range(1027,1030)), data=list(range(16)),
-          transparent=[44, 182, 205] + list(range(11340,11359)) + list(range(1027,1030)), solid=True)
+@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340, 11359)) +
+          list(range(1027, 1030)) + list(range(1072, 1080)), data=list(range(16)),
+          transparent=[44, 182, 205] + list(range(11340, 11359)) + list(range(1027, 1030)) +
+          list(range(1072, 1080)), solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1771,6 +1773,18 @@ def slabs(self, blockid, data):
         top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_blackstone.png").copy()
     elif blockid == 1029: #  polished_blackstone_brick_slab
         top = side  = self.load_image_texture("assets/minecraft/textures/block/polished_blackstone_bricks.png").copy()
+    elif blockid in range(1072, 1080):
+        copper_tex = {
+            1072: "assets/minecraft/textures/block/cut_copper.png",
+            1076: "assets/minecraft/textures/block/cut_copper.png",
+            1073: "assets/minecraft/textures/block/exposed_cut_copper.png",
+            1077: "assets/minecraft/textures/block/exposed_cut_copper.png",
+            1074: "assets/minecraft/textures/block/weathered_cut_copper.png",
+            1078: "assets/minecraft/textures/block/weathered_cut_copper.png",
+            1075: "assets/minecraft/textures/block/oxidized_cut_copper.png",
+            1079: "assets/minecraft/textures/block/oxidized_cut_copper.png",
+        }
+        top = side = self.load_image_texture(copper_tex[blockid]).copy()
 
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)

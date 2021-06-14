@@ -315,7 +315,23 @@ const mc_block_t block_class_alt_height[] = {
     block_stone_slab2,
     block_purpur_stairs,
     block_purpur_slab,
-    block_wooden_slab};
+    block_wooden_slab,
+    block_cut_copper_stairs,
+    block_exposed_cut_copper_stairs,
+    block_weathered_cut_copper_stairs,
+    block_oxidized_cut_copper_stairs,
+    block_waxed_cut_copper_stairs,
+    block_waxed_exposed_cut_copper_stairs,
+    block_waxed_weathered_cut_copper_stairs,
+    block_waxed_oxidized_cut_copper_stairs,
+    block_cut_copper_slab,
+    block_exposed_cut_copper_slab,
+    block_weathered_cut_copper_slab,
+    block_oxidized_cut_copper_slab,
+    block_waxed_cut_copper_slab,
+    block_waxed_exposed_cut_copper_slab,
+    block_waxed_weathered_cut_copper_slab,
+    block_waxed_oxidized_cut_copper_slab};
 const size_t block_class_alt_height_len = COUNT_OF(block_class_alt_height);
 
 const mc_block_t block_class_nether_roof[] = {
