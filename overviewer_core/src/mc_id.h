@@ -358,6 +358,30 @@ enum mc_block_id {
     block_waxed_weathered_cut_copper_slab = 1078,
     block_waxed_oxidized_cut_copper_slab = 1079,
 
+    block_moss = 1080,
+    block_calcite = 1081,
+    block_rooted_dirt = 1082,
+
+    block_cobbled_deepslate = 1083,
+    block_polished_deepslate = 1084,
+    block_deepslate_coal_ore = 1085,
+    block_deepslate_iron_ore = 1086,
+    block_deepslate_copper_ore = 1087,
+    block_deepslate_gold_ore = 1088,
+    block_deepslate_emerald_ore = 1089,
+    block_deepslate_lapis_ore = 1090,
+    block_deepslate_diamond_ore = 1091,
+    block_deepslate_redstone_ore = 1092,
+    block_deepslate_bricks = 1093,
+    block_cracked_deepslate_bricks = 1094,
+    block_deepslate_tiles = 1095,
+    block_cracked_deepslate_tiles = 1096,
+    block_chiseled_deepslate = 1097,
+
+    block_dripstone = 1098,
+    block_smooth_basalt = 1099,
+    block_tuff = 1100,
+
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls

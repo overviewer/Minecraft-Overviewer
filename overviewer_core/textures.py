@@ -1176,6 +1176,10 @@ def leaves(self, blockid, data):
         t = self.load_image_texture("assets/minecraft/textures/block/acacia_leaves.png")
     elif (blockid, data) == (161, 5): 
         t = self.load_image_texture("assets/minecraft/textures/block/dark_oak_leaves.png")
+    elif (blockid, data) == (18, 6):
+        t = self.load_image_texture("assets/minecraft/textures/block/flowering_azalea_leaves.png")
+    elif (blockid, data) == (18, 7):
+        t = self.load_image_texture("assets/minecraft/textures/block/azalea_leaves.png")
     return self.build_block(t, t)
 
 # sponge
@@ -5988,3 +5992,27 @@ block(blockid=[1057, 1061], top_image="assets/minecraft/textures/block/oxidized_
 block(blockid=1062, top_image="assets/minecraft/textures/block/raw_copper_block.png")
 block(blockid=1063, top_image="assets/minecraft/textures/block/copper_ore.png")
 # You are now leaving the COPPER ZONE
+
+block(blockid=1080, top_image="assets/minecraft/textures/block/moss_block.png")
+block(blockid=1081, top_image="assets/minecraft/textures/block/calcite.png")
+block(blockid=1082, top_image="assets/minecraft/textures/block/rooted_dirt.png")
+
+block(blockid=1083, top_image="assets/minecraft/textures/block/cobbled_deepslate.png")
+block(blockid=1084, top_image="assets/minecraft/textures/block/polished_deepslate.png")
+block(blockid=1085, top_image="assets/minecraft/textures/block/deepslate_coal_ore.png")
+block(blockid=1086, top_image="assets/minecraft/textures/block/deepslate_iron_ore.png")
+block(blockid=1087, top_image="assets/minecraft/textures/block/deepslate_copper_ore.png")
+block(blockid=1088, top_image="assets/minecraft/textures/block/deepslate_gold_ore.png")
+block(blockid=1089, top_image="assets/minecraft/textures/block/deepslate_emerald_ore.png")
+block(blockid=1090, top_image="assets/minecraft/textures/block/deepslate_lapis_ore.png")
+block(blockid=1091, top_image="assets/minecraft/textures/block/deepslate_diamond_ore.png")
+block(blockid=1092, top_image="assets/minecraft/textures/block/deepslate_redstone_ore.png")
+block(blockid=1093, top_image="assets/minecraft/textures/block/deepslate_bricks.png")
+block(blockid=1094, top_image="assets/minecraft/textures/block/cracked_deepslate_bricks.png")
+block(blockid=1095, top_image="assets/minecraft/textures/block/deepslate_tiles.png")
+block(blockid=1096, top_image="assets/minecraft/textures/block/cracked_deepslate_tiles.png")
+block(blockid=1097, top_image="assets/minecraft/textures/block/chiseled_deepslate.png")
+
+block(blockid=1098, top_image="assets/minecraft/textures/block/dripstone_block.png")
+block(blockid=1099, top_image="assets/minecraft/textures/block/smooth_basalt.png")
+block(blockid=1100, top_image="assets/minecraft/textures/block/tuff.png")
