@@ -767,6 +767,26 @@ class Textures(object):
 
         return img
 
+    def build_axis_block(self, top, side, data):
+        """
+        Build an block with Axis property.
+        data = {'y': 0, 'x': 1, 'z': 2}[axis]
+        """
+        def draw_x():
+            return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+
+        def draw_y():
+            return self.build_full_block(side, None, None, side.rotate(270), top)
+
+        draw_funcs = [draw_x, draw_y]
+
+        if data == 0:  # up
+            return self.build_block(top, side)
+        elif data == 1:  # x
+            return draw_funcs[(self.rotation + 0) % len(draw_funcs)]()
+        elif data == 2:  # y
+            return draw_funcs[(self.rotation + 1) % len(draw_funcs)]()
+
     def build_sprite(self, side):
         """From a side texture, create a sprite-like texture such as those used
         for spiderwebs or flowers."""
@@ -1679,9 +1699,10 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
 @material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340, 11359)) +
-          list(range(1027, 1030)) + list(range(1072, 1080)), data=list(range(16)),
+          list(range(1027, 1030)) + list(range(1072, 1080)) + list(range(1103, 1107)),
+          data=list(range(16)),
           transparent=[44, 182, 205] + list(range(11340, 11359)) + list(range(1027, 1030)) +
-          list(range(1072, 1080)), solid=True)
+          list(range(1072, 1080)) + list(range(1103, 1107)), solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
         texture = data & 7
@@ -1789,6 +1810,14 @@ def slabs(self, blockid, data):
             1079: "assets/minecraft/textures/block/oxidized_cut_copper.png",
         }
         top = side = self.load_image_texture(copper_tex[blockid]).copy()
+    elif blockid in range(1103, 1107):
+        deepslate_tex = {
+            1103: "assets/minecraft/textures/block/cobbled_deepslate.png",
+            1104: "assets/minecraft/textures/block/polished_deepslate.png",
+            1105: "assets/minecraft/textures/block/deepslate_bricks.png",
+            1106: "assets/minecraft/textures/block/deepslate_tiles.png",
+        }
+        top = side = self.load_image_texture(deepslate_tex[blockid]).copy()
 
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
@@ -2048,10 +2077,11 @@ block(blockid=52, top_image="assets/minecraft/textures/block/spawner.png", trans
 # polished_granite polished_andesite polished_diorite granite diorite andesite end_stone_bricks red_nether_brick stairs
 # smooth_red_sandstone blackstone polished_blackstone polished_blackstone_brick
 # also all the copper variants
+# also all deepslate variants
 @material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 509, 510,
                    11337, 11338, 11339, 11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379,
                    11380, 11381, 11382, 11383, 11384, 11415, 1030, 1031, 1032, 1064, 1065, 1066,
-                   1067, 1068, 1069, 1070, 1071],
+                   1067, 1068, 1069, 1070, 1071, 1099, 1100, 1101, 1102],
           data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
@@ -2112,7 +2142,11 @@ def stairs(self, blockid, data):
         1069: "assets/minecraft/textures/block/exposed_cut_copper.png",
         1070: "assets/minecraft/textures/block/weathered_cut_copper.png",
         1071: "assets/minecraft/textures/block/oxidized_cut_copper.png",
-
+        # Deepslate
+        1099: "assets/minecraft/textures/block/cobbled_deepslate.png",
+        1100: "assets/minecraft/textures/block/polished_deepslate.png",
+        1101: "assets/minecraft/textures/block/deepslate_bricks.png",
+        1102: "assets/minecraft/textures/block/deepslate_tiles.png",
     }
 
     texture = self.load_image_texture(stair_id_to_tex[blockid]).copy()
@@ -4882,7 +4916,7 @@ def beacon(self, blockid, data):
 
 # cobblestone and mossy cobblestone walls, chorus plants, mossy stone brick walls
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=[199]+list(range(1792, 1808 + 1)), data=list(range(32)), transparent=True, nospawn=True)
+@material(blockid=[199]+list(range(1792, 1812 + 1)), data=list(range(32)), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
     walls_id_to_tex = {
           199: "assets/minecraft/textures/block/chorus_plant.png", # chorus plants
@@ -4902,7 +4936,11 @@ def cobblestone_wall(self, blockid, data):
         1805: "assets/minecraft/textures/block/stone_bricks.png",
         1806: "assets/minecraft/textures/block/blackstone.png",
         1807: "assets/minecraft/textures/block/polished_blackstone.png",
-        1808: "assets/minecraft/textures/block/polished_blackstone_bricks.png"
+        1808: "assets/minecraft/textures/block/polished_blackstone_bricks.png",
+        1809: "assets/minecraft/textures/block/cobbled_deepslate.png",
+        1810: "assets/minecraft/textures/block/polished_deepslate.png",
+        1811: "assets/minecraft/textures/block/deepslate_bricks.png",
+        1812: "assets/minecraft/textures/block/deepslate_tiles.png",
     }
     t = self.load_image_texture(walls_id_to_tex[blockid]).copy()
 
@@ -5317,19 +5355,12 @@ def chorus_flower(self, blockid, data):
 # purpur block
 block(blockid=201, top_image="assets/minecraft/textures/block/purpur_block.png")
 
-# purpur pilar
-@material(blockid=202, data=list(range(12)) , solid=True)
+# purpur pillar
+@material(blockid=202, data=list(range(3)), solid=True)
 def purpur_pillar(self, blockid, data):
-    pillar_orientation = data & 12
     top=self.load_image_texture("assets/minecraft/textures/block/purpur_pillar_top.png")
     side=self.load_image_texture("assets/minecraft/textures/block/purpur_pillar.png")
-    if pillar_orientation == 0: # east-west orientation
-        return self.build_block(top, side)
-    elif pillar_orientation == 4: # east-west orientation
-        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
-    elif pillar_orientation == 8: # north-south orientation
-
-        return self.build_full_block(side, None, None, side.rotate(270), top)
+    return self.build_axis_block(top, side, data)
 
 # end brick
 block(blockid=206, top_image="assets/minecraft/textures/block/end_stone_bricks.png")
@@ -5895,12 +5926,7 @@ def basalt(self, blockid, data):
     block_name = "polished_basalt" if blockid == 1002 else "basalt"
     top = self.load_image_texture("assets/minecraft/textures/block/" + block_name + "_top.png")
     side = self.load_image_texture("assets/minecraft/textures/block/" + block_name + "_side.png")
-    if data == 0:
-        return self.build_block(top, side)
-    elif data == 1: # east-west orientation
-        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
-    elif data == 2: # north-south orientation
-        return self.build_full_block(side, None, None, side.rotate(270), top)
+    return self.build_axis_block(top, side, data)
 
 
 # Blackstone block
@@ -5997,22 +6023,31 @@ block(blockid=1080, top_image="assets/minecraft/textures/block/moss_block.png")
 block(blockid=1081, top_image="assets/minecraft/textures/block/calcite.png")
 block(blockid=1082, top_image="assets/minecraft/textures/block/rooted_dirt.png")
 
-block(blockid=1083, top_image="assets/minecraft/textures/block/cobbled_deepslate.png")
-block(blockid=1084, top_image="assets/minecraft/textures/block/polished_deepslate.png")
-block(blockid=1085, top_image="assets/minecraft/textures/block/deepslate_coal_ore.png")
-block(blockid=1086, top_image="assets/minecraft/textures/block/deepslate_iron_ore.png")
-block(blockid=1087, top_image="assets/minecraft/textures/block/deepslate_copper_ore.png")
-block(blockid=1088, top_image="assets/minecraft/textures/block/deepslate_gold_ore.png")
-block(blockid=1089, top_image="assets/minecraft/textures/block/deepslate_emerald_ore.png")
-block(blockid=1090, top_image="assets/minecraft/textures/block/deepslate_lapis_ore.png")
-block(blockid=1091, top_image="assets/minecraft/textures/block/deepslate_diamond_ore.png")
-block(blockid=1092, top_image="assets/minecraft/textures/block/deepslate_redstone_ore.png")
-block(blockid=1093, top_image="assets/minecraft/textures/block/deepslate_bricks.png")
-block(blockid=1094, top_image="assets/minecraft/textures/block/cracked_deepslate_bricks.png")
-block(blockid=1095, top_image="assets/minecraft/textures/block/deepslate_tiles.png")
-block(blockid=1096, top_image="assets/minecraft/textures/block/cracked_deepslate_tiles.png")
-block(blockid=1097, top_image="assets/minecraft/textures/block/chiseled_deepslate.png")
 
-block(blockid=1098, top_image="assets/minecraft/textures/block/dripstone_block.png")
-block(blockid=1099, top_image="assets/minecraft/textures/block/smooth_basalt.png")
-block(blockid=1100, top_image="assets/minecraft/textures/block/tuff.png")
+# deepslate
+@material(blockid=1083, data=list(range(3)), solid=True)
+def purpur_pillar(self, blockid, data):
+    top=self.load_image_texture("assets/minecraft/textures/block/deepslate_top.png")
+    side=self.load_image_texture("assets/minecraft/textures/block/deepslate.png")
+    return self.build_axis_block(top, side, data)
+
+
+block(blockid=1084, top_image="assets/minecraft/textures/block/cobbled_deepslate.png")
+block(blockid=1085, top_image="assets/minecraft/textures/block/polished_deepslate.png")
+block(blockid=1086, top_image="assets/minecraft/textures/block/deepslate_coal_ore.png")
+block(blockid=1087, top_image="assets/minecraft/textures/block/deepslate_iron_ore.png")
+block(blockid=1088, top_image="assets/minecraft/textures/block/deepslate_copper_ore.png")
+block(blockid=1089, top_image="assets/minecraft/textures/block/deepslate_gold_ore.png")
+block(blockid=1090, top_image="assets/minecraft/textures/block/deepslate_emerald_ore.png")
+block(blockid=1091, top_image="assets/minecraft/textures/block/deepslate_lapis_ore.png")
+block(blockid=1092, top_image="assets/minecraft/textures/block/deepslate_diamond_ore.png")
+block(blockid=1093, top_image="assets/minecraft/textures/block/deepslate_redstone_ore.png")
+block(blockid=1094, top_image="assets/minecraft/textures/block/deepslate_bricks.png")
+block(blockid=1095, top_image="assets/minecraft/textures/block/cracked_deepslate_bricks.png")
+block(blockid=1096, top_image="assets/minecraft/textures/block/deepslate_tiles.png")
+block(blockid=1097, top_image="assets/minecraft/textures/block/cracked_deepslate_tiles.png")
+block(blockid=1098, top_image="assets/minecraft/textures/block/chiseled_deepslate.png")
+
+block(blockid=1107, top_image="assets/minecraft/textures/block/dripstone_block.png")
+block(blockid=1108, top_image="assets/minecraft/textures/block/smooth_basalt.png")
+block(blockid=1109, top_image="assets/minecraft/textures/block/tuff.png")

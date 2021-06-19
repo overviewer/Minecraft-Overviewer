@@ -124,7 +124,11 @@ const mc_block_t block_class_stair[] = {
     block_waxed_cut_copper_stairs,
     block_waxed_exposed_cut_copper_stairs,
     block_waxed_weathered_cut_copper_stairs,
-    block_waxed_oxidized_cut_copper_stairs};
+    block_waxed_oxidized_cut_copper_stairs,
+    block_cobbled_deepslate_stairs,
+    block_polished_deepslate_stairs,
+    block_deepslate_brick_stairs,
+    block_deepslate_tile_stairs};
 const size_t block_class_stair_len = COUNT_OF(block_class_stair);
 
 const mc_block_t block_class_door[] = {
@@ -215,6 +219,10 @@ const mc_block_t block_class_ancil[] = {
     block_waxed_exposed_cut_copper_stairs,
     block_waxed_weathered_cut_copper_stairs,
     block_waxed_oxidized_cut_copper_stairs,
+    block_cobbled_deepslate_stairs,
+    block_polished_deepslate_stairs,
+    block_deepslate_brick_stairs,
+    block_deepslate_tile_stairs,
     block_grass,
     block_flowing_water,
     block_water,
@@ -250,7 +258,11 @@ const mc_block_t block_class_ancil[] = {
     block_dark_oak_fence,
     block_crimson_fence,
     block_warped_fence,
-    block_acacia_fence};
+    block_acacia_fence,
+    block_cobbled_deepslate_wall,
+    block_polished_deepslate_wall,
+    block_deepslate_brick_wall,
+    block_deepslate_tile_wall};
 const size_t block_class_ancil_len = COUNT_OF(block_class_ancil);
 
 const mc_block_t block_class_alt_height[] = {
@@ -331,7 +343,15 @@ const mc_block_t block_class_alt_height[] = {
     block_waxed_cut_copper_slab,
     block_waxed_exposed_cut_copper_slab,
     block_waxed_weathered_cut_copper_slab,
-    block_waxed_oxidized_cut_copper_slab};
+    block_waxed_oxidized_cut_copper_slab,
+    block_cobbled_deepslate_stairs,
+    block_polished_deepslate_stairs,
+    block_deepslate_brick_stairs,
+    block_deepslate_tile_stairs,
+    block_cobbled_deepslate_slab,
+    block_polished_deepslate_slab,
+    block_deepslate_brick_slab,
+    block_deepslate_tile_slab};
 const size_t block_class_alt_height_len = COUNT_OF(block_class_alt_height);
 
 const mc_block_t block_class_nether_roof[] = {
