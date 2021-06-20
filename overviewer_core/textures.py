@@ -6026,7 +6026,7 @@ block(blockid=1082, top_image="assets/minecraft/textures/block/rooted_dirt.png")
 
 # deepslate
 @material(blockid=1083, data=list(range(3)), solid=True)
-def purpur_pillar(self, blockid, data):
+def deepslate(self, blockid, data):
     top=self.load_image_texture("assets/minecraft/textures/block/deepslate_top.png")
     side=self.load_image_texture("assets/minecraft/textures/block/deepslate.png")
     return self.build_axis_block(top, side, data)
