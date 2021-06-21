@@ -343,6 +343,8 @@ class RegionSet(object):
             'minecraft:jungle_leaves': (18, 3),
             'minecraft:acacia_leaves': (18, 4),
             'minecraft:dark_oak_leaves': (18, 5),
+            'minecraft:flowering_azalea_leaves': (18, 6),
+            'minecraft:azalea_leaves': (18, 7),
             'minecraft:sponge': (19, 0),
             'minecraft:wet_sponge': (19, 1),
             'minecraft:glass': (20, 0),
@@ -810,6 +812,40 @@ class RegionSet(object):
             'minecraft:waxed_exposed_cut_copper_slab': (1077, 0),
             'minecraft:waxed_weathered_cut_copper_slab': (1078, 0),
             'minecraft:waxed_oxidized_cut_copper_slab': (1079, 0),
+            'minecraft:moss_block': (1080, 0),
+            'minecraft:calcite': (1081, 0),
+            'minecraft:rooted_dirt': (1082, 0),
+            'minecraft:deepslate': (1083, 0),
+            'minecraft:infested_deepslate': (1083, 0),
+            'minecraft:cobbled_deepslate': (1084, 0),
+            'minecraft:polished_deepslate': (1085, 0),
+            'minecraft:deepslate_coal_ore': (1086, 0),
+            'minecraft:deepslate_iron_ore': (1087, 0),
+            'minecraft:deepslate_copper_ore': (1088, 0),
+            'minecraft:deepslate_gold_ore': (1089, 0),
+            'minecraft:deepslate_emerald_ore': (1090, 0),
+            'minecraft:deepslate_lapis_ore': (1091, 0),
+            'minecraft:deepslate_diamond_ore': (1092, 0),
+            'minecraft:deepslate_redstone_ore': (1093, 0),
+            'minecraft:deepslate_bricks': (1094, 0),
+            'minecraft:cracked_deepslate_bricks': (1095, 0),
+            'minecraft:deepslate_tiles': (1096, 0),
+            'minecraft:cracked_deepslate_tiles': (1097, 0),
+            'minecraft:chiseled_deepslate': (1098, 0),
+
+            'minecraft:cobbled_deepslate_stairs': (1099, 0),
+            'minecraft:polished_deepslate_stairs': (1100, 0),
+            'minecraft:deepslate_brick_stairs': (1101, 0),
+            'minecraft:deepslate_tile_stairs': (1102, 0),
+
+            'minecraft:cobbled_deepslate_slab': (1103, 0),
+            'minecraft:polished_deepslate_slab': (1104, 0),
+            'minecraft:deepslate_brick_slab': (1105, 0),
+            'minecraft:deepslate_tile_slab': (1106, 0),
+
+            'minecraft:dripstone_block': (1107, 0),
+            'minecraft:smooth_basalt': (1108, 0),
+            'minecraft:tuff': (1109, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
@@ -953,6 +989,10 @@ class RegionSet(object):
             'minecraft:blackstone_wall': (1806, 0),
             'minecraft:polished_blackstone_wall': (1807, 0),
             'minecraft:polished_blackstone_brick_wall': (1808, 0),
+            'minecraft:cobbled_deepslate_wall': (1809, 0),
+            'minecraft:polished_deepslate_wall': (1810, 0),
+            'minecraft:deepslate_brick_wall': (1811, 0),
+            'minecraft:deepslate_tile_wall': (1812, 0),
         }
 
         colors = [   'white', 'orange', 'magenta', 'light_blue',
@@ -995,7 +1035,9 @@ class RegionSet(object):
                         'minecraft:mossy_cobblestone_slab','minecraft:mossy_stone_brick_slab',
                         'minecraft:smooth_quartz_slab','minecraft:smooth_stone_slab',
                         'minecraft:blackstone_slab','minecraft:polished_blackstone_slab',
-                        'minecraft:polished_blackstone_brick_slab'
+                        'minecraft:polished_blackstone_brick_slab', 'minecraft:cobbled_deepslate_slab',
+                        'minecraft:polished_deepslate_slab', 'minecraft:deepslate_brick_slab',
+                        'minecraft:deepslate_tile_slab'
                          )
 
         prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
@@ -1131,6 +1173,18 @@ class RegionSet(object):
                     elif key == 'minecraft:polished_blackstone_brick_slab':
                         block = 1026   # polished_blackstone_bricks
                         data = 0
+                    elif key == 'minecraft:cobbled_deepslate_slab':
+                        block = 1084  # 'minecraft:cobbled_deepslate'
+                        data = 0
+                    elif key == 'minecraft:polished_deepslate_slab':
+                        block = 1085  # 'minecraft:polished_deepslate'
+                        data = 0
+                    elif key == 'minecraft:deepslate_brick_slab':
+                        block = 1094  # 'minecraft:deepslate_bricks'
+                        data = 0
+                    elif key == 'minecraft:deepslate_tile_slab':
+                        block = 1096  # 'minecraft:deepslate_tiles'
+                        data = 0
 
                 elif key in  prismarine_slabs:
                     block = 168         # minecraft:prismarine variants
@@ -1143,6 +1197,7 @@ class RegionSet(object):
                 elif key in copper_slabs:
                     # dumb hack because I'm lazy but this function is horrid anyway
                     block = block - 18
+
 
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest',
                      'minecraft:trapped_chest', 'minecraft:furnace',
@@ -1197,7 +1252,8 @@ class RegionSet(object):
                 data = 3
             if axis == 'z':
                 data = 4
-        elif key in ['minecraft:basalt', 'minecraft:polished_basalt', 'minecraft:chain']:
+        elif key in ['minecraft:basalt', 'minecraft:polished_basalt', 'minecraft:chain', 'minecraft:purpur_pillar',
+                     'minecraft:deepslate']:
             axis = palette_entry['Properties']['axis']
             data = {'y': 0, 'x': 1, 'z': 2}[axis]
         elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch',
