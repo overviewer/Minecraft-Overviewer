@@ -15,8 +15,8 @@ Python, don't worry, it's pretty simple. Just follow the examples.
 
 .. note::
 
-    You should *always* use forward slashes ("/"), even on
-    Windows.  This is required because the backslash ("\\\") has special meaning
+    You should *always* use forward slashes (``/``), even on
+    Windows.  This is required because the backslash (``\``) has special meaning
     in Python.  
 
 Examples
