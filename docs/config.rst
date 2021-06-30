@@ -305,6 +305,9 @@ Observers
         This will display render progress on the output map in the bottom right
         corner of the screen. ``JSObserver``.
 
+        .. note::
+            JSObserver does not work on locally opened maps, but requires a running HTTP server.
+
         * ``outputdir="<output directory path"``
             Path to overviewer output directory. For simplicity, specify this 
             as ``outputdir=outputdir`` and place this line after setting
