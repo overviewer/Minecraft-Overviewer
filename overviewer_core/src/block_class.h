@@ -36,12 +36,6 @@ extern const size_t block_class_stair_len;
 extern const mc_block_t block_class_door[];
 extern const size_t block_class_door_len;
 
-extern const mc_block_t block_class_fence[];
-extern const size_t block_class_fence_len;
-
-extern const mc_block_t block_class_fence_gate[];
-extern const size_t block_class_fence_gate_len;
-
 extern const mc_block_t block_class_ancil[];
 extern const size_t block_class_ancil_len;
 
