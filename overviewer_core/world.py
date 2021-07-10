@@ -274,7 +274,7 @@ class RegionSet(object):
         elif self.rel == "region":
             # this is the main world
             self.type = None
-        elif self.rel == "entities":
+        elif "entities" in os.path.split(self.rel):
             self.type = "entities"
         else:
             logging.warning("Unknown region type in %r, rel %r", regiondir, self.rel)
