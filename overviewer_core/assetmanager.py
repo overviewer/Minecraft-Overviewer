@@ -181,6 +181,10 @@ top-level directory.
             od_fd = os.open(self.outputdir, os.O_DIRECTORY)
             try:
                 os.symlink("markers", "icons", target_is_directory=True, dir_fd=od_fd)
+            except OSError:
+                # Example setup where this happens:
+                # Linux renders onto Windows CIFS share
+                logging.warning("Could not create the icons symlink")
             finally:
                 os.close(od_fd)
         # write a dummy baseMarkers.js if none exists

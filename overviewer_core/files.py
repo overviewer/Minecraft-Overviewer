@@ -47,18 +47,23 @@ def does_chmod_work(dir_to_test):
     return chmod_works
 
 def does_rename_work(dir_to_test):
-    with tempfile.NamedTemporaryFile(dir=dir_to_test) as f1:
-        with tempfile.NamedTemporaryFile(dir=dir_to_test) as f2:
-            try:
-                os.rename(f1.name,f2.name)
-            except OSError:
-                renameworks = False
-                logging.debug("Detected that overwriting renames do NOT work in %r" % dir_to_test)
-            else:
-                renameworks = True
-                logging.debug("Detected that overwriting renames work in %r" % dir_to_test)
-                # re-make this file so it can be deleted without error
-                open(f1.name, 'w').close()
+    try:
+        with tempfile.NamedTemporaryFile(dir=dir_to_test) as f1:
+            with tempfile.NamedTemporaryFile(dir=dir_to_test) as f2:
+                try:
+                    os.rename(f1.name,f2.name)
+                except OSError:
+                    renameworks = False
+                    logging.debug("Detected that overwriting renames do NOT work in %r"
+                                  % dir_to_test)
+                else:
+                    renameworks = True
+                    logging.debug("Detected that overwriting renames work in %r" % dir_to_test)
+                    # re-make this file so it can be deleted without error
+                    open(f1.name, 'w').close()
+    except FileNotFoundError:
+        # Special handling for CIFS, which simply cannot cope with any rename whatsoever
+        renameworks = False
     return renameworks
 
 ## useful recursive copy, that ignores common OS cruft
