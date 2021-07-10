@@ -143,29 +143,6 @@ const mc_block_t block_class_door[] = {
     block_warped_door};
 const size_t block_class_door_len = COUNT_OF(block_class_door);
 
-const mc_block_t block_class_fence[] = {
-    block_fence,
-    block_nether_brick_fence,
-    block_spruce_fence,
-    block_birch_fence,
-    block_jungle_fence,
-    block_dark_oak_fence,
-    block_crimson_fence,
-    block_warped_fence,
-    block_acacia_fence};
-const size_t block_class_fence_len = COUNT_OF(block_class_fence);
-
-const mc_block_t block_class_fence_gate[] = {
-    block_fence_gate,
-    block_spruce_fence_gate,
-    block_birch_fence_gate,
-    block_jungle_fence_gate,
-    block_dark_oak_fence_gate,
-    block_acacia_fence_gate,
-    block_crimson_fence_gate,
-    block_warped_fence_gate};
-const size_t block_class_fence_gate_len = COUNT_OF(block_class_fence_gate);
-
 const mc_block_t block_class_ancil[] = {
     block_wooden_door,
     block_iron_door,
@@ -229,10 +206,8 @@ const mc_block_t block_class_ancil[] = {
     block_glass,
     block_redstone_wire,
     block_ice,
-    block_fence,
     block_portal,
     block_waterlily,
-    block_nether_brick_fence,
     block_andesite_wall,
     block_brick_wall,
     block_cobblestone_wall,
@@ -252,13 +227,6 @@ const mc_block_t block_class_ancil[] = {
     block_polished_blackstone_brick_wall,
     block_double_plant,
     block_stained_glass,
-    block_spruce_fence,
-    block_birch_fence,
-    block_jungle_fence,
-    block_dark_oak_fence,
-    block_crimson_fence,
-    block_warped_fence,
-    block_acacia_fence,
     block_cobbled_deepslate_wall,
     block_polished_deepslate_wall,
     block_deepslate_brick_wall,

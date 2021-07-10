@@ -1303,10 +1303,14 @@ class RegionSet(object):
                 data = p['rotation']
         elif key.endswith('_fence'):
             p = palette_entry['Properties']
-            if p['north'] == 'true': data |= 1
-            if p['west']  == 'true': data |= 2
-            if p['south'] == 'true': data |= 4
-            if p['east']  == 'true': data |= 8
+            if p['north'] == 'true':
+                data |= 1
+            if p['east'] == 'true':
+                data |= 2
+            if p['south'] == 'true':
+                data |= 4
+            if p['west'] == 'true':
+                data |= 8
         elif key.endswith('_stairs'):
             facing = palette_entry['Properties']['facing']
             if   facing == 'south': data = 2

@@ -3665,10 +3665,8 @@ def jukebox(self, blockid, data):
     return self.build_block(self.load_image_texture("assets/minecraft/textures/block/jukebox_top.png"), self.load_image_texture("assets/minecraft/textures/block/note_block.png"))
 
 # nether and normal fences
-# uses pseudo-ancildata found in iterate.c
 @material(blockid=[85, 188, 189, 190, 191, 192, 113, 511, 512], data=list(range(16)), transparent=True, nospawn=True)
 def fence(self, blockid, data):
-    # no need for rotations, it uses pseudo data.
     # create needed images for Big stick fence
     if blockid == 85: # normal fence
         fence_top = self.load_image_texture("assets/minecraft/textures/block/oak_planks.png").copy()
@@ -3769,24 +3767,34 @@ def fence(self, blockid, data):
     pos_top_right = (10,3)
     pos_bottom_right = (10,7)
     pos_bottom_left = (2,7)
-    
+
     # +x axis points top right direction
     # +y axis points bottom right direction
-    # First compose small sticks in the back of the image, 
-    # then big stick and thecn small sticks in the front.
+    # First compose small sticks in the back of the image,
+    # then big stick and then small sticks in the front.
+    def draw_north():
+        alpha_over(img, fence_small_side, pos_top_left, fence_small_side)
+    def draw_east():
+        alpha_over(img, fence_small_other_side, pos_top_right, fence_small_other_side)
+    def draw_south():
+        alpha_over(img, fence_small_side, pos_bottom_right, fence_small_side)
+    def draw_west():
+        alpha_over(img, fence_small_other_side, pos_bottom_left, fence_small_other_side)
 
-    if (data & 0b0001) == 1:
-        alpha_over(img,fence_small_side, pos_top_left,fence_small_side)                # top left
-    if (data & 0b1000) == 8:
-        alpha_over(img,fence_small_other_side, pos_top_right,fence_small_other_side)    # top right
-        
-    alpha_over(img,fence_big,(0,0),fence_big)
-        
-    if (data & 0b0010) == 2:
-        alpha_over(img,fence_small_other_side, pos_bottom_left,fence_small_other_side)      # bottom left    
-    if (data & 0b0100) == 4:
-        alpha_over(img,fence_small_side, pos_bottom_right,fence_small_side)                  # bottom right
-    
+    draw_funcs = [draw_north, draw_east, draw_south, draw_west]
+
+    if (data & 0b0001):
+        draw_funcs[(self.rotation + 0) % len(draw_funcs)]()
+    if (data & 0b0010):
+        draw_funcs[(self.rotation + 1) % len(draw_funcs)]()
+
+    alpha_over(img, fence_big, (0, 0), fence_big)
+
+    if (data & 0b0100):
+        draw_funcs[(self.rotation + 2) % len(draw_funcs)]()
+    if (data & 0b1000):
+        draw_funcs[(self.rotation + 3) % len(draw_funcs)]()
+
     return img
 
 # pumpkin

@@ -276,12 +276,6 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if (block_class_is_subset(state->block, block_class_fence, block_class_fence_len)) { /* fences */
-        /* check for fences AND fence gates */
-        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, block_fence_gate) |
-               check_adjacent_blocks(state, x, y, z, block_fence_gate) | check_adjacent_blocks(state, x, y, z, block_birch_fence_gate) | check_adjacent_blocks(state, x, y, z, block_jungle_fence_gate) |
-               check_adjacent_blocks(state, x, y, z, block_dark_oak_fence_gate) | check_adjacent_blocks(state, x, y, z, block_acacia_fence_gate)
-                | check_adjacent_blocks(state, x, y, z, block_crimson_fence_gate) | check_adjacent_blocks(state, x, y, z, block_warped_fence_gate);
 
     } else if (state->block == block_redstone_wire) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
@@ -317,8 +311,8 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         }
         return final_data;
 
-    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_portal, block_nether_brick_fence}, 2)) {
-        /* portal and nether brick fences */
+    } else if (state->block == block_portal) {
+        /* portal */
         return check_adjacent_blocks(state, x, y, z, state->block);
 
     } else if (block_class_is_subset(state->block, block_class_door, block_class_door_len)) {
@@ -620,7 +614,7 @@ chunk_render(PyObject* self, PyObject* args) {
                     state.block_data = ancilData;
                     /* block that need pseudo ancildata:
                      * grass, water, glass, chest, restone wire,
-                     * ice, fence, portal, iron bars, glass panes,
+                     * ice, portal, iron bars,
                      * trapped chests, stairs */
                     if (block_class_is_subset(state.block, block_class_ancil, block_class_ancil_len)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
