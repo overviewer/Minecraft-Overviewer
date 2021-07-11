@@ -6059,3 +6059,19 @@ block(blockid=1098, top_image="assets/minecraft/textures/block/chiseled_deepslat
 block(blockid=1107, top_image="assets/minecraft/textures/block/dripstone_block.png")
 block(blockid=1108, top_image="assets/minecraft/textures/block/smooth_basalt.png")
 block(blockid=1109, top_image="assets/minecraft/textures/block/tuff.png")
+
+
+@material(blockid=1110, data=list(range(16)), transparent=True)
+def pointed_dripstone(self, blockid, data):
+    up_down = "down" if data & 0b1000 else "up"
+    if (data & 4) == 4: # base
+        tex = self.load_image_texture("assets/minecraft/textures/block/pointed_dripstone_%s_base.png" % (up_down))
+    elif (data & 3) == 3: # frustum
+        tex = self.load_image_texture("assets/minecraft/textures/block/pointed_dripstone_%s_frustum.png" % (up_down))
+    elif (data & 2) == 2: # middle
+        tex = self.load_image_texture("assets/minecraft/textures/block/pointed_dripstone_%s_middle.png" % (up_down))
+    elif (data & 1) == 1: # tip_merge
+        tex = self.load_image_texture("assets/minecraft/textures/block/pointed_dripstone_%s_tip_merge.png" % (up_down))
+    else: # 0 - tip
+        tex = self.load_image_texture("assets/minecraft/textures/block/pointed_dripstone_%s_tip.png" % (up_down))
+    return self.build_sprite(tex)
