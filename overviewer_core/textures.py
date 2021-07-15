@@ -3601,8 +3601,6 @@ def end_rod(self, blockid, data):
 # snow
 @material(blockid=78, data=list(range(1, 9)), transparent=True, solid=True)
 def snow(self, blockid, data):
-    # still not rendered correctly: data other than 0
-
     tex = self.load_image_texture("assets/minecraft/textures/block/snow.png")
 
     y = 16 - (data * 2)
@@ -3615,6 +3613,13 @@ def snow(self, blockid, data):
     top = self.transform_image_top(tex)
     side = self.transform_image_side(sidetex)
     otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
 
     alpha_over(img, side, (0, 6), side)
     alpha_over(img, otherside, (12, 6), otherside)

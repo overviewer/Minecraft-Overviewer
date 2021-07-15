@@ -45,8 +45,13 @@ edge_lines_draw(void* data, RenderState* state, PyObject* src, PyObject* mask, P
         int32_t increment = 0;
         if (block_class_is_subset(state->block, (mc_block_t[]){block_wooden_slab, block_stone_slab}, 2) && ((state->block_data & 0x8) == 0)) // half-steps BUT no upsidown half-steps
             increment = 6;
-        else if (block_class_is_subset(state->block, (mc_block_t[]){block_snow_layer, block_unpowered_repeater, block_powered_repeater}, 3)) // snow, redstone repeaters (on and off)
+        else if (block_class_is_subset(state->block, (mc_block_t[]){block_unpowered_repeater, block_powered_repeater}, 2)) // redstone repeaters (on and off)
             increment = 9;
+        else if (state->block == block_snow_layer) {
+            uint32_t block_data = get_data(state, DATA, x, y, z);
+            // height calculation from textures.py -> def snow
+            increment = (int)((12.0f - (12.0f / 8.0f * (float)block_data)));
+        }
 
         /* +X side */
         side_block = get_data(state, BLOCKS, x + 1, y, z);
