@@ -394,6 +394,17 @@ enum mc_block_id {
     block_tuff = 1109,
     block_pointed_dripstone = 1110,
 
+    block_powder_snow = 1111,
+    block_hanging_roots = 1112,
+    block_small_amethyst_bud = 1113,
+    block_medium_amethyst_bud = 1114,
+    block_large_amethyst_bud = 1115,
+    block_cave_vines_plant = 1116,
+    block_cave_vines = 1117,
+    block_lightning_rod = 1118,
+    block_glow_lichen = 1119,
+    block_spore_blossom = 1120,
+
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls
