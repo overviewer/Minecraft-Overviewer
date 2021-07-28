@@ -392,6 +392,7 @@ enum mc_block_id {
     block_dripstone = 1107,
     block_smooth_basalt = 1108,
     block_tuff = 1109,
+    block_pointed_dripstone = 1110,
 
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792

@@ -846,6 +846,7 @@ class RegionSet(object):
             'minecraft:dripstone_block': (1107, 0),
             'minecraft:smooth_basalt': (1108, 0),
             'minecraft:tuff': (1109, 0),
+            'minecraft:pointed_dripstone': (1110, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
@@ -1400,6 +1401,10 @@ class RegionSet(object):
                 data |= (4 << 4)
             if p['west'] == 'true':
                 data |= (8 << 4)
+        elif key == 'minecraft:pointed_dripstone':
+            p = palette_entry['Properties']
+            data = {'tip': 0, 'tip_merge': 1, 'middle': 2, 'frustum': 3, 'base': 4}[p['thickness']]
+            data |= {'up': 0, 'down': 0b1000}[p['vertical_direction']]
 
         return (block, data)
 
