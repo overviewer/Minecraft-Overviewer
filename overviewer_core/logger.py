@@ -44,9 +44,9 @@ COLORIZE = {
     'DEBUG': CYAN,
 }
 HIGHLIGHT = {
-    'CRITICAL': RED,
-    'ERROR': RED,
-    'WARNING': YELLOW,
+    'CRITICAL': COLOR_SEQ % (40 + RED)    + COLOR_SEQ % (30 + WHITE),
+    'ERROR':    COLOR_SEQ % (40 + RED)    + COLOR_SEQ % (30 + WHITE),
+    'WARNING':  COLOR_SEQ % (40 + YELLOW) + COLOR_SEQ % (30 + BLACK),
 }
 
 
@@ -244,7 +244,7 @@ class ANSIColorFormatter(HighlightingFormatter):
         elif record.levelname in HIGHLIGHT:
             # Colorize the entire line
             line = logging.Formatter.format(self, record)
-            line = COLOR_SEQ % (40 + HIGHLIGHT[record.levelname]) + line + RESET_SEQ
+            line = HIGHLIGHT[record.levelname] + line + RESET_SEQ
             return line
 
         else:
