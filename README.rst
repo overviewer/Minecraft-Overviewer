@@ -70,6 +70,15 @@ in a web browser.
 
 You can throw these files up to a web server to let others view your map.
 
+Bedrock and other formats
+=========================
+
+Minecraft Overviewer only supports the world format from the Java edition of Minecraft.
+Minecraft Bedrock (the Windows 10 version) is not supported by Overviewer, but users
+have reported success using `Amulet <https://www.amuletmc.com/>`__ to convert
+Bedrock worlds to the Java format, and then used Overviewer to render the converted
+worlds.
+
 Bugs
 ====
 
