@@ -4654,21 +4654,24 @@ def brewing_stand(self, blockid, data):
 
 
 # cauldron
-@material(blockid=118, data=list(range(4)), transparent=True, solid=True, nospawn=True)
+@material(blockid=[118, 11701, 11702, 11703], data=list(range(4)), transparent=True, solid=True, nospawn=True)
 def cauldron(self, blockid, data):
     side = self.load_image_texture("assets/minecraft/textures/block/cauldron_side.png").copy()
     top = self.load_image_texture("assets/minecraft/textures/block/cauldron_top.png")
     bottom = self.load_image_texture("assets/minecraft/textures/block/cauldron_inner.png")
-    water = self.transform_image_top(self.load_image_texture("water.png"))
-    # Side texture isn't transparent between the feet, so adjust the texture
-    ImageDraw.Draw(side).rectangle((5, 14, 11, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+    if blockid == 11701:
+        liquid = self.transform_image_top(self.load_image_texture("lava.png"))
+    elif blockid == 11702:
+        liquid = self.transform_image_top(self.load_image_texture("assets/minecraft/textures/block/snow.png"))
+    else:
+        liquid = self.transform_image_top(self.load_image_texture("water.png"))
 
     if data == 0:  # Empty
         img = self.build_full_block(top, side, side, side, side)
     else:  # Part or fully filled
         # Is filled in increments of a third, with data indicating how many thirds are filled
         img = self.build_full_block(None, side, side, None, None)
-        alpha_over(img, water, (0, 12 - data * 4), water)
+        alpha_over(img, liquid, (0, 12 - data * 4), liquid)
         img2 = self.build_full_block(top, None, None, side, side)
         alpha_over(img, img2, (0, 0), img2)
 

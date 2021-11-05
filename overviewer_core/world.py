@@ -971,6 +971,10 @@ class RegionSet(object):
             'minecraft:sweet_berry_bush': (11505, 0),
             'minecraft:campfire': (11506, 0),
             'minecraft:bell': (11507, 0),
+            #1.17 blocks
+            'minecraft:lava_cauldron': (11701, 0),
+            'minecraft:powder_snow_cauldron': (11702, 0),
+            'minecraft:water_cauldron': (11703, 0),
             # adding a gap in the numbering of walls to keep them all
             # blocks >= 1792 and <= 2047 are considered walls
             'minecraft:andesite_wall': (1792, 0),
@@ -1366,7 +1370,17 @@ class RegionSet(object):
         elif key == 'minecraft:respawn_anchor':
             data = int(palette_entry['Properties']['charges'])
         elif key == 'minecraft:cauldron':
+            data = 0
+            print(f'Found cauldron:{data}')
+        elif key == 'minecraft:lava_cauldron':
+            data = 3
+            print(f'Found lava cauldron:{data}')
+        elif key == 'minecraft:water_cauldron':
             data = int(palette_entry['Properties'].get('level', '0'))
+            print(f'Found water cauldron:{data}')
+        elif key == 'minecraft:powder_snow_cauldron':
+            data = int(palette_entry['Properties'].get('level', '0'))
+            print(f'Found snow cauldron:{data}')
         elif key == 'minecraft:structure_block':
             block_mode = palette_entry['Properties'].get('mode', 'save')
             data = {'save': 0, 'load': 1, 'corner': 2, 'data': 3}.get(block_mode, 0)
