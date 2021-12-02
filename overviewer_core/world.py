@@ -1509,6 +1509,39 @@ class RegionSet(object):
         
         return result
 
+    def _get_blockdata_v118(self, section, unrecognized_block_types, longarray_unpacker):
+        block_states = section['block_states']
+        palette = block_states.get('palette')
+        block_states_data = block_states.get('data')
+
+        if not block_states_data:
+            # This chunk is missing its block data, skip it
+            block_states_data = numpy.zeros((256,), dtype=numpy.uint16)
+
+        # Translate each entry in the palette to a 1.2-era (block, data) int pair.
+        num_palette_entries = len(palette)
+        translated_blocks = numpy.zeros((num_palette_entries,), dtype=numpy.uint16) # block IDs
+        translated_data = numpy.zeros((num_palette_entries,), dtype=numpy.uint8) # block data
+        for i in range(num_palette_entries):
+            key = palette[i]
+            try:
+                translated_blocks[i], translated_data[i] = self._get_block(key)
+            except KeyError:
+                pass    # We already have initialised arrays with 0 (= air)
+
+        # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
+        blocks = numpy.empty((4096,), dtype=numpy.uint16)
+        data = numpy.empty((4096,), dtype=numpy.uint8)
+        block_states = longarray_unpacker(block_states_data, 4096, num_palette_entries)
+        blocks[:] = translated_blocks[block_states]
+        data[:] = translated_data[block_states]
+
+        # Turn the Data array into a 16x16x16 matrix, same as SkyLight
+        blocks = blocks.reshape((16, 16, 16))
+        data = data.reshape((16, 16, 16))
+
+        return (blocks, data)
+
     def _get_blockdata_v113(self, section, unrecognized_block_types, longarray_unpacker):
         # Translate each entry in the palette to a 1.2-era (block, data) int pair.
         num_palette_entries = len(section['Palette'])
@@ -1634,8 +1667,15 @@ class RegionSet(object):
         if data is None:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
-        level = data[1]['Level']
-        chunk_data = level
+        chunk_data = data[1]
+
+        if not 'sections' in chunk_data:
+            # This world was generated pre 21w43a and thus most chunk data is contained
+            # in the "Level" key
+            chunk_data = chunk_data['Level']
+        else:
+            # This world was generated post 21w43a
+            chunk_data['Sections'] = chunk_data['sections']
 
         longarray_unpacker = self._packed_longarray_to_shorts
         if data[1].get('DataVersion', 0) >= 2529:
@@ -1668,6 +1708,8 @@ class RegionSet(object):
             # Worlds converted by Jeb's program may be missing the Biomes key.
             # Additionally, 19w09a worlds have an empty array as biomes key
             # in some cases.
+
+            # TODO: Implement paletted biomes for >21w39a
             biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
         chunk_data['Biomes'] = biomes
         chunk_data['NewBiomes'] = (len(biomes.shape) == 3)
@@ -1707,7 +1749,9 @@ class RegionSet(object):
                 del blocklight
                 section['BlockLight'] = blocklight_expanded
 
-                if 'Palette' in section:
+                if 'block_states' in section:
+                    (blocks, data) = self._get_blockdata_v118(section, unrecognized_block_types, longarray_unpacker)
+                elif 'Palette' in section:
                     (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types, longarray_unpacker)
                 elif 'Data' in section:
                     (blocks, data) = self._get_blockdata_v112(section)
