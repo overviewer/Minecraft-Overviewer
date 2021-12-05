@@ -506,7 +506,10 @@ class RegionSet(object):
             'minecraft:nether_wart': (115, 0),
             'minecraft:enchanting_table': (116, 0),
             'minecraft:brewing_stand': (117, 0),
-            'minecraft:cauldron': (118, 0),
+            'minecraft:cauldron': (118, 1 << 2),
+            'minecraft:water_cauldron': (118, 1 << 2),
+            'minecraft:lava_cauldron': (118, (2 << 2) | 3),
+            'minecraft:powder_snow_cauldron': (118, 3 << 2),
             'minecraft:end_portal': (119, 0),
             'minecraft:end_portal_frame': (120, 0),
             'minecraft:end_stone': (121, 0),
@@ -625,6 +628,7 @@ class RegionSet(object):
             'minecraft:green_carpet': (171, 13),
             'minecraft:red_carpet': (171, 14),
             'minecraft:black_carpet': (171, 15),
+            'minecraft:moss_carpet': (171, 16),
             'minecraft:terracotta': (172, 0),
             'minecraft:coal_block': (173, 0),
             'minecraft:packed_ice': (174, 0),
@@ -847,6 +851,17 @@ class RegionSet(object):
             'minecraft:smooth_basalt': (1108, 0),
             'minecraft:tuff': (1109, 0),
             'minecraft:pointed_dripstone': (1110, 0),
+
+            'minecraft:powder_snow': (1111, 0),
+            'minecraft:hanging_roots': (1112, 0),
+            'minecraft:small_amethyst_bud': (1113, 0),
+            'minecraft:medium_amethyst_bud': (1114, 0),
+            'minecraft:large_amethyst_bud': (1115, 0),
+            'minecraft:cave_vines_plant': (1116, 0),
+            'minecraft:cave_vines': (1117, 0),
+            'minecraft:lightning_rod': (1118, 0),
+            'minecraft:glow_lichen': (1119, 0),
+            'minecraft:spore_blossom': (1120, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
@@ -1365,8 +1380,9 @@ class RegionSet(object):
                 data |= 4
         elif key == 'minecraft:respawn_anchor':
             data = int(palette_entry['Properties']['charges'])
-        elif key == 'minecraft:cauldron':
-            data = int(palette_entry['Properties'].get('level', '0'))
+        elif key in ['minecraft:cauldron', 'minecraft:water_cauldron',
+                     'minecraft:lava_cauldron', 'minecraft:powder_snow_cauldron']:
+            data |= int(palette_entry.get('Properties', {}).get('level', '0'))
         elif key == 'minecraft:structure_block':
             block_mode = palette_entry['Properties'].get('mode', 'save')
             data = {'save': 0, 'load': 1, 'corner': 2, 'data': 3}.get(block_mode, 0)
@@ -1405,6 +1421,28 @@ class RegionSet(object):
             p = palette_entry['Properties']
             data = {'tip': 0, 'tip_merge': 1, 'middle': 2, 'frustum': 3, 'base': 4}[p['thickness']]
             data |= {'up': 0, 'down': 0b1000}[p['vertical_direction']]
+        elif key in ['minecraft:small_amethyst_bud', 'minecraft:medium_amethyst_bud', 'minecraft:large_amethyst_bud',
+                     'minecraft:lightning_rod']:
+            p = palette_entry['Properties']
+            data = {'down': 0, 'up': 1, 'east': 2, 'south': 3, 'west': 4, 'north': 5}[p['facing']]
+        elif key in ['minecraft:cave_vines_plant', 'minecraft:cave_vines']:
+            p = palette_entry['Properties']
+            if p['berries'] == 'true':
+                data = 1
+        elif key == 'minecraft:glow_lichen':
+            p = palette_entry['Properties']
+            if p['down'] == 'true':
+                data |= 1 << 0
+            if p['up'] == 'true':
+                data |= 1 << 1
+            if p['east'] == 'true':
+                data |= 1 << 2
+            if p['south'] == 'true':
+                data |= 1 << 3
+            if p['west'] == 'true':
+                data |= 1 << 4
+            if p['north'] == 'true':
+                data |= 1 << 5
 
         return (block, data)
 

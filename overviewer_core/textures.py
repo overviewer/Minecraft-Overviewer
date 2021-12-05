@@ -4654,24 +4654,29 @@ def brewing_stand(self, blockid, data):
 
 
 # cauldron
-@material(blockid=118, data=list(range(4)), transparent=True, solid=True, nospawn=True)
+@material(blockid=118, data=list(range(16)), transparent=True, solid=True, nospawn=True)
 def cauldron(self, blockid, data):
     side = self.load_image_texture("assets/minecraft/textures/block/cauldron_side.png").copy()
     top = self.load_image_texture("assets/minecraft/textures/block/cauldron_top.png")
-    bottom = self.load_image_texture("assets/minecraft/textures/block/cauldron_inner.png")
-    water = self.transform_image_top(self.load_image_texture("water.png"))
+    filltype = (data & (3 << 2)) >> 2
+    if filltype == 3:
+        water = self.transform_image_top(self.load_image_texture("assets/minecraft/textures/block/powder_snow.png"))
+    elif filltype == 2:
+        water = self.transform_image_top(self.load_image_texture("assets/minecraft/textures/block/lava_still.png"))
+    else: # filltype == 1 or 0
+        water = self.transform_image_top(self.load_image_texture("water.png"))
     # Side texture isn't transparent between the feet, so adjust the texture
     ImageDraw.Draw(side).rectangle((5, 14, 11, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
 
-    if data == 0:  # Empty
+    level = (data & 3)
+    if level == 0:  # Empty
         img = self.build_full_block(top, side, side, side, side)
     else:  # Part or fully filled
-        # Is filled in increments of a third, with data indicating how many thirds are filled
+        # Is filled in increments of a third, with level indicating how many thirds are filled
         img = self.build_full_block(None, side, side, None, None)
-        alpha_over(img, water, (0, 12 - data * 4), water)
+        alpha_over(img, water, (0, 12 - level * 4), water)
         img2 = self.build_full_block(top, None, None, side, side)
         alpha_over(img, img2, (0, 0), img2)
-
     return img
 
 
@@ -5289,9 +5294,12 @@ def hayblock(self, blockid, data):
 
 
 # carpet - wool block that's small?
-@material(blockid=171, data=list(range(16)), transparent=True)
+@material(blockid=171, data=list(range(17)), transparent=True)
 def carpet(self, blockid, data):
-    texture = self.load_image_texture("assets/minecraft/textures/block/%s_wool.png" % color_map[data])
+    if data < 16:
+        texture = self.load_image_texture("assets/minecraft/textures/block/%s_wool.png" % color_map[data])
+    elif data == 16:
+        texture = self.load_image_texture("assets/minecraft/textures/block/moss_block.png")
 
     return self.build_full_block((texture,15),texture,texture,texture,texture)
 
@@ -6080,3 +6088,289 @@ def pointed_dripstone(self, blockid, data):
     else: # 0 - tip
         tex = self.load_image_texture("assets/minecraft/textures/block/pointed_dripstone_%s_tip.png" % (up_down))
     return self.build_sprite(tex)
+
+
+block(blockid=1111, top_image="assets/minecraft/textures/block/powder_snow.png")
+
+
+@material(blockid=1112, data=0, transparent=True)
+def hangings_roots(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/block/hanging_roots.png")
+    return self.build_sprite(tex)
+
+
+@material(blockid=[1113, 1114, 1115], data=list(range(6)), transparent=True)
+def amethyst_bud(self, blockid, data):
+    if blockid == 1113:
+        tex = self.load_image_texture("assets/minecraft/textures/block/small_amethyst_bud.png")
+    elif blockid == 1114:
+        tex = self.load_image_texture("assets/minecraft/textures/block/medium_amethyst_bud.png")
+    elif blockid == 1115:
+        tex = self.load_image_texture("assets/minecraft/textures/block/large_amethyst_bud.png")
+
+    def draw_north():
+        rotated = tex.rotate(90)
+        side = self.transform_image_side(rotated)
+        otherside = self.transform_image_top(rotated)
+        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        alpha_over(img, side, (6, 3), side)
+        alpha_over(img, otherside, (0, 6), otherside)
+
+    def draw_south():
+        rotated = tex.rotate(-90)
+        side = self.transform_image_side(rotated)
+        otherside = self.transform_image_top(rotated)
+        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        alpha_over(img, side, (6, 3), side)
+        alpha_over(img, otherside, (0, 6), otherside)
+
+    def draw_west():
+        rotated = tex.rotate(-90)
+        side = self.transform_image_side(rotated)
+        side = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = self.transform_image_top(rotated)
+        otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        alpha_over(img, side, (6, 3), side)
+        alpha_over(img, otherside, (0, 6), otherside)
+
+    def draw_east():
+        rotated = tex.rotate(90)
+        side = self.transform_image_side(rotated)
+        side = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = self.transform_image_top(rotated)
+        otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        alpha_over(img, side, (6, 3), side)
+        alpha_over(img, otherside, (0, 6), otherside)
+
+    draw_funcs = [draw_east, draw_south, draw_west, draw_north]
+
+    if data == 0: # down
+        tex = tex.transpose(Image.FLIP_TOP_BOTTOM)
+        return self.build_sprite(tex)
+    elif data == 1: # up
+        return self.build_sprite(tex)
+    elif data == 5: # north
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        draw_funcs[(self.rotation + 3) % len(draw_funcs)]()
+        return img
+    elif data == 3: # south
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        draw_funcs[(self.rotation + 1) % len(draw_funcs)]()
+        return img
+    elif data == 4: # west
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        draw_funcs[(self.rotation + 2) % len(draw_funcs)]()
+        return img
+    elif data == 2: # east
+        img = Image.new("RGBA", (24, 24), self.bgcolor)
+        draw_funcs[(self.rotation + 0) % len(draw_funcs)]()
+        return img
+
+    return self.build_sprite(tex)
+
+
+@material(blockid=[1116, 1117], data=list(range(2)), transparent=True)
+def cave_vines(self, blockid, data):
+    if blockid == 1116:
+        if data == 1:
+            tex = self.load_image_texture("assets/minecraft/textures/block/cave_vines_plant_lit.png")
+        else:
+            tex = self.load_image_texture("assets/minecraft/textures/block/cave_vines_plant.png")
+    elif blockid == 1117:
+        if data == 1:
+            tex = self.load_image_texture("assets/minecraft/textures/block/cave_vines_lit.png")
+        else:
+            tex = self.load_image_texture("assets/minecraft/textures/block/cave_vines.png")
+    return self.build_sprite(tex)
+
+
+@material(blockid=1118, data=list(range(6)), transparent=True, solid=True)
+def lightning_rod(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/block/lightning_rod.png")
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+
+    mask = tex.crop((0, 4, 2, 16))
+    sidetex = Image.new(tex.mode, tex.size, self.bgcolor)
+    alpha_over(sidetex, mask, (14, 4), mask)
+
+    mask = tex.crop((0, 0, 4, 4))
+    toptex = Image.new(tex.mode, tex.size, self.bgcolor)
+    alpha_over(toptex, mask, (12, 0), mask)
+
+    mask = tex.crop((0, 4, 2, 6))
+    side_toptex = Image.new(tex.mode, tex.size, self.bgcolor)
+    alpha_over(side_toptex, mask, (12, 0), mask)
+
+    def draw_east():
+        toptex_rotated = toptex.rotate(90)
+        top_side = self.transform_image_side(toptex_rotated)
+        top_side = top_side.transpose(Image.FLIP_LEFT_RIGHT)
+        top_otherside = self.transform_image_top(toptex)
+        top_otherside = top_otherside.transpose(Image.FLIP_LEFT_RIGHT)
+        top_top = self.transform_image_side(toptex)
+
+        # top
+        alpha_over(img, top_otherside, (6, 6), top_otherside)
+        # side
+        alpha_over(img, top_side, (8, 7), top_side)
+        alpha_over(img, top_top, (6, 2), top_top)
+
+        roated_side = sidetex.rotate(90)
+        side = self.transform_image_side(roated_side)
+        side = side.transpose(Image.FLIP_TOP_BOTTOM)
+        otherside = self.transform_image_top(sidetex)
+        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        side_top = self.transform_image_side(side_toptex)
+
+        alpha_over(img, otherside, (-7, 4), otherside)
+        alpha_over(img, side, (5, -1), side)
+        alpha_over(img, side_top, (-2, 9), side_top)
+
+    def draw_south():
+        roated_side = sidetex.rotate(90)
+        side = self.transform_image_side(roated_side)
+        otherside = self.transform_image_top(sidetex)
+
+        alpha_over(img, side, (3, 6), side)
+        alpha_over(img, otherside, (-8, 6), otherside)
+
+        toptex_rotated = toptex.rotate(90)
+        top_side = self.transform_image_side(toptex_rotated)
+        top_otherside = self.transform_image_top(toptex)
+        top_top = self.transform_image_side(toptex)
+        top_top = top_top.transpose(Image.FLIP_LEFT_RIGHT)
+
+        alpha_over(img, top_side, (15, 12), top_side)
+        alpha_over(img, top_otherside, (5, 10), top_otherside)
+        alpha_over(img, top_top, (17, 7), top_top)
+
+    def draw_west():
+        roated_side = sidetex.rotate(90)
+        side = self.transform_image_side(roated_side)
+        side = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = self.transform_image_top(sidetex)
+        otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+
+        alpha_over(img, side, (10, 6), side)
+        alpha_over(img, otherside, (8, 6), otherside)
+
+        toptex_rotated = toptex.rotate(90)
+        top_side = self.transform_image_side(toptex_rotated)
+        top_side = top_side.transpose(Image.FLIP_LEFT_RIGHT)
+        top_otherside = self.transform_image_top(toptex)
+        top_otherside = top_otherside.transpose(Image.FLIP_LEFT_RIGHT)
+        top_top = self.transform_image_side(toptex)
+
+        # top
+        alpha_over(img, top_otherside, (-3, 10), top_otherside)
+        # side
+        alpha_over(img, top_side, (0, 11), top_side)
+        alpha_over(img, top_top, (-3, 7), top_top)
+
+    def draw_north():
+        roated_side = sidetex.rotate(90)
+        side = self.transform_image_side(roated_side)
+        otherside = self.transform_image_top(sidetex)
+
+        alpha_over(img, side, (4, 7), side)
+        alpha_over(img, otherside, (-6, 7), otherside)
+
+        toptex_rotated = toptex.rotate(90)
+        top_side = self.transform_image_side(toptex_rotated)
+        top_otherside = self.transform_image_top(toptex)
+        top_top = self.transform_image_side(toptex)
+        top_top = top_top.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, top_otherside, (-4, 6), top_otherside)
+        alpha_over(img, top_side, (5, 7), top_side)
+        alpha_over(img, top_top, (8, 3), top_top)
+
+    draw_funcs = [draw_east, draw_south, draw_west, draw_north]
+
+    if data == 1: # up
+        side = self.transform_image_side(sidetex)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, side, (0, 6 - 4), side)
+        alpha_over(img, otherside, (12, 6 - 4), otherside)
+
+        top_top = self.transform_image_top(toptex)
+        top_side = self.transform_image_side(toptex)
+        top_otherside = top_side.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, top_side, (0, 6 - 4), top_side)
+        alpha_over(img, top_otherside, (12, 6 - 4), top_otherside)
+        alpha_over(img, top_top, (0, 5), top_top)
+    elif data == 0: # down
+        toptex_flipped = toptex.transpose(Image.FLIP_TOP_BOTTOM)
+        top_top = self.transform_image_top(toptex)
+        top_side = self.transform_image_side(toptex_flipped)
+        top_otherside = top_side.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, top_side, (0, 6 - 4), top_side)
+        alpha_over(img, top_otherside, (12, 6 - 4), top_otherside)
+        alpha_over(img, top_top, (0, 14), top_top)
+
+        flipped = sidetex.transpose(Image.FLIP_TOP_BOTTOM)
+        side_top = self.transform_image_top(side_toptex)
+        side = self.transform_image_side(flipped)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        alpha_over(img, side, (0, 6 - 4), side)
+        alpha_over(img, otherside, (12, 6 - 4), otherside)
+        alpha_over(img, side_top, (2, 6), side_top)
+    elif data == 3: # south
+        draw_funcs[(self.rotation + 1) % len(draw_funcs)]()
+    elif data == 4: # west
+        draw_funcs[(self.rotation + 2) % len(draw_funcs)]()
+    elif data == 2: # east
+        draw_funcs[(self.rotation + 0) % len(draw_funcs)]()
+    elif data == 5: # north
+        draw_funcs[(self.rotation + 3) % len(draw_funcs)]()
+
+    return img
+
+
+@material(blockid=1119, data=list(range(1 << 6)), transparent=True)
+def glow_lichen(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/block/glow_lichen.png")
+
+    bottom = tex if data & 1 << 0 else None
+    top = tex if data & 1 << 1 else None
+    east = tex if data & 1 << 2 else None
+    south = tex if data & 1 << 3 else None
+    west = tex if data & 1 << 4 else None
+    north = tex if data & 1 << 5 else None
+
+    if self.rotation == 0:
+        return self.build_full_block(top, north, east, west, south, bottom)
+    elif self.rotation == 1:
+        return self.build_full_block(top, west, north, south, east, bottom)
+    elif self.rotation == 2:
+        return self.build_full_block(top, south, west, east, north, bottom)
+    else: # self.rotation == 3:
+        return self.build_full_block(top, east, south, north, west, bottom)
+
+
+@material(blockid=1120, data=list(range(1)), transparent=True)
+def spore_blossom(self, blockid, data):
+    leaf = self.load_image_texture("assets/minecraft/textures/block/spore_blossom.png")
+    base = self.load_image_texture("assets/minecraft/textures/block/spore_blossom_base.png")
+    img = Image.new("RGBA", (24, 24), self.bgcolor)
+
+    side_leaf = self.transform_image_top(leaf)
+    alpha_over(img, side_leaf, (-6, -5), side_leaf)
+
+    roated_leaf = leaf.rotate(90)
+    side_leaf = self.transform_image_top(roated_leaf)
+    alpha_over(img, side_leaf, (-7, 4), side_leaf)
+
+    roated_leaf = roated_leaf.rotate(90)
+    side_leaf = self.transform_image_top(roated_leaf)
+    alpha_over(img, side_leaf, (5, 4), side_leaf)
+
+    roated_leaf = roated_leaf.rotate(90)
+    side_leaf = self.transform_image_top(roated_leaf)
+    alpha_over(img, side_leaf, (5, -5), side_leaf)
+
+    base_top = self.transform_image_top(base)
+    alpha_over(img, base_top, (0, 0), base_top)
+    return img
+
