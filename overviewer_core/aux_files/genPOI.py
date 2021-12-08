@@ -130,7 +130,7 @@ def parseBucketChunks(task_tuple):
     for b in bucket:
         try:
             data = rset.get_chunk(b[0], b[1])
-            for poi in itertools.chain(data.get('TileEntities', []), data.get('Entities', [])):
+            for poi in itertools.chain(data.get('TileEntities', []), data.get('Entities', []), data.get('block_entities', [])):
                 if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
                     poi = signWrangler(poi)
                 for name, filter_function in filters:
@@ -183,7 +183,7 @@ def handleEntities(rset, config, config_path, filters, markers):
         for (x, z, mtime) in rset.iterate_chunks():
             try:
                 data = rset.get_chunk(x, z)
-                for poi in itertools.chain(data.get('TileEntities', []), data.get('Entities', [])):
+                for poi in itertools.chain(data.get('TileEntities', []), data.get('Entities', []), data.get('block_entities', [])):
                     if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':    # kill me
                         poi = signWrangler(poi)
                     for name, __, filter_function, __, __, __ in filters:
