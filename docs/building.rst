@@ -164,6 +164,10 @@ macOS
 
     pip install Pillow
 
+#. Install numpy::
+
+    pip install numpy
+
 #. Download the Pillow source files from https://github.com/python-pillow/Pillow/releases/latest and unpack the tar.gz file and move it to a directory you can remember
 #. Download the Minercaft Overviewer source-code from https://overviewer.org/builds/overviewer-latest.tar.gz
 #. Extract overviewer-[Version].tar.gz and move it to a directory you can remember
