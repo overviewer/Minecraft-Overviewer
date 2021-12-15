@@ -31,7 +31,7 @@
 
 // increment this value if you've made a change to the c extension
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 107
+#define OVERVIEWER_EXTENSION_VERSION 108
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -78,7 +78,7 @@ PyObject* resize_half_wrap(PyObject* self, PyObject* args);
 typedef struct _RenderMode RenderMode;
 
 /* in iterate.c */
-#define SECTIONS_PER_CHUNK 16
+#define SECTIONS_PER_CHUNK 24
 typedef struct {
     /* whether this chunk is loaded: use load_chunk to load */
     int32_t loaded;

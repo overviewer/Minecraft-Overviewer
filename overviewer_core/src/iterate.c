@@ -178,7 +178,7 @@ bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
         if (!ycoord)
             continue;
 
-        sectiony = PyLong_AsLong(ycoord);
+        sectiony = PyLong_AsLong(ycoord) + 4;
         if (sectiony >= 0 && sectiony < SECTIONS_PER_CHUNK)
             load_chunk_section(dest, sectiony, section);
     }
@@ -353,7 +353,7 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         /* calculate the global block coordinates of this position */
         wx = (state->chunkx * 16) + x;
         wz = (state->chunkz * 16) + z;
-        wy = (state->chunky * 16) + y;
+        wy = ((state->chunky - 4) * 16) + y;
         /* lilypads orientation is obtained with these magic numbers */
         /* magic numbers obtained from: */
         /* http://llbit.se/?p=1537 */

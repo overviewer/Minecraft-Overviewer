@@ -1081,7 +1081,7 @@ class TileSet(object):
         max_chunk_mtime = 0
         for col, row, chunkx, chunky, chunkz, chunk_mtime in chunks:
             xpos = -192 + (col - colstart) * 192
-            ypos = -96 + (row - rowstart) * 96 + (16 - 1 - chunky) * 192
+            ypos = -96 + (row - rowstart) * 96 + (24 - 1 - chunky) * 192
 
             if chunk_mtime > max_chunk_mtime:
                 max_chunk_mtime = chunk_mtime
@@ -1324,12 +1324,12 @@ def get_tiles_by_chunk(chunkcol, chunkrow):
         colrange = (tilecol,)
 
     # If this chunk is in a row divisible by 4, then it touches the
-    # tile above it as well. Also touches the next 4 tiles down (16
+    # tile above it as well. Also touches the next 6 tiles down (24
     # rows)
     if chunkrow % 4 == 0:
-        rowrange = range(tilerow - 4, tilerow + 32 + 1, 4)
+        rowrange = range(tilerow - 4, tilerow + 48 + 1, 4)
     else:
-        rowrange = range(tilerow, tilerow + 32 + 1, 4)
+        rowrange = range(tilerow, tilerow + 48 + 1, 4)
 
     return product(colrange, rowrange)
 
@@ -1360,12 +1360,12 @@ def get_chunks_by_tile(tile, regionset):
     # First do the odd. For each chunk in the tile's odd column the tile
     # "passes through" three chunk sections.
     oddcol_sections = []
-    for i, y in enumerate(reversed(range(16))):
+    for i, y in enumerate(reversed(range(24))):
         for row in range(tile.row + 3 - i * 2, tile.row - 2 - i * 2, -2):
             oddcol_sections.append((tile.col + 1, row, y))
 
     evencol_sections = []
-    for i, y in enumerate(reversed(range(16))):
+    for i, y in enumerate(reversed(range(24))):
         for row in range(tile.row + 4 - i * 2, tile.row - 3 - i * 2, -2):
             evencol_sections.append((tile.col + 2, row, y))
             evencol_sections.append((tile.col, row, y))
