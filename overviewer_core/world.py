@@ -198,8 +198,8 @@ class World(object):
         disp_spawnZ = spawnZ = data['SpawnZ']
 
         ## clamp spawnY to a sane value, in-chunk value
-        if spawnY < 0:
-            spawnY = 0
+        if spawnY < -63:
+            spawnY = -63
         if spawnY > 319:
             spawnY = 319
             
