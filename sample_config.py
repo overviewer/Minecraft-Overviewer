@@ -4,10 +4,10 @@
 # Define the path to your world here. 'My World' in this case will show up as
 # the world name on the map interface. If you change it, be sure to also change
 # the referenced world names in the render definitions below.
-worlds['My World'] = "/path/to/your/world"
+worlds['My World'] = "/world"
 
 # Define where to put the output here.
-outputdir = "/tmp/test_render"
+outputdir = "/output"
 
 # This is an item usually specified in a renders dictionary below, but if you
 # set it here like this, it becomes the default for all renders that don't
@@ -34,4 +34,3 @@ renders["render3"] = {
         # Notice how this overrides the rendermode default specified above
         'rendermode': 'night',
 }
-

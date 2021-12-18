@@ -10,8 +10,4 @@ RUN apt-get install -y build-essential python3-pil python3-dev python3-numpy wge
 
 RUN python3 setup.py build
 
-ENV VERSION=1.18.1
-RUN mkdir -p ~/.minecraft/versions/$VERSION/
-RUN wget https://overviewer.org/textures/$VERSION -O ~/.minecraft/versions/$VERSION/$VERSION.jar
-
-CMD ["/build/overviewer.py", "--config=/server/overviewer.config.py"]
+ENTRYPOINT ["/build/overviewer.py"]

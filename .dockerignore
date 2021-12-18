@@ -1,5 +1,23 @@
+# Docker
 .dockerignore
 Dockerfile
-scripts
-README.md
+Dockerfile.server
+
+# Directories
+.git
 .github
+build-tools
+contrib
+docs
+scripts
+test
+
+# Files
+.gitignore
+.gitlab-ci.yml
+.gitmodules
+.mailmap
+.travis.yml
+MANIFEST.in
+README.md
+setup.cfg
