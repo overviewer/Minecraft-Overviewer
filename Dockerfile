@@ -10,4 +10,6 @@ RUN apt-get install -y build-essential python3-pil python3-dev python3-numpy wge
 
 RUN python3 setup.py build
 
+RUN python3 /build/overviewer.py --version
+
 ENTRYPOINT ["/build/overviewer.py"]
