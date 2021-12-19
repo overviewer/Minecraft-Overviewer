@@ -622,7 +622,7 @@ overviewer.util = {
         lat += 6 * z * perPixel;
 
         // each block down along Z adds 12px to y
-        lat += 12 * (256 - y) * perPixel;
+        lat += 12 * (320 - y) * perPixel;
 
         // add on 12 px to the X coordinate to center our point
         lng += 12 * perPixel;
@@ -678,8 +678,8 @@ overviewer.util = {
         // only latitude and longitude, so assume Y=64. Since this is lowering
         // down from the height of a chunk, it depends on the chunk height as
         // so:
-        point.x += 256-64;
-        point.z -= 256-64;
+        point.x += 320-64;
+        point.z -= 320-64;
 
         if(north_direction == overviewerConfig.CONST.UPPERRIGHT){
             temp = point.z;
