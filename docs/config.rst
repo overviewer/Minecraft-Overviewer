@@ -1101,10 +1101,10 @@ Depth
     **Options**
 
     min
-        lowest level of blocks to render. Default: 0
+        lowest level of blocks to render. Default: -64
 
     max
-        highest level of blocks to render. Default: 255
+        highest level of blocks to render. Default: 319
 
 Exposed
     Only renders blocks that are exposed (adjacent to a transparent block).
