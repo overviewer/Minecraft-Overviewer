@@ -67,8 +67,8 @@ class HeightFading(RenderPrimitive):
 class Depth(RenderPrimitive):
     name = "depth"
     options = {
-        "min": ("lowest level of blocks to render", 0),
-        "max": ("highest level of blocks to render", 255),
+        "min": ("lowest level of blocks to render", -64),
+        "max": ("highest level of blocks to render", 319),
     }
     
 class Exposed(RenderPrimitive):
