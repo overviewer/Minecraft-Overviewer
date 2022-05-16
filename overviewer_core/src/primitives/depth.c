@@ -37,7 +37,7 @@ depth_start(void* data, RenderState* state, PyObject* support) {
 static bool
 depth_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
     PrimitiveDepth* self = (PrimitiveDepth*)data;
-    y += 16 * state->chunky;
+    y += 16 * (state->chunky - 4);
     if (y > self->max || y < self->min) {
         return true;
     }

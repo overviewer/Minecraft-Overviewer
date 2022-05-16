@@ -29,7 +29,7 @@ tiles that can be displayed with a Leaflet interface. This section goes over how
 Minecraft worlds work and are stored.
 
 A Minecraft world extends indefinitely along the two horizontal axes, and are
-exactly 256 units high. Minecraft worlds are made of voxels (volumetric pixels),
+exactly 384 units high. Minecraft worlds are made of voxels (volumetric pixels),
 hereby called "blocks", where each block in the world's grid has a type that
 determines what it is (grass, stone, ...).  This makes worlds relatively
 uncomplicated to render, the Overviewer simply determines what blocks to draw
@@ -40,15 +40,15 @@ iteratively.
 The coordinate system for Minecraft has three axes. The X and Z axes are the
 horizontal axes. They extend indefinitely towards both positive and negative
 infinity. (There are practical limits, but no theoretical limits). The Y axis
-extends from 0 to 255, which corresponds with the world height limit. Each
+extends from -64 to 319, which corresponds with the world height limit. Each
 block in Minecraft has a coordinate address, e.g. the block at 15,78,-35 refers
 to 15 along the X axis, -35 along the Z axis, and 78 units up from bedrock.
 
 The world is organized in a three-layer hierarchy. At the finest level are the
 blocks (voxels). A 16x16x16 array of blocks is called a *chunk section*. A
-vertical column of 16 chunk sections makes a *chunk*. A chunk is therefore a 16
+vertical column of 24 chunk sections makes a *chunk*. A chunk is therefore a 16
 by 16 area of the world that extends from bedrock to sky. In other words, a 16
-by 256 by 16 "chunk" of the world. A 32 by 32 area of chunks is called a
+by 384 by 16 "chunk" of the world. A 32 by 32 area of chunks is called a
 *region*. Regions are stored on disk one per file.
 
 While blocks have a global coordinate (the ones you see in the debug output
@@ -355,7 +355,8 @@ origin being at the left corner.
 
 To ensure that block closer to the viewer are drawn on top while blocks that
 should be obstructed are drawn are hidden, the blocks are drawn one layer at a
-time from bottom to top (Y=0 to Y=15) and from back to front.
+time from bottom to top (Y=0 to Y=23, corresponding to sections Y=-4 to Y=19)
+and from back to front.
 
 From the data file on disk, block information in a chunk is a three-dimensional
 array of bytes, each representing a `block id
@@ -372,12 +373,12 @@ Now that we know how to draw a single chunk, let's move on to how to place
 chunks relative to each other.
 
 Before we get started, let's take a moment to remember that one chunk section is
-only 1/16th of a chunk:
+only 1/24th of a chunk:
 
 .. image:: tilerendering/entirechunk.png
     :alt: An entire chunk
 
-A chunk is 16 chunk sections stacked together.
+A chunk is 24 chunk sections stacked together.
 
 Since this is pretty tall, the diagrams in this section are simplified to only
 show the *top face* of a chunk, as shown in green here:
@@ -504,7 +505,7 @@ pixels.
 
 The rendering routines takes the given range of columns and rows, converts it
 back into chunk coordinates, and renders the given 8 chunks plus all chunks from
-the 16 rows above the given range (see the note below). The chunks are
+the 24 rows above the given range (see the note below). The chunks are
 positioned correctly with the above positioning rules, so any chunks that are
 out of the bounds get rendered off the tile and don't affect the final image.
 (There is therefore no penalty for rendering out-of-bounds chunks for a tile

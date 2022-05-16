@@ -92,6 +92,8 @@ do_work(workobj)
 """
 
 
+TILESET_VERSION = 2  # Update this whenever there is a breaking change with tile renders
+
 # small but useful
 def iterate_base4(d):
     """Iterates over a base 4 number with d digits"""
@@ -309,6 +311,7 @@ class TileSet(object):
 
         self.last_rendertime = config.get('last_rendertime', 0)
         self.forcerendertime = config.get('forcerendertime', 0)
+        self.lastrenderversion = config.get('lastrenderversion', 0)
 
         if "renderchecks" not in self.options:
             # renderchecks was not given, this indicates it was not specified
@@ -318,20 +321,25 @@ class TileSet(object):
                 # No persistent config?
                 if os.path.exists(self.outputdir):
                     # Somehow there's no config but the output dir DOES exist.
-                    # That's strange!
+                    # That's strange! Run forcerender in case of breaking OV version change
                     logging.warning(
                         "For render '%s' I couldn't find any persistent config, "
                         "but I did find my tile directory already exists. This "
                         "shouldn't normally happen, something may be up, but I "
                         "think I can continue...", self.options['name'])
-                    logging.info("Switching to --check-tiles mode")
-                    self.options['renderchecks'] = 1
+                    logging.info("Switching to --forcerender mode")
+                    self.options['renderchecks'] = 2
                 else:
                     # This is the typical code path for an initial render, make
                     # this a "forcerender"
                     self.options['renderchecks'] = 2
                     logging.debug("This is the first time rendering %s. Doing "
                                   "a full-render", self.options['name'])
+            elif self.lastrenderversion != TILESET_VERSION:
+                # Force render in case there is a version change that is breaking
+                logging.warning("Re-rendering world due to version change."
+                                "This will avoid any bad rendering between incompatible versions")
+                self.options['renderchecks'] = 2
             elif not os.path.exists(self.outputdir):
                 # Somehow the outputdir got erased but the metadata file is
                 # still there. That's strange!
@@ -376,6 +384,11 @@ class TileSet(object):
                     "--fullrender for just this run.")
                 self.options['renderchecks'] = 2
             os.mkdir(self.outputdir)
+
+        if self.lastrenderversion != TILESET_VERSION and self.options['renderchecks'] not in [2, 3]:
+            logging.warning("Normally renders from different versions should be"
+                            "overridden or ignored to prevent incompatibilities,"
+                            "but we will honor your decision.")
 
         # must wait until outputdir exists
         self.fs_caps = get_fs_caps(self.outputdir)
@@ -591,7 +604,8 @@ class TileSet(object):
             poititle=self.options.get("poititle"),
             showlocationmarker=self.options.get("showlocationmarker"),
             center=(self.options.get("center") or self.options.get("spawn")
-                    or [0, 64, 0])
+                    or [0, 64, 0]),
+            lastrenderversion=TILESET_VERSION
         )
         d['maxZoom'] = self.options.get('maxzoom', self.treedepth)
         if d['maxZoom'] < 0:
@@ -1081,7 +1095,7 @@ class TileSet(object):
         max_chunk_mtime = 0
         for col, row, chunkx, chunky, chunkz, chunk_mtime in chunks:
             xpos = -192 + (col - colstart) * 192
-            ypos = -96 + (row - rowstart) * 96 + (16 - 1 - chunky) * 192
+            ypos = -96 + (row - rowstart) * 96 + (24 - 1 - chunky) * 192
 
             if chunk_mtime > max_chunk_mtime:
                 max_chunk_mtime = chunk_mtime
@@ -1324,12 +1338,12 @@ def get_tiles_by_chunk(chunkcol, chunkrow):
         colrange = (tilecol,)
 
     # If this chunk is in a row divisible by 4, then it touches the
-    # tile above it as well. Also touches the next 4 tiles down (16
+    # tile above it as well. Also touches the next 6 tiles down (24
     # rows)
     if chunkrow % 4 == 0:
-        rowrange = range(tilerow - 4, tilerow + 32 + 1, 4)
+        rowrange = range(tilerow - 4, tilerow + 48 + 1, 4)
     else:
-        rowrange = range(tilerow, tilerow + 32 + 1, 4)
+        rowrange = range(tilerow, tilerow + 48 + 1, 4)
 
     return product(colrange, rowrange)
 
@@ -1360,12 +1374,12 @@ def get_chunks_by_tile(tile, regionset):
     # First do the odd. For each chunk in the tile's odd column the tile
     # "passes through" three chunk sections.
     oddcol_sections = []
-    for i, y in enumerate(reversed(range(16))):
+    for i, y in enumerate(reversed(range(24))):
         for row in range(tile.row + 3 - i * 2, tile.row - 2 - i * 2, -2):
             oddcol_sections.append((tile.col + 1, row, y))
 
     evencol_sections = []
-    for i, y in enumerate(reversed(range(16))):
+    for i, y in enumerate(reversed(range(24))):
         for row in range(tile.row + 4 - i * 2, tile.row - 3 - i * 2, -2):
             evencol_sections.append((tile.col + 2, row, y))
             evencol_sections.append((tile.col, row, y))

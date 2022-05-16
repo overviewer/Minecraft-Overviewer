@@ -17,10 +17,10 @@
 
 #include "../overviewer.h"
 
-#define NETHER_ROOF 127
+#define NETHER_ROOF 191
 #define WIDTH 16
 #define DEPTH 16
-#define HEIGHT 256
+#define HEIGHT 384
 
 // add two to these because the primative functions should expect to
 // deal with x and z values of -1 and 16

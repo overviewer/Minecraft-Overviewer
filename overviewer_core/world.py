@@ -198,10 +198,10 @@ class World(object):
         disp_spawnZ = spawnZ = data['SpawnZ']
 
         ## clamp spawnY to a sane value, in-chunk value
-        if spawnY < 0:
-            spawnY = 0
-        if spawnY > 255:
-            spawnY = 255
+        if spawnY < -63:
+            spawnY = -63
+        if spawnY > 319:
+            spawnY = 319
             
         ## The chunk that holds the spawn location
         chunkX = spawnX//16
@@ -236,7 +236,7 @@ class World(object):
                 spawnY += 1
             # Next section, start at local 0
             inChunkY = 0
-        return spawnX, 256, spawnZ
+        return spawnX, 320, spawnZ
 
 class RegionSet(object):
     """This object is the gateway to a particular Minecraft dimension within a
