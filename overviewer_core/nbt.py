@@ -289,7 +289,7 @@ class MCRFileReader(object):
         have the chunks load out of regions properly."""
 
         try:
-        header = self._file.read(5)
+            header = self._file.read(5)
         except OSError as e:
             raise CorruptChunkError("An OSError occurred: {}".format(e.strerror))
 
