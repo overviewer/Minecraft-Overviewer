@@ -1749,6 +1749,8 @@ class RegionSet(object):
             else:
                 section = {}
 
+            section['Y'] = i - 4;
+
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
             try:
