@@ -1768,11 +1768,13 @@ class RegionSet(object):
 
                 if 'Blocks' in section:
                     (blocks, data) = self._get_blockdata_Bedrock(section)
+                    section['block_states'] = None
                 else:   # Special case introduced with 1.14
                     blocks = numpy.zeros((16,16,16), dtype=numpy.uint16)
                     data = numpy.zeros((16,16,16), dtype=numpy.uint8)
                 (section['Blocks'], section['Data']) = (blocks, data)
 
+                section['biomes'] = None
                 chunk_data['Sections'][i] = section
 
             except ValueError:
