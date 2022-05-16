@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5d3e054e-05e3-498c-8f21-dab9715df9ca}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>overviewer.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId />
+    <SuppressConfigureTestFrameworkPrompt>true</SuppressConfigureTestFrameworkPrompt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="COPYING.txt" />
+    <Content Include="docs\design\blockrendering\cube_parts.png" />
+    <Content Include="docs\design\blockrendering\cube_parts.svg" />
+    <Content Include="docs\design\blockrendering\cube_sides.png" />
+    <Content Include="docs\design\blockrendering\cube_top.png" />
+    <Content Include="docs\design\blockrendering\pixelfix.png" />
+    <Content Include="docs\design\blockrendering\pixelfix.svg" />
+    <Content Include="docs\design\blockrendering\tessellation.png" />
+    <Content Include="docs\design\blockrendering\tessellation.svg" />
+    <Content Include="docs\design\blockrendering\texturecubing.png" />
+    <Content Include="docs\design\blockrendering\texturecubing.svg" />
+    <Content Include="docs\design\blockrendering\texturesidesteps.png" />
+    <Content Include="docs\design\blockrendering\texturesidesteps.svg" />
+    <Content Include="docs\design\blockrendering\texturetopsteps.png" />
+    <Content Include="docs\design\blockrendering\texturetopsteps.svg" />
+    <Content Include="docs\design\cubepositionimgs\chunk_coords.png" />
+    <Content Include="docs\design\cubepositionimgs\chunk_coords.svg" />
+    <Content Include="docs\design\cubepositionimgs\cube_horizontal_offset.png" />
+    <Content Include="docs\design\cubepositionimgs\cube_horizontal_offset.svg" />
+    <Content Include="docs\design\cubepositionimgs\cube_measurements.png" />
+    <Content Include="docs\design\cubepositionimgs\cube_measurements.svg" />
+    <Content Include="docs\design\cubepositionimgs\cube_neighbors.png" />
+    <Content Include="docs\design\cubepositionimgs\cube_neighbors.svg" />
+    <Content Include="docs\design\cubepositionimgs\cube_stacking.png" />
+    <Content Include="docs\design\cubepositionimgs\cube_stacking.svg" />
+    <Content Include="docs\design\cuberenderimgs\chunk_height.png" />
+    <Content Include="docs\design\cuberenderimgs\chunk_height.svg" />
+    <Content Include="docs\design\cuberenderimgs\chunk_perspective.png" />
+    <Content Include="docs\design\cuberenderimgs\chunk_perspective.svg" />
+    <Content Include="docs\design\cuberenderimgs\chunk_width.png" />
+    <Content Include="docs\design\cuberenderimgs\chunk_width.svg" />
+    <Content Include="docs\design\cuberenderimgs\cube_stack16.png" />
+    <Content Include="docs\design\cuberenderimgs\cube_stack16.svg" />
+    <Content Include="docs\design\lighting\light-eqn.png" />
+    <Content Include="docs\design\lighting\lighting-process.png" />
+    <Content Include="docs\design\lighting\lighting-process.svg" />
+    <Content Include="docs\design\lighting\smooth-average.png" />
+    <Content Include="docs\design\lighting\smooth-average.svg" />
+    <Content Include="docs\design\quadtree\depth2addresses.png" />
+    <Content Include="docs\design\quadtree\depth2addresses.svg" />
+    <Content Include="docs\design\screenshot.png" />
+    <Content Include="docs\design\tilerendering\4children.png" />
+    <Content Include="docs\design\tilerendering\4children.svg" />
+    <Content Include="docs\design\tilerendering\chunkgrid.png" />
+    <Content Include="docs\design\tilerendering\chunkgrid.svg" />
+    <Content Include="docs\design\tilerendering\chunkgridwithrowcol.png" />
+    <Content Include="docs\design\tilerendering\chunkgridwithrowcol.svg" />
+    <Content Include="docs\design\tilerendering\chunkpositioning.png" />
+    <Content Include="docs\design\tilerendering\chunkpositioning.svg" />
+    <Content Include="docs\design\tilerendering\chunksintile.png" />
+    <Content Include="docs\design\tilerendering\chunksintile.svg" />
+    <Content Include="docs\design\tilerendering\entirechunk.png" />
+    <Content Include="docs\design\tilerendering\entirechunk.svg" />
+    <Content Include="docs\design\tilerendering\tilegrid.png" />
+    <Content Include="docs\design\tilerendering\tilegrid.svg" />
+    <Content Include="docs\design\tilerendering\topofchunk.png" />
+    <Content Include="docs\design\tilerendering\topofchunk.svg" />
+    <Content Include="docs\front_page_screenshot.png" />
+    <Content Include="docs\win_tut\changed_dir.png" />
+    <Content Include="docs\win_tut\cmd.png" />
+    <Content Include="docs\win_tut\computer_properties.png" />
+    <Content Include="docs\win_tut\extracting.png" />
+    <Content Include="docs\win_tut\gist1.png" />
+    <Content Include="docs\win_tut\gist2.png" />
+    <Content Include="docs\win_tut\gist3.png" />
+    <Content Include="docs\win_tut\location1.png" />
+    <Content Include="docs\win_tut\location2.png" />
+    <Content Include="docs\win_tut\opening_cmd.png" />
+    <Content Include="docs\win_tut\system.png" />
+    <Content Include="docs\win_tut\usage.png" />
+    <Content Include="overviewer_core\data\js_src\overviewer.js" />
+    <Content Include="overviewer_core\data\js_src\util.js" />
+    <Content Include="overviewer_core\data\textures\fire.png" />
+    <Content Include="overviewer_core\data\textures\icon_src\marker_home.svg" />
+    <Content Include="overviewer_core\data\textures\icon_src\marker_location.svg" />
+    <Content Include="overviewer_core\data\textures\lava.png" />
+    <Content Include="overviewer_core\data\textures\light_normal.png" />
+    <Content Include="overviewer_core\data\textures\portal.png" />
+    <Content Include="overviewer_core\data\textures\water.png" />
+    <Content Include="overviewer_core\data\textures\watercolor.png" />
+    <Content Include="overviewer_core\data\web_assets\bed.png" />
+    <Content Include="overviewer_core\data\web_assets\compass_lower-left.png" />
+    <Content Include="overviewer_core\data\web_assets\compass_lower-right.png" />
+    <Content Include="overviewer_core\data\web_assets\compass_upper-left.png" />
+    <Content Include="overviewer_core\data\web_assets\compass_upper-right.png" />
+    <Content Include="overviewer_core\data\web_assets\images\layers-2x.png" />
+    <Content Include="overviewer_core\data\web_assets\images\layers.png" />
+    <Content Include="overviewer_core\data\web_assets\images\marker-icon-2x.png" />
+    <Content Include="overviewer_core\data\web_assets\images\marker-icon.png" />
+    <Content Include="overviewer_core\data\web_assets\images\marker-shadow.png" />
+    <Content Include="overviewer_core\data\web_assets\index.html" />
+    <Content Include="overviewer_core\data\web_assets\leaflet.css" />
+    <Content Include="overviewer_core\data\web_assets\leaflet.js" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_anvil.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_anvil_red.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_base_plain.svg" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_base_plain_red.svg" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_factory.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_factory_red.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_hoe.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_hoe_red.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_home.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_home_2x.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_location.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_location_2x.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_mine.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_mine_red.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_ship.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_ship_red.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_tower.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_tower_red.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_town.png" />
+    <Content Include="overviewer_core\data\web_assets\markers\marker_town_red.png" />
+    <Content Include="overviewer_core\data\web_assets\overviewer.css" />
+    <Content Include="overviewer_core\data\web_assets\regions.js" />
+    <Content Include="overviewer_core\data\web_assets\signpost-shadow.png" />
+    <Content Include="overviewer_core\data\web_assets\signpost.png" />
+    <Content Include="overviewer_core\data\web_assets\signpost_icon.png" />
+    <Content Include="overviewer_core\LICENSE-LEVELDB.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="contribManager.py" />
+    <Compile Include="contrib\contributors.py" />
+    <Compile Include="contrib\cyrillic_convert.py" />
+    <Compile Include="contrib\gallery.py" />
+    <Compile Include="contrib\playerInspect.py" />
+    <Compile Include="contrib\png-it.py" />
+    <Compile Include="contrib\regionTrimmer.py" />
+    <Compile Include="contrib\testRender.py" />
+    <Compile Include="contrib\__init__.py" />
+    <Compile Include="docs\conf.py" />
+    <Compile Include="overviewer.py" />
+    <Compile Include="overviewer_core\assetmanager.py" />
+    <Compile Include="overviewer_core\aux_files\genPOI.py" />
+    <Compile Include="overviewer_core\aux_files\__init__.py" />
+    <Compile Include="overviewer_core\bedrock.py" />
+    <Compile Include="overviewer_core\biome.py" />
+    <Compile Include="overviewer_core\cache.py" />
+    <Compile Include="overviewer_core\config_parser.py" />
+    <Compile Include="overviewer_core\dispatcher.py" />
+    <Compile Include="overviewer_core\files.py" />
+    <Compile Include="overviewer_core\items.py" />
+    <Compile Include="overviewer_core\leveldb.py" />
+    <Compile Include="overviewer_core\logger.py" />
+    <Compile Include="overviewer_core\nbt.py" />
+    <Compile Include="overviewer_core\nbt2.py" />
+    <Compile Include="overviewer_core\observer.py" />
+    <Compile Include="overviewer_core\optimizeimages.py" />
+    <Compile Include="overviewer_core\progressbar.py" />
+    <Compile Include="overviewer_core\rcon.py" />
+    <Compile Include="overviewer_core\rendermodes.py" />
+    <Compile Include="overviewer_core\settingsDefinition.py" />
+    <Compile Include="overviewer_core\settingsValidators.py" />
+    <Compile Include="overviewer_core\signals.py" />
+    <Compile Include="overviewer_core\textures.py" />
+    <Compile Include="overviewer_core\tileset.py" />
+    <Compile Include="overviewer_core\util.py" />
+    <Compile Include="overviewer_core\world.py" />
+    <Compile Include="overviewer_core\__init__.py" />
+    <Compile Include="sample_config.py" />
+    <Compile Include="setup.py" />
+    <Compile Include="test\data\settings\settings_test_1.py" />
+    <Compile Include="test\data\settings\settings_test_rendermode.py" />
+    <Compile Include="test\test_cache.py" />
+    <Compile Include="test\test_contributors.py" />
+    <Compile Include="test\test_cyrillic_convert.py" />
+    <Compile Include="test\test_playerInspect.py" />
+    <Compile Include="test\test_regionTrimmer.py" />
+    <Compile Include="test\test_rendertileset.py" />
+    <Compile Include="test\test_settings.py" />
+    <Compile Include="test\test_testRender.py" />
+    <Compile Include="test\test_tileobj.py" />
+    <Compile Include="test\test_tileset.py" />
+    <Compile Include="test\test_world.py" />
+    <Compile Include="test\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="contrib" />
+    <Folder Include="docs" />
+    <Folder Include="docs\design" />
+    <Folder Include="docs\design\blockrendering" />
+    <Folder Include="docs\design\cubepositionimgs" />
+    <Folder Include="docs\design\cuberenderimgs" />
+    <Folder Include="docs\design\lighting" />
+    <Folder Include="docs\design\quadtree" />
+    <Folder Include="docs\design\tilerendering" />
+    <Folder Include="docs\win_tut" />
+    <Folder Include="overviewer_core" />
+    <Folder Include="overviewer_core\aux_files" />
+    <Folder Include="overviewer_core\data\" />
+    <Folder Include="overviewer_core\data\js_src" />
+    <Folder Include="overviewer_core\data\textures" />
+    <Folder Include="overviewer_core\data\textures\icon_src" />
+    <Folder Include="overviewer_core\data\web_assets" />
+    <Folder Include="overviewer_core\data\web_assets\images" />
+    <Folder Include="overviewer_core\data\web_assets\markers" />
+    <Folder Include="test" />
+    <Folder Include="test\data\" />
+    <Folder Include="test\data\settings" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>

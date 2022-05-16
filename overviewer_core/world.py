@@ -1727,7 +1727,7 @@ class RegionSet(object):
         # so we'll just pretend they aren't there.
 
         # Turn the Biomes array into a 16x16 numpy array
-        if 'Biomes' in chunk_data and len(chunk_data['Biomes']) > 0:
+        if 'Biomes' in chunk_data and chunk_data['Biomes'] is not None and len(chunk_data['Biomes']) > 0:
             biomes = chunk_data['Biomes']
             if isinstance(biomes, bytes):
                 biomes = numpy.frombuffer(biomes, dtype=numpy.uint8)

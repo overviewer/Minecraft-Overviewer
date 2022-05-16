@@ -5,8 +5,8 @@
 # the world name on the map interface. If you change it, be sure to also change
 # the referenced world names in the render definitions below.
 
-worlds['My World'] = "C:\\Users\\benb\\Documents\\My Projects\\MapBedrock2"
-# worlds['My World'] = "C:\\Users\\benb\\Documents\\My Projects\\MapJava"
+# worlds['My World'] = "C:\\Users\\barre\\AppData\\Local\\Packages\\Microsoft.MinecraftUWP_8wekyb3d8bbwe\\LocalState\\games\\com.mojang\\minecraftWorlds\\hHeCYhnHAAA="
+worlds['My World'] = "C:\\Users\\barre\\AppData\\Roaming\\.minecraft\\saves\\Demo_World"
 
 # Define where to put the output here.
 outputdir = "C:\\Overviewer"

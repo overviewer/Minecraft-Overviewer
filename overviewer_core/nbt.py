@@ -242,11 +242,12 @@ class MCRFileReader(object):
         file, as (x, z) coordinate tuples. To load these chunks,
         provide these coordinates to load_chunk()."""
 
-        for key in self._file.iterKeys():
+
+
+        for chunk in self._file.iterChunks():
             # More info: see 'Chunk key format'
             # https://minecraft.gamepedia.com/Bedrock_Edition_level_format
-            if (len(key[0]) == 9 and key[0][8] == ord("v")):
-                yield struct.unpack_from("<ii", key[0])
+            yield (chunk.x, chunk.z)
 
     def get_chunk_timestamp(self, x, z):
         """Return the given chunk's modification time. If the given
@@ -288,14 +289,4 @@ class MCRFileReader(object):
         provide chunk coordinates in global coordinates, and still
         have the chunks load out of regions properly."""
 
-        try:
-            header = self._file.read(5)
-        except OSError as e:
-            raise CorruptChunkError("An OSError occurred: {}".format(e.strerror))
-
-        try:
-            return NBTFileReader(data, is_gzip=is_gzip).read_all()
-        except CorruptionError:
-            raise
-        except Exception as e:
-            raise CorruptChunkError("Misc error parsing chunk: " + str(e))
+        return self._file.getChunk(x, z)
