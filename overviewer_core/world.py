@@ -1525,6 +1525,7 @@ class RegionSet(object):
         
         return result
 
+    def _get_blockdata_v118(self, section, unrecognized_block_types, longarray_unpacker):
         block_states = section['block_states']
         palette = block_states.get('palette')
         block_states_data = block_states.get('data')
@@ -1544,6 +1545,7 @@ class RegionSet(object):
             except KeyError:
                 pass    # We already have initialised arrays with 0 (= air)
 
+        # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
         blocks = numpy.empty((4096,), dtype=numpy.uint16)
         data = numpy.empty((4096,), dtype=numpy.uint8)
         block_states = longarray_unpacker(block_states_data, 4096, num_palette_entries)
