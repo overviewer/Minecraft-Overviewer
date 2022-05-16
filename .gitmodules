@@ -1,3 +1,0 @@
-[submodule "test/data/worlds"]
-	path = test/data/worlds
-	url = git://github.com/overviewer/Overviewer-Test-Data.git
