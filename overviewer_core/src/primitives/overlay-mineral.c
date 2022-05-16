@@ -111,7 +111,7 @@ overlay_mineral_start(void* data, RenderState* state, PyObject* support) {
 
         for (i = 0; i < minerals_size; i++) {
             PyObject* mineral = PyList_GET_ITEM(opt, i);
-            if (!PyArg_ParseTuple(mineral, "b(bbb)", &(minerals[i].block), &(minerals[i].r), &(minerals[i].g), &(minerals[i].b))) {
+            if (!PyArg_ParseTuple(mineral, "H(bbb)", &(minerals[i].block), &(minerals[i].r), &(minerals[i].g), &(minerals[i].b))) {
                 free(minerals);
                 self->minerals = NULL;
                 return true;

@@ -28,17 +28,13 @@ bool block_class_is_subset(
     const mc_block_t block_class[],
     size_t block_class_len);
 
+bool block_class_is_wall(mc_block_t block);
+
 extern const mc_block_t block_class_stair[];
 extern const size_t block_class_stair_len;
 
 extern const mc_block_t block_class_door[];
 extern const size_t block_class_door_len;
-
-extern const mc_block_t block_class_fence[];
-extern const size_t block_class_fence_len;
-
-extern const mc_block_t block_class_fence_gate[];
-extern const size_t block_class_fence_gate_len;
 
 extern const mc_block_t block_class_ancil[];
 extern const size_t block_class_ancil_len;
@@ -46,7 +42,7 @@ extern const size_t block_class_ancil_len;
 extern const mc_block_t block_class_alt_height[];
 extern const size_t block_class_alt_height_len;
 
-extern const mc_block_t block_class_wall[];
-extern const size_t block_class_wall_len;
+extern const mc_block_t block_class_nether_roof[];
+extern const size_t block_class_nether_roof_len;
 
 #endif

@@ -276,11 +276,6 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if (block_class_is_subset(state->block, block_class_fence, block_class_fence_len)) { /* fences */
-        /* check for fences AND fence gates */
-        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, block_fence_gate) |
-               check_adjacent_blocks(state, x, y, z, block_fence_gate) | check_adjacent_blocks(state, x, y, z, block_birch_fence_gate) | check_adjacent_blocks(state, x, y, z, block_jungle_fence_gate) |
-               check_adjacent_blocks(state, x, y, z, block_dark_oak_fence_gate) | check_adjacent_blocks(state, x, y, z, block_acacia_fence_gate);
 
     } else if (state->block == block_redstone_wire) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
@@ -316,54 +311,8 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         }
         return final_data;
 
-    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_chest, block_trapped_chest}, 2)) {
-        /* Orientation is given by ancilData, pseudo data needed to 
-         * choose from single or double chest and the correct half of
-         * the chest. */
-
-        /* Add two bits to ancilData to store single or double chest 
-          * and which half of the chest it is: bit 0x10 = second half
-          *                                    bit 0x8 = first half */
-
-        uint8_t chest_data = 0, final_data = 0;
-
-        /* search for adjacent chests of the same type */
-        chest_data = check_adjacent_blocks(state, x, y, z, state->block);
-
-        if (chest_data == 1) { /* another chest in the upper-left */
-            final_data = final_data | 0x10 | ancilData;
-
-        } else if (chest_data == 2) { /* in the bottom-left */
-            final_data = final_data | 0x8 | ancilData;
-
-        } else if (chest_data == 4) { /*in the bottom-right */
-            final_data = final_data | 0x8 | ancilData;
-
-        } else if (chest_data == 8) { /*in the upper-right */
-            final_data = final_data | 0x10 | ancilData;
-
-        } else if (chest_data == 0) {
-            /* Single chest, determine the orientation */
-            final_data = ancilData;
-
-        } else {
-            /* more than one adjacent chests! That shouldn't be 
-             * possible! render as normal chest */
-            return 0;
-        }
-        return final_data;
-
-    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_iron_bars, block_glass_pane, block_stained_glass_pane}, 3)) {
-        /* iron bars and glass panes:
-         * they seem to stick to almost everything but air,
-         * not sure yet! Still a TODO! */
-        /* return check adjacent blocks with air, bit inverted */
-        // shift up 4 bits because the lower 4 bits encode color
-        data = (check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f);
-        return (data << 4) | (ancilData & 0xf);
-
-    } else if (block_class_is_subset(state->block, (mc_block_t[]){block_portal, block_nether_brick_fence}, 2)) {
-        /* portal and nether brick fences */
+    } else if (state->block == block_portal) {
+        /* portal */
         return check_adjacent_blocks(state, x, y, z, state->block);
 
     } else if (block_class_is_subset(state->block, block_class_door, block_class_door_len)) {
@@ -391,7 +340,7 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
             }
         }
         return data;
-    } else if (block_class_is_subset(state->block, block_class_wall, block_class_wall_len)) {
+    } else if (block_class_is_wall(state->block)) {
         /* check for walls and add one bit with the type of wall (mossy or cobblestone)*/
         if (ancilData == 0x1) {
             return check_adjacent_blocks(state, x, y, z, state->block) | 0x10;
@@ -665,7 +614,7 @@ chunk_render(PyObject* self, PyObject* args) {
                     state.block_data = ancilData;
                     /* block that need pseudo ancildata:
                      * grass, water, glass, chest, restone wire,
-                     * ice, fence, portal, iron bars, glass panes,
+                     * ice, portal, iron bars,
                      * trapped chests, stairs */
                     if (block_class_is_subset(state.block, block_class_ancil, block_class_ancil_len)) {
                         ancilData = generate_pseudo_data(&state, ancilData);

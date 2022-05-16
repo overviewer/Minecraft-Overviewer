@@ -219,11 +219,14 @@ class MCRFileReader(object):
     _location_table_format = struct.Struct(">1024I")
     _timestamp_table_format = struct.Struct(">1024i")
     _chunk_header_format = struct.Struct(">I B")
+    _preloaded = False
 
     def __init__(self, fileobj):
         """This creates a region object from the given file-like
         object. Chances are you want to use load_region instead."""
         self._file = bedrock.World(fileobj)
+    def load_pre_data(self):
+        self._file.seek(0)
 
     def close(self):
         """Close the region file and free any resources associated
@@ -267,6 +270,16 @@ class MCRFileReader(object):
         
         return True
 
+    def preload_chunks(self):
+        if not self._preloaded:
+            self._file.seek(0)
+            pl_data = BytesIO(self._file.read())
+            self._file.close()
+            self._file = pl_data
+            # re-read location, timestamps
+            self.load_pre_data()
+            self._preloaded = True
+
     def load_chunk(self, x, z):
         """Return a (name, data) tuple for the given chunk, or
         None if the given chunk doesn't exist in this region file. If
@@ -275,7 +288,10 @@ class MCRFileReader(object):
         provide chunk coordinates in global coordinates, and still
         have the chunks load out of regions properly."""
 
-        return self._file.getChunk(x, z)
+        try:
+        header = self._file.read(5)
+        except OSError as e:
+            raise CorruptChunkError("An OSError occurred: {}".format(e.strerror))
 
         try:
             return NBTFileReader(data, is_gzip=is_gzip).read_all()

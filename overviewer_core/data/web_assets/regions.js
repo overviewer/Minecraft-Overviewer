@@ -7,11 +7,10 @@ var world = "top";
 markersDB[groupName] = {
 	"raw": [
 		{
-		"fillColor": "#00FF00",
-		"fillOpacity": 0.2,
 		"strokeColor": "#FF0000",
-		"strokeOpacity": 1,
-		"polygon" : [
+		"strokeWeight": 2,
+		"fill": true,
+		"polyline" : [
 			{"x": 347, "y": 67, "z": 95},
 			{"x": 347, "y": 77, "z": 95},
 			{"x": 347, "y": 77, "z": 105},
@@ -19,7 +18,7 @@ markersDB[groupName] = {
 			{"x": 347, "y": 67, "z": 105}
 		]}
 	],
-	"name": "Regions",
+	"name": groupName,
 	"created": false
 }
 

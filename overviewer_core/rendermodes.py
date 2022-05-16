@@ -12,6 +12,7 @@
 #
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
+from datetime import datetime, timedelta
 
 from PIL import Image
 from . import textures
@@ -229,6 +230,17 @@ class BiomeOverlay(Overlay):
     options = {
         'biomes' : ('a list of (biome, (r, g, b)) tuples for coloring biomes', None),
         'alpha'  : ('an integer value between 0 (transparent) and 255 (opaque)', None),
+    }
+
+class HeatmapOverlay(Overlay):
+    t_now = datetime.now()
+    name = "overlay-heatmap"
+    options = {
+        't_invisible': (
+            'the timestamp when the overlay will get invisible (e.g. 1 month go)',
+            int((t_now - timedelta(days=30)).timestamp())
+        ),
+        't_full': ('the timestamp when the overlay will be fully visible (e.g. now)', int(t_now.timestamp())),
     }
 
 class Hide(RenderPrimitive):

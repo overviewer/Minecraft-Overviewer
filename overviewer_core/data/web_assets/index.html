@@ -1,29 +1,28 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
+    <title>{title}</title>
 
-<title>{title}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="generator" content="Minecraft-Overviewer {version}" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Minecraft-Overviewer {version}" />
-<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <script type="text/javascript" src="overviewerConfig.js"></script>
+    <script type="text/javascript" src="overviewer.js"></script>
+    <script type="text/javascript" src="baseMarkers.js"></script>
 
-<script type="text/javascript" src="overviewerConfig.js"></script>
-<script type="text/javascript" src="overviewer.js"></script>
-<script type="text/javascript" src="baseMarkers.js"></script>
+    <link rel="stylesheet" href="leaflet.css" />
+    <script src="leaflet.js"></script>
+    <link rel="stylesheet" href="overviewer.css" type="text/css" />
+  </head>
 
-<link rel="stylesheet" href="leaflet.css" />
-<script src="leaflet.js"></script>
-<link rel="stylesheet" href="overviewer.css" type="text/css" />
-
-</head>
-
-<!-- Generated at: {time} -->
-<body onload="overviewer.util.initialize()">
-    <noscript style="color:white; background-color:black">
-        If you can see this message, there is likely a problem loading the Overviewer JavaScript components.
-        Check the JavaScript console for error messages.
+  <!-- Generated at: {time} -->
+  <body onload="overviewer.util.initialize()">
+    <noscript style="color: white; background-color: black">
+      If you can see this message, there is likely a problem loading the
+      Overviewer JavaScript components. Check the JavaScript console for error
+      messages.
     </noscript>
     <div id="mcmap"></div>
-</body>
+  </body>
 </html>

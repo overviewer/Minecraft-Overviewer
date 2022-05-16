@@ -16,7 +16,7 @@ Get The Source
 ==============
 
 First step: download the platform-independent source! Either clone with Git
-(recommended if you know Git) or download the most recent snapshot
+(recommended if you know Git) or download the most recent snapshot:
 
 * Git URL to clone: ``git://github.com/overviewer/Minecraft-Overviewer.git``
 * `Download most recent tar archive <https://github.com/overviewer/Minecraft-Overviewer/tarball/master>`_
@@ -160,9 +160,13 @@ macOS
 
     sudo easy_install pip
 
-#. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same funcitonality)::
+#. Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that provides the same functionality)::
 
     pip install Pillow
+
+#. Install numpy::
+
+    pip install numpy
 
 #. Download the Pillow source files from https://github.com/python-pillow/Pillow/releases/latest and unpack the tar.gz file and move it to a directory you can remember
 #. Download the Minercaft Overviewer source-code from https://overviewer.org/builds/overviewer-latest.tar.gz

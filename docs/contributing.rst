@@ -287,10 +287,10 @@ Talking with other Developers
 
 Occasionally, the issue tracker simply doesn't cut it. You need to talk with
 another developer, maybe to brainstorm a new feature or ask a question about
-the code. For this, we have `an IRC channel on freenode`_, which allows you to
+the code. For this, we have `an IRC channel on Libera.Chat`_, which allows you to
 talk with other developers that are on the IRC channel in real-time.
 
-.. _an IRC channel on freenode: https://overviewer.org/irc/
+.. _an IRC channel on Libera.Chat: https://overviewer.org/irc/
 
 Since most developers have jobs or are in college or university, it may
 sometimes take a few moments to get a reply. So it's useful to stick around and

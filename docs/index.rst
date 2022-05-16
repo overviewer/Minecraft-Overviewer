@@ -7,7 +7,7 @@ The Minecraft Overviewer
 ========================
 
 See also the `Github Homepage`_ and the `Updates Blog`_, and follow us on
-our `Twitter account`_
+our `Twitter account`_.
 
 .. _Github Homepage: https://github.com/overviewer/Minecraft-Overviewer
 
@@ -18,8 +18,8 @@ our `Twitter account`_
 Introduction
 ============
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
-maps of Minecraft worlds. It generates a set of static html and image files and
-uses Leaflet to display a nice interactive map.
+maps of Minecraft Java Edition worlds. It generates a set of static html and
+image files and uses Leaflet to display a nice interactive map.
 
 The Overviewer has been in active development for several years and has many
 features, including day and night lighting, cave rendering, mineral overlays,
@@ -53,7 +53,7 @@ Documentation Contents
 Features
 ========
 
-* Renders high resolution images of your world, let's you "deep zoom" and see
+* Renders high resolution images of your world, lets you "deep zoom" and see
   details!
 
 * Gloriously awesome smooth lighting is here!
@@ -109,6 +109,8 @@ Full disclosure disclaimers of what The Overviewer is *not*.
   line based, you will need to know a bit about the command line in order to
   operate The Overviewer.
 
+* The Overviewer does not support Bedrock/Win10/Portable Edition worlds.
+
 * The Overviewer is not a potato.
 
 Requirements
@@ -157,9 +159,9 @@ Help
 ====
 
 **IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to chat with
-us live in IRC: #overviewer on Freenode. There's usually someone on there that
+us live in IRC: #overviewer on Libera.Chat. There's usually someone on there that
 can help you out. Not familiar with IRC? `Use the web client
-<http://webchat.freenode.net/?channels=overviewer>`_. (If there's no immediate
+<https://overviewer.org/irc>`_. (If there's no immediate
 response, wait around or try a different time of day; we have to sleep sometime)
 
 Also check our :doc:`Frequently Asked Questions <faq>` page.

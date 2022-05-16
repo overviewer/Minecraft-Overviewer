@@ -241,6 +241,9 @@ def main():
             f = tex.find_file("assets/minecraft/textures/block/grass_block_top.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/block/diamond_ore.png", verbose=True)
             f = tex.find_file("assets/minecraft/textures/block/acacia_planks.png", verbose=True)
+            # 1.16
+            f = tex.find_file("assets/minecraft/textures/block/ancient_debris_top.png",
+                              verbose=True)
         except IOError:
             logging.error("Could not find any texture files.")
             return 1
@@ -367,7 +370,7 @@ def main():
 
     ############################################################
     # Final validation steps and creation of the destination directory
-    logging.info("Welcome to Minecraft Overviewer!")
+    logging.info("Welcome to Minecraft Overviewer version %s (%s)!" % (util.findGitVersion(), util.findGitHash()[:7]))
     logging.debug("Current log level: {0}.".format(logging.getLogger().level))
 
     def set_renderchecks(checkname, num):
@@ -512,7 +515,7 @@ def main():
             rset = w.get_regionset(render['dimension'][1])
         except IndexError:
             logging.error("Sorry, I can't find anything to render!  Are you sure there are .mca "
-                          "files in the world directory?")
+                          "files in the world directory of %s?" % render['world'])
             return 1
         if rset is None:    # indicates no such dimension was found
             logging.warning("Sorry, you requested dimension '%s' for %s, but I couldn't find it.",

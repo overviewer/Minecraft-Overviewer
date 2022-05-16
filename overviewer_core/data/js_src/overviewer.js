@@ -39,7 +39,7 @@ overviewer.collections = {
 
         /**
          * When switching regionsets, where should we zoom to?
-         * Defaults to spawn.  Stored as map of world names to [latlng, zoom]
+         * Defaults to spawn.  Stored as map of maps: world names to layer names to [latlng, zoom]
          */
         'centers': {},
 

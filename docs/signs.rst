@@ -28,6 +28,11 @@ array), and return a string representing the text to be displayed.  For example:
         if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
             return "\n".join([poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']])
 
+.. note::
+    This example is intended as a teaching aid and does not escape HTML,
+    so if you are concerned that your Minecraft players will put HTML/JS into
+    their signs, see below for a version that does do escaping.
+
 If a POI doesn't match, the filter can return None (which is the default if a python 
 functions runs off the end without an explicit 'return').
 
@@ -55,14 +60,25 @@ be used as the hover text, the second will be used as the info window content::
         if poi['id'] == "Chest" or poi['id'] == 'minecraft:chest':
             return ("Chest", "Chest with %d items" % len(poi.get('Items', [])))
 
+Additionally, you can filter based on other Block Entity data by including references to other
+Minecraft Block Entity fields. For instance, you can filter out world-generated lootable chests
+that have not yet been opened by players by filtering out chests that still have loot tables::
+
+    def chestFilter(poi):
+        if poi['id'] == "Chest" or poi['id'] == 'minecraft:chest':
+            if "LootTable" in poi:
+                return None
+            else:
+                return ("Chest", "Chest with %d items" % len(poi.get('Items', [])))
+
 Because of the way the config file is loaded, if you need to import a function or module
 for use in your filter function, you need to explicitly load it into the global namespace::
 
     global escape
-    from cgi import escape
+    from html import escape
     def signFilter(poi):
         if poi['id'] == 'Sign' or poi['id'] == 'minecraft:sign':
-            return "\n".join(map(escape, [poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']]))
+            return escape("\n".join([poi['Text1'], poi['Text2'], poi['Text3'], poi['Text4']]))
 
 Since writing these filters can be a little tedious, a set of predefined filters
 functions are provided.  See the :ref:`predefined_filter_functions` section for
@@ -76,7 +92,7 @@ There are currently two special types of POIs.  They each have a special id:
 
 PlayerSpawn
   Used to indicate the spawn location of a player.  The player's name is set
-  in the ``EntityId`` key, and the location is in the x,y,z keys
+  in the ``EntityId`` key, and the location is in the x,y,z keys.
 
 Player
   Used to indicate the last known location of a player.  The player's name is set
@@ -156,7 +172,7 @@ Here is a more complex example where not every marker of a certain id has a cert
                         'y':85,
                         'z':-234,
                         'name':'Bar'}],
-        'markers': [dict(name="Towns", filterFunction=townFilter, icon="icons/marker_town.png")],
+        'markers': [dict(name="Towns", filterFunction=townFilter, icon="markers/marker_town.png")],
         ### Note: The 'icon' parameter allows you to specify a custom icon, as per
         ###       standard markers. This icon must exist in the same folder as your
         ###       custom webassets or in the same folder as the generated index.html
@@ -193,11 +209,14 @@ The following keys are accepted in the marker dictionary:
 ``icon``
     Optional.  Specifies the icon to use for POIs in this group.  If omitted, it defaults
     to a signpost icon.  Note that each POI can have different icon by setting the key 'icon'
-    on the POI itself (this can be done by modifying the POI in the filter function.  See the
+    on the POI itself. (this can be done by modifying the POI in the filter function.  See the
     example above)
 
 ``createInfoWindow``
     Optional. Specifies whether or not the icon displays an info window on click. Defaults to True
+
+``showIconInLegend``
+    Optional. Specifies whether or not the icon is displayed in the legend. Defaults to False
 
 ``checked``
     Optional.  Specifies whether or not this marker group will be checked(visible) by default when
@@ -271,7 +290,7 @@ Marker Icons Overviewer ships by default
 ========================================
 
 Overviewer comes with multiple small icons that you can use for your markers.
-You can find them in the ``overviewer_core/data/web_assets/icons`` directory.
+You can find them in the ``overviewer_core/data/web_assets/markers`` directory.
 
 If you want to make your own in the same style, you can use the provided
 ``marker_base_plain.svg`` and ``marker_base_plain_red.svg`` as template, with

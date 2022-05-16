@@ -14,6 +14,9 @@
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
+class BiomeException(Exception):
+    def __init__(self, msg):
+        self.msg = msg
 
 def reshape_biome_data(biome_array):
     biome_len = len(biome_array)
@@ -28,3 +31,7 @@ def reshape_biome_data(biome_array):
         # but they appear to either be wrong or have explained it with the eloquence of a
         # caveman.
         return biome_array.reshape((4, 64, 4))
+    elif biome_len == 1536:
+        return biome_array.reshape((4, 96, 4))
+    else:
+        raise BiomeException("Can't reshape a biome of length {}".format(biome_len))

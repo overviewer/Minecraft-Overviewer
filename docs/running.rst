@@ -273,14 +273,14 @@ If you want or need to provide your own textures, you have several options:
 
   ::
 
-    VERSION=1.15
+    VERSION=1.17
     mkdir -p ~/.minecraft/versions/${VERSION}/
     wget https://overviewer.org/textures/${VERSION} -O ~/.minecraft/versions/${VERSION}/${VERSION}.jar
 
   If that's too confusing for you, then just take this single line and paste it into
-  a terminal to get 1.15 textures::
+  a terminal to get 1.17 textures::
 
-    wget https://overviewer.org/textures/1.15 -O ~/.minecraft/versions/1.15/1.15.jar
+    mkdir -p ~/.minecraft/versions/1.17/ && wget https://overviewer.org/textures/1.17 -O ~/.minecraft/versions/1.17/1.17.jar
 
 * You can also just run the launcher to install the client.
 
@@ -309,15 +309,3 @@ modification times intact, use ``cp -p``. For people who render from backups,
 GNU ``tar`` automatically handles modification times correctly. ``rsync -a
 --delete`` will handle this correctly as well. If you use some other tool,
 you'll have to figure out how to do this yourself.
-
-HTTPS support
--------------
-
-In order to support displaying maps over HTTPS, Overviewer loads the Google
-maps API and JQuery over HTTPS. This avoids security warnings for HTTPS
-sites, and is not expected to cause problems for users.
-
-If this change causes problems, take a look at the
-:ref:`custom web assets<customwebassets>` option. This allows you to
-provide a custom index.html which loads the required Javascript libraries
-over HTTP.
