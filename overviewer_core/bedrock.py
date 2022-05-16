@@ -54,6 +54,19 @@ class World:
   def iterKeys(self, start=None, end=None):
     yield from ldb.iterate(self.db, start, end)
 
+  def iterChunks(self, start=None, end=None):
+    for k, _ in ldb.iterate(self.db):
+      if len(k) == 9 and k.endswith((b"v", b",")):
+        x, z = struct.unpack("<ii", k[:8])
+        if start and (x < start[0] or x >= end[0]):
+          continue
+        if end and (z < start[1] or z >= end[1]):
+          continue
+        try:
+          yield self.getChunk(x, z)
+        except Exception as e:
+          print("Error: Couldn't load chunk at {} {}: {}".format(x, z, e))
+
 # Handles biomes and tile entities. Maps blocks to subchunks.
 class Chunk:
   def __init__(self, db, x, z):
@@ -63,10 +76,14 @@ class Chunk:
     self.keyBase = struct.pack("<ii", self.x, self.z)
 
     self.version = self._loadVersion(db)
-    self.hMap, self.biomes = self._load2D(db)
+    self.cavesAndCliffs = self.version >= 25
+    if not self.cavesAndCliffs:
+      self.hMap, self.biomes = self._load2D(db)
+    else:
+      self.hMap, self.biomes = None, None
 
     self.subchunks = []
-    for i in range(16):
+    for i in range(24 if self.cavesAndCliffs else 16):
       try:
         self.subchunks.append(SubChunk(db, self.x, self.z, i)) #Pass off processing to the subchunk class
       #Supposedly if a subchunk exists then all the subchunks below it exist. This is not the case.
@@ -79,14 +96,15 @@ class Chunk:
   # Version is simply a stored value.
   def _loadVersion(self, db):
     try:
-      version = ldb.get(db, self.keyBase + b"v")
+      try:
+        version = ldb.get(db, self.keyBase + b",")
+      except KeyError:
+        version = ldb.get(db, self.keyBase + b"v")
       version = struct.unpack("<B", version)[0]
-      if version not in [10, 13, 14, 15]:
+      if version not in [10, 13, 14, 15, 18, 19, 21, 22, 25]:
         raise NotImplementedError("Unexpected chunk version {} at chunk {} {}.".format(version, self.x, self.z))
     except KeyError:
       raise KeyError("Chunk at {}, {} does not exist.".format(self.x, self.z))
-    except OSError:
-      return 0
     return version
 
   # Load heightmap (seemingly useless) and biome info
@@ -126,11 +144,15 @@ class Chunk:
     return entities
 
   def getBlock(self, x, y, z, layer=0):
+    if self.cavesAndCliffs:
+      y += 64
     if y // 16 + 1 > len(self.subchunks) or self.subchunks[y // 16] is None:
       return None
     return self.subchunks[y // 16].getBlock(x, y % 16, z, layer)
 
   def setBlock(self, x, y, z, block, layer=0):
+    if self.cavesAndCliffs:
+      y += 64
     while y // 16 + 1 > len(self.subchunks):
       self.subchunks.append(SubChunk.empty(self.x, self.z, len(self.subchunks)))
     if self.subchunks[y // 16] is None:
@@ -139,8 +161,9 @@ class Chunk:
 
   def save(self, db):
     version = struct.pack("<B", self.version)
-    ldb.put(db, self.keyBase + b"v", version)
-    self._save2D(db)
+    ldb.put(db, self.keyBase + b",", version)
+    if not self.cavesAndCliffs:
+      self._save2D(db)
     for subchunk in self.subchunks:
       if subchunk is None:
         continue
@@ -193,9 +216,14 @@ class SubChunk:
       except KeyError:
         raise NotFoundError("Subchunk at {} {}/{} not found.".format(x, z, y))
       self.version, data = data[0], data[1:]
-      if self.version != 8:
+      if self.version not in [8, 9]:
         raise NotImplementedError("Unsupported subchunk version {} at {} {}/{}".format(self.version, x, z, y))
       numStorages, data = data[0], data[1:]
+
+      if self.version == 9:
+        self.y_db, data = data[0], data[1:]
+      else:
+        self.y_db = None
 
       self.blocks = []
       for i in range(numStorages):
@@ -261,6 +289,9 @@ class SubChunk:
         for block in palette:
           data += nbt2.encode(block)
 
+      if self.version == 9:
+        data = struct.pack("B", self.y_db) + data
+
       key = struct.pack("<iicB", self.x, self.z, b'/', self.y)
       ldb.put(db, key, data)
 
@@ -323,8 +354,16 @@ class Block:
     self.properties = properties or []
     self.nbt = nbtData
 
+  def __eq__(self, other):
+    if not isinstance(other, Block):
+      return False
+    return self.name == other.name and self.properties == other.properties and self.nbt == other.nbt
+
   def __repr__(self):
     return "{} {}".format(self.name, self.properties)
+
+  def __hash__(self):
+    return self.__repr__().__hash__()
 
 # Handles NBT generation for command blocks.
 class CommandBlock(Block):

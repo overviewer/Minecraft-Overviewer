@@ -178,6 +178,12 @@ class TAG_Compound(TAG):
         return self.payload.pop(i)
     return None
 
+  def __contains__(self, name):
+    for item in self.payload:
+      if item.name == name:
+        return True
+    return False
+
 # Similar to TAG_List, except the type of tag is not specified, as we know it is an int.
 class TAG_Int_Array(TAG):
   ID = 7
