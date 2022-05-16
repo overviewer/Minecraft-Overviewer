@@ -218,6 +218,8 @@ class RegionSet(object):
 
     """
 
+    unknowns = {}
+
     def __init__(self, regiondir, rel):
         """Initialize a new RegionSet to access the region files in the given
         directory.
@@ -1043,11 +1045,33 @@ class RegionSet(object):
 
         key = palette_entry.name
 
+        if key == 'minecraft:tallgrass':
+            key = 'minecraft:tall_grass'
+        elif key == 'minecraft:magma':
+            key = 'minecraft:magma_block'
+        elif key == 'minecraft:log':
+            logTypeMatch = [x for x in palette_entry.properties if x.name == 'old_log_type']
+            key = 'minecraft:' + logTypeMatch[0].payload + '_log'
+        elif key == 'minecraft:leaves':
+            leafTypeMatch = [x for x in palette_entry.properties if x.name == 'old_leaf_type']
+            key = 'minecraft:' + leafTypeMatch[0].payload + '_leaves'
+        elif key == 'minecraft:planks':
+            plankTypeMatch = [x for x in palette_entry.properties if x.name == 'wood_type']
+            key = 'minecraft:' + plankTypeMatch[0].payload + '_planks'
+        else:
+            flowerMatch = [x for x in palette_entry.properties if x.name == 'flower_type']
+            if len(flowerMatch) == 1:
+                if flowerMatch[0].payload == 'oxeye':
+                    key = 'minecraft:oxeye_daisy'
+                else:
+                    key = 'minecraft:' + flowerMatch[0].payload
+
         try:
             (block, data) = self._blockmap[key]
             return (block, data)
 
         except KeyError:
+            self.unknowns[key] = palette_entry;
             (block, data) = self._blockmap['minecraft:bedrock']
             return (block, data)
 
@@ -1569,7 +1593,7 @@ class RegionSet(object):
         for x in range(16):
             for y in range(16):
                 for z in range(16):
-                    key = section['Blocks'][0][x][y][z]
+                    key = section['Blocks'][0][z][x][y]
                     newBlock, newData = self._get_block(key)
                     blocks[x][y][z] = newBlock
                     data[x][y][z] = newData

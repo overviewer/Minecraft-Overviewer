@@ -19,7 +19,26 @@ rendermode = "normal"
 
 renders["render1"] = {
         'world': 'My World',
-        'title': 'A regular render',
+        'northdirection': 'upper-left',
+        'title': 'Upper-left'
+}
+
+renders["render2"] = {
+        'world': 'My World',
+        'northdirection': 'upper-right',
+        'title': 'Upper-right'
+}
+
+renders["render3"] = {
+        'world': 'My World',
+        'northdirection': 'lower-right',
+        'title': 'Lower-right'
+}
+
+renders["render4"] = {
+        'world': 'My World',
+        'northdirection': 'lower-left',
+        'title': 'Lower-left'
 }
 
 processes = 1
