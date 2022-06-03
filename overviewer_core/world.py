@@ -1711,7 +1711,7 @@ class RegionSet(object):
             # This world was generated pre 21w43a and thus most chunk data is contained
             # in the "Level" key
             if 'Level' in chunk_data:
-            	chunk_data = chunk_data['Level']
+            	   chunk_data = chunk_data['Level']
         else:
             # This world was generated post 21w43a
             chunk_data['Sections'] = chunk_data['sections']
