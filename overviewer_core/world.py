@@ -1707,13 +1707,13 @@ class RegionSet(object):
 
         chunk_data = data[1]
 
-        if not 'sections' in chunk_data:
+        if chunk_data.get('DataVersion', 0) <= 2840 and 'Level' in chunk_data:
             # This world was generated pre 21w43a and thus most chunk data is contained
             # in the "Level" key
             chunk_data = chunk_data['Level']
         else:
-            # This world was generated post 21w43a
-            chunk_data['Sections'] = chunk_data['sections']
+            # This world was (probably) generated post 21w43a
+            chunk_data['Sections'] = chunk_data.get('sections', [])
 
         longarray_unpacker = self._packed_longarray_to_shorts
         if data[1].get('DataVersion', 0) >= 2529:
