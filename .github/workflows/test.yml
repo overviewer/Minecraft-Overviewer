@@ -13,5 +13,8 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install dependencies
+        run: python -m pip install numpy
+
       - name: Build extension
         run: python setup.py build
