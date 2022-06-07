@@ -13,8 +13,23 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install dependencies
+      - name: Install dependencies (apt)
+        run: sudo apt -y install python3-pil
+
+      - name: Install dependencies (pip)
         run: python -m pip install numpy
 
       - name: Build extension
         run: python setup.py build
+
+  Build-Windows-x86_64:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install python
+        uses: actions/setup-python@v3
+
+      - name: Install dependencies (pip)
+        run: python -m pip install numpy pillow
