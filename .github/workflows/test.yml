@@ -20,10 +20,10 @@ jobs:
         run: python -m pip install numpy Pillow==9.1.1
 
       - name: Clone Pillow 9.1.1
-        run: git clone --branch=9.1.1 --depth=1 https://github.com/python-pillow/Pillow.git /pillow
+        run: git clone --branch=9.1.1 --depth=1 https://github.com/python-pillow/Pillow.git /tmp/pillow_checkout
 
       - name: Build extension
-        run: env PIL_INCLUDE_DIR=/pillow/src/libImaging/ python setup.py build
+        run: env PIL_INCLUDE_DIR=/tmp/pillow_checkout/src/libImaging/ python setup.py build
 
   Build-Windows-x86_64:
     runs-on: windows-latest
