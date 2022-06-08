@@ -18,7 +18,7 @@ from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
 from distutils.cmd import Command
 from distutils.dir_util import remove_tree
-from distutils.sysconfig import get_python_inc
+from distutils.sysconfig import get_python_inc, get_python_lib
 from distutils import log
 import os, os.path
 import glob
@@ -183,7 +183,13 @@ c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
 c_overviewer_files = ['overviewer_core/src/' + s for s in c_overviewer_files]
 c_overviewer_includes = ['overviewer_core/src/' + s for s in c_overviewer_includes]
 
-setup_kwargs['ext_modules'].append(Extension('overviewer_core.c_overviewer', c_overviewer_files, include_dirs=['.', numpy_include] + pil_include, depends=c_overviewer_includes, extra_link_args=[]))
+setup_kwargs['ext_modules'].append(Extension(
+    'overviewer_core.c_overviewer',
+    c_overviewer_files,
+    include_dirs=['.', numpy_include] + pil_include,
+    depends=c_overviewer_includes,
+    extra_link_args=[]
+))
 
 
 # tell build_ext to build the extension in-place
@@ -290,6 +296,9 @@ class CustomBuildExt(build_ext):
                 e.extra_link_args.append("/MANIFEST")
                 e.extra_link_args.append("/DWINVER=0x060")
                 e.extra_link_args.append("/D_WIN32_WINNT=0x060")
+                # workaround for our extremely shitty build system
+                # yeet this into a fire once we move to github actions
+                e.extra_link_args.append("/LIBPATH:C:\Python37\Libs")
         if c == "unix":
             # customize the build options for this compilier
             for e in self.extensions:
