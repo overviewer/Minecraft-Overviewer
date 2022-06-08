@@ -198,16 +198,16 @@ c_overviewer_includes = ['overviewer_core/src/' + s for s in c_overviewer_includ
 # to something else. The problem is that virtualenv somehow
 # now overrides the base_prefix (which it shouldn't do) which
 # makes distutils unable to find our Python library
-python_lib_dir = ""
+python_lib_dirs = None
 if platform.system() == 'Windows':
     ci_python_dir = os.path.split(find_system_module_path())[0]
-    python_lib_dir = os.path.join(ci_python_dir, "Libs")
+    python_lib_dirs = [os.path.join(ci_python_dir, "Libs")]
 
 setup_kwargs['ext_modules'].append(Extension(
     'overviewer_core.c_overviewer',
     c_overviewer_files,
     include_dirs=['.', numpy_include] + pil_include,
-    library_dirs=[python_lib_dir],
+    library_dirs=python_lib_dirs,
     depends=c_overviewer_includes,
     extra_link_args=[]
 ))
