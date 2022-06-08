@@ -18,7 +18,7 @@ from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
 from distutils.cmd import Command
 from distutils.dir_util import remove_tree
-from distutils.sysconfig import get_python_inc, get_python_lib
+from distutils.sysconfig import get_python_inc
 from distutils import log
 import os, os.path
 import glob
@@ -103,6 +103,17 @@ def recursive_package_data(src, package_dir='overviewer_core'):
 
     return ret
 
+# Finds the system-wide path from within a venv.
+# Taken from https://github.com/pyinstaller/pyinstaller/blob/master/PyInstaller/hooks/pre_find_module_path/hook-distutils.py
+def find_system_module_path():
+    # opcode is not a virtualenv module, so we can use it to find the stdlib. Technique taken from virtualenv's
+    # "distutils" package detection at
+    # https://github.com/pypa/virtualenv/blob/16.3.0/virtualenv_embedded/distutils-init.py#L5
+    import opcode
+
+    system_module_path = os.path.normpath(os.path.dirname(opcode.__file__))
+    return system_module_path
+
 #
 # py2exe options
 #
@@ -183,10 +194,20 @@ c_overviewer_includes = ['overviewer.h', 'rendermodes.h']
 c_overviewer_files = ['overviewer_core/src/' + s for s in c_overviewer_files]
 c_overviewer_includes = ['overviewer_core/src/' + s for s in c_overviewer_includes]
 
+# really ugly hack for our scuffed CI, remove this once we move
+# to something else. The problem is that virtualenv somehow
+# now overrides the base_prefix (which it shouldn't do) which
+# makes distutils unable to find our Python library
+python_lib_dir = ""
+if platform.system() == 'Windows':
+    ci_python_dir = os.path.split(find_system_module_path())[0]
+    python_lib_dir = os.path.join(ci_python_dir, "Libs")
+
 setup_kwargs['ext_modules'].append(Extension(
     'overviewer_core.c_overviewer',
     c_overviewer_files,
     include_dirs=['.', numpy_include] + pil_include,
+    library_dirs=[python_lib_dir],
     depends=c_overviewer_includes,
     extra_link_args=[]
 ))
@@ -296,9 +317,6 @@ class CustomBuildExt(build_ext):
                 e.extra_link_args.append("/MANIFEST")
                 e.extra_link_args.append("/DWINVER=0x060")
                 e.extra_link_args.append("/D_WIN32_WINNT=0x060")
-                # workaround for our extremely shitty build system
-                # yeet this into a fire once we move to github actions
-                e.extra_link_args.append("/LIBPATH:C:\Python37\Libs")
         if c == "unix":
             # customize the build options for this compilier
             for e in self.extensions:
