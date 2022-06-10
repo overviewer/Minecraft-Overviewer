@@ -88,8 +88,9 @@ class World(object):
 
     """
 
-    def __init__(self, worlddir):
+    def __init__(self, worlddir, isbedrock):
         self.worlddir = worlddir
+        self.isbedrock = isbedrock
 
         # This list, populated below, will hold RegionSet files that are in
         # this world
@@ -100,64 +101,86 @@ class World(object):
         if not os.path.exists(os.path.join(self.worlddir, "level.dat")):
             raise ValueError("level.dat not found in %s" % self.worlddir)
 
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
-        # it seems that reading a level.dat file is unstable, particularly with respect
-        # to the spawnX,Y,Z variables.  So we'll try a few times to get a good reading
-        # empirically, it seems that 0,50,0 is a "bad" reading
-        # update: 0,50,0 is the default spawn, and may be valid is some cases
-        # more info is needed
-        data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
+        if self.isbedrock == 0:
+            data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
+            # it seems that reading a level.dat file is unstable, particularly with respect
+            # to the spawnX,Y,Z variables.  So we'll try a few times to get a good reading
+            # empirically, it seems that 0,50,0 is a "bad" reading
+            # update: 0,50,0 is the default spawn, and may be valid is some cases
+            # more info is needed
+            data = nbt.load(os.path.join(self.worlddir, "level.dat"))[1]['Data']
 
 
-        # Hard-code this to only work with format version 19133, "Anvil"
-        if not ('version' in data and data['version'] == 19133):
-            if 'version' in data and data['version'] == 0:
-                logging.debug("Note: Allowing a version of zero in level.dat!")
-                ## XXX temporary fix for #1194
-            else:
-                raise UnsupportedVersion(
-                    ("Sorry, This version of Minecraft-Overviewer only works "
-                     "with the 'Anvil' chunk format\n"
-                     "World at %s is not compatible with Overviewer")
-                    % self.worlddir)
+            # Hard-code this to only work with format version 19133, "Anvil"
+            if not ('version' in data and data['version'] == 19133):
+                if 'version' in data and data['version'] == 0:
+                    logging.debug("Note: Allowing a version of zero in level.dat!")
+                    ## XXX temporary fix for #1194
+                else:
+                    raise UnsupportedVersion(
+                        ("Sorry, This version of Minecraft-Overviewer only works "
+                         "with the 'Anvil' chunk format\n"
+                         "World at %s is not compatible with Overviewer")
+                        % self.worlddir)
 
-        # This isn't much data, around 15 keys and values for vanilla worlds.
-        self.leveldat = data
-
-
-        # Scan worlddir to try to identify all region sets. Since different
-        # server mods like to arrange regions differently and there does not
-        # seem to be any set standard on what dimensions are in each world,
-        # just scan the directory heirarchy to find a directory with .mca
-        # files.
-        for root, dirs, files in os.walk(self.worlddir, followlinks=True):
-            # any .mcr files in this directory?
-            mcas = [x for x in files if x.endswith(".mca")]
-            if mcas:
-                # construct a regionset object for this
-                rel = os.path.relpath(root, self.worlddir)
-                if os.path.basename(rel) != "poi":
-                    rset = RegionSet(root, rel)
-                    if root == os.path.join(self.worlddir, "region"):
-                        self.regionsets.insert(0, rset)
-                    else:
-                        self.regionsets.append(rset)
-
-        # TODO move a lot of the following code into the RegionSet
+            # This isn't much data, around 15 keys and values for vanilla worlds.
+            self.leveldat = data
 
 
-        try:
-            # level.dat should have the LevelName attribute so we'll use that
-            self.name = data['LevelName']
-        except KeyError:
-            # but very old ones might not? so we'll just go with the world dir name if they don't
+            # Scan worlddir to try to identify all region sets. Since different
+            # server mods like to arrange regions differently and there does not
+            # seem to be any set standard on what dimensions are in each world,
+            # just scan the directory heirarchy to find a directory with .mca
+            # files.
+            for root, dirs, files in os.walk(self.worlddir, followlinks=True):
+                # any .mcr files in this directory?
+                mcas = [x for x in files if x.endswith(".mca")]
+                if mcas:
+                    # construct a regionset object for this
+                    rel = os.path.relpath(root, self.worlddir)
+                    if os.path.basename(rel) != "poi":
+                        rset = RegionSet(root, rel, self.isbedrock)
+                        if root == os.path.join(self.worlddir, "region"):
+                            self.regionsets.insert(0, rset)
+                        else:
+                            self.regionsets.append(rset)
+
+            # TODO move a lot of the following code into the RegionSet
+
+
+            try:
+                # level.dat should have the LevelName attribute so we'll use that
+                self.name = data['LevelName']
+            except KeyError:
+                # but very old ones might not? so we'll just go with the world dir name if they don't
+                self.name = os.path.basename(os.path.realpath(self.worlddir))
+
+            try:
+                # level.dat also has a RandomSeed attribute
+                self.seed = data['RandomSeed']
+            except KeyError:
+                self.seed = 0 # oh well
+        else:
+            # Overworld
+            rset = RegionSet(self.worlddir, "region", self.isbedrock)
+            for anychunk in rset.iterate_chunks():
+                self.regionsets.append(rset)
+                break
+            # Nether
+            rset = RegionSet(self.worlddir, "DIM-1/region", self.isbedrock)
+            for anychunk in rset.iterate_chunks():
+                self.regionsets.append(rset)
+                break
+            # The End
+            rset = RegionSet(self.worlddir, "DIM1/region", self.isbedrock)
+            for anychunk in rset.iterate_chunks():
+                self.regionsets.append(rset)
+                break
             self.name = os.path.basename(os.path.realpath(self.worlddir))
-
-        try:
-            # level.dat also has a RandomSeed attribute
-            self.seed = data['RandomSeed']
-        except KeyError:
-            self.seed = 0 # oh well
+            # TODO: Find this and maybe other data in bedrock level.dat
+            # Sounds like bedrock's level.dat is NBT format as well, but isn't compressed and bytes are stored as little endian
+            # Some more info: https://github.com/C4K3/nbted/issues/4
+            self.seed = 0
 
         # TODO figure out where to handle regionlists
 
@@ -190,6 +213,9 @@ class World(object):
         # The spawn Y coordinate is almost always the default of 64.  Find the
         # first air block above the stored spawn location for the true spawn
         # location
+
+        if self.isbedrock == 1:
+            return (0, 0, 0) # TODO: Find in bedrock level.dat (https://github.com/C4K3/nbted/issues/4)
 
         ## read spawn info from level.dat
         data = self.leveldat
@@ -250,7 +276,7 @@ class RegionSet(object):
 
     """
 
-    def __init__(self, regiondir, rel):
+    def __init__(self, regiondir, rel, isbedrock):
         """Initialize a new RegionSet to access the region files in the given
         directory.
 
@@ -265,6 +291,7 @@ class RegionSet(object):
         """
         self.regiondir = os.path.normpath(regiondir)
         self.rel = os.path.normpath(rel)
+        self.isbedrock = isbedrock
         logging.debug("regiondir is %r" % self.regiondir)
         logging.debug("rel is %r" % self.rel)
 
@@ -1029,7 +1056,7 @@ class RegionSet(object):
 
     # Re-initialize upon unpickling
     def __getstate__(self):
-        return (self.regiondir, self.rel)
+        return (self.regiondir, self.rel, self.isbedrock)
     def __setstate__(self, state):
         return self.__init__(*state)
 
@@ -1071,8 +1098,57 @@ class RegionSet(object):
         colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan',
                   'purple', 'blue', 'brown', 'green', 'red', 'black']
 
+        if self.isbedrock == 1:
+            key = palette_entry.name
+
+            # Switch from Bedrock keys to Anvil, because we are still using Java edition textures
+            # Here's a good list of available values: https://docs.microsoft.com/en-us/minecraft/creator/scriptapi/mojang-minecraft/blockproperties
+            # TODO: Finish this block conversion, including blocks facing certain directions, and block data in NBT properties
+            # Instead of putting in cases for a lot of blocks, maybe try using someone else's tool for map conversion, for example: https://github.com/gentlegiantJGC/PyMCTranslate
+            try:
+                if key == 'minecraft:tallgrass':
+                    key = 'minecraft:tall_grass'
+                elif key == 'minecraft:magma':
+                    key = 'minecraft:magma_block'
+                elif key == 'minecraft:log':
+                    logTypeMatch = [x for x in palette_entry.properties if x.name == 'old_log_type']
+                    if logTypeMatch:
+                        key = 'minecraft:' + logTypeMatch[0].payload + '_log'
+                elif key == 'minecraft:leaves':
+                    leafTypeMatch = [x for x in palette_entry.properties if x.name == 'old_leaf_type']
+                    if leafTypeMatch:
+                        key = 'minecraft:' + leafTypeMatch[0].payload + '_leaves'
+                elif key == 'minecraft:planks':
+                    plankTypeMatch = [x for x in palette_entry.properties if x.name == 'wood_type']
+                    if plankTypeMatch:
+                        key = 'minecraft:' + plankTypeMatch[0].payload + '_planks'
+                else:
+                    if palette_entry.properties and hasattr(palette_entry.properties, '__iter__'):
+                        flowerMatch = [x for x in palette_entry.properties if x.name == 'flower_type']
+                        if len(flowerMatch) == 1:
+                            if flowerMatch[0].payload == 'oxeye':
+                                key = 'minecraft:oxeye_daisy'
+                            else:
+                                key = 'minecraft:' + flowerMatch[0].payload
+            except BaseException:
+                # This block has something we don't understand in it's properties
+                # TODO: Ideally this shouldn't happen. Make cases above for as many exceptions as I can find
+                pass
+
+            try:
+                (block, data) = self._blockmap[key]
+                return (block, data)
+
+            except KeyError:
+                (block, data) = self._blockmap['minecraft:bedrock']
+                # TODO: Log unrecognized Bedrock keys so we can implement them
+                return (block, data)
+        
+        # Anvil key
         key = palette_entry['Name']
         (block, data) = self._blockmap[key]
+
+        # TODO: Implement the below cases for Bedrock
         if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
             if palette_entry['Properties']['lit'] == 'true':
                 block += 1
@@ -1459,6 +1535,19 @@ class RegionSet(object):
         # Check the cache first. If it's not there, create the
         # nbt.MCRFileReader object, cache it, and return it
         # May raise an nbt.CorruptRegionError
+
+        # Bedrock maps don't use regioncache because all dimensions are in one region file
+        # Currently the bedrock reader uses a static class variable for database access anyway, so the cache wouldn't really help with performance
+        if self.isbedrock == 1:
+            if self.type is None:
+                return nbt.load_region_bedrock(regionfilename, dimension=0)
+            elif self.type == "DIM-1":
+                return nbt.load_region_bedrock(regionfilename, dimension=1)
+            elif self.type == "DIM1":
+                return nbt.load_region_bedrock(regionfilename, dimension=2)
+            else:
+                raise NotImplementedError("Unexpected region type for bedrock map: {}".format(self.type))
+
         try:
             return self.regioncache[regionfilename]
         except KeyError:
@@ -1705,20 +1794,28 @@ class RegionSet(object):
         if data is None:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
-        chunk_data = data[1]
+        chunk_data = None
 
-        if chunk_data.get('DataVersion', 0) <= 2840 and 'Level' in chunk_data:
-            # This world was generated pre 21w43a and thus most chunk data is contained
-            # in the "Level" key
-            chunk_data = chunk_data['Level']
+        if self.isbedrock == 1:
+            chunk_data = {
+                'Biomes': data.biomes, # TODO: I don't know if Bedrock biomes data is in the same format as Anvil
+                'Sections': data.subchunks
+            }
         else:
-            # This world was (probably) generated post 21w43a
-            chunk_data['Sections'] = chunk_data.get('sections', [])
+            chunk_data = data[1]
 
-        longarray_unpacker = self._packed_longarray_to_shorts
-        if data[1].get('DataVersion', 0) >= 2529:
-            # starting with 1.16 snapshot 20w17a, block states are packed differently
-            longarray_unpacker = self._packed_longarray_to_shorts_v116
+            if chunk_data.get('DataVersion', 0) <= 2840 and 'Level' in chunk_data:
+                # This world was generated pre 21w43a and thus most chunk data is contained
+                # in the "Level" key
+                chunk_data = chunk_data['Level']
+            else:
+                # This world was (probably) generated post 21w43a
+                chunk_data['Sections'] = chunk_data.get('sections', [])
+
+            longarray_unpacker = self._packed_longarray_to_shorts
+            if data[1].get('DataVersion', 0) >= 2529:
+                # starting with 1.16 snapshot 20w17a, block states are packed differently
+                longarray_unpacker = self._packed_longarray_to_shorts_v116
 
         # From the interior of a map to the edge, a chunk's status may be one of:
         # - postprocessed (interior, or next to fullchunk)
@@ -1735,7 +1832,7 @@ class RegionSet(object):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array
-        if 'Biomes' in chunk_data and len(chunk_data['Biomes']) > 0:
+        if 'Biomes' in chunk_data and chunk_data['Biomes'] is not None and len(chunk_data['Biomes']) > 0:
             biomes = chunk_data['Biomes']
             if isinstance(biomes, bytes):
                 biomes = numpy.frombuffer(biomes, dtype=numpy.uint8)
@@ -1753,7 +1850,20 @@ class RegionSet(object):
         chunk_data['NewBiomes'] = (len(biomes.shape) == 3)
 
         unrecognized_block_types = {}
-        for section in chunk_data['Sections']:
+
+        for i in range(len(chunk_data['Sections'])):
+            section = chunk_data['Sections'][i]
+
+            if self.isbedrock == 1:
+                if section != None and hasattr(section, 'blocks'):
+                    section = {
+                        'Blocks': section.blocks,
+                        'X': section.x,
+                        'Y': section.y,
+                        'Z': section.z
+                    }
+                else:
+                    section = {}
 
             # Turn the skylight array into a 16x16x16 matrix. The array comes
             # packed 2 elements per byte, so we need to expand it.
@@ -1761,7 +1871,9 @@ class RegionSet(object):
                 # Sometimes, Minecraft loves generating chunks with no light info.
                 # These mostly appear to have those two properties, and in this case
                 # we default to full-bright as it's less jarring to look at than all-black.
-                if chunk_data.get("Status", "") == "spawn" and 'Lights' in chunk_data:
+                # TODO: Try to find skylight and blocklight data in Bedrock leveldb - for now just using full skylight on all blocks
+                # https://wiki.vg/Pocket_Minecraft_Map_Format
+                if self.isbedrock == 1 or (chunk_data.get("Status", "") == "spawn" and 'Lights' in chunk_data):
                     section['SkyLight'] = numpy.full((16,16,16), 255, dtype=numpy.uint8)
                 else:
                     if 'SkyLight' in section:
@@ -1793,10 +1905,24 @@ class RegionSet(object):
                     (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types, longarray_unpacker)
                 elif 'Data' in section:
                     (blocks, data) = self._get_blockdata_v112(section)
-                else:   # Special case introduced with 1.14
+                else:   # Special case introduced with 1.14, or bedrock database
                     blocks = numpy.zeros((16,16,16), dtype=numpy.uint16)
                     data = numpy.zeros((16,16,16), dtype=numpy.uint8)
+
+                if self.isbedrock and 'Blocks' in section:
+                    for x in range(16):
+                        for y in range(16):
+                            for z in range(16):
+                                # TODO: The '0' in the below array is 'layer': https://wiki.vg/Bedrock_Edition_level_format
+                                # Layers '0' and '1' are used.  Almost all blocks are in layer '0'.  Layer '1' has "waterlogged" or "snowy" block data
+                                # We should read from layer '1' when available and render "waterlogged" or "snowy" blocks as well
+                                key = section['Blocks'][0][z][x][y]
+                                newBlock, newData = self._get_block(key)
+                                blocks[x][y][z] = newBlock
+                                data[x][y][z] = newData                    
+
                 (section['Blocks'], section['Data']) = (blocks, data)
+                chunk_data['Sections'][i] = section
 
             except ValueError:
                 # iv'e seen at least 1 case where numpy raises a value error during the reshapes.  i'm not
@@ -1874,7 +2000,14 @@ class RegionSet(object):
         Coords can be either be global chunk coords, or local to a region
 
         """
-        (regionfile,filemtime) = self.regionfiles.get((chunkX//32, chunkY//32),(None, None))
+        regionfile = None
+
+        if self.isbedrock == 0:
+            (regionfile,filemtime) = self.regionfiles.get((chunkX//32, chunkY//32),(None, None))
+        else:
+            # No region files in Bedrock, everything is in the same leveldb database
+            (regionfile,filemtime) = self.regionfiles[(0, 0)]
+
         return regionfile
 
     def _iterate_regionfiles(self):
@@ -1883,16 +2016,20 @@ class RegionSet(object):
 
         Returns (regionx, regiony, filename)"""
 
-        logging.debug("regiondir is %s, has type %r", self.regiondir, self.type)
+        if self.isbedrock == 0:
+            logging.debug("regiondir is %s, has type %r", self.regiondir, self.type)
 
-        for f in os.listdir(self.regiondir):
-            if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
-                p = f.split(".")
-                x = int(p[1])
-                y = int(p[2])
-                if abs(x) > 500000 or abs(y) > 500000:
-                    logging.warning("Holy shit what is up with region file %s in %s !?" % (f, self.regiondir))
-                yield (x, y, os.path.join(self.regiondir, f))
+            for f in os.listdir(self.regiondir):
+                if re.match(r"^r\.-?\d+\.-?\d+\.mca$", f):
+                    p = f.split(".")
+                    x = int(p[1])
+                    y = int(p[2])
+                    if abs(x) > 500000 or abs(y) > 500000:
+                        logging.warning("Holy shit what is up with region file %s in %s !?" % (f, self.regiondir))
+                    yield (x, y, os.path.join(self.regiondir, f))
+        else:
+            # No region files in Bedrock, everything is in the same leveldb database
+            yield (0, 0, self.regiondir)
 
 class RegionSetWrapper(object):
     """This is the base class for all "wrappers" of RegionSet objects. A
@@ -2100,6 +2237,9 @@ class CachedRegionSet(RegionSetWrapper):
             s += obj.regiondir
         except AttributeError:
             s += repr(obj)
+
+        # Add the dimension to the key because Bedrock databases have all dimensions in one regionfile
+        s += obj.get_type() or "None"
 
         logging.debug("Initializing a cache with key '%s'", s)
 

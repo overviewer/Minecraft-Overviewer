@@ -18,7 +18,10 @@ import gzip
 from io import BytesIO
 import struct
 import zlib
+import time
+from .bedrock import bedrock
 
+bedrockfilereaders = {}
 
 # decorator that turns the first argument from a string into an open file
 # handle
@@ -46,6 +49,12 @@ def load_region(fileobj):
     for accessing the chunks inside."""
     return MCRFileReader(fileobj)
 
+def load_region_bedrock(fileobj, dimension):
+    """Reads in the given file as a bedrock region, and returns an object
+    for accessing the chunks inside."""
+    if dimension not in bedrockfilereaders:
+        bedrockfilereaders[dimension] = BedrockFileReader(fileobj, dimension)
+    return bedrockfilereaders[dimension]
 
 class CorruptionError(Exception):
     pass
@@ -210,7 +219,7 @@ class NBTFileReader(object):
 # For reference, the MCR format is outlined at
 # <http://www.minecraftwiki.net/wiki/Beta_Level_Format>
 class MCRFileReader(object):
-    """A class for reading chunk region files, as introduced in the
+    """A class for reading Anvil chunk region files, as introduced in the
     Beta 1.3 update. It provides functions for opening individual
     chunks (as (name, data) tuples), getting chunk timestamps, and for
     listing chunks contained in the file.
@@ -343,3 +352,57 @@ class MCRFileReader(object):
             raise
         except Exception as e:
             raise CorruptChunkError("Misc error parsing chunk: " + str(e))
+
+# For reference, the Bedrock format is outlined at
+# <https://minecraft.fandom.com/wiki/Bedrock_Edition_level_format>
+class BedrockFileReader(object):
+    """A class for reading bedrock chunk region files.
+    It provides functions for opening individual
+    chunks (as (name, data) tuples), getting chunk timestamps, and for
+    listing chunks contained in the file.
+    """
+    _file = None
+
+    def __init__(self, fileobj, dimension):
+        """This creates a region object from the given file-like
+        object. Chances are you want to use load_region instead."""
+        self.dimension = dimension
+        if BedrockFileReader._file is None:
+            BedrockFileReader._file = bedrock.World(fileobj)
+            BedrockFileReader._file.__enter__() # Don't use "with" because the __exit__() method saves to the database, and we want read-only
+
+    def load_pre_data(self):
+        return
+
+    def close(self):
+        """Close the region file and free any resources associated
+        with keeping it open. Using this object after closing it
+        results in undefined behaviour."""
+        return
+
+    def get_chunks(self):
+        """Return an iterator of all chunks contained in this region
+        file, as (x, z) coordinate tuples. To load these chunks,
+        provide these coordinates to load_chunk()."""
+        for (x, z) in BedrockFileReader._file.iterChunks(dimension=self.dimension, coordinatesonly=True):
+            yield (x, z)
+
+    def get_chunk_timestamp(self, x, z):
+        """Return the given chunk's modification time."""
+        # TODO: Find chunk timestamps in Bedrock's leveldb database
+        # For now, just use current time
+        # https://minecraft.gamepedia.com/Bedrock_Edition_level_format
+        # Edit: Looking at other Bedrock map software, I'm beginning to wonder if chunk timestamps are not stored in the database at all
+        # Another solution is to store a hash of each chunk, instead of a modified time, and use that to determine when a chunk has changed
+        # This isn't a trivial change because '_iterate_and_check_tiles' in 'tileset.py' uses the output tile image file modified time from the file system
+        # We would need to create a new json file or something to store chunk hashes, and make sure 'tileset.py' and elsewhere check that file for Bedrock maps, instead of file system times
+        return time.time()
+
+    def chunk_exists(self, x, z):
+        """Determines if a chunk exists."""
+        return BedrockFileReader._file.chunkExists(x, z, self.dimension)
+
+    def load_chunk(self, x, z):
+        """Return a (name, data) tuple for the given chunk, or
+        None if the given chunk doesn't exist in this region file."""
+        return BedrockFileReader._file.getChunk(x, z, self.dimension)

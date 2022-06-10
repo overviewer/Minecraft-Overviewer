@@ -88,6 +88,8 @@ def main():
     parser = ArgumentParser(usage=helptext)
     parser.add_argument("-c", "--config", dest="config", action="store",
                         help="Specify the config file to use.")
+    parser.add_argument("--bedrock", dest="bedrock", action="store", type=int,
+                        help="Specify if the database is bedrock format. Defaults to 0.")
     parser.add_argument("-p", "--processes", dest="procs", action="store", type=int,
                         help="The number of local worker processes to spawn. Defaults to the "
                         "number of CPU cores your computer has.")
@@ -338,6 +340,8 @@ def main():
     # the config
     if args.procs:
         mw_parser.set_config_item("processes", args.procs)
+    if args.bedrock:
+        mw_parser.set_config_item("isbedrock", args.bedrock)
 
     # Now parse and return the validated config
     try:
@@ -350,6 +354,37 @@ def main():
             logging.error("An error was encountered with your configuration.")
             logging.error(str(ex))
         return 1
+
+    # TODO: Bedrock.py leveldb access can't support multiple processes.  If we can limit db to a single process, the rest of this app can run multi process
+    if config["isbedrock"] == 1 and config["processes"] != 1:
+        logging.error("Bedrock currently only supports a single process. "
+                       "Please set 'processes' config to 1")
+        return 1
+
+    # TODO: Bedrock renders are incomplete if multiple dimensions are run in one configuration
+    # I can't find any error messages given, the output images are just sometimes blank
+    # My guess is there is an issue with caching somewhere, where chunks are cached across dimensions
+    # Perhaps because there is only one 'regionfile' in bedrock - only one file path for all regions
+    # Perhaps in the C code, I haven't made any changes there when adding Bedrock support
+    # For now, just tell the user they can't run more than one dimension in a configuration
+    if config["isbedrock"] == 1:
+        dimensionName = ""
+        for _, render in config['renders'].items():
+            nextDimensionName = render["dimension"][0]
+            if nextDimensionName == "default":
+                nextDimensionName = "overworld"
+            if dimensionName == "":
+                dimensionName = nextDimensionName
+            elif dimensionName != nextDimensionName:
+                logging.error("Bedrock currently only supports running one dimension at a time. "
+                               "You can have multiple renders in a single dimension. "
+                               "Please update your configuration to only have renders for one dimension (E.g. overworld, nether, end)")
+                return 1
+
+    if config["isbedrock"] == 1:
+        logging.warning("IMPORTANT: Minecraft Bedrock map generation is in early development.\n"
+                        "Make sure you only run Overviewer on a BACKUP of your map\n"
+                        "Make sure you do not log in to the selected Minecraft map while Overviewer is running\n\n")
 
     if args.check_terrain:   # we are already in the "if configfile" branch
         logging.info("Looking for a few common texture files...")
@@ -485,7 +520,7 @@ def main():
             w = worldcache[render['world']]
         except KeyError:
             try:
-                w = world.World(render['world'])
+                w = world.World(render['world'], config['isbedrock'])
             except CorruptNBTError as e:
                 logging.error("Failed to open world %r.", render['world'])
                 raise e
