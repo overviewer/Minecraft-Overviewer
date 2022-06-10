@@ -151,7 +151,7 @@ class Chunk:
         version = ldb.get(db, self.keyBase + b"v")
       version = struct.unpack("<B", version)[0]
       if version not in [7, 9, 10, 13, 14, 15, 18, 19, 21, 22, 25, 39, 40]:
-        raise NotImplementedError("Unexpected chunk version {} at chunk {} {} (Dim {}).".format(version, self.x, self.z, self.dimension))
+        logging.debug("Unexpected chunk version {} at chunk {} {} (Dim {}).".format(version, self.x, self.z, self.dimension))
     except KeyError:
       raise KeyError("Chunk at {}, {} (Dim {}) does not exist.".format(self.x, self.z, self.dimension))
     return version
