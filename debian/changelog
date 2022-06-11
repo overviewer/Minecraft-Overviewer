@@ -1,0 +1,5 @@
+minecraft-overviewer ({VERSION}-0~overviewer1) unstable; urgency=low
+
+  * Automatically generated from Git: {DESC}
+
+ -- Aaron Griffith <agrif@overviewer.org>  {DATE}
