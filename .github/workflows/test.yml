@@ -14,7 +14,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install dependencies (apt)
-        run: sudo apt-get -y install zlib1g-dev libjpeg-dev
+        run: sudo DEBIAN_FRONTEND=noninteractive apt-get -y install zlib1g-dev libjpeg-dev devscripts python3-all-dev debhelper python3-pil python3-numpy dh-python
 
       - name: Install dependencies (pip)
         run: python -m pip install numpy Pillow==9.1.1
@@ -24,6 +24,19 @@ jobs:
 
       - name: Build extension
         run: env PIL_INCLUDE_DIR=/tmp/pillow_checkout/src/libImaging/ python setup.py build
+
+      - name: Create .deb changelog
+        run: |
+          export VERSION=$(python3 setup.py --version)
+          export DESC=$(git describe --tags)
+          export DATE=$(date -u +'%a, %d %b %Y %H:%M:%S %z')
+          envsubst < debian/changelog.in > debian/changelog
+
+      - name: Build .deb
+        run: env DEB_BUILD_OPTIONS=nocheck debuild -i -us -uc -b -Zxz
+
+      - name: List deb files
+        run: ls -l ../*.deb
 
   Build-Windows-x86_64:
     runs-on: windows-latest
