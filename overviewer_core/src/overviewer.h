@@ -31,7 +31,7 @@
 
 // increment this value if you've made a change to the c extension
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 109
+#define OVERVIEWER_EXTENSION_VERSION 110
 
 #include <stdbool.h>
 #include <stdint.h>
