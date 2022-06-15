@@ -31,6 +31,28 @@ bool block_class_is_subset(
     size_t block_class_len) {
     size_t i = 0;
 
+#if defined(__AVX512F__) && defined(__AVX512BW__)
+    for (; i / 32 < block_class_len / 32; i += 32) {
+        const __m512i block_class_vec = _mm512_loadu_si512(
+            (__m512i*)&block_class[i]);
+        const __m512i block_vec = _mm512_set1_epi16(block);
+        const __mmask32 block_cmp = _mm512_cmpeq_epi16_mask(block_vec, block_class_vec);
+        if (block_cmp) {
+            return true;
+        }
+    }
+#endif
+#if defined(__AVX2__)
+    for (; i / 16 < block_class_len / 16; i += 16) {
+        const __m256i block_class_vec = _mm256_loadu_si256(
+            (__m256i*)&block_class[i]);
+        const __m256i block_vec = _mm256_set1_epi16(block);
+        const __m256i block_cmp = _mm256_cmpeq_epi16(block_vec, block_class_vec);
+        if (_mm256_movemask_epi8(block_cmp)) {
+            return true;
+        }
+    }
+#endif
 #ifdef __SSE2__
     for (; i / 8 < block_class_len / 8; i += 8) {
         const __m128i block_class_vec = _mm_loadu_si128(
