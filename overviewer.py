@@ -477,6 +477,9 @@ def main():
     # TODO: optionally more caching layers here
 
     renders = config['renders']
+    render_protochunks = config["render_protochunks"]
+    prettify_protochunk_lighting = config["prettify_protochunk_lighting"]
+
     for render_name, render in renders.items():
         logging.debug("Found the following render thing: %r", render)
 
@@ -485,7 +488,11 @@ def main():
             w = worldcache[render['world']]
         except KeyError:
             try:
-                w = world.World(render['world'])
+                w = world.World(
+                    render['world'],
+                    render_protochunks,
+                    prettify_protochunk_lighting,
+                )
             except CorruptNBTError as e:
                 logging.error("Failed to open world %r.", render['world'])
                 raise e

@@ -88,7 +88,12 @@ class World(object):
 
     """
 
-    def __init__(self, worlddir):
+    def __init__(
+        self,
+        worlddir,
+        render_protochunks=False,
+        prettify_protochunk_lighting=False,
+    ):
         self.worlddir = worlddir
 
         # This list, populated below, will hold RegionSet files that are in
@@ -137,7 +142,12 @@ class World(object):
                 # construct a regionset object for this
                 rel = os.path.relpath(root, self.worlddir)
                 if os.path.basename(rel) != "poi":
-                    rset = RegionSet(root, rel)
+                    rset = RegionSet(
+                        root,
+                        rel,
+                        render_protochunks=render_protochunks,
+                        prettify_protochunk_lighting=prettify_protochunk_lighting,
+                    )
                     if root == os.path.join(self.worlddir, "region"):
                         self.regionsets.insert(0, rset)
                     else:
@@ -250,7 +260,7 @@ class RegionSet(object):
 
     """
 
-    def __init__(self, regiondir, rel):
+    def __init__(self, regiondir, rel, render_protochunks=False, prettify_protochunk_lighting=False):
         """Initialize a new RegionSet to access the region files in the given
         directory.
 
@@ -265,6 +275,9 @@ class RegionSet(object):
         """
         self.regiondir = os.path.normpath(regiondir)
         self.rel = os.path.normpath(rel)
+        self.render_protochunks = render_protochunks
+        self.prettify_protochunk_lighting = prettify_protochunk_lighting
+
         logging.debug("regiondir is %r" % self.regiondir)
         logging.debug("rel is %r" % self.rel)
 
@@ -1029,9 +1042,17 @@ class RegionSet(object):
 
     # Re-initialize upon unpickling
     def __getstate__(self):
-        return (self.regiondir, self.rel)
+        return (
+            (self.regiondir, self.rel),
+            {
+                "render_protochunks": self.render_protochunks,
+                "prettify_protochunk_lighting": self.prettify_protochunk_lighting,
+            },
+        )
+
     def __setstate__(self, state):
-        return self.__init__(*state)
+        args, kwargs = state
+        return self.__init__(*args, **kwargs)
 
     def __repr__(self):
         return "<RegionSet regiondir=%r>" % self.regiondir
