@@ -1802,6 +1802,10 @@ class RegionSet(object):
                     if 'SkyLight' in section:
                         skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
                         skylight = skylight.reshape((16,16,8))
+                    elif chunk_status in ["structure_starts", "empty"]:
+                        # completely black border chunk. fullbright is definitely
+                        # preferable here.
+                        skylight = numpy.full((16,16,8), 255, dtype=numpy.uint8)
                     else:   # Special case introduced with 1.14
                         skylight = numpy.zeros((16,16,8), dtype=numpy.uint8)
                     skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
