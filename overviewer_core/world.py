@@ -863,6 +863,12 @@ class RegionSet(object):
             'minecraft:glow_lichen': (1119, 0),
             'minecraft:spore_blossom': (1120, 0),
 
+            # 1.19 blocks
+            'minecraft:mud': (1121, 0),
+            'minecraft:packed_mud': (1122, 0),
+            'minecraft:mud_bricks': (1123, 0),
+            'minecraft:mud_brick_slab': (1124, 0),
+
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
             'minecraft:spruce_pressure_plate': (11301, 0),
@@ -1053,7 +1059,7 @@ class RegionSet(object):
                         'minecraft:blackstone_slab','minecraft:polished_blackstone_slab',
                         'minecraft:polished_blackstone_brick_slab', 'minecraft:cobbled_deepslate_slab',
                         'minecraft:polished_deepslate_slab', 'minecraft:deepslate_brick_slab',
-                        'minecraft:deepslate_tile_slab'
+                        'minecraft:deepslate_tile_slab', 'minecraft:mud_brick_slab'
                          )
 
         prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
@@ -1200,6 +1206,9 @@ class RegionSet(object):
                         data = 0
                     elif key == 'minecraft:deepslate_tile_slab':
                         block = 1096  # 'minecraft:deepslate_tiles'
+                        data = 0
+                    elif key == 'minecraft:mud_brick_slab':
+                        block = 1123  # 'minecraft:mud_bricks
                         data = 0
 
                 elif key in  prismarine_slabs:

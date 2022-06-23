@@ -405,6 +405,11 @@ enum mc_block_id {
     block_glow_lichen = 1119,
     block_spore_blossom = 1120,
 
+    block_mud = 1121,
+    block_packed_mud = 1122,
+    block_mud_bricks = 1123,
+    block_mud_brick_slab = 1124,
+
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls

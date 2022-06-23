@@ -1698,10 +1698,10 @@ block(blockid=42, top_image="assets/minecraft/textures/block/iron_block.png")
 # double slabs and slabs
 # these wooden slabs are unobtainable without cheating, they are still
 # here because lots of pre-1.3 worlds use this blocks, add prismarine slabs
-@material(blockid=[43, 44, 181, 182, 204, 205] + list(range(11340, 11359)) +
+@material(blockid=[43, 44, 181, 182, 204, 205, 1124] + list(range(11340, 11359)) +
           list(range(1027, 1030)) + list(range(1072, 1080)) + list(range(1103, 1107)),
           data=list(range(16)),
-          transparent=[44, 182, 205] + list(range(11340, 11359)) + list(range(1027, 1030)) +
+          transparent=[44, 182, 205, 1124] + list(range(11340, 11359)) + list(range(1027, 1030)) +
           list(range(1072, 1080)) + list(range(1103, 1107)), solid=True)
 def slabs(self, blockid, data):
     if blockid == 44 or blockid == 182: 
@@ -1818,6 +1818,8 @@ def slabs(self, blockid, data):
             1106: "assets/minecraft/textures/block/deepslate_tiles.png",
         }
         top = side = self.load_image_texture(deepslate_tex[blockid]).copy()
+    elif blockid == 1124:
+        top = side = self.load_image_texture("assets/minecraft/textures/block/mud_bricks.png").copy()
 
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
@@ -6374,3 +6376,7 @@ def spore_blossom(self, blockid, data):
     alpha_over(img, base_top, (0, 0), base_top)
     return img
 
+
+block(blockid=1121, top_image="assets/minecraft/textures/block/mud.png")
+block(blockid=1122, top_image="assets/minecraft/textures/block/packed_mud.png")
+block(blockid=1123, top_image="assets/minecraft/textures/block/mud_bricks.png")
