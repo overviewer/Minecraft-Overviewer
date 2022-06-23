@@ -345,6 +345,7 @@ class RegionSet(object):
             'minecraft:dark_oak_leaves': (18, 5),
             'minecraft:flowering_azalea_leaves': (18, 6),
             'minecraft:azalea_leaves': (18, 7),
+            'minecraft:mangrove_leaves': (18, 8),
             'minecraft:sponge': (19, 0),
             'minecraft:wet_sponge': (19, 1),
             'minecraft:glass': (20, 0),
@@ -868,6 +869,9 @@ class RegionSet(object):
             'minecraft:packed_mud': (1122, 0),
             'minecraft:mud_bricks': (1123, 0),
             'minecraft:mud_brick_slab': (1124, 0),
+            'minecraft:mangrove_roots': (1125, 0),
+            'minecraft:mangrove_log': (1126, 0),
+            'minecraft:stripped_mangrove_log': (1126, 1),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),

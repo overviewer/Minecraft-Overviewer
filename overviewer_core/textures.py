@@ -1097,7 +1097,7 @@ block(blockid=15, top_image="assets/minecraft/textures/block/iron_ore.png")
 # coal ore
 block(blockid=16, top_image="assets/minecraft/textures/block/coal_ore.png")
 
-@material(blockid=[17, 162, 11306, 11307, 11308, 11309, 11310, 11311, 1008, 1009], 
+@material(blockid=[17, 162, 11306, 11307, 11308, 11309, 11310, 11311, 1008, 1009, 1126],
           data=list(range(12)), solid=True)
 def wood(self, blockid, data):
     # extract orientation and wood type frorm data bits
@@ -1163,7 +1163,11 @@ def wood(self, blockid, data):
             1: ("stripped_warped_stem.png", None),
             2: ("crimson_stem.png", None),
             3: ("stripped_crimson_stem.png", None),
-        }
+        },
+        1126: {
+            0: ("mangrove_log_top.png", "mangrove_log.png"),
+            1: ("stripped_mangrove_log_top.png", "stripped_mangrove_log.png"),
+        },
     }
 
     top_f, side_f = wood_tex[blockid].get(wood_type, wood_tex[blockid][0])
@@ -1200,6 +1204,8 @@ def leaves(self, blockid, data):
         t = self.load_image_texture("assets/minecraft/textures/block/flowering_azalea_leaves.png")
     elif (blockid, data) == (18, 7):
         t = self.load_image_texture("assets/minecraft/textures/block/azalea_leaves.png")
+    elif (blockid, data) == (18, 8):
+        t = self.load_image_texture("assets/minecraft/textures/block/mangrove_leaves.png")
     return self.build_block(t, t)
 
 # sponge
@@ -6380,3 +6386,5 @@ def spore_blossom(self, blockid, data):
 block(blockid=1121, top_image="assets/minecraft/textures/block/mud.png")
 block(blockid=1122, top_image="assets/minecraft/textures/block/packed_mud.png")
 block(blockid=1123, top_image="assets/minecraft/textures/block/mud_bricks.png")
+block(blockid=1125, top_image="assets/minecraft/textures/block/mangrove_roots_top.png",
+      side_image="assets/minecraft/textures/block/mangrove_roots_side.png")
