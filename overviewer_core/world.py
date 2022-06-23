@@ -277,6 +277,20 @@ class RegionSet(object):
         self.rel = os.path.normpath(rel)
         self.render_protochunks = render_protochunks
         self.prettify_protochunk_lighting = prettify_protochunk_lighting
+        renderable_statuses = [
+            "full",
+            "postprocessed",
+            "fullchunk",
+            "mobs_spawned",
+            "spawn",
+            "",
+        ]
+        if self.render_protochunks:
+            renderable_statuses += [
+                "structure_starts",
+                "empty",
+            ]
+        self.renderable_statuses = tuple(renderable_statuses)
 
         logging.debug("regiondir is %r" % self.regiondir)
         logging.debug("rel is %r" % self.rel)
@@ -1751,8 +1765,8 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
-        if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk",
-                                                "mobs_spawned", "spawn", ""):
+        chunk_status = chunk_data.get("Status", "")
+        if chunk_status not in self.renderable_statuses:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array
@@ -1782,7 +1796,7 @@ class RegionSet(object):
                 # Sometimes, Minecraft loves generating chunks with no light info.
                 # These mostly appear to have those two properties, and in this case
                 # we default to full-bright as it's less jarring to look at than all-black.
-                if chunk_data.get("Status", "") == "spawn" and 'Lights' in chunk_data:
+                if chunk_status == "spawn" and 'Lights' in chunk_data:
                     section['SkyLight'] = numpy.full((16,16,16), 255, dtype=numpy.uint8)
                 else:
                     if 'SkyLight' in section:
