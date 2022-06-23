@@ -270,6 +270,58 @@ General
 
         processes = 2
 
+.. _render_protochunks:
+
+``render_protochunks``
+    This is a boolean. When enabled, the Overviewer will render some proto-chunks, ie,
+    chunks that have not been fully generated yet.
+
+    This is useful for rendering worlds that have pre-1.18 chunks. When Minecraft 1.18
+    or higher loads one of these chunks, it will mark it as a proto-chunk until all of
+    the terrain below Y=0 is generated. So, without this option set, the Overviewer
+    may not render parts of the world at all.
+
+    It's worth noting that if a world has been optimized (``--forceUpgrade``), all
+    upgraded but unvisited chunks will be in this state.
+
+    However, this option will make the edges of the map contain actual proto-chunks, so
+    it isn't recommended for worlds started in 1.18 or newer, and disabled by default.
+
+    e.g.::
+
+        render_protochunks = True
+
+    **Default:** ``False``
+
+.. _prettify_protochunk_lighting:
+
+``prettify_protochunk_lighting``
+    This is a boolean. It is only useful in combination with
+    :ref:`render_protochunks <render_protochunks>`.
+
+    If it is enabled, a heuristic is applied to get rid of certain lighting issues in
+    proto-chunks on map borders.
+
+    Some proto-chunks are partially dark because their skylight has not been
+    calculated yet, but skylight from neighboring chunks has already been used to
+    generate lighting data.
+
+    So, with this option enabled, if a chunk section
+     - is a proto-chunk
+     - has not been visited by a player before
+     - and does not contain a single block with full sky light
+
+    the Overviewer will render it as fully bright instead.
+
+    It is disabled by default as there is no guarantee that no false positives are
+    generated.
+
+    e.g.::
+
+        prettify_protochunk_lighting = True
+
+    **Default:** ``False``
+
 Observers
 ~~~~~~~~~
 
