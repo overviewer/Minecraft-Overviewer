@@ -1787,6 +1787,8 @@ class RegionSet(object):
         chunk_data['Biomes'] = biomes
         chunk_data['NewBiomes'] = (len(biomes.shape) == 3)
 
+        chunk_was_inhabited = chunk_data.get("InhabitedTime", 0) > 0
+
         unrecognized_block_types = {}
         for section in chunk_data['Sections']:
 
@@ -1812,6 +1814,34 @@ class RegionSet(object):
                     skylight_expanded[:,:,::2] = skylight & 0x0F
                     skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
                     del skylight
+
+                    if self.prettify_protochunk_lighting:
+                        # this chunk might be a border chunk that was populated with
+                        # sky light from neighboring chunks, but hasn't had its own sky
+                        # light calculated yet.
+                        # first, check if the chunk was inhabited. This is pretty much
+                        # impossible for border chunks.
+                        # then, check if the chunk is even a proto-chunk.
+                        if not chunk_was_inhabited and chunk_status in ["structure_starts", "empty"]:
+                            # and finally, check if there is a block with full skylight
+                            # in the section.
+                            # if there is one, that means that skylight was definitely
+                            # calculated here before.
+                            # if not, we assume that we're in a border chunk.
+                            # this is based on the following observations:
+                            #  - sections that are underground and far from border
+                            #    chunks will not be seen on the map most of the time
+                            #    anyway
+                            #  - sections that are above ground will almost always have
+                            #    a block somewhere with full light level in naturally
+                            #    generated terrain
+                            #  - sections that are above ground and have been modified
+                            #    by a player have almost certainly been inhabited
+                            # so, false positives shouldn't be too common, and those
+                            # that occur shouldn't be in player-visited areas.
+                            if not numpy.any(skylight_expanded == 15):
+                                skylight_expanded = numpy.full((16,16,16), 0x0F, dtype=numpy.uint8)
+
                     section['SkyLight'] = skylight_expanded
 
                 # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
