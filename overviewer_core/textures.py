@@ -6388,3 +6388,5 @@ block(blockid=1122, top_image="assets/minecraft/textures/block/packed_mud.png")
 block(blockid=1123, top_image="assets/minecraft/textures/block/mud_bricks.png")
 block(blockid=1125, top_image="assets/minecraft/textures/block/mangrove_roots_top.png",
       side_image="assets/minecraft/textures/block/mangrove_roots_side.png")
+block(blockid=1127, top_image="assets/minecraft/textures/block/muddy_mangrove_roots_top.png",
+      side_image="assets/minecraft/textures/block/muddy_mangrove_roots_side.png")
