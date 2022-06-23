@@ -1073,6 +1073,52 @@ class RegionSet(object):
             'minecraft:waxed_weathered_cut_copper_slab',
             'minecraft:waxed_oxidized_cut_copper_slab'
         )
+        # Map from slab to double slab block
+        slab_to_double = {
+            'minecraft:stone_slab': 'minecraft:stone',
+            'minecraft:cobblestone_slab': 'minecraft:cobblestone',
+            'minecraft:sandstone_slab': 'minecraft:sandstone',
+            'minecraft:red_sandstone_slab': 'minecraft:red_sandstone',
+            'minecraft:nether_brick_slab': 'minecraft:nether_bricks',
+            'minecraft:quartz_slab': 'minecraft:quartz_block',
+            'minecraft:brick_slab': 'minecraft:bricks',
+            'minecraft:purpur_slab': 'minecraft:purpur_block',
+            'minecraft:andesite_slab': 'minecraft:andesite',
+            'minecraft:diorite_slab': 'minecraft:diorite',
+            'minecraft:granite_slab': 'minecraft:granite',
+            'minecraft:polished_andesite_slab': 'minecraft:polished_andesite',
+            'minecraft:polished_diorite_slab': 'minecraft:polished_diorite',
+            'minecraft:polished_granite_slab': 'minecraft:polished_granite',
+            'minecraft:red_nether_brick_slab': 'minecraft:red_nether_bricks',
+            'minecraft:smooth_sandstone_slab': 'minecraft:smooth_sandstone',
+            'minecraft:cut_sandstone_slab': 'minecraft:cut_sandstone',
+            'minecraft:smooth_red_standstone_slab': 'minecraft:smooth_red_sandstone',
+            'minecraft:cut_red_sandstone_slab': 'minecraft:cut_red_sandstone',
+            'minecraft:end_stone_brick_slab': 'minecraft:end_stone_bricks',
+            'minecraft:mossy_cobblestone_slab': 'minecraft:mossy_cobblestone',
+            'minecraft:mossy_stone_brick_slab': 'minecraft:mossy_stone_bricks',
+            'minecraft:smooth_quartz_slab': 'minecraft:smooth_quartz',
+            'minecraft:smooth_stone_slab': 'minecraft:smooth_stone',
+            'minecraft:blackstone_slab': 'minecraft:blackstone',
+            'minecraft:polished_blackstone_slab': 'minecraft:polished_blackstone',
+            'minecraft:polished_blackstone_brick_slab': 'minecraft:polished_blackstone_bricks',
+            'minecraft:cobbled_deepslate_slab': 'minecraft:cobbled_deepslate',
+            'minecraft:polished_deepslate_slab': 'minecraft:polished_deepslate',
+            'minecraft:deepslate_brick_slab': 'minecraft:deepslate_bricks',
+            'minecraft:deepslate_tile_slab': 'minecraft:deepslate_tiles',
+            'minecraft:mud_brick_slab': 'minecraft:mud_bricks',
+            'minecraft:cut_copper_slab': 'minecraft:cut_copper',
+            'minecraft:exposed_cut_copper_slab': 'minecraft:exposed_cut_copper',
+            'minecraft:weathered_cut_copper_slab': 'minecraft:weathered_cut_copper',
+            'minecraft:oxidized_cut_copper_slab': 'minecraft:oxidized_cut_copper',
+            'minecraft:waxed_cut_copper_slab': 'minecraft:waxed_cut_copper',
+            'minecraft:waxed_exposed_cut_copper_slab': 'minecraft:waxed_exposed_cut_copper',
+            'minecraft:waxed_weathered_cut_copper_slab': 'minecraft:waxed_weathered_cut_copper',
+            'minecraft:waxed_oxidized_cut_copper_slab': 'minecraft:waxed_oxidized_cut_copper',
+            'minecraft:prismarine_slab': 'minecraft:prismarine',
+            'minecraft:dark_prismarine_slab': 'minecraft:dark_prismarine',
+            'minecraft:prismarine_brick_slab': 'minecraft:prismarine_bricks',
+        }
 
         colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan',
                   'purple', 'blue', 'brown', 'green', 'red', 'black']
@@ -1119,110 +1165,8 @@ class RegionSet(object):
             elif palette_entry['Properties']['type'] == 'double':
                 if key in wood_slabs:
                     block = 125         # block_double_wooden_slab
-                elif key in stone_slabs:
-                    if key == 'minecraft:stone_brick_slab':
-                        block = 98
-                    elif key == 'minecraft:stone_slab':
-                        block = 1      # stone data 0
-                    elif key == 'minecraft:cobblestone_slab':
-                        block = 4       # cobblestone
-                    elif key == 'minecraft:sandstone_slab':
-                        block = 24      # minecraft:sandstone
-                    elif key == 'minecraft:red_sandstone_slab':
-                        block = 179     # minecraft:red_sandstone
-                    elif key == 'minecraft:nether_brick_slab':
-                        block = 112     # minecraft:nether_bricks
-                    elif key == 'minecraft:quartz_slab':
-                        block = 155     # minecraft:quartz_block
-                    elif key == 'minecraft:brick_slab':
-                        block = 45      # minecraft:bricks
-                    elif key == 'minecraft:purpur_slab':
-                        block = 201     # minecraft:purpur_block
-                    elif key == 'minecraft:andesite_slab':
-                        block = 1   # minecraft:andesite
-                        data  = 5
-                    elif key == 'minecraft:diorite_slab':
-                        block = 1   # minecraft:diorite
-                        data  = 3
-                    elif key == 'minecraft:granite_slab':
-                        block = 1   # minecraft:granite
-                        data  = 1
-                    elif key == 'minecraft:polished_andesite_slab':
-                        block = 1   # minecraft: polished_andesite
-                        data  = 6
-                    elif key == 'minecraft:polished_diorite_slab':
-                        block = 1   # minecraft: polished_diorite
-                        data  = 4
-                    elif key == 'minecraft:polished_granite_slab':
-                        block = 1   # minecraft: polished_granite
-                        data  = 2
-                    elif key == 'minecraft:red_nether_brick_slab':
-                        block = 215   # minecraft: red_nether_brick
-                        data  = 0
-                    elif key == 'minecraft:smooth_sandstone_slab':
-                        block = 11314   # minecraft: smooth_sandstone
-                        data  = 0
-                    elif key == 'minecraft:cut_sandstone_slab':
-                        block = 24   # minecraft: cut_sandstone
-                        data  = 2
-                    elif key == 'minecraft:smooth_red_sandstone_slab':
-                        block = 11315   # minecraft: smooth_red_sandstone
-                        data  = 0
-                    elif key == 'minecraft:cut_red_sandstone_slab':
-                        block = 179   # minecraft: cut_red_sandstone
-                        data  = 2
-                    elif key == 'minecraft:end_stone_brick_slab':
-                        block = 206   # minecraft:end_stone_bricks
-                        data  = 0
-                    elif key == 'minecraft:mossy_cobblestone_slab':
-                        block = 48   # minecraft:mossy_cobblestone
-                        data  = 0
-                    elif key == 'minecraft:mossy_stone_brick_slab':
-                        block = 98   # minecraft:mossy_stone_bricks
-                        data  = 1
-                    elif key == 'minecraft:smooth_quartz_slab':
-                        block = 155   # minecraft:smooth_quartz
-                        data  = 0
-                    elif key == 'minecraft:smooth_stone_slab':
-                        block = 11313   # minecraft:smooth_stone
-                        data  = 0
-                    elif key == 'minecraft:blackstone_slab':
-                        block = 1004   # blackstone
-                        data = 0
-                    elif key == 'minecraft:polished_blackstone_slab':
-                        block = 1022   # polished_blackstone
-                        data = 0
-                    elif key == 'minecraft:polished_blackstone_brick_slab':
-                        block = 1026   # polished_blackstone_bricks
-                        data = 0
-                    elif key == 'minecraft:cobbled_deepslate_slab':
-                        block = 1084  # 'minecraft:cobbled_deepslate'
-                        data = 0
-                    elif key == 'minecraft:polished_deepslate_slab':
-                        block = 1085  # 'minecraft:polished_deepslate'
-                        data = 0
-                    elif key == 'minecraft:deepslate_brick_slab':
-                        block = 1094  # 'minecraft:deepslate_bricks'
-                        data = 0
-                    elif key == 'minecraft:deepslate_tile_slab':
-                        block = 1096  # 'minecraft:deepslate_tiles'
-                        data = 0
-                    elif key == 'minecraft:mud_brick_slab':
-                        block = 1123  # 'minecraft:mud_bricks
-                        data = 0
-
-                elif key in  prismarine_slabs:
-                    block = 168         # minecraft:prismarine variants
-                    if key == 'minecraft:prismarine_slab':
-                        data = 0
-                    elif key == 'minecraft:prismarine_brick_slab':
-                        data = 1
-                    elif key == 'minecraft:dark_prismarine_slab':
-                        data = 2
-                elif key in copper_slabs:
-                    # dumb hack because I'm lazy but this function is horrid anyway
-                    block = block - 18
-
+                else:
+                    (block, data) = self._blockmap[slab_to_double[key]]
 
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest',
                      'minecraft:trapped_chest', 'minecraft:furnace',
