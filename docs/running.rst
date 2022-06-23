@@ -273,14 +273,14 @@ If you want or need to provide your own textures, you have several options:
 
   ::
 
-    VERSION=1.17
+    VERSION=1.19
     mkdir -p ~/.minecraft/versions/${VERSION}/
     wget https://overviewer.org/textures/${VERSION} -O ~/.minecraft/versions/${VERSION}/${VERSION}.jar
 
   If that's too confusing for you, then just take this single line and paste it into
-  a terminal to get 1.17 textures::
+  a terminal to get 1.19 textures::
 
-    mkdir -p ~/.minecraft/versions/1.17/ && wget https://overviewer.org/textures/1.17 -O ~/.minecraft/versions/1.17/1.17.jar
+    mkdir -p ~/.minecraft/versions/1.19/ && wget https://overviewer.org/textures/1.19 -O ~/.minecraft/versions/1.19/1.19.jar
 
 * You can also just run the launcher to install the client.
 
