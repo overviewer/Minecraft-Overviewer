@@ -295,6 +295,7 @@ enum mc_block_id {
     block_nether_gold_ore = 1021,
 
     block_frogspawn = 454,
+    block_azalea = 455,
 
     // Solid Nether stone blocks
     block_polished_blackstone = 1022,

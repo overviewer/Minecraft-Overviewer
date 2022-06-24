@@ -4655,6 +4655,18 @@ def enchantment_table(self, blockid, data):
 
     return img
 
+@material(blockid=455, data=list(range(2)),transparent=True)
+def azalea(self, blockid, data):
+    if data == 0: # just come up
+        top = self.load_image_texture("assets/minecraft/textures/block/azalea_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/block/azalea_side.png")
+    if data == 1: # just come up
+        top = self.load_image_texture("assets/minecraft/textures/block/flowering_azalea_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/block/flowering_azalea_side.png")
+    img = self.build_full_block(top, None, None, side, side)
+
+    return img
+
 # brewing stand
 # TODO this is a place holder, is a 2d image pasted
 @material(blockid=117, data=list(range(5)), transparent=True)

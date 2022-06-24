@@ -500,6 +500,8 @@ class RegionSet(object):
             'minecraft:mycelium': (110, 0),
             'minecraft:lily_pad': (111, 0),
             'minecraft:frogspawn': (454, 0),
+            'minecraft:azalea': (455, 0),
+            'minecraft:flowering_azalea': (455, 1),
             'minecraft:nether_bricks': (112, 0),
             'minecraft:cracked_nether_bricks': (112, 1),
             'minecraft:chiseled_nether_bricks': (112, 2),
