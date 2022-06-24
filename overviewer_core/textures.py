@@ -5297,6 +5297,9 @@ def prismarine_block(self, blockid, data):
 # sea lantern 
 block(blockid=169, top_image="assets/minecraft/textures/block/sea_lantern.png")
 
+# target
+block(blockid=456, top_image="assets/minecraft/textures/block/target_top.png", side_image="assets/minecraft/textures/block/target_side.png")
+
 # froglights
 block(blockid=451, top_image="assets/minecraft/textures/block/pearlescent_froglight_top.png", side_image="assets/minecraft/textures/block/pearlescent_froglight_side.png")
 block(blockid=452, top_image="assets/minecraft/textures/block/verdant_froglight_top.png", side_image="assets/minecraft/textures/block/verdant_froglight_side.png")

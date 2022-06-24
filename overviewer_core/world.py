@@ -502,6 +502,7 @@ class RegionSet(object):
             'minecraft:frogspawn': (454, 0),
             'minecraft:azalea': (455, 0),
             'minecraft:flowering_azalea': (455, 1),
+            'minecraft:target':(456,0),
             'minecraft:nether_bricks': (112, 0),
             'minecraft:cracked_nether_bricks': (112, 1),
             'minecraft:chiseled_nether_bricks': (112, 2),
