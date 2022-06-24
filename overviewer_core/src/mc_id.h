@@ -268,6 +268,10 @@ enum mc_block_id {
     block_structure_block = 255,
     block_jigsaw = 256,
     block_shulker_box = 257,
+
+    block_pearlescent_froglight = 451,
+    block_verdant_froglight = 452,
+    block_ochre_froglight = 453,
     // 1.16 stuff
     block_ancient_debris = 1000,
     block_basalt = 1001,

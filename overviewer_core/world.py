@@ -693,6 +693,10 @@ class RegionSet(object):
 
             'minecraft:armor_stand': (416, 0),  # not rendering
 
+            'minecraft:pearlescent_froglight': (451, 0),
+            'minecraft:verdant_froglight': (452, 0),
+            'minecraft:ochre_froglight': (453, 0),
+
             # The following blocks are underwater and are not yet rendered.
             # To avoid spurious warnings, we'll treat them as water for now.
             'minecraft:brain_coral': (8, 0),
