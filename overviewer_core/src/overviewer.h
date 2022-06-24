@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is part of the Minecraft Overviewer.
  *
  * Minecraft Overviewer is free software: you can redistribute it and/or
@@ -31,7 +31,7 @@
 
 // increment this value if you've made a change to the c extension
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 113
+#define OVERVIEWER_EXTENSION_VERSION 114
 
 #include <stdbool.h>
 #include <stdint.h>

@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is part of the Minecraft Overviewer.
  *
  * Minecraft Overviewer is free software: you can redistribute it and/or
@@ -15,7 +15,7 @@
  * with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* 
+/*
  * This file implements a custom alpha_over function for (some) PIL
  * images. It's designed to be used through composite.py, which
  * includes a proxy alpha_over function that falls back to the default
@@ -505,6 +505,11 @@ draw_triangle(PyObject* dest, int32_t inclusive,
     return dest;
 }
 
+// https://www.qt.io/blog/2009/01/20/50-scaling-of-argb32-image
+inline uint32_t average_rgba(uint32_t a, uint32_t b) {
+    return (((a ^ b) & 0xfefefefeUL) >> 1) + (a & b);
+}
+
 /* scales the image to half size
  */
 inline PyObject*
@@ -516,7 +521,7 @@ resize_half(PyObject* dest, PyObject* src) {
     /* iteration variables */
     uint32_t x, y;
     /* temp color variables */
-    uint32_t r, g, b, a;
+    uint16_t r, g, b, a;
     /* size values for source and destination */
     uint32_t src_width, src_height, dest_width, dest_height;
 
@@ -571,61 +576,87 @@ resize_half(PyObject* dest, PyObject* src) {
         UINT8* in_row1 = (UINT8*)imSrc->image[y * 2];
         UINT8* in_row2 = (UINT8*)imSrc->image[y * 2 + 1];
 
-        for (x = 0; x < dest_width; x++) {
+        // Special cases
+        if (src_has_alpha && dest_has_alpha) {
+            // src and dest are both RGBA
+            uint32_t column_average1, column_average2;
+            for (x = 0; x < dest_width; x++) {
 
-            // read first column
-            r = *in_row1;
-            r += *in_row2;
-            in_row1++;
-            in_row2++;
-            g = *in_row1;
-            g += *in_row2;
-            in_row1++;
-            in_row2++;
-            b = *in_row1;
-            b += *in_row2;
-            in_row1++;
-            in_row2++;
+                // average first column
+                column_average1 = average_rgba(
+                    *(uint32_t*)in_row1,
+                    *(uint32_t*)in_row2);
+                in_row1 += 4;
+                in_row2 += 4;
 
-            if (src_has_alpha) {
-                a = *in_row1;
-                a += *in_row2;
+                // average second column
+                column_average2 = average_rgba(
+                    *(uint32_t*)in_row1,
+                    *(uint32_t*)in_row2);
+                in_row1 += 4;
+                in_row2 += 4;
+
+                // write blended color
+                *(uint32_t*)out = average_rgba(column_average1, column_average2);
+                out += 4;
+            }
+        } else {
+            for (x = 0; x < dest_width; x++) {
+
+                // read first column
+                r = *in_row1;
+                r += *in_row2;
                 in_row1++;
                 in_row2++;
-            }
-
-            // read second column
-            r += *in_row1;
-            r += *in_row2;
-            in_row1++;
-            in_row2++;
-            g += *in_row1;
-            g += *in_row2;
-            in_row1++;
-            in_row2++;
-            b += *in_row1;
-            b += *in_row2;
-            in_row1++;
-            in_row2++;
-
-            if (src_has_alpha) {
-                a += *in_row1;
-                a += *in_row2;
+                g = *in_row1;
+                g += *in_row2;
                 in_row1++;
                 in_row2++;
-            }
+                b = *in_row1;
+                b += *in_row2;
+                in_row1++;
+                in_row2++;
 
-            // write blended color
-            *out = (UINT8)(r >> 2);
-            out++;
-            *out = (UINT8)(g >> 2);
-            out++;
-            *out = (UINT8)(b >> 2);
-            out++;
+                if (src_has_alpha) {
+                    a = *in_row1;
+                    a += *in_row2;
+                    in_row1++;
+                    in_row2++;
+                }
 
-            if (dest_has_alpha) {
-                *out = (UINT8)(a >> 2);
+                // read second column
+                r += *in_row1;
+                r += *in_row2;
+                in_row1++;
+                in_row2++;
+                g += *in_row1;
+                g += *in_row2;
+                in_row1++;
+                in_row2++;
+                b += *in_row1;
+                b += *in_row2;
+                in_row1++;
+                in_row2++;
+
+                if (src_has_alpha) {
+                    a += *in_row1;
+                    a += *in_row2;
+                    in_row1++;
+                    in_row2++;
+                }
+
+                // write blended color
+                *out = (UINT8)(r >> 2);
                 out++;
+                *out = (UINT8)(g >> 2);
+                out++;
+                *out = (UINT8)(b >> 2);
+                out++;
+
+                if (dest_has_alpha) {
+                    *out = (UINT8)(a >> 2);
+                    out++;
+                }
             }
         }
     }
