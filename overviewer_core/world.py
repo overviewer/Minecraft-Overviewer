@@ -499,6 +499,7 @@ class RegionSet(object):
             'minecraft:stone_brick_stairs': (109, 0),
             'minecraft:mycelium': (110, 0),
             'minecraft:lily_pad': (111, 0),
+            'minecraft:frogspawn': (454, 0),
             'minecraft:nether_bricks': (112, 0),
             'minecraft:cracked_nether_bricks': (112, 1),
             'minecraft:chiseled_nether_bricks': (112, 2),

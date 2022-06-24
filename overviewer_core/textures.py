@@ -4609,6 +4609,12 @@ def lilypad(self, blockid, data):
 
     return self.build_full_block(None, None, None, None, None, t)
 
+@material(blockid=454, nodata=True, transparent=True)
+def frogspawn(self, blockid, data):
+    t = self.load_image_texture("assets/minecraft/textures/block/frogspawn.png")
+
+    return self.build_full_block(None, None, None, None, None, t)
+
 # nether bricks
 @material(blockid=112, data=list(range(3)), solid=True)
 def nether_bricks(self, blockid, data):

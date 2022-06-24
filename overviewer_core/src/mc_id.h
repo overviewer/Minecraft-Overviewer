@@ -293,6 +293,9 @@ enum mc_block_id {
     block_crimson_roots = 1019,
     block_soul_soil = 1020,
     block_nether_gold_ore = 1021,
+
+    block_frogspawn = 454,
+
     // Solid Nether stone blocks
     block_polished_blackstone = 1022,
     block_chiseled_polished_blackstone = 1023,
