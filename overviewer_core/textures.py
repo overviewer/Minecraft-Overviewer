@@ -4665,6 +4665,9 @@ def azalea(self, blockid, data):
         side = self.load_image_texture("assets/minecraft/textures/block/flowering_azalea_side.png")
     img = self.build_full_block(top, None, None, side, side)
 
+    t = self.load_image_texture("assets/minecraft/textures/block/azalea_plant.png")
+    stem = self.build_billboard(t)
+    alpha_over(img,stem,(0,-2))
     return img
 
 # brewing stand
