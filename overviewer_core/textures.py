@@ -5280,9 +5280,9 @@ def prismarine_block(self, blockid, data):
 block(blockid=169, top_image="assets/minecraft/textures/block/sea_lantern.png")
 
 # froglights
-block(blockid=451, top_image="assets/minecraft/textures/block/pearlescent_froglight.png")
-block(blockid=452, top_image="assets/minecraft/textures/block/verdant_froglight.png")
-block(blockid=453, top_image="assets/minecraft/textures/block/ochre_froglight.png")
+block(blockid=451, top_image="assets/minecraft/textures/block/pearlescent_froglight_top.png", side_image="assets/minecraft/textures/block/pearlescent_froglight_side.png")
+block(blockid=452, top_image="assets/minecraft/textures/block/verdant_froglight_top.png", side_image="assets/minecraft/textures/block/verdant_froglight_side.png")
+block(blockid=453, top_image="assets/minecraft/textures/block/ochre_froglight_top.png", side_image="assets/minecraft/textures/block/ochre_froglight_side.png")
 
 # hay block
 @material(blockid=170, data=list(range(9)), solid=True)
