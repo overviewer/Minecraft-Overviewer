@@ -655,7 +655,7 @@ class RegionSet(object):
             'minecraft:jungle_fence_gate': (185, 0),
             'minecraft:dark_oak_fence_gate': (186, 0),
             'minecraft:acacia_fence_gate': (187, 0),
-            'minecraft:crimson_fence_gate': (517, 0),
+            'minecraft:crimson_fence_gate': (513, 0),
             'minecraft:warped_fence_gate': (514, 0),
             'minecraft:mangrove_fence_gate': (515, 0),
             'minecraft:spruce_fence': (188, 0),
