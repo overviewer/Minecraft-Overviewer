@@ -14,6 +14,7 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
+import re
 import sys
 import imp
 import json
@@ -30,8 +31,7 @@ import functools
 
 from . import util
 
-
-BLOCKTEX = "assets/minecraft/textures/block/"
+BLOCKTEX = "assets/minecraft/textures/"
 BLOCKMOD = "assets/minecraft/models/"
 
 # global variables to collate information in @material decorators
@@ -832,36 +832,141 @@ class Textures(object):
             return None
         return (img, self.generate_opaque_mask(img))
 
-    modelcache = {}
+    models = {}
 
     def load_model(self, modelname):
-        if modelname in self.modelcache:
-            return self.modelcache[modelname]
+        if modelname in self.models:
+            return self.models[modelname]
 
         fileobj = self.find_file(BLOCKMOD + modelname + '.json', verbose=logging.getLogger().isEnabledFor(logging.DEBUG))
-        self.modelcache[modelname] = json.load(fileobj)
+        self.models[modelname] = json.load(fileobj)
         fileobj.close()
 
-        if 'parent' in self.modelcache[modelname]:
-            self.load_model(self.modelcache[modelname]['parent'].removeprefix('minecraft:'))
-        
-        return self.modelcache[modelname]
+        if 'parent' in self.models[modelname]:
+            parent = self.load_model(re.sub('.*:','',self.models[modelname]['parent']))
+            if 'textures' in parent:
+                self.models[modelname]['textures'].update(parent['textures'])
+            if 'elements' in parent:
+                if 'elements' in self.models[modelname]:
+                    self.models[modelname]['elements'].update(parent['elements'])
+                else:
+                    self.models[modelname]['elements'] = parent['elements']
+            del self.models[modelname]['parent']
+
+        return self.models[modelname]
         
     def load_image_from_model(self, modelname):
         data = self.load_model('block/' + modelname)
 
-        # Iterating through the json
-        # list
-        for i in self.modelcache:
-            print(self.modelcache[i])
+        # print(json.dumps(data, indent=4))
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        # for each elements
+        for elem in data['elements']:
+            # determine all 6 faces from the 'from' and 'to' fields
+            if 'west' in elem['faces']:
+                direction = 'west'
+                print('westside')
+                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
+                texture = self.transform_texture(direction, texture)
+                texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
+                texture = self.adjust_lighting(texture)
+
+                alpha_over(img, texture, self.transrights(direction), texture)
+            elif 'east' in elem['faces']:
+                direction = 'east'
+                print('eastside')
+                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
+                texture = self.transform_texture(direction, texture)
+                texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
+                texture = self.adjust_lighting(texture)
+
+                alpha_over(img, texture, (0,0), texture)
+            if 'north' in elem['faces']:
+                direction = 'north'
+                print('northside')
+                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
+                texture = self.transform_texture(direction, texture)
+                texture = self.adjust_lighting(texture)
+
+                alpha_over(img, texture, (0,6), texture)
+            elif 'south' in elem['faces']:
+                direction = 'south'
+                print('southside')
+                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
+                texture = self.transform_texture(direction, texture)
+                texture = self.adjust_lighting(texture)
+
+                alpha_over(img, texture, (12,0), texture)
+            if 'up' in elem['faces']:
+                direction = 'up'
+                print('upside')
+                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
+                texture = self.transform_texture(direction, texture)
+
+                alpha_over(img, texture, (0,0), texture)
+            elif 'down' in elem['faces']:
+                direction = 'down'
+                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
+                texture = self.transform_texture(direction, texture)
+
+                alpha_over(img, texture, (0,12), texture)
+
+            # draw each face
         
-        # Closing file
-        ## 2. validate renderable type
-        ## 3. determine draw method
-        ## 4. return img
-        return null
+        # TODO: this is not acceptable in a generic model reader, only applicable on full blocks
+        # Manually touch up 6 pixels that leave a gap because of how the
+        # shearing works out. This makes the blocks perfectly tessellate-able
+        for x,y in [(13,23), (17,21), (21,19)]:
+            # Copy a pixel to x,y from x-1,y
+            img.putpixel((x,y), img.getpixel((x-1,y)))
+        for x,y in [(3,4), (7,2), (11,0)]:
+            # Copy a pixel to x,y from x+1,y
+            img.putpixel((x,y), img.getpixel((x+1,y)))
 
+        return img
 
+    def adjust_lighting(self, texture):
+        # Darken this side
+        sidealpha = texture.split()[3]
+        texture = ImageEnhance.Brightness(texture).enhance(0.8)
+        texture.putalpha(sidealpha)
+
+        return texture
+
+    def transform_texture(self, direction, texture):
+        match direction:
+            case 'down' | 'up':
+                return self.transform_image_top(texture)
+            case 'north'| 'south' | 'west' | 'east':
+                return self.transform_image_side(texture)
+            case _:
+                raise Exception()
+
+    def find_texture_from_model(self, face, textureset):
+        if face.startswith('#'):
+            return self.find_texture_from_model(textureset[face[1:]], textureset)
+        else:
+            return self.load_image_texture(BLOCKTEX + re.sub('.*:','',face) + '.png')
+
+    # todo: use to implement non-full blocks
+    def determine_face_coords(self, fromdim, todim, direction):
+        match direction:
+            case 'down':
+                return 0
+            case 'up':
+                return 0
+            case 'north':
+                return 0
+            case 'south':
+                return 0
+            case 'west':
+                return 0
+            case 'east':
+                return 0
+            case _:
+                raise Exception()
+                
 ##
 ## The other big one: @material and associated framework
 ##
@@ -965,7 +1070,7 @@ def billboard(blockid=[], imagename=None, **kwargs):
 @material(blockid=1, data=list(range(7)), solid=True)
 def stone(self, blockid, data):
     if data == 0: # regular old-school stone
-        self.load_image_from_model('stone')
+        return self.load_image_from_model('stone')
         img = self.load_image_texture("assets/minecraft/textures/block/stone.png")
     elif data == 1: # granite
         img = self.load_image_texture("assets/minecraft/textures/block/granite.png")
@@ -1008,7 +1113,9 @@ def dirt_blocks(self, blockid, data):
 
 
 # cobblestone
-block(blockid=4, top_image="assets/minecraft/textures/block/cobblestone.png")
+@material(blockid=4, data=0, solid=True)
+def cobblestone(self, blockid, data):
+    return self.load_image_from_model('cobblestone')
 
 # wooden planks
 @material(blockid=5, data=list(range(8)), solid=True)
@@ -1206,8 +1313,8 @@ def wood(self, blockid, data):
     top_f, side_f = wood_tex[blockid].get(wood_type, wood_tex[blockid][0])
     if not side_f:
         side_f = top_f
-    top = self.load_image_texture(BLOCKTEX + top_f)
-    side = self.load_image_texture(BLOCKTEX + side_f)
+    top = self.load_image_texture(BLOCKTEX + 'block/' + top_f)
+    side = self.load_image_texture(BLOCKTEX + 'block/' + side_f)
 
     # choose orientation and paste textures
     if wood_orientation == 0:
