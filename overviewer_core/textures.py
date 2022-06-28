@@ -16,6 +16,7 @@
 from collections import OrderedDict
 import sys
 import imp
+import json
 import os
 import os.path
 import zipfile
@@ -31,6 +32,7 @@ from . import util
 
 
 BLOCKTEX = "assets/minecraft/textures/block/"
+BLOCKMOD = "assets/minecraft/models/"
 
 # global variables to collate information in @material decorators
 blockmap_generators = {}
@@ -830,6 +832,36 @@ class Textures(object):
             return None
         return (img, self.generate_opaque_mask(img))
 
+    modelcache = {}
+
+    def load_model(self, modelname):
+        if modelname in self.modelcache:
+            return self.modelcache[modelname]
+
+        fileobj = self.find_file(BLOCKMOD + modelname + '.json', verbose=logging.getLogger().isEnabledFor(logging.DEBUG))
+        self.modelcache[modelname] = json.load(fileobj)
+        fileobj.close()
+
+        if 'parent' in self.modelcache[modelname]:
+            self.load_model(self.modelcache[modelname]['parent'].removeprefix('minecraft:'))
+        
+        return self.modelcache[modelname]
+        
+    def load_image_from_model(self, modelname):
+        data = self.load_model('block/' + modelname)
+
+        # Iterating through the json
+        # list
+        for i in self.modelcache:
+            print(self.modelcache[i])
+        
+        # Closing file
+        ## 2. validate renderable type
+        ## 3. determine draw method
+        ## 4. return img
+        return null
+
+
 ##
 ## The other big one: @material and associated framework
 ##
@@ -875,7 +907,7 @@ def material(blockid=[], data=[0], **kwargs):
                 except TypeError:
                     if kwargs.get(prop, False):
                         properties[prop].update([block])
-            
+
             # populate blockmap_generators with our function
             for d in data:
                 blockmap_generators[(block, d)] = func_wrapper
@@ -933,6 +965,7 @@ def billboard(blockid=[], imagename=None, **kwargs):
 @material(blockid=1, data=list(range(7)), solid=True)
 def stone(self, blockid, data):
     if data == 0: # regular old-school stone
+        self.load_image_from_model('stone')
         img = self.load_image_texture("assets/minecraft/textures/block/stone.png")
     elif data == 1: # granite
         img = self.load_image_texture("assets/minecraft/textures/block/granite.png")
