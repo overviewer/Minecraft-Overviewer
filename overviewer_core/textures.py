@@ -860,56 +860,49 @@ class Textures(object):
 
         # print(json.dumps(data, indent=4))
         img = Image.new("RGBA", (24,24), self.bgcolor)
+        fullblock = 1
 
         # for each elements
         for elem in data['elements']:
             # determine all 6 faces from the 'from' and 'to' fields
             if 'west' in elem['faces']:
                 direction = 'west'
-                print('westside')
-                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
+                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures']).copy()
+                if 'uv' in elem['faces'][direction]:
+                    fullblock = 0
+                    print('uv defined for ' + modelname + ' in ' + elem['__comment'] + ' as ' + str(elem['faces'][direction]['uv']))
+                    texture = self.crop_to_transparancy(texture, elem['faces'][direction]['uv'])
                 texture = self.transform_texture(direction, texture)
                 texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
-                texture = self.adjust_lighting(texture)
+                texture = self.adjust_lighting(direction,texture)
 
-                alpha_over(img, texture, self.transrights(direction), texture)
+                alpha_over(img, texture, (12,6), texture)
+                
+                return img
             elif 'east' in elem['faces']:
                 direction = 'east'
-                print('eastside')
-                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
-                texture = self.transform_texture(direction, texture)
-                texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
-                texture = self.adjust_lighting(texture)
+                texture = self.draw_face(direction, elem, data, modelname)
 
                 alpha_over(img, texture, (0,0), texture)
             if 'north' in elem['faces']:
                 direction = 'north'
-                print('northside')
-                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
-                texture = self.transform_texture(direction, texture)
-                texture = self.adjust_lighting(texture)
+                texture = self.draw_face(direction, elem, data, modelname)
 
                 alpha_over(img, texture, (0,6), texture)
             elif 'south' in elem['faces']:
-                direction = 'south'
-                print('southside')
-                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
-                texture = self.transform_texture(direction, texture)
-                texture = self.adjust_lighting(texture)
+                texture = self.draw_face(direction, elem, data, modelname)
 
                 alpha_over(img, texture, (12,0), texture)
             if 'up' in elem['faces']:
                 direction = 'up'
-                print('upside')
-                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
-                texture = self.transform_texture(direction, texture)
+                texture = self.draw_face(direction, elem, data, modelname)
 
                 alpha_over(img, texture, (0,0), texture)
             elif 'down' in elem['faces']:
                 direction = 'down'
-                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures'])
-                texture = self.transform_texture(direction, texture)
-
+                
+                texture = self.draw_face(direction, elem, data, modelname)
+                
                 alpha_over(img, texture, (0,12), texture)
 
             # draw each face
@@ -917,28 +910,51 @@ class Textures(object):
         # TODO: this is not acceptable in a generic model reader, only applicable on full blocks
         # Manually touch up 6 pixels that leave a gap because of how the
         # shearing works out. This makes the blocks perfectly tessellate-able
-        for x,y in [(13,23), (17,21), (21,19)]:
-            # Copy a pixel to x,y from x-1,y
-            img.putpixel((x,y), img.getpixel((x-1,y)))
-        for x,y in [(3,4), (7,2), (11,0)]:
-            # Copy a pixel to x,y from x+1,y
-            img.putpixel((x,y), img.getpixel((x+1,y)))
+        if fullblock == 1:
+            for x,y in [(13,23), (17,21), (21,19)]:
+                # Copy a pixel to x,y from x-1,y
+                img.putpixel((x,y), img.getpixel((x-1,y)))
+            for x,y in [(3,4), (7,2), (11,0)]:
+                # Copy a pixel to x,y from x+1,y
+                img.putpixel((x,y), img.getpixel((x+1,y)))
 
         return img
 
-    def adjust_lighting(self, texture):
-        # Darken this side
-        sidealpha = texture.split()[3]
-        texture = ImageEnhance.Brightness(texture).enhance(0.8)
-        texture.putalpha(sidealpha)
+    def draw_face(self, direction, elem, data, modelname):
+        texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures']).copy()
+        if 'uv' in elem['faces'][direction]:
+            print('uv defined for ' + modelname)
+            ImageDraw.Draw(texture).rectangle((0,0,0,0), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        texture = self.transform_texture(direction, texture)
+        texture = self.adjust_lighting(direction,texture)
 
         return texture
+
+    def adjust_lighting(self, direction, texture):
+        match direction:
+            case 'down' | 'up':
+                return texture
+            case 'south' | 'west':
+                sidealpha = texture.split()[3]
+                texture = ImageEnhance.Brightness(texture).enhance(0.8)
+                texture.putalpha(sidealpha)
+                return texture
+            case 'north' | 'east':
+                sidealpha = texture.split()[3]
+                texture = ImageEnhance.Brightness(texture).enhance(0.9)
+                texture.putalpha(sidealpha)
+                return texture
+            case _:
+                raise Exception()
+
 
     def transform_texture(self, direction, texture):
         match direction:
             case 'down' | 'up':
                 return self.transform_image_top(texture)
-            case 'north'| 'south' | 'west' | 'east':
+            case 'north'| 'south':
+                return self.transform_image_side(texture)
+            case 'west' | 'east':
                 return self.transform_image_side(texture)
             case _:
                 raise Exception()
@@ -951,6 +967,8 @@ class Textures(object):
 
     # todo: use to implement non-full blocks
     def determine_face_coords(self, fromdim, todim, direction):
+		# "from": [0, 0, 0],
+		# "to": [16, 16, 16],
         match direction:
             case 'down':
                 return 0
@@ -967,6 +985,18 @@ class Textures(object):
             case _:
                 raise Exception()
                 
+    def crop_to_transparancy(self, img, area):
+        # [0, 2, 4, 14]
+        # top
+        ImageDraw.Draw(img).rectangle((area[2],0,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        # bottom
+        ImageDraw.Draw(img).rectangle((0,0,area[0],16),outline=(0,0,0,0),fill=(0,0,0,0))
+        # left
+        ImageDraw.Draw(img).rectangle((0,0,16,area[1]),outline=(0,0,0,0),fill=(0,0,0,0))
+        # right
+        ImageDraw.Draw(img).rectangle((0,area[3],16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        return img
+    
 ##
 ## The other big one: @material and associated framework
 ##
@@ -5268,7 +5298,8 @@ def anvil(self, blockid, data):
     # get the correct textures
     # the bits 0x4 and 0x8 determine how damaged is the anvil
     if (data & 0xc) == 0:  # non damaged anvil
-        top = self.load_image_texture("assets/minecraft/textures/block/anvil_top.png")
+        # top = self.load_image_texture("assets/minecraft/textures/block/anvil_top.png")
+        return self.load_image_from_model('anvil')
     elif (data & 0xc) == 0x4:  # slightly damaged
         top = self.load_image_texture("assets/minecraft/textures/block/chipped_anvil_top.png")
     elif (data & 0xc) == 0x8:  # very damaged
