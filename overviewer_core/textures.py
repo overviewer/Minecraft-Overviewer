@@ -860,71 +860,86 @@ class Textures(object):
 
         # print(json.dumps(data, indent=4))
         img = Image.new("RGBA", (24,24), self.bgcolor)
-        fullblock = 1
+
+        print(modelname + ' ' + str(self.rotation))
 
         # for each elements
         for elem in data['elements']:
             # determine all 6 faces from the 'from' and 'to' fields
             if 'west' in elem['faces']:
-                direction = 'west'
-                texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures']).copy()
-                if 'uv' in elem['faces'][direction]:
-                    fullblock = 0
-                    print('uv defined for ' + modelname + ' in ' + elem['__comment'] + ' as ' + str(elem['faces'][direction]['uv']))
-                    texture = self.crop_to_transparancy(texture, elem['faces'][direction]['uv'])
-                texture = self.transform_texture(direction, texture)
-                texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
-                texture = self.adjust_lighting(direction,texture)
-
+                texture = self.draw_face('west', elem, data, modelname)
                 alpha_over(img, texture, (12,6), texture)
-                
-                return img
             elif 'east' in elem['faces']:
-                direction = 'east'
-                texture = self.draw_face(direction, elem, data, modelname)
-
+                texture = self.draw_face('east', elem, data, modelname)
                 alpha_over(img, texture, (0,0), texture)
-            if 'north' in elem['faces']:
-                direction = 'north'
-                texture = self.draw_face(direction, elem, data, modelname)
 
+            if 'north' in elem['faces']:
+                texture = self.draw_face('north', elem, data, modelname)
                 alpha_over(img, texture, (0,6), texture)
             elif 'south' in elem['faces']:
-                texture = self.draw_face(direction, elem, data, modelname)
-
+                texture = self.draw_face('south', elem, data, modelname)
                 alpha_over(img, texture, (12,0), texture)
-            if 'up' in elem['faces']:
-                direction = 'up'
-                texture = self.draw_face(direction, elem, data, modelname)
 
+            if 'up' in elem['faces']:
+                texture = self.draw_face('up', elem, data, modelname)
                 alpha_over(img, texture, (0,0), texture)
             elif 'down' in elem['faces']:
-                direction = 'down'
-                
-                texture = self.draw_face(direction, elem, data, modelname)
-                
+                texture = self.draw_face('down', elem, data, modelname)
                 alpha_over(img, texture, (0,12), texture)
 
             # draw each face
         
-        # TODO: this is not acceptable in a generic model reader, only applicable on full blocks
         # Manually touch up 6 pixels that leave a gap because of how the
         # shearing works out. This makes the blocks perfectly tessellate-able
-        if fullblock == 1:
-            for x,y in [(13,23), (17,21), (21,19)]:
-                # Copy a pixel to x,y from x-1,y
-                img.putpixel((x,y), img.getpixel((x-1,y)))
-            for x,y in [(3,4), (7,2), (11,0)]:
-                # Copy a pixel to x,y from x+1,y
-                img.putpixel((x,y), img.getpixel((x+1,y)))
+        for x,y in [(13,23), (17,21), (21,19)]:
+            # Copy a pixel to x,y from x-1,y
+            img.putpixel((x,y), img.getpixel((x-1,y)))
+        for x,y in [(3,4), (7,2), (11,0)]:
+            # Copy a pixel to x,y from x+1,y
+            img.putpixel((x,y), img.getpixel((x+1,y)))
 
         return img
 
+    # def translate_rotation(self, direction, rotation):
+    #     match direction:
+    #         case 'down':
+    #             return 'down'
+    #         case 'up':
+    #             return 'up'
+    #         case 'north':
+    #             return self.cards(rotation)
+    #         case 'south':
+    #             return self.cards(rotation + 1)
+    #         case 'west':
+    #             return self.cards(rotation + 2)
+    #         case 'east':
+    #             return self.cards(rotation + 3)
+    #         case _:
+    #             raise Exception()
+
+    # def cards(self, rotation):
+    #     print(rotation)
+    #     rotation = rotation % 4
+    #     print(rotation)
+    #     match rotation:
+    #         case 0:
+    #             return 'north'
+    #         case 1:
+    #             return 'south'
+    #         case 2:
+    #             return 'west'
+    #         case 3:
+    #             return 'east'
+    #         case _:
+    #             raise Exception()
+
     def draw_face(self, direction, elem, data, modelname):
+        # direction = self.translate_rotation(direction, self.rotation)
         texture = self.find_texture_from_model(elem['faces'][direction]['texture'], data['textures']).copy()
-        if 'uv' in elem['faces'][direction]:
-            print('uv defined for ' + modelname)
-            ImageDraw.Draw(texture).rectangle((0,0,0,0), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        # if 'uv' in elem['faces'][direction]:
+        #     print('uv defined for ' + modelname + ' in ' + elem['__comment'] + ' as ' + str(elem['faces'][direction]['uv']))
+        #     texture = self.crop_to_transparancy(texture, elem['faces'][direction]['uv'])
+        #     texture = self.adjust_rotation(direction, texture)
         texture = self.transform_texture(direction, texture)
         texture = self.adjust_lighting(direction,texture)
 
@@ -947,7 +962,6 @@ class Textures(object):
             case _:
                 raise Exception()
 
-
     def transform_texture(self, direction, texture):
         match direction:
             case 'down' | 'up':
@@ -955,7 +969,8 @@ class Textures(object):
             case 'north'| 'south':
                 return self.transform_image_side(texture)
             case 'west' | 'east':
-                return self.transform_image_side(texture)
+                texture = self.transform_image_side(texture)
+                return texture.transpose(Image.FLIP_LEFT_RIGHT)
             case _:
                 raise Exception()
 
@@ -965,37 +980,28 @@ class Textures(object):
         else:
             return self.load_image_texture(BLOCKTEX + re.sub('.*:','',face) + '.png')
 
-    # todo: use to implement non-full blocks
-    def determine_face_coords(self, fromdim, todim, direction):
-		# "from": [0, 0, 0],
-		# "to": [16, 16, 16],
-        match direction:
-            case 'down':
-                return 0
-            case 'up':
-                return 0
-            case 'north':
-                return 0
-            case 'south':
-                return 0
-            case 'west':
-                return 0
-            case 'east':
-                return 0
-            case _:
-                raise Exception()
-                
-    def crop_to_transparancy(self, img, area):
-        # [0, 2, 4, 14]
-        # top
-        ImageDraw.Draw(img).rectangle((area[2],0,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
-        # bottom
-        ImageDraw.Draw(img).rectangle((0,0,area[0],16),outline=(0,0,0,0),fill=(0,0,0,0))
-        # left
-        ImageDraw.Draw(img).rectangle((0,0,16,area[1]),outline=(0,0,0,0),fill=(0,0,0,0))
-        # right
-        ImageDraw.Draw(img).rectangle((0,area[3],16,16),outline=(0,0,0,0),fill=(0,0,0,0))
-        return img
+    # def crop_to_transparancy(self, img, area):
+    #     img = img.copy()
+    #     # top
+    #     ImageDraw.Draw(img).rectangle((area[2],0,16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    #     # right
+    #     ImageDraw.Draw(img).rectangle((0,area[3],16,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    #     # bottom
+    #     ImageDraw.Draw(img).rectangle((0,0,area[0],16),outline=(0,0,0,0),fill=(0,0,0,0))
+    #     # left
+    #     ImageDraw.Draw(img).rectangle((0,0,16,area[1]),outline=(0,0,0,0),fill=(0,0,0,0))
+    #     return img
+
+    # def adjust_rotation(self, direction, texture):
+    #     match direction:
+    #         case 'down' | 'up':
+    #             return texture.rotate(90)
+    #         case 'south' | 'west':
+    #             return texture.rotate(90)
+    #         case 'north' | 'east':
+    #             return texture.rotate(0)
+    #         case _:
+    #             raise Exception()
     
 ##
 ## The other big one: @material and associated framework
@@ -1101,7 +1107,6 @@ def billboard(blockid=[], imagename=None, **kwargs):
 def stone(self, blockid, data):
     if data == 0: # regular old-school stone
         return self.load_image_from_model('stone')
-        img = self.load_image_texture("assets/minecraft/textures/block/stone.png")
     elif data == 1: # granite
         img = self.load_image_texture("assets/minecraft/textures/block/granite.png")
     elif data == 2: # polished granite
@@ -2896,21 +2901,23 @@ def lectern(self, blockid, data):
 
 @material(blockid=11367, data=list(range(4)), solid=True)
 def loom(self, blockid, data):
-    # Do rotation
-    data = (self.rotation + data) % 4
 
-    top_rot = [180, 90, 0, 270][data]
-    side3_tex = "front" if data == 1 else "side"
-    side4_tex = "front" if data == 0 else "side"
+    return self.load_image_from_model('loom')
 
-    tex_path = "assets/minecraft/textures/block"
-    top = self.load_image_texture("{}/loom_top.png".format(tex_path)).copy()
-    side3 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side3_tex))
-    side4 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side4_tex)).copy()
-    top = top.rotate(top_rot)
-    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+    # data = (self.rotation + data) % 4
 
-    return self.build_full_block(top, None, None, side3, side4, None)
+    # top_rot = [180, 90, 0, 270][data]
+    # side3_tex = "front" if data == 1 else "side"
+    # side4_tex = "front" if data == 0 else "side"
+
+    # tex_path = "assets/minecraft/textures/block"
+    # top = self.load_image_texture("{}/loom_top.png".format(tex_path)).copy()
+    # side3 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side3_tex))
+    # side4 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side4_tex)).copy()
+    # top = top.rotate(top_rot)
+    # side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+
+    # return self.build_full_block(top, None, None, side3, side4, None)
 
 
 @material(blockid=11368, data=list(range(4)), transparent=True, solid=True, nospawn=True)
@@ -5298,8 +5305,7 @@ def anvil(self, blockid, data):
     # get the correct textures
     # the bits 0x4 and 0x8 determine how damaged is the anvil
     if (data & 0xc) == 0:  # non damaged anvil
-        # top = self.load_image_texture("assets/minecraft/textures/block/anvil_top.png")
-        return self.load_image_from_model('anvil')
+        top = self.load_image_texture("assets/minecraft/textures/block/anvil_top.png")
     elif (data & 0xc) == 0x4:  # slightly damaged
         top = self.load_image_texture("assets/minecraft/textures/block/chipped_anvil_top.png")
     elif (data & 0xc) == 0x8:  # very damaged
