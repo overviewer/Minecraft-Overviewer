@@ -864,24 +864,24 @@ class Textures(object):
         # for each elements
         for elem in colmodel['elements']:
             if 'west' in elem['faces']:
-                texture = self.draw_face('west', elem, colmodel, blockstate)
+                texture = self.draw_face('west', elem, colmodel, blockstate, modelname)
                 alpha_over(img, texture, (12,6), texture)
             elif 'east' in elem['faces']:
-                texture = self.draw_face('east', elem, colmodel, blockstate)
+                texture = self.draw_face('east', elem, colmodel, blockstate, modelname)
                 alpha_over(img, texture, (0,0), texture)
 
             if 'north' in elem['faces']:
-                texture = self.draw_face('north', elem, colmodel, blockstate)
+                texture = self.draw_face('north', elem, colmodel, blockstate, modelname)
                 alpha_over(img, texture, (0,6), texture)
             elif 'south' in elem['faces']:
-                texture = self.draw_face('south', elem, colmodel, blockstate)
+                texture = self.draw_face('south', elem, colmodel, blockstate, modelname)
                 alpha_over(img, texture, (12,0), texture)
 
             if 'up' in elem['faces']:
-                texture = self.draw_face('up', elem, colmodel, blockstate)
+                texture = self.draw_face('up', elem, colmodel, blockstate, modelname)
                 alpha_over(img, texture, (0,0), texture)
             elif 'down' in elem['faces']:
-                texture = self.draw_face('down', elem, colmodel, blockstate)
+                texture = self.draw_face('down', elem, colmodel, blockstate, modelname)
                 alpha_over(img, texture, (0,12), texture)
 
             # draw each face
@@ -912,16 +912,16 @@ class Textures(object):
             return targetblockface
         return self.orientation_from_numvalue((self.numvalue_orientation(targetblockface) + [0,3,2,1][self.numvalue_orientation(blockfacing)] + 1 + self.rotation + (self.rotation % 2)*2) % 4)
         
-    def draw_face(self, direction, elem, data, blockstate):        
+    def draw_face(self, direction, elem, data, blockstate, modelname):        
         textureface = direction
         if 'facing' in blockstate:
             textureface = self.map_facing_to_real(blockstate['facing'], direction)
 
         texture = self.find_texture_from_model(elem['faces'][textureface]['texture'], data['textures']).copy()
         if 'uv' in elem['faces'][textureface]:
-            print('uv defined in ' + elem['__comment'] + ' as ' + str(elem['faces'][textureface]['uv']))
+            print('uv defined in ' + modelname + ' as ' + str(elem['faces'][textureface]['uv']))
             texture = self.crop_to_transparancy(texture, elem['faces'][textureface]['uv'])
-            texture = self.adjust_rotation(textureface, texture)
+            texture = self.adjust_rotation(textureface, texture, modelname)
         texture = self.transform_texture(direction, texture, blockstate)
         texture = self.adjust_lighting(direction,texture)
 
@@ -978,12 +978,14 @@ class Textures(object):
         ImageDraw.Draw(img).rectangle((0,0,16,area[1]),outline=(0,0,0,0),fill=(0,0,0,0))
         return img
 
-    def adjust_rotation(self, direction, texture):
+    def adjust_rotation(self, direction, texture, modelname):
         match direction:
             case 'down' | 'up':
                 return texture.rotate(90)
-            case 'south' | 'west':
+            case 'south':
                 return texture.rotate(90)
+            case 'west':
+                return texture.rotate(0)
             case 'north' | 'east':
                 return texture.rotate(0)
             case _:
@@ -1105,43 +1107,37 @@ def stone(self, blockid, data):
     if data == 0: # regular old-school stone
         return self.build_block_from_model('stone')
     elif data == 1: # granite
-        img = self.load_image_texture("assets/minecraft/textures/block/granite.png")
+        return self.build_block_from_model('granite')
     elif data == 2: # polished granite
-        img = self.load_image_texture("assets/minecraft/textures/block/polished_granite.png")
+        return self.build_block_from_model('polished_granite')
     elif data == 3: # diorite
-        img = self.load_image_texture("assets/minecraft/textures/block/diorite.png")
+        return self.build_block_from_model('diorite')
     elif data == 4: # polished diorite
-        img = self.load_image_texture("assets/minecraft/textures/block/polished_diorite.png")
+        return self.build_block_from_model('polished_diorite')
     elif data == 5: # andesite
-        img = self.load_image_texture("assets/minecraft/textures/block/andesite.png")
+        return self.build_block_from_model('andesite')
     elif data == 6: # polished andesite
-        img = self.load_image_texture("assets/minecraft/textures/block/polished_andesite.png")
-    return self.build_block(img, img)
+        return self.build_block_from_model('polished_andesite')
 
 @material(blockid=2, data=list(range(11))+[0x10,], solid=True)
 def grass(self, blockid, data):
     # 0x10 bit means SNOW
-    side_img = self.load_image_texture("assets/minecraft/textures/block/grass_block_side.png")
     if data & 0x10:
-        side_img = self.load_image_texture("assets/minecraft/textures/block/grass_block_snow.png")
-    img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/grass_block_top.png"), side_img)
-    if not data & 0x10:
+        return self.build_block_from_model('grass_block_snow')
+    else:
+        img = self.build_block_from_model('grass_block')
         alpha_over(img, self.biome_grass_texture, (0, 0), self.biome_grass_texture)
-    return img
-
+        return img
 
 # dirt
 @material(blockid=3, data=list(range(3)), solid=True)
 def dirt_blocks(self, blockid, data):
-    texture_map = [{"top": "dirt",        "side": "dirt"},         # Normal
-                   {"top": "coarse_dirt", "side": "coarse_dirt"},  # Coarse
-                   {"top": "podzol_top",  "side": "podzol_side"}]  # Podzol
-    top_img = self.load_image_texture("assets/minecraft/textures/block/%s.png"
-                                      % texture_map[data]["top"])
-    side_img = self.load_image_texture("assets/minecraft/textures/block/%s.png"
-                                       % texture_map[data]["side"])
-
-    return self.build_block(top_img, side_img)
+    if data == 0:
+        return self.build_block_from_model('dirt')
+    if data == 1:
+        return self.build_block_from_model('coarse_dirt')
+    if data == 2:
+        return self.build_block_from_model('podzol')
 
 modelblock(blockid=4, name='cobblestone')
 
@@ -1149,21 +1145,21 @@ modelblock(blockid=4, name='cobblestone')
 @material(blockid=5, data=list(range(8)), solid=True)
 def wooden_planks(self, blockid, data):
     if data == 0: # normal
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/oak_planks.png"), self.load_image_texture("assets/minecraft/textures/block/oak_planks.png"))
+        return self.build_block_from_model('oak_planks')
     if data == 1: # pine
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/spruce_planks.png"),self.load_image_texture("assets/minecraft/textures/block/spruce_planks.png"))
+        return self.build_block_from_model('spruce_planks')
     if data == 2: # birch
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/birch_planks.png"),self.load_image_texture("assets/minecraft/textures/block/birch_planks.png"))
+        return self.build_block_from_model('birch_planks')
     if data == 3: # jungle wood
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/jungle_planks.png"),self.load_image_texture("assets/minecraft/textures/block/jungle_planks.png"))
+        return self.build_block_from_model('jungle_planks')
     if data == 4: # acacia
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png"),self.load_image_texture("assets/minecraft/textures/block/acacia_planks.png"))
+        return self.build_block_from_model('acacia_planks')
     if data == 5: # dark oak
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"),self.load_image_texture("assets/minecraft/textures/block/dark_oak_planks.png"))
+        return self.build_block_from_model('dark_oak_planks')
     if data == 6: # crimson
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png"),self.load_image_texture("assets/minecraft/textures/block/crimson_planks.png"))
+        return self.build_block_from_model('crimson_planks')
     if data == 7: # warped
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/block/warped_planks.png"),self.load_image_texture("assets/minecraft/textures/block/warped_planks.png"))
+        return self.build_block_from_model('warped_planks')
 
 @material(blockid=6, data=list(range(16)), transparent=True)
 def saplings(self, blockid, data):
