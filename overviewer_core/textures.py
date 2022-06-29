@@ -1043,6 +1043,17 @@ def material(blockid=[], data=[0], **kwargs):
     return inner_material
 
 # shortcut function for pure blocks, default to solid, nodata
+def modelblock(blockid=[], name=None):
+    
+    if name is None:
+        raise ValueError("block name was not provided")
+    
+    @material(blockid=blockid)
+    def inner_block(self, unused_id, unused_data):
+        return self.build_block_from_model(name)
+    return inner_block
+
+# shortcut function for pure blocks, default to solid, nodata
 def block(blockid=[], top_image=None, side_image=None, **kwargs):
     new_kwargs = {'solid' : True, 'nodata' : True}
     new_kwargs.update(kwargs)
@@ -1132,11 +1143,7 @@ def dirt_blocks(self, blockid, data):
 
     return self.build_block(top_img, side_img)
 
-
-# cobblestone
-@material(blockid=4, data=0, solid=True)
-def cobblestone(self, blockid, data):
-    return self.build_block_from_model('cobblestone')
+modelblock(blockid=4, name='cobblestone')
 
 # wooden planks
 @material(blockid=5, data=list(range(8)), solid=True)
@@ -2887,28 +2894,10 @@ def lectern(self, blockid, data):
 
 @material(blockid=11367, data=list(range(4)), solid=True)
 def loom(self, blockid, data):
-
     # normalize data so it can be used by a generic method
     blockstate = {}
     blockstate['facing'] = {0:'south', 1:'west', 2:'north', 3:'east'}[data]
-
     return self.build_block_from_model('loom', blockstate)
-
-    # data = (self.rotation + data) % 4
-
-    # top_rot = [180, 90, 0, 270][data]
-    # side3_tex = "front" if data == 1 else "side"
-    # side4_tex = "front" if data == 0 else "side"
-
-    # tex_path = "assets/minecraft/textures/block"
-    # top = self.load_image_texture("{}/loom_top.png".format(tex_path)).copy()
-    # side3 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side3_tex))
-    # side4 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side4_tex)).copy()
-    # top = top.rotate(top_rot)
-    # side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
-
-    # return self.build_full_block(top, None, None, side3, side4, None)
-
 
 @material(blockid=11368, data=list(range(4)), transparent=True, solid=True, nospawn=True)
 def stonecutter(self, blockid, data):
