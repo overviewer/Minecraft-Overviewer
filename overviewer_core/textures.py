@@ -897,31 +897,56 @@ class Textures(object):
 
         return img
 
-    # def determine_face(self, blockrotation, worldrotation, face):
-    #       if rendered orientation is south or west -> draw front
-    #     # if I want to draw the 
-
     def numvalue_orientation(self, orientation):
         return {'south': 0, 'west': 1, 'north': 2, 'east': 3}[orientation]
         
     def orientation_from_numvalue(self, orientation):
         return {0:'south', 1:'west', 2:'north', 3:'east'}[orientation]
         
+    # translates rotation to real face value
     def map_facing_to_real(self, blockfacing, targetblockface):
         if ((blockfacing in {'up','down'}) | (targetblockface in {'up','down'})):
             return targetblockface
         return self.orientation_from_numvalue((self.numvalue_orientation(targetblockface) + [0,3,2,1][self.numvalue_orientation(blockfacing)] + 1 + self.rotation + (self.rotation % 2)*2) % 4)
+
+    def map_axis_to_real(self, axis, textureface):
+        match axis:
+            case 'x':
+                return {'up':'north','north':'down','down':'south','south':'up','east':'east','west':'west'}[textureface]
+            case 'y':
+                return textureface
+            case 'z':
+                return {'up':'west','west':'down','down':'east','east':'up','north':'north','south':'south'}[textureface]
+            case _:
+                raise Exception()
+
+    def axis_rotation(self, axis, face, texture):
+        match axis:
+            case 'x':
+                rotation = {'up':0,'north':0,'down':0,'south':0,'east':90,'west':90}[face]
+                return texture.rotate(rotation)
+            case 'y':
+                return texture
+            case 'z':
+                rotation = {'up':0,'west':0,'down':0,'east':0,'north':270,'south':270}[face]
+                return texture.rotate(rotation)
+            case _:
+                raise Exception()
         
     def draw_face(self, direction, elem, data, blockstate, modelname):        
         textureface = direction
         if 'facing' in blockstate:
             textureface = self.map_facing_to_real(blockstate['facing'], direction)
+        if 'axis' in blockstate:
+            textureface = self.map_axis_to_real(blockstate['axis'], direction)
 
         texture = self.find_texture_from_model(elem['faces'][textureface]['texture'], data['textures']).copy()
         if 'uv' in elem['faces'][textureface]:
             print('uv defined in ' + modelname + ' as ' + str(elem['faces'][textureface]['uv']))
             texture = self.crop_to_transparancy(texture, elem['faces'][textureface]['uv'])
             texture = self.adjust_rotation(textureface, texture, modelname)
+        if 'axis' in blockstate:
+            texture = self.axis_rotation(blockstate['axis'], direction, texture)
         texture = self.transform_texture(direction, texture, blockstate)
         texture = self.adjust_lighting(direction,texture)
 
@@ -990,7 +1015,9 @@ class Textures(object):
                 return texture.rotate(0)
             case _:
                 raise Exception()
-    
+
+## In my quest to generify reading model json files I've found there is no simple way to deduce the BlockProperty (KNOWN, TRANSPARENT, SOLID, FLUID, NOSPAWN) of a block. Do you have any suggestion how I could detrmine these properties, short of just keeping a hard-coded list of these blocks?
+
 ##
 ## The other big one: @material and associated framework
 ##
@@ -1191,9 +1218,6 @@ sprite(blockid=11413, imagename="assets/minecraft/textures/block/bamboo_stage0.p
 # bedrock
 modelblock(blockid=7, name='bedrock')
 
-#glass
-modelblock(blockid=20, name='glass')
-
 # TODO: There is no transparency information in the model json files. The png files do contain transparancy. Create static list for this data.
 # water, glass, and ice (no inner surfaces)
 # uses pseudo-ancildata found in iterate.c
@@ -1201,6 +1225,8 @@ modelblock(blockid=20, name='glass')
 def no_inner_surfaces(self, blockid, data):
     if blockid == 8 or blockid == 9:
         texture = self.load_water()
+    elif blockid == 20:
+        texture = self.load_image_texture("assets/minecraft/textures/block/glass.png")
     elif blockid == 95:
         texture = self.load_image_texture("assets/minecraft/textures/block/%s_stained_glass.png" % color_map[data & 0x0f])
     else:
@@ -1258,90 +1284,112 @@ modelblock(blockid=16, name='coal_ore')
 @material(blockid=[17, 162, 11306, 11307, 11308, 11309, 11310, 11311, 1008, 1009, 1126],
           data=list(range(12)), solid=True)
 def wood(self, blockid, data):
-    # extract orientation and wood type frorm data bits
-    wood_type = data & 3
-    wood_orientation = data & 12
-    if self.rotation == 1:
-        if wood_orientation == 4: wood_orientation = 8
-        elif wood_orientation == 8: wood_orientation = 4
-    elif self.rotation == 3:
-        if wood_orientation == 4: wood_orientation = 8
-        elif wood_orientation == 8: wood_orientation = 4
+    type = data & 3
+    
+    blockstate = {}
+    blockstate['axis'] = { 0 : 'y', 4: 'x', 8 : 'z'}[data & 12]
 
-    # dictionary of blockid : { wood_type : (top, side) }
-    wood_tex = {
-        17: {
-            0: ("oak_log_top.png", "oak_log.png"),
-            1: ("spruce_log_top.png", "spruce_log.png"),
-            2: ("birch_log_top.png", "birch_log.png"),
-            3: ("jungle_log_top.png", "jungle_log.png"),
-        },
-        162: {
-            0: ("acacia_log_top.png", "acacia_log.png"),
-            1: ("dark_oak_log_top.png", "dark_oak_log.png"),
-        },
-        11306: {
-            0: ("stripped_oak_log_top.png", "stripped_oak_log.png"),
-            1: ("stripped_spruce_log_top.png", "stripped_spruce_log.png"),
-            2: ("stripped_birch_log_top.png", "stripped_birch_log.png"),
-            3: ("stripped_jungle_log_top.png", "stripped_jungle_log.png"),
-        },
-        11307: {
-            0: ("stripped_acacia_log_top.png", "stripped_acacia_log.png"),
-            1: ("stripped_dark_oak_log_top.png", "stripped_dark_oak_log.png"),
-        },
-        11308: {
-            0: ("oak_log.png", None),
-            1: ("spruce_log.png", None),
-            2: ("birch_log.png", None),
-            3: ("jungle_log.png", None),
-        },
-        11309: {
-            0: ("acacia_log.png", None),
-            1: ("dark_oak_log.png", None),
-        },
-        11310: {
-            0: ("stripped_oak_log.png", None),
-            1: ("stripped_spruce_log.png", None),
-            2: ("stripped_birch_log.png", None),
-            3: ("stripped_jungle_log.png", None),
-        },
-        11311: {
-            0: ("stripped_acacia_log.png", None),
-            1: ("stripped_dark_oak_log.png", None),
-        },
-        1008: {
-            0: ("warped_stem_top.png", "warped_stem.png"),
-            1: ("warped_stem_top.png", "stripped_warped_stem.png"),
-            2: ("crimson_stem_top.png", "crimson_stem.png"),
-            3: ("crimson_stem_top.png", "stripped_crimson_stem.png"),
-        },
-        1009: {
-            0: ("warped_stem.png", None),
-            1: ("stripped_warped_stem.png", None),
-            2: ("crimson_stem.png", None),
-            3: ("stripped_crimson_stem.png", None),
-        },
-        1126: {
-            0: ("mangrove_log_top.png", "mangrove_log.png"),
-            1: ("stripped_mangrove_log_top.png", "stripped_mangrove_log.png"),
-        },
-    }
+    if blockid == 17:
+        if type == 0:
+            return self.build_block_from_model('oak_log', blockstate)
+        if type == 1:
+            return self.build_block_from_model('spruce_log', blockstate)
+        if type == 2:
+            return self.build_block_from_model('birch_log', blockstate)
+        if type == 3:
+            return self.build_block_from_model('jungle_log', blockstate)
 
-    top_f, side_f = wood_tex[blockid].get(wood_type, wood_tex[blockid][0])
-    if not side_f:
-        side_f = top_f
-    top = self.load_image_texture(BLOCKTEX + 'block/' + top_f)
-    side = self.load_image_texture(BLOCKTEX + 'block/' + side_f)
+    if blockid == 162:
+        if type == 0:
+            return self.build_block_from_model('acacia_log', blockstate)
+        if type == 1:
+            return self.build_block_from_model('dark_oak_log', blockstate)
 
-    # choose orientation and paste textures
-    if wood_orientation == 0:
-        return self.build_block(top, side)
-    elif wood_orientation == 4: # east-west orientation
-        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
-    elif wood_orientation == 8: # north-south orientation
-        return self.build_full_block(side, None, None, side.rotate(270), top)
+    if blockid == 11306:
+        if type == 0:
+            return self.build_block_from_model('stripped_oak_log', blockstate)
+        if type == 1:
+            return self.build_block_from_model('stripped_spruce_log', blockstate)
+        if type == 2:
+            return self.build_block_from_model('stripped_birch_log', blockstate)
+        if type == 3:
+            return self.build_block_from_model('stripped_jungle_log', blockstate)
 
+    if blockid == 11307:
+        if type == 0:
+            return self.build_block_from_model('stripped_acacia_log', blockstate)
+        if type == 1:
+            return self.build_block_from_model('stripped_dark_oak_log', blockstate)
+
+    if blockid == 11308:
+        if type == 0:
+            return self.build_block_from_model('oak_wood', blockstate)
+        if type == 1:
+            return self.build_block_from_model('spruce_wood', blockstate)
+        if type == 2:
+            return self.build_block_from_model('birch_wood', blockstate)
+        if type == 3:
+            return self.build_block_from_model('jungle_wood', blockstate)
+
+    if blockid == 11309:
+        if type == 0:
+            return self.build_block_from_model('acacia_wood', blockstate)
+        if type == 1:
+            return self.build_block_from_model('dark_oak_wood', blockstate)
+
+    if blockid == 11310:
+        if type == 0:
+            return self.build_block_from_model('stripped_oak_wood', blockstate)
+        if type == 1:
+            return self.build_block_from_model('stripped_spruce_wood', blockstate)
+        if type == 2:
+            return self.build_block_from_model('stripped_birch_wood', blockstate)
+        if type == 3:
+            return self.build_block_from_model('stripped_jungle_wood', blockstate)
+            
+    if blockid == 11311:
+        if type == 0:
+            return self.build_block_from_model('stripped_acacia_wood', blockstate)
+        if type == 1:
+            return self.build_block_from_model('stripped_dark_oak_wood', blockstate)
+
+    if blockid == 1008:
+        if type == 0:
+            return self.build_block_from_model('warped_stem', blockstate)
+        if type == 1:
+            return self.build_block_from_model('stripped_warped_stem', blockstate)
+        if type == 2:
+            return self.build_block_from_model('crimson_stem', blockstate)
+        if type == 3:
+            return self.build_block_from_model('stripped_crimson_stem', blockstate)
+
+    if blockid == 1009:
+        if type == 0:
+            return self.build_block_from_model('warped_hyphae', blockstate)
+        if type == 1:
+            return self.build_block_from_model('stripped_warped_hyphae', blockstate)
+        if type == 2:
+            return self.build_block_from_model('crimson_hyphae', blockstate)
+        if type == 3:
+            return self.build_block_from_model('stripped_crimson_hyphae', blockstate)
+
+    if blockid == 1126:
+        if type == 0:
+            return self.build_block_from_model('mangrove_log', blockstate)
+        if type == 1:
+            return self.build_block_from_model('stripped_mangrove_log', blockstate)
+
+    # # choose orientation and paste textures
+    # if wood_orientation == 0:
+    #     return self.build_block(top, side)
+    # elif wood_orientation == 4: # east-west orientation
+    #     return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    # elif wood_orientation == 8: # north-south orientation
+    #     return self.build_full_block(side, None, None, side.rotate(270), top)
+    
+    return self.build_block_from_model('redstone_block', blockstate)
+
+# TODO: transparency
 @material(blockid=[18, 161], data=list(range(16)), transparent=True, solid=True)
 def leaves(self, blockid, data):
     # mask out the bits 4 and 8
