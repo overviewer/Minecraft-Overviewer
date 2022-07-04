@@ -4630,6 +4630,12 @@ def lilypad(self, blockid, data):
 
     return self.build_full_block(None, None, None, None, None, t)
 
+@material(blockid=454, nodata=True, transparent=True)
+def frogspawn(self, blockid, data):
+    t = self.load_image_texture("assets/minecraft/textures/block/frogspawn.png")
+
+    return self.build_full_block(None, None, None, None, None, t)
+
 # nether bricks
 @material(blockid=112, data=list(range(3)), solid=True)
 def nether_bricks(self, blockid, data):
@@ -4668,6 +4674,21 @@ def enchantment_table(self, blockid, data):
     side = self.load_image_texture("assets/minecraft/textures/block/enchanting_table_side.png")
     img = self.build_full_block((top, 4), None, None, side, side)
 
+    return img
+
+@material(blockid=455, data=list(range(2)),transparent=True)
+def azalea(self, blockid, data):
+    if data == 0: # just come up
+        top = self.load_image_texture("assets/minecraft/textures/block/azalea_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/block/azalea_side.png")
+    if data == 1: # just come up
+        top = self.load_image_texture("assets/minecraft/textures/block/flowering_azalea_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/block/flowering_azalea_side.png")
+    img = self.build_full_block(top, None, None, side, side)
+
+    t = self.load_image_texture("assets/minecraft/textures/block/azalea_plant.png")
+    stem = self.build_billboard(t)
+    alpha_over(img,stem,(0,-2))
     return img
 
 # brewing stand
@@ -5299,6 +5320,14 @@ def prismarine_block(self, blockid, data):
 
 # sea lantern 
 block(blockid=169, top_image="assets/minecraft/textures/block/sea_lantern.png")
+
+# target
+block(blockid=456, top_image="assets/minecraft/textures/block/target_top.png", side_image="assets/minecraft/textures/block/target_side.png")
+
+# froglights
+block(blockid=451, top_image="assets/minecraft/textures/block/pearlescent_froglight_top.png", side_image="assets/minecraft/textures/block/pearlescent_froglight_side.png")
+block(blockid=452, top_image="assets/minecraft/textures/block/verdant_froglight_top.png", side_image="assets/minecraft/textures/block/verdant_froglight_side.png")
+block(blockid=453, top_image="assets/minecraft/textures/block/ochre_froglight_top.png", side_image="assets/minecraft/textures/block/ochre_froglight_side.png")
 
 # hay block
 @material(blockid=170, data=list(range(9)), solid=True)

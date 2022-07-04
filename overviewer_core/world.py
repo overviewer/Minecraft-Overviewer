@@ -503,6 +503,10 @@ class RegionSet(object):
             'minecraft:stone_brick_stairs': (109, 0),
             'minecraft:mycelium': (110, 0),
             'minecraft:lily_pad': (111, 0),
+            'minecraft:frogspawn': (454, 0),
+            'minecraft:azalea': (455, 0),
+            'minecraft:flowering_azalea': (455, 1),
+            'minecraft:target':(456,0),
             'minecraft:nether_bricks': (112, 0),
             'minecraft:cracked_nether_bricks': (112, 1),
             'minecraft:chiseled_nether_bricks': (112, 2),
@@ -699,6 +703,10 @@ class RegionSet(object):
             'minecraft:shulker_box': (257, 0),
 
             'minecraft:armor_stand': (416, 0),  # not rendering
+
+            'minecraft:pearlescent_froglight': (451, 0),
+            'minecraft:verdant_froglight': (452, 0),
+            'minecraft:ochre_froglight': (453, 0),
 
             # The following blocks are underwater and are not yet rendered.
             # To avoid spurious warnings, we'll treat them as water for now.

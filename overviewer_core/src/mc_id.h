@@ -272,6 +272,10 @@ enum mc_block_id {
     block_structure_block = 255,
     block_jigsaw = 256,
     block_shulker_box = 257,
+
+    block_pearlescent_froglight = 451,
+    block_verdant_froglight = 452,
+    block_ochre_froglight = 453,
     // 1.16 stuff
     block_ancient_debris = 1000,
     block_basalt = 1001,
@@ -293,6 +297,11 @@ enum mc_block_id {
     block_crimson_roots = 1019,
     block_soul_soil = 1020,
     block_nether_gold_ore = 1021,
+
+    block_frogspawn = 454,
+    block_azalea = 455,
+    block_target = 456,
+
     // Solid Nether stone blocks
     block_polished_blackstone = 1022,
     block_chiseled_polished_blackstone = 1023,
