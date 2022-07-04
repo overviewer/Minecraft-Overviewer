@@ -1121,11 +1121,12 @@ def stone(self, blockid, data):
 
 @material(blockid=2, data=list(range(11))+[0x10,], solid=True)
 def grass(self, blockid, data):
-    # 0x10 bit means SNOW
     if data & 0x10:
         return self.build_block_from_model('grass_block_snow')
     else:
-        img = self.build_block_from_model('grass_block')
+        # TODO: generify biome texture overlay 
+        side_img = self.load_image_texture("assets/minecraft/textures/block/grass_block_side.png")
+        img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/grass_block_top.png"), side_img)
         alpha_over(img, self.biome_grass_texture, (0, 0), self.biome_grass_texture)
         return img
 
@@ -1163,6 +1164,7 @@ def wooden_planks(self, blockid, data):
 
 @material(blockid=6, data=list(range(16)), transparent=True)
 def saplings(self, blockid, data):
+    # TODO: generify block/cross
     # usual saplings
     tex = self.load_image_texture("assets/minecraft/textures/block/oak_sapling.png")
     
@@ -1187,16 +1189,18 @@ sprite(blockid=11390, imagename="assets/minecraft/textures/block/dark_oak_saplin
 sprite(blockid=11413, imagename="assets/minecraft/textures/block/bamboo_stage0.png")
 
 # bedrock
-block(blockid=7, top_image="assets/minecraft/textures/block/bedrock.png")
+modelblock(blockid=7, name='bedrock')
 
+#glass
+modelblock(blockid=20, name='glass')
+
+# TODO: There is no transparency information in the model json files. The png files do contain transparancy. Create static list for this data.
 # water, glass, and ice (no inner surfaces)
 # uses pseudo-ancildata found in iterate.c
-@material(blockid=[8, 9, 20, 79, 95], data=list(range(512)), fluid=(8, 9), transparent=True, nospawn=True, solid=(79, 20, 95))
+@material(blockid=[8, 9, 79, 95], data=list(range(512)), fluid=(8, 9), transparent=True, nospawn=True, solid=(79, 20, 95))
 def no_inner_surfaces(self, blockid, data):
     if blockid == 8 or blockid == 9:
         texture = self.load_water()
-    elif blockid == 20:
-        texture = self.load_image_texture("assets/minecraft/textures/block/glass.png")
     elif blockid == 95:
         texture = self.load_image_texture("assets/minecraft/textures/block/%s_stained_glass.png" % color_map[data & 0x0f])
     else:
@@ -1210,17 +1214,7 @@ def no_inner_surfaces(self, blockid, data):
         top = texture
     else:
         top = None
-        
-    if (data & 0b0001) == 1:
-        side1 = texture    # top left
-    else:
-        side1 = None
-    
-    if (data & 0b1000) == 8:
-        side2 = texture    # top right           
-    else:
-        side2 = None
-    
+            
     if (data & 0b0010) == 2:
         side3 = texture    # bottom left    
     else:
@@ -1238,6 +1232,7 @@ def no_inner_surfaces(self, blockid, data):
     img = self.build_full_block(top,None,None,side3,side4)
     return img
 
+# TODO: generify rendering fluids
 @material(blockid=[10, 11], data=list(range(16)), fluid=True, transparent=False, nospawn=True)
 def lava(self, blockid, data):
     lavatex = self.load_lava()
@@ -1247,19 +1242,18 @@ def lava(self, blockid, data):
 @material(blockid=12, data=list(range(2)), solid=True)
 def sand_blocks(self, blockid, data):
     if data == 0: # normal
-        img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/sand.png"), self.load_image_texture("assets/minecraft/textures/block/sand.png"))
-    if data == 1: # red
-        img = self.build_block(self.load_image_texture("assets/minecraft/textures/block/red_sand.png"), self.load_image_texture("assets/minecraft/textures/block/red_sand.png"))
-    return img
+        return self.build_block_from_model('sand')
+    else: # red
+        return self.build_block_from_model('red_sand')
 
 # gravel
-block(blockid=13, top_image="assets/minecraft/textures/block/gravel.png")
+modelblock(blockid=13, name='gravel')
 # gold ore
-block(blockid=14, top_image="assets/minecraft/textures/block/gold_ore.png")
+modelblock(blockid=14, name='gold_ore')
 # iron ore
-block(blockid=15, top_image="assets/minecraft/textures/block/iron_ore.png")
+modelblock(blockid=15, name='iron_ore')
 # coal ore
-block(blockid=16, top_image="assets/minecraft/textures/block/coal_ore.png")
+modelblock(blockid=16, name='coal_ore')
 
 @material(blockid=[17, 162, 11306, 11307, 11308, 11309, 11310, 11311, 1008, 1009, 1126],
           data=list(range(12)), solid=True)
