@@ -1200,7 +1200,7 @@ class RegionSet(object):
                 data = {'east': 1, 'west': 2, 'south': 3, 'north': 4}[facing]
             elif face == 'floor':
                 data = {'east': 6, 'west': 6, 'south': 5, 'north': 5}[facing]
-        elif key == 'minecraft:nether_wart':
+        elif key in ['minecraft:nether_wart', 'minecraft:frosted_ice']:
             data = int(palette_entry['Properties']['age'])
         elif (key.endswith('shulker_box') or key.endswith('piston') or
               key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser',
@@ -1223,11 +1223,11 @@ class RegionSet(object):
         elif key == 'minecraft:quartz_pillar':
             axis = palette_entry['Properties']['axis']
             if axis == 'x':
-                data = 3
+                data = 1
             if axis == 'z':
-                data = 4
+                data = 2
         elif key in ['minecraft:basalt', 'minecraft:polished_basalt', 'minecraft:chain', 'minecraft:purpur_pillar',
-                     'minecraft:deepslate']:
+                     'minecraft:deepslate', 'minecraft:hay_block']:
             axis = palette_entry['Properties']['axis']
             data = {'y': 0, 'x': 1, 'z': 2}[axis]
         elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch',

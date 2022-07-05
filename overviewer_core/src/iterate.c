@@ -30,7 +30,6 @@ static PyObject* transparent_blocks = NULL;
 static PyObject* solid_blocks = NULL;
 static PyObject* fluid_blocks = NULL;
 static PyObject* nospawn_blocks = NULL;
-static PyObject* nodata_blocks = NULL;
 
 PyObject* init_chunk_render(void) {
 
@@ -76,9 +75,6 @@ PyObject* init_chunk_render(void) {
     nospawn_blocks = PyObject_GetAttrString(textures, "nospawn_blocks");
     if (!nospawn_blocks)
         return NULL;
-    nodata_blocks = PyObject_GetAttrString(textures, "nodata_blocks");
-    if (!nodata_blocks)
-        return NULL;
 
     block_properties = calloc(max_blockid, sizeof(uint8_t));
     for (i = 0; i < max_blockid; i++) {
@@ -94,8 +90,6 @@ PyObject* init_chunk_render(void) {
             block_properties[i] |= 1 << FLUID;
         if (PySequence_Contains(nospawn_blocks, block))
             block_properties[i] |= 1 << NOSPAWN;
-        if (PySequence_Contains(nodata_blocks, block))
-            block_properties[i] |= 1 << NODATA;
 
         Py_DECREF(block);
     }
@@ -601,27 +595,18 @@ chunk_render(PyObject* self, PyObject* args) {
                     continue;
                 }
 
-                /* everything stored here will be a borrowed ref */
-
-                if (block_has_property(state.block, NODATA)) {
-                    /* block shouldn't have data associated with it, set it to 0 */
-                    ancilData = 0;
-                    state.block_data = 0;
-                    state.block_pdata = 0;
+                /* block has associated data, use it */
+                ancilData = getArrayByte3D(state.blockdatas, state.x, state.y, state.z);
+                state.block_data = ancilData;
+                /* block that need pseudo ancildata:
+                    * grass, water, glass, chest, restone wire,
+                    * ice, portal, iron bars,
+                    * trapped chests, stairs */
+                if (block_class_is_subset(state.block, block_class_ancil, block_class_ancil_len)) {
+                    ancilData = generate_pseudo_data(&state, ancilData);
+                    state.block_pdata = ancilData;
                 } else {
-                    /* block has associated data, use it */
-                    ancilData = getArrayByte3D(state.blockdatas, state.x, state.y, state.z);
-                    state.block_data = ancilData;
-                    /* block that need pseudo ancildata:
-                     * grass, water, glass, chest, restone wire,
-                     * ice, portal, iron bars,
-                     * trapped chests, stairs */
-                    if (block_class_is_subset(state.block, block_class_ancil, block_class_ancil_len)) {
-                        ancilData = generate_pseudo_data(&state, ancilData);
-                        state.block_pdata = ancilData;
-                    } else {
-                        state.block_pdata = 0;
-                    }
+                    state.block_pdata = 0;
                 }
 
                 /* make sure our block info is in-bounds */

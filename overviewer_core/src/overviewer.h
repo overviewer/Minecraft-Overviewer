@@ -131,7 +131,6 @@ typedef enum {
     SOLID,
     FLUID,
     NOSPAWN,
-    NODATA,
 } BlockProperty;
 /* globals set in init_chunk_render, here because they're used
    in block_has_property */
