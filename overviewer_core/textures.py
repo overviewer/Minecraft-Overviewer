@@ -14,6 +14,7 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
+from locale import normalize
 import re
 import sys
 import imp
@@ -849,12 +850,25 @@ class Textures(object):
                     self.models[modelname]['elements'] = parent['elements']
             del self.models[modelname]['parent']
 
+        self.models[modelname] = self.normalize_model(self.models[modelname], modelname);
         return self.models[modelname]
 
-    def build_block_from_model(self, modelname, blockstate={}):
-        colmodel = self.load_model('block/' + modelname)
+    # fix known inconsistencies in model info
+    def normalize_model(self, model, modelname):
+        match modelname:
+            # observer top texture is inconsistent in rotation
+            case 'block/observer':
+                model['elements'][0]['faces']['up']['texturerotation'] = 180
+                model['elements'][0]['faces']['down']['texturerotation'] = 180
+        return model
 
-        # print(json.dumps(data, indent=4))
+    def build_block_from_model(self, modelname, blockstate={}):
+        modelname = 'block/' + modelname
+
+        colmodel = self.load_model(modelname)
+
+        # if modelname in {'block/loom'}:
+            # print(json.dumps(self.models[modelname], indent=4))
         img = Image.new("RGBA", (24,24), self.bgcolor)
 
         # for each elements
@@ -894,35 +908,38 @@ class Textures(object):
         return img
 
     def numvalue_orientation(self, orientation):
-        return {'south': 0, 'west': 1, 'north': 2, 'east': 3, 'up': 4,'down': 5}[orientation]
+        return {'south': 0, 'west': 1, 'north': 2, 'east': 3, 'up': 4,'down': 6}[orientation]
         
     def orientation_from_numvalue(self, orientation):
-        return {0:'south', 1:'west', 2:'north', 3:'east', 4:'up', 5:'down'}[orientation]
+        return {0:'south', 1:'west', 2:'north', 3:'east', 4:'up', 6:'down'}[orientation]
         
     # translates rotation to real face value
     # facing is the blockproperty
     # targetfacing is the direction in witch the north is rotated
     def map_facing_to_real(self, blockfacing, targetblockface):
-        if ((blockfacing in {'up','down'}) or (targetblockface in {'up','down'})):
+        if blockfacing == 'up':
             if targetblockface == 'up':
-                resultface = 'up'
-            elif targetblockface == 'down':
-                resultface = 'up' # because there is no down texture
-
-            elif blockfacing == 'down' and targetblockface == 'west':
+                resultface = 'north'
+            elif targetblockface == 'north':
                 resultface = 'west'
-            elif blockfacing == 'down' and targetblockface == 'east':
-                resultface = 'east'
-            elif blockfacing == 'down' and targetblockface == 'north':
-                resultface = 'up' # because there is no down texture
-
-
-            elif blockfacing == 'up' and targetblockface == 'north':
-                resultface = 'up' # because there is no down texture
-            elif blockfacing == 'up' and targetblockface == 'west':
-                resultface = 'west'
+            elif targetblockface == 'west':
+                resultface = 'down'
             else:
                 raise Exception('unexpected facing direction: ' + blockfacing + ' ' + targetblockface)
+        elif blockfacing == 'down':
+            if targetblockface == 'west':
+                resultface = 'down'
+            elif targetblockface == 'north':
+                resultface = 'west'
+            elif targetblockface == 'up':
+                resultface = 'south'
+            else:
+                raise Exception('unexpected facing direction: ' + blockfacing + ' ' + targetblockface)
+        elif targetblockface == 'up':
+            resultface = 'up'
+        elif targetblockface == 'down':
+            # print('facing direction: ' + blockfacing + ' target: ' + targetblockface + ' ')
+            resultface = 'down'
         else:
             resultface = self.orientation_from_numvalue((self.numvalue_orientation(targetblockface) + [0,3,2,1][self.numvalue_orientation(blockfacing)] + 1 + self.rotation + (self.rotation % 2)*2) % 4)
         return resultface
@@ -972,7 +989,7 @@ class Textures(object):
         if 'axis' in blockstate:
             texture = self.axis_rotation(blockstate['axis'], direction, texture)
         # else:
-        texture = self.transform_texture(direction, texture, blockstate)
+        texture = self.transform_texture(direction, texture, blockstate, elem['faces'][textureface])
         texture = self.adjust_lighting(direction,texture)
 
         return texture
@@ -994,16 +1011,22 @@ class Textures(object):
             case _:
                 raise Exception()
 
-    def transform_texture(self, direction, texture, blockstate):
+    def transform_texture(self, direction, texture, blockstate, faceinfo):
         top_rotation = 0
-        if 'facing' in blockstate:
-            top_rotation = [180, 90, 0, 270, 180, 180][(self.numvalue_orientation(blockstate['facing']) + self.rotation) % 6]
         match direction:
             case 'down' | 'up':
+                if 'facing' in blockstate:
+                    top_rotation = [ 180, 90, 0, 270][(self.numvalue_orientation(blockstate['facing']) + self.rotation) % 4]
+                if 'texturerotation' in faceinfo:
+                    top_rotation += faceinfo['texturerotation']
                 return self.transform_image_top(texture.rotate(top_rotation))
             case 'north'| 'south':
+                if 'facing' in blockstate and blockstate['facing'] in {'up','down'}:
+                    top_rotation = [90,90][({'up':0,'down':1}[blockstate['facing']])]
                 texture = self.transform_image_side(texture.rotate(top_rotation))
             case 'west' | 'east':
+                if 'facing' in blockstate and blockstate['facing'] in {'up','down'}:
+                    top_rotation = [180,0][({'up':0,'down':1}[blockstate['facing']])]
                 texture = self.transform_image_side(texture.rotate(top_rotation))
                 texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
             case _:
