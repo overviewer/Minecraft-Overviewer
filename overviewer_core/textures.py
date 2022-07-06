@@ -5552,42 +5552,11 @@ def boneblock(self, blockid, data):
 # observer
 @material(blockid=218, data=[0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 13], solid=True, nospawn=True)
 def observer(self, blockid, data):
-
     facing = {0: 'down', 1: 'up', 2: 'north', 3: 'south', 4: 'west', 5: 'east'}[data & 0b0111]
     if data & 0b1000:
         return self.build_block_from_model('observer', {'facing':facing})
     else:
         return self.build_block_from_model('observer_on', {'facing':facing})
-
-
-    # Do rotation
-    if self.rotation in [1, 2, 3] and (data & 0b111) in [2, 3, 4, 5]:
-        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
-                        2: {2: 3, 3: 2, 4: 5, 5: 4},
-                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
-        data = (data & 0b1000) | rotation_map[self.rotation][data & 0b111]
-
-    front = self.load_image_texture("assets/minecraft/textures/block/observer_front.png")
-    side = self.load_image_texture("assets/minecraft/textures/block/observer_side.png")
-    top = self.load_image_texture("assets/minecraft/textures/block/observer_top.png")
-    file_name_back = "observer_back_on" if data & 0b1000 else "observer_back"
-    back = self.load_image_texture("assets/minecraft/textures/block/%s.png" % file_name_back)
-
-    if data & 0b0111 == 0:    # Down
-        img = self.build_full_block(back, None, None, side.rotate(90), top)
-    elif data & 0b0111 == 1:  # Up
-        img = self.build_full_block(front.rotate(180), None, None, side.rotate(90), top.rotate(180))
-    elif data & 0b0111 == 2:  # East
-        img = self.build_full_block(top.rotate(180), None, None, side, back)
-    elif data & 0b0111 == 3:  # West
-        img = self.build_full_block(top, None, None, side, front)
-    elif data & 0b0111 == 4:  # North
-        img = self.build_full_block(top.rotate(270), None, None, front, side)
-    elif data & 0b0111 == 5:  # South
-        img = self.build_full_block(top.rotate(90), None, None, back, side)
-
-    return img
-
 
 # shulker box
 @material(blockid=list(range(219, 235)) + [257], data=list(range(6)), solid=True, nospawn=True)
@@ -5638,14 +5607,15 @@ def shulker_box(self, blockid, data):
 @material(blockid=255, data=list(range(4)), solid=True)
 def structure_block(self, blockid, data):
     if data == 0:
-        img = self.load_image_texture("assets/minecraft/textures/block/structure_block_save.png")
+        return self.build_block_from_model("structure_block_save")
     elif data == 1:
-        img = self.load_image_texture("assets/minecraft/textures/block/structure_block_load.png")
+        return self.build_block_from_model("structure_block_load")
     elif data == 2:
-        img = self.load_image_texture("assets/minecraft/textures/block/structure_block_corner.png")
+        return self.build_block_from_model("structure_block_corner")
     elif data == 3:
-        img = self.load_image_texture("assets/minecraft/textures/block/structure_block_data.png")
-    return self.build_block(img, img)
+        return self.build_block_from_model("structure_block_data")
+    else:
+        raise Exception('unexpected structure block: ' + str(data))
 
 
 # Jigsaw block
