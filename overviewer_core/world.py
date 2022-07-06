@@ -1202,9 +1202,13 @@ class RegionSet(object):
                 data = {'east': 6, 'west': 6, 'south': 5, 'north': 5}[facing]
         elif key in ['minecraft:nether_wart', 'minecraft:frosted_ice']:
             data = int(palette_entry['Properties']['age'])
+        elif key in ['minecraft:jigsaw']:
+            data = {'down_east': 0, 'down_east': 0, 'down_north': 0, 'down_south': 0, 'down_west': 0,
+             'up_east': 1, 'up_north': 1, 'up_south': 1, 'up_west': 1, 'north_up': 2, 'south_up': 3,
+              'west_up': 4, 'east_up': 5}[palette_entry['Properties']['facing']]
         elif (key.endswith('shulker_box') or key.endswith('piston') or
               key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser',
-                      'minecraft:piston_head', 'minecraft:jigsaw', 'minecraft:end_rod']):
+                      'minecraft:piston_head', 'minecraft:end_rod']):
             p = palette_entry['Properties']
             data = {'down': 0, 'up': 1, 'north': 2, 'south': 3, 'west': 4, 'east': 5}[p['facing']]
             if ((key.endswith('piston') and p.get('extended', 'false') == 'true') or

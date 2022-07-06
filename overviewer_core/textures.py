@@ -845,7 +845,9 @@ class Textures(object):
                 self.models[modelname]['textures'].update(parent['textures'])
             if 'elements' in parent:
                 if 'elements' in self.models[modelname]:
-                    self.models[modelname]['elements'].update(parent['elements'])
+                    # print(modelname + ' : ' + str(type(self.models[modelname])))
+                    # self.models[modelname]['elements'].update(parent['elements'])
+                    self.models[modelname]['elements'] += parent['elements']
                 else:
                     self.models[modelname]['elements'] = parent['elements']
             del self.models[modelname]['parent']
@@ -857,7 +859,7 @@ class Textures(object):
     def normalize_model(self, model, modelname):
         match modelname:
             # observer top texture is inconsistent in rotation
-            case 'block/observer':
+            case 'block/loom':
                 model['elements'][0]['faces']['up']['texturerotation'] = 180
                 model['elements'][0]['faces']['down']['texturerotation'] = 180
         return model
@@ -867,33 +869,36 @@ class Textures(object):
 
         colmodel = self.load_model(modelname)
 
-        # if modelname in {'block/loom'}:
-            # print(json.dumps(self.models[modelname], indent=4))
+        # if modelname in {'block/white_glazed_terracotta'}:
+        #     print(json.dumps(self.models[modelname], indent=4))
         img = Image.new("RGBA", (24,24), self.bgcolor)
 
         # for each elements
         for elem in colmodel['elements']:
-            if 'west' in elem['faces']:
-                texture = self.draw_face('west', elem, colmodel, blockstate, modelname)
-                alpha_over(img, texture, (12,6), texture)
-            elif 'east' in elem['faces']:
-                texture = self.draw_face('east', elem, colmodel, blockstate, modelname)
-                alpha_over(img, texture, (0,0), texture)
+            try:
+                if 'west' in elem['faces']:
+                    texture = self.draw_face('west', elem, colmodel, blockstate, modelname)
+                    alpha_over(img, texture, (12,6), texture)
+                elif 'east' in elem['faces']:
+                    texture = self.draw_face('east', elem, colmodel, blockstate, modelname)
+                    alpha_over(img, texture, (0,0), texture)
 
-            if 'north' in elem['faces']:
-                texture = self.draw_face('north', elem, colmodel, blockstate, modelname)
-                alpha_over(img, texture, (0,6), texture)
-            elif 'south' in elem['faces']:
-                texture = self.draw_face('south', elem, colmodel, blockstate, modelname)
-                alpha_over(img, texture, (12,0), texture)
+                if 'north' in elem['faces']:
+                    texture = self.draw_face('north', elem, colmodel, blockstate, modelname)
+                    alpha_over(img, texture, (0,6), texture)
+                elif 'south' in elem['faces']:
+                    texture = self.draw_face('south', elem, colmodel, blockstate, modelname)
+                    alpha_over(img, texture, (12,0), texture)
 
-            if 'up' in elem['faces']:
-                texture = self.draw_face('up', elem, colmodel, blockstate, modelname)
-                alpha_over(img, texture, (0,0), texture)
-            elif 'down' in elem['faces']:
-                texture = self.draw_face('down', elem, colmodel, blockstate, modelname)
-                alpha_over(img, texture, (0,12), texture)
-
+                if 'up' in elem['faces']:
+                    texture = self.draw_face('up', elem, colmodel, blockstate, modelname)
+                    alpha_over(img, texture, (0,0), texture)
+                elif 'down' in elem['faces']:
+                    texture = self.draw_face('down', elem, colmodel, blockstate, modelname)
+                    alpha_over(img, texture, (0,12), texture)
+            except KeyError:
+                # element has an invalid texture; skipping entire element
+                continue
             # draw each face
         
         # Manually touch up 6 pixels that leave a gap because of how the
@@ -958,12 +963,12 @@ class Textures(object):
     def axis_rotation(self, axis, face, texture):
         match axis:
             case 'x':
-                rotation = {'up':90,'north':0,'down':0,'south':0,'east':90,'west':90}[face]
+                rotation = {'up':270,'north':0,'down':0,'south':0,'east':270,'west':270}[face]
                 return texture.rotate(rotation)
             case 'y':
                 return texture
             case 'z':
-                rotation = {'up':0,'west':0,'down':0,'east':0,'north':270,'south':270}[face]
+                rotation = {'up':0,'west':0,'down':0,'east':0,'north':90,'south':90}[face]
                 return texture.rotate(rotation)
             case _:
                 raise Exception()
@@ -1012,22 +1017,30 @@ class Textures(object):
                 raise Exception()
 
     def transform_texture(self, direction, texture, blockstate, faceinfo):
-        top_rotation = 0
+        rotation = 0
         match direction:
             case 'down' | 'up':
                 if 'facing' in blockstate:
-                    top_rotation = [ 180, 90, 0, 270][(self.numvalue_orientation(blockstate['facing']) + self.rotation) % 4]
+                    if self.numvalue_orientation(blockstate['facing']) < 4:
+                        rotation += [ 0, 270, 180, 90][(self.numvalue_orientation(blockstate['facing']) + self.rotation) % 4]
+                    else:
+                        rotation += [180,0][({'up':0,'down':1}[blockstate['facing']])]
                 if 'texturerotation' in faceinfo:
-                    top_rotation += faceinfo['texturerotation']
-                return self.transform_image_top(texture.rotate(top_rotation))
-            case 'north'| 'south':
+                    rotation += faceinfo['texturerotation']
+                return self.transform_image_top(texture.rotate(rotation))
+            case 'north' | 'south':
+                if 'rotation' in faceinfo:
+                    rotation = {0:180, 90:90, 180:0, 270:270}[faceinfo['rotation']]
                 if 'facing' in blockstate and blockstate['facing'] in {'up','down'}:
-                    top_rotation = [90,90][({'up':0,'down':1}[blockstate['facing']])]
-                texture = self.transform_image_side(texture.rotate(top_rotation))
+                    rotation += [90,90][({'up':0,'down':1}[blockstate['facing']])]
+                texture = self.transform_image_side(texture.rotate(rotation))
             case 'west' | 'east':
+                if 'rotation' in faceinfo:
+                    rotation = {0:180, 90:90, 180:0, 270:270}[faceinfo['rotation']]
                 if 'facing' in blockstate and blockstate['facing'] in {'up','down'}:
-                    top_rotation = [180,0][({'up':0,'down':1}[blockstate['facing']])]
-                texture = self.transform_image_side(texture.rotate(top_rotation))
+                    rotation += [180,0][({'up':0,'down':1}[blockstate['facing']])]
+                texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
+                texture = self.transform_image_side(texture.rotate(rotation))
                 texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
             case _:
                 raise Exception()
@@ -5617,37 +5630,12 @@ def structure_block(self, blockid, data):
     else:
         raise Exception('unexpected structure block: ' + str(data))
 
-
 # Jigsaw block
+# doesnt actually render
 @material(blockid=256, data=list(range(6)), solid=True)
 def jigsaw_block(self, blockid, data):
-    # Do rotation
-    if self.rotation in [1, 2, 3] and data in [2, 3, 4, 5]:
-        rotation_map = {1: {2: 5, 3: 4, 4: 2, 5: 3},
-                        2: {2: 3, 3: 2, 4: 5, 5: 4},
-                        3: {2: 4, 3: 5, 4: 3, 5: 2}}
-        data = rotation_map[self.rotation][data]
-
-    top = self.load_image_texture("assets/minecraft/textures/block/jigsaw_top.png")
-    bottom = self.load_image_texture("assets/minecraft/textures/block/jigsaw_bottom.png")
-    side = self.load_image_texture("assets/minecraft/textures/block/jigsaw_side.png")
-
-    if data == 0:    # Down
-        img = self.build_full_block(bottom.rotate(self.rotation * 90), None, None,
-                                    side.rotate(180), side.rotate(180))
-    elif data == 1:  # Up
-        img = self.build_full_block(top.rotate(self.rotation * 90), None, None, side, side)
-    elif data == 2:  # North
-        img = self.build_full_block(side, None, None, side.rotate(90), bottom.rotate(180))
-    elif data == 3:  # South
-        img = self.build_full_block(side.rotate(180), None, None, side.rotate(270), top.rotate(270))
-    elif data == 4:  # West
-        img = self.build_full_block(side.rotate(90), None, None, top.rotate(180), side.rotate(270))
-    elif data == 5:  # East
-        img = self.build_full_block(side.rotate(270), None, None, bottom.rotate(180),
-                                    side.rotate(90))
-
-    return img
+    facing = {0: 'down', 1: 'up', 2: 'north', 3: 'south', 4: 'west', 5: 'east'}[data%6]
+    return self.build_block_from_model('jigsaw', {'facing':facing})
 
 
 # beetroots(207), berry bushes (11505)
@@ -5673,38 +5661,18 @@ def crops(self, blockid, data):
 # Concrete
 @material(blockid=251, data=list(range(16)), solid=True)
 def concrete(self, blockid, data):
-    texture = self.load_image_texture("assets/minecraft/textures/block/%s_concrete.png" % color_map[data])
-    return self.build_block(texture, texture)
+    return self.build_block_from_model("%s_concrete" % color_map[data])
 
 # Concrete Powder
 @material(blockid=252, data=list(range(16)), solid=True)
 def concrete(self, blockid, data):
-    texture = self.load_image_texture("assets/minecraft/textures/block/%s_concrete_powder.png" % color_map[data])
-    return self.build_block(texture, texture)
-
+    return self.build_block_from_model("%s_concrete_powder" % color_map[data])
 
 # Glazed Terracotta
 @material(blockid=list(range(235, 251)), data=list(range(4)), solid=True)
 def glazed_terracotta(self, blockid, data):
-    # Do rotation
-    data = (self.rotation + data) % 4
-
-    texture = self.load_image_texture("assets/minecraft/textures/block/%s_glazed_terracotta.png" %
-                                      color_map[blockid - 235]).copy()
-    texture_side4 = texture.transpose(Image.FLIP_LEFT_RIGHT)
-
-    if data == 0:    # South
-        return self.build_full_block(texture, None, None, texture, texture_side4.rotate(270))
-    elif data == 1:  # West
-        return self.build_full_block(texture.rotate(270), None, None, texture.rotate(90),
-                                     texture_side4.rotate(180))
-    elif data == 2:  # North
-        return self.build_full_block(texture.rotate(180), None, None, texture.rotate(180),
-                                     texture_side4.rotate(90))
-    elif data == 3:  # East
-        return self.build_full_block(texture.rotate(90), None, None, texture.rotate(270),
-                                     texture_side4)
-
+    facing = {0: 'south', 1: 'west', 2: 'north', 3: 'east'}[data]
+    return self.build_block_from_model("%s_glazed_terracotta" % color_map[blockid - 235], {'facing':facing})
 
 # dried kelp block
 @material(blockid=11331, data=[0], solid=True)
