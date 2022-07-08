@@ -40,6 +40,8 @@ class UnsupportedVersion(Exception):
 class UnknownBlockException(Exception):
     pass
 
+modelblocks = {}
+
 def log_other_exceptions(func):
     """A decorator that prints out any errors that are not
     ChunkDoesntExist errors. This should decorate any functions or
@@ -1126,10 +1128,19 @@ class RegionSet(object):
         colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan',
                   'purple', 'blue', 'brown', 'green', 'red', 'black']
 
+        global modelblocks
+
         key = palette_entry['Name']
-        if key not in self._blockmap:
+        if key in self._blockmap:
+            (block, data) = self._blockmap[key]
+        elif key in modelblocks:
+            (block, data) = modelblocks[key]
+            print('found ' + str(block) + ' : ' + str(key))
+        else:
+            print(str(type(modelblocks)))
+            print('unknown key ' + key )
             raise UnknownBlockException(key)
-        (block, data) = self._blockmap[key]
+
         if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
             if palette_entry['Properties']['lit'] == 'true':
                 block += 1
@@ -1602,6 +1613,10 @@ class RegionSet(object):
 
         return (blocks, data_expanded)
 
+    def add_to_blockmap(self, blockmap):
+        global modelblocks
+        modelblocks = blockmap
+
     #@log_other_exceptions
     def get_chunk(self, x, z):
         """Returns a dictionary object representing the "Level" NBT Compound
@@ -1902,6 +1917,8 @@ class RegionSetWrapper(object):
         return self._r.iterate_newer_chunks(filemtime)
     def get_chunk_mtime(self, x, z):
         return self._r.get_chunk_mtime(x,z)
+    def add_to_blockmap(self, blockmap):
+        return self._r.add_to_blockmap(blockmap)
 
 # see RegionSet.rotate.  These values are chosen so that they can be
 # passed directly to rot90; this means that they're the number of

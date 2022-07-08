@@ -35,6 +35,7 @@ from . import util
 
 # global variables to collate information in @material decorators
 blockmap_generators = {}
+block_models = {}
 
 known_blocks = set()
 used_datas = set()
@@ -133,11 +134,20 @@ class Textures(object):
         # generate biome grass mask
         self.biome_grass_texture = self.build_block(self.load_image_texture("assets/minecraft/textures/block/grass_block_top.png"), self.load_image_texture("assets/minecraft/textures/block/grass_block_side_overlay.png"))
         
+        global max_blockid, block_models
+
+        models = self.find_models()
+        max_blockid = max_blockid+1
+        for model in models:
+            solidmodelblock(blockid=max_blockid, name=model)
+            block_models['minecraft:'+model] = (max_blockid, 0)
+        
+        # print(str(block_models))
+
         # generate the blocks
         global blockmap_generators
-        global known_blocks, used_datas
         self.blockmap = [None] * max_blockid * max_data
-        
+
         for (blockid, data), texgen in list(blockmap_generators.items()):
             tex = texgen(self, blockid, data)
             self.blockmap[blockid * max_data + data] = self.generate_texture_tuple(tex)
@@ -147,15 +157,55 @@ class Textures(object):
             self.biome_grass_texture = self.biome_grass_texture.resize(self.texture_dimensions, Image.ANTIALIAS)
             
             # rescale the rest
-            for i, tex in enumerate(blockmap):
+            for i, tex in enumerate(self.blockmap):
                 if tex is None:
                     continue
                 block = tex[0]
                 scaled_block = block.resize(self.texture_dimensions, Image.ANTIALIAS)
-                blockmap[i] = self.generate_texture_tuple(scaled_block)
+                self.blockmap[i] = self.generate_texture_tuple(scaled_block)
         
         self.generated = True
     
+    #TODO: load models from resource packs, for now only client jars are used
+    #TODO: load blockstate before models 
+    def find_models(self, verbose=False):
+        filename = 'assets/minecraft/models/'
+        versiondir = self.versiondir(verbose)
+        available_versions = self.available_versions(versiondir, verbose)
+        
+        if not available_versions:
+            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.8.0")
+        while(available_versions):
+            most_recent_version = available_versions.pop(0)
+            if verbose: logging.info("Trying {0}. Searching it for the file...".format(".".join(str(x) for x in most_recent_version)))
+
+            jarname = ".".join(str(x) for x in most_recent_version)
+            jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
+
+            jar = {}
+
+            if jarpath in self.jars:
+                jar = self.jars[jarpath]
+            elif os.path.isfile(jarpath):
+                try:
+                    jar = zipfile.ZipFile(jarpath)
+                except (KeyError, IOError) as e:
+                    pass
+                except (zipfile.BadZipFile) as e:
+                    logging.warning("Your jar {0} is corrupted, I'll be skipping it, but you "
+                                    "should probably look into that.".format(jarpath))
+            else:
+                if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
+                continue
+
+            models = []
+            for file in jar.namelist():
+                if file.startswith('assets/minecraft/models/block'):
+                    model = Path(file).stem
+                    models.append(model)
+
+            return models
+            
     ##
     ## Helpers for opening textures
     ##
@@ -264,6 +314,37 @@ class Textures(object):
 
         # Find an installed minecraft client jar and look in it for the texture
         # file we need.
+        versiondir = self.versiondir(verbose)
+        available_versions = self.available_versions(versiondir, verbose)
+        
+        if not available_versions:
+            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.8.0")
+        while(available_versions):
+            most_recent_version = available_versions.pop(0)
+            if verbose: logging.info("Trying {0}. Searching it for the file...".format(".".join(str(x) for x in most_recent_version)))
+
+            jarname = ".".join(str(x) for x in most_recent_version)
+            jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
+
+            if os.path.isfile(jarpath):
+                try:
+                    jar = zipfile.ZipFile(jarpath)
+                    jar.getinfo(filename)
+                    if verbose: logging.info("Found %s in '%s'", filename, jarpath)
+                    self.jars[jarpath] = jar
+                    return jar.open(filename)
+                except (KeyError, IOError) as e:
+                    pass
+                except (zipfile.BadZipFile) as e:
+                    logging.warning("Your jar {0} is corrupted, I'll be skipping it, but you "
+                                    "should probably look into that.".format(jarpath))
+
+            if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
+            
+
+        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.19-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+
+    def versiondir(self, verbose):
         versiondir = ""
         if "APPDATA" in os.environ and sys.platform.startswith("win"):
             versiondir = os.path.join(os.environ['APPDATA'], ".minecraft", "versions")
@@ -274,7 +355,9 @@ class Textures(object):
                 # For Mac:
                 versiondir = os.path.join(os.environ['HOME'], "Library",
                     "Application Support", "minecraft", "versions")
+        return versiondir
 
+    def available_versions(self, versiondir, verbose):
         try:
             if verbose: logging.info("Looking in the following directory: \"%s\"" % versiondir)
             versions = os.listdir(versiondir)
@@ -306,32 +389,8 @@ class Textures(object):
             available_versions.append(versionparts)
 
         available_versions.sort(reverse=True)
-        if not available_versions:
-            if verbose: logging.info("Did not find any non-snapshot minecraft jars >=1.8.0")
-        while(available_versions):
-            most_recent_version = available_versions.pop(0)
-            if verbose: logging.info("Trying {0}. Searching it for the file...".format(".".join(str(x) for x in most_recent_version)))
 
-            jarname = ".".join(str(x) for x in most_recent_version)
-            jarpath = os.path.join(versiondir, jarname, jarname + ".jar")
-
-            if os.path.isfile(jarpath):
-                try:
-                    jar = zipfile.ZipFile(jarpath)
-                    jar.getinfo(filename)
-                    if verbose: logging.info("Found %s in '%s'", filename, jarpath)
-                    self.jars[jarpath] = jar
-                    return jar.open(filename)
-                except (KeyError, IOError) as e:
-                    pass
-                except (zipfile.BadZipFile) as e:
-                    logging.warning("Your jar {0} is corrupted, I'll be skipping it, but you "
-                                    "should probably look into that.".format(jarpath))
-
-            if verbose: logging.info("Did not find file {0} in jar {1}".format(filename, jarpath))
-            
-
-        raise TextureException("Could not find the textures while searching for '{0}'. Try specifying the 'texturepath' option in your config file.\nSet it to the path to a Minecraft Resource pack.\nAlternately, install the Minecraft client (which includes textures)\nAlso see <http://docs.overviewer.org/en/latest/running/#installing-the-textures>\n(Remember, this version of Overviewer requires a 1.19-compatible resource pack)\n(Also note that I won't automatically use snapshots; you'll have to use the texturepath option to use a snapshot jar)".format(filename))
+        return available_versions
 
     def load_image_texture(self, filename):
         # Textures may be animated or in a different resolution than 16x16.  
@@ -375,8 +434,6 @@ class Textures(object):
                                    "that file from.".format(filename))
         self.texture_cache[filename] = img
         return img
-
-
 
     def load_water(self):
         """Special-case function for loading water."""
@@ -525,7 +582,6 @@ class Textures(object):
 
         return newimg
 
-
     @staticmethod
     def transform_image_angle(img, angle):
         """Takes an image an shears it in arbitrary angle with the axis of
@@ -565,7 +621,6 @@ class Textures(object):
         newimg = img.transform((24,24), Image.AFFINE, transform)
 
         return newimg
-
 
     def build_block(self, top, side):
         """From a top texture and a side texture, build a block image.
@@ -899,7 +954,6 @@ class Textures(object):
                 # element has an invalid texture; skipping entire element
                 continue
             # draw each face
-        
         # Manually touch up 6 pixels that leave a gap because of how the
         # shearing works out. This makes the blocks perfectly tessellate-able
         for x,y in [(13,23), (17,21), (21,19)]:
@@ -5577,7 +5631,6 @@ def structure_block(self, blockid, data):
         raise Exception('unexpected structure block: ' + str(data))
 
 # Jigsaw block
-# doesnt actually render
 @material(blockid=256, data=list(range(6)), solid=True)
 def jigsaw_block(self, blockid, data):
     facing = {0: 'down', 1: 'up', 2: 'north', 3: 'south', 4: 'west', 5: 'east'}[data%6]

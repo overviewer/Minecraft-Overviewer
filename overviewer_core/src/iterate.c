@@ -26,6 +26,7 @@ uint32_t max_data = 0;
 uint8_t* block_properties = NULL;
 
 static PyObject* known_blocks = NULL;
+static PyObject* model_blocks = NULL;
 static PyObject* transparent_blocks = NULL;
 static PyObject* solid_blocks = NULL;
 static PyObject* fluid_blocks = NULL;
@@ -62,6 +63,9 @@ PyObject* init_chunk_render(void) {
     /* assemble the property table */
     known_blocks = PyObject_GetAttrString(textures, "known_blocks");
     if (!known_blocks)
+        return NULL;
+    model_blocks = PyObject_GetAttrString(textures, "block_models");
+    if (!model_blocks)
         return NULL;
     transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
     if (!transparent_blocks)
@@ -136,6 +140,9 @@ bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
 
     x += state->chunkx;
     z += state->chunkz;
+
+    
+    PyObject_CallMethod(state->regionset, "add_to_blockmap","O", model_blocks);
 
     chunk = PyObject_CallMethod(state->regionset, "get_chunk", "ii", x, z);
     if (chunk == NULL) {
