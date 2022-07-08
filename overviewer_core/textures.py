@@ -14,8 +14,8 @@
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
-from locale import normalize
-import copy
+from copy import deepcopy
+from pathlib import Path
 import re
 import sys
 import imp
@@ -841,11 +841,11 @@ class Textures(object):
         match modelname:
             # observer top texture is inconsistent in rotation
             case 'block/loom':
-                self.models[modelname] = copy.deepcopy(self.models[modelname])
+                self.models[modelname] = deepcopy(self.models[modelname])
                 self.models[modelname]['elements'][0]['faces']['up']['texturerotation'] = 180
                 self.models[modelname]['elements'][0]['faces']['down']['texturerotation'] = 180
             case 'block/barrel' | 'block/barrel_open':
-                self.models[modelname] = copy.deepcopy(self.models[modelname])
+                self.models[modelname] = deepcopy(self.models[modelname])
                 self.models[modelname]['elements'][0]['faces']['north']['texture'] = '#up'
                 self.models[modelname]['elements'][0]['faces']['south']['texture'] = '#down'
                 self.models[modelname]['elements'][0]['faces']['down']['texture'] = '#north'
@@ -853,7 +853,7 @@ class Textures(object):
                 self.models[modelname]['elements'][0]['faces']['east']['texturerotation'] = 90
                 self.models[modelname]['elements'][0]['faces']['west']['texturerotation'] = 90
             case 'block/dropper_vertical' | 'block/dispenser_vertical':
-                self.models[modelname] = copy.deepcopy(self.models[modelname])
+                self.models[modelname] = deepcopy(self.models[modelname])
                 self.models[modelname]['elements'][0]['faces']['north']['texture'] = '#up'
                 self.models[modelname]['elements'][0]['faces']['up']['texture'] = '#north'
 
@@ -868,6 +868,9 @@ class Textures(object):
             # print(json.dumps(self.models[modelname], indent=4))
 
         img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        if 'elements' not in colmodel:
+            return None
 
         # for each elements
         for elem in colmodel['elements']:
@@ -5382,11 +5385,11 @@ transparentmodelblock(blockid=165, name="slime_block")
 @material(blockid=168, data=list(range(3)), solid=True)
 def prismarine_block(self, blockid, data):
     if data == 0: # prismarine
-       t = self.build_block_from_model("prismarine")
+       return self.build_block_from_model("prismarine")
     elif data == 1: # prismarine bricks
-       t = self.build_block_from_model("prismarine_bricks")
+       return self.build_block_from_model("prismarine_bricks")
     elif data == 2: # dark prismarine
-       t = self.build_block_from_model("dark_prismarine")
+       return  self.build_block_from_model("dark_prismarine")
     else:
         raise Exception('unexpected prismarine data: ' + str(data))
 

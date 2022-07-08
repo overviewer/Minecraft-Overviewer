@@ -18,12 +18,9 @@ import os
 import os.path
 import logging
 import time
-import random
 import re
-import locale
 
 import numpy
-import math
 
 from . import nbt
 from . import cache
@@ -37,10 +34,11 @@ This module has routines for extracting information about available worlds
 class ChunkDoesntExist(Exception):
     pass
 
-
 class UnsupportedVersion(Exception):
     pass
 
+class UnknownBlockException(Exception):
+    pass
 
 def log_other_exceptions(func):
     """A decorator that prints out any errors that are not
@@ -1129,6 +1127,8 @@ class RegionSet(object):
                   'purple', 'blue', 'brown', 'green', 'red', 'black']
 
         key = palette_entry['Name']
+        if key not in self._blockmap:
+            raise UnknownBlockException(key)
         (block, data) = self._blockmap[key]
         if key in ['minecraft:redstone_ore', 'minecraft:redstone_lamp']:
             if palette_entry['Properties']['lit'] == 'true':
@@ -1209,8 +1209,8 @@ class RegionSet(object):
             data = int(palette_entry['Properties']['age'])
         elif key in ['minecraft:jigsaw']:
             data = {'down_east': 0, 'down_east': 0, 'down_north': 0, 'down_south': 0, 'down_west': 0,
-             'up_east': 1, 'up_north': 1, 'up_south': 1, 'up_west': 1, 'north_up': 2, 'south_up': 3,
-              'west_up': 4, 'east_up': 5}[palette_entry['Properties']['facing']]
+            'up_east': 1, 'up_north': 1, 'up_south': 1, 'up_west': 1, 'north_up': 2, 'south_up': 3,
+            'west_up': 4, 'east_up': 5}[palette_entry['Properties']['orientation']]
         elif (key.endswith('shulker_box') or key.endswith('piston') or
               key in ['minecraft:observer', 'minecraft:dropper', 'minecraft:dispenser',
                       'minecraft:piston_head', 'minecraft:end_rod']):
@@ -1514,7 +1514,7 @@ class RegionSet(object):
         
         return result
 
-    def _get_blockdata_v118(self, section, unrecognized_block_types, longarray_unpacker):
+    def _get_blockdata_v118(self, section, longarray_unpacker):
         block_states = section['block_states']
         palette = block_states.get('palette')
         block_states_data = block_states.get('data')
@@ -1531,7 +1531,7 @@ class RegionSet(object):
             key = palette[i]
             try:
                 translated_blocks[i], translated_data[i] = self._get_block(key)
-            except KeyError:
+            except UnknownBlockException as e:
                 pass    # We already have initialised arrays with 0 (= air)
 
         # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
@@ -1547,7 +1547,7 @@ class RegionSet(object):
 
         return (blocks, data)
 
-    def _get_blockdata_v113(self, section, unrecognized_block_types, longarray_unpacker):
+    def _get_blockdata_v113(self, section, longarray_unpacker):
         # Translate each entry in the palette to a 1.2-era (block, data) int pair.
         num_palette_entries = len(section['Palette'])
         translated_blocks = numpy.zeros((num_palette_entries,), dtype=numpy.uint16) # block IDs
@@ -1556,7 +1556,7 @@ class RegionSet(object):
             key = section['Palette'][i]
             try:
                 translated_blocks[i], translated_data[i] = self._get_block(key)
-            except KeyError:
+            except UnknownBlockException as e:
                 pass    # We already have initialised arrays with 0 (= air)
 
         # Turn the BlockStates array into a 16x16x16 numpy matrix of shorts.
@@ -1719,7 +1719,6 @@ class RegionSet(object):
         chunk_data['Biomes'] = biomes
         chunk_data['NewBiomes'] = (len(biomes.shape) == 3)
 
-        unrecognized_block_types = {}
         for section in chunk_data['Sections']:
 
             # Turn the skylight array into a 16x16x16 matrix. The array comes
@@ -1755,9 +1754,9 @@ class RegionSet(object):
                 section['BlockLight'] = blocklight_expanded
 
                 if 'block_states' in section:
-                    (blocks, data) = self._get_blockdata_v118(section, unrecognized_block_types, longarray_unpacker)
+                    (blocks, data) = self._get_blockdata_v118(section, longarray_unpacker)
                 elif 'Palette' in section:
-                    (blocks, data) = self._get_blockdata_v113(section, unrecognized_block_types, longarray_unpacker)
+                    (blocks, data) = self._get_blockdata_v113(section, longarray_unpacker)
                 elif 'Data' in section:
                     (blocks, data) = self._get_blockdata_v112(section)
                 else:   # Special case introduced with 1.14
@@ -1772,9 +1771,6 @@ class RegionSet(object):
 
                 logging.debug("Full traceback:", exc_info=1)
                 raise nbt.CorruptChunkError()
-
-        for k in unrecognized_block_types:
-            logging.debug("Found %d blocks of unknown type %s" % (unrecognized_block_types[k], k))
 
         return chunk_data
 

@@ -263,7 +263,7 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
          * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an uint8_t, 
          * forcing us to use an uint16_t to hold 16 bits of pseudo ancil data
          * */
-        if ((get_data(state, BLOCKS, x, y + 1, z) == 20) || (get_data(state, BLOCKS, x, y + 1, z) == 95)) {
+        if ((get_data(state, BLOCKS, x, y + 1, z) == block_glass) || (get_data(state, BLOCKS, x, y + 1, z) == block_stained_glass)) {
             data = 0;
         } else {
             data = 16;
@@ -278,15 +278,15 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         uint8_t above_level_data = 0, same_level_data = 0, below_level_data = 0, possibly_connected = 0, final_data = 0;
 
         /* check for air in y+1, no air = no connection with upper level */
-        if (get_data(state, BLOCKS, x, y + 1, z) == 0) {
+        if (get_data(state, BLOCKS, x, y + 1, z) == block_air) {
             above_level_data = check_adjacent_blocks(state, x, y + 1, z, state->block);
         } /* else above_level_data = 0 */
 
         /* check connection with same level (other redstone and trapped chests */
-        same_level_data = check_adjacent_blocks(state, x, y, z, 55) | check_adjacent_blocks(state, x, y, z, 146);
+        same_level_data = check_adjacent_blocks(state, x, y, z, block_redstone_wire) | check_adjacent_blocks(state, x, y, z, block_trapped_chest);
 
         /* check the posibility of connection with y-1 level, check for air */
-        possibly_connected = check_adjacent_blocks(state, x, y, z, 0);
+        possibly_connected = check_adjacent_blocks(state, x, y, z, block_air );
 
         /* check connection with y-1 level */
         below_level_data = check_adjacent_blocks(state, x, y - 1, z, state->block);
@@ -622,7 +622,7 @@ chunk_render(PyObject* self, PyObject* args) {
                 /* if we found a proper texture, render it! */
                 if (t != NULL && t != Py_None) {
                     PyObject *src, *mask, *mask_light;
-                    int32_t do_rand = (state.block == block_tallgrass /*|| state.block == block_red_flower || state.block == block_double_plant*/);
+                    int32_t do_rand = (state.block == block_tallgrass);
                     int32_t randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 0);
