@@ -162,6 +162,7 @@ const mc_block_t block_class_door[] = {
     block_acacia_door,
     block_dark_oak_door,
     block_crimson_door,
+    block_mangrove_door,
     block_warped_door};
 const size_t block_class_door_len = COUNT_OF(block_class_door);
 
@@ -174,6 +175,7 @@ const mc_block_t block_class_ancil[] = {
     block_acacia_door,
     block_dark_oak_door,
     block_crimson_door,
+    block_mangrove_door,
     block_oak_stairs,
     block_brick_stairs,
     block_stone_brick_stairs,
@@ -252,7 +254,8 @@ const mc_block_t block_class_ancil[] = {
     block_cobbled_deepslate_wall,
     block_polished_deepslate_wall,
     block_deepslate_brick_wall,
-    block_deepslate_tile_wall};
+    block_deepslate_tile_wall,
+    block_mud_brick_wall};
 const size_t block_class_ancil_len = COUNT_OF(block_class_ancil);
 
 const mc_block_t block_class_alt_height[] = {

@@ -141,7 +141,6 @@ bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
     x += state->chunkx;
     z += state->chunkz;
 
-    
     PyObject_CallMethod(state->regionset, "add_to_blockmap","O", model_blocks);
 
     chunk = PyObject_CallMethod(state->regionset, "get_chunk", "ii", x, z);

@@ -33,16 +33,27 @@ struct MineralColor {
 /* put more valuable ores first -- they take precedence */
 static struct MineralColor default_minerals[] = {
     {block_mossy_cobblestone, 31, 153, 9},
+    {block_deepslate_emerald_ore, 0, 255, 0},
 
     {block_diamond_ore, 32, 230, 220},
+    {block_deepslate_diamond_ore, 32, 230, 220},
 
     {block_lapis_ore, 0, 23, 176},
+    {block_deepslate_lapis_ore, 0, 23, 176},
     {block_gold_ore, 255, 234, 0},
+    {block_deepslate_gold_ore, 255, 234, 0},
+
+    {block_emerald_ore, 0, 255, 0},
 
     {block_iron_ore, 204, 204, 204},
+    {block_deepslate_iron_ore, 204, 204, 204},
     {block_redstone_ore, 186, 0, 0},
-    {block_lit_redstone_ore, 186, 0, 0},
+    {block_deepslate_redstone_ore, 186, 0, 0},
     {block_coal_ore, 54, 54, 54},
+    {block_deepslate_coal_ore, 54, 54, 54},
+    
+    {block_copper_ore, 254, 154, 54},
+    {block_deepslate_copper_ore, 254, 154, 54},
 
     /* end of list marker */
     {0, 0, 0, 0}};
