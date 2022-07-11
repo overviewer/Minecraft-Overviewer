@@ -41,7 +41,7 @@ known_blocks = set()
 used_datas = set()
 max_blockid = 0
 max_data = 0
-next_unclaimed_id = 1
+next_unclaimed_id = 2048
 
 transparent_blocks = set()
 solid_blocks = set()
@@ -894,6 +894,9 @@ class Textures(object):
     # fix known inconsistencies in model info
     def normalize_model(self, modelname):
         match modelname:
+            case 'block/observer':
+                self.models[modelname] = deepcopy(self.models[modelname])
+                self.models[modelname]['elements'][0]['faces']['up']['uv'] = [0, 0, 16, 16]
             # remap textures of blocks with the rotation property to match the mapping of the observer textures
             case 'block/loom':
                 self.models[modelname] = deepcopy(self.models[modelname])
@@ -928,27 +931,20 @@ class Textures(object):
         for elem in colmodel['elements']:
             try:
                 if 'west' in elem['faces']:
-                    texture = self.draw_face('west', elem, colmodel, blockstate, modelname)
-                    alpha_over(img, texture, (12, 6), texture)
+                    self.draw_block(img, elem, colmodel, blockstate, modelname, 'west')
                 elif 'east' in elem['faces']:
-                    texture = self.draw_face('east', elem, colmodel, blockstate, modelname)
-                    alpha_over(img, texture, (0, 0), texture)
+                    self.draw_block(img, elem, colmodel, blockstate, modelname, 'east')
 
                 if 'north' in elem['faces']:
-                    texture = self.draw_face('north', elem, colmodel, blockstate, modelname)
-                    alpha_over(img, texture, (0, 6), texture)
+                    self.draw_block(img, elem, colmodel, blockstate, modelname, 'north')
                 elif 'south' in elem['faces']:
-                    texture = self.draw_face('south', elem, colmodel, blockstate, modelname)
-                    alpha_over(img, texture, (12, 0), texture)
+                    self.draw_block(img, elem, colmodel, blockstate, modelname, 'south')
 
                 if 'up' in elem['faces']:
-                    texture = self.draw_face('up', elem, colmodel, blockstate, modelname)
-                    alpha_over(img, texture, (0, 0), texture)
+                    self.draw_block(img, elem, colmodel, blockstate, modelname, 'up')
                 elif 'down' in elem['faces']:
-                    texture = self.draw_face('down', elem, colmodel, blockstate, modelname)
-                    alpha_over(img, texture, (0, 12), texture)
+                    self.draw_block(img, elem, colmodel, blockstate, modelname, 'down')
             except KeyError:
-                # element has an invalid texture; skipping entire element
                 continue
 
         # Manually touch up 6 pixels that leave a gap because of how the
@@ -961,6 +957,37 @@ class Textures(object):
             img.putpixel((x, y), img.getpixel((x + 1, y)))
 
         return img
+
+    def draw_block(self, img, elem, colmodel, blockstate, modelname, direction):
+        if 'facing' in blockstate:
+            facing = self.map_facing_to_real(blockstate['facing'], direction)
+        else:
+            facing = 'north'
+        texture = self.draw_face(direction, elem, colmodel, blockstate, modelname)
+        alpha_over(img, texture, self.image_pos(direction, elem, facing), texture)
+
+    def image_pos(self, direction, element, facing):
+        
+        # TODO: deal with uv, from, to
+        match direction:
+
+            case 'west': return (12, 6)
+            case 'east': return (0, 0)
+            case 'north': return(0, 6)
+            case 'south': return (12, 0)
+            # # move up
+            case 'down':
+                fromy = 12
+                if 'from' in element:
+                    fromy = int(math.ceil(((16 - element['from'][1])/16*12.)))
+                return (0, fromy) # 0,0
+            
+            # # move down
+            case 'up' | _: 
+                toy = 0
+                if 'to' in element:
+                    toy = int(math.ceil(((16 - element['to'][1])/16*12.)))
+                return (0, toy) # 0,6
 
     def numvalue_orientation(self, orientation):
         return {'south': 0, 'west': 1, 'north': 2, 'east': 3, 'up': 4, 'down': 6}[orientation]
@@ -1027,6 +1054,17 @@ class Textures(object):
 
         texture = self.find_texture_from_model(
             elem['faces'][textureface]['texture'], data['textures']).copy()
+            
+        if 'uv' in elem['faces'][textureface]:
+            if 'facing' in blockstate and textureface in {'up','down'}:
+                texture = texture.rotate(90)
+            uvface = {'north':'east','east':'south','south':'west','west':'north','up':'up','down':'down'}[textureface]
+            texture = self.crop_to_transparancy(texture, elem['faces'][uvface]['uv'])
+            if 'facing' in blockstate and textureface in {'up','down'}:
+                texture = texture.rotate(270)
+            
+        # TODO: deal with rotation
+
         if 'axis' in blockstate:
             texture = self.axis_rotation(blockstate['axis'], direction, texture)
 
@@ -1088,14 +1126,20 @@ class Textures(object):
     
     # TODO: deal with uv, from, to
     def crop_to_transparancy(self, img, area):
+        if area == [ 0, 0, 16, 16 ]:
+            return img
         # top
-        ImageDraw.Draw(img).rectangle((area[2], 0, 16, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        if area[2] != 0:
+            ImageDraw.Draw(img).rectangle((area[2]+1, 0, 16, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
         # right
-        ImageDraw.Draw(img).rectangle((0, area[3], 16, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        if area[3] != 0:
+            ImageDraw.Draw(img).rectangle((0, area[3]+1, 16, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
         # bottom
-        ImageDraw.Draw(img).rectangle((0, 0, area[0], 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        if area[0] != 16:
+            ImageDraw.Draw(img).rectangle((0, 0, area[0]-1, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
         # left
-        ImageDraw.Draw(img).rectangle((0, 0, 16, area[1]), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+        if area[1] != 16:
+            ImageDraw.Draw(img).rectangle((0, 0, 16, area[1]-1), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
         return img
 
 ##
@@ -5277,8 +5321,6 @@ transparentmodelblock(blockid=165, name="slime_block")
 solidmodelblock(blockid=169, name="sea_lantern")
 
 # hay block
-
-
 @material(blockid=170, data=list(range(3)), solid=True)
 def hayblock(self, blockid, data):
     return self.build_block_from_model('hay_block', blockstate={'axis': ({0: 'y', 1: 'x', 2: 'z'}[data])})

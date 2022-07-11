@@ -375,6 +375,7 @@ class RegionSet(object):
             'minecraft:oak_stairs': (53, 0),
             'minecraft:crimson_stairs': (509, 0),
             'minecraft:warped_stairs': (510, 0),
+            'minecraft:mangrove_stairs': (577, 0),
             'minecraft:chest': (54, 0),
             'minecraft:redstone_wire': (55, 0),
             'minecraft:diamond_ore': (56, 0),
@@ -924,6 +925,8 @@ class RegionSet(object):
             'minecraft:waxed_weathered_cut_copper_slab',
             'minecraft:waxed_oxidized_cut_copper_slab'
         )
+        unbound_slabs = ('minecraft:mangrove_slab',)
+
         # Map from slab to double slab block
         slab_to_double = {
             'minecraft:stone_slab': 'minecraft:stone',
@@ -969,7 +972,8 @@ class RegionSet(object):
             'minecraft:prismarine_slab': 'minecraft:prismarine',
             'minecraft:dark_prismarine_slab': 'minecraft:dark_prismarine',
             'minecraft:prismarine_brick_slab': 'minecraft:prismarine_bricks',
-        }
+            'minecraft:mangrove_slab': 'minecraft:mangrove_planks',
+       }
 
         colors = ['white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink', 'gray', 'light_gray', 'cyan',
                   'purple', 'blue', 'brown', 'green', 'red', 'black']
@@ -1022,7 +1026,9 @@ class RegionSet(object):
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
-        elif key in wood_slabs + stone_slabs + prismarine_slabs + copper_slabs:
+        elif key.endswith('_slab') and palette_entry['Properties']['type'] == 'top':
+            (block, data) = modelblocks[key+'_top']
+        elif key in wood_slabs + stone_slabs + prismarine_slabs + copper_slabs + unbound_slabs:
         # handle double slabs 
             if palette_entry['Properties']['type'] == 'top':
                 data |= 0x08
