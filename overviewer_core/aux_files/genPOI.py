@@ -331,6 +331,9 @@ def handlePlayers(worldpath, filters, markers):
         except (IOError, TypeError, KeyError, nbt.CorruptNBTError):
             logging.warning("Skipping bad player dat file %r.", playerfile)
             continue
+        if not "_name" in data:
+            logging.warning("Skipping bad player dat file %r (incomplete player info).", playerfile)
+            continue
 
         playername = playerfile.split(".")[0]
         if isSinglePlayer:
