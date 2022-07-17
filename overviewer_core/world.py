@@ -465,6 +465,7 @@ class RegionSet(object):
             'minecraft:dark_oak_slab': (126, 5),
             'minecraft:crimson_slab': (126, 6),
             'minecraft:warped_slab': (126, 7),
+            'minecraft:mangrove_slab': (1789, 0),
             'minecraft:cocoa': (127, 0),
             'minecraft:sandstone_stairs': (128, 0),
             'minecraft:emerald_ore': (129, 0),
@@ -474,7 +475,6 @@ class RegionSet(object):
             'minecraft:spruce_stairs': (134, 0),
             'minecraft:birch_stairs': (135, 0),
             'minecraft:jungle_stairs': (136, 0),
-            'minecraft:beacon': (138, 0),
             'minecraft:mushroom_stem': (139, 0),
             'minecraft:flower_pot': (140, 0),
             'minecraft:potted_poppy': (140, 0),  # Pots not rendering
@@ -528,25 +528,7 @@ class RegionSet(object):
             'minecraft:dark_oak_stairs': (164, 0),
             'minecraft:slime_block': (165,0),
             'minecraft:iron_trapdoor': (167, 0),
-            'minecraft:sea_lantern': (169, 0),
             'minecraft:hay_block': (170, 0),
-            'minecraft:white_carpet': (171, 0),
-            'minecraft:orange_carpet': (171, 1),
-            'minecraft:magenta_carpet': (171, 2),
-            'minecraft:light_blue_carpet': (171, 3),
-            'minecraft:yellow_carpet': (171, 4),
-            'minecraft:lime_carpet': (171, 5),
-            'minecraft:pink_carpet': (171, 6),
-            'minecraft:gray_carpet': (171, 7),
-            'minecraft:light_gray_carpet': (171, 8),
-            'minecraft:cyan_carpet': (171, 9),
-            'minecraft:purple_carpet': (171, 10),
-            'minecraft:blue_carpet': (171, 11),
-            'minecraft:brown_carpet': (171, 12),
-            'minecraft:green_carpet': (171, 13),
-            'minecraft:red_carpet': (171, 14),
-            'minecraft:black_carpet': (171, 15),
-            'minecraft:moss_carpet': (171, 16),
             'minecraft:sunflower': (175, 0),
             'minecraft:lilac': (175, 1),
             'minecraft:tall_grass': (175, 2),
@@ -673,7 +655,6 @@ class RegionSet(object):
             'minecraft:soul_fire': (1040, 0),
 
             # 1.17 blocks go here
-            'minecraft:budding_amethyst': (1045, 0),
             'minecraft:waxed_copper_block':   (1050, 0),
             'minecraft:waxed_exposed_copper':   (1051, 0),
             'minecraft:waxed_weathered_copper':   (1052, 0),
@@ -911,8 +892,8 @@ class RegionSet(object):
                         'minecraft:blackstone_slab','minecraft:polished_blackstone_slab',
                         'minecraft:polished_blackstone_brick_slab', 'minecraft:cobbled_deepslate_slab',
                         'minecraft:polished_deepslate_slab', 'minecraft:deepslate_brick_slab',
-                        'minecraft:deepslate_tile_slab', 'minecraft:mud_brick_slab'
-                         )
+                        'minecraft:deepslate_tile_slab', 'minecraft:mud_brick_slab',
+                        'minecraft:mangrove_slab' )
 
         prismarine_slabs = ('minecraft:prismarine_slab','minecraft:dark_prismarine_slab','minecraft:prismarine_brick_slab')
         copper_slabs = (
@@ -925,7 +906,6 @@ class RegionSet(object):
             'minecraft:waxed_weathered_cut_copper_slab',
             'minecraft:waxed_oxidized_cut_copper_slab'
         )
-        unbound_slabs = ('minecraft:mangrove_slab',)
 
         # Map from slab to double slab block
         slab_to_double = {
@@ -1026,9 +1006,11 @@ class RegionSet(object):
         elif key in ('minecraft:sunflower', 'minecraft:lilac', 'minecraft:tall_grass', 'minecraft:large_fern', 'minecraft:rose_bush', 'minecraft:peony'):
             if palette_entry['Properties']['half'] == 'upper':
                 data |= 0x08
-        elif key.endswith('_slab') and palette_entry['Properties']['type'] == 'top':
-            (block, data) = modelblocks[key+'_top']
-        elif key in wood_slabs + stone_slabs + prismarine_slabs + copper_slabs + unbound_slabs:
+        # handle unknown slabs. The lighting on these will suck.
+        elif key.endswith('_slab') and palette_entry['Properties']['type'] == 'top' and key not in wood_slabs + stone_slabs + prismarine_slabs + copper_slabs:
+            if key+'_top' in modelblocks:
+                (block, data) = modelblocks[key+'_top']
+        elif key in wood_slabs + stone_slabs + prismarine_slabs + copper_slabs:
         # handle double slabs 
             if palette_entry['Properties']['type'] == 'top':
                 data |= 0x08
@@ -1040,6 +1022,10 @@ class RegionSet(object):
                         (block, data) = self._blockmap[slab_to_double[key]]
                     else:
                         (block, data) = modelblocks[slab_to_double[key]]
+                else:
+                    if key+'_top' in modelblocks:
+                        # unknown slabs render as top if full is unknown
+                        (block, data) = modelblocks[key+'_top']
 
         elif key in ['minecraft:ladder', 'minecraft:chest', 'minecraft:ender_chest',
                      'minecraft:trapped_chest', 'minecraft:furnace',
@@ -1246,7 +1232,7 @@ class RegionSet(object):
             data = {'tip': 0, 'tip_merge': 1, 'middle': 2, 'frustum': 3, 'base': 4}[p['thickness']]
             data |= {'up': 0, 'down': 0b1000}[p['vertical_direction']]
         elif key in ['minecraft:small_amethyst_bud', 'minecraft:medium_amethyst_bud', 'minecraft:large_amethyst_bud',
-                     'minecraft:lightning_rod']:
+                     'minecraft:lightning_rod', 'minecraft:hopper']:
             p = palette_entry['Properties']
             data = {'down': 0, 'up': 1, 'east': 2, 'south': 3, 'west': 4, 'north': 5}[p['facing']]
         elif key in ['minecraft:cave_vines_plant', 'minecraft:cave_vines']:

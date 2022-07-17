@@ -118,7 +118,6 @@ enum mc_block_id {
     block_spruce_stairs = 134,
     block_birch_stairs = 135,
     block_jungle_stairs = 136,
-    block_beacon = 138,
     block_mushroom_stem = 139,
     block_flower_pot = 140,
     block_carrots = 141,
@@ -147,9 +146,7 @@ enum mc_block_id {
     block_slime = 165,
     block_barrier = 166,
     block_iron_trapdoor = 167,
-    block_sea_lantern = 169,
     block_hay_block = 170,
-    block_carpet = 171,
     block_double_plant = 175,
     block_standing_banner = 176,
     block_wall_banner = 177,
@@ -266,7 +263,6 @@ enum mc_block_id {
     block_soul_fire = 1040,
 
     // 1.17
-    block_budding_amethyst = 1045,
     block_waxed_copper = 1050,
     block_waxed_exposed_copper = 1051,
     block_waxed_weathered_copper = 1052,
@@ -334,6 +330,7 @@ enum mc_block_id {
     block_mud_brick_slab = 1124,
     block_mangrove_roots = 1125,
     block_mangrove_log = 1126,
+    block_mangrove_slab = 1789,
 
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
@@ -390,9 +387,7 @@ enum mc_block_id {
     block_smooth_quartz_slab = 11357,
     block_smooth_stone_slab = 11358,
     block_blast_furnace = 11362,
-    // block_blast_furnace lit 11363
     block_smoker = 11364,
-    // block_smoker lit = 11365,
     block_lectern = 11366,
     block_loom = 11367,
     block_stonecutter = 11368,
