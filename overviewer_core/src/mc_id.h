@@ -307,6 +307,7 @@ enum mc_block_id {
     block_polished_deepslate_stairs = 1100,
     block_deepslate_brick_stairs = 1101,
     block_deepslate_tile_stairs = 1102,
+    block_mangrove_stairs = 1108,
 
     block_cobbled_deepslate_slab = 1103,
     block_polished_deepslate_slab = 1104,

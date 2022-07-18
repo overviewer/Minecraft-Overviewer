@@ -975,66 +975,32 @@ class Textures(object):
 
         match elementdirection:
 
-            # case 'west': return (12, 6)
             case 'east': return (0, 0)
-            # case 'north': return(0, 6)
             case 'south': return (12, 0)
-            # case 'up': return (0, 0)
-            # case 'down': return (0, 12)
 
-            # # 24x24 image
-            ## WIP
-            # Down and to the right
-            # 16 => 12,0
-            # 0  => 6,6
-            # case 'south':
-            #     toxa = 12
-            #     tox = 0
-            # #     if 'to' in element:
-            # #         toxa = int(math.ceil(6 + (6/16 * element[face[0]][face[1]])))
-            # #         tox = int(math.ceil(6 - (6/16 * element[face[0]][face[1]])))
-            #     return (toxa, tox) # 12,0
-
-            # # # # Up and to the right
-            # # # # 0  => 0,6
-            # # # # 16 => 12,0
             case 'west':
                 setback = 16 - self.setback(element, facing)
                 toya = int(math.ceil(12/16 * (setback)))
                 toy = int(math.ceil(6/16 * (setback)))
-                return (toya, toy) # 12, 6
-
-            # Up and to the left
-            # 16  => 12,0
-            # 0 => 0,6
+                return (toya, toy)
+                
             case 'north':
                 setback = self.setback(element, facing)
                 toya = int(math.ceil((12/16 * (setback))))
                 toy = int(math.ceil(6 - (6/16 * (setback))))
-                return (toya, toy) # 0, 6
-
-            # # # # Down and to the right
-            # # # # 0  => 0,0
-            # # # # 16 => 6,6
-            # case 'east':
-            #     setback = self.setback(element, facing)
-            #     toya = int(math.ceil(6/16 * (setback)))
-            #     toy = int(math.ceil(6/16 * (setback)))
-            #     return (toya, toy) # 0, 0
-
-            # # move up
+                return (toya, toy)
+                
             case 'down':
                 fromy = 12
                 if 'from' in element:
                     fromy = int(math.ceil(((16 - element['from'][1])/16*12.)))
-                return (0, fromy) # 0,0
-            
-            # # move down
+                return (0, fromy) 
+                
             case 'up' | _: 
                 toy = 0
                 if 'to' in element:
                     toy = int(math.ceil(((16 - element['to'][1])/16*12.)))
-                return (0, toy) # 0,6
+                return (0, toy)
 
     def setback(self, element, facing):
         return {'up': 16, 'down': 0,
@@ -1143,11 +1109,11 @@ class Textures(object):
 
         return texture
 
+    # TODO: use uv instead of from-to values
     def crop_to_transparancy(self, img, area):
         # PIL image coordinates do not match MC texture coordinates
         # PIL starts in lower left
         # MC starts in upper left
-        # r, b, l, t
 
         if area[0] > area[2]:
             area = [area[2], area[1], area[0], area[3]]
@@ -1334,7 +1300,7 @@ def unbound_models():
     global max_blockid, block_models, next_unclaimed_id
     tex = Textures()
 
-    models = tex.find_models(tex)
+    models = Textures.find_models(tex)
     for model in models:
         # determine transparency
         
@@ -1599,11 +1565,6 @@ def sponge(self, blockid, data):
 solidmodelblock(blockid=21, name="lapis_ore")
 # lapis lazuli block
 solidmodelblock(blockid=22, name="lapis_block")
-
-@material(blockid=[577], data=list(range(8)), solid=True, transparent=True)
-def modern_stairs(self, blockid, data):
-    facing = {3: 'north', 0: 'east', 2: 'south', 1: 'west' }[data%4]
-    return self.build_block_from_model('mangrove_stairs', {'facing': facing})
 
 @material(blockid=[23, 158], data=list(range(6)), solid=True)
 def dropper(self, blockid, data):
@@ -2387,9 +2348,19 @@ def composter(self, blockid, data):
 @material(blockid=[51, 1040], transparent=True)
 def fire(self, blockid, data):
     if blockid == 51:
-        return self.build_block_from_model('fire_floor0')
-    else:
-        return self.build_block_from_model('soul_fire_floor0')
+        textureNS = self.load_image_texture("assets/minecraft/textures/block/fire_0.png")
+        textureEW = self.load_image_texture("assets/minecraft/textures/block/fire_1.png")
+    elif blockid == 1040:
+        textureNS = self.load_image_texture("assets/minecraft/textures/block/soul_fire_0.png")
+        textureEW = self.load_image_texture("assets/minecraft/textures/block/soul_fire_1.png")
+    side1 = self.transform_image_side(textureNS)
+    side2 = self.transform_image_side(textureEW).transpose(Image.FLIP_LEFT_RIGHT)
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side1, (12,0), side1)
+    alpha_over(img, side2, (0,0), side2)
+    alpha_over(img, side1, (0,6), side1)
+    alpha_over(img, side2, (12,6), side2)    
+    return img
 
 # monster spawner
 modelblock(blockid=52, name="spawner", solid=True, transparent=True)
@@ -2404,7 +2375,7 @@ modelblock(blockid=52, name="spawner", solid=True, transparent=True)
 @material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 509, 510,
                    11337, 11338, 11339, 11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379,
                    11380, 11381, 11382, 11383, 11384, 11415, 1030, 1031, 1032, 1064, 1065, 1066,
-                   1067, 1068, 1069, 1070, 1071, 1099, 1100, 1101, 1102],
+                   1067, 1068, 1069, 1070, 1071, 1099, 1100, 1101, 1102, 1108],
           data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
@@ -2470,6 +2441,7 @@ def stairs(self, blockid, data):
         1100: "assets/minecraft/textures/block/polished_deepslate.png",
         1101: "assets/minecraft/textures/block/deepslate_bricks.png",
         1102: "assets/minecraft/textures/block/deepslate_tiles.png",
+        1108: "assets/minecraft/textures/block/mangrove_planks.png",
     }
 
     texture = self.load_image_texture(stair_id_to_tex[blockid]).copy()
@@ -4453,26 +4425,6 @@ def comparator(self, blockid, data):
 # the trapdoor is looks like a sprite when opened, that's not good
 @material(blockid=[96,167,451,11332,11333,11334,11335,11336,12501,12502], data=list(range(16)), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
-    
-    # texture generation
-    model_map = {96:"oak_trapdoor",
-            167:"iron_trapdoor",
-            451:"mangrove_trapdoor",
-            11332:"spruce_trapdoor",
-            11333:"birch_trapdoor",
-            11334:"jungle_trapdoor",
-            11335:"acacia_trapdoor",
-            11336:"dark_oak_trapdoor",
-            12501:"crimson_trapdoor",
-            12502:"warped_trapdoor",
-            }
-    facing = {0: 'north', 1: 'south', 2: 'west', 3: 'east'}[data % 4]
-    
-    if data & 0x4 == 0x4:  # off
-        return self.build_block_from_model("%s_open" % model_map[blockid], {'facing': facing})
-    if data & 0x8 == 0x8:  # off
-        return self.build_block_from_model("%s_top" % model_map[blockid] )
-    return self.build_block_from_model("%s_bottom" % model_map[blockid])
 
     # rotation
     # Masked to not clobber opened/closed info
@@ -5250,13 +5202,6 @@ def quartz_pillar(self, blockid, data):
 # hopper
 @material(blockid=154, data=list(range(6)), transparent=True)
 def hopper(self, blockid, data):
-    # # TODO: 
-    # facing = {0: 'down', 1: 'up', 2: 'east', 3: 'south', 4: 'west', 5: 'north'}[data]
-    # if facing == 'down':
-    #     return self.build_block_from_model('hopper', {'facing': facing})
-    # return self.build_block_from_model('hopper_side', {'facing': facing})
-
-
     #build the top
     side = self.load_image_texture("assets/minecraft/textures/block/hopper_outside.png")
     top = self.load_image_texture("assets/minecraft/textures/block/hopper_top.png")
@@ -5410,15 +5355,15 @@ def crops(self, blockid, data):
         return self.build_block_from_model("beetroots_stage%d" % data)
     else:
         raw_crop = self.load_image_texture("assets/minecraft/textures/block/sweet_berry_bush_stage%d.png" % data)
-    crop1 = self.transform_image_top(raw_crop)
-    crop2 = self.transform_image_side(raw_crop)
-    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+        crop1 = self.transform_image_top(raw_crop)
+        crop2 = self.transform_image_side(raw_crop)
+        crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
 
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, crop1, (0,12), crop1)
-    alpha_over(img, crop2, (6,3), crop2)
-    alpha_over(img, crop3, (6,3), crop3)
-    return img
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(img, crop1, (0,12), crop1)
+        alpha_over(img, crop2, (6,3), crop2)
+        alpha_over(img, crop3, (6,3), crop3)
+        return img
 
 # Glazed Terracotta
 @material(blockid=list(range(235, 251)), data=list(range(4)), solid=True)
@@ -5889,12 +5834,6 @@ def cave_vines(self, blockid, data):
 
 @material(blockid=1118, data=list(range(6)), transparent=True, solid=True)
 def lightning_rod(self, blockid, data):
-
-    # lignting rod default model is for facing 'up'
-    # TODO: for generic processing the texture requires uv handling
-
-    # facing = {0: 'down', 1: 'up', 2: 'east', 3: 'south', 4: 'west', 5: 'north'}[data]
-    # return self.build_block_from_model('lightning_rod', {'facing': 'north'})
 
     tex = self.load_image_texture("assets/minecraft/textures/block/lightning_rod.png")
     img = Image.new("RGBA", (24, 24), self.bgcolor)

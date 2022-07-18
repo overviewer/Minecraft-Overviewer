@@ -375,7 +375,6 @@ class RegionSet(object):
             'minecraft:oak_stairs': (53, 0),
             'minecraft:crimson_stairs': (509, 0),
             'minecraft:warped_stairs': (510, 0),
-            'minecraft:mangrove_stairs': (577, 0),
             'minecraft:chest': (54, 0),
             'minecraft:redstone_wire': (55, 0),
             'minecraft:diamond_ore': (56, 0),
@@ -693,6 +692,7 @@ class RegionSet(object):
             'minecraft:polished_deepslate_stairs': (1100, 0),
             'minecraft:deepslate_brick_stairs': (1101, 0),
             'minecraft:deepslate_tile_stairs': (1102, 0),
+            'minecraft:mangrove_stairs': (1108, 0),
 
             'minecraft:cobbled_deepslate_slab': (1103, 0),
             'minecraft:polished_deepslate_slab': (1104, 0),
