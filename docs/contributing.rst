@@ -207,9 +207,10 @@ Simple Solid 6-Sided Block
 Most blocks are simple full height solid blocks. These blocks are automatically
 picked up by the ``unbound_models()`` method from the minecraft assets.
 Sometimes these blocks have special properties that can not be picked up
-from the assets, like transparency. These blocks can be added like this:: 
+from the assets, like nospawn, or because you want to include them in an overview.
+These blocks can be added like this:: 
 
-    transparentmodelblock(blockid=1125, name="mangrove_roots")
+    solidmodelblock(blockid=1125, name="mangrove_roots")
 
 Block with Variable Colors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

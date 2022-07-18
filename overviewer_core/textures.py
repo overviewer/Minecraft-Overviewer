@@ -925,10 +925,13 @@ class Textures(object):
         if 'elements' not in colmodel:
             return None
 
+        elements = colmodel['elements']
+        elements.sort(key=lambda x: (x['to'][1], 16 - (x['from'][0]+x['to'][0]),16 - (x['from'][2]+x['to'][2])))
+
         img = Image.new("RGBA", (24, 24), self.bgcolor)
 
         # for each elements
-        for elem in colmodel['elements']:
+        for elem in elements:
             try:
                 if 'west' in elem['faces']:
                     self.draw_blockface(img, elem, colmodel, blockstate, modelname, 'west')
@@ -1159,7 +1162,7 @@ class Textures(object):
 
         # cut from bottom
         if area[1] != 0:
-            ImageDraw.Draw(img).rectangle((0, 16 - (area[1]-1), 16, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+            ImageDraw.Draw(img).rectangle((0, 16 - (area[1]-2), 16, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
         
         # cut from right
         if area[2] != 16:
@@ -1167,7 +1170,7 @@ class Textures(object):
         
         # cut from left
         if area[0] != 0:
-            ImageDraw.Draw(img).rectangle((0, 0, area[0]-1, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
+            ImageDraw.Draw(img).rectangle((0, 0, area[0]-2, 16), outline=(0, 0, 0, 0), fill=(0, 0, 0, 0))
         
         return img
 
@@ -1283,12 +1286,6 @@ def material(blockid=[], data=[0], **kwargs):
         
         return func_wrapper
     return inner_material
-
-
-def transparentmodelblock(blockid=[], name=None, **kwargs):
-    new_kwargs = {'transparent': True}
-    new_kwargs.update(kwargs)
-    return modelblock(blockid=blockid, name=name, **new_kwargs)
 
 
 def solidmodelblock(blockid=[], name=None, **kwargs):
@@ -1622,8 +1619,6 @@ def dropper(self, blockid, data):
         return self.build_block_from_model('dispenser', {'facing': facing})
 
 # furnace, blast furnace, and smoker
-
-
 @material(blockid=[61, 11362, 11364], data=list(range(14)), solid=True)
 def furnaces(self, blockid, data):
     lit = data & 0b1000 == 8
@@ -2397,7 +2392,7 @@ def fire(self, blockid, data):
         return self.build_block_from_model('soul_fire_floor0')
 
 # monster spawner
-transparentmodelblock(blockid=52, name="spawner")
+modelblock(blockid=52, name="spawner", solid=True, transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch,
 # jungle, quartz, red sandstone, purpur_stairs, crimson_stairs, warped_stairs, (dark) prismarine,
@@ -3144,17 +3139,7 @@ def grindstone(self, blockid, data):
 # crops with 8 data values (like wheat)
 @material(blockid=59, data=list(range(8)), transparent=True, nospawn=True)
 def crops8(self, blockid, data):
-    raw_crop = self.load_image_texture("assets/minecraft/textures/block/wheat_stage%d.png" % data)
-    crop1 = self.transform_image_top(raw_crop)
-    crop2 = self.transform_image_side(raw_crop)
-    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
-
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, crop1, (0,12), crop1)
-    alpha_over(img, crop2, (6,3), crop2)
-    alpha_over(img, crop3, (6,3), crop3)
-    return img
-
+    return self.build_block_from_model("wheat_stage%d" % data)
 
 # farmland and grass path (15/16 blocks)
 @material(blockid=[60, 208], data=list(range(2)), solid=True, transparent=True, nospawn=True)
@@ -4938,11 +4923,6 @@ def end_portal_frame(self, blockid, data):
         return self.build_block_from_model('end_portal_frame_filled', {'facing': facing})
     return self.build_block_from_model('end_portal_frame', {'facing': facing})
 
-
-# dragon egg
-transparentmodelblock(blockid=122, name="dragon_egg")
-
-
 @material(blockid=[123], data=list(range(2)), solid=True)
 def redstone_lamp(self, blockid, data):
     if data == 0:  # off
@@ -5298,9 +5278,6 @@ def hopper(self, blockid, data):
 
     return img
 
-# slime block
-transparentmodelblock(blockid=165, name="slime_block")
-
 # hay block
 @material(blockid=170, data=list(range(3)), solid=True)
 def hayblock(self, blockid, data):
@@ -5332,11 +5309,9 @@ def flower(self, blockid, data):
 def chorus_flower(self, blockid, data):
     # aged 5, dead
     if data == 5:
-        texture = self.load_image_texture("assets/minecraft/textures/block/chorus_flower_dead.png")
+        return self.build_block_from_model("chorus_flower_dead")
     else:
-        texture = self.load_image_texture("assets/minecraft/textures/block/chorus_flower.png")
-
-    return self.build_block(texture,texture)
+        return self.build_block_from_model("chorus_flower")
 
 # purpur pillar
 @material(blockid=202, data=list(range(3)), solid=True)
@@ -5431,13 +5406,10 @@ def jigsaw_block(self, blockid, data):
 # beetroots(207), berry bushes (11505)
 @material(blockid=[207, 11505], data=list(range(4)), transparent=True, nospawn=True)
 def crops(self, blockid, data):
-
-    crops_id_to_tex = {
-        207: "assets/minecraft/textures/block/beetroots_stage%d.png",
-      11505: "assets/minecraft/textures/block/sweet_berry_bush_stage%d.png",
-    }
-
-    raw_crop = self.load_image_texture(crops_id_to_tex[blockid] % data)
+    if blockid == 207:
+        return self.build_block_from_model("beetroots_stage%d" % data)
+    else:
+        raw_crop = self.load_image_texture("assets/minecraft/textures/block/sweet_berry_bush_stage%d.png" % data)
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
     crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
@@ -5474,10 +5446,6 @@ def beehivenest(self, blockid, data):
         if data >= 4:
             return self.build_block_from_model('bee_nest_honey', {'facing': facing})
         return self.build_block_from_model('bee_nest', {'facing': facing})
-
-
-# honey_block
-transparentmodelblock(blockid=11504, name="honey_block")
 
 # Barrel
 @material(blockid=11418, data=list(range(12)), solid=True)
@@ -5921,13 +5889,6 @@ def cave_vines(self, blockid, data):
 
 @material(blockid=1118, data=list(range(6)), transparent=True, solid=True)
 def lightning_rod(self, blockid, data):
-
-    # lignting rod default model is for facing 'up'
-    # TODO: for generic processing the texture requires uv handling
-
-    # facing = {0: 'down', 1: 'up', 2: 'east', 3: 'south', 4: 'west', 5: 'north'}[data]
-    # return self.build_block_from_model('lightning_rod', {'facing': 'north'})
-
     tex = self.load_image_texture("assets/minecraft/textures/block/lightning_rod.png")
     img = Image.new("RGBA", (24, 24), self.bgcolor)
 
@@ -6113,8 +6074,6 @@ def spore_blossom(self, blockid, data):
     base_top = self.transform_image_top(base)
     alpha_over(img, base_top, (0, 0), base_top)
     return img
-
-transparentmodelblock(blockid=1125, name="mangrove_roots")
 
 # Render all blocks not explicitly declared before
 # Must run last to prevent being hidden by blocks with fixed IDs

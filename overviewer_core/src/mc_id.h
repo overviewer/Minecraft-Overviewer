@@ -105,7 +105,6 @@ enum mc_block_id {
     block_cauldron = 118,
     block_end_portal = 119,
     block_end_portal_frame = 120,
-    block_dragon_egg = 122,
     block_redstone_lamp = 123,
     block_double_wooden_slab = 125,
     block_wooden_slab = 126,
@@ -143,7 +142,6 @@ enum mc_block_id {
     block_dark_oak_stairs = 164,
     block_crimson_stairs = 509,
     block_warped_stairs = 510,
-    block_slime = 165,
     block_barrier = 166,
     block_iron_trapdoor = 167,
     block_hay_block = 170,
@@ -328,7 +326,6 @@ enum mc_block_id {
     block_spore_blossom = 1120,
 
     block_mud_brick_slab = 1124,
-    block_mangrove_roots = 1125,
     block_mangrove_log = 1126,
     block_mangrove_slab = 1789,
 
@@ -435,7 +432,6 @@ enum mc_block_id {
     // 1.15 blocks below
     block_beehive = 11501,
     block_bee_nest = 11502,
-    block_honey_block = 11504,
     block_sweet_berry_bush = 11505,
     block_campfire = 11506,
     block_bell = 11507,
