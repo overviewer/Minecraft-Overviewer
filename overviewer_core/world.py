@@ -455,7 +455,6 @@ class RegionSet(object):
             'minecraft:powder_snow_cauldron': (118, 3 << 2),
             'minecraft:end_portal': (119, 0),
             'minecraft:end_portal_frame': (120, 0),
-            'minecraft:dragon_egg': (122, 0),
             'minecraft:redstone_lamp': (123, 0),
             'minecraft:oak_slab': (126, 0),
             'minecraft:spruce_slab': (126, 1),
@@ -526,7 +525,6 @@ class RegionSet(object):
             'minecraft:dark_oak_log': (162, 1),
             'minecraft:acacia_stairs': (163, 0),
             'minecraft:dark_oak_stairs': (164, 0),
-            'minecraft:slime_block': (165,0),
             'minecraft:iron_trapdoor': (167, 0),
             'minecraft:hay_block': (170, 0),
             'minecraft:sunflower': (175, 0),
@@ -715,7 +713,6 @@ class RegionSet(object):
 
             # 1.19 blocks
             'minecraft:mud_brick_slab': (1124, 0),
-            'minecraft:mangrove_roots': (1125, 0),
             'minecraft:mangrove_log': (1126, 0),
             'minecraft:stripped_mangrove_log': (1126, 1),
 
@@ -822,7 +819,6 @@ class RegionSet(object):
             # 1.15 blocks below
             'minecraft:beehive': (11501, 0),
             'minecraft:bee_nest': (11502, 0),
-            'minecraft:honey_block': (11504, 0),
             'minecraft:sweet_berry_bush': (11505, 0),
             'minecraft:campfire': (11506, 0),
             'minecraft:bell': (11507, 0),
