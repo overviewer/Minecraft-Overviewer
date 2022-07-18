@@ -5889,6 +5889,13 @@ def cave_vines(self, blockid, data):
 
 @material(blockid=1118, data=list(range(6)), transparent=True, solid=True)
 def lightning_rod(self, blockid, data):
+
+    # lignting rod default model is for facing 'up'
+    # TODO: for generic processing the texture requires uv handling
+
+    # facing = {0: 'down', 1: 'up', 2: 'east', 3: 'south', 4: 'west', 5: 'north'}[data]
+    # return self.build_block_from_model('lightning_rod', {'facing': 'north'})
+
     tex = self.load_image_texture("assets/minecraft/textures/block/lightning_rod.png")
     img = Image.new("RGBA", (24, 24), self.bgcolor)
 
