@@ -1698,7 +1698,7 @@ class RegionSet(object):
             below_zero_retrogen_target_status = (
                 chunk_data.get("below_zero_retrogen", {}).get("target_status")
             )
-            if below_zero_retrogen_target_status in ("heightmaps", "spawn"):
+            if below_zero_retrogen_target_status in ("heightmaps", "spawn", "minecraft:heightmaps", "minecraft:spawn"):
                 include_chunk = True
 
         if not include_chunk:
