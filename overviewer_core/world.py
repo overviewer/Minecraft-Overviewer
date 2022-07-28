@@ -1719,10 +1719,23 @@ class RegionSet(object):
         fullbright = chunk_data.get("Status", "") == "spawn" and 'Lights' in chunk_data
         if not fullbright and self.get_type() is None:
             # In the overworld, we also default to fullbright if these is no sky light
-            # in the chunk whatsoever
-            for section in sections:
+            # in the chunk at full level.
+            # We can't just check for the complete absence of light, as Minecraft will
+            # sometimes partially generate sky light in chunks that is just spillover
+            # from neighboring chunks, but doesn't take the chunk itself into account,
+            # leaving us with a mostly dark chunk.
+            # The nice thing about sky light that spills over is, it is never at full
+            # level.
+            # Also, almost all chunks will have full sky light at the very top.
+            # Therefore: if a chunk contains sky light, but none of it is full, we can
+            # be 99% sure that that chunk is one of these mostly dark ones.
+            # If you've built a roof of leaves at build limit and are reading this:
+            # I'm sorry.
+            for section in sections[::-1]:
                 if "SkyLight" in section:
-                    break
+                    light = numpy.frombuffer(section["SkyLight"], dtype=numpy.uint8)
+                    if numpy.any((light>>4) == 15) or numpy.any((light & 15) == 15):
+                        break
             else:
                 fullbright = True
 
