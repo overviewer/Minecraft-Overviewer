@@ -893,27 +893,25 @@ class Textures(object):
 
     # fix known inconsistencies in model info
     def normalize_model(self, modelname):
-        match modelname:
-            case 'block/observer':
-                self.models[modelname] = deepcopy(self.models[modelname])
-                self.models[modelname]['elements'][0]['faces']['up']['uv'] = [0, 0, 16, 16]
-            # remap textures of blocks with the rotation property to match the mapping of the observer textures
-            case 'block/loom':
-                self.models[modelname] = deepcopy(self.models[modelname])
-                self.models[modelname]['elements'][0]['faces']['up']['texturerotation'] = 180
-                self.models[modelname]['elements'][0]['faces']['down']['texturerotation'] = 180
-            case 'block/barrel' | 'block/barrel_open':
-                self.models[modelname] = deepcopy(self.models[modelname])
-                self.models[modelname]['elements'][0]['faces']['north']['texture'] = '#up'
-                self.models[modelname]['elements'][0]['faces']['south']['texture'] = '#down'
-                self.models[modelname]['elements'][0]['faces']['down']['texture'] = '#north'
-                self.models[modelname]['elements'][0]['faces']['up']['texture'] = '#south'
-                self.models[modelname]['elements'][0]['faces']['east']['texturerotation'] = 90
-                self.models[modelname]['elements'][0]['faces']['west']['texturerotation'] = 90
-            case 'block/dropper_vertical' | 'block/dispenser_vertical':
-                self.models[modelname] = deepcopy(self.models[modelname])
-                self.models[modelname]['elements'][0]['faces']['north']['texture'] = '#up'
-                self.models[modelname]['elements'][0]['faces']['up']['texture'] = '#north'
+        if modelname == 'block/observer':
+            self.models[modelname] = deepcopy(self.models[modelname])
+            self.models[modelname]['elements'][0]['faces']['up']['uv'] = [0, 0, 16, 16]
+        elif modelname == 'block/loom':
+            self.models[modelname] = deepcopy(self.models[modelname])
+            self.models[modelname]['elements'][0]['faces']['up']['texturerotation'] = 180
+            self.models[modelname]['elements'][0]['faces']['down']['texturerotation'] = 180
+        elif modelname == 'block/barrel' or modelname == 'block/barrel_open':
+            self.models[modelname] = deepcopy(self.models[modelname])
+            self.models[modelname]['elements'][0]['faces']['north']['texture'] = '#up'
+            self.models[modelname]['elements'][0]['faces']['south']['texture'] = '#down'
+            self.models[modelname]['elements'][0]['faces']['down']['texture'] = '#north'
+            self.models[modelname]['elements'][0]['faces']['up']['texture'] = '#south'
+            self.models[modelname]['elements'][0]['faces']['east']['texturerotation'] = 90
+            self.models[modelname]['elements'][0]['faces']['west']['texturerotation'] = 90
+        elif modelname == 'block/dropper_vertical' or modelname == 'block/dispenser_vertical':
+            self.models[modelname] = deepcopy(self.models[modelname])
+            self.models[modelname]['elements'][0]['faces']['north']['texture'] = '#up'
+            self.models[modelname]['elements'][0]['faces']['up']['texture'] = '#north'
 
         return self.models[modelname]
 
@@ -973,34 +971,30 @@ class Textures(object):
 
     def image_pos(self, elementdirection, element, facing, modelname):
 
-        match elementdirection:
-
-            case 'east': return (0, 0)
-            case 'south': return (12, 0)
-
-            case 'west':
-                setback = 16 - self.setback(element, facing)
-                toya = int(math.ceil(12/16 * (setback)))
-                toy = int(math.ceil(6/16 * (setback)))
-                return (toya, toy)
-                
-            case 'north':
-                setback = self.setback(element, facing)
-                toya = int(math.ceil((12/16 * (setback))))
-                toy = int(math.ceil(6 - (6/16 * (setback))))
-                return (toya, toy)
-                
-            case 'down':
-                fromy = 12
-                if 'from' in element:
-                    fromy = int(math.ceil(((16 - element['from'][1])/16*12.)))
-                return (0, fromy) 
-                
-            case 'up' | _: 
-                toy = 0
-                if 'to' in element:
-                    toy = int(math.ceil(((16 - element['to'][1])/16*12.)))
-                return (0, toy)
+        if elementdirection == 'east':
+            return (0, 0)
+        elif elementdirection == 'south':
+            return (12, 0)
+        elif elementdirection == 'west':
+            setback = 16 - self.setback(element, facing)
+            toya = int(math.ceil(12/16 * (setback)))
+            toy = int(math.ceil(6/16 * (setback)))
+            return (toya, toy)
+        elif elementdirection == 'north':
+            setback = self.setback(element, facing)
+            toya = int(math.ceil((12/16 * (setback))))
+            toy = int(math.ceil(6 - (6/16 * (setback))))
+            return (toya, toy)
+        elif elementdirection == 'down':
+            toy = 12
+            if 'from' in element:
+                fromy = int(math.ceil(((16 - element['from'][1])/16*12.)))
+            return (0, toy)
+        else: # up
+            toy = 0
+            if 'to' in element:
+                toy = int(math.ceil(((16 - element['to'][1])/16*12.)))
+            return (0, toy)
 
     def setback(self, element, facing):
         return {'up': 16, 'down': 0,
@@ -1042,26 +1036,24 @@ class Textures(object):
         return resultface
 
     def map_axis_to_real(self, axis, textureface):
-        match axis:
-            case 'x':
-                return {'up': 'north', 'north': 'down', 'down': 'south', 'south': 'up', 'east': 'east', 'west': 'west'}[textureface]
-            case 'z':
-                return {'up': 'west', 'west': 'down', 'down': 'east', 'east': 'up', 'north': 'north', 'south': 'south'}[textureface]
-            case 'y' | _:
-                return textureface
+        if axis == 'x':
+            return {'up': 'north', 'north': 'down', 'down': 'south', 'south': 'up', 'east': 'east', 'west': 'west'}[textureface]
+        elif axis == 'z':
+            return {'up': 'west', 'west': 'down', 'down': 'east', 'east': 'up', 'north': 'north', 'south': 'south'}[textureface]
+        else:
+            return textureface
 
     def axis_rotation(self, axis, face, texture):
-        match axis:
-            case 'x':
-                rotation = {'up': 270, 'north': 0, 'down': 0,
-                            'south': 0, 'east': 270, 'west': 270}[face]
-                return texture.rotate(rotation)
-            case 'z':
-                rotation = {'up': 0, 'west': 0, 'down': 0,
-                            'east': 0, 'north': 90, 'south': 90}[face]
-                return texture.rotate(rotation)
-            case 'y' | _:
-                return texture
+        if axis == 'x':
+            rotation = {'up': 270, 'north': 0, 'down': 0,
+                        'south': 0, 'east': 270, 'west': 270}[face]
+            return texture.rotate(rotation)
+        elif axis == 'z':
+            rotation = {'up': 0, 'west': 0, 'down': 0,
+                        'east': 0, 'north': 90, 'south': 90}[face]
+            return texture.rotate(rotation)
+        else:
+            return texture
         
     def build_texture(self, direction, elem, data, blockstate, modelname, textureface):   
 
@@ -1075,32 +1067,30 @@ class Textures(object):
         if 'from' in elem and 'to' in elem and (elem['from'] != [0,0,0] or elem['to'] != [16,16,16]):
             area = [0,0,16,16]
             
-            match textureface:
-
-                case 'west': 
-                    area = [elem['from'][2],elem['from'][1],elem['to'][2],elem['to'][1]]
-                    texture = self.crop_to_transparancy(texture, area)
-                case 'east':
-                    area = [16-elem['from'][2],elem['from'][1],16-elem['to'][2],elem['to'][1]]
-                    texture = self.crop_to_transparancy(texture, area)
-                case 'north':
-                    area = [16-elem['from'][0],elem['from'][1],16-elem['to'][0],elem['to'][1]]
-                    texture = self.crop_to_transparancy(texture, area)
-                case 'south':
-                    area = [elem['from'][0],elem['from'][1],elem['to'][0],elem['to'][1]]
-                    texture = self.crop_to_transparancy(texture, area)
-                case 'up'|'down'|_:
-                    if 'facing' in blockstate and blockstate['facing'] in {'north'}:
-                        area = [elem['from'][0],16-elem['from'][2],elem['to'][0],16-elem['to'][2]]
-                    elif 'facing' in blockstate and blockstate['facing'] in {'south'}:
-                        area = [16-elem['from'][0],elem['from'][2],16-elem['to'][0],elem['to'][2]]
-                    elif 'facing' in blockstate and blockstate['facing'] in {'west'}:
-                        area = [elem['from'][2],elem['from'][0],elem['to'][2],elem['to'][0]]
-                    elif 'facing' in blockstate and blockstate['facing'] in {'east'}:
-                        area = [16-elem['from'][2],16-elem['from'][0],16-elem['to'][2],16-elem['to'][0]]
-                    else:
-                        area = [elem['from'][2],elem['from'][0],elem['to'][2],elem['to'][0]]
-                    texture = self.crop_to_transparancy(texture, area)
+            if textureface == 'west': 
+                area = [elem['from'][2],elem['from'][1],elem['to'][2],elem['to'][1]]
+                texture = self.crop_to_transparancy(texture, area)
+            elif textureface == 'east':
+                area = [16-elem['from'][2],elem['from'][1],16-elem['to'][2],elem['to'][1]]
+                texture = self.crop_to_transparancy(texture, area)
+            elif textureface == 'north':
+                area = [16-elem['from'][0],elem['from'][1],16-elem['to'][0],elem['to'][1]]
+                texture = self.crop_to_transparancy(texture, area)
+            elif textureface == 'south':
+                area = [elem['from'][0],elem['from'][1],elem['to'][0],elem['to'][1]]
+                texture = self.crop_to_transparancy(texture, area)
+            elif textureface in {'up', 'down'}:
+                if 'facing' in blockstate and blockstate['facing'] in {'north'}:
+                    area = [elem['from'][0],16-elem['from'][2],elem['to'][0],16-elem['to'][2]]
+                elif 'facing' in blockstate and blockstate['facing'] in {'south'}:
+                    area = [16-elem['from'][0],elem['from'][2],16-elem['to'][0],elem['to'][2]]
+                elif 'facing' in blockstate and blockstate['facing'] in {'west'}:
+                    area = [elem['from'][2],elem['from'][0],elem['to'][2],elem['to'][0]]
+                elif 'facing' in blockstate and blockstate['facing'] in {'east'}:
+                    area = [16-elem['from'][2],16-elem['from'][0],16-elem['to'][2],16-elem['to'][0]]
+                else:
+                    area = [elem['from'][2],elem['from'][0],elem['to'][2],elem['to'][0]]
+                texture = self.crop_to_transparancy(texture, area)
 
         # TODO: deal with rotation
 
@@ -1141,55 +1131,53 @@ class Textures(object):
         return img
 
     def adjust_lighting(self, direction, texture):
-        match direction:
-            case 'south' | 'west':
-                sidealpha = texture.split()[3]
-                texture = ImageEnhance.Brightness(texture).enhance(0.8)
-                texture.putalpha(sidealpha)
-                return texture
-            case 'north' | 'east':
-                sidealpha = texture.split()[3]
-                texture = ImageEnhance.Brightness(texture).enhance(0.9)
-                texture.putalpha(sidealpha)
-                return texture
-            case 'down' | 'up' | _:
-                return texture
+        if direction in {'south', 'west'}:
+            sidealpha = texture.split()[3]
+            texture = ImageEnhance.Brightness(texture).enhance(0.8)
+            texture.putalpha(sidealpha)
+            return texture
+        if direction in {'north', 'east'}:
+            sidealpha = texture.split()[3]
+            texture = ImageEnhance.Brightness(texture).enhance(0.9)
+            texture.putalpha(sidealpha)
+            return texture
+        else:
+            return texture
 
     def texture_rotation(self, direction, texture, blockstate, faceinfo, modelname):
         rotation = 0
         if 'texturerotation' in faceinfo:
             rotation += faceinfo['texturerotation']
-        match direction:
-            case 'down' | 'up':
-                if 'facing' in blockstate:
-                    if self.numvalue_orientation(blockstate['facing']) < 4:
-                        rotation += [0, 270, 180,
-                                     90][(self.numvalue_orientation(blockstate['facing']) + self.rotation) % 4]
-                    else:
-                        rotation += [180, 0][({'up': 0, 'down': 1}[blockstate['facing']])]
-            case 'north' | 'south':
-                if 'rotation' in faceinfo:
-                    rotation = {0: 180, 90: 90, 180: 0, 270: 270}[faceinfo['rotation']]
-                if 'facing' in blockstate and blockstate['facing'] in {'up', 'down'}:
-                    rotation += [90, 90][({'up': 0, 'down': 1}[blockstate['facing']])]
-            case 'west' | 'east':
-                if 'rotation' in faceinfo:
-                    rotation = {0: 180, 90: 270, 180: 0, 270: 90}[faceinfo['rotation']]
-                if 'facing' in blockstate and blockstate['facing'] in {'up', 'down'}:
+        if direction in {'down', 'up'}:
+            if 'facing' in blockstate:
+                if self.numvalue_orientation(blockstate['facing']) < 4:
+                    rotation += [0, 270, 180,
+                                    90][(self.numvalue_orientation(blockstate['facing']) + self.rotation) % 4]
+                else:
                     rotation += [180, 0][({'up': 0, 'down': 1}[blockstate['facing']])]
+        elif direction in {'north', 'south'}:
+            if 'rotation' in faceinfo:
+                rotation = {0: 180, 90: 90, 180: 0, 270: 270}[faceinfo['rotation']]
+            if 'facing' in blockstate and blockstate['facing'] in {'up', 'down'}:
+                rotation += [90, 90][({'up': 0, 'down': 1}[blockstate['facing']])]
+        elif direction in {'west', 'east'}:
+            if 'rotation' in faceinfo:
+                rotation = {0: 180, 90: 270, 180: 0, 270: 90}[faceinfo['rotation']]
+            if 'facing' in blockstate and blockstate['facing'] in {'up', 'down'}:
+                rotation += [180, 0][({'up': 0, 'down': 1}[blockstate['facing']])]
         
         return texture.rotate(rotation % 360)
 
     def transform_texture(self, direction, texture, blockstate, faceinfo):
-        match direction:
-            case 'down' | 'up':
-                return self.transform_image_top(texture)
-            case 'north' | 'south':
-                texture = self.transform_image_side(texture)
-            case 'west' | 'east':
-                texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
-                texture = self.transform_image_side(texture)
-                texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
+        
+        if direction in {'down', 'up'}:
+            return self.transform_image_top(texture)
+        elif direction in {'north', 'south'}:
+            texture = self.transform_image_side(texture)
+        elif direction in {'west', 'east'}:
+            texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
+            texture = self.transform_image_side(texture)
+            texture = texture.transpose(Image.FLIP_LEFT_RIGHT)
         
         return texture
 
