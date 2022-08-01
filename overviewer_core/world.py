@@ -1076,7 +1076,10 @@ class RegionSet(object):
                 data |= 8
         elif key in ['minecraft:basalt', 'minecraft:polished_basalt', 'minecraft:chain', 'minecraft:purpur_pillar',
                      'minecraft:deepslate', 'minecraft:hay_block', 'minecraft:quartz_pillar']:
-            axis = palette_entry['Properties']['axis']
+            if 'axis' in palette_entry['Properties']:
+                axis = palette_entry['Properties']['axis']
+            else:
+                axis = 'y'
             data = {'y': 0, 'x': 1, 'z': 2}[axis]
         elif key in ['minecraft:redstone_torch','minecraft:redstone_wall_torch','minecraft:wall_torch',
                     'minecraft:soul_torch', 'minecraft:soul_wall_torch']:
