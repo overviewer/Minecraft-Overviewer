@@ -1016,7 +1016,7 @@ class RegionSet(object):
                 elif key in slab_to_double :
                     if slab_to_double[key] in self._blockmap:
                         (block, data) = self._blockmap[slab_to_double[key]]
-                    else:
+                    elif slab_to_double[key] in modelblocks:
                         (block, data) = modelblocks[slab_to_double[key]]
                 else:
                     if key+'_top' in modelblocks:
