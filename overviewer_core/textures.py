@@ -988,7 +988,7 @@ class Textures(object):
         elif elementdirection == 'down':
             toy = 12
             if 'from' in element:
-                fromy = int(math.ceil(((16 - element['from'][1])/16*12.)))
+                toy = int(math.ceil(((16 - element['from'][1])/16*12.)))
             return (0, toy)
         else: # up
             toy = 0
@@ -1136,7 +1136,7 @@ class Textures(object):
             texture = ImageEnhance.Brightness(texture).enhance(0.8)
             texture.putalpha(sidealpha)
             return texture
-        if direction in {'north', 'east'}:
+        elif direction in {'north', 'east'}:
             sidealpha = texture.split()[3]
             texture = ImageEnhance.Brightness(texture).enhance(0.9)
             texture.putalpha(sidealpha)
