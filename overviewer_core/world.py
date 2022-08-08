@@ -906,6 +906,7 @@ class RegionSet(object):
         # Map from slab to double slab block
         slab_to_double = {
             'minecraft:stone_slab': 'minecraft:stone',
+            'minecraft:stone_brick_slab': 'minecraft:stone_bricks',
             'minecraft:cobblestone_slab': 'minecraft:cobblestone',
             'minecraft:sandstone_slab': 'minecraft:sandstone',
             'minecraft:red_sandstone_slab': 'minecraft:red_sandstone',
