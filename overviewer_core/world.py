@@ -715,6 +715,7 @@ class RegionSet(object):
             'minecraft:mud_brick_slab': (1124, 0),
             'minecraft:mangrove_log': (1126, 0),
             'minecraft:stripped_mangrove_log': (1126, 1),
+            'minecraft:mud_brick_stairs': (1129, 0),
 
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),

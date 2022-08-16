@@ -2363,7 +2363,7 @@ modelblock(blockid=52, name="spawner", solid=True, transparent=True)
 @material(blockid=[53, 67, 108, 109, 114, 128, 134, 135, 136, 156, 163, 164, 180, 203, 509, 510,
                    11337, 11338, 11339, 11370, 11371, 11374, 11375, 11376, 11377, 11378, 11379,
                    11380, 11381, 11382, 11383, 11384, 11415, 1030, 1031, 1032, 1064, 1065, 1066,
-                   1067, 1068, 1069, 1070, 1071, 1099, 1100, 1101, 1102, 1108],
+                   1067, 1068, 1069, 1070, 1071, 1099, 1100, 1101, 1102, 1108, 1129],
           data=list(range(128)), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     # preserve the upside-down bit
@@ -2414,6 +2414,7 @@ def stairs(self, blockid, data):
         1030: "assets/minecraft/textures/block/blackstone.png",
         1031: "assets/minecraft/textures/block/polished_blackstone.png",
         1032: "assets/minecraft/textures/block/polished_blackstone_bricks.png",
+        1129: "assets/minecraft/textures/block/mud_bricks.png",
         # Cut copper stairs
         1064: "assets/minecraft/textures/block/cut_copper.png",
         1065: "assets/minecraft/textures/block/exposed_cut_copper.png",

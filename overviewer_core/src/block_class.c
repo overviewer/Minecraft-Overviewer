@@ -151,7 +151,8 @@ const mc_block_t block_class_stair[] = {
     block_polished_deepslate_stairs,
     block_deepslate_brick_stairs,
     block_deepslate_tile_stairs,
-    block_mangrove_stairs};
+    block_mangrove_stairs,
+    block_mud_brick_stairs};
 const size_t block_class_stair_len = COUNT_OF(block_class_stair);
 
 const mc_block_t block_class_door[] = {
@@ -226,6 +227,7 @@ const mc_block_t block_class_ancil[] = {
     block_deepslate_brick_stairs,
     block_deepslate_tile_stairs,
     block_mangrove_stairs,
+    block_mud_brick_stairs,
     block_grass,
     block_flowing_water,
     block_water,
@@ -296,7 +298,8 @@ const mc_block_t block_class_alt_height[] = {
     block_smooth_sandstone_stairs,
     block_blackstone_stairs,
     block_polished_blackstone_stairs,
-    block_polished_blackstone_brick_stairs,   
+    block_polished_blackstone_brick_stairs,
+    block_mud_brick_stairs,   
     block_prismarine_slab,
     block_dark_prismarine_slab,
     block_prismarine_brick_slab,

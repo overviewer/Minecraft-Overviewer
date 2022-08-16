@@ -328,6 +328,7 @@ enum mc_block_id {
 
     block_mud_brick_slab = 1124,
     block_mangrove_log = 1126,
+    block_mud_brick_stairs = 1129,
     block_mangrove_slab = 1789,
 
     // adding a gap in the numbering of walls to keep them all
