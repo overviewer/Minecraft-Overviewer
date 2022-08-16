@@ -68,11 +68,10 @@ exist.
 Overviewer at a High Level
 ==========================
 
-Minecraft worlds are rendered in an approximated Isometric projection at an
-oblique angle. In the original design, the projection acts as if your eye is
-infinitely far away looking down at the world at a 45 degree angle in the
-South-East direction (now, the world can be rendered at any of the 4 oblique
-directions).
+Minecraft worlds are rendered in an Isometric projection at an oblique angle.
+The projection acts as if your eye is infinitely far away looking down at the
+world at an approximate 35 degree angle in the South-East direction (though the
+world can also be rendered at any of the 4 oblique directions).
 
 .. image:: screenshot.png
     :alt: A screenshot of Overviewer output
