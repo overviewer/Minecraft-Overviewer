@@ -12,10 +12,10 @@
 #
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
-import importlib
+
 import os
 import subprocess
-import sys
+from PIL import Image
 
 
 class Optimizer:
@@ -219,19 +219,13 @@ class pillowpng(Optimizer, PNGOptimizer):
         self.dither = dither
 
     def optimize(self, img):
-        orig = self.pil.Image.open(img)
-        conv = orig.convert('P', palette=self.pil.Image.ADAPTIVE, colors=self.colors,
-                            dither=self.pil.Image.FLOYDSTEINBERG if self.dither else self.pil.Image.NONE)
+        orig = Image.open(img)
+        conv = orig.convert('P', palette=Image.ADAPTIVE, colors=self.colors,
+                            dither=Image.FLOYDSTEINBERG if self.dither else Image.NONE)
         conv.save(img, format='PNG', optimize=True)
 
     def check_availability(self):
-        if 'PIL' in sys.modules:
-            self.pil = sys.modules['PIL']
-        else:
-            try:
-                self.pil = importlib.import_module("PIL")
-            except ImportError as e:
-                raise Exception("Python image libraries was not found!")
+        return True
 
     def is_crusher(self):
         return True
