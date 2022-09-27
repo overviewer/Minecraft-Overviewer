@@ -212,7 +212,7 @@ class oxipng(Optimizer, PNGOptimizer):
 
 class pillowpng(Optimizer, PNGOptimizer):
 
-    def __init__(self, colors=20, dither=False):
+    def __init__(self, colors=256, dither=True):
         if colors < 2:
             raise Exception("You can't use less than 2 colors")
         self.colors = colors
