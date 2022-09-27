@@ -12,9 +12,10 @@
 #
 #    You should have received a copy of the GNU General Public License along
 #    with the Overviewer.  If not, see <http://www.gnu.org/licenses/>.
-
+import importlib
 import os
 import subprocess
+import sys
 
 
 class Optimizer:
@@ -204,6 +205,33 @@ class oxipng(Optimizer, PNGOptimizer):
         Optimizer.fire_and_forget(self, [self.binaryname, "-o" +
                                          str(self.olevel), "-q", "-t" +
                                          str(self.threads), img])
+
+    def is_crusher(self):
+        return True
+
+
+class pillowpng(Optimizer, PNGOptimizer):
+
+    def __init__(self, colors=20, dither=False):
+        if colors < 2:
+            raise Exception("You can't use less than 2 colors")
+        self.colors = colors
+        self.dither = dither
+
+    def optimize(self, img):
+        orig = self.pil.Image.open(img)
+        conv = orig.convert('P', palette=self.pil.Image.ADAPTIVE, colors=self.colors,
+                            dither=self.pil.Image.FLOYDSTEINBERG if self.dither else self.pil.Image.NONE)
+        conv.save(img, format='PNG', optimize=True)
+
+    def check_availability(self):
+        if 'PIL' in sys.modules:
+            self.pil = sys.modules['PIL']
+        else:
+            try:
+                self.pil = importlib.import_module("PIL")
+            except ImportError as e:
+                raise Exception("Python image libraries was not found!")
 
     def is_crusher(self):
         return True

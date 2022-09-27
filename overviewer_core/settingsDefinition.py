@@ -47,7 +47,7 @@ from collections import OrderedDict
 
 from .settingsValidators import *
 from .observer import ProgressBarObserver, LoggingObserver, JSObserver
-from .optimizeimages import pngnq, optipng, pngcrush
+from .optimizeimages import pngnq, optipng, pngcrush, pillowpng
 import platform
 import sys
 
