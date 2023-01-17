@@ -97,9 +97,9 @@ def main():
     parser.add_argument("--rendermodes", dest="rendermodes", action="store",
                         help="If you're not using a config file, specify which rendermodes to "
                         "render with this option. This is a comma-separated list.")
-    parser.add_argument("world", nargs='?',
+    parser.add_argument("world",
                         help="Path or name of the world you want to render.")
-    parser.add_argument("output", nargs='?',
+    parser.add_argument("output", nargs='+',
                         help="Output directory for the rendered map.")
 
     # Useful one-time render modifiers:
@@ -150,8 +150,8 @@ def main():
     if len(unknowns) > 0 and args.world and args.output:
         possible_mistakes = []
         for i in range(len(unknowns) + 1):
-            possible_mistakes.append(" ".join([args.world, args.output] + unknowns[:i]))
-            possible_mistakes.append(" ".join([args.output] + unknowns[:i]))
+            possible_mistakes.append(" ".join([args.world, " ".join(args.output)] + unknowns[:i]))
+            possible_mistakes.append(" ".join([" ".join(args.output)] + unknowns[:i]))
         for mistake in possible_mistakes:
             if os.path.exists(mistake):
                 logging.warning("Looks like you tried to make me use {0} as an argument, but "
@@ -298,7 +298,9 @@ def main():
 
     if not args.config:
         # No config file mode.
-        worldpath, destdir = map(os.path.expanduser, [args.world, args.output])
+        worldpath, destdir = map(os.path.expanduser, [args.world, " ".join(args.output)])
+        worldpath = worldpath.replace('"', '')
+        destdir = destdir.replace('"', '')
         logging.debug("Using %r as the world directory", worldpath)
         logging.debug("Using %r as the output directory", destdir)
 
