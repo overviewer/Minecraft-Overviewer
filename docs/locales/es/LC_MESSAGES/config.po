@@ -1,0 +1,1949 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/config.rst:5
+msgid "The Configuration File"
+msgstr ""
+
+#: ../../docs/config.rst:7
+msgid ""
+"Using a configuration file is now the preferred way of running The "
+"Overviewer. You will need to create a blank file and specify it when "
+"running The Overviewer like this::"
+msgstr ""
+
+#: ../../docs/config.rst:13
+msgid ""
+"The config file is formatted in Python syntax. If you aren't familiar "
+"with Python, don't worry, it's pretty simple. Just follow the examples."
+msgstr ""
+
+#: ../../docs/config.rst:18
+msgid ""
+"You should *always* use forward slashes (``/``), even on Windows.  This "
+"is required because the backslash (``\\``) has special meaning in Python."
+msgstr ""
+
+#: ../../docs/config.rst:23
+msgid "Examples"
+msgstr ""
+
+#: ../../docs/config.rst:25
+msgid ""
+"The following examples should give you an idea of what a configuration "
+"file looks like, and also teach you some neat tricks."
+msgstr ""
+
+#: ../../docs/config.rst:29
+msgid "A Simple Example"
+msgstr ""
+
+#: ../../docs/config.rst:42
+msgid ""
+"This defines a single world, and a single render of that world. You can "
+"see there are two main sections."
+msgstr ""
+
+#: ../../docs/config.rst:50
+msgid "The ``worlds`` dictionary"
+msgstr ""
+
+#: ../../docs/config.rst:46
+msgid ""
+"Define items in the ``worlds`` dictionary as shown to tell The Overviewer"
+" where to find your worlds. The keys to this dictionary (\"My world\" in "
+"the example) is a name you give, and is referenced later in the render "
+"dictionary. If you want to render more than one world, you would put more"
+" lines like this one. Otherwise, one is sufficient."
+msgstr ""
+
+#: ../../docs/config.rst:60
+msgid "The ``renders`` dictionary"
+msgstr ""
+
+#: ../../docs/config.rst:53
+msgid ""
+"Each item here declares a \"render\" which is a map of one dimension of "
+"one world rendered with the given options. If you declare more than one "
+"render, then you will get a dropdown box to choose which map you want to "
+"look at when viewing the maps."
+msgstr ""
+
+#: ../../docs/config.rst:58
+msgid ""
+"You are free to declare as many renders as you want with whatever options"
+" you want. For example, you are allowed to render multiple worlds, or "
+"even render the same world multiple times with different options."
+msgstr ""
+
+#: ../../docs/config.rst:64
+msgid ""
+"Since this is Python syntax, keep in mind you need to put quotation marks"
+" around your strings. ``worlds[My world]`` will not work. It must be "
+"``worlds[\"My world\"]``"
+msgstr ""
+
+#: ../../docs/config.rst:69
+msgid "A more complicated example"
+msgstr ""
+
+#: ../../docs/config.rst:114
+msgid ""
+"This config defines four maps for render. Two of them are of the survival"
+" world's overworld, one is for the survival's nether, and one is for the "
+"creative world."
+msgstr ""
+
+#: ../../docs/config.rst:118
+msgid ""
+"Notice here we explicitly set the dimension property on each render. If "
+"dimension is not specified, the default or overworld dimension is used. "
+"It is necessary e.g. for the nether render."
+msgstr ""
+
+#: ../../docs/config.rst:122
+msgid ""
+"Also note here we specify some different rendermodes. A rendermode refers"
+" to how the map is rendered. The Overviewer can render a map in many "
+"different ways, and there are many preset rendermodes, and you can even "
+"create your own (more on that later)."
+msgstr ""
+
+#: ../../docs/config.rst:127
+msgid ""
+"And finally, note the usage of the ``texturepath`` option. This specifies"
+" a texture pack (also called a resource pack) to use for the rendering. "
+"Also note that it is set at the top level of the config file, and "
+"therefore applies to every render. It could be set on individual renders "
+"to apply to just those renders."
+msgstr ""
+
+#: ../../docs/config.rst:135
+msgid ""
+"See the ``sample_config.py`` file included in the repository for another "
+"example."
+msgstr ""
+
+#: ../../docs/config.rst:139
+msgid "A dynamic config file"
+msgstr ""
+
+#: ../../docs/config.rst:141
+msgid ""
+"It might be handy to dynamically retrieve parameters. For instance, if "
+"you periodically render your last map backup which is located in a "
+"timestamped directory, it is not convenient to edit the config file each "
+"time to fit the new directory name."
+msgstr ""
+
+#: ../../docs/config.rst:146
+msgid ""
+"Using environment variables, you can easily retrieve a parameter which "
+"has been set by, for instance, your map backup script. In this example, "
+"Overviewer is called from a *bash* script, but it can be done from other "
+"shell scripts and languages."
+msgstr ""
+
+#: ../../docs/config.rst:168
+msgid ""
+"The environment variable will only be local to the process and its child "
+"processes. The Overviewer, when run by the script, will be able to access"
+" the variable since it becomes a child process."
+msgstr ""
+
+#: ../../docs/config.rst:190
+msgid "Config File Specifications"
+msgstr ""
+
+#: ../../docs/config.rst:192
+msgid ""
+"The config file is a python file and is parsed with python's execfile() "
+"builtin. This means you can put arbitrary logic in this file. The "
+"Overviewer gives the execution of the file a local dict with a few pre-"
+"defined items (everything in the overviewer_core.rendermodes module)."
+msgstr ""
+
+#: ../../docs/config.rst:197
+msgid ""
+"If the above doesn't make sense, just know that items in the config file "
+"take the form ``key = value``. Two items take a different form:, "
+"``worlds`` and ``renders``, which are described below."
+msgstr ""
+
+#: ../../docs/config.rst:202 ../../docs/config.rst:459
+msgid "General"
+msgstr ""
+
+#: ../../docs/config.rst:219
+msgid "``worlds``"
+msgstr ""
+
+#: ../../docs/config.rst:205
+msgid ""
+"This is pre-defined as an empty dictionary. The config file is expected "
+"to add at least one item to it."
+msgstr ""
+
+#: ../../docs/config.rst:208
+msgid ""
+"Keys are arbitrary strings used to identify the worlds in the ``renders``"
+" dictionary."
+msgstr ""
+
+#: ../../docs/config.rst:211
+msgid "Values are paths to worlds (directories with a level.dat)"
+msgstr ""
+
+#: ../../docs/config.rst:213 ../../docs/config.rst:237
+#: ../../docs/config.rst:252 ../../docs/config.rst:269
+#: ../../docs/config.rst:497 ../../docs/config.rst:514
+msgid "e.g.::"
+msgstr ""
+
+#: ../../docs/config.rst:217
+msgid "**You must specify at least one world**"
+msgstr ""
+
+#: ../../docs/config.rst:219 ../../docs/config.rst:256
+msgid "*Reminder*: Always use forward slashes (\"/\"), even on Windows."
+msgstr ""
+
+#: ../../docs/config.rst:244
+msgid "``renders``"
+msgstr ""
+
+#: ../../docs/config.rst:222
+msgid ""
+"This is also pre-defined as an empty dictionary. The config file is "
+"expected to add at least one item to it. By default, it is an ordered "
+"dictionary; the order you add entries to it will determine the default "
+"render in the output map and the order the buttons appear in the map UI."
+msgstr ""
+
+#: ../../docs/config.rst:227
+msgid ""
+"Keys are strings that are used as the identifier for this render in the "
+"javascript, and also as the directory name for the tiles, but it's "
+"essentially up to you. It thus is recommended to make it a string with no"
+" spaces or special characters, only alphanumeric characters."
+msgstr ""
+
+#: ../../docs/config.rst:232
+msgid ""
+"Values are dictionaries specifying the configuration for the render. Each"
+" of these render dictionaries maps strings naming configuration options "
+"to their values. Valid keys and their values are listed in the "
+":ref:`renderdict` section."
+msgstr ""
+
+#: ../../docs/config.rst:244
+msgid "**You must specify at least one render**"
+msgstr ""
+
+#: ../../docs/config.rst:258
+msgid "``outputdir = \"<output directory path>\"``"
+msgstr ""
+
+#: ../../docs/config.rst:249
+msgid ""
+"This is the path to the output directory where the rendered tiles will be"
+" saved."
+msgstr ""
+
+#: ../../docs/config.rst:258 ../../docs/config.rst:316
+#: ../../docs/config.rst:376 ../../docs/config.rst:383
+#: ../../docs/config.rst:392 ../../docs/config.rst:397
+#: ../../docs/config.rst:465 ../../docs/config.rst:472
+msgid "**Required**"
+msgstr ""
+
+#: ../../docs/config.rst:271
+msgid "``processes = num_procs``"
+msgstr ""
+
+#: ../../docs/config.rst:263
+msgid ""
+"This specifies the number of worker processes to spawn on the local "
+"machine to do work. It defaults to the number of CPU cores you have, if "
+"not specified."
+msgstr ""
+
+#: ../../docs/config.rst:267
+msgid "This can also be specified with :option:`--processes <-p>`"
+msgstr ""
+
+#: ../../docs/config.rst:274
+msgid "Observers"
+msgstr ""
+
+#: ../../docs/config.rst:410
+msgid "``observer = <observer object>``"
+msgstr ""
+
+#: ../../docs/config.rst:279
+msgid ""
+"This lets you configure how the progress of the render is reported. The "
+"default is to display a progress bar, unless run on Windows or with "
+"stderr redirected to a file. The default value will probably be fine for "
+"most people, but advanced users may want to make their own progress "
+"reporter (for a web service or something like that) or you may want to "
+"force a particular observer to be used. The observer object is expected "
+"to have at least ``start``, ``add``, ``update``, and ``finish`` methods."
+msgstr ""
+
+#: ../../docs/config.rst:287
+msgid "If you want to specify an observer manually, try something like: ::"
+msgstr ""
+
+#: ../../docs/config.rst:293
+msgid ""
+"There are currently three observers available: ``LoggingObserver``, "
+"``ProgressBarObserver`` and ``JSObserver``."
+msgstr ""
+
+#: ../../docs/config.rst:298
+msgid "``LoggingObserver``"
+msgstr ""
+
+#: ../../docs/config.rst:297
+msgid ""
+"This gives the normal/older style output and is the default when output "
+"is redirected to a file or when running on Windows"
+msgstr ""
+
+#: ../../docs/config.rst:302
+msgid "``ProgressBarObserver``"
+msgstr ""
+
+#: ../../docs/config.rst:301
+msgid ""
+"This is used by default when the output is a terminal. Displays a text "
+"based progress bar and some statistics."
+msgstr ""
+
+#: ../../docs/config.rst:346
+msgid "``JSObserver(outputdir[, minrefresh][, messages])``"
+msgstr ""
+
+#: ../../docs/config.rst:305
+msgid ""
+"This will display render progress on the output map in the bottom right "
+"corner of the screen. ``JSObserver``."
+msgstr ""
+
+#: ../../docs/config.rst:309
+msgid ""
+"JSObserver does not work on locally opened maps, but requires a running "
+"HTTP server."
+msgstr ""
+
+#: ../../docs/config.rst:316
+msgid "``outputdir=\"<output directory path\"``"
+msgstr ""
+
+#: ../../docs/config.rst:312
+msgid ""
+"Path to overviewer output directory. For simplicity, specify this as "
+"``outputdir=outputdir`` and place this line after setting ``outputdir = "
+"\"<output directory path>\"``."
+msgstr ""
+
+#: ../../docs/config.rst:320
+msgid "``minrefresh=<seconds>``"
+msgstr ""
+
+#: ../../docs/config.rst:319
+msgid ""
+"Progress information won't be written to file or requested by your web "
+"browser more frequently than this interval."
+msgstr ""
+
+#: ../../docs/config.rst:340
+msgid ""
+"``messages=dict(totalTiles=<string>, renderCompleted=<string>, "
+"renderProgress=<string>)``"
+msgstr ""
+
+#: ../../docs/config.rst:323
+msgid ""
+"Customises messages displayed in browser. All three messages must be "
+"defined similar to the following:"
+msgstr ""
+
+#: ../../docs/config.rst:326
+#, python-format
+msgid ""
+"``totalTiles=\"Rendering %d tiles\"`` The ``%d`` format string will be "
+"replaced with the total number of tiles to be rendered."
+msgstr ""
+
+#: ../../docs/config.rst:330
+#, python-format
+msgid ""
+"``renderCompleted=\"Render completed in %02d:%02d:%02d\"`` The three "
+"format strings  will be replaced with the number of hours. minutes and "
+"seconds taken to complete this render."
+msgstr ""
+
+#: ../../docs/config.rst:334
+#, python-format
+msgid ""
+"``renderProgress=\"Rendered %d of %d tiles (%d%% ETA:%s)\"\"`` The four "
+"format strings will be replaced with the number of tiles completed, the "
+"total number of tiles, the percentage complete, and the ETA."
+msgstr ""
+
+#: ../../docs/config.rst:339
+msgid ""
+"Format strings are explained here: "
+"http://docs.python.org/library/stdtypes.html#string-formatting All format"
+" strings must be present in your custom messages."
+msgstr ""
+
+#: ../../docs/config.rst:367
+msgid "``MultiplexingObserver(Observer[, Observer[, Observer ...]])``"
+msgstr ""
+
+#: ../../docs/config.rst:349
+msgid ""
+"This observer will send the progress information to all Observers passed "
+"to it."
+msgstr ""
+
+#: ../../docs/config.rst:352
+msgid "All Observers passed must implement the full Observer interface."
+msgstr ""
+
+#: ../../docs/config.rst:383
+msgid "``ServerAnnounceObserver(target, pct_interval)``"
+msgstr ""
+
+#: ../../docs/config.rst:370
+msgid ""
+"This Observer will send its progress and status to a Minecraft server via"
+" ``target`` with a Minecraft ``say`` command."
+msgstr ""
+
+#: ../../docs/config.rst:376
+msgid "``target=<file handle to write to>``"
+msgstr ""
+
+#: ../../docs/config.rst:374
+msgid ""
+"Either a FIFO file or stdin. Progress and status messages will be written"
+" to this handle."
+msgstr ""
+
+#: ../../docs/config.rst:383 ../../docs/config.rst:410
+msgid "``pct_interval=<update rate, in percent>``"
+msgstr ""
+
+#: ../../docs/config.rst:379
+#, python-format
+msgid ""
+"Progress and status messages will not be written more often than this "
+"value. E.g., a value of ``1`` will make the ServerAnnounceObserver write "
+"to its target once for every 1% of progress."
+msgstr ""
+
+#: ../../docs/config.rst:410
+msgid "``RConObserver(target, password[, port][, pct_interval])``"
+msgstr ""
+
+#: ../../docs/config.rst:386
+msgid ""
+"This Observer will announce render progress with the server's ``say`` "
+"command through RCon."
+msgstr ""
+
+#: ../../docs/config.rst:392
+msgid "``target=<address>``"
+msgstr ""
+
+#: ../../docs/config.rst:390
+msgid "Address of the target Minecraft server."
+msgstr ""
+
+#: ../../docs/config.rst:397
+msgid "``password=<rcon password>``"
+msgstr ""
+
+#: ../../docs/config.rst:395
+msgid "The server's rcon password."
+msgstr ""
+
+#: ../../docs/config.rst:402
+msgid "``port=<port number>``"
+msgstr ""
+
+#: ../../docs/config.rst:400
+msgid "Port on which the Minecraft server listens for incoming RCon connections."
+msgstr ""
+
+#: ../../docs/config.rst:402
+msgid "**Default:** ``25575``"
+msgstr ""
+
+#: ../../docs/config.rst:405
+msgid ""
+"Percentage interval in which the progress should be announced, the same "
+"as for ``ServerAnnounceObserver``."
+msgstr ""
+
+#: ../../docs/config.rst:408
+msgid "**Default:** ``10``"
+msgstr ""
+
+#: ../../docs/config.rst:413
+msgid "Custom web assets"
+msgstr ""
+
+#: ../../docs/config.rst:433
+msgid "``customwebassets = \"<path to custom web assets>\"``"
+msgstr ""
+
+#: ../../docs/config.rst:418
+msgid ""
+"This option allows you to specify a directory containing custom web "
+"assets to be copied to the output directory. Any files in the custom web "
+"assets directory overwrite the default files."
+msgstr ""
+
+#: ../../docs/config.rst:422
+msgid ""
+"If you are providing a custom index.html, the following strings will be "
+"replaced:"
+msgstr ""
+
+#: ../../docs/config.rst:424
+msgid "``{title}`` Will be replaced by 'Minecraft Overviewer'"
+msgstr ""
+
+#: ../../docs/config.rst:427
+msgid ""
+"``{time}`` Will be replaced by the current date and time when the world "
+"is rendered e.g. 'Sun, 12 Aug 2012 15:25:40 BST'"
+msgstr ""
+
+#: ../../docs/config.rst:431
+msgid ""
+"``{version}`` Will be replaced by the version of Overviewer used e.g. "
+"'0.9.276 (5ff9c50)'"
+msgstr ""
+
+#: ../../docs/config.rst:438
+msgid "Render Dictionary Keys"
+msgstr ""
+
+#: ../../docs/config.rst:440
+msgid ""
+"The render dictionary is a dictionary mapping configuration key strings "
+"to values. The valid configuration keys are listed below."
+msgstr ""
+
+#: ../../docs/config.rst:445
+msgid ""
+"Any of these items can be specified at the top level of the config file "
+"to set the default for every render. For example, this line at the top of"
+" the config file will set the world for every render to 'myworld' if no "
+"world is specified::"
+msgstr ""
+
+#: ../../docs/config.rst:452
+msgid ""
+"Then you don't need to specify a ``world`` key in the render "
+"dictionaries::"
+msgstr ""
+
+#: ../../docs/config.rst:465
+msgid "``world``"
+msgstr ""
+
+#: ../../docs/config.rst:462
+msgid ""
+"Specifies which world this render corresponds to. Its value should be a "
+"string from the appropriate key in the worlds dictionary."
+msgstr ""
+
+#: ../../docs/config.rst:472
+msgid "``title``"
+msgstr ""
+
+#: ../../docs/config.rst:468
+msgid ""
+"This is the display name used in the user interface. Set this to whatever"
+" you want to see displayed in the Map Type control (the buttons in the "
+"upper- right)."
+msgstr ""
+
+#: ../../docs/config.rst:502
+msgid "``dimension``"
+msgstr ""
+
+#: ../../docs/config.rst:477
+msgid ""
+"Specified which dimension of the world should be rendered. Each Minecraft"
+" world has by default 3 dimensions: The Overworld, The Nether, and The "
+"End. Bukkit servers are a bit more complicated, typically worlds only "
+"have a single dimension, in which case you can leave this option off."
+msgstr ""
+
+#: ../../docs/config.rst:482
+msgid ""
+"The value should be a string. It should either be one of \"overworld\", "
+"\"nether\", \"end\", or the directory name of the dimension within the "
+"world. e.g. \"DIM-1\""
+msgstr ""
+
+#: ../../docs/config.rst:488
+msgid ""
+"If you choose to render your nether dimension, you must also use a nether"
+" :ref:`rendermode<option_rendermode>`. Otherwise you'll just end up "
+"rendering the nether's ceiling."
+msgstr ""
+
+#: ../../docs/config.rst:494
+msgid ""
+"For the end, you will most likely want to turn down the strength of the "
+"shadows, as you'd otherwise end up with a very dark result."
+msgstr ""
+
+#: ../../docs/config.rst:502
+msgid "**Default:** ``\"overworld\"``"
+msgstr ""
+
+#: ../../docs/config.rst:505
+msgid "Rendering"
+msgstr ""
+
+#: ../../docs/config.rst:570
+msgid "``rendermode``"
+msgstr ""
+
+#: ../../docs/config.rst:510
+msgid ""
+"This is which rendermode to use for this render. There are many "
+"rendermodes to choose from. This can either be a rendermode object, or a "
+"string, in which case the rendermode object by that name is used."
+msgstr ""
+
+#: ../../docs/config.rst:518
+msgid "Here are the rendermodes and what they do:"
+msgstr ""
+
+#: ../../docs/config.rst:521
+msgid "``\"normal\"``"
+msgstr ""
+
+#: ../../docs/config.rst:521
+msgid "A normal render with no lighting. This is the fastest option."
+msgstr ""
+
+#: ../../docs/config.rst:526
+msgid "``\"lighting\"``"
+msgstr ""
+
+#: ../../docs/config.rst:524
+msgid ""
+"A render with per-block lighting, which looks similar to Minecraft "
+"without smooth lighting turned on. This is slightly slower than the "
+"normal mode."
+msgstr ""
+
+#: ../../docs/config.rst:532
+msgid "``\"smooth_lighting\"``"
+msgstr ""
+
+#: ../../docs/config.rst:529
+msgid ""
+"A render with smooth lighting, which looks similar to Minecraft with "
+"smooth lighting turned on."
+msgstr ""
+
+#: ../../docs/config.rst:532
+msgid "*This option looks the best* but is also the slowest."
+msgstr ""
+
+#: ../../docs/config.rst:535
+msgid "``\"night\"``"
+msgstr ""
+
+#: ../../docs/config.rst:535
+msgid "A \"nighttime\" render with blocky lighting."
+msgstr ""
+
+#: ../../docs/config.rst:538
+msgid "``\"smooth_night\"``"
+msgstr ""
+
+#: ../../docs/config.rst:538
+msgid "A \"nighttime\" render with smooth lighting"
+msgstr ""
+
+#: ../../docs/config.rst:550
+msgid "``\"nether\"``"
+msgstr ""
+
+#: ../../docs/config.rst:541
+msgid ""
+"A normal lighting render of the nether. You can apply this to any render,"
+" not just nether dimensions. The only difference between this and normal "
+"is that the ceiling is stripped off, so you can actually see inside."
+msgstr ""
+
+#: ../../docs/config.rst:548
+msgid ""
+"Selecting this rendermode doesn't automatically render your nether "
+"dimension.  Be sure to also set the :ref:`dimension<option_dimension>` "
+"option to 'nether'."
+msgstr ""
+
+#: ../../docs/config.rst:553
+msgid "``\"nether_lighting\"``"
+msgstr ""
+
+#: ../../docs/config.rst:553
+msgid "Similar to \"nether\" but with blocky lighting."
+msgstr ""
+
+#: ../../docs/config.rst:556
+msgid "``\"nether_smooth_lighting\"``"
+msgstr ""
+
+#: ../../docs/config.rst:556
+msgid "Similar to \"nether\" but with smooth lighting."
+msgstr ""
+
+#: ../../docs/config.rst:561
+msgid "``\"cave\"``"
+msgstr ""
+
+#: ../../docs/config.rst:559
+msgid ""
+"A cave render with depth tinting (blocks are tinted with a color "
+"dependent on their depth, so it's easier to tell overlapping caves apart)"
+msgstr ""
+
+#: ../../docs/config.rst:563
+msgid "**Default:** ``\"normal\"``"
+msgstr ""
+
+#: ../../docs/config.rst:567
+msgid ""
+"The value for the 'rendermode' key can be either a *string* or "
+"*rendermode object* (strings simply name one of the built-in rendermode "
+"objects). The actual object type is a list of *rendermode primitive* "
+"objects.  See :ref:`customrendermodes` for more information."
+msgstr ""
+
+#: ../../docs/config.rst:584
+msgid "``northdirection``"
+msgstr ""
+
+#: ../../docs/config.rst:573
+msgid ""
+"This is direction or viewpoint angle with which north will be rendered. "
+"This north direction will match the established north direction in the "
+"game where the sun rises in the east and sets in the west."
+msgstr ""
+
+#: ../../docs/config.rst:577
+msgid "Here are the valid north directions:"
+msgstr ""
+
+#: ../../docs/config.rst:579
+msgid "``\"upper-left\"``"
+msgstr ""
+
+#: ../../docs/config.rst:580
+msgid "``\"upper-right\"``"
+msgstr ""
+
+#: ../../docs/config.rst:581
+msgid "``\"lower-left\"``"
+msgstr ""
+
+#: ../../docs/config.rst:582
+msgid "``\"lower-right\"``"
+msgstr ""
+
+#: ../../docs/config.rst:584
+msgid "**Default:** ``\"upper-left\"``"
+msgstr ""
+
+#: ../../docs/config.rst:631
+msgid "``overlay``"
+msgstr ""
+
+#: ../../docs/config.rst:589
+msgid ""
+"This specifies which renders that this render will be displayed on top "
+"of. It should be a list of other renders.  If this option is confusing, "
+"think of this option's name as \"overlay_on_to\"."
+msgstr ""
+
+#: ../../docs/config.rst:593
+msgid ""
+"If you leave this as an empty list, this overlay will be displayed on top"
+" of all renders for the same world/dimension as this one."
+msgstr ""
+
+#: ../../docs/config.rst:596
+msgid ""
+"As an example, let's assume you have two renders, one called \"day\" and "
+"one called \"night\".  You want to create a Biome Overlay to be displayed"
+" on top of the \"day\" render.  Your config file might look like this:"
+msgstr ""
+
+#: ../../docs/config.rst:602
+msgid ""
+"When 'overlay' is used the ``imgformat`` must be set to a transparent "
+"image format like ``\"png\"``. Otherwise the overlay is rendered without "
+"transparency and the render underneath will not show."
+msgstr ""
+
+#: ../../docs/config.rst:631 ../../docs/config.rst:944
+msgid "**Default:** ``[]`` (an empty list)"
+msgstr ""
+
+#: ../../docs/config.rst:643
+msgid "``texturepath``"
+msgstr ""
+
+#: ../../docs/config.rst:636
+msgid ""
+"This is a where a specific texture or resource pack can be found to use "
+"during this render. It can be a path to either a folder or a zip/jar file"
+" containing the texture resources. If specifying a folder, this option "
+"should point to a directory that *contains* the assets/ directory (it "
+"should not point to the assets directory directly or any one particular "
+"texture image)."
+msgstr ""
+
+#: ../../docs/config.rst:642
+msgid ""
+"Its value should be a string: the path on the filesystem to the resource "
+"pack."
+msgstr ""
+
+#: ../../docs/config.rst:699
+msgid "``crop``"
+msgstr ""
+
+#: ../../docs/config.rst:648
+msgid ""
+"You can use this to render one or more small subsets of your map. The "
+"format of an individual crop zone is (min x, min z, max x, max z); if you"
+" wish to specify multiple crop zones, you may do so by specifying a list "
+"of crop zones, i.e. [(min x1, min z1, max x1, max z1), (min x2, min z2, "
+"max x2, max z2)]"
+msgstr ""
+
+#: ../../docs/config.rst:653
+msgid ""
+"The coordinates are block coordinates. The same you get with the debug "
+"menu in-game and the coordinates shown when you view a map."
+msgstr ""
+
+#: ../../docs/config.rst:656
+msgid "Example that only renders a 1000 by 1000 square of land about the origin::"
+msgstr ""
+
+#: ../../docs/config.rst:664
+msgid "Example that renders two 500 by 500 squares of land::"
+msgstr ""
+
+#: ../../docs/config.rst:672
+msgid ""
+"This option performs a similar function to the old ``--regionlist`` "
+"option (which no longer exists). It is useful for example if someone has "
+"wandered really far off and made your map too large. You can set the crop"
+" for the largest map you want to render (perhaps "
+"``(-10000,-10000,10000,10000)``). It could also be used to define a "
+"really small render showing off one particular feature, perhaps from "
+"multiple angles."
+msgstr ""
+
+#: ../../docs/config.rst:681
+msgid ""
+"If you decide to change the bounds on a render, you may find it produces "
+"unexpected results. It is recommended to not change the crop settings "
+"once it has been rendered once."
+msgstr ""
+
+#: ../../docs/config.rst:685
+msgid ""
+"For an expansion to the bounds, because chunks in the new bounds have the"
+" same mtime as the old, tiles will not automatically be updated, leaving "
+"strange artifacts along the old border. You may need to use "
+":option:`--forcerender` to force those tiles to update.  (You can use the"
+" ``forcerender`` option on just one render by adding ``'forcerender': "
+"True`` to that render's configuration)"
+msgstr ""
+
+#: ../../docs/config.rst:692
+msgid ""
+"For reductions to the bounds, you will need to render your map at least "
+"once with the :option:`--check-tiles` mode activated, and then once with "
+"the :option:`--forcerender` option. The first run will go and delete "
+"tiles that should no longer exist, while the second will render the tiles"
+" around the edge properly. Also see :ref:`this faq entry<cropping_faq>`."
+msgstr ""
+
+#: ../../docs/config.rst:698
+msgid ""
+"Sorry there's no better way to handle these cases at the moment. It's a "
+"tricky problem and nobody has devoted the effort to solve it yet."
+msgstr ""
+
+#: ../../docs/config.rst:702
+msgid "Image options"
+msgstr ""
+
+#: ../../docs/config.rst:712
+msgid "``imgformat``"
+msgstr ""
+
+#: ../../docs/config.rst:705
+msgid ""
+"This is which image format to render the tiles into. Its value should be "
+"a string containing \"png\", \"jpg\", \"jpeg\" or \"webp\"."
+msgstr ""
+
+#: ../../docs/config.rst:709
+msgid ""
+"For WebP, your PIL/Pillow needs to be built with WebP support. Do keep in"
+" mind that not all browsers support WebP images."
+msgstr ""
+
+#: ../../docs/config.rst:712
+msgid "**Default:** ``\"png\"``"
+msgstr ""
+
+#: ../../docs/config.rst:721
+msgid "``imgquality``"
+msgstr ""
+
+#: ../../docs/config.rst:715
+msgid ""
+"This is the image quality used when saving the tiles into the JPEG or "
+"WebP image format. Its value should be an integer between 0 and 100."
+msgstr ""
+
+#: ../../docs/config.rst:718
+msgid ""
+"For WebP images in lossless mode, it determines how much effort is spent "
+"on compressing the image."
+msgstr ""
+
+#: ../../docs/config.rst:721
+msgid "**Default:** ``95``"
+msgstr ""
+
+#: ../../docs/config.rst:727
+msgid "``imglossless``"
+msgstr ""
+
+#: ../../docs/config.rst:724
+msgid ""
+"Determines whether a WebP image is saved in lossless or lossy mode. Has "
+"no effect on other image formats."
+msgstr ""
+
+#: ../../docs/config.rst:727 ../../docs/config.rst:923
+msgid "**Default:** ``True``"
+msgstr ""
+
+#: ../../docs/config.rst:729
+msgid "``optimizeimg``"
+msgstr ""
+
+#: ../../docs/config.rst:732
+msgid "Using image optimizers will increase render times significantly."
+msgstr ""
+
+#: ../../docs/config.rst:735
+msgid ""
+"With the port to Python 3, the import line has changed. Prefix the "
+"``optimizeimages`` module with a period, so ``from .optimizeimages import"
+" foo, bar``."
+msgstr ""
+
+#: ../../docs/config.rst:739
+msgid ""
+"This option specifies which additional tools overviewer should use to "
+"optimize the filesize of rendered tiles. The tools used must be placed "
+"somewhere where overviewer can find them, for example the \"PATH\" "
+"environment variable or a directory like /usr/bin."
+msgstr ""
+
+#: ../../docs/config.rst:744
+msgid ""
+"The option is a list of Optimizer objects, which are then executed in the"
+" order in which they're specified::"
+msgstr ""
+
+#: ../../docs/config.rst:760
+msgid ""
+"Don't forget to import the optimizers you use in your config file, as "
+"shown in the example above."
+msgstr ""
+
+#: ../../docs/config.rst:763
+msgid "Here is a list of supported image optimization programs:"
+msgstr ""
+
+#: ../../docs/config.rst:793
+msgid "``pngnq``"
+msgstr ""
+
+#: ../../docs/config.rst:766
+msgid ""
+"pngnq quantizes 32-bit RGBA images into 8-bit RGBA palette PNGs. This is "
+"lossy, but reduces filesize significantly. Available settings:"
+msgstr ""
+
+#: ../../docs/config.rst:774
+msgid "``sampling``"
+msgstr ""
+
+#: ../../docs/config.rst:770
+msgid ""
+"An integer between ``1`` and ``10``, ``1`` samples all pixels, is slow "
+"and yields the best quality. Higher values sample less of the image, "
+"which makes the process faster, but less accurate."
+msgstr ""
+
+#: ../../docs/config.rst:774
+msgid "**Default:** ``3``"
+msgstr ""
+
+#: ../../docs/config.rst:786
+msgid "``dither``"
+msgstr ""
+
+#: ../../docs/config.rst:777
+msgid ""
+"Either the string ``\"n\"`` for no dithering, or ``\"f\"`` for Floyd "
+"Steinberg dithering. Dithering helps eliminate colorbanding, sometimes "
+"increasing visual quality."
+msgstr ""
+
+#: ../../docs/config.rst:782
+msgid ""
+"With pngnq version 1.0 (which is what Ubuntu 12.04 ships), the dithering "
+"option is broken. Only the default, no dithering, can be specified on "
+"those systems."
+msgstr ""
+
+#: ../../docs/config.rst:786
+msgid "**Default:** ``\"n\"``"
+msgstr ""
+
+#: ../../docs/config.rst:789
+msgid ""
+"Because of several PIL bugs, only the most zoomed in level has "
+"transparency when using pngnq. The other zoom levels have all "
+"transparency replaced by black. This is *not* pngnq's fault, as pngnq "
+"supports multiple levels of transparency just fine, it's PIL's fault for "
+"not even reading indexed PNGs correctly."
+msgstr ""
+
+#: ../../docs/config.rst:805
+msgid "``optipng``"
+msgstr ""
+
+#: ../../docs/config.rst:796
+msgid ""
+"optipng tunes the deflate algorithm and removes unneeded channels from "
+"the PNG, producing a smaller, lossless output image. It was inspired by "
+"pngcrush. Available settings:"
+msgstr ""
+
+#: ../../docs/config.rst:805 ../../docs/config.rst:815
+msgid "``olevel``"
+msgstr ""
+
+#: ../../docs/config.rst:801
+msgid ""
+"An integer between ``0`` (few optimizations) and ``7`` (many "
+"optimizations). The default should be satisfactory for everyone, higher "
+"levels than the default see almost no benefit."
+msgstr ""
+
+#: ../../docs/config.rst:805 ../../docs/config.rst:815
+msgid "**Default:** ``2``"
+msgstr ""
+
+#: ../../docs/config.rst:824
+msgid "``oxipng``"
+msgstr ""
+
+#: ../../docs/config.rst:808
+msgid "An optipng replacement written in Rust. Works much like optipng."
+msgstr ""
+
+#: ../../docs/config.rst:811
+msgid ""
+"An integer between ``0`` (few optimizations) and ``6`` (many "
+"optimizations). The default should be satisfactory for everyone, higher "
+"levels than the default see almost no benefit."
+msgstr ""
+
+#: ../../docs/config.rst:824
+msgid "``threads``"
+msgstr ""
+
+#: ../../docs/config.rst:818
+msgid ""
+"An integer specifying how many threads per process to use. Note that "
+"Overviewer spawns one oxipng process per Overviewer worker process, so "
+"increasing this value if you already have one Overviewer process per CPU "
+"thread makes little sense, and can actually slow down the rendering."
+msgstr ""
+
+#: ../../docs/config.rst:824 ../../docs/config.rst:883
+msgid "**Default:** ``1``"
+msgstr ""
+
+#: ../../docs/config.rst:840
+msgid "``pngcrush``"
+msgstr ""
+
+#: ../../docs/config.rst:827
+msgid ""
+"pngcrush, like optipng, is a lossless PNG recompressor. If you are able "
+"to do so, it is recommended to use optipng instead, as it generally "
+"yields better results in less time. Available settings:"
+msgstr ""
+
+#: ../../docs/config.rst:840
+msgid "``brute``"
+msgstr ""
+
+#: ../../docs/config.rst:833
+msgid ""
+"Either ``True`` or ``False``. Cycles through all compression methods, and"
+" is very slow."
+msgstr ""
+
+#: ../../docs/config.rst:836
+msgid ""
+"There is practically no reason to ever use this. optipng will beat "
+"pngcrush, and throwing more CPU time at pngcrush most likely won't help. "
+"If you think you need this option, then you are most likely wrong."
+msgstr ""
+
+#: ../../docs/config.rst:840
+msgid "**Default:** ``False``"
+msgstr ""
+
+#: ../../docs/config.rst:868
+msgid "``jpegoptim``"
+msgstr ""
+
+#: ../../docs/config.rst:843
+msgid ""
+"jpegoptim can do both lossy and lossless JPEG optimisation. If no options"
+" are specified, jpegoptim will only do lossless optimisations. Available "
+"settings:"
+msgstr ""
+
+#: ../../docs/config.rst:855
+msgid "``quality``"
+msgstr ""
+
+#: ../../docs/config.rst:848
+msgid ""
+"A number between 0 and 100 that corresponds to the jpeg quality level. If"
+" the input image has a lower quality specified than the output image, "
+"jpegoptim will only do lossless optimisations."
+msgstr ""
+
+#: ../../docs/config.rst:852
+msgid ""
+"If this option is specified and the above condition does not apply, "
+"jpegoptim will do lossy optimisation."
+msgstr ""
+
+#: ../../docs/config.rst:855 ../../docs/config.rst:868
+msgid "**Default:** ``None`` *(= Unspecified)*"
+msgstr ""
+
+#: ../../docs/config.rst:868
+msgid "``target_size``"
+msgstr ""
+
+#: ../../docs/config.rst:858
+msgid ""
+"Either a percentage of the original filesize (e.g. ``\"50%\"``) or a "
+"target filesize in kilobytes (e.g. ``15``). jpegoptim will then try to "
+"reach this as its target size."
+msgstr ""
+
+#: ../../docs/config.rst:861
+msgid "If specified, jpegoptim will do lossy optimisation."
+msgstr ""
+
+#: ../../docs/config.rst:864
+msgid ""
+"This appears to have a greater performance impact than just setting "
+"``quality``. Unless predictable filesizes are a thing you need, you "
+"should probably use ``quality`` instead."
+msgstr ""
+
+#: ../../docs/config.rst:870
+msgid "**Default:** ``[]``"
+msgstr ""
+
+#: ../../docs/config.rst:873
+msgid "Zoom"
+msgstr ""
+
+#: ../../docs/config.rst:875
+msgid "These options control the zooming behavior in the JavaScript output."
+msgstr ""
+
+#: ../../docs/config.rst:883
+msgid "``defaultzoom``"
+msgstr ""
+
+#: ../../docs/config.rst:878
+msgid ""
+"This value specifies the default zoom level that the map will be opened "
+"with. It has to be greater than 0, which corresponds to the most zoomed-"
+"out level. If you use ``minzoom`` or ``maxzoom``, it should be between "
+"those two."
+msgstr ""
+
+#: ../../docs/config.rst:901
+msgid "``maxzoom``"
+msgstr ""
+
+#: ../../docs/config.rst:886
+msgid ""
+"This specifies the maximum, closest in zoom allowed by the zoom control "
+"on the web page. This is relative to 0, the farthest-out image, so "
+"setting this to 8 will allow you to zoom in at most 8 times. This is "
+"*not* relative to ``minzoom``, so setting ``minzoom`` will shave off even"
+" more levels. If you wish to specify how many zoom levels to leave off, "
+"instead of how many total to use, use a negative number here. For "
+"example, setting this to -2 will disable the two most zoomed-in levels."
+msgstr ""
+
+#: ../../docs/config.rst:897
+msgid ""
+"This does not change the number of zoom levels rendered, but allows you "
+"to neglect uploading the larger and more detailed zoom levels if "
+"bandwidth usage is an issue."
+msgstr ""
+
+#: ../../docs/config.rst:901
+msgid "**Default:** Automatically set to most detailed zoom level"
+msgstr ""
+
+#: ../../docs/config.rst:914
+msgid "``minzoom``"
+msgstr ""
+
+#: ../../docs/config.rst:904
+msgid ""
+"This specifies the minimum, farthest away zoom allowed by the zoom "
+"control on the web page. For example, setting this to 2 will disable the "
+"two most zoomed-out levels."
+msgstr ""
+
+#: ../../docs/config.rst:910
+msgid ""
+"This does not change the number of zoom levels rendered, but allows you "
+"to have control over the number of zoom levels accessible via the slider "
+"control."
+msgstr ""
+
+#: ../../docs/config.rst:914
+msgid "**Default:** 0 (zero, which does not disable any zoom levels)"
+msgstr ""
+
+#: ../../docs/config.rst:917
+msgid "Other HTML/JS output options"
+msgstr ""
+
+#: ../../docs/config.rst:923
+msgid "``showlocationmarker``"
+msgstr ""
+
+#: ../../docs/config.rst:920
+msgid ""
+"Allows you to specify whether to show the location marker when accessing "
+"a URL with coordinates specified."
+msgstr ""
+
+#: ../../docs/config.rst:930
+msgid "``base``"
+msgstr ""
+
+#: ../../docs/config.rst:926
+msgid ""
+"Allows you to specify a remote location for the tile folder, useful if "
+"you rsync your map's images to a remote server. Leave a trailing slash "
+"and point to the location that contains the tile folders for each render,"
+" not the tiles folder itself. For example, if the tile images start at "
+"http://domain.com/map/world_day/ you want to set this to "
+"http://domain.com/map/"
+msgstr ""
+
+#: ../../docs/config.rst:945
+msgid "``markers``"
+msgstr ""
+
+#: ../../docs/config.rst:935
+msgid ""
+"This controls the display of markers, signs, and other points of interest"
+" in the output HTML.  It should be a list of dictionaries."
+msgstr ""
+
+#: ../../docs/config.rst:940
+msgid ""
+"Setting this configuration option alone does nothing.  In order to get "
+"markers and signs on our map, you must also run the genPO script.  See "
+"the :doc:`Signs and markers<signs>` section for more details and "
+"documenation."
+msgstr ""
+
+#: ../../docs/config.rst:950
+msgid "``poititle``"
+msgstr ""
+
+#: ../../docs/config.rst:948
+msgid "This controls the display name of the POI/marker dropdown control."
+msgstr ""
+
+#: ../../docs/config.rst:950
+msgid "**Default:** \"Signs\""
+msgstr ""
+
+#: ../../docs/config.rst:954
+msgid "``showspawn``"
+msgstr ""
+
+#: ../../docs/config.rst:953
+msgid ""
+"This is a boolean, and defaults to ``True``. If set to ``False``, then "
+"the spawn icon will not be displayed on the rendered map."
+msgstr ""
+
+#: ../../docs/config.rst:961
+msgid "``bgcolor``"
+msgstr ""
+
+#: ../../docs/config.rst:957
+msgid ""
+"This is the background color to be displayed behind the map. Its value "
+"should be either a string in the standard HTML color syntax or a 4-tuple "
+"in the format of (r,b,g,a). The alpha entry should be set to 0."
+msgstr ""
+
+#: ../../docs/config.rst:961
+msgid "**Default:** ``#1a1a1a``"
+msgstr ""
+
+#: ../../docs/config.rst:971
+msgid "``center``"
+msgstr ""
+
+#: ../../docs/config.rst:964
+msgid ""
+"This is allows you to specify a list or a tuple of Minecraft world "
+"coordinates that should be used as the map's default center, e.g. ``[800,"
+" 64, -334]``."
+msgstr ""
+
+#: ../../docs/config.rst:967
+msgid ""
+"You may also specify only two coordinates, in case they will be "
+"interpreted as X and Z coordinates, and Y is assumed to be ``64`` (sea "
+"level)."
+msgstr ""
+
+#: ../../docs/config.rst:970
+msgid ""
+"**Default:** The coordinates of your spawn, or ``[0, 64, 0]`` if the "
+"regionset has no spawn."
+msgstr ""
+
+#: ../../docs/config.rst:974
+msgid "Map update behavior"
+msgstr ""
+
+#: ../../docs/config.rst:984
+msgid "``rerenderprob``"
+msgstr ""
+
+#: ../../docs/config.rst:979
+msgid ""
+"This is the probability that a tile will be rerendered even though there "
+"may have been no changes to any blocks within that tile. Its value should"
+" be a floating point number between 0.0 and 1.0."
+msgstr ""
+
+#: ../../docs/config.rst:983
+msgid "**Default:** ``0``"
+msgstr ""
+
+#: ../../docs/config.rst:1013
+msgid "``forcerender``"
+msgstr ""
+
+#: ../../docs/config.rst:987
+msgid ""
+"This is a boolean. If set to ``True`` (or any non-false value) then this "
+"render will unconditionally re-render every tile regardless of whether it"
+" actually needs updating or not."
+msgstr ""
+
+#: ../../docs/config.rst:991
+msgid ""
+"The :option:`--forcerender` command line option acts similarly, but with "
+"one important difference. Say you have 3 renders defined in your "
+"configuration file. If you use :option:`--forcerender`, then all 3 of "
+"those renders get re-rendered completely. However, if you just need one "
+"of them re-rendered, that's unnecessary extra work."
+msgstr ""
+
+#: ../../docs/config.rst:997
+msgid ""
+"If you set ``'forcerender': True,`` on just one of those renders, then "
+"just that one gets re-rendered completely. The other two render normally "
+"(only tiles that need updating are rendered)."
+msgstr ""
+
+#: ../../docs/config.rst:1001
+msgid ""
+"You probably don't want to leave this option in your config file, it is "
+"intended to be used temporarily, such as after a setting change, to re-"
+"render the entire map with new settings. If you leave it in, then "
+"Overviewer will end up doing a lot of unnecessary work rendering parts of"
+" your map that may not have changed."
+msgstr ""
+
+#: ../../docs/config.rst:1007 ../../docs/config.rst:1209
+#: ../../docs/config.rst:1229 ../../docs/config.rst:1250
+#: ../../docs/config.rst:1269
+msgid "Example::"
+msgstr ""
+
+#: ../../docs/config.rst:1021
+msgid "``renderchecks``"
+msgstr ""
+
+#: ../../docs/config.rst:1016
+msgid ""
+"This is an integer, and functions as a more complex form of "
+"``forcerender``. Setting it to 1 enables :option:`--check-tiles` mode, "
+"setting it to 2 enables :option:`--forcerender`, and 3 tells Overviewer "
+"to keep this particular render in the output, but otherwise don't update "
+"it. It defaults to 0, which is the usual update checking mode."
+msgstr ""
+
+#: ../../docs/config.rst:1038
+msgid "``changelist``"
+msgstr ""
+
+#: ../../docs/config.rst:1024
+msgid ""
+"This is a string. It names a file where it will write out, one per line, "
+"the path to tiles that have been updated. You can specify the same file "
+"for multiple (or all) renders and they will all be written to the same "
+"file. The file is cleared when The Overviewer starts."
+msgstr ""
+
+#: ../../docs/config.rst:1029
+msgid ""
+"This option is useful in conjunction with a simple upload script, to "
+"upload the files that have changed."
+msgstr ""
+
+#: ../../docs/config.rst:1034
+msgid ""
+"A solution like ``rsync -a --delete`` is much better because it also "
+"watches for tiles that should be *deleted*, which is impossible to convey"
+" with the changelist option. If your map ever shrinks or you've removed "
+"some tiles, you may need to do some manual deletion on the remote side."
+msgstr ""
+
+#: ../../docs/config.rst:1043
+msgid "Custom Rendermodes and Rendermode Primitives"
+msgstr ""
+
+#: ../../docs/config.rst:1045
+msgid ""
+"We have generalized the rendering system. Every rendermode is made up of "
+"a sequence of *rendermode primitives*. These primitives add some "
+"functionality to the render, and stacked together, form a functional "
+"rendermode.  Some rendermode primitives have options you can change. You "
+"are free to create your own rendermodes by defining a list of rendermode "
+"primitives."
+msgstr ""
+
+#: ../../docs/config.rst:1051
+msgid ""
+"There are 9 rendermode primitives. Each has a helper class defined in "
+"overviewer_core.rendermodes, and a section of C code in the C extension."
+msgstr ""
+
+#: ../../docs/config.rst:1054
+msgid ""
+"A list of rendermode primitives defines a rendermode. During rendering, "
+"each rendermode primitive is applied in sequence. For example, the "
+"lighting rendermode consists of the primitives \"Base\" and \"Lighting\"."
+" The Base primitive draws the blocks with no lighting, and determines "
+"which blocks are occluded (hidden). The Lighting primitive then draws the"
+" appropriate shading on each block."
+msgstr ""
+
+#: ../../docs/config.rst:1061
+msgid ""
+"More specifically, each primitive defines a draw() and an is_occluded() "
+"function. A block is rendered if none of the primitives determine the "
+"block is occluded. A block is rendered by applying each primitives' "
+"draw() function in sequence."
+msgstr ""
+
+#: ../../docs/config.rst:1067
+msgid "The Rendermode Primitives"
+msgstr ""
+
+#: ../../docs/config.rst:1081
+msgid "Base"
+msgstr ""
+
+#: ../../docs/config.rst:1070
+msgid ""
+"This is the base of all non-overlay rendermodes. It renders each block "
+"according to its defined texture, and applies basic occluding to hidden "
+"blocks."
+msgstr ""
+
+#: ../../docs/config.rst:1074 ../../docs/config.rst:1091
+#: ../../docs/config.rst:1101 ../../docs/config.rst:1112
+#: ../../docs/config.rst:1124 ../../docs/config.rst:1133
+#: ../../docs/config.rst:1142 ../../docs/config.rst:1154
+#: ../../docs/config.rst:1168 ../../docs/config.rst:1181
+#: ../../docs/config.rst:1192 ../../docs/config.rst:1203
+#: ../../docs/config.rst:1243 ../../docs/config.rst:1261
+msgid "**Options**"
+msgstr ""
+
+#: ../../docs/config.rst:1081 ../../docs/config.rst:1252
+msgid "biomes"
+msgstr ""
+
+#: ../../docs/config.rst:1077
+msgid "Whether to render biome coloring or not. Default: True."
+msgstr ""
+
+#: ../../docs/config.rst:1079
+msgid "Set to False to disable biomes::"
+msgstr ""
+
+#: ../../docs/config.rst:1085
+msgid "Nether"
+msgstr ""
+
+#: ../../docs/config.rst:1084
+msgid ""
+"This doesn't affect the drawing, but occludes blocks that are connected "
+"to the ceiling."
+msgstr ""
+
+#: ../../docs/config.rst:1096
+msgid "HeightFading"
+msgstr ""
+
+#: ../../docs/config.rst:1088
+msgid ""
+"Draws a colored overlay on the blocks that fades them out according to "
+"their height."
+msgstr ""
+
+#: ../../docs/config.rst:1096
+msgid "sealevel"
+msgstr ""
+
+#: ../../docs/config.rst:1094
+msgid ""
+"sealevel of the word you're rendering. Note that the default, 128, is "
+"usually *incorrect* for most worlds. You should probably set this to 64. "
+"Default: 128"
+msgstr ""
+
+#: ../../docs/config.rst:1107
+msgid "Depth"
+msgstr ""
+
+#: ../../docs/config.rst:1099
+msgid "Only renders blocks between the specified min and max heights."
+msgstr ""
+
+#: ../../docs/config.rst:1104
+msgid "min"
+msgstr ""
+
+#: ../../docs/config.rst:1104
+msgid "lowest level of blocks to render. Default: -64"
+msgstr ""
+
+#: ../../docs/config.rst:1107
+msgid "max"
+msgstr ""
+
+#: ../../docs/config.rst:1107
+msgid "highest level of blocks to render. Default: 319"
+msgstr ""
+
+#: ../../docs/config.rst:1115
+msgid "Exposed"
+msgstr ""
+
+#: ../../docs/config.rst:1110
+msgid "Only renders blocks that are exposed (adjacent to a transparent block)."
+msgstr ""
+
+#: ../../docs/config.rst:1115
+msgid "mode"
+msgstr ""
+
+#: ../../docs/config.rst:1115
+msgid ""
+"when set to 1, inverts the render mode, only drawing unexposed blocks. "
+"Default: 0"
+msgstr ""
+
+#: ../../docs/config.rst:1118
+msgid "NoFluids"
+msgstr ""
+
+#: ../../docs/config.rst:1118
+msgid "Don't render fluid blocks (water, lava)."
+msgstr ""
+
+#: ../../docs/config.rst:1127
+msgid "EdgeLines"
+msgstr ""
+
+#: ../../docs/config.rst:1121
+msgid ""
+"Draw edge lines on the back side of blocks, to help distinguish them from"
+" the background."
+msgstr ""
+
+#: ../../docs/config.rst:1127
+msgid "opacity"
+msgstr ""
+
+#: ../../docs/config.rst:1127
+msgid "The darkness of the edge lines, from 0.0 to 1.0. Default: 0.15"
+msgstr ""
+
+#: ../../docs/config.rst:1136
+msgid "Cave"
+msgstr ""
+
+#: ../../docs/config.rst:1130
+msgid ""
+"Occlude blocks that are in direct sunlight, effectively rendering only "
+"caves."
+msgstr ""
+
+#: ../../docs/config.rst:1136
+msgid "only_lit"
+msgstr ""
+
+#: ../../docs/config.rst:1136
+msgid "Only render lit caves. Default: False"
+msgstr ""
+
+#: ../../docs/config.rst:1145
+msgid "Hide"
+msgstr ""
+
+#: ../../docs/config.rst:1139
+msgid ""
+"Hide blocks based on blockid. Blocks hidden in this way will be treated "
+"exactly the same as air."
+msgstr ""
+
+#: ../../docs/config.rst:1145
+msgid "blocks"
+msgstr ""
+
+#: ../../docs/config.rst:1145
+msgid "A list of block ids, or (blockid, data) tuples to hide."
+msgstr ""
+
+#: ../../docs/config.rst:1149
+msgid "DepthTinting"
+msgstr ""
+
+#: ../../docs/config.rst:1148
+msgid ""
+"Tint blocks a color according to their depth (height) from bedrock. "
+"Useful mainly for cave renders."
+msgstr ""
+
+#: ../../docs/config.rst:1163
+msgid "Lighting"
+msgstr ""
+
+#: ../../docs/config.rst:1152
+msgid "Applies lighting to each block."
+msgstr ""
+
+#: ../../docs/config.rst:1157
+msgid "strength"
+msgstr ""
+
+#: ../../docs/config.rst:1157
+msgid "how dark to make the shadows. from 0.0 to 1.0. Default: 1.0"
+msgstr ""
+
+#: ../../docs/config.rst:1160
+msgid "night"
+msgstr ""
+
+#: ../../docs/config.rst:1160
+msgid "whether to use nighttime skylight settings. Default: False"
+msgstr ""
+
+#: ../../docs/config.rst:1163
+msgid "color"
+msgstr ""
+
+#: ../../docs/config.rst:1163
+msgid "whether to use colored light. Default: False"
+msgstr ""
+
+#: ../../docs/config.rst:1170
+msgid "SmoothLighting"
+msgstr ""
+
+#: ../../docs/config.rst:1166
+msgid "Applies smooth lighting to each block."
+msgstr ""
+
+#: ../../docs/config.rst:1170
+msgid "(same as Lighting)"
+msgstr ""
+
+#: ../../docs/config.rst:1174
+msgid "ClearBase"
+msgstr ""
+
+#: ../../docs/config.rst:1173
+msgid ""
+"Forces the background to be transparent. Use this in place of Base for "
+"rendering pure overlays."
+msgstr ""
+
+#: ../../docs/config.rst:1185
+msgid "SpawnOverlay"
+msgstr ""
+
+#: ../../docs/config.rst:1177
+msgid ""
+"Color the map red in areas where monsters can spawn. Either use this on "
+"top of other modes, or on top of ClearBase to create a pure overlay."
+msgstr ""
+
+#: ../../docs/config.rst:1185 ../../docs/config.rst:1196
+msgid "overlay_color"
+msgstr ""
+
+#: ../../docs/config.rst:1184
+msgid ""
+"custom color for the overlay in the format (r,g,b,a). If not defined a "
+"red color is used."
+msgstr ""
+
+#: ../../docs/config.rst:1196
+msgid "SlimeOverlay"
+msgstr ""
+
+#: ../../docs/config.rst:1188
+msgid ""
+"Color the map green in chunks where slimes can spawn. Either use this on "
+"top of other modes, or on top of ClearBase to create a pure overlay."
+msgstr ""
+
+#: ../../docs/config.rst:1195
+msgid ""
+"custom color for the overlay in the format (r,g,b,a). If not defined a "
+"green color is used."
+msgstr ""
+
+#: ../../docs/config.rst:1211
+msgid "MineralOverlay"
+msgstr ""
+
+#: ../../docs/config.rst:1199
+msgid ""
+"Color the map according to what minerals can be found underneath. Either "
+"use this on top of other modes, or on top of ClearBase to create a pure "
+"overlay."
+msgstr ""
+
+#: ../../docs/config.rst:1211
+msgid "minerals"
+msgstr ""
+
+#: ../../docs/config.rst:1206
+msgid ""
+"A list of (blockid, (r, g, b)) tuples to use as colors. If not provided, "
+"a default list of common minerals is used."
+msgstr ""
+
+#: ../../docs/config.rst:1237
+msgid "StructureOverlay"
+msgstr ""
+
+#: ../../docs/config.rst:1214
+msgid ""
+"Color the map according to patterns of blocks. With this rail overlays or"
+" overlays for other small structures can be realized. It can also be a "
+"MineralOverlay with alpha support."
+msgstr ""
+
+#: ../../docs/config.rst:1218
+msgid ""
+"This Overlay colors according to a patterns that are specified as "
+"multiple tuples of the form ``(relx, rely, relz, blockid)``. So by "
+"specifying ``(0, -1, 0, 4)`` the block below the current one has to be a "
+"cobblestone."
+msgstr ""
+
+#: ../../docs/config.rst:1223
+msgid ""
+"One color is then specified as ``((relblockid1, relblockid2, ...), (r, g,"
+" b, a))`` where the ``relblockid*`` are relative coordinates and the "
+"blockid as specified above. The ``relblockid*`` must match all at the "
+"same time for the color to apply."
+msgstr ""
+
+#: ../../docs/config.rst:1234
+msgid ""
+"In this example all rails(66) on top of cobblestone are rendered in pure "
+"red. And all powerrails(27) are rendered in green."
+msgstr ""
+
+#: ../../docs/config.rst:1237
+msgid "If ``structures`` is not provided, a default rail coloring is used."
+msgstr ""
+
+#: ../../docs/config.rst:1252
+msgid "BiomeOverlay"
+msgstr ""
+
+#: ../../docs/config.rst:1240
+msgid ""
+"Color the map according to the biome at that point. Either use on top of "
+"other modes or on top of ClearBase to create a pure overlay."
+msgstr ""
+
+#: ../../docs/config.rst:1246
+msgid ""
+"A list of (\"biome name\", (r, g, b)) tuples to use as colors. Any biome "
+"not specified won't be highlighted. If not provided then a default list "
+"of biomes and colors is used."
+msgstr ""
+
+#: ../../docs/config.rst:1275
+msgid "HeatmapOverlay"
+msgstr ""
+
+#: ../../docs/config.rst:1255
+msgid ""
+"Color the map according to when a chunk was last visited. The color for "
+"Timestamps between t_invisible and t_full will be interpolated between 0 "
+"and 255. This RenderPrimitive might require use of the forcerender "
+"option. Otherwise the Overlay might not get updated for not visited "
+"chunks (resulting in them always being the brightest color, as if "
+"recently visited)."
+msgstr ""
+
+#: ../../docs/config.rst:1264
+msgid "t_invisible"
+msgstr ""
+
+#: ../../docs/config.rst:1264
+msgid ""
+"The timestamp when the overlay will get invisible. The default is 30 days"
+" ago."
+msgstr ""
+
+#: ../../docs/config.rst:1267
+msgid "t_now"
+msgstr ""
+
+#: ../../docs/config.rst:1267
+msgid ""
+"The timestamp when the overlay will be fully visible. The default is "
+"today."
+msgstr ""
+
+#: ../../docs/config.rst:1278
+msgid "Defining Custom Rendermodes"
+msgstr ""
+
+#: ../../docs/config.rst:1280
+msgid ""
+"Each rendermode primitive listed above is a Python *class* that is "
+"automatically imported in the context of the config file (They come from "
+"overviewer_core.rendermodes). To define your own rendermode, simply "
+"define a list of rendermode primitive *objects* like so::"
+msgstr ""
+
+#: ../../docs/config.rst:1287
+msgid ""
+"If you want to specify any options, they go as parameters to the "
+"rendermode primitive object's constructor::"
+msgstr ""
+
+#: ../../docs/config.rst:1293
+msgid "Then you can use your new rendermode in your render definitions::"
+msgstr ""
+
+#: ../../docs/config.rst:1302
+msgid ""
+"Note the lack of quotes around ``my_rendermode``. This is necessary since"
+" you are referencing the previously defined list, not one of the built-in"
+" rendermodes."
+msgstr ""
+
+#: ../../docs/config.rst:1307
+msgid "Built-in Rendermodes"
+msgstr ""
+
+#: ../../docs/config.rst:1309
+msgid ""
+"The built-in rendermodes are nothing but pre-defined lists of rendermode "
+"primitives for your convenience. Here are their definitions::"
+msgstr ""
+

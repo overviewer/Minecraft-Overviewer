@@ -1,0 +1,370 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/faq.rst:3
+msgid "Frequently Asked Questions"
+msgstr ""
+
+#: ../../docs/faq.rst:9
+msgid "General Questions"
+msgstr ""
+
+#: ../../docs/faq.rst:12
+msgid "Does the Overviewer work with mod blocks?"
+msgstr ""
+
+#: ../../docs/faq.rst:14
+msgid ""
+"The Overviewer will render the world, but none of the blocks added by "
+"mods will be visible. Currently, the blocks Overviewer supports are "
+"hardcoded, and because there is no official Minecraft modding API as of "
+"the time of writing, supporting mod blocks is not trivial."
+msgstr ""
+
+#: ../../docs/faq.rst:20
+msgid "Can I view Overviewer maps without having an internet connection?"
+msgstr ""
+
+#: ../../docs/faq.rst:22
+msgid ""
+"Yes, absolutely. The Overviewer switched away from the Google Maps API "
+"and now uses Leaflet. All files which Overviewer needs are included in "
+"the output, so even if you have no internet connection, you will still be"
+" able to view the map without any issues."
+msgstr ""
+
+#: ../../docs/faq.rst:28
+msgid "When my map expands, I see remnants of another zoom level."
+msgstr ""
+
+#: ../../docs/faq.rst:30
+msgid ""
+"When your map expands (\"Your map seems to have expanded beyond its "
+"previous bounds\") you may see tiles at a zoom level that shouldn't be "
+"there, usually around the borders. This is probably not a bug, but is "
+"typically caused by copying the map tiles from their render destination "
+"to another location (such as a web server)."
+msgstr ""
+
+#: ../../docs/faq.rst:36
+msgid ""
+"When you're copying the rendered map, you need to be sure files that "
+"*don't* exist in the source are *deleted* in the destination."
+msgstr ""
+
+#: ../../docs/faq.rst:39
+msgid ""
+"Explanation: When Overviewer re-arranges tiles to make room for another "
+"zoom level, it moves some tiles at a particular zoom level and places "
+"them at a higher zoom level. The tiles that used to be at that zoom level"
+" should no longer exist there, but if you're copying tiles, there is no "
+"mechanism to *delete* those files at the copy destination."
+msgstr ""
+
+#: ../../docs/faq.rst:45
+msgid ""
+"If that explanation doesn't make full sense, then just know that you must"
+" do one of the following:"
+msgstr ""
+
+#: ../../docs/faq.rst:48
+msgid "Render the tiles directly to the destination."
+msgstr ""
+
+#: ../../docs/faq.rst:50
+msgid ""
+"Copy the tiles from the render destination in a way that deletes extra "
+"files, such as using ``rsync`` with ``--delete``."
+msgstr ""
+
+#: ../../docs/faq.rst:53
+msgid ""
+"Erase and re-copy the files at the final destination when the map "
+"expands. Map expansions double the width and height of the map, so you "
+"will eventually hit a map size that is unlikely to need another level."
+msgstr ""
+
+#: ../../docs/faq.rst:58
+msgid ""
+"You've added a new feature or changed textures, but it's not showing up "
+"on my map!"
+msgstr ""
+
+#: ../../docs/faq.rst:60
+msgid ""
+"Some new features will only show up in newly-rendered areas. Use the "
+":option:`--forcerender` option to update the entire map. If you have a "
+"really large map and don't want to re-render everything, take a look at "
+"the :ref:`rerenderprob<rerenderprob>` configuration option."
+msgstr ""
+
+#: ../../docs/faq.rst:66
+msgid "The background color of the map is black, and I don't like it!"
+msgstr ""
+
+#: ../../docs/faq.rst:68
+msgid ""
+"You can change the background color by specifying a new one in the "
+"configuration file. See the :doc:`config` page for more details."
+msgstr ""
+
+#: ../../docs/faq.rst:72
+msgid ""
+"I downloaded the Windows version but when I double-click it, the window "
+"closes real fast."
+msgstr ""
+
+#: ../../docs/faq.rst:74
+msgid ""
+"The Overviewer is a command line program and must be run from a command "
+"line. It is necessary to become at least a little familiar with a command"
+" line to run The Overviewer (if you have no interest in this, perhaps "
+"this isn't the mapping program for you). A brief guide is provided on the"
+" :doc:`win_tut/windowsguide` page."
+msgstr ""
+
+#: ../../docs/faq.rst:80
+msgid ""
+"Unfortunately, A full tutorial of the Windows command line is out of "
+"scope for this documentation; consult the almighty Google for tutorials "
+"and information on the Windows command line. (If you would like to "
+"contribute a short tutorial to these docs, please do!)"
+msgstr ""
+
+#: ../../docs/faq.rst:85
+msgid ""
+"Batch files are another easy way to run the Overviewer without messing "
+"with command lines, but information on how to do this has also not been "
+"written."
+msgstr ""
+
+#: ../../docs/faq.rst:88
+msgid ""
+"On a related note, we also welcome contributions for a graphical "
+"interface for the Overviewer."
+msgstr ""
+
+#: ../../docs/faq.rst:92
+msgid "The Overviewer is eating up all my memory!"
+msgstr ""
+
+#: ../../docs/faq.rst:94
+msgid ""
+"We have written The Overviewer with memory efficiency in mind. On even "
+"the largest worlds we have at our disposal to test with, it should not be"
+" taking more than a gigabyte or two. It varies of course, that number is "
+"only an estimate, but most computers with a reasonable amount of RAM "
+"should run just fine."
+msgstr ""
+
+#: ../../docs/faq.rst:100
+msgid ""
+"If you are seeing exorbitant memory usage, then it is likely either a bug"
+" or a subtly corrupted world. Please file an issue or come talk to us on "
+"IRC so we can take a look! See :ref:`help`."
+msgstr ""
+
+#: ../../docs/faq.rst:105
+msgid "How can I log The Overviewer's output to a file?"
+msgstr ""
+
+#: ../../docs/faq.rst:107
+msgid ""
+"If you are on a UNIX-like system like MacOSX or Linux, you can use shell "
+"redirection to write the output into a file::"
+msgstr ""
+
+#: ../../docs/faq.rst:112
+msgid ""
+"What this does is redirect the previous commands standard output to the "
+"file \"renderlog.log\", and redirect the standard error to the standard "
+"output. The file will be overwritten each time you run this command line;"
+" to simply append the output to the file, use two greater than signs::"
+msgstr ""
+
+#: ../../docs/faq.rst:122
+msgid "I've deleted some sections of my world, but they still appear in the map."
+msgstr ""
+
+#: ../../docs/faq.rst:123
+msgid ""
+"Okay, so making edits to your world in e.g. worldedit has some caveats, "
+"especially regarding deleting sections of your world."
+msgstr ""
+
+#: ../../docs/faq.rst:126
+msgid "This faq also applies to using the :ref:`crop<crop>` option."
+msgstr ""
+
+#: ../../docs/faq.rst:128
+msgid ""
+"Under normal operation with vanilla Minecraft and no external tools "
+"fiddling with the world, Overviewer performs correctly, rendering areas "
+"that have changed, and everything is good."
+msgstr ""
+
+#: ../../docs/faq.rst:132
+msgid ""
+"Often with servers one user will travel reeeeally far out and cause a lot"
+" of extra work for the server and for The Overviewer, so you may be "
+"tempted to delete parts of your map. This can cause problems, so read on "
+"to learn what you can do about it."
+msgstr ""
+
+#: ../../docs/faq.rst:137
+msgid ""
+"First some explanation: Until recently (Mid May 2012) The Overviewer did "
+"not have any facility for detecting parts of the map that should no "
+"longer exist. Remember that the map is split into small tiles. When "
+"Overviewer starts up, the first thing it does is calculate which tiles "
+"should exist and which should be updated. This means it does not check or"
+" even look at tiles that should not exist. This means that parts of your "
+"world which have been deleted will hang around on your map because "
+"Overviewer won't even look at those tiles and notice they shouldn't be "
+"there. You may even see strange artifacts around the border as tiles that"
+" should exist get updated."
+msgstr ""
+
+#: ../../docs/faq.rst:147
+msgid ""
+"Now, with the :option:`--check-tiles` option, The Overviewer *will* look "
+"for and remove tiles that should no longer exist. So you can render your "
+"map once with that option and all those extra tiles will get removed "
+"automatically. However, this is only half of the solution. The other half"
+" is making sure the tiles along the border are re-rendered, or else it "
+"will look like your map is being cut off."
+msgstr ""
+
+#: ../../docs/faq.rst:153
+msgid ""
+"Explanation: The tiles next to the ones that were removed are tiles that "
+"should continue to exist, but parts of them have chunks that no longer "
+"exist. Those tiles then should be re-rendered to show that. However, "
+"since tile updates are triggered by the chunk last-modified timestamp "
+"changing, and the chunks that still exist have *not* been updated, those "
+"tiles will not get re-rendered."
+msgstr ""
+
+#: ../../docs/faq.rst:159
+msgid ""
+"The consequence of this is that your map will end up looking cut-off "
+"around the new borders that were created by the parts you deleted. You "
+"can fix this one of two ways."
+msgstr ""
+
+#: ../../docs/faq.rst:163
+msgid ""
+"You can run a render with :option:`--forcerender`. This has the "
+"unfortunate side-effect of re-rendering *everything* and doing much more "
+"work than is necessary."
+msgstr ""
+
+#: ../../docs/faq.rst:167
+msgid ""
+"Manually navigate the tile directory hierarchy and manually delete tiles "
+"along the edge. Then run once again with :option:`--check-tiles` to re-"
+"render the tiles you just deleted. This may not be as bad as it seems. "
+"Remember each zoom level divides the world into 4 quadrants: 0, 1, 2, and"
+" 3 are the upper left, upper right, lower left, and lower right. It "
+"shouldn't be too hard to navigate it manually to find the parts of the "
+"map that need re-generating."
+msgstr ""
+
+#: ../../docs/faq.rst:174
+msgid ""
+"The third non-option is to not worry about it. The problem will fix "
+"itself if people explore near there, because that will force that part of"
+" the map to update."
+msgstr ""
+
+#: ../../docs/faq.rst:179
+msgid "My map is zoomed out so far that it looks (almost) blank."
+msgstr ""
+
+#: ../../docs/faq.rst:181
+msgid ""
+"We see this quite a bit, and seems to stem from a bug in the Minecraft "
+"terrain generation."
+msgstr ""
+
+#: ../../docs/faq.rst:184
+msgid ""
+"Explanation: Minecraft generates chunks of your world as it needs them. "
+"When Overviewer goes to render your map, it looks at how big the world "
+"is, and calculates how big the maps needs to be in order to fit it all "
+"in. Occasionally, we see that Minecraft has generated a few chunks of the"
+" world extremely far away from the main part of the world. These "
+"erroneous chunks have most likely not been explored [*]_ and should not "
+"exist."
+msgstr ""
+
+#: ../../docs/faq.rst:191
+msgid ""
+"There are two solutions. The preferred is to delete the offending chunks."
+" Open up your region folder of your world and look at the region file "
+"names. They are numbered ``r.##.##.mcr`` where ``##`` is a number. The "
+"two numbers indicate the coordinates of that region file. Look for region"
+" files with coordinates much larger in magnitude than any others. Most "
+"likely you will find around 1–3 region files with coordinates much larger"
+" than any others. Delete or otherwise remove those files, and re-render "
+"your map."
+msgstr ""
+
+#: ../../docs/faq.rst:199
+msgid ""
+"The other option is to use the :ref:`crop<crop>` option to tell "
+"Overviewer not to render all of your map, but instead to only render the "
+"specified region."
+msgstr ""
+
+#: ../../docs/faq.rst:202
+msgid "As always, if you need assistance, come chat with us on :ref:`irc<help>`."
+msgstr ""
+
+#: ../../docs/faq.rst:204
+msgid ""
+"They could also have been triggered by an accidental teleport where the "
+"coordinates were typed in manually."
+msgstr ""
+
+#: ../../docs/faq.rst:207
+msgid ""
+"I want to put manual POI definitions or other parts of my config into a "
+"separate file."
+msgstr ""
+
+#: ../../docs/faq.rst:209
+msgid ""
+"This can be achieved by creating a module and then importing it in your "
+"config.  First, create a file containing your markers definitions. We'll "
+"call it ``manualmarkers.py``."
+msgstr ""
+
+#: ../../docs/faq.rst:219
+msgid ""
+"The final step is to import the very basic module you've just created "
+"into your config.  In your config, do the following"
+msgstr ""
+
+#: ../../docs/faq.rst:239
+msgid "Now you should be all set."
+msgstr ""
+

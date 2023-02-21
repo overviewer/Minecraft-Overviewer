@@ -1,0 +1,379 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/index.rst:7
+msgid "The Minecraft Overviewer"
+msgstr "El Overviewer de Minecraft"
+
+#: ../../docs/index.rst:9
+msgid ""
+"See also the `Github Homepage`_ and the `Updates Blog`_, and follow us on"
+" our `Twitter account`_."
+msgstr ""
+"Visita nuestra página de `Github <https://github.com/overviewer/Minecraft-Overviewer>`_, "
+"nuestro `Blog de Actualizaciones <https://overviewer.org/blog/>`_ y seguinos en nuestra "
+"`cuenta de Twitter <https://twitter.com/mcoverviewer>`_."
+
+#: ../../docs/index.rst:19
+msgid "Introduction"
+msgstr "Introducción"
+
+#: ../../docs/index.rst:20
+msgid ""
+"The Minecraft Overviewer is a command-line tool for rendering high-"
+"resolution maps of Minecraft Java Edition worlds. It generates a set of "
+"static html and image files and uses Leaflet to display a nice "
+"interactive map."
+msgstr ""
+"El Overviewer para Minecraft es una herramienta de comandos "
+"para renderizar mapas de alta resolución de Minecraft Edición Java. "
+"Este genera una serie de imágenes y archivos html, y usa Leaflet para "
+"mostrar un mapa interactivo."
+#: ../../docs/index.rst:24
+msgid ""
+"The Overviewer has been in active development for several years and has "
+"many features, including day and night lighting, cave rendering, mineral "
+"overlays, and many plugins for even more features! It is written mostly "
+"in Python with critical sections in C as an extension module."
+msgstr ""
+"El Overviewer estuvo bajo desarrollo durante varios años y tiene varias "
+"funcionalidades, incluyendo iluminación de día y de noche, renderizado de "
+"cuevas, capas de minerales y ¡varias extensiones para más! Está escrito "
+"principalmente en Python, con algunas secciones críticas en C."
+
+#: ../../docs/index.rst:29
+msgid ""
+"For a simple example of what your renders will look like, head over to "
+"`The \"Exmaple\" Map <https://overviewer.org/example/>`_. For more user-"
+"contributed examples, see `The Example Wiki Page "
+"<https://github.com/overviewer/Minecraft-Overviewer/wiki/Map-examples>`_."
+msgstr ""
+"Para un ejemplo simple de como se vería un renderizado, vaya a `Mapa de Ejemplo "
+"<https://overviewer.org/example/>`_. Para ver más ejemplos de usuarios, vea la "
+"`Página de Ejemplos <https://github.com/overviewer/Minecraft-Overviewer/wiki/Map-examples>`_."
+
+#: ../../docs/index.rst:36
+msgid "Documentation Contents"
+msgstr "Contenidos"
+
+#: ../../docs/index.rst:54
+msgid "Features"
+msgstr "Características"
+
+#: ../../docs/index.rst:56
+msgid ""
+"Renders high resolution images of your world, lets you \"deep zoom\" and "
+"see details!"
+msgstr ""
+"¡Renderizados de muy alta calidad de tus mundos, que permiten realizar un "
+"\"Acercamiento profundo\" y ver detalles!"
+
+#: ../../docs/index.rst:59
+msgid ""
+"Gloriously awesome smooth lighting is here! "
+"(:ref:`rendermode<option_rendermode>` name is ``smooth_lighting``)"
+msgstr ""
+"¡La absolutamente increíble iluminación suave está aquí! "
+"(El nombre del :ref:`modo de renderizado<option_rendermode>` es ``smooth_lighting``)"
+
+#: ../../docs/index.rst:62
+msgid ""
+"Customizable textures! Pulls textures straight from your installed "
+"texture pack!"
+msgstr ""
+"¡Texturas perzonalizables! ¡Pon texturas directamente de tus "
+"pack de texturas favoritos!"
+
+#: ../../docs/index.rst:65
+msgid "Choose from four rendering angles."
+msgstr "Elige de cuatro ángulos de renderizado."
+
+#: ../../docs/index.rst:67
+msgid "Generates a Leaflet powered map!"
+msgstr "¡Genera un mapa impulsado por Leaflet!"
+
+#: ../../docs/index.rst:69
+msgid "Runs on Linux, Windows, and Mac platforms!"
+msgstr "¡Corre en plataformas Linux, Windows y Mac!"
+
+#: ../../docs/index.rst:71
+msgid ""
+"Renders efficiently in parallel, using as many simultaneous processes as "
+"you want!"
+msgstr ""
+"Renderiza eficientemente en paralelo, ¡Usando tantos procesos simultáneos "
+"como quieras!"
+
+#: ../../docs/index.rst:74
+msgid ""
+"*Only* requires: Python, Numpy, and PIL (all of which are included in the"
+" Windows download!)"
+msgstr ""
+"*Solo* requiere: Python, Numpy y PIL (¡Los cuales están incluidos en la "
+"descarga de Windows!"
+
+#: ../../docs/index.rst:77
+msgid ""
+"Utilizes caching to speed up subsequent renderings of your world. Only "
+"parts that need re-rendering are re-rendered."
+msgstr ""
+"Utiliza caches para acelerar las renderizaciones posteriores de su mundo. "
+"Solo se vuelven a renderizar las partes que son necesarias."
+
+#: ../../docs/index.rst:80
+msgid ""
+"Throw the output directory up on a web server to share your Minecraft "
+"world with the internet!"
+msgstr ""
+"Pon la carpeta de salida en un servidor web para compartir tus mundos "
+"con todo internet."
+
+#: ../../docs/index.rst:83
+msgid ""
+"Run The Overviewer from a command line or on a cron schedule for "
+"constantly updated maps! Run it for your Minecraft server world to "
+"provide your users with a detailed map!"
+msgstr ""
+"Corre El Overviewer desde el símbolo del sistema o en un cronograma "
+"para tener tus mapas siempre actualizados. Usalo para brindarle a tus "
+"usuarios un mapa de calidad con mucho detalle."
+
+#: ../../docs/index.rst:87
+msgid "Supports Nether and The End dimensions!"
+msgstr "¡Soporta las dimensiones del Inframundo y el Fin!"
+
+#: ../../docs/index.rst:89
+msgid "Built-in support for Biomes!"
+msgstr "¡Soporte de biomas incluido!"
+
+#: ../../docs/index.rst:92
+msgid "What The Overviewer is not"
+msgstr "Que no es El Overviewer"
+
+#: ../../docs/index.rst:93
+msgid "Full disclosure disclaimers of what The Overviewer is *not*."
+msgstr "Descargo de responsabilidad de lo que *no* es El Overviewer"
+
+#: ../../docs/index.rst:95
+msgid ""
+"It does not run fast. Because of the high level of detail, initial "
+"renders of a world can take some time. Expect minutes for medium worlds, "
+"hours for large to huge worlds. Subsequent renders are *much* faster due "
+"to the caching."
+msgstr ""
+"No corre rápido. Dado al alto nivel de detalle, renderizaciones iniciales "
+"de un mundo pueden llevar un tiempo. Cuenta con varios minutos para mundos "
+"medianos, y hasta horas para mundos largos y gigantes. Las renderizaciones "
+"posteriores son *mucho más* rápidas dado al almacenamiento en caché"
+
+#: ../../docs/index.rst:99
+msgid ""
+"Also note that speed is improving all the time. We continually make "
+"efficiency improvements to The Overviewer. Besides, for the level of "
+"detail provided, our users consider it worth the time!"
+msgstr ""
+"También ten en cuenta que la velocidad está mejorando todo el tiempo. "
+"Estamos continuamente haciendo mejoras en la eficiencia del Overviewer. "
+"Por otro lado, dado al nivel de detalle provisto, nuestros usuarios consideran "
+"que vale la pena la demora."
+
+#: ../../docs/index.rst:103
+msgid ""
+"The Overviewer is not targeted at end users. We mainly see Overviewer "
+"fitting in best with server operators, rendering their server's map for "
+"all users to view."
+msgstr ""
+"El Overviewer no esta dirigido principalmente a jugadores y usuarios finales. "
+"Nosotros vemos al programa encajando mejor con operadores de servidores, para "
+"que sus usuarios vean el mapa del servidor."
+
+#: ../../docs/index.rst:107
+msgid ""
+"You are welcome to use The Overviewer for your single player worlds, and "
+"it will work just fine. However, since the only interface is currently "
+"command line based, you will need to know a bit about the command line in"
+" order to operate The Overviewer."
+msgstr ""
+"Eres bienvenido a usar El Overviewer para tus mundos de un jugador, y funcionará "
+"sin problemas. Sin embargo, como la interfaz es a traves de comandos, deberás saber "
+"un poco sobre esto para poder operar al programa."
+
+
+#: ../../docs/index.rst:112
+msgid "The Overviewer does not support Bedrock/Win10/Portable Edition worlds."
+msgstr "El Overviewer no soporta mundos de versiones Bedrock/Win10/Portable."
+
+#: ../../docs/index.rst:114
+msgid "The Overviewer is not a potato."
+msgstr "El Overviewer no es una papa."
+
+#: ../../docs/index.rst:117
+msgid "Requirements"
+msgstr "Requerimientos"
+
+#: ../../docs/index.rst:118
+msgid ""
+"This is a quick list of what's required to run The Overviewer. It runs on"
+" Windows, Mac, and Linux as long as you have these software packages "
+"installed:"
+msgstr ""
+"Esta es una lista rápida de que se requiere para correr el programa. Este "
+"corre en Windows, Mac y Linux mientras tengas estos paquetes instalados:"
+
+#: ../../docs/index.rst:121
+msgid "Python 3.4 or above (we are no longer compatible with Python 2.x)"
+msgstr "Python 3.4 o superior (ya no somos compatibles con Python 2.x)"
+
+#: ../../docs/index.rst:123
+msgid "PIL (Python Imaging Library) or Pillow"
+msgstr "PIL (Libreria de Imágenes de Python) o Pillow"
+
+#: ../../docs/index.rst:125
+msgid "Numpy"
+msgstr "Numpy"
+
+#: ../../docs/index.rst:127
+msgid ""
+"Either a Minecraft Client installed or a textures/ folder for the "
+"textures (possibly from a texturepack)"
+msgstr ""
+"El cliente de Minecraft instalado o texturas/ carpeta para texturas "
+"(Posiblemente de un pack de texturas)"
+
+#: ../../docs/index.rst:129
+msgid ""
+"The first three are included in the Windows download. Also, there are "
+"additional requirements for compiling it (like a compiler). More details "
+"are available in either the :doc:`Building <building>` or "
+":doc:`Installing <installing>` pages."
+msgstr ""
+"Los primeros tres están incluidos en la descarga de Windows. Además, hay "
+"requirimientos adicionales para compilar (como un compilador). Más detalles "
+"están disponibles en las páginas sobre :doc:`Compilar <building>` o en :doc:`Instalar <installing>`."
+
+#: ../../docs/index.rst:134
+msgid "Getting Started"
+msgstr "Guía de Inicio"
+
+#: ../../docs/index.rst:136
+msgid ""
+"The Overviewer works with Linux, Mac, and Windows! We provide Windows and"
+" Debian built executables for your convenience. Find them as well as the "
+"full sources on our `Github Homepage`_."
+msgstr ""
+"¡El Overviewer funciona en Linux, Mac o Windows! Nosotros proveemos de los "
+"executables para Windows y Debian por tu comodidad. Encuentra los executables "
+"como tambien la fuente completa en nuestra "
+"página de `Github <https://github.com/overviewer/Minecraft-Overviewer>`_."
+
+#: ../../docs/index.rst:140
+msgid ""
+"**If you are running Windows, Debian, or Ubuntu and would like the pre-"
+"built packages and don't want to have to compile anything yourself**, "
+"head to the :doc:`installing` page."
+msgstr ""
+"**Si estás corriendo Windows, Debian o Ubuntu y te gustaría los paquetes pre-"
+"armados y no quieres compilar nada por ti mismo**, ve a :doc:`Instalar <installing>`."
+
+#: ../../docs/index.rst:144
+msgid ""
+"**Running Windows and not familiar with the command line?** Head to the "
+":doc:`win_tut/windowsguide` page."
+msgstr ""
+"**Corres Windows y no estás familiarizado con el Símbolo del sistema?** "
+"Ve a :doc:`Guía de Windows <win_tut/windowsguide>`."
+
+#: ../../docs/index.rst:147
+msgid ""
+"**If you would like to build the Overviewer from source yourself (it's "
+"not that bad)**, head to the :doc:`Building <building>` page."
+msgstr ""
+"**Si te gustaría compilar El Overviewer desde la fuente tú mismo (no está "
+"tan mal)**, ve a :doc:`Compilar <building>`."
+
+#: ../../docs/index.rst:150
+msgid ""
+"**For all other platforms** you will need to build it yourself. "
+":doc:`building`."
+msgstr ""
+"**Para otras plataformas** deberás compilarlo tú mismo. "
+":doc:`Compilar el Overviewer desde la fuente <building>`."
+
+#: ../../docs/index.rst:153
+msgid ""
+"**After you have The Overviewer built/installed** see :doc:`running` and "
+":doc:`config`."
+msgstr ""
+"**Cuando tengas el Overviewer compilado/instalado** vea "
+":doc:`Correr el Overviewer <running>` y :doc:`El archivo de Configuración<config>`."
+
+
+#: ../../docs/index.rst:159
+msgid "Help"
+msgstr "Ayuda"
+
+#: ../../docs/index.rst:161
+msgid ""
+"**IF YOU NEED HELP COMPILING OR RUNNING THE OVERVIEWER** feel free to "
+"chat with us live in IRC: #overviewer on Libera.Chat. There's usually "
+"someone on there that can help you out. Not familiar with IRC? `Use the "
+"web client <https://overviewer.org/irc>`_. (If there's no immediate "
+"response, wait around or try a different time of day; we have to sleep "
+"sometime)"
+msgstr ""
+"**SI NECESITAS AYUDA COMPILANDO O CORRIENDO EL OVERVIEWER** siéntete libre "
+"de contractarnos en IRC: #overviewer en Libera.Chat. Usualmente hay alguien "
+"ahí que te pueda ayudar. No conoces IRC? `Uso del cliente web "
+"<https://overviewer.org/irc>`_. (Si no hay respuesta inmediata, "
+"espera un rato o prueba un horario diferente; a veces tenemos que dormir)."
+
+#: ../../docs/index.rst:167
+msgid "Also check our :doc:`Frequently Asked Questions <faq>` page."
+msgstr "También visita nuestra pagina de :doc:`Preguntas Frecuentes <faq>`."
+
+#: ../../docs/index.rst:169
+msgid ""
+"If you think you've found a bug or other issue, file an issue on our "
+"`Issue Tracker <https://github.com/overviewer/Minecraft-"
+"Overviewer/issues>`_. Filing or commenting on an issue sends a notice to "
+"our IRC channel, so the response time is often very good!"
+msgstr ""
+"Si pensas que descubriste algun error o problema, archiva el problema "
+"en nuestro `Seguidor de Errores <https://github.com/overviewer/Minecraft-"
+"Overviewer/issues>`_. Comentar un problema manda una notificación a nuestro "
+"canal IRC, así que nuestros tiempos de respuesta suelen ser muy buenos."
+
+#: ../../docs/index.rst:175
+msgid "Indices and tables"
+msgstr "Índices y tablas"
+
+#: ../../docs/index.rst:177
+msgid ":ref:`genindex`"
+msgstr ":ref:`Índice <genindex>`"
+
+#: ../../docs/index.rst:178
+msgid ":ref:`modindex`"
+msgstr ":ref:`Índice de Modulos <modindex>`"
+
+#: ../../docs/index.rst:179
+msgid ":ref:`search`"
+msgstr ":ref:`Página de Búsqueda<search>`"
+
