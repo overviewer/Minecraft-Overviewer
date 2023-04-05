@@ -16,6 +16,10 @@ Blog:
     https://overviewer.org/blog/
 
 
+**PLEASE NOTE: Overviewer is currently unmaintained. PRs will not be merged
+and issues will not be addressed. The website and repository will remain online
+and accessible.**
+
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
 maps of Minecraft worlds. It generates a set of static html and image files and
 uses Leaflet to display a nice interactive map.
