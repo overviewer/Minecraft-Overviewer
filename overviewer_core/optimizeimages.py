@@ -15,6 +15,7 @@
 
 import os
 import subprocess
+from PIL import Image
 
 
 class Optimizer:
@@ -204,6 +205,27 @@ class oxipng(Optimizer, PNGOptimizer):
         Optimizer.fire_and_forget(self, [self.binaryname, "-o" +
                                          str(self.olevel), "-q", "-t" +
                                          str(self.threads), img])
+
+    def is_crusher(self):
+        return True
+
+
+class pillowpng(Optimizer, PNGOptimizer):
+
+    def __init__(self, colors=256, dither=True):
+        if colors < 2:
+            raise Exception("You can't use less than 2 colors")
+        self.colors = colors
+        self.dither = dither
+
+    def optimize(self, img):
+        orig = Image.open(img)
+        conv = orig.convert('P', palette=Image.ADAPTIVE, colors=self.colors,
+                            dither=Image.FLOYDSTEINBERG if self.dither else Image.NONE)
+        conv.save(img, format='PNG', optimize=True)
+
+    def check_availability(self):
+        return True
 
     def is_crusher(self):
         return True
