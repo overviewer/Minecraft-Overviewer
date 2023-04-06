@@ -127,10 +127,10 @@ Let's take a closer look at the ``overviewer_core/`` directory:
 
 * ``signals.py`` is multiprocessing communication code. Scary stuff.
 
-* ``textures.py`` contains all the block definitions and how Overviewer should
-  render them. If you want to add a new block to the Overviewer, this is where
-  you'll want to do it. Additionally, this code also controls how the textures
-  are loaded.
+* ``textures.py`` contains the custom block definitions and how Overviewer
+  should render them. If a block is not rendering properly in Overviewer,
+  this is where you'll want to fix it. Additionally, this code also controls
+  how the textures are loaded.
 
 * ``tileset.py`` contains code that maps a render dict entry to the output tiled
   image structure.
@@ -138,8 +138,10 @@ Let's take a closer look at the ``overviewer_core/`` directory:
 * ``util.py`` contains random utility code that has no home anywhere else.
 
 * ``world.py`` is a whole lot of code that does things like choosing which
-  chunks to load and to cache, and general functionality revolving around the
-  concept of Minecraft worlds.
+  chunks to load and to cache, how to interpret block properties, and
+  general functionality revolving around the concept of Minecraft worlds.
+  If a block is not behaving like you expect this is probably where
+  you'll fix that.
 
 docs
 ----
@@ -184,8 +186,8 @@ Adding a Block
 
 Let's assume you want to add support for a new block to the Overviewer. This is
 probably one of the most common ways people start contributing to the project,
-as all blocks in the Overviewer are currently hardcoded and code to handle them
-needs to be added by hand.
+as anything but the simplest blocks in the Overviewer are currently hardcoded
+and code to handle them needs to be added by hand.
 
 The place to look here is ``textures.py``. It contains the block definitions,
 which are assisted by Python decorators_, which make it quite a bit simpler to
@@ -202,46 +204,26 @@ as ``solid=True`` to indicate that the block is a solid block.
 Simple Solid 6-Sided Block
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A lot of times, new blocks are basically just your standard full-height block
-with a new texture. For a block this simple, we don't even really need to use
-the material decorator. As an example, check out the definition of the coal
-block::
+Most blocks are simple full height solid blocks. These blocks are automatically
+picked up by the ``unbound_models()`` method from the minecraft assets.
+Sometimes these blocks have special properties that can not be picked up
+from the assets, like nospawn, or because you want to include them in an overview.
+These blocks can be added like this:: 
 
-    block(blockid=173, top_image="assets/minecraft/textures/blocks/coal_block.png")
-
-Block with a Different Top
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Another common theme is a block where the top is a different texture than the
-sides. Here we use the ``@material`` decorator to create the jukebox block::
-
-    @material(blockid=84, data=range(16), solid=True)
-    def jukebox(self, blockid, data):
-        return self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/jukebox_top.png"), self.load_image_texture("assets/minecraft/textures/blocks/noteblock.png"))
-
-As you can see, we define a method called ``jukebox``, taking the parameters
-``blockid`` and ``data``, decorated by a decorator stating that the following
-definition is a material with a ``blockid`` of ``84`` and a data value range
-from ``0`` to ``15`` (or ``range(16)``), which we won't use as it doesn't affect
-the rendering of the block. We also specify that the block is solid.
-
-Inside the method, we then return the return value of ``self.build_block()``,
-which is a helper method that takes a texture for the top and a texture for the
-side as its arguments.
+    solidmodelblock(blockid=1125, name="mangrove_roots")
 
 Block with Variable Colors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Occasionally, blocks can have colors stored in their data values.
 ``textures.py`` includes an easy mapping list, called ``color_map``, to map
-between data values and Minecraft color names. Let's take stained hardened clay
+between data values and Minecraft color names. Let's take carpet
 as an example of how this is used::
 
-    @material(blockid=159, data=range(16), solid=True)
-    def stained_clay(self, blockid, data):
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/hardened_clay_stained_%s.png" % color_map[data])
-
-        return self.build_block(texture,texture)
+    @material(blockid=171, data=list(range(17)), transparent=True)
+    def carpet(self, blockid, data):
+        if data < 16:
+            texture = self.load_image_texture("assets/minecraft/textures/block/%s_wool.png" % color_map[data])
 
 As you can see, we specify that the block has 16 data values, then depending
 on the data value we load the right block texture by looking up the color name

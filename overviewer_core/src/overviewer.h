@@ -31,7 +31,7 @@
 
 // increment this value if you've made a change to the c extension
 // and want to force users to rebuild
-#define OVERVIEWER_EXTENSION_VERSION 113
+#define OVERVIEWER_EXTENSION_VERSION 114
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -131,7 +131,6 @@ typedef enum {
     SOLID,
     FLUID,
     NOSPAWN,
-    NODATA,
 } BlockProperty;
 /* globals set in init_chunk_render, here because they're used
    in block_has_property */
