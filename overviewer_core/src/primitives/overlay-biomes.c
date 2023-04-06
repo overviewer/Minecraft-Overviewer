@@ -30,47 +30,91 @@ struct BiomeColor {
     uint8_t r, g, b;
 };
 
+/* This default list matches (or at least tries to match)
+ * the default coloring scheme for Biomes established by
+ * the contributors of the Amidst project:
+ * https://github.com/toolbox4minecraft/amidst/wiki/Biome-Color-Table
+ */
 static struct BiomeColor default_biomes[] = {
-    {0, 135, 106, 150},  /* Ocean */
-    {1, 98, 238, 240},   /* Plains */
-    {2, 227, 107, 0},    /* Desert */
-    {3, 255, 55, 55},    /* Extreme Hills */
-    {4, 10, 200, 200},   /* Forest */
-    {5, 10, 100, 240},   /* Taiga */
-    {6, 200, 100, 100},  /* Swampland */
-    {7, 70, 170, 0},     /* River */
-    {8, 255, 0, 0},      /* Hell */
-    {9, 255, 255, 255},  /* Sky */
-    {10, 155, 55, 255},  /* FrozenOcean */
-    {11, 255, 55, 255},  /* FrozenRiver */
-    {12, 155, 255, 255}, /* Ice Plains */
-    {13, 205, 205, 255}, /* Ice Mountains */
-    {14, 255, 0, 155},   /* MushroomIsland */
-    {15, 255, 75, 175},  /* MushroomIslandShore */
-    {16, 255, 255, 0},   /* Beach */
-    {17, 240, 155, 0},   /* DesertHills */
-    {18, 100, 200, 200}, /* ForestHills */
-    {19, 100, 100, 240}, /* TaigaHills */
-    {20, 255, 25, 15},   /* Extreme Hills Edge */
-    {21, 155, 155, 55},  /* Jungle */
-    {22, 175, 255, 55},  /* Jungle Hills */
-    {23, 135, 255, 55},  /* Jungle Edge */
-    {24, 135, 106, 150}, /* Deep Ocean */
-    {25, 255, 25, 15},   /* Stone Beach */
-    {26, 155, 255, 255}, /* Cold Beach */
-    {27, 10, 200, 200},  /* Birch Forest */
-    {28, 10, 200, 200},  /* Birch Forest Edge */
-    {29, 10, 200, 200},  /* Roofed Forest */
-    {30, 155, 255, 255}, /* Cold Taiga */
-    {31, 155, 200, 255}, /* Cold Taiga Hills */
-    {32, 10, 100, 240},  /* Mega Taiga */
-    {33, 10, 100, 240},  /* Mega Taiga Hills*/
-    {34, 255, 55, 55},   /* Extreme Hills+ */
-    {35, 227, 107, 0},   /* Savanna */
-    {36, 227, 107, 0},   /* Savanna Plateau */
-    {37, 255, 100, 100}, /* Mesa */
-    {38, 255, 100, 100}, /* Mesa Plateau F */
-    {39, 255, 100, 100}, /* Mesa Plateau */
+    {  0,   0,   0, 112},  /* Ocean */
+    {  1, 141, 179,  96},  /* Plains */
+    {  2, 250, 148,  24},  /* Desert */
+    {  3,  96,  96,  96},  /* Mountains */
+    {  4,   5, 102,  21},  /* Forest */
+    {  5,  11, 102,  33},  /* Taiga */
+    {  6,   7, 249, 178},  /* Swamp */
+    {  7,   0,   0, 255},  /* River */
+    {  8, 190,  60,  60},  /* Nether Wastes; not clear red because we use that for crimson forest instead */
+    {  9, 128, 128, 255},  /* The End */
+    { 10, 112, 112, 214},  /* Frozen Ocean */
+    { 11, 160, 160, 255},  /* Frozen River */
+    { 12, 255, 255, 255},  /* Snowy Tundra */
+    { 13, 160, 160, 160},  /* Snowy Mountains */
+    { 14, 255,   0, 255},  /* Mushroom Fields */
+    { 15, 160,   0, 255},  /* Mushroom Field Shore */
+    { 16, 250, 222,  85},  /* Beach */
+    { 17, 210,  95,  18},  /* Desert Hills */
+    { 18,  34,  85,  28},  /* Wooded Hills */
+    { 19,  22,  57,  51},  /* Taiga Hills */
+    { 20, 114, 120, 154},  /* Mountain Edge */
+    { 21,  83, 123,   9},  /* Jungle */
+    { 22,  44,  66,   5},  /* Jungle Hills */
+    { 23,  98, 139,  23},  /* Jungle Edge */
+    { 24,   0,   0,  48},  /* Deep Ocean */
+    { 25, 162, 162, 132},  /* Stone Shore */
+    { 26, 250, 240, 192},  /* Snowy Beach */
+    { 27,  48, 116,  68},  /* Birch Forest */
+    { 28,  31,  95,  50},  /* Birch Forest Hills */
+    { 29,  64,  81,  26},  /* Dark Forest */
+    { 30,  49,  85,  74},  /* Snowy Taiga */
+    { 31,  36,  63,  54},  /* Snowy Taiga Hills */
+    { 32,  89, 102,  81},  /* Giant Tree Taiga */
+    { 33,  69,  79,  62},  /* Giant Tree Taiga Hills */
+    { 34,  80, 112,  80},  /* Wooded Mountains */
+    { 35, 189, 178,  95},  /* Savanna */
+    { 36, 167, 157, 100},  /* Savanna Plateau */
+    { 37, 217,  69,  21},  /* Badlands */
+    { 38, 176, 151, 101},  /* Wooded Badlands Plateau */
+    { 39, 202, 140, 101},  /* Badlands Plateau */
+    { 40, 128, 128, 255},  /* Small End Islands */
+    { 41, 128, 128, 255},  /* End Midlands */
+    { 42, 128, 128, 255},  /* End Highlands */
+    { 43, 128, 128, 255},  /* End Barrens */
+    { 44,   0,   0, 172},  /* Warm Ocean */
+    { 45,   0,   0, 144},  /* Lukewarm Ocean */
+    { 46,  32,  32, 112},  /* Cold Ocean */
+    { 47,   0,   0,  80},  /* Deep Warm Ocean */
+    { 48,   0,   0,  64},  /* Deep Lukewarm Ocean */
+    { 49,  32,  32,  56},  /* Deep Cold Ocean */
+    { 50,  64,  64, 144},  /* Deep Frozen Ocean */
+    /* 127 would be "the void" */
+    {129, 181, 219, 136},  /* Sunflower Plains */
+    {130, 255, 188,  64},  /* Desert Lakes */
+    {131, 136, 136, 136},  /* Gravelly Mountains */
+    {132,  45, 142,  73},  /* Flower Forest */
+    {133,  51, 142, 129},  /* Taiga Mountains */
+    {134,  47, 255, 218},  /* Swamp Hills */
+    {140,   0,  70, 120},  /* Ice Spikes */
+    {149, 123, 163,  49},  /* Modified Jungle */
+    {151, 138, 179,  63},  /* Modified Jungle Edge */
+    {155,  88, 156, 108},  /* Tall Birch Forest */
+    {156,  71, 135,  90},  /* Tall Birch Hills */
+    {157, 104, 121,  66},  /* Dark Forest Hills */
+    {158,  89, 125, 114},  /* Snowy Taiga Mountains */
+    {160, 129, 142, 121},  /* Giant Spruce Taiga */
+    {161, 109, 119, 102},  /* Giant Spruce Taiga Hills */
+    {162, 120, 152, 120},  /* Gravelly Mountains+ */
+    {163, 229, 218, 135},  /* Shattered Savanna */
+    {164, 207, 197, 140},  /* Shattered Savanna Plateau */
+    {165, 255, 109,  61},  /* Eroded Badlands */
+    {166, 216, 191, 141},  /* Modified Wooded Badlands Plateau */
+    {167, 242, 180, 141},  /* Modified Badlands Plateau */
+    {168, 118, 142,  20},  /* Bamboo Jungle */
+    {169,  59,  71,  10},  /* Bamboo Jungle Hills */
+    {170,  70,  50,  40},  /* Soul Sand Valley */
+    {171, 255,   0,   0},  /* Crimson Forest */
+    {172,  30, 160, 160},  /* Warped Forest */
+    {173,  70,  70,  70},  /* Basalt Deltas */
 
     /* end of list marker */
     {255, 0, 0, 0}};
