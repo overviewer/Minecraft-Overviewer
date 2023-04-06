@@ -28,6 +28,7 @@ typedef struct {
 struct Condition {
     int32_t relx, rely, relz;
     mc_block_t block;
+    signed short data;
 };
 
 struct Color {
@@ -65,7 +66,10 @@ static void get_color(void* data,
                 all = true;
                 c = (struct Condition*)&structures[col].conditions[cond];
                 // check if the condition does apply and break from the conditions loop if not.
-                if (!(c->block == get_data(state, BLOCKS, x + c->relx, y + c->rely, z + c->relz))) {
+                if (!(
+                        c->block == get_data(state, BLOCKS, x + c->relx, y + c->rely, z + c->relz) &&
+                        (c->data == -1 || (uint32_t)c->data == get_data(state, DATA, x + c->relx, y + c->rely, z + c->relz))
+                )) {
                     all = false;
                     break;
                 }
@@ -147,8 +151,9 @@ static bool overlay_structure_start(void* data, RenderState* state, PyObject* su
                     return true;
                 }
 
+                structures[i].a = 255;
                 // Parse colorpy into a c-struct.
-                if (!PyArg_ParseTuple(colorpy, "bbbb",
+                if (!PyArg_ParseTuple(colorpy, "bbb|b",
                                       &structures[i].r,
                                       &structures[i].g,
                                       &structures[i].b,
@@ -182,11 +187,13 @@ static bool overlay_structure_start(void* data, RenderState* state, PyObject* su
                 // iterate over all the conditions and read them.
                 for (n = 0; n < structures[i].numconds; n++) {
                     PyObject* ccond = PySequence_Fast_GET_ITEM(condspy, n);
-                    if (!PyArg_ParseTuple(ccond, "iiib",
+                    cond[n].data = -1;     // If no data value is given the data value stays at -1
+                    if (!PyArg_ParseTuple(ccond, "iiih|h",
                                           &cond[n].relx,
                                           &cond[n].rely,
                                           &cond[n].relz,
-                                          &cond[n].block)) {
+                                          &cond[n].block,
+                                          &cond[n].data)) {
                         int32_t x = 0;
                         for (x = 0; x < structures_size; x++) {
                             free(structures[x].conditions);

@@ -1216,23 +1216,24 @@ StructureOverlay
     a MineralOverlay with alpha support.
 
     This Overlay colors according to a patterns that are specified as
-    multiple tuples of the form ``(relx, rely, relz, blockid)``. So
+    multiple tuples of the form ``(relx, rely, relz, blockid)`` or ``(relx, rely, relz, blockid, data)``. So
     by specifying ``(0, -1, 0, 4)`` the block below the current one has to
-    be a cobblestone.
+    be a cobblestone. By specifying ``(0, -1, 0, 35, 11)`` the block below has to be Blue wool.
 
     One color is then specified as
     ``((relblockid1, relblockid2, ...), (r, g, b, a))`` where the
     ``relblockid*`` are relative coordinates and the blockid as specified
     above. The ``relblockid*`` must match all at the same time for the
-    color to apply.
+    color to apply. The Alpha (a) is optional and is set to 255 by default.
 
     Example::
 
         StructureOverlay(structures=[(((0, 0, 0, 66), (0, -1, 0, 4)), (255, 0, 0, 255)),
-                                     (((0, 0, 0, 27), (0, -1, 0, 4)), (0, 255, 0, 255))])
+                                     (((0, 0, 0, 27), (0, -1, 0, 4)), (0, 255, 0, 255)),
+                                     (((0, 0, 0, 66), (0, -1, 0, 35, 11)), (0, 0, 255))])
 
     In this example all rails(66) on top of cobblestone are rendered in
-    pure red. And all powerrails(27) are rendered in green.
+    pure red, all powerrails(27) are rendered in green and all rails(66) above blue wool are rendered blue.
 
     If ``structures`` is not provided, a default rail coloring is used.
 
