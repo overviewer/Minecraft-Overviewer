@@ -1,0 +1,308 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/win_tut/windowsguide.rst:3
+msgid "Windows Newbie Guide"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:4
+msgid ""
+"If you're running Windows and aren't as familiar with the Windows command"
+" prompt as the rest of the documentation assumes you are, this page is "
+"for you!"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:7
+msgid ""
+"The Overviewer is a *command line* tool, which means you will need to use"
+" the command line to run it."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:22
+msgid "**First step:** Open the command line."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:10
+msgid ""
+"Open your Start menu and type in the box 'cmd' and press enter. If you're"
+" running XP you'll go to the \"run\" option instead and then type 'cmd' "
+"and press enter."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:16
+msgid ""
+"This should bring up the *command prompt*, a black window with a prompt "
+"where you can type *commands*. The prompt part will probably look "
+"something like ``C:\\Users\\andrew>`` followed by a cursor where you type"
+" your commands."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:22
+msgid "Leave this window open and move on to step 2."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:24
+msgid ""
+"Now that you know how to open a command line, and haven't been scared off"
+" yet, the next step is to download the latest Overviewer."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:46
+msgid "**Step 2:** Download Overviewer"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:28
+msgid ""
+"Go to the `Downloads Page <https://overviewer.org/downloads>`_ and "
+"download the *latest* version for your architecture, either 32 bit or 64 "
+"bit."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:32
+msgid ""
+"*This is important. If you don't know which to choose, 32 or 64,* then "
+"you can find out by clicking on the start menu, *right clicking* on the "
+"\"Computer\" icon or \"My Computer\" icon (depending on your version of "
+"Windows), and then selecting \"Properties.\" Somewhere among the "
+"information about your computer it should tell you if you're running a "
+"*32 bit operating system* or *64 bit operating system*."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:43
+msgid ""
+"Once you know if your computer is 32 or 64 bit, go and download the "
+"latest version. We make small changes all the time, and a new version is "
+"uploaded to that page for every change we make. It's usually best to just"
+" get the latest."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:48
+msgid ""
+"Okay, you've got a command prompt open. You've got The Overviewer "
+"downloaded. We're half way there!"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:59
+msgid "**Step 3:** Extract the Overviewer zip you downloaded."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:52
+msgid ""
+"This is easy. I assume you know how to unzip things. Unzip the contents "
+"to somewhere you can find easily. You'll need to find it in the command "
+"prompt. It may help to leave the window with the unzipped contents open "
+"so you can remind yourself where it is."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:57
+msgid "*Keep all those files together!* They're all needed to run The Overviewer."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:87
+msgid ""
+"**Step 4:** Change directory in command prompt to the location of "
+"overviewer.exe"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:62
+msgid ""
+"You remember the location of the files you just extracted? Windows "
+"doesn't always make it easy. Here's how in windows 7: just click on the "
+"little icon to the left of the directory name."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:70
+msgid ""
+"Got the location? Good. We're going to *change directory* to that "
+"directory with the command prompt. Bring the command prompt window back "
+"up. The command we're going to use is called ``cd``, it stands for ... "
+"*change directory*!"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:75
+msgid ""
+"I'm going to illustrate this with an example. Let's say you extracted "
+"Overviewer to the directory ``c:\\users\\andrew\\overviewer``. Here is "
+"exactly what you'll type into the command prompt and then press enter::"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:84
+msgid ""
+"Okay, did it work? Your command *prompt* should now have the *current "
+"working directory* in it. If your prompt changed to the directory that "
+"you just cd'd to, then your current directory changed successfully! "
+"You're ready for the next step!"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:89
+msgid ""
+"Okay before we actually run Overviewer for real, let's do a checkpoint. "
+"You should have *cd*'d to the directory where overviewer.exe is. To test,"
+" type this in and you should see the help text print out::"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:95
+msgid "note the two hyphens before \"help\". You should see something like this:"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:99
+msgid ""
+"The help text displays the *usage* of overviewer.exe, or the parameters "
+"it takes to run it. It's kind of long, I had to make my window larger to "
+"show it all."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:107
+msgid ""
+"Command line tool usage convention says that items in [square brackets] "
+"are *optional*, while items in <angled brackets> are *required*."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:134
+msgid "**Step 5** Render a map!"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:111
+msgid ""
+"Okay, so to render a map, you have to run ``overviewer.exe`` with two "
+"*parameters*: the *world path* and a *destination directory*."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:114
+msgid ""
+"Let's say you have a world named \"Singleplayer world\" and you want to "
+"put the tiles into a directory on your desktop. Singleplayer worlds are "
+"stored on your hard drive at a location called "
+"``%appdata%\\.minecraft\\saves``. Try typing this into the command "
+"prompt::"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:122
+msgid "You must use quotation marks around a path that has spaces in it."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:125
+msgid ""
+"``%appdata%`` is a special windows \"variable\" that refers to the "
+"location on your drive where applications can store their data. Typing "
+"``%appdata%`` instead of the full path is a convenient shortcut."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:129
+msgid ""
+"If everything went according to plan, The Overviewer should now be "
+"churning away furiously on your world, rendering thousands of image files"
+" that compose a map of your world."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:133
+msgid ""
+"When it's done, open up the file ``index.html`` in a web browser and you "
+"should see your map!"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:136
+msgid ""
+"I hope this has been enough to get some of you Windows noobs started on "
+"The Overviewer. Sorry there's no easy-to-use graphical interface right "
+"now. We want to make one, we really do, but we haven't had the time and "
+"the talent to do so yet."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:141
+msgid ""
+"The preferred way to run The Overviewer is with a *configuration file*. "
+"Without one, you can only do the most basic of renders. Once you're "
+"ready, head to the :doc:`../config` page to see what else The Overviewer "
+"can do. And as always, feel free to drop by in `IRC "
+"<https://overviewer.org/irc/>`_ if you have any questions! We're glad to "
+"help!"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:148
+msgid "Common Pitfalls"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:150
+msgid "Wrong working directory::"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:155
+msgid ""
+"This is a common mistake to make, especially for people unfamiliar with "
+"the command line. This happens if your current working directory does not"
+" contain overviewer.exe. This is likely because you've forgot to change "
+"the working directory to the directory you have unzipped overviewer into."
+" Re-read Step 4 for instructions on how to do that."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:161
+msgid "Overviewer is on a different drive than C:\\"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:163
+msgid ""
+"You may have Overviewer located on a different partition than C:, and for"
+" some odd reason the windows command line does not accept \"cd D:\\\" as "
+"a way to switch partitions. To do this, you have to just type the drive "
+"letter followed by a colon::"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:170
+msgid "This should switch your current working directory to D:\\"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:174
+msgid "Using GitHub Gist"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:176
+msgid ""
+"Sometimes, when helping people with issues with Overviewer, we'll often "
+"ask to see the config file you're using, or, if there was an Overviewer "
+"error, a full copy of an error message.   Unfortunately, `IRC "
+"<https://overviewer.org/irc/>`_ is not a good way to send large amounts "
+"of text.  So we often ask users to create a `Gist "
+"<https://gist.github.com/>`_ containing the text we want to see.  Sites "
+"like these are also called Pastebins, and you are welcome to use your "
+"favorite pastebin site, if you'd like."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:184
+msgid "First, go to http://gist.github.com/"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:186
+msgid "Second, paste your text into the primary text entry area:"
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:190
+msgid ""
+"Third, click the 'Create Secret Gist' button.  A secret gist means that "
+"only someone with the exact URL can view your gist."
+msgstr ""
+
+#: ../../docs/win_tut/windowsguide.rst:195
+msgid ""
+"Finally, send us the URL.  This will let us easily view your properly "
+"formatted Gist."
+msgstr ""
+

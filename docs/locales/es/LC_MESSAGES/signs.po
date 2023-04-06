@@ -1,0 +1,378 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/signs.rst:5
+msgid "Signs and Markers"
+msgstr ""
+
+#: ../../docs/signs.rst:7
+msgid ""
+"The Overviewer can display signs, markers, and other points of interest "
+"on your map.  This works a little differently than it has in the past, so"
+" be sure to read these docs carefully."
+msgstr ""
+
+#: ../../docs/signs.rst:11
+msgid ""
+"In these docs, we use the term POI (or point of interest) to refer to "
+"entities and tileentities."
+msgstr ""
+
+#: ../../docs/signs.rst:16
+msgid "Configuration File"
+msgstr ""
+
+#: ../../docs/signs.rst:20
+msgid "Filter Functions"
+msgstr ""
+
+#: ../../docs/signs.rst:22
+msgid ""
+"A filter function is a python function that is used to figure out if a "
+"given POI should be part of a markerSet or not, and to control how it is "
+"displayed. The function should accept one argument (a dictionary, also "
+"know as an associative array), and return a string representing the text "
+"to be displayed.  For example::"
+msgstr ""
+
+#: ../../docs/signs.rst:32
+msgid ""
+"This example is intended as a teaching aid and does not escape HTML, so "
+"if you are concerned that your Minecraft players will put HTML/JS into "
+"their signs, see below for a version that does do escaping."
+msgstr ""
+
+#: ../../docs/signs.rst:36
+msgid ""
+"If a POI doesn't match, the filter can return None (which is the default "
+"if a python functions runs off the end without an explicit 'return')."
+msgstr ""
+
+#: ../../docs/signs.rst:39
+msgid ""
+"The single argument will either a TileEntity, or an Entity taken directly"
+" from the chunk file.  It could also be a special entity representing a "
+"player's location or a player's spawn.  See below for more details."
+msgstr ""
+
+#: ../../docs/signs.rst:43
+msgid ""
+"In this example, this function returns all 4 lines from the sign if the "
+"entity is a sign. For more information of TileEntities and Entities, see "
+"the `Chunk Format <http://www.minecraftwiki.net/wiki/Chunk_format>`_ page"
+" on the Minecraft Wiki."
+msgstr ""
+
+#: ../../docs/signs.rst:49
+msgid ""
+"A more complicated filter function can construct a more customized "
+"display text::"
+msgstr ""
+
+#: ../../docs/signs.rst:55
+msgid ""
+"It is also possible to return a tuple from the filter function to specify"
+" a hovertext different from the text displayed in the info window. The "
+"first entry of the tuple will be used as the hover text, the second will "
+"be used as the info window content::"
+msgstr ""
+
+#: ../../docs/signs.rst:63
+msgid ""
+"Additionally, you can filter based on other Block Entity data by "
+"including references to other Minecraft Block Entity fields. For "
+"instance, you can filter out world-generated lootable chests that have "
+"not yet been opened by players by filtering out chests that still have "
+"loot tables::"
+msgstr ""
+
+#: ../../docs/signs.rst:74
+msgid ""
+"Because of the way the config file is loaded, if you need to import a "
+"function or module for use in your filter function, you need to "
+"explicitly load it into the global namespace::"
+msgstr ""
+
+#: ../../docs/signs.rst:83
+msgid ""
+"Since writing these filters can be a little tedious, a set of predefined "
+"filters functions are provided.  See the "
+":ref:`predefined_filter_functions` section for details."
+msgstr ""
+
+#: ../../docs/signs.rst:89
+msgid "Special POIs"
+msgstr ""
+
+#: ../../docs/signs.rst:91
+msgid ""
+"There are currently two special types of POIs.  They each have a special "
+"id:"
+msgstr ""
+
+#: ../../docs/signs.rst:95
+msgid "PlayerSpawn"
+msgstr ""
+
+#: ../../docs/signs.rst:94
+msgid ""
+"Used to indicate the spawn location of a player.  The player's name is "
+"set in the ``EntityId`` key, and the location is in the x,y,z keys."
+msgstr ""
+
+#: ../../docs/signs.rst:99
+msgid "Player"
+msgstr ""
+
+#: ../../docs/signs.rst:98
+msgid ""
+"Used to indicate the last known location of a player.  The player's name "
+"is set in the ``EntityId`` key, and the location is in the x,y,z keys."
+msgstr ""
+
+#: ../../docs/signs.rst:102
+msgid ""
+"The player location is taken from level.dat (in the case of a single-"
+"player world) or the player.dat files (in the case of a multi-player "
+"server).  The locations are only written to these files when the world is"
+" saved, so this won't give you real-time player location information."
+msgstr ""
+
+#: ../../docs/signs.rst:107
+msgid "Here's an example that displays icons for each player::"
+msgstr ""
+
+#: ../../docs/signs.rst:114
+msgid ""
+"Note how each POI can get a different icon by setting ``poi['icon']``. "
+"These icons must exist in either the output folder, or in your custom web"
+" assets folder. If the icon file does not exist in the correct location, "
+"your markers will be shown without an icon - making them invisible!"
+msgstr ""
+
+#: ../../docs/signs.rst:119
+msgid "Manual POIs"
+msgstr ""
+
+#: ../../docs/signs.rst:121
+msgid ""
+"It is also possible to manually define markers. Each render can have a "
+"render dictionary key called ``manualpois``, which is a list of dicts. "
+"Each dict represents a marker, and is required to have at least the "
+"attributes ``x``, ``y``, ``z`` and ``id``, with the coordinates being "
+"Minecraft world coordinates. (i.e. what you see in-game when you press "
+"F3)"
+msgstr ""
+
+#: ../../docs/signs.rst:126
+msgid ""
+"An example which adds two POIs with the id \"town\", and then uses a "
+"filter function to filter for them::"
+msgstr ""
+
+#: ../../docs/signs.rst:150
+msgid ""
+"Here is a more complex example where not every marker of a certain id has"
+" a certain key::"
+msgstr ""
+
+#: ../../docs/signs.rst:185
+msgid "Render Dictionary Key"
+msgstr ""
+
+#: ../../docs/signs.rst:187
+msgid ""
+"Each render can specify a list of zero or more filter functions.  Each of"
+" these filter functions become a selectable item in the 'Signs' drop-down"
+" menu in the rendered map.  Previously, this used to be a list of "
+"functions.  Now it is a list of dictionaries.  For example::"
+msgstr ""
+
+#: ../../docs/signs.rst:200
+msgid "The following keys are accepted in the marker dictionary:"
+msgstr ""
+
+#: ../../docs/signs.rst:203
+msgid "``name``"
+msgstr ""
+
+#: ../../docs/signs.rst:203
+msgid "This is the text that is displayed in the 'Signs' dropdown."
+msgstr ""
+
+#: ../../docs/signs.rst:207
+msgid "``filterFunction``"
+msgstr ""
+
+#: ../../docs/signs.rst:206
+msgid ""
+"This is the filter function.  It must accept at least 1 argument (the POI"
+" to filter), and it must return either None or a string."
+msgstr ""
+
+#: ../../docs/signs.rst:213
+msgid "``icon``"
+msgstr ""
+
+#: ../../docs/signs.rst:210
+msgid ""
+"Optional.  Specifies the icon to use for POIs in this group.  If omitted,"
+" it defaults to a signpost icon.  Note that each POI can have different "
+"icon by setting the key 'icon' on the POI itself. (this can be done by "
+"modifying the POI in the filter function.  See the example above)"
+msgstr ""
+
+#: ../../docs/signs.rst:216
+msgid "``createInfoWindow``"
+msgstr ""
+
+#: ../../docs/signs.rst:216
+msgid ""
+"Optional. Specifies whether or not the icon displays an info window on "
+"click. Defaults to True"
+msgstr ""
+
+#: ../../docs/signs.rst:219
+msgid "``showIconInLegend``"
+msgstr ""
+
+#: ../../docs/signs.rst:219
+msgid ""
+"Optional. Specifies whether or not the icon is displayed in the legend. "
+"Defaults to False"
+msgstr ""
+
+#: ../../docs/signs.rst:223
+msgid "``checked``"
+msgstr ""
+
+#: ../../docs/signs.rst:222
+msgid ""
+"Optional.  Specifies whether or not this marker group will be "
+"checked(visible) by default when the map loads.  Defaults to False"
+msgstr ""
+
+#: ../../docs/signs.rst:226
+msgid "Generating the POI Markers"
+msgstr ""
+
+#: ../../docs/signs.rst:229
+msgid ""
+"Markers will not be updated or added during a regular overviewer.py map "
+"render! You must use one of the following options to generate your "
+"markers."
+msgstr ""
+
+#: ../../docs/signs.rst:233
+msgid "The --genpoi option"
+msgstr ""
+
+#: ../../docs/signs.rst:234
+msgid ""
+"Running overviewer.py with the :option:`--genpoi` option flag will "
+"generate your POI markers. For example::"
+msgstr ""
+
+#: ../../docs/signs.rst:240
+msgid ""
+"A --genpoi run will NOT generate a map render, it will only generate "
+"markers."
+msgstr ""
+
+#: ../../docs/signs.rst:242
+msgid ""
+"If all went well, you will see a \"Markers\" button in the upper-right "
+"corner of your map."
+msgstr ""
+
+#: ../../docs/signs.rst:246
+msgid "genPOI.py"
+msgstr ""
+
+#: ../../docs/signs.rst:248
+msgid ""
+"The genPOI.py script is also provided, and can be used directly. For "
+"example::"
+msgstr ""
+
+#: ../../docs/signs.rst:254
+msgid ""
+"This will generate the necessary JavaScript files needed in your config "
+"file's outputdir."
+msgstr ""
+
+#: ../../docs/signs.rst:258
+msgid "Options"
+msgstr ""
+
+#: ../../docs/signs.rst:260
+msgid "genPOI comes with a few options of its own."
+msgstr ""
+
+#: ../../docs/signs.rst:264
+msgid ""
+"The config file to use for the genPOI operation. This must be the same "
+"config file that you use for your normal rendering runs."
+msgstr ""
+
+#: ../../docs/signs.rst:269
+msgid "Outputs less information onto the terminal while running."
+msgstr ""
+
+#: ../../docs/signs.rst:273
+msgid ""
+"Skip scanning the world for entities and tile entities. Useful if you "
+"only want to generate markers for players or through manual POIs, as you "
+"can speed up the genPOI operation considerably."
+msgstr ""
+
+#: ../../docs/signs.rst:279
+msgid ""
+"Skip reading and retrieving player data during genPOI runs. This is "
+"useful if you don't plan on generating markers for the player locations."
+msgstr ""
+
+#: ../../docs/signs.rst:285
+msgid "Predefined Filter Functions"
+msgstr ""
+
+#: ../../docs/signs.rst:287
+msgid "TODO write some filter functions, then document them here"
+msgstr ""
+
+#: ../../docs/signs.rst:290
+msgid "Marker Icons Overviewer ships by default"
+msgstr ""
+
+#: ../../docs/signs.rst:292
+msgid ""
+"Overviewer comes with multiple small icons that you can use for your "
+"markers. You can find them in the "
+"``overviewer_core/data/web_assets/markers`` directory."
+msgstr ""
+
+#: ../../docs/signs.rst:295
+msgid ""
+"If you want to make your own in the same style, you can use the provided "
+"``marker_base_plain.svg`` and ``marker_base_plain_red.svg`` as template, "
+"with a vector editing software such as `Inkscape <http://inkscape.org>`_."
+msgstr ""
+
