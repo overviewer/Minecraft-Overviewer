@@ -249,6 +249,12 @@ class Hide(RenderPrimitive):
         'blocks' : ('a list of blockids or (blockid, data) tuples of blocks to hide', []),
     }
 
+class Show(RenderPrimitive):
+    name = "show"
+    options = {
+        'blocks': ('a list of blockids or (blockid, data) tuples of blocks to show', []),
+    }
+
 # Built-in rendermodes for your convenience!
 normal = [Base(), EdgeLines()]
 lighting = [Base(), EdgeLines(), Lighting()]

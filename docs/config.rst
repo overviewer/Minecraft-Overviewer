@@ -1144,6 +1144,15 @@ Hide
     blocks
         A list of block ids, or (blockid, data) tuples to hide.
 
+Show
+    Show blocks based on blockid. Blocks hidden in this way will be
+    trated exactly the same as air.
+
+    **Options**
+
+    blocks
+        A list of block ids, or (blockid, data) tuples to show.
+
 DepthTinting
     Tint blocks a color according to their depth (height) from bedrock. Useful
     mainly for cave renders.
