@@ -60,7 +60,7 @@ Building with Visual Studio
 1. Get the latest Overviewer source code as per above.
 2. From the Start menu, navigate to 'Visual Studio 2017' and open the **'Developer Command Prompt for VS 2017'** (*or whatever year*) shortcut. A regular command or powershell prompt will *NOT* work for this.
 3. cd to the folder containing the Overviewer source code.
-4. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
+4. Copy Imaging.h, ImPlatform.h, and ImagingUtils.h from your Pillow sources into the current working directory.
 5. First try a build::
 
     c:\python37\python setup.py build

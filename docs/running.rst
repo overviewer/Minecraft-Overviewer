@@ -2,8 +2,8 @@
 Running the Overviewer
 ======================
 
-Rendering your First Map
-========================
+Rendering your First Map (Java Edition)
+=======================================
 
 Overviewer is a command-line application, and so it needs to be run from the
 command line. If you installed Overviewer from a package manager, the command is
@@ -71,6 +71,14 @@ The rendermodes you have to choose from are:
 * cave
 
 You can specify more than one. Just separate them with a comma!
+
+Rendering your First Map (Bedrock Edition)
+==========================================
+
+Rendering a Bedrock edition map is in early development.
+Overviewer operates the same as Java instructions, with these exceptions:
+* Use a configuration file, and set configuration option 'isbedrock=1'
+* Specify the full file path to a Bedrock save file
 
 .. _usage:
 

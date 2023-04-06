@@ -18,8 +18,11 @@ our `Twitter account`_.
 Introduction
 ============
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
-maps of Minecraft Java Edition worlds. It generates a set of static html and
+maps of Minecraft Java and Bedrock Edition worlds. It generates a set of static html and
 image files and uses Leaflet to display a nice interactive map.
+
+Bedrock Edition support is in early development, and has known bugs and performance issues.
+Make sure you use a backup of your Bedrock map to try this out.
 
 The Overviewer has been in active development for several years and has many
 features, including day and night lighting, cave rendering, mineral overlays,
@@ -109,8 +112,6 @@ Full disclosure disclaimers of what The Overviewer is *not*.
   line based, you will need to know a bit about the command line in order to
   operate The Overviewer.
 
-* The Overviewer does not support Bedrock/Win10/Portable Edition worlds.
-
 * The Overviewer is not a potato.
 
 Requirements
@@ -124,7 +125,7 @@ Windows, Mac, and Linux as long as you have these software packages installed:
 
 * Numpy
 
-* Either a Minecraft Client installed or a textures/ folder for the textures (possibly from a texturepack)
+* Either a Minecraft Java Edition Client installed or a textures/ folder for the textures (possibly from a texturepack)
 
 The first three are included in the Windows download. Also, there are additional
 requirements for compiling it (like a compiler). More details are available in

@@ -270,6 +270,19 @@ General
 
         processes = 2
 
+.. _isbedrock:
+
+``isbedrock = 1``
+    This specifies the Minecraft map is from a Bedrock edition of the game
+    At this time, this is all editions of the game outside of Java (Eg. Win 10, Pocket Edition)
+    Note: Bedrock edition rendering is in early development.
+    Only run using a BACKUP of your map.
+    Performance and memory usage are not yet optimized.
+
+    e.g.::
+
+        isbedrock = 1
+
 Observers
 ~~~~~~~~~
 
