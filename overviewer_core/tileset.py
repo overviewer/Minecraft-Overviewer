@@ -28,7 +28,7 @@ import time
 from collections import namedtuple
 from itertools import chain, product
 
-from PIL import Image, ImageColor
+from PIL import Image
 
 from . import c_overviewer
 from . import rendermodes
@@ -1113,8 +1113,7 @@ class TileSet(object):
         # The viewer will fill in this missing tile with the default blank tile created in the
         # AssetManager, so there's no need to spend compute time on compressing and disk space
         # & network traffic on serving a blank image.
-        transparent_color = ImageColor.getrgb(self.options['bgcolor']) + (0,)
-        if tileimg.getcolors() == [(147456, transparent_color)]:
+        if tileimg.getcolors() == [(147456, self.options['bgcolor'])]:
             return
 
         # Create the directory if not exists
