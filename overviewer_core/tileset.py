@@ -28,7 +28,7 @@ import time
 from collections import namedtuple
 from itertools import chain, product
 
-from PIL import Image
+from PIL import Image, ImageColor
 
 from . import c_overviewer
 from . import rendermodes
@@ -1049,7 +1049,8 @@ class TileSet(object):
         The argument is a RenderTile object
 
         The image is rendered and saved to disk in the place this tileset is
-        configured to save images.
+        configured to save images, unless the rendered image is blank, in
+        which case no image is saved to disk.
 
         """
 
@@ -1072,18 +1073,6 @@ class TileSet(object):
             else:
                 logging.debug("%s deleted", tile)
             return
-
-        # Create the directory if not exists
-        dirdest = os.path.dirname(imgpath)
-        if not os.path.exists(dirdest):
-            try:
-                os.makedirs(dirdest)
-            except OSError as e:
-                # Ignore errno EEXIST: file exists. Due to a race condition,
-                # two processes could conceivably try and create the same
-                # directory at the same time
-                if e.errno != errno.EEXIST:
-                    raise
 
         # Compile this image
         tileimg = Image.new("RGBA", (384, 384), self.options['bgcolor'])
@@ -1120,6 +1109,25 @@ class TileSet(object):
                 logging.error("Full error was:", exc_info=1)
                 sys.exit(1)
 
+        # Don't save if the output is blank (384*384 pixels all colored bgcolor at 0% opacity)
+        # The viewer will fill in this missing tile with the default blank tile created in the
+        # AssetManager, so there's no need to spend compute time on compressing and disk space
+        # & network traffic on serving a blank image.
+        transparent_color = ImageColor.getrgb(self.options['bgcolor']) + (0,)
+        if tileimg.getcolors() == [(147456, transparent_color)]:
+            return
+
+        # Create the directory if not exists
+        dirdest = os.path.dirname(imgpath)
+        if not os.path.exists(dirdest):
+            try:
+                os.makedirs(dirdest)
+            except OSError as e:
+                # Ignore errno EEXIST: file exists. Due to a race condition,
+                # two processes could conceivably try and create the same
+                # directory at the same time
+                if e.errno != errno.EEXIST:
+                    raise
         # Save them
         with FileReplacer(imgpath, capabilities=self.fs_caps) as tmppath:
             if self.imgextension == 'jpg':
