@@ -984,9 +984,6 @@ class TileSet(object):
                 # Ignore errors if it's "file doesn't exist"
                 if e.errno != errno.ENOENT:
                     raise
-            logging.warning(
-                "Tile %s was requested for render, but no children were found! "
-                "This is probably a bug.", imgpath)
             return
 
         # Create the actual image now
