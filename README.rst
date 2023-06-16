@@ -3,6 +3,8 @@ Minecraft Overviewer  |Build Status|
 ====================================
 By Andrew Brown and contributors (see CONTRIBUTORS.rst).
 
+Modified by Thomas Howard, I am editing this to scratch an itch and maybe learn a bit of python, expect nothing from this.
+
 Documentation:
     http://docs.overviewer.org
 
