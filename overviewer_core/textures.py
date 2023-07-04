@@ -6390,3 +6390,7 @@ block(blockid=1125, top_image="assets/minecraft/textures/block/mangrove_roots_to
       side_image="assets/minecraft/textures/block/mangrove_roots_side.png")
 block(blockid=1127, top_image="assets/minecraft/textures/block/muddy_mangrove_roots_top.png",
       side_image="assets/minecraft/textures/block/muddy_mangrove_roots_side.png")
+
+
+block(blockid=1128, top_image="assets/minecraft/textures/block/bamboo_block.png")
+block(blockid=1129, top_image="assets/minecraft/textures/block/bamboo_mosaic.png")

@@ -874,6 +874,10 @@ class RegionSet(object):
             'minecraft:stripped_mangrove_log': (1126, 1),
             'minecraft:muddy_mangrove_roots': (1127, 0),
 
+            # 1.20 blocks
+            'minecraft:bamboo_block': (1128, 0),
+            'minecraft:bamboo_mosaic': (1129, 0),
+
             # New blocks
             'minecraft:carved_pumpkin': (11300, 0),
             'minecraft:spruce_pressure_plate': (11301, 0),

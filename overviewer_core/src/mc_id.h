@@ -413,6 +413,9 @@ enum mc_block_id {
     block_mangrove_log = 1126,
     block_muddy_mangrove_roots = 1127,
 
+    block_bamboo_block = 1128,
+    block_bamboo_block = 1129,
+
     // adding a gap in the numbering of walls to keep them all
     // in one numbering block starting at 1792
     // all blocks between 1792 and 2047 are considered walls
