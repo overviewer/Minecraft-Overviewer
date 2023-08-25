@@ -4,7 +4,6 @@
 
 import fileinput
 import argparse
-import sys
 
 gibberish_to_cyrillic = {
     'À': 'А',
