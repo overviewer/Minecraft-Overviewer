@@ -208,7 +208,7 @@ class NBTFileReader(object):
 
 
 # For reference, the MCR format is outlined at
-# <http://www.minecraftwiki.net/wiki/Beta_Level_Format>
+# <http://www.minecraft.wiki/w/Beta_Level_Format>
 class MCRFileReader(object):
     """A class for reading chunk region files, as introduced in the
     Beta 1.3 update. It provides functions for opening individual

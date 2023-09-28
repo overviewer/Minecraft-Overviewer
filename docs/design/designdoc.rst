@@ -359,7 +359,7 @@ and from back to front.
 
 From the data file on disk, block information in a chunk is a three-dimensional
 array of bytes, each representing a `block id
-<http://www.minecraftwiki.net/wiki/Data_values#Block_IDs_.28Minecraft_Beta.29>`_.
+<http://www.minecraft.wiki/w/Data_values#Block_IDs_.28Minecraft_Beta.29>`_.
 The process of assembling a chunk is simply a matter of iterating over this
 array, reading the blockid values, looking up the appropriate sprite, and
 pasting it on the chunk image at the appropriate location.

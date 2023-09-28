@@ -43,7 +43,7 @@ or a player's spawn.  See below for more details.
 In this example, this function returns all 4 lines from the sign
 if the entity is a sign.
 For more information of TileEntities and Entities, see
-the `Chunk Format <http://www.minecraftwiki.net/wiki/Chunk_format>`_ page on
+the `Chunk Format <http://www.minecraft.wiki/w/Chunk_format>`_ page on
 the Minecraft Wiki.
 
 A more complicated filter function can construct a more customized display text::
