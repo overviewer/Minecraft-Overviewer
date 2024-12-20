@@ -18,7 +18,8 @@ Blog:
 
 **PLEASE NOTE: Overviewer is currently unmaintained. PRs will not be merged
 and issues will not be addressed. The website and repository will remain online
-and accessible.**
+and accessible. For an alternative, please consider using
+`BlueMap <https://bluemap.bluecolored.de/>`_ **
 
 The Minecraft Overviewer is a command-line tool for rendering high-resolution
 maps of Minecraft worlds. It generates a set of static html and image files and
