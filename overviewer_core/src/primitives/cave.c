@@ -83,14 +83,14 @@ cave_hidden(void* data, RenderState* state, int32_t x, int32_t y, int32_t z) {
 
     blockID = getArrayShort3D(state->blocks, x, y, z);
     blockUpID = get_data(state, BLOCKS, x, y + 1, z);
-    if (blockID == 9 || blockID == 8 || blockUpID == 9 || blockUpID == 8) {
+    if (blockID == block_water || blockID == block_flowing_water || blockUpID == block_water || blockUpID == block_flowing_water) {
         for (dy = y + 1; dy < (SECTIONS_PER_CHUNK - state->chunky) * 16; dy++) {
             /* go up and check for skylight */
             if (get_data(state, SKYLIGHT, x, dy, z) != 0) {
                 return true;
             }
             blockUpID = get_data(state, BLOCKS, x, dy, z);
-            if (blockUpID != 8 && blockUpID != 9) {
+            if (blockUpID != block_flowing_water && blockUpID != block_water) {
                 /* we are out of the water! and there's no skylight
                  * , i.e. is a cave lake or something similar */
                 break;

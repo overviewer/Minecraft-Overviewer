@@ -26,11 +26,11 @@ uint32_t max_data = 0;
 uint8_t* block_properties = NULL;
 
 static PyObject* known_blocks = NULL;
+static PyObject* model_blocks = NULL;
 static PyObject* transparent_blocks = NULL;
 static PyObject* solid_blocks = NULL;
 static PyObject* fluid_blocks = NULL;
 static PyObject* nospawn_blocks = NULL;
-static PyObject* nodata_blocks = NULL;
 
 PyObject* init_chunk_render(void) {
 
@@ -64,6 +64,9 @@ PyObject* init_chunk_render(void) {
     known_blocks = PyObject_GetAttrString(textures, "known_blocks");
     if (!known_blocks)
         return NULL;
+    model_blocks = PyObject_GetAttrString(textures, "block_models");
+    if (!model_blocks)
+        return NULL;
     transparent_blocks = PyObject_GetAttrString(textures, "transparent_blocks");
     if (!transparent_blocks)
         return NULL;
@@ -75,9 +78,6 @@ PyObject* init_chunk_render(void) {
         return NULL;
     nospawn_blocks = PyObject_GetAttrString(textures, "nospawn_blocks");
     if (!nospawn_blocks)
-        return NULL;
-    nodata_blocks = PyObject_GetAttrString(textures, "nodata_blocks");
-    if (!nodata_blocks)
         return NULL;
 
     block_properties = calloc(max_blockid, sizeof(uint8_t));
@@ -94,8 +94,6 @@ PyObject* init_chunk_render(void) {
             block_properties[i] |= 1 << FLUID;
         if (PySequence_Contains(nospawn_blocks, block))
             block_properties[i] |= 1 << NOSPAWN;
-        if (PySequence_Contains(nodata_blocks, block))
-            block_properties[i] |= 1 << NODATA;
 
         Py_DECREF(block);
     }
@@ -142,6 +140,8 @@ bool load_chunk(RenderState* state, int32_t x, int32_t z, uint8_t required) {
 
     x += state->chunkx;
     z += state->chunkz;
+
+    PyObject_CallMethod(state->regionset, "add_to_blockmap","O", model_blocks);
 
     chunk = PyObject_CallMethod(state->regionset, "get_chunk", "ii", x, z);
     if (chunk == NULL) {
@@ -269,7 +269,7 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
          * Note that stained glass encodes 16 colors using 4 bits.  this pushes us over the 8-bits of an uint8_t, 
          * forcing us to use an uint16_t to hold 16 bits of pseudo ancil data
          * */
-        if ((get_data(state, BLOCKS, x, y + 1, z) == 20) || (get_data(state, BLOCKS, x, y + 1, z) == 95)) {
+        if ((get_data(state, BLOCKS, x, y + 1, z) == block_glass) || (get_data(state, BLOCKS, x, y + 1, z) == block_stained_glass)) {
             data = 0;
         } else {
             data = 16;
@@ -284,15 +284,15 @@ generate_pseudo_data(RenderState* state, uint16_t ancilData) {
         uint8_t above_level_data = 0, same_level_data = 0, below_level_data = 0, possibly_connected = 0, final_data = 0;
 
         /* check for air in y+1, no air = no connection with upper level */
-        if (get_data(state, BLOCKS, x, y + 1, z) == 0) {
+        if (get_data(state, BLOCKS, x, y + 1, z) == block_air) {
             above_level_data = check_adjacent_blocks(state, x, y + 1, z, state->block);
         } /* else above_level_data = 0 */
 
         /* check connection with same level (other redstone and trapped chests */
-        same_level_data = check_adjacent_blocks(state, x, y, z, 55) | check_adjacent_blocks(state, x, y, z, 146);
+        same_level_data = check_adjacent_blocks(state, x, y, z, block_redstone_wire) | check_adjacent_blocks(state, x, y, z, block_trapped_chest);
 
         /* check the posibility of connection with y-1 level, check for air */
-        possibly_connected = check_adjacent_blocks(state, x, y, z, 0);
+        possibly_connected = check_adjacent_blocks(state, x, y, z, block_air );
 
         /* check connection with y-1 level */
         below_level_data = check_adjacent_blocks(state, x, y - 1, z, state->block);
@@ -601,27 +601,18 @@ chunk_render(PyObject* self, PyObject* args) {
                     continue;
                 }
 
-                /* everything stored here will be a borrowed ref */
-
-                if (block_has_property(state.block, NODATA)) {
-                    /* block shouldn't have data associated with it, set it to 0 */
-                    ancilData = 0;
-                    state.block_data = 0;
-                    state.block_pdata = 0;
+                /* block has associated data, use it */
+                ancilData = getArrayByte3D(state.blockdatas, state.x, state.y, state.z);
+                state.block_data = ancilData;
+                /* block that need pseudo ancildata:
+                    * grass, water, glass, chest, restone wire,
+                    * ice, portal, iron bars,
+                    * trapped chests, stairs */
+                if (block_class_is_subset(state.block, block_class_ancil, block_class_ancil_len)) {
+                    ancilData = generate_pseudo_data(&state, ancilData);
+                    state.block_pdata = ancilData;
                 } else {
-                    /* block has associated data, use it */
-                    ancilData = getArrayByte3D(state.blockdatas, state.x, state.y, state.z);
-                    state.block_data = ancilData;
-                    /* block that need pseudo ancildata:
-                     * grass, water, glass, chest, restone wire,
-                     * ice, portal, iron bars,
-                     * trapped chests, stairs */
-                    if (block_class_is_subset(state.block, block_class_ancil, block_class_ancil_len)) {
-                        ancilData = generate_pseudo_data(&state, ancilData);
-                        state.block_pdata = ancilData;
-                    } else {
-                        state.block_pdata = 0;
-                    }
+                    state.block_pdata = 0;
                 }
 
                 /* make sure our block info is in-bounds */
@@ -637,7 +628,7 @@ chunk_render(PyObject* self, PyObject* args) {
                 /* if we found a proper texture, render it! */
                 if (t != NULL && t != Py_None) {
                     PyObject *src, *mask, *mask_light;
-                    int32_t do_rand = (state.block == block_tallgrass /*|| state.block == block_red_flower || state.block == block_double_plant*/);
+                    int32_t do_rand = (state.block == block_tallgrass);
                     int32_t randx = 0, randy = 0;
                     src = PyTuple_GetItem(t, 0);
                     mask = PyTuple_GetItem(t, 0);
