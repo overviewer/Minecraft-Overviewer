@@ -1244,8 +1244,10 @@ BiomeOverlay
 
     biomes
         A list of ("biome name", (r, g, b)) tuples to use as colors. Any
-        biome not specified won't be highlighted. If not provided then 
-        a default list of biomes and colors is used.
+        biome not specified won't be highlighted. If no list is provided,
+        then a default list of biomes and colors is used, that is trying
+        to match the de-facto-standard for biome coloring established
+        by the Amidst project: https://github.com/toolbox4minecraft/amidst/wiki/Biome-Color-Table
 
         Example::
 
