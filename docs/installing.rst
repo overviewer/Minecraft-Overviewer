@@ -27,12 +27,11 @@ right place!
 Debian / Ubuntu
 ===============
 We provide an APT repository with pre-built Overviewer packages for
-Debian and Ubuntu users. To do this, add the following line to your
-``/etc/apt/sources.list``
+Debian and Ubuntu users. To do this, run
 
 ::
 
-    deb https://overviewer.org/debian ./
+    echo "deb https://overviewer.org/debian ./" > /etc/apt/sources.list.d/minecraft-overviewer.list
 
 Note that you will need to have the ``apt-transport-https`` package installed
 for this source to work.
