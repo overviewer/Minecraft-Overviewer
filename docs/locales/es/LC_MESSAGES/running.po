@@ -1,0 +1,471 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/running.rst:3
+msgid "Running the Overviewer"
+msgstr ""
+
+#: ../../docs/running.rst:6
+msgid "Rendering your First Map"
+msgstr ""
+
+#: ../../docs/running.rst:8
+msgid ""
+"Overviewer is a command-line application, and so it needs to be run from "
+"the command line. If you installed Overviewer from a package manager, the"
+" command is ``overviewer.py``. If you downloaded it manually, open a "
+"terminal window and navigate to wherever you downloaded Overviewer. For "
+"pre-compiled Windows builds, the command is ``overviewer.exe``. For other"
+" systems, it's ``overviewer.py``."
+msgstr ""
+
+#: ../../docs/running.rst:14
+msgid ""
+"What follows in this section is a few examples to get you started. For "
+"full usage, see the :ref:`usage` section."
+msgstr ""
+
+#: ../../docs/running.rst:17
+msgid ""
+"So, let's render your first map! Let's say you want to render your single"
+" player world called \"My World\". Let's also say you want to save it "
+"c:\\mcmap. You would type into your command prompt the following::"
+msgstr ""
+
+#: ../../docs/running.rst:23
+msgid ""
+"If you're on Linux or a Mac, you could do something like one of the "
+"following::"
+msgstr ""
+
+#: ../../docs/running.rst:27
+msgid "or"
+msgstr ""
+
+#: ../../docs/running.rst:33
+msgid ""
+"Those will look for a single player world by that name. You can also "
+"specify the path to the world you want to render. This is useful for "
+"rendering servers."
+msgstr ""
+
+#: ../../docs/running.rst:36
+msgid ""
+"Let's say you have a server installed in /home/username/mcserver. This "
+"command will render the default dimension (in the case of Bukkit "
+"multiworld servers, the default world is used. You can also specify the "
+"directory to the specific world you want to render)."
+msgstr ""
+
+#: ../../docs/running.rst:45
+msgid ""
+"After you enter one of the commands, The Overviewer should start "
+"rendering your map. When the render is done, open up *index.html* using "
+"your web-browser of choice.  Pretty cool, huh? You can even upload this "
+"map to a web server to share with others! Simply upload the entire folder"
+" to a web server and point your users to index.html!"
+msgstr ""
+
+#: ../../docs/running.rst:51
+msgid ""
+"Incremental updates are just as easy, and a lot faster. If you go and "
+"change something inside your world, run the command again and The "
+"Overviewer will automatically re-render only what's needed."
+msgstr ""
+
+#: ../../docs/running.rst:56
+msgid "Specifying a different rendermode"
+msgstr ""
+
+#: ../../docs/running.rst:57
+msgid ""
+"There are a few built-in rendermodes for you to choose from. Each will "
+"render your map differently. For example, if you want smooth lighting "
+"(which looks really good), you would add ``--rendermodes=smooth-"
+"lighting`` to your command. e.g."
+msgstr ""
+
+#: ../../docs/running.rst:66
+msgid "The rendermodes you have to choose from are:"
+msgstr ""
+
+#: ../../docs/running.rst:68
+msgid "normal (the default)"
+msgstr ""
+
+#: ../../docs/running.rst:69
+msgid "lighting"
+msgstr ""
+
+#: ../../docs/running.rst:70
+msgid "smooth-lighting"
+msgstr ""
+
+#: ../../docs/running.rst:71
+msgid "cave"
+msgstr ""
+
+#: ../../docs/running.rst:73
+msgid "You can specify more than one. Just separate them with a comma!"
+msgstr ""
+
+#: ../../docs/running.rst:78
+msgid "Usage"
+msgstr ""
+
+#: ../../docs/running.rst:80
+msgid ""
+"For this section, we assume the executable is ``overviewer.py``. Replace "
+"that with ``overviewer.exe`` for windows."
+msgstr ""
+
+#: ../../docs/running.rst:83
+msgid "Overviewer usage::"
+msgstr ""
+
+#: ../../docs/running.rst:88
+msgid ""
+"The first form is for basic or quick renderings without having to create "
+"a config file. It is intentionally limited because the amount of "
+"configuration was becoming unmanageable for the command line."
+msgstr ""
+
+#: ../../docs/running.rst:92
+msgid ""
+"The second, preferred usage involves creating a configuration file which "
+"specifies all the options including what to render, where to place the "
+"output, and all the settings. See :ref:`configfile` for details on that."
+msgstr ""
+
+#: ../../docs/running.rst:96
+msgid ""
+"For example, on Windows if your Minecraft server runs out of "
+"``c:\\server\\`` and you want to put the rendered map in ``c:\\mcmap\\``,"
+" run this::"
+msgstr ""
+
+#: ../../docs/running.rst:101
+msgid ""
+"For Mac or Linux builds from source, you would run something like this "
+"with the current directory in the top level of the source tree::"
+msgstr ""
+
+#: ../../docs/running.rst:106
+msgid "The first render can take a while, depending on the size of your world."
+msgstr ""
+
+#: ../../docs/running.rst:111
+msgid "Options"
+msgstr ""
+
+#: ../../docs/running.rst:113
+msgid ""
+"The following options change the way The Overviewer generates or updates "
+"the map, and are intended to be things you only have to use in special "
+"situations. You should not normally have to specify these options; the "
+"default is typically correct."
+msgstr ""
+
+#: ../../docs/running.rst:120
+msgid ""
+"With this option, The Overviewer will determine which tiles to render by "
+"looking at the saved last-render timestamp and comparing it to the last-"
+"modified time of the chunks of the world. It builds a tree of tiles that "
+"need updating and renders only those tiles."
+msgstr ""
+
+#: ../../docs/running.rst:125
+msgid ""
+"This option does not do *any* checking of tile mtimes on disk, and thus "
+"is the cheapest option: only rendering what needs updating while "
+"minimising disk IO."
+msgstr ""
+
+#: ../../docs/running.rst:129
+msgid ""
+"The caveat is that the *only* thing to trigger a tile update is if "
+"Minecraft updates a chunk. Any other reason a tile may have for needing "
+"re-rendering is not detected. This means that changes in your render "
+"configuration will not be reflected in your world except in updated "
+"chunks. It could also cause problems if the system clock of the machine "
+"running Minecraft is not stable."
+msgstr ""
+
+#: ../../docs/running.rst:135
+msgid ""
+"**This option is the default** unless :option:`--forcerender` or :option"
+":`--check-tiles` is in effect.  This option conflicts with "
+":option:`--forcerender` and :option:`--check-tiles`."
+msgstr ""
+
+#: ../../docs/running.rst:141
+msgid ""
+"Forces The Overviewer to check each tile on disk and check to make sure "
+"it is up to date. This also checks for tiles that shouldn't exist and "
+"deletes them."
+msgstr ""
+
+#: ../../docs/running.rst:145
+msgid ""
+"This is functionally equivalent to :option:`--no-tile-checks` with the "
+"difference that each tile is individually checked. It is therefore useful"
+" if the tiles are not consistent with the last-render timestamp that is "
+"automatically stored. This option was designed to handle the case where "
+"the last render was interrupted -- some tiles have been updated but "
+"others haven't, so each one is checked before it is rendered."
+msgstr ""
+
+#: ../../docs/running.rst:152
+msgid ""
+"This is slightly slower than :option:`--no-tile-checks` due to the "
+"additional disk-io involved in reading tile mtimes from the filesystem"
+msgstr ""
+
+#: ../../docs/running.rst:155
+msgid ""
+"Since this option also checks for erroneous tiles, **It is also useful "
+"after you delete sections of your map, e.g. with worldedit, to delete "
+"tiles that should no longer exist.** Overviewer greatly overestimates "
+"tiles to be rendered and time needed to complete."
+msgstr ""
+
+#: ../../docs/running.rst:160
+msgid ""
+"The caveats with this option are the same as for :option:`--no-tile-"
+"checks` with the additional caveat that tile timestamps in the filesystem"
+" must be preserved. If you copy tiles or make changes to them with an "
+"external tool that modifies mtimes of tiles, it could cause problems with"
+" this option."
+msgstr ""
+
+#: ../../docs/running.rst:165
+msgid ""
+"This option is automatically activated when The Overviewer detects the "
+"last render was interrupted midway through. This option conflicts with "
+":option:`--forcerender` and :option:`--no-tile-checks`"
+msgstr ""
+
+#: ../../docs/running.rst:171
+msgid ""
+"Forces The Overviewer to re-render every tile regardless of whether it "
+"thinks it needs updating or not. It does no tile mtime checks, and "
+"therefore ignores the last render time of the world, the last "
+"modification times of each chunk, and the filesystem mtimes of each tile."
+" It unconditionally renders every tile that exists."
+msgstr ""
+
+#: ../../docs/running.rst:177
+msgid ""
+"The caveat with this option is that it does *no* checks, period. Meaning "
+"it will not detect tiles that do exist, but shouldn't (this can happen if"
+" your world shrinks for some reason. For that specific case, :option"
+":`--check-tiles` is actually the appropriate mode)."
+msgstr ""
+
+#: ../../docs/running.rst:182
+msgid ""
+"This option is useful if you have changed a render setting and wish to "
+"re-render every tile with the new settings."
+msgstr ""
+
+#: ../../docs/running.rst:185
+msgid ""
+"This option is automatically activated for first-time renders. This "
+"option conflicts with :option:`--check-tiles` and :option:`--no-tile-"
+"checks`"
+msgstr ""
+
+#: ../../docs/running.rst:191 ../../docs/running.rst:208
+msgid "Don't use this flag without first reading :ref:`signsmarkers`!"
+msgstr ""
+
+#: ../../docs/running.rst:193
+msgid ""
+"Generates the POI markers for your map. This option does not do any "
+"tile/map generation, and ONLY generates markers. See :ref:`signsmarkers` "
+"on how to configure POI options."
+msgstr ""
+
+#: ../../docs/running.rst:199
+msgid ""
+"This specifies the number of worker processes to spawn on the local "
+"machine to do work. It defaults to the number of CPU cores you have, if "
+"not specified."
+msgstr ""
+
+#: ../../docs/running.rst:203
+msgid ""
+"This option can also be specified in the config file as :ref:`processes "
+"<processes>`"
+msgstr ""
+
+#: ../../docs/running.rst:210
+msgid ""
+"When generating POI markers, this option prevents scanning for entities "
+"and tile entities, and only creates the markers specified in the config "
+"file. This considerably speeds up the POI marker generation process if no"
+" entities or tile entities are being used for POI markers. See "
+":ref:`signsmarkers` on how to configure POI options."
+msgstr ""
+
+#: ../../docs/running.rst:218
+msgid ""
+"Activate a more verbose logging format and turn on debugging output. This"
+" can be quite noisy but also gives a lot more info on what The Overviewer"
+" is doing."
+msgstr ""
+
+#: ../../docs/running.rst:224
+msgid ""
+"Turns off one level of logging for quieter output. You can specify this "
+"more than once. One ``-q`` will suppress all INFO lines. Two will "
+"suppress all INFO and WARNING lines. And so on for ERROR and CRITICAL log"
+" messages."
+msgstr ""
+
+#: ../../docs/running.rst:228
+msgid ""
+"If :option:`--verbose<-v>` is given, then the first ``-q`` will "
+"counteract the DEBUG lines, but not the more verbose logging format. "
+"Thus, you can specify ``-v -q`` to get only INFO logs and higher (no "
+"DEBUG) but with the more verbose logging format."
+msgstr ""
+
+#: ../../docs/running.rst:235
+msgid ""
+"Update web assets, including custom assets, without starting a render. "
+"This won't update overviewerConfig.js, but will recreate overviewer.js"
+msgstr ""
+
+#: ../../docs/running.rst:241
+msgid "Installing the Textures"
+msgstr ""
+
+#: ../../docs/running.rst:244
+msgid ""
+"This procedure has changed with Minecraft 1.6's Resource Pack update. The"
+" latest versions of Overviewer are not compatible with Minecraft 1.5 "
+"client resources."
+msgstr ""
+
+#: ../../docs/running.rst:248
+msgid ""
+"If Overviewer is running on a machine with the Minecraft client "
+"installed, it will automatically use the default textures from Minecraft."
+msgstr ""
+
+#: ../../docs/running.rst:252
+msgid ""
+"Overviewer will only search for installed client *release* versions, not "
+"snapshots. If you want to use a snapshot client jar for the textures, you"
+" must specify it manually with the :ref:`texturepath<option_texturepath>`"
+" option."
+msgstr ""
+
+#: ../../docs/running.rst:257
+msgid ""
+"If, however, you're running on a machine without the Minecraft client "
+"installed, or if you want to use different textures, you will need to "
+"provide the textures manually. This is common for servers."
+msgstr ""
+
+#: ../../docs/running.rst:261
+msgid ""
+"If you want or need to provide your own textures, you have several "
+"options:"
+msgstr ""
+
+#: ../../docs/running.rst:263
+msgid ""
+"The easy solution is to download the latest client jar to the location "
+"the launcher would normally install it. Overviewer will find it and use "
+"it."
+msgstr ""
+
+#: ../../docs/running.rst:266
+msgid ""
+"You can use the following commands to download the client jar on Linux or"
+" Mac. Run the first line in a terminal, changing the version string to "
+"the latest as appropriate (these docs may not always be updated to "
+"reflect the latest). Then paste the second line into your terminal to "
+"create directories if necessary. Then paste the third line into your "
+"terminal to download the latest version. ``${VERSION}`` will be replaced "
+"by the actual version string from the first line. These 3 lines can be "
+"included in a shell script prior to map generation to ensure the proper "
+"textures are always downloaded."
+msgstr ""
+
+#: ../../docs/running.rst:280
+msgid ""
+"If that's too confusing for you, then just take this single line and "
+"paste it into a terminal to get 1.19 textures::"
+msgstr ""
+
+#: ../../docs/running.rst:285
+msgid "You can also just run the launcher to install the client."
+msgstr ""
+
+#: ../../docs/running.rst:287
+msgid ""
+"You can transfer the client jar to the correct place manually, from a "
+"computer that does have the client, to your server. The correct places "
+"are:"
+msgstr ""
+
+#: ../../docs/running.rst:290
+msgid "For Linux: ``~/.minecraft/versions/<version>/<version>.jar``"
+msgstr ""
+
+#: ../../docs/running.rst:292
+msgid ""
+"For Mac: ``~/Library/Application "
+"Support/minecraft/versions/<version>/<version>.jar``"
+msgstr ""
+
+#: ../../docs/running.rst:294
+msgid "For Windows: ``%APPDATA%/.minecraft/versions/<version>/<version>.jar``"
+msgstr ""
+
+#: ../../docs/running.rst:296
+msgid ""
+"You can download and use a custom resource pack. Download the resource "
+"pack file and specify the path to it with the "
+":ref:`texturepath<option_texturepath>` option."
+msgstr ""
+
+#: ../../docs/running.rst:301
+msgid "If you copy your world before you render it"
+msgstr ""
+
+#: ../../docs/running.rst:303
+msgid ""
+"The important thing to be careful about when copying world files to "
+"another location is file modification times, which Overviewer uses to "
+"figure out what parts of the map need updating. If you do a straight "
+"copy, usually this will update the modification times on all the copied "
+"files, causing Overviewer to re-render the entire map. To copy files on "
+"Unix, while keeping these modification times intact, use ``cp -p``. For "
+"people who render from backups, GNU ``tar`` automatically handles "
+"modification times correctly. ``rsync -a --delete`` will handle this "
+"correctly as well. If you use some other tool, you'll have to figure out "
+"how to do this yourself."
+msgstr ""
+

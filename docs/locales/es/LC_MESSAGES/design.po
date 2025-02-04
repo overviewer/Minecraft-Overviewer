@@ -1,0 +1,1082 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/design/designdoc.rst:3
+msgid "Design Documentation"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:4
+msgid ""
+"So you'd like a technical overview of how The Overviewer works, huh? "
+"You've come to the right place!"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:7
+msgid ""
+"This document's scope does not cover the details of the code. The code is"
+" fairly well commented and not difficult to understand. Instead, this "
+"document is intended to give an explanation to how the Overviewer was "
+"designed, why certain decisions were made, and how all the pieces fit "
+"together. Think of this document as commenting on how all the high level "
+"pieces of the code work."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:13
+msgid ""
+"This document is probably a good read to anyone that wants to get "
+"involved in Overviewer development."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:16
+msgid "So let's get started!"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:20
+msgid "This page is continually under construction."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:22
+msgid "Contents"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:25
+msgid "Background Info"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:27
+msgid ""
+"The Overviewer's task is to take Minecraft worlds and render them into a "
+"set of tiles that can be displayed with a Leaflet interface. This section"
+" goes over how Minecraft worlds work and are stored."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:31
+msgid ""
+"A Minecraft world extends indefinitely along the two horizontal axes, and"
+" are exactly 384 units high. Minecraft worlds are made of voxels "
+"(volumetric pixels), hereby called \"blocks\", where each block in the "
+"world's grid has a type that determines what it is (grass, stone, ...).  "
+"This makes worlds relatively uncomplicated to render, the Overviewer "
+"simply determines what blocks to draw and where. Since everything in "
+"Minecraft is aligned to a strict grid, placement and rendering decisions "
+"are completely deterministic and can be performed iteratively."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:40
+msgid ""
+"The coordinate system for Minecraft has three axes. The X and Z axes are "
+"the horizontal axes. They extend indefinitely towards both positive and "
+"negative infinity. (There are practical limits, but no theoretical "
+"limits). The Y axis extends from -64 to 319, which corresponds with the "
+"world height limit. Each block in Minecraft has a coordinate address, "
+"e.g. the block at 15,78,-35 refers to 15 along the X axis, -35 along the "
+"Z axis, and 78 units up from bedrock."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:47
+msgid ""
+"The world is organized in a three-layer hierarchy. At the finest level "
+"are the blocks (voxels). A 16x16x16 array of blocks is called a *chunk "
+"section*. A vertical column of 24 chunk sections makes a *chunk*. A chunk"
+" is therefore a 16 by 16 area of the world that extends from bedrock to "
+"sky. In other words, a 16 by 384 by 16 \"chunk\" of the world. A 32 by 32"
+" area of chunks is called a *region*. Regions are stored on disk one per "
+"file."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:54
+msgid ""
+"While blocks have a global coordinate (the ones you see in the debug "
+"output in-game), they also have a local coordinate within a chunk section"
+" and within a chunk. Also, chunks and regions have their own coordinates "
+"to identify themselves. To find which chunk a block is in, simply divide "
+"its coordinates by 16 and take the floor. To find which region a chunk is"
+" in, divide the chunk coordinates by 32 and take the floor. To find which"
+" chunk section a block is in, take its Y coordinate and floor-divide by "
+"16."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:62
+msgid ""
+"Minecraft worlds are generated on-the-fly by the chunk. This means not "
+"all chunks will exist, and not all sections within a chunk will exist. "
+"There is no pattern to which chunks are generated, the game generates "
+"them as needed as players explore the area. A region file may not exist "
+"if none of its chunks exist."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:69
+msgid "Overviewer at a High Level"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:71
+msgid ""
+"Minecraft worlds are rendered in an Isometric projection at an oblique "
+"angle. The projection acts as if your eye is infinitely far away looking "
+"down at the world at an approximate 35 degree angle in the South-East "
+"direction (though the world can also be rendered at any of the 4 oblique "
+"directions)."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "A screenshot of Overviewer output"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:79
+msgid ""
+"The Overviewer is a sprite-based renderer. Each block type corresponds to"
+" a pre-rendered sprite (a small image). The basic idea is to iterate over"
+" the blocks of the world and draw these sprites to the appropriate "
+"location on the map."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:84
+msgid ""
+"These are the high-level tasks The Overviewer must perform in rendering a"
+" map:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:86
+msgid "Render each block sprite from the textures"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:87
+msgid "Scan the chunks of the world and determine which tiles need rendering"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:88
+msgid "Render a chunk by drawing the appropriate blocks sprites on an image"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:89
+msgid "Render a tile of the map from several chunk images"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:90
+msgid "Compose the lower-zoom tiles from the higher-zoom tiles"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:92
+msgid "The next sections will go over how these tasks work."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:95
+msgid "Block Rendering"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:98
+msgid ""
+"The first step is rendering the block sprites from the textures. Each "
+"block is \"built\" from its textures into an image of a cube and cached "
+"in a :class:`Textures` object."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:102
+msgid ""
+"Textures come from files inside of a \"textures\" folder.  If the file is"
+" square (has equal width and height dimensions), it is scaled down to 16 "
+"x 16 pixels.  Non-square images are used with animated textures.  In this"
+" case, the first frame of the animated texture is used, and also scaled "
+"to a 16 by 16 image. In order to draw a cube out of the textures, an "
+"`affine transformation`_ is applied to the images for the top and sides "
+"of the cube in order to transform it to the appropriate perspective."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:111
+msgid ""
+"This section goes over the simple case for a regular cube, which are most"
+" of the blocks in Minecraft. There are lots of irregular blocks that "
+"aren't cubes (fences, torches, doors) which require custom rendering. "
+"Irregular blocks are not covered by this design document. Each type of "
+"block has its own function in :mod:`overviewer_core.textures` that "
+"defines how to render it."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "A texture gets rendered into a cube"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:123
+msgid ""
+"Every block sprite is exactly 24 by 24 pixels in size. This particular "
+"size for the cubes was chosen for an important reason: 24 is divisible by"
+" 2 and by 4. This makes placement much easier. E.g. in order to draw two "
+"cubes that are next to each other in the world, one is drawn exactly 12 "
+"pixels over and 6 pixels down from the other. All placements of the cubes"
+" happen on exact pixel boundaries and no further resolution is lost "
+"beyond the initial transformations. (This advantage will become clear in "
+"the :ref:`cubepositioning` section; all offsets are a nice even 6, 12, or"
+" 24 pixels)"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:132
+msgid ""
+"A cube sprite is built in two stages. First, the texture is transformed "
+"for the top of the cube. Then the texture is transformed for the left "
+"side of the cube, which is mirrored for the right side of the cube."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:137
+msgid "Top Transformation"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:139
+msgid ""
+"The transformation for the top face of the cube is a simple `affine "
+"transformation`_ from the original square texture. It is actually several"
+" affine transformations: a re-size, a rotation, and a scaling; but since "
+"multiple affine transformations can be chained together simply by "
+"multiplying the transformation matrices together, only one transformation"
+" is actually done."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:145
+msgid ""
+"This can be seen in the function "
+":func:`overviewer_core.textures.transform_image`. It performs three "
+"steps:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:148
+msgid ""
+"The texture is re-sized to 17 by 17 pixels. This is done because the "
+"diagonal of a square with sides 17 is approximately 24, which is the "
+"target size for the bounding box of the cube image. So when it's rotated,"
+" it will be the correct width. (Better to scale it now than after we "
+"rotate it)"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:153
+msgid "The image is rotated 45 degrees about its center."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:155
+msgid "The image is scaled on the vertical axis by a factor of 1/2."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:157
+msgid "This produces an image of size 24 by 12 as seen in the following sequence."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "The 4 steps for transforming a texture square into the top of the cube."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:162
+msgid "The final image, shown below, becomes the top of the cube."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Top of the cube"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:167
+msgid ""
+"On the left is what will become the top of the block at actual size after"
+" the transformation, the right is the same but blown up by a factor of 10"
+" with no interpolation to show the pixels."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:172
+msgid "Side Transformation"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:174
+msgid ""
+"The texture square is transformed for the sides of the cube in the "
+":func:`textures.transform_image_side` function. This is another `affine "
+"transformation`_, but this time only two transformations are done: a re-"
+"size and a shear."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:179
+msgid ""
+"First the texture is re-sized to 12 by 12 pixels. This is half the width "
+"of 24 so it will have the correct width after the shear."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:182
+msgid ""
+"The 12 by 12 square is sheared by a factor of 1.5 in the Y direction, "
+"producing an image that is bounded by a 12 by 18 pixel square."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Texture being sheared for the side of the cube."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:188
+msgid ""
+"This image is simply flipped along the horizontal axis for the other "
+"visible side of the cube."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "The sides of the block"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:194
+msgid ""
+"Again, shown on the left are the two sides of the block at actual size, "
+"the right is scaled with no interpolation by a factor of 10 to show the "
+"pixels."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:198
+msgid "An Entire Cube"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:199
+msgid ""
+"These three images, the top and two sides, are pasted into a single 24 by"
+" 24 pixel image to get the cube sprite, as shown."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:202
+msgid ""
+"However, notice from the middle of the three images in the sequence below"
+" that the images as transformed don't fit together exactly. There is some"
+" overlap when put in the 24 by 24 box in which they must fit."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "How the cube parts fit together"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:209
+msgid ""
+"There is one more complication. The cubes don't tessellate perfectly. A "
+"six pixel gap is left between the lower-right border and upper-left "
+"border of blocks in this arrangement:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Cubes don't tessellate perfectly"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:216
+msgid ""
+"The solution is to manually touch up those 6 pixels. 3 pixels are added "
+"on the upper left of each cube, 3 on the lower right. Therefore, they all"
+" line up perfectly!"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:220
+msgid "This is done at the end of :meth:`Textures.build_block`"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "The 6 pixels manually added to each cube."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:226
+msgid "Chunk Rendering"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:228
+msgid ""
+"With these cube sprites, we can draw them together to start constructing "
+"the world. The renderer renders a single chunk section (a 16 by 16 by 16 "
+"group of blocks) at a time."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:232
+msgid ""
+"This section of the design doc goes over how to draw the cube sprites "
+"together to draw an entire chunk section."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:235
+msgid ""
+"How big is a chunk section going to be? A chunk section is a cube of "
+"16x16x16 blocks."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:238
+msgid ""
+"Rendered at the appropriate perspective, we'll have a cube made up of "
+"4096 smaller cubes, like this:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Perspective rendering of a chunk section."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:244
+msgid ""
+"Each of those cubes shown is where one of the pre-rendered block sprites "
+"gets pasted; the entire thing is a chunk section. The renderer iterates "
+"over a chunk layer-at-a-time from bottom to top, drawing the sprites. The"
+" order is important so that the it gets drawn correctly. Obviously if a "
+"sprite in the back is pasted on the image after the sprites in the front "
+"are drawn, it will be drawn on top of everything instead of behind."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:254
+msgid "Block Positioning"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:256
+msgid ""
+"A single block is a 24 by 24 pixel image. Before we can construct a chunk"
+" section out of individual blocks, we must figure out how to position "
+"neighboring blocks."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:260
+msgid "First, to review, these are the measurements of a block sprite:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "The measurements of a block sprite"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:265
+msgid "The image is bounded by a 24 by 24 pixel square."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:267
+msgid "The side vertical edges are 12 pixels high."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:269
+msgid ""
+"The top (and bottom) face of the block takes 12 vertical pixels (and 24 "
+"horizontal pixels)."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:272
+msgid ""
+"The edges of the top and bottom of the block take up 6 vertical pixels "
+"and 12 horizontal pixels each."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:275
+msgid ""
+"Two blocks that are neighbors after projection to the image (diagonally "
+"neighboring in the world) have a horizontal offset of 24 pixels from each"
+" other, as shown below on the left.  This is mostly trivial, since the "
+"images don't overlap at all. Two blocks in the same configuration but "
+"rotated 90 degrees have some overlap as shown on the right, and are only "
+"vertically offset by 12 pixels."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Two blocks horizontally positioned are offset by 24 pixels on the X axis."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:284
+msgid ""
+"Now for something slightly less intuitive: two blocks that are stacked on"
+" top of each other in the world. One is rendered lower on the vertical "
+"axis of the image, but by how much?"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Two blocks stacked are offset in the image by 12 pixels."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:291
+msgid ""
+"Interestingly enough, due to the projection, this is exactly the same "
+"offset as the situation above for diagonally neighboring blocks. The "
+"block outlined in green is drawn 12 pixels below the other one. Only the "
+"order that the blocks are drawn is different."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:296
+msgid ""
+"And finally, what about blocks that are next to each other in the world "
+"--- diagonally next to each other in the image?"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Cubes that are neighbors are offset by 12 on the X and 6 on the Y"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:302
+msgid ""
+"The block outlined in green is offset on the horizontal axis by half the "
+"block width, or 12 pixels. It is offset on the vertical axis by half the "
+"height of the block's top, or 6 pixels. For the other 3 directions this "
+"could go, the directions of the offsets are changed, but the amounts are "
+"the same."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:308
+msgid "The size of a chunk"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:309
+msgid ""
+"Now that we know how to place blocks relative to each other, we can begin"
+" to construct an entire chunk section."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:312
+msgid ""
+"Since the block sprites are 24 by 24 pixels, and the diagonal of the 16 "
+"by 16 grid is 16 squares, the width of one rendered chunk section will be"
+" 384 pixels. Just considering the top layer of blocks within a section:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Illustrating the width of a single chunk"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:319
+msgid ""
+"Since blocks next to each other in the same \"diagonal row\" are offset "
+"by 24 pixels, this is trivially calculated."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:322
+msgid ""
+"The height is a bit more tricky to calculate. Let's start by calculating "
+"the height of a single stack of 16 blocks."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:325
+msgid ""
+"The non-overlapping edge of each block sprite is 12 pixels high. Since "
+"there are 16 blocks in this stack, that's 192 pixels high. There are also"
+" 6 additional pixels at the top and bottom of the stack as shown, giving "
+"a total height of 204 pixels."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "A stack of 16 cubes takes 204 vertical pixels to draw."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:333
+msgid ""
+"But that's just for one column of blocks. What about the entire chunk "
+"section? Take a look at this diagram:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "The highest and lowest positioned cubes in a chunk"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:339
+msgid ""
+"The green highlighted blocks are the stack we calculated just above and "
+"have a height of 204 pixels. The red highlighted blocks each take 12 "
+"pixels of vertical space on the image, and there are 15 of them. So 204 +"
+" 12*15 is 384 pixels."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:343
+msgid "So the total size of a chunk section in pixels is 384 wide by 384 tall."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:346
+msgid "Assembling a Chunk"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:348
+msgid ""
+"Now that we know how to place blocks, here's how they are arranged to "
+"form an entire chunk section. The coordinate system is arranged as shown,"
+" with the origin being at the left corner."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Illustrating how cubes are addressed in a chunk"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:355
+msgid ""
+"To ensure that block closer to the viewer are drawn on top while blocks "
+"that should be obstructed are drawn are hidden, the blocks are drawn one "
+"layer at a time from bottom to top (Y=0 to Y=23, corresponding to "
+"sections Y=-4 to Y=19) and from back to front."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:360
+msgid ""
+"From the data file on disk, block information in a chunk is a three-"
+"dimensional array of bytes, each representing a `block id "
+"<http://www.minecraftwiki.net/wiki/Data_values#Block_IDs_.28Minecraft_Beta.29>`_."
+" The process of assembling a chunk is simply a matter of iterating over "
+"this array, reading the blockid values, looking up the appropriate "
+"sprite, and pasting it on the chunk image at the appropriate location."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:368
+msgid "Chunk Placement"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:371
+msgid ""
+"Now that we know how to draw a single chunk, let's move on to how to "
+"place chunks relative to each other."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:374
+msgid ""
+"Before we get started, let's take a moment to remember that one chunk "
+"section is only 1/24th of a chunk:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "An entire chunk"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:380
+msgid "A chunk is 24 chunk sections stacked together."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:382
+msgid ""
+"Since this is pretty tall, the diagrams in this section are simplified to"
+" only show the *top face* of a chunk, as shown in green here:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "The top of a chunk is highlighted"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:388
+msgid ""
+"This makes it easier and less cumbersome to describe how to place chunks "
+"together on a tile. Just remember that chunks are actually very tall and "
+"extend down far beyond the drawn diamonds in these diagrams."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:393
+msgid "Chunk Addressing"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:395
+msgid ""
+"Chunks in Minecraft have an X,Z address, with the origin at 0,0 and "
+"extending to positive and negative infinity on both axes (Recall from the"
+" introduction that chunk addresses are simply the block addresses divided"
+" by 16). Since we're going to render at a diagonal perspective, it is "
+"convenient to perform a change of coordinate system. For that, we "
+"translate X,Z coordinates into column,row coordinates. Consider this grid"
+" showing 25 chunks around the origin. They are labeled with their X,Z "
+"chunk addresses."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "A grid of 5x5 chunks showing how chunks are addressed."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:406
+msgid ""
+"Now, we want to transform each chunk to a row/column address as shown "
+"here:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:411
+msgid ""
+"So the chunk at address 0,0 would be at col 0, row 0; while the chunk at "
+"address 1,1 would be at col 2, row 0. The intersection of the red and "
+"green lines addresses the chunk in col,row format."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:417
+msgid ""
+"As a consequence of this addressing scheme, there is no chunk at e.g. "
+"column 1 row 0. There are some col,row addresses that lie between chunks,"
+" and therefore do not correspond to a chunk. (as can be seen where the "
+"red/green lines intersect at a chunk boundary instead of the middle of a "
+"chunk)."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:422
+msgid ""
+"So how does one translate between them? It turns out that a chunk's "
+"column address is simply the sum of the X and the Z coordinate, while the"
+" row is the difference. Try it!"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:435
+msgid "Chunk Positioning"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:437
+msgid ""
+"This section will seem very familiar to the block positioning. In fact, "
+"it is exactly the same but with different numbers (because blocks and "
+"chunk sections have the exact same proportions), so let's speed through "
+"this."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:441
+msgid ""
+"A chunk's top face is 384 pixels wide by 192 pixels tall. They therefore "
+"have these offsets from their neighbors:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Chunk positioning diagram"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:449
+msgid "Tile Rendering"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:451
+msgid ""
+"Now that we know how to translate chunk coordinates to col/row "
+"coordinates, and know how to calculate the offset from the origin on the "
+"final image, we could easily draw the chunks in one large image. However,"
+" for large worlds, that would quickly become too much data to handle at "
+"once. (Early versions of the Overviewer did this, but the large, unwieldy"
+" images quickly motivated the development of rendering to individual "
+"tiles)."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:458
+msgid ""
+"Hence choosing a technology like Google Maps or Leaflet, which draws "
+"small tiles together to make it look like one large image, lets rendering"
+" even the largest worlds possible. The Overviewer can draw each tile "
+"separately and not have to load the entire map into memory at once. The "
+"next sections describe how to determine which chunks to render in which "
+"tiles, and how to reason about tile ↔ chunk mappings."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:466
+msgid "Tile Layout"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:468
+msgid ""
+"Instead of rendering to one large image, chunks are rendered to small "
+"tiles. Only a handful of chunks need to be rendered into each tile. The "
+"downside is that chunks must be rendered multiple times for each tile "
+"they appear in, but the upside is that arbitrarily sized maps can be "
+"viewed."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:473
+msgid ""
+"The Overviewer uses a tile size of 384 by 384 pixels. This is the same as"
+" the size of a chunk section and is no coincidence. Just considering the "
+"top face of a chunk, the 8 chunks directly below it get rendered into a "
+"tile in this configuration:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "The 8 chunks that get rendered into a tile"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:483
+msgid ""
+"Don't forget that chunks are tall, so many more than 8 chunks get "
+"rendered into this tile. If you think about it, chunks from the rows "
+"*above* the ones in that diagram may have blocks that fall into this "
+"tile, since the diamonds in the diagram correspond to the *tops* of the "
+"chunks, and chunks extend *down*."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:491
+msgid ""
+"This is an important diagram and we'll be coming back to it. Make sure it"
+" makes sense. As a side note, if anything in this document *doesn't* make"
+" sense, please let us know in IRC or by filing an issue. I want these "
+"docs to be as clear as possible!"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:496
+msgid ""
+"So the overall strategy is to convert all chunks into diagonal col,row "
+"coordinates, then for each tile decide which chunks belong in it, then "
+"render them in the appropriate place on the tile."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:500
+msgid ""
+"The rendering routines are actually passed a range of chunks to render, "
+"e.g. rows 4-6, cols 20-24. The lower bound col,row chunk given in the "
+"range is rendered at position 0,0 in the diagram above. That is, at "
+"offset -192,-96 pixels."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:505
+msgid ""
+"The rendering routines takes the given range of columns and rows, "
+"converts it back into chunk coordinates, and renders the given 8 chunks "
+"plus all chunks from the 24 rows above the given range (see the note "
+"below). The chunks are positioned correctly with the above positioning "
+"rules, so any chunks that are out of the bounds get rendered off the tile"
+" and don't affect the final image. (There is therefore no penalty for "
+"rendering out-of-bounds chunks for a tile except increased processing)"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:513
+msgid ""
+"Since every other column of chunks is half-way in two tiles, they must be"
+" rendered twice. Each neighboring tile is therefore only 2 columns over, "
+"not 3 as one may suspect at first. Same goes for the rows: The next tile "
+"down is 4 rows down, not 5."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:518
+msgid ""
+"To further illustrate this point, here are four tiles arranged on the "
+"grid of chunks. Notice how the tiles are addressed by the col,row of the "
+"chunk in the upper-left corner. Also notice how neighboring tiles are 2 "
+"columns apart but 4 rows apart."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "4 tiles arranged on the grid of chunks"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:527
+msgid "Quadtrees"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:530
+msgid ""
+"Tiles are rendered and stored in a quadtree on disk. Each node is a tile "
+"of the world, and each node has four children representing a zoomed-in "
+"tile of the four quadrants."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "A tile has 4 children, each is a zoomed-in tile of one of the quadrants."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:537
+msgid ""
+"The tree is generated from the bottom-up. The highest zoom level is "
+"rendered directly from the chunks and the blocks, then four of those "
+"rendered tiles are shrunk and concatenated to get the next zoom level. "
+"The tree is built up in this way until the entire world is compressed "
+"down to a single tile."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:542
+msgid ""
+"We've already seen how tiles can be identified by the column,row range of"
+" the chunks that make up the tile. More precisely, since tiles are always"
+" the same size, the chunk that goes in the tile's 0,0 col,row slot "
+"identifies the tile."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:546
+msgid ""
+"Now, tiles are also identified by their path in the quadtree. For "
+"example, ``3/0/0/1/1/2.png`` refers to the tile starting at the base, "
+"under the third quadrant, then the 0th quadrant, then the 0th, and so "
+"fourth."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:551
+msgid "Quadtree Size"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:552
+msgid ""
+"The size of the quadtree must be known before it's generated, that way "
+"the code knows where to save the images. This is easily calculated from a"
+" few realizations. Each depth in the quadtree doubles the number of tiles"
+" in each dimension, or, quadruples the total tiles. While there is only "
+"one tile at level 0, there are four at level 1, 16 at level 2, and 4^n at"
+" level n."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:558
+msgid ""
+"To find how deep the quadtree must be, we look at the size of the world. "
+"First find the maximum and minimum row and column of the chunks. Just "
+"looking at columns, let's say the maximum column is 82 and the minimum "
+"column is -136. A zoom level of 6 will be 2^6 tile across and 2^6 tiles "
+"high at the highest level."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:563
+msgid ""
+"Since horizontally tiles are two chunks wide, multiply 2^6 by 2 to get "
+"the total diameter of this map in chunks: 2*2^6. Is this wide enough for "
+"our map?"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:566
+msgid ""
+"It turns out it isn't (2*2^6=128, 136+82=218). A zoom level of 7 is 2^7 "
+"tiles across, or 2*2^7 chunks across. This turns out is wide enough "
+"(2*2^7 = 256), however, Overviewer maps are always centered at point 0,0 "
+"in the world. This is so tiles will always line up no mater how the map "
+"may expand in the future."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:571
+msgid ""
+"So zoom level 7 is *not* enough because, while the chunk diameter is wide"
+" enough, it only extends half that far from the origin. The chunk "
+"*radius* is 2^7 (half the diameter) and 2^7=128 is not wide enough for "
+"the minimum column at absolute position 136."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:576
+msgid ""
+"So this example requires zoom level 8 (at least in the horizontal "
+"direction. The vertical direction must also be checked)."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:580
+msgid "Quadtree Paths"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:582
+msgid ""
+"To illustrate the relationship between tile col,row addresses and their "
+"path, consider these 16 tiles from a depth 2 quadtree:"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "Addresses and paths for 16 tiles in a depth 2 tree"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:588
+msgid ""
+"The top address in each tile is the col,row address, where the chunk "
+"outlined in green in the center is at 0,0. The lower address in each tile"
+" is the path. The first number indicates which quadrant the tile is in "
+"overall, and the second is which quadrant within the first one."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:594
+msgid "get_range_by_path"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:598
+msgid "Reading the Data Files"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:604
+msgid "Image Composition"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:610
+msgid "Multiprocessing"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:615
+msgid "Caching"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:619
+msgid "Lighting"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:621
+msgid ""
+"Minecraft stores precomputed lighting information in the chunk files "
+"themselves, so rendering shadows on the map is a simple matter of "
+"interpreting this data, then adding a few extra steps to the render "
+"process. These few extra steps may be found in ``rendermode-lighting.c`` "
+"or ``rendermode-smooth-lighting.c``, depending on the exact method used."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:628
+msgid ""
+"Each chunk contains two lighting arrays, each of which contains one value"
+" between 0 and 15 for each block. These two arrays are the BlockLight "
+"array, containing light received from other blocks, and the SkyLight "
+"array, containing light received from the sky. Storing these two "
+"seperately makes it easier to switch between daytime and nighttime. To "
+"turn these two values into one value between 0 and 1 representing how "
+"much light there is in a block, we use the following equation (where l\\ "
+":sub:`b` and l\\ :sub:`s` are the block light and sky light values, "
+"respectively):"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "c = 0.8^{15 - min(l_b, l_s)}"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:641
+msgid ""
+"For night lighting, the sky light values are shifted down by 11 before "
+"this lighting coefficient is calculated."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:644
+msgid ""
+"Each block of light data applies to all the block faces that touch it. "
+"So, each solid block doesn't receive lighting from the block it's in, but"
+" from the three blocks it touches above, to the left, and to the right. "
+"For transparent blocks with potentially strange shapes, lighting is "
+"approximated by using the local block lighting on the entire image."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "The lighting process"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:654
+msgid ""
+"For some blocks, notably half-steps and stairs, Minecraft doesn't "
+"generate valid lighting data in the local block like it does for all "
+"other transparent blocks. In these cases, the lighting data is estimated "
+"by averaging data from nearby blocks. This is not an ideal solution, but "
+"it produces acceptable results in almost all cases."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:661
+msgid "Smooth Lighting"
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:663
+msgid ""
+"In the smooth-lighting rendermode, solid blocks are lit per-vertex "
+"instead of per-face. This is done by covering all three faces with a "
+"quadralateral where each corner has a lighting value associated with it. "
+"These lighting values are then smoothly interpolated across the entire "
+"face."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:669
+msgid ""
+"To calculate these values on each corner, we look at lighting data in the"
+" 8 blocks surrounding the corner, and ignore the 4 blocks behind the face"
+" the corner belongs to. We then calculate the lighting coefficient for "
+"all 4 remaining blocks as normal, and average them to obtain the "
+"coefficient for the corner. This is repeated for all 4 corners on a given"
+" face, and for all visible faces."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:-1
+msgid "An example face and vertex, with the 4 light sources."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:679
+msgid ""
+"The `ambient occlusion`_ effect so strongly associated with smooth "
+"lighting in-game is a side effect of this method. Since solid blocks have"
+" both light values set to 0, the lighting coefficient is very close to 0."
+" For vertices in corners, at least 1 (or more) of the 4 averaged lighting"
+" values is therefore 0, dragging the average down, and creating the "
+"\"dark corners\" effect."
+msgstr ""
+
+#: ../../docs/design/designdoc.rst:689
+msgid "Cave Mode"
+msgstr ""
+

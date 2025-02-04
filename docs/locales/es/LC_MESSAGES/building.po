@@ -1,0 +1,377 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/building.rst:3
+msgid "Building the Overviewer from Source"
+msgstr ""
+
+#: ../../docs/building.rst:5
+msgid ""
+"These instructions are for building the C extension for Overviewer. Once "
+"you have finished with these instructions, head to :doc:`running`."
+msgstr ""
+
+#: ../../docs/building.rst:10
+msgid ""
+"Pre-built Windows and Debian executables are available on the "
+":doc:`installing` page.  These kits already contain the compiled code and"
+" require no further setup, so you can skip to the next section of the "
+"docs: :doc:`running`."
+msgstr ""
+
+#: ../../docs/building.rst:16
+msgid "Get The Source"
+msgstr ""
+
+#: ../../docs/building.rst:18
+msgid ""
+"First step: download the platform-independent source! Either clone with "
+"Git (recommended if you know Git) or download the most recent snapshot:"
+msgstr ""
+
+#: ../../docs/building.rst:21
+msgid "Git URL to clone: ``git://github.com/overviewer/Minecraft-Overviewer.git``"
+msgstr ""
+
+#: ../../docs/building.rst:22
+msgid ""
+"`Download most recent tar archive <https://github.com/overviewer"
+"/Minecraft-Overviewer/tarball/master>`_"
+msgstr ""
+
+#: ../../docs/building.rst:24
+msgid ""
+"`Download most recent zip archive <https://github.com/overviewer"
+"/Minecraft-Overviewer/zipball/master>`_"
+msgstr ""
+
+#: ../../docs/building.rst:26
+msgid ""
+"Once you have the source, see below for instructions on building for your"
+" system."
+msgstr ""
+
+#: ../../docs/building.rst:30
+msgid "Build Instructions For Various Operating Systems"
+msgstr ""
+
+#: ../../docs/building.rst:36
+msgid "Windows Build Instructions"
+msgstr ""
+
+#: ../../docs/building.rst:38
+msgid ""
+"First, you'll need a compiler.  You can either use Visual Studio, or "
+"cygwin/mingw. The free `Visual Studio Community "
+"<https://www.visualstudio.com/vs/community/>`_ is okay. You will need to "
+"select the \"Desktop Development with C++\" WORKLOAD. Microsoft has been "
+"changing up the names on this with the \"Community\" edition of Visual "
+"Studio. If nothing else works, just install every Individual Visual C++ "
+"component you can find :)"
+msgstr ""
+
+#: ../../docs/building.rst:44
+msgid "Prerequisites"
+msgstr ""
+
+#: ../../docs/building.rst:46
+msgid "You will need the following:"
+msgstr ""
+
+#: ../../docs/building.rst:48
+msgid "`Python 3.x <https://www.python.org/downloads/windows/>`_"
+msgstr ""
+
+#: ../../docs/building.rst:49
+msgid "A copy of the `Pillow sources <https://github.com/python-pillow/Pillow>`_."
+msgstr ""
+
+#: ../../docs/building.rst:50
+msgid "The Pillow Extension for Python."
+msgstr ""
+
+#: ../../docs/building.rst:51
+msgid "The Numpy Extension for Python."
+msgstr ""
+
+#: ../../docs/building.rst:52
+msgid "The extensions can be installed via::"
+msgstr ""
+
+#: ../../docs/building.rst:58
+msgid "Building with Visual Studio"
+msgstr ""
+
+#: ../../docs/building.rst:60
+msgid "Get the latest Overviewer source code as per above."
+msgstr ""
+
+#: ../../docs/building.rst:61
+msgid ""
+"From the Start menu, navigate to 'Visual Studio 2017' and open the "
+"**'Developer Command Prompt for VS 2017'** (*or whatever year*) shortcut."
+" A regular command or powershell prompt will *NOT* work for this."
+msgstr ""
+
+#: ../../docs/building.rst:62
+msgid "cd to the folder containing the Overviewer source code."
+msgstr ""
+
+#: ../../docs/building.rst:63 ../../docs/building.rst:115
+msgid ""
+"Copy Imaging.h and ImPlatform.h from your Pillow sources into the current"
+" working directory."
+msgstr ""
+
+#: ../../docs/building.rst:64
+msgid "First try a build::"
+msgstr ""
+
+#: ../../docs/building.rst:68
+msgid "If you encounter the following errors::"
+msgstr ""
+
+#: ../../docs/building.rst:72
+msgid "then try the following::"
+msgstr ""
+
+#: ../../docs/building.rst:78
+msgid ""
+"If the build was successful, there should be a c_overviewer.pyd file in "
+"your current working directory."
+msgstr ""
+
+#: ../../docs/building.rst:81
+msgid "Building with mingw-w64 and msys2"
+msgstr ""
+
+#: ../../docs/building.rst:83
+msgid "This is the recommended way to build on Windows without MSVC."
+msgstr ""
+
+#: ../../docs/building.rst:85
+msgid ""
+"Install msys2 by following **all** the instructions on `the msys2 "
+"installation page <https://msys2.github.io/>`_."
+msgstr ""
+
+#: ../../docs/building.rst:88
+msgid "Install the dependencies::"
+msgstr ""
+
+#: ../../docs/building.rst:92
+msgid "Clone the Minecraft-Overviewer git repository::"
+msgstr ""
+
+#: ../../docs/building.rst:96
+msgid ""
+"The source code will be downloaded to your msys2 home directory, e.g. "
+"``C:\\msys2\\home\\Potato\\Minecraft-Overviewer``"
+msgstr ""
+
+#: ../../docs/building.rst:99
+msgid "Close the msys2 shell. Instead, open the MinGW64 shell."
+msgstr ""
+
+#: ../../docs/building.rst:101
+msgid ""
+"Build the Overviewer by changing your current working directory into the "
+"source directory and executing the build script::"
+msgstr ""
+
+#: ../../docs/building.rst:107
+msgid ""
+"After it finishes, you should now be able to execute ``overviewer.py`` "
+"from the MINGW64 shell."
+msgstr ""
+
+#: ../../docs/building.rst:111
+msgid "Building with mingw"
+msgstr ""
+
+#: ../../docs/building.rst:113
+msgid "Open a MinGW shell."
+msgstr ""
+
+#: ../../docs/building.rst:114
+msgid "cd to the Overviewer directory."
+msgstr ""
+
+#: ../../docs/building.rst:116 ../../docs/building.rst:181
+msgid "Build::"
+msgstr ""
+
+#: ../../docs/building.rst:120
+msgid ""
+"If the build fails with complaints about ``-mno-cygwin``, open the file "
+"``Lib/distutils/cygwincompiler.py`` in an editor of your choice, and "
+"remove all mentions of ``-mno-cygwin``. This is a bug in distutils, filed"
+" as `Issue 12641 <http://bugs.python.org/issue12641>`_."
+msgstr ""
+
+#: ../../docs/building.rst:126
+msgid "Linux"
+msgstr ""
+
+#: ../../docs/building.rst:128
+msgid ""
+"You will need the gcc compiler and a working build environment. On Ubuntu"
+" and Debian, this can be done by installing the ``build-essential`` "
+"package."
+msgstr ""
+
+#: ../../docs/building.rst:131
+msgid ""
+"You will need the following packages on Debian-derived distributions "
+"(e.g. Ubuntu):"
+msgstr ""
+
+#: ../../docs/building.rst:133
+msgid ""
+"python3-pil or python3-pillow (the latter is usually aliased to the "
+"former)"
+msgstr ""
+
+#: ../../docs/building.rst:134
+msgid "python3-dev"
+msgstr ""
+
+#: ../../docs/building.rst:135
+msgid "python3-numpy"
+msgstr ""
+
+#: ../../docs/building.rst:138
+msgid ""
+"If you choose to install pillow through pip instead of your "
+"distribution's package manager, you won't get the pillow headers which "
+"Overviewer requires to build its C extension. In that case, you should "
+"manually download the header files specific to the version of pillow you "
+"installed, and point at them with the ``PIL_INCLUDE_DIR`` environment "
+"variable. A version mismatch between the installed pillow library and the"
+" headers can lead to segfaults while running Overviewer due to an ABI "
+"mismatch."
+msgstr ""
+
+#: ../../docs/building.rst:145
+msgid "Then to build::"
+msgstr ""
+
+#: ../../docs/building.rst:149
+msgid ""
+"At this point, you can run ``./overviewer.py`` from the current "
+"directory, so to run it you'll have to be in this directory and run "
+"``./overviewer.py`` or provide the the full path to ``overviewer.py``.  "
+"Another option would be to add this directory to your ``$PATH``.   Note "
+"that there is a ``python3 setup.py install`` step that you can run which "
+"will install things into ``/usr/local/bin``, but this is strongly not "
+"recommended as it might conflict with other installs of Overviewer."
+msgstr ""
+
+#: ../../docs/building.rst:152
+msgid "macOS"
+msgstr ""
+
+#: ../../docs/building.rst:154
+msgid ""
+"Install the Xcode Command Line Tools by running the following command in "
+"a terminal (located in your /Applications/Utilities folder)::"
+msgstr ""
+
+#: ../../docs/building.rst:158
+msgid ""
+"Install Python 3 if you don't already have it, for example from `the "
+"official Python website <https://www.python.org/downloads/mac-osx/>`_."
+msgstr ""
+
+#: ../../docs/building.rst:159
+msgid "Install PIP, e.g. with::"
+msgstr ""
+
+#: ../../docs/building.rst:163
+msgid ""
+"Install Pillow (overviewer needs PIL, Pillow is a fork of PIL that "
+"provides the same functionality)::"
+msgstr ""
+
+#: ../../docs/building.rst:167
+msgid "Install numpy::"
+msgstr ""
+
+#: ../../docs/building.rst:171
+msgid ""
+"Download the Pillow source files from https://github.com/python-"
+"pillow/Pillow/releases/latest and unpack the tar.gz file and move it to a"
+" directory you can remember"
+msgstr ""
+
+#: ../../docs/building.rst:172
+msgid ""
+"Download the Minercaft Overviewer source-code from "
+"https://overviewer.org/builds/overviewer-latest.tar.gz"
+msgstr ""
+
+#: ../../docs/building.rst:173
+msgid ""
+"Extract overviewer-[Version].tar.gz and move it to a directory you can "
+"remember"
+msgstr ""
+
+#: ../../docs/building.rst:174
+msgid ""
+"Go into your Pillow-[Version] folder and navigate to the /src/libImaging "
+"directory"
+msgstr ""
+
+#: ../../docs/building.rst:175
+msgid ""
+"Drag the following files from the Pillow-[Version]/src/libImaging folder "
+"to your overviewer-[Version] folder:"
+msgstr ""
+
+#: ../../docs/building.rst:176
+msgid "``Imaging.h``"
+msgstr ""
+
+#: ../../docs/building.rst:177
+msgid "``ImagingUtils.h``"
+msgstr ""
+
+#: ../../docs/building.rst:178
+msgid "``ImPlatform.h``"
+msgstr ""
+
+#: ../../docs/building.rst:179
+msgid "Make sure your installation of Python 3 is in ``$PATH``"
+msgstr ""
+
+#: ../../docs/building.rst:180
+msgid ""
+"In a terminal, change your current working directory to your "
+"overviewer-[Version] folder (e.g. by using ``cd "
+"Desktop/overviewer-[Version]``)"
+msgstr ""
+
+#: ../../docs/building.rst:185
+msgid ""
+"You should now be able to run Overviewer with ``./overviewer.py`` inside "
+"of the Overviewer directory."
+msgstr ""
+

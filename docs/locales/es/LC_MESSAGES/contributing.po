@@ -1,0 +1,489 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2010-2019 The Overviewer Team
+# This file is distributed under the same license as the Overviewer package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Overviewer 0.13\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-21 00:46-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
+
+#: ../../docs/contributing.rst:3
+msgid "Contributing"
+msgstr ""
+
+#: ../../docs/contributing.rst:5
+msgid ""
+"In this page, you'll be given some pointers on how to start contributing "
+"to the Minecraft-Overviewer project. This is useful for people who want "
+"to help develop the Overviewer, but don't quite know where to start."
+msgstr ""
+
+#: ../../docs/contributing.rst:9
+msgid ""
+"This page is mostly focused on where to look for things and how to get "
+"your changes back into the project, for help on how to compile the "
+"Overviewer, check :doc:`Building <building>`."
+msgstr ""
+
+#: ../../docs/contributing.rst:14
+msgid "Prerequisites"
+msgstr ""
+
+#: ../../docs/contributing.rst:16
+msgid ""
+"Ideally you're familiar with Python (Overviewer uses Python 3), and know "
+"the basics of Git. Both have various very good resources online that help"
+" you in learning them, but the best way of learning is always to use them"
+" in the real world, so don't hesitate to jump right in after having a "
+"basic grasp and ask questions along the way."
+msgstr ""
+
+#: ../../docs/contributing.rst:22
+msgid ""
+"Additionally, some parts of Overviewer are written in C, though unless "
+"you're interested in the drawing and compositing routines or the "
+"rendermodes, you don't need to know C."
+msgstr ""
+
+#: ../../docs/contributing.rst:26
+msgid ""
+"Last but not least, some of the Overviewer's code is written in "
+"JavaScript, namely the part that runs in your browser when you view the "
+"map."
+msgstr ""
+
+#: ../../docs/contributing.rst:30
+msgid "Acquiring the Source Code"
+msgstr ""
+
+#: ../../docs/contributing.rst:32
+msgid ""
+"First, you'll need to get the Overviewer source code. We do version "
+"management of code through Git_, which allows multiple people to work on "
+"the code at the same time. Naturally, this means you'll also be getting "
+"the source code through Git. For this to work, you'll have to install Git"
+" on your computer."
+msgstr ""
+
+#: ../../docs/contributing.rst:39
+msgid ""
+"Our source code is hosted on GitHub_, so it's a good idea to make an "
+"account there if you don't already have one."
+msgstr ""
+
+#: ../../docs/contributing.rst:44
+msgid ""
+"This page won't go into the details of how to use Git, but it'll give you"
+" some advice on how your workflow should be to avoid some trouble."
+msgstr ""
+
+#: ../../docs/contributing.rst:48
+msgid "Finding Your Way around the Code Base"
+msgstr ""
+
+#: ../../docs/contributing.rst:50
+msgid ""
+"At first glance, all the code can be a bit overwhelming. So here's a "
+"quick overview of the important parts."
+msgstr ""
+
+#: ../../docs/contributing.rst:53
+msgid ""
+"``setup.py`` is the build script. If you need to make any changes to how "
+"the Overviewer is built, you'll want to look there."
+msgstr ""
+
+#: ../../docs/contributing.rst:56
+msgid ""
+"``overviewer.py`` is the entry-point of the application. It imports all "
+"the other functionality, and does the command line parsing."
+msgstr ""
+
+#: ../../docs/contributing.rst:59
+msgid ""
+"``overviewer_core/`` is the directory where the vast majority of the "
+"Overviewer's functionality is. More on that below."
+msgstr ""
+
+#: ../../docs/contributing.rst:62
+msgid ""
+"``overviewer_core/aux_files/genPOI.py`` is where the genPOI functionality"
+" is implemented. If you're looking into changing the way markers are "
+"generated, look there."
+msgstr ""
+
+#: ../../docs/contributing.rst:66
+msgid ""
+"``overviewer_core/src/`` is the directory for all the files that are part"
+" of Overviewer's C extension. This includes things such as rendermodes, "
+"which are stored in the ``primitives`` sub-directory."
+msgstr ""
+
+#: ../../docs/contributing.rst:70
+msgid ""
+"``overviewer_core/data/`` mostly contains the parts that make up "
+"Overviewer's web front-end, with ``js_src`` containing the JS files and "
+"``web_assets`` containing the ``index.html``, CSS files and image files "
+"such as icons or the compass."
+msgstr ""
+
+#: ../../docs/contributing.rst:75
+msgid ""
+"``docs/`` contains the documentation, which can be built with the "
+"included Makefile if you have sphinx installed."
+msgstr ""
+
+#: ../../docs/contributing.rst:79
+msgid "overviewer_core"
+msgstr ""
+
+#: ../../docs/contributing.rst:81
+msgid "Let's take a closer look at the ``overviewer_core/`` directory:"
+msgstr ""
+
+#: ../../docs/contributing.rst:83
+msgid ""
+"``assetmanager.py`` controls how the HTML and JS output are written out, "
+"as well as the ``overviewerConfig.js`` format."
+msgstr ""
+
+#: ../../docs/contributing.rst:86
+msgid ""
+"``cache.py`` implements a Least-Recently-Used (LRU) cache, which is used "
+"for caching chunks in memory as the rendering happens."
+msgstr ""
+
+#: ../../docs/contributing.rst:89
+msgid ""
+"``config_parser.py`` contains some code that sets up how the config is "
+"parsed, but is not really involved in the definitions of individual "
+"settings therein."
+msgstr ""
+
+#: ../../docs/contributing.rst:92
+msgid ""
+"``dispatcher.py`` is the code that sets up multiprocessing, so Overviewer"
+" can use all available CPU threads on a machine."
+msgstr ""
+
+#: ../../docs/contributing.rst:95
+msgid ""
+"``files.py`` implements helpful routines which allow you to determine "
+"whether some file operations such as replacing a file work in a given "
+"directory, and also implements the ``FileReplacer`` class which can then "
+"safely replace a file given the capabilities of the filesystem."
+msgstr ""
+
+#: ../../docs/contributing.rst:100
+msgid "``items.py`` is a remnant of the past and entirely unused."
+msgstr ""
+
+#: ../../docs/contributing.rst:102
+msgid "``logger.py`` sets up and implements Overviewer's logging facilities."
+msgstr ""
+
+#: ../../docs/contributing.rst:104
+msgid ""
+"``nbt.py`` contains the code that is used to parse the Minecraft NBT file"
+" structure."
+msgstr ""
+
+#: ../../docs/contributing.rst:107
+msgid ""
+"``observer.py`` defines all the observers that are available. If you want"
+" to add a new observer, this is the place where you'll want to look."
+msgstr ""
+
+#: ../../docs/contributing.rst:110
+msgid ""
+"``optimizeimages.py`` defines all the optimizeimg tools and how they're "
+"called."
+msgstr ""
+
+#: ../../docs/contributing.rst:113
+msgid ""
+"``progressbar.py`` implements the fancy progress bar that the Overviewer "
+"has."
+msgstr ""
+
+#: ../../docs/contributing.rst:115
+msgid ""
+"``rcon.py`` implements an rcon client for the Minecraft server, used by "
+"the RConObserver."
+msgstr ""
+
+#: ../../docs/contributing.rst:118
+msgid ""
+"``rendermodes.py`` contains definitions and glue code for the rendermodes"
+" in the C extension."
+msgstr ""
+
+#: ../../docs/contributing.rst:121
+msgid ""
+"``settingsDefinitions.py`` includes all definitions for the Overviewer "
+"configuration file. If you want to add a new configuration option, this "
+"is where you'll want to start."
+msgstr ""
+
+#: ../../docs/contributing.rst:125
+msgid ""
+"``settingsValidators.py`` contains validation code for the settings "
+"definitions, which ensures that the values are all good."
+msgstr ""
+
+#: ../../docs/contributing.rst:128
+msgid "``signals.py`` is multiprocessing communication code. Scary stuff."
+msgstr ""
+
+#: ../../docs/contributing.rst:130
+msgid ""
+"``textures.py`` contains all the block definitions and how Overviewer "
+"should render them. If you want to add a new block to the Overviewer, "
+"this is where you'll want to do it. Additionally, this code also controls"
+" how the textures are loaded."
+msgstr ""
+
+#: ../../docs/contributing.rst:135
+msgid ""
+"``tileset.py`` contains code that maps a render dict entry to the output "
+"tiled image structure."
+msgstr ""
+
+#: ../../docs/contributing.rst:138
+msgid "``util.py`` contains random utility code that has no home anywhere else."
+msgstr ""
+
+#: ../../docs/contributing.rst:140
+msgid ""
+"``world.py`` is a whole lot of code that does things like choosing which "
+"chunks to load and to cache, and general functionality revolving around "
+"the concept of Minecraft worlds."
+msgstr ""
+
+#: ../../docs/contributing.rst:145
+msgid "docs"
+msgstr ""
+
+#: ../../docs/contributing.rst:147
+msgid ""
+"The documentation is written in reStructuredText_, a markup format. It "
+"can be compiled into an HTML output using the Makefile in the ``docs/`` "
+"subtree by typing ``make``. You'll need to have sphinx_ installed for "
+"this to work."
+msgstr ""
+
+#: ../../docs/contributing.rst:154
+msgid ""
+"The theme that will be used in the locally generated HTML is different "
+"than what is used on http://docs.overviewer.org. However, it should still"
+" be sufficient to get a good idea of how your changes will end up looking"
+" like when they're on the main docs page."
+msgstr ""
+
+#: ../../docs/contributing.rst:160
+msgid "Code Style"
+msgstr ""
+
+#: ../../docs/contributing.rst:162
+msgid ""
+"To be honest, currently the Overviewer's codebase is a bit of a mess. "
+"There is no consistent code style in use right now. However, it's "
+"probably a good idea to stick to PEP8_ when writing new code. If you're "
+"refactoring old code, it would be great if you were to fix it to make it "
+"PEP8 compliant as well."
+msgstr ""
+
+#: ../../docs/contributing.rst:167
+msgid ""
+"To check whether the code is PEP8 compliant, you can use pycodestyle_. "
+"You can easily install it with pip by using ``pip3 install pycodestyle``."
+msgstr ""
+
+#: ../../docs/contributing.rst:175
+msgid "Example Scenarios"
+msgstr ""
+
+#: ../../docs/contributing.rst:177
+msgid ""
+"This section will demonstrate by example how a few possible contributions"
+" might be made. These serve as guidelines on how to quickly get started "
+"if you're interested in doing a specific task that many others before you"
+" have done too in some other form."
+msgstr ""
+
+#: ../../docs/contributing.rst:183
+msgid "Adding a Block"
+msgstr ""
+
+#: ../../docs/contributing.rst:185
+msgid ""
+"Let's assume you want to add support for a new block to the Overviewer. "
+"This is probably one of the most common ways people start contributing to"
+" the project, as all blocks in the Overviewer are currently hardcoded and"
+" code to handle them needs to be added by hand."
+msgstr ""
+
+#: ../../docs/contributing.rst:190
+msgid ""
+"The place to look here is ``textures.py``. It contains the block "
+"definitions, which are assisted by Python decorators_, which make it "
+"quite a bit simpler to add new blocks."
+msgstr ""
+
+#: ../../docs/contributing.rst:194
+msgid ""
+"The big decorator in question is ``@material``, which takes arguments "
+"such as the ``blockid`` (a list of block IDs this block definition should"
+" handle), and ``data`` (a list of possible data values for this block). "
+"Additionally, it can also take various additional arguments for the "
+"different block properties, such as ``solid=True`` to indicate that the "
+"block is a solid block."
+msgstr ""
+
+#: ../../docs/contributing.rst:203
+msgid "Simple Solid 6-Sided Block"
+msgstr ""
+
+#: ../../docs/contributing.rst:205
+msgid ""
+"A lot of times, new blocks are basically just your standard full-height "
+"block with a new texture. For a block this simple, we don't even really "
+"need to use the material decorator. As an example, check out the "
+"definition of the coal block::"
+msgstr ""
+
+#: ../../docs/contributing.rst:213
+msgid "Block with a Different Top"
+msgstr ""
+
+#: ../../docs/contributing.rst:215
+msgid ""
+"Another common theme is a block where the top is a different texture than"
+" the sides. Here we use the ``@material`` decorator to create the jukebox"
+" block::"
+msgstr ""
+
+#: ../../docs/contributing.rst:222
+msgid ""
+"As you can see, we define a method called ``jukebox``, taking the "
+"parameters ``blockid`` and ``data``, decorated by a decorator stating "
+"that the following definition is a material with a ``blockid`` of ``84`` "
+"and a data value range from ``0`` to ``15`` (or ``range(16)``), which we "
+"won't use as it doesn't affect the rendering of the block. We also "
+"specify that the block is solid."
+msgstr ""
+
+#: ../../docs/contributing.rst:228
+msgid ""
+"Inside the method, we then return the return value of "
+"``self.build_block()``, which is a helper method that takes a texture for"
+" the top and a texture for the side as its arguments."
+msgstr ""
+
+#: ../../docs/contributing.rst:233
+msgid "Block with Variable Colors"
+msgstr ""
+
+#: ../../docs/contributing.rst:235
+msgid ""
+"Occasionally, blocks can have colors stored in their data values. "
+"``textures.py`` includes an easy mapping list, called ``color_map``, to "
+"map between data values and Minecraft color names. Let's take stained "
+"hardened clay as an example of how this is used::"
+msgstr ""
+
+#: ../../docs/contributing.rst:246
+msgid ""
+"As you can see, we specify that the block has 16 data values, then "
+"depending on the data value we load the right block texture by looking up"
+" the color name in the ``color_map`` list, formatting a string for the "
+"filename with it."
+msgstr ""
+
+#: ../../docs/contributing.rst:251
+msgid "Good Git Practices"
+msgstr ""
+
+#: ../../docs/contributing.rst:253
+msgid ""
+"How you structure your Git workflow is ultimately up to you, but here are"
+" a few recommendations to make your life and the life of the people who "
+"want to merge your pull requests easier."
+msgstr ""
+
+#: ../../docs/contributing.rst:257
+msgid ""
+"**Commit your changes in a separate branch, and then submit a pull "
+"request from that branch.** This makes it easier for you to rebase your "
+"changes, and allows you to keep your repository's master branch in-sync "
+"with our master branch, so you can easily split off a new branch from "
+"master if you want to develop a new change while your old change still "
+"isn't merged into the master."
+msgstr ""
+
+#: ../../docs/contributing.rst:263
+msgid ""
+"**Format your commit messages properly.** The first line should be a 50 "
+"character long summary of the change the commit makes, in present tense, "
+"e.g. \"Add a spinner to the progress bar\". This should be followed by a "
+"blank line, and a longer explanation of the change the commit actually "
+"does, wrapped at 72 characters."
+msgstr ""
+
+#: ../../docs/contributing.rst:269
+msgid ""
+"**Don't merge master into your branch.** If you plan on submitting a "
+"change as a pull request and the master branch has moved in the meantime,"
+" then don't merge the master branch into the branch of your pull request."
+" Instead, rebase your branch on top of the updated master."
+msgstr ""
+
+#: ../../docs/contributing.rst:274
+msgid ""
+"**Keep commits logically separated.** Don't try to cram unrelated changes"
+" into just one commit unless it's a commit full of small fixes. If you "
+"find yourself struggling to keep the commit summary below 50 characters, "
+"and find yourself using the word \"and\" in it, rethink whether the "
+"changes you're making should be just one commit."
+msgstr ""
+
+#: ../../docs/contributing.rst:280
+msgid ""
+"It's also a good idea to look at the output of ``git diff`` before "
+"committing a change, to make sure nothing was unintentionally changed in "
+"the file where you weren't expecting it. ``git diff`` will also highlight"
+" blank lines with spaces in them with a solid red background."
+msgstr ""
+
+#: ../../docs/contributing.rst:286
+msgid "Talking with other Developers"
+msgstr ""
+
+#: ../../docs/contributing.rst:288
+msgid ""
+"Occasionally, the issue tracker simply doesn't cut it. You need to talk "
+"with another developer, maybe to brainstorm a new feature or ask a "
+"question about the code. For this, we have `an IRC channel on "
+"Libera.Chat`_, which allows you to talk with other developers that are on"
+" the IRC channel in real-time."
+msgstr ""
+
+#: ../../docs/contributing.rst:295
+msgid ""
+"Since most developers have jobs or are in college or university, it may "
+"sometimes take a few moments to get a reply. So it's useful to stick "
+"around and wait for someone who can help you to be around."
+msgstr ""
+
