@@ -531,20 +531,12 @@ def main():
 
         # If a crop is requested, wrap the regionset here
         if "crop" in render:
-            rsets = []
-            for zone in render['crop']:
-                rsets.append(world.CroppedRegionSet(rset, *zone))
-        else:
-            rsets = [rset]
+            rset = world.CroppedRegionSet(rset, render['crop'])
 
         # If this is to be a rotated regionset, wrap it in a RotatedRegionSet
         # object
         if (render['northdirection'] > 0):
-            newrsets = []
-            for r in rsets:
-                r = world.RotatedRegionSet(r, render['northdirection'])
-                newrsets.append(r)
-            rsets = newrsets
+            rset = world.RotatedRegionSet(rset, render['northdirection'])
 
         ###############################
         # Do the final prep and create the TileSet object
@@ -560,9 +552,8 @@ def main():
             "dimension", "changelist", "showspawn", "overlay", "base", "poititle", "maxzoom",
             "showlocationmarker", "minzoom", "center"])
         tileSetOpts.update({"spawn": w.find_true_spawn()})  # TODO find a better way to do this
-        for rset in rsets:
-            tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
-            tilesets.append(tset)
+        tset = tileset.TileSet(w, rset, assetMrg, tex, tileSetOpts, tileset_dir)
+        tilesets.append(tset)
 
     # If none of the requested dimenstions exist, tilesets will be empty
     if not tilesets:
