@@ -142,18 +142,6 @@ class Textures(object):
             tex = texgen(self, blockid, data)
             self.blockmap[blockid * max_data + data] = self.generate_texture_tuple(tex)
         
-        if self.texture_size != 24:
-            # rescale biome grass
-            self.biome_grass_texture = self.biome_grass_texture.resize(self.texture_dimensions, Image.ANTIALIAS)
-            
-            # rescale the rest
-            for i, tex in enumerate(blockmap):
-                if tex is None:
-                    continue
-                block = tex[0]
-                scaled_block = block.resize(self.texture_dimensions, Image.ANTIALIAS)
-                blockmap[i] = self.generate_texture_tuple(scaled_block)
-        
         self.generated = True
     
     ##
