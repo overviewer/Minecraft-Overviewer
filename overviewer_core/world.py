@@ -1711,39 +1711,48 @@ class RegionSet(object):
         chunk_data['NewBiomes'] = (len(biomes.shape) == 3)
 
         unrecognized_block_types = {}
-        for section in chunk_data['Sections']:
 
-            # Turn the skylight array into a 16x16x16 matrix. The array comes
-            # packed 2 elements per byte, so we need to expand it.
+        sections = chunk_data['Sections']
+        # Sometimes, Minecraft loves generating chunks with no light info.
+        # These mostly appear to have those two properties, and in this case
+        # we default to full-bright as it's less jarring to look at than all-black.
+        fullbright = chunk_data.get("Status", "") == "spawn" and 'Lights' in chunk_data
+        if not fullbright and self.get_type() is None:
+            # In the overworld, we also default to fullbright if these is no sky light
+            # in the chunk at full level.
+            # We can't just check for the complete absence of light, as Minecraft will
+            # sometimes partially generate sky light in chunks that is just spillover
+            # from neighboring chunks, but doesn't take the chunk itself into account,
+            # leaving us with a mostly dark chunk.
+            # The nice thing about sky light that spills over is, it is never at full
+            # level.
+            # Also, almost all chunks will have full sky light at the very top.
+            # Therefore: if a chunk contains sky light, but none of it is full, we can
+            # be 99% sure that that chunk is one of these mostly dark ones.
+            # If you've built a roof of leaves at build limit and are reading this:
+            # I'm sorry.
+            for section in sections[::-1]:
+                if "SkyLight" in section:
+                    light = numpy.frombuffer(section["SkyLight"], dtype=numpy.uint8)
+                    if numpy.any((light>>4) == 15) or numpy.any((light & 15) == 15):
+                        break
+            else:
+                fullbright = True
+
+        for section in sections:
             try:
-                # Sometimes, Minecraft loves generating chunks with no light info.
-                # These mostly appear to have those two properties, and in this case
-                # we default to full-bright as it's less jarring to look at than all-black.
-                if chunk_data.get("Status", "") == "spawn" and 'Lights' in chunk_data:
+                if fullbright:
                     section['SkyLight'] = numpy.full((16,16,16), 255, dtype=numpy.uint8)
+                elif not "SkyLight" in section:
+                    # Special case introduced with 1.14
+                    section['SkyLight'] = numpy.zeros((16,16,16), dtype=numpy.uint8)
                 else:
-                    if 'SkyLight' in section:
-                        skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
-                        skylight = skylight.reshape((16,16,8))
-                    else:   # Special case introduced with 1.14
-                        skylight = numpy.zeros((16,16,8), dtype=numpy.uint8)
-                    skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-                    skylight_expanded[:,:,::2] = skylight & 0x0F
-                    skylight_expanded[:,:,1::2] = (skylight & 0xF0) >> 4
-                    del skylight
-                    section['SkyLight'] = skylight_expanded
+                    section['SkyLight'] = self._extract_light_data(section["SkyLight"])
 
-                # Turn the BlockLight array into a 16x16x16 matrix, same as SkyLight
-                if 'BlockLight' in section:
-                    blocklight = numpy.frombuffer(section['BlockLight'], dtype=numpy.uint8)
-                    blocklight = blocklight.reshape((16,16,8))
-                else:   # Special case introduced with 1.14
-                    blocklight = numpy.zeros((16,16,8), dtype=numpy.uint8)
-                blocklight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
-                blocklight_expanded[:,:,::2] = blocklight & 0x0F
-                blocklight_expanded[:,:,1::2] = (blocklight & 0xF0) >> 4
-                del blocklight
-                section['BlockLight'] = blocklight_expanded
+                if not 'BlockLight' in section:
+                    section['BlockLight'] = numpy.zeros((16,16,16), dtype=numpy.uint8)
+                else:
+                    section['BlockLight'] = self._extract_light_data(section["BlockLight"])
 
                 if 'block_states' in section:
                     (blocks, data) = self._get_blockdata_v118(section, unrecognized_block_types, longarray_unpacker)
@@ -1769,6 +1778,15 @@ class RegionSet(object):
 
         return chunk_data
 
+    def _extract_light_data(self, data):
+        # Turn the light array into a 16x16x16 matrix. The array comes
+        # packed 2 elements per byte, so we need to expand it.
+        light = numpy.frombuffer(data, dtype=numpy.uint8).reshape((16,16,8))
+        light_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
+        light_expanded[:,:,::2] = light & 0x0F
+        light_expanded[:,:,1::2] = (light & 0xF0) >> 4
+        del light
+        return light_expanded
 
     def iterate_chunks(self):
         """Returns an iterator over all chunk metadata in this world. Iterates
