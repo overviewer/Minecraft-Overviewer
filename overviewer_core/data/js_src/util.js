@@ -357,7 +357,8 @@ overviewer.util = {
             var myLayer = new L.tileLayer('', {
                 tileSize: overviewerConfig.CONST.tileSize,
                 noWrap: true,
-                maxZoom: obj.maxZoom,
+                maxZoom: obj.maxZoom+1,
+                maxNativeZoom: obj.maxZoom,
                 minZoom: obj.minZoom,
                 errorTileUrl: obj.base + obj.path + "/blank." + obj.imgextension,
             });
