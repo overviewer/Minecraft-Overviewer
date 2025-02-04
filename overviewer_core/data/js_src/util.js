@@ -416,7 +416,9 @@ overviewer.util = {
                             }
                             // Add popup to marker
                             if (marker_entry.createInfoWindow && db.text) {
-                                layerObj.bindPopup(db.text);
+                                layerObj.bindPopup(
+                                    document.createTextNode(db.text)
+                                );
                             }
                             // Add the polyline or marker to the layer
                             marker_group.addLayer(layerObj);
