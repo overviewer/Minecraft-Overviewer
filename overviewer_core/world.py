@@ -1678,6 +1678,8 @@ class RegionSet(object):
             # starting with 1.16 snapshot 20w17a, block states are packed differently
             longarray_unpacker = self._packed_longarray_to_shorts_v116
 
+        include_chunk = False
+        below_zero_retrogen_target_status = None
         # From the interior of a map to the edge, a chunk's status may be one of:
         # - postprocessed (interior, or next to fullchunk)
         # - fullchunk (next to decorated)
@@ -1688,8 +1690,18 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
-        if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk",
+        if chunk_data.get("Status", "") in ("full", "postprocessed", "fullchunk",
                                                 "mobs_spawned", "spawn", ""):
+            include_chunk = True
+
+        else:
+            below_zero_retrogen_target_status = (
+                chunk_data.get("below_zero_retrogen", {}).get("target_status")
+            )
+            if below_zero_retrogen_target_status in ("heightmaps", "spawn", "minecraft:heightmaps", "minecraft:spawn"):
+                include_chunk = True
+
+        if not include_chunk:
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array
@@ -1725,6 +1737,12 @@ class RegionSet(object):
                     if 'SkyLight' in section:
                         skylight = numpy.frombuffer(section['SkyLight'], dtype=numpy.uint8)
                         skylight = skylight.reshape((16,16,8))
+                    elif below_zero_retrogen_target_status and section["Y"] < 0:
+                        # nonexistent section of incomplete pre-1.18 chunk
+                        # if we don't do this, the terrain below Y=0 next to it will be
+                        # painted black, and since this terrain isn't a red door and we
+                        # aren't the rolling stones, we don't want that
+                        skylight = numpy.full((16,16, 8), 255, dtype=numpy.uint8)
                     else:   # Special case introduced with 1.14
                         skylight = numpy.zeros((16,16,8), dtype=numpy.uint8)
                     skylight_expanded = numpy.empty((16,16,16), dtype=numpy.uint8)
