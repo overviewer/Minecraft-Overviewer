@@ -4069,7 +4069,7 @@ def repeater(self, blockid, data):
     ImageDraw.Draw(torch).rectangle((0,16,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
     
     # touch up the 3d effect with big rectangles, just in case, for other texture packs
-    ImageDraw.Draw(torch).rectangle((0,24,10,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(torch).rectangle((0,15,10,24),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(torch).rectangle((12,15,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
     
     # torch positions for every redstone torch orientation.
