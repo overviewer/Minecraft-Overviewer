@@ -343,8 +343,6 @@ class ProgressBar(object):
 
 
 if __name__=='__main__':
-    import os
-
     def example1():
         widgets = ['Test: ', Percentage(), ' ', Bar(marker=RotatingMarker()),
                    ' ', ETA(), ' ', FileTransferSpeed()]

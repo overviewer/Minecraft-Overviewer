@@ -22,7 +22,7 @@ import imp
 import os.path
 import platform
 import sys
-from itertools import cycle, islice, product
+from itertools import cycle, islice
 from string import hexdigits
 from subprocess import PIPE, Popen
 

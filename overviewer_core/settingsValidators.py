@@ -5,7 +5,6 @@ import os.path
 from collections import OrderedDict
 
 from . import rendermodes
-from . import util
 from .optimizeimages import Optimizer
 from .world import LOWER_LEFT, LOWER_RIGHT, UPPER_LEFT, UPPER_RIGHT
 
