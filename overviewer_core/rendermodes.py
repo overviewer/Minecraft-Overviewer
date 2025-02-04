@@ -210,7 +210,7 @@ class SlimeOverlay(Overlay):
 class StructureOverlay(Overlay):
     name = "overlay-structure"
     options = {
-        'structures': ('a list of ((((relx, rely, relz), blockid), ...), (r, g, b, a)) tuples for coloring minerals',
+        'structures': ('a list of (((relx, rely, relz, blockid, data), ...), (r, g, b, a)) tuples for coloring minerals',
                        [(((0, 0, 0, 66),  (0, -1, 0, 4)), (255, 0,   0, 255)),
                         (((0, 0, 0, 27),  (0, -1, 0, 4)), (0,   255, 0, 255)),
                         (((0, 0, 0, 28),  (0, -1, 0, 4)), (255, 255, 0, 255)),
