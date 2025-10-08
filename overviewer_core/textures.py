@@ -15,7 +15,7 @@
 
 from collections import OrderedDict
 import sys
-import imp
+import importlib.util
 import os
 import os.path
 import zipfile
@@ -64,6 +64,12 @@ class TextureException(Exception):
 color_map = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
              "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"]
 
+def is_frozen(module_name):
+    try:
+        spec = importlib.util.find_spec(module_name)
+    except ValueError:
+        spec = None
+    return spec is not None and spec.origin == 'frozen'
 
 ##
 ## Textures object
@@ -138,21 +144,21 @@ class Textures(object):
         global known_blocks, used_datas
         self.blockmap = [None] * max_blockid * max_data
         
-        for (blockid, data), texgen in list(blockmap_generators.items()):
+        for (blockid, data), texgen in blockmap_generators.items():
             tex = texgen(self, blockid, data)
             self.blockmap[blockid * max_data + data] = self.generate_texture_tuple(tex)
         
         if self.texture_size != 24:
             # rescale biome grass
-            self.biome_grass_texture = self.biome_grass_texture.resize(self.texture_dimensions, Image.ANTIALIAS)
+            self.biome_grass_texture = self.biome_grass_texture.resize(self.texture_dimensions, Image.Resampling.LANCZOS)
             
             # rescale the rest
-            for i, tex in enumerate(blockmap):
+            for i, tex in enumerate(self.blockmap):
                 if tex is None:
                     continue
                 block = tex[0]
-                scaled_block = block.resize(self.texture_dimensions, Image.ANTIALIAS)
-                blockmap[i] = self.generate_texture_tuple(scaled_block)
+                scaled_block = block.resize(self.texture_dimensions, Image.Resampling.LANCZOS)
+                self.blockmap[i] = self.generate_texture_tuple(scaled_block)
         
         self.generated = True
     
@@ -197,7 +203,7 @@ class Textures(object):
         if os.path.isfile(path):
             if verbose: logging.info("Found %s in '%s'", filename, path)
             return open(path, mode)
-        elif hasattr(sys, "frozen") or imp.is_frozen("__main__"):
+        elif hasattr(sys, "frozen") or is_frozen("__main__"):
             # windows special case, when the package dir doesn't exist
             path = os.path.join(programdir, "textures", filename)
             if os.path.isfile(path):
@@ -343,7 +349,7 @@ class Textures(object):
         if w != h:
             img = img.crop((0,0,w,w))
         if w != 16:
-            img = img.resize((16, 16), Image.ANTIALIAS)
+            img = img.resize((16, 16), Image.Resampling.LANCZOS)
 
         self.texture_cache[filename] = img
         return img
@@ -451,9 +457,9 @@ class Textures(object):
                 lower = upper+texture_resolution
                 region = terrain.transform(
                           (16, 16),
-                          Image.EXTENT,
+                          Image.Transform.EXTENT,
                           (left,upper,right,lower),
-                          Image.BICUBIC)
+                          Image.Resampling.BICUBIC)
                 textures.append(region)
 
         return textures
@@ -471,7 +477,7 @@ class Textures(object):
 
         # Resize to 17x17, since the diagonal is approximately 24 pixels, a nice
         # even number that can be split in half twice
-        img = img.resize((17, 17), Image.ANTIALIAS)
+        img = img.resize((17, 17), Image.Resampling.LANCZOS)
 
         # Build the Affine transformation matrix for this perspective
         transform = numpy.matrix(numpy.identity(3))
@@ -488,7 +494,7 @@ class Textures(object):
 
         transform = numpy.array(transform)[:2,:].ravel().tolist()
 
-        newimg = img.transform((24,12), Image.AFFINE, transform)
+        newimg = img.transform((24,12), Image.Transform.AFFINE, transform)
         return newimg
 
     @staticmethod
@@ -497,7 +503,7 @@ class Textures(object):
         the right side)"""
 
         # Size of the cube side before shear
-        img = img.resize((12,12), Image.ANTIALIAS)
+        img = img.resize((12,12), Image.Resampling.LANCZOS)
 
         # Apply shear
         transform = numpy.matrix(numpy.identity(3))
@@ -505,7 +511,7 @@ class Textures(object):
 
         transform = numpy.array(transform)[:2,:].ravel().tolist()
 
-        newimg = img.transform((12,18), Image.AFFINE, transform)
+        newimg = img.transform((12,18), Image.Transform.AFFINE, transform)
         return newimg
 
     @staticmethod
@@ -514,14 +520,14 @@ class Textures(object):
         in the -y direction (reflect for +x direction). Used for minetracks"""
 
         # Take the same size as trasform_image_side
-        img = img.resize((12,12), Image.ANTIALIAS)
+        img = img.resize((12,12), Image.Resampling.LANCZOS)
 
         # Apply shear
         transform = numpy.matrix(numpy.identity(3))
         transform *= numpy.matrix("[0.75,-0.5,3;0.25,0.5,-3;0,0,1]")
         transform = numpy.array(transform)[:2,:].ravel().tolist()
 
-        newimg = img.transform((24,24), Image.AFFINE, transform)
+        newimg = img.transform((24,24), Image.Transform.AFFINE, transform)
 
         return newimg
 
@@ -539,7 +545,7 @@ class Textures(object):
         """
 
         # Take the same size as trasform_image_side
-        img = img.resize((12,12), Image.ANTIALIAS)
+        img = img.resize((12,12), Image.Resampling.LANCZOS)
 
         # some values
         cos_angle = math.cos(angle)
@@ -562,7 +568,7 @@ class Textures(object):
 
         transform = tuple(transform[0]) + tuple(transform[1])
 
-        newimg = img.transform((24,24), Image.AFFINE, transform)
+        newimg = img.transform((24,24), Image.Transform.AFFINE, transform)
 
         return newimg
 
@@ -582,7 +588,7 @@ class Textures(object):
             return img
 
         side = self.transform_image_side(side)
-        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
         # Darken the sides slightly. These methods also affect the alpha layer,
         # so save them first (we don't want to "darken" the alpha layer making
@@ -622,7 +628,7 @@ class Textures(object):
         # plain slab
         top = self.transform_image_top(top)
         side = self.transform_image_side(side)
-        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
         sidealpha = side.split()[3]
         side = ImageEnhance.Brightness(side).enhance(0.9)
@@ -706,7 +712,7 @@ class Textures(object):
         # first back sides
         if side1 is not None :
             side1 = self.transform_image_side(side1)
-            side1 = side1.transpose(Image.FLIP_LEFT_RIGHT)
+            side1 = side1.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
             # Darken this side.
             sidealpha = side1.split()[3]
@@ -743,7 +749,7 @@ class Textures(object):
 
         if side4 is not None :
             side4 = self.transform_image_side(side4)
-            side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+            side4 = side4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
             # Darken this side
             sidealpha = side4.split()[3]
@@ -793,7 +799,7 @@ class Textures(object):
         img = Image.new("RGBA", (24,24), self.bgcolor)
 
         side = self.transform_image_side(side)
-        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
         alpha_over(img, side, (6,3), side)
         alpha_over(img, otherside, (6,3), otherside)
@@ -805,7 +811,7 @@ class Textures(object):
         """
         img = Image.new("RGBA", (24,24), self.bgcolor)
 
-        front = tex.resize((14, 12), Image.ANTIALIAS)
+        front = tex.resize((14, 12), Image.Resampling.LANCZOS)
         alpha_over(img, front, (5,9))
         return img
 
@@ -1330,7 +1336,7 @@ def bed(self, blockid, data):
         side_part1 = bed_texture.copy().crop((0, 6, 6, 22)).rotate(90, expand=True)
         # foot of the bed
         side_part2 = bed_texture.copy().crop((53, 3, 56, 6))
-        side_part2_f = side_part2.transpose(Image.FLIP_LEFT_RIGHT)
+        side_part2_f = side_part2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(side, side_part1, (0, 7), side_part1)
         alpha_over(side, side_part2, (0, 13), side_part2)
 
@@ -1341,12 +1347,12 @@ def bed(self, blockid, data):
         alpha_over(end, side_part2_f, (13, 13), side_part2_f)
         if data & 0x03 == 0x00:    # South
             top_face = top.rotate(180)
-            left_face = side.transpose(Image.FLIP_LEFT_RIGHT)
+            left_face = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             right_face = end
         elif data & 0x03 == 0x01:  # West
             top_face = top.rotate(90)
             left_face = end
-            right_face = side.transpose(Image.FLIP_LEFT_RIGHT)
+            right_face = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         elif data & 0x03 == 0x02:  # North
             top_face = top
             left_face = side
@@ -1359,7 +1365,7 @@ def bed(self, blockid, data):
         side = Image.new("RGBA", (16, 16), self.bgcolor)
         side_part1 = bed_texture.copy().crop((0, 28, 6, 44)).rotate(90, expand=True)
         side_part2 = bed_texture.copy().crop((53, 3, 56, 6))
-        side_part2_f = side_part2.transpose(Image.FLIP_LEFT_RIGHT)
+        side_part2_f = side_part2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(side, side_part1, (0, 7), side_part1)
         alpha_over(side, side_part2, (13, 13), side_part2)
 
@@ -1370,10 +1376,10 @@ def bed(self, blockid, data):
         alpha_over(end, side_part2_f, (13, 13), side_part2_f)
         if data & 0x03 == 0x00:    # South
             top_face = top.rotate(180)
-            left_face = side.transpose(Image.FLIP_LEFT_RIGHT)
+            left_face = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         elif data & 0x03 == 0x01:  # West
             top_face = top.rotate(90)
-            right_face = side.transpose(Image.FLIP_LEFT_RIGHT)
+            right_face = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         elif data & 0x03 == 0x02:  # North
             top_face = top
             left_face = side
@@ -1472,10 +1478,10 @@ def rails(self, blockid, data):
         alpha_over(img, track, (0,12), track)
     elif data == 8:
         # flip
-        track = self.transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90))
+        track = self.transform_image_top(raw_corner.transpose(Image.Transpose.FLIP_TOP_BOTTOM).rotate(90))
         alpha_over(img, track, (0,12), track)
     elif data == 9:
-        track = self.transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM))
+        track = self.transform_image_top(raw_corner.transpose(Image.Transpose.FLIP_TOP_BOTTOM))
         alpha_over(img, track, (0,12), track)
     elif data == 1:
         track = self.transform_image_top(raw_straight.rotate(90))
@@ -1484,7 +1490,7 @@ def rails(self, blockid, data):
     #slopes
     elif data == 2: # slope going up in +x direction
         track = self.transform_image_slope(raw_straight)
-        track = track.transpose(Image.FLIP_LEFT_RIGHT)
+        track = track.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, track, (2,0), track)
         # the 2 pixels move is needed to fit with the adjacent tracks
         
@@ -1541,7 +1547,7 @@ def piston(self, blockid, data):
         elif data & 0x07 == 0x3:  # south
             img = self.build_full_block(side_t.rotate(180), None, None, side_t.rotate(270), None)
             temp = self.transform_image_side(interior_t)
-            temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
+            temp = temp.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, temp, (9, 4), temp)
         elif data & 0x07 == 0x4:  # west
             img = self.build_full_block(side_t.rotate(90), None, None, None, side_t.rotate(270))
@@ -1605,7 +1611,7 @@ def piston_extension(self, blockid, data):
     v_stick = Image.new("RGBA", (24, 24), self.bgcolor)
     temp = self.transform_image_side(side_t.rotate(90))
     alpha_over(v_stick, temp, (12, 6), temp)
-    temp = temp.transpose(Image.FLIP_LEFT_RIGHT)
+    temp = temp.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     alpha_over(v_stick, temp, (1, 6), temp)
     # Darken it
     sidealpha = v_stick.split()[3]
@@ -1624,7 +1630,7 @@ def piston_extension(self, blockid, data):
         alpha_over(img, img2, (0, 0), img2)
     elif data & 0x07 == 0x2:  # north
         img = self.build_full_block(side_t, None, None, side_t.rotate(90), None)
-        temp = self.transform_image_side(back_t).transpose(Image.FLIP_LEFT_RIGHT)
+        temp = self.transform_image_side(back_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, temp, (2, 2), temp)
         alpha_over(img, h_stick, (6, 3), h_stick)
     elif data & 0x07 == 0x3:  # south
@@ -1634,12 +1640,12 @@ def piston_extension(self, blockid, data):
         alpha_over(img, img2, (0, 0), img2)
     elif data & 0x07 == 0x4:  # west
         img = self.build_full_block(side_t.rotate(90), None, None, piston_t, side_t.rotate(270))
-        h_stick = h_stick.transpose(Image.FLIP_LEFT_RIGHT)
+        h_stick = h_stick.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, h_stick, (0, 0), h_stick)
     elif data & 0x07 == 0x5:  # east
         img = Image.new("RGBA", (24, 24), self.bgcolor)
         img2 = self.build_full_block(side_t.rotate(270), None, None, None, side_t.rotate(90))
-        h_stick = h_stick.transpose(Image.FLIP_LEFT_RIGHT)
+        h_stick = h_stick.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         temp = self.transform_image_side(back_t)
         alpha_over(img2, temp, (10, 2), temp)
         alpha_over(img, img2, (0, 0), img2)
@@ -1830,7 +1836,7 @@ def slabs(self, blockid, data):
     if blockid == 43 or blockid == 181 or blockid == 204: # double slab
         return self.build_block(top, side)
     
-    return self.build_slab_block(top, side, data & 8 == 8);
+    return self.build_slab_block(top, side, data & 8 == 8)
 
 # brick block
 block(blockid=45, top_image="assets/minecraft/textures/block/bricks.png")
@@ -1883,19 +1889,19 @@ def torches(self, blockid, data):
     rotation = 15
     
     if data == 1: # pointing south
-        torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
+        torch = torch.rotate(-rotation, Image.Resampling.NEAREST) # nearest filter is more nitid.
         img = self.build_full_block(None, None, None, torch, None, None)
         
     elif data == 2: # pointing north
-        torch = torch.rotate(rotation, Image.NEAREST)
+        torch = torch.rotate(rotation, Image.Resampling.NEAREST)
         img = self.build_full_block(None, None, torch, None, None, None)
         
     elif data == 3: # pointing west
-        torch = torch.rotate(rotation, Image.NEAREST)
+        torch = torch.rotate(rotation, Image.Resampling.NEAREST)
         img = self.build_full_block(None, torch, None, None, None, None)
         
     elif data == 4: # pointing east
-        torch = torch.rotate(-rotation, Image.NEAREST)
+        torch = torch.rotate(-rotation, Image.Resampling.NEAREST)
         img = self.build_full_block(None, None, None, None, torch, None)
         
     elif data == 5: # standing on the floor
@@ -1963,7 +1969,7 @@ def lantern(self, blockid, data):
     alpha_over(img, side3, (xoff+0, yoff+6), side3)
     # side4
     side4 = self.transform_image_side(side_texture)
-    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+    side4 = side4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     # Darken this side
     sidealpha = side4.split()[3]
     side4 = ImageEnhance.Brightness(side4).enhance(0.8)
@@ -2022,7 +2028,7 @@ def bamboo(self, blockid, data):
     alpha_over(img, side3, (4+xoff, yoff), side3)
     # side4
     side4 = self.transform_image_side(side_texture)
-    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+    side4 = side4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     # Darken this side
     sidealpha = side4.split()[3]
     side4 = ImageEnhance.Brightness(side4).enhance(0.8)
@@ -2068,7 +2074,7 @@ def fire(self, blockid, data):
         textureNS = self.load_image_texture("assets/minecraft/textures/block/soul_fire_0.png")
         textureEW = self.load_image_texture("assets/minecraft/textures/block/soul_fire_1.png")
     side1 = self.transform_image_side(textureNS)
-    side2 = self.transform_image_side(textureEW).transpose(Image.FLIP_LEFT_RIGHT)
+    side2 = self.transform_image_side(textureEW).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     img = Image.new("RGBA", (24,24), self.bgcolor)
     alpha_over(img, side1, (12,0), side1)
     alpha_over(img, side2, (0,0), side2)
@@ -2229,7 +2235,7 @@ def stairs(self, blockid, data):
     alpha_over(img, inside_l, (6,3))
 
     # render inner right surface
-    inside_r = self.transform_image_side(inside_r).transpose(Image.FLIP_LEFT_RIGHT)
+    inside_r = self.transform_image_side(inside_r).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     # Darken the vertical part of the second step
     sidealpha = inside_r.split()[3]
     # darken it a bit more than usual, looks better
@@ -2284,7 +2290,7 @@ def chests(self, blockid, data):
 
         # the textures is no longer in terrain.png, get it from
         # item/chest.png and get by cropping all the needed stuff
-        if t.size != (64, 64): t = t.resize((64, 64), Image.ANTIALIAS)
+        if t.size != (64, 64): t = t.resize((64, 64), Image.Resampling.LANCZOS)
         # top
         top = t.crop((28, 50, 42, 64))
         top.load() # every crop need a load, crop is a lazy operation
@@ -2435,7 +2441,7 @@ def chests(self, blockid, data):
         side = self.transform_image_side(side_r)
         alpha_over(img, side, (1, 7))
         back = self.transform_image_side(back)
-        alpha_over(img, back.transpose(Image.FLIP_LEFT_RIGHT), (11, 7))
+        alpha_over(img, back.transpose(Image.Transpose.FLIP_LEFT_RIGHT), (11, 7))
         front = self.transform_image_side(front)
         top = self.transform_image_top(top.rotate(180))
         alpha_over(img, top, (0, 2))
@@ -2443,14 +2449,14 @@ def chests(self, blockid, data):
     elif data & 7 == 3: # south
         side = self.transform_image_side(side_l)
         alpha_over(img, side, (1, 7))
-        front = self.transform_image_side(front).transpose(Image.FLIP_LEFT_RIGHT)
+        front = self.transform_image_side(front).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         top = self.transform_image_top(top.rotate(180))
         alpha_over(img, top, (0, 2))
         alpha_over(img, front, (11, 7))
 
     elif data & 7 == 4: # west
         side = self.transform_image_side(side_r)
-        alpha_over(img, side.transpose(Image.FLIP_LEFT_RIGHT), (11, 7))
+        alpha_over(img, side.transpose(Image.Transpose.FLIP_LEFT_RIGHT), (11, 7))
         front = self.transform_image_side(front)
         alpha_over(img, front, (1, 7))
         top = self.transform_image_top(top.rotate(270))
@@ -2458,7 +2464,7 @@ def chests(self, blockid, data):
 
     elif data & 7 == 5: # east
         back = self.transform_image_side(back)
-        side = self.transform_image_side(side_l).transpose(Image.FLIP_LEFT_RIGHT)
+        side = self.transform_image_side(side_l).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, side, (11, 7))
         alpha_over(img, back, (1, 7))
         top = self.transform_image_top(top.rotate(270))
@@ -2582,7 +2588,7 @@ def block_table(self, blockid, data):
     side3 = self.load_image_texture("{}/{}.png".format(tex_path, side3_tex))
     side4 = self.load_image_texture("{}/{}.png".format(tex_path, side4_tex)).copy()
     top = top.rotate(top_rot)
-    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+    side4 = side4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     return self.build_full_block(top, None, None, side3, side4, None)
 
@@ -2628,7 +2634,7 @@ def lectern(self, blockid, data):
     img = self.build_full_block((base_top_t, 14), None, None, base_side3_t, base_side4_t, None)
 
     # Generate central pillar
-    side_flip_t = side_raw_t.transpose(Image.FLIP_LEFT_RIGHT)
+    side_flip_t = side_raw_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     # Define parameters used to obtain the texture for each side
     pillar_param = [{'img': front_raw_t, 'crop': (8, 4, 16, 16), 'paste': (4, 2), 'rot': 0},    # South
                     {'img': side_raw_t,  'crop': (2, 8, 15, 16), 'paste': (4, 1), 'rot': 270},  # West
@@ -2641,10 +2647,10 @@ def lectern(self, blockid, data):
                                  pillar_side[0]['paste'], pillar_side[0]['rot'])
     pillar_side4_t = create_tile(pillar_side[1]['img'], pillar_side[1]['crop'],
                                  pillar_side[1]['paste'], pillar_side[1]['rot'])
-    pillar_side4_t = pillar_side4_t.transpose(Image.FLIP_LEFT_RIGHT)
+    pillar_side4_t = pillar_side4_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     pillar_side3_t = self.transform_image_side(pillar_side3_t)
     pillar_side3_t = darken_image(pillar_side3_t, 0.9)
-    pillar_side4_t = self.transform_image_side(pillar_side4_t).transpose(Image.FLIP_LEFT_RIGHT)
+    pillar_side4_t = self.transform_image_side(pillar_side4_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     pillar_side4_t = darken_image(pillar_side4_t, 0.8)
     alpha_over(img, pillar_side3_t, (3, 4), pillar_side3_t)
     alpha_over(img, pillar_side4_t, (9, 4), pillar_side4_t)
@@ -2659,7 +2665,7 @@ def lectern(self, blockid, data):
 
     stand_side3_t = self.transform_image_angle(stand_side3_t, math.radians(22.5))
     stand_side3_t = darken_image(stand_side3_t, 0.9)
-    stand_side4_t = self.transform_image_side(stand_side4_t).transpose(Image.FLIP_LEFT_RIGHT)
+    stand_side4_t = self.transform_image_side(stand_side4_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     stand_side4_t = darken_image(stand_side4_t, 0.8)
     stand_top_t = create_tile(top_raw_t, (0, 1, 16, 14), (0, 1), 0)
     if data & 0b100:
@@ -2709,7 +2715,7 @@ def lectern(self, blockid, data):
         transform_matrix *= numpy.matrix([[1, 0, -13], [0, 1, -7], [0, 0, 1]])
 
     transform_matrix = numpy.array(transform_matrix)[:2, :].ravel().tolist()
-    stand_top_t = stand_top_t.transform((24, 24), Image.AFFINE, transform_matrix)
+    stand_top_t = stand_top_t.transform((24, 24), Image.Transform.AFFINE, transform_matrix)
 
     img_stand = Image.new("RGBA", (24, 24), self.bgcolor)
     alpha_over(img_stand, stand_side3_t, (-4, 2), stand_side3_t)  # Fix some holes
@@ -2718,7 +2724,7 @@ def lectern(self, blockid, data):
     alpha_over(img_stand, stand_top_t, (0, 0), stand_top_t)
     # Flip the stand if North or South facing
     if (data & 0b11) in [0, 2]:
-        img_stand = img_stand.transpose(Image.FLIP_LEFT_RIGHT)
+        img_stand = img_stand.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     alpha_over(img, img_stand, (0, -2), img_stand)
 
     return img
@@ -2738,7 +2744,7 @@ def loom(self, blockid, data):
     side3 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side3_tex))
     side4 = self.load_image_texture("{}/loom_{}.png".format(tex_path, side4_tex)).copy()
     top = top.rotate(top_rot)
-    side4 = side4.transpose(Image.FLIP_LEFT_RIGHT)
+    side4 = side4.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     return self.build_full_block(top, None, None, side3, side4, None)
 
@@ -2759,10 +2765,10 @@ def stonecutter(self, blockid, data):
 
     # Add saw blade
     if data in [0, 2]:
-        blade_t = blade_t.transpose(Image.FLIP_LEFT_RIGHT)
+        blade_t = blade_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     blade_t = self.transform_image_side(blade_t)
     if data in [0, 2]:
-        blade_t = blade_t.transpose(Image.FLIP_LEFT_RIGHT)
+        blade_t = blade_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     alpha_over(img, blade_t, (6, -4), blade_t)
 
     return img
@@ -2786,7 +2792,7 @@ def grindstone(self, blockid, data):
         img_in = img_src.crop(coord_crop)
         if scale >= 0 and scale != 1:
             w, h = img_in.size
-            img_in = img_in.resize((int(w * scale), int(h * scale)), Image.NEAREST)
+            img_in = img_in.resize((int(w * scale), int(h * scale)), Image.Resampling.NEAREST)
         img_out.paste(img_in, coord_paste)
         return img_out
 
@@ -2820,16 +2826,16 @@ def grindstone(self, blockid, data):
     # Transform to block sides & tops
     side_t = self.transform_image_side(side_t)
     round_ud_t = self.transform_image_top(round_ud_t)
-    round_lr_t = self.transform_image_side(round_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+    round_lr_t = self.transform_image_side(round_lr_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     pivot_outer_t = self.transform_image_side(pivot_outer_t)
-    pivot_lr_t = self.transform_image_side(pivot_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+    pivot_lr_t = self.transform_image_side(pivot_lr_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     pivot_ud_t = self.transform_image_top(pivot_ud_t)
     leg_outer_t = self.transform_image_side(leg_outer_t)
     if wall_mounted:
-        leg_lr_t = self.transform_image_top(leg_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
-        leg_ud_t = self.transform_image_side(leg_ud_t).transpose(Image.FLIP_LEFT_RIGHT)
+        leg_lr_t = self.transform_image_top(leg_lr_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        leg_ud_t = self.transform_image_side(leg_ud_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     else:
-        leg_lr_t = self.transform_image_side(leg_lr_t).transpose(Image.FLIP_LEFT_RIGHT)
+        leg_lr_t = self.transform_image_side(leg_lr_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         leg_ud_t = self.transform_image_top(leg_ud_t)
 
     # Compose leg texture
@@ -2860,7 +2866,7 @@ def grindstone(self, blockid, data):
     alpha_over(img, round_lr_t, (10, 6), round_lr_t)
     alpha_over(img, img_pivot, (-5, -1), img_pivot)
     if (data & 0b11) in [1, 3]:
-        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     alpha_over(img_final, img, offset_final, img)
 
     return img_final
@@ -2872,7 +2878,7 @@ def crops8(self, blockid, data):
     raw_crop = self.load_image_texture("assets/minecraft/textures/block/wheat_stage%d.png" % data)
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
-    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+    crop3 = crop2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     img = Image.new("RGBA", (24,24), self.bgcolor)
     alpha_over(img, crop1, (0,12), crop1)
@@ -2942,7 +2948,7 @@ def signpost(self, blockid, data):
 
     # Minecraft uses wood texture for the signpost stick
     texture_stick = self.load_image_texture(texture_stick_path)
-    texture_stick = texture_stick.resize((12,12), Image.ANTIALIAS)
+    texture_stick = texture_stick.resize((12,12), Image.Resampling.LANCZOS)
     ImageDraw.Draw(texture_stick).rectangle((2,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
 
     img = Image.new("RGBA", (24,24), self.bgcolor)
@@ -3048,12 +3054,12 @@ def door(self, blockid, data):
     if (data & 0x03) == 0: # facing west when closed
         if hinge_on_left:
             if closed:
-                tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = self.transform_image_side(raw_door.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
                 alpha_over(img, tex, (0,6), tex)
             else:
                 # flip first to set the doornob on the correct side
-                tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-                tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
+                tex = self.transform_image_side(raw_door.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+                tex = tex.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 alpha_over(img, tex, (12,6), tex)
         else:
             if closed:
@@ -3061,14 +3067,14 @@ def door(self, blockid, data):
                 alpha_over(img, tex, (0,6), tex)
             else:
                 # flip first to set the doornob on the correct side
-                tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-                tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
+                tex = self.transform_image_side(raw_door.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+                tex = tex.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 alpha_over(img, tex, (0,0), tex)
     
     if (data & 0x03) == 1: # facing north when closed
         if hinge_on_left:
             if closed:
-                tex = self.transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                tex = self.transform_image_side(raw_door).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 alpha_over(img, tex, (0,0), tex)
             else:
                 # flip first to set the doornob on the correct side
@@ -3077,7 +3083,7 @@ def door(self, blockid, data):
 
         else:
             if closed:
-                tex = self.transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                tex = self.transform_image_side(raw_door).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 alpha_over(img, tex, (0,0), tex)
             else:
                 # flip first to set the doornob on the correct side
@@ -3093,34 +3099,34 @@ def door(self, blockid, data):
             else:
                 # flip first to set the doornob on the correct side
                 tex = self.transform_image_side(raw_door)
-                tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
+                tex = tex.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 alpha_over(img, tex, (0,0), tex)
         else:
             if closed:
-                tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = self.transform_image_side(raw_door.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
                 alpha_over(img, tex, (12,0), tex)
             else:
                 # flip first to set the doornob on the correct side
-                tex = self.transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                tex = self.transform_image_side(raw_door).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 alpha_over(img, tex, (12,6), tex)
 
     if (data & 0x03) == 3: # facing south when closed
         if hinge_on_left:
             if closed:
-                tex = self.transform_image_side(raw_door).transpose(Image.FLIP_LEFT_RIGHT)
+                tex = self.transform_image_side(raw_door).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 alpha_over(img, tex, (12,6), tex)
             else:
                 # flip first to set the doornob on the correct side
-                tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = self.transform_image_side(raw_door.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
                 alpha_over(img, tex, (12,0), tex)
         else:
             if closed:
-                tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
-                tex = tex.transpose(Image.FLIP_LEFT_RIGHT)
+                tex = self.transform_image_side(raw_door.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+                tex = tex.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                 alpha_over(img, tex, (12,6), tex)
             else:
                 # flip first to set the doornob on the correct side
-                tex = self.transform_image_side(raw_door.transpose(Image.FLIP_LEFT_RIGHT))
+                tex = self.transform_image_side(raw_door.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
                 alpha_over(img, tex, (0,6), tex)
 
     return img
@@ -3157,11 +3163,11 @@ def ladder(self, blockid, data):
         alpha_over(img, tex, (0,6), tex)
         return img
     if data == 2:
-        tex = self.transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+        tex = self.transform_image_side(raw_texture).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, tex, (12,6), tex)
         return img
     if data == 3:
-        tex = self.transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
+        tex = self.transform_image_side(raw_texture).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, tex, (0,0), tex)
         return img
     if data == 4:
@@ -3287,7 +3293,7 @@ def levers(self, blockid, data):
     tmp = ImageEnhance.Brightness(stick).enhance(0.8)
     alpha_over(c_stick, tmp, (1,0), tmp)
     alpha_over(c_stick, stick, (0,0), stick)
-    t_stick = self.transform_image_side(c_stick.rotate(45, Image.NEAREST))
+    t_stick = self.transform_image_side(c_stick.rotate(45, Image.Resampling.NEAREST))
 
     # where the lever will be composed
     img = Image.new("RGBA", (24,24), self.bgcolor)
@@ -3313,7 +3319,7 @@ def levers(self, blockid, data):
         # paste the lever stick
         pos = (7,-7)
         if powered:
-            t_stick = t_stick.transpose(Image.FLIP_TOP_BOTTOM)
+            t_stick = t_stick.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
             pos = (7,6)
         alpha_over(img, t_stick, pos, t_stick)
 
@@ -3321,7 +3327,7 @@ def levers(self, blockid, data):
         base = self.transform_image_side(t_base)
         
         # paste it twice with different brightness to make a fake 3D effect
-        base = base.transpose(Image.FLIP_LEFT_RIGHT)
+        base = base.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, base, (0,-1), base)
 
         alpha = base.split()[3]
@@ -3331,10 +3337,10 @@ def levers(self, blockid, data):
         alpha_over(img, base, (1,0), base)
         
         # paste the lever stick
-        t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
+        t_stick = t_stick.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         pos = (5,-7)
         if powered:
-            t_stick = t_stick.transpose(Image.FLIP_TOP_BOTTOM)
+            t_stick = t_stick.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
             pos = (6,6)
         alpha_over(img, t_stick, pos, t_stick)
 
@@ -3358,7 +3364,7 @@ def levers(self, blockid, data):
         # lever stick
         pos = (3,2)
         if not powered:
-            t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
+            t_stick = t_stick.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             pos = (11,2)
         alpha_over(img, t_stick, pos, t_stick)
 
@@ -3376,7 +3382,7 @@ def levers(self, blockid, data):
         # lever stick
         pos = (2,3)
         if not powered:
-            t_stick = t_stick.transpose(Image.FLIP_LEFT_RIGHT)
+            t_stick = t_stick.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             pos = (10,2)
         alpha_over(img, t_stick, pos, t_stick)
 
@@ -3495,7 +3501,7 @@ def buttons(self, blockid, data):
 
         elif data == 3: # facing WEST
             # paste it twice with different brightness to make a 3D effect
-            button = button.transpose(Image.FLIP_LEFT_RIGHT)
+            button = button.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, button, (0,-1), button)
 
             alpha = button.split()[3]
@@ -3542,7 +3548,7 @@ def end_rod(self, blockid, data):
 
     if data == 1 or data == 0:
         side = self.transform_image_side(sidetex)
-        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         bottom = self.transform_image_top(bottom)
 
         if data == 1: # up
@@ -3565,7 +3571,7 @@ def end_rod(self, blockid, data):
         sidetex = sidetex.rotate(90)
         side = self.transform_image_side(sidetex)
         bottom = self.transform_image_side(bottom)
-        bottom = bottom.transpose(Image.FLIP_LEFT_RIGHT)
+        bottom = bottom.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
         def draw_south():
             alpha_over(img, bottom, (0, 0), bottom)
@@ -3578,19 +3584,19 @@ def end_rod(self, blockid, data):
             alpha_over(img, bottom, (12, 6), bottom)
 
         def draw_west():
-            _bottom = bottom.transpose(Image.FLIP_LEFT_RIGHT)
+            _bottom = bottom.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, _bottom, (13, 0), _bottom)
-            _side = side.transpose(Image.FLIP_LEFT_RIGHT)
+            _side = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, _side, (7, 8), _side)
-            _otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+            _otherside = otherside.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, _otherside, (4, 9), _otherside)
 
         def draw_east():
-            _side = side.transpose(Image.FLIP_LEFT_RIGHT)
+            _side = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, _side, (7, 8), _side)
-            _otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+            _otherside = otherside.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, _otherside, (4, 9), _otherside)
-            _bottom = bottom.transpose(Image.FLIP_LEFT_RIGHT)
+            _bottom = bottom.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, _bottom, (0, 6), _bottom)
 
         draw_funcs = [ draw_south, draw_west, draw_north, draw_east ]
@@ -3620,7 +3626,7 @@ def snow(self, blockid, data):
 
     top = self.transform_image_top(tex)
     side = self.transform_image_side(sidetex)
-    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     sidealpha = side.split()[3]
     side = ImageEnhance.Brightness(side).enhance(0.9)
@@ -3648,7 +3654,7 @@ def cactus(self, blockid, data):
     
     top = self.transform_image_top(top)
     side = self.transform_image_side(side)
-    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     sidealpha = side.split()[3]
     side = ImageEnhance.Brightness(side).enhance(0.9)
@@ -3729,7 +3735,7 @@ def fence(self, blockid, data):
 
     # Create the sides and the top of the big stick
     fence_side = self.transform_image_side(fence_side)
-    fence_other_side = fence_side.transpose(Image.FLIP_LEFT_RIGHT)
+    fence_other_side = fence_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     fence_top = self.transform_image_top(fence_top)
 
     # Darken the sides slightly. These methods also affect the alpha layer,
@@ -3758,7 +3764,7 @@ def fence(self, blockid, data):
 
     # Create the sides and the top of the small sticks
     fence_small_side = self.transform_image_side(fence_small_side)
-    fence_small_other_side = fence_small_side.transpose(Image.FLIP_LEFT_RIGHT)
+    fence_small_other_side = fence_small_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     
     # Darken the sides slightly. These methods also affect the alpha layer,
     # so save them first (we don't want to "darken" the alpha layer making
@@ -3869,7 +3875,7 @@ def portal(self, blockid, data):
     img = Image.new("RGBA", (24,24), self.bgcolor)
 
     side = self.transform_image_side(portaltexture)
-    otherside = side.transpose(Image.FLIP_TOP_BOTTOM)
+    otherside = side.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
 
     if data in (1,4,5):
         alpha_over(img, side, (5,4), side)
@@ -3893,7 +3899,7 @@ def cake(self, blockid, data):
     if data == 0:  # unbitten cake
         top = self.transform_image_top(top)
         side = self.transform_image_side(side)
-        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
         # darken sides slightly
         sidealpha = side.split()[3]
@@ -3922,7 +3928,7 @@ def cake(self, blockid, data):
         # composite the cake for every north orientation
         if self.rotation == 0:  # north top-left
             # create right side
-            rs = self.transform_image_side(side).transpose(Image.FLIP_LEFT_RIGHT)
+            rs = self.transform_image_side(side).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             # create bitten side and its coords
             deltax = bite_width * data
             deltay = -1 * data
@@ -3946,11 +3952,11 @@ def cake(self, blockid, data):
         elif self.rotation == 1:  # north top-right
             # bitten side not shown
             # create left side
-            ls = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT))
+            ls = self.transform_image_side(side.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
             # create top
             t = self.transform_image_top(top.rotate(-90))
             # create right side
-            rs = self.transform_image_side(fullside).transpose(Image.FLIP_LEFT_RIGHT)
+            rs = self.transform_image_side(fullside).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             # darken sides slightly
             sidealpha = ls.split()[3]
             ls = ImageEnhance.Brightness(ls).enhance(0.9)
@@ -3970,8 +3976,8 @@ def cake(self, blockid, data):
             # top
             t = self.transform_image_top(top.rotate(180))
             # right side
-            rs = self.transform_image_side(side.transpose(Image.FLIP_LEFT_RIGHT))
-            rs = rs.transpose(Image.FLIP_LEFT_RIGHT)
+            rs = self.transform_image_side(side.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+            rs = rs.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             # darken sides slightly
             sidealpha = ls.split()[3]
             ls = ImageEnhance.Brightness(ls).enhance(0.9)
@@ -3994,7 +4000,7 @@ def cake(self, blockid, data):
             deltay = -1 * data
             if data in [3, 4, 5, 6]:
                 deltax += 1
-            rs = self.transform_image_side(inside).transpose(Image.FLIP_LEFT_RIGHT)
+            rs = self.transform_image_side(inside).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             # darken sides slightly
             sidealpha = ls.split()[3]
             ls = ImageEnhance.Brightness(ls).enhance(0.9)
@@ -4069,7 +4075,7 @@ def repeater(self, blockid, data):
     ImageDraw.Draw(torch).rectangle((0,16,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
     
     # touch up the 3d effect with big rectangles, just in case, for other texture packs
-    ImageDraw.Draw(torch).rectangle((0,24,10,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(torch).rectangle((0,15,10,24),outline=(0,0,0,0),fill=(0,0,0,0))
     ImageDraw.Draw(torch).rectangle((12,15,24,24),outline=(0,0,0,0),fill=(0,0,0,0))
     
     # torch positions for every redstone torch orientation.
@@ -4255,7 +4261,7 @@ def trapdoor(self, blockid, data):
                   }[blockid]
 
     if data & 0x4 == 0x4: # opened trapdoor
-        if data & 0x08 == 0x08: texture = self.load_image_texture(texturepath).transpose(Image.FLIP_TOP_BOTTOM)
+        if data & 0x08 == 0x08: texture = self.load_image_texture(texturepath).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         else: texture = self.load_image_texture(texturepath)
 
         if data & 0x3 == 0: # west
@@ -4342,7 +4348,7 @@ def huge_mushroom(self, blockid, data):
     side_up    = cap if data & 0b010000 else porous  # Up
     side_west  = cap if data & 0b000010 else porous  # West
     side_south = cap if data & 0b000001 else porous  # South
-    side_south = side_south.transpose(Image.FLIP_LEFT_RIGHT)
+    side_south = side_south.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     return self.build_full_block(side_up, None, None, side_west, side_south)
 
@@ -4373,9 +4379,9 @@ def panes(self, blockid, data):
 
     up_center = self.transform_image_side(center)
     up_left = self.transform_image_side(left)
-    up_right = self.transform_image_side(right).transpose(Image.FLIP_TOP_BOTTOM)
+    up_right = self.transform_image_side(right).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
     dw_right = self.transform_image_side(right)
-    dw_left = self.transform_image_side(left).transpose(Image.FLIP_TOP_BOTTOM)
+    dw_left = self.transform_image_side(left).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
 
     # Create img to compose the texture
     img = Image.new("RGBA", (24,24), self.bgcolor)
@@ -4543,10 +4549,10 @@ def fence_gate(self, blockid, data):
     gate_side.putalpha(sidealpha)
     
     # create the other sides
-    mirror_gate_side = self.transform_image_side(gate_side.transpose(Image.FLIP_LEFT_RIGHT))
+    mirror_gate_side = self.transform_image_side(gate_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
     gate_side = self.transform_image_side(gate_side)
-    gate_other_side = gate_side.transpose(Image.FLIP_LEFT_RIGHT)
-    mirror_gate_other_side = mirror_gate_side.transpose(Image.FLIP_LEFT_RIGHT)
+    gate_other_side = gate_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    mirror_gate_other_side = mirror_gate_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     
     # Create img to compose the fence gate
     img = Image.new("RGBA", (24,24), self.bgcolor)
@@ -4728,7 +4734,7 @@ def end_portal_frame(self, blockid, data):
         # transform images and paste
         eye = self.transform_image_top(eye_t.rotate((data % 4) * 90))
         eye_s = self.transform_image_side(eye_t_s)
-        eye_os = eye_s.transpose(Image.FLIP_LEFT_RIGHT)
+        eye_os = eye_s.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, eye_s, (5, 5), eye_s)
         alpha_over(img, eye_os, (9, 5), eye_os)
         alpha_over(img, eye, (0, 0), eye)
@@ -4766,7 +4772,7 @@ def daylight_sensor(self, blockid, data):
     # plain slab
     top = self.transform_image_top(top)
     side = self.transform_image_side(side)
-    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+    otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     
     sidealpha = side.split()[3]
     side = ImageEnhance.Brightness(side).enhance(0.9)
@@ -4873,9 +4879,9 @@ def cocoa_plant(self, blockid, data):
     
     # first compose the block of the cocoa plant
     block = Image.new("RGBA", (24,24), self.bgcolor)
-    tmp = self.transform_image_side(side).transpose(Image.FLIP_LEFT_RIGHT)
+    tmp = self.transform_image_side(side).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     alpha_over (block, tmp, c_right,tmp) # right side
-    tmp = tmp.transpose(Image.FLIP_LEFT_RIGHT)
+    tmp = tmp.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     alpha_over (block, tmp, c_left,tmp) # left side
     tmp = self.transform_image_top(top)
     alpha_over(block, tmp, c_top,tmp)
@@ -4886,17 +4892,17 @@ def cocoa_plant(self, blockid, data):
     # compose the cocoa plant
     img = Image.new("RGBA", (24,24), self.bgcolor)
     if orientation in (2,3): # south and west
-        tmp = self.transform_image_side(stalk).transpose(Image.FLIP_LEFT_RIGHT)
+        tmp = self.transform_image_side(stalk).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, block,(-1,-2), block)
         alpha_over(img, tmp, (4,-2), tmp)
         if orientation == 3:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+            img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     elif orientation in (0,1): # north and east
-        tmp = self.transform_image_side(stalk.transpose(Image.FLIP_LEFT_RIGHT))
+        tmp = self.transform_image_side(stalk.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
         alpha_over(img, block,(-1,5), block)
         alpha_over(img, tmp, (2,12), tmp)
         if orientation == 0:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+            img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     return img
 
@@ -4927,10 +4933,10 @@ def beacon(self, blockid, data):
     glass = self.build_block(t,t)
     t = self.load_image_texture("assets/minecraft/textures/block/obsidian.png")
     obsidian = self.build_full_block((t,12),None, None, t, t)
-    obsidian = obsidian.resize((20,20), Image.ANTIALIAS)
+    obsidian = obsidian.resize((20,20), Image.Resampling.LANCZOS)
     t = self.load_image_texture("assets/minecraft/textures/block/beacon.png")
     crystal = self.build_block(t,t)
-    crystal = crystal.resize((16,16),Image.ANTIALIAS)
+    crystal = crystal.resize((16,16),Image.Resampling.LANCZOS)
     
     # compose the block
     img = Image.new("RGBA", (24,24), self.bgcolor)
@@ -4989,7 +4995,7 @@ def cobblestone_wall(self, blockid, data):
 
     # Create the sides and the top of the pole
     wall_pole_side = self.transform_image_side(wall_pole_side)
-    wall_pole_other_side = wall_pole_side.transpose(Image.FLIP_LEFT_RIGHT)
+    wall_pole_other_side = wall_pole_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     wall_pole_top = self.transform_image_top(wall_pole_top)
 
     # Darken the sides slightly. These methods also affect the alpha layer,
@@ -5034,7 +5040,7 @@ def cobblestone_wall(self, blockid, data):
     alpha_over(tmp,wall_side, (0,0),wall_side)
     alpha_over(tmp,wall_side_top, (-5,3),wall_side_top)
     wall_side = tmp
-    wall_other_side = wall_side.transpose(Image.FLIP_LEFT_RIGHT)
+    wall_other_side = wall_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     # compose the sides of the full wall
     tmp = Image.new("RGBA", (24,24), self.bgcolor)
@@ -5051,7 +5057,7 @@ def cobblestone_wall(self, blockid, data):
     alpha_over(tmp,wall_side_full, (4,0),wall_side_full)
     alpha_over(tmp,wall_side_top_full, (3,-4),wall_side_top_full)
     wall_side_full = tmp
-    wall_other_side_full = wall_side_full.transpose(Image.FLIP_LEFT_RIGHT)
+    wall_other_side_full = wall_side_full.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     # Create img to compose the wall
     img = Image.new("RGBA", (24,24), self.bgcolor)
@@ -5105,7 +5111,7 @@ def crops4(self, blockid, data):
         raw_crop = self.load_image_texture("assets/minecraft/textures/block/potatoes_stage%d.png" % stage)
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
-    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+    crop3 = crop2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     img = Image.new("RGBA", (24,24), self.bgcolor)
     alpha_over(img, crop1, (0,12), crop1)
@@ -5192,7 +5198,7 @@ def anvil(self, blockid, data):
     alpha_over(img, top, (0, 0), top)
 
     left_side = self.transform_image_side(left_side)
-    right_side = self.transform_image_side(right_side).transpose(Image.FLIP_LEFT_RIGHT)
+    right_side = self.transform_image_side(right_side).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     alpha_over(img, left_side, left_pos, left_side)
     alpha_over(img, right_side, right_pos, right_side)
@@ -5247,8 +5253,8 @@ def hopper(self, blockid, data):
     hop_mid = self.build_full_block((top,5), side, side, side, side, side)
     hop_bot = self.build_block(side,side)
 
-    hop_mid = hop_mid.resize((17,17),Image.ANTIALIAS)
-    hop_bot = hop_bot.resize((10,10),Image.ANTIALIAS)
+    hop_mid = hop_mid.resize((17,17),Image.Resampling.LANCZOS)
+    hop_bot = hop_bot.resize((10,10),Image.Resampling.LANCZOS)
     
     #compose the final block
     img = Image.new("RGBA", (24,24), self.bgcolor)
@@ -5366,7 +5372,7 @@ def flower(self, blockid, data):
     #sunflower top
     if data == 8:
         bloom_tex = self.load_image_texture("assets/minecraft/textures/block/sunflower_front.png")
-        alpha_over(img, bloom_tex.resize((14, 11), Image.ANTIALIAS), (5,5))
+        alpha_over(img, bloom_tex.resize((14, 11), Image.Resampling.LANCZOS), (5,5))
 
     return img
 
@@ -5569,7 +5575,7 @@ def crops(self, blockid, data):
     raw_crop = self.load_image_texture(crops_id_to_tex[blockid] % data)
     crop1 = self.transform_image_top(raw_crop)
     crop2 = self.transform_image_side(raw_crop)
-    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+    crop3 = crop2.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     img = Image.new("RGBA", (24,24), self.bgcolor)
     alpha_over(img, crop1, (0,12), crop1)
@@ -5598,7 +5604,7 @@ def glazed_terracotta(self, blockid, data):
 
     texture = self.load_image_texture("assets/minecraft/textures/block/%s_glazed_terracotta.png" %
                                       color_map[blockid - 235]).copy()
-    texture_side4 = texture.transpose(Image.FLIP_LEFT_RIGHT)
+    texture_side4 = texture.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     if data == 0:    # South
         return self.build_full_block(texture, None, None, texture, texture_side4.rotate(270))
@@ -5754,8 +5760,8 @@ def campfire(self, blockid, data):
 
     log_end_t = self.transform_image_side(log_end_t)
     log_top_t = self.transform_image_top(log_side_t)
-    log_side_t = self.transform_image_side(log_side_t).transpose(Image.FLIP_LEFT_RIGHT)
-    log_side_lit_t = self.transform_image_side(log_side_lit_t).transpose(Image.FLIP_LEFT_RIGHT)
+    log_side_t = self.transform_image_side(log_side_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    log_side_lit_t = self.transform_image_side(log_side_lit_t).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     alpha_over(log_t, log_top_t, (-2, 2), log_top_t)  # Fix some holes at the edges
     alpha_over(log_t, log_top_t, (-2, 1), log_top_t)
@@ -5780,7 +5786,7 @@ def campfire(self, blockid, data):
 
     # Back logs
     alpha_over(logs_back_t, log_lit_t, (-1, 7), log_lit_t)
-    log_tmp_t = logs_back_t.transpose(Image.FLIP_LEFT_RIGHT)
+    log_tmp_t = logs_back_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     alpha_over(logs_back_t, log_tmp_t, (1, -3), log_tmp_t)
 
     # Front logs
@@ -5792,7 +5798,7 @@ def campfire(self, blockid, data):
     alpha_over(logs_front_t, log_tmp_t, (1, -3), log_tmp_t)
     log_tmp_t = Image.new("RGBA", (24, 24), self.bgcolor)
     alpha_over(log_tmp_t, log_lit_t, (7, 10), log_lit_t)
-    log_tmp_t = log_tmp_t.transpose(Image.FLIP_LEFT_RIGHT)
+    log_tmp_t = log_tmp_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     alpha_over(logs_front_t, log_tmp_t, (1, -3), log_tmp_t)
 
     # Compose final image
@@ -5802,11 +5808,11 @@ def campfire(self, blockid, data):
     if data & 0b100:
         fire_t = fire_raw_t.copy()
         if data & 0b11 in [0, 2]:  # North, South
-            fire_t = fire_t.transpose(Image.FLIP_LEFT_RIGHT)
+            fire_t = fire_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, fire_t, (4, 4), fire_t)
     alpha_over(img, logs_front_t, (0, 0), logs_front_t)
     if data & 0b11 in [0, 2]:  # North, South
-        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     return img
 
@@ -5848,15 +5854,15 @@ def bell(self, blockid, data):
     bell_ul_t = create_tile(bell_raw_t, (bell_coord[0], 6, bell_coord[0] + 6, 13), (5, 4), 180)
     bell_ur_t = create_tile(bell_raw_t, (bell_coord[1], 6, bell_coord[1] + 6, 13), (5, 4), 180)
     bell_ul_t = self.transform_image_side(bell_ul_t)
-    bell_ur_t = self.transform_image_side(bell_ur_t.transpose(Image.FLIP_LEFT_RIGHT))
-    bell_ur_t = bell_ur_t.transpose(Image.FLIP_LEFT_RIGHT)
+    bell_ur_t = self.transform_image_side(bell_ur_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+    bell_ur_t = bell_ur_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     # Lower sides
     bell_coord = [x * 8 for x in bell_sides_idx]
     bell_ll_t = create_tile(bell_raw_t, (bell_coord[0], 21, bell_coord[0] + 8, 23), (4, 11), 180)
     bell_lr_t = create_tile(bell_raw_t, (bell_coord[1], 21, bell_coord[1] + 8, 23), (4, 11), 180)
     bell_ll_t = self.transform_image_side(bell_ll_t)
-    bell_lr_t = self.transform_image_side(bell_lr_t.transpose(Image.FLIP_LEFT_RIGHT))
-    bell_lr_t = bell_lr_t.transpose(Image.FLIP_LEFT_RIGHT)
+    bell_lr_t = self.transform_image_side(bell_lr_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+    bell_lr_t = bell_lr_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     # Upper top
     top_rot = (180 + self.rotation * 90) % 360
     bell_ut_t = create_tile(bell_raw_t, (6, 0, 12, 6), (5, 5), top_rot)
@@ -5901,8 +5907,8 @@ def bell(self, blockid, data):
     bar_r_t = create_tile(bar_raw_t, bar_coord[1], bar_tile_pos[1], 0)
     bar_t_t = create_tile(bar_raw_t, bar_coord[2], bar_tile_pos[2], 0)
     bar_l_t = self.transform_image_side(bar_l_t)
-    bar_r_t = self.transform_image_side(bar_r_t.transpose(Image.FLIP_LEFT_RIGHT))
-    bar_r_t = bar_r_t.transpose(Image.FLIP_LEFT_RIGHT)
+    bar_r_t = self.transform_image_side(bar_r_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+    bar_r_t = bar_r_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
     bar_t_t = self.transform_image_top(bar_t_t)
 
     bar_t = Image.new("RGBA", (24, 24), self.bgcolor)
@@ -5910,7 +5916,7 @@ def bell(self, blockid, data):
     alpha_over(bar_t, bar_l_t, bar_over_pos[0], bar_l_t)
     alpha_over(bar_t, bar_r_t, bar_over_pos[1], bar_r_t)
     if flip_part:
-        bar_t = bar_t.transpose(Image.FLIP_LEFT_RIGHT)
+        bar_t = bar_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     # Generate post, only applies to floor attached bell
     if bell_type == 0:
@@ -5918,8 +5924,8 @@ def bell(self, blockid, data):
         post_r_t = create_tile(post_raw_t, (0, 1, 2, 16), (14, 1), 0)
         post_t_t = create_tile(post_raw_t, (0, 0, 2,  4), (14, 6), 0)
         post_l_t = self.transform_image_side(post_l_t)
-        post_r_t = self.transform_image_side(post_r_t.transpose(Image.FLIP_LEFT_RIGHT))
-        post_r_t = post_r_t.transpose(Image.FLIP_LEFT_RIGHT)
+        post_r_t = self.transform_image_side(post_r_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT))
+        post_r_t = post_r_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         post_t_t = self.transform_image_top(post_t_t)
 
         post_back_t = Image.new("RGBA", (24, 24), self.bgcolor)
@@ -5930,8 +5936,8 @@ def bell(self, blockid, data):
         alpha_over(post_back_t, post_r_t, (6, 3), post_r_t)  # Fix some holes
         alpha_over(post_front_t, post_back_t, (-10, 5), post_back_t)
         if flip_part:
-            post_back_t = post_back_t.transpose(Image.FLIP_LEFT_RIGHT)
-            post_front_t = post_front_t.transpose(Image.FLIP_LEFT_RIGHT)
+            post_back_t = post_back_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            post_front_t = post_front_t.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
     img = Image.new("RGBA", (24, 24), self.bgcolor)
     if bell_type == 0:
@@ -5980,12 +5986,12 @@ def chain(self, blockid, data):
         otherside = self.transform_image_top(sidetex)
 
         def draw_x():
-            _side = side.transpose(Image.FLIP_LEFT_RIGHT)
+            _side = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, _side, (6,3), _side)
             alpha_over(img, otherside, (3,3), otherside)
 
         def draw_z():
-            _otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+            _otherside = otherside.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
             alpha_over(img, side, (6,3), side)
             alpha_over(img, _otherside, (0,6), _otherside)
 
@@ -6120,7 +6126,7 @@ def amethyst_bud(self, blockid, data):
         rotated = tex.rotate(90)
         side = self.transform_image_side(rotated)
         otherside = self.transform_image_top(rotated)
-        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        otherside = otherside.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         alpha_over(img, side, (6, 3), side)
         alpha_over(img, otherside, (0, 6), otherside)
 
@@ -6128,34 +6134,34 @@ def amethyst_bud(self, blockid, data):
         rotated = tex.rotate(-90)
         side = self.transform_image_side(rotated)
         otherside = self.transform_image_top(rotated)
-        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        otherside = otherside.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         alpha_over(img, side, (6, 3), side)
         alpha_over(img, otherside, (0, 6), otherside)
 
     def draw_west():
         rotated = tex.rotate(-90)
         side = self.transform_image_side(rotated)
-        side = side.transpose(Image.FLIP_LEFT_RIGHT)
+        side = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         otherside = self.transform_image_top(rotated)
-        otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
-        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        otherside = otherside.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        otherside = otherside.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         alpha_over(img, side, (6, 3), side)
         alpha_over(img, otherside, (0, 6), otherside)
 
     def draw_east():
         rotated = tex.rotate(90)
         side = self.transform_image_side(rotated)
-        side = side.transpose(Image.FLIP_LEFT_RIGHT)
+        side = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         otherside = self.transform_image_top(rotated)
-        otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
-        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        otherside = otherside.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        otherside = otherside.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         alpha_over(img, side, (6, 3), side)
         alpha_over(img, otherside, (0, 6), otherside)
 
     draw_funcs = [draw_east, draw_south, draw_west, draw_north]
 
     if data == 0: # down
-        tex = tex.transpose(Image.FLIP_TOP_BOTTOM)
+        tex = tex.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         return self.build_sprite(tex)
     elif data == 1: # up
         return self.build_sprite(tex)
@@ -6214,9 +6220,9 @@ def lightning_rod(self, blockid, data):
     def draw_east():
         toptex_rotated = toptex.rotate(90)
         top_side = self.transform_image_side(toptex_rotated)
-        top_side = top_side.transpose(Image.FLIP_LEFT_RIGHT)
+        top_side = top_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         top_otherside = self.transform_image_top(toptex)
-        top_otherside = top_otherside.transpose(Image.FLIP_LEFT_RIGHT)
+        top_otherside = top_otherside.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         top_top = self.transform_image_side(toptex)
 
         # top
@@ -6227,9 +6233,9 @@ def lightning_rod(self, blockid, data):
 
         roated_side = sidetex.rotate(90)
         side = self.transform_image_side(roated_side)
-        side = side.transpose(Image.FLIP_TOP_BOTTOM)
+        side = side.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         otherside = self.transform_image_top(sidetex)
-        otherside = otherside.transpose(Image.FLIP_TOP_BOTTOM)
+        otherside = otherside.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         side_top = self.transform_image_side(side_toptex)
 
         alpha_over(img, otherside, (-7, 4), otherside)
@@ -6248,7 +6254,7 @@ def lightning_rod(self, blockid, data):
         top_side = self.transform_image_side(toptex_rotated)
         top_otherside = self.transform_image_top(toptex)
         top_top = self.transform_image_side(toptex)
-        top_top = top_top.transpose(Image.FLIP_LEFT_RIGHT)
+        top_top = top_top.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
         alpha_over(img, top_side, (15, 12), top_side)
         alpha_over(img, top_otherside, (5, 10), top_otherside)
@@ -6257,18 +6263,18 @@ def lightning_rod(self, blockid, data):
     def draw_west():
         roated_side = sidetex.rotate(90)
         side = self.transform_image_side(roated_side)
-        side = side.transpose(Image.FLIP_LEFT_RIGHT)
+        side = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         otherside = self.transform_image_top(sidetex)
-        otherside = otherside.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = otherside.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
         alpha_over(img, side, (10, 6), side)
         alpha_over(img, otherside, (8, 6), otherside)
 
         toptex_rotated = toptex.rotate(90)
         top_side = self.transform_image_side(toptex_rotated)
-        top_side = top_side.transpose(Image.FLIP_LEFT_RIGHT)
+        top_side = top_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         top_otherside = self.transform_image_top(toptex)
-        top_otherside = top_otherside.transpose(Image.FLIP_LEFT_RIGHT)
+        top_otherside = top_otherside.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         top_top = self.transform_image_side(toptex)
 
         # top
@@ -6289,7 +6295,7 @@ def lightning_rod(self, blockid, data):
         top_side = self.transform_image_side(toptex_rotated)
         top_otherside = self.transform_image_top(toptex)
         top_top = self.transform_image_side(toptex)
-        top_top = top_top.transpose(Image.FLIP_LEFT_RIGHT)
+        top_top = top_top.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, top_otherside, (-4, 6), top_otherside)
         alpha_over(img, top_side, (5, 7), top_side)
         alpha_over(img, top_top, (8, 3), top_top)
@@ -6298,29 +6304,29 @@ def lightning_rod(self, blockid, data):
 
     if data == 1: # up
         side = self.transform_image_side(sidetex)
-        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, side, (0, 6 - 4), side)
         alpha_over(img, otherside, (12, 6 - 4), otherside)
 
         top_top = self.transform_image_top(toptex)
         top_side = self.transform_image_side(toptex)
-        top_otherside = top_side.transpose(Image.FLIP_LEFT_RIGHT)
+        top_otherside = top_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, top_side, (0, 6 - 4), top_side)
         alpha_over(img, top_otherside, (12, 6 - 4), top_otherside)
         alpha_over(img, top_top, (0, 5), top_top)
     elif data == 0: # down
-        toptex_flipped = toptex.transpose(Image.FLIP_TOP_BOTTOM)
+        toptex_flipped = toptex.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         top_top = self.transform_image_top(toptex)
         top_side = self.transform_image_side(toptex_flipped)
-        top_otherside = top_side.transpose(Image.FLIP_LEFT_RIGHT)
+        top_otherside = top_side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, top_side, (0, 6 - 4), top_side)
         alpha_over(img, top_otherside, (12, 6 - 4), top_otherside)
         alpha_over(img, top_top, (0, 14), top_top)
 
-        flipped = sidetex.transpose(Image.FLIP_TOP_BOTTOM)
+        flipped = sidetex.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         side_top = self.transform_image_top(side_toptex)
         side = self.transform_image_side(flipped)
-        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+        otherside = side.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         alpha_over(img, side, (0, 6 - 4), side)
         alpha_over(img, otherside, (12, 6 - 4), otherside)
         alpha_over(img, side_top, (2, 6), side_top)

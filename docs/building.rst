@@ -39,6 +39,8 @@ First, you'll need a compiler.  You can either use Visual Studio, or
 cygwin/mingw. The free `Visual Studio Community
 <https://www.visualstudio.com/vs/community/>`_ is okay. You will need to select the "Desktop Development with C++" WORKLOAD. Microsoft has been changing up the names on this with the "Community" edition of Visual Studio. If nothing else works, just install every Individual Visual C++ component you can find :)
 
+When using the Visual C++ libraries, if you run into an issue where io.h is missing, make sure either Windows 10 or Windows 11 SDK is installed (depending on your OS).
+
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -60,7 +62,7 @@ Building with Visual Studio
 1. Get the latest Overviewer source code as per above.
 2. From the Start menu, navigate to 'Visual Studio 2017' and open the **'Developer Command Prompt for VS 2017'** (*or whatever year*) shortcut. A regular command or powershell prompt will *NOT* work for this.
 3. cd to the folder containing the Overviewer source code.
-4. Copy Imaging.h and ImPlatform.h from your Pillow sources into the current working directory.
+4. Copy Imaging.h, ImPlatform.h, ImagingUtils.h, and Arrow.h from your Pillow sources into the current working directory.
 5. First try a build::
 
     c:\python37\python setup.py build

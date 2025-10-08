@@ -18,7 +18,7 @@ Misc utility routines used by multiple files that don't belong anywhere else
 """
 
 import errno
-import imp
+import importlib.util
 import os.path
 import platform
 import sys
@@ -28,7 +28,7 @@ from subprocess import PIPE, Popen
 
 
 def get_program_path():
-    if hasattr(sys, "frozen") or imp.is_frozen("__main__"):
+    if hasattr(sys, "frozen") or is_frozen("__main__"):
         return os.path.dirname(sys.executable)
     else:
         try:
@@ -37,6 +37,13 @@ def get_program_path():
             return os.path.dirname(os.path.dirname(__file__))
         except NameError:
             return os.path.dirname(sys.argv[0])
+
+def is_frozen(module_name):
+    try:
+        spec = importlib.util.find_spec(module_name)
+    except ValueError:
+        spec = None
+    return spec is not None and spec.origin == 'frozen'
 
 
 def findGitHash():

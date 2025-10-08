@@ -147,7 +147,7 @@ class Lighting(RenderPrimitive):
         # no alpha channel (and it's mode "L")
         top.paste(toppart, (0,0))
         left.paste(leftpart, (0,6))
-        right = left.transpose(Image.FLIP_LEFT_RIGHT)
+        right = left.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         
         # Manually touch up 6 pixels that leave a gap, like in
         # textures._build_block()

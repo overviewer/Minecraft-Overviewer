@@ -10,16 +10,13 @@ if sys.version_info[0] == 2 or (sys.version_info[0] == 3 and sys.version_info[1]
     sys.exit(1)
 
 
-from distutils.core import setup
-from distutils.extension import Extension
-from distutils.command.build import build
-from distutils.command.clean import clean
-from distutils.command.build_ext import build_ext
-from distutils.command.sdist import sdist
-from distutils.cmd import Command
-from distutils.dir_util import remove_tree
-from distutils.sysconfig import get_python_inc
-from distutils import log
+from setuptools import setup, Command, Distribution
+from setuptools.extension import Extension
+from setuptools.command.build import build
+from setuptools.command.build_ext import build_ext
+from setuptools.command.sdist import sdist
+import sysconfig
+import logging as log
 import os, os.path
 import glob
 import platform
@@ -34,7 +31,6 @@ except ImportError:
 
 try:
     import py2app
-    from setuptools.extension import Extension
 except ImportError:
     py2app = None
 
@@ -172,7 +168,7 @@ except AttributeError:
 try:
     pil_include = os.environ['PIL_INCLUDE_DIR'].split(os.pathsep)
 except Exception:
-    pil_include = [ os.path.join(get_python_inc(plat_specific=1), 'Imaging') ]
+    pil_include = [ os.path.join(sysconfig.get_path('include'), 'Imaging') ]
     if not os.path.exists(pil_include[0]):
         pil_include = [ ]
 
@@ -219,11 +215,8 @@ setup_kwargs['options']['build_ext'] = {'inplace' : 1}
 
 # custom clean command to remove in-place extension
 # and the version file, primitives header
-class CustomClean(clean):
+class CustomClean(Command):
     def run(self):
-        # do the normal cleanup
-        clean.run(self)
-
         # try to remove '_composite.{so,pyd,...}' extension,
         # regardless of the current system's extension name convention
         build_ext = self.get_finalized_command('build_ext')

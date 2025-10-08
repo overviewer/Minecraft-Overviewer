@@ -193,6 +193,10 @@ class World(object):
 
         ## read spawn info from level.dat
         data = self.leveldat
+        version = self.leveldat['Version']['Name']
+        if not version.startswith("1.") or int(version.split(".")[1]) > 21 or (version.split(".")[2] and int(version.split(".")[2]) > 9):
+            # No world spawn is available after the Copper Age update, so use some default
+            return 0, 32, 0
         disp_spawnX = spawnX = data['SpawnX']
         spawnY = data['SpawnY']
         disp_spawnZ = spawnZ = data['SpawnZ']
@@ -1688,8 +1692,12 @@ class RegionSet(object):
         # Empty is self-explanatory, and liquid_carved and carved seem to correspond
         # to SkyLight not being calculated, which results in mostly-black chunks,
         # so we'll just pretend they aren't there.
+        # Also, at some point, the "minecraft:" prefix was added to the status,
+        # so need to check for that too
         if chunk_data.get("Status", "") not in ("full", "postprocessed", "fullchunk",
-                                                "mobs_spawned", "spawn", ""):
+                                                "mobs_spawned", "spawn", "",
+                                                "minecraft:full", "minecraft:postprocessed", "minecraft:fullchunk",
+                                                "minecraft:mobs_spawned", "minecraft:spawn"):
             raise ChunkDoesntExist("Chunk %s,%s doesn't exist" % (x,z))
 
         # Turn the Biomes array into a 16x16 numpy array
