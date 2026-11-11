@@ -939,7 +939,7 @@ Other HTML/JS output options
 
        Setting this configuration option alone does nothing.  In order to get
        markers and signs on our map, you must also run the genPO script.  See
-       the :doc:`Signs and markers<signs>` section for more details and documenation.
+       the :doc:`Signs and markers<signs>` section for more details and documentation.
 
     **Default:** ``[]`` (an empty list)
 
